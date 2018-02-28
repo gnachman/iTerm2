@@ -170,7 +170,7 @@
     // pretty common.
     if (filename.length > 0 &&
         ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
-        DLog(@"Accepting filename from brute force search: %@", filename);
+//        DLog(@"Accepting filename from brute force search: %@", filename);
         // If you clicked on an existing filename, use it.
         URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
         VT100GridWindowedRange range;
@@ -222,13 +222,13 @@
                                                        range:&smartRange
                                             ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
     NSArray *actions = [SmartSelectionController actionsInRule:smartMatch.rule];
-    DLog(@"  Smart selection produces these actions: %@", actions);
+//    DLog(@"  Smart selection produces these actions: %@", actions);
     if (actions.count) {
         NSString *content = smartMatch.components[0];
         if (!respectHardNewlines) {
             content = [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
         }
-        DLog(@"  Actions match this content: %@", content);
+//        DLog(@"  Actions match this content: %@", content);
         URLAction *action = [URLAction urlActionToPerformSmartSelectionRule:smartMatch.rule
                                                                    onString:content];
         action.range = smartRange;
@@ -276,29 +276,29 @@
                     suffixCoords:(NSArray *)suffixCoords
                        extractor:(iTermTextExtractor *)extractor {
     NSString *joined = [prefix stringByAppendingString:suffix];
-    DLog(@"Smart selection found nothing. Look for URL-like things in %@ around offset %d",
-         joined, (int)[prefix length]);
+//    DLog(@"Smart selection found nothing. Look for URL-like things in %@ around offset %d",
+//         joined, (int)[prefix length]);
     int prefixChars = 0;
     NSString *possibleUrl = [joined substringIncludingOffset:[prefix length]
                                             fromCharacterSet:[NSCharacterSet urlCharacterSet]
                                         charsTakenFromPrefix:&prefixChars];
-    DLog(@"String of just permissible chars is %@", possibleUrl);
+//    DLog(@"String of just permissible chars is %@", possibleUrl);
 
     // Remove punctuation, parens, brackets, etc.
     NSRange rangeWithoutNearbyPunctuation = [possibleUrl rangeOfURLInString];
     if (rangeWithoutNearbyPunctuation.location == NSNotFound) {
-        DLog(@"No URL found");
+//        DLog(@"No URL found");
         return nil;
     }
     prefixChars -= rangeWithoutNearbyPunctuation.location;
     NSString *stringWithoutNearbyPunctuation = [possibleUrl substringWithRange:rangeWithoutNearbyPunctuation];
-    DLog(@"String without nearby punctuation: %@", stringWithoutNearbyPunctuation);
+//    DLog(@"String without nearby punctuation: %@", stringWithoutNearbyPunctuation);
 
     const BOOL hasColon = ([stringWithoutNearbyPunctuation rangeOfString:@":"].location != NSNotFound);
     BOOL looksLikeURL;
     if (hasColon) {
         // The test later on for whether an app exists to open the URL is sufficient.
-        DLog(@"Contains a colon so it looks like a URL to me");
+//        DLog(@"Contains a colon so it looks like a URL to me");
         looksLikeURL = YES;
     } else {
         // Only try to use HTTP if the string has something especially HTTP URL-like about it, such as
@@ -307,11 +307,11 @@
         looksLikeURL = [self stringLooksLikeURL:[possibleUrl substringWithRange:rangeWithoutNearbyPunctuation]];
 
         if (looksLikeURL) {
-            DLog(@"There's no colon but it seems like it could be an HTTP URL. Let's give that a try.");
+//            DLog(@"There's no colon but it seems like it could be an HTTP URL. Let's give that a try.");
             NSString *defaultScheme = @"http://";
             stringWithoutNearbyPunctuation = [defaultScheme stringByAppendingString:stringWithoutNearbyPunctuation];
         } else {
-            DLog(@"Doesn't look enough like a URL to guess that it's an HTTP URL");
+//            DLog(@"Doesn't look enough like a URL to guess that it's an HTTP URL");
         }
     }
 
@@ -326,7 +326,7 @@
                          prefixChars <= prefix.length);
 
         if (openable) {
-            DLog(@"%@ is openable", url);
+//            DLog(@"%@ is openable", url);
             VT100GridWindowedRange range;
             NSInteger j = prefix.length - prefixChars;
             if (j < prefixCoords.count) {
@@ -334,7 +334,7 @@
             } else if (j == prefixCoords.count && j > 0) {
                 range.coordRange.start = [extractor successorOfCoord:[prefixCoords[j - 1] gridCoordValue]];
             } else {
-                DLog(@"prefixCoordscount=%@ j=%@", @(prefixCoords.count), @(j));
+//                DLog(@"prefixCoordscount=%@ j=%@", @(prefixCoords.count), @(j));
                 return nil;
             }
             NSInteger i = rangeWithoutNearbyPunctuation.length - prefixChars;
@@ -343,7 +343,7 @@
             } else if (i > 0 && i == suffixCoords.count) {
                 range.coordRange.end = [extractor successorOfCoord:[suffixCoords[i - 1] gridCoordValue]];
             } else {
-                DLog(@"i=%@ suffixcoords.count=%@", @(i), @(suffixCoords.count));
+//                DLog(@"i=%@ suffixcoords.count=%@", @(i), @(suffixCoords.count));
                 return nil;
             }
             range.columnWindow = extractor.logicalWindow;
@@ -351,8 +351,8 @@
             action.range = range;
             return action;
         } else {
-            DLog(@"%@ is not openable (couldn't convert it to a URL [%@] or no scheme handler",
-                 stringWithoutNearbyPunctuation, url);
+//            DLog(@"%@ is not openable (couldn't convert it to a URL [%@] or no scheme handler",
+//                 stringWithoutNearbyPunctuation, url);
         }
     }
 

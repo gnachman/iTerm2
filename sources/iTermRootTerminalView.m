@@ -225,7 +225,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 }
 
 - (void)updateToolbeltFrame {
-    DLog(@"Set toolbelt frame to %@", NSStringFromRect([self toolbeltFrame]));
+//    DLog(@"Set toolbelt frame to %@", NSStringFromRect([self toolbeltFrame]));
     [self constrainToolbeltWidth];
     [self.toolbelt setFrame:self.toolbeltFrame];
 }

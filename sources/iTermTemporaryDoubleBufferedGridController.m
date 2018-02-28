@@ -31,7 +31,7 @@
 }
 
 - (void)reset {
-    DLog(@"Reset saved grid (delegate=%@)", _delegate);
+//    DLog(@"Reset saved grid (delegate=%@)", _delegate);
     BOOL hadSavedGrid = _savedGrid != nil;
     self.savedGrid = nil;
     [_timer invalidate];
@@ -44,7 +44,7 @@
 #pragma mark - Private
 
 - (void)snapshot {
-    DLog(@"Take a snapshot of the grid because cursor was hidden (delegate=%@)", _delegate);
+//    DLog(@"Take a snapshot of the grid because cursor was hidden (delegate=%@)", _delegate);
     static const NSTimeInterval kTimeToKeepSavedGrid = 0.2;
     self.savedGrid = [_delegate temporaryDoubleBufferedGridCopy];
 
@@ -58,7 +58,7 @@
 }
 
 - (void)savedGridExpirationTimer:(NSTimer *)timer {
-    DLog(@"Saved grid expired. (delegate=%@)", _delegate);
+//    DLog(@"Saved grid expired. (delegate=%@)", _delegate);
     _timer = nil;
     [self reset];
 }

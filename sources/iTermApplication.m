@@ -301,7 +301,7 @@
 }
 
 - (BOOL)handleKeyDownEvent:(NSEvent *)event {
-    DLog(@"Received KeyDown event: %@. Key window is %@. First responder is %@", event, [self keyWindow], [[self keyWindow] firstResponder]);
+//    DLog(@"Received KeyDown event: %@. Key window is %@. First responder is %@", event, [self keyWindow], [[self keyWindow] firstResponder]);
 
     if ([self dispatchHotkeyLocally:event]) {
         return YES;
@@ -338,7 +338,7 @@
         if ([self handleKeyDownEvent:event]) {
             return;
         }
-        DLog(@"NSKeyDown event taking the regular path");
+//        DLog(@"NSKeyDown event taking the regular path");
     }
     [super sendEvent:event];
 }

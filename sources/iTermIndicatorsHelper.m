@@ -163,7 +163,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 }
 
 - (void)drawInFrame:(NSRect)frame {
-    DLog(@"drawInFrame %@", NSStringFromRect(frame));
+//    DLog(@"drawInFrame %@", NSStringFromRect(frame));
 
     // Draw top-right indicators.
     [self enumerateTopRightIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect frame) {
@@ -187,40 +187,40 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 
     // Draw full screen flash.
     if (_fullScreenAlpha > 0) {
-        DLog(@"Drawing full screen flash overlay");
+//        DLog(@"Drawing full screen flash overlay");
         [[[_delegate indicatorFullScreenFlashColor] colorWithAlphaComponent:_fullScreenAlpha] set];
         NSRectFillUsingOperation(frame, NSCompositeSourceOver);
     } else if (_fullScreenFlashStartTime > 0 && _fullScreenAlpha == 0) {
-        DLog(@"Not drawing full screen flash overlay");
+//        DLog(@"Not drawing full screen flash overlay");
     }
     [self didDraw];
 }
 
 - (void)didDraw {
     NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - _fullScreenFlashStartTime;
-    DLog(@"elapsed=%@, fullScreenAlpha=%@", @(elapsed), @(_fullScreenAlpha));
-    DLog(@"Set haveSetNeedsDisplay=NO");
+//    DLog(@"elapsed=%@, fullScreenAlpha=%@", @(elapsed), @(_fullScreenAlpha));
+//    DLog(@"Set haveSetNeedsDisplay=NO");
     _haveSetNeedsDisplay = NO;
 }
 
 - (void)checkForFlashUpdate {
-    DLog(@"Check for flash update. full screen flash start time is %@, haveSetNeedsDisplay=%@",
-         @(_fullScreenFlashStartTime), @(_haveSetNeedsDisplay));
+//    DLog(@"Check for flash update. full screen flash start time is %@, haveSetNeedsDisplay=%@",
+//         @(_fullScreenFlashStartTime), @(_haveSetNeedsDisplay));
     NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - _fullScreenFlashStartTime;
     if (_fullScreenFlashStartTime > 0 || [self haveFlashingIndicator]) {
         const CGFloat kMaxFullScreenFlashAlpha = 0.5;
         _fullScreenAlpha = MAX(0, 1.0 - elapsed / kFullScreenFlashDuration) * kMaxFullScreenFlashAlpha;
-        DLog(@"Set fullScreenAlpha=%@", @(_fullScreenAlpha));
+//        DLog(@"Set fullScreenAlpha=%@", @(_fullScreenAlpha));
         if (!_haveSetNeedsDisplay) {
-            DLog(@"Tell delegate %@ setNeedsDisplay", _delegate);
+//            DLog(@"Tell delegate %@ setNeedsDisplay", _delegate);
             [_delegate setNeedsDisplay:YES];
         }
-        DLog(@"Set haveSetNeedsDisplay=YES");
+//        DLog(@"Set haveSetNeedsDisplay=YES");
         _haveSetNeedsDisplay = YES;
 
         // Ensure that the screen gets redrawn with alpha = 0.
         if (_fullScreenAlpha == 0) {
-            DLog(@"Reset fullScreenFlashStartTime");
+//            DLog(@"Reset fullScreenFlashStartTime");
             _fullScreenFlashStartTime = 0;
         }
     }
@@ -235,7 +235,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 
     // Request another update if needed.
     if (_fullScreenFlashStartTime > 0 || [self haveFlashingIndicator]) {
-        DLog(@"Schedule another call to checkForFlashUpdate");
+//        DLog(@"Schedule another call to checkForFlashUpdate");
         [self performSelector:@selector(checkForFlashUpdate) withObject:nil afterDelay:1 / 60.0];
     }
 }

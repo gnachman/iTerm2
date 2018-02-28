@@ -66,7 +66,7 @@
 }
 
 - (void)invalidateCachedOcclusion:(NSNotification *)notification {
-    DLog(@"Invalidate occlusion cache because of notification %@", notification.name);
+//    DLog(@"Invalidate occlusion cache because of notification %@", notification.name);
     [self invalidateCachedOcclusion];
 }
 

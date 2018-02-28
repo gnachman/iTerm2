@@ -2734,14 +2734,14 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)makeCurrentSessionFirstResponder
 {
     if ([self currentSession]) {
-        PtyLog(@"makeCurrentSessionFirstResponder. New first responder will be %@. The current first responder is %@",
-               [[self currentSession] textview], [[self window] firstResponder]);
+//        PtyLog(@"makeCurrentSessionFirstResponder. New first responder will be %@. The current first responder is %@",
+//               [[self currentSession] textview], [[self window] firstResponder]);
         [[self window] makeFirstResponder:[[self currentSession] textview]];
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
                                                             object:[self currentSession]
                                                           userInfo:nil];
     } else {
-        PtyLog(@"There is no current session to make the first responder");
+//        PtyLog(@"There is no current session to make the first responder");
     }
 }
 
@@ -2815,7 +2815,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 [[self window] setFrame:[self canonicalFrameForScreen:screen] display:YES];
 
                 if (changedScrollBars && NSEqualSizes(self.window.frame.size, originalFrame.size)) {
-                    DLog(@"Fitting tabs to window when canonicalizing fullscreen window because of scrollbar change");
+//                    DLog(@"Fitting tabs to window when canonicalizing fullscreen window because of scrollbar change");
                     [self fitTabsToWindow];
                     if (!tmuxOriginatedResizeInProgress_) {
                         // When opening a new tmux tab in a fullscreen window, it'll be initialized
@@ -2863,13 +2863,13 @@ ITERM_WEAKLY_REFERENCEABLE
     // Note: During window state restoration, this may be called before the tabs are created from
     // the arrangement, in which case the line height and char width will be 0.
     if (self.tabs.count == 0) {
-        DLog(@"Window has no tabs. Returning early.");
+//        DLog(@"Window has no tabs. Returning early.");
         return self.window.frame;
     }
     PtyLog(@"Decoration size is %@", [NSValue valueWithSize:decorationSize]);
     PtyLog(@"Line height is %f, char width is %f", (float) [[session textview] lineHeight], [[session textview] charWidth]);
     if (session.textview.lineHeight == 0 || session.textview.charWidth == 0) {
-        DLog(@"Line height or char width is 0. Returning existing frame. session=%@", session);
+//        DLog(@"Line height or char width is 0. Returning existing frame. session=%@", session);
         return self.window.frame;
     }
     BOOL edgeSpanning = YES;
@@ -3004,7 +3004,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)screenParametersDidChange
 {
-    PtyLog(@"Screen parameters changed.");
+//    PtyLog(@"Screen parameters changed.");
     [self canonicalizeWindowFrame];
 }
 
@@ -3016,9 +3016,9 @@ ITERM_WEAKLY_REFERENCEABLE
         [[aSession textview] removeUnderline];
     }
 
-    PtyLog(@"PseudoTerminal windowDidResignKey");
+//    PtyLog(@"PseudoTerminal windowDidResignKey");
     if (togglingFullScreen_) {
-        PtyLog(@"windowDidResignKey returning because togglingFullScreen.");
+//        PtyLog(@"windowDidResignKey returning because togglingFullScreen.");
         return;
     }
 
@@ -3038,8 +3038,8 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
 
-    PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignKey:%@]",
-          __FILE__, __LINE__, aNotification);
+//    PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignKey:%@]",
+//          __FILE__, __LINE__, aNotification);
 
     if (_fullScreen) {
         [_contentView.tabBarControl setFlashing:NO];
@@ -3073,8 +3073,8 @@ ITERM_WEAKLY_REFERENCEABLE
 #if ENABLE_SHORTCUT_ACCESSORY
     _shortcutAccessoryViewController.isMain = NO;
 #endif
-    PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
-          __FILE__, __LINE__, aNotification);
+//    PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
+//          __FILE__, __LINE__, aNotification);
     NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
     NSWindowController *newMainWindowController = [[NSApp mainWindow] windowController];
     if (![siblings containsObject:newMainWindowController]) {
@@ -3313,8 +3313,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)windowDidChangeScreen:(NSNotification *)notification {
     // This gets called when any part of the window enters or exits the screen and
     // appears to be spuriously called for nonnative fullscreen windows.
-    DLog(@"windowDidChangeScreen called. This is known to happen when the screen didn't really change! screen=%@",
-         self.window.screen);
+//    DLog(@"windowDidChangeScreen called. This is known to happen when the screen didn't really change! screen=%@",
+//         self.window.screen);
     if (!_inWindowDidChangeScreen) {
         // Nicolas reported a bug where canonicalizeWindowFrame moved the window causing this to
         // be called re-entrantly, and eventually the stack overflowed. If we insist the window should
@@ -3324,7 +3324,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self canonicalizeWindowFrame];
         _inWindowDidChangeScreen = NO;
     } else {
-        DLog(@"** Re-entrant call to windowDidChangeScreen:! Not canonicalizing. **");
+//        DLog(@"** Re-entrant call to windowDidChangeScreen:! Not canonicalizing. **");
     }
     if (@available(macOS 10.11, *)) {
         for (PTYSession *session in self.allSessions) {
@@ -3332,7 +3332,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [session.textview setNeedsDisplay:YES];
         }
     }
-    DLog(@"Returning from windowDidChangeScreen:.");
+//    DLog(@"Returning from windowDidChangeScreen:.");
 }
 
 - (void)windowDidMove:(NSNotification *)notification

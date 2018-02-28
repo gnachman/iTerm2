@@ -123,10 +123,10 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
 - (void)setTimerUpdateCadence:(NSTimeInterval)cadence liveResizing:(BOOL)liveResizing force:(BOOL)force {
     if (_updateTimer.timeInterval == cadence) {
-        DLog(@"No change to cadence.");
+//        DLog(@"No change to cadence.");
         return;
     }
-    DLog(@"Set cadence of %@ to %f", self.delegate, cadence);
+//    DLog(@"Set cadence of %@ to %f", self.delegate, cadence);
 
     if (liveResizing) {
         // This solves the bug where we don't redraw properly during live resize.
@@ -141,7 +141,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
     } else {
         if (!force && _updateTimer && cadence > _updateTimer.timeInterval) {
-            DLog(@"Defer cadence change");
+//            DLog(@"Defer cadence change");
             _deferredCadenceChange = YES;
         } else {
             [_updateTimer invalidate];
@@ -156,17 +156,17 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 - (void)setGCDUpdateCadence:(NSTimeInterval)cadence liveResizing:(BOOL)liveResizing force:(BOOL)force {
     const NSTimeInterval period = liveResizing ? kActiveUpdateCadence : cadence;
     if (_cadence == period) {
-        DLog(@"No change to cadence.");
+//        DLog(@"No change to cadence.");
         return;
     }
-    DLog(@"Set cadence of %@ to %f", self.delegate, cadence);
+//    DLog(@"Set cadence of %@ to %f", self.delegate, cadence);
 
     if (!force && _cadence > 0 && cadence > _cadence) {
         // Don't increase the cadence until after the screen has a chance to
         // draw. This way if you do "cat bigfile.txt" you see the first
         // screenful before the refresh rate drops. This way you know
         // something's happening.
-        DLog(@"Defer cadence change");
+//        DLog(@"Defer cadence change");
         _deferredCadenceChange = YES;
         return;
     }

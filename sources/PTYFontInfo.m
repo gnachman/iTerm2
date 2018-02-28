@@ -57,7 +57,7 @@
         fontsWithDefaultLigatures = [[NSSet setWithArray:@[ ]] retain];
     });
     BOOL result = [fontsWithDefaultLigatures containsObject:self.fontName];
-    DLog(@"Default ligatures for '%@' is %@", self.fontName, @(result));
+//    DLog(@"Default ligatures for '%@' is %@", self.fontName, @(result));
     return result;
 }
 
@@ -192,7 +192,7 @@
     NSFontManager *fontManager = [NSFontManager sharedFontManager];
     NSInteger weight = [fontManager weightOfFont:font];
     NSInteger minimumAcceptableWeight = weight + 4;
-    DLog(@"Looking for a bold version of %@, whose weight is %@", font, @(weight));
+//    DLog(@"Looking for a bold version of %@, whose weight is %@", font, @(weight));
     NSFont *lastFont = font;
 
     // Sometimes the heavier version of a font is oblique (issue 4442). So
@@ -207,7 +207,7 @@
                                               NSFixedPitchFontMask |
                                               NSUnitalicFontMask);
     NSFontTraitMask requiredTraits = ([fontManager traitsOfFont:font] & kImmutableTraits);
-    DLog(@"Required traits: %x", (int)requiredTraits);
+//    DLog(@"Required traits: %x", (int)requiredTraits);
     while (lastFont) {
         NSFont *heavierFont = [fontManager convertWeight:YES ofFont:lastFont];
         if (heavierFont == lastFont) {
@@ -215,26 +215,26 @@
             return nil;
         }
         NSInteger weight = [fontManager weightOfFont:heavierFont];
-        DLog(@"  next bolder font is %@ with a weight of %@",  heavierFont, @(weight));
+//        DLog(@"  next bolder font is %@ with a weight of %@",  heavierFont, @(weight));
         NSFontTraitMask maskedTraits = ([fontManager traitsOfFont:heavierFont] & kImmutableTraits);
-        DLog(@"  masked traits=%x", (int)maskedTraits);
+//        DLog(@"  masked traits=%x", (int)maskedTraits);
         if (maskedTraits == requiredTraits && weight >= minimumAcceptableWeight) {
-            DLog(@"  accepted!");
+//            DLog(@"  accepted!");
             return heavierFont;
         }
         lastFont = heavierFont;
     }
-    DLog(@"Failed to find a bold version that's bold enough");
+//    DLog(@"Failed to find a bold version that's bold enough");
     return nil;
 }
 
 - (PTYFontInfo *)computedBoldVersion {
     NSFont *boldFont = [self boldVersionOfFont:font_];
-    DLog(@"Bold version of %@ is %@", font_, boldFont);
+//    DLog(@"Bold version of %@ is %@", font_, boldFont);
     if (boldFont && boldFont != font_) {
         return [PTYFontInfo fontInfoWithFont:boldFont];
     } else {
-        DLog(@"Failed to find a bold version of %@", font_);
+//        DLog(@"Failed to find a bold version of %@", font_);
         return nil;
     }
 }
@@ -242,11 +242,11 @@
 - (PTYFontInfo *)computedItalicVersion {
     NSFontManager* fontManager = [NSFontManager sharedFontManager];
     NSFont* italicFont = [fontManager convertFont:font_ toHaveTrait:NSItalicFontMask];
-    DLog(@"Italic version of %@ is %@", font_, italicFont);
+//    DLog(@"Italic version of %@ is %@", font_, italicFont);
     if (italicFont && italicFont != font_) {
         return [PTYFontInfo fontInfoWithFont:italicFont];
     } else {
-        DLog(@"Failed to find an italic version of %@", font_);
+//        DLog(@"Failed to find an italic version of %@", font_);
         return nil;
     }
 }

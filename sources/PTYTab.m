@@ -1053,22 +1053,22 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateLabelAttributes {
-    DLog(@"PTYTab updateLabelAttributes for tab %d", objectCount_);
+//    DLog(@"PTYTab updateLabelAttributes for tab %d", objectCount_);
 
     if ([[self activeSession] exited]) {
         // Session has terminated.
         [self setLabelAttributesForDeadSession];
     } else {
         if (![self anySessionIsProcessing]) {
-            DLog(@"No session is processing");
+//            DLog(@"No session is processing");
             // Too much time has passed since activity occurred and we're idle.
             [self setLabelAttributesForIdleTab];
         } else {
-            DLog(@"Some session is processing");
+//            DLog(@"Some session is processing");
             // Less than 2 seconds has passed since the last output in the session.
             BOOL okToNotify;
             if ([self anySessionHasNewOutput:&okToNotify]) {
-                DLog(@"Some session has new output");
+//                DLog(@"Some session has new output");
                 [self setLabelAttributesForActiveTab:okToNotify];
             }
         }
@@ -2194,7 +2194,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)recheckBlur {
-    PtyLog(@"PTYTab recheckBlur");
+//    PtyLog(@"PTYTab recheckBlur");
     if ([realParentWindow_ currentTab] == self &&
         ![[realParentWindow_ window] isMiniaturized]) {
         if ([self blur]) {

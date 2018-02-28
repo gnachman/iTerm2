@@ -92,7 +92,7 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord updateTimestamp:(BOOL)updateTimestamp {
-    DLog(@"Mark %@ dirty=%@ delegate=%@", VT100GridCoordDescription(coord), @(dirty), delegate_);
+//    DLog(@"Mark %@ dirty=%@ delegate=%@", VT100GridCoordDescription(coord), @(dirty), delegate_);
 
     if (!dirty) {
         allDirty_ = NO;
@@ -104,7 +104,7 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to {
-    DLog(@"Mark rect from %@ to %@ dirty=%@ delegate=%@", VT100GridCoordDescription(from), VT100GridCoordDescription(to), @(dirty), delegate_);
+//    DLog(@"Mark rect from %@ to %@ dirty=%@ delegate=%@", VT100GridCoordDescription(from), VT100GridCoordDescription(to), @(dirty), delegate_);
     if (!dirty) {
         allDirty_ = NO;
     }
@@ -117,7 +117,7 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (void)markAllCharsDirty:(BOOL)dirty {
-    DLog(@"Mark all chars dirty=%@ delegate=%@", @(dirty), delegate_);
+//    DLog(@"Mark all chars dirty=%@ delegate=%@", @(dirty), delegate_);
 
     allDirty_ = dirty;
     [self markCharsDirty:dirty

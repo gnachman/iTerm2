@@ -205,11 +205,11 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 
 - (BOOL)fileHasForbiddenPrefix:(NSString *)filename
         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
-    DLog(@"Additional network paths are: %@", additionalNetworkPaths);
+//    DLog(@"Additional network paths are: %@", additionalNetworkPaths);
     // Augment list of additional paths with nfs automounter mount points.
     NSMutableArray *networkPaths = [[additionalNetworkPaths mutableCopy] autorelease];
     [networkPaths addObjectsFromArray:[[iTermAutoMasterParser sharedInstance] mountpoints]];
-    DLog(@"Including automounter paths, ignoring: %@", networkPaths);
+//    DLog(@"Including automounter paths, ignoring: %@", networkPaths);
 
     for (NSString *path in networkPaths) {
         if (!path.length) {
@@ -219,7 +219,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
             path = [path stringByAppendingString:@"/"];
         }
         if ([filename hasPrefix:path]) {
-            DLog(@"Filename %@ has prefix of ignored path %@", filename, path);
+//            DLog(@"Filename %@ has prefix of ignored path %@", filename, path);
             return YES;
         }
     }

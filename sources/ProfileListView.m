@@ -625,8 +625,8 @@ const CGFloat kDefaultTagsWidth = 80;
     Profile* bookmark = [dataSource_ profileAtIndex:rowIndex];
 
     if (aTableColumn == tableColumn_) {
-        DLog(@"Getting name of profile at row %d. The dictionary's address is %p. Its name is %@",
-             (int)rowIndex, bookmark, bookmark[KEY_NAME]);
+//        DLog(@"Getting name of profile at row %d. The dictionary's address is %p. Its name is %@",
+//             (int)rowIndex, bookmark, bookmark[KEY_NAME]);
         Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
         return [self attributedStringForName:bookmark[KEY_NAME] ?: @""
                                         tags:bookmark[KEY_TAGS]
@@ -737,10 +737,10 @@ const CGFloat kDefaultTagsWidth = 80;
 }
 
 - (void)reloadData {
-    DLog(@"ProfileListView reloadData called");
+//    DLog(@"ProfileListView reloadData called");
     [self _addTags:[[dataSource_ underlyingModel] allTags] toSearchField:searchField_];
     [dataSource_ sync];
-    DLog(@"calling reloadData on the profile tableview");
+//    DLog(@"calling reloadData on the profile tableview");
     [tableView_ reloadData];
     if (self.delegate && ![selectedGuids_ isEqualToSet:[self selectedGuids]]) {
         [selectedGuids_ release];
@@ -888,7 +888,7 @@ const CGFloat kDefaultTagsWidth = 80;
 }
 
 - (void)dataChangeNotification:(id)sender {
-    DLog(@"Scheduling a delayed perform of reloadData");
+//    DLog(@"Scheduling a delayed perform of reloadData");
     // Use a delayed perform so the underlying model has a chance to parse its journal.
     [self performSelector:@selector(reloadData)
                withObject:nil

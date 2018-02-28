@@ -57,11 +57,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
          workingDirectory:(NSString *)workingDirectory
                lineNumber:(NSString **)lineNumber
              columnNumber:(NSString **)columnNumber {
-    DLog(@"Check if %@ is a valid path in %@", path, workingDirectory);
+//    DLog(@"Check if %@ is a valid path in %@", path, workingDirectory);
     NSString *origPath = path;
     // TODO(chendo): Move regex, define capture semantics in config file/prefs
     if (!path || [path length] == 0) {
-        DLog(@"  no: it is empty");
+//        DLog(@"  no: it is empty");
         return nil;
     }
 
@@ -71,7 +71,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     // strip various trailing characters that are unlikely to be part of the file name.
     path = [path stringByReplacingOccurrencesOfRegex:@"[.),:]$"
                                           withString:@""];
-    DLog(@" Strip trailing chars, leaving %@", path);
+//    DLog(@" Strip trailing chars, leaving %@", path);
 
     if (lineNumber != nil) {
         *lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
@@ -82,17 +82,17 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     path = [[path stringByReplacingOccurrencesOfRegex:@":\\d*(?::.*)?$"
                                            withString:@""]
                stringByExpandingTildeInPath];
-    DLog(@"  Strip line number suffix leaving %@", path);
+//    DLog(@"  Strip line number suffix leaving %@", path);
     if ([path length] == 0) {
         // Everything was stripped out, meaning we'd try to open the working directory.
         return nil;
     }
     if ([path rangeOfRegex:@"^/"].location == NSNotFound) {
         path = [workingDirectory stringByAppendingPathComponent:path];
-        DLog(@"  Prepend working directory, giving %@", path);
+//        DLog(@"  Prepend working directory, giving %@", path);
     }
 
-    DLog(@"  Checking if file exists locally: %@", path);
+//    DLog(@"  Checking if file exists locally: %@", path);
 
     // NOTE: The path used to be standardized first. While that would allow us to catch
     // network paths, it also caused filesystem access that would hit network paths.
@@ -105,22 +105,22 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     // disk access in the old code.
 
     if ([self fileExistsAtPathLocally:path]) {
-        DLog(@"    YES: A file exists at %@", path);
+//        DLog(@"    YES: A file exists at %@", path);
         NSURL *url = [NSURL fileURLWithPath:path];
 
         // Resolve path by removing ./ and ../ etc
         path = [[url standardizedURL] path];
-        DLog(@"    Check standardized path for forbidden prefix %@", path);
+//        DLog(@"    Check standardized path for forbidden prefix %@", path);
 
         if ([self fileHasForbiddenPrefix:path]) {
-            DLog(@"    NO: Standardized path has forbidden prefix.");
+//            DLog(@"    NO: Standardized path has forbidden prefix.");
             return nil;
         }
         return path;
     }
     // If path doesn't exist and it starts with "a/" or "b/" (from `diff`).
     if ([origPath isMatchedByRegex:@"^[ab]/"]) {
-        DLog(@"  Treating as diff path");
+//        DLog(@"  Treating as diff path");
         // strip the prefix off ...
         origPath = [origPath stringByReplacingOccurrencesOfRegex:@"^[ab]/"
                                                  withString:@""];
@@ -132,7 +132,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                     columnNumber:columnNumber];
     }
 
-    DLog(@"     NO: no valid path found");
+//    DLog(@"     NO: no valid path found");
     return nil;
 }
 
@@ -159,7 +159,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     executable = [executable stringByAppendingPathComponent:
                             [bundle objectForInfoDictionaryKey:(id)kCFBundleExecutableKey]];
     if (bundle && executable && path) {
-        DLog(@"Launch %@: %@ %@", bundleIdentifier, executable, path);
+//        DLog(@"Launch %@: %@ %@", bundleIdentifier, executable, path);
         [self launchTaskWithPath:executable arguments:@[ path ] wait:NO];
     }
 }
@@ -175,7 +175,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         NSString *codeExecutable =
         [bundlePath stringByAppendingPathComponent:@"Contents/Resources/app/bin/code"];
         if ([self.fileManager fileExistsAtPath:codeExecutable]) {
-            DLog(@"Launch VSCode %@ %@", codeExecutable, path);
+//            DLog(@"Launch VSCode %@ %@", codeExecutable, path);
             [self launchTaskWithPath:codeExecutable arguments:@[ path, @"-g" ] wait:NO];
         } else {
             // This isn't as good as opening "code -g" because it always opens a new instance
@@ -201,7 +201,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         NSString *sublExecutable =
             [bundlePath stringByAppendingPathComponent:@"Contents/SharedSupport/bin/subl"];
         if ([self.fileManager fileExistsAtPath:sublExecutable]) {
-            DLog(@"Launch sublime text %@ %@", sublExecutable, path);
+//            DLog(@"Launch sublime text %@ %@", sublExecutable, path);
             [self launchTaskWithPath:sublExecutable arguments:@[ path ] wait:NO];
         } else {
             // This isn't as good as opening "subl" because it always opens a new instance
@@ -228,7 +228,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
           lineNumber:(NSString *)lineNumber
         columnNumber:(NSString *)columnNumber {
     if (identifier) {
-        DLog(@"openFileInEditor. editor=%@", [self preferredEditorIdentifier]);
+//        DLog(@"openFileInEditor. editor=%@", [self preferredEditorIdentifier]);
         if ([identifier isEqualToString:kAtomIdentifier]) {
             if (lineNumber != nil) {
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
@@ -276,7 +276,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                                             [iTermSemanticHistoryPrefsController schemeForEditor:editorIdentifier],
                                             path]];
             }
-            DLog(@"Open url %@", url);
+//            DLog(@"Open url %@", url);
             // BBEdit and TextMate share a URL scheme, so this disambiguates.
             [self openURL:url editorIdentifier:editorIdentifier];
         }
@@ -299,12 +299,12 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 }
 
 - (BOOL)openFile:(NSString *)fullPath {
-    DLog(@"Open file %@", fullPath);
+//    DLog(@"Open file %@", fullPath);
     return [[iTermLaunchServices sharedInstance] openFile:fullPath];
 }
 
 - (BOOL)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier {
-    DLog(@"Open URL %@", url);
+//    DLog(@"Open URL %@", url);
     if (editorIdentifier) {
         return [[NSWorkspace sharedWorkspace] openURLs:@[ url ]
                                withAppBundleIdentifier:editorIdentifier
@@ -323,7 +323,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 - (BOOL)openPath:(NSString *)path
     workingDirectory:(NSString *)workingDirectory
        substitutions:(NSDictionary *)substitutions {
-    DLog(@"openPath:%@ workingDirectory:%@ substitutions:%@", path, workingDirectory, substitutions);
+//    DLog(@"openPath:%@ workingDirectory:%@ substitutions:%@", path, workingDirectory, substitutions);
     BOOL isDirectory;
     NSString *lineNumber = @"";
     NSString *columnNumber = @"";
@@ -333,7 +333,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         path = [self getFullPath:path workingDirectory:workingDirectory
                       lineNumber:&lineNumber
                     columnNumber:&columnNumber];
-        DLog(@"Not a raw action. New path is %@, line number is %@", path, lineNumber);
+//        DLog(@"Not a raw action. New path is %@, line number is %@", path, lineNumber);
     }
 
     NSString *script = [prefs_ objectForKey:kSemanticHistoryTextKey];
@@ -345,34 +345,34 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     augmentedSubs[@"5"] = substitutions[kSemanticHistoryWorkingDirectorySubstitutionKey];
     script = [script stringByReplacingVariableReferencesWithVariables:augmentedSubs];
 
-    DLog(@"After escaping backrefs, script is %@", script);
+//    DLog(@"After escaping backrefs, script is %@", script);
 
     if (isRawAction) {
-        DLog(@"Launch raw action: /bin/sh -c %@", script);
+//        DLog(@"Launch raw action: /bin/sh -c %@", script);
         [self launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", script ] wait:YES];
         return YES;
     }
 
     if (![self.fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
-        DLog(@"No file exists at %@, not running semantic history", path);
+//        DLog(@"No file exists at %@, not running semantic history", path);
         return NO;
     }
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCommandAction]) {
-        DLog(@"Running /bin/sh -c %@", script);
+//        DLog(@"Running /bin/sh -c %@", script);
         [self launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", script ] wait:YES];
         return YES;
     }
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCoprocessAction]) {
-        DLog(@"Launch coproress with script %@", script);
+//        DLog(@"Launch coproress with script %@", script);
         assert(delegate_);
         [delegate_ semanticHistoryLaunchCoprocessWithCommand:script];
         return YES;
     }
 
     if (isDirectory) {
-        DLog(@"Open directory %@", path);
+//        DLog(@"Open directory %@", path);
         [self openFile:path];
         return YES;
     }
@@ -387,7 +387,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                 [augmentedSubs[key] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
         }
         url = [url stringByReplacingVariableReferencesWithVariables:augmentedSubs];
-        DLog(@"Open url %@", url);
+//        DLog(@"Open url %@", url);
         [self openURL:[NSURL URLWithUserSuppliedString:url]];
         return YES;
     }
@@ -402,8 +402,8 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     if (lineNumber) {
         NSString *appBundleId = [self bundleIdForDefaultAppForFile:path];
         if ([self canOpenFileWithLineNumberUsingEditorWithBundleId:appBundleId]) {
-            DLog(@"A line number is present and I know how to open this file to the line number using %@. Do so.",
-                 appBundleId);
+//            DLog(@"A line number is present and I know how to open this file to the line number using %@. Do so.",
+//                 appBundleId);
             [self openFile:path inEditorWithBundleId:appBundleId lineNumber:lineNumber columnNumber:columnNumber];
             return YES;
         }
@@ -447,12 +447,12 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                                  trimWhitespace:(BOOL)trimWhitespace {
     BOOL workingDirectoryIsOk = [self fileExistsAtPathLocally:workingDirectory];
     if (!workingDirectoryIsOk) {
-        DLog(@"Working directory %@ is a network share or doesn't exist. Not using it for context.",
-             workingDirectory);
+//        DLog(@"Working directory %@ is a network share or doesn't exist. Not using it for context.",
+//             workingDirectory);
     }
 
-    DLog(@"Brute force path from prefix <<%@>>, suffix <<%@>> directory=%@",
-         beforeStringIn, afterStringIn, workingDirectory);
+//    DLog(@"Brute force path from prefix <<%@>>, suffix <<%@>> directory=%@",
+//         beforeStringIn, afterStringIn, workingDirectory);
 
     // The parens here cause "Foo bar" to become {"Foo", " ", "bar"} rather than {"Foo", "bar"}.
     // Also, there is some kind of weird bug in regexkit. If you do [[beforeChunks mutableCopy] autorelease]
@@ -460,8 +460,8 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     NSString *const kSplitRegex = @"([\t ()])";
     NSArray *beforeChunks = [beforeStringIn componentsSeparatedByRegex:kSplitRegex];
     NSArray *afterChunks = [afterStringIn componentsSeparatedByRegex:kSplitRegex];
-    DLog(@"before chunks=%@", beforeChunks);
-    DLog(@"after chunks=%@", afterChunks);
+//    DLog(@"before chunks=%@", beforeChunks);
+//    DLog(@"after chunks=%@", afterChunks);
 
     NSMutableString *left = [NSMutableString string];
     int iterationsBeforeQuitting = 100;  // Bail after 100 iterations if nothing is still found.
@@ -533,7 +533,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                             *suffixChars = right.length - lengthOfBadSuffix;
                         }
                     }
-                    DLog(@"Using path %@", modifiedPossiblePath);
+//                    DLog(@"Using path %@", modifiedPossiblePath);
                     return modifiedPossiblePath;
                 }
             }

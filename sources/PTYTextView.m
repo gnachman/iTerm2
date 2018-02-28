@@ -532,7 +532,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)resetMouseLocationToRefuseFirstResponderAt {
-    DLog(@"reset refuse location from\n%@", [NSThread callStackSymbols]);
+//    DLog(@"reset refuse location from\n%@", [NSThread callStackSymbols]);
     _mouseLocationToRefuseFirstResponderAt = NSMakePoint(DBL_MAX, DBL_MAX);
 }
 
@@ -795,17 +795,17 @@ static const int kDragThreshold = 3;
 - (BOOL)isInKeyWindow
 {
     if ([[self window] isKeyWindow]) {
-        DLog(@"%@ is key window", self);
+//        DLog(@"%@ is key window", self);
         return YES;
     }
     NSWindow *theKeyWindow = [[NSApplication sharedApplication] keyWindow];
     if (!theKeyWindow) {
-        DLog(@"There is no key window");
+//        DLog(@"There is no key window");
         return NO;
     }
     if (!strcmp("NSToolbarFullScreenWindow", object_getClassName(theKeyWindow))) {
-        DLog(@"key window is a NSToolbarFullScreenWindow, using my main window status of %d as key status",
-             (int)self.window.isMainWindow);
+//        DLog(@"key window is a NSToolbarFullScreenWindow, using my main window status of %d as key status",
+//             (int)self.window.isMainWindow);
         return [[self window] isMainWindow];
     }
     return NO;
@@ -919,7 +919,7 @@ static const int kDragThreshold = 3;
 //
 // Returns YES if blinking text or cursor was found.
 - (BOOL)refresh {
-    DLog(@"PTYTextView refresh called with delegate %@", _delegate);
+//    DLog(@"PTYTextView refresh called with delegate %@", _delegate);
     if (_dataSource == nil || _inRefresh) {
         return YES;
     }
@@ -1061,7 +1061,7 @@ static const int kDragThreshold = 3;
 - (void)markCursorDirty {
     int currentCursorX = [_dataSource cursorX] - 1;
     int currentCursorY = [_dataSource cursorY] - 1;
-    DLog(@"Mark cursor position %d, %d dirty.", currentCursorX, currentCursorY);
+//    DLog(@"Mark cursor position %d, %d dirty.", currentCursorX, currentCursorY);
     [_dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
 }
 
@@ -1166,7 +1166,7 @@ static const int kDragThreshold = 3;
     }
     BOOL savedCursorVisible = _drawingHelper.cursorVisible;
 
-    DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
+//    DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
 
     const NSRect *rectArray;
     NSInteger rectCount;
@@ -1409,14 +1409,14 @@ static const int kDragThreshold = 3;
         [appDelegate userDidInteractWithASession];
     });
 
-    DLog(@"PTYTextView keyDown BEGIN %@", event);
+//    DLog(@"PTYTextView keyDown BEGIN %@", event);
     id delegate = [self delegate];
     if ([delegate isPasting]) {
         [delegate queueKeyDown:event];
         return;
     }
     if ([_delegate textViewDelegateHandlesAllKeystrokes]) {
-        DLog(@"PTYTextView keyDown: in instant replay, send to delegate");
+//        DLog(@"PTYTextView keyDown: in instant replay, send to delegate");
         // Delegate has special handling for this case.
         [delegate keyDown:event];
         return;
@@ -1428,17 +1428,17 @@ static const int kDragThreshold = 3;
     BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
 
     _keyIsARepeat = [event isARepeat];
-    DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
-    DLog(@"_hadMarkedTextBeforeHandlingKeypressEvent=%d", (int)_hadMarkedTextBeforeHandlingKeypressEvent);
-    DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
-    DLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%lu", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
-    DLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
-    DLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
-    DLog(@"leftAltPressed && optionKey != NORMAL = %d", (int)(leftAltPressed && [delegate optionKey] != OPT_NORMAL));
-    DLog(@"rightAltPressed && rightOptionKey != NORMAL = %d", (int)(rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL));
-    DLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
-    DLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
-    DLog(@"event is repeated=%d", _keyIsARepeat);
+//    DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
+//    DLog(@"_hadMarkedTextBeforeHandlingKeypressEvent=%d", (int)_hadMarkedTextBeforeHandlingKeypressEvent);
+//    DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
+//    DLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%lu", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
+//    DLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
+//    DLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
+//    DLog(@"leftAltPressed && optionKey != NORMAL = %d", (int)(leftAltPressed && [delegate optionKey] != OPT_NORMAL));
+//    DLog(@"rightAltPressed && rightOptionKey != NORMAL = %d", (int)(rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL));
+//    DLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
+//    DLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
+//    DLog(@"event is repeated=%d", _keyIsARepeat);
 
     // discard repeated key events if auto repeat mode (DECARM) is disabled
     if (_keyIsARepeat && ![[_dataSource terminal] autorepeatMode]) {
@@ -1452,7 +1452,7 @@ static const int kDragThreshold = 3;
     BOOL pointlessly;
     if ([_keyBindingEmulator handlesEvent:event pointlessly:&pointlessly extraEvents:eventsToHandle]) {
         if (!pointlessly) {
-            DLog(@"iTermNSKeyBindingEmulator reports that event is handled, sending to interpretKeyEvents.");
+//            DLog(@"iTermNSKeyBindingEmulator reports that event is handled, sending to interpretKeyEvents.");
             [self interpretKeyEvents:@[ event ]];
         } else {
             [self handleKeyDownEvent:event eschewCocoaTextHandling:YES];
@@ -1481,17 +1481,17 @@ static const int kDragThreshold = 3;
            (rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL))) ||
          ((modflag & NSControlKeyMask) &&                          // a few special cases
           (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
-             DLog(@"PTYTextView keyDown: process in delegate");
+//             DLog(@"PTYTextView keyDown: process in delegate");
              [delegate keyDown:event];
              return;
     }
 
-    DLog(@"Test for command key");
+//    DLog(@"Test for command key");
 
     if (modflag & NSCommandKeyMask) {
         // You pressed cmd+something but it's not handled by the delegate. Going further would
         // send the unmodified key to the terminal which doesn't make sense.
-        DLog(@"PTYTextView keyDown You pressed cmd+something");
+//        DLog(@"PTYTextView keyDown You pressed cmd+something");
         return;
     }
 
@@ -1500,7 +1500,7 @@ static const int kDragThreshold = 3;
     BOOL workAroundControlBug = NO;
     if (!_hadMarkedTextBeforeHandlingKeypressEvent &&
         (modflag & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask) {
-        DLog(@"Special ctrl+key handler running");
+//        DLog(@"Special ctrl+key handler running");
 
         NSString *unmodkeystr = [event charactersIgnoringModifiers];
         if ([unmodkeystr length] != 0) {
@@ -1523,7 +1523,7 @@ static const int kDragThreshold = 3;
             }
             if (cc != 0xffff) {
                 [self insertText:[NSString stringWithCharacters:&cc length:1]];
-                DLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
+//                DLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
                 workAroundControlBug = YES;
             }
         }
@@ -1532,7 +1532,7 @@ static const int kDragThreshold = 3;
     if (!workAroundControlBug) {
         // Let the IME process key events
         _keyPressHandled = NO;
-        DLog(@"PTYTextView keyDown send to IME");
+//        DLog(@"PTYTextView keyDown send to IME");
 
         // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
         // wrong instnace of PTYTextView. We work around the issue by using a global variable to
@@ -1569,11 +1569,11 @@ static const int kDragThreshold = 3;
             shouldPassToDelegate = YES;
         }
         if (shouldPassToDelegate) {
-            DLog(@"PTYTextView keyDown unhandled (likely repeated) keypress with no IME, send to delegate");
+//            DLog(@"PTYTextView keyDown unhandled (likely repeated) keypress with no IME, send to delegate");
             [delegate keyDown:event];
         }
     }
-    DLog(@"PTYTextView keyDown END");
+//    DLog(@"PTYTextView keyDown END");
 }
 
 - (BOOL)keyIsARepeat {
@@ -6163,8 +6163,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (URLAction *)urlActionForClickAtX:(int)x
                                   y:(int)y
              respectingHardNewlines:(BOOL)respectHardNewlines {
-    DLog(@"urlActionForClickAt:%@,%@ respectingHardNewlines:%@",
-         @(x), @(y), @(respectHardNewlines));
+//    DLog(@"urlActionForClickAt:%@,%@ respectingHardNewlines:%@",
+//         @(x), @(y), @(respectHardNewlines));
 
     const VT100GridCoord coord = VT100GridCoordMake(x, y);
     iTermImageInfo *imageInfo = [self imageInfoAtCoord:coord];
@@ -6532,7 +6532,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // when it blinks.
     BOOL redrawBlink = [self shouldRedrawBlinkingObjects];
     if (redrawBlink) {
-        DebugLog(@"Time to redraw blinking objects");
+//        DebugLog(@"Time to redraw blinking objects");
         if (_blinkingCursor && [self isInKeyWindow]) {
             // Blink flag flipped and there is a blinking cursor. Make it redraw.
             [self setCursorNeedsDisplay];
@@ -6609,13 +6609,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (foundDirty) {
         // Dump the screen contents
         DLog(@"Found dirty with delegate %@", _delegate);
-        DLog(@"\n%@", [_dataSource debugString]);
+//        DLog(@"\n%@", [_dataSource debugString]);
     } else {
-        DLog(@"Nothing dirty found, delegate=%@", _delegate);
+//        DLog(@"Nothing dirty found, delegate=%@", _delegate);
     }
 
     // Unset the dirty bit for all chars.
-    DebugLog(@"updateDirtyRects resetDirty");
+//    DebugLog(@"updateDirtyRects resetDirty");
     [_dataSource resetDirty];
 
     if (foundDirty) {

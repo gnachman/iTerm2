@@ -149,11 +149,11 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
             (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function];
         [gDebugLogStr appendString:value];
         [gDebugLogStr appendString:@"\n"];
-        static const NSInteger kMaxLogSize = 100000000;
-        if ([gDebugLogStr length] > kMaxLogSize) {
-            [gDebugLogStr replaceCharactersInRange:NSMakeRange(0, kMaxLogSize / 2)
-                                        withString:@"*GIANT LOG TRUNCATED*\n"];
-        }
+//        static const NSInteger kMaxLogSize = 100000000;
+//        if ([gDebugLogStr length] > kMaxLogSize) {
+//            [gDebugLogStr replaceCharactersInRange:NSMakeRange(0, kMaxLogSize / 2)
+//                                        withString:@"*GIANT LOG TRUNCATED*\n"];
+//        }
         [gDebugLogLock unlock];
     }
     return 1;

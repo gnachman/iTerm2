@@ -267,9 +267,9 @@ const NSInteger kLongMaximumWordLength = 100000;
                                           _logicalWindow.location, _logicalWindow.length);
     }
 
-    DLog(@"Compute range for word at %@, max length %@", VT100GridCoordDescription(location), @(maximumLength));
-    DLog(@"These special chars will be treated as alphanumeric: %@", [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]);
-
+//    DLog(@"Compute range for word at %@, max length %@", VT100GridCoordDescription(location), @(maximumLength));
+//    DLog(@"These special chars will be treated as alphanumeric: %@", [iTermPreferences stringForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection]);
+//
     location = [self coordLockedToWindow:location];
     iTermTextExtractorClass theClass =
         [self classForCharacter:[self characterAt:location]];
@@ -667,7 +667,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     for (int j = 0; j < numRules; j++) {
         NSDictionary *rule = [rulesArray objectAtIndex:j];
         if (actionRequired && [[SmartSelectionController actionsInRule:rule] count] == 0) {
-            DLog(@"Ignore smart selection rule because it has no action: %@", rule);
+//            DLog(@"Ignore smart selection rule because it has no action: %@", rule);
             continue;
         }
         NSString *regex = [SmartSelectionController regexInRule:rule];
@@ -1191,9 +1191,9 @@ const NSInteger kLongMaximumWordLength = 100000;
               truncateTail:(BOOL)truncateTail
          continuationChars:(NSMutableIndexSet *)continuationChars
               coords:(NSMutableArray *)coords {
-    DLog(@"Find selected text in range %@ pad=%d, includeLastNewline=%d, trim=%d",
-         VT100GridWindowedRangeDescription(windowedRange), (int)pad, (int)includeLastNewline,
-         (int)trimSelectionTrailingSpaces);
+//    DLog(@"Find selected text in range %@ pad=%d, includeLastNewline=%d, trim=%d",
+//         VT100GridWindowedRangeDescription(windowedRange), (int)pad, (int)includeLastNewline,
+//         (int)trimSelectionTrailingSpaces);
     __block id result;
     // Appends a string to |result|, either attributed or not, as appropriate.
     void (^appendString)(NSString *, screen_char_t, VT100GridCoord) =

@@ -1094,10 +1094,10 @@ static int MyForkPty(int *amaster,
 
 - (NSString*)getWorkingDirectory {
     if (self.pid == -1) {
-        DLog(@"Want to use the kernel to get the working directory but pid = -1");
+//        DLog(@"Want to use the kernel to get the working directory but pid = -1");
         return nil;
     }
-    DLog(@"Using OS magic to get the working directory");
+//    DLog(@"Using OS magic to get the working directory");
     struct proc_vnodepathinfo vpi;
     int ret;
 
@@ -1115,16 +1115,16 @@ static int MyForkPty(int *amaster,
     }
     if (ret <= 0) {
         // An error occurred
-        DLog(@"Failed with error %d", ret);
+//        DLog(@"Failed with error %d", ret);
         return nil;
     } else if (ret != sizeof(vpi)) {
         // Now this is very bad...
-        DLog(@"Got a struct of the wrong size back");
+//        DLog(@"Got a struct of the wrong size back");
         return nil;
     } else {
         // All is good
         NSString *dir = [NSString stringWithUTF8String:vpi.pvi_cdir.vip_path];
-        DLog(@"Result: %@", dir);
+//        DLog(@"Result: %@", dir);
         return dir;
     }
 }

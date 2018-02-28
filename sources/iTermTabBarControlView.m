@@ -48,7 +48,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
         return;
     }
     _cmdPressed = cmdPressed;
-    DLog(@"Set cmdPressed=%d", (int)cmdPressed);
+//    DLog(@"Set cmdPressed=%d", (int)cmdPressed);
     switch (self.flashState) {
         case kFlashOff:
             break;
@@ -153,7 +153,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 
 - (void)setFlashing:(BOOL)flashing {
     flashing &= [_itermTabBarDelegate iTermTabBarShouldFlashAutomatically];
-    DLog(@"Set flashing to %d", (int)flashing);
+//    DLog(@"Set flashing to %d", (int)flashing);
     if (flashing) {
         switch (self.flashState) {
             case kFlashOff:

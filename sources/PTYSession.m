@@ -714,10 +714,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)description
 {
-    return [NSString stringWithFormat:@"<%@: %p bookmarkName=%@ profile.name=%@ profile.guid=%@ profile.original_guid=%@ size=%dx%d metal=%@>",
+    return [NSString stringWithFormat:@"<%@: %p bookmarkName=%@ profile.name=%@ profile.guid=%@ profile.original_guid=%@ size=%dx%d metal=%@ divorced=%@>",
                [self class], self,
             _bookmarkName, _profile[KEY_NAME], _profile[KEY_GUID], _profile[KEY_ORIGINAL_GUID],
-            [_screen width], [_screen height], @(self.useMetal)];
+            [_screen width], [_screen height], @(self.useMetal), @(_isDivorced)];
 }
 
 - (void)setLiveSession:(PTYSession *)liveSession {
@@ -2310,7 +2310,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)taskWasDeregistered {
-    DLog(@"taskWasDeregistered");
+//    DLog(@"taskWasDeregistered");
     @synchronized(self) {
       _registered = NO;
     }
@@ -3264,7 +3264,7 @@ ITERM_WEAKLY_REFERENCEABLE
         NSDictionary *sessionsProfile =
                 [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
         if (!sessionsProfile && _profile) {
-            DLog(@"Have no sessions profile but I do have a profile. Adding my profile guid=%@ to the sessions instance", _profile[KEY_GUID]);
+            DLog(@"SANITY CHECK FAILED - Have no sessions profile but I do have a profile. Adding my profile guid=%@ to the sessions instance", _profile[KEY_GUID]);
             [[ProfileModel sessionsInstance] addBookmark:_profile];
         }
     }
@@ -3514,12 +3514,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)badgeLabel {
-    DLog(@"Raw badge format is %@", _badgeFormat);
-    DLog(@"Variables are:\n%@", _variables);
+//    DLog(@"Raw badge format is %@", _badgeFormat);
+//    DLog(@"Variables are:\n%@", _variables);
     NSString *p = [_badgeFormat stringByReplacingVariableReferencesWithVariables:_variables];
     p = [p stringByReplacingEscapedChar:'n' withString:@"\n"];
     p = [p stringByReplacingEscapedHexValuesWithChars];
-    DLog(@"Expanded badge label is: %@", p);
+//    DLog(@"Expanded badge label is: %@", p);
     return p;
 }
 
@@ -4230,7 +4230,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self.view setTitle:self.name];
     }
 
-    DLog(@"Session %@ calling refresh", self);
+//    DLog(@"Session %@ calling refresh", self);
     const BOOL somethingIsBlinking = [_textview refresh];
     const BOOL transientTitle = _delegate.realParentWindow.isShowingTransientTitle;
     const BOOL animationPlaying = _textview.getAndResetDrawingAnimatedImageFlag;
@@ -4265,15 +4265,15 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)refresh {
-    DLog(@"Session %@ calling refresh", self);
+//    DLog(@"Session %@ calling refresh", self);
     if ([_textview refresh]) {
         self.active = YES;
     }
 }
 
 - (void)setActive:(BOOL)active {
-    DLog(@"setActive:%@ timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f session=%@",
-         @(active), @(_timerRunning), @(_cadenceController.updateTimerIsValid), _lastTimeout, self);
+//    DLog(@"setActive:%@ timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f session=%@",
+//         @(active), @(_timerRunning), @(_cadenceController.updateTimerIsValid), _lastTimeout, self);
     _active = active;
     [_cadenceController changeCadenceIfNeeded];
 }
@@ -4335,8 +4335,8 @@ ITERM_WEAKLY_REFERENCEABLE
     verticalSpacing:(float)verticalSpacing {
     DLog(@"setFont:%@ nonAsciiFont:%@", font, nonAsciiFont);
     NSWindow *window = [[_delegate realParentWindow] window];
-    DLog(@"Before:\n%@", [window.contentView iterm_recursiveDescription]);
-    DLog(@"Window frame: %@", window);
+//    DLog(@"Before:\n%@", [window.contentView iterm_recursiveDescription]);
+//    DLog(@"Window frame: %@", window);
     if ([_textview.font isEqualTo:font] &&
         [_textview.nonAsciiFontEvenIfNotUsed isEqualTo:nonAsciiFont] &&
         [_textview horizontalSpacing] == horizontalSpacing &&
@@ -4350,15 +4350,15 @@ ITERM_WEAKLY_REFERENCEABLE
         // session.
         return;
     }
-    DLog(@"Line height was %f", (float)[_textview lineHeight]);
+//    DLog(@"Line height was %f", (float)[_textview lineHeight]);
     [_textview setFont:font
          nonAsciiFont:nonAsciiFont
         horizontalSpacing:horizontalSpacing
         verticalSpacing:verticalSpacing];
-    DLog(@"Line height is now %f", (float)[_textview lineHeight]);
+//    DLog(@"Line height is now %f", (float)[_textview lineHeight]);
     [_delegate sessionDidChangeFontSize:self];
-    DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
-    DLog(@"Window frame: %@", window);
+//    DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
+//    DLog(@"Window frame: %@", window);
 }
 
 - (void)terminalFileShouldStop:(NSNotification *)notification {
@@ -4417,6 +4417,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)savedArrangementWasRepaired:(NSNotification *)notification {
     if ([notification.object isEqual:_missingSavedArrangementProfileGUID]) {
         Profile *newProfile = notification.userInfo[@"new profile"];
+        DLog(@"Repaired session, setting divorced=NO %@\n%@", self, [NSThread callStackSymbols]);
         _isDivorced = NO;
         [_overriddenFields removeAllObjects];
         [_originalProfile release];
@@ -4560,6 +4561,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)remarry
 {
+    DLog(@"remarry %@\n%@", self, [NSThread callStackSymbols]);
     _isDivorced = NO;
 }
 
@@ -4570,6 +4572,8 @@ ITERM_WEAKLY_REFERENCEABLE
     Profile* bookmark = [self profile];
     NSString* guid = [bookmark objectForKey:KEY_GUID];
     if (_isDivorced && [[ProfileModel sessionsInstance] bookmarkWithGuid:guid]) {
+        DLog(@"%@ already divorced and session sessions instance", self);
+
         // Once, I saw a case where an already-divorced bookmark's guid was missing from
         // sessionsInstance. I don't know why, but if that's the case, just create it there
         // again. :(
@@ -4593,6 +4597,13 @@ ITERM_WEAKLY_REFERENCEABLE
         bookmark = [[ProfileModel sessionsInstance] setObject:guid
                                                         forKey:KEY_ORIGINAL_GUID
                                                     inBookmark:bookmark];
+    } else {
+        DLog(@"%@ Not setting original guid. existingOriginalGuid=%@, !bookmarkWithGuid:existingOriginalGuid=%@ %@=?=%@",
+             self,
+             existingOriginalGuid,
+             @(![[ProfileModel sharedInstance] bookmarkWithGuid:existingOriginalGuid]),
+             existingOriginalGuid,
+             _originalProfile[KEY_GUID]);
     }
 
     // Allocate a new guid for this bookmark.
@@ -4790,29 +4801,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)metalAllowed {
-    static dispatch_once_t onceToken;
-    static BOOL machineSupportsMetal;
-    if (@available(macOS 10.11, *)) {
-        dispatch_once(&onceToken, ^{
-            NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
-            machineSupportsMetal = devices.count > 0;
-            [devices release];
-        });
-    }
-    // Metal's not allowed when other views are composited over the metal view because that just
-    // doesn't seem to work, even if you use presentsWithTransaction (even if it did work, it
-    // requires presenting the drawable on the main thread which defeats the purpose of the metal
-    // renderer).
-    //
-    // Perhaps some day transparency and ligatures will be supported.
-    return ([iTermAdvancedSettingsModel useMetal] &&
-            machineSupportsMetal &&
-            _textview.transparencyAlpha == 1 &&
-            ![self ligaturesEnabledInEitherFont] &&
-            ![PTYNoteViewController anyNoteVisible] &&
-            !_view.findViewController.isVisible &&
-            !_pasteHelper.pasteViewIsVisible &&
-            _view.currentAnnouncement == nil);
+    return NO;
+
 }
 
 - (BOOL)ligaturesEnabledInEitherFont {
@@ -6712,9 +6702,9 @@ ITERM_WEAKLY_REFERENCEABLE
                           button:(MouseButtonNumber)button
                       coordinate:(VT100GridCoord)coord
                           deltaY:(CGFloat)deltaY {
-    DLog(@"Report event type %lu, modifiers=%lu, button=%d, coord=%@",
-         (unsigned long)eventType, (unsigned long)modifiers, button,
-         VT100GridCoordDescription(coord));
+//    DLog(@"Report event type %lu, modifiers=%lu, button=%d, coord=%@",
+//         (unsigned long)eventType, (unsigned long)modifiers, button,
+//         VT100GridCoordDescription(coord));
 
     switch (eventType) {
         case NSLeftMouseDown:
@@ -6842,7 +6832,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput {
-    DLog(@"Fetching range of last command output...");
+//    DLog(@"Fetching range of last command output...");
     if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         DLog(@"Command history has never been used.");
         [iTermShellHistoryController showInformationalMessage];

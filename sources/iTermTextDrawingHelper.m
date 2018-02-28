@@ -208,7 +208,7 @@ typedef struct iTermTextColorContext {
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray
                         rectCount:(NSInteger)rectCount {
-    DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
+//    DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
     iTermPreciseTimerSetEnabled([iTermAdvancedSettingsModel logDrawingPerformance]);
 
     if (_debug) {
@@ -293,7 +293,7 @@ typedef struct iTermTextColorContext {
     _lineRefCache = _replacementLineRefCache;
     _replacementLineRefCache = [[NSMutableDictionary alloc] init];
 
-    DLog(@"end drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
+//    DLog(@"end drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
 }
 
 - (NSImage *)imageForCoord:(VT100GridCoord)coord size:(CGSize)size {
@@ -2327,7 +2327,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 }
 
 - (void)drawCursor:(BOOL)outline {
-    DLog(@"drawCursor:%@", @(outline));
+//    DLog(@"drawCursor:%@", @(outline));
 
     // Update the last time the cursor moved.
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
@@ -2542,10 +2542,10 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                    column >= 0 &&
                    row >= 0 &&
                    row < height);
-    DLog(@"shouldDrawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, column=%d, row=%d"
-         @"width=%d, height=%d. Result=%@",
-         (int)[self hasMarkedText], (int)_cursorVisible, (int)shouldShowCursor, column, row,
-         width, height, @(result));
+//    DLog(@"shouldDrawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, column=%d, row=%d"
+//         @"width=%d, height=%d. Result=%@",
+//         (int)[self hasMarkedText], (int)_cursorVisible, (int)shouldShowCursor, column, row,
+//         width, height, @(result));
     return result;
 }
 
