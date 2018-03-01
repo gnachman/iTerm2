@@ -17,6 +17,17 @@ typedef NS_ENUM(int, iTermTextRendererStat) {
     iTermTextRendererStatCount
 };
 
+typedef NS_ENUM(int, iTermASCIITextRendererStat) {
+    iTermASCIITextRendererStatNewTemporaryTexture,
+    iTermASCIITextRendererStatNewDims,
+    iTermASCIITextRendererStatNewQuad,
+    iTermASCIITextRendererStatNewConfig,
+    iTermASCIITextRendererStatBlit,
+
+    iTermASCIITextRendererStatCount
+};
+
+
 // Describes how underlines should be drawn.
 typedef struct {
     // Offset from the top of the cell, in points.
