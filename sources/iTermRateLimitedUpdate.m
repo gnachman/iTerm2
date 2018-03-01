@@ -21,16 +21,30 @@
     _block = nil;
 }
 
+- (void)scheduleTimer {
+    _timer = [NSTimer scheduledWeakTimerWithTimeInterval:self.minimumInterval
+                                                  target:self
+                                                selector:@selector(performBlockIfNeeded:)
+                                                userInfo:nil
+                                                 repeats:NO];
+}
+
 - (void)performRateLimitedBlock:(void (^)(void))block {
     if (_timer == nil) {
         block();
-        _timer = [NSTimer scheduledWeakTimerWithTimeInterval:self.minimumInterval
-                                                      target:self
-                                                    selector:@selector(performBlockIfNeeded:)
-                                                    userInfo:nil
-                                                     repeats:NO];
+        [self scheduleTimer];
     } else {
         _block = [block copy];
+    }
+}
+
+- (BOOL)tryPerformRateLimitedBlock:(void (^)(void))block {
+    if (_timer == nil) {
+        block();
+        [self scheduleTimer];
+        return YES;
+    } else {
+        return NO;
     }
 }
 
