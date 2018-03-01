@@ -1223,17 +1223,13 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 - (iTermData *)markedIndices {
-    iTermData *data = [iTermData dataOfLength:(_gridSize.width + 1) * _gridSize.height];
-    bzero(data.mutableBytes, data.length);
-    int offset = 0;
+    NSMutableArray<NSIndexSet *> *indexSetArray = [NSMutableArray array];
     for (int i = 0; i < _gridSize.height; i++) {
         NSRange range = _imeInfo ? [_imeInfo markedRangeOnLine:i width:_gridSize.width] : NSMakeRange(NSNotFound, 0);
-        unsigned char *line = data.mutableBytes + offset;
-        for (NSInteger i = 0; i < range.length; i++) {
-            ITERM_SET_BIT(line, i + range.location);
-        }
+        NSIndexSet *indexSet = [NSIndexSet indexSetWithIndexesInRange:range];
+        [indexSetArray addObject:indexSet];
     }
-    return data;
+    return [self dataForIndexSetArray:indexSetArray];
 }
 
 - (iTermData *)underlinedIndices {

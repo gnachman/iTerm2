@@ -649,6 +649,29 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
+- (void)blitFrom:(id<MTLTexture>)source
+              to:(id<MTLTexture>)dest
+       frameData:(iTermMetalFrameData *)frameData {
+    [frameData.renderEncoder endEncoding];
+
+    id<MTLBlitCommandEncoder> blitter = [frameData.commandBuffer blitCommandEncoder];
+    blitter.label = [NSString stringWithFormat:@"Intermediate>Temp Blitter"];
+    [blitter copyFromTexture:source
+                 sourceSlice:0
+                 sourceLevel:0
+                sourceOrigin:MTLOriginMake(0, 0, 0)
+                  sourceSize:MTLSizeMake(source.width, source.height, 1)
+                   toTexture:dest
+            destinationSlice:0
+            destinationLevel:0
+           destinationOrigin:MTLOriginMake(0, 0, 0)];
+    [blitter endEncoding];
+
+    frameData.renderEncoder = [self newRenderEncoderFromCommandBuffer:frameData.commandBuffer
+                                                            frameData:frameData
+                                                                 pass:frameData.currentPass];
+}
+
 - (void)enequeueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
                         commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     DLog(@"  enequeueDrawCallsForFrameData");
@@ -665,26 +688,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     iTermASCIITextRendererTransientState *asciiState = [frameData transientStateForRenderer:_asciiTextRenderer];
     __weak __typeof(self) weakSelf = self;
+    __weak __typeof(frameData) weakFrameData = frameData;
     asciiState.blitBlock = ^id<MTLRenderCommandEncoder>(id<MTLTexture>  _Nonnull source, id<MTLTexture>  _Nonnull dest) {
-        [frameData.renderEncoder endEncoding];
-
-        id<MTLBlitCommandEncoder> blitter = [frameData.commandBuffer blitCommandEncoder];
-        blitter.label = [NSString stringWithFormat:@"Intermediate>Temp Blitter"];
-        [blitter copyFromTexture:source
-                     sourceSlice:0
-                     sourceLevel:0
-                    sourceOrigin:MTLOriginMake(0, 0, 0)
-                      sourceSize:MTLSizeMake(source.width, source.height, 1)
-                       toTexture:dest
-                destinationSlice:0
-                destinationLevel:0
-               destinationOrigin:MTLOriginMake(0, 0, 0)];
-        [blitter endEncoding];
-
-        frameData.renderEncoder = [weakSelf newRenderEncoderFromCommandBuffer:commandBuffer
-                                                                    frameData:frameData
-                                                                         pass:frameData.currentPass];
-        return frameData.renderEncoder;
+        [weakSelf blitFrom:source to:dest frameData:weakFrameData];
+        return weakFrameData.renderEncoder;
     };
     [self drawCellRenderer:_asciiTextRenderer
                  frameData:frameData
@@ -726,7 +733,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                  frameData:frameData
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawHighlightRow]];
 
-    [self finishDrawingWithCommandBuffer:commandBuffer
+    [self finishDrawingWithCommandBuffer:frameData.commandBuffer
                                frameData:frameData];
 }
 
@@ -1012,7 +1019,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }
 
         if (!_asciiTextRenderer.rendererDisabled) {
-            [asciiState addRow:rowData.asciiRow];
+            asciiState.lines = frameData.perFrameState.concatenatedLines;
         }
     }];
 

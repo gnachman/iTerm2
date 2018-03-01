@@ -18,14 +18,12 @@
 @end
 
 @interface iTermASCIITextRendererTransientState()
-@property (nonatomic, readonly) NSArray<iTermASCIIRow *> *rows;
 @property (nonatomic, strong) iTermASCIITextureGroup *asciiTextureGroup;
 @property (nonatomic, strong) iTermMetalBufferPool *configPool;
 @property (nonatomic, strong) NSNumber *iteration;
 @end
 
 @implementation iTermASCIITextRendererTransientState {
-    NSMutableArray<iTermASCIIRow *> *_rows;
     iTermPreciseTimerStats _stats[iTermASCIITextRendererStatCount];
 }
 
@@ -54,20 +52,17 @@
 - (void)writeDebugInfoToFolder:(NSURL *)folder {
     [super writeDebugInfoToFolder:folder];
     @autoreleasepool {
-        int i = 0;
-        for (iTermASCIIRow *row in _rows) {
-            iTermData *data = row.screenChars;
+        screen_char_t *allLines = reinterpret_cast<screen_char_t *>(self.lines.mutableBytes);
+        for (int i = 0; i < self.cellConfiguration.gridSize.height; i++) {
             // Write out screen chars
             NSMutableString *s = [NSMutableString string];
-            size_t size = data.length / sizeof(screen_char_t*);
-            const screen_char_t *line = static_cast<const screen_char_t *>(data.bytes);
-            for (int j = 0; j < size; j++) {
+            int width = self.cellConfiguration.gridSize.width + 1;
+            const screen_char_t *line = &allLines[width * i];
+            for (int j = 0; j + 1 < width; j++) {
                 [s appendString:[self.class formatScreenChar:line[j]]];
             }
             NSMutableString *name = [NSMutableString stringWithFormat:@"screen_char_t.%04d.txt", (int)i];
             [s writeToURL:[folder URLByAppendingPathComponent:name] atomically:NO encoding:NSUTF8StringEncoding error:nil];
-
-            i++;
         }
     }
     NSString *s = [NSString stringWithFormat:@"backgroundTexture=%@\nasciiUnderlineDescriptor=%@\n",
@@ -77,19 +72,6 @@
        atomically:NO
          encoding:NSUTF8StringEncoding
             error:NULL];
-}
-
-- (void)addRow:(iTermASCIIRow *)row {
-    if (!_rows) {
-        _rows = [NSMutableArray array];
-    }
-    [_rows addObject:row];
-}
-
-- (void)enumerateDraws:(void (^)(iTermASCIIRow *, int))block {
-    [_rows enumerateObjectsUsingBlock:^(iTermASCIIRow * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        block(obj, idx);
-    }];
 }
 
 - (iTermPreciseTimerStats *)stats {
@@ -122,7 +104,6 @@
     iTermMetalBufferPool *_dimensionsPool;
     iTermMetalBufferPool *_configPool;
     iTermMetalBufferPool *_quadPool;
-    NSMutableDictionary<NSNumber *, id<MTLBuffer>> *_rowInfos;
     id<MTLBuffer> _models;
     id<MTLBuffer> _evensBuffer;
     id<MTLBuffer> _oddsBuffer;
@@ -134,8 +115,6 @@
         // This is here because I need a c++ place to stick it.
         static_assert(sizeof(screen_char_t) == SIZEOF_SCREEN_CHAR_T, "Screen char sizes unequal");
 
-        // The maximum number of rows we'll handle efficiently
-        static const NSInteger maxRows = 512;
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermASCIITextVertexShader"
                                                   fragmentFunctionName:@"iTermASCIITextFragmentShader"
@@ -143,12 +122,11 @@
                                                         piuElementSize:sizeof(screen_char_t)
                                                    transientStateClass:[iTermASCIITextRendererTransientState class]];
         _screenCharPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
-                                                                       capacity:maxRows * (iTermMetalDriverMaximumNumberOfFramesInFlight + 1)
-                                                                           name:@"ASCII PIU lines"];
+                                                                       capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1
+                                                                           name:@"ASCII screen_char_t"];
         _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextureDimensions)];
         _configPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermASCIITextConfiguration)];
         _quadPool =  [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
-        _rowInfos = [NSMutableDictionary dictionary];
 
         // Use a generic color model for blending. No need to use a buffer pool here because this is only
         // created once.
@@ -284,7 +262,6 @@
     }];
 
     [tState measureTimeForStat:iTermASCIITextRendererStatNewQuad ofBlock:^{
-        const CGSize cellSize = tState.cellConfiguration.cellSize;
         tState.vertexBuffer = [self extraWideQuadWithCellSize:tState.cellConfiguration.cellSize
                                                   textureSize:textureDimensions.textureSize
                                                   poolContext:tState.poolContext];
@@ -305,12 +282,16 @@
                                               checkIfChanged:YES];
     }];
 
-    [self drawPassEven:YES tState:tState config:configBuffer textureDimensions:textureDimensionsBuffer renderEncoder:renderEncoder textures:textures];
+    id<MTLBuffer> screenChars = [_screenCharPool requestBufferFromContext:tState.poolContext
+                                                                     size:tState.lines.length
+                                                                    bytes:tState.lines.mutableBytes];
+
+    [self drawPassEven:YES tState:tState config:configBuffer textureDimensions:textureDimensionsBuffer renderEncoder:renderEncoder textures:textures screenChars:screenChars];
     [tState measureTimeForStat:iTermASCIITextRendererStatBlit ofBlock:^{
         renderEncoder = tState.blitBlock(tState.backgroundTexture, tempTexture);
         [self createPipelineState:tState];
     }];
-    [self drawPassEven:NO tState:tState config:configBuffer textureDimensions:textureDimensionsBuffer renderEncoder:renderEncoder textures:textures];
+    [self drawPassEven:NO tState:tState config:configBuffer textureDimensions:textureDimensionsBuffer renderEncoder:renderEncoder textures:textures screenChars:screenChars];
 }
 
 - (void)drawPassEven:(BOOL)even
@@ -318,43 +299,23 @@
               config:(id<MTLBuffer>)configBuffer
    textureDimensions:(id<MTLBuffer>)textureDimensionsBuffer
        renderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-            textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures {
-    [tState enumerateDraws:^(iTermASCIIRow *row, int line) {
-        id<MTLBuffer> screenChars = [_screenCharPool requestBufferFromContext:tState.poolContext
-                                                                         size:row.screenChars.length
-                                                                        bytes:row.screenChars.bytes];
-        NSDictionary<NSNumber *, id<MTLBuffer>> *vertexBuffers = @{
-              @(iTermVertexInputIndexVertices): tState.vertexBuffer,
-              @(iTermVertexInputIndexPerInstanceUniforms): screenChars,
-              @(iTermVertexInputIndexOffset): tState.offsetBuffer,
-              @(iTermVertexInputCellColors): tState.colorsBuffer,
-              @(iTermVertexInputIndexASCIITextConfiguration): configBuffer,
-              @(iTermVertexInputIndexASCIITextRowInfo): [self rowInfoBufferForLine:line tState:tState] };
+            textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures
+         screenChars:(id<MTLBuffer>)screenChars {
+    NSDictionary<NSNumber *, id<MTLBuffer>> *vertexBuffers = @{
+          @(iTermVertexInputIndexVertices): tState.vertexBuffer,
+          @(iTermVertexInputIndexPerInstanceUniforms): screenChars,
+          @(iTermVertexInputIndexOffset): tState.offsetBuffer,
+          @(iTermVertexInputCellColors): tState.colorsBuffer,
+          @(iTermVertexInputIndexASCIITextConfiguration): configBuffer };
 
-        [_cellRenderer drawWithTransientState:tState
-                                renderEncoder:renderEncoder
-                             numberOfVertices:6
-                                 numberOfPIUs:row.screenChars.length / sizeof(screen_char_t)
-                                vertexBuffers:[vertexBuffers dictionaryBySettingObject:even ? _evensBuffer : _oddsBuffer forKey:@(iTermVertexInputMask)]
-                              fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): _models,
-                                                 @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
-                                     textures:textures];
-    }];
-}
-
-- (id<MTLBuffer>)rowInfoBufferForLine:(int)line tState:(iTermASCIITextRendererTransientState *)tState {
-    id<MTLBuffer> rowInfoBuffer = _rowInfos[@(line)];
-    if (!rowInfoBuffer) {
-        iTermASCIIRowInfo rowInfo = {
-            .row = line,
-            .debugX = (line == tState.debugCoord.y) ? tState.debugCoord.x : -1
-        };
-        rowInfoBuffer = [_cellRenderer.device newBufferWithBytes:&rowInfo
-                                                          length:sizeof(rowInfo)
-                                                         options:MTLResourceStorageModeShared];
-        _rowInfos[@(line)] = rowInfoBuffer;
-    }
-    return rowInfoBuffer;
+    [_cellRenderer drawWithTransientState:tState
+                            renderEncoder:renderEncoder
+                         numberOfVertices:6
+                             numberOfPIUs:screenChars.length / sizeof(screen_char_t)
+                            vertexBuffers:[vertexBuffers dictionaryBySettingObject:even ? _evensBuffer : _oddsBuffer forKey:@(iTermVertexInputMask)]
+                          fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): _models,
+                                             @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
+                                 textures:textures];
 }
 
 - (void)setASCIICellSize:(CGSize)cellSize

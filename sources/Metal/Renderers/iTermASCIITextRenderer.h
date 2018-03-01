@@ -28,9 +28,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) VT100GridCoord debugCoord;
 @property (nonatomic, strong) id<MTLBuffer> colorsBuffer;  // iTermCellColors, to be populated by iTermColorComputer
 @property (nonatomic, copy) id<MTLRenderCommandEncoder> (^blitBlock)(id<MTLTexture> source, id<MTLTexture> dest);
-
-// screen_char_t array
-- (void)addRow:(iTermASCIIRow *)row;
+@property (nonatomic, strong) iTermData *lines;  // screen_char_t array
 
 @end
 

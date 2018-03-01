@@ -73,17 +73,15 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
                            constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                            constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
                            device screen_char_t *line [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
-                           unsigned int x [[instance_id]],
+                           unsigned int i [[instance_id]],
                            device iTermASCIITextConfiguration *config [[ buffer(iTermVertexInputIndexASCIITextConfiguration) ]],
-                           device iTermASCIIRowInfo *rowInfo [[ buffer(iTermVertexInputIndexASCIITextRowInfo) ]],
                            device iTermCellColors *colors [[ buffer(iTermVertexInputCellColors) ]],
                            device int *mask [[ buffer(iTermVertexInputMask) ]]) {
     iTermASCIITextVertexFunctionOutput out;
 
-    const int i = x + rowInfo->row * (config->gridSize.x + 1);  // add one for EOL marker
     if (colors[i].nonascii) {
         out.discard = true;
-        out.clipSpacePosition = float4(0,0,0,0);
+        out.clipSpacePosition = float4(0, 0, 0, 0);
         return out;
     } else {
         out.discard = false;
@@ -92,30 +90,34 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     if (*mask) {
         out.even = false;
         // want odds
-        if ((x & 1) == 0) {
+        if ((i & 1) == 0) {
             out.discard = true;
-            out.clipSpacePosition = float4(0,0,0,0);
+            out.clipSpacePosition = float4(0, 0, 0, 0);
             return out;
         }
     } else {
         out.even = true;
         // want evens
-        if ((x & 1) == 1) {
+        if ((i & 1) == 1) {
             out.discard = true;
-            out.clipSpacePosition = float4(0,0,0,0);
+            out.clipSpacePosition = float4(0, 0, 0, 0);
             return out;
         }
     }
 
+    const int width = (config->gridSize.x + 1);  // includes eol marker
+    const int x = i % width;
+    const int y = i / width;
+
     // pixelSpacePosition is in pixels
-    float2 pixelSpacePosition = vertexArray[vertexID].position.xy + PixelSpaceOrigin(x, rowInfo->row, config) + offset[0];
+    float2 pixelSpacePosition = vertexArray[vertexID].position.xy + PixelSpaceOrigin(x, y, config) + offset[0];
     float2 viewportSize = float2(*viewportSizePointer);
 
     out.clipSpacePosition.xy = pixelSpacePosition / viewportSize;
     out.clipSpacePosition.z = 0.0;
     out.clipSpacePosition.w = 1;
 
-    device screen_char_t *sct = SCIndex(line, x);
+    device screen_char_t *sct = SCIndex(line, i);
     const unichar code = SCCode(sct);
     out.textureOffset = NormalizedTextureOffset(CodeIndex(code),
                                                 config->cellSize,
@@ -123,7 +125,6 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.textureCoordinate = vertexArray[vertexID].textureCoordinate + out.textureOffset;
 
     out.backgroundTextureCoordinate = pixelSpacePosition / viewportSize;
-#warning DNS
     out.backgroundTextureCoordinate.y = 1 - out.backgroundTextureCoordinate.y;
 
     out.backgroundColor = colors[i].backgroundColor;

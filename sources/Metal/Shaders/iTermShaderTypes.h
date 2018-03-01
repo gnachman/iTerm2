@@ -17,7 +17,7 @@ typedef enum iTermVertexInputIndex {
     iTermVertexInputIndexOffset = 3,
     iTermVertexInputIndexCursorDescription = 4,
     iTermVertexInputIndexASCIITextConfiguration = 5,  // iTermASCIITextConfiguration
-    iTermVertexInputIndexASCIITextRowInfo = 6,  // iTermASCIIRowInfo
+    // 6 up for grabs
     iTermVertexInputIndexColorMap = 7,  // data with serialized iTermColorMap
     iTermVertexInputSelectedIndices = 8,  // data is an array of bits giving selected indices
     iTermVertexInputFindMatchIndices = 9,  // data is an array of bits giving find-match indices to highlight
@@ -156,11 +156,6 @@ typedef struct {
     int offset;
     int capacity;
 } iTermMetalDebugBuffer;
-
-typedef struct {
-    int row;
-    int debugX;
-} iTermASCIIRowInfo;
 
 #define ENABLE_DEBUG_COLOR_COMPUTER 0
 
