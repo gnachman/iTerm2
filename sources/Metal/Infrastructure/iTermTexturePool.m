@@ -6,6 +6,7 @@
 //
 
 #import "iTermTexturePool.h"
+#import "NSArray+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -20,6 +21,10 @@ NS_ASSUME_NONNULL_BEGIN
         _textures = [NSMutableArray array];
     }
     return self;
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p %@>", NSStringFromClass([self class]), self, self.name];
 }
 
 - (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size {
@@ -39,8 +44,18 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
+- (iTermPooledTexture *)pooledTextureOfSize:(vector_uint2)size
+                                    creator:(id<MTLTexture> (^)(void))creator {
+    id<MTLTexture> texture = [self requestTextureOfSize:size];
+    if (!texture) {
+        texture = creator();
+    }
+    return [[iTermPooledTexture alloc] initWithTexture:texture pool:self];
+}
+
 - (void)returnTexture:(id<MTLTexture>)texture {
     @synchronized(self) {
+        assert(![_textures containsObject:texture]);
         if (texture.width == _size.x && texture.height == _size.y) {
             [_textures addObject:texture];
         }

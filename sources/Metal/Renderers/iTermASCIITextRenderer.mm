@@ -21,10 +21,20 @@
 @property (nonatomic, strong) iTermASCIITextureGroup *asciiTextureGroup;
 @property (nonatomic, strong) iTermMetalBufferPool *configPool;
 @property (nonatomic, strong) NSNumber *iteration;
+@property (nonatomic, readonly) NSMutableArray<iTermPooledTexture *> *pooledTextures;
+@property (nonatomic, strong) iTermTexturePool *texturePool;
 @end
 
 @implementation iTermASCIITextRendererTransientState {
     iTermPreciseTimerStats _stats[iTermASCIITextRendererStatCount];
+    NSMutableArray<iTermPooledTexture *> *_pooledTextures;
+}
+
+- (NSMutableArray<iTermPooledTexture *> *)pooledTextures {
+    if (!_pooledTextures) {
+        _pooledTextures = [NSMutableArray array];
+    }
+    return _pooledTextures;
 }
 
 - (NSString *)formatScreenChar:(screen_char_t)c {
@@ -104,6 +114,7 @@
     iTermMetalBufferPool *_dimensionsPool;
     iTermMetalBufferPool *_configPool;
     iTermMetalBufferPool *_quadPool;
+    iTermTexturePool *_tempTexturePool;
     id<MTLBuffer> _models;
     id<MTLBuffer> _evensBuffer;
     id<MTLBuffer> _oddsBuffer;
@@ -127,6 +138,8 @@
         _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextureDimensions)];
         _configPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermASCIITextConfiguration)];
         _quadPool =  [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
+        _tempTexturePool = [[iTermTexturePool alloc] init];
+        _tempTexturePool.name = @"ASCII temp texture pool";
 
         // Use a generic color model for blending. No need to use a buffer pool here because this is only
         // created once.
@@ -163,19 +176,7 @@
 
 - (void)initializeTransientState:(iTermASCIITextRendererTransientState *)tState {
     tState.asciiTextureGroup = _asciiTextureGroup;
-}
-
-- (id<MTLTexture>)newTemporaryTextureWithTexture:(id<MTLTexture>)backgroundTexture
-                                          tState:(iTermASCIITextRendererTransientState *)tState {
-    MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
-                                                                                                 width:tState.configuration.viewportSize.x
-                                                                                                height:tState.configuration.viewportSize.y
-                                                                                             mipmapped:NO];
-    textureDescriptor.usage = (MTLTextureUsageShaderRead |
-                               MTLTextureUsageShaderWrite |
-                               MTLTextureUsageRenderTarget |
-                               MTLTextureUsagePixelFormatView);
-    return [_cellRenderer.device newTextureWithDescriptor:textureDescriptor];
+    tState.texturePool = _tempTexturePool;
 }
 
 - (void)createPipelineState:(iTermASCIITextRendererTransientState *)tState {
@@ -209,64 +210,7 @@
     return quad;
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)originalRenderEncoder
-               transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
-    iTermASCIITextRendererTransientState *tState = transientState;
-
-    static const iTermASCIITextureAttributes B = iTermASCIITextureAttributesBold;
-    static const iTermASCIITextureAttributes I = iTermASCIITextureAttributesItalic;
-    static const iTermASCIITextureAttributes T = iTermASCIITextureAttributesThinStrokes;
-
-    __block id<MTLRenderCommandEncoder> renderEncoder = nil;
-    __block id<MTLTexture> tempTexture;
-
-    [tState measureTimeForStat:iTermASCIITextRendererStatNewTemporaryTexture ofBlock:^{
-        tempTexture = [self newTemporaryTextureWithTexture:tState.backgroundTexture
-                                                    tState:tState];
-    }];
-
-    [tState measureTimeForStat:iTermASCIITextRendererStatBlit ofBlock:^{
-        renderEncoder = tState.blitBlock(tState.backgroundTexture, tempTexture);
-        [self createPipelineState:tState];
-    }];
-
-    __block NSDictionary<NSNumber *, id<MTLTexture>> *textures =
-    @{
-      @(iTermTextureIndexPlain):          [tState.asciiTextureGroup asciiTextureForAttributes:0].textureArray.texture,
-      @(iTermTextureIndexBold):           [tState.asciiTextureGroup asciiTextureForAttributes:B].textureArray.texture,
-      @(iTermTextureIndexItalic):         [tState.asciiTextureGroup asciiTextureForAttributes:I].textureArray.texture,
-      @(iTermTextureIndexBoldItalic):     [tState.asciiTextureGroup asciiTextureForAttributes:B | I].textureArray.texture,
-      @(iTermTextureIndexThin):           [tState.asciiTextureGroup asciiTextureForAttributes:T].textureArray.texture,
-      @(iTermTextureIndexThinBold):       [tState.asciiTextureGroup asciiTextureForAttributes:B | T].textureArray.texture,
-      @(iTermTextureIndexThinItalic):     [tState.asciiTextureGroup asciiTextureForAttributes:I | T].textureArray.texture,
-      @(iTermTextureIndexThinBoldItalic): [tState.asciiTextureGroup asciiTextureForAttributes:B | I | T].textureArray.texture,
-      @(iTermTextureIndexBackground):     tempTexture,
-    };
-
-    __block id<MTLBuffer> textureDimensionsBuffer;
-    iTermTextureDimensions textureDimensions = {
-        .textureSize = tState.asciiTextureGroup.atlasSize,
-        .cellSize = simd_make_float2(tState.cellConfiguration.cellSize.width, tState.cellConfiguration.cellSize.height),
-        .underlineOffset = static_cast<float>(tState.cellConfiguration.cellSize.height - tState.underlineDescriptor.offset * tState.cellConfiguration.scale),
-        .underlineThickness = static_cast<float>(tState.underlineDescriptor.thickness * tState.cellConfiguration.scale),
-        .scale = static_cast<float>(tState.cellConfiguration.scale)
-    };
-    [tState measureTimeForStat:iTermASCIITextRendererStatNewDims ofBlock:^{
-        if (tState.cellConfiguration.usingIntermediatePass) {
-            textures = [textures dictionaryBySettingObject:tState.backgroundTexture forKey:@(iTermTextureIndexBackground)];
-        }
-        textureDimensionsBuffer = [_dimensionsPool requestBufferFromContext:tState.poolContext
-                                                                  withBytes:&textureDimensions
-                                                             checkIfChanged:YES];
-        textureDimensionsBuffer.label = @"Texture dimensions";
-    }];
-
-    [tState measureTimeForStat:iTermASCIITextRendererStatNewQuad ofBlock:^{
-        tState.vertexBuffer = [self extraWideQuadWithCellSize:tState.cellConfiguration.cellSize
-                                                  textureSize:textureDimensions.textureSize
-                                                  poolContext:tState.poolContext];
-    }];
-
+- (id<MTLBuffer>)newConfigBufferForState:(iTermASCIITextRendererTransientState *)tState {
     __block id<MTLBuffer> configBuffer;
     [tState measureTimeForStat:iTermASCIITextRendererStatNewConfig ofBlock:^{
         iTermASCIITextConfiguration config = {
@@ -280,17 +224,127 @@
         configBuffer = [_configPool requestBufferFromContext:tState.poolContext
                                                    withBytes:&config
                                               checkIfChanged:YES];
+        configBuffer.label = @"ASCII config";
     }];
+    return configBuffer;
+}
 
+- (id<MTLBuffer>)newVertexBufferForState:(iTermASCIITextRendererTransientState *)tState
+                             textureSize:(vector_float2)textureSize {
+    __block id<MTLBuffer> vertexBuffer;
+    [tState measureTimeForStat:iTermASCIITextRendererStatNewQuad ofBlock:^{
+        vertexBuffer = [self extraWideQuadWithCellSize:tState.cellConfiguration.cellSize
+                                           textureSize:textureSize
+                                           poolContext:tState.poolContext];
+        vertexBuffer.label = @"ASCII Vertexes";
+    }];
+    return vertexBuffer;
+}
+
+- (id<MTLBuffer>)newTextureDimensionsBufferForState:(iTermASCIITextRendererTransientState *)tState
+                                  textureDimensions:(iTermTextureDimensions *)textureDimensions {
+    __block id<MTLBuffer> textureDimensionsBuffer;
+    [tState measureTimeForStat:iTermASCIITextRendererStatNewDims ofBlock:^{
+        textureDimensionsBuffer = [_dimensionsPool requestBufferFromContext:tState.poolContext
+                                                                  withBytes:&textureDimensions
+                                                             checkIfChanged:YES];
+        textureDimensionsBuffer.label = @"ASCII dimensions";
+    }];
+    return textureDimensionsBuffer;
+}
+
+- (iTermTextureDimensions)textureDimensionsForState:(iTermASCIITextRendererTransientState *)tState {
+    iTermTextureDimensions textureDimensions = {
+        .textureSize = tState.asciiTextureGroup.atlasSize,
+        .cellSize = simd_make_float2(tState.cellConfiguration.cellSize.width, tState.cellConfiguration.cellSize.height),
+        .underlineOffset = static_cast<float>(tState.cellConfiguration.cellSize.height - tState.underlineDescriptor.offset * tState.cellConfiguration.scale),
+        .underlineThickness = static_cast<float>(tState.underlineDescriptor.thickness * tState.cellConfiguration.scale),
+        .scale = static_cast<float>(tState.cellConfiguration.scale)
+    };
+    return textureDimensions;
+}
+- (NSDictionary<NSNumber *, id<MTLTexture>> *)newTexturesForState:(iTermASCIITextRendererTransientState *)tState
+                                                      tempTexture:(id<MTLTexture>)tempTexture {
+    static const iTermASCIITextureAttributes B = iTermASCIITextureAttributesBold;
+    static const iTermASCIITextureAttributes I = iTermASCIITextureAttributesItalic;
+    static const iTermASCIITextureAttributes T = iTermASCIITextureAttributesThinStrokes;
+    NSDictionary<NSNumber *, id<MTLTexture>> *textures =
+    @{
+      @(iTermTextureIndexPlain):          [tState.asciiTextureGroup asciiTextureForAttributes:0].textureArray.texture,
+      @(iTermTextureIndexBold):           [tState.asciiTextureGroup asciiTextureForAttributes:B].textureArray.texture,
+      @(iTermTextureIndexItalic):         [tState.asciiTextureGroup asciiTextureForAttributes:I].textureArray.texture,
+      @(iTermTextureIndexBoldItalic):     [tState.asciiTextureGroup asciiTextureForAttributes:B | I].textureArray.texture,
+      @(iTermTextureIndexThin):           [tState.asciiTextureGroup asciiTextureForAttributes:T].textureArray.texture,
+      @(iTermTextureIndexThinBold):       [tState.asciiTextureGroup asciiTextureForAttributes:B | T].textureArray.texture,
+      @(iTermTextureIndexThinItalic):     [tState.asciiTextureGroup asciiTextureForAttributes:I | T].textureArray.texture,
+      @(iTermTextureIndexThinBoldItalic): [tState.asciiTextureGroup asciiTextureForAttributes:B | I | T].textureArray.texture,
+      @(iTermTextureIndexBackground):     tempTexture,
+      };
+    if (tState.cellConfiguration.usingIntermediatePass) {
+        textures = [textures dictionaryBySettingObject:tState.backgroundTexture forKey:@(iTermTextureIndexBackground)];
+    }
+    return textures;
+}
+
+- (id<MTLTexture>)newTempTextureForState:(iTermASCIITextRendererTransientState *)tState {
+    __block id<MTLTexture> tempTexture;
+    [tState measureTimeForStat:iTermASCIITextRendererStatNewTemporaryTexture ofBlock:^{
+        iTermPooledTexture *pooledTexture =
+            [_tempTexturePool pooledTextureOfSize:tState.configuration.viewportSize
+                                          creator:^id<MTLTexture> _Nonnull{
+                                              MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+                                                                                                                                           width:tState.configuration.viewportSize.x
+                                                                                                                                          height:tState.configuration.viewportSize.y
+                                                                                                                                       mipmapped:NO];
+                                              textureDescriptor.usage = (MTLTextureUsageShaderRead |
+                                                                         MTLTextureUsageShaderWrite |
+                                                                         MTLTextureUsageRenderTarget |
+                                                                         MTLTextureUsagePixelFormatView);
+                                              id<MTLTexture> created = [_cellRenderer.device newTextureWithDescriptor:textureDescriptor];
+                                              created.label = @"Temp texture";
+                                              return created;
+                                          }];
+        [tState.pooledTextures addObject:pooledTexture];
+        tempTexture = pooledTexture.texture;
+    }];
+    return tempTexture;
+}
+
+- (id<MTLRenderCommandEncoder>)newRenderEncoderAfterBlittingToTempTexture:(id<MTLTexture>)tempTexture
+                                                                withState:(iTermASCIITextRendererTransientState *)tState {
+    __block id<MTLRenderCommandEncoder> renderEncoder;
+    [tState measureTimeForStat:iTermASCIITextRendererStatBlit ofBlock:^{
+        renderEncoder = tState.blitBlock(tState.backgroundTexture, tempTexture);
+        [self createPipelineState:tState];
+    }];
+    return renderEncoder;
+}
+
+- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)originalRenderEncoder
+               transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
+    iTermASCIITextRendererTransientState *tState = transientState;
+
+    id<MTLTexture> tempTexture = [self newTempTextureForState:tState];
+    id<MTLRenderCommandEncoder> renderEncoder = [self newRenderEncoderAfterBlittingToTempTexture:tempTexture
+                                                                                       withState:tState];
+    NSDictionary<NSNumber *, id<MTLTexture>> *textures = [self newTexturesForState:tState
+                                                                       tempTexture:tempTexture];
+
+    id<MTLBuffer> textureDimensionsBuffer;
+    iTermTextureDimensions textureDimensions = [self textureDimensionsForState:tState];
+
+    textureDimensionsBuffer = [self newTextureDimensionsBufferForState:tState
+                                                     textureDimensions:&textureDimensions];
+
+    tState.vertexBuffer = [self newVertexBufferForState:tState textureSize:textureDimensions.textureSize];
+    id<MTLBuffer> configBuffer = [self newConfigBufferForState:tState];
     id<MTLBuffer> screenChars = [_screenCharPool requestBufferFromContext:tState.poolContext
                                                                      size:tState.lines.length
                                                                     bytes:tState.lines.mutableBytes];
 
     [self drawPassEven:YES tState:tState config:configBuffer textureDimensions:textureDimensionsBuffer renderEncoder:renderEncoder textures:textures screenChars:screenChars];
-    [tState measureTimeForStat:iTermASCIITextRendererStatBlit ofBlock:^{
-        renderEncoder = tState.blitBlock(tState.backgroundTexture, tempTexture);
-        [self createPipelineState:tState];
-    }];
+    renderEncoder = [self newRenderEncoderAfterBlittingToTempTexture:tempTexture
+                                                           withState:tState];
     [self drawPassEven:NO tState:tState config:configBuffer textureDimensions:textureDimensionsBuffer renderEncoder:renderEncoder textures:textures screenChars:screenChars];
 }
 

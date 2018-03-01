@@ -126,7 +126,6 @@
     id<MTLBuffer> underlinedIndices = [_bitmapPool requestBufferFromContext:tState.poolContext
                                                                        size:tState.underlinedIndices.length
                                                                       bytes:tState.underlinedIndices.bytes];
-#warning DNS
     id<MTLBuffer> configBuffer = [tState configurationBufferWithPool:_configurationPool];
 
     NSDictionary<NSNumber *, id<MTLBuffer>> *buffers =

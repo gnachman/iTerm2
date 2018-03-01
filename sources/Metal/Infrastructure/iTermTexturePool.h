@@ -11,10 +11,27 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermPooledTexture;
+
 // Pools textures of a particular size.
+//
+// Suggested usage:
+//   iTermTexturePool *pool = [[iTermTexturePool alloc] init];
+//   pool.name = @"Foo pool";
+//   iTermPooledTexture *pooledTexture = [pool pooledTextureOfSize:size creator:^id<MTLTexture> { ... return newTexture; }];
+//   [tState.textures addObject:pooledTexture];
+//   ... use pooledTexture.texture.
+//
+// When tState is dealloced the iTermPooledTexture gets dealloced and added back to the pool.
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTexturePool : NSObject
+@property (nonatomic, copy) NSString *name;
+
 - (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size;
+- (iTermPooledTexture *)pooledTextureOfSize:(vector_uint2)size
+                                    creator:(id<MTLTexture> (^)(void))creator;
+
+// Only use this if you don't use iTermPooledTexture.
 - (void)returnTexture:(id<MTLTexture>)texture;
 @end
 
