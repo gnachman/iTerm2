@@ -147,6 +147,8 @@
     NSTimeInterval _lastFrameStartTime;
     iTermHistogram *_startToStartHistogram;
     iTermHistogram *_inFlightHistogram;
+
+    iTermTexturePool *_tempTexturePool;
 }
 
 - (nullable instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView {
@@ -179,6 +181,9 @@
         _copyModeCursorRenderer = [iTermCursorRenderer newCopyModeCursorRendererWithDevice:mtkView.device];
         _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:mtkView.device];
         _colorComputer = [[iTermColorComputer alloc] initWithDevice:mtkView.device];
+
+        _tempTexturePool = [[iTermTexturePool alloc] init];
+        _tempTexturePool.name = @"Temp texture pool";
 
         _commandQueue = [mtkView.device newCommandQueue];
 #if ENABLE_PRIVATE_QUEUE
@@ -376,6 +381,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         frameData.cellSizeWithoutSpacing = rescale(frameData.perFrameState.cellSizeWithoutSpacing);
 
         frameData.scale = _scale;
+
+        frameData.tempTexture = [self newTempTextureForFrameData:frameData];
     }];
     return frameData;
 }
@@ -957,6 +964,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     asciiState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
     asciiState.debugCoord = VT100GridCoordMake(0, 0);
     asciiState.colorsBuffer = colorState.outputBuffer;
+    asciiState.tempTexture = frameData.tempTexture;
 
     CGSize cellSize = textState.cellConfiguration.cellSize;
     iTermBackgroundColorRendererTransientState *backgroundState = [frameData transientStateForRenderer:_backgroundColorRenderer];
@@ -1384,6 +1392,26 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 #pragma mark - Drawing Helpers
+
+- (id<MTLTexture>)newTempTextureForFrameData:(iTermMetalFrameData *)frameData {
+    const vector_uint2 viewportSize = frameData.viewportSize;
+    iTermPooledTexture *pooledTexture =
+        [_tempTexturePool pooledTextureOfSize:viewportSize creator:^id<MTLTexture> _Nonnull{
+            MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+                                                                                                         width:viewportSize.x
+                                                                                                        height:viewportSize.y
+                                                                                                     mipmapped:NO];
+            textureDescriptor.usage = (MTLTextureUsageShaderRead |
+                                       MTLTextureUsageShaderWrite |
+                                       MTLTextureUsageRenderTarget |
+                                       MTLTextureUsagePixelFormatView);
+            id<MTLTexture> created = [frameData.device newTextureWithDescriptor:textureDescriptor];
+            created.label = @"Temp texture";
+            return created;
+        }];
+    [frameData.pooledTextures addObject:pooledTexture];
+    return pooledTexture.texture;
+}
 
 - (id<MTLRenderCommandEncoder>)newRenderEncoderWithDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
                                                 commandBuffer:(id<MTLCommandBuffer>)commandBuffer

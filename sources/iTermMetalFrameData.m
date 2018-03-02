@@ -115,6 +115,7 @@ static NSInteger gNextFrameDataNumber;
         _frameNumber = gNextFrameDataNumber++;
         _framePoolContext = [[iTermMetalBufferPoolContext alloc] init];
         _transientStates = [NSMutableDictionary dictionary];
+        _pooledTextures = [NSMutableArray array];
         iTermMetalFrameDataStatsBundleInitialize(_stats);
 
         iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);
