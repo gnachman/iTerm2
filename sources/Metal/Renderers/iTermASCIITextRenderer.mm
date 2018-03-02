@@ -272,19 +272,16 @@
       @(iTermTextureIndexThinBold):       [tState.asciiTextureGroup asciiTextureForAttributes:B | T].textureArray.texture,
       @(iTermTextureIndexThinItalic):     [tState.asciiTextureGroup asciiTextureForAttributes:I | T].textureArray.texture,
       @(iTermTextureIndexThinBoldItalic): [tState.asciiTextureGroup asciiTextureForAttributes:B | I | T].textureArray.texture,
-      @(iTermTextureIndexBackground):     tState.tempTexture,
+      @(iTermTextureIndexBackground):     tState.backgroundTexture,
       };
-#warning TODO: WTF??? The temp texture isn't used??
-    if (tState.cellConfiguration.usingIntermediatePass) {
-        textures = [textures dictionaryBySettingObject:tState.backgroundTexture forKey:@(iTermTextureIndexBackground)];
-    }
+    assert(tState.cellConfiguration.usingIntermediatePass);
     return textures;
 }
 
-- (id<MTLRenderCommandEncoder>)newRenderEncoderAfterBlittingToTempTextureWithState:(iTermASCIITextRendererTransientState *)tState {
+- (id<MTLRenderCommandEncoder>)newRenderEncoder:(iTermASCIITextRendererTransientState *)tState {
     __block id<MTLRenderCommandEncoder> renderEncoder;
-    [tState measureTimeForStat:iTermASCIITextRendererStatBlit ofBlock:^{
-        renderEncoder = tState.blitBlock(tState.backgroundTexture, tState.tempTexture);
+    [tState measureTimeForStat:iTermASCIITextRendererStatCycleRenderEncoder ofBlock:^{
+        renderEncoder = tState.cycleRenderEncoder();
         [self createPipelineState:tState];
     }];
     return renderEncoder;
@@ -294,7 +291,7 @@
                transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermASCIITextRendererTransientState *tState = transientState;
 
-    id<MTLRenderCommandEncoder> renderEncoder = [self newRenderEncoderAfterBlittingToTempTextureWithState:tState];
+    id<MTLRenderCommandEncoder> renderEncoder = [self newRenderEncoder:tState];
     NSDictionary<NSNumber *, id<MTLTexture>> *textures = [self newTexturesForState:tState];
 
     id<MTLBuffer> textureDimensionsBuffer;
@@ -310,7 +307,7 @@
                                                                     bytes:tState.lines.mutableBytes];
 
     [self drawPassEven:YES tState:tState config:configBuffer textureDimensions:textureDimensionsBuffer renderEncoder:renderEncoder textures:textures screenChars:screenChars];
-    renderEncoder = [self newRenderEncoderAfterBlittingToTempTextureWithState:tState];
+    renderEncoder = [self newRenderEncoder:tState];
     [self drawPassEven:NO tState:tState config:configBuffer textureDimensions:textureDimensionsBuffer renderEncoder:renderEncoder textures:textures screenChars:screenChars];
 }
 

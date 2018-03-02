@@ -147,8 +147,6 @@
     NSTimeInterval _lastFrameStartTime;
     iTermHistogram *_startToStartHistogram;
     iTermHistogram *_inFlightHistogram;
-
-    iTermTexturePool *_tempTexturePool;
 }
 
 - (nullable instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView {
@@ -181,9 +179,6 @@
         _copyModeCursorRenderer = [iTermCursorRenderer newCopyModeCursorRendererWithDevice:mtkView.device];
         _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:mtkView.device];
         _colorComputer = [[iTermColorComputer alloc] initWithDevice:mtkView.device];
-
-        _tempTexturePool = [[iTermTexturePool alloc] init];
-        _tempTexturePool.name = @"Temp texture pool";
 
         _commandQueue = [mtkView.device newCommandQueue];
 #if ENABLE_PRIVATE_QUEUE
@@ -381,8 +376,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         frameData.cellSizeWithoutSpacing = rescale(frameData.perFrameState.cellSizeWithoutSpacing);
 
         frameData.scale = _scale;
-
-        frameData.tempTexture = [self newTempTextureForFrameData:frameData];
     }];
     return frameData;
 }
@@ -619,34 +612,21 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         frameData.currentPass = frameData.currentPass + 1;
         frameData.renderEncoder = [self newRenderEncoderFromCommandBuffer:frameData.commandBuffer
                                                                 frameData:frameData
-                                                                     pass:frameData.currentPass];
+                                                                     pass:frameData.currentPass
+                                                                    label:@"Copy intermediate to drawable"];
         [self drawRenderer:_copyBackgroundRenderer
                  frameData:frameData
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueCopyBackground]];
     }
 }
 
-- (void)blitFrom:(id<MTLTexture>)source
-              to:(id<MTLTexture>)dest
-       frameData:(iTermMetalFrameData *)frameData {
+- (id<MTLRenderCommandEncoder>)cycleRenderEncoder:(iTermMetalFrameData *)frameData label:(NSString *)label {
     [frameData.renderEncoder endEncoding];
-
-    id<MTLBlitCommandEncoder> blitter = [frameData.commandBuffer blitCommandEncoder];
-    blitter.label = [NSString stringWithFormat:@"Intermediate>Temp Blitter"];
-    [blitter copyFromTexture:source
-                 sourceSlice:0
-                 sourceLevel:0
-                sourceOrigin:MTLOriginMake(0, 0, 0)
-                  sourceSize:MTLSizeMake(source.width, source.height, 1)
-                   toTexture:dest
-            destinationSlice:0
-            destinationLevel:0
-           destinationOrigin:MTLOriginMake(0, 0, 0)];
-    [blitter endEncoding];
-
     frameData.renderEncoder = [self newRenderEncoderFromCommandBuffer:frameData.commandBuffer
                                                             frameData:frameData
-                                                                 pass:frameData.currentPass];
+                                                                 pass:frameData.currentPass
+                                                                label:label];
+    return frameData.renderEncoder;
 }
 
 - (void)enequeueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
@@ -659,16 +639,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     frameData.renderEncoder = [self newRenderEncoderFromCommandBuffer:commandBuffer
                                                             frameData:frameData
-                                                                 pass:frameData.currentPass];
+                                                                 pass:frameData.currentPass
+                                                                label:@"Second Pass"];
 
     [self drawContentBehindTextWithFrameData:frameData];
 
     iTermASCIITextRendererTransientState *asciiState = [frameData transientStateForRenderer:_asciiTextRenderer];
     __weak __typeof(self) weakSelf = self;
     __weak __typeof(frameData) weakFrameData = frameData;
-    asciiState.blitBlock = ^id<MTLRenderCommandEncoder>(id<MTLTexture>  _Nonnull source, id<MTLTexture>  _Nonnull dest) {
-        [weakSelf blitFrom:source to:dest frameData:weakFrameData];
-        return weakFrameData.renderEncoder;
+    asciiState.cycleRenderEncoder = ^id<MTLRenderCommandEncoder>() {
+        return [weakSelf cycleRenderEncoder:weakFrameData label:@"Render ASCII"];
     };
     [self drawCellRenderer:_asciiTextRenderer
                  frameData:frameData
@@ -964,7 +944,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     asciiState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
     asciiState.debugCoord = VT100GridCoordMake(0, 0);
     asciiState.colorsBuffer = colorState.outputBuffer;
-    asciiState.tempTexture = frameData.tempTexture;
 
     CGSize cellSize = textState.cellConfiguration.cellSize;
     iTermBackgroundColorRendererTransientState *backgroundState = [frameData transientStateForRenderer:_backgroundColorRenderer];
@@ -1212,7 +1191,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
         frameData.renderEncoder = [self newRenderEncoderFromCommandBuffer:frameData.commandBuffer
                                                                 frameData:frameData
-                                                                     pass:frameData.currentPass];
+                                                                     pass:frameData.currentPass
+                                                                    label:@"Save output for debugging"];
     }
 }
 
@@ -1393,26 +1373,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 #pragma mark - Drawing Helpers
 
-- (id<MTLTexture>)newTempTextureForFrameData:(iTermMetalFrameData *)frameData {
-    const vector_uint2 viewportSize = frameData.viewportSize;
-    iTermPooledTexture *pooledTexture =
-        [_tempTexturePool pooledTextureOfSize:viewportSize creator:^id<MTLTexture> _Nonnull{
-            MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
-                                                                                                         width:viewportSize.x
-                                                                                                        height:viewportSize.y
-                                                                                                     mipmapped:NO];
-            textureDescriptor.usage = (MTLTextureUsageShaderRead |
-                                       MTLTextureUsageShaderWrite |
-                                       MTLTextureUsageRenderTarget |
-                                       MTLTextureUsagePixelFormatView);
-            id<MTLTexture> created = [frameData.device newTextureWithDescriptor:textureDescriptor];
-            created.label = @"Temp texture";
-            return created;
-        }];
-    [frameData.pooledTextures addObject:pooledTexture];
-    return pooledTexture.texture;
-}
-
 - (id<MTLRenderCommandEncoder>)newRenderEncoderWithDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
                                                 commandBuffer:(id<MTLCommandBuffer>)commandBuffer
                                                  viewportSize:(vector_uint2)viewportSize
@@ -1451,15 +1411,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (id<MTLRenderCommandEncoder>)newRenderEncoderFromCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
                                                        frameData:(iTermMetalFrameData *)frameData
-                                                            pass:(int)pass {
+                                                            pass:(int)pass
+                                                           label:(NSString *)label {
     assert(pass >= 0 && pass <= 1);
 
     NSArray<MTLRenderPassDescriptor *> *descriptors =
         @[ frameData.intermediateRenderPassDescriptor ?: frameData.renderPassDescriptor,
            frameData.renderPassDescriptor ];
-    NSArray<NSString *> *labels =
-        @[ frameData.intermediateRenderPassDescriptor ? @"Render background to intermediate" : @"Render All Layers of Terminal",
-           @"Copy bg and render text" ];
     iTermMetalFrameDataStat stats[2] = {
         iTermMetalFrameDataStatPqEnqueueDrawCreateFirstRenderEncoder,
         iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder
@@ -1467,7 +1425,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     id<MTLRenderCommandEncoder> renderEncoder = [self newRenderEncoderFromCommandBuffer:commandBuffer
                                                                    renderPassDescriptor:descriptors[pass]
-                                                                                  label:labels[pass]
+                                                                                  label:label
                                                                               frameData:frameData
                                                                                    stat:stats[pass]];
     return renderEncoder;
