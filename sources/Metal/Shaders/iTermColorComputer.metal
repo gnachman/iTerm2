@@ -98,7 +98,7 @@ iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInp
 
     // Assign values to output.
     if (underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-        colorsOut[i].underlineColor = UnderlineColor(config->asciiUnderlineColor,
+        colorsOut[i].underlineColor = UnderlineColor(config->underlineColor,
                                                      textColor,
                                                      annotated,
                                                      marked);

@@ -663,7 +663,8 @@ static void HandleGlyph(const screen_char_t &c,
     configurationPtr->unfocusedSelectionColor = _unfocusedSelectionColor;
     configurationPtr->isFrontTextView = _isFrontTextView;
     configurationPtr->dimOnlyText = _colorMap.dimOnlyText;
-    configurationPtr->asciiUnderlineColor = _asciiUnderlineDescriptor.color;
+    // Both ascii and non-ascii descriptors will have the same color, as there is only one setting for both.
+    configurationPtr->underlineColor = _asciiUnderlineDescriptor.color;
     configurationPtr->thinStrokesSetting = _thinStrokes;
     configurationPtr->hasBackgroundImage = _hasBackgroundImage;
     configurationPtr->blend = _backgroundImageBlending;

@@ -137,8 +137,7 @@ typedef struct {
     vector_float4 unfocusedSelectionColor;  // see PTYTextView colorMap:didChangeColorForKey:
     bool isFrontTextView;
     bool dimOnlyText;
-#warning TODO: This should also handle non-ascii
-    vector_float4 asciiUnderlineColor;
+    vector_float4 underlineColor;
     iTermThinStrokesSetting thinStrokesSetting;
     bool hasBackgroundImage;
 } iTermColorsConfiguration;

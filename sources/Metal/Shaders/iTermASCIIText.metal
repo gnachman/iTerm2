@@ -217,22 +217,13 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                                          thinBoldItalicTexture);
     half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
 
-    // TODO: You can't always sample the drawable
+    // TODO: Some fragments could avoid the expensive call to RemapColor and simply look up the
+    // cell's background color in colorMap[offset + bwColor * 255] (where offset is the beginning
+    // of the lookup table for the current text/bg color combination).
     const float4 backgroundColor = static_cast<float4>(drawable.sample(textureSampler, in.backgroundTextureCoordinate));
-#warning TODO: Support NOT sampling from drawable when needed
-//    const float4 backgroundColor = in.backgroundColor;
-#warning DNS
-//    // Evens return red, odds returns sampled background color
-//    if (!in.even) {
-//        float4 temp = backgroundColor;
-//        temp.w = 1;
-//        return temp;
-//    } else {
-//        return float4(1,0,0,1);
-//    }
 
     if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
-        // No text in this pixel
+        // No text in this pixel. But we might need to draw some background here.
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
             const float weight = ComputeWeightOfUnderline(in.underlineStyle,
                                                           in.clipSpacePosition.xy,
@@ -253,11 +244,8 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                            weight);
             }
         }
-//        discard_fragment();
-#warning DNS
-        return float4(0, 0, 0, 0);
+        discard_fragment();
     } else {
-#warning DNS
         return RemapColor(in.textColor, backgroundColor, bwColor, colorModels);
     }
 }
