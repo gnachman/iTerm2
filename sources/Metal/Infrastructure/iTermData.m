@@ -82,6 +82,20 @@
     return _mutableBytes;
 }
 
+- (NSString *)bitRanges {
+    NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
+    int n = 0;
+    for (int i = 0; i < _length; i++) {
+        unsigned char c = _mutableBytes[i];
+        for (int j = 0; j < 8; j++, n++) {
+            if (c & (1 << j)) {
+                [indexes addIndex:n];
+            }
+        }
+    }
+    return indexes.description;
+}
+
 @end
 
 

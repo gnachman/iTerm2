@@ -16,11 +16,11 @@ using namespace metal;
 kernel void
 iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInputIndexColorMap) ]],
                          device unsigned char *line_ALL [[ buffer(iTermComputeIndexScreenChars) ]],
-                         device unsigned char *selectedIndices_ALL [[ buffer(iTermVertexInputSelectedIndices) ]],
-                         device unsigned char *findMatchIndices_ALL [[ buffer(iTermVertexInputFindMatchIndices) ]],
-                         device unsigned char *annotatedIndices_ALL [[ buffer(iTermVertexInputAnnotatedIndices) ]],
-                         device unsigned char *markedIndices_ALL [[ buffer(iTermVertexInputMarkedIndices) ]],
-                         device unsigned char *underlinedIndices_ALL [[ buffer(iTermVertexInputUnderlinedIndices) ]],
+                         device unsigned char *selectedIndices [[ buffer(iTermVertexInputSelectedIndices) ]],
+                         device unsigned char *findMatchIndices [[ buffer(iTermVertexInputFindMatchIndices) ]],
+                         device unsigned char *annotatedIndices [[ buffer(iTermVertexInputAnnotatedIndices) ]],
+                         device unsigned char *markedIndices [[ buffer(iTermVertexInputMarkedIndices) ]],
+                         device unsigned char *underlinedIndices [[ buffer(iTermVertexInputUnderlinedIndices) ]],
                          device iTermColorsConfiguration *config [[ buffer(iTermComputeIndexColorsConfig) ]],
                          device iTermMetalDebugBuffer *debugBuffer [[ buffer(iTermVertexInputDebugBuffer) ]],
                          device iTermCellColors *colorsOut [[ buffer(iTermComputeIndexColors) ]],  // OUTPUT
@@ -34,6 +34,7 @@ iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInp
 
     const int x = gid.x;
     const int i = x + (config->gridSize.x + 1) * gid.y;
+    const int b = x + (config->gridSize.x + 8) * gid.y;
 
     const int offset = gid.y * (width + 1);
     device screen_char_t *line = line_ALL + offset * SIZEOF_SCREEN_CHAR_T;
@@ -49,19 +50,12 @@ iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInp
                              SCCode(sct) < ' ' ||
                              SCImage(sct));
 
-    // Get pointers to this line in the various bit fields.
-    device unsigned char *selectedIndices = selectedIndices_ALL + offset;
-    device unsigned char *findMatchIndices = findMatchIndices_ALL + offset;
-    device unsigned char *annotatedIndices = annotatedIndices_ALL + offset;
-    device unsigned char *markedIndices = markedIndices_ALL + offset;
-    device unsigned char *underlinedIndices = underlinedIndices_ALL + offset;
-
-    const int mask = 1 << (i & 7);
-    const bool selected = !!(selectedIndices[i / 8] & mask);
-    const bool findMatch = !!(findMatchIndices[i / 8] & mask);
-    const bool annotated = !!(annotatedIndices[i / 8] & mask);
-    const bool marked = !!(markedIndices[i / 8] & mask);
-    const bool inUnderlinedRange = !!(underlinedIndices[i / 8] & mask);
+    const int mask = 1 << (b & 7);
+    const bool selected = !!(selectedIndices[b / 8] & mask);
+    const bool findMatch = !!(findMatchIndices[b / 8] & mask);
+    const bool annotated = !!(annotatedIndices[b / 8] & mask);
+    const bool marked = !!(markedIndices[b / 8] & mask);
+    const bool inUnderlinedRange = !!(underlinedIndices[b / 8] & mask);
 
     const vector_float4 backgroundColor = BackgroundColor(sct,
                                                           config->transparencyAlpha,

@@ -17,6 +17,7 @@
 @property (nonatomic) NSUInteger length;
 // Will be a multiple of requested alignment
 @property (nonatomic, readonly) NSUInteger allocatedCapacity;
+@property (nonatomic, readonly) NSString *bitRanges;
 
 + (instancetype)dataOfLength:(NSUInteger)length;
 + (instancetype)pageAlignedUninitializeDataOfLength:(NSUInteger)length;
