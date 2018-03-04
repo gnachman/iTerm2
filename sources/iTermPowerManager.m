@@ -14,7 +14,12 @@ NSString *const iTermPowerManagerStateDidChange = @"iTermPowerManagerStateDidCha
 @implementation iTermPowerManager
 
 + (instancetype)sharedInstance {
-    return [[self alloc] initPrivate];
+    static iTermPowerManager *instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] initPrivate];
+    });
+    return instance;
 }
 
 - (instancetype)initPrivate {
