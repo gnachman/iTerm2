@@ -4980,6 +4980,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [_passwordManagerWindowController selectAccountName:name];
 }
 
+- (void)tabDidClearScrollbackBufferInSession:(PTYSession *)session {
+    [[_contentView.toolbelt capturedOutputView] removeSelection];
+    [[_contentView.toolbelt commandHistoryView] removeSelection];
+    [self refreshTools];
+}
+
 - (void)genericCloseSheet:(NSWindow *)sheet
                returnCode:(int)returnCode
               contextInfo:(id)contextInfo {

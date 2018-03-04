@@ -197,6 +197,9 @@ typedef enum {
 // Whether metal is allowed has changed
 - (void)sessionUpdateMetalAllowed;
 
+// Scrollback buffer cleared.
+- (void)sessionDidClearScrollbackBuffer:(PTYSession *)session;
+
 @end
 
 @class SessionView;

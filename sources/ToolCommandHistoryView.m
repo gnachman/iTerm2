@@ -239,6 +239,10 @@ static const CGFloat kHelpMargin = 5;
     [self updateCommands];
 }
 
+- (void)removeSelection {
+    [tableView_ selectRowIndexes:[NSIndexSet indexSet] byExtendingSelection:NO];
+}
+
 - (void)updateCommands {
     [self computeFilteredEntries];
     // Updating the table data causes the cursor to change into an arrow!

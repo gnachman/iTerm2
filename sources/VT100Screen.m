@@ -943,6 +943,8 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [intervalTree_ release];
     intervalTree_ = [[IntervalTree alloc] init];
     [self reloadMarkCache];
+    self.lastCommandMark = nil;
+    [delegate_ screenDidClearScrollbackBuffer:self];
 }
 
 - (void)appendScreenChars:(screen_char_t *)line

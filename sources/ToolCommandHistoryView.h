@@ -25,5 +25,6 @@
 - (void)shutdown;
 - (void)updateCommands;
 - (iTermCommandHistoryCommandUseMO *)selectedCommandUse;
+- (void)removeSelection;
 
 @end

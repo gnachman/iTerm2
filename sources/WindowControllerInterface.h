@@ -276,6 +276,8 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 
 - (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session;
 
+- (void)tabDidClearScrollbackBufferInSession:(PTYSession *)session;
+
 #pragma mark - Instant replay
 
 // Begin instant replay on a session.

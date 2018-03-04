@@ -4,6 +4,7 @@
 #import "VT100Token.h"
 
 @class VT100RemoteHost;
+@class VT100Screen;
 @class iTermColorMap;
 @class iTermSelection;
 
@@ -164,6 +165,9 @@
 
 // Remove highlights of search results.
 - (void)screenClearHighlights;
+
+// Scrollback buffer deleted
+- (void)screenDidClearScrollbackBuffer:(VT100Screen *)screen;
 
 // Called when the mouse reporting mode changes.
 - (void)screenMouseModeDidChange;

@@ -16,5 +16,6 @@
 @property(nonatomic, readonly) NSTableView *tableView;
 
 - (void)updateCapturedOutput;
+- (void)removeSelection;
 
 @end

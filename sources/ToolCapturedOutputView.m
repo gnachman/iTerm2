@@ -140,6 +140,13 @@ static const CGFloat kButtonHeight = 23;
     [super dealloc];
 }
 
+- (void)removeSelection {
+    [mark_ autorelease];
+    mark_ = nil;
+    [tableView_ selectRowIndexes:[NSIndexSet indexSet] byExtendingSelection:NO];
+    [self updateCapturedOutput];
+}
+
 - (void)updateCapturedOutput {
     iTermToolWrapper *wrapper = self.toolWrapper;
     ToolCommandHistoryView *commandHistoryView = [wrapper.delegate commandHistoryView];

@@ -4862,4 +4862,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (void)sessionDidClearScrollbackBuffer:(PTYSession *)session {
+    [realParentWindow_ tabDidClearScrollbackBufferInSession:session];
+}
+
 @end
