@@ -11,34 +11,49 @@
 
 NSString *const iTermPowerManagerStateDidChange = @"iTermPowerManagerStateDidChange";
 
-@implementation iTermPowerManager
+@implementation iTermPowerManager {
+    CFRunLoopRef _runLoop;
+    CFRunLoopSourceRef _runLoopSource;
+}
+
+static BOOL iTermPowerManagerIsConnectedToPower(void) {
+    CFStringRef source = IOPSGetProvidingPowerSourceType(NULL);
+    return [@kIOPMACPowerKey isEqualToString:(__bridge NSString *)(source)];
+}
+
+static void iTermPowerManagerSourceDidChange(void *context) {
+    iTermPowerManager* pm = (__bridge iTermPowerManager *)(context);
+    [pm setConnected:iTermPowerManagerIsConnectedToPower()];
+}
 
 + (instancetype)sharedInstance {
-    static iTermPowerManager *instance;
+    static iTermPowerManager *sharedInstance = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] initPrivate];
+        sharedInstance = [[self alloc] initPrivate];
     });
-    return instance;
+    return sharedInstance;
 }
 
 - (instancetype)initPrivate {
     self = [super init];
     if (self) {
-        [self updateCharging];
-        [NSTimer it_scheduledTimerWithTimeInterval:5 repeats:YES block:^(NSTimer * _Nonnull timer) {
-            BOOL before = _connectedToPower;
-            [self updateCharging];
-            if (_connectedToPower != before) {
-                [[NSNotificationCenter defaultCenter] postNotificationName:iTermPowerManagerStateDidChange object:nil];
-            }
-        }];
+        _runLoop = CFRunLoopGetMain();
+        _runLoopSource = IOPSCreateLimitedPowerNotification(iTermPowerManagerSourceDidChange,
+                                                            (__bridge void *)(self));
+        _connectedToPower = iTermPowerManagerIsConnectedToPower();
+        if (_runLoop && _runLoopSource){
+            CFRunLoopAddSource(_runLoop, _runLoopSource, kCFRunLoopDefaultMode);
+        }
     }
     return self;
 }
 
-- (void)updateCharging {
-    _connectedToPower = (IOPSGetTimeRemainingEstimate() == kIOPSTimeRemainingUnlimited);
+- (void)setConnected:(BOOL)connected {
+    if (_connectedToPower != connected) {
+        _connectedToPower = connected;
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermPowerManagerStateDidChange object:nil];
+    }
 }
 
 @end
