@@ -25,9 +25,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @property (nonatomic) iTermMetalUnderlineDescriptor underlineDescriptor;
 @property (nonatomic, strong) id<MTLTexture> backgroundTexture;
+@property (nonatomic, strong) id<MTLTexture> tempTexture;
 @property (nonatomic) VT100GridCoord debugCoord;
 @property (nonatomic, strong) id<MTLBuffer> colorsBuffer;  // iTermCellColors, to be populated by iTermColorComputer
-@property (nonatomic, copy) id<MTLRenderCommandEncoder> (^cycleRenderEncoder)(void);
+@property (nonatomic, copy) id<MTLRenderCommandEncoder> (^blitBlock)(id<MTLTexture> source, id<MTLTexture> dest);
 @property (nonatomic, strong) iTermData *lines;  // screen_char_t array
 
 @end

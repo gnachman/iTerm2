@@ -39,7 +39,9 @@ NS_ASSUME_NONNULL_BEGIN
         NSImage *image = [NSImage imageNamed:@"BackgroundStripes"];
         _size = image.size;
         _texture = [_metalRenderer textureFromImage:image context:nil];
-        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
+        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                                name:@"Broadcast stripes vertices"
+                                                          bufferSize:sizeof(iTermVertex) * 6];
     }
     return self;
 }

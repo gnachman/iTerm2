@@ -130,6 +130,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
             buffer = bestMatch;
         } else {
             buffer = [_device newBufferWithLength:size options:MTLResourceStorageModeShared];
+            buffer.label = self.name;
         }
         [context addBuffer:buffer pool:self];
         [context addWastedSpace:buffer.length - size];
@@ -174,6 +175,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
             // size was larger than the largest item
             NSLog(@"%@ allocating a new buffer of size %d (%d outstanding)", _name, (int)size, (int)_numberOutstanding);
             buffer = [_device newBufferWithBytes:bytes length:size options:MTLResourceStorageModeShared];
+            buffer.label = self.name;
         }
         [context addBuffer:buffer pool:self];
         [context addWastedSpace:buffer.length - size];
@@ -202,9 +204,11 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
+                          name:(NSString *)name
                     bufferSize:(size_t)bufferSize {
     self = [super init];
     if (self) {
+        _name = [name copy];
         _device = device;
         _bufferSize = bufferSize;
         _buffers = [NSMutableArray array];
@@ -230,6 +234,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
             [_buffers removeLastObject];
         } else {
             buffer = [_device newBufferWithLength:_bufferSize options:MTLResourceStorageModeShared];
+            buffer.label = self.name;
         }
         [context addBuffer:buffer pool:self];
         return buffer;
@@ -254,6 +259,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
             }
         } else {
             buffer = [_device newBufferWithBytes:bytes length:_bufferSize options:MTLResourceStorageModeShared];
+            buffer.label = self.name;
         }
         [context addBuffer:buffer pool:self];
         return buffer;

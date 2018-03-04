@@ -30,8 +30,12 @@ NS_ASSUME_NONNULL_BEGIN
                                                               blending:[[iTermMetalBlending alloc] init]
                                                         piuElementSize:0
                                                    transientStateClass:[iTermMarginRendererTransientState class]];
-        _colorPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
-        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float2) * 6 * 4];
+        _colorPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                             name:@"Color"
+                                                       bufferSize:sizeof(vector_float4)];
+        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                                name:@"Vertices"
+                                                          bufferSize:sizeof(vector_float2) * 6 * 4];
     }
     return self;
 }

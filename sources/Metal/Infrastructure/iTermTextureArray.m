@@ -3,6 +3,7 @@
 #import "DebugLogging.h"
 #import "iTermTexture.h"
 #import "iTermTextureArray.h"
+#import "NSMutableData+iTerm.h"
 #import <CoreImage/CoreImage.h>
 
 @implementation iTermTextureArray {
@@ -124,6 +125,17 @@
                   withBytes:bitmap.data.bytes
                 bytesPerRow:bitmap.size.width * 4
               bytesPerImage:bitmap.size.height * bitmap.size.width * 4];
+}
+
+- (void)fillWhite {
+    NSMutableData *data = [NSMutableData uninitializedDataWithLength:_texture.width * 4 * _texture.height];
+    memset(data.mutableBytes, 0xff, data.length);
+    [_texture replaceRegion:MTLRegionMake2D(0, 0, _texture.width, _texture.height)
+                mipmapLevel:0
+                      slice:0
+                  withBytes:data.bytes
+                bytesPerRow:_texture.width * 4
+              bytesPerImage:_texture.width * 4 * _texture.height];
 }
 
 - (BOOL)setSlice:(NSUInteger)slice withImage:(NSImage *)nsimage {

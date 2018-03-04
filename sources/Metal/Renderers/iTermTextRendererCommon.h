@@ -21,7 +21,7 @@ typedef NS_ENUM(int, iTermASCIITextRendererStat) {
     iTermASCIITextRendererStatNewDims,
     iTermASCIITextRendererStatNewQuad,
     iTermASCIITextRendererStatNewConfig,
-    iTermASCIITextRendererStatCycleRenderEncoder,
+    iTermASCIITextRendererStatBlit,
 
     iTermASCIITextRendererStatCount
 };

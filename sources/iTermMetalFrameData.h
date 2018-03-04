@@ -138,6 +138,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) id<MTLBuffer> debugBuffer;
 @property (nonatomic, readonly) NSMutableArray<iTermPooledTexture *> *pooledTextures;
 
+// When blending antialiased text, we must blit the drawable to a temporary texture, sample colors
+// it and blend them in the fragment shader, and draw the result to the drawable.
+@property (nonatomic, strong) id<MTLTexture> tempTexture;
+
 // When drawing to an intermediate texture there may be two passes (i.e., two render encoders)
 @property (nonatomic) int currentPass;
 

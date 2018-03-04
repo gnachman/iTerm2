@@ -9,6 +9,7 @@
 
 #import "iTermASCIITexture.h"
 #import "iTermData.h"
+#import "iTermMetalGlyphKey.h"
 #import "iTermTextRenderer.h"
 #import "NSDictionary+iTerm.h"
 #import "NSMutableData+iTerm.h"
@@ -59,22 +60,47 @@
             @(c.urlCode)];
 }
 
+- (NSString *)formatColor:(iTermCellColors *)color {
+    return [NSString stringWithFormat:@"[nonascii=%@ textColor=%@ backgroundColor=%@ underlineColor=%@ underlineStyle=%@ useThinStrokes=%@]",
+            @(color->nonascii),
+            iTermStringFromColorVectorFloat4(color->textColor),
+            iTermStringFromColorVectorFloat4(color->backgroundColor),
+            iTermStringFromColorVectorFloat4(color->underlineColor),
+            @(color->underlineStyle),
+            @(color->useThinStrokes)];
+}
+
 - (void)writeDebugInfoToFolder:(NSURL *)folder {
     [super writeDebugInfoToFolder:folder];
     @autoreleasepool {
+        NSMutableString *s = [NSMutableString string];
         screen_char_t *allLines = reinterpret_cast<screen_char_t *>(self.lines.mutableBytes);
         for (int i = 0; i < self.cellConfiguration.gridSize.height; i++) {
             // Write out screen chars
-            NSMutableString *s = [NSMutableString string];
             int width = self.cellConfiguration.gridSize.width + 1;
             const screen_char_t *line = &allLines[width * i];
             for (int j = 0; j + 1 < width; j++) {
-                [s appendString:[self.class formatScreenChar:line[j]]];
+                [s appendFormat:@"(%4d, %4d): %@\n", j, i, [self formatScreenChar:line[j]]];
             }
-            NSMutableString *name = [NSMutableString stringWithFormat:@"screen_char_t.%04d.txt", (int)i];
-            [s writeToURL:[folder URLByAppendingPathComponent:name] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+            [s appendString:@"\n"];
         }
+        [s writeToURL:[folder URLByAppendingPathComponent:@"screen_char_t.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
     }
+
+    @autoreleasepool {
+        NSMutableString *s = [NSMutableString string];
+        iTermCellColors *colors = reinterpret_cast<iTermCellColors *>(self.colorsBuffer.contents);
+        for (int i = 0; i < self.cellConfiguration.gridSize.height; i++) {
+            // Write out screen chars
+            int width = self.cellConfiguration.gridSize.width + 1;
+            for (int j = 0; j + 1 < width; j++) {
+                [s appendFormat:@"(%4d, %4d): %@\n", j, i, [self formatColor:&colors[i * width + j]]];
+            }
+            [s appendString:@"\n"];
+        }
+        [s writeToURL:[folder URLByAppendingPathComponent:@"colors.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    }
+
     NSString *s = [NSString stringWithFormat:@"backgroundTexture=%@\nasciiUnderlineDescriptor=%@\n",
                    _backgroundTexture,
                    iTermMetalUnderlineDescriptorDescription(&_underlineDescriptor)];
@@ -133,9 +159,15 @@
         _screenCharPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
                                                                        capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1
                                                                            name:@"ASCII screen_char_t"];
-        _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextureDimensions)];
-        _configPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermASCIITextConfiguration)];
-        _quadPool =  [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
+        _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                                  name:@"Dimensions"
+                                                            bufferSize:sizeof(iTermTextureDimensions)];
+        _configPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                              name:@"Config"
+                                                        bufferSize:sizeof(iTermASCIITextConfiguration)];
+        _quadPool =  [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                             name:@"Quad"
+                                                       bufferSize:sizeof(iTermVertex) * 6];
 
         // Use a generic color model for blending. No need to use a buffer pool here because this is only
         // created once.
@@ -272,16 +304,15 @@
       @(iTermTextureIndexThinBold):       [tState.asciiTextureGroup asciiTextureForAttributes:B | T].textureArray.texture,
       @(iTermTextureIndexThinItalic):     [tState.asciiTextureGroup asciiTextureForAttributes:I | T].textureArray.texture,
       @(iTermTextureIndexThinBoldItalic): [tState.asciiTextureGroup asciiTextureForAttributes:B | I | T].textureArray.texture,
-      @(iTermTextureIndexBackground):     tState.backgroundTexture,
+      @(iTermTextureIndexBackground):     tState.tempTexture,
       };
-    assert(tState.cellConfiguration.usingIntermediatePass);
     return textures;
 }
 
-- (id<MTLRenderCommandEncoder>)newRenderEncoder:(iTermASCIITextRendererTransientState *)tState {
+- (id<MTLRenderCommandEncoder>)newRenderEncoderAfterBlittingToTempTextureWithState:(iTermASCIITextRendererTransientState *)tState {
     __block id<MTLRenderCommandEncoder> renderEncoder;
-    [tState measureTimeForStat:iTermASCIITextRendererStatCycleRenderEncoder ofBlock:^{
-        renderEncoder = tState.cycleRenderEncoder();
+    [tState measureTimeForStat:iTermASCIITextRendererStatBlit ofBlock:^{
+        renderEncoder = tState.blitBlock(tState.backgroundTexture, tState.tempTexture);
         [self createPipelineState:tState];
     }];
     return renderEncoder;
@@ -291,7 +322,7 @@
                transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermASCIITextRendererTransientState *tState = transientState;
 
-    id<MTLRenderCommandEncoder> renderEncoder = [self newRenderEncoder:tState];
+    id<MTLRenderCommandEncoder> renderEncoder = [self newRenderEncoderAfterBlittingToTempTextureWithState:tState];
     NSDictionary<NSNumber *, id<MTLTexture>> *textures = [self newTexturesForState:tState];
 
     id<MTLBuffer> textureDimensionsBuffer;
@@ -307,7 +338,7 @@
                                                                     bytes:tState.lines.mutableBytes];
 
     [self drawPassEven:YES tState:tState config:configBuffer textureDimensions:textureDimensionsBuffer renderEncoder:renderEncoder textures:textures screenChars:screenChars];
-    renderEncoder = [self newRenderEncoder:tState];
+    renderEncoder = [self newRenderEncoderAfterBlittingToTempTextureWithState:tState];
     [self drawPassEven:NO tState:tState config:configBuffer textureDimensions:textureDimensionsBuffer renderEncoder:renderEncoder textures:textures screenChars:screenChars];
 }
 

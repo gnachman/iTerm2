@@ -228,7 +228,6 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
     // cell's background color in colorMap[offset + bwColor * 255] (where offset is the beginning
     // of the lookup table for the current text/bg color combination).
     const float4 backgroundColor = static_cast<float4>(drawable.sample(textureSampler, in.backgroundTextureCoordinate));
-
     if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         // No text in this pixel. But we might need to draw some background here.
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone &&

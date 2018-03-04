@@ -219,6 +219,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                         piuElementSize:0
                                                    transientStateClass:self.transientStateClass];
         _descriptionPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                                   name:@"Description"
                                                              bufferSize:sizeof(iTermCursorDescription)];
     }
     return self;

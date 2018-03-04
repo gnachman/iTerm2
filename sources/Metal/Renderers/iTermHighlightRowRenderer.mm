@@ -70,7 +70,9 @@ namespace iTerm2 {
                                                               blending:[[iTermMetalBlending alloc] init]
                                                         piuElementSize:0
                                                    transientStateClass:[iTermHighlightRowRendererTransientState class]];
-        _colorPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
+        _colorPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                             name:@"Color"
+                                                       bufferSize:sizeof(vector_float4)];
     }
     return self;
 }

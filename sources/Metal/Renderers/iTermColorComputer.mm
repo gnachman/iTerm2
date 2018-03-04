@@ -63,11 +63,15 @@
         _bitmapPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
                                                                    capacity:categories * (iTermMetalDriverMaximumNumberOfFramesInFlight + 1)
                                                                        name:@"Bit fields"];
-        _configurationPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermColorsConfiguration)];
-        _debugBufferPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermMetalDebugBuffer)];
+        _configurationPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                                     name:@"Configuration"
+                                                               bufferSize:sizeof(iTermColorsConfiguration)];
+        _debugBufferPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                                   name:@"Debug"
+                                                             bufferSize:sizeof(iTermMetalDebugBuffer)];
         _outputPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
                                                                    capacity:iTermMetalDriverMaximumNumberOfFramesInFlight + 1
-                                                                       name:@"Color outputd"];
+                                                                       name:@"ComputedColors"];
     }
     return self;
 }

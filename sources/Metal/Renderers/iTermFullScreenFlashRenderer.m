@@ -38,7 +38,9 @@
                                                fragmentFunctionName:@"iTermFullScreenFlashFragmentShader"
                                                            blending:[[iTermMetalBlending alloc] init]
                                                 transientStateClass:[iTermFullScreenFlashRendererTransientState class]];
-        _colorBufferPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
+        _colorBufferPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                                   name:@"Color"
+                                                             bufferSize:sizeof(vector_float4)];
     }
     return self;
 }

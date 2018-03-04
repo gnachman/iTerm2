@@ -38,6 +38,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                      index:(NSInteger)destinationIndex
                    blitter:(id<MTLBlitCommandEncoder>)blitter;
 - (MTLOrigin)offsetForIndex:(NSInteger)index;
+- (void)fillWhite;
 
 @end
 

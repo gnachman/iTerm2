@@ -67,7 +67,6 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     NSMutableArray<iTermTextRendererCachedQuad *> *_quadCache;
     CGSize _cellSizeForQuadCache;
 
-    iTermMetalBufferPool *_emptyBuffers;
     iTermMetalBufferPool *_verticesPool;
     iTermMetalBufferPool *_dimensionsPool;
     iTermMetalMixedSizeBufferPool *_piuPool;
@@ -122,9 +121,12 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         _cellRenderer.formatterDelegate = self;
 
         _quadCache = [NSMutableArray array];
-        _emptyBuffers = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:1];
-        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
-        _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextureDimensions)];
+        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                                name:@"Vertices"
+                                                          bufferSize:sizeof(iTermVertex) * 6];
+        _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                                  name:@"Dimensions"
+                                                            bufferSize:sizeof(iTermTextureDimensions)];
 
         // Allow the pool to reserve up to this many bytes. Work backward to find the largest number
         // of buffers we are OK with keeping permanently allocated. By having enough characters on

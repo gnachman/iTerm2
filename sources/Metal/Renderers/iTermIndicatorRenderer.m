@@ -57,7 +57,9 @@ NS_ASSUME_NONNULL_BEGIN
         _textures = [NSMutableDictionary dictionary];
         _indicatorDescriptors = [NSMutableArray array];
         _identifierToTextureMap = [NSMutableDictionary dictionary];
-        _alphaBufferPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(float)];
+        _alphaBufferPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                                   name:@"Indicator alpha"
+                                                             bufferSize:sizeof(float)];
     }
     return self;
 }

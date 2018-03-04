@@ -29,11 +29,11 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
                                                           textureHeight:cellSize.height
                                                             arrayLength:iTermASCIITextureCapacity
                                                                  device:device];
-        _textureArray.texture.label = [NSString stringWithFormat:@"ASCII texture %@%@%@",
+        _textureArray.texture.label = [NSString stringWithFormat:@"ASCIITexture%@%@%@",
                                        (attributes & iTermASCIITextureAttributesBold) ? @"Bold" : @"",
                                        (attributes & iTermASCIITextureAttributesItalic) ? @"Italic" : @"",
                                        (attributes & iTermASCIITextureAttributesThinStrokes) ? @"ThinStrokes" : @""];
-
+        [_textureArray fillWhite];
         for (int i = iTermASCIITextureMinimumCharacter; i <= iTermASCIITextureMaximumCharacter; i++) {
             NSDictionary<NSNumber *, iTermCharacterBitmap *> *dict = creation(i, attributes);
             iTermCharacterBitmap *left = dict[@(iTermImagePartFromDeltas(-1, 0))];

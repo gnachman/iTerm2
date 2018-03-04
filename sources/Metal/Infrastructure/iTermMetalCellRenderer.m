@@ -104,7 +104,9 @@ NS_ASSUME_NONNULL_BEGIN
     if (self) {
         _piuElementSize = piuElementSize;
         _transientStateClass = transientStateClass;
-        _offsetBuffers = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float2)];
+        _offsetBuffers = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                                 name:@"Offset"
+                                                           bufferSize:sizeof(vector_float2)];
     }
     return self;
 }

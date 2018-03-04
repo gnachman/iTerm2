@@ -170,7 +170,9 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
         _fragmentFunctionName = [fragmentFunctionName copy];
         _blending = blending;
         _transientStateClass = transientStateClass;
-        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
+        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                                name:@"Vertices"
+                                                          bufferSize:sizeof(iTermVertex) * 6];
         _pipelineStates = [NSMutableDictionary dictionary];
     }
     return self;

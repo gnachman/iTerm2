@@ -30,8 +30,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalBufferPool : NSObject
 
 @property (nonatomic) size_t bufferSize;
+@property (nonatomic, readonly) NSString *name;
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device
+                          name:(NSString *)name
                     bufferSize:(size_t)bufferSize NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 

@@ -39,7 +39,9 @@
                                                         piuElementSize:1
                                                    transientStateClass:[iTermBackgroundColorRendererTransientState class]];
         _cellRenderer.formatterDelegate = self;
-        _configPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermBackgroundColorConfiguration)];
+        _configPool = [[iTermMetalBufferPool alloc] initWithDevice:device
+                                                              name:@"Config"
+                                                        bufferSize:sizeof(iTermBackgroundColorConfiguration)];
     }
     return self;
 }
