@@ -38,6 +38,9 @@ NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 SVNDIR=~/iterm2-website
 git log > $SVNDIR/source/appcasts/nightly_changes.txt
 
+CASK_DATE=$(echo -n $COMPACTDATE | sed -e 's/-nightly//')
+CASK_VERSION=$(cat version.txt | sed -e "s/%(extra)s/$CASK_DATE/")
+
 cd build/Nightly
 
 # For the purposes of auto-update, the app's folder must be named iTerm.app since Sparkle won't accept a name change.
@@ -46,6 +49,8 @@ mv iTerm2.app iTerm.app
 zip -ry iTerm2-${NAME}.zip iTerm.app
 
 SparkleSign nightly.xml nightly_template.xml
+
+cask-repair --cask-version $CASK_VERSION iterm2-nightly
 
 scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/nightly/iTerm2-${NAME}.zip || die "scp zip"
 ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@iterm2.com "./newnightly.sh iTerm2-${NAME}.zip" || die "ssh"
