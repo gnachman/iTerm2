@@ -40,6 +40,7 @@ git log > $SVNDIR/source/appcasts/nightly_changes.txt
 
 CASK_DATE=$(echo -n $COMPACTDATE | sed -e 's/-nightly//')
 CASK_VERSION=$(cat version.txt | sed -e "s/%(extra)s/$CASK_DATE/")
+CASK_VERSION=$(echo $CASK_VERSION | sed -e "s/\\./_/g")
 
 cd build/Nightly
 
