@@ -33,8 +33,6 @@ typedef struct {
     bool bold;
     bool italic;
     bool thin;
-#warning DNS
-    bool even;
 } iTermASCIITextVertexFunctionOutput;
 
 
@@ -62,8 +60,9 @@ float2 NormalizedTextureOffset(int i, float2 cellSize, float2 atlasSize) {
 
 // i is CodeIndex(screen_char_t.code).
 float2 CellOffset(int i, uint2 gridSize, float2 cellSize, float2 offset) {
-    float2 coord = float2(i % gridSize.x,
-                          gridSize.y - 1 - i / gridSize.y);
+    int width = gridSize.x + 1;
+    float2 coord = float2(i % width,
+                          gridSize.y - 1 - i / width);
     return coord * cellSize + offset;
 }
 
@@ -88,7 +87,6 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     }
 
     if (*mask) {
-        out.even = false;
         // want odds
         if ((i & 1) == 0) {
             out.discard = true;
@@ -96,7 +94,6 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
             return out;
         }
     } else {
-        out.even = true;
         // want evens
         if ((i & 1) == 1) {
             out.discard = true;
@@ -132,7 +129,7 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.underlineStyle = colors[i].underlineStyle;
     out.underlineColor = colors[i].underlineColor;
 
-    out.cellOffset = CellOffset(x, config->gridSize, config->cellSize, *offset);
+    out.cellOffset = CellOffset(i, config->gridSize, config->cellSize, *offset);
     out.viewportSize = viewportSize;
     out.scale = config->scale;
 
@@ -185,6 +182,16 @@ texture2d<half> GetTexture(bool bold,
     }
 }
 
+static bool
+InCenterThird(float2 clipSpacePosition,
+              float2 viewportSize,
+              float2 cellOffset,
+              float2 cellSize) {
+    float originOnScreenInPixelSpace = clipSpacePosition.x - 0.5;
+    float originOfCellInPixelSpace = originOnScreenInPixelSpace - cellOffset.x;
+    return (originOfCellInPixelSpace >= 0 && originOfCellInPixelSpace < cellSize.x);
+}
+
 fragment float4
 iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                              texture2d<half> plainTexture [[ texture(iTermTextureIndexPlain) ]],
@@ -200,7 +207,7 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                              constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
     if (in.discard) {
         discard_fragment();
-        return float4(0,0,0,0);
+        return float4(0, 0, 0, 0);
     }
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
@@ -224,7 +231,8 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
 
     if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         // No text in this pixel. But we might need to draw some background here.
-        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
+        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone &&
+            InCenterThird(in.clipSpacePosition.xy, in.viewportSize, in.cellOffset, dimensions->cellSize)) {
             const float weight = ComputeWeightOfUnderline(in.underlineStyle,
                                                           in.clipSpacePosition.xy,
                                                           in.viewportSize,
@@ -245,6 +253,7 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
             }
         }
         discard_fragment();
+        return float4(0, 0, 0, 0);
     } else {
         return RemapColor(in.textColor, backgroundColor, bwColor, colorModels);
     }
