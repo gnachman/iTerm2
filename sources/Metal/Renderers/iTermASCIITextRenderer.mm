@@ -241,7 +241,7 @@
     __block id<MTLBuffer> textureDimensionsBuffer;
     [tState measureTimeForStat:iTermASCIITextRendererStatNewDims ofBlock:^{
         textureDimensionsBuffer = [_dimensionsPool requestBufferFromContext:tState.poolContext
-                                                                  withBytes:&textureDimensions
+                                                                  withBytes:textureDimensions
                                                              checkIfChanged:YES];
         textureDimensionsBuffer.label = @"ASCII dimensions";
     }];
