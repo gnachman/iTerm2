@@ -1,13 +1,16 @@
 #import "CPKSwatchView.h"
 #import "NSObject+CPK.h"
 
-@implementation CPKSwatchView
+@implementation CPKSwatchView {
+    NSImage *_checkerboard;
+}
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
         self.cornerRadius = 2;
         self.borderColor = [NSColor grayColor];
+        _checkerboard = [self cpk_imageNamed:@"SwatchCheckerboard"];
     }
     return self;
 }
@@ -28,7 +31,7 @@
     [path addClip];
 
     if (self.color) {
-        [[NSColor colorWithPatternImage:[self cpk_imageNamed:@"SwatchCheckerboard"]] set];
+        [[NSColor colorWithPatternImage:_checkerboard] set];
         NSRect offset = [self convertRect:self.bounds toView:nil];
         [[NSGraphicsContext currentContext] setPatternPhase:offset.origin];
         NSRectFill(rect);

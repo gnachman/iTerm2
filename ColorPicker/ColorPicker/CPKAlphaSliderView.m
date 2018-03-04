@@ -5,7 +5,9 @@
 @property(nonatomic) NSImageView *indicatorView;
 @end
 
-@implementation CPKAlphaSliderView
+@implementation CPKAlphaSliderView {
+    NSImage *_checkerboard;
+}
 
 - (instancetype)initWithFrame:(NSRect)frame
                         alpha:(CGFloat)alpha
@@ -14,6 +16,7 @@
     self = [super initWithFrame:frame value:alpha block:block];
     if (self) {
         self.color = color;
+        _checkerboard = [self cpk_imageNamed:@"SwatchCheckerboard"];
     }
     return self;
 }
@@ -21,7 +24,7 @@
 - (void)drawRect:(NSRect)dirtyRect {
     [super drawRect:dirtyRect];
     NSBezierPath *path = [self boundingPath];
-    [[NSColor colorWithPatternImage:[self cpk_imageNamed:@"SwatchCheckerboard"]] set];
+    [[NSColor colorWithPatternImage:_checkerboard] set];
     [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint(1, 2)];
     [path fill];
 
