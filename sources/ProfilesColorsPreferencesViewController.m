@@ -64,6 +64,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet CPKColorWell *_guideColor;
 
     IBOutlet NSPopUpButton *_presetsPopupButton;
+    IBOutlet NSView *_bwWarning1;
+    IBOutlet NSView *_bwWarning2;
 }
 
 + (NSArray<NSString *> *)presetNames {
@@ -156,9 +158,10 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [self updateColorControlsEnabled]; };
 
-    [self defineControl:_minimumContrast
-                    key:KEY_MINIMUM_CONTRAST
-                   type:kPreferenceInfoTypeSlider];
+    info = [self defineControl:_minimumContrast
+                           key:KEY_MINIMUM_CONTRAST
+                          type:kPreferenceInfoTypeSlider];
+    info.observer = ^() { [self maybeWarnAboutExcessiveContrast]; };
 
     [self defineControl:_cursorBoost
                     key:KEY_CURSOR_BOOST
@@ -168,7 +171,14 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                     key:KEY_USE_CURSOR_GUIDE
                    type:kPreferenceInfoTypeCheckbox];
 
+    [self maybeWarnAboutExcessiveContrast];
     [self updateColorControlsEnabled];
+}
+
+- (void)maybeWarnAboutExcessiveContrast {
+    const BOOL hidden = ([self floatForKey:KEY_MINIMUM_CONTRAST] < 0.97);
+    _bwWarning1.hidden = hidden;
+    _bwWarning2.hidden = hidden;
 }
 
 - (void)updateColorControlsEnabled {

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="13196" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="13771" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="13196"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="13771"/>
         <capability name="box content view" minToolsVersion="7.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -1436,6 +1436,8 @@ DQ
                 <outlet property="_backgroundColor" destination="2285" id="11Q-XD-XYI"/>
                 <outlet property="_badgeColor" destination="A9a-sA-67D" id="djP-Vq-hVi"/>
                 <outlet property="_boldColor" destination="2272" id="zhk-0J-m9y"/>
+                <outlet property="_bwWarning1" destination="CJu-FZ-K1D" id="gy1-mn-JYT"/>
+                <outlet property="_bwWarning2" destination="eve-jv-6xP" id="jYs-b3-a3w"/>
                 <outlet property="_cursorBoost" destination="evF-qt-9wo" id="zxW-aa-c8U"/>
                 <outlet property="_cursorColor" destination="2280" id="bFx-TT-7QV"/>
                 <outlet property="_cursorColorLabel" destination="2283" id="wkr-Fv-k2e"/>
@@ -1928,7 +1930,7 @@ DQ
             <point key="canvasLocation" x="986.5" y="-712"/>
         </customView>
         <customView id="SCN-fS-hNB" userLabel="Prefs - Profiles - Colors" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="559" height="307"/>
+            <rect key="frame" x="0.0" y="0.0" width="569" height="320"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2284">
@@ -2061,7 +2063,7 @@ DQ
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4899">
                     <rect key="frame" x="10" y="127" width="128" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Minimum contrast:" id="4900">
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Minimum Contrast:" id="4900">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -2346,6 +2348,24 @@ DQ
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Cursor Colors" id="bpz-eJ-H00">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField hidden="YES" horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" id="eve-jv-6xP">
+                    <rect key="frame" x="173" y="113" width="165" height="14"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="All text will be black or white" id="9wh-0G-sEv">
+                        <font key="font" metaFont="systemBold" size="11"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField hidden="YES" horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" id="CJu-FZ-K1D">
+                    <rect key="frame" x="157" y="111" width="23" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="⚠️" id="zNa-1V-sCK">
+                        <font key="font" metaFont="smallSystem"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
