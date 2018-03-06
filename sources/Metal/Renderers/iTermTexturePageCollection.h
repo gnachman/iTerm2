@@ -54,16 +54,18 @@ namespace iTerm2 {
         // Adds a collection of glyph entries for a glyph key, allocating a new texture page if
         // needed.
         std::vector<const GlyphEntry *> *add(int column,
-                                             const GlyphKey &glyphKey,
+                                             const iTermMetalGlyphKey &glyphKey,
                                              iTermMetalBufferPoolContext *context,
-                                             NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^creator)(int, BOOL *)) {
+                                             NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^creator)(const iTermMetalGlyphKey *glyphKey, BOOL *)) {
             BOOL emoji;
-            NSDictionary<NSNumber *, iTermCharacterBitmap *> *images = creator(column, &emoji);
+            NSDictionary<NSNumber *, iTermCharacterBitmap *> *images = creator(&glyphKey, &emoji);
             std::vector<const GlyphEntry *> *result = new std::vector<const GlyphEntry *>();
-            _pages[glyphKey] = result;
+
+            const iTerm2::GlyphKey key(&glyphKey);
+            _pages[key] = result;
             for (NSNumber *partNumber in images) {
                 iTermCharacterBitmap *image = images[partNumber];
-                const GlyphEntry *entry = internal_add(partNumber.intValue, glyphKey, image, emoji, context);
+                const GlyphEntry *entry = internal_add(partNumber.intValue, key, image, emoji, context);
                 result->push_back(entry);
             }
             return result;

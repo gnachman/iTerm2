@@ -46,6 +46,9 @@ typedef enum iTermTextureIndex {
     iTermTextureIndexThinItalic = 8,
     iTermTextureIndexThinBoldItalic = 9,
 
+    // Subpixel model texture
+    iTermTextureIndexColorModels = 10,
+
 } iTermTextureIndex;
 
 typedef NS_ENUM(int, iTermComputeIndex) {

@@ -30,7 +30,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                      row:(int)row
        markedRangeOnLine:(NSRange)markedRangeOnLine
                  context:(iTermMetalBufferPoolContext *)context
-                creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation;
+                creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(const iTermMetalGlyphKey *glyphKey, BOOL *emoji))creation;
 - (void)willDraw;
 - (void)didComplete;
 

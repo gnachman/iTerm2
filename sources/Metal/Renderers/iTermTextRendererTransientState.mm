@@ -95,7 +95,6 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
     return [@[ @"text.newQuad",
                @"text.newPIU",
                @"text.newDims",
-               @"text.subpixel",
                @"text.draw" ] objectAtIndex:i];
 }
 
@@ -130,7 +129,7 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
                      row:(int)row
        markedRangeOnLine:(NSRange)markedRangeOnLine
                  context:(iTermMetalBufferPoolContext *)context
-                creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
+                creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(const iTermMetalGlyphKey *glyphKey, BOOL *emoji))creation {
     const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.mutableBytes;
 
     std::map<int, int> lastRelations;
@@ -151,13 +150,14 @@ typedef std::pair<unsigned char, unsigned char> iTermColorComponentPair;
                 row:(int)row
                   x:(int)x
             context:(iTermMetalBufferPoolContext *)context
-           creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
+           creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(const iTermMetalGlyphKey *glyphKey, BOOL *emoji))creation {
     iTermMetalGlyphKey temp = *key;
     temp.thinStrokes = thinStrokes;
-    const iTerm2::GlyphKey glyphKey(&temp);
-    std::vector<const iTerm2::GlyphEntry *> *entries = _texturePageCollectionSharedPointer.object->find(glyphKey);
+
+    iTerm2::GlyphKey cppGlyphKey(&temp);
+    std::vector<const iTerm2::GlyphEntry *> *entries = _texturePageCollectionSharedPointer.object->find(cppGlyphKey);
     if (!entries) {
-        entries = _texturePageCollectionSharedPointer.object->add(x, glyphKey, context, creation);
+        entries = _texturePageCollectionSharedPointer.object->add(x, temp, context, creation);
         if (!entries) {
             return;
         }

@@ -985,15 +985,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         NSRange markedRangeOnLine = imeInfo ? [imeInfo markedRangeOnLine:rowData.y width:frameData.gridSize.width] : NSMakeRange(NSNotFound, 0);
 
-        iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         if (!_textRenderer.rendererDisabled) {
             [textState setGlyphKeysData:rowData.keysData
                                   count:rowData.numberOfDrawableGlyphs
                                     row:rowData.y
                       markedRangeOnLine:markedRangeOnLine
                                 context:textState.poolContext
-                               creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(int x, BOOL *emoji) {
-                                   return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
+                               creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(const iTermMetalGlyphKey *glyphKey, BOOL *emoji) {
+                                   return [frameData.perFrameState metalImagesForGlyphKey:glyphKey
                                                                                      size:cellSize
                                                                                     scale:scale
                                                                                     emoji:emoji];

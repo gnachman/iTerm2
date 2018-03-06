@@ -62,85 +62,6 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     return out;
 }
 
-// Used when there is no intermediate pass and we know text will always be
-// rendered over a solid background color. This is much faster because the
-// shader is quite simple. It uses 256 bytes of buffer for each combination of
-// foreground/background color component.
-fragment float4
-iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_in]],
-                                       texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
-                                       constant unsigned char *colorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
-                                       constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
-    if (in.discard) {
-        discard_fragment();
-        return float4(0, 0, 0, 0);
-    }
-    constexpr sampler textureSampler(mag_filter::linear,
-                                     min_filter::linear);
-
-    half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
-
-    if (!in.recolor) {
-        // Emoji code path
-        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            const float weight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
-                                                                  in.clipSpacePosition.xy,
-                                                                  in.viewportSize,
-                                                                  in.cellOffset,
-                                                                  dimensions->underlineOffset,
-                                                                  dimensions->underlineThickness,
-                                                                  dimensions->textureSize,
-                                                                  in.textureOffset,
-                                                                  in.textureCoordinate,
-                                                                  dimensions->cellSize,
-                                                                  texture,
-                                                                  textureSampler,
-                                                                  dimensions->scale);
-            return mix(static_cast<float4>(bwColor),
-                       in.underlineColor,
-                       weight);
-        } else {
-            return static_cast<float4>(bwColor);
-        }
-    } else if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
-        // Background shows through completely. Not emoji.
-        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            const float weight = ComputeWeightOfUnderline(in.underlineStyle,
-                                                          in.clipSpacePosition.xy,
-                                                          in.viewportSize,
-                                                          in.cellOffset,
-                                                          dimensions->underlineOffset,
-                                                          dimensions->underlineThickness,
-                                                          dimensions->textureSize,
-                                                          in.textureOffset,
-                                                          in.textureCoordinate,
-                                                          dimensions->cellSize,
-                                                          texture,
-                                                          textureSampler,
-                                                          dimensions->scale);
-            if (weight > 0) {
-                return mix(in.backgroundColor,
-                           in.underlineColor,
-                           weight);
-            } else {
-                discard_fragment();
-            }
-        } else {
-            discard_fragment();
-        }
-    }
-    const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
-
-    // Base index for this color model
-    const int3 i = in.colorModelIndex * 256;
-    // Find RGB values to map colors in the black-on-white glyph to
-    const uchar4 rgba = uchar4(colorModels[i.x + bwIntIndices.x],
-                               colorModels[i.y + bwIntIndices.y],
-                               colorModels[i.z + bwIntIndices.z],
-                               255);
-    return static_cast<float4>(rgba) / 255;
-}
-
 // This path is slow but can deal with any combination of foreground/background
 // color components. It's used when there's a background image, a badge,
 // broadcast image stripes, or anything else nontrivial behind the text.
@@ -148,7 +69,7 @@ fragment float4
 iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]],
                                     texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
                                     texture2d<half> drawable [[ texture(iTermTextureIndexBackground) ]],
-                                    constant unsigned char *colorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
+                                    texture2d<half> colorModelsTexture [[ texture(iTermTextureIndexColorModels) ]],
                                     constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
     if (in.discard) {
         discard_fragment();
@@ -207,6 +128,6 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
         discard_fragment();
     }
 
-    return RemapColor(in.textColor, backgroundColor, bwColor, colorModels);
+    return RemapColor(in.textColor, backgroundColor, bwColor, colorModelsTexture);
 }
 

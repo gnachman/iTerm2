@@ -140,17 +140,17 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     return out;
 }
 
-texture2d<half> GetTexture(bool bold,
-                           bool italic,
-                           bool thin,
-                           texture2d<half> plainTexture,
-                           texture2d<half> boldTexture,
-                           texture2d<half> italicTexture,
-                           texture2d<half> boldItalicTexture,
-                           texture2d<half> thinTexture,
-                           texture2d<half> thinBoldTexture,
-                           texture2d<half> thinItalicTexture,
-                           texture2d<half> thinBoldItalicTexture) {
+inline texture2d<half> GetTexture(bool bold,
+                                  bool italic,
+                                  bool thin,
+                                  texture2d<half> plainTexture,
+                                  texture2d<half> boldTexture,
+                                  texture2d<half> italicTexture,
+                                  texture2d<half> boldItalicTexture,
+                                  texture2d<half> thinTexture,
+                                  texture2d<half> thinBoldTexture,
+                                  texture2d<half> thinItalicTexture,
+                                  texture2d<half> thinBoldItalicTexture) {
     if (bold) {
         if (italic) {
             if (thin) {
@@ -203,7 +203,7 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                              texture2d<half> thinItalicTexture [[ texture(iTermTextureIndexThinItalic) ]],
                              texture2d<half> thinBoldItalicTexture [[ texture(iTermTextureIndexThinBoldItalic) ]],
                              texture2d<half> drawable [[ texture(iTermTextureIndexBackground) ]],
-                             constant unsigned char *colorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
+                             texture2d<half> colorModelsTexture [[ texture(iTermTextureIndexColorModels) ]],
                              constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
     if (in.discard) {
         discard_fragment();
@@ -223,7 +223,6 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                                          thinItalicTexture,
                                          thinBoldItalicTexture);
     half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
-
     // TODO: Some fragments could avoid the expensive call to RemapColor and simply look up the
     // cell's background color in colorMap[offset + bwColor * 255] (where offset is the beginning
     // of the lookup table for the current text/bg color combination).
@@ -254,6 +253,9 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
         discard_fragment();
         return float4(0, 0, 0, 0);
     } else {
-        return RemapColor(in.textColor, backgroundColor, bwColor, colorModels);
+        return RemapColor(in.textColor,
+                          backgroundColor,
+                          bwColor,
+                          colorModelsTexture);
     }
 }

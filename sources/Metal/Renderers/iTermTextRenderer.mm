@@ -13,6 +13,7 @@ extern "C" {
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalDebugInfo.h"
 #import "iTermPIUArray.h"
+#import "iTermTexture.h"
 #import "iTermTexturePageCollection.h"
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermTextRendererTransientState.h"
@@ -61,7 +62,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
 
 @implementation iTermTextRenderer {
     iTermMetalCellRenderer *_cellRenderer;
-    id<MTLBuffer> _models;
+    id<MTLTexture> _models;
 
     iTermTexturePageCollectionSharedPointer *_texturePageCollectionSharedPointer;
     NSMutableArray<iTermTextRendererCachedQuad *> *_quadCache;
@@ -72,6 +73,60 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     iTermMetalMixedSizeBufferPool *_piuPool;
 }
 
+/*
+ * Input is organized as
+ *  Index   Text  Bg   Sample
+ *      0     0   0        0
+ *                       ...
+ *                       255
+ *    256         1        0
+ *                       ...
+ *                       255
+ *  256*2         2        0
+ *              ...
+ * 256*17        17        0
+ *                       ...
+ *                       255
+ * 256*18      1   0       0
+ *               ...
+ *
+ * Output is organized as a 2d texture that lets us use the GPU's bilinear
+ * interpolation. It's about 33% faster overall on my iMac.
+ *
+ *                sample=0 sample=1 ...
+ *                text ->  text->
+ *  background    0...255  0...255
+ *  |        0    XXXXXXX  XXXXXXX     XXXXXXX
+ *  V      ...    XXXXXXX  XXXXXXX ... XXXXXXX
+ *          17    XXXXXXX  XXXXXXX     XXXXXXX
+ *
+ * Width = 256 * 18
+ * Height = 18
+ * Bytes per sample = 1
+ */
++ (NSData *)transformedData:(NSData *)input {
+    const unsigned char *inputBytes = reinterpret_cast<const unsigned char *>(input.bytes);
+    unsigned char (^load)(int, int, int) = ^unsigned char(int text, int background, int bwSample) {
+        const size_t i = 256 * (18 * text + background) + bwSample;
+        return inputBytes[i];
+    };
+
+    NSMutableData *output = [NSMutableData uninitializedDataWithLength:18 * 18 * 256];
+    unsigned char *outputBytes = reinterpret_cast<unsigned char *>(output.mutableBytes);
+    void (^store)(int, int, int, unsigned char) = ^void(int text, int background, int bwSample, unsigned char value) {
+        const size_t i = 18 * (bwSample + 256 * background) + text;
+        outputBytes[i] = value;
+    };
+    for (int t = 0; t < 18; t ++) {
+        for (int b = 0; b < 18; b ++) {
+            for (int s = 0; s < 256; s++) {
+                store(t, b, s, load(t, b, s));
+            }
+        }
+    }
+    return output;
+}
+
 + (NSData *)subpixelModelData {
     static NSData *subpixelModelData;
     static dispatch_once_t onceToken;
@@ -79,7 +134,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         NSMutableData *data = [NSMutableData data];
         // The fragment function assumes we use the value 17 here. It's
         // convenient that 17 evenly divides 255 (17 * 15 = 255).
-        float stride = 255.0/17.0;
+        const float stride = 255.0/17.0;
         for (float textColor = 0; textColor < 256; textColor += stride) {
             for (float backgroundColor = 0; backgroundColor < 256; backgroundColor += stride) {
                 iTermSubpixelModel *model = [[iTermSubpixelModelBuilder sharedInstance] modelForForegoundColor:MIN(MAX(0, textColor / 255.0), 1)
@@ -87,26 +142,13 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
                 [data appendData:model.table];
             }
         }
-        subpixelModelData = data;
+        subpixelModelData = [self transformedData:data];
     });
     return subpixelModelData;
 }
 
 - (iTermMetalFrameDataStat)createTransientStateStat {
     return iTermMetalFrameDataStatPqCreateTextTS;
-}
-
-- (id<MTLBuffer>)subpixelModelsForState:(iTermTextRendererTransientState *)tState {
-    // Use a generic color model for blending. No need to use a buffer pool here because this is only
-    // created once.
-    if (_models == nil) {
-        NSData *subpixelModelData = [iTermTextRenderer subpixelModelData];
-        _models = [_cellRenderer.device newBufferWithBytes:subpixelModelData.bytes
-                                                    length:subpixelModelData.length
-                                                   options:MTLResourceStorageModeManaged];
-        _models.label = @"Subpixel models";
-    }
-    return _models;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -127,6 +169,25 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device
                                                                   name:@"Dimensions"
                                                             bufferSize:sizeof(iTermTextureDimensions)];
+#warning TODO: This code is duplicated in ASCII
+        // Use a generic color model for blending. No need to use a buffer pool here because this is only
+        // created once.
+        NSData *subpixelModelData = [iTermTextRenderer subpixelModelData];
+
+        MTLTextureDescriptor *textureDescriptor =
+            [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatR8Unorm
+                                                               width:18 * 256
+                                                              height:18
+                                                           mipmapped:NO];
+        _models = [_cellRenderer.device newTextureWithDescriptor:textureDescriptor];
+        _models.label = @"Subpixel Models";
+        [_models replaceRegion:MTLRegionMake2D(0, 0, 18 * 256, 18)
+                   mipmapLevel:0
+                     withBytes:subpixelModelData.bytes
+                   bytesPerRow:18 * 256];
+        [iTermTexture setBytesPerRow:18*256
+                         rawDataSize:18 * 256 * 18
+                          forTexture:_models];
 
         // Allow the pool to reserve up to this many bytes. Work backward to find the largest number
         // of buffers we are OK with keeping permanently allocated. By having enough characters on
@@ -153,13 +214,8 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         [_quadCache removeAllObjects];
         _cellSizeForQuadCache = configuration.cellSize;
     }
-    // NOTE: Any time a glyph overflows its bounds into a neighboring cell it's possible the strokes will intersect.
-    // I haven't thought of a way to make that look good yet without having to do one draw pass per overflow glyph that
-    // blends using the output of the preceding passes.
-    
-//    _cellRenderer.fragmentFunctionName = configuration.usingIntermediatePass ? @"iTermTextFragmentShaderWithBlending" : @"iTermTextFragmentShaderSolidBackground";
 
-#warning TODO: Build a cache of solid color models to use when possible.
+#warning TODO: Bring back the code that assumes a solid background color. It's probably a lot faster.
     _cellRenderer.fragmentFunctionName = @"iTermTextFragmentShaderWithBlending";
     __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =
         [_cellRenderer createTransientStateForCellConfiguration:configuration
@@ -261,11 +317,6 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     __block iTermTextureDimensions previousTextureDimensions;
     __block id<MTLBuffer> previousTextureDimensionsBuffer = nil;
 
-    __block id<MTLBuffer> subpixelModelsBuffer;
-    [tState measureTimeForStat:iTermTextRendererStatSubpixelModel ofBlock:^{
-        subpixelModelsBuffer = [self subpixelModelsForState:tState];
-    }];
-
     [tState enumerateDraws:^(const iTermTextPIU *pius, NSInteger instances, id<MTLTexture> texture, vector_uint2 textureSize, vector_uint2 cellSize, iTermMetalUnderlineDescriptor underlineDescriptor) {
         totalInstances += instances;
         __block id<MTLBuffer> vertexBuffer;
@@ -280,7 +331,8 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
             piuBuffer = [self piuBufferForPIUs:pius tState:tState instances:instances];
         }];
 
-        NSDictionary *textures = @{ @(iTermTextureIndexPrimary): texture };
+        NSDictionary *textures = @{ @(iTermTextureIndexPrimary): texture,
+                                    @(iTermTextureIndexColorModels): _models };
         if (tState.cellConfiguration.usingIntermediatePass) {
             textures = [textures dictionaryBySettingObject:tState.backgroundTexture forKey:@(iTermTextureIndexBackground)];
         }
@@ -321,8 +373,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
                                                      @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
                                                      @(iTermVertexInputCellColors): tState.colorsBuffer,
                                                      @(iTermVertexInputIndexOffset): tState.offsetBuffer }
-                                  fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): subpixelModelsBuffer,
-                                                     @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
+                                  fragmentBuffers:@{ @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
                                          textures:textures];
         }];
     }];

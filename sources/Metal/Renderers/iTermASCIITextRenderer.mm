@@ -11,6 +11,7 @@
 #import "iTermData.h"
 #import "iTermMetalGlyphKey.h"
 #import "iTermTextRenderer.h"
+#import "iTermTexture.h"
 #import "NSDictionary+iTerm.h"
 #import "NSMutableData+iTerm.h"
 #import "ScreenChar.h"
@@ -139,7 +140,7 @@
     iTermMetalBufferPool *_dimensionsPool;
     iTermMetalBufferPool *_configPool;
     iTermMetalBufferPool *_quadPool;
-    id<MTLBuffer> _models;
+    id<MTLTexture> _models;
     id<MTLBuffer> _evensBuffer;
     id<MTLBuffer> _oddsBuffer;
 }
@@ -172,15 +173,26 @@
         // Use a generic color model for blending. No need to use a buffer pool here because this is only
         // created once.
         NSData *subpixelModelData = [iTermTextRenderer subpixelModelData];
-        _models = [_cellRenderer.device newBufferWithBytes:subpixelModelData.bytes
-                                                    length:subpixelModelData.length
-                                                   options:MTLResourceStorageModeManaged];
+
+        MTLTextureDescriptor *textureDescriptor =
+            [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatR8Unorm
+                                                               width:18 * 256
+                                                              height:18
+                                                           mipmapped:NO];
+        _models = [_cellRenderer.device newTextureWithDescriptor:textureDescriptor];
+        _models.label = @"Subpixel Models";
+        [_models replaceRegion:MTLRegionMake2D(0, 0, 18 * 256, 18)
+                   mipmapLevel:0
+                     withBytes:subpixelModelData.bytes
+                   bytesPerRow:18 * 256];
+        [iTermTexture setBytesPerRow:18*256
+                         rawDataSize:18 * 256 * 18
+                          forTexture:_models];
 
         int oddsValue = 1;
         int evensValue = 0;
         _evensBuffer = [_cellRenderer.device newBufferWithBytes:&evensValue length:sizeof(evensValue) options:MTLResourceStorageModeShared];
         _oddsBuffer = [_cellRenderer.device newBufferWithBytes:&oddsValue length:sizeof(oddsValue) options:MTLResourceStorageModeShared];
-        _models.label = @"Subpixel models";
     }
     return self;
 }
@@ -305,7 +317,8 @@
       @(iTermTextureIndexThinItalic):     [tState.asciiTextureGroup asciiTextureForAttributes:I | T].textureArray.texture,
       @(iTermTextureIndexThinBoldItalic): [tState.asciiTextureGroup asciiTextureForAttributes:B | I | T].textureArray.texture,
       @(iTermTextureIndexBackground):     tState.tempTexture,
-      };
+      @(iTermTextureIndexColorModels):    _models,
+    };
     return textures;
 }
 
@@ -361,8 +374,7 @@
                          numberOfVertices:6
                              numberOfPIUs:screenChars.length / sizeof(screen_char_t)
                             vertexBuffers:[vertexBuffers dictionaryBySettingObject:even ? _evensBuffer : _oddsBuffer forKey:@(iTermVertexInputMask)]
-                          fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): _models,
-                                             @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
+                          fragmentBuffers:@{ @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
                                  textures:textures];
 }
 
