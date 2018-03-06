@@ -33,7 +33,9 @@
 #import "VT100ScreenMark.h"
 
 // Set the `index`th bit in an unsigned char array, `array`.
-#define ITERM_SET_BIT(array, index) (array[index / 8] |= (1 << (index & 7)))
+static inline void iTermSetBit(unsigned char *array, int index) {
+    array[index / 8] |= (1 << (index & 7));
+}
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -1156,13 +1158,13 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 - (iTermData *)dataForIndexSetArray:(NSArray<NSIndexSet *> *)indexSetArray {
-    int stride = (_gridSize.width + 8) / 8;
-    iTermData *data = [iTermData dataOfLength:stride * _gridSize.height];
+    const int bitsPerLine = _gridSize.width;
+    iTermData *data = [iTermData dataOfLength:(bitsPerLine * _gridSize.height + 8) / 8];
     bzero(data.mutableBytes, data.length);
     [indexSetArray enumerateObjectsUsingBlock:^(NSIndexSet * _Nonnull indexSet, NSUInteger y, BOOL * _Nonnull stop) {
-        unsigned char *line = data.mutableBytes + y * stride;
+        const int offset = y * bitsPerLine;
         [indexSet enumerateIndexesUsingBlock:^(NSUInteger x, BOOL * _Nonnull stop) {
-            ITERM_SET_BIT(line, x);
+            iTermSetBit(data.mutableBytes, x + offset);
         }];
     }];
     return data;
@@ -1175,7 +1177,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     [indexSetDictionary enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull yNumber, NSIndexSet * _Nonnull indexSet, BOOL * _Nonnull stop) {
         unsigned char *line = data.mutableBytes + yNumber.integerValue * stride;
         [indexSet enumerateIndexesUsingBlock:^(NSUInteger x, BOOL * _Nonnull stop) {
-            ITERM_SET_BIT(line, x);
+            iTermSetBit(line, x);
         }];
     }];
     return data;
@@ -1201,7 +1203,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         unsigned char *line = data.mutableBytes + yNumber.integerValue * stride;
         NSRange range = rangeValue.rangeValue;
         for (NSUInteger i = 0; i < range.length; i++) {
-            ITERM_SET_BIT(line, i + range.location);
+            iTermSetBit(line, i + range.location);
         }
     }];
     return data;

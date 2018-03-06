@@ -34,7 +34,7 @@ iTermColorKernelFunction(device unsigned char *colorMap [[ buffer(iTermVertexInp
 
     const int x = gid.x;
     const int i = x + (config->gridSize.x + 1) * gid.y;
-    const int b = x + (config->gridSize.x + 8) * gid.y;
+    const int b = x + config->gridSize.x * gid.y;
 
     const int offset = gid.y * (width + 1);
     device screen_char_t *line = line_ALL + offset * SIZEOF_SCREEN_CHAR_T;
