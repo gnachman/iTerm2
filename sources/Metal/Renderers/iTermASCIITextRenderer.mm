@@ -303,19 +303,9 @@
     return textureDimensions;
 }
 - (NSDictionary<NSNumber *, id<MTLTexture>> *)newTexturesForState:(iTermASCIITextRendererTransientState *)tState {
-    static const iTermASCIITextureAttributes B = iTermASCIITextureAttributesBold;
-    static const iTermASCIITextureAttributes I = iTermASCIITextureAttributesItalic;
-    static const iTermASCIITextureAttributes T = iTermASCIITextureAttributesThinStrokes;
     NSDictionary<NSNumber *, id<MTLTexture>> *textures =
     @{
-      @(iTermTextureIndexPlain):          [tState.asciiTextureGroup asciiTextureForAttributes:0].textureArray.texture,
-      @(iTermTextureIndexBold):           [tState.asciiTextureGroup asciiTextureForAttributes:B].textureArray.texture,
-      @(iTermTextureIndexItalic):         [tState.asciiTextureGroup asciiTextureForAttributes:I].textureArray.texture,
-      @(iTermTextureIndexBoldItalic):     [tState.asciiTextureGroup asciiTextureForAttributes:B | I].textureArray.texture,
-      @(iTermTextureIndexThin):           [tState.asciiTextureGroup asciiTextureForAttributes:T].textureArray.texture,
-      @(iTermTextureIndexThinBold):       [tState.asciiTextureGroup asciiTextureForAttributes:B | T].textureArray.texture,
-      @(iTermTextureIndexThinItalic):     [tState.asciiTextureGroup asciiTextureForAttributes:I | T].textureArray.texture,
-      @(iTermTextureIndexThinBoldItalic): [tState.asciiTextureGroup asciiTextureForAttributes:B | I | T].textureArray.texture,
+      @(iTermTextureIndexASCIICompositeGlpyhs): tState.asciiTextureGroup.compositeTextureArray.texture,
       @(iTermTextureIndexBackground):     tState.tempTexture,
       @(iTermTextureIndexColorModels):    _models,
     };
@@ -386,6 +376,7 @@
                                                                         creationIdentifier:(id)creationIdentifier
                                                                                   creation:creation];
     if (![replacement isEqual:_asciiTextureGroup]) {
+        [replacement renderGlyphsToTexture];
         _asciiTextureGroup = replacement;
     }
 }

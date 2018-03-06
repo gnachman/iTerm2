@@ -10,6 +10,8 @@
 #import <Foundation/Foundation.h>
 #endif
 
+#define iTermASCIITextureGlyphsPerStyle 95
+
 typedef enum iTermVertexInputIndex {
     iTermVertexInputIndexVertices = 0,
     iTermVertexInputIndexViewportSize = 1,
@@ -36,15 +38,7 @@ typedef enum iTermTextureIndex {
     // A texture containing the background we're drawing over.
     iTermTextureIndexBackground = 1,
 
-    // Texture atlases used by the ASCII renderer
-    iTermTextureIndexPlain = 2,
-    iTermTextureIndexBold = 3,
-    iTermTextureIndexItalic = 4,
-    iTermTextureIndexBoldItalic = 5,
-    iTermTextureIndexThin = 6,
-    iTermTextureIndexThinBold = 7,
-    iTermTextureIndexThinItalic = 8,
-    iTermTextureIndexThinBoldItalic = 9,
+    iTermTextureIndexASCIICompositeGlpyhs = 2,  // texture with ASCII glyphs in every style (all combinations of bold, italic, thin)
 
     // Subpixel model texture
     iTermTextureIndexColorModels = 10,

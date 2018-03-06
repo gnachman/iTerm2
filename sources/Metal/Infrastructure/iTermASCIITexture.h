@@ -59,7 +59,6 @@ typedef NS_OPTIONS(int, iTermASCIITextureParts) {
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermASCIITexture : NSObject
 
-@property (nonatomic, readonly) iTermTextureArray *textureArray;
 @property (nonatomic, readonly) iTermASCIITextureAttributes attributes;
 // C array that maps an ASCII code to which parts are present
 @property (nonatomic, readonly) iTermASCIITextureParts *parts;
@@ -68,6 +67,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (instancetype)initWithAttributes:(iTermASCIITextureAttributes)attributes
                           cellSize:(CGSize)cellSize
                             device:(id<MTLDevice>)device
+                      textureArray:(iTermTextureArray *)textureArray
+                     startingIndex:(int)startingIndex
                           creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull (^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
 
 @end
@@ -82,10 +83,12 @@ typedef NS_ENUM(int, iTermASCIITextureOffset) {
 
 // Convert a drawable ASCII character into an index into the texture array. Note that control
 // character, SPACE, and DEL (127) are not accepted.
-NS_INLINE int iTermASCIITextureIndexOfCode(char code, iTermASCIITextureOffset offset) {
+//
+// base gives the index where glyphs of this typeface begin in a composite texture array.
+NS_INLINE int iTermASCIITextureIndexOfCode(int base, char code, iTermASCIITextureOffset offset) {
     ITDebugAssert(code >= iTermASCIITextureMinimumCharacter);
     ITDebugAssert(code <= iTermASCIITextureMaximumCharacter);
-    return offset + iTermASCIITextureOffsetCount * (code - iTermASCIITextureMinimumCharacter);
+    return base + offset + iTermASCIITextureOffsetCount * (code - iTermASCIITextureMinimumCharacter);
 }
 
 // Implements isEqual:
@@ -100,14 +103,16 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, copy, readonly) NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^creation)(char, iTermASCIITextureAttributes);
 @property (nonatomic, readonly) id creationIdentifier;
 @property (nonatomic, readonly) vector_float2 atlasSize;
+@property (nonatomic, readonly) iTermTextureArray *compositeTextureArray;
 
 - (instancetype)initWithCellSize:(CGSize)cellSize
                           device:(id<MTLDevice>)device
               creationIdentifier:(id)creationIdentifier
                         creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
+
 - (instancetype)init NS_UNAVAILABLE;
 
-- (iTermASCIITexture *)asciiTextureForAttributes:(iTermASCIITextureAttributes)attributes;
+- (void)renderGlyphsToTexture;
 
 @end
 

@@ -116,7 +116,12 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
 
     device screen_char_t *sct = SCIndex(line, i);
     const unichar code = SCCode(sct);
-    out.textureOffset = NormalizedTextureOffset(CodeIndex(code),
+
+    out.bold = SCBold(sct);
+    out.thin = colors[i].useThinStrokes;
+    out.italic = SCItalic(sct);
+    const int style = (out.bold ? 1 : 0) | (out.italic ? 2 : 0) | (out.thin ? 4 : 0);
+    out.textureOffset = NormalizedTextureOffset(CodeIndex(code + style * iTermASCIITextureGlyphsPerStyle),
                                                 config->cellSize,
                                                 config->atlasSize);
     out.textureCoordinate = vertexArray[vertexID].textureCoordinate + out.textureOffset;
@@ -133,53 +138,7 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.viewportSize = viewportSize;
     out.scale = config->scale;
 
-    out.bold = SCBold(sct);
-    out.thin = colors[i].useThinStrokes;
-    out.italic = SCItalic(sct);
-
     return out;
-}
-
-inline texture2d<half> GetTexture(bool bold,
-                                  bool italic,
-                                  bool thin,
-                                  texture2d<half> plainTexture,
-                                  texture2d<half> boldTexture,
-                                  texture2d<half> italicTexture,
-                                  texture2d<half> boldItalicTexture,
-                                  texture2d<half> thinTexture,
-                                  texture2d<half> thinBoldTexture,
-                                  texture2d<half> thinItalicTexture,
-                                  texture2d<half> thinBoldItalicTexture) {
-    if (bold) {
-        if (italic) {
-            if (thin) {
-                return thinBoldItalicTexture;
-            } else {
-                return boldItalicTexture;
-            }
-        } else {
-            if (thin) {
-                return thinBoldTexture;
-            } else {
-                return boldTexture;
-            }
-        }
-    } else {
-        if (italic) {
-            if (thin) {
-                return thinItalicTexture;
-            } else {
-                return italicTexture;
-            }
-        } else {
-            if (thin) {
-                return thinTexture;
-            } else {
-                return plainTexture;
-            }
-        }
-    }
 }
 
 static bool
@@ -194,14 +153,7 @@ InCenterThird(float2 clipSpacePosition,
 
 fragment float4
 iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
-                             texture2d<half> plainTexture [[ texture(iTermTextureIndexPlain) ]],
-                             texture2d<half> boldTexture [[ texture(iTermTextureIndexBold) ]],
-                             texture2d<half> italicTexture [[ texture(iTermTextureIndexItalic) ]],
-                             texture2d<half> boldItalicTexture [[ texture(iTermTextureIndexBoldItalic) ]],
-                             texture2d<half> thinTexture [[ texture(iTermTextureIndexThin) ]],
-                             texture2d<half> thinBoldTexture [[ texture(iTermTextureIndexThinBold) ]],
-                             texture2d<half> thinItalicTexture [[ texture(iTermTextureIndexThinItalic) ]],
-                             texture2d<half> thinBoldItalicTexture [[ texture(iTermTextureIndexThinBoldItalic) ]],
+                             texture2d<half> glyphs [[ texture(iTermTextureIndexASCIICompositeGlpyhs) ]],
                              texture2d<half> drawable [[ texture(iTermTextureIndexBackground) ]],
                              texture2d<half> colorModelsTexture [[ texture(iTermTextureIndexColorModels) ]],
                              constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
@@ -211,18 +163,7 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
     }
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
-    texture2d<half> texture = GetTexture(in.bold,
-                                         in.italic,
-                                         in.thin,
-                                         plainTexture,
-                                         boldTexture,
-                                         italicTexture,
-                                         boldItalicTexture,
-                                         thinTexture,
-                                         thinBoldTexture,
-                                         thinItalicTexture,
-                                         thinBoldItalicTexture);
-    half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
+    half4 bwColor = glyphs.sample(textureSampler, in.textureCoordinate);
     // TODO: Some fragments could avoid the expensive call to RemapColor and simply look up the
     // cell's background color in colorMap[offset + bwColor * 255] (where offset is the beginning
     // of the lookup table for the current text/bg color combination).
@@ -241,7 +182,7 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                                                           in.textureOffset,
                                                           in.textureCoordinate,
                                                           dimensions->cellSize,
-                                                          texture,
+                                                          glyphs,
                                                           textureSampler,
                                                           dimensions->scale);
             if (weight > 0) {
