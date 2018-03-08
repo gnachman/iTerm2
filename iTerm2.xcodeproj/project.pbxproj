@@ -9711,6 +9711,7 @@
 				);
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/sources";
 				"OTHER_CFLAGS[arch=*]" = "-DITERM_DEBUG=1";
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				OTHER_LDFLAGS = (
@@ -9777,6 +9778,7 @@
 					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/sources";
 				"OTHER_CFLAGS[arch=*]" = "";
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				OTHER_LDFLAGS = (
@@ -9842,6 +9844,7 @@
 					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/sources";
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
@@ -9920,6 +9923,7 @@
 					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/sources";
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				OTHER_LDFLAGS = (
@@ -9989,6 +9993,7 @@
 					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/sources";
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
@@ -10058,6 +10063,7 @@
 					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/sources";
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
@@ -10357,6 +10363,7 @@
 					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/sources";
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
@@ -10454,6 +10461,7 @@
 					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/sources";
 				"OTHER_CFLAGS[arch=*]" = "";
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				OTHER_LDFLAGS = (
