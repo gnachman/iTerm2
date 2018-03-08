@@ -23,16 +23,14 @@ typedef struct {
     float2 textureOffset;  // Normalized offset in texture.
     float2 textureCoordinate;
     float2 backgroundTextureCoordinate;
-    float4 textColor;
+    float4 scaledTextColor;
     float4 backgroundColor;
     float4 underlineColor;
     float2 cellOffset;  // Coordinate of bottom left of cell in pixel coordinates. 0,0 is the bottom left of the screen.
     int underlineStyle;  // should draw an underline? For some stupid reason the compiler won't let me set the type as iTermMetalGlyphAttributesUnderline
+
     float2 viewportSize;  // size of viewport in pixels. TODO: see if I can avoid passing this to fragment function.
     float scale;  // 2 for retina, 1 for non-retina
-    bool bold;
-    bool italic;
-    bool thin;
 } iTermASCIITextVertexFunctionOutput;
 
 
@@ -117,10 +115,7 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     device screen_char_t *sct = SCIndex(line, i);
     const unichar code = SCCode(sct);
 
-    out.bold = SCBold(sct);
-    out.thin = colors[i].useThinStrokes;
-    out.italic = SCItalic(sct);
-    const int style = (out.bold ? 1 : 0) | (out.italic ? 2 : 0) | (out.thin ? 4 : 0);
+    const int style = (SCBold(sct) ? 1 : 0) | (colors[i].useThinStrokes ? 2 : 0) | (SCItalic(sct) ? 4 : 0);
     out.textureOffset = NormalizedTextureOffset(CodeIndex(code + style * iTermASCIITextureGlyphsPerStyle),
                                                 config->cellSize,
                                                 config->atlasSize);
@@ -130,7 +125,7 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.backgroundTextureCoordinate.y = 1 - out.backgroundTextureCoordinate.y;
 
     out.backgroundColor = colors[i].backgroundColor;
-    out.textColor = colors[i].textColor;
+    out.scaledTextColor = colors[i].textColor * 17;
     out.underlineStyle = colors[i].underlineStyle;
     out.underlineColor = colors[i].underlineColor;
 
@@ -151,7 +146,7 @@ InCenterThird(float2 clipSpacePosition,
     return (originOfCellInPixelSpace >= 0 && originOfCellInPixelSpace < cellSize.x);
 }
 
-fragment float4
+fragment half4
 iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                              texture2d<half> glyphs [[ texture(iTermTextureIndexASCIICompositeGlpyhs) ]],
                              texture2d<half> drawable [[ texture(iTermTextureIndexBackground) ]],
@@ -159,7 +154,7 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                              constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
     if (in.discard) {
         discard_fragment();
-        return float4(0, 0, 0, 0);
+        return half4(0, 0, 0, 0);
     }
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
@@ -186,15 +181,15 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                                                           textureSampler,
                                                           dimensions->scale);
             if (weight > 0) {
-                return mix(backgroundColor,
-                           in.underlineColor,
-                           weight);
+                return static_cast<half4>(mix(backgroundColor,
+                                              in.underlineColor,
+                                              weight));
             }
         }
         discard_fragment();
-        return float4(0, 0, 0, 0);
+        return half4(0, 0, 0, 0);
     } else {
-        return RemapColor(in.textColor,
+        return RemapColor(in.scaledTextColor,
                           backgroundColor,
                           bwColor,
                           colorModelsTexture);

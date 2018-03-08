@@ -11,7 +11,7 @@ typedef struct {
     float4 clipSpacePosition [[position]];  // In vector function is normalized. In fragment function is in pixels, with a half pixel offset since it refers to the center of the pixel.
     float2 textureCoordinate;
     float2 backgroundTextureCoordinate;
-    float4 textColor;
+    float4 scaledTextColor;
     float4 backgroundColor;
     float4 underlineColor;
     bool recolor;
@@ -54,7 +54,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
 
     out.cellOffset = perInstanceUniforms[iid].offset.xy + offset[0];
 
-    out.textColor = cellColors[i].textColor;
+    out.scaledTextColor = cellColors[i].textColor * 17;
     out.backgroundColor = cellColors[i].backgroundColor;
     out.underlineColor = cellColors[i].underlineColor;
     out.underlineStyle = cellColors[i].underlineStyle;
@@ -65,7 +65,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
 // This path is slow but can deal with any combination of foreground/background
 // color components. It's used when there's a background image, a badge,
 // broadcast image stripes, or anything else nontrivial behind the text.
-fragment float4
+fragment half4
 iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]],
                                     texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
                                     texture2d<half> drawable [[ texture(iTermTextureIndexBackground) ]],
@@ -73,7 +73,7 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
                                     constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
     if (in.discard) {
         discard_fragment();
-        return float4(0, 0, 0, 0);
+        return half4(0, 0, 0, 0);
     }
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
@@ -97,11 +97,11 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
                                                                   texture,
                                                                   textureSampler,
                                                                   dimensions->scale);
-            return mix(static_cast<float4>(bwColor),
-                       in.underlineColor,
-                       weight);
+            return static_cast<half4>(mix(static_cast<float4>(bwColor),
+                                          in.underlineColor,
+                                          weight));
         } else {
-            return static_cast<float4>(bwColor);
+            return bwColor;
         }
     } else if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         // Background shows through completely. Not emoji.
@@ -120,14 +120,14 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
                                                           textureSampler,
                                                           dimensions->scale);
             if (weight > 0) {
-                return mix(backgroundColor,
-                           in.underlineColor,
-                           weight);
+                return static_cast<half4>(mix(backgroundColor,
+                                              in.underlineColor,
+                                              weight));
             }
         }
         discard_fragment();
     }
 
-    return RemapColor(in.textColor, backgroundColor, bwColor, colorModelsTexture);
+    return RemapColor(in.scaledTextColor, backgroundColor, bwColor, colorModelsTexture);
 }
 
