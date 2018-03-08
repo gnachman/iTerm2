@@ -1364,6 +1364,7 @@
 		A647E3A918C353C500450FA1 /* VT100StringParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3A718C353C500450FA1 /* VT100StringParser.h */; };
 		A647E3AE18C3588800450FA1 /* VT100ControlParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3AC18C3588800450FA1 /* VT100ControlParser.h */; };
 		A647E3B718C5884600450FA1 /* iTermObjectPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3B518C5884600450FA1 /* iTermObjectPool.h */; };
+		A648A87A2051A58300C27826 /* iTermTextShared.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6561A1E2039FCC200C36D66 /* iTermTextShared.metal */; };
 		A6543709203B89FB0040F74A /* iTermThinStrokes.h in Headers */ = {isa = PBXBuildFile; fileRef = A6543708203B89FB0040F74A /* iTermThinStrokes.h */; };
 		A654371F203B8C1F0040F74A /* iTermShaderTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = A67960C21F81FCA6008A42BC /* iTermShaderTypes.h */; };
 		A6543720203B8C1F0040F74A /* iTermBackgroundColor.metal in Sources */ = {isa = PBXBuildFile; fileRef = A67960BD1F81FCA5008A42BC /* iTermBackgroundColor.metal */; };
@@ -8911,6 +8912,7 @@
 				A6561A192039ED6900C36D66 /* iTermASCIIText.metal in Sources */,
 				A656857A2041F26F0018E37F /* iTermColorComputer.metal in Sources */,
 				A68AC8F61F0823100023A216 /* iTermFindOnPageHelperTest.m in Sources */,
+				A648A87A2051A58300C27826 /* iTermTextShared.metal in Sources */,
 				90A1E13B186F9EA4003EC3E8 /* AppleScriptTest.m in Sources */,
 				A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */,
 				A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */,
