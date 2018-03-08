@@ -118,6 +118,7 @@ typedef struct {
     float underlineOffset;  // Distance from bottom of cell to underline in pixels
     float underlineThickness;  // Thickness of underline in pixels
     float scale;  // 2 for retina, 1 for non retina
+    vector_uint2 viewportSize;
 } iTermTextureDimensions;
 
 typedef struct {

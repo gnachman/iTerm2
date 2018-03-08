@@ -28,9 +28,6 @@ typedef struct {
     float4 underlineColor;
     float2 cellOffset;  // Coordinate of bottom left of cell in pixel coordinates. 0,0 is the bottom left of the screen.
     int underlineStyle;  // should draw an underline? For some stupid reason the compiler won't let me set the type as iTermMetalGlyphAttributesUnderline
-
-    float2 viewportSize;  // size of viewport in pixels. TODO: see if I can avoid passing this to fragment function.
-    float scale;  // 2 for retina, 1 for non-retina
 } iTermASCIITextVertexFunctionOutput;
 
 
@@ -130,15 +127,12 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.underlineColor = colors[i].underlineColor;
 
     out.cellOffset = CellOffset(i, config->gridSize, config->cellSize, *offset);
-    out.viewportSize = viewportSize;
-    out.scale = config->scale;
 
     return out;
 }
 
 static bool
 InCenterThird(float2 clipSpacePosition,
-              float2 viewportSize,
               float2 cellOffset,
               float2 cellSize) {
     float originOnScreenInPixelSpace = clipSpacePosition.x - 0.5;
@@ -166,10 +160,10 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
     if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         // No text in this pixel. But we might need to draw some background here.
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone &&
-            InCenterThird(in.clipSpacePosition.xy, in.viewportSize, in.cellOffset, dimensions->cellSize)) {
+            InCenterThird(in.clipSpacePosition.xy, in.cellOffset, dimensions->cellSize)) {
             const float weight = ComputeWeightOfUnderline(in.underlineStyle,
                                                           in.clipSpacePosition.xy,
-                                                          in.viewportSize,
+                                                          static_cast<float2>(dimensions->viewportSize),
                                                           in.cellOffset,
                                                           dimensions->underlineOffset,
                                                           dimensions->underlineThickness,

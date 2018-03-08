@@ -298,7 +298,8 @@
         .cellSize = simd_make_float2(tState.cellConfiguration.cellSize.width, tState.cellConfiguration.cellSize.height),
         .underlineOffset = static_cast<float>(tState.cellConfiguration.cellSize.height - tState.underlineDescriptor.offset * tState.cellConfiguration.scale),
         .underlineThickness = static_cast<float>(tState.underlineDescriptor.thickness * tState.cellConfiguration.scale),
-        .scale = static_cast<float>(tState.cellConfiguration.scale)
+        .scale = static_cast<float>(tState.cellConfiguration.scale),
+        .viewportSize = tState.configuration.viewportSize
     };
     return textureDimensions;
 }
