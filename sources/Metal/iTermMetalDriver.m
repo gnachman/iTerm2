@@ -400,12 +400,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (void)addRowDataToFrameData:(iTermMetalFrameData *)frameData {
     for (int y = 0; y < frameData.gridSize.height; y++) {
+        const int columns = frameData.gridSize.width;
         iTermMetalRowData *rowData = [[iTermMetalRowData alloc] init];
         [frameData.rows addObject:rowData];
         rowData.y = y;
-        rowData.keysData = [iTermData dataOfLength:sizeof(iTermMetalGlyphKey) * _columns];
-        rowData.attributesData = [iTermData dataOfLength:sizeof(iTermMetalGlyphAttributes) * _columns];
-        rowData.backgroundColorRLEData = [iTermData dataOfLength:sizeof(iTermMetalBackgroundColorRLE) * _columns];
+        rowData.keysData = [iTermData dataOfLength:sizeof(iTermMetalGlyphKey) * columns];
+        rowData.attributesData = [iTermData dataOfLength:sizeof(iTermMetalGlyphAttributes) * columns];
+        rowData.backgroundColorRLEData = [iTermData dataOfLength:sizeof(iTermMetalBackgroundColorRLE) * columns];
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         int drawableGlyphs = 0;
         int rles = 0;
@@ -418,13 +419,17 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                           rleCount:&rles
                                          markStyle:&markStyle
                                                row:y
-                                             width:_columns
+                                             width:columns
                                     drawableGlyphs:&drawableGlyphs
                                               date:&date];
         rowData.backgroundColorRLEData.length = rles * sizeof(iTermMetalBackgroundColorRLE);
         rowData.date = date;
         rowData.numberOfBackgroundRLEs = rles;
         rowData.numberOfDrawableGlyphs = drawableGlyphs;
+        ITConservativeBetaAssert(drawableGlyphs <= rowData.keysData.length / sizeof(iTermMetalGlyphKey),
+                                 @"Have %@ drawable glyphs with %@ glyph keys",
+                                 @(drawableGlyphs),
+                                 @(rowData.keysData.length / sizeof(iTermMetalGlyphKey)));
         rowData.markStyle = markStyle;
 
         [frameData.debugInfo addRowData:rowData];
@@ -865,6 +870,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }
 
         if (!_textRenderer.rendererDisabled) {
+            ITConservativeBetaAssert(rowData.numberOfDrawableGlyphs * sizeof(iTermMetalGlyphKey) <= rowData.keysData.length,
+                                     @"Need %@ bytes of glyph keys but have %@",
+                                     @(rowData.numberOfDrawableGlyphs * sizeof(iTermMetalGlyphKey)),
+                                     @(rowData.keysData.length));
             [textState setGlyphKeysData:rowData.keysData
                                   count:rowData.numberOfDrawableGlyphs
                          attributesData:rowData.attributesData
@@ -931,10 +940,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                  (int)frameNumber,
                  (int)round(fps));
         int o = MAX(0, width - strlen(frame));
-        for (int i = count; i < o; i++) {
-            glyphKeys[o].drawable = NO;
-        }
-        for (int i = 0; frame[i]; i++, o++) {
+        for (int i = 0; frame[i] && o >= 0 && o < count; i++, o++) {
             glyphKeys[o].code = frame[i];
             glyphKeys[o].isComplex = NO;
             glyphKeys[o].boxDrawing = NO;
