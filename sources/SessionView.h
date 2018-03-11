@@ -123,6 +123,8 @@
 
 - (void)sessionViewHideMetalViewUntilNextFrame;
 
+- (void)sessionViewUserScrollDidChange:(BOOL)userScroll;
+
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>
@@ -134,6 +136,7 @@
 @property(nonatomic, readonly) iTermAnnouncementViewController *currentAnnouncement;
 @property(nonatomic, assign) id<iTermSessionViewDelegate> delegate;
 @property(nonatomic, readonly) PTYScrollView *scrollview;
+@property(nonatomic, readonly) PTYScroller *verticalScroller;
 @property(nonatomic, readonly) iTermMetalDriver *driver NS_AVAILABLE_MAC(10_11);
 @property(nonatomic, readonly) MTKView *metalView NS_AVAILABLE_MAC(10_11);
 

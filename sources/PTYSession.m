@@ -4773,7 +4773,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Perhaps some day transparency and ligatures will be supported.
     return ([iTermAdvancedSettingsModel useMetal] &&
             machineSupportsMetal &&
-            (![iTermAdvancedSettingsModel disableMetalWhenIdle] || _cadenceController.isActive) &&
+            (![iTermAdvancedSettingsModel disableMetalWhenIdle] || _cadenceController.isActive || _view.verticalScroller.userScroll) &&
             _textview.transparencyAlpha == 1 &&
             ![self ligaturesEnabledInEitherFont] &&
             ![PTYNoteViewController anyNoteVisible] &&
@@ -9226,6 +9226,10 @@ ITERM_WEAKLY_REFERENCEABLE
         _textview.suppressDrawing = NO;
         _view.metalView.alphaValue = 0;
     }
+}
+
+- (void)sessionViewUserScrollDidChange:(BOOL)userScroll {
+    [self.delegate sessionUpdateMetalAllowed];
 }
 
 #pragma mark - iTermCoprocessDelegate

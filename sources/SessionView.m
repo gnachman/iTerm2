@@ -56,7 +56,7 @@ static NSDate* lastResizeDate_;
 @end
 
 
-@interface SessionView () <iTermAnnouncementDelegate>
+@interface SessionView () <iTermAnnouncementDelegate, PTYScrollerDelegate>
 @property(nonatomic, retain) PTYScrollView *scrollview;
 @end
 
@@ -130,6 +130,7 @@ static NSDate* lastResizeDate_;
                                                                       aRect.size.width,
                                                                       aRect.size.height)
                                        hasVerticalScroller:NO];
+        self.verticalScroller.ptyScrollerDelegate = self;
         [_scrollview setAutoresizingMask:(NSViewWidthSizable | NSViewHeightSizable)];
 
         if (@available(macOS 10.11, *)) {
@@ -149,6 +150,9 @@ static NSDate* lastResizeDate_;
 
 - (void)dealloc {
     _inDealloc = YES;
+    if (self.verticalScroller.ptyScrollerDelegate == self) {
+        self.verticalScroller.ptyScrollerDelegate = nil;
+    }
     [_scrollview release];
     [_title removeFromSuperview];
     [self unregisterDraggedTypes];
@@ -615,6 +619,10 @@ static NSDate* lastResizeDate_;
     [_delegate sessionViewDidChangeWindow];
 }
 
+- (PTYScroller *)verticalScroller {
+    return [PTYScroller castFrom:self.scrollview.verticalScroller];
+}
+
 #pragma mark NSDraggingSource protocol
 
 - (void)draggedImage:(NSImage *)draggedImage movedTo:(NSPoint)screenPoint {
@@ -921,6 +929,12 @@ static NSDate* lastResizeDate_;
                        afterDelay:[[NSAnimationContext currentContext] duration]];
         }
     }
+}
+
+#pragma mark - PTYScrollerDelegate
+
+- (void)userScrollDidChange:(BOOL)userScroll {
+    [self.delegate sessionViewUserScrollDidChange:userScroll];
 }
 
 @end

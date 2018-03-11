@@ -47,7 +47,10 @@
     if (!userScroll && _userScroll) {
         _accumulatedDeltaY = 0;
     }
-    _userScroll = userScroll;
+    if (userScroll != _userScroll) {
+        _userScroll = userScroll;
+        [_ptyScrollerDelegate userScrollDidChange:userScroll];
+    }
 }
 
 - (void)mouseDown:(NSEvent *)theEvent {

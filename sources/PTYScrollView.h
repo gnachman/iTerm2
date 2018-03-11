@@ -29,8 +29,13 @@
 
 #import <Cocoa/Cocoa.h>
 
+@protocol PTYScrollerDelegate<NSObject>
+- (void)userScrollDidChange:(BOOL)userScroll;
+@end
+
 @interface PTYScroller : NSScroller
 
+@property(nonatomic, assign) id<PTYScrollerDelegate> ptyScrollerDelegate;
 @property(nonatomic, assign) BOOL userScroll;
 
 @end
