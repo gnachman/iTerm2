@@ -43,9 +43,9 @@ float ComputeWeightOfUnderlineForEmoji(int underlineStyle,  // iTermMetalGlyphAt
 
 // scaledTextColor is the text color multiplied by float4(17).
 static inline half4 RemapColor(float4 scaledTextColor,
-                                float4 backgroundColor_in,
-                                half4 bwColor_in,
-                                texture2d<half> models) {
+                               float4 backgroundColor_in,
+                               half4 bwColor_in,
+                               texture2d<half> models) {
     half4 bwColor = round(bwColor_in * 255) * 18 + 0.5;
     float4 backgroundColor = backgroundColor_in * 17 + 0.5;
 

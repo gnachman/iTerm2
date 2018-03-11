@@ -112,7 +112,7 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     device screen_char_t *sct = SCIndex(line, i);
     const unichar code = SCCode(sct);
 
-    const int style = (SCBold(sct) ? 1 : 0) | (colors[i].useThinStrokes ? 2 : 0) | (SCItalic(sct) ? 4 : 0);
+    const int style = (SCBold(sct) ? 1 : 0) | (SCItalic(sct) ? 2 : 0) | (colors[i].useThinStrokes ? 4 : 0);
     out.textureOffset = NormalizedTextureOffset(CodeIndex(code + style * iTermASCIITextureGlyphsPerStyle),
                                                 config->cellSize,
                                                 config->atlasSize);
