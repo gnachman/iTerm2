@@ -153,7 +153,7 @@ extern BOOL gDebugLogging;
     } \
   } while (0)
 #else  // BETA
-#define ITBetaAssert(condition, args...)
+#define ITConservativeBetaAssert(condition, args...)
 #endif
 
 void ToggleDebugLogging(void);

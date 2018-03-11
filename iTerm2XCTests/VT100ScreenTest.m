@@ -898,6 +898,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
 }
 
+- (void)screenDidClearScrollbackBuffer:(VT100Screen *)screen {
+}
 
 #pragma mark - iTermSelectionDelegate
 
