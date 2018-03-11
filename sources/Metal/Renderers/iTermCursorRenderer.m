@@ -1,5 +1,6 @@
 #import "iTermCursorRenderer.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermMetalBufferPool.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -289,7 +290,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width, 2 * tState.cellConfiguration.scale)
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width,
+                                                                  tState.configuration.scale * tState.cellConfiguration.scale)
                                            poolContext:tState.poolContext];
 }
 
@@ -299,8 +301,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(2, tState.cellConfiguration.cellSize.height)
-                                           poolContext:tState.poolContext];
+    const CGFloat width = [iTermAdvancedSettingsModel verticalBarCursorWidth];
+    tState.vertexBuffer =
+        [_cellRenderer newQuadOfSize:CGSizeMake(tState.configuration.scale * width,
+                                                tState.cellConfiguration.cellSize.height)
+                         poolContext:tState.poolContext];
 }
 
 @end
