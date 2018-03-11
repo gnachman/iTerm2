@@ -12,7 +12,6 @@ typedef struct {
     float2 textureCoordinate;
     float2 backgroundTextureCoordinate;
     half4 scaledTextColor;
-    float4 backgroundColor;
     half4 underlineColor;
     bool recolor;
     int3 colorModelIndex;
@@ -55,7 +54,6 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.cellOffset = perInstanceUniforms[iid].offset.xy + offset[0];
 
     out.scaledTextColor = static_cast<half4>(cellColors[i].textColor * 17);
-    out.backgroundColor = cellColors[i].backgroundColor;
     out.underlineColor = static_cast<half4>(cellColors[i].underlineColor);
     out.underlineStyle = cellColors[i].underlineStyle;
 
