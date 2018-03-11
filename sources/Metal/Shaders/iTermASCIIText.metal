@@ -26,7 +26,7 @@ typedef struct {
     half4 scaledTextColor;
     half4 underlineColor;
     float2 cellOffset;  // Coordinate of bottom left of cell in pixel coordinates. 0,0 is the bottom left of the screen.
-    int underlineStyle;  // should draw an underline? For some stupid reason the compiler won't let me set the type as iTermMetalGlyphAttributesUnderline
+    unsigned char underlineStyle;  // should draw an underline? For some stupid reason the compiler won't let me set the type as iTermMetalGlyphAttributesUnderline
 } iTermASCIITextVertexFunctionOutput;
 
 
