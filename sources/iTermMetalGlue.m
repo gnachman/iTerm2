@@ -251,9 +251,10 @@ static NSColor *ColorForVector(vector_float4 v) {
 }
 
 - (void)metalDriverDidProduceDebugInfo:(nonnull NSData *)archive {
-    [archive writeToFile:@"/tmp/iTerm2-frame-capture.zip" atomically:NO];
+    NSString *filename = @"/tmp/iTerm2-frame-capture.zip";
+    [archive writeToFile:filename atomically:NO];
+    [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:filename] ]];
 }
-
 
 @end
 
