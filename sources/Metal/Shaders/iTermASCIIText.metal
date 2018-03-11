@@ -23,7 +23,7 @@ typedef struct {
     float2 textureOffset;  // Normalized offset in texture.
     float2 textureCoordinate;
     float2 backgroundTextureCoordinate;
-    float4 scaledTextColor;
+    half4 scaledTextColor;
     float4 backgroundColor;
     float4 underlineColor;
     float2 cellOffset;  // Coordinate of bottom left of cell in pixel coordinates. 0,0 is the bottom left of the screen.
@@ -122,7 +122,7 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.backgroundTextureCoordinate.y = 1 - out.backgroundTextureCoordinate.y;
 
     out.backgroundColor = colors[i].backgroundColor;
-    out.scaledTextColor = colors[i].textColor * 17;
+    out.scaledTextColor = static_cast<half4>(colors[i].textColor * 17);
     out.underlineStyle = colors[i].underlineStyle;
     out.underlineColor = colors[i].underlineColor;
 

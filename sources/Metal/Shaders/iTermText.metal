@@ -11,7 +11,7 @@ typedef struct {
     float4 clipSpacePosition [[position]];  // In vector function is normalized. In fragment function is in pixels, with a half pixel offset since it refers to the center of the pixel.
     float2 textureCoordinate;
     float2 backgroundTextureCoordinate;
-    float4 scaledTextColor;
+    half4 scaledTextColor;
     float4 backgroundColor;
     float4 underlineColor;
     bool recolor;
@@ -54,7 +54,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
 
     out.cellOffset = perInstanceUniforms[iid].offset.xy + offset[0];
 
-    out.scaledTextColor = cellColors[i].textColor * 17;
+    out.scaledTextColor = static_cast<half4>(cellColors[i].textColor * 17);
     out.backgroundColor = cellColors[i].backgroundColor;
     out.underlineColor = cellColors[i].underlineColor;
     out.underlineStyle = cellColors[i].underlineStyle;
