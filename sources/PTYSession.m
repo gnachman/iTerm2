@@ -4773,6 +4773,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Perhaps some day transparency and ligatures will be supported.
     return ([iTermAdvancedSettingsModel useMetal] &&
             machineSupportsMetal &&
+            (![iTermAdvancedSettingsModel disableMetalWhenIdle] || _cadenceController.isActive) &&
             _textview.transparencyAlpha == 1 &&
             ![self ligaturesEnabledInEitherFont] &&
             ![PTYNoteViewController anyNoteVisible] &&
@@ -9265,6 +9266,12 @@ ITERM_WEAKLY_REFERENCEABLE
     state.slowFrameRate = _slowFrameRate;
     state.liveResizing = _inLiveResize;
     return state;
+}
+
+- (void)cadenceControllerActiveStateDidChange:(BOOL)active {
+    if (@available(macOS 10.11, *)) {
+        [self.delegate sessionUpdateMetalAllowed];
+    }
 }
 
 #pragma mark - API

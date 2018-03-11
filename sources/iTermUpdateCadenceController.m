@@ -92,10 +92,18 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
 #pragma mark - Private
 
+- (void)setIsActive:(BOOL)active {
+    if (active != _isActive) {
+        _isActive = active;
+        [_delegate cadenceControllerActiveStateDidChange:active];
+    }
+}
+
 - (void)changeCadenceIfNeeded:(BOOL)force {
     iTermUpdateCadenceState state = [_delegate updateCadenceControllerState];
 
-    BOOL effectivelyActive = (state.active || !state.idle || [NSApp isActive]);
+    self.isActive = (state.active || !state.idle);
+    BOOL effectivelyActive = (_isActive || [NSApp isActive]);
     if (effectivelyActive && state.visible) {
         if (state.useAdaptiveFrameRate) {
             const NSInteger kThroughputLimit = state.adaptiveFrameRateThroughputThreshold;

@@ -30,6 +30,8 @@ typedef struct {
 // Returns the current state of the delegate.
 - (iTermUpdateCadenceState)updateCadenceControllerState;
 
+- (void)cadenceControllerActiveStateDidChange:(BOOL)active;
+
 @end
 
 @interface iTermUpdateCadenceController : NSObject
@@ -37,6 +39,7 @@ typedef struct {
 @property (nonatomic, readonly) BOOL updateTimerIsValid;
 @property (nonatomic, weak) id<iTermUpdateCadenceControllerDelegate> delegate;
 @property (nonatomic, readonly) iTermHistogram *histogram;
+@property (nonatomic, readonly) BOOL isActive;
 
 - (instancetype)initWithThroughputEstimator:(iTermThroughputEstimator *)throughputEstimator NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

@@ -205,5 +205,6 @@
 + (BOOL)tabsWrapAround;
 + (BOOL)middleClickClosesTab;
 + (BOOL)disableMetalWhenUnplugged;
++ (BOOL)disableMetalWhenIdle;
 
 @end
