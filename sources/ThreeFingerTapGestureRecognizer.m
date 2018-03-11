@@ -73,7 +73,7 @@
         DLog(@"fired->YES");
         fired_ = YES;
     }
-    if (numTouches_ == 0) {
+    if (numTouches_ == 0 || (firstTouchTime_ && !threeTouchTime_)) {
         DLog(@"Reset first/three times");
         firstTouchTime_ = 0;
         threeTouchTime_ = 0;
