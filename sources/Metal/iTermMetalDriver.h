@@ -100,6 +100,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (void)setDebugString:(NSString *)debugString;
 
+- (iTermData *)lineForRow:(int)y;
+
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)

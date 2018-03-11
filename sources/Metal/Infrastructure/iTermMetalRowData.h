@@ -25,6 +25,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // iTermMetalBackgroundColorRLE
 @property (nonatomic, strong) iTermData *backgroundColorRLEData;
 
+// screen_char_t
+@property (nonatomic, strong) iTermData *line;
+
 @property (nonatomic) int numberOfBackgroundRLEs;
 
 // Number of elements in preceding arrays to use.

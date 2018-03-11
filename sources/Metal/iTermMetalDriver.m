@@ -411,6 +411,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         rowData.keysData = [iTermData dataOfLength:sizeof(iTermMetalGlyphKey) * columns];
         rowData.attributesData = [iTermData dataOfLength:sizeof(iTermMetalGlyphAttributes) * columns];
         rowData.backgroundColorRLEData = [iTermData dataOfLength:sizeof(iTermMetalBackgroundColorRLE) * columns];
+        rowData.line = [frameData.perFrameState lineForRow:y];
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         int drawableGlyphs = 0;
         int rles = 0;

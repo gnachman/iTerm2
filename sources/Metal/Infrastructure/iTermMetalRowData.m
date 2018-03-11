@@ -9,6 +9,7 @@
 
 #import "iTermMetalGlyphKey.h"
 #import "iTermTextRendererCommon.h"
+#import "ScreenChar.h"
 
 @implementation iTermMetalRowData
 
@@ -62,6 +63,42 @@
         }
         [bgColorsString writeToURL:[folder URLByAppendingPathComponent:@"BackgroundColors.txt"] atomically:NO encoding:NSUTF8StringEncoding error:NULL];
     }
+
+    @autoreleasepool {
+        NSMutableString *lineString = [NSMutableString string];
+        screen_char_t *line = (screen_char_t *)_line.mutableBytes;
+        for (int i = 0; i < _line.length / sizeof(screen_char_t); i++) {
+            screen_char_t c = line[i];
+            [lineString appendFormat:@"%4d: %@\n", i, [self formatChar:c]];
+        }
+        [lineString writeToURL:[folder URLByAppendingPathComponent:@"ScreenChars.txt"]
+                    atomically:NO
+                      encoding:NSUTF8StringEncoding
+                         error:NULL];
+    }
+}
+
+- (NSString *)formatChar:(screen_char_t)c {
+    return [NSString stringWithFormat:@"code=%x (%@) foregroundColor=%@ fgGreen=%@ fgBlue=%@ backgroundColor=%@ bgGreen=%@ bgBlue=%@ foregroundColorMode=%@ backgroundColorMode=%@ complexChar=%@ bold=%@ faint=%@ italic=%@ blink=%@ underline=%@ image=%@ unused=%@ urlCode=%@",
+            (int)c.code,
+            ScreenCharToStr(&c),
+            @(c.foregroundColor),
+            @(c.fgGreen),
+            @(c.fgBlue),
+            @(c.backgroundColor),
+            @(c.bgGreen),
+            @(c.bgBlue),
+            @(c.foregroundColorMode),
+            @(c.backgroundColorMode),
+            @(c.complexChar),
+            @(c.bold),
+            @(c.faint),
+            @(c.italic),
+            @(c.blink),
+            @(c.underline),
+            @(c.image),
+            @(c.unused),
+            @(c.urlCode)];
 }
 
 @end

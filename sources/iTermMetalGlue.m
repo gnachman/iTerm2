@@ -1269,6 +1269,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     }
 }
 
+- (iTermData *)lineForRow:(int)y {
+    return _lines[y];
+}
+
 #pragma mark - Color
 
 - (vector_float4)textColorForCharacter:(screen_char_t *)c
