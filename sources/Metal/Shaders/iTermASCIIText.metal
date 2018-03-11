@@ -24,7 +24,6 @@ typedef struct {
     float2 textureCoordinate;
     float2 backgroundTextureCoordinate;
     half4 scaledTextColor;
-    float4 backgroundColor;
     half4 underlineColor;
     float2 cellOffset;  // Coordinate of bottom left of cell in pixel coordinates. 0,0 is the bottom left of the screen.
     int underlineStyle;  // should draw an underline? For some stupid reason the compiler won't let me set the type as iTermMetalGlyphAttributesUnderline
@@ -121,7 +120,6 @@ iTermASCIITextVertexShader(uint vertexID [[ vertex_id ]],
     out.backgroundTextureCoordinate = pixelSpacePosition / viewportSize;
     out.backgroundTextureCoordinate.y = 1 - out.backgroundTextureCoordinate.y;
 
-    out.backgroundColor = colors[i].backgroundColor;
     out.scaledTextColor = static_cast<half4>(colors[i].textColor * 17);
     out.underlineStyle = colors[i].underlineStyle;
     out.underlineColor = static_cast<half4>(colors[i].underlineColor);
