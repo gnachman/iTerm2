@@ -4756,30 +4756,46 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)metalAllowed {
-    static dispatch_once_t onceToken;
-    static BOOL machineSupportsMetal;
     if (@available(macOS 10.11, *)) {
+        if (!self.canProduceMetalFramecap) {
+            return NO;
+        }
+        return (![iTermAdvancedSettingsModel disableMetalWhenIdle] ||
+                _cadenceController.isActive ||
+                _view.verticalScroller.userScroll ||
+                self.overrideGlobalDisableMetalWhenIdleSetting ||
+                _view.driver.captureDebugInfoForNextFrame);
+    } else {
+        return NO;
+    }
+}
+
+- (BOOL)canProduceMetalFramecap {
+    if (@available(macOS 10.11, *)) {
+        static dispatch_once_t onceToken;
+        static BOOL machineSupportsMetal;
         dispatch_once(&onceToken, ^{
             NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
             machineSupportsMetal = devices.count > 0;
             [devices release];
         });
+        // Metal's not allowed when other views are composited over the metal view because that just
+        // doesn't seem to work, even if you use presentsWithTransaction (even if it did work, it
+        // requires presenting the drawable on the main thread which defeats the purpose of the metal
+        // renderer).
+        //
+        // Perhaps some day transparency and ligatures will be supported.
+        return ([iTermAdvancedSettingsModel useMetal] &&
+                machineSupportsMetal &&
+                _textview.transparencyAlpha == 1 &&
+                ![self ligaturesEnabledInEitherFont] &&
+                ![PTYNoteViewController anyNoteVisible] &&
+                !_view.findViewController.isVisible &&
+                !_pasteHelper.pasteViewIsVisible &&
+                _view.currentAnnouncement == nil);
+    } else {
+        return NO;
     }
-    // Metal's not allowed when other views are composited over the metal view because that just
-    // doesn't seem to work, even if you use presentsWithTransaction (even if it did work, it
-    // requires presenting the drawable on the main thread which defeats the purpose of the metal
-    // renderer).
-    //
-    // Perhaps some day transparency and ligatures will be supported.
-    return ([iTermAdvancedSettingsModel useMetal] &&
-            machineSupportsMetal &&
-            (![iTermAdvancedSettingsModel disableMetalWhenIdle] || _cadenceController.isActive || _view.verticalScroller.userScroll) &&
-            _textview.transparencyAlpha == 1 &&
-            ![self ligaturesEnabledInEitherFont] &&
-            ![PTYNoteViewController anyNoteVisible] &&
-            !_view.findViewController.isVisible &&
-            !_pasteHelper.pasteViewIsVisible &&
-            _view.currentAnnouncement == nil);
 }
 
 - (BOOL)ligaturesEnabledInEitherFont {

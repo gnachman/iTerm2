@@ -459,6 +459,8 @@ typedef enum {
 @property(nonatomic, readonly) BOOL passwordInput;
 
 @property(nonatomic) BOOL isSingleUseSession;
+@property(nonatomic) BOOL overrideGlobalDisableMetalWhenIdleSetting;
+@property(nonatomic, readonly) BOOL canProduceMetalFramecap;
 
 #pragma mark - methods
 

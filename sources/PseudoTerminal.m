@@ -5153,7 +5153,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (IBAction)captureNextMetalFrame:(id)sender {
     if (@available(macOS 10.11, *)) {
+        self.currentSession.overrideGlobalDisableMetalWhenIdleSetting = YES;
+        [self.currentTab updateUseMetal];
         self.currentSession.view.driver.captureDebugInfoForNextFrame = YES;
+        self.currentSession.overrideGlobalDisableMetalWhenIdleSetting = NO;
+        [self.currentSession.view setNeedsDisplay:YES];
     }
 }
 
@@ -7272,7 +7276,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else if ([item action] == @selector(zoomOut:)) {
         return self.currentSession.textViewIsZoomedIn;
     } else if (item.action == @selector(captureNextMetalFrame:)) {
-        return self.currentSession.useMetal;
+        return self.currentSession.canProduceMetalFramecap;
     }
 
     return result;
