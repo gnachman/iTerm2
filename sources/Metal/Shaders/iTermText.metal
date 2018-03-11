@@ -13,7 +13,7 @@ typedef struct {
     float2 backgroundTextureCoordinate;
     half4 scaledTextColor;
     float4 backgroundColor;
-    float4 underlineColor;
+    half4 underlineColor;
     bool recolor;
     int3 colorModelIndex;
     float2 textureOffset;  // Normalized offset in texture.
@@ -56,7 +56,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
 
     out.scaledTextColor = static_cast<half4>(cellColors[i].textColor * 17);
     out.backgroundColor = cellColors[i].backgroundColor;
-    out.underlineColor = cellColors[i].underlineColor;
+    out.underlineColor = static_cast<half4>(cellColors[i].underlineColor);
     out.underlineStyle = cellColors[i].underlineStyle;
 
     return out;
@@ -84,7 +84,7 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
     if (!in.recolor) {
         // Emoji code path
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            const float weight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
+            const half weight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
                                                                   in.clipSpacePosition.xy,
                                                                   in.viewportSize,
                                                                   in.cellOffset,
@@ -97,16 +97,16 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
                                                                   texture,
                                                                   textureSampler,
                                                                   dimensions->scale);
-            return static_cast<half4>(mix(static_cast<float4>(bwColor),
-                                          in.underlineColor,
-                                          weight));
+            return mix(bwColor,
+                       in.underlineColor,
+                       weight);
         } else {
             return bwColor;
         }
     } else if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         // Background shows through completely. Not emoji.
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            const float weight = ComputeWeightOfUnderline(in.underlineStyle,
+            const half weight = ComputeWeightOfUnderline(in.underlineStyle,
                                                           in.clipSpacePosition.xy,
                                                           in.viewportSize,
                                                           in.cellOffset,
@@ -120,9 +120,9 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
                                                           textureSampler,
                                                           dimensions->scale);
             if (weight > 0) {
-                return static_cast<half4>(mix(backgroundColor,
-                                              in.underlineColor,
-                                              weight));
+                return mix(static_cast<half4>(backgroundColor),
+                           in.underlineColor,
+                           weight);
             }
         }
         discard_fragment();
