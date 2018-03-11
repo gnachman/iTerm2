@@ -13,7 +13,7 @@ void SampleNeighbors(float2 textureSize,
                      sampler textureSampler,
                      thread half4 *result);
 
-float ComputeWeightOfUnderline(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
+half ComputeWeightOfUnderline(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
                                float2 clipSpacePosition,
                                float2 viewportSize,
                                float2 cellOffset,
@@ -27,7 +27,7 @@ float ComputeWeightOfUnderline(int underlineStyle,  // iTermMetalGlyphAttributes
                                sampler textureSampler,
                                float scale);
 
-float ComputeWeightOfUnderlineForEmoji(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
+half ComputeWeightOfUnderlineForEmoji(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
                                        float2 clipSpacePosition,
                                        float2 viewportSize,
                                        float2 cellOffset,

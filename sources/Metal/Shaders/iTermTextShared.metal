@@ -151,7 +151,7 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
 // Returns the weight in [0, 1] of underline for a pixel at `clipSpacePosition`.
 // This ignores the alpha channel of the texture and assumes white pixels are
 // background.
-float ComputeWeightOfUnderline(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
+half ComputeWeightOfUnderline(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
                                float2 clipSpacePosition,
                                float2 viewportSize,
                                float2 cellOffset,
@@ -164,13 +164,13 @@ float ComputeWeightOfUnderline(int underlineStyle,  // iTermMetalGlyphAttributes
                                texture2d<half> texture,
                                sampler textureSampler,
                                float scale) {
-    float weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
-                                                                  clipSpacePosition,
-                                                                  viewportSize,
-                                                                  cellOffset,
-                                                                  underlineOffset,
-                                                                  underlineThickness,
-                                                                  scale);
+    half weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
+                                                                 clipSpacePosition,
+                                                                 viewportSize,
+                                                                 cellOffset,
+                                                                 underlineOffset,
+                                                                 underlineThickness,
+                                                                 scale);
     if (weight == 0) {
         return 0;
     }
@@ -190,7 +190,7 @@ float ComputeWeightOfUnderline(int underlineStyle,  // iTermMetalGlyphAttributes
 
 // Returns the weight in [0, 1] of underline for a pixel at `clipSpacePosition`
 // when drawing underlined emoji. This respects the alpha channel of the texture.
-float ComputeWeightOfUnderlineForEmoji(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
+half ComputeWeightOfUnderlineForEmoji(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
                                        float2 clipSpacePosition,
                                        float2 viewportSize,
                                        float2 cellOffset,
@@ -203,17 +203,17 @@ float ComputeWeightOfUnderlineForEmoji(int underlineStyle,  // iTermMetalGlyphAt
                                        texture2d<half> texture,
                                        sampler textureSampler,
                                        float scale) {
-    float weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
-                                                                  clipSpacePosition,
-                                                                  viewportSize,
-                                                                  cellOffset,
-                                                                  underlineOffset,
-                                                                  underlineThickness,
-                                                                  scale);
+    half weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
+                                                                 clipSpacePosition,
+                                                                 viewportSize,
+                                                                 cellOffset,
+                                                                 underlineOffset,
+                                                                 underlineThickness,
+                                                                 scale);
     if (weight == 0) {
         return 0;
     }
-
+    
     half maxAlpha = GetMaximumColorComponentsOfNeighbors(textureSize,
                                                          textureOffset,
                                                          textureCoordinate,

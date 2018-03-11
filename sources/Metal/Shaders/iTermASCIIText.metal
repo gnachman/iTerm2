@@ -161,7 +161,7 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
         // No text in this pixel. But we might need to draw some background here.
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone &&
             InCenterThird(in.clipSpacePosition.xy, in.cellOffset, dimensions->cellSize)) {
-            const float weight = ComputeWeightOfUnderline(in.underlineStyle,
+            const half weight = ComputeWeightOfUnderline(in.underlineStyle,
                                                           in.clipSpacePosition.xy,
                                                           static_cast<float2>(dimensions->viewportSize),
                                                           in.cellOffset,
@@ -175,8 +175,8 @@ iTermASCIITextFragmentShader(iTermASCIITextVertexFunctionOutput in [[stage_in]],
                                                           textureSampler,
                                                           dimensions->scale);
             if (weight > 0) {
-                return static_cast<half4>(mix(backgroundColor,
-                                              in.underlineColor,
+                return static_cast<half4>(mix(static_cast<half4>(backgroundColor),
+                                              static_cast<half4>(in.underlineColor),
                                               weight));
             }
         }
