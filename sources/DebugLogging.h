@@ -112,7 +112,7 @@ extern BOOL gDebugLogging;
       ELog(args); \
       if (TurnOffDebugLoggingSilently()) { \
         dispatch_async(dispatch_get_main_queue(), ^{ \
-          NSAlert *alert = [[[NSAlert alloc] init] autorelease]; \
+          NSAlert *alert = [[NSAlert alloc] init]; \
           alert.messageText = @"Critical Error"; \
           alert.informativeText =  @"A critical error occurred and a debug log was created. Please send /tmp/debuglog.txt to the developers."; \
           [alert addButtonWithTitle:@"OK"]; \
@@ -141,6 +141,19 @@ extern BOOL gDebugLogging;
       ELog(args); \
     } \
   } while (0)
+#endif
+
+#if BETA
+#define ITConservativeBetaAssert(condition, args...) \
+  do { \
+    if (!(condition)) { \
+      DLog(@"Crashing because %s from:\n%@", #condition, [NSThread callStackSymbols]); \
+      ELog(args); \
+      assert(NO); \
+    } \
+  } while (0)
+#else  // BETA
+#define ITBetaAssert(condition, args...)
 #endif
 
 void ToggleDebugLogging(void);

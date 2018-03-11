@@ -919,9 +919,11 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             NSPoint pointInWindow = [window convertRectFromScreen:mouseRect].origin;
             if ([window isTerminalWindow]) {
                 NSView *view = [window.contentView hitTest:pointInWindow];
-                [window makeKeyAndOrderFront:nil];
-                if ([view isKindOfClass:[PTYTextView class]]) {
-                    [window makeFirstResponder:view];
+                if (view) {
+                    [window makeKeyAndOrderFront:nil];
+                    if ([view isKindOfClass:[PTYTextView class]]) {
+                        [window makeFirstResponder:view];
+                    }
                 }
                 break;
             }

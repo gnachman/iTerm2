@@ -598,6 +598,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     newProfile[KEY_SHORTCUT] = @"";
     newProfile[KEY_BOUND_HOSTS] = @[];
     newProfile[KEY_TAGS] = [newProfile[KEY_TAGS] arrayByRemovingObject:kProfileDynamicTag];
+    newProfile[KEY_HAS_HOTKEY] = @NO;  // Don't create another hotkey window with the same hotkey
     [[_delegate profilePreferencesModel] addBookmark:newProfile];
     [_profilesListView reloadData];
     [_profilesListView selectRowByGuid:newProfile[KEY_GUID]];
