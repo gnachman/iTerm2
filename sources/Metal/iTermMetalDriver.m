@@ -349,6 +349,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 // Runs in private queue
 - (void)performPrivateQueueSetupForFrameData:(iTermMetalFrameData *)frameData
                                         view:(nonnull MTKView *)view {
+    if ([iTermAdvancedSettingsModel showMetalFPSmeter]) {
+        [frameData.perFrameState setDebugString:[self fpsMeterStringForFrameNumber:frameData.frameNumber]];
+    }
+
     // Get glyph keys, attributes, background colors, etc. from datasource.
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqBuildRowData ofBlock:^{
         [self addRowDataToFrameData:frameData];
@@ -860,14 +864,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }
 
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
-        if (idx == 0 && [iTermAdvancedSettingsModel showMetalFPSmeter]) {
-            [self writeFPSMeterIntoGlyphKeys:glyphKeys
-                                       count:rowData.numberOfDrawableGlyphs
-                                  attributes:(iTermMetalGlyphAttributes *)rowData.attributesData.mutableBytes
-                                       width:frameData.gridSize.width
-                                 frameNumber:frameData.frameNumber];
-            rowData.numberOfDrawableGlyphs = frameData.gridSize.width;
-        }
 
         if (!_textRenderer.rendererDisabled) {
             ITConservativeBetaAssert(rowData.numberOfDrawableGlyphs * sizeof(iTermMetalGlyphKey) <= rowData.keysData.length,
@@ -921,39 +917,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
-- (void)writeFPSMeterIntoGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
-                             count:(int)count
-                        attributes:(iTermMetalGlyphAttributes *)attributes
-                             width:(int)width
-                       frameNumber:(NSInteger)frameNumber {
-    const size_t fpsMeterSize = MAX(0, MIN(80, width));
-    if (fpsMeterSize > 1) {
-        const double period = [_fpsMovingAverage value];
-        double fps = 1.0 / period;
-        if (period < 0.001) {
-            fps = 0;
-        }
-        char frame[fpsMeterSize];
-        snprintf(frame,
-                 fpsMeterSize - 1,
-                 " [Frame %d: %d fps] ",
-                 (int)frameNumber,
-                 (int)round(fps));
-        int o = MAX(0, width - strlen(frame));
-        for (int i = 0; frame[i] && o >= 0 && o < count; i++, o++) {
-            glyphKeys[o].code = frame[i];
-            glyphKeys[o].isComplex = NO;
-            glyphKeys[o].boxDrawing = NO;
-            glyphKeys[o].thinStrokes = NO;
-            glyphKeys[o].drawable = YES;
-            glyphKeys[o].typeface = iTermMetalGlyphKeyTypefaceRegular;
-
-            attributes[o].backgroundColor = simd_make_float4(0.0, 0.0, 0.0, 1.0);
-            attributes[o].foregroundColor = simd_make_float4(1.0, 0.0, 1.0, 1.0);
-            attributes[o].underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
-            attributes[o].annotation = NO;
-        }
+- (NSString *)fpsMeterStringForFrameNumber:(int)frameNumber {
+    const double period = [_fpsMovingAverage value];
+    double fps = 1.0 / period;
+    if (period < 0.001) {
+        fps = 0;
     }
+    return [NSString stringWithFormat:@" [Frame %d: %d fps] ", frameNumber, (int)round(fps)];
 }
 
 - (void)populateMarkRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {

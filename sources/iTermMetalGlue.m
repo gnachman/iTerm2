@@ -1236,6 +1236,39 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     *nonAscii = _nonAsciiUnderlineDescriptor;
 }
 
+// Use 24-bit color to set the text and background color of a cell.
+- (void)setTextColor:(vector_float4)textColor
+     backgroundColor:(vector_float4)backgroundColor
+             atCoord:(VT100GridCoord)coord
+               lines:(screen_char_t *)lines
+            gridSize:(VT100GridSize)gridSize {
+    if (coord.x < 0 || coord.y < 0 || coord.x >= gridSize.width || coord.y >= gridSize.height) {
+        return;
+    }
+    screen_char_t *c = &lines[coord.x + coord.y * (gridSize.width + 1)];
+    c->foregroundColorMode = ColorMode24bit;
+    c->foregroundColor = textColor.x * 255;
+    c->fgGreen = textColor.y * 255;
+    c->fgBlue = textColor.z * 255;
+
+    c->backgroundColorMode = ColorMode24bit;
+    c->backgroundColor = backgroundColor.x * 255;
+    c->bgGreen = backgroundColor.y * 255;
+    c->bgBlue = backgroundColor.z * 255;
+}
+
+- (void)setDebugString:(NSString *)debugString {
+    screen_char_t *line = _lines[0].mutableBytes;
+    for (int i = 0, o = _gridSize.width - debugString.length; i < debugString.length && o < _gridSize.width; i++, o++) {
+        [self setTextColor:simd_make_float4(1, 0, 1, 1)
+           backgroundColor:simd_make_float4(0.1, 0.1, 0.1, 1)
+                   atCoord:VT100GridCoordMake(o, 0)
+                     lines:line
+                  gridSize:_gridSize];
+        line[o].code = [debugString characterAtIndex:i];
+    }
+}
+
 #pragma mark - Color
 
 - (vector_float4)textColorForCharacter:(screen_char_t *)c

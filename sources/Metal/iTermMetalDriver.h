@@ -98,6 +98,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (void)metalEnumerateHighlightedRows:(void (^)(vector_float3 color, NSTimeInterval age, int row))block;
 
+- (void)setDebugString:(NSString *)debugString;
+
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)
