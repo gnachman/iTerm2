@@ -1260,7 +1260,9 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 - (void)setDebugString:(NSString *)debugString {
     screen_char_t *line = _lines[0].mutableBytes;
-    for (int i = 0, o = _gridSize.width - debugString.length; i < debugString.length && o < _gridSize.width; i++, o++) {
+    for (int i = 0, o = MAX(0, _gridSize.width - (int)debugString.length);
+         i < debugString.length && o < _gridSize.width;
+         i++, o++) {
         [self setTextColor:simd_make_float4(1, 0, 1, 1)
            backgroundColor:simd_make_float4(0.1, 0.1, 0.1, 1)
                    atCoord:VT100GridCoordMake(o, 0)
