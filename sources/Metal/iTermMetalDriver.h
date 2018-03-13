@@ -133,6 +133,15 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
            gridSize:(VT100GridSize)gridSize
               scale:(CGFloat)scale;
 
+// Draw and return after the GPU's completion callback is run.
+// enableSetNeedsDisplay should be NO.
+- (void)drawSynchronouslyInView:(MTKView *)view;
+
+// Draw and return immediately, calling completion block after GPU's completion
+// block is called.
+// enableSetNeedsDisplay should be NO.
+- (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(void))completion;
+
 @end
 
 NS_ASSUME_NONNULL_END

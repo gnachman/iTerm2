@@ -4743,12 +4743,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)metalGlueDidDrawFrameAndNeedsRedraw:(BOOL)redrawAsap NS_AVAILABLE_MAC(10_11) {
     if (_view.useMetal) {
-        // If the text view had been visible, hide it. Hiding it before the
-        // first frame is drawn causes a flash of gray.
-        DLog(@"metalGlueDidDrawFrame");
-        _wrapper.useMetal = YES;
-        _textview.suppressDrawing = YES;
-        _view.metalView.alphaValue = 1;
         if (redrawAsap) {
             [_textview setNeedsDisplay:YES];
         }
@@ -4827,7 +4821,33 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [_textview setNeedsDisplay:YES];
         [_cadenceController changeCadenceIfNeeded];
+
+        if (useMetal) {
+            // First draw asynchronously since it takes a long time (200 ms on my old mbp) to spin
+            // up a new metal driver. This frame will never be seen since PTYTextView is still visible.
+            DLog(@"Begin async draw for %@", self);
+            [_view.driver drawAsynchronouslyInView:_view.metalView completion:^{
+                if (_useMetal) {
+                    // Now that everything's hot we can draw a frame synchronously without the UI hiccupping.
+                    DLog(@"Begin synchronous draw for %@", self);
+                    [_view drawFrameSynchronously];
+                    [self showMetalAndStopDrawingTextView];
+                    _view.metalView.enableSetNeedsDisplay = YES;
+                }
+            }];
+        } else {
+            _view.metalView.enableSetNeedsDisplay = NO;
+        }
     }
+}
+
+- (void)showMetalAndStopDrawingTextView NS_AVAILABLE_MAC(10_11) {
+    // If the text view had been visible, hide it. Hiding it before the
+    // first frame is drawn causes a flash of gray.
+    DLog(@"metalGlueDidDrawFrame");
+    _wrapper.useMetal = YES;
+    _textview.suppressDrawing = YES;
+    _view.metalView.alphaValue = 1;
 }
 
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {

@@ -46,6 +46,7 @@
             VT100GridCoordDescription(_cursorCoord),
             VT100GridCoordRangeDescription(_markedRange)];
 }
+
 - (void)setRangeStart:(VT100GridCoord)start {
     _markedRange.start = start;
 }
@@ -113,6 +114,9 @@
     NSTimeInterval _lastFrameStartTime;
     iTermHistogram *_startToStartHistogram;
     iTermHistogram *_inFlightHistogram;
+    // If set, copy this to frame data and leave it when rendering the frame is
+    // complete. Use for sync/async-with-completion draw call.
+    dispatch_group_t _group;
 }
 
 - (nullable instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView {
@@ -233,6 +237,28 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return iTermMetalDriverMaximumNumberOfFramesInFlight;
 }
 
+- (dispatch_group_t)groupForDrawInView:(MTKView *)view {
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    _group = group;
+    [view draw];
+    return group;
+}
+
+- (void)drawSynchronouslyInView:(MTKView *)view {
+    DLog(@"Start synchronous draw");
+    dispatch_group_wait([self groupForDrawInView:view], DISPATCH_TIME_FOREVER);
+    DLog(@"Synchronous draw completed.");
+}
+
+- (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(void))completion {
+    DLog(@"Start asynchronous draw of %@", view);
+    dispatch_group_notify([self groupForDrawInView:view], dispatch_get_main_queue(), ^{
+        DLog(@"Asynchronous draw of %@ completed", view);
+        completion();
+    });
+}
+
 - (BOOL)reallyDrawInMTKView:(nonnull MTKView *)view startToStartTime:(NSTimeInterval)startToStartTime {
     @synchronized (self) {
         [_inFlightHistogram addValue:_framesInFlight];
@@ -299,6 +325,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     @synchronized(self) {
         [_currentFrames addObject:frameData];
     }
+
+    frameData.group = _group;
+    _group = nil;
 
     void (^block)(void) = ^{
         NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
@@ -1373,6 +1402,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self dispatchAsyncToPrivateQueue:^{
         [self scheduleDrawIfNeededInView:frameData.view];
     }];
+
+    if (frameData.group) {
+        DLog(@"finished draw with group of frame %@", frameData);
+        dispatch_group_leave(frameData.group);
+    }
 }
 
 #pragma mark - Miscellaneous Utility Methods

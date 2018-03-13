@@ -187,5 +187,6 @@
 - (SplitSessionHalf)removeSplitSelectionView;
 
 - (void)setHoverURL:(NSString *)url;
+- (void)drawFrameSynchronously;
 
 @end

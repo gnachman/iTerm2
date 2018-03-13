@@ -203,10 +203,10 @@ static NSDate* lastResizeDate_;
 
     // Configure and hide the metal view. It will be shown by PTYSession after it has rendered its
     // first frame. Until then it's just a solid gray rectangle.
-    _metalView.paused = NO;
+    _metalView.paused = YES;
+    _metalView.enableSetNeedsDisplay = NO;
     _metalView.hidden = NO;
     _metalView.alphaValue = 0;
-    _metalView.enableSetNeedsDisplay = YES;
 
     // Start the metal driver going. It will receive delegate calls from MTKView that kick off
     // frame rendering.
@@ -214,6 +214,10 @@ static NSDate* lastResizeDate_;
     _driver.dataSource = dataSource;
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
     _metalView.delegate = _driver;
+}
+
+- (void)drawFrameSynchronously {
+    [_driver drawSynchronouslyInView:_metalView];
 }
 
 - (void)removeMetalView NS_AVAILABLE_MAC(10_11) {
