@@ -338,7 +338,7 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
             code == TAB_FILLER ||
             code < ' ') {
             return NO;
-        } else if (code == ' ' && !c->underline) {
+        } else if (code == ' ' && !c->underline && !c->urlCode) {
             return NO;
         }
     }
