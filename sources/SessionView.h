@@ -125,6 +125,8 @@
 
 - (void)sessionViewUserScrollDidChange:(BOOL)userScroll;
 
+- (void)sessionViewDidChangeHoverURLVisible:(BOOL)visible;
+
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>
@@ -187,6 +189,7 @@
 - (SplitSessionHalf)removeSplitSelectionView;
 
 - (void)setHoverURL:(NSString *)url;
+- (BOOL)hasHoverURL;
 - (void)drawFrameSynchronously;
 
 @end

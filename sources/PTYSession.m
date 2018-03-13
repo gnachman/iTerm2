@@ -4786,7 +4786,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 ![PTYNoteViewController anyNoteVisible] &&
                 !_view.findViewController.isVisible &&
                 !_pasteHelper.pasteViewIsVisible &&
-                _view.currentAnnouncement == nil);
+                _view.currentAnnouncement == nil &&
+                !_view.hasHoverURL);
     } else {
         return NO;
     }
@@ -9265,6 +9266,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)sessionViewUserScrollDidChange:(BOOL)userScroll {
+    [self.delegate sessionUpdateMetalAllowed];
+}
+
+- (void)sessionViewDidChangeHoverURLVisible:(BOOL)visible {
     [self.delegate sessionUpdateMetalAllowed];
 }
 

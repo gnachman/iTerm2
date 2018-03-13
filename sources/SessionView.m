@@ -589,6 +589,10 @@ static NSDate* lastResizeDate_;
     return half;
 }
 
+- (BOOL)hasHoverURL {
+    return _hoverURLView != nil;
+}
+
 - (void)setHoverURL:(NSString *)url {
     if (_hoverURLView == nil) {
         if (url == nil) {
@@ -608,11 +612,14 @@ static NSDate* lastResizeDate_;
         [_hoverURLView addSubview:_hoverURLTextField];
         _hoverURLView.frame = _hoverURLTextField.bounds;
         [self addSubview:_hoverURLView];
+        [_delegate sessionViewDidChangeHoverURLVisible:YES];
     } else if (url == nil) {
         [_hoverURLView removeFromSuperview];
         _hoverURLView = nil;
         _hoverURLTextField = nil;
+        [_delegate sessionViewDidChangeHoverURLVisible:NO];
     } else {
+        // _hoveurlView != nil && url != nil
         [_hoverURLTextField setStringValue:url];
     }
 
