@@ -2079,6 +2079,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
             break;
 
         case NSUnderlineStyleDouble: {
+            origin.y -= lineWidth;
             [path moveToPoint:origin];
             [path lineToPoint:NSMakePoint(origin.x + runWidth, origin.y)];
             [path setLineWidth:lineWidth];

@@ -165,10 +165,8 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
     if (underlineStyle == iTermMetalGlyphAttributesUnderlineDouble) {
         // We can't draw the underline lower than the bottom of the cell, so
         // move the lower underline down by one thickness, if possible, and
-        // the second underline will draw above it. This is different than
-        // the non-metal codepath which will draw an underline lower than the
-        // bottom of the cell. Double underlines are rare enough that I doubt
-        // anyone will notice.
+        // the second underline will draw above it. The same hack was added
+        // to the non-metal code path so this isn't a glaring difference.
         underlineOffset = max(0.0, underlineOffset - underlineThickness);
     }
     float weight = FractionOfPixelThatIntersectsUnderline(clipSpacePosition,
@@ -176,19 +174,37 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
                                                           cellOffset,
                                                           underlineOffset,
                                                           underlineThickness);
-    if (weight == 0 && underlineStyle == iTermMetalGlyphAttributesUnderlineDouble) {
-        // Check if this pixel is in the second underline.
-        weight = FractionOfPixelThatIntersectsUnderline(clipSpacePosition,
-                                                        viewportSize,
-                                                        cellOffset,
-                                                        underlineOffset + underlineThickness * 2,
-                                                        underlineThickness);
-    } else if (weight > 0 &&
-               underlineStyle == iTermMetalGlyphAttributesUnderlineDashedSingle &&
-               fmod(clipSpacePosition.x - 0.5, 7 * scale) >= 4 * scale) {
-        // 4 on 3 off. This is the off.
-        return 0;
+    switch (static_cast<iTermMetalGlyphAttributesUnderline>(underlineStyle)) {
+        case iTermMetalGlyphAttributesUnderlineNone:
+        case iTermMetalGlyphAttributesUnderlineSingle:
+            return weight;
+
+        case iTermMetalGlyphAttributesUnderlineDouble:
+            // Single & dashed
+            if (weight > 0 && fmod(clipSpacePosition.x, 7 * scale) >= 4 * scale) {
+                // Make a hole in the bottom underline
+                return 0;
+            } else if (weight == 0) {
+                // Add a top underline if the y coordinate is right
+                return FractionOfPixelThatIntersectsUnderline(clipSpacePosition,
+                                                              viewportSize,
+                                                              cellOffset,
+                                                              underlineOffset + underlineThickness * 2,
+                                                              underlineThickness);
+            } else {
+                // Visible part of dashed bottom underline
+                return weight;
+            }
+
+        case iTermMetalGlyphAttributesUnderlineDashedSingle:
+            if (weight > 0 && fmod(clipSpacePosition.x, 7 * scale) >= 4 * scale) {
+                return 0;
+            } else {
+                return weight;
+            }
     }
+
+    // Shouldn't get here
     return weight;
 }
 
