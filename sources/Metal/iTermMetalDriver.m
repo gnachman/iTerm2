@@ -480,7 +480,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (!_broadcastStripesRenderer.rendererDisabled && frameData.perFrameState.showBroadcastStripes) {
         return YES;
     }
-
+    if (!_cursorGuideRenderer.rendererDisabled && frameData.perFrameState.cursorGuideEnabled) {
+        return YES;
+    }
     return NO;
 }
 
@@ -628,10 +630,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self drawCellRenderer:_markRenderer
                  frameData:frameData
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawMarks]];
-
-    [self drawCellRenderer:_cursorGuideRenderer
-                 frameData:frameData
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursorGuide]];
 
     [self drawRenderer:_indicatorRenderer
              frameData:frameData
@@ -1223,13 +1221,17 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                  frameData:frameData
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawBackgroundColor]];
 
+    [self drawRenderer:_badgeRenderer
+             frameData:frameData
+                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueBadge]];
+
     [self drawRenderer:_broadcastStripesRenderer
              frameData:frameData
                   stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueBroadcastStripes]];
 
-    [self drawRenderer:_badgeRenderer
-             frameData:frameData
-                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueBadge]];
+    [self drawCellRenderer:_cursorGuideRenderer
+                 frameData:frameData
+                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursorGuide]];
 
     [self drawCursorBeforeTextWithFrameData:frameData];
 
