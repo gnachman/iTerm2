@@ -1,6 +1,7 @@
 #import "iTermMarkRenderer.h"
 
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermTextDrawingHelper.h"
 #import "iTermTextureArray.h"
 #import "iTermMetalCellRenderer.h"
 
@@ -26,7 +27,6 @@
 - (nonnull NSData *)newMarkPerInstanceUniforms {
     NSMutableData *data = [[NSMutableData alloc] initWithLength:sizeof(iTermMarkPIU) * _marks.count];
     iTermMarkPIU *pius = (iTermMarkPIU *)data.mutableBytes;
-    CGSize atlasSize = _marksArrayTexture.atlasSize;
     __block size_t i = 0;
     [_marks enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull rowNumber, NSNumber * _Nonnull styleNumber, BOOL * _Nonnull stop) {
         MTLOrigin origin = [_marksArrayTexture offsetForIndex:styleNumber.integerValue];
@@ -35,7 +35,7 @@
                 0,
                 (self.cellConfiguration.gridSize.height - rowNumber.intValue - 1) * self.cellConfiguration.cellSize.height + self.margins.top
             },
-            .textureOffset = { origin.x / atlasSize.width, origin.y / atlasSize.height }
+            .textureOffset = { origin.x, origin.y }
         };
         i++;
     }];
@@ -98,48 +98,33 @@
 - (void)initializeTransientState:(iTermMarkRendererTransientState *)tState {
     const CGFloat scale = tState.configuration.scale;
 
-    NSRect leftMargin = NSMakeRect(0,
-                                   0,
-                                   [iTermAdvancedSettingsModel terminalMargin],
-                                   tState.cellConfiguration.cellSize.height);
-    const CGFloat verticalSpacing = MAX(0,
-                                        round((tState.cellConfiguration.cellSize.height - tState.cellConfiguration.cellSizeWithoutSpacing.height) / 2.0));
-    CGRect rect = NSMakeRect(leftMargin.origin.x,
-                             leftMargin.origin.y + verticalSpacing,
-                             [iTermAdvancedSettingsModel terminalMargin],
-                             tState.cellConfiguration.cellSizeWithoutSpacing.height);
-    const CGFloat kMaxHeight = 15 * scale;
-    const CGFloat kMinMargin = 3 * scale;
-    const CGFloat kMargin = MAX(kMinMargin, (tState.cellConfiguration.cellSizeWithoutSpacing.height - kMaxHeight) / 2.0);
-
-    CGSize markSize = CGSizeMake(scale * [iTermAdvancedSettingsModel terminalMargin],
-                                 tState.cellConfiguration.cellSizeWithoutSpacing.height - kMargin * 2);
-
-    if (!CGSizeEqualToSize(markSize, _markSize)) {
+    CGRect leftMarignRect = CGRectMake(0,
+                                       0,
+                                       [iTermAdvancedSettingsModel terminalMargin] * scale,
+                                       tState.cellConfiguration.cellSize.height);
+    CGRect markRect = [iTermTextDrawingHelper frameForMarkContainedInRect:leftMarignRect
+                                                                 cellSize:tState.cellConfiguration.cellSize
+                                                   cellSizeWithoutSpacing:tState.cellConfiguration.cellSizeWithoutSpacing
+                                                                    scale:scale];
+    if (!CGSizeEqualToSize(markRect.size, _markSize)) {
         // Mark size has changed
-        _markSize = markSize;
+        _markSize = markRect.size;
         _marksArrayTexture = [[iTermTextureArray alloc] initWithTextureWidth:_markSize.width
                                                                textureHeight:_markSize.height
                                                                  arrayLength:3
+                                                                        bgra:NO
                                                                       device:_cellRenderer.device];
 
-        NSColor *successColor = [NSColor colorWithSRGBRed:120.0 / 255.0 green:178.0 / 255.0 blue:255.0 / 255.0 alpha:1];
-        NSColor *otherColor = [NSColor colorWithSRGBRed:210.0 / 255.0 green:210.0 / 255.0 blue:90.0 / 255.0 alpha:1];
-        NSColor *failureColor = [NSColor colorWithSRGBRed:248.0 / 255.0 green:90.0 / 255.0 blue:90.0 / 255.0 alpha:1];
+        NSColor *successColor = [iTermTextDrawingHelper successMarkColor];
+        NSColor *otherColor = [iTermTextDrawingHelper otherMarkColor];
+        NSColor *failureColor = [iTermTextDrawingHelper errorMarkColor];
 
         [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:successColor size:_markSize]];
         [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:failureColor size:_markSize]];
         [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:otherColor size:_markSize]];
     }
 
-    const CGFloat overage = rect.size.width - rect.size.height + 2 * kMargin;
-    if (overage > 0) {
-        rect.origin.x += overage * .7;
-        rect.size.width -= overage;
-    }
-
-    tState.markOffset = CGPointMake(NSMinX(rect) * scale,
-                                    (NSMinY(rect) * scale + kMargin));
+    tState.markOffset = markRect.origin;
     tState.marksArrayTexture = _marksArrayTexture;
     tState.markSize = _markSize;
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:_markSize poolContext:tState.poolContext];
@@ -152,14 +137,15 @@
         return;
     }
 
-    const CGRect quad = CGRectMake(tState.markOffset.x,
-                                   tState.markOffset.y,
+    const CGFloat scale = tState.configuration.scale;
+    const CGRect quad = CGRectMake(round(tState.markOffset.x / scale) * scale,
+                                   0,
                                    tState.markSize.width,
                                    tState.markSize.height);
     const CGRect textureFrame = CGRectMake(0,
                                            0,
-                                           tState.markSize.width / tState.marksArrayTexture.atlasSize.width,
-                                           tState.markSize.height / tState.marksArrayTexture.atlasSize.height);
+                                           tState.markSize.width,
+                                           tState.markSize.height);
     const iTermVertex vertices[] = {
         // Pixel Positions                              Texture Coordinates
         { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
@@ -193,9 +179,26 @@
 #pragma mark - Private
 
 - (NSImage *)newImageWithMarkOfColor:(NSColor *)color size:(CGSize)size {
-    NSImage *image = [[NSImage alloc] initWithSize:size];
+    // Doing this hacky crap with NSBitmapImageRep is necessary to get it
+    // pixel-perfect. If you lock an NSImage it'll create a rep that's larger by
+    // the scale factor (of, uh, something).
+    NSBitmapImageRep *offscreenRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
+                                                                              pixelsWide:size.width
+                                                                              pixelsHigh:size.height
+                                                                           bitsPerSample:8
+                                                                         samplesPerPixel:4
+                                                                                hasAlpha:YES
+                                                                                isPlanar:NO
+                                                                          colorSpaceName:NSDeviceRGBColorSpace
+                                                                            bitmapFormat:NSAlphaFirstBitmapFormat
+                                                                             bytesPerRow:0
+                                                                            bitsPerPixel:0];
+    offscreenRep = [offscreenRep bitmapImageRepByRetaggingWithColorSpace:[NSColorSpace sRGBColorSpace]];
 
-    [image lockFocus];
+    NSGraphicsContext *g = [NSGraphicsContext graphicsContextWithBitmapImageRep:offscreenRep];
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:g];
+
     CGRect rect = CGRectMake(0, 0, size.width, size.height);
 
     NSPoint bottom = NSMakePoint(NSMinX(rect), NSMinY(rect));
@@ -219,9 +222,11 @@
     [path setLineWidth:1.0];
     [path stroke];
 
-    [image unlockFocus];
+    [NSGraphicsContext restoreGraphicsState];
 
-    return image;
+    NSImage *img = [[NSImage alloc] initWithSize:size];
+    [img addRepresentation:offscreenRep];
+    return img;
 }
 
 @end

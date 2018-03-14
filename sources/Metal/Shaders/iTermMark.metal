@@ -7,7 +7,7 @@ using namespace metal;
 
 typedef struct {
     float4 clipSpacePosition [[position]];
-    float2 textureCoordinate;
+    float2 textureCoordinate;  // pixel coords
 } iTermMarkVertexFunctionOutput;
 
 vertex iTermMarkVertexFunctionOutput
@@ -35,9 +35,9 @@ fragment float4
 iTermMarkFragmentShader(iTermMarkVertexFunctionOutput in [[stage_in]],
                         texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
-                                     min_filter::linear);
+                                     min_filter::linear,
+                                     coord::pixel);
 
     const half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
-    // TODO: Why do I have to do this? Other renderers like the copy cursor don't have this problem.
-    return float4(colorSample.zyxw);
+    return float4(colorSample);
 }

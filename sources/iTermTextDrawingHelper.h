@@ -283,6 +283,10 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 // symbols (non-alphanumerics) get to use the fastpath.
 @property (nonatomic, readonly) BOOL asciiLigaturesAvailable;
 
+@property (nonatomic, readonly, class) NSColor *successMarkColor;
+@property (nonatomic, readonly, class) NSColor *errorMarkColor;
+@property (nonatomic, readonly, class) NSColor *otherMarkColor;
+
 // imageSize: size of image to draw
 // destinationRect: rect bounding the region of a scrollview's content view (i.e., very tall view) that's being drawn
 // destinationFrameSize: size of the scrollview's content view
@@ -300,6 +304,11 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 + (BOOL)cursorUsesBackgroundColorForScreenChar:(screen_char_t)screenChar
                                 wantBackground:(BOOL)wantBackgroundColor
                                   reverseVideo:(BOOL)reverseVideo;
+
++ (NSRect)frameForMarkContainedInRect:(NSRect)container
+                             cellSize:(CGSize)cellSize
+               cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
+                                scale:(CGFloat)scale;
 
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect

@@ -75,7 +75,7 @@ typedef struct {
     // Offset from vertex in pixels.
     vector_float2 offset;
 
-    // Offset of source texture
+    // Offset of source texture in pixels.
     vector_float2 textureOffset;
 } iTermMarkPIU;
 

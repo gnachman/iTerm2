@@ -24,6 +24,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (instancetype)initWithTextureWidth:(uint32_t)width
                        textureHeight:(uint32_t)height
                          arrayLength:(NSUInteger)length
+                                bgra:(BOOL)bgra
                               device:(id <MTLDevice>)device;
 
 - (BOOL)addSliceWithContentsOfFile:(NSString *)path;
