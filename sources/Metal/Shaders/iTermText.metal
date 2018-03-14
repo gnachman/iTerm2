@@ -318,8 +318,9 @@ static inline half4 RemapColor(float4 scaledTextColor,  // scaledTextColor is th
 fragment float4
 iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_in]],
                                        texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
-                                       constant unsigned char *colorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
-                                       constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
+                                       constant unsigned char *exactColorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
+                                       constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]],
+                                       texture2d<half> colorModelsTexture [[ texture(iTermTextureIndexSubpixelModels) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
@@ -374,16 +375,23 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
             discard_fragment();
         }
     }
-    const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
 
-    // Base index for this color model
-    const int3 i = in.colorModelIndex * 256;
-    // Find RGB values to map colors in the black-on-white glyph to
-    const uchar4 rgba = uchar4(colorModels[i.x + bwIntIndices.x],
-                               colorModels[i.y + bwIntIndices.y],
-                               colorModels[i.z + bwIntIndices.z],
-                               255);
-    return static_cast<float4>(rgba) / 255;
+    if (dimensions->disableExactColorModels) {
+        return static_cast<float4>(RemapColor(in.textColor * 17.0,
+                                              in.backgroundColor,
+                                              bwColor,
+                                              colorModelsTexture));
+    } else {
+        const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
+        // Base index for this color model
+        const int3 i = in.colorModelIndex * 256;
+        // Find RGB values to map colors in the black-on-white glyph to
+        const uchar4 rgba = uchar4(exactColorModels[i.x + bwIntIndices.x],
+                                   exactColorModels[i.y + bwIntIndices.y],
+                                   exactColorModels[i.z + bwIntIndices.z],
+                                   255);
+        return static_cast<float4>(rgba) / 255;
+    }
 }
 
 // This path is slow but can deal with any combination of foreground/background

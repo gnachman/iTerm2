@@ -65,6 +65,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSColor *timestampsTextColor;
 @property (nonatomic, readonly) long long firstVisibleAbsoluteLineNumber;
 
+// Initialize sketchPtr to 0. The number of set bits estimates the unique number of color combinations.
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
                attributes:(iTermMetalGlyphAttributes *)attributes
                 imageRuns:(NSMutableArray<iTermMetalImageRun *> *)imageRuns
@@ -74,7 +75,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
                       row:(int)row
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr
-                     date:(out NSDate * _Nonnull * _Nonnull)date;
+                     date:(out NSDate * _Nonnull * _Nonnull)date
+                     sketch:(out NSUInteger *)sketchPtr;
 
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo;
 

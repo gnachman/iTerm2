@@ -361,7 +361,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
 
         NSDictionary *textures = @{ @(iTermTextureIndexPrimary): texture,
                                     @(iTermTextureIndexSubpixelModels): _models };
-        if (tState.cellConfiguration.usingIntermediatePass) {
+        if (tState.cellConfiguration.usingIntermediatePass || tState.disableIndividualColorModels) {
             textures = [textures dictionaryBySettingObject:tState.backgroundTexture forKey:@(iTermTextureIndexBackground)];
         }
 
@@ -373,7 +373,8 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
                 .cellSize = simd_make_float2(cellSize.x, cellSize.y),
                 .underlineOffset = cellSize.y - (underlineDescriptor.offset * scale),
                 .underlineThickness = underlineDescriptor.thickness * scale,
-                .scale = scale
+                .scale = scale,
+                .disableExactColorModels = static_cast<bool>(tState.disableIndividualColorModels)
             };
 
             // These tend to get reused so avoid changing the buffer if it is the same as the last one.

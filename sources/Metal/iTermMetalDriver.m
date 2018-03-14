@@ -432,6 +432,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (void)addRowDataToFrameData:(iTermMetalFrameData *)frameData {
+    NSUInteger sketch = 0;
     for (int y = 0; y < frameData.gridSize.height; y++) {
         const int columns = frameData.gridSize.width;
         iTermMetalRowData *rowData = [[iTermMetalRowData alloc] init];
@@ -455,7 +456,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                                row:y
                                              width:columns
                                     drawableGlyphs:&drawableGlyphs
-                                              date:&date];
+                                              date:&date
+                                            sketch:&sketch];
         rowData.backgroundColorRLEData.length = rles * sizeof(iTermMetalBackgroundColorRLE);
         rowData.date = date;
         rowData.numberOfBackgroundRLEs = rles;
@@ -468,6 +470,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
         [frameData.debugInfo addRowData:rowData];
     }
+
+    // On average, this will be true if there are more than 16 unique color combinations.
+    // See tests/sketch_monte_carlo.py
+    frameData.hasManyColorCombos = (__builtin_popcountll(sketch) > 14);
 }
 
 - (BOOL)shouldCreateIntermediateRenderPassDescriptor:(iTermMetalFrameData *)frameData {
@@ -847,6 +853,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     // Set the background texture if one is available.
     textState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
+    textState.disableIndividualColorModels = frameData.hasManyColorCombos;
 
     // Configure underlines
     iTermMetalUnderlineDescriptor asciiUnderlineDescriptor;

@@ -102,6 +102,14 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
     }
 }
 
+- (void)setDisableIndividualColorModels:(BOOL)disableIndividualColorModels {
+    _disableIndividualColorModels = disableIndividualColorModels;
+    if (disableIndividualColorModels) {
+        _colorModels = nil;
+        _colorModelIndexes = nil;
+    }
+}
+
 + (NSString *)formatTextPIU:(iTermTextPIU)a {
     return [NSString stringWithFormat:
             @"offset=(%@, %@) "

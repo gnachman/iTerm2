@@ -800,7 +800,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                       row:(int)row
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr
-                     date:(out NSDate **)datePtr {
+                     date:(out NSDate **)datePtr
+                   sketch:(out NSUInteger *)sketchPtr {
     NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPaths];
     if (_timestampsEnabled) {
         *datePtr = _dates[row];
@@ -817,6 +818,11 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     int previousImageCode = -1;
     VT100GridCoord previousImageCoord;
     NSIndexSet *annotatedIndexes = _rowToAnnotationRanges[@(row)];
+    NSUInteger sketch = *sketchPtr;
+
+    // Prime numbers chosen more or less arbitrarily.
+    const vector_float4 bmul = simd_make_float4(7, 11, 13, 1) * 255;
+    const vector_float4 fmul = simd_make_float4(17, 19, 23, 1) * 255;
 
     *markStylePtr = [_markStyles[row] intValue];
     int lastDrawableGlyph = -1;
@@ -965,7 +971,16 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         } else {
             glyphKeys[x].drawable = NO;
         }
+
+        // This is my attempt at a fast sketch that estimates the number of unique combinations of
+        // foreground and background color.
+        const vector_float4 sum = attributes[x].backgroundColor * bmul + attributes[x].foregroundColor * fmul;
+        const unsigned int bit = ((unsigned int)(sum.x + sum.y + sum.z)) & 63;
+        sketch |= (1ULL << bit);
     }
+
+    *sketchPtr = sketch;
+
     *rleCount = rles;
     *drawableGlyphsPtr = lastDrawableGlyph + 1;
 
