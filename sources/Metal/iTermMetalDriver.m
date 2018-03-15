@@ -242,6 +242,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     dispatch_group_enter(group);
     _group = group;
     [view draw];
+    if (_group) {
+        dispatch_group_leave(group);
+        _group = nil;
+    }
     return group;
 }
 
