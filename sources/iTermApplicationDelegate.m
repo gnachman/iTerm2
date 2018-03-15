@@ -341,7 +341,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     } else if ([menuItem action] == @selector(makeDefaultTerminal:)) {
         return ![[iTermLaunchServices sharedInstance] iTermIsDefaultTerminal];
     } else if ([menuItem action] == @selector(checkForIncompatibleSoftware:)) {
-        return [iTermAdvancedSettingsModel logDrawingPerformance];
+        return YES;
     } else if (menuItem == maximizePane) {
         if ([[[iTermController sharedInstance] currentTerminal] inInstantReplay]) {
             // Things get too complex if you allow this. It crashes.
