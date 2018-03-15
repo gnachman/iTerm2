@@ -225,7 +225,8 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
         [s writeToURL:[folder URLByAppendingPathComponent:@"non-ascii-pius.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
     }
 
-    NSString *s = [NSString stringWithFormat:@"backgroundTexture=%@\nasciiUnderlineDescriptor=%@\nnonAsciiUnderlineDescriptor=%@\ndefaultBackgroundColor=(%@, %@, %@, %@)",
+    NSString *s = [NSString stringWithFormat:@"disableIndividualColorModels=%@\nbackgroundTexture=%@\nasciiUnderlineDescriptor=%@\nnonAsciiUnderlineDescriptor=%@\ndefaultBackgroundColor=(%@, %@, %@, %@)",
+                   @(_disableIndividualColorModels),
                    _backgroundTexture,
                    iTermMetalUnderlineDescriptorDescription(&_asciiUnderlineDescriptor),
                    iTermMetalUnderlineDescriptorDescription(&_nonAsciiUnderlineDescriptor),
