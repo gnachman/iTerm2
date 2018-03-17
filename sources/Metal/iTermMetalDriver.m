@@ -57,10 +57,21 @@
 
 @end
 
+typedef struct {
+    // The current size of our view so we can use this in our render pipeline
+    vector_uint2 viewportSize;
+    CGSize cellSize;
+    CGSize cellSizeWithoutSpacing;
+    int rows;
+    int columns;
+    CGFloat scale;
+} iTermMetalDriverMainThreadState;
+
 @interface iTermMetalDriver()
 // This indicates if a draw call was made while busy. When we stop being busy
 // and this is set, then we must schedule another draw.
 @property (atomic) BOOL needsDraw;
+@property (nonatomic, readonly) iTermMetalDriverMainThreadState *mainThreadState;
 @end
 
 @implementation iTermMetalDriver {
@@ -90,14 +101,8 @@
 
     // The command Queue from which we'll obtain command buffers
     id<MTLCommandQueue> _commandQueue;
+    iTermMetalDriverMainThreadState __mainThreadState;
 
-    // The current size of our view so we can use this in our render pipeline
-    vector_uint2 _viewportSize;
-    CGSize _cellSize;
-    CGSize _cellSizeWithoutSpacing;
-    int _rows;
-    int _columns;
-    CGFloat _scale;
 #if ENABLE_PRIVATE_QUEUE
     dispatch_queue_t _queue;
 #endif
@@ -169,6 +174,11 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+- (iTermMetalDriverMainThreadState *)mainThreadState {
+    assert([NSThread isMainThread]);
+    return &__mainThreadState;
+}
+
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
 #if ENABLE_PRIVATE_QUEUE
     dispatch_async(_queue, ^{
@@ -196,24 +206,22 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     cellSizeWithoutSpacing.width *= scale;
     cellSizeWithoutSpacing.height *= scale;
 
-    [self dispatchAsyncToPrivateQueue:^{
-        if (scale == 0) {
-            ELog(@"Warning: scale is 0");
-        }
-        DLog(@"Cell size is now %@x%@, grid size is now %@x%@", @(cellSize.width), @(cellSize.height), @(gridSize.width), @(gridSize.height));
-        _cellSize = cellSize;
-        _cellSizeWithoutSpacing = cellSizeWithoutSpacing;
-        _rows = MAX(1, gridSize.height);
-        _columns = MAX(1, gridSize.width);
-        _scale = scale;
-    }];
+    if (scale == 0) {
+        ELog(@"Warning: scale is 0");
+    }
+    DLog(@"Cell size is now %@x%@, grid size is now %@x%@", @(cellSize.width), @(cellSize.height), @(gridSize.width), @(gridSize.height));
+    self.mainThreadState->cellSize = cellSize;
+    self.mainThreadState->cellSizeWithoutSpacing = cellSizeWithoutSpacing;
+    self.mainThreadState->rows = MAX(1, gridSize.height);
+    self.mainThreadState->columns = MAX(1, gridSize.width);
+    self.mainThreadState->scale = scale;
 }
 
 #pragma mark - MTKViewDelegate
 
 - (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size {
-    _viewportSize.x = size.width;
-    _viewportSize.y = size.height;
+    self.mainThreadState->viewportSize.x = size.width;
+    self.mainThreadState->viewportSize.y = size.height;
 }
 
 // Called whenever the view needs to render a frame
@@ -267,7 +275,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     @synchronized (self) {
         [_inFlightHistogram addValue:_framesInFlight];
     }
-    if (_rows == 0 || _columns == 0) {
+    if (self.mainThreadState->rows == 0 || self.mainThreadState->columns == 0) {
         DLog(@"  abort: uninitialized");
         [self scheduleDrawIfNeededInView:view];
         return NO;
@@ -358,7 +366,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     iTermMetalFrameData *frameData = [[iTermMetalFrameData alloc] initWithView:view];
 
     [frameData measureTimeForStat:iTermMetalFrameDataStatMtExtractFromApp ofBlock:^{
-        frameData.viewportSize = _viewportSize;
+        frameData.viewportSize = self.mainThreadState->viewportSize;
 
         // This is the slow part
         frameData.perFrameState = [_dataSource metalDriverWillBeginDrawingFrame];
@@ -367,12 +375,12 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         frameData.gridSize = frameData.perFrameState.gridSize;
 
         CGSize (^rescale)(CGSize) = ^CGSize(CGSize size) {
-            return CGSizeMake(size.width * _scale, size.height * _scale);
+            return CGSizeMake(size.width * self.mainThreadState->scale, size.height * self.mainThreadState->scale);
         };
         frameData.cellSize = rescale(frameData.perFrameState.cellSize);
         frameData.cellSizeWithoutSpacing = rescale(frameData.perFrameState.cellSizeWithoutSpacing);
 
-        frameData.scale = _scale;
+        frameData.scale = self.mainThreadState->scale;
     }];
     return frameData;
 }
@@ -668,10 +676,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return;
     }
     __weak __typeof(self) weakSelf = self;
-    CGSize cellSize = _cellSize;
-    CGFloat scale = _scale;
+    CGSize cellSize = frameData.cellSize;
+    CGFloat scale = frameData.scale;
     __weak iTermMetalFrameData *weakFrameData = frameData;
-    [_textRenderer setASCIICellSize:_cellSize
+    [_textRenderer setASCIICellSize:cellSize
                  creationIdentifier:[frameData.perFrameState metalASCIICreationIdentifier]
                            creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(char c, iTermASCIITextureAttributes attributes) {
                                __typeof(self) strongSelf = weakSelf;
@@ -1279,41 +1287,26 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             [commandBuffer presentDrawable:frameData.destinationDrawable];
         }
 #endif
-        __block BOOL completed = NO;
 
         iTermPreciseTimerStatsStartTimer(&frameData.stats[iTermMetalFrameDataStatGpuScheduleWait]);
+
+        iTermPreciseTimerStats *scheduleWaitStat = &frameData.stats[iTermMetalFrameDataStatGpuScheduleWait];
+        void (^scheduledBlock)(void) = [^{
+            iTermPreciseTimerStatsMeasureAndRecordTimer(scheduleWaitStat);
+            [frameData class];  // force a reference to frameData to be kept
+        } copy];
         [commandBuffer addScheduledHandler:^(id<MTLCommandBuffer> _Nonnull commandBuffer) {
-            iTermPreciseTimerStatsMeasureAndRecordTimer(&frameData.stats[iTermMetalFrameDataStatGpuScheduleWait]);
+            dispatch_async(_queue, scheduledBlock);
         }];
 
+        __block BOOL completed = NO;
+        void (^completedBlock)(void) = [^{
+            completed = [self didComplete:completed withFrameData:frameData];
+        } copy];
+
         [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _Nonnull buffer) {
-            void (^block)(void) = ^{
-                if (!completed) {
-                    if (frameData.debugInfo) {
-                        NSData *archive = [frameData.debugInfo newArchive];
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            [self.dataSource metalDriverDidProduceDebugInfo:archive];
-                        });
-                    }
-
-                    completed = YES;
-                    [self complete:frameData];
-                    [self scheduleDrawIfNeededInView:frameData.view];
-
-                    __weak __typeof(self) weakSelf = self;
-                    [weakSelf dispatchAsyncToMainQueue:^{
-                        if (!_imageRenderer.rendererDisabled) {
-                            iTermImageRendererTransientState *tState = [frameData transientStateForRenderer:_imageRenderer];
-                            [weakSelf.dataSource metalDidFindImages:tState.missingImageUniqueIdentifiers
-                                                      missingImages:tState.foundImageUniqueIdentifiers
-                                                      animatedLines:tState.animatedLines];
-                        }
-                        [weakSelf.dataSource metalDriverDidDrawFrame:frameData.perFrameState];
-                    }];
-                }
-            };
 #if ENABLE_PRIVATE_QUEUE
-            [frameData dispatchToQueue:_queue forCompletion:block];
+            [frameData dispatchToQueue:_queue forCompletion:completedBlock];
 #else
             [frameData dispatchToQueue:dispatch_get_main_queue() forCompletion:block];
 #endif
@@ -1329,6 +1322,33 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }
 #endif
     }];
+}
+
+- (BOOL)didComplete:(BOOL)completed withFrameData:(iTermMetalFrameData *)frameData {
+    if (!completed) {
+        if (frameData.debugInfo) {
+            NSData *archive = [frameData.debugInfo newArchive];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.dataSource metalDriverDidProduceDebugInfo:archive];
+            });
+        }
+
+        completed = YES;
+        [self complete:frameData];
+        [self scheduleDrawIfNeededInView:frameData.view];
+
+        __weak __typeof(self) weakSelf = self;
+        [weakSelf dispatchAsyncToMainQueue:^{
+            if (!_imageRenderer.rendererDisabled) {
+                iTermImageRendererTransientState *tState = [frameData transientStateForRenderer:_imageRenderer];
+                [weakSelf.dataSource metalDidFindImages:tState.missingImageUniqueIdentifiers
+                                          missingImages:tState.foundImageUniqueIdentifiers
+                                          animatedLines:tState.animatedLines];
+            }
+            [weakSelf.dataSource metalDriverDidDrawFrame:frameData.perFrameState];
+        }];
+    }
+    return completed;
 }
 
 #pragma mark - Drawing Helpers
