@@ -46,6 +46,7 @@ typedef struct {
     unsigned int bold : 1;
     unsigned int faint : 1;
     vector_float4 background;
+    ColorMode mode : 2;
 } iTermTextColorKey;
 
 typedef struct {
@@ -889,6 +890,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         currentColorKey->isMatch = findMatch;
         currentColorKey->inUnderlinedRange = inUnderlinedRange;
         currentColorKey->selected = selected;
+        currentColorKey->mode = line[x].foregroundColorMode;
         currentColorKey->foregroundColor = line[x].foregroundColor;
         currentColorKey->fgGreen = line[x].fgGreen;
         currentColorKey->fgBlue = line[x].fgBlue;
@@ -900,6 +902,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             currentColorKey->inUnderlinedRange == previousColorKey->inUnderlinedRange &&
             currentColorKey->selected == previousColorKey->selected &&
             currentColorKey->foregroundColor == previousColorKey->foregroundColor &&
+            currentColorKey->mode == previousColorKey->mode &&
             currentColorKey->fgGreen == previousColorKey->fgGreen &&
             currentColorKey->fgBlue == previousColorKey->fgBlue &&
             currentColorKey->bold == previousColorKey->bold &&
