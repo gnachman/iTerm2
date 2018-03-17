@@ -87,11 +87,14 @@ NS_ASSUME_NONNULL_BEGIN
     const NSEdgeInsets margins = tState.margins;
     vector_float2 vertices[6 * 4];
     vector_float2 *v = &vertices[0];
+    // Top
     v = [self appendVerticesForQuad:CGRectMake(0,
                                                0,
                                                size.width,
                                                margins.top)
                            vertices:v];
+
+    // Botom
     v = [self appendVerticesForQuad:CGRectMake(0,
                                                size.height - margins.bottom,
                                                size.width,
@@ -99,14 +102,20 @@ NS_ASSUME_NONNULL_BEGIN
                            vertices:v];
 
     const CGFloat innerHeight = size.height - margins.bottom - margins.top;
+
+    // Left
     v = [self appendVerticesForQuad:CGRectMake(0,
                                                margins.top,
                                                margins.left,
                                                innerHeight)
                            vertices:v];
-    v = [self appendVerticesForQuad:CGRectMake(size.width - margins.right,
+
+    // Right
+    const CGFloat gridWidth = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.cellSize.width;
+    const CGFloat rightGutterWidth = tState.configuration.viewportSize.x - margins.right - gridWidth;
+    v = [self appendVerticesForQuad:CGRectMake(size.width - margins.right - rightGutterWidth,
                                                margins.top,
-                                               margins.right,
+                                               margins.right + rightGutterWidth,
                                                innerHeight)
                            vertices:v];
 
