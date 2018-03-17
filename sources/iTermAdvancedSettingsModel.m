@@ -302,6 +302,8 @@ DEFINE_BOOL(showBlockBoundaries, NO, @"Debugging: Show line buffer block boundar
 DEFINE_BOOL(useMetal, ADVANCED_SETTINGS_MODEL_USE_METAL, @"Experimental Features: Use Metal GPU-based renderer.\nThis should provide higher performance but it does not support transparent windows or ligatures and may have other missing features.");
 DEFINE_BOOL(showMetalFPSmeter, NO, @"Experimental Features: Show FPS meter\nRequires Metal renderer");
 DEFINE_BOOL(disableMetalWhenUnplugged, YES, @"Experimental Features: Disable Metal renderer when not connected to power?\nThis helps to conserve energy.");
-DEFINE_BOOL(disableMetalWhenIdle, YES, @"Experimental Features: Disable metal renderer when idle to save CPU utilization?\nRequires Metal renderer");
+
+// TODO: Turn this back on by default in a few days. Let's see if it is responsible for the spike in nightly build crasehs starting with the 3-12-2018 build.
+DEFINE_BOOL(disableMetalWhenIdle, NO, @"Experimental Features: Disable metal renderer when idle to save CPU utilization?\nRequires Metal renderer");
 
 @end
