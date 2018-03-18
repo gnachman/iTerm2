@@ -225,6 +225,15 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
         [s writeToURL:[folder URLByAppendingPathComponent:@"non-ascii-pius.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
     }
 
+    if (_colorModelIndexes) {
+        for (auto i : *_colorModelIndexes) {
+            const iTermColorComponentPair p = i.first;
+            [[iTermSubpixelModelBuilder sharedInstance] writeDebugDataToFolder:folder.path
+                                                                foregoundColor:p.first / 255.0
+                                                               backgroundColor:p.second / 255.0];
+        }
+    }
+
     NSString *s = [NSString stringWithFormat:@"disableIndividualColorModels=%@\nbackgroundTexture=%@\nasciiUnderlineDescriptor=%@\nnonAsciiUnderlineDescriptor=%@\ndefaultBackgroundColor=(%@, %@, %@, %@)",
                    @(_disableIndividualColorModels),
                    _backgroundTexture,

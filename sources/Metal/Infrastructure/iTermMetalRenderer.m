@@ -228,6 +228,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
 - (void)writeFragmentTexture:(id<MTLTexture>)texture index:(NSUInteger)index toFolder:(NSURL *)folder {
     NSUInteger length = [iTermTexture rawDataSizeForTexture:texture];
+    int samplesPerPixel = [iTermTexture samplesPerPixelForTexture:texture];
     NSMutableData *storage = [NSMutableData dataWithLength:length];
     [texture getBytes:storage.mutableBytes
           bytesPerRow:[iTermTexture bytesPerRowForForTexture:texture]
@@ -236,8 +237,8 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     NSImage *image = [NSImage imageWithRawData:storage
                                           size:NSMakeSize(texture.width, texture.height)
                                  bitsPerSample:8
-                               samplesPerPixel:4
-                                      hasAlpha:YES
+                               samplesPerPixel:samplesPerPixel
+                                      hasAlpha:samplesPerPixel == 4
                                 colorSpaceName:NSDeviceRGBColorSpace];
     NSString *name = [NSString stringWithFormat:@"texture.%@.%@.png", @(index), texture.label];
     [image saveAsPNGTo:[folder URLByAppendingPathComponent:name].path];
@@ -398,6 +399,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
     [iTermTexture setBytesPerRow:bytesPerRow
                      rawDataSize:height * width * 4
+                 samplesPerPixel:4
                       forTexture:texture];
 
     free(rawData);

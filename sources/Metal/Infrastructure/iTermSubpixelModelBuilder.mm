@@ -12,6 +12,7 @@ extern "C" {
 }
 #import <Cocoa/Cocoa.h>
 
+#import "NSImage+iTerm.h"
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
@@ -246,6 +247,32 @@ static NSString *const iTermSubpixelModelString = @"O";
         _models[@(key)] = subpixelModel;
         return subpixelModel;
     }
+}
+
+- (void)writeDebugDataToFolder:(NSString *)folder
+                foregoundColor:(float)foregroundComponent
+               backgroundColor:(float)backgroundComponent {
+    NSData *imageData = [iTermSubpixelModelBuilder dataForImageWithForegroundColor:simd_make_float4(foregroundComponent,
+                                                                                                    foregroundComponent,
+                                                                                                    foregroundComponent,
+                                                                                                    1)
+                                                                   backgroundColor:simd_make_float4(backgroundComponent,
+                                                                                                    backgroundComponent,
+                                                                                                    backgroundComponent,
+                                                                                                    1)];
+    NSString *name = [NSString stringWithFormat:@"SubpixelImage.f_%02x.b_%02x.dat",
+                      static_cast<int>(foregroundComponent * 255), static_cast<int>(backgroundComponent * 255)];
+    [imageData writeToFile:[folder stringByAppendingPathComponent:name] atomically:NO];
+
+    NSImage *image = [NSImage imageWithRawData:imageData
+                                          size:iTermSubpixelModelSize
+                                 bitsPerSample:8
+                               samplesPerPixel:4
+                                      hasAlpha:YES
+                                colorSpaceName:NSDeviceRGBColorSpace];
+    NSString *imageName = [NSString stringWithFormat:@"SubpixelImage.f_%02x.b_%02x.png",
+                           static_cast<int>(foregroundComponent * 255), static_cast<int>(backgroundComponent * 255)];
+    [[image dataForFileOfType:NSPNGFileType] writeToFile:[folder stringByAppendingPathComponent:imageName] atomically:NO];
 }
 
 - (void)dealloc {

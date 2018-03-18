@@ -212,6 +212,7 @@ static NSInteger gNextFrameDataNumber;
         colorAttachment.texture = [self.device newTextureWithDescriptor:textureDescriptor];
         [iTermTexture setBytesPerRow:self.viewportSize.x * 4
                          rawDataSize:self.viewportSize.x * self.viewportSize.y * 4
+                     samplesPerPixel:4
                           forTexture:colorAttachment.texture];
         colorAttachment.texture.label = label;
     }

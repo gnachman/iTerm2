@@ -582,6 +582,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         texture.label = @"Offscreen destination";
         [iTermTexture setBytesPerRow:frameData.destinationDrawable.texture.width * 4
                          rawDataSize:frameData.destinationDrawable.texture.width * frameData.destinationDrawable.texture.height * 4
+                     samplesPerPixel:4
                           forTexture:texture];
         return texture;
     } else {

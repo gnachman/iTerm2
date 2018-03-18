@@ -12,9 +12,13 @@ const char *iTermTextureMetadataKey = "iTermTextureMetadataKey";
 
 @implementation iTermTexture
 
-+ (void)setBytesPerRow:(int)bytesPerRow rawDataSize:(int)size forTexture:(id<MTLTexture>)texture {
++ (void)setBytesPerRow:(int)bytesPerRow
+           rawDataSize:(int)size
+       samplesPerPixel:(int)samplesPerPixel
+            forTexture:(id<MTLTexture>)texture {
     [self attachMetadata:@{ @"bytesPerRow": @(bytesPerRow),
-                            @"rawDataSize": @(size) }
+                            @"rawDataSize": @(size),
+                            @"samplesPerPixel": @(samplesPerPixel) }
                toTexture:texture];
 }
 
@@ -32,6 +36,10 @@ const char *iTermTextureMetadataKey = "iTermTextureMetadataKey";
 
 + (int)rawDataSizeForTexture:(id<MTLTexture>)texture {
     return [[[self metadataForTexture:texture] objectForKey:@"rawDataSize"] intValue];
+}
+
++ (int)samplesPerPixelForTexture:(id<MTLTexture>)texture {
+    return [[[self metadataForTexture:texture] objectForKey:@"samplesPerPixel"] intValue];
 }
 
 + (void)setMetadataObject:(id)object forKey:(id)key onTexture:(id<MTLTexture>)texture {

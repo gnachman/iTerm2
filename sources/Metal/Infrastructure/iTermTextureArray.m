@@ -49,6 +49,7 @@
         _texture.label = @"iTermTextureArray";
         [iTermTexture setBytesPerRow:_atlasSize.width * 4
                          rawDataSize:_atlasSize.width * _atlasSize.height * 4
+                     samplesPerPixel:4
                           forTexture:_texture];
     }
 

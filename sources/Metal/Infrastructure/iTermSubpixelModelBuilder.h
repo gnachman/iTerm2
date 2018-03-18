@@ -35,4 +35,8 @@
 - (iTermSubpixelModel *)modelForForegoundColor:(float)foregroundComponent
                                backgroundColor:(float)backgroundComponent;
 
+- (void)writeDebugDataToFolder:(NSString *)folder
+                foregoundColor:(float)foregroundComponent
+               backgroundColor:(float)backgroundComponent;
+
 @end

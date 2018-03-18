@@ -40,12 +40,35 @@
     return data;
 }
 
++ (NSData *)dataWithFourBytesPerPixelFromDataWithOneBytePerPixel:(NSData *)input {
+    NSMutableData *output = [NSMutableData dataWithLength:input.length * 4];
+    unsigned char *ob = (unsigned char *)output.mutableBytes;
+    unsigned char *ib = (unsigned char *)input.bytes;
+    for (int i = 0; i < input.length; i++) {
+        const int j = i * 4;
+        ob[j] = *ib;
+        ob[j+1] = *ib;
+        ob[j+2] = *ib;
+        ob[j+3] = 255;
+    }
+    return output;
+}
+
 + (instancetype)imageWithRawData:(NSData *)data
                             size:(NSSize)size
                    bitsPerSample:(NSInteger)bitsPerSample
                  samplesPerPixel:(NSInteger)samplesPerPixel
                         hasAlpha:(BOOL)hasAlpha
                   colorSpaceName:(NSString *)colorSpaceName {
+    if (samplesPerPixel == 1) {
+        return [self imageWithRawData:[self dataWithFourBytesPerPixelFromDataWithOneBytePerPixel:data]
+                                 size:size
+                        bitsPerSample:8
+                      samplesPerPixel:4
+                             hasAlpha:YES
+                       colorSpaceName:colorSpaceName];
+    }
+    
     assert(data.length == size.width * size.height * bitsPerSample * samplesPerPixel / 8);
     NSBitmapImageRep *bitmapImageRep =
         [[[NSBitmapImageRep alloc] initWithBitmapDataPlanes:nil  // allocate the pixel buffer for us

@@ -218,6 +218,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
                    bytesPerRow:18 * 256];
         [iTermTexture setBytesPerRow:18*256
                          rawDataSize:18 * 256 * 18
+                     samplesPerPixel:1
                           forTexture:_models];
     }
     return self;
