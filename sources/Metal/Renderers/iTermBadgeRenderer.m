@@ -55,11 +55,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermBadgeRendererTransientState *tState = transientState;
     const CGSize size = tState.destinationRect.size;
     const CGFloat scale = tState.configuration.scale;
-    CGRect textureFrame = tState.sourceRect;
-    textureFrame.origin.x /= tState.texture.width / scale;
-    textureFrame.origin.y /= tState.texture.height / scale;
-    textureFrame.size.width /= tState.texture.width / scale;
-    textureFrame.size.height /= tState.texture.height / scale;
+    CGRect textureFrame = CGRectMake(0, 0, 1, 1);
     const CGFloat MARGIN_HEIGHT = [iTermAdvancedSettingsModel terminalVMargin] * scale;
 
     CGRect quad = CGRectMake(scale * tState.destinationRect.origin.x,
