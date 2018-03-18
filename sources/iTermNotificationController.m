@@ -1,5 +1,5 @@
 /*
- **  iTermGrowlDelegate.m
+ **  iTermNotificationController.m
  **
  **  Copyright (c) 2006
  **
@@ -8,7 +8,7 @@
  **  Project: iTerm
  **
  **  Description: Implements the delegate for Growl notifications.
- **               See iTermGrowlDelegate.h for usage information.
+ **               See iTermNotificationController.h for usage information.
  **
  **  This program is free software; you can redistribute it and/or modify
  **  it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import "iTermGrowlDelegate.h"
+#import "iTermNotificationController.h"
 
 #import "iTermController.h"
 #import "PreferencePanel.h"
@@ -38,10 +38,10 @@
 static NSString *const kGrowlAppName = @"iTerm";
 static NSString *const kDefaultNotification = @"Miscellaneous";
 
-@implementation iTermGrowlDelegate
+@implementation iTermNotificationController
 
 + (id)sharedInstance {
-    static iTermGrowlDelegate *instance;
+    static iTermNotificationController *instance;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         instance = [[self alloc] init];
@@ -52,7 +52,7 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
 - (instancetype)init {
     self = [super init];
     if (self) {
-        NSBundle *myBundle = [NSBundle bundleForClass:[iTermGrowlDelegate class]];
+        NSBundle *myBundle = [NSBundle bundleForClass:[iTermNotificationController class]];
         NSString *growlPath =
             [[myBundle privateFrameworksPath] stringByAppendingPathComponent:@"Growl.framework"];
         NSBundle *growlBundle = [NSBundle bundleWithPath:growlPath];

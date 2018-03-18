@@ -6,7 +6,7 @@
 //
 
 #import "GrowlTrigger.h"
-#import "iTermGrowlDelegate.h"
+#import "iTermNotificationController.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
 
@@ -34,7 +34,7 @@
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                                     stop:(BOOL *)stop {
-    iTermGrowlDelegate *gd = [iTermGrowlDelegate sharedInstance];
+    iTermNotificationController *gd = [iTermNotificationController sharedInstance];
     [gd growlNotify:[self paramWithBackreferencesReplacedWithValues:capturedStrings count:captureCount]
         withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
                          [aSession name],

@@ -1,5 +1,5 @@
 /*
- **  iTermGrowlDelegate.h
+ **  iTermNotificationController.h
  **
  **  Copyright (c) 2006
  **
@@ -13,21 +13,21 @@
  **  Usage:
  **      In your class header file, add the following @class directive
  **
- **          @class iTermGrowlDelegate;
+ **          @class iTermNotificationController;
  **
- **      and declare an iTermGrowlDelegate variable in the @interface
+ **      and declare an iTermNotificationController variable in the @interface
  **
- **          iTermGrowlDelegate* gd;
+ **          iTermNotificationController* gd;
  **
  **      In your class implementation file, add the following import
  **
- **          #import "iTermGrowlDelegate.h"
+ **          #import "iTermNotificationController.h"
  **
  **      In the class init, get a copy of the shared delegate
  **
- **          gd = [iTermGrowlDelegate sharedInstance];
+ **          gd = [iTermNotificationController sharedInstance];
  **
- **      There are several growlNotify methods in iTermGrowlDelegate.
+ **      There are several growlNotify methods in iTermNotificationController.
  **      See the header file for details.
  **
  **      Example usage:
@@ -54,7 +54,7 @@
 #import <Cocoa/Cocoa.h>
 #import <Growl/Growl.h>
 
-@interface iTermGrowlDelegate : NSObject <
+@interface iTermNotificationController : NSObject <
   GrowlApplicationBridgeDelegate,
   NSUserNotificationCenterDelegate>
 

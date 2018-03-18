@@ -9,7 +9,7 @@
 #import "iTermCapturedOutputMark.h"
 #import "iTermColorMap.h"
 #import "iTermExpose.h"
-#import "iTermGrowlDelegate.h"
+#import "iTermNotificationController.h"
 #import "iTermImage.h"
 #import "iTermImageInfo.h"
 #import "iTermImageMark.h"
@@ -205,7 +205,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         [self setInitialTabStops];
         linebuffer_ = [[LineBuffer alloc] init];
 
-        [iTermGrowlDelegate sharedInstance];
+        [iTermNotificationController sharedInstance];
 
         dvr_ = [DVR alloc];
         [dvr_ initWithBufferCapacity:[iTermPreferences intForKey:kPreferenceKeyInstantReplayMemoryMegabytes] * 1024 * 1024];
@@ -3092,7 +3092,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                     [delegate_ screenName],
                                     [delegate_ screenNumber],
                                     message];
-        BOOL sent = [[iTermGrowlDelegate sharedInstance]
+        BOOL sent = [[iTermNotificationController sharedInstance]
                         growlNotify:@"Alert"
                         withDescription:description
                         andNotification:@"Customized Message"
