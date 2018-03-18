@@ -718,6 +718,9 @@ typedef struct iTermTextColorContext {
     rect.origin.y += kMargin;
     rect.size.height -= kMargin;
 
+    // Bump the bottom up by as much as 3 points.
+    rect.size.height -= MAX(3 * scale, (cellSizeWithoutSpacing.height - 15 * scale) / 2.0);
+
     return rect;
 }
 
