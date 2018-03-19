@@ -68,21 +68,21 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
     return self;
 }
 
-- (void)growlNotify:(NSString *)title {
-    [self growlNotify:title withDescription:nil];
+- (void)notify:(NSString *)title {
+    [self notify:title withDescription:nil];
 }
 
-- (void)growlNotify:(NSString *)title
+- (void)notify:(NSString *)title
      withDescription:(NSString *)description {
-    [self growlNotify:title
+    [self notify:title
       withDescription:description
       andNotification:kDefaultNotification];
 }
 
-- (void)growlNotify:(NSString *)title
+- (void)notify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification {
-      [self growlNotify:title
+      [self notify:title
         withDescription:description
         andNotification:notification
             windowIndex:-1
@@ -90,13 +90,13 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
               viewIndex:-1];
 }
 
-- (BOOL)growlNotify:(NSString *)title
+- (BOOL)notify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification
         windowIndex:(int)windowIndex
            tabIndex:(int)tabIndex
           viewIndex:(int)viewIndex {
-    return [self growlNotify:title
+    return [self notify:title
              withDescription:description
              andNotification:notification
                  windowIndex:windowIndex
@@ -105,7 +105,7 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
                       sticky:NO];
 }
 
-- (BOOL)growlNotify:(NSString *)title
+- (BOOL)notify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification
         windowIndex:(int)windowIndex

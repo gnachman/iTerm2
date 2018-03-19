@@ -3093,7 +3093,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                     [delegate_ screenNumber],
                                     message];
         BOOL sent = [[iTermNotificationController sharedInstance]
-                        growlNotify:@"Alert"
+                                 notify:@"Alert"
                         withDescription:description
                         andNotification:@"Customized Message"
                             windowIndex:[delegate_ screenWindowIndex]

@@ -4627,7 +4627,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                             [session name],
                             [self tabNumber]];
                     if ([iTermProfilePreferences boolForKey:KEY_SEND_IDLE_ALERT inProfile:session.profile]) {
-                        [[iTermNotificationController sharedInstance] growlNotify:@"Idle"
+                        [[iTermNotificationController sharedInstance] notify:@"Idle"
                                                          withDescription:theDescription
                                                          andNotification:@"Idle"
                                                              windowIndex:[session screenWindowIndex]
@@ -4665,7 +4665,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         notify &&
         [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC) {
         if ([iTermProfilePreferences boolForKey:KEY_SEND_NEW_OUTPUT_ALERT inProfile:self.activeSession.profile]) {
-            [[iTermNotificationController sharedInstance] growlNotify:NSLocalizedStringFromTableInBundle(@"New Output",
+            [[iTermNotificationController sharedInstance] notify:NSLocalizedStringFromTableInBundle(@"New Output",
                                                                                                 @"iTerm",
                                                                                                 [NSBundle bundleForClass:[self class]],
                                                                                                 @"Growl Alerts")

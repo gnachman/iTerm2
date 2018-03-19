@@ -126,13 +126,13 @@
                     break;
 
                 case kTransferrableFileStatusFinishedSuccessfully:
-                    [[iTermNotificationController sharedInstance] growlNotify:
+                    [[iTermNotificationController sharedInstance] notify:
                         [NSString stringWithFormat:@"%@ of “%@” finished!",
                             self.isDownloading ? @"Download" : @"Upload", [self shortName]]];
                     break;
 
                 case kTransferrableFileStatusFinishedWithError:
-                    [[iTermNotificationController sharedInstance] growlNotify:
+                    [[iTermNotificationController sharedInstance] notify:
                      [NSString stringWithFormat:@"%@ of “%@” failed.",
                       self.isDownloading ? @"Download" : @"Upload", [self shortName]]];
             }

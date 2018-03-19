@@ -35,7 +35,7 @@
                     atAbsoluteLineNumber:(long long)lineNumber
                                     stop:(BOOL *)stop {
     iTermNotificationController *gd = [iTermNotificationController sharedInstance];
-    [gd growlNotify:[self paramWithBackreferencesReplacedWithValues:capturedStrings count:captureCount]
+    [gd notify:[self paramWithBackreferencesReplacedWithValues:capturedStrings count:captureCount]
         withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
                          [aSession name],
                          aSession.delegate.tabNumber]

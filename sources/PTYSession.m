@@ -2643,7 +2643,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_shell killServerIfRunning];
     if ([self shouldPostGrowlNotification] &&
         [iTermProfilePreferences boolForKey:KEY_SEND_SESSION_ENDED_ALERT inProfile:self.profile]) {
-        [[iTermNotificationController sharedInstance] growlNotify:@"Session Ended"
+        [[iTermNotificationController sharedInstance] notify:@"Session Ended"
                                          withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                                                           [self name],
                                                           [_delegate tabNumber]]
@@ -3108,7 +3108,7 @@ ITERM_WEAKLY_REFERENCEABLE
             if ([_textview keyIsARepeat] == NO &&
                 [self shouldPostGrowlNotification] &&
                 [iTermProfilePreferences boolForKey:KEY_SEND_BELL_ALERT inProfile:self.profile]) {
-                [[iTermNotificationController sharedInstance] growlNotify:@"Bell"
+                [[iTermNotificationController sharedInstance] notify:@"Bell"
                                                  withDescription:[NSString stringWithFormat:@"Session %@ #%d just rang a bell!",
                                                                   [self name],
                                                                   [_delegate tabNumber]]
@@ -7669,7 +7669,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.alertOnNextMark) {
         NSString *action = [iTermApplication.sharedApplication delegate].markAlertAction;
         if ([action isEqualToString:kMarkAlertActionPostNotification]) {
-            [[iTermNotificationController sharedInstance] growlNotify:@"Mark Set"
+            [[iTermNotificationController sharedInstance] notify:@"Mark Set"
                                              withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
                                                               [self name],
                                                               [_delegate tabNumber]]

@@ -32,7 +32,7 @@
  **
  **      Example usage:
  **
- **          [gd growlNotify: @"This is the title"
+ **          [gd notify: @"This is the title"
  **          withDescription: @"This is the description"
  **          andNotification: @"Bells"];
  **
@@ -62,13 +62,13 @@
 
 // Generate a Growl message with no description and a notification type
 // of "Miscellaneous".
-- (void)growlNotify:(NSString *)title;
+- (void)notify:(NSString *)title;
 
 // Generate a Growl message with a notification type of "Miscellaneous".
-- (void)growlNotify:(NSString *)title withDescription:(NSString *)description;
+- (void)notify:(NSString *)title withDescription:(NSString *)description;
 
 //  Generate a 'full' Growl message with a specified notification type.
-- (void)growlNotify:(NSString *)title
+- (void)notify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification;
 
@@ -76,7 +76,7 @@
 // associated with a particular window/tab/view.
 //
 // Returns YES if the notification was posted.
-- (BOOL)growlNotify:(NSString *)title
+- (BOOL)notify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification
         windowIndex:(int)windowIndex
@@ -84,7 +84,7 @@
           viewIndex:(int)viewIndex;
 
 // Adds the sticky argument. Only works with Growl, not notification center.
-- (BOOL)growlNotify:(NSString *)title
+- (BOOL)notify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification
         windowIndex:(int)windowIndex
