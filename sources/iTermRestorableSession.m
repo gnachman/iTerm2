@@ -32,6 +32,9 @@
         self.terminalGuid = restorableState[@"terminalGuid"];
         self.arrangement = restorableState[@"arrangement"];
         self.predecessors = restorableState[@"predecessors"];
+        self.windowType = restorableState[@"windowType"] ? [restorableState[@"windowType"] intValue] : WINDOW_TYPE_NORMAL;
+        self.savedWindowType = restorableState[@"savedWindowType"] ? [restorableState[@"savedWindowType"] intValue] : WINDOW_TYPE_NORMAL;
+        self.screen = restorableState[@"screen"] ? [restorableState[@"screen"] intValue] : -1;
     }
     return self;
 }
@@ -40,7 +43,10 @@
     return @{ @"sessionFrameTuples": [_sessions mapWithBlock:^id(PTYSession *session) { return @[ [NSValue valueWithRect:session.view.frame], [session arrangementWithContents:YES] ]; }] ?: @[],
               @"terminalGuid": _terminalGuid ?: @"",
               @"arrangement": _arrangement ?: @{},
-              @"predecessors": _predecessors ?: @[] };
+              @"predecessors": _predecessors ?: @[],
+              @"windowType": @(_windowType),
+              @"savedWindowType": @(_savedWindowType),
+              @"screen": @(_screen) };
 }
 
 @end

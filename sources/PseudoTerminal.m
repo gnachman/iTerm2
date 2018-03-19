@@ -1379,7 +1379,14 @@ ITERM_WEAKLY_REFERENCEABLE
     restorableSession.terminalGuid = self.terminalGuid;
     restorableSession.arrangement = [self arrangement];
     restorableSession.group = kiTermRestorableSessionGroupWindow;
+    [self storeWindowStateInRestorableSession:restorableSession];
     return restorableSession;
+}
+
+- (void)storeWindowStateInRestorableSession:(iTermRestorableSession *)restorableSession {
+    restorableSession.windowType = self.lionFullScreen ? WINDOW_TYPE_LION_FULL_SCREEN : windowType_;
+    restorableSession.savedWindowType = savedWindowType_;
+    restorableSession.screen = _screenNumberFromFirstProfile;
 }
 
 - (iTermRestorableSession *)restorableSessionForTab:(PTYTab *)aTab {
@@ -1400,6 +1407,7 @@ ITERM_WEAKLY_REFERENCEABLE
     restorableSession.predecessors = predecessors;
     restorableSession.arrangement = [aTab arrangement];
     restorableSession.group = kiTermRestorableSessionGroupTab;
+    [self storeWindowStateInRestorableSession:restorableSession];
     return restorableSession;
 }
 
@@ -1411,6 +1419,7 @@ ITERM_WEAKLY_REFERENCEABLE
         restorableSession.sessions = [aTab sessions];
         restorableSession.terminalGuid = self.terminalGuid;
         restorableSession.tabUniqueId = aTab.uniqueId;
+        [self storeWindowStateInRestorableSession:restorableSession];
         NSArray *tabs = [self tabs];
         NSUInteger index = [tabs indexOfObject:aTab];
         if (index != NSNotFound) {
@@ -2637,6 +2646,7 @@ ITERM_WEAKLY_REFERENCEABLE
         restorableSession.terminalGuid = self.terminalGuid;
         restorableSession.arrangement = [self arrangement];
         restorableSession.group = kiTermRestorableSessionGroupWindow;
+        [self storeWindowStateInRestorableSession:restorableSession];
         if (restorableSession.arrangement) {
             [[iTermController sharedInstance] pushCurrentRestorableSession:restorableSession];
         }
