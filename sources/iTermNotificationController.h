@@ -7,8 +7,9 @@
  **
  **  Project: iTerm
  **
- **  Description: Implements the delegate for Growl notifications. When
- **      available, Notifiation Center is used as a fallback.
+ **  Description: Implements the delegate for notifications. When available
+ **      Notification Center is used either as a fallback from Growl or
+ **      directly (if the corresponding advanced setting is turned on).
  **
  **  Usage:
  **      In your class header file, add the following @class directive
@@ -27,7 +28,7 @@
  **
  **          gd = [iTermNotificationController sharedInstance];
  **
- **      There are several growlNotify methods in iTermNotificationController.
+ **      There are several notify methods in iTermNotificationController.
  **      See the header file for details.
  **
  **      Example usage:
@@ -60,19 +61,19 @@
 
 + (instancetype)sharedInstance;
 
-// Generate a Growl message with no description and a notification type
+// Generate a message with no description and a Growl notification type
 // of "Miscellaneous".
 - (void)notify:(NSString *)title;
 
-// Generate a Growl message with a notification type of "Miscellaneous".
+// Generate a message with a Growl notification type of "Miscellaneous".
 - (void)notify:(NSString *)title withDescription:(NSString *)description;
 
-//  Generate a 'full' Growl message with a specified notification type.
+//  Generate a 'full' message with a specified notification type.
 - (void)notify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification;
 
-// Generate a 'full' Growl message with a specified notification type,
+// Generate a 'full' message with a specified notification type,
 // associated with a particular window/tab/view.
 //
 // Returns YES if the notification was posted.
@@ -83,7 +84,7 @@
            tabIndex:(int)tabIndex
           viewIndex:(int)viewIndex;
 
-// Adds the sticky argument. Only works with Growl, not notification center.
+// Adds the sticky argument.
 - (BOOL)notify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification
