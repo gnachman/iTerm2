@@ -10,6 +10,7 @@
 
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermProfilePreferences.h"
 #import "iTermRestorableSession.h"
 #import "NSArray+iTerm.h"
 #import "PseudoTerminal.h"
@@ -84,14 +85,18 @@
     } else {
         // Create a new term and add the session to it.
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                 windowType:WINDOW_TYPE_NORMAL
-                                            savedWindowType:WINDOW_TYPE_NORMAL
-                                                     screen:-1] autorelease];
+                                                 windowType:restorableSession.windowType
+                                            savedWindowType:restorableSession.savedWindowType
+                                                     screen:restorableSession.screen] autorelease];
         if (term) {
             [[iTermController sharedInstance] addTerminalWindow:term];
             term.terminalGuid = restorableSession.terminalGuid;
             [term addRevivedSession:restorableSession.sessions[0]];
             [term fitWindowToTabs];
+
+            if (restorableSession.windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+                [term delayedEnterFullscreen];
+            }
         }
     }
     [[[iTermApplication sharedApplication] delegate] updateBuriedSessionsMenu];

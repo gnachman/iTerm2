@@ -563,6 +563,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     restorableSession.tabUniqueId = self.uniqueId;
     restorableSession.arrangement = self.arrangement;
     restorableSession.group = kiTermRestorableSessionGroupSession;
+    [realParentWindow_ storeWindowStateInRestorableSession:restorableSession];
 }
 
 - (void)setActiveSession:(PTYSession *)session {
