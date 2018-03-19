@@ -169,6 +169,12 @@ DEFINE_BOOL(hideStuckTooltips, YES, @"General: Hide stuck tooltips.\nWhen you hi
 DEFINE_BOOL(openFileOverridesSendText, YES, @"General: Should opening a script with iTerm2 disable the default profile's “Send Text at Start” setting?\nIf you use “open iTerm2 file.command” or drag a script onto iTerm2's icon and this setting is enabled then the script will be executed in lieu of the profile's “Send Text at Start” setting. If this setting is off then both will be executed.");
 DEFINE_BOOL(statusBarIcon, YES, @"General: Add status bar icon when excluded from dock?\nWhen you turn on “Exclude from Dock and Cmd-Tab Application Switcher” a status bar icon is added to the menu bar so you can switch the setting back off. Disable this to remove the status bar icon. Doing so makes it very hard to get to Preferences. You must restart iTerm2 after changing this setting.");
 DEFINE_BOOL(wrapFocus, YES, @"General: Should the directional focus hotkeys wrap");
+#if BETA
+#define ADVANCED_SETTINGS_DISABLE_GROWL YES
+#else
+#define ADVANCED_SETTINGS_DISABLE_GROWL NO
+#endif
+DEFINE_BOOL(disableGrowl, ADVANCED_SETTINGS_DISABLE_GROWL, @"General: Disable Growl notifications.\nSend notifications directly to Notification Center instead of relying on Growl to deliver them. Enables sound alerts on notifications.");
 
 #pragma mark - Drawing
 DEFINE_BOOL(zippyTextDrawing, YES, @"Drawing: Use zippy text drawing algorithm?\nThis draws non-ASCII text more quickly but with lower fidelity. This setting is ignored if ligatures are enabled in Prefs > Profiles > Text.");
