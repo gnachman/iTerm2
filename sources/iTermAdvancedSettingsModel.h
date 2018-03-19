@@ -206,5 +206,6 @@
 + (BOOL)middleClickClosesTab;
 + (BOOL)disableMetalWhenUnplugged;
 + (BOOL)disableMetalWhenIdle;
++ (BOOL)disableGrowl;
 
 @end
