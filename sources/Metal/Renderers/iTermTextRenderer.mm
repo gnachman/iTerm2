@@ -131,21 +131,27 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     return output;
 }
 
++ (void)enumerateGridOfSubpixelModels:(void (^)(float, float, iTermSubpixelModel *))block {
+    // The fragment function assumes we use the value 17 here. It's
+    // convenient that 17 evenly divides 255 (17 * 15 = 255).
+    float stride = 255.0/17.0;
+    for (float textColor = 0; textColor < 256; textColor += stride) {
+        for (float backgroundColor = 0; backgroundColor < 256; backgroundColor += stride) {
+            iTermSubpixelModel *model = [[iTermSubpixelModelBuilder sharedInstance] modelForForegoundColor:MIN(MAX(0, textColor / 255.0), 1)
+                                                                                           backgroundColor:MIN(MAX(0, backgroundColor / 255.0), 1)];
+            block(textColor, backgroundColor, model);
+        }
+    }
+}
+
 + (NSData *)subpixelModelData {
     static NSData *subpixelModelData;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         NSMutableData *data = [NSMutableData data];
-        // The fragment function assumes we use the value 17 here. It's
-        // convenient that 17 evenly divides 255 (17 * 15 = 255).
-        float stride = 255.0/17.0;
-        for (float textColor = 0; textColor < 256; textColor += stride) {
-            for (float backgroundColor = 0; backgroundColor < 256; backgroundColor += stride) {
-                iTermSubpixelModel *model = [[iTermSubpixelModelBuilder sharedInstance] modelForForegoundColor:MIN(MAX(0, textColor / 255.0), 1)
-                                                                                               backgroundColor:MIN(MAX(0, backgroundColor / 255.0), 1)];
-                [data appendData:model.table];
-            }
-        }
+        [self enumerateGridOfSubpixelModels:^(float textColor, float backgroundColor, iTermSubpixelModel *model) {
+            [data appendData:model.table];
+        }];
         subpixelModelData = [self transformedData:data];
     });
     return subpixelModelData;
@@ -432,6 +438,27 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         }
         NSURL *url = [folder URLByAppendingPathComponent:@"vertexBuffer.iTermVertexInputIndexPerInstanceUniforms.txt"];
         [s writeToURL:url atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    }
+}
+
+- (void)writeFragmentTexture:(id<MTLTexture>)texture index:(NSUInteger)index toFolder:(NSURL *)folder {
+    if (index == iTermTextureIndexSubpixelModels) {
+        NSMutableData *data = [NSMutableData data];
+        [self.class enumerateGridOfSubpixelModels:^(float textColor, float backgroundColor, iTermSubpixelModel *model) {
+            NSString *name = [NSString stringWithFormat:@"SubpixelModelGridBwGlyph.t_%02x.b_%02x.dat",
+                              (int)textColor, (int)backgroundColor];
+            NSURL *url = [folder URLByAppendingPathComponent:name];
+            [model.table writeToURL:url atomically:NO];
+
+            [data appendData:model.table];
+        }];
+        NSString *name = @"SubpixelModelGridComposite_Untransformed.dat";
+        NSURL *url = [folder URLByAppendingPathComponent:name];
+        [data writeToURL:url atomically:NO];
+
+        name = @"SubpixelModelGridComposite_Transformed.dat";
+        url = [folder URLByAppendingPathComponent:name];
+        [[self.class transformedData:data] writeToURL:url atomically:NO];
     }
 }
 
