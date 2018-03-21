@@ -700,7 +700,7 @@ typedef struct iTermTextColorContext {
                              cellSize:(CGSize)cellSize
                cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                 scale:(CGFloat)scale {
-    const CGFloat verticalSpacing = MAX(0, round((cellSize.height - cellSizeWithoutSpacing.height) / 2.0));
+    const CGFloat verticalSpacing = MAX(0, scale * round((cellSize.height / scale - cellSizeWithoutSpacing.height / scale) / 2.0));
     CGRect rect = NSMakeRect(container.origin.x,
                              container.origin.y + verticalSpacing,
                              [iTermAdvancedSettingsModel terminalMargin] * scale,
