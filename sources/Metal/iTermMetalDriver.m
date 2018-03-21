@@ -513,6 +513,12 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self updateCursorGuideRendererForFrameData:frameData];
     [self updateIndicatorRendererForFrameData:frameData];
     [self updateTimestampsRendererForFrameData:frameData];
+
+    [self.cellRenderers enumerateObjectsUsingBlock:^(id<iTermMetalCellRenderer>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (!obj.rendererDisabled) {
+            [frameData.debugInfo addCellRenderer:obj];
+        }
+    }];
 }
 
 - (void)createTransientStatesWithFrameData:(iTermMetalFrameData *)frameData

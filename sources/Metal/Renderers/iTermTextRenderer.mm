@@ -427,6 +427,25 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     }
 }
 
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    NSMutableData *data = [NSMutableData data];
+    [self.class enumerateGridOfSubpixelModels:^(float textColor, float backgroundColor, iTermSubpixelModel *model) {
+        NSString *name = [NSString stringWithFormat:@"SubpixelModelGridBwGlyph.t_%02x.b_%02x.dat",
+                          (int)textColor, (int)backgroundColor];
+        NSURL *url = [folder URLByAppendingPathComponent:name];
+        [model.table writeToURL:url atomically:NO];
+
+        [data appendData:model.table];
+    }];
+    NSString *name = @"SubpixelModelGridComposite_Untransformed.dat";
+    NSURL *url = [folder URLByAppendingPathComponent:name];
+    [data writeToURL:url atomically:NO];
+
+    name = @"SubpixelModelGridComposite_Transformed.dat";
+    url = [folder URLByAppendingPathComponent:name];
+    [[self.class transformedData:data] writeToURL:url atomically:NO];
+}
+
 #pragma mark - iTermMetalDebugInfoFormatter
 
 - (void)writeVertexBuffer:(id<MTLBuffer>)buffer index:(NSUInteger)index toFolder:(NSURL *)folder {
@@ -438,27 +457,6 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         }
         NSURL *url = [folder URLByAppendingPathComponent:@"vertexBuffer.iTermVertexInputIndexPerInstanceUniforms.txt"];
         [s writeToURL:url atomically:NO encoding:NSUTF8StringEncoding error:nil];
-    }
-}
-
-- (void)writeFragmentTexture:(id<MTLTexture>)texture index:(NSUInteger)index toFolder:(NSURL *)folder {
-    if (index == iTermTextureIndexSubpixelModels) {
-        NSMutableData *data = [NSMutableData data];
-        [self.class enumerateGridOfSubpixelModels:^(float textColor, float backgroundColor, iTermSubpixelModel *model) {
-            NSString *name = [NSString stringWithFormat:@"SubpixelModelGridBwGlyph.t_%02x.b_%02x.dat",
-                              (int)textColor, (int)backgroundColor];
-            NSURL *url = [folder URLByAppendingPathComponent:name];
-            [model.table writeToURL:url atomically:NO];
-
-            [data appendData:model.table];
-        }];
-        NSString *name = @"SubpixelModelGridComposite_Untransformed.dat";
-        NSURL *url = [folder URLByAppendingPathComponent:name];
-        [data writeToURL:url atomically:NO];
-
-        name = @"SubpixelModelGridComposite_Transformed.dat";
-        url = [folder URLByAppendingPathComponent:name];
-        [[self.class transformedData:data] writeToURL:url atomically:NO];
     }
 }
 
