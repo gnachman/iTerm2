@@ -46,10 +46,10 @@
     unsigned char *ib = (unsigned char *)input.bytes;
     for (int i = 0; i < input.length; i++) {
         const int j = i * 4;
-        ob[j] = *ib;
-        ob[j+1] = *ib;
-        ob[j+2] = *ib;
-        ob[j+3] = 255;
+        ob[j + 0] = ib[i];
+        ob[j + 1] = ib[i];
+        ob[j + 2] = ib[i];
+        ob[j + 3] = 255;
     }
     return output;
 }
