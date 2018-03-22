@@ -73,6 +73,7 @@
     MTLRenderPassDescriptor *_intermediateRenderPassDescriptor;
     NSMutableArray<iTermMetalRowData *> *_rowData;
     NSMutableArray<iTermMetalRendererTransientState *> *_transientStates;
+    NSMutableArray<id<iTermMetalCellRenderer>> *_cellRenderers;
     NSMutableArray<iTermMetalDebugDrawInfo *> *_draws;
     NSImage *_finalImage;
 }
@@ -82,6 +83,7 @@
     if (self) {
         _rowData = [NSMutableArray array];
         _transientStates = [NSMutableArray array];
+        _cellRenderers = [NSMutableArray array];
         _draws = [NSMutableArray array];
     }
     return self;
@@ -102,6 +104,10 @@
 - (void)addTransientState:(iTermMetalRendererTransientState *)tState {
     [_transientStates addObject:tState];
     tState.debugInfo = self;
+}
+
+- (void)addCellRenderer:(id<iTermMetalCellRenderer>)renderer {
+    [_cellRenderers addObject:renderer];
 }
 
 - (void)addRenderOutputData:(NSData *)data
@@ -173,6 +179,16 @@
             NSString *filename = [NSString stringWithFormat:@"%04d-output.png", (int)obj.sequenceNumber];
             [obj.renderedOutputForDebugging saveAsPNGTo:[[folder URLByAppendingPathComponent:filename] path]];
         }
+    }];
+
+    [_cellRenderers enumerateObjectsUsingBlock:^(id<iTermMetalCellRenderer> _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (![obj respondsToSelector:@selector(writeDebugInfoToFolder:)]) {
+            return;
+        }
+        Class theClass = [obj class];
+        NSURL *folder = [self newFolderNamed:[NSString stringWithFormat:@"renderer-%04d-%@", (int)idx, NSStringFromClass(theClass)]
+                                        root:root];
+        [obj writeDebugInfoToFolder:folder];
     }];
 
     [_draws enumerateObjectsUsingBlock:^(iTermMetalDebugDrawInfo * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {

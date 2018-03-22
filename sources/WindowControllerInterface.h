@@ -7,6 +7,7 @@
 #import "PTYWindow.h"
 
 @class iTermPopupWindowController;
+@class iTermRestorableSession;
 @class PSMTabBarControl;
 @class PTYSession;
 @class PTYTab;
@@ -173,6 +174,8 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (BOOL)isShowingTransientTitle;
 
 - (void)currentSessionWordAtCursorDidBecome:(NSString *)word;
+
+- (void)storeWindowStateInRestorableSession:(iTermRestorableSession *)restorableSession;
 
 #pragma mark - Tabs
 

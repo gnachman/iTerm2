@@ -33,7 +33,7 @@
         pius[i] = (iTermMarkPIU) {
             .offset = {
                 0,
-                (self.cellConfiguration.gridSize.height - rowNumber.intValue - 1) * self.cellConfiguration.cellSize.height + self.margins.top
+                (self.cellConfiguration.gridSize.height - rowNumber.intValue - 1) * self.cellConfiguration.cellSize.height + self.margins.top + self.cellConfiguration.cellSize.height - self.markSize.height - self.markOffset.y
             },
             .textureOffset = { origin.x, origin.y }
         };

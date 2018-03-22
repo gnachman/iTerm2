@@ -45,6 +45,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (__kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
                                                                           commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
+@optional
+- (void)writeDebugInfoToFolder:(NSURL *)folderURL;
+
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)

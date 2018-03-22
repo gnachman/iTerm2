@@ -534,7 +534,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     vector_float2 asciiCellSize = 1.0 / _asciiTextureGroup.atlasSize;
     const float cellHeight = self.cellConfiguration.cellSize.height;
     const float cellWidth = self.cellConfiguration.cellSize.width;
-    const float yOffset = (self.cellConfiguration.gridSize.height - row - 1) * cellHeight;
+    const float verticalShift = round((cellHeight - self.cellConfiguration.cellSizeWithoutSpacing.height) / (2 * self.configuration.scale)) * self.configuration.scale;
+    const float yOffset = (self.cellConfiguration.gridSize.height - row - 1) * cellHeight + verticalShift;
 
     std::map<int, int> lastRelations;
     BOOL havePrevious = NO;
