@@ -95,10 +95,14 @@
     return YES;
 }
 
+- (PopupWindow *)popupWindow {
+    return (PopupWindow *)self.window;
+}
+
 - (void)popWithDelegate:(id<PopupDelegate>)delegate {
     self.delegate = delegate;
 
-    [[self window] setParentWindow:delegate.popupWindowController.window];
+    [self.popupWindow setOwningWindow:delegate.popupWindowController.window];
 
     static const NSTimeInterval kAnimationDuration = 0.15;
     self.window.alphaValue = 0;
@@ -117,6 +121,51 @@
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
     self.window.animator.alphaValue = 1;
     [NSAnimationContext endGrouping];
+}
+
+#pragma mark - NSResponder Hacks
+
+// When a popup window is open we will forward some actions to the "real" responder in the owning
+// window. We have to implement the methods in question so that the SDK will enable them in the
+// menu.
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    for (NSResponder *responder in self.allResponders) {
+        if ([responder respondsToSelector:@selector(validateMenuItem:)] &&
+            [responder validateMenuItem:menuItem]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (NSArray *)allResponders {
+    NSMutableArray *responders = [NSMutableArray array];
+    NSResponder *responder = [self.popupWindow.owningWindow firstResponder];
+    while (responder) {
+        [responders addObject:responder];
+        responder = [responder nextResponder];
+    }
+    return responders;
+}
+
+- (void)paste:(id)sender {
+    [self.popupWindow.owningWindow.firstResponder tryToPerform:_cmd with:sender];
+}
+
+- (void)copy:(id)sender {
+    [self.popupWindow.owningWindow.firstResponder tryToPerform:_cmd with:sender];
+}
+
+- (void)copyWithStyles:(id)sender {
+    [self.popupWindow.owningWindow.firstResponder tryToPerform:_cmd with:sender];
+}
+
+- (void)selectAll:(id)sender {
+    [self.popupWindow.owningWindow.firstResponder tryToPerform:_cmd with:sender];
+}
+
+- (void)selectOutputOfLastCommand:(id)sender {
+    [self.popupWindow.owningWindow.firstResponder tryToPerform:_cmd with:sender];
 }
 
 - (PopupModel*)unfilteredModel

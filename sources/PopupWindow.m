@@ -10,7 +10,6 @@
 #import "iTermApplicationDelegate.h"
 
 @implementation PopupWindow {
-    NSWindow* parentWindow_;
     BOOL shutdown_;
 }
 
@@ -31,7 +30,7 @@
 
 - (void)dealloc
 {
-    [parentWindow_ release];
+    [_owningWindow release];
     [super dealloc];
 }
 
@@ -56,9 +55,9 @@
     shutdown_ = YES;
 }
 
-- (void)setParentWindow:(NSWindow*)parentWindow {
-    [parentWindow_ autorelease];
-    parentWindow_ = [parentWindow retain];
+- (void)setOwningWindow:(NSWindow *)owningWindow {
+    [_owningWindow autorelease];
+    _owningWindow = [owningWindow retain];
 }
 
 - (void)close
@@ -81,7 +80,7 @@
     iTermApplicationDelegate *theDelegate = [iTermApplication.sharedApplication delegate];
     [theDelegate makeHotKeyWindowKeyIfOpen];
     [super close];
-    [parentWindow_ makeKeyAndOrderFront:self];
+    [_owningWindow makeKeyAndOrderFront:self];
 }
 
 - (BOOL)autoHidesHotKeyWindow {
