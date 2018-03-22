@@ -19,6 +19,7 @@ typedef struct {
     int underlineStyle;  // should draw an underline? For some stupid reason the compiler won't let me set the type as iTermMetalGlyphAttributesUnderline
     float2 viewportSize;  // size of viewport in pixels. TODO: see if I can avoid passing this to fragment function.
     float scale;  // 2 for retina, 1 for non-retina
+    int iid;
 } iTermTextVertexFunctionOutput;
 
 vertex iTermTextVertexFunctionOutput
@@ -50,7 +51,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.cellOffset = perInstanceUniforms[iid].offset.xy + offset[0];
     out.underlineStyle = perInstanceUniforms[iid].underlineStyle;
     out.underlineColor = perInstanceUniforms[iid].underlineColor;
-
+    out.iid = iid;
     return out;
 }
 
@@ -377,20 +378,20 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
     }
 
     if (dimensions->disableExactColorModels) {
-        return static_cast<float4>(RemapColor(in.textColor * 17.0,
-                                              in.backgroundColor,
-                                              bwColor,
-                                              colorModelsTexture));
+        if (in.iid % 2) {
+            // Hardcode values that go on the leftmost column of pixels in an antialiased "e" with this user's text and bg colors. Tests is RemapColor produces the same output for them as for me.
+            return static_cast<float4>(RemapColor(float4(0.7098039, 0.5372549, 0, 1) * 17.0,
+                                                  float4(0, 0.1686275, 0.2117647, 1),
+                                                  half4(0.596, 0.823, 0.949, 1),
+                                                  colorModelsTexture));
+        } else {
+            return static_cast<float4>(RemapColor(in.textColor * 17.0,
+                                                  in.backgroundColor,
+                                                  bwColor,
+                                                  colorModelsTexture));
+        }
     } else {
-        const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
-        // Base index for this color model
-        const int3 i = in.colorModelIndex * 256;
-        // Find RGB values to map colors in the black-on-white glyph to
-        const uchar4 rgba = uchar4(exactColorModels[i.x + bwIntIndices.x],
-                                   exactColorModels[i.y + bwIntIndices.y],
-                                   exactColorModels[i.z + bwIntIndices.z],
-                                   255);
-        return static_cast<float4>(rgba) / 255;
+        return float4(0.5,0.5,1,1);
     }
 }
 
@@ -403,59 +404,7 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
                                     texture2d<half> drawable [[ texture(iTermTextureIndexBackground) ]],
                                     texture2d<half> colorModels [[ texture(iTermTextureIndexSubpixelModels) ]],
                                     constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
-    constexpr sampler textureSampler(mag_filter::linear,
-                                     min_filter::linear);
+    return half4(1,0,0.5,1);
 
-    half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
-    const float4 backgroundColor = static_cast<float4>(drawable.sample(textureSampler, in.backgroundTextureCoordinate));
-
-    if (!in.recolor) {
-        // Emoji code path
-        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            const float weight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
-                                                                  in.clipSpacePosition.xy,
-                                                                  in.viewportSize,
-                                                                  in.cellOffset,
-                                                                  dimensions->underlineOffset,
-                                                                  dimensions->underlineThickness,
-                                                                  dimensions->textureSize,
-                                                                  in.textureOffset,
-                                                                  in.textureCoordinate,
-                                                                  dimensions->cellSize,
-                                                                  texture,
-                                                                  textureSampler,
-                                                                  dimensions->scale);
-            return static_cast<half4>(mix(static_cast<float4>(bwColor),
-                                          in.underlineColor,
-                                          weight));
-        } else {
-            return bwColor;
-        }
-    } else if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
-        // Background shows through completely. Not emoji.
-        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            const float weight = ComputeWeightOfUnderline(in.underlineStyle,
-                                                          in.clipSpacePosition.xy,
-                                                          in.viewportSize,
-                                                          in.cellOffset,
-                                                          dimensions->underlineOffset,
-                                                          dimensions->underlineThickness,
-                                                          dimensions->textureSize,
-                                                          in.textureOffset,
-                                                          in.textureCoordinate,
-                                                          dimensions->cellSize,
-                                                          texture,
-                                                          textureSampler,
-                                                          dimensions->scale);
-            if (weight > 0) {
-                return static_cast<half4>(mix(backgroundColor,
-                                              in.underlineColor,
-                                              weight));
-            }
-        }
-        discard_fragment();
-    }
-
-    return RemapColor(in.textColor * 17.0, backgroundColor, bwColor, colorModels);
 }
 
