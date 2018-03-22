@@ -6813,19 +6813,27 @@ ITERM_WEAKLY_REFERENCEABLE
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
                     if (deltaY != 0) {
-                        if ([iTermAdvancedSettingsModel doubleReportScrollWheel]) {
+                        int steps;
+                        if ([iTermAdvancedSettingsModel proportionalScrollWheelReporting]) {
+                            // Cap number of reported scroll events at 32 to prevent runaway redraws.
+                            // This is a mostly theoretical concern and the number can grow if it
+                            // doesn't seem to be a problem.
+                            steps = MIN(32, fabs(deltaY));
+                        } else {
+                            steps = 1;
+                        }
+                        if (steps == 1 && [iTermAdvancedSettingsModel doubleReportScrollWheel]) {
                             // This works around what I believe is a bug in tmux or a bug in
                             // how users use tmux. See the thread on tmux-users with subject
                             // "Mouse wheel events and server_client_assume_paste--the perfect storm of bugs?".
+                            steps = 2;
+                        }
+                        for (int i = 0; i < steps; i++) {
                             [self writeLatin1EncodedData:[_terminal.output mousePress:button
                                                                         withModifiers:modifiers
                                                                                    at:coord]
                                         broadcastAllowed:NO];
                         }
-                        [self writeLatin1EncodedData:[_terminal.output mousePress:button
-                                                                    withModifiers:modifiers
-                                                                               at:coord]
-                                    broadcastAllowed:NO];
                     }
                     // If deltaY is 0 we still return YES because the
                     // scrollview moves anyway (likely because our caller is

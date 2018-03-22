@@ -312,4 +312,11 @@ DEFINE_BOOL(disableMetalWhenUnplugged, YES, @"Experimental Features: Disable Met
 // TODO: Turn this back on by default in a few days. Let's see if it is responsible for the spike in nightly build crasehs starting with the 3-12-2018 build.
 DEFINE_BOOL(disableMetalWhenIdle, NO, @"Experimental Features: Disable metal renderer when idle to save CPU utilization?\nRequires Metal renderer");
 
+#if BETA
+#define DEFAULT_PROPORTIONAL_SCROLL_WHEEL_REPORTING YES
+#else
+#define DEFAULT_PROPORTIONAL_SCROLL_WHEEL_REPORTING NO
+#endif
+DEFINE_BOOL(proportionalScrollWheelReporting, DEFAULT_PROPORTIONAL_SCROLL_WHEEL_REPORTING, @"Experimental Features: Report multiple mouse scroll events when scrolling quickly?");
+
 @end

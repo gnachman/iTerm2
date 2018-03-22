@@ -207,5 +207,6 @@
 + (BOOL)disableMetalWhenUnplugged;
 + (BOOL)disableMetalWhenIdle;
 + (BOOL)disableGrowl;
++ (BOOL)proportionalScrollWheelReporting;
 
 @end
