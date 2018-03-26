@@ -318,5 +318,6 @@ DEFINE_BOOL(disableMetalWhenIdle, NO, @"Experimental Features: Disable metal ren
 #define DEFAULT_PROPORTIONAL_SCROLL_WHEEL_REPORTING NO
 #endif
 DEFINE_BOOL(proportionalScrollWheelReporting, DEFAULT_PROPORTIONAL_SCROLL_WHEEL_REPORTING, @"Experimental Features: Report multiple mouse scroll events when scrolling quickly?");
+DEFINE_BOOL(useModernScrollWheelAccumulator, NO, @"Experimental Features: Use modern scroll wheel accumulator.\nThis should support wheel mice better and feel more natural.");
 
 @end

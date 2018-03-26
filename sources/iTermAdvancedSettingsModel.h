@@ -208,5 +208,6 @@
 + (BOOL)disableMetalWhenIdle;
 + (BOOL)disableGrowl;
 + (BOOL)proportionalScrollWheelReporting;
++ (BOOL)useModernScrollWheelAccumulator;
 
 @end

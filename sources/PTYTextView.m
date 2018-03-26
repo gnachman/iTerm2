@@ -24,6 +24,7 @@
 #import "iTermPreferences.h"
 #import "iTermPrintAccessoryViewController.h"
 #import "iTermQuickLookController.h"
+#import "iTermScrollAccumulator.h"
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
 #import "iTermShellHistoryController.h"
@@ -256,6 +257,9 @@ static const int kDragThreshold = 3;
     NSEvent *_eventBeingHandled;
 
     NSMutableArray<iTermHighlightedRow *> *_highlightedRows;
+
+    // Used to report scroll wheel mouse events.
+    iTermScrollAccumulator *_scrollAccumulator;
 }
 
 
@@ -353,6 +357,8 @@ static const int kDragThreshold = 3;
         _altScreenMouseScrollInferer = [[iTermAltScreenMouseScrollInferer alloc] init];
         _altScreenMouseScrollInferer.delegate = self;
         [self refuseFirstResponderAtCurrentMouseLocation];
+
+        _scrollAccumulator = [[iTermScrollAccumulator alloc] init];
     }
     return self;
 }
@@ -424,6 +430,7 @@ static const int kDragThreshold = 3;
     [_keyBindingEmulator release];
     [_altScreenMouseScrollInferer release];
     [_highlightedRows release];
+    [_scrollAccumulator release];
 
     [super dealloc];
 }
@@ -6939,7 +6946,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             return MOUSE_BUTTON_MIDDLE;
 
         case NSScrollWheel:
-            if ([event deltaY] > 0) {
+            if ([event scrollingDeltaY] > 0) {
                 return MOUSE_BUTTON_SCROLLDOWN;
             } else {
                 return MOUSE_BUTTON_SCROLLUP;
@@ -6968,7 +6975,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                      modifiers:event.modifierFlags
                                         button:[self mouseReportingButtonNumberForEvent:event]
                                     coordinate:coord
-                                        deltaY:[event deltaY]];
+                                        deltaY:[_scrollAccumulator deltaYForEvent:event lineHeight:self.enclosingScrollView.verticalLineScroll]];
 }
 
 #pragma mark - NSDraggingSource

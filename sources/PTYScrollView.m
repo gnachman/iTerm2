@@ -26,6 +26,7 @@
 #import "iTerm.h"
 #import "FutureMethods.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermScrollAccumulator.h"
 #import "PreferencePanel.h"
 #import "PTYScrollView.h"
 #import "PTYTextView.h"
@@ -33,8 +34,7 @@
 #import <Cocoa/Cocoa.h>
 
 @interface PTYScroller()
-// Total number of rows scrolled by. Will always be in (-1, 1).
-@property(nonatomic) CGFloat accumulatedDeltaY;
+@property (nonatomic, retain) iTermScrollAccumulator *accumulator;
 @end
 
 @implementation PTYScroller
@@ -43,9 +43,21 @@
     return YES;
 }
 
+- (void)dealloc {
+    [_accumulator release];
+    [super dealloc];
+}
+
+- (iTermScrollAccumulator *)accumulator {
+    if (!_accumulator) {
+        _accumulator = [[iTermScrollAccumulator alloc] init];
+    }
+    return _accumulator;
+}
+
 - (void)setUserScroll:(BOOL)userScroll {
     if (!userScroll && _userScroll) {
-        _accumulatedDeltaY = 0;
+        [_accumulator reset];
     }
     if (userScroll != _userScroll) {
         _userScroll = userScroll;
@@ -137,36 +149,13 @@
     [self detectUserScroll];
 }
 
-static CGFloat RoundTowardZero(CGFloat value) {
-    if (value > 0) {
-        return floor(value);
-    } else {
-        return ceil(value);
-    }
-}
-
 - (CGFloat)accumulateVerticalScrollFromEvent:(NSEvent *)theEvent {
-    CGFloat delta = theEvent.scrollingDeltaY;
-    if (theEvent.hasPreciseScrollingDeltas) {
-        delta /= self.verticalLineScroll;
+    const CGFloat lineHeight = self.verticalLineScroll;
+    if ([iTermAdvancedSettingsModel useModernScrollWheelAccumulator]) {
+        return [self.ptyVerticalScroller.accumulator deltaYForEvent:theEvent lineHeight:lineHeight];
+    } else {
+        return [self.ptyVerticalScroller.accumulator legacyDeltaYForEvent:theEvent lineHeight:lineHeight];
     }
-    if ([iTermAdvancedSettingsModel sensitiveScrollWheel]) {
-        if (delta > 0) {
-            return ceil(delta);
-        } else if (delta < 0) {
-            return floor(delta);
-        } else {
-            return 0;
-        }
-    }
-    PTYScroller *verticalScroller = (PTYScroller *)[self verticalScroller];
-    verticalScroller.accumulatedDeltaY += delta;
-    CGFloat amount = 0;
-    if (fabs(verticalScroller.accumulatedDeltaY) >= 1) {
-        amount = RoundTowardZero(verticalScroller.accumulatedDeltaY);
-        verticalScroller.accumulatedDeltaY = verticalScroller.accumulatedDeltaY - amount;
-    }
-    return amount;
 }
 
 - (void)scrollWheel:(NSEvent *)theEvent {
@@ -175,7 +164,7 @@ static CGFloat RoundTowardZero(CGFloat value) {
     scrollRect = [self documentVisibleRect];
 
     CGFloat amount = [self accumulateVerticalScrollFromEvent:theEvent];
-    scrollRect.origin.y -= amount * [self verticalLineScroll];
+    scrollRect.origin.y -= amount * self.verticalLineScroll;
     [[self documentView] scrollRectToVisible:scrollRect];
 
     [self detectUserScroll];
