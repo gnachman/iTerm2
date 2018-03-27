@@ -909,7 +909,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             .origin = [NSEvent mouseLocation],
             .size = { 0, 0 }
         };
-        for (NSWindow *window in [[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels]) {
+        // There's an annoying bug here in macOS 10.13: non-native fullscreen windows always appear
+        // last in -orderedWindows. I guess Apple was serious about deprecating it. :(
+        for (NSWindow *window in [[[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels] reverseObjectEnumerator]) {
             if (!window.isOnActiveSpace) {
                 continue;
             }
