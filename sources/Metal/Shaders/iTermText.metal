@@ -378,8 +378,21 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
     }
 
     if (dimensions->disableExactColorModels) {
+        switch (in.iid % 4) {
+            case 0:
+                return float4(1, 0, 0, 1);
+            case 1:
+                return in.textColor;
+            case 2:
+                return in.backgroundColor;
+            case 3:
+                return static_cast<float4>(bwColor);
+        }
+/*
         if (in.iid % 2) {
             // Hardcode values that go on the leftmost column of pixels in an antialiased "e" with this user's text and bg colors. Tests is RemapColor produces the same output for them as for me.
+ // In adhoc build adhoc_3.2.20180321_220726 this code path was taken and rendered properly.
+ // My guess is that the background color is wrong.
             return static_cast<float4>(RemapColor(float4(0.7098039, 0.5372549, 0, 1) * 17.0,
                                                   float4(0, 0.1686275, 0.2117647, 1),
                                                   half4(0.596, 0.823, 0.949, 1),
@@ -390,6 +403,7 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
                                                   bwColor,
                                                   colorModelsTexture));
         }
+ */
     } else {
         return float4(0.5,0.5,1,1);
     }
