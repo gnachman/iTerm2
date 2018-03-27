@@ -909,7 +909,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             .origin = [NSEvent mouseLocation],
             .size = { 0, 0 }
         };
-        for (NSWindow *window in [[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels]) {
+        for (NSWindow *window in [[[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels] reverseObjectEnumerator]) {
             if (!window.isOnActiveSpace) {
                 continue;
             }
