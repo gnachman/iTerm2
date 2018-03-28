@@ -820,6 +820,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     VT100GridCoord previousImageCoord;
     NSIndexSet *annotatedIndexes = _rowToAnnotationRanges[@(row)];
     NSUInteger sketch = *sketchPtr;
+    vector_float4 lastUnprocessedBackgroundColor = simd_make_float4(0, 0, 0, 0);
 
     // Prime numbers chosen more or less arbitrarily.
     const vector_float4 bmul = simd_make_float4(7, 11, 13, 1) * 255;
@@ -848,6 +849,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         };
 
         vector_float4 backgroundColor;
+        vector_float4 unprocessedBackgroundColor;
         if (x > 0 &&
             backgroundKey.bgColor == lastBackgroundKey.bgColor &&
             backgroundKey.bgGreen == lastBackgroundKey.bgGreen &&
@@ -860,10 +862,12 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             const int previousRLE = rles - 1;
             backgroundColor = backgroundRLE[previousRLE].color;
             backgroundRLE[previousRLE].count++;
+            unprocessedBackgroundColor = lastUnprocessedBackgroundColor;
         } else {
-            vector_float4 unprocessed = [self unprocessedColorForBackgroundColorKey:&backgroundKey];
+            unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey];
+            lastUnprocessedBackgroundColor = unprocessedBackgroundColor;
             // The unprocessed color is needed for minimum contrast computation for text color.
-            backgroundRLE[rles].color = [_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessed];
+            backgroundRLE[rles].color = [_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
             backgroundRLE[rles].origin = x;
             backgroundRLE[rles].count = 1;
             if (_backgroundImage) {
@@ -912,7 +916,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         } else {
             vector_float4 textColor = [self textColorForCharacter:&line[x]
                                                              line:row
-                                                  backgroundColor:backgroundColor
+                                                  backgroundColor:unprocessedBackgroundColor
                                                          selected:selected
                                                         findMatch:findMatch
                                                 inUnderlinedRange:inUnderlinedRange && !annotated
@@ -1298,7 +1302,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 - (vector_float4)textColorForCharacter:(screen_char_t *)c
                                   line:(int)line
-                       backgroundColor:(vector_float4)backgroundColor
+                       backgroundColor:(vector_float4)unprocessedBackgroundColor
                               selected:(BOOL)selected
                              findMatch:(BOOL)findMatch
                      inUnderlinedRange:(BOOL)inUnderlinedRange
@@ -1366,7 +1370,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     vector_float4 result;
     if (needsProcessing) {
         result = VectorForColor([_colorMap processedTextColorForTextColor:ColorForVector(rawColor)
-                                                      overBackgroundColor:ColorForVector(backgroundColor)]);
+                                                      overBackgroundColor:ColorForVector(unprocessedBackgroundColor)]);
     } else {
         result = rawColor;
     }
