@@ -909,31 +909,44 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             .origin = [NSEvent mouseLocation],
             .size = { 0, 0 }
         };
-        // There's an annoying bug here in macOS 10.13: non-native fullscreen windows always appear
-        // last in -orderedWindows. I guess Apple was serious about deprecating it. :(
-        for (NSWindow *window in [[[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels] reverseObjectEnumerator]) {
-            if (!window.isOnActiveSpace) {
-                continue;
-            }
-            if (!window.isVisible) {
-                continue;
-            }
-            NSPoint pointInWindow = [window convertRectFromScreen:mouseRect].origin;
-            if ([window isTerminalWindow]) {
-                NSView *view = [window.contentView hitTest:pointInWindow];
-                if (view) {
-                    [window makeKeyAndOrderFront:nil];
-                    if ([view isKindOfClass:[PTYTextView class]]) {
-                        [window makeFirstResponder:view];
-                    }
-                    break;
-                }
-            }
-        }
+        // Dispatch async because when you cmd-tab into iTerm2 the windows are briefly
+        // out of order. Looks like an OS bug to me. They fix themselves right away,
+        // and a dispatch async seems to give it enough time to right itself before
+        // we iterate front to back.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self selectWindowAtMouseRect:mouseRect];
+        });
     }
 
     [self hideStuckToolTips];
     iTermPreciseTimerClearLogs();
+}
+
+- (void)selectWindowAtMouseRect:(NSRect)mouseRect {
+    NSArray<NSWindow *> *frontToBackWindows = [[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels];
+    for (NSWindow *window in frontToBackWindows) {
+        if (!window.isOnActiveSpace) {
+            continue;
+        }
+        if (!window.isVisible) {
+            continue;
+        }
+        NSPoint pointInWindow = [window convertRectFromScreen:mouseRect].origin;
+        if ([window isTerminalWindow]) {
+            DLog(@"Consider window %@", window.title);
+            NSView *view = [window.contentView hitTest:pointInWindow];
+            if (view) {
+                DLog(@"Will activate %@", window.title);
+                [window makeKeyAndOrderFront:nil];
+                if ([view isKindOfClass:[PTYTextView class]]) {
+                    [window makeFirstResponder:view];
+                }
+                return;
+            } else {
+                DLog(@"%@ failed hit test", window.title);
+            }
+        }
+    }
 }
 
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
