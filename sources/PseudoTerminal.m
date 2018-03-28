@@ -3114,6 +3114,28 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (BOOL)movesWhenDraggedOntoSelf {
+    switch (windowType_) {
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            return NO;
+
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+            return YES;
+    }
+
+    return YES;
+}
+
 - (BOOL)anyFullScreen
 {
     return _fullScreen || lionFullScreen_;

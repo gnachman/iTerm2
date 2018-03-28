@@ -39,6 +39,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Returns true if the window is fullscreen in either Lion-style or
 // pre-Lion-style fullscreen.
 - (BOOL)anyFullScreen;
+- (BOOL)movesWhenDraggedOntoSelf;
 
 // Close a session
 - (void)closeSession:(PTYSession*)aSession;

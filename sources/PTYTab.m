@@ -4762,7 +4762,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // self is the destination tab. session is the session that's moving.
     if ([[[sender draggingPasteboard] types] indexOfObject:iTermMovePaneDragType] != NSNotFound) {
         if ([[MovePaneController sharedInstance] isMovingSession:session]) {
-            if (self.sessions.count == 1 && !self.realParentWindow.anyFullScreen) {
+            if (self.sessions.count == 1 && !self.realParentWindow.anyFullScreen && self.realParentWindow.movesWhenDraggedOntoSelf) {
                 // If you dragged a session from a tab with split panes onto itself then do nothing.
                 // But if you drag a session onto itself in a tab WITHOUT split panes, then move the
                 // whole window.
