@@ -333,6 +333,9 @@ unsigned short iTermBogusVirtualKeyCode = 0xffff;
 
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent *)event {
+    if (event.type == NSLeftMouseDown || event.type == NSMouseMoved || event.type == NSLeftMouseUp) {
+        DLog(@"sendEvent (mouse): %@", event);
+    }
     if ([event type] == NSFlagsChanged) {
         event = [self eventByRemappingForSecureInput:event];
         if ([self handleFlagsChangedEvent:event]) {
