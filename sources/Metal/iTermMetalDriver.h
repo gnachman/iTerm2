@@ -137,12 +137,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 // Draw and return after the GPU's completion callback is run.
 // enableSetNeedsDisplay should be NO.
-- (void)drawSynchronouslyInView:(MTKView *)view;
+// Returns YES on success, NO if resources were insufficient
+- (BOOL)drawSynchronouslyInView:(MTKView *)view;
 
 // Draw and return immediately, calling completion block after GPU's completion
 // block is called.
 // enableSetNeedsDisplay should be NO.
-- (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(void))completion;
+// The arg to completion is YES on success and NO if the draw was aborted for lack of resources.
+- (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion;
 
 @end
 

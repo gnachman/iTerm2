@@ -216,8 +216,8 @@ static NSDate* lastResizeDate_;
     _metalView.delegate = _driver;
 }
 
-- (void)drawFrameSynchronously {
-    [_driver drawSynchronouslyInView:_metalView];
+- (BOOL)drawFrameSynchronously {
+    return [_driver drawSynchronouslyInView:_metalView];
 }
 
 - (void)removeMetalView NS_AVAILABLE_MAC(10_11) {

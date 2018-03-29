@@ -34,6 +34,15 @@
 #import "NSArray+iTerm.h"
 #import "NSMutableData+iTerm.h"
 
+@interface iTermMetalDriverAsyncContext : NSObject
+@property (nonatomic, strong) dispatch_group_t group;
+@property (nonatomic) BOOL aborted;
+@end
+
+@implementation iTermMetalDriverAsyncContext
+@end
+
+
 @implementation iTermMetalCursorInfo
 @end
 
@@ -121,7 +130,7 @@ typedef struct {
     iTermHistogram *_inFlightHistogram;
     // If set, copy this to frame data and leave it when rendering the frame is
     // complete. Use for sync/async-with-completion draw call.
-    dispatch_group_t _group;
+    iTermMetalDriverAsyncContext *_context;
 }
 
 - (nullable instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView {
@@ -230,7 +239,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     const NSTimeInterval dt = now - _lastFrameStartTime;
     _lastFrameStartTime = now;
 
-    [self reallyDrawInMTKView:view startToStartTime:dt];
+    iTermMetalDriverAsyncContext *context = _context;
+    BOOL ok = [self reallyDrawInMTKView:view startToStartTime:dt];
+    context.aborted = !ok;
+    if (_context && context) {
+        dispatch_group_leave(context.group);
+        _context = nil;
+    }
+
     iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Dropped frames", _identifier],
                              [NSString stringWithFormat:@"%0.1f%%\n", 100.0 * ((double)_dropped / (double)_total)]);
     if (_total % 10 == 1) {
@@ -245,29 +261,30 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return iTermMetalDriverMaximumNumberOfFramesInFlight;
 }
 
-- (dispatch_group_t)groupForDrawInView:(MTKView *)view {
-    dispatch_group_t group = dispatch_group_create();
-    dispatch_group_enter(group);
-    _group = group;
+- (iTermMetalDriverAsyncContext *)newContextForDrawInView:(MTKView *)view {
+    iTermMetalDriverAsyncContext *context = [[iTermMetalDriverAsyncContext alloc] init];
+    _context = context;
+    context.group = dispatch_group_create();
+    dispatch_group_enter(context.group);
     [view draw];
-    if (_group) {
-        dispatch_group_leave(group);
-        _group = nil;
-    }
-    return group;
+
+    return context;
 }
 
-- (void)drawSynchronouslyInView:(MTKView *)view {
+- (BOOL)drawSynchronouslyInView:(MTKView *)view {
     DLog(@"Start synchronous draw");
-    dispatch_group_wait([self groupForDrawInView:view], DISPATCH_TIME_FOREVER);
+    iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view];
+    dispatch_group_wait(context.group, DISPATCH_TIME_FOREVER);
     DLog(@"Synchronous draw completed.");
+    return !context.aborted;
 }
 
-- (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(void))completion {
+- (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion {
     DLog(@"Start asynchronous draw of %@", view);
-    dispatch_group_notify([self groupForDrawInView:view], dispatch_get_main_queue(), ^{
+    iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view];
+    dispatch_group_notify(context.group, dispatch_get_main_queue(), ^{
         DLog(@"Asynchronous draw of %@ completed", view);
-        completion();
+        completion(!context.aborted);
     });
 }
 
@@ -280,7 +297,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [self scheduleDrawIfNeededInView:view];
         return NO;
     }
-
+#if ENABLE_FLAKY_METAL
+#warning DNS
+    if (arc4random_uniform(3) == 0) {
+        return NO;
+    }
+#endif
+    
     _total++;
     if (_total % 60 == 0) {
         @synchronized (self) {
@@ -338,8 +361,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [_currentFrames addObject:frameData];
     }
 
-    frameData.group = _group;
-    _group = nil;
+    frameData.group = _context.group;
+    _context = nil;
 
     void (^block)(void) = ^{
         NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];

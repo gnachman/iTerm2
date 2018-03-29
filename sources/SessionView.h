@@ -190,6 +190,6 @@
 
 - (void)setHoverURL:(NSString *)url;
 - (BOOL)hasHoverURL;
-- (void)drawFrameSynchronously;
+- (BOOL)drawFrameSynchronously;
 
 @end
