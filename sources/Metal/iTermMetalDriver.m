@@ -128,8 +128,10 @@ typedef struct {
     NSTimeInterval _lastFrameStartTime;
     iTermHistogram *_startToStartHistogram;
     iTermHistogram *_inFlightHistogram;
-    // If set, copy this to frame data and leave it when rendering the frame is
-    // complete. Use for sync/async-with-completion draw call.
+
+    // For client-driven calls through drawSynchronouslyInView/drawAsynchronouslyInView, this will
+    // be nonnil and holds the state needed by those calls. Will bet set to nil if the frame will
+    // be drawn by reallyDrawInMTKView:.
     iTermMetalDriverAsyncContext *_context;
 }
 
@@ -243,6 +245,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     BOOL ok = [self reallyDrawInMTKView:view startToStartTime:dt];
     context.aborted = !ok;
     if (_context && context) {
+        // Explicit draw call (drawSynchronously or drawAsynchronously) that failed.
         dispatch_group_leave(context.group);
         _context = nil;
     }
