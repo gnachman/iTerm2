@@ -138,7 +138,9 @@ static NSColor *ColorForVector(vector_float4 v) {
     BOOL _timestampsEnabled;
     long long _firstVisibleAbsoluteLineNumber;
     long long _lastVisibleAbsoluteLineNumber;
-
+    BOOL _cutOutRightCorner;
+    BOOL _cutOutLeftCorner;
+        
     // Row on screen to characters with annotation underline on that row.
     NSDictionary<NSNumber *, NSIndexSet *> *_rowToAnnotationRanges;
     NSArray<iTermHighlightedRow *> *_highlightedRows;
@@ -300,6 +302,7 @@ static NSColor *ColorForVector(vector_float4 v) {
         [self loadIndicatorsFromTextView:textView];
         [self loadHighlightedRowsFromTextView:textView];
         [self loadAnnotationRangesFromTextView:textView];
+        [self loadCornerCutoutsFromTextView:textView];
 
         [textView.dataSource setUseSavedGridIfAvailable:NO];
     }
@@ -547,6 +550,27 @@ static NSColor *ColorForVector(vector_float4 v) {
         }
     }
     [_markStyles addObject:@(markStyle)];
+}
+
+- (BOOL)cutOutLeftCorner {
+    return _cutOutLeftCorner;
+}
+
+- (BOOL)cutOutRightCorner {
+    return _cutOutRightCorner;
+}
+
+- (void)loadCornerCutoutsFromTextView:(PTYTextView *)textView {
+    NSRect textViewFrameInWindowCoords = [textView convertRect:textView.bounds toView:nil];
+    const NSWindowStyleMask styleMask = textView.window.styleMask;
+    const BOOL titled = (styleMask & NSWindowStyleMaskTitled);
+    const BOOL fullScreen = (textView.window.styleMask & NSWindowStyleMaskFullScreen);
+    const BOOL windowHasRoundedCorners = titled && !fullScreen;
+    const BOOL abutsLeft = (fabs(NSMinX(textViewFrameInWindowCoords)) < 1);
+    const BOOL abutsRight = (fabs(NSMaxX(textViewFrameInWindowCoords) - textView.window.frame.size.width) < 1);
+
+    _cutOutLeftCorner = windowHasRoundedCorners && abutsLeft;
+    _cutOutRightCorner = windowHasRoundedCorners && abutsRight;
 }
 
 // Populate _rowToAnnotationRanges.

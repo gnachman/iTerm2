@@ -109,19 +109,21 @@
     if (!CGSizeEqualToSize(markRect.size, _markSize)) {
         // Mark size has changed
         _markSize = markRect.size;
-        _marksArrayTexture = [[iTermTextureArray alloc] initWithTextureWidth:_markSize.width
-                                                               textureHeight:_markSize.height
-                                                                 arrayLength:3
-                                                                        bgra:NO
-                                                                      device:_cellRenderer.device];
+        if (_markSize.width > 0 && _markSize.height > 0) {
+            _marksArrayTexture = [[iTermTextureArray alloc] initWithTextureWidth:_markSize.width
+                                                                   textureHeight:_markSize.height
+                                                                     arrayLength:3
+                                                                            bgra:NO
+                                                                          device:_cellRenderer.device];
 
-        NSColor *successColor = [iTermTextDrawingHelper successMarkColor];
-        NSColor *otherColor = [iTermTextDrawingHelper otherMarkColor];
-        NSColor *failureColor = [iTermTextDrawingHelper errorMarkColor];
+            NSColor *successColor = [iTermTextDrawingHelper successMarkColor];
+            NSColor *otherColor = [iTermTextDrawingHelper otherMarkColor];
+            NSColor *failureColor = [iTermTextDrawingHelper errorMarkColor];
 
-        [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:successColor size:_markSize]];
-        [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:failureColor size:_markSize]];
-        [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:otherColor size:_markSize]];
+            [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:successColor size:_markSize]];
+            [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:failureColor size:_markSize]];
+            [_marksArrayTexture addSliceWithImage:[self newImageWithMarkOfColor:otherColor size:_markSize]];
+        }
     }
 
     tState.markOffset = markRect.origin;
@@ -134,6 +136,9 @@
                transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermMarkRendererTransientState *tState = transientState;
     if (tState.marks.count == 0) {
+        return;
+    }
+    if (tState.marksArrayTexture == nil) {
         return;
     }
 

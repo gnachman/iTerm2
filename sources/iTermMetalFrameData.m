@@ -52,6 +52,7 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "indicatorsTS<<",
         "timestampsTS<<",
         "flashTS<<",
+        "cornerTS<<",
 
         "PopulateTransient<",
         "dispatchToMain<",
@@ -75,7 +76,8 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "DrawIndicators<<",
         "DrawTimestamps<<",
         "DrawFlash<<",
-
+        "DrawCorners<<",
+        
         "EndEncodingDrwbl<<",
         "PresentCommit<<",
 
