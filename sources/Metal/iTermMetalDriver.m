@@ -247,6 +247,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         _context = nil;
     }
 
+    if (!context && !ok) {
+        // Was a system-initiated draw that failed. Try again later.
+        [view setNeedsDisplay:YES];
+    }
+
     iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: Dropped frames", _identifier],
                              [NSString stringWithFormat:@"%0.1f%%\n", 100.0 * ((double)_dropped / (double)_total)]);
     if (_total % 10 == 1) {
@@ -297,8 +302,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [self scheduleDrawIfNeededInView:view];
         return NO;
     }
+
 #if ENABLE_FLAKY_METAL
-#warning DNS
+#warning DO NOT SUBMIT - FLAKY MODE ENABLED
     if (arc4random_uniform(3) == 0) {
         return NO;
     }
