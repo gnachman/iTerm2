@@ -474,6 +474,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermMetalGlue *_metalGlue NS_AVAILABLE_MAC(10_11);
 
     int _updateCount;
+    int _metalTemporarilyDisabled;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -9267,9 +9268,18 @@ ITERM_WEAKLY_REFERENCEABLE
         if (!_useMetal) {
             return;
         }
+        _metalTemporarilyDisabled++;
         _wrapper.useMetal = NO;
         _textview.suppressDrawing = NO;
         _view.metalView.alphaValue = 0;
+        [_view.driver drawAsynchronouslyInView:_view.metalView completion:^{
+            _metalTemporarilyDisabled--;
+            if (_metalTemporarilyDisabled-- && _useMetal) {
+                _wrapper.useMetal = YES;
+                _textview.suppressDrawing = YES;
+                _view.metalView.alphaValue = 1;
+            }
+        }];
     }
 }
 
