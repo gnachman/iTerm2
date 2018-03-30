@@ -559,24 +559,34 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     DLog(@"Stored previous state");
 }
 
-- (PseudoTerminal *)keyHotkeyWindowController {
-    NSWindowController *windowController = [[NSApp keyWindow] windowController];
-    if ([windowController isKindOfClass:[PseudoTerminal class]]) {
-        PseudoTerminal *term = (PseudoTerminal *)windowController;
-        if ([term isHotKeyWindow]) {
-            if (![[self profileHotKeyForWindowController:term] rollingOut]) {
-                return term;
+- (BOOL)otherHotKeyWindowWillBecomeKeyAfterOrderOut:(iTermProfileHotKey *)profileHotKey {
+    PseudoTerminal *myWindowController = profileHotKey.windowController;
+
+    for (NSWindow *window in [NSApp orderedWindows]) {
+        NSWindowController *windowController = [window windowController];
+        if ([windowController isKindOfClass:[PseudoTerminal class]]) {
+            PseudoTerminal *term = (PseudoTerminal *)windowController;
+            if (term == myWindowController) {
+                continue;
             }
+            if (!term.isHotKeyWindow) {
+                return NO;
+            }
+            iTermProfileHotKey *other = [self profileHotKeyForWindowController:term];
+            if ([other rollingOut]) {
+                continue;
+            }
+            return term.hasBeenKeySinceActivation;
         }
     }
-    return nil;
+    return NO;
 }
 
 - (BOOL)willFinishRollingOutProfileHotKey:(iTermProfileHotKey *)profileHotKey {
     // Restore the previous state (key window or active app) unless we switched
     // to another hotkey window.
     DLog(@"Finished rolling out %p. key window is %@.", profileHotKey.windowController, [[NSApp keyWindow] windowController]);
-    if ([self keyHotkeyWindowController] != profileHotKey.windowController.weaklyReferencedObject) {
+    if (![self otherHotKeyWindowWillBecomeKeyAfterOrderOut:profileHotKey]) {
         DLog(@"Restoring the previous state %p", self.previousState);
         BOOL result = [self.previousState restoreAllowingAppSwitch:!profileHotKey.closedByOtherHotkeyWindowOpening];
         if (!profileHotKey.closedByOtherHotkeyWindowOpening) {

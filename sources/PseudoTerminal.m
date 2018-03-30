@@ -727,6 +727,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                              selector:@selector(keyBindingsDidChange:)
                                                  name:kKeyBindingsChangedNotification
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationDidBecomeActive:)
+                                                 name:NSApplicationDidBecomeActiveNotification
+                                               object:nil];
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                            selector:@selector(activeSpaceDidChange:)
                                                                name:NSWorkspaceActiveSpaceDidChangeNotification
@@ -2680,6 +2684,10 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"windowDidBecomeKey:%@ window=%@ stack:\n%@",
          aNotification, self.window, [NSThread callStackSymbols]);
 
+    if ([NSApp isActive]) {
+        _hasBeenKeySinceActivation = YES;
+    }
+
     [iTermQuickLookController dismissSharedPanel];
 #if ENABLE_SHORTCUT_ACCESSORY
     _shortcutAccessoryViewController.isMain = YES;
@@ -3016,6 +3024,10 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     PtyLog(@"Screen parameters changed.");
     [self canonicalizeWindowFrame];
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
+    _hasBeenKeySinceActivation = [self.window isKeyWindow];
 }
 
 - (void)windowDidResignKey:(NSNotification *)aNotification {
