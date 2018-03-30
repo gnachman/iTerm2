@@ -13,6 +13,8 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 @property(nonatomic) NSMutableArray<CPKScreenshot *> *screenshots;
 @property(nonatomic) NSColor *selectedColor;
 @property(nonatomic) CPKEyedropperView *eyedropperView;
+@property(nonatomic, strong) NSWindow *previousKeyWindow;
+
 - (void)accept;
 - (void)dismiss;
 @end
@@ -38,6 +40,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     eyedropperWindow.opaque = NO;
     eyedropperWindow.backgroundColor = [NSColor clearColor];
     eyedropperWindow.hasShadow = NO;
+    eyedropperWindow.previousKeyWindow = [NSApp keyWindow];
     NSRect rect = NSMakeRect(0, 0, frame.size.width, frame.size.height);
     eyedropperWindow.eyedropperView = [[CPKEyedropperView alloc] initWithFrame:rect];
     __weak __typeof(eyedropperWindow) weakWindow = eyedropperWindow;
@@ -214,6 +217,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 
 - (void)dismiss {
     [NSApp stopModal];
+    [_previousKeyWindow makeKeyAndOrderFront:nil];
 }
 
 - (BOOL)canBecomeKeyWindow {
