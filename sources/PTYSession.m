@@ -9342,7 +9342,9 @@ ITERM_WEAKLY_REFERENCEABLE
         if (!ok) {
             DLog(@"Schedule drawFrameAndRemoveTemporarilyDisablementOfMetal to run after a spin of the mainloop");
             dispatch_async(dispatch_get_main_queue(), ^{
-                [self drawFrameAndRemoveTemporarilyDisablementOfMetal];
+                if (_metalDisabledGeneration == generation) {
+                    [self drawFrameAndRemoveTemporarilyDisablementOfMetal];
+                }
             });
             return;
         }
