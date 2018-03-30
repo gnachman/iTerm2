@@ -12,12 +12,28 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 @property (nonatomic, strong) NSData *data;
 @property (nonatomic) CGSize size;
 
++ (instancetype)grabFromScreen:(NSScreen *)screen;
 + (instancetype)screenshotFromCGImage:(CGImageRef)image;
 - (NSColor *)colorAtX:(int)x y:(int)y;
 
 @end
 
 @implementation CPKScreenshot
+
++ (instancetype)grabFromScreen:(NSScreen *)screen {
+    NSDictionary *dict = screen.deviceDescription;
+    CGDirectDisplayID displayId = [dict[@"NSScreenNumber"] unsignedIntValue];
+    CGImageRef cgImage = CGDisplayCreateImage(displayId);
+
+    NSSize size = screen.frame.size;
+    size.width *= screen.backingScaleFactor;
+    size.height *= screen.backingScaleFactor;
+
+    CPKScreenshot *screenshot = [CPKScreenshot screenshotFromCGImage:cgImage];
+    CFRelease(cgImage);
+
+    return screenshot;
+}
 
 + (instancetype)screenshotFromCGImage:(CGImageRef)inImage; {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
@@ -148,16 +164,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 - (void)grabScreenshots {
     self.screenshots = [NSMutableArray array];
     for (NSScreen *screen in [NSScreen screens]) {
-        NSDictionary *dict = screen.deviceDescription;
-        CGDirectDisplayID displayId = [dict[@"NSScreenNumber"] unsignedIntValue];
-        CGImageRef cgImage = CGDisplayCreateImage(displayId);
-
-        NSSize size = screen.frame.size;
-        size.width *= screen.backingScaleFactor;
-        size.height *= screen.backingScaleFactor;
-
-        CPKScreenshot *screenshot = [CPKScreenshot screenshotFromCGImage:cgImage];
-        CFRelease(cgImage);
+        CPKScreenshot *screenshot = [CPKScreenshot grabFromScreen:screen];
         [self.screenshots addObject:screenshot];
     }
 }
