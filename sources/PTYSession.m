@@ -477,6 +477,7 @@ static const NSUInteger kMaxHosts = 100;
     // Count of the number of times metal was temporarily disabled. When 0, not disabled.
     // Gets reset to 0 when useMetal is set to NO.
     int _metalTemporarilyDisabled;
+    int _metalDisabledGeneration;
     BOOL _metalFrameChangePending;
 }
 
@@ -4824,6 +4825,7 @@ ITERM_WEAKLY_REFERENCEABLE
         } else {
             _wrapper.useMetal = NO;
             _metalTemporarilyDisabled = 0;
+            _metalDisabledGeneration++;
         }
         [_textview setNeedsDisplay:YES];
         [_cadenceController changeCadenceIfNeeded];
@@ -9326,8 +9328,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal beginning async draw");
+    int generation = _metalDisabledGeneration;
     [_view.driver drawAsynchronouslyInView:_view.metalView completion:^(BOOL ok) {
         DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal drawAsynchronouslyInView finished wtih ok=%@", @(ok));
+        if (_metalDisabledGeneration != generation) {
+            DLog(@"Generation changed. Do nothing after async draw finishes.");
+            return;
+        }
         if (!_useMetal) {
             DLog(@"Returning because useMetal is off");
             return;
