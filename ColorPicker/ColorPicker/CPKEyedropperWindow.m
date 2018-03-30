@@ -8,8 +8,84 @@ const CGFloat kSize = 200;
 // How often to update the view for the current mouse coordinates
 const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 
+@interface CPKScreenshot : NSObject
+@property (nonatomic, strong) NSData *data;
+@property (nonatomic) CGSize size;
+
++ (instancetype)screenshotFromCGImage:(CGImageRef)image;
+- (NSColor *)colorAtX:(int)x y:(int)y;
+
+@end
+
+@implementation CPKScreenshot
+
++ (instancetype)screenshotFromCGImage:(CGImageRef)inImage; {
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    if (colorSpace == NULL) {
+        return nil;
+    }
+
+    // Create the bitmap context
+    NSMutableData *storage = [NSMutableData data];
+    CGContextRef cgctx = [self newBitmapContextForImage:inImage
+                                             colorSpace:colorSpace
+                                                storage:storage];
+    if (cgctx == NULL) {
+        CGColorSpaceRelease(colorSpace);
+        return nil;
+    }
+
+    CGRect rect = CGRectMake(0,
+                             0,
+                             CGImageGetWidth(inImage),
+                             CGImageGetHeight(inImage));
+    CGContextDrawImage(cgctx, rect, inImage);
+
+    CPKScreenshot *result = [[CPKScreenshot alloc] init];
+    result.data = [NSData dataWithBytes:CGBitmapContextGetData(cgctx)
+                                 length:CGBitmapContextGetBytesPerRow(cgctx) * CGBitmapContextGetHeight(cgctx)];
+    result.size = rect.size;
+
+    CGContextRelease(cgctx);
+    CGColorSpaceRelease(colorSpace);
+
+    return result;
+}
+
++ (CGContextRef)newBitmapContextForImage:(CGImageRef)inImage
+                              colorSpace:(CGColorSpaceRef)colorSpace
+                                 storage:(NSMutableData *)storage {
+    const int pixelsWide = (int)CGImageGetWidth(inImage);
+    const int pixelsHigh = (int)CGImageGetHeight(inImage);
+
+    const int bitmapBytesPerRow = pixelsWide * 4;
+    const int bitmapByteCount     = (bitmapBytesPerRow * pixelsHigh);
+
+    storage.length = bitmapByteCount;
+    CGContextRef context = CGBitmapContextCreate (storage.mutableBytes,
+                                                  pixelsWide,
+                                                  pixelsHigh,
+                                                  8,      // bits per component
+                                                  bitmapBytesPerRow,
+                                                  colorSpace,
+                                                  kCGImageAlphaPremultipliedFirst);
+    return context;
+}
+
+- (NSColor *)colorAtX:(int)x y:(int)y {
+    unsigned char *b = (unsigned char *)_data.bytes;
+    b += y * (int)_size.width * 4;
+    b += x * 4;
+    return [NSColor colorWithSRGBRed:b[1] / 255.0
+                               green:b[2] / 255.0
+                                blue:b[3] / 255.0
+                               alpha:b[0] / 255.0];
+}
+
+@end
+
 @interface CPKEyedropperWindow ()
-@property(nonatomic) NSMutableArray *screenshots;
+@property(nonatomic) NSMutableArray<CPKScreenshot *> *screenshots;
 @property(nonatomic) NSColor *selectedColor;
 @property(nonatomic) CPKEyedropperView *eyedropperView;
 - (void)stop;
@@ -74,17 +150,15 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     for (NSScreen *screen in [NSScreen screens]) {
         NSDictionary *dict = screen.deviceDescription;
         CGDirectDisplayID displayId = [dict[@"NSScreenNumber"] unsignedIntValue];
-        CGImageRef image = CGDisplayCreateImage(displayId);
+        CGImageRef cgImage = CGDisplayCreateImage(displayId);
+
         NSSize size = screen.frame.size;
         size.width *= screen.backingScaleFactor;
         size.height *= screen.backingScaleFactor;
 
-        NSBitmapImageRep *imageRep =
-        [[NSBitmapImageRep alloc] initWithData:[[[NSImage alloc] initWithCGImage:image
-                                                                            size:size]
-                                                TIFFRepresentation]];
-        CFRelease(image);
-        [self.screenshots addObject:imageRep];
+        CPKScreenshot *screenshot = [CPKScreenshot screenshotFromCGImage:cgImage];
+        CFRelease(cgImage);
+        [self.screenshots addObject:screenshot];
     }
 }
 
@@ -145,7 +219,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     return result;
 }
 
-- (NSBitmapImageRep *)currentScreenScreenshot {
+- (CPKScreenshot *)currentScreenScreenshot {
     NSInteger i = [self currentScreenIndex];
     if (i < 0) {
         return nil;
@@ -169,7 +243,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 
     NSMutableArray *outerArray = [NSMutableArray array];
     const NSInteger radius = 9;
-    NSBitmapImageRep *screenshot = [self currentScreenScreenshot];
+    CPKScreenshot *screenshot = [self currentScreenScreenshot];
     NSColor *blackColor = [NSColor cpk_colorWithRed:0 green:0 blue:0 alpha:1];
     for (NSInteger x = point.x - radius; x <= point.x + radius; x++) {
         NSMutableArray *innerArray = [NSMutableArray array];
@@ -211,7 +285,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     point.y = screen.frame.size.height - point.y;
     point.x *= screen.backingScaleFactor;
     point.y *= screen.backingScaleFactor;
-    self.selectedColor = [self.currentScreenScreenshot colorAtX:point.x y:point.y];
+    self.selectedColor = [[self.currentScreenScreenshot colorAtX:point.x y:point.y] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
 
 }
 
