@@ -13,7 +13,8 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 @property(nonatomic) NSMutableArray<CPKScreenshot *> *screenshots;
 @property(nonatomic) NSColor *selectedColor;
 @property(nonatomic) CPKEyedropperView *eyedropperView;
-- (void)stop;
+- (void)accept;
+- (void)dismiss;
 @end
 
 @implementation CPKEyedropperWindow
@@ -40,11 +41,18 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     NSRect rect = NSMakeRect(0, 0, frame.size.width, frame.size.height);
     eyedropperWindow.eyedropperView = [[CPKEyedropperView alloc] initWithFrame:rect];
     __weak __typeof(eyedropperWindow) weakWindow = eyedropperWindow;
-    eyedropperWindow.eyedropperView.click = ^() { [weakWindow stop]; };
+    eyedropperWindow.eyedropperView.click = ^() {
+        [weakWindow accept];
+        [weakWindow dismiss];
+    };
+    eyedropperWindow.eyedropperView.cancel = ^() {
+        [weakWindow dismiss];
+    };
     eyedropperWindow.contentView = eyedropperWindow.eyedropperView;
 
     // It takes a spin of the mainloop for this to take effect
     eyedropperWindow.level = NSMainMenuWindowLevel + 1;
+    [eyedropperWindow makeKeyAndOrderFront:nil];
 
     dispatch_async(dispatch_get_main_queue(), ^{
         [eyedropperWindow finishPickingColorWithCompletion:completion];
@@ -116,11 +124,11 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 
 - (void)setSelectedColor:(NSColor *)selectedColor {
     _selectedColor = selectedColor;
-    [NSApp stopModal];
 }
 
 - (void)stopPicking:(NSNotification *)notification {
     self.selectedColor = [NSColor clearColor];
+    [self dismiss];
 }
 
 - (NSInteger)currentScreenIndex {
@@ -193,7 +201,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     [self setFrame:frame display:YES];
 }
 
-- (void)stop {
+- (void)accept {
     NSPoint location = [NSEvent mouseLocation];
     NSScreen *screen = [[NSScreen screens] objectAtIndex:self.currentScreenIndex];
     NSPoint point = NSMakePoint(location.x - screen.frame.origin.x,
@@ -202,7 +210,14 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     point.x *= screen.backingScaleFactor;
     point.y *= screen.backingScaleFactor;
     self.selectedColor = [[self.currentScreenScreenshot colorAtX:point.x y:point.y] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+}
 
+- (void)dismiss {
+    [NSApp stopModal];
+}
+
+- (BOOL)canBecomeKeyWindow {
+    return YES;
 }
 
 @end

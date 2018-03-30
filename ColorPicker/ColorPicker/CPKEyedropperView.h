@@ -11,4 +11,7 @@
 /** Called on click. */
 @property(nonatomic, copy) void (^click)(void);
 
+/** Called when a key is pressed to cancel picking. */
+@property(nonatomic, copy) void (^cancel)(void);
+
 @end
