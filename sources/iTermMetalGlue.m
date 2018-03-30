@@ -568,9 +568,10 @@ static NSColor *ColorForVector(vector_float4 v) {
     const BOOL windowHasRoundedCorners = titled && !fullScreen;
     const BOOL abutsLeft = (fabs(NSMinX(textViewFrameInWindowCoords)) < 1);
     const BOOL abutsRight = (fabs(NSMaxX(textViewFrameInWindowCoords) - textView.window.frame.size.width) < 1);
-
-    _cutOutLeftCorner = windowHasRoundedCorners && abutsLeft;
-    _cutOutRightCorner = windowHasRoundedCorners && abutsRight;
+    const BOOL abutsBottom = (fabs(NSMinY(textViewFrameInWindowCoords) < 1));
+    
+    _cutOutLeftCorner = windowHasRoundedCorners && abutsLeft && abutsBottom;
+    _cutOutRightCorner = windowHasRoundedCorners && abutsRight && abutsBottom;
 }
 
 // Populate _rowToAnnotationRanges.
