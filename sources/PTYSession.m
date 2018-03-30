@@ -477,6 +477,7 @@ static const NSUInteger kMaxHosts = 100;
     // Count of the number of times metal was temporarily disabled. When 0, not disabled.
     // Gets reset to 0 when useMetal is set to NO.
     int _metalTemporarilyDisabled;
+    BOOL _metalFrameChangePending;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -9318,6 +9319,12 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal returning earily because useMetal is off");
         return;
     }
+    if (_metalTemporarilyDisabled > 1) {
+        --_metalTemporarilyDisabled;
+        DLog(@"Decrement _metalTemporarilyDisabled to %@ and return", @(_metalTemporarilyDisabled));
+        return;
+    }
+
     DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal beginning async draw");
     [_view.driver drawAsynchronouslyInView:_view.metalView completion:^(BOOL ok) {
         DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal drawAsynchronouslyInView finished wtih ok=%@", @(ok));
@@ -9342,6 +9349,23 @@ ITERM_WEAKLY_REFERENCEABLE
             _view.metalView.alphaValue = 1;
         }
     }];
+}
+
+- (void)sessionViewNeedsMetalFrameUpdate {
+    if (@available(macOS 10.11, *)) {
+        if (_metalFrameChangePending) {
+            return;
+        }
+
+        _metalFrameChangePending = YES;
+        [self temporarilyDisableMetal];
+        [self.textview setNeedsDisplay:YES];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            _metalFrameChangePending = NO;
+            [_view reallyUpdateMetalViewFrame];
+            [self drawFrameAndRemoveTemporarilyDisablementOfMetal];
+        });
+    }
 }
 
 - (void)sessionViewUserScrollDidChange:(BOOL)userScroll {
