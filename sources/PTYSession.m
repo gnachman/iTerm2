@@ -474,6 +474,11 @@ static const NSUInteger kMaxHosts = 100;
     iTermMetalGlue *_metalGlue NS_AVAILABLE_MAC(10_11);
 
     int _updateCount;
+    // Count of the number of times metal was temporarily disabled. When 0, not disabled.
+    // Gets reset to 0 when useMetal is set to NO.
+    int _metalTemporarilyDisabled;
+    int _metalDisabledGeneration;
+    BOOL _metalFrameChangePending;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -4819,33 +4824,63 @@ ITERM_WEAKLY_REFERENCEABLE
             // wrapper.useMetal becomes YES after the first frame is done drawing
         } else {
             _wrapper.useMetal = NO;
+            _metalTemporarilyDisabled = 0;
+            _metalDisabledGeneration++;
         }
         [_textview setNeedsDisplay:YES];
         [_cadenceController changeCadenceIfNeeded];
 
         if (useMetal) {
-            // First draw asynchronously since it takes a long time (200 ms on my old mbp) to spin
-            // up a new metal driver. This frame will never be seen since PTYTextView is still visible.
-            DLog(@"Begin async draw for %@", self);
-            [_view.driver drawAsynchronouslyInView:_view.metalView completion:^{
-                if (_useMetal) {
-                    // Now that everything's hot we can draw a frame synchronously without the UI hiccupping.
-                    DLog(@"Begin synchronous draw for %@", self);
-                    [_view drawFrameSynchronously];
-                    [self showMetalAndStopDrawingTextView];
-                    _view.metalView.enableSetNeedsDisplay = YES;
-                }
-            }];
+            [self renderTwoMetalFramesAndShowMetalView];
         } else {
             _view.metalView.enableSetNeedsDisplay = NO;
         }
     }
 }
 
+- (void)renderTwoMetalFramesAndShowMetalView NS_AVAILABLE_MAC(10_11) {
+    if (_useMetal) {
+        // First draw asynchronously since it takes a long time (200 ms on my old mbp) to spin
+        // up a new metal driver. This frame will never be seen since PTYTextView is still visible.
+        DLog(@"Begin async draw for %@", self);
+        [_view.driver drawAsynchronouslyInView:_view.metalView completion:^(BOOL ok) {
+            if (!_useMetal) {
+                return;
+            }
+
+            if (!ok) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self renderTwoMetalFramesAndShowMetalView];
+                });
+                return;
+            }
+
+            // Now that everything's hot we can draw a frame synchronously without the UI hiccupping.
+            [self drawMetalFrameSychronouslyAndShowMetalView];
+        }];
+    }
+}
+
+- (void)drawMetalFrameSychronouslyAndShowMetalView NS_AVAILABLE_MAC(10_11) {
+    DLog(@"Begin synchronous draw for %@", self);
+    BOOL ok = [_view drawFrameSynchronously];
+    DLog(@"Finished synchronous draw with ok=%@ for %@", @(ok), self);
+    if (!ok) {
+        DLog(@"Failed to draw metal frame synchronously. Try again later.");
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self drawMetalFrameSychronouslyAndShowMetalView];
+        });
+        return;
+    }
+
+    [self showMetalAndStopDrawingTextView];
+    _view.metalView.enableSetNeedsDisplay = YES;
+}
+
 - (void)showMetalAndStopDrawingTextView NS_AVAILABLE_MAC(10_11) {
     // If the text view had been visible, hide it. Hiding it before the
     // first frame is drawn causes a flash of gray.
-    DLog(@"metalGlueDidDrawFrame");
+    DLog(@"showMetalAndStopDrawingTextView");
     _wrapper.useMetal = YES;
     _textview.suppressDrawing = YES;
     _view.metalView.alphaValue = 1;
@@ -9267,9 +9302,76 @@ ITERM_WEAKLY_REFERENCEABLE
         if (!_useMetal) {
             return;
         }
-        _wrapper.useMetal = NO;
-        _textview.suppressDrawing = NO;
-        _view.metalView.alphaValue = 0;
+        [self temporarilyDisableMetal];
+        [self drawFrameAndRemoveTemporarilyDisablementOfMetal];
+    }
+}
+
+- (void)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11) {
+    assert(_useMetal);
+    _metalTemporarilyDisabled++;
+    DLog(@"temporarilyDisableMetal. Count is now %@", @(_metalTemporarilyDisabled));
+    _wrapper.useMetal = NO;
+    _textview.suppressDrawing = NO;
+    _view.metalView.alphaValue = 0;
+}
+
+- (void)drawFrameAndRemoveTemporarilyDisablementOfMetal NS_AVAILABLE_MAC(10_11) {
+    if (!_useMetal) {
+        DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal returning earily because useMetal is off");
+        return;
+    }
+    if (_metalTemporarilyDisabled > 1) {
+        --_metalTemporarilyDisabled;
+        DLog(@"Decrement _metalTemporarilyDisabled to %@ and return", @(_metalTemporarilyDisabled));
+        return;
+    }
+
+    DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal beginning async draw");
+    int generation = _metalDisabledGeneration;
+    [_view.driver drawAsynchronouslyInView:_view.metalView completion:^(BOOL ok) {
+        DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal drawAsynchronouslyInView finished wtih ok=%@", @(ok));
+        if (_metalDisabledGeneration != generation) {
+            DLog(@"Generation changed. Do nothing after async draw finishes.");
+            return;
+        }
+        if (!_useMetal) {
+            DLog(@"Returning because useMetal is off");
+            return;
+        }
+        if (!ok) {
+            DLog(@"Schedule drawFrameAndRemoveTemporarilyDisablementOfMetal to run after a spin of the mainloop");
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self drawFrameAndRemoveTemporarilyDisablementOfMetal];
+            });
+            return;
+        }
+
+        _metalTemporarilyDisabled--;
+        assert(_metalTemporarilyDisabled >= 0);
+        DLog(@"Remove temporarily disablement. Count is now %@", @(_metalTemporarilyDisabled));
+        if (!_metalTemporarilyDisabled && _useMetal) {
+            _wrapper.useMetal = YES;
+            _textview.suppressDrawing = YES;
+            _view.metalView.alphaValue = 1;
+        }
+    }];
+}
+
+- (void)sessionViewNeedsMetalFrameUpdate {
+    if (@available(macOS 10.11, *)) {
+        if (_metalFrameChangePending) {
+            return;
+        }
+
+        _metalFrameChangePending = YES;
+        [self temporarilyDisableMetal];
+        [self.textview setNeedsDisplay:YES];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            _metalFrameChangePending = NO;
+            [_view reallyUpdateMetalViewFrame];
+            [self drawFrameAndRemoveTemporarilyDisablementOfMetal];
+        });
     }
 }
 

@@ -295,9 +295,9 @@ float ComputeWeightOfUnderlineForEmoji(int underlineStyle,  // iTermMetalGlyphAt
 // iTermTextRenderer.mm for details on how the texture is structured.
 static inline half4 RemapColor(float4 scaledTextColor,  // scaledTextColor is the text color multiplied by float4(17).
                                float4 backgroundColor_in,
-                               half4 bwColor_in,
+                               float4 bwColor_in,
                                texture2d<half> models) {
-    half4 bwColor = round(bwColor_in * 255) * 18 + 0.5;
+    float4 bwColor = round(bwColor_in * 255) * 18 + 0.5;
     float4 backgroundColor = backgroundColor_in * 17 + 0.5;
 
     constexpr sampler s(coord::pixel,
@@ -379,7 +379,7 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
     if (dimensions->disableExactColorModels) {
         return static_cast<float4>(RemapColor(in.textColor * 17.0,
                                               in.backgroundColor,
-                                              bwColor,
+                                              static_cast<float4>(bwColor),
                                               colorModelsTexture));
     } else {
         const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
@@ -456,6 +456,6 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
         discard_fragment();
     }
 
-    return RemapColor(in.textColor * 17.0, backgroundColor, bwColor, colorModels);
+    return RemapColor(in.textColor * 17.0, backgroundColor, static_cast<float4>(bwColor), colorModels);
 }
 

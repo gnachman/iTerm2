@@ -195,7 +195,6 @@ static NSDate* lastResizeDate_;
     // Allocate a new metal view
     _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                          device:MTLCreateSystemDefaultDevice()];
-
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
 
@@ -216,8 +215,8 @@ static NSDate* lastResizeDate_;
     _metalView.delegate = _driver;
 }
 
-- (void)drawFrameSynchronously {
-    [_driver drawSynchronouslyInView:_metalView];
+- (BOOL)drawFrameSynchronously {
+    return [_driver drawSynchronouslyInView:_metalView];
 }
 
 - (void)removeMetalView NS_AVAILABLE_MAC(10_11) {
@@ -302,7 +301,11 @@ static NSDate* lastResizeDate_;
 
 - (void)updateMetalViewFrame {
     // The metal view looks awful while resizing because it insists on scaling
-    // its contents.. Just switch off the metal renderer until it catches up.
+    // its contents. Just switch off the metal renderer until it catches up.
+    [_delegate sessionViewNeedsMetalFrameUpdate];
+}
+
+- (void)reallyUpdateMetalViewFrame {
     [_delegate sessionViewHideMetalViewUntilNextFrame];
     _metalView.frame = _scrollview.contentView.frame;
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];

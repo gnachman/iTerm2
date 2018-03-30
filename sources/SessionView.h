@@ -126,6 +126,7 @@
 - (void)sessionViewUserScrollDidChange:(BOOL)userScroll;
 
 - (void)sessionViewDidChangeHoverURLVisible:(BOOL)visible;
+- (void)sessionViewNeedsMetalFrameUpdate;
 
 @end
 
@@ -141,7 +142,6 @@
 @property(nonatomic, readonly) PTYScroller *verticalScroller;
 @property(nonatomic, readonly) iTermMetalDriver *driver NS_AVAILABLE_MAC(10_11);
 @property(nonatomic, readonly) MTKView *metalView NS_AVAILABLE_MAC(10_11);
-
 @property(nonatomic, readonly) BOOL useMetal NS_AVAILABLE_MAC(10_11);
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11);;
 
@@ -190,6 +190,7 @@
 
 - (void)setHoverURL:(NSString *)url;
 - (BOOL)hasHoverURL;
-- (void)drawFrameSynchronously;
+- (BOOL)drawFrameSynchronously;
+- (void)reallyUpdateMetalViewFrame;
 
 @end

@@ -64,6 +64,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSColor *timestampsBackgroundColor;
 @property (nonatomic, readonly) NSColor *timestampsTextColor;
 @property (nonatomic, readonly) long long firstVisibleAbsoluteLineNumber;
+@property (nonatomic, readonly) BOOL cutOutLeftCorner;
+@property (nonatomic, readonly) BOOL cutOutRightCorner;
 
 // Initialize sketchPtr to 0. The number of set bits estimates the unique number of color combinations.
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
@@ -137,12 +139,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 // Draw and return after the GPU's completion callback is run.
 // enableSetNeedsDisplay should be NO.
-- (void)drawSynchronouslyInView:(MTKView *)view;
+// Returns YES on success, NO if resources were insufficient
+- (BOOL)drawSynchronouslyInView:(MTKView *)view;
 
 // Draw and return immediately, calling completion block after GPU's completion
 // block is called.
 // enableSetNeedsDisplay should be NO.
-- (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(void))completion;
+// The arg to completion is YES on success and NO if the draw was aborted for lack of resources.
+- (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion;
 
 @end
 

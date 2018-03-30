@@ -1,5 +1,6 @@
 #import "CPKEyedropperWindow.h"
 #import "CPKEyedropperView.h"
+#import "CPKScreenshot.h"
 #import "NSColor+CPK.h"
 
 // Size in points of one edge of the window. It is square.
@@ -9,10 +10,13 @@ const CGFloat kSize = 200;
 const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 
 @interface CPKEyedropperWindow ()
-@property(nonatomic) NSMutableArray *screenshots;
+@property(nonatomic) NSMutableArray<CPKScreenshot *> *screenshots;
 @property(nonatomic) NSColor *selectedColor;
 @property(nonatomic) CPKEyedropperView *eyedropperView;
-- (void)stop;
+@property(nonatomic, strong) NSWindow *previousKeyWindow;
+
+- (void)accept;
+- (void)dismiss;
 @end
 
 @implementation CPKEyedropperWindow
@@ -36,14 +40,22 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     eyedropperWindow.opaque = NO;
     eyedropperWindow.backgroundColor = [NSColor clearColor];
     eyedropperWindow.hasShadow = NO;
+    eyedropperWindow.previousKeyWindow = [NSApp keyWindow];
     NSRect rect = NSMakeRect(0, 0, frame.size.width, frame.size.height);
     eyedropperWindow.eyedropperView = [[CPKEyedropperView alloc] initWithFrame:rect];
     __weak __typeof(eyedropperWindow) weakWindow = eyedropperWindow;
-    eyedropperWindow.eyedropperView.click = ^() { [weakWindow stop]; };
+    eyedropperWindow.eyedropperView.click = ^() {
+        [weakWindow accept];
+        [weakWindow dismiss];
+    };
+    eyedropperWindow.eyedropperView.cancel = ^() {
+        [weakWindow dismiss];
+    };
     eyedropperWindow.contentView = eyedropperWindow.eyedropperView;
 
     // It takes a spin of the mainloop for this to take effect
     eyedropperWindow.level = NSMainMenuWindowLevel + 1;
+    [eyedropperWindow makeKeyAndOrderFront:nil];
 
     dispatch_async(dispatch_get_main_queue(), ^{
         [eyedropperWindow finishPickingColorWithCompletion:completion];
@@ -72,19 +84,8 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 - (void)grabScreenshots {
     self.screenshots = [NSMutableArray array];
     for (NSScreen *screen in [NSScreen screens]) {
-        NSDictionary *dict = screen.deviceDescription;
-        CGDirectDisplayID displayId = [dict[@"NSScreenNumber"] unsignedIntValue];
-        CGImageRef image = CGDisplayCreateImage(displayId);
-        NSSize size = screen.frame.size;
-        size.width *= screen.backingScaleFactor;
-        size.height *= screen.backingScaleFactor;
-
-        NSBitmapImageRep *imageRep =
-        [[NSBitmapImageRep alloc] initWithData:[[[NSImage alloc] initWithCGImage:image
-                                                                            size:size]
-                                                TIFFRepresentation]];
-        CFRelease(image);
-        [self.screenshots addObject:imageRep];
+        CPKScreenshot *screenshot = [CPKScreenshot grabFromScreen:screen];
+        [self.screenshots addObject:screenshot];
     }
 }
 
@@ -126,11 +127,11 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 
 - (void)setSelectedColor:(NSColor *)selectedColor {
     _selectedColor = selectedColor;
-    [NSApp stopModal];
 }
 
 - (void)stopPicking:(NSNotification *)notification {
     self.selectedColor = [NSColor clearColor];
+    [self dismiss];
 }
 
 - (NSInteger)currentScreenIndex {
@@ -145,7 +146,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     return result;
 }
 
-- (NSBitmapImageRep *)currentScreenScreenshot {
+- (CPKScreenshot *)currentScreenScreenshot {
     NSInteger i = [self currentScreenIndex];
     if (i < 0) {
         return nil;
@@ -169,7 +170,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 
     NSMutableArray *outerArray = [NSMutableArray array];
     const NSInteger radius = 9;
-    NSBitmapImageRep *screenshot = [self currentScreenScreenshot];
+    CPKScreenshot *screenshot = [self currentScreenScreenshot];
     NSColor *blackColor = [NSColor cpk_colorWithRed:0 green:0 blue:0 alpha:1];
     for (NSInteger x = point.x - radius; x <= point.x + radius; x++) {
         NSMutableArray *innerArray = [NSMutableArray array];
@@ -203,7 +204,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     [self setFrame:frame display:YES];
 }
 
-- (void)stop {
+- (void)accept {
     NSPoint location = [NSEvent mouseLocation];
     NSScreen *screen = [[NSScreen screens] objectAtIndex:self.currentScreenIndex];
     NSPoint point = NSMakePoint(location.x - screen.frame.origin.x,
@@ -211,8 +212,16 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     point.y = screen.frame.size.height - point.y;
     point.x *= screen.backingScaleFactor;
     point.y *= screen.backingScaleFactor;
-    self.selectedColor = [self.currentScreenScreenshot colorAtX:point.x y:point.y];
+    self.selectedColor = [[self.currentScreenScreenshot colorAtX:point.x y:point.y] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+}
 
+- (void)dismiss {
+    [NSApp stopModal];
+    [_previousKeyWindow makeKeyAndOrderFront:nil];
+}
+
+- (BOOL)canBecomeKeyWindow {
+    return YES;
 }
 
 @end

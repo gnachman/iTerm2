@@ -244,19 +244,17 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     if (dimmingAmount == 0) {
         return self;
     }
-    double r = [self redComponent];
-    double g = [self greenComponent];
-    double b = [self blueComponent];
-    double alpha = [self alphaComponent];
     // This algorithm limits the dynamic range of colors as well as brightening
     // them. Both attributes change in proportion to the dimmingAmount.
 
     // Find a linear interpolation between kCenter and the requested color component
     // in proportion to 1- dimmingAmount.
-    return [NSColor colorWithCalibratedRed:(1 - dimmingAmount) * r + dimmingAmount * grayLevel
-                                     green:(1 - dimmingAmount) * g + dimmingAmount * grayLevel
-                                      blue:(1 - dimmingAmount) * b + dimmingAmount * grayLevel
-                                     alpha:alpha];
+    CGFloat components[4];
+    [self getComponents:components];
+    for (int i = 0; i < 3; i++) {
+        components[i] = (1 - dimmingAmount) * components[i] + dimmingAmount * grayLevel;
+    }
+    return [NSColor colorWithColorSpace:self.colorSpace components:components count:4];
 }
 
 - (CGFloat)perceivedBrightness {

@@ -86,6 +86,14 @@
     [self setNeedsDisplay:YES];
 }
 
+- (BOOL)acceptsFirstResponder {
+    return YES;
+}
+
+- (void)keyDown:(NSEvent *)event {
+    self.cancel();
+}
+
 - (void)mouseUp:(NSEvent *)theEvent {
     if (theEvent.clickCount == 1) {
         self.click();
