@@ -195,7 +195,6 @@ static NSDate* lastResizeDate_;
     // Allocate a new metal view
     _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                          device:MTLCreateSystemDefaultDevice()];
-    _metalView.layer.opaque = NO;
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
 

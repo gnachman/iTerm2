@@ -10,7 +10,6 @@
 #import "iTermBackgroundColorRenderer.h"
 #import "iTermBadgeRenderer.h"
 #import "iTermBroadcastStripesRenderer.h"
-#import "iTermCornerCutoutRenderer.h"
 #import "iTermCopyBackgroundRenderer.h"
 #import "iTermCursorGuideRenderer.h"
 #import "iTermCursorRenderer.h"
@@ -102,7 +101,6 @@ typedef struct {
     iTermCursorRenderer *_imeCursorRenderer;
     iTermCursorRenderer *_blockCursorRenderer;
     iTermCursorRenderer *_frameCursorRenderer;
-    iTermCornerCutoutRenderer *_cornerCutoutRenderer;
     iTermCopyModeCursorRenderer *_copyModeCursorRenderer;
     iTermCopyBackgroundRenderer *_copyBackgroundRenderer;
     iTermImageRenderer *_imageRenderer;
@@ -163,7 +161,6 @@ typedef struct {
         _imeCursorRenderer = [iTermCursorRenderer newIMECursorRendererWithDevice:mtkView.device];
         _blockCursorRenderer = [iTermCursorRenderer newBlockCursorRendererWithDevice:mtkView.device];
         _frameCursorRenderer = [iTermCursorRenderer newFrameCursorRendererWithDevice:mtkView.device];
-        _cornerCutoutRenderer = [[iTermCornerCutoutRenderer alloc] initWithDevice:mtkView.device];
         _copyModeCursorRenderer = [iTermCursorRenderer newCopyModeCursorRendererWithDevice:mtkView.device];
         _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:mtkView.device];
 
@@ -609,7 +606,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self populateTimestampsRendererTransientStateWithFrameData:frameData];
     [self populateFlashRendererTransientStateWithFrameData:frameData];
     [self populateImageRendererTransientStateWithFrameData:frameData];
-    [self populateCornerCutoutRendererTransientStateWithFrameData:frameData];
 }
 
 - (id<MTLTexture>)destinationTextureForFrameData:(iTermMetalFrameData *)frameData {
@@ -707,10 +703,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self drawCellRenderer:_highlightRowRenderer
                  frameData:frameData
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawHighlightRow]];
-
-    [self drawRenderer:_cornerCutoutRenderer
-             frameData:frameData
-                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCornerCutout]];
 
     [self finishDrawingWithCommandBuffer:commandBuffer
                                frameData:frameData];
@@ -813,15 +805,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 #pragma mark - Populate Transient States
-
-- (void)populateCornerCutoutRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
-    if (_cornerCutoutRenderer.rendererDisabled) {
-        return;
-    }
-    iTermCornerCutoutRendererTransientState *tState = [frameData transientStateForRenderer:_cornerCutoutRenderer];
-    tState.drawLeft = frameData.perFrameState.cutOutLeftCorner;
-    tState.drawRight = frameData.perFrameState.cutOutRightCorner;
-}
 
 - (void)populateCopyBackgroundRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     if (_copyBackgroundRenderer.rendererDisabled) {
@@ -1523,8 +1506,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
               _broadcastStripesRenderer,
               _copyBackgroundRenderer,
               _indicatorRenderer,
-              _flashRenderer,
-              _cornerCutoutRenderer ];
+              _flashRenderer ];
 }
 
 - (void)scheduleDrawIfNeededInView:(MTKView *)view {
