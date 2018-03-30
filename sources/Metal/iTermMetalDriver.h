@@ -131,7 +131,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSString *identifier;
 @property (atomic) BOOL captureDebugInfoForNextFrame;
 
-- (nullable instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView;
+- (instancetype)init NS_UNAVAILABLE;
+- (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
+
 - (void)setCellSize:(CGSize)cellSize
 cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
            gridSize:(VT100GridSize)gridSize

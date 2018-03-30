@@ -135,7 +135,7 @@ typedef struct {
     iTermMetalDriverAsyncContext *_context;
 }
 
-- (nullable instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView {
+- (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device {
     self = [super init];
     if (self) {
         static int gNextIdentifier;
@@ -143,28 +143,28 @@ typedef struct {
         _startToStartHistogram = [[iTermHistogram alloc] init];
         _inFlightHistogram = [[iTermHistogram alloc] init];
         _startTime = [NSDate timeIntervalSinceReferenceDate];
-        _marginRenderer = [[iTermMarginRenderer alloc] initWithDevice:mtkView.device];
-        _backgroundImageRenderer = [[iTermBackgroundImageRenderer alloc] initWithDevice:mtkView.device];
-        _textRenderer = [[iTermTextRenderer alloc] initWithDevice:mtkView.device];
-        _backgroundColorRenderer = [[iTermBackgroundColorRenderer alloc] initWithDevice:mtkView.device];
-        _markRenderer = [[iTermMarkRenderer alloc] initWithDevice:mtkView.device];
-        _badgeRenderer = [[iTermBadgeRenderer alloc] initWithDevice:mtkView.device];
-        _flashRenderer = [[iTermFullScreenFlashRenderer alloc] initWithDevice:mtkView.device];
-        _timestampsRenderer = [[iTermTimestampsRenderer alloc] initWithDevice:mtkView.device];
-        _indicatorRenderer = [[iTermIndicatorRenderer alloc] initWithDevice:mtkView.device];
-        _broadcastStripesRenderer = [[iTermBroadcastStripesRenderer alloc] initWithDevice:mtkView.device];
-        _cursorGuideRenderer = [[iTermCursorGuideRenderer alloc] initWithDevice:mtkView.device];
-        _highlightRowRenderer = [[iTermHighlightRowRenderer alloc] initWithDevice:mtkView.device];
-        _imageRenderer = [[iTermImageRenderer alloc] initWithDevice:mtkView.device];
-        _underlineCursorRenderer = [iTermCursorRenderer newUnderlineCursorRendererWithDevice:mtkView.device];
-        _barCursorRenderer = [iTermCursorRenderer newBarCursorRendererWithDevice:mtkView.device];
-        _imeCursorRenderer = [iTermCursorRenderer newIMECursorRendererWithDevice:mtkView.device];
-        _blockCursorRenderer = [iTermCursorRenderer newBlockCursorRendererWithDevice:mtkView.device];
-        _frameCursorRenderer = [iTermCursorRenderer newFrameCursorRendererWithDevice:mtkView.device];
-        _copyModeCursorRenderer = [iTermCursorRenderer newCopyModeCursorRendererWithDevice:mtkView.device];
-        _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:mtkView.device];
+        _marginRenderer = [[iTermMarginRenderer alloc] initWithDevice:device];
+        _backgroundImageRenderer = [[iTermBackgroundImageRenderer alloc] initWithDevice:device];
+        _textRenderer = [[iTermTextRenderer alloc] initWithDevice:device];
+        _backgroundColorRenderer = [[iTermBackgroundColorRenderer alloc] initWithDevice:device];
+        _markRenderer = [[iTermMarkRenderer alloc] initWithDevice:device];
+        _badgeRenderer = [[iTermBadgeRenderer alloc] initWithDevice:device];
+        _flashRenderer = [[iTermFullScreenFlashRenderer alloc] initWithDevice:device];
+        _timestampsRenderer = [[iTermTimestampsRenderer alloc] initWithDevice:device];
+        _indicatorRenderer = [[iTermIndicatorRenderer alloc] initWithDevice:device];
+        _broadcastStripesRenderer = [[iTermBroadcastStripesRenderer alloc] initWithDevice:device];
+        _cursorGuideRenderer = [[iTermCursorGuideRenderer alloc] initWithDevice:device];
+        _highlightRowRenderer = [[iTermHighlightRowRenderer alloc] initWithDevice:device];
+        _imageRenderer = [[iTermImageRenderer alloc] initWithDevice:device];
+        _underlineCursorRenderer = [iTermCursorRenderer newUnderlineCursorRendererWithDevice:device];
+        _barCursorRenderer = [iTermCursorRenderer newBarCursorRendererWithDevice:device];
+        _imeCursorRenderer = [iTermCursorRenderer newIMECursorRendererWithDevice:device];
+        _blockCursorRenderer = [iTermCursorRenderer newBlockCursorRendererWithDevice:device];
+        _frameCursorRenderer = [iTermCursorRenderer newFrameCursorRendererWithDevice:device];
+        _copyModeCursorRenderer = [iTermCursorRenderer newCopyModeCursorRendererWithDevice:device];
+        _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:device];
 
-        _commandQueue = [mtkView.device newCommandQueue];
+        _commandQueue = [device newCommandQueue];
 #if ENABLE_PRIVATE_QUEUE
         _queue = dispatch_queue_create("com.iterm2.metalDriver", NULL);
 #endif

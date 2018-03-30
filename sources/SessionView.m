@@ -209,7 +209,7 @@ static NSDate* lastResizeDate_;
 
     // Start the metal driver going. It will receive delegate calls from MTKView that kick off
     // frame rendering.
-    _driver = [[iTermMetalDriver alloc] initWithMetalKitView:_metalView];
+    _driver = [[iTermMetalDriver alloc] initWithDevice:_metalView.device];
     _driver.dataSource = dataSource;
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
     _metalView.delegate = _driver;
