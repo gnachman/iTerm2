@@ -2467,6 +2467,12 @@
 		A6DBC05120073CBA00F1466D /* NSResponder+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC04F20073CBA00F1466D /* NSResponder+iTerm.h */; };
 		A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC05020073CBA00F1466D /* NSResponder+iTerm.m */; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
+		A6E17492206DE54900E70F8D /* LeftCornerMask.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E17490206DE54800E70F8D /* LeftCornerMask.png */; };
+		A6E17493206DE54900E70F8D /* RightCornerMask.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E17491206DE54800E70F8D /* RightCornerMask.png */; };
+		A6E17494206DE54F00E70F8D /* LeftCornerMask.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E17490206DE54800E70F8D /* LeftCornerMask.png */; };
+		A6E17495206DE54F00E70F8D /* RightCornerMask.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E17491206DE54800E70F8D /* RightCornerMask.png */; };
+		A6E17496206DE54F00E70F8D /* LeftCornerMask.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E17490206DE54800E70F8D /* LeftCornerMask.png */; };
+		A6E17497206DE54F00E70F8D /* RightCornerMask.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E17491206DE54800E70F8D /* RightCornerMask.png */; };
 		A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		A6E525DD1A9C5730007B898E /* VT100StateMachine.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DA1A9C5730007B898E /* VT100StateMachine.h */; };
 		A6E525DE1A9C5730007B898E /* VT100StateMachine.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DA1A9C5730007B898E /* VT100StateMachine.h */; };
@@ -4104,6 +4110,8 @@
 		A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSTextField+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTextField+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF7B711A5BA33900D96409 /* iTermParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermParser.h; sourceTree = "<group>"; };
+		A6E17490206DE54800E70F8D /* LeftCornerMask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LeftCornerMask.png; path = images/LeftCornerMask.png; sourceTree = "<group>"; };
+		A6E17491206DE54800E70F8D /* RightCornerMask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = RightCornerMask.png; path = images/RightCornerMask.png; sourceTree = "<group>"; };
 		A6E525CE1A9C5725007B898E /* VT100StateTransition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100StateTransition.m; sourceTree = "<group>"; };
 		A6E525CF1A9C5725007B898E /* VT100State.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100State.m; sourceTree = "<group>"; };
 		A6E525D01A9C5725007B898E /* VT100StateMachine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100StateMachine.m; sourceTree = "<group>"; };
@@ -4932,6 +4940,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6E17490206DE54800E70F8D /* LeftCornerMask.png */,
+				A6E17491206DE54800E70F8D /* RightCornerMask.png */,
 				A6539AA9206D944400456F24 /* LeftCornerMask@2x.png */,
 				A6539AA8206D944300456F24 /* RightCornerMask@2x.png */,
 				A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */,
@@ -7854,6 +7864,7 @@
 				1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */,
 				A60BB3881EB54BD300D76C09 /* CopyMode.png in Resources */,
 				1D6ED9C919AEA20D005A7799 /* IBarCursor@2x.png in Resources */,
+				A6E17496206DE54F00E70F8D /* LeftCornerMask.png in Resources */,
 				1D6ED9CA19AEA20D005A7799 /* IBarCursorXMR@2x.png in Resources */,
 				1D6ED9CE19AEA20D005A7799 /* TabClose_Front_Rollover@2x.png in Resources */,
 				1D8BBA721B30F7FB0005A852 /* Dismiss@2x.png in Resources */,
@@ -7866,6 +7877,7 @@
 				1D6ED9D319AEA20D005A7799 /* TabClose_Front_Pressed.png in Resources */,
 				1D6ED9D419AEA20D005A7799 /* TabClose_Front_Rollover.png in Resources */,
 				A6EFF23C1D20F6C000806EEF /* EraseDarkBackground@2x.png in Resources */,
+				A6E17497206DE54F00E70F8D /* RightCornerMask.png in Resources */,
 				1DEDF56B19C917FD005B023A /* new-tab.png in Resources */,
 				1D6ED9D519AEA20D005A7799 /* TabClose_Front.png in Resources */,
 				1D6ED9D919AEA20D005A7799 /* important@2x.png in Resources */,
@@ -8236,6 +8248,7 @@
 				A663010919CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
 				1D44D0501CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBackgroundImageWithGloballyInvertedColors.png in Resources */,
 				1D44D0361CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhiteOneBlack.png in Resources */,
+				A6E17495206DE54F00E70F8D /* RightCornerMask.png in Resources */,
 				1D44CFD81CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackground.png in Resources */,
 				1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				1D44CF8E1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithGloballyInvertedColors.png in Resources */,
@@ -8276,6 +8289,7 @@
 				1D44D04D1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testAsciiAntiAliasOnly.png in Resources */,
 				1D44D06C1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testDimmingTextAndBgAndCursorBoost.png in Resources */,
 				A67D0D541A2EE12A003A8B35 /* GlobalSearch.xib in Resources */,
+				A6E17494206DE54F00E70F8D /* LeftCornerMask.png in Resources */,
 				1D44CF8B1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testAsciiAntiAliasOnly.png in Resources */,
 				1D44D0A61CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testUnderlineCursorReverseVideo.png in Resources */,
 				1D44D0251CC7F5A600BE5630 /* PTYTextViewTest-golden-testNonretinaFakeBold.png in Resources */,
@@ -8438,7 +8452,9 @@
 				1D8BBA6B1B30F5C30005A852 /* Navigate@2x.png in Resources */,
 				A67D0D801A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
 				A67D0D5F1A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
+				A6E17493206DE54900E70F8D /* RightCornerMask.png in Resources */,
 				A67D0D561A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
+				A6E17492206DE54900E70F8D /* LeftCornerMask.png in Resources */,
 				A65B725A1B1A630100F947A7 /* CheckMark.png in Resources */,
 				A67D0D321A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
 				A6CEDA6119988A7300BB57EC /* LogoShadow.png in Resources */,
