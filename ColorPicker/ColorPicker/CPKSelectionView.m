@@ -830,26 +830,26 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 
 - (void)updateTextFieldsForColor:(NSColor *)color {
     self.hexTextField.stringValue = [NSString stringWithFormat:@"%02x%02x%02x",
-                                        (int)round(color.redComponent * 255),
-                                        (int)round(color.greenComponent * 255),
-                                        (int)round(color.blueComponent * 255)];
+                                        (int)floor(color.redComponent * 255),
+                                        (int)floor(color.greenComponent * 255),
+                                        (int)floor(color.blueComponent * 255)];
     self.redTextField.stringValue =
-        [NSString stringWithFormat:@"%d", (int)round(color.redComponent * 255)];
+        [NSString stringWithFormat:@"%d", (int)floor(color.redComponent * 255)];
     self.greenTextField.stringValue =
-        [NSString stringWithFormat:@"%d", (int)round(color.greenComponent * 255)];
+        [NSString stringWithFormat:@"%d", (int)floor(color.greenComponent * 255)];
     self.blueTextField.stringValue =
-        [NSString stringWithFormat:@"%d", (int)round(color.blueComponent * 255)];
+        [NSString stringWithFormat:@"%d", (int)floor(color.blueComponent * 255)];
 
     self.hueTextField.stringValue =
-        [NSString stringWithFormat:@"%d", (int)round(color.hueComponent * 255)];
+        [NSString stringWithFormat:@"%d", (int)floor(color.hueComponent * 255)];
     self.saturationTextField.stringValue =
-        [NSString stringWithFormat:@"%d", (int)round(color.saturationComponent * 255)];
+        [NSString stringWithFormat:@"%d", (int)floor(color.saturationComponent * 255)];
     self.brightnessTextField.stringValue =
-        [NSString stringWithFormat:@"%d", (int)round(color.brightnessComponent * 255)];
+        [NSString stringWithFormat:@"%d", (int)floor(color.brightnessComponent * 255)];
 
     if (self.alphaAllowed) {
         self.alphaTextField.stringValue =
-            [NSString stringWithFormat:@"%d",(int)round(color.alphaComponent * 255)];
+            [NSString stringWithFormat:@"%d",(int)floor(color.alphaComponent * 255)];
     }
 }
 
