@@ -98,3 +98,16 @@
 }
 
 @end
+
+#if ENABLE_USE_TEMPORARY_TEXTURE
+@implementation iTermCopyToDrawableRendererTransientState
+@end
+
+@implementation iTermCopyToDrawableRenderer
+
+- (Class)transientStateClass {
+    return [iTermCopyToDrawableRendererTransientState class];
+}
+
+@end
+#endif

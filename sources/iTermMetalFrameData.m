@@ -34,6 +34,7 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "dispatchToPQ<",
         "BuildRowData<",
         "BuildIntermed<",
+        "BuildTemp<",
         "UpdateRenderers<",
         "CreateTransient<",
 
@@ -77,7 +78,9 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "DrawTimestamps<<",
         "DrawFlash<<",
         "DrawCorners<<",
-        
+
+        "Create3rdRE<<",
+        "enqueueCopyToDr<<",
         "EndEncodingDrwbl<<",
         "PresentCommit<<",
 
@@ -232,7 +235,8 @@ static NSInteger gNextFrameDataNumber;
     return renderEncoder;
 }
 
-- (MTLRenderPassDescriptor *)newRenderPassDescriptorWithLabel:(NSString *)label {
+- (MTLRenderPassDescriptor *)newRenderPassDescriptorWithLabel:(NSString *)label
+                                                         fast:(BOOL)fast {
     MTLRenderPassDescriptor *renderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
     MTLRenderPassColorAttachmentDescriptor *colorAttachment = renderPassDescriptor.colorAttachments[0];
     colorAttachment.storeAction = MTLStoreActionStore;
@@ -243,10 +247,14 @@ static NSInteger gNextFrameDataNumber;
                                                                                                      width:self.viewportSize.x
                                                                                                     height:self.viewportSize.y
                                                                                                  mipmapped:NO];
-        textureDescriptor.usage = (MTLTextureUsageShaderRead |
-                                   MTLTextureUsageShaderWrite |
-                                   MTLTextureUsageRenderTarget |
-                                   MTLTextureUsagePixelFormatView);
+        if (fast) {
+            textureDescriptor.usage = (MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget) ;
+        } else {
+            textureDescriptor.usage = (MTLTextureUsageShaderRead |
+                                       MTLTextureUsageShaderWrite |
+                                       MTLTextureUsageRenderTarget |
+                                       MTLTextureUsagePixelFormatView);
+        }
         colorAttachment.texture = [self.device newTextureWithDescriptor:textureDescriptor];
         [iTermTexture setBytesPerRow:self.viewportSize.x * 4
                          rawDataSize:self.viewportSize.x * self.viewportSize.y * 4
@@ -263,12 +271,25 @@ static NSInteger gNextFrameDataNumber;
     [self measureTimeForStat:iTermMetalFrameDataStatPqCreateIntermediate ofBlock:^{
         assert(!self.intermediateRenderPassDescriptor);
 
-        self.intermediateRenderPassDescriptor = [self newRenderPassDescriptorWithLabel:@"Intermediate Texture"];
+        self.intermediateRenderPassDescriptor = [self newRenderPassDescriptorWithLabel:@"Intermediate Texture"
+                                                                                  fast:YES];
 
         [_debugInfo setIntermediateRenderPassDescriptor:self.intermediateRenderPassDescriptor];
     }];
 }
 
+#if ENABLE_USE_TEMPORARY_TEXTURE
+- (void)createTemporaryRenderPassDescriptor {
+    [self measureTimeForStat:iTermMetalFrameDataStatPqCreateTemporary ofBlock:^{
+        assert(!self.temporaryRenderPassDescriptor);
+
+        self.temporaryRenderPassDescriptor = [self newRenderPassDescriptorWithLabel:@"Temporary Texture"
+                                                                               fast:YES];
+
+        [_debugInfo setTemporaryRenderPassDescriptor:self.intermediateRenderPassDescriptor];
+    }];
+}
+#endif
 
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats owner:(NSString *)owner {
     self.status = @"complete";
@@ -278,7 +299,6 @@ static NSInteger gNextFrameDataNumber;
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatGpu]);
     iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);
 
-#define ENABLE_PER_FRAME_METAL_STATS 0
 #if ENABLE_PER_FRAME_METAL_STATS
     NSLog(@"Stats for %@", self);
     iTermPreciseTimerLogOneEvent(_stats, iTermMetalFrameDataStatCount, YES);

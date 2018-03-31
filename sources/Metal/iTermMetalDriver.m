@@ -104,9 +104,14 @@ typedef struct {
     iTermCopyModeCursorRenderer *_copyModeCursorRenderer;
     iTermCopyBackgroundRenderer *_copyBackgroundRenderer;
     iTermImageRenderer *_imageRenderer;
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    iTermCopyToDrawableRenderer *_copyToDrawableRenderer;
+#endif
 
     // This one is special because it's debug only
     iTermCopyOffscreenRenderer *_copyOffscreenRenderer;
+
+
 
     // The command Queue from which we'll obtain command buffers
     id<MTLCommandQueue> _commandQueue;
@@ -163,6 +168,9 @@ typedef struct {
         _frameCursorRenderer = [iTermCursorRenderer newFrameCursorRendererWithDevice:device];
         _copyModeCursorRenderer = [iTermCursorRenderer newCopyModeCursorRendererWithDevice:device];
         _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:device];
+#if ENABLE_USE_TEMPORARY_TEXTURE
+        _copyToDrawableRenderer = [[iTermCopyToDrawableRenderer alloc] initWithDevice:device];
+#endif
 
         _commandQueue = [device newCommandQueue];
 #if ENABLE_PRIVATE_QUEUE
@@ -438,6 +446,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if ([self shouldCreateIntermediateRenderPassDescriptor:frameData]) {
         [frameData createIntermediateRenderPassDescriptor];
     }
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    [frameData createTemporaryRenderPassDescriptor];
+#endif
 
     // Set properties of the renderers for values that tend not to change very often and which
     // are used to create transient states. This must happen before creating transient states
@@ -634,7 +645,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
     if (frameData.debugInfo) {
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
-            frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"Offscreen debug texture"];
+            frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"Offscreen debug texture"
+                                                                                    fast:NO];
             frameData.debugRealRenderPassDescriptor = view.currentRenderPassDescriptor;
         }];
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
@@ -701,6 +713,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                  frameData:frameData
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawHighlightRow]];
 
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    // Copy to the drawable
+    frameData.currentPass = 2;
+    [frameData.renderEncoder endEncoding];
+    [self updateRenderEncoderForCurrentPass:frameData label:@"Copy to drawable"];
+    [self drawRenderer:_copyToDrawableRenderer
+             frameData:frameData
+                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueCopyToDrawable]];
+#endif
+
     [self finishDrawingWithCommandBuffer:commandBuffer
                                frameData:frameData];
 }
@@ -755,6 +777,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return;
     }
     _copyBackgroundRenderer.enabled = (frameData.intermediateRenderPassDescriptor != nil);
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    _copyToDrawableRenderer.enabled = YES;
+#endif
 }
 
 - (void)updateBadgeRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -810,6 +835,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     // Copy state
     iTermCopyBackgroundRendererTransientState *copyState = [frameData transientStateForRenderer:_copyBackgroundRenderer];
     copyState.sourceTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
+
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    iTermCopyToDrawableRendererTransientState *dState = [frameData transientStateForRenderer:_copyToDrawableRenderer];
+    dState.sourceTexture = frameData.temporaryRenderPassDescriptor.colorAttachments[0].texture;
+#endif
 }
 
 - (void)populateCursorRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -1193,15 +1223,33 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)updateRenderEncoderForCurrentPass:(iTermMetalFrameData *)frameData
                                     label:(NSString *)label {
     const int pass = frameData.currentPass;
+
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    assert(pass >= 0 && pass <= 2);
+
+    NSArray<MTLRenderPassDescriptor *> *descriptors =
+        @[ frameData.intermediateRenderPassDescriptor ?: frameData.temporaryRenderPassDescriptor,
+           frameData.temporaryRenderPassDescriptor,
+           frameData.renderPassDescriptor ];
+    iTermMetalFrameDataStat stats[3] = {
+        iTermMetalFrameDataStatPqEnqueueDrawCreateFirstRenderEncoder,
+        iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder,
+        iTermMetalFrameDataStatPqEnqueueDrawCreateThirdRenderEncoder
+    };
+#else
+    // No temporary texture
     assert(pass >= 0 && pass <= 1);
 
     NSArray<MTLRenderPassDescriptor *> *descriptors =
     @[ frameData.intermediateRenderPassDescriptor ?: frameData.renderPassDescriptor,
+       frameData.renderPassDescriptor,
        frameData.renderPassDescriptor ];
-    iTermMetalFrameDataStat stats[2] = {
+    iTermMetalFrameDataStat stats[3] = {
         iTermMetalFrameDataStatPqEnqueueDrawCreateFirstRenderEncoder,
-        iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder
+        iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder,
     };
+#endif
+
     [frameData updateRenderEncoderWithRenderPassDescriptor:descriptors[pass]
                                                       stat:stats[pass]
                                                      label:label];
@@ -1459,6 +1507,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
               _badgeRenderer,
               _broadcastStripesRenderer,
               _copyBackgroundRenderer,
+#if ENABLE_USE_TEMPORARY_TEXTURE
+              _copyToDrawableRenderer,
+#endif
               _indicatorRenderer,
               _flashRenderer ];
 }

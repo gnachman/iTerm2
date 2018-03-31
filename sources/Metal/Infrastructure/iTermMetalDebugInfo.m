@@ -71,6 +71,7 @@
 @implementation iTermMetalDebugInfo {
     MTLRenderPassDescriptor *_renderPassDescriptor;
     MTLRenderPassDescriptor *_intermediateRenderPassDescriptor;
+    MTLRenderPassDescriptor *_temporaryRenderPassDescriptor;
     NSMutableArray<iTermMetalRowData *> *_rowData;
     NSMutableArray<iTermMetalRendererTransientState *> *_transientStates;
     NSMutableArray<id<iTermMetalCellRenderer>> *_cellRenderers;
@@ -95,6 +96,10 @@
 
 - (void)setIntermediateRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor {
     _intermediateRenderPassDescriptor = renderPassDescriptor;
+}
+
+- (void)setTemporaryRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor {
+    _temporaryRenderPassDescriptor = renderPassDescriptor;
 }
 
 - (void)addRowData:(iTermMetalRowData *)rowData {
@@ -159,6 +164,11 @@
     if (_intermediateRenderPassDescriptor) {
         [self writeRenderPassDescriptor:_intermediateRenderPassDescriptor
                                      to:[self newFolderNamed:@"IntermediateRenderPassDescriptor"
+                                                        root:root]];
+    }
+    if (_temporaryRenderPassDescriptor) {
+        [self writeRenderPassDescriptor:_temporaryRenderPassDescriptor
+                                     to:[self newFolderNamed:@"TemporaryRenderPassDescriptor"
                                                         root:root]];
     }
     NSURL *rowDataFolder = [self newFolderNamed:@"RowData" root:root];
