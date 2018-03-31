@@ -674,8 +674,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                         commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     DLog(@"  enequeueDrawCallsForFrameData");
 
+    NSString *firstLabel;
+    if (frameData.intermediateRenderPassDescriptor) {
+        firstLabel = @"Draw content behind text";
+    } else {
+        firstLabel = @"Draw bg and text";
+    }
     [self updateRenderEncoderForCurrentPass:frameData
-                                      label:@"First render encoder"];
+                                      label:firstLabel];
 
     [self drawContentBehindTextWithFrameData:frameData];
 
