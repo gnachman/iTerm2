@@ -50,8 +50,8 @@ NS_ASSUME_NONNULL_BEGIN
     _texture.label = @"Badge";
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermBadgeRendererTransientState *tState = transientState;
     const CGSize size = tState.destinationRect.size;
     const CGFloat scale = tState.configuration.scale;
@@ -76,7 +76,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                       withBytes:vertices
                                                                  checkIfChanged:YES];
     [_metalRenderer drawWithTransientState:tState
-                             renderEncoder:renderEncoder
+                             renderEncoder:frameData.renderEncoder
                           numberOfVertices:6
                               numberOfPIUs:0
                              vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }

@@ -83,7 +83,7 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermMetalFrameDataStatPqCreateIndicatorsTS;
 }
 
-- (void)drawWithRenderEncoder:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
+- (void)drawWithFrameData:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermIndicatorRendererTransientState *tState = transientState;
     [tState.indicatorDescriptors enumerateObjectsUsingBlock:^(iTermIndicatorDescriptor * _Nonnull descriptor, NSUInteger idx, BOOL * _Nonnull stop) {

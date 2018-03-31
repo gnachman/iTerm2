@@ -334,8 +334,8 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     return piuBuffer;
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermTextRendererTransientState *tState = transientState;
     tState.vertexBuffer.label = @"Text vertex buffer";
     tState.offsetBuffer.label = @"Offset";
@@ -402,7 +402,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
 
         [tState measureTimeForStat:iTermTextRendererStatDraw ofBlock:^{
             [_cellRenderer drawWithTransientState:tState
-                                    renderEncoder:renderEncoder
+                                    renderEncoder:frameData.renderEncoder
                                  numberOfVertices:6
                                      numberOfPIUs:instances
                                     vertexBuffers:@{ @(iTermVertexInputIndexVertices): vertexBuffer,

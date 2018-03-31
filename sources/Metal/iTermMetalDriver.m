@@ -1111,7 +1111,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                                        commandBuffer:frameData.commandBuffer];
     tState.sourceTexture = frameData.destinationTexture;
     tState.debugInfo = frameData.debugInfo;
-    [_copyOffscreenRenderer drawWithRenderEncoder:renderEncoder transientState:tState];
+    [_copyOffscreenRenderer drawWithFrameData:frameData transientState:tState];
     [renderEncoder endEncoding];
 }
 
@@ -1130,7 +1130,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     const NSUInteger before = frameData.debugInfo.numberOfRecordedDraws;
     // NOTE: State may be nil if we determined it should be skipped early on.
     if (state != nil && !state.skipRenderer) {
-        [renderer drawWithRenderEncoder:frameData.renderEncoder transientState:state];
+        [renderer drawWithFrameData:frameData transientState:state];
     }
     const NSUInteger numberOfDraws = frameData.debugInfo.numberOfRecordedDraws - before;
 
@@ -1154,7 +1154,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     state.sequenceNumber = frameData.numberOfRenderersDrawn;
     frameData.numberOfRenderersDrawn = frameData.numberOfRenderersDrawn + 1;
     if (state != nil && !state.skipRenderer) {
-        [renderer drawWithRenderEncoder:frameData.renderEncoder transientState:state];
+        [renderer drawWithFrameData:frameData transientState:state];
     }
     const NSUInteger numberOfDraws = frameData.debugInfo.numberOfRecordedDraws - before;
 

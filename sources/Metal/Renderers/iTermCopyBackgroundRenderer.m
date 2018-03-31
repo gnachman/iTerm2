@@ -36,7 +36,7 @@
     return iTermMetalFrameDataStatPqCreateCopyBackgroundTS;
 }
 
-- (void)drawWithRenderEncoder:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
+- (void)drawWithFrameData:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermCopyRendererTransientState *tState = transientState;
     [_metalRenderer drawWithTransientState:tState

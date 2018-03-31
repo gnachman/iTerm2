@@ -32,8 +32,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) BOOL rendererDisabled;
 
 - (iTermMetalFrameDataStat)createTransientStateStat;
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(__kindof iTermMetalRendererTransientState *)transientState;
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalRendererTransientState *)transientState;
 
 - (__kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
                                                                       commandBuffer:(id<MTLCommandBuffer>)commandBuffer;

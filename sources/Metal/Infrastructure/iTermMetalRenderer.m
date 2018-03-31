@@ -257,8 +257,8 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     return tState;
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(NSDictionary *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(NSDictionary *)transientState {
     [self doesNotRecognizeSelector:_cmd];
 }
 

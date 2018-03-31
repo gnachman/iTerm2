@@ -166,8 +166,8 @@
 - (void)initializeTransientState:(iTermTimestampsRendererTransientState *)tState {
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermTimestampsRendererTransientState *tState = transientState;
     _cache.countLimit = tState.cellConfiguration.gridSize.height * 4;
     const CGFloat scale = tState.configuration.scale;
@@ -194,7 +194,7 @@
                                                   poolContext:tState.poolContext];
 
         [_cellRenderer drawWithTransientState:tState
-                                renderEncoder:renderEncoder
+                                renderEncoder:frameData.renderEncoder
                              numberOfVertices:6
                                  numberOfPIUs:0
                                 vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }

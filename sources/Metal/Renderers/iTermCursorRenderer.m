@@ -255,8 +255,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermCursorRendererTransientState *tState = transientState;
     iTermCursorDescription description = {
         .origin = {
@@ -274,7 +274,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                        withBytes:&description
                                                                   checkIfChanged:YES];
     [_cellRenderer drawWithTransientState:tState
-                            renderEncoder:renderEncoder
+                            renderEncoder:frameData.renderEncoder
                          numberOfVertices:6
                              numberOfPIUs:0
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
@@ -341,8 +341,8 @@ NS_ASSUME_NONNULL_BEGIN
                                            poolContext:tState.poolContext];
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermFrameCursorRendererTransientState *tState = transientState;
     iTermCursorDescription description = {
         .origin = {
@@ -360,7 +360,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                        withBytes:&description
                                                                   checkIfChanged:YES];
     [_cellRenderer drawWithTransientState:tState
-                            renderEncoder:renderEncoder
+                            renderEncoder:frameData.renderEncoder
                          numberOfVertices:6
                              numberOfPIUs:tState.cellConfiguration.gridSize.width
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
@@ -389,8 +389,8 @@ NS_ASSUME_NONNULL_BEGIN
                                            poolContext:tState.poolContext];
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermCopyModeCursorRendererTransientState *tState = transientState;
     iTermCursorDescription description = {
         .origin = {
@@ -405,7 +405,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                        withBytes:&description
                                                                   checkIfChanged:YES];
     [_cellRenderer drawWithTransientState:tState
-                            renderEncoder:renderEncoder
+                            renderEncoder:frameData.renderEncoder
                          numberOfVertices:6
                              numberOfPIUs:0
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,

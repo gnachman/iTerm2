@@ -51,7 +51,7 @@
     return iTermMetalFrameDataStatPqCreateFullScreenFlashTS;
 }
 
-- (void)drawWithRenderEncoder:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
+- (void)drawWithFrameData:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermFullScreenFlashRendererTransientState *tState = transientState;
     if (tState.color.w > 0) {

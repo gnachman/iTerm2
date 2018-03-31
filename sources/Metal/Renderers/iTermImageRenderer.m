@@ -221,15 +221,15 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
     tState.textures = _textures;
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermImageRendererTransientState *tState = transientState;
 
     NSMutableSet<NSNumber *> *texturesToRemove = [_onNotice mutableCopy];
     [tState enumerateDraws:^(id key, id<MTLBuffer> vertexBuffer, id<MTLTexture> texture) {
         [texturesToRemove removeObject:key];
         [_cellRenderer drawWithTransientState:tState
-                                renderEncoder:renderEncoder
+                                renderEncoder:frameData.renderEncoder
                              numberOfVertices:6
                                  numberOfPIUs:0
                                 vertexBuffers:@{ @(iTermVertexInputIndexVertices): vertexBuffer }

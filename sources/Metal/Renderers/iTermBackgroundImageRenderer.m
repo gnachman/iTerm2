@@ -61,7 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
     _tiled = tiled;
 }
 
-- (void)drawWithRenderEncoder:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
+- (void)drawWithFrameData:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
                transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundImageRendererTransientState *tState = transientState;
     [_metalRenderer drawWithTransientState:tState
