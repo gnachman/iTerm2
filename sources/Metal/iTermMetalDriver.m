@@ -544,6 +544,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (!_cursorGuideRenderer.rendererDisabled && frameData.perFrameState.cursorGuideEnabled) {
         return YES;
     }
+
+#if ENABLE_PRETTY_ASCII_OVERLAP
+    return YES;
+#endif
+    
     return NO;
 }
 

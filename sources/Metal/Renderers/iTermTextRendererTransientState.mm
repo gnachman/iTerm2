@@ -53,6 +53,7 @@ static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
     std::map<iTermColorComponentPair, int> *_colorModelIndexes;
 
     iTerm2::PIUArray<iTermTextPIU> _asciiPIUArrays[iTermASCIITextureAttributesMax * 2];
+    iTerm2::PIUArray<iTermTextPIU> _asciiOverflowArrays[iTermASCIITextureAttributesMax * 2];
 
     // Array of PIUs for each texture page.
     std::map<iTerm2::TexturePage *, iTerm2::PIUArray<iTermTextPIU> *> _pius;
@@ -194,7 +195,30 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                 const iTermTextPIU &a = _asciiPIUArrays[i].get(j);
                 [s appendString:[self.class formatTextPIU:a]];
             }
-            NSMutableString *name = [NSMutableString stringWithFormat:@"asciiPIUs."];
+            NSMutableString *name = [NSMutableString stringWithFormat:@"asciiPIUs.CenterPart."];
+            if (i & iTermASCIITextureAttributesBold) {
+                [name appendString:@"B"];
+            }
+            if (i & iTermASCIITextureAttributesItalic) {
+                [name appendString:@"I"];
+            }
+            if (i & iTermASCIITextureAttributesThinStrokes) {
+                [name appendString:@"T"];
+            }
+            [name appendString:@".txt"];
+            [s writeToURL:[folder URLByAppendingPathComponent:name] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+        }
+    }
+
+    @autoreleasepool {
+        for (int i = 0; i < sizeof(_asciiOverflowArrays) / sizeof(*_asciiOverflowArrays); i++) {
+            NSMutableString *s = [NSMutableString string];
+            const int size = _asciiOverflowArrays[i].size();
+            for (int j = 0; j < size; j++) {
+                const iTermTextPIU &a = _asciiOverflowArrays[i].get(j);
+                [s appendString:[self.class formatTextPIU:a]];
+            }
+            NSMutableString *name = [NSMutableString stringWithFormat:@"asciiPIUs.Overflow."];
             if (i & iTermASCIITextureAttributesBold) {
                 [name appendString:@"B"];
             }
@@ -265,15 +289,30 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                @"text.draw" ] objectAtIndex:i];
 }
 
-- (void)enumerateASCIIDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor))block {
+- (BOOL)haveAsciiOverflow {
     for (int i = 0; i < iTermASCIITextureAttributesMax * 2; i++) {
-        const int n = _asciiPIUArrays[i].get_number_of_segments();
+        const int n = _asciiOverflowArrays[i].get_number_of_segments();
+        if (n > 0) {
+            for (int j = 0; j < n; j++) {
+                if (_asciiOverflowArrays[i].size_of_segment(j) > 0) {
+                    return YES;
+                }
+            }
+        }
+    }
+    return NO;
+}
+
+- (void)enumerateASCIIDrawsFromArrays:(iTerm2::PIUArray<iTermTextPIU> *)piuArrays
+                                block:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor))block {
+    for (int i = 0; i < iTermASCIITextureAttributesMax * 2; i++) {
+        const int n = piuArrays[i].get_number_of_segments();
         iTermASCIITexture *asciiTexture = [_asciiTextureGroup asciiTextureForAttributes:(iTermASCIITextureAttributes)i];
         ITBetaAssert(asciiTexture, @"nil ascii texture for attributes %d", i);
         for (int j = 0; j < n; j++) {
-            if (_asciiPIUArrays[i].size_of_segment(j) > 0) {
-                block(_asciiPIUArrays[i].start_of_segment(j),
-                      _asciiPIUArrays[i].size_of_segment(j),
+            if (piuArrays[i].size_of_segment(j) > 0) {
+                block(piuArrays[i].start_of_segment(j),
+                      piuArrays[i].size_of_segment(j),
                       asciiTexture.textureArray.texture,
                       CGSizeToVectorUInt2(asciiTexture.textureArray.atlasSize),
                       CGSizeToVectorUInt2(_asciiTextureGroup.cellSize),
@@ -283,7 +322,8 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
     }
 }
 
-- (void)enumerateNonASCIIDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor))block {
+- (size_t)enumerateNonASCIIDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor))block {
+    size_t sum = 0;
     for (auto const &mapPair : _pius) {
         const iTerm2::TexturePage *const &texturePage = mapPair.first;
         const iTerm2::PIUArray<iTermTextPIU> *const &piuArray = mapPair.second;
@@ -291,6 +331,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
         for (size_t i = 0; i < piuArray->get_number_of_segments(); i++) {
             const size_t count = piuArray->size_of_segment(i);
             if (count > 0) {
+                sum += count;
                 block(piuArray->start_of_segment(i),
                       count,
                       texturePage->get_texture(),
@@ -300,11 +341,19 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
             }
         }
     }
+    return sum;
 }
 
-- (void)enumerateDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor))block {
+- (void)enumerateDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor))block
+             copyBlock:(void (^)(void))copyBlock {
     [self enumerateNonASCIIDraws:block];
-    [self enumerateASCIIDraws:block];
+    [self enumerateASCIIDrawsFromArrays:_asciiPIUArrays
+                                  block:block];
+    if ([self haveAsciiOverflow]) {
+        copyBlock();
+        [self enumerateASCIIDrawsFromArrays:_asciiOverflowArrays
+                                      block:block];
+    }
 }
 
 - (void)willDraw {
@@ -419,7 +468,7 @@ NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU
     if (parts & iTermASCIITexturePartsLeft) {
         if (x > 0) {
             // Normal case
-            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[asciiAttrs].get_next(),
+            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[asciiAttrs].get_next(),
                                                               code,
                                                               w,
                                                               h,
@@ -434,7 +483,7 @@ NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU
                                                               underlineColor);
         } else {
             // Intrusion into left margin
-            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[asciiAttrs].get_next(),
+            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[asciiAttrs].get_next(),
                                                               code,
                                                               w,
                                                               h,
@@ -476,7 +525,7 @@ NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU
         const int lastColumn = self.cellConfiguration.gridSize.width - 1;
         if (x < lastColumn) {
             // Normal case
-            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[asciiAttrs].get_next(),
+            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[asciiAttrs].get_next(),
                                                               code,
                                                               w,
                                                               h,
@@ -491,7 +540,7 @@ NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU
                                                               underlineColor);
         } else {
             // Intrusion into right margin
-            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[asciiAttrs].get_next(),
+            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[asciiAttrs].get_next(),
                                                               code,
                                                               w,
                                                               h,
