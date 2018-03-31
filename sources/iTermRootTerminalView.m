@@ -46,7 +46,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     self = [super initWithFrame:frameRect color:color];
     if (self) {
         _delegate = delegate;
-
+        self.wantsLayer = YES;
+        
         self.autoresizesSubviews = YES;
         _leftTabBarPreferredWidth = [iTermPreferences doubleForKey:kPreferenceKeyLeftTabBarWidth];
         [self setLeftTabBarWidthFromPreferredWidth];

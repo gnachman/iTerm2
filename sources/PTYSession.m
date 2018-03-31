@@ -4755,6 +4755,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)metalAllowed {
+    return YES;
+
     if (@available(macOS 10.11, *)) {
         if (!self.canProduceMetalFramecap) {
             return NO;
@@ -4813,6 +4815,16 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setUseMetal:(BOOL)useMetal {
     if (@available(macOS 10.11, *)) {
+        if (!_useMetal) {
+            [self setUseMetal:useMetal dataSource:_metalGlue];
+            [self showMetalAndStopDrawingTextView];
+            _view.metalView.enableSetNeedsDisplay = YES;
+            [self updateMetalDriver];
+            _useMetal = YES;
+            _textview.hidden = YES;
+        }
+        return;
+
         if (useMetal == _useMetal) {
             return;
         }
@@ -9308,6 +9320,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11) {
+    return;
+
     assert(_useMetal);
     _metalTemporarilyDisabled++;
     DLog(@"temporarilyDisableMetal. Count is now %@", @(_metalTemporarilyDisabled));
@@ -9317,6 +9331,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)drawFrameAndRemoveTemporarilyDisablementOfMetal NS_AVAILABLE_MAC(10_11) {
+    return;
     if (!_useMetal) {
         DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal returning earily because useMetal is off");
         return;
