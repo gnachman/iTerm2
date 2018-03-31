@@ -93,7 +93,8 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatGpuScheduleWait,
     iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion,
 
-    iTermMetalFrameDataStatCount
+    iTermMetalFrameDataStatCount,
+    iTermMetalFrameDataStatNA = -1
 };
 
 extern void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle);
@@ -163,6 +164,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (__kindof iTermMetalRendererTransientState *)transientStateForRenderer:(NSObject *)renderer;
 - (void)setTransientState:(iTermMetalRendererTransientState *)tState forRenderer:(NSObject *)renderer;
 - (MTLRenderPassDescriptor *)newRenderPassDescriptorWithLabel:(NSString *)label;
+
+- (void)updateRenderEncoderWithRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
+                                               stat:(iTermMetalFrameDataStat)stat
+                                              label:(NSString *)label;
 
 @end
 

@@ -140,6 +140,11 @@ static NSInteger gNextFrameDataNumber;
 }
 
 - (void)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^)(void))block {
+    if (stat == iTermMetalFrameDataStatNA) {
+        block();
+        return;
+    }
+    
     self.status = [NSString stringWithUTF8String:_stats[stat].name];
     iTermPreciseTimerStatsStartTimer(&_stats[stat]);
     block();
@@ -194,6 +199,37 @@ static NSInteger gNextFrameDataNumber;
         instance = [[iTermTexturePool alloc] init];
     });
     return instance;
+}
+
+- (void)updateRenderEncoderWithRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
+                                               stat:(iTermMetalFrameDataStat)stat
+                                              label:(NSString *)label {
+    [self measureTimeForStat:stat ofBlock:^{
+        self.renderEncoder = [self newRenderEncoderWithDescriptor:renderPassDescriptor
+                                                    commandBuffer:self.commandBuffer
+                                                     viewportSize:self.viewportSize
+                                                            label:label];
+    }];
+}
+
+- (id<MTLRenderCommandEncoder>)newRenderEncoderWithDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
+                                                commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                                 viewportSize:(vector_uint2)viewportSize
+                                                        label:(NSString *)label {
+    id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+    renderEncoder.label = label;
+
+    // Set the region of the drawable to which we'll draw.
+    MTLViewport viewport = {
+        -(double)viewportSize.x,
+        0.0,
+        viewportSize.x * 2,
+        viewportSize.y * 2,
+        -1.0,
+        1.0
+    };
+    [renderEncoder setViewport:viewport];
+    return renderEncoder;
 }
 
 - (MTLRenderPassDescriptor *)newRenderPassDescriptorWithLabel:(NSString *)label {

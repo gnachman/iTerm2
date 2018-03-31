@@ -61,11 +61,11 @@ NS_ASSUME_NONNULL_BEGIN
     _tiled = tiled;
 }
 
-- (void)drawWithFrameData:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+- (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
+           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundImageRendererTransientState *tState = transientState;
     [_metalRenderer drawWithTransientState:tState
-                             renderEncoder:renderEncoder
+                             renderEncoder:frameData.renderEncoder
                           numberOfVertices:6
                               numberOfPIUs:0
                              vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
