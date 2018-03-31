@@ -112,7 +112,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     // Right
     const CGFloat gridWidth = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.cellSize.width;
-    const CGFloat rightGutterWidth = tState.configuration.viewportSize.x - margins.right - gridWidth;
+    const CGFloat rightGutterWidth = tState.configuration.viewportSize.x - margins.left - margins.right - gridWidth;
     v = [self appendVerticesForQuad:CGRectMake(size.width - margins.right - rightGutterWidth,
                                                margins.top,
                                                margins.right + rightGutterWidth,
