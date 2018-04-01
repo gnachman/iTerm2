@@ -64,6 +64,7 @@ NSString *const kTerminalStateAltSavedCursorKey = @"Alt Saved Cursor";
 NSString *const kTerminalStateAllowColumnModeKey = @"Allow Column Mode";
 NSString *const kTerminalStateColumnModeKey = @"Column Mode";
 NSString *const kTerminalStateDisableSMCUPAndRMCUPKey = @"Disable Alt Screen";
+NSString *const kTerminalStateSoftAlternateScreenModeKey = @"Soft Alternate Screen Mode";
 NSString *const kTerminalStateInCommandKey = @"In Command";
 NSString *const kTerminalStateUnicodeVersionStack = @"Unicode Version Stack";
 NSString *const kTerminalStateURL = @"URL";
@@ -81,6 +82,9 @@ NSString *const kTerminalStateURLParams = @"URL Params";
 @property(nonatomic, assign) BOOL disableSmcupRmcup;
 @property(nonatomic, retain) NSURL *url;
 @property(nonatomic, retain) NSString *urlParams;
+
+// Records whether the remote side thinks we're in alternate screen mode.
+@property(nonatomic, readonly) BOOL softAlternateScreenMode;
 
 // A write-only property, at the moment. TODO: What should this do?
 @property(nonatomic, assign) BOOL strictAnsiMode;
@@ -356,6 +360,7 @@ static const int kMaxScreenRows = 4096;
         [_parser reset];
     }
     [delegate_ terminalShowPrimaryBuffer];
+    _softAlternateScreenMode = NO;
     [delegate_ terminalResetPreservingPrompt:userInitiated];
 }
 
@@ -547,6 +552,7 @@ static const int kMaxScreenRows = 4096;
                         [delegate_ terminalSetCursorY:y];
                     }
                 }
+                _softAlternateScreenMode = mode;
                 break;
 
             case 69:
@@ -612,6 +618,7 @@ static const int kMaxScreenRows = 4096;
                         [self restoreCursor];
                     }
                 }
+                _softAlternateScreenMode = mode;
                 break;
 
             case 2004:
@@ -2494,6 +2501,7 @@ static const int kMaxScreenRows = 4096;
     switch ([command characterAtIndex:0]) {
         case 'A':
             // Sequence marking the start of the command prompt (FTCS_PROMPT_START)
+            _softAlternateScreenMode = NO;  // We can reasonably assume alternate screen mode has ended if there's a prompt. Could be ssh dying, etc.
             [delegate_ terminalPromptDidStart];
             break;
 
@@ -2710,6 +2718,7 @@ static const int kMaxScreenRows = 4096;
            kTerminalStateAllowColumnModeKey: @(self.allowColumnMode),
            kTerminalStateColumnModeKey: @(self.columnMode),
            kTerminalStateDisableSMCUPAndRMCUPKey: @(self.disableSmcupRmcup),
+           kTerminalStateSoftAlternateScreenModeKey: @(_softAlternateScreenMode),
            kTerminalStateInCommandKey: @(inCommand_),
            kTerminalStateUnicodeVersionStack: _unicodeVersionStack,
            kTerminalStateURL: self.url ?: [NSNull null],
@@ -2758,6 +2767,7 @@ static const int kMaxScreenRows = 4096;
     self.allowColumnMode = [dict[kTerminalStateAllowColumnModeKey] boolValue];
     self.columnMode = [dict[kTerminalStateColumnModeKey] boolValue];
     self.disableSmcupRmcup = [dict[kTerminalStateDisableSMCUPAndRMCUPKey] boolValue];
+    _softAlternateScreenMode = [dict[kTerminalStateSoftAlternateScreenModeKey] boolValue];
     inCommand_ = [dict[kTerminalStateInCommandKey] boolValue];
     [_unicodeVersionStack removeAllObjects];
     if (dict[kTerminalStateUnicodeVersionStack]) {
