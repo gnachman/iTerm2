@@ -47,7 +47,7 @@ static const CGFloat iTermScrollAccumulatorRoundUpThreshold = 0.1;
     if (event.hasPreciseScrollingDeltas) {
         return event.scrollingDeltaY / _lineHeight;
     } else {
-        return event.deltaY;
+        return event.scrollingDeltaY;
     }
 }
 
