@@ -31,6 +31,10 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 @property(nonatomic, retain) NSControl *control;
 @property(nonatomic, assign) NSRange range;  // For integer fields, the range of legal values.
 
+// If set to YES, don't process changes until keyboard focus exits the control. Defaults to NO.
+// Only supported on controls of type kPreferenceInfoTypeIntegerTextField.
+@property(nonatomic) BOOL deferUpdate;
+
 // A function that indicates if the control should be enabled. If nil, then the control is always
 // enabled.
 @property(nonatomic, copy) BOOL (^shouldBeEnabled)(void);

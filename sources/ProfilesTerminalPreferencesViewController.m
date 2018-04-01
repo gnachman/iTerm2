@@ -50,7 +50,8 @@
                            key:KEY_SCROLLBACK_LINES
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(0, 10 * 1000 * 1000);
-
+    info.deferUpdate = YES;
+    
     info = [self defineControl:_unlimitedScrollback
                            key:KEY_UNLIMITED_SCROLLBACK
                           type:kPreferenceInfoTypeCheckbox];
