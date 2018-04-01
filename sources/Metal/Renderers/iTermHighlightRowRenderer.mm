@@ -95,8 +95,8 @@ namespace iTerm2 {
 - (void)initializeTransientState:(iTermHighlightRowRendererTransientState *)tState {
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermHighlightRowRendererTransientState *tState = transientState;
     const VT100GridSize gridSize = tState.cellConfiguration.gridSize;
     const CGSize cellSize = tState.cellConfiguration.cellSize;
@@ -114,7 +114,7 @@ namespace iTerm2 {
                                                                withBytes:&color
                                                           checkIfChanged:YES];
         [_cellRenderer drawWithTransientState:tState
-                                renderEncoder:renderEncoder
+                                renderEncoder:frameData.renderEncoder
                              numberOfVertices:6
                                  numberOfPIUs:0
                                 vertexBuffers:@{ @(iTermVertexInputIndexVertices): vertexBuffer }

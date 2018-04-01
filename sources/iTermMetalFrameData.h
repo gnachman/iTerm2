@@ -7,24 +7,12 @@
 
 #import <Foundation/Foundation.h>
 
+#import "iTermMetalConfig.h"
 #import "iTermPreciseTimer.h"
 #import "VT100GridTypes.h"
 
 #import <Metal/Metal.h>
 #import <simd/simd.h>
-
-// Perform most metal activities on a private queue? Relieves the main thread of most drawing
-// work when enabled.
-#define ENABLE_PRIVATE_QUEUE 1
-
-// If enabled, the drawable's -present method is called on the main queue after the GPU work is
-// scheduled. This is horrible and slow but is necessary if you set presentsWithTransaction
-// to YES. That should be avoided at all costs.
-#define ENABLE_SYNCHRONOUS_PRESENTATION 0
-
-// It's not clear to me if dispatching to the main queue is actually necessary, but I'm leaving
-// this here so it's easy to switch back to doing so. It adds a ton of latency when enabled.
-#define ENABLE_DISPATCH_TO_MAIN_QUEUE_FOR_ENQUEUEING_DRAW_CALLS 0
 
 @protocol iTermMetalRenderer;
 
@@ -41,6 +29,7 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatDispatchToPrivateQueue,
     iTermMetalFrameDataStatPqBuildRowData,
     iTermMetalFrameDataStatPqCreateIntermediate,
+    iTermMetalFrameDataStatPqCreateTemporary,
     iTermMetalFrameDataStatPqUpdateRenderers,
     iTermMetalFrameDataStatPqCreateTransientStates,
 
@@ -86,6 +75,8 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatPqEnqueueDrawFullScreenFlash,
     iTermMetalFrameDataStatPqEnqueueDrawCornerCutout,
 
+    iTermMetalFrameDataStatPqEnqueueDrawCreateThirdRenderEncoder,
+    iTermMetalFrameDataStatPqEnqueueCopyToDrawable,
     iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable,
     iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit,
 
@@ -93,7 +84,8 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatGpuScheduleWait,
     iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion,
 
-    iTermMetalFrameDataStatCount
+    iTermMetalFrameDataStatCount,
+    iTermMetalFrameDataStatNA = -1
 };
 
 extern void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle);
@@ -146,6 +138,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // It will have a texture identical to the drawable's texture. Invoke createIntermediateRenderPassDescriptor
 // to create this if it's nil.
 @property (nonatomic, strong) MTLRenderPassDescriptor *intermediateRenderPassDescriptor;
+#if ENABLE_USE_TEMPORARY_TEXTURE
+@property (nonatomic, strong) MTLRenderPassDescriptor *temporaryRenderPassDescriptor;
+#endif
 
 - (instancetype)initWithView:(MTKView *)view NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
@@ -155,6 +150,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block;
 #endif
 - (void)createIntermediateRenderPassDescriptor;
+#if ENABLE_USE_TEMPORARY_TEXTURE
+- (void)createTemporaryRenderPassDescriptor;
+#endif
 - (void)dispatchToQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block;
 - (void)enqueueDrawCallsWithBlock:(void (^)(void))block;
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats
@@ -162,7 +160,12 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (__kindof iTermMetalRendererTransientState *)transientStateForRenderer:(NSObject *)renderer;
 - (void)setTransientState:(iTermMetalRendererTransientState *)tState forRenderer:(NSObject *)renderer;
-- (MTLRenderPassDescriptor *)newRenderPassDescriptorWithLabel:(NSString *)label;
+- (MTLRenderPassDescriptor *)newRenderPassDescriptorWithLabel:(NSString *)label
+                                                         fast:(BOOL)fast;
+
+- (void)updateRenderEncoderWithRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
+                                               stat:(iTermMetalFrameDataStat)stat
+                                              label:(NSString *)label;
 
 @end
 

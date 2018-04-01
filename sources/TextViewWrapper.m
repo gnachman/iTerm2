@@ -38,12 +38,9 @@
 
 - (void)drawRect:(NSRect)rect {
     if (_useMetal) {
-        if (_needsClear) {
-            [[NSColor clearColor] set];
-            NSRectFill(rect);
-            _needsClear = NO;
+        if (!_needsClear) {
+            return;
         }
-        return;
     }
     [child_.delegate textViewDrawBackgroundImageInView:self
                                               viewRect:rect

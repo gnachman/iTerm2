@@ -334,8 +334,8 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     return piuBuffer;
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermTextRendererTransientState *tState = transientState;
     tState.vertexBuffer.label = @"Text vertex buffer";
     tState.offsetBuffer.label = @"Offset";
@@ -402,7 +402,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
 
         [tState measureTimeForStat:iTermTextRendererStatDraw ofBlock:^{
             [_cellRenderer drawWithTransientState:tState
-                                    renderEncoder:renderEncoder
+                                    renderEncoder:frameData.renderEncoder
                                  numberOfVertices:6
                                      numberOfPIUs:instances
                                     vertexBuffers:@{ @(iTermVertexInputIndexVertices): vertexBuffer,
@@ -412,7 +412,32 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
                                                      @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
                                          textures:textures];
         }];
-    }];
+    }
+                 copyBlock:^{
+#if ENABLE_PRETTY_ASCII_OVERLAP
+                     [frameData.renderEncoder endEncoding];
+
+                     id<MTLBlitCommandEncoder> blitter = [frameData.commandBuffer blitCommandEncoder];
+                     blitter.label = [NSString stringWithFormat:@"Temporary>Intermediate"];
+                     id<MTLTexture> source = frameData.temporaryRenderPassDescriptor.colorAttachments[0].texture;
+                     id<MTLTexture> dest = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
+                     [blitter copyFromTexture:source
+                                  sourceSlice:0
+                                  sourceLevel:0
+                                 sourceOrigin:MTLOriginMake(0, 0, 0)
+                                   sourceSize:MTLSizeMake(source.width, source.height, 1)
+                                    toTexture:dest
+                             destinationSlice:0
+                             destinationLevel:0
+                            destinationOrigin:MTLOriginMake(0, 0, 0)];
+                     [blitter endEncoding];
+
+                     [frameData updateRenderEncoderWithRenderPassDescriptor:frameData.temporaryRenderPassDescriptor
+                                                                       stat:iTermMetalFrameDataStatNA
+                                                                      label:@"Draw more text"];
+#endif
+                 }
+     ];
 }
 
 - (void)setASCIICellSize:(CGSize)cellSize

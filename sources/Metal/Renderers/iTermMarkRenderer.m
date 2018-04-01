@@ -132,8 +132,8 @@
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:_markSize poolContext:tState.poolContext];
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermMarkRendererTransientState *tState = transientState;
     if (tState.marks.count == 0) {
         return;
@@ -171,7 +171,7 @@
     memcpy(tState.pius.contents, data.bytes, data.length);
 
     [_cellRenderer drawWithTransientState:tState
-                            renderEncoder:renderEncoder
+                            renderEncoder:frameData.renderEncoder
                          numberOfVertices:6
                              numberOfPIUs:tState.marks.count
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,

@@ -103,8 +103,8 @@
     _lastCellSize = CGSizeZero;
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermCursorGuideRendererTransientState *tState = transientState;
     if (tState.row < 0) {
         // Cursor is offscreen. We set it to -1 to signal this.
@@ -113,7 +113,7 @@
 
     [tState initializeVerticesWithPool:_cellRenderer.verticesPool];
     [_cellRenderer drawWithTransientState:tState
-                            renderEncoder:renderEncoder
+                            renderEncoder:frameData.renderEncoder
                          numberOfVertices:6
                              numberOfPIUs:0
                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }

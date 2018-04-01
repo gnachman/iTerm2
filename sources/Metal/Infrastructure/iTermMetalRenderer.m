@@ -257,8 +257,8 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     return tState;
 }
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(NSDictionary *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(NSDictionary *)transientState {
     [self doesNotRecognizeSelector:_cmd];
 }
 
@@ -348,6 +348,26 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     return [self textureFromImage:image context:context pool:nil];
 }
 
+- (void)convertWidth:(NSUInteger)width
+              height:(NSUInteger)height
+             toWidth:(NSUInteger *)widthOut
+              height:(NSUInteger *)heightOut
+        notExceeding:(NSInteger)maxSize {
+    if (height > width) {
+        [self convertWidth:height height:width toWidth:heightOut height:widthOut notExceeding:maxSize];
+        return;
+    }
+    // At this point, width >= height
+    if (width > maxSize) {
+        *widthOut = maxSize;
+        const CGFloat aspectRatio = (CGFloat)height / (CGFloat)width;
+        *heightOut = maxSize * aspectRatio;
+    } else {
+        *widthOut = width;
+        *heightOut = height;
+    }
+}
+
 - (id<MTLTexture>)textureFromImage:(NSImage *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
     if (!image) {
         return nil;
@@ -357,9 +377,12 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     CGImageRef imageRef = [image CGImageForProposedRect:&imageRect context:NULL hints:nil];
 
     // Create a suitable bitmap context for extracting the bits of the image
-    NSUInteger width = CGImageGetWidth(imageRef);
-    NSUInteger height = CGImageGetHeight(imageRef);
-
+    NSUInteger width, height;
+    [self convertWidth:CGImageGetWidth(imageRef)
+                height:CGImageGetHeight(imageRef)
+               toWidth:&width
+                height:&height
+          notExceeding:4096];
     if (width == 0 || height == 0) {
         return nil;
     }

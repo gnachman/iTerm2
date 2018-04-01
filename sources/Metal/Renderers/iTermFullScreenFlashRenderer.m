@@ -51,8 +51,8 @@
     return iTermMetalFrameDataStatPqCreateFullScreenFlashTS;
 }
 
-- (void)drawWithRenderEncoder:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+- (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
+           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermFullScreenFlashRendererTransientState *tState = transientState;
     if (tState.color.w > 0) {
         CGSize size = CGSizeMake(transientState.configuration.viewportSize.x,
@@ -63,7 +63,7 @@
                                                                      withBytes:&color
                                                                 checkIfChanged:YES];
         [_metalRenderer drawWithTransientState:tState
-                                 renderEncoder:renderEncoder
+                                 renderEncoder:frameData.renderEncoder
                               numberOfVertices:6
                                   numberOfPIUs:0
                                  vertexBuffers:@{ @(iTermVertexInputIndexVertices): vertexBuffer }

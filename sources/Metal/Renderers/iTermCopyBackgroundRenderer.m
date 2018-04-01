@@ -36,11 +36,11 @@
     return iTermMetalFrameDataStatPqCreateCopyBackgroundTS;
 }
 
-- (void)drawWithRenderEncoder:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+- (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
+           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermCopyRendererTransientState *tState = transientState;
     [_metalRenderer drawWithTransientState:tState
-                             renderEncoder:renderEncoder
+                             renderEncoder:frameData.renderEncoder
                           numberOfVertices:6
                               numberOfPIUs:0
                              vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
@@ -98,3 +98,16 @@
 }
 
 @end
+
+#if ENABLE_USE_TEMPORARY_TEXTURE
+@implementation iTermCopyToDrawableRendererTransientState
+@end
+
+@implementation iTermCopyToDrawableRenderer
+
+- (Class)transientStateClass {
+    return [iTermCopyToDrawableRendererTransientState class];
+}
+
+@end
+#endif

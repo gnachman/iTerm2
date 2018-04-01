@@ -91,8 +91,8 @@
 }
 
 
-- (void)drawWithRenderEncoder:(id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundColorRendererTransientState *tState = transientState;
     [tState enumerateSegments:^(const iTermBackgroundColorPIU *pius, size_t numberOfInstances) {
         id<MTLBuffer> piuBuffer = [_piuPool requestBufferFromContext:tState.poolContext
@@ -100,7 +100,7 @@
                                                                bytes:pius];
         piuBuffer.label = @"PIUs";
         [_cellRenderer drawWithTransientState:tState
-                                renderEncoder:renderEncoder
+                                renderEncoder:frameData.renderEncoder
                              numberOfVertices:6
                                  numberOfPIUs:numberOfInstances
                                 vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,

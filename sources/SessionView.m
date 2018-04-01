@@ -195,6 +195,7 @@ static NSDate* lastResizeDate_;
     // Allocate a new metal view
     _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                          device:MTLCreateSystemDefaultDevice()];
+    _metalView.layer.opaque = YES;
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
 
@@ -209,7 +210,7 @@ static NSDate* lastResizeDate_;
 
     // Start the metal driver going. It will receive delegate calls from MTKView that kick off
     // frame rendering.
-    _driver = [[iTermMetalDriver alloc] initWithMetalKitView:_metalView];
+    _driver = [[iTermMetalDriver alloc] initWithDevice:_metalView.device];
     _driver.dataSource = dataSource;
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
     _metalView.delegate = _driver;
@@ -307,8 +308,12 @@ static NSDate* lastResizeDate_;
 
 - (void)reallyUpdateMetalViewFrame {
     [_delegate sessionViewHideMetalViewUntilNextFrame];
-    _metalView.frame = _scrollview.contentView.frame;
+    _metalView.frame = [self frameByInsettingTopAndBottomForMetal:_scrollview.contentView.frame];
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
+}
+
+- (NSRect)frameByInsettingTopAndBottomForMetal:(NSRect)frame {
+    return NSInsetRect(frame, 0, [iTermAdvancedSettingsModel terminalVMargin]);
 }
 
 - (void)setDelegate:(id<iTermSessionViewDelegate>)delegate {
@@ -544,6 +549,32 @@ static NSDate* lastResizeDate_;
     // than the session view.
     // TODO(metal): This will be a performance issue. Use another view with a layer and background color.
     [super drawRect:dirtyRect];
+    if (_useMetal) {
+        [self metalDrawRect];
+    } else {
+        [self nonmetalDrawRect:dirtyRect];
+    }
+}
+
+// When metal is enabled this draws the slice of background above and below it.
+// The Metal view is inset by 5 points so windows can still have rounded corners.
+- (void)metalDrawRect {
+    NSRect scrollViewFrame = _scrollview.frame;
+    NSRect bottomSlice = NSMakeRect(0,
+                                    NSMinY(scrollViewFrame),
+                                    scrollViewFrame.size.width,
+                                    _metalView.frame.origin.y - NSMinY(scrollViewFrame));
+    NSRect topSlice = NSMakeRect(0,
+                                 NSMaxY(_metalView.frame),
+                                 scrollViewFrame.size.width,
+                                 NSMaxY(scrollViewFrame) - NSMaxY(_metalView.frame));
+
+    [self drawBackgroundInRect:topSlice];
+    [self drawBackgroundInRect:bottomSlice];
+    return;
+}
+
+- (void)nonmetalDrawRect:(NSRect)dirtyRect {
     PTYScrollView *scrollView = [self scrollview];
     NSRect svFrame = [scrollView frame];
     if (svFrame.size.width < self.frame.size.width) {

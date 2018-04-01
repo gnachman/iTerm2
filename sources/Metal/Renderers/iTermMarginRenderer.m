@@ -40,15 +40,15 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermMetalFrameDataStatPqCreateMarginTS;
 }
 
-- (void)drawWithRenderEncoder:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
-               transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+- (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
+           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermMarginRendererTransientState *tState = transientState;
     vector_float4 color = tState.color;
     id<MTLBuffer> colorBuffer = [_colorPool requestBufferFromContext:tState.poolContext
                                                            withBytes:&color
                                                       checkIfChanged:YES];
     [_cellRenderer drawWithTransientState:tState
-                             renderEncoder:renderEncoder
+                             renderEncoder:frameData.renderEncoder
                           numberOfVertices:6 * 4
                               numberOfPIUs:0
                              vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
@@ -112,7 +112,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     // Right
     const CGFloat gridWidth = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.cellSize.width;
-    const CGFloat rightGutterWidth = tState.configuration.viewportSize.x - margins.right - gridWidth;
+    const CGFloat rightGutterWidth = tState.configuration.viewportSize.x - margins.left - margins.right - gridWidth;
     v = [self appendVerticesForQuad:CGRectMake(size.width - margins.right - rightGutterWidth,
                                                margins.top,
                                                margins.right + rightGutterWidth,

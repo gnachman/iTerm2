@@ -4785,6 +4785,7 @@ ITERM_WEAKLY_REFERENCEABLE
         //
         // Perhaps some day transparency and ligatures will be supported.
         return ([iTermAdvancedSettingsModel useMetal] &&
+                [iTermAdvancedSettingsModel terminalVMargin] >= 5 &&  // Smaller margins break rounded window corners
                 machineSupportsMetal &&
                 _textview.transparencyAlpha == 1 &&
                 ![self ligaturesEnabledInEitherFont] &&
@@ -4863,6 +4864,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)drawMetalFrameSychronouslyAndShowMetalView NS_AVAILABLE_MAC(10_11) {
     DLog(@"Begin synchronous draw for %@", self);
+    [_view setNeedsDisplay:YES];
     BOOL ok = [_view drawFrameSynchronously];
     DLog(@"Finished synchronous draw with ok=%@ for %@", @(ok), self);
     if (!ok) {
@@ -6511,8 +6513,9 @@ ITERM_WEAKLY_REFERENCEABLE
         } else {
             image = _backgroundImage;
         }
-        double dx = image.size.width / _view.frame.size.width;
-        double dy = image.size.height / _view.frame.size.height;
+        const NSRect contentRect = _view.contentRect;
+        double dx = image.size.width / contentRect.size.width;
+        double dy = image.size.height / contentRect.size.height;
 
         NSRect sourceRect = NSMakeRect(localRect.origin.x * dx,
                                        localRect.origin.y * dy,
@@ -9342,7 +9345,9 @@ ITERM_WEAKLY_REFERENCEABLE
         if (!ok) {
             DLog(@"Schedule drawFrameAndRemoveTemporarilyDisablementOfMetal to run after a spin of the mainloop");
             dispatch_async(dispatch_get_main_queue(), ^{
-                [self drawFrameAndRemoveTemporarilyDisablementOfMetal];
+                if (_metalDisabledGeneration == generation) {
+                    [self drawFrameAndRemoveTemporarilyDisablementOfMetal];
+                }
             });
             return;
         }

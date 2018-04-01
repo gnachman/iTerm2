@@ -3478,6 +3478,7 @@
 		A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferHelpers.h; sourceTree = "<group>"; tabWidth = 4; };
 		A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferHelpers.m; sourceTree = "<group>"; tabWidth = 4; };
 		A64203171DCF7DEE0074DC6C /* api.proto */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = api.proto; path = proto/api.proto; sourceTree = SOURCE_ROOT; };
+		A6460F40206F3ED1004CF71F /* iTermMetalConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermMetalConfig.h; path = Metal/Infrastructure/iTermMetalConfig.h; sourceTree = "<group>"; };
 		A6461D871E1B654D00FEDCD6 /* iTermShellPromptTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermShellPromptTrigger.h; sourceTree = "<group>"; };
 		A6461D881E1B654D00FEDCD6 /* iTermShellPromptTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShellPromptTrigger.m; sourceTree = "<group>"; };
 		A647E39718C3504100450FA1 /* VT100Token.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100Token.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -5704,6 +5705,7 @@
 				A6588828201F06ED006F48DB /* iTermTexture.m */,
 				A6232E74202832A900EC0F98 /* iTermData.h */,
 				A6232E75202832A900EC0F98 /* iTermData.m */,
+				A6460F40206F3ED1004CF71F /* iTermMetalConfig.h */,
 			);
 			name = Infrastructure;
 			sourceTree = "<group>";

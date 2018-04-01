@@ -104,9 +104,14 @@ typedef struct {
     iTermCopyModeCursorRenderer *_copyModeCursorRenderer;
     iTermCopyBackgroundRenderer *_copyBackgroundRenderer;
     iTermImageRenderer *_imageRenderer;
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    iTermCopyToDrawableRenderer *_copyToDrawableRenderer;
+#endif
 
     // This one is special because it's debug only
     iTermCopyOffscreenRenderer *_copyOffscreenRenderer;
+
+
 
     // The command Queue from which we'll obtain command buffers
     id<MTLCommandQueue> _commandQueue;
@@ -135,7 +140,7 @@ typedef struct {
     iTermMetalDriverAsyncContext *_context;
 }
 
-- (nullable instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView {
+- (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device {
     self = [super init];
     if (self) {
         static int gNextIdentifier;
@@ -143,28 +148,31 @@ typedef struct {
         _startToStartHistogram = [[iTermHistogram alloc] init];
         _inFlightHistogram = [[iTermHistogram alloc] init];
         _startTime = [NSDate timeIntervalSinceReferenceDate];
-        _marginRenderer = [[iTermMarginRenderer alloc] initWithDevice:mtkView.device];
-        _backgroundImageRenderer = [[iTermBackgroundImageRenderer alloc] initWithDevice:mtkView.device];
-        _textRenderer = [[iTermTextRenderer alloc] initWithDevice:mtkView.device];
-        _backgroundColorRenderer = [[iTermBackgroundColorRenderer alloc] initWithDevice:mtkView.device];
-        _markRenderer = [[iTermMarkRenderer alloc] initWithDevice:mtkView.device];
-        _badgeRenderer = [[iTermBadgeRenderer alloc] initWithDevice:mtkView.device];
-        _flashRenderer = [[iTermFullScreenFlashRenderer alloc] initWithDevice:mtkView.device];
-        _timestampsRenderer = [[iTermTimestampsRenderer alloc] initWithDevice:mtkView.device];
-        _indicatorRenderer = [[iTermIndicatorRenderer alloc] initWithDevice:mtkView.device];
-        _broadcastStripesRenderer = [[iTermBroadcastStripesRenderer alloc] initWithDevice:mtkView.device];
-        _cursorGuideRenderer = [[iTermCursorGuideRenderer alloc] initWithDevice:mtkView.device];
-        _highlightRowRenderer = [[iTermHighlightRowRenderer alloc] initWithDevice:mtkView.device];
-        _imageRenderer = [[iTermImageRenderer alloc] initWithDevice:mtkView.device];
-        _underlineCursorRenderer = [iTermCursorRenderer newUnderlineCursorRendererWithDevice:mtkView.device];
-        _barCursorRenderer = [iTermCursorRenderer newBarCursorRendererWithDevice:mtkView.device];
-        _imeCursorRenderer = [iTermCursorRenderer newIMECursorRendererWithDevice:mtkView.device];
-        _blockCursorRenderer = [iTermCursorRenderer newBlockCursorRendererWithDevice:mtkView.device];
-        _frameCursorRenderer = [iTermCursorRenderer newFrameCursorRendererWithDevice:mtkView.device];
-        _copyModeCursorRenderer = [iTermCursorRenderer newCopyModeCursorRendererWithDevice:mtkView.device];
-        _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:mtkView.device];
+        _marginRenderer = [[iTermMarginRenderer alloc] initWithDevice:device];
+        _backgroundImageRenderer = [[iTermBackgroundImageRenderer alloc] initWithDevice:device];
+        _textRenderer = [[iTermTextRenderer alloc] initWithDevice:device];
+        _backgroundColorRenderer = [[iTermBackgroundColorRenderer alloc] initWithDevice:device];
+        _markRenderer = [[iTermMarkRenderer alloc] initWithDevice:device];
+        _badgeRenderer = [[iTermBadgeRenderer alloc] initWithDevice:device];
+        _flashRenderer = [[iTermFullScreenFlashRenderer alloc] initWithDevice:device];
+        _timestampsRenderer = [[iTermTimestampsRenderer alloc] initWithDevice:device];
+        _indicatorRenderer = [[iTermIndicatorRenderer alloc] initWithDevice:device];
+        _broadcastStripesRenderer = [[iTermBroadcastStripesRenderer alloc] initWithDevice:device];
+        _cursorGuideRenderer = [[iTermCursorGuideRenderer alloc] initWithDevice:device];
+        _highlightRowRenderer = [[iTermHighlightRowRenderer alloc] initWithDevice:device];
+        _imageRenderer = [[iTermImageRenderer alloc] initWithDevice:device];
+        _underlineCursorRenderer = [iTermCursorRenderer newUnderlineCursorRendererWithDevice:device];
+        _barCursorRenderer = [iTermCursorRenderer newBarCursorRendererWithDevice:device];
+        _imeCursorRenderer = [iTermCursorRenderer newIMECursorRendererWithDevice:device];
+        _blockCursorRenderer = [iTermCursorRenderer newBlockCursorRendererWithDevice:device];
+        _frameCursorRenderer = [iTermCursorRenderer newFrameCursorRendererWithDevice:device];
+        _copyModeCursorRenderer = [iTermCursorRenderer newCopyModeCursorRendererWithDevice:device];
+        _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:device];
+#if ENABLE_USE_TEMPORARY_TEXTURE
+        _copyToDrawableRenderer = [[iTermCopyToDrawableRenderer alloc] initWithDevice:device];
+#endif
 
-        _commandQueue = [mtkView.device newCommandQueue];
+        _commandQueue = [device newCommandQueue];
 #if ENABLE_PRIVATE_QUEUE
         _queue = dispatch_queue_create("com.iterm2.metalDriver", NULL);
 #endif
@@ -438,6 +446,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if ([self shouldCreateIntermediateRenderPassDescriptor:frameData]) {
         [frameData createIntermediateRenderPassDescriptor];
     }
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    [frameData createTemporaryRenderPassDescriptor];
+#endif
 
     // Set properties of the renderers for values that tend not to change very often and which
     // are used to create transient states. This must happen before creating transient states
@@ -533,6 +544,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (!_cursorGuideRenderer.rendererDisabled && frameData.perFrameState.cursorGuideEnabled) {
         return YES;
     }
+
+#if ENABLE_PRETTY_ASCII_OVERLAP
+    return YES;
+#endif
+    
     return NO;
 }
 
@@ -634,7 +650,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
     if (frameData.debugInfo) {
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
-            frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"Offscreen debug texture"];
+            frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"Offscreen debug texture"
+                                                                                    fast:NO];
             frameData.debugRealRenderPassDescriptor = view.currentRenderPassDescriptor;
         }];
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
@@ -657,18 +674,21 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                         commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     DLog(@"  enequeueDrawCallsForFrameData");
 
-    frameData.renderEncoder = [self newRenderEncoderFromCommandBuffer:commandBuffer
-                                                            frameData:frameData
-                                                                 pass:frameData.currentPass];
+    NSString *firstLabel;
+    if (frameData.intermediateRenderPassDescriptor) {
+        firstLabel = @"Draw content behind text";
+    } else {
+        firstLabel = @"Draw bg and text";
+    }
+    [self updateRenderEncoderForCurrentPass:frameData
+                                      label:firstLabel];
 
     [self drawContentBehindTextWithFrameData:frameData];
 
     // If we're using an intermediate render pass, copy from it to the view for final steps.
     if (frameData.intermediateRenderPassDescriptor) {
         frameData.currentPass = frameData.currentPass + 1;
-        frameData.renderEncoder = [self newRenderEncoderFromCommandBuffer:commandBuffer
-                                                                frameData:frameData
-                                                                     pass:frameData.currentPass];
+        [self updateRenderEncoderForCurrentPass:frameData label:@"Copy bg and render text"];
         [self drawRenderer:_copyBackgroundRenderer
                  frameData:frameData
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueCopyBackground]];
@@ -703,6 +723,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self drawCellRenderer:_highlightRowRenderer
                  frameData:frameData
                       stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawHighlightRow]];
+
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    // Copy to the drawable
+    frameData.currentPass = 2;
+    [frameData.renderEncoder endEncoding];
+    [self updateRenderEncoderForCurrentPass:frameData label:@"Copy to drawable"];
+    [self drawRenderer:_copyToDrawableRenderer
+             frameData:frameData
+                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueCopyToDrawable]];
+#endif
 
     [self finishDrawingWithCommandBuffer:commandBuffer
                                frameData:frameData];
@@ -758,6 +788,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return;
     }
     _copyBackgroundRenderer.enabled = (frameData.intermediateRenderPassDescriptor != nil);
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    _copyToDrawableRenderer.enabled = YES;
+#endif
 }
 
 - (void)updateBadgeRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -813,6 +846,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     // Copy state
     iTermCopyBackgroundRendererTransientState *copyState = [frameData transientStateForRenderer:_copyBackgroundRenderer];
     copyState.sourceTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
+
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    iTermCopyToDrawableRendererTransientState *dState = [frameData transientStateForRenderer:_copyToDrawableRenderer];
+    dState.sourceTexture = frameData.temporaryRenderPassDescriptor.colorAttachments[0].texture;
+#endif
 }
 
 - (void)populateCursorRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -1095,12 +1133,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return buffer;
 }
 
+// frameData's renderEncoder must have just had -endEncoding called on it at this point.
+// It will be left in the same staate.
 - (void)copyOffscreenTextureToDrawableInFrameData:(iTermMetalFrameData *)frameData {
     // Copy from texture to drawable
-    id<MTLRenderCommandEncoder> renderEncoder = [self newRenderEncoderWithDescriptor:frameData.debugRealRenderPassDescriptor
-                                                                       commandBuffer:frameData.commandBuffer
-                                                                        viewportSize:frameData.viewportSize
-                                                                               label:@"copy to drawable"];
+    [frameData updateRenderEncoderWithRenderPassDescriptor:frameData.debugRealRenderPassDescriptor
+                                                      stat:iTermMetalFrameDataStatNA
+                                                     label:@"copy offscreen to drawable"];
     if (!_copyOffscreenRenderer) {
         _copyOffscreenRenderer = [[iTermCopyOffscreenRenderer alloc] initWithDevice:frameData.device];
         _copyOffscreenRenderer.enabled = YES;
@@ -1111,8 +1150,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                                        commandBuffer:frameData.commandBuffer];
     tState.sourceTexture = frameData.destinationTexture;
     tState.debugInfo = frameData.debugInfo;
-    [_copyOffscreenRenderer drawWithRenderEncoder:renderEncoder transientState:tState];
-    [renderEncoder endEncoding];
+    [_copyOffscreenRenderer drawWithFrameData:frameData transientState:tState];
+    [frameData.renderEncoder endEncoding];
 }
 
 - (void)drawRenderer:(id<iTermMetalRenderer>)renderer
@@ -1130,7 +1169,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     const NSUInteger before = frameData.debugInfo.numberOfRecordedDraws;
     // NOTE: State may be nil if we determined it should be skipped early on.
     if (state != nil && !state.skipRenderer) {
-        [renderer drawWithRenderEncoder:frameData.renderEncoder transientState:state];
+        [renderer drawWithFrameData:frameData transientState:state];
     }
     const NSUInteger numberOfDraws = frameData.debugInfo.numberOfRecordedDraws - before;
 
@@ -1154,7 +1193,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     state.sequenceNumber = frameData.numberOfRenderersDrawn;
     frameData.numberOfRenderersDrawn = frameData.numberOfRenderersDrawn + 1;
     if (state != nil && !state.skipRenderer) {
-        [renderer drawWithRenderEncoder:frameData.renderEncoder transientState:state];
+        [renderer drawWithFrameData:frameData transientState:state];
     }
     const NSUInteger numberOfDraws = frameData.debugInfo.numberOfRecordedDraws - before;
 
@@ -1187,10 +1226,44 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #endif
         }];
 
-        frameData.renderEncoder = [self newRenderEncoderFromCommandBuffer:frameData.commandBuffer
-                                                                frameData:frameData
-                                                                     pass:frameData.currentPass];
+        [self updateRenderEncoderForCurrentPass:frameData
+                                          label:@"Save output for debugging"];
     }
+}
+
+- (void)updateRenderEncoderForCurrentPass:(iTermMetalFrameData *)frameData
+                                    label:(NSString *)label {
+    const int pass = frameData.currentPass;
+
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    assert(pass >= 0 && pass <= 2);
+
+    NSArray<MTLRenderPassDescriptor *> *descriptors =
+        @[ frameData.intermediateRenderPassDescriptor ?: frameData.temporaryRenderPassDescriptor,
+           frameData.temporaryRenderPassDescriptor,
+           frameData.renderPassDescriptor ];
+    iTermMetalFrameDataStat stats[3] = {
+        iTermMetalFrameDataStatPqEnqueueDrawCreateFirstRenderEncoder,
+        iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder,
+        iTermMetalFrameDataStatPqEnqueueDrawCreateThirdRenderEncoder
+    };
+#else
+    // No temporary texture
+    assert(pass >= 0 && pass <= 1);
+
+    NSArray<MTLRenderPassDescriptor *> *descriptors =
+    @[ frameData.intermediateRenderPassDescriptor ?: frameData.renderPassDescriptor,
+       frameData.renderPassDescriptor,
+       frameData.renderPassDescriptor ];
+    iTermMetalFrameDataStat stats[3] = {
+        iTermMetalFrameDataStatPqEnqueueDrawCreateFirstRenderEncoder,
+        iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder,
+    };
+#endif
+
+    [frameData updateRenderEncoderWithRenderPassDescriptor:descriptors[pass]
+                                                      stat:stats[pass]
+                                                     label:label];
 }
 
 - (void)drawCursorBeforeTextWithFrameData:(iTermMetalFrameData *)frameData {
@@ -1392,66 +1465,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 #pragma mark - Drawing Helpers
 
-- (id<MTLRenderCommandEncoder>)newRenderEncoderWithDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
-                                                commandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                                 viewportSize:(vector_uint2)viewportSize
-                                                        label:(NSString *)label {
-    id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-    renderEncoder.label = label;
-
-    // Set the region of the drawable to which we'll draw.
-    MTLViewport viewport = {
-        -(double)viewportSize.x,
-        0.0,
-        viewportSize.x * 2,
-        viewportSize.y * 2,
-        -1.0,
-        1.0
-    };
-    [renderEncoder setViewport:viewport];
-    return renderEncoder;
-}
-
-- (id<MTLRenderCommandEncoder>)newRenderEncoderFromCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                            renderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
-                                                           label:(NSString *)label
-                                                       frameData:(iTermMetalFrameData *)frameData
-                                                            stat:(iTermMetalFrameDataStat)stat {
-    __block id<MTLRenderCommandEncoder> renderEncoder;
-    [frameData measureTimeForStat:stat ofBlock:^{
-        renderEncoder = [self newRenderEncoderWithDescriptor:renderPassDescriptor
-                                               commandBuffer:commandBuffer
-                                                viewportSize:frameData.viewportSize
-                                                       label:label];
-    }];
-
-    return renderEncoder;
-}
-
-- (id<MTLRenderCommandEncoder>)newRenderEncoderFromCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
-                                                       frameData:(iTermMetalFrameData *)frameData
-                                                            pass:(int)pass {
-    assert(pass >= 0 && pass <= 1);
-
-    NSArray<MTLRenderPassDescriptor *> *descriptors =
-        @[ frameData.intermediateRenderPassDescriptor ?: frameData.renderPassDescriptor,
-           frameData.renderPassDescriptor ];
-    NSArray<NSString *> *labels =
-        @[ frameData.intermediateRenderPassDescriptor ? @"Render background to intermediate" : @"Render All Layers of Terminal",
-           @"Copy bg and render text" ];
-    iTermMetalFrameDataStat stats[2] = {
-        iTermMetalFrameDataStatPqEnqueueDrawCreateFirstRenderEncoder,
-        iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder
-    };
-
-    id<MTLRenderCommandEncoder> renderEncoder = [self newRenderEncoderFromCommandBuffer:commandBuffer
-                                                                   renderPassDescriptor:descriptors[pass]
-                                                                                  label:labels[pass]
-                                                                              frameData:frameData
-                                                                                   stat:stats[pass]];
-    return renderEncoder;
-}
-
 - (void)complete:(iTermMetalFrameData *)frameData {
     DLog(@"  Completed");
 
@@ -1505,6 +1518,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
               _badgeRenderer,
               _broadcastStripesRenderer,
               _copyBackgroundRenderer,
+#if ENABLE_USE_TEMPORARY_TEXTURE
+              _copyToDrawableRenderer,
+#endif
               _indicatorRenderer,
               _flashRenderer ];
 }

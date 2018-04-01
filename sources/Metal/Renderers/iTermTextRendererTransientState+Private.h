@@ -25,7 +25,8 @@
                                  id<MTLTexture>,
                                  vector_uint2,
                                  vector_uint2,
-                                 iTermMetalUnderlineDescriptor))block;
+                                 iTermMetalUnderlineDescriptor))block
+             copyBlock:(void (^)(void))copyBlock;
 
 @end
 
