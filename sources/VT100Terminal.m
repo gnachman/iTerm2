@@ -1331,7 +1331,7 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalBackspace];
             break;
         case VT100CC_HT:
-            [delegate_ terminalAppendTabAtCursor];
+            [delegate_ terminalAppendTabAtCursor:!_softAlternateScreenMode];
             break;
         case VT100CC_LF:
         case VT100CC_VT:

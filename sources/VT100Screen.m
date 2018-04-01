@@ -2436,7 +2436,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     currentGrid_.cursorY++;
 }
 
-- (void)terminalAppendTabAtCursor {
+- (void)terminalAppendTabAtCursor:(BOOL)setBackgroundColors {
     int rightMargin;
     if (currentGrid_.useScrollRegionCols) {
         rightMargin = currentGrid_.rightMargin;
@@ -2472,15 +2472,28 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     }
     if (allNulls) {
         int i;
+        screen_char_t filler;
+        InitializeScreenChar(&filler, [terminal_ foregroundColorCode], [terminal_ backgroundColorCode]);
+        filler.code = TAB_FILLER;
         for (i = currentGrid_.cursorX; i < nextTabStop - 1; i++) {
-            aLine[i].image = NO;
-            aLine[i].complexChar = NO;
-            aLine[i].code = TAB_FILLER;
+            if (setBackgroundColors) {
+                aLine[i] = filler;
+            } else {
+                aLine[i].image = NO;
+                aLine[i].complexChar = NO;
+                aLine[i].code = TAB_FILLER;
+            }
         }
 
-        aLine[i].image = NO;
-        aLine[i].complexChar = NO;
-        aLine[i].code = '\t';
+        if (setBackgroundColors) {
+            screen_char_t tab = filler;
+            tab.code = '\t';
+            aLine[i] = tab;
+        } else {
+            aLine[i].image = NO;
+            aLine[i].complexChar = NO;
+            aLine[i].code = '\t';
+        }
     }
     currentGrid_.cursorX = nextTabStop;
 }
