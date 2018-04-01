@@ -1,5 +1,6 @@
 #import "iTermBackgroundImageRenderer.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermShaderTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -91,8 +92,9 @@ NS_ASSUME_NONNULL_BEGIN
     tState.texture = _texture;
     tState.tiled = _tiled;
 
-    const CGSize nativeTextureSize = NSMakeSize(_image.size.width * tState.configuration.scale,
-                                                _image.size.height * tState.configuration.scale);
+    const CGFloat scale = tState.configuration.scale;
+    const CGSize nativeTextureSize = NSMakeSize(_image.size.width * scale,
+                                                _image.size.height * scale);
     const CGSize size = CGSizeMake(tState.configuration.viewportSize.x,
                                    tState.configuration.viewportSize.y);
     CGSize textureSize;
@@ -102,19 +104,17 @@ NS_ASSUME_NONNULL_BEGIN
     } else {
         textureSize = CGSizeMake(1, 1);
     }
-    const iTermVertex vertices[] = {
-        // Pixel Positions             Texture Coordinates
-        { { size.width,           0 }, { textureSize.width,                  0 } },
-        { {          0,           0 }, {                 0,                  0 } },
-        { {          0, size.height }, {                 0, textureSize.height } },
-
-        { { size.width,           0 }, { textureSize.width,                  0 } },
-        { {          0, size.height }, {                 0, textureSize.height } },
-        { { size.width, size.height }, { textureSize.width, textureSize.height } },
-    };
-    tState.vertexBuffer = [_metalRenderer.verticesPool requestBufferFromContext:tState.poolContext
-                                                                      withBytes:vertices
-                                                                 checkIfChanged:YES];
+    const CGFloat topMargin = [iTermAdvancedSettingsModel terminalVMargin] * scale;
+    const CGFloat bottomMargin = topMargin;
+    tState.vertexBuffer = [_metalRenderer newQuadWithFrame:CGRectMake(0,
+                                                                      -topMargin,
+                                                                      size.width,
+                                                                      size.height + topMargin + bottomMargin)
+                                              textureFrame:CGRectMake(0,
+                                                                      0,
+                                                                      textureSize.width,
+                                                                      textureSize.height)
+                                               poolContext:tState.poolContext];
 }
 
 @end
