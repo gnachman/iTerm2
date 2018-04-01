@@ -370,7 +370,7 @@ enum {
     [panel setAllowsMultipleSelection:NO];
 
     if ([panel runModal] == NSModalResponseOK) {
-        [_prefsCustomFolder setStringValue:[panel legacyDirectory]];
+        [_prefsCustomFolder setStringValue:panel.directoryURL.path];
         [self settingChanged:_prefsCustomFolder];
         return YES;
     }  else {

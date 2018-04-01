@@ -280,7 +280,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     // Display the dialog.  If the OK button was pressed,
     // process the files.
-    if ([openPanel legacyRunModalForDirectory:nil file:nil] == NSModalResponseOK) {
+    if ([openPanel runModal] == NSModalResponseOK) {
         // Get an array containing the full filenames of all
         // files and directories selected.
         for (NSString* filename in [openPanel legacyFilenames]) {
@@ -296,8 +296,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     // Set options.
     [savePanel setAllowedFileTypes:[NSArray arrayWithObject:@"itermcolors"]];
 
-    if ([savePanel legacyRunModalForDirectory:nil file:nil] == NSModalResponseOK) {
-        [self exportColorPresetToFile:[savePanel legacyFilename]];
+    if ([savePanel runModal] == NSModalResponseOK) {
+        [self exportColorPresetToFile:savePanel.URL.path];
     }
 }
 

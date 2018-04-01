@@ -7,6 +7,7 @@
 //
 
 #import "FutureMethods.h"
+#import "NSSavePanel+iTerm.h"
 
 static NSString *const kApplicationServicesFramework = @"/System/Library/Frameworks/ApplicationServices.framework";
 
@@ -72,34 +73,6 @@ CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFun
     }
     return filenames;
 }
-@end
-
-@implementation NSSavePanel (Utility)
-- (NSInteger)legacyRunModalForDirectory:(NSString *)path file:(NSString *)name types:(NSArray *)fileTypes {
-    if (path) {
-        self.directoryURL = [NSURL fileURLWithPath:path];
-    }
-    if (name) {
-        self.nameFieldStringValue = name;
-    }
-    if (fileTypes) {
-        self.allowedFileTypes = fileTypes;
-    }
-    return [self runModal];
-}
-
-- (NSInteger)legacyRunModalForDirectory:(NSString *)path file:(NSString *)name {
-    return [self legacyRunModalForDirectory:path file:name types:nil];
-}
-
-- (NSString *)legacyDirectory {
-    return [[self directoryURL] path];
-}
-
-- (NSString *)legacyFilename {
-    return [[self URL] path];
-}
-
 @end
 
 @implementation NSFont(Future)

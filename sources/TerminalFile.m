@@ -9,6 +9,7 @@
 #import "TerminalFile.h"
 #import "FileTransferManager.h"
 #import "FutureMethods.h"
+#import "NSSavePanel+iTerm.h"
 #import "RegexKitLite.h"
 #import <apr-1/apr_base64.h>
 
@@ -28,8 +29,15 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
         if (!name) {
             NSSavePanel *panel = [NSSavePanel savePanel];
 
-            if ([panel legacyRunModalForDirectory:[self downloadsDirectory] file:@"" types:nil]) {
-                _localPath = [[panel legacyFilename] copy];
+            NSString *path = [self downloadsDirectory];
+            if (path) {
+                NSURL *url = [NSURL fileURLWithPath:path];
+                [panel setDirectoryURL:url onceForID:@"TerminalFile"];
+            }
+            panel.nameFieldStringValue = @"";
+
+            if ([panel runModal] == NSModalResponseOK) {
+                _localPath = [panel.URL.path copy];
                 _filename = [[_localPath lastPathComponent] copy];
             }
         } else {

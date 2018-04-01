@@ -35,13 +35,6 @@ CPSReleaseKeyFocusFunction *GetCPSReleaseKeyFocusFunction(void);
 - (NSArray *)legacyFilenames;
 @end
 
-@interface NSSavePanel (Utility)
-- (NSInteger)legacyRunModalForDirectory:(NSString *)path file:(NSString *)name types:(NSArray *)fileTypes;
-- (NSInteger)legacyRunModalForDirectory:(NSString *)path file:(NSString *)name;
-- (NSString *)legacyFilename;
-- (NSString *)legacyDirectory;
-@end
-
 @interface NSFont (Future)
 // Does this font look bad without anti-aliasing? Relies on a private method.
 - (BOOL)futureShouldAntialias;

@@ -47,7 +47,9 @@
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSPasteboard+iTerm.h"
+#import "NSSavePanel+iTerm.h"
 #import "NSResponder+iTerm.h"
+#import "NSSavePanel+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
 #import "NSWindow+PSM.h"
@@ -4481,8 +4483,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSSavePanel* panel = [NSSavePanel savePanel];
 
     NSString *directory = [[NSFileManager defaultManager] downloadsDirectory] ?: NSHomeDirectory();
-
-    panel.directoryURL = [NSURL fileURLWithPath:directory];
+    [panel setDirectoryURL:[NSURL fileURLWithPath:directory] onceForID:@"saveImageAs"];
     panel.nameFieldStringValue = [imageInfo.filename lastPathComponent];
     panel.allowedFileTypes = @[ @"png", @"bmp", @"gif", @"jp2", @"jpeg", @"jpg", @"tiff" ];
     panel.allowsOtherFileTypes = NO;
@@ -4490,7 +4491,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [panel setExtensionHidden:NO];
 
     if ([panel runModal] == NSModalResponseOK) {
-        NSString *filename = [panel legacyFilename];
+        NSString *filename = [[panel URL] path];
         [imageInfo saveToFile:filename];
     }
 }
@@ -5061,23 +5062,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 // Save method
-- (void)saveDocumentAs:(id)sender
-{
-    NSData *aData;
-    NSSavePanel *aSavePanel;
-    NSString *aString;
-
+- (void)saveDocumentAs:(id)sender {
     // We get our content of the textview or selection, if any
-    aString = [self selectedText];
+    NSString *aString = [self selectedText];
     if (!aString) {
         aString = [self content];
     }
 
-    aData = [aString dataUsingEncoding:[_delegate textViewEncoding]
-                  allowLossyConversion:YES];
+    NSData *aData = [aString dataUsingEncoding:[_delegate textViewEncoding]
+                          allowLossyConversion:YES];
 
     // initialize a save panel
-    aSavePanel = [NSSavePanel savePanel];
+    NSSavePanel *aSavePanel = [NSSavePanel savePanel];
     [aSavePanel setAccessoryView:nil];
 
     NSString *path = @"";
@@ -5095,8 +5091,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     formattedDate = [formattedDate stringByReplacingOccurrencesOfString:@":" withString:@"-"];
     NSString *nowStr = [NSString stringWithFormat:@"Log at %@.txt", formattedDate];
 
-    if ([aSavePanel legacyRunModalForDirectory:path file:nowStr] == NSFileHandlingPanelOKButton) {
-        if (![aData writeToFile:[aSavePanel legacyFilename] atomically:YES]) {
+    // Show the save panel. The first time it's done set the path, and from then on the save panel
+    // will remember the last path you used.tmp
+    [aSavePanel setDirectoryURL:[NSURL fileURLWithPath:path] onceForID:@"saveDocumentAs:"];
+    aSavePanel.nameFieldStringValue = nowStr;
+    if ([aSavePanel runModal] == NSFileHandlingPanelOKButton) {
+        if (![aData writeToFile:aSavePanel.URL.path atomically:YES]) {
             NSBeep();
         }
     }
