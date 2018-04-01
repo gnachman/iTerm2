@@ -19,6 +19,7 @@
 + (instancetype)profile:(Profile *)profile blockedByJobs:(NSArray<NSString *> *)jobs;
 + (instancetype)alwaysConfirmQuitPreferenceEnabled;
 + (instancetype)closingMultipleSessionsPreferenceEnabled;
++ (instancetype)tmuxClientsAlwaysPromptBecaseJobsAreNotExposed;
 
 - (void)addReason:(iTermPromptOnCloseReason *)reason;
 

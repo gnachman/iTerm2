@@ -226,6 +226,10 @@
     return [[[iTermPromptOnCloseMessageReason alloc] initWithMessage:@"“Prefs > General > Confirm closing multiple sessions” is enabled." priority:90] autorelease];
 }
 
++ (instancetype)tmuxClientsAlwaysPromptBecaseJobsAreNotExposed {
+    return [[[iTermPromptOnCloseMessageReason alloc] initWithMessage:@"A tmux session is configured to prompt if jobs are running, but tmux doesn’t expose the process tree." priority:80] autorelease];
+}
+
 - (BOOL)hasReason {
     return YES;
 }
