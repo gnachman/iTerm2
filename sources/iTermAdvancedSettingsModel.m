@@ -78,6 +78,14 @@ DEFINE_FLOAT(name, theDefault, theDescription) \
                                                             description:theDescription]; \
 }
 
+// Convenience default value for boolean settings that are on for beta users.
+#if BETA
+#define YES_IF_BETA_ELSE_NO YES
+#else
+#define YES_IF_BETA_ELSE_NO NO
+#endif
+
+
 #pragma mark Tabs
 DEFINE_BOOL(useUnevenTabs, NO, @"Tabs: Uneven tab widths allowed.");
 DEFINE_INT(minTabWidth, 75, @"Tabs: Minimum tab width when using uneven tab widths.");
@@ -169,12 +177,7 @@ DEFINE_BOOL(hideStuckTooltips, YES, @"General: Hide stuck tooltips.\nWhen you hi
 DEFINE_BOOL(openFileOverridesSendText, YES, @"General: Should opening a script with iTerm2 disable the default profile's “Send Text at Start” setting?\nIf you use “open iTerm2 file.command” or drag a script onto iTerm2's icon and this setting is enabled then the script will be executed in lieu of the profile's “Send Text at Start” setting. If this setting is off then both will be executed.");
 DEFINE_BOOL(statusBarIcon, YES, @"General: Add status bar icon when excluded from dock?\nWhen you turn on “Exclude from Dock and Cmd-Tab Application Switcher” a status bar icon is added to the menu bar so you can switch the setting back off. Disable this to remove the status bar icon. Doing so makes it very hard to get to Preferences. You must restart iTerm2 after changing this setting.");
 DEFINE_BOOL(wrapFocus, YES, @"General: Should the directional focus hotkeys wrap");
-#if BETA
-#define ADVANCED_SETTINGS_DISABLE_GROWL YES
-#else
-#define ADVANCED_SETTINGS_DISABLE_GROWL NO
-#endif
-DEFINE_BOOL(disableGrowl, ADVANCED_SETTINGS_DISABLE_GROWL, @"General: Disable Growl notifications.\nSend notifications directly to Notification Center instead of relying on Growl to deliver them. Enables sound alerts on notifications.");
+DEFINE_BOOL(disableGrowl, YES_IF_BETA_ELSE_NO, @"General: Disable Growl notifications.\nSend notifications directly to Notification Center instead of relying on Growl to deliver them. Enables sound alerts on notifications.");
 
 #pragma mark - Drawing
 DEFINE_BOOL(zippyTextDrawing, YES, @"Drawing: Use zippy text drawing algorithm?\nThis draws non-ASCII text more quickly but with lower fidelity. This setting is ignored if ligatures are enabled in Prefs > Profiles > Text.");
@@ -293,31 +296,17 @@ DEFINE_BOOL(killSessionsOnLogout, NO, @"Experimental Features: Kill sessions on 
 DEFINE_BOOL(experimentalKeyHandling, NO, @"General: Improved support for input method editors like AquaSKK.");
 
 DEFINE_BOOL(useExperimentalFontMetrics, NO, @"Experimental Features: Use a more theoretically correct technique to measure line height.\nYou must restart iTerm2 or adjust a session's font size for this change to take effect.");
-#if BETA
-DEFINE_BOOL(supportREPCode, YES, @"Experimental Features: Enable support for REP (Repeat previous character) escape sequence?");
-#else
-DEFINE_BOOL(supportREPCode, NO, @"Experimental Features: Enable support for REP (Repeat previous character) escape sequence?");
-#endif
+DEFINE_BOOL(supportREPCode, YES_IF_BETA_ELSE_NO, @"Experimental Features: Enable support for REP (Repeat previous character) escape sequence?");
 
 DEFINE_BOOL(showBlockBoundaries, NO, @"Debugging: Show line buffer block boundaries (issue 6207)");
-#if BETA
-#define ADVANCED_SETTINGS_MODEL_USE_METAL YES
-#else
-#define ADVANCED_SETTINGS_MODEL_USE_METAL NO
-#endif
-DEFINE_BOOL(useMetal, ADVANCED_SETTINGS_MODEL_USE_METAL, @"Experimental Features: Use Metal GPU-based renderer.\nThis should provide higher performance but it does not support transparent windows or ligatures and may have other missing features.");
+DEFINE_BOOL(useMetal, YES_IF_BETA_ELSE_NO, @"Experimental Features: Use Metal GPU-based renderer.\nThis should provide higher performance but it does not support transparent windows or ligatures and may have other missing features.");
 DEFINE_BOOL(showMetalFPSmeter, NO, @"Experimental Features: Show FPS meter\nRequires Metal renderer");
 DEFINE_BOOL(disableMetalWhenUnplugged, YES, @"Experimental Features: Disable Metal renderer when not connected to power?\nThis helps to conserve energy.");
 
 // TODO: Turn this back on by default in a few days. Let's see if it is responsible for the spike in nightly build crasehs starting with the 3-12-2018 build.
 DEFINE_BOOL(disableMetalWhenIdle, NO, @"Experimental Features: Disable metal renderer when idle to save CPU utilization?\nRequires Metal renderer");
 
-#if BETA
-#define DEFAULT_PROPORTIONAL_SCROLL_WHEEL_REPORTING YES
-#else
-#define DEFAULT_PROPORTIONAL_SCROLL_WHEEL_REPORTING NO
-#endif
-DEFINE_BOOL(proportionalScrollWheelReporting, DEFAULT_PROPORTIONAL_SCROLL_WHEEL_REPORTING, @"Experimental Features: Report multiple mouse scroll events when scrolling quickly?");
+DEFINE_BOOL(proportionalScrollWheelReporting, YES_IF_BETA_ELSE_NO, @"Experimental Features: Report multiple mouse scroll events when scrolling quickly?");
 DEFINE_BOOL(useModernScrollWheelAccumulator, NO, @"Experimental Features: Use modern scroll wheel accumulator.\nThis should support wheel mice better and feel more natural.");
 
 @end
