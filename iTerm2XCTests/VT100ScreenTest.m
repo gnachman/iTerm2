@@ -156,7 +156,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen terminalCarriageReturn];
     int expected = 9;
     while (expected < [screen width]) {
-        [screen terminalAppendTabAtCursor];
+        [screen terminalAppendTabAtCursor:NO];
         XCTAssert([screen cursorX] == expected);
         XCTAssert([screen cursorY] == [screen height]);
         expected += 8;
@@ -2067,9 +2067,9 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert([[screen currentGrid] bottomMargin] == 7);
     XCTAssert(!cursorVisible_);
     [screen terminalCarriageReturn];
-    [screen terminalAppendTabAtCursor];
+    [screen terminalAppendTabAtCursor:NO];
     XCTAssert(screen.cursorX == 5);
-    [screen terminalAppendTabAtCursor];
+    [screen terminalAppendTabAtCursor:NO];
     XCTAssert(screen.cursorX == 9);
 }
 
@@ -2842,7 +2842,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen terminalCarriageReturn];
     int lastX = screen.cursorX;
     while (1) {
-        [screen terminalAppendTabAtCursor];
+        [screen terminalAppendTabAtCursor:NO];
         if (screen.cursorX == lastX) {
             return actual;
         }
@@ -2875,20 +2875,20 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen terminalMoveCursorToX:1 y:1];
     [screen terminalSetUseColumnScrollRegion:YES];
     [screen terminalSetLeftMargin:0 rightMargin:7];
-    [screen terminalAppendTabAtCursor];
+    [screen terminalAppendTabAtCursor:NO];
     XCTAssert(screen.cursorX == 8);
 
     // Tabbing over text doesn't change it
     screen = [self screenWithWidth:20 height:3];
     [screen appendStringAtCursor:@"0123456789"];
     [screen terminalMoveCursorToX:1 y:1];
-    [screen terminalAppendTabAtCursor];
+    [screen terminalAppendTabAtCursor:NO];
     XCTAssert([ScreenCharArrayToStringDebug([screen getLineAtScreenIndex:0],
                                             screen.width) isEqualToString:@"0123456789"]);
 
     // Tabbing over all nils replaces them with tab fillers and a tab character at the end
     screen = [self screenWithWidth:20 height:3];
-    [screen terminalAppendTabAtCursor];
+    [screen terminalAppendTabAtCursor:NO];
     screen_char_t *line = [screen getLineAtScreenIndex:0];
     for (int i = 0; i < 7; i++) {
         XCTAssert(line[i].code == TAB_FILLER);
@@ -2900,24 +2900,24 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [screen terminalMoveCursorToX:3 y:1];
     [screen appendStringAtCursor:@"x"];
     [screen terminalMoveCursorToX:1 y:1];
-    [screen terminalAppendTabAtCursor];
+    [screen terminalAppendTabAtCursor:NO];
     XCTAssert([ScreenCharArrayToStringDebug([screen getLineAtScreenIndex:0],
                                             screen.width) isEqualToString:@"x"]);
     XCTAssert(screen.cursorX == 9);
 
     // No wrap-around
     screen = [self screenWithWidth:20 height:3];
-    [screen terminalAppendTabAtCursor];  // 9
-    [screen terminalAppendTabAtCursor];  // 15
-    [screen terminalAppendTabAtCursor];  // 19
+    [screen terminalAppendTabAtCursor:NO];  // 9
+    [screen terminalAppendTabAtCursor:NO];  // 15
+    [screen terminalAppendTabAtCursor:NO];  // 19
     XCTAssert(screen.cursorX == 20);
     XCTAssert(screen.cursorY == 1);
 
     // Test backtab (it's simple, no wraparound)
     screen = [self screenWithWidth:20 height:3];
     [screen terminalMoveCursorToX:1 y:2];
-    [screen terminalAppendTabAtCursor];
-    [screen terminalAppendTabAtCursor];
+    [screen terminalAppendTabAtCursor:NO];
+    [screen terminalAppendTabAtCursor:NO];
     XCTAssert(screen.cursorX == 17);
     [screen terminalBackTab:1];
     XCTAssert(screen.cursorX == 9);
