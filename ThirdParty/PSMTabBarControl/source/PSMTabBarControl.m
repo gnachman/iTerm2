@@ -1432,11 +1432,6 @@ const NSInteger kPSMStartResizeAnimation = 0;
     return [super beginDraggingSessionWithItems:items event:event source:source];
 }
 
-- (NSDragOperation)draggingSourceOperationMaskForLocal:(BOOL)isLocal
-{
-    return (isLocal ? NSDragOperationMove : NSDragOperationNone);
-}
-
 - (BOOL)ignoreModifierKeysWhileDragging
 {
     return YES;
