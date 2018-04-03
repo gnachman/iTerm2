@@ -233,4 +233,9 @@
 {
 }
 
+- (BOOL)movesWhenDraggedOntoSelf {
+    return NO;
+}
+
+
 @end
