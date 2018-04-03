@@ -7428,7 +7428,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (type == CURSOR_DEFAULT) {
         type = [iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:_profile];
     }
-    [[self textview] setCursorType:type];
+    [self setSessionSpecificProfileValues:@{ KEY_CURSOR_TYPE : @(type) }];
 }
 
 - (void)screenSetCursorBlinking:(BOOL)blink {
