@@ -563,6 +563,9 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     PseudoTerminal *myWindowController = profileHotKey.windowController;
 
     for (NSWindow *window in [NSApp orderedWindows]) {
+        if (!window.isVisible) {
+            continue;
+        }
         NSWindowController *windowController = [window windowController];
         if ([windowController isKindOfClass:[PseudoTerminal class]]) {
             PseudoTerminal *term = (PseudoTerminal *)windowController;
