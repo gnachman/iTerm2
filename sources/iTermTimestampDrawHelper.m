@@ -68,9 +68,9 @@ const CGFloat iTermTimestampGradientWidth = 20;
 
 - (void)drawInContext:(NSGraphicsContext *)context frame:(NSRect)frame {
     [_rows enumerateObjectsUsingBlock:^(iTermTimestampRow * _Nonnull row, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSRect stringFrame = [self frameForStringGivenWidth:_maximumWidth line:row.line maxX:NSMaxX(frame)];
+        NSRect stringFrame = [self frameForStringGivenWidth:self->_maximumWidth line:row.line maxX:NSMaxX(frame)];
         [self drawBackgroundInFrame:[self backgroundFrameForTextFrame:stringFrame]
-                            bgColor:_bgColor
+                            bgColor:self->_bgColor
                             context:context];
         [self drawString:row.string row:idx frame:stringFrame];
     }];

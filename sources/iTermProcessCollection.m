@@ -112,7 +112,7 @@
 
 - (void)commit {
     [_processes enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull processID, iTermProcessInfo * _Nonnull info, BOOL * _Nonnull stop) {
-        info.parent = _processes[@(info.parentProcessID)];
+        info.parent = self->_processes[@(info.parentProcessID)];
         [info.parent.children addObject:info];
     }];
 }

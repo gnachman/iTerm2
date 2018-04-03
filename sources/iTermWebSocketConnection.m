@@ -129,7 +129,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         while (weakSelf) {
-            NSMutableData *data = [_connection read];
+            NSMutableData *data = [self->_connection read];
             if (!data) {
                 return;
             }

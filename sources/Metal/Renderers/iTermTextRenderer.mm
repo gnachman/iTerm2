@@ -367,7 +367,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         }];
 
         NSDictionary *textures = @{ @(iTermTextureIndexPrimary): texture,
-                                    @(iTermTextureIndexSubpixelModels): _models };
+                                    @(iTermTextureIndexSubpixelModels): self->_models };
         if (tState.cellConfiguration.usingIntermediatePass || tState.disableIndividualColorModels) {
             textures = [textures dictionaryBySettingObject:tState.backgroundTexture forKey:@(iTermTextureIndexBackground)];
         }
@@ -389,9 +389,9 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
                 !memcmp(&textureDimensions, &previousTextureDimensions, sizeof(textureDimensions))) {
                 textureDimensionsBuffer = previousTextureDimensionsBuffer;
             } else {
-                textureDimensionsBuffer = [_dimensionsPool requestBufferFromContext:tState.poolContext
-                                                                          withBytes:&textureDimensions
-                                                                     checkIfChanged:YES];
+                textureDimensionsBuffer = [self->_dimensionsPool requestBufferFromContext:tState.poolContext
+                                                                                withBytes:&textureDimensions
+                                                                           checkIfChanged:YES];
                 textureDimensionsBuffer.label = @"Texture dimensions";
                 previousTextureDimensionsBuffer = textureDimensionsBuffer;
                 std::memcpy((void *)&previousTextureDimensions,
@@ -401,16 +401,16 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         }];
 
         [tState measureTimeForStat:iTermTextRendererStatDraw ofBlock:^{
-            [_cellRenderer drawWithTransientState:tState
-                                    renderEncoder:frameData.renderEncoder
-                                 numberOfVertices:6
-                                     numberOfPIUs:instances
-                                    vertexBuffers:@{ @(iTermVertexInputIndexVertices): vertexBuffer,
-                                                     @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
-                                                     @(iTermVertexInputIndexOffset): tState.offsetBuffer }
-                                  fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): subpixelModelsBuffer,
-                                                     @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
-                                         textures:textures];
+            [self->_cellRenderer drawWithTransientState:tState
+                                          renderEncoder:frameData.renderEncoder
+                                       numberOfVertices:6
+                                           numberOfPIUs:instances
+                                          vertexBuffers:@{ @(iTermVertexInputIndexVertices): vertexBuffer,
+                                                           @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
+                                                           @(iTermVertexInputIndexOffset): tState.offsetBuffer }
+                                        fragmentBuffers:@{ @(iTermFragmentBufferIndexColorModels): subpixelModelsBuffer,
+                                                           @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer }
+                                               textures:textures];
         }];
     }
                  copyBlock:^{

@@ -78,7 +78,7 @@
                                                                       rowHeight:rowHeight
                                                                          retina:self.configuration.scale > 1];
         [_timestamps enumerateObjectsUsingBlock:^(NSDate * _Nonnull date, NSUInteger idx, BOOL * _Nonnull stop) {
-            [_drawHelper setDate:date forLine:idx];
+            [self->_drawHelper setDate:date forLine:idx];
         }];
     }
     const CGFloat visibleWidth = _drawHelper.suggestedWidth;
@@ -95,7 +95,7 @@
         key.width = visibleWidth;
         key.textColor = textColor;
         key.backgroundColor = backgroundColor;
-        key.date = [_drawHelper rowIsRepeat:idx] ? 0 : round(date.timeIntervalSinceReferenceDate);
+        key.date = [self->_drawHelper rowIsRepeat:idx] ? 0 : round(date.timeIntervalSinceReferenceDate);
         block(idx,
               key,
               NSMakeRect(self.configuration.viewportSize.x / self.configuration.scale - visibleWidth,
@@ -172,34 +172,34 @@
     _cache.countLimit = tState.cellConfiguration.gridSize.height * 4;
     const CGFloat scale = tState.configuration.scale;
     [tState enumerateRows:^(int row, iTermTimestampKey *key, NSRect frame) {
-        iTermPooledTexture *pooledTexture = [_cache objectForKey:key];
+        iTermPooledTexture *pooledTexture = [self->_cache objectForKey:key];
         if (!pooledTexture) {
             NSImage *image = [tState imageForRow:row];
             iTermMetalBufferPoolContext *context = tState.poolContext;
-            id<MTLTexture> texture = [_cellRenderer textureFromImage:image
-                                                             context:context
-                                                                pool:_texturePool];
+            id<MTLTexture> texture = [self->_cellRenderer textureFromImage:image
+                                                                   context:context
+                                                                      pool:self->_texturePool];
             assert(texture);
             pooledTexture = [[iTermPooledTexture alloc] initWithTexture:texture
-                                                                   pool:_texturePool];
-            [_cache setObject:pooledTexture forKey:key];
+                                                                   pool:self->_texturePool];
+            [self->_cache setObject:pooledTexture forKey:key];
         }
         [tState addPooledTexture:pooledTexture];
         assert(tState.configuration.viewportSize.x > pooledTexture.texture.width);
-        tState.vertexBuffer = [_cellRenderer newQuadWithFrame:CGRectMake(frame.origin.x * scale,
-                                                                         frame.origin.y * scale,
-                                                                         frame.size.width * scale,
-                                                                         frame.size.height * scale)
-                                                 textureFrame:CGRectMake(0, 0, 1, 1)
-                                                  poolContext:tState.poolContext];
+        tState.vertexBuffer = [self->_cellRenderer newQuadWithFrame:CGRectMake(frame.origin.x * scale,
+                                                                               frame.origin.y * scale,
+                                                                               frame.size.width * scale,
+                                                                               frame.size.height * scale)
+                                                       textureFrame:CGRectMake(0, 0, 1, 1)
+                                                        poolContext:tState.poolContext];
 
-        [_cellRenderer drawWithTransientState:tState
-                                renderEncoder:frameData.renderEncoder
-                             numberOfVertices:6
-                                 numberOfPIUs:0
-                                vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
-                              fragmentBuffers:@{}
-                                     textures:@{ @(iTermTextureIndexPrimary): pooledTexture.texture } ];
+        [self->_cellRenderer drawWithTransientState:tState
+                                      renderEncoder:frameData.renderEncoder
+                                   numberOfVertices:6
+                                       numberOfPIUs:0
+                                      vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
+                                    fragmentBuffers:@{}
+                                           textures:@{ @(iTermTextureIndexPrimary): pooledTexture.texture } ];
     }];
 }
 

@@ -165,8 +165,8 @@ static NSInteger gNextFrameDataNumber;
 
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
     dispatch_async(queue, ^{
-        iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatPrivateQueueTotal]);
-        iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
+        iTermPreciseTimerStatsStartTimer(&self->_stats[iTermMetalFrameDataStatPrivateQueueTotal]);
+        iTermPreciseTimerStatsMeasureAndRecordTimer(&self->_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
         block();
     });
 }
@@ -174,7 +174,7 @@ static NSInteger gNextFrameDataNumber;
 - (void)dispatchToMainQueueForDrawing:(void (^)(void))block {
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
     dispatch_async(dispatch_get_main_queue(), ^{
-        iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
+        iTermPreciseTimerStatsMeasureAndRecordTimer(&self->_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
         block();
     });
 }
@@ -184,7 +184,7 @@ static NSInteger gNextFrameDataNumber;
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion]);
     dispatch_async(queue, ^{
         self.status = @"completion handler on private queue";
-        iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion]);
+        iTermPreciseTimerStatsMeasureAndRecordTimer(&self->_stats[iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion]);
         block();
     });
 }
@@ -274,7 +274,7 @@ static NSInteger gNextFrameDataNumber;
         self.intermediateRenderPassDescriptor = [self newRenderPassDescriptorWithLabel:@"Intermediate Texture"
                                                                                   fast:YES];
 
-        [_debugInfo setIntermediateRenderPassDescriptor:self.intermediateRenderPassDescriptor];
+        [self->_debugInfo setIntermediateRenderPassDescriptor:self.intermediateRenderPassDescriptor];
     }];
 }
 
@@ -286,7 +286,7 @@ static NSInteger gNextFrameDataNumber;
         self.temporaryRenderPassDescriptor = [self newRenderPassDescriptorWithLabel:@"Temporary Texture"
                                                                                fast:YES];
 
-        [_debugInfo setTemporaryRenderPassDescriptor:self.intermediateRenderPassDescriptor];
+        [self->_debugInfo setTemporaryRenderPassDescriptor:self.intermediateRenderPassDescriptor];
     }];
 }
 #endif

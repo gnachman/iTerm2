@@ -213,25 +213,25 @@ static NSColor *ColorForVector(vector_float4 v) {
              missingImages:(NSSet<NSString *> *)missingImages
             animatedLines:(NSSet<NSNumber *> *)animatedLines {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [_missingImages unionSet:missingImages];
-        [_missingImages minusSet:foundImages];
+        [self->_missingImages unionSet:missingImages];
+        [self->_missingImages minusSet:foundImages];
         if (animatedLines.count) {
-            _textView.drawingHelper.animated = YES;
+            self->_textView.drawingHelper.animated = YES;
         }
-        int width = _textView.dataSource.width;
-        long long offset = _textView.dataSource.totalScrollbackOverflow;
+        int width = self->_textView.dataSource.width;
+        long long offset = self->_textView.dataSource.totalScrollbackOverflow;
         for (NSNumber *absoluteLine in animatedLines) {
             long long abs = absoluteLine.longLongValue;
             if (abs >= offset) {
                 int row = abs - offset;
-                [_textView.dataSource setRangeOfCharsAnimated:NSMakeRange(0, width) onLine:row];
+                [self->_textView.dataSource setRangeOfCharsAnimated:NSMakeRange(0, width) onLine:row];
             }
         }
-        NSMutableSet<NSString *> *newlyLoaded = [_missingImages mutableCopy];
-        [newlyLoaded intersectSet:_loadedImages];
+        NSMutableSet<NSString *> *newlyLoaded = [self->_missingImages mutableCopy];
+        [newlyLoaded intersectSet:self->_loadedImages];
         if (newlyLoaded.count) {
-            [_textView setNeedsDisplay:YES];
-            [_missingImages minusSet:_loadedImages];
+            [self->_textView setNeedsDisplay:YES];
+            [self->_missingImages minusSet:self->_loadedImages];
         }
     });
 }
@@ -586,7 +586,7 @@ static NSColor *ColorForVector(vector_float4 v) {
                 VT100GridRange gridRange = [obj gridRangeValue];
                 [indexes addIndexesInRange:NSMakeRange(gridRange.location, gridRange.length)];
             }];
-            dict[@(second.intValue - _visibleRange.start.y)] = indexes;
+            dict[@(second.intValue - self->_visibleRange.start.y)] = indexes;
         }
         return dict;
     }];
@@ -602,7 +602,7 @@ static NSColor *ColorForVector(vector_float4 v) {
         indicator.image = image;
         indicator.frame = rect;
         indicator.alpha = 0.5;
-        [_indicators addObject:indicator];
+        [self->_indicators addObject:indicator];
     }];
     [textView.indicatorsHelper enumerateCenterIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect rect, CGFloat alpha) {
         rect.origin.y = frame.size.height - NSMaxY(rect);
@@ -611,7 +611,7 @@ static NSColor *ColorForVector(vector_float4 v) {
         indicator.image = image;
         indicator.frame = rect;
         indicator.alpha = alpha;
-        [_indicators addObject:indicator];
+        [self->_indicators addObject:indicator];
     }];
     [textView.indicatorsHelper didDraw];
     NSColor *color = [[textView indicatorFullScreenFlashColor] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
@@ -1449,9 +1449,9 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return [iTermSmartCursorColor neighborsForCursorAtCoord:_cursorInfo.coord
                                                    gridSize:_gridSize
                                                  lineSource:^screen_char_t *(int y) {
-                                                     const int i = y + _numberOfScrollbackLines - _visibleRange.start.y;
-                                                     if (i >= 0 && i < _lines.count) {
-                                                         return (screen_char_t *)_lines[i].mutableBytes;
+                                                     const int i = y + self->_numberOfScrollbackLines - self->_visibleRange.start.y;
+                                                     if (i >= 0 && i < self->_lines.count) {
+                                                         return (screen_char_t *)self->_lines[i].mutableBytes;
                                                      } else {
                                                          return nil;
                                                      }

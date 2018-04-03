@@ -29,11 +29,11 @@
     __block BOOL eof = NO;
     while (!eof) {
         iTermWebSocketFrame *frame = [iTermWebSocketFrame frameWithDataSource:^unsigned char *(int64_t bytesWanted) {
-            if (_data.length < offset + bytesWanted) {
+            if (self->_data.length < offset + bytesWanted) {
                 eof = YES;
                 return NULL;
             } else {
-                unsigned char *result = _data.mutableBytes + offset;
+                unsigned char *result = self->_data.mutableBytes + offset;
                 offset += bytesWanted;
                 return result;
             }

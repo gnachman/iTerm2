@@ -201,7 +201,7 @@ typedef struct {
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
 #if ENABLE_PRIVATE_QUEUE
     dispatch_async(_queue, ^{
-        iTermMetalFrameDataStatsBundleInitialize(_stats);
+        iTermMetalFrameDataStatsBundleInitialize(self->_stats);
     });
 #else
     iTermMetalFrameDataStatsBundleInitialize(_stats);
@@ -383,10 +383,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     void (^block)(void) = ^{
         NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-        if (_lastFrameTime) {
-            [_fpsMovingAverage addValue:now - _lastFrameTime];
+        if (self->_lastFrameTime) {
+            [self->_fpsMovingAverage addValue:now - self->_lastFrameTime];
         }
-        _lastFrameTime = now;
+        self->_lastFrameTime = now;
 
         [self performPrivateQueueSetupForFrameData:frameData view:view];
     };
@@ -409,7 +409,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         frameData.viewportSize = self.mainThreadState->viewportSize;
 
         // This is the slow part
-        frameData.perFrameState = [_dataSource metalDriverWillBeginDrawingFrame];
+        frameData.perFrameState = [self->_dataSource metalDriverWillBeginDrawingFrame];
 
         frameData.rows = [NSMutableArray array];
         frameData.gridSize = frameData.perFrameState.gridSize;
@@ -460,7 +460,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     // Create each renderer's transient state, which its per-frame object.
     __block id<MTLCommandBuffer> commandBuffer;
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqCreateTransientStates ofBlock:^{
-        commandBuffer = [_commandQueue commandBuffer];
+        commandBuffer = [self->_commandQueue commandBuffer];
         frameData.commandBuffer = commandBuffer;
         [self createTransientStatesWithFrameData:frameData view:view commandBuffer:commandBuffer];
     }];
@@ -811,7 +811,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                               frameData.viewportSize.y / scale);
     [_indicatorRenderer reset];
     [frameData.perFrameState enumerateIndicatorsInFrame:frame block:^(iTermIndicatorDescriptor * _Nonnull indicator) {
-        [_indicatorRenderer addIndicator:indicator context:frameData.framePoolContext];
+        [self->_indicatorRenderer addIndicator:indicator context:frameData.framePoolContext];
     }];
 }
 
@@ -989,7 +989,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
 
-        if (!_textRenderer.rendererDisabled) {
+        if (!self->_textRenderer.rendererDisabled) {
             ITConservativeBetaAssert(rowData.numberOfDrawableGlyphs * sizeof(iTermMetalGlyphKey) <= rowData.keysData.length,
                                      @"Need %@ bytes of glyph keys but have %@",
                                      @(rowData.numberOfDrawableGlyphs * sizeof(iTermMetalGlyphKey)),
@@ -1220,7 +1220,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                 [debugInfo addRenderOutputData:data size:size transientState:state];
             };
 #if ENABLE_PRIVATE_QUEUE
-            dispatch_async(_queue, block);
+            dispatch_async(self->_queue, block);
 #else
             dispatch_async(dispatch_get_main_queue(), block);
 #endif
@@ -1408,7 +1408,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             [frameData class];  // force a reference to frameData to be kept
         } copy];
         [commandBuffer addScheduledHandler:^(id<MTLCommandBuffer> _Nonnull commandBuffer) {
-            dispatch_async(_queue, scheduledBlock);
+            dispatch_async(self->_queue, scheduledBlock);
         }];
 
         __block BOOL completed = NO;
@@ -1418,7 +1418,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
         [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _Nonnull buffer) {
 #if ENABLE_PRIVATE_QUEUE
-            [frameData dispatchToQueue:_queue forCompletion:completedBlock];
+            [frameData dispatchToQueue:self->_queue forCompletion:completedBlock];
 #else
             [frameData dispatchToQueue:dispatch_get_main_queue() forCompletion:block];
 #endif
@@ -1451,8 +1451,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
         __weak __typeof(self) weakSelf = self;
         [weakSelf dispatchAsyncToMainQueue:^{
-            if (!_imageRenderer.rendererDisabled) {
-                iTermImageRendererTransientState *tState = [frameData transientStateForRenderer:_imageRenderer];
+            if (!self->_imageRenderer.rendererDisabled) {
+                iTermImageRendererTransientState *tState = [frameData transientStateForRenderer:self->_imageRenderer];
                 [weakSelf.dataSource metalDidFindImages:tState.missingImageUniqueIdentifiers
                                           missingImages:tState.foundImageUniqueIdentifiers
                                           animatedLines:tState.animatedLines];

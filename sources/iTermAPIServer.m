@@ -177,11 +177,11 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
 - (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection {
     dispatch_async(_queue, ^{
-        iTermWebSocketConnection *webSocketConnection = _connections[connection];
+        iTermWebSocketConnection *webSocketConnection = self->_connections[connection];
         if (webSocketConnection) {
             ITMResponse *response = [[ITMResponse alloc] init];
             response.notification = notification;
-            dispatch_async(_executionQueue, ^{
+            dispatch_async(self->_executionQueue, ^{
                 [self sendResponse:response onConnection:webSocketConnection];
             });
         }
@@ -452,8 +452,8 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 - (void)webSocketConnectionDidTerminate:(iTermWebSocketConnection *)webSocketConnection {
     dispatch_async(_queue, ^{
         DLog(@"Connection terminated");
-        [_connections removeObjectForKey:webSocketConnection.handle];
-        dispatch_async(_executionQueue, ^{
+        [self->_connections removeObjectForKey:webSocketConnection.handle];
+        dispatch_async(self->_executionQueue, ^{
             if (self.transaction.connection == webSocketConnection) {
                 iTermAPITransaction *transaction = self.transaction;
                 self.transaction = nil;
@@ -461,7 +461,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             }
         });
         dispatch_async(dispatch_get_main_queue(), ^{
-            [_delegate apiServerRemoveSubscriptionsForConnection:webSocketConnection.handle];
+            [self->_delegate apiServerRemoveSubscriptionsForConnection:webSocketConnection.handle];
         });
     });
 }

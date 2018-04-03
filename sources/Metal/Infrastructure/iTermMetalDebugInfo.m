@@ -51,13 +51,13 @@
 
 - (void)writeToFolder:(NSURL *)folder {
     [_vertexBuffers enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<MTLBuffer> _Nonnull obj, BOOL * _Nonnull stop) {
-        [_formatter writeVertexBuffer:obj index:key.integerValue toFolder:folder];
+        [self->_formatter writeVertexBuffer:obj index:key.integerValue toFolder:folder];
     }];
     [_fragmentBuffers enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<MTLBuffer>  _Nonnull obj, BOOL * _Nonnull stop) {
-        [_formatter writeFragmentBuffer:obj index:key.integerValue toFolder:folder];
+        [self->_formatter writeFragmentBuffer:obj index:key.integerValue toFolder:folder];
     }];
     [_fragmentTextures enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<MTLTexture>  _Nonnull obj, BOOL * _Nonnull stop) {
-        [_formatter writeFragmentTexture:obj index:key.integerValue toFolder:folder];
+        [self->_formatter writeFragmentTexture:obj index:key.integerValue toFolder:folder];
     }];
     NSString *description = [NSString stringWithFormat:@"vertex count: %@\ninstance count: %@\nrenderPipelineState: %@\n",
                              @(_vertexCount),

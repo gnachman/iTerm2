@@ -145,7 +145,7 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
 
     [_runs enumerateObjectsUsingBlock:^(iTermMetalImageRun * _Nonnull run, NSUInteger idx, BOOL * _Nonnull stop) {
         id key = [self keyForRun:run];
-        id<MTLTexture> texture = _textures[key];
+        id<MTLTexture> texture = self->_textures[key];
         const CGSize textureSize = CGSizeMake(texture.width, texture.height);
         NSSize chunkSize = NSMakeSize(textureSize.width / run.imageInfo.size.width,
                                       textureSize.height / run.imageInfo.size.height);
@@ -154,12 +154,12 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
                                                (chunkSize.width * run.length) / textureSize.width,
                                                (chunkSize.height) / textureSize.height);
 
-        id<MTLBuffer> vertexBuffer = [_cellRenderer newQuadWithFrame:CGRectMake(run.startingCoordOnScreen.x * cellSize.width + offset.x,
-                                                                                bottom + height - (run.startingCoordOnScreen.y * cellSize.height + offset.y + cellSize.height),
-                                                                                run.length * cellSize.width,
-                                                                                cellSize.height)
-                                                        textureFrame:textureFrame
-                                                         poolContext:self.poolContext];
+        id<MTLBuffer> vertexBuffer = [self->_cellRenderer newQuadWithFrame:CGRectMake(run.startingCoordOnScreen.x * cellSize.width + offset.x,
+                                                                                      bottom + height - (run.startingCoordOnScreen.y * cellSize.height + offset.y + cellSize.height),
+                                                                                      run.length * cellSize.width,
+                                                                                      cellSize.height)
+                                                              textureFrame:textureFrame
+                                                               poolContext:self.poolContext];
 
         block(key, vertexBuffer, texture);
     }];
@@ -228,21 +228,21 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
     NSMutableSet<NSNumber *> *texturesToRemove = [_onNotice mutableCopy];
     [tState enumerateDraws:^(id key, id<MTLBuffer> vertexBuffer, id<MTLTexture> texture) {
         [texturesToRemove removeObject:key];
-        [_cellRenderer drawWithTransientState:tState
-                                renderEncoder:frameData.renderEncoder
-                             numberOfVertices:6
-                                 numberOfPIUs:0
-                                vertexBuffers:@{ @(iTermVertexInputIndexVertices): vertexBuffer }
-                              fragmentBuffers:@{}
-                                     textures:@{ @(iTermTextureIndexPrimary): texture } ];
-        [_counts removeObject:key];
-        if ([_counts countForObject:key] == 0) {
-            [_onNotice addObject:key];
+        [self->_cellRenderer drawWithTransientState:tState
+                                      renderEncoder:frameData.renderEncoder
+                                   numberOfVertices:6
+                                       numberOfPIUs:0
+                                      vertexBuffers:@{ @(iTermVertexInputIndexVertices): vertexBuffer }
+                                    fragmentBuffers:@{}
+                                           textures:@{ @(iTermTextureIndexPrimary): texture } ];
+        [self->_counts removeObject:key];
+        if ([self->_counts countForObject:key] == 0) {
+            [self->_onNotice addObject:key];
         }
     }];
     [texturesToRemove enumerateObjectsUsingBlock:^(NSNumber * _Nonnull key, BOOL * _Nonnull stop) {
-        [_textures removeObjectForKey:key];
-        [_onNotice removeObject:key];
+        [self->_textures removeObjectForKey:key];
+        [self->_onNotice removeObject:key];
     }];
 }
 

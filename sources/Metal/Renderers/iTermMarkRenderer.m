@@ -29,7 +29,7 @@
     iTermMarkPIU *pius = (iTermMarkPIU *)data.mutableBytes;
     __block size_t i = 0;
     [_marks enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull rowNumber, NSNumber * _Nonnull styleNumber, BOOL * _Nonnull stop) {
-        MTLOrigin origin = [_marksArrayTexture offsetForIndex:styleNumber.integerValue];
+        MTLOrigin origin = [self->_marksArrayTexture offsetForIndex:styleNumber.integerValue];
         pius[i] = (iTermMarkPIU) {
             .offset = {
                 0,

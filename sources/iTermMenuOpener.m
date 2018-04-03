@@ -56,7 +56,7 @@
     menu.delegate = self;
 
     [self clickThroughElements:elements completion:^{
-        if (_menu.delegate == self) {
+        if (self->_menu.delegate == self) {
             DLog(@"Done clicking through elements.");
             DLog(@"Menu is %@, item is %@", menu, item);
             NSRect frame = [self frameOfElement:(__bridge AXUIElementRef)(elements.lastObject)];
@@ -236,9 +236,9 @@
         [_popover close];
         _popover = nil;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [_window close];
-            _window = nil;
-            _self = nil;
+            [self->_window close];
+            self->_window = nil;
+            self->_self = nil;
         });
     } else {
         [_window close];

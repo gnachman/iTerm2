@@ -174,7 +174,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
         static id<MTLLibrary> defaultLibrary;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            defaultLibrary = [_device newDefaultLibrary];
+            defaultLibrary = [self->_device newDefaultLibrary];
         });
         id <MTLFunction> vertexShader = [defaultLibrary newFunctionWithName:_vertexFunctionName];
         ITDebugAssert(vertexShader);

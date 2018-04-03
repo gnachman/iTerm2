@@ -29,7 +29,7 @@
     [super scrollToPoint:newOrigin];
     if (_useMetal) {
         BOOL performed = [_rateLimit tryPerformRateLimitedBlock:^{
-            [_metalView draw];
+            [self->_metalView draw];
         }];
         if (!performed) {
             [_metalView setNeedsDisplay:YES];
