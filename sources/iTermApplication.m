@@ -344,6 +344,13 @@ unsigned short iTermBogusVirtualKeyCode = 0xffff;
             return;
         }
         DLog(@"NSKeyDown event taking the regular path");
+
+        @try {
+            [super sendEvent:event];
+        } @catch (NSException *exception) {
+            ITBetaAssert(NO, @"Event %@ died with exception %@", event, exception);
+        }
+        return;
     }
     [super sendEvent:event];
 }
