@@ -57,7 +57,7 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalBackspace;
 
 // Move the cursor to the next tab stop, erasing until that point.
-- (void)terminalAppendTabAtCursor;
+- (void)terminalAppendTabAtCursor:(BOOL)setBackgroundColors;
 
 // Move the cursor down, scrolling if necessary.
 - (void)terminalLineFeed;

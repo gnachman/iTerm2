@@ -27,6 +27,7 @@
 
 #import "iTermNotificationController.h"
 
+#import "DebugLogging.h"
 #import "iTermController.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "PreferencePanel.h"
@@ -120,6 +121,8 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
            tabIndex:(int)tabIndex
           viewIndex:(int)viewIndex
              sticky:(BOOL)sticky {
+    DLog(@"Notify title=%@ description=%@ notification=%@ window=%@ tab=%@ view=%@ sticky=%@",
+         title, description, notification, @(windowIndex), @(tabIndex), @(viewIndex), @(sticky));
     NSDictionary *context = nil;
     if (windowIndex >= 0) {
         context = @{ @"win": @(windowIndex),
@@ -135,9 +138,11 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
         notification.informativeText = description;
         notification.userInfo = context;
         notification.soundName = NSUserNotificationDefaultSoundName;
+        DLog(@"Post notification %@", notification);
         [[NSUserNotificationCenter defaultUserNotificationCenter]
             deliverNotification:notification];
     } else {
+        DLog(@"Post to growl");
         [GrowlApplicationBridge notifyWithTitle:title
                                     description:description
                                notificationName:notification
@@ -151,27 +156,34 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
 }
 
 - (void)growlNotificationWasClicked:(id)clickContext {
+    DLog(@"growlNotificationWasClicked");
     [self notificationWasClicked:clickContext];
 }
 
 - (void)notificationWasClicked:(id)clickContext {
+    DLog(@"notificationWasClicked:%@", clickContext);
     int win = [clickContext[@"win"] intValue];
     int tab = [clickContext[@"tab"] intValue];
     int view = [clickContext[@"view"] intValue];
 
     iTermController *controller = [iTermController sharedInstance];
     if (win >= [controller numberOfTerminals]) {
+        DLog(@"bogus window number");
         NSBeep();
         return;
     }
     PseudoTerminal *terminal = [controller terminalAtIndex:win];
+    DLog(@"window controller is %@", terminal);
     PTYTabView *tabView = [terminal tabView];
     if (tab >= [tabView numberOfTabViewItems]) {
+        DLog(@"bogus tab");
         NSBeep();
         return;
     }
     PTYTab *theTab = [[tabView tabViewItemAtIndex:tab] identifier];
+    DLog(@"tab is %@", theTab);
     PTYSession *theSession = [theTab sessionWithViewId:view];
+    DLog(@"Reveal %@", theSession);
     [theSession reveal];
 }
 
@@ -202,6 +214,7 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
 - (void)userNotificationCenter:(NSUserNotificationCenter *)center didActivateNotification:(NSUserNotification *)notification
 {
     [self notificationWasClicked:notification.userInfo];
+    [center removeDeliveredNotification:notification];
 }
 
 @end
