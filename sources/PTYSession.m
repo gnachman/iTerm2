@@ -474,11 +474,9 @@ static const NSUInteger kMaxHosts = 100;
     iTermMetalGlue *_metalGlue NS_AVAILABLE_MAC(10_11);
 
     int _updateCount;
-    // Count of the number of times metal was temporarily disabled. When 0, not disabled.
-    // Gets reset to 0 when useMetal is set to NO.
-    int _metalTemporarilyDisabled;
-    int _metalDisabledGeneration;
     BOOL _metalFrameChangePending;
+    int _nextMetalDisabledToken;
+    NSMutableArray *_metalDisabledTokens;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -560,7 +558,7 @@ static const NSUInteger kMaxHosts = 100;
         _promptSubscriptions = [[NSMutableDictionary alloc] init];
         _locationChangeSubscriptions = [[NSMutableDictionary alloc] init];
         _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
-
+        _metalDisabledTokens = [[NSMutableArray alloc] init];
         _statusChangedAbsLine = -1;
         if (@available(macOS 10.11, *)) {
             _metalGlue = [[iTermMetalGlue alloc] init];
@@ -706,6 +704,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_customEscapeSequenceNotifications release];
 
     [_copyModeState release];
+    [_metalDisabledTokens release];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -4828,8 +4827,7 @@ ITERM_WEAKLY_REFERENCEABLE
             // wrapper.useMetal becomes YES after the first frame is done drawing
         } else {
             _wrapper.useMetal = NO;
-            _metalTemporarilyDisabled = 0;
-            _metalDisabledGeneration++;
+            [_metalDisabledTokens removeAllObjects];
         }
         [_textview setNeedsDisplay:YES];
         [_cadenceController changeCadenceIfNeeded];
@@ -9309,37 +9307,43 @@ ITERM_WEAKLY_REFERENCEABLE
         if (!_useMetal) {
             return;
         }
-        [self temporarilyDisableMetal];
-        [self drawFrameAndRemoveTemporarilyDisablementOfMetal];
+        id token = [self temporarilyDisableMetal];
+        [self drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
     }
 }
 
-- (void)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11) {
+- (id)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11) {
     assert(_useMetal);
-    _metalTemporarilyDisabled++;
-    DLog(@"temporarilyDisableMetal. Count is now %@", @(_metalTemporarilyDisabled));
     _wrapper.useMetal = NO;
     _textview.suppressDrawing = NO;
     _view.metalView.alphaValue = 0;
+    id token = @(_nextMetalDisabledToken++);
+    [_metalDisabledTokens addObject:token];
+    return token;
 }
 
-- (void)drawFrameAndRemoveTemporarilyDisablementOfMetal NS_AVAILABLE_MAC(10_11) {
+- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token NS_AVAILABLE_MAC(10_11) {
     if (!_useMetal) {
         DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal returning earily because useMetal is off");
         return;
     }
-    if (_metalTemporarilyDisabled > 1) {
-        --_metalTemporarilyDisabled;
-        DLog(@"Decrement _metalTemporarilyDisabled to %@ and return", @(_metalTemporarilyDisabled));
+    if ([_metalDisabledTokens containsObject:token]) {
+        DLog(@"Found token %@", token);
+        if (_metalDisabledTokens.count > 1) {
+            [_metalDisabledTokens removeObject:token];
+            DLog(@"There are still other tokens remaining: %@", _metalDisabledTokens);
+            return;
+        }
+    } else {
+        DLog(@"Bogus token %@", token);
         return;
     }
 
     DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal beginning async draw");
-    int generation = _metalDisabledGeneration;
     [_view.driver drawAsynchronouslyInView:_view.metalView completion:^(BOOL ok) {
         DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal drawAsynchronouslyInView finished wtih ok=%@", @(ok));
-        if (_metalDisabledGeneration != generation) {
-            DLog(@"Generation changed. Do nothing after async draw finishes.");
+        if (![_metalDisabledTokens containsObject:token]) {
+            DLog(@"Token %@ is gone, not proceeding.", token);
             return;
         }
         if (!_useMetal) {
@@ -9349,17 +9353,19 @@ ITERM_WEAKLY_REFERENCEABLE
         if (!ok) {
             DLog(@"Schedule drawFrameAndRemoveTemporarilyDisablementOfMetal to run after a spin of the mainloop");
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (_metalDisabledGeneration == generation) {
-                    [self drawFrameAndRemoveTemporarilyDisablementOfMetal];
+                if (![_metalDisabledTokens containsObject:token]) {
+                    DLog(@"[after a spin of the runloop] Token %@ is gone, not proceeding.", token);
+                    return;
                 }
+                [self drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
             });
             return;
         }
 
-        _metalTemporarilyDisabled--;
-        assert(_metalTemporarilyDisabled >= 0);
-        DLog(@"Remove temporarily disablement. Count is now %@", @(_metalTemporarilyDisabled));
-        if (!_metalTemporarilyDisabled && _useMetal) {
+        assert([_metalDisabledTokens containsObject:token]);
+        [_metalDisabledTokens removeObject:token];
+        DLog(@"Remove temporarily disablement. Tokens are now %@", _metalDisabledTokens);
+        if (_metalDisabledTokens.count == 0 && _useMetal) {
             _wrapper.useMetal = YES;
             _textview.suppressDrawing = YES;
             _view.metalView.alphaValue = 1;
@@ -9374,12 +9380,12 @@ ITERM_WEAKLY_REFERENCEABLE
         }
 
         _metalFrameChangePending = YES;
-        [self temporarilyDisableMetal];
+        id token = [self temporarilyDisableMetal];
         [self.textview setNeedsDisplay:YES];
         dispatch_async(dispatch_get_main_queue(), ^{
             _metalFrameChangePending = NO;
             [_view reallyUpdateMetalViewFrame];
-            [self drawFrameAndRemoveTemporarilyDisablementOfMetal];
+            [self drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
         });
     }
 }
