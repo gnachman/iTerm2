@@ -777,6 +777,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         //    open no windows at startup.
         return NO;
     }
+    if (![iTermAdvancedSettingsModel openUntitledFile]) {
+        return NO;
+    }
     if (![[NSApplication sharedApplication] isRunningUnitTests]) {
         [self newWindow:nil];
     }
