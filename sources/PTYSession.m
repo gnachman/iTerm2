@@ -476,7 +476,7 @@ static const NSUInteger kMaxHosts = 100;
     int _updateCount;
     BOOL _metalFrameChangePending;
     int _nextMetalDisabledToken;
-    NSMutableArray *_metalDisabledTokens;
+    NSMutableSet *_metalDisabledTokens;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -558,7 +558,7 @@ static const NSUInteger kMaxHosts = 100;
         _promptSubscriptions = [[NSMutableDictionary alloc] init];
         _locationChangeSubscriptions = [[NSMutableDictionary alloc] init];
         _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
-        _metalDisabledTokens = [[NSMutableArray alloc] init];
+        _metalDisabledTokens = [[NSMutableSet alloc] init];
         _statusChangedAbsLine = -1;
         if (@available(macOS 10.11, *)) {
             _metalGlue = [[iTermMetalGlue alloc] init];
