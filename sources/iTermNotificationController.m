@@ -214,6 +214,7 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
 - (void)userNotificationCenter:(NSUserNotificationCenter *)center didActivateNotification:(NSUserNotification *)notification
 {
     [self notificationWasClicked:notification.userInfo];
+    [center removeDeliveredNotification:notification];
 }
 
 @end
