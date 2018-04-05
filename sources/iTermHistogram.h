@@ -15,5 +15,10 @@
 
 - (void)addValue:(double)value;
 - (void)mergeFrom:(iTermHistogram *)other;
+- (double)valueAtNTile:(double)ntile;
+- (NSString *)sparklineGraphWithPrecision:(int)precision
+                               multiplier:(double)multiplier
+                                    units:(NSString *)units;
+- (void)clear;
 
 @end

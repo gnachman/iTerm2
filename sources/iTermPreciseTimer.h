@@ -23,7 +23,10 @@ typedef struct {
     double m2;
     double min;
     double max;
+    int level;
 } iTermPreciseTimerStats;
+
+@class NSArray;
 
 #define ENABLE_PRECISE_TIMERS 1
 
@@ -38,7 +41,7 @@ NSTimeInterval iTermPreciseTimerMeasure(iTermPreciseTimer *timer);
 
 void iTermPreciseTimerStatsInit(iTermPreciseTimerStats *stats, const char *name);
 void iTermPreciseTimerStatsStartTimer(iTermPreciseTimerStats *stats);
-void iTermPreciseTimerStatsMeasureAndRecordTimer(iTermPreciseTimerStats *stats);
+double iTermPreciseTimerStatsMeasureAndRecordTimer(iTermPreciseTimerStats *stats);
 void iTermPreciseTimerStatsRecordTimer(iTermPreciseTimerStats *stats);
 
 void iTermPreciseTimerStatsMeasureAndAccumulate(iTermPreciseTimerStats *stats);
@@ -52,15 +55,18 @@ void iTermPreciseTimerPeriodicLog(NSString *identifier,
                                   iTermPreciseTimerStats stats[],
                                   size_t count,
                                   NSTimeInterval interval,
-                                  BOOL logToConsole);
+                                  BOOL logToConsole,
+                                  NSArray *histograms);
 void iTermPreciseTimerLogOneEvent(NSString *identifier,
                                   iTermPreciseTimerStats stats[],
                                   size_t count,
-                                  BOOL logToConsole);
+                                  BOOL logToConsole,
+                                  NSArray *histograms);
 void iTermPreciseTimerLog(NSString *identifier,
                           iTermPreciseTimerStats stats[],
                           size_t count,
-                          BOOL logToConsole);
+                          BOOL logToConsole,
+                          NSArray *histograms);
 NSString *iTermPreciseTimerGetSavedLogs(void);
 void iTermPreciseTimerSaveLog(NSString *identifier, NSString *log);
 void iTermPreciseTimerClearLogs(void);
@@ -76,7 +82,7 @@ static inline NSTimeInterval iTermPreciseTimerMeasure(iTermPreciseTimer *timer) 
 
 static inline void iTermPreciseTimerStatsInit(iTermPreciseTimerStats *stats, const char *name) { }
 static inline void iTermPreciseTimerStatsStartTimer(iTermPreciseTimerStats *stats) { }
-static inline void iTermPreciseTimerStatsMeasureAndRecordTimer(iTermPreciseTimerStats *stats) { }
+static inline double iTermPreciseTimerStatsMeasureAndRecordTimer(iTermPreciseTimerStats *stats) { }
 static inline void iTermPreciseTimerStatsMeasureAndAccumulate(iTermPreciseTimerStats *stats) { }
 static inline void iTermPreciseTimerStatsRecordTimer(iTermPreciseTimerStats *stats) { }
 
@@ -90,15 +96,18 @@ static inline void iTermPreciseTimerPeriodicLog(NSString *identifier,
                                                 iTermPreciseTimerStats stats[],
                                                 size_t count,
                                                 NSTimeInterval interval,
-                                                BOOL logToConsole) { }
+                                                BOOL logToConsole,
+                                                NSArray *histograms) { }
 void iTermPreciseTimerPeriodicLog(NSString *identifier,
                                   iTermPreciseTimerStats stats[],
                                   size_t count,
-                                  BOOL logToConsole) { }
+                                  BOOL logToConsole,
+                                  NSArray *histograms) { }
 void iTermPreciseTimerLogOneEvent(NSString *identifier,
                                   iTermPreciseTimerStats stats[],
                                   size_t count,
-                                  BOOL logToConsole) { }
+                                  BOOL logToConsole,
+                                  NSArray *histograms) { }
 NSString *iTermPreciseTimerGetSavedLogs(void) { }
 void iTermPreciseTimerSaveLog(NSString *identifier, NSString *log) { }
 void iTermPreciseTimerClearLogs(void);

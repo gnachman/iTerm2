@@ -18,15 +18,22 @@
 
 typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatEndToEnd,
+
+    iTermMetalFrameDataStatGpu,
+    iTermMetalFrameDataStatGpuScheduleWait,
+    iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion,
+
     iTermMetalFrameDataStatCPU,
     iTermMetalFrameDataStatMainQueueTotal,
-    iTermMetalFrameDataStatPrivateQueueTotal,
 
     iTermMetalFrameDataStatMtExtractFromApp,
     iTermMetalFrameDataStatMtGetCurrentDrawable,
     iTermMetalFrameDataStatMtGetRenderPassDescriptor,
-
     iTermMetalFrameDataStatDispatchToPrivateQueue,
+
+    iTermMetalFrameDataStatPrivateQueueTotal,
+
+
     iTermMetalFrameDataStatPqBuildRowData,
     iTermMetalFrameDataStatPqCreateIntermediate,
     iTermMetalFrameDataStatPqCreateTemporary,
@@ -80,10 +87,6 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable,
     iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit,
 
-    iTermMetalFrameDataStatGpu,
-    iTermMetalFrameDataStatGpuScheduleWait,
-    iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion,
-
     iTermMetalFrameDataStatCount,
     iTermMetalFrameDataStatNA = -1
 };
@@ -92,6 +95,8 @@ extern void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bun
 extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTermPreciseTimerStats *source);
 
 @class iTermCellRenderConfiguration;
+@class iTermHistogram;
+
 NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSourcePerFrameState;
 @class iTermMetalBufferPoolContext;
@@ -116,6 +121,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic, strong, readonly) MTKView *view;
 @property (nonatomic, readonly) NSInteger frameNumber;
 @property (nonatomic, readonly) iTermPreciseTimerStats *stats;
+@property (nonatomic, readonly) NSArray<iTermHistogram *> *statHistograms;
 @property (nonatomic, strong) id<CAMetalDrawable> destinationDrawable;
 @property (nonatomic, strong) id<MTLTexture> destinationTexture;
 @property (nonatomic, strong) MTLRenderPassDescriptor *renderPassDescriptor;
@@ -156,6 +162,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (void)dispatchToQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block;
 - (void)enqueueDrawCallsWithBlock:(void (^)(void))block;
 - (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats
+                           histograms:(NSArray<iTermHistogram *> *)aggregateHistograms
                                 owner:(NSString *)owner;
 
 - (__kindof iTermMetalRendererTransientState *)transientStateForRenderer:(NSObject *)renderer;

@@ -124,6 +124,20 @@ namespace iTerm2 {
     private:
     };
 }
+
+static inline int BucketFromValue(const double &value) {
+    const double logValue = std::log(value + 1) / std::log(M_SQRT2);
+    return std::min(255.0, std::floor(logValue));
+}
+
+static inline double BucketLowerBound(const int &bucket) {
+    return pow(M_SQRT2, bucket) - 1;
+}
+
+static inline double BucketUpperBound(const int &bucket) {
+    return pow(M_SQRT2, bucket + 1) - 1;
+}
+
 @implementation iTermHistogram {
     std::map<int, int> _buckets;
     double _sum;
@@ -145,10 +159,19 @@ namespace iTerm2 {
     delete _sampler;
 }
 
-- (void)addValue:(double)value {
-    double logValue = std::log(value + 1) / std::log(M_SQRT2);
+- (void)clear {
+    _buckets.clear();
+    _sum = 0;
+    _maxCount = 0;
+    _min = 0;
+    _max = 0;
+    _count = 0;
+    delete _sampler;
+    _sampler = new iTerm2::Sampler(100);
+}
 
-    int bucket = std::min(255.0, std::floor(logValue));
+- (void)addValue:(double)value {
+    int bucket = BucketFromValue(value);
     int newCount = _buckets[bucket];
     newCount++;
     _buckets[bucket] = newCount;
@@ -205,13 +228,7 @@ namespace iTerm2 {
     }
     NSMutableString *sparklines = [NSMutableString string];
 
-    if (_buckets.size() > 0) {
-        const int min = _buckets.begin()->first;
-        const int max = _buckets.rbegin()->first;
-        for (int bucket = min; bucket <= max; bucket++) {
-            [sparklines appendString:[self sparkForBucket:bucket]];
-        }
-    }
+    [sparklines appendString:[self sparklineGraphWithPrecision:4 multiplier:1 units:@""]];
 
     return [NSString stringWithFormat:@"%@ %@ %@  Count=%@ Mean=%@ p50=%@ p95=%@ Sum=%@",
             @(_min),
@@ -224,6 +241,35 @@ namespace iTerm2 {
             @(_sum)];
 }
 
+- (double)valueAtNTile:(double)ntile {
+    return _sampler->value_for_percentile(ntile);
+}
+
+- (NSString *)floatingPointFormatWithPrecision:(int)precision units:(NSString *)units {
+    return [NSString stringWithFormat:@"%%0.%df%@", precision, units];
+}
+
+- (NSString *)sparklineGraphWithPrecision:(int)precision multiplier:(double)multiplier units:(NSString *)units {
+    if (_buckets.size() == 0) {
+        return @"";
+    }
+
+    const int firstBucket = _buckets.begin()->first;
+    const int lastBucket = _buckets.rbegin()->first;
+
+    NSString *format = [self floatingPointFormatWithPrecision:precision units:units];
+    NSMutableString *sparklines = [NSMutableString stringWithFormat:format, multiplier * BucketLowerBound(firstBucket)];
+    [sparklines appendString:@" "];
+
+    for (int bucket = firstBucket; bucket <= lastBucket; bucket++) {
+        [sparklines appendString:[self sparkForBucket:bucket]];
+    }
+    [sparklines appendString:@" "];
+    [sparklines appendFormat:format, multiplier * BucketUpperBound(lastBucket)];
+
+    return sparklines;
+}
+
 #pragma mark - Private
 
 - (NSString *)stringForBucket:(int)bucket {
@@ -234,8 +280,8 @@ namespace iTerm2 {
     }
     NSString *percent = [NSString stringWithFormat:@"%0.1f%%", 100.0 * static_cast<double>(_buckets[bucket]) / static_cast<double>(_count)];
     return [NSString stringWithFormat:@"[%12.0f, %12.0f) %8d (%6s) |%@",
-            pow(M_SQRT2, bucket) - 1,
-            pow(M_SQRT2, bucket + 1) - 1,
+            BucketLowerBound(bucket),
+            BucketUpperBound(bucket),
             _buckets[bucket],
             percent.UTF8String,
             stars];

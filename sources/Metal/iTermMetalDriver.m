@@ -121,6 +121,7 @@ typedef struct {
     dispatch_queue_t _queue;
 #endif
     iTermPreciseTimerStats _stats[iTermMetalFrameDataStatCount];
+    NSArray<iTermHistogram *> *_statHistograms;
     int _dropped;
     int _total;
 
@@ -180,6 +181,10 @@ typedef struct {
         _fpsMovingAverage = [[MovingAverage alloc] init];
         _fpsMovingAverage.alpha = 0.75;
         iTermMetalFrameDataStatsBundleInitialize(_stats);
+        _statHistograms = [[NSArray sequenceWithRange:NSMakeRange(0, iTermMetalFrameDataStatCount)] mapWithBlock:^id(NSNumber *anObject) {
+            return [[iTermHistogram alloc] init];
+        }];
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidBecomeActive:)
                                                      name:NSApplicationDidBecomeActiveNotification
@@ -202,6 +207,9 @@ typedef struct {
 #if ENABLE_PRIVATE_QUEUE
     dispatch_async(_queue, ^{
         iTermMetalFrameDataStatsBundleInitialize(self->_stats);
+        [self->_statHistograms enumerateObjectsUsingBlock:^(iTermHistogram * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            [obj clear];
+        }];
     });
 #else
     iTermMetalFrameDataStatsBundleInitialize(_stats);
@@ -692,38 +700,38 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [self updateRenderEncoderForCurrentPass:frameData label:@"Copy bg and render text"];
         [self drawRenderer:_copyBackgroundRenderer
                  frameData:frameData
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueCopyBackground]];
+                      stat:iTermMetalFrameDataStatPqEnqueueCopyBackground];
     }
 
     [self drawCellRenderer:_textRenderer
                  frameData:frameData
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawText]];
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawText];
 
     [self drawCellRenderer:_imageRenderer
                  frameData:frameData
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawImage]];
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawImage];
 
     [self drawCursorAfterTextWithFrameData:frameData];
 
     [self drawCellRenderer:_markRenderer
                  frameData:frameData
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawMarks]];
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawMarks];
 
     [self drawRenderer:_indicatorRenderer
              frameData:frameData
-                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawIndicators]];
+                  stat:iTermMetalFrameDataStatPqEnqueueDrawIndicators];
 
     [self drawCellRenderer:_timestampsRenderer
                  frameData:frameData
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawTimestamps]];
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawTimestamps];
 
     [self drawRenderer:_flashRenderer
              frameData:frameData
-                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawFullScreenFlash]];
+                  stat:iTermMetalFrameDataStatPqEnqueueDrawFullScreenFlash];
 
     [self drawCellRenderer:_highlightRowRenderer
                  frameData:frameData
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawHighlightRow]];
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawHighlightRow];
 
 #if ENABLE_USE_TEMPORARY_TEXTURE
     // Copy to the drawable
@@ -732,7 +740,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self updateRenderEncoderForCurrentPass:frameData label:@"Copy to drawable"];
     [self drawRenderer:_copyToDrawableRenderer
              frameData:frameData
-                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueCopyToDrawable]];
+                  stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
 #endif
 
     [self finishDrawingWithCommandBuffer:commandBuffer
@@ -1163,50 +1171,51 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (void)drawRenderer:(id<iTermMetalRenderer>)renderer
            frameData:(iTermMetalFrameData *)frameData
-                stat:(iTermPreciseTimerStats *)stat {
+                stat:(iTermMetalFrameDataStat)stat {
     if (renderer.rendererDisabled) {
         return;
     }
-    iTermPreciseTimerStatsStartTimer(stat);
-
-    iTermMetalRendererTransientState *state = [frameData transientStateForRenderer:renderer];
-    state.sequenceNumber = frameData.numberOfRenderersDrawn;
-    frameData.numberOfRenderersDrawn = frameData.numberOfRenderersDrawn + 1;
 
     const NSUInteger before = frameData.debugInfo.numberOfRecordedDraws;
-    // NOTE: State may be nil if we determined it should be skipped early on.
-    if (state != nil && !state.skipRenderer) {
-        [renderer drawWithFrameData:frameData transientState:state];
-    }
+    [frameData measureTimeForStat:stat ofBlock:^{
+        iTermMetalRendererTransientState *state = [frameData transientStateForRenderer:renderer];
+        state.sequenceNumber = frameData.numberOfRenderersDrawn;
+        frameData.numberOfRenderersDrawn = frameData.numberOfRenderersDrawn + 1;
+
+        // NOTE: State may be nil if we determined it should be skipped early on.
+        if (state != nil && !state.skipRenderer) {
+            [renderer drawWithFrameData:frameData transientState:state];
+        }
+    }];
+
     const NSUInteger numberOfDraws = frameData.debugInfo.numberOfRecordedDraws - before;
 
-    iTermPreciseTimerStatsMeasureAndRecordTimer(stat);
-
     if (numberOfDraws) {
+        iTermMetalRendererTransientState *state = [frameData transientStateForRenderer:renderer];
         [self saveRenderOutputForDebuggingIfNeeded:frameData tState:state];
     }
 }
 
 - (void)drawCellRenderer:(id<iTermMetalCellRenderer>)renderer
                frameData:(iTermMetalFrameData *)frameData
-                    stat:(iTermPreciseTimerStats *)stat {
+                    stat:(iTermMetalFrameDataStat)stat {
     if (renderer.rendererDisabled) {
         return;
     }
-    iTermPreciseTimerStatsStartTimer(stat);
 
     const NSUInteger before = frameData.debugInfo.numberOfRecordedDraws;
-    iTermMetalCellRendererTransientState *state = [frameData transientStateForRenderer:renderer];
-    state.sequenceNumber = frameData.numberOfRenderersDrawn;
-    frameData.numberOfRenderersDrawn = frameData.numberOfRenderersDrawn + 1;
-    if (state != nil && !state.skipRenderer) {
-        [renderer drawWithFrameData:frameData transientState:state];
-    }
+    [frameData measureTimeForStat:stat ofBlock:^{
+        iTermMetalCellRendererTransientState *state = [frameData transientStateForRenderer:renderer];
+        state.sequenceNumber = frameData.numberOfRenderersDrawn;
+        frameData.numberOfRenderersDrawn = frameData.numberOfRenderersDrawn + 1;
+        if (state != nil && !state.skipRenderer) {
+            [renderer drawWithFrameData:frameData transientState:state];
+        }
+    }];
+
     const NSUInteger numberOfDraws = frameData.debugInfo.numberOfRecordedDraws - before;
-
-    iTermPreciseTimerStatsMeasureAndRecordTimer(stat);
-
     if (numberOfDraws) {
+        iTermMetalCellRendererTransientState *state = [frameData transientStateForRenderer:renderer];
         [self saveRenderOutputForDebuggingIfNeeded:frameData tState:state];
     }
 }
@@ -1282,21 +1291,21 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                 if (frameData.intermediateRenderPassDescriptor) {
                     [self drawCellRenderer:_underlineCursorRenderer
                                  frameData:frameData
-                                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+                                      stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
                 }
                 break;
             case CURSOR_BOX:
                 if (!cursorInfo.frameOnly) {
                     [self drawCellRenderer:_blockCursorRenderer
                                  frameData:frameData
-                                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+                                      stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
                 }
                 break;
             case CURSOR_VERTICAL:
                 if (frameData.intermediateRenderPassDescriptor) {
                     [self drawCellRenderer:_barCursorRenderer
                                  frameData:frameData
-                                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+                                      stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
                 }
                 break;
             case CURSOR_DEFAULT:
@@ -1311,28 +1320,28 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (cursorInfo.copyMode) {
         [self drawCellRenderer:_copyModeCursorRenderer
                      frameData:frameData
-                          stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
     } else if (cursorInfo.cursorVisible) {
         switch (cursorInfo.type) {
             case CURSOR_UNDERLINE:
                 if (!frameData.intermediateRenderPassDescriptor) {
                     [self drawCellRenderer:_underlineCursorRenderer
                                  frameData:frameData
-                                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+                                      stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
                 }
                 break;
             case CURSOR_BOX:
                 if (cursorInfo.frameOnly) {
                     [self drawCellRenderer:_frameCursorRenderer
                                  frameData:frameData
-                                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+                                      stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
                 }
                 break;
             case CURSOR_VERTICAL:
                 if (!frameData.intermediateRenderPassDescriptor) {
                     [self drawCellRenderer:_barCursorRenderer
                                  frameData:frameData
-                                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+                                      stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
                 }
                 break;
             case CURSOR_DEFAULT:
@@ -1342,34 +1351,34 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (frameData.perFrameState.imeInfo) {
         [self drawCellRenderer:_imeCursorRenderer
                      frameData:frameData
-                          stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursor]];
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
     }
 }
 
 - (void)drawContentBehindTextWithFrameData:(iTermMetalFrameData *)frameData {
     [self drawRenderer:_backgroundImageRenderer
              frameData:frameData
-                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawBackgroundImage]];
+                  stat:iTermMetalFrameDataStatPqEnqueueDrawBackgroundImage];
 
     [self drawCellRenderer:_marginRenderer
                  frameData:frameData
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawMargin]];
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawMargin];
 
      [self drawCellRenderer:_backgroundColorRenderer
                  frameData:frameData
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawBackgroundColor]];
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawBackgroundColor];
 
     [self drawRenderer:_badgeRenderer
              frameData:frameData
-                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueBadge]];
+                  stat:iTermMetalFrameDataStatPqEnqueueBadge];
 
     [self drawRenderer:_broadcastStripesRenderer
              frameData:frameData
-                  stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueBroadcastStripes]];
+                  stat:iTermMetalFrameDataStatPqEnqueueBroadcastStripes];
 
     [self drawCellRenderer:_cursorGuideRenderer
                  frameData:frameData
-                      stat:&frameData.stats[iTermMetalFrameDataStatPqEnqueueDrawCursorGuide]];
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawCursorGuide];
 
     [self drawCursorBeforeTextWithFrameData:frameData];
 
@@ -1410,8 +1419,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         iTermPreciseTimerStatsStartTimer(&frameData.stats[iTermMetalFrameDataStatGpuScheduleWait]);
 
         iTermPreciseTimerStats *scheduleWaitStat = &frameData.stats[iTermMetalFrameDataStatGpuScheduleWait];
+        iTermHistogram *scheduleWaitHist = frameData.statHistograms[iTermMetalFrameDataStatGpuScheduleWait];
         void (^scheduledBlock)(void) = [^{
-            iTermPreciseTimerStatsMeasureAndRecordTimer(scheduleWaitStat);
+            const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(scheduleWaitStat);
+            [scheduleWaitHist addValue:duration * 1000];
             [frameData class];  // force a reference to frameData to be kept
         } copy];
         [commandBuffer addScheduledHandler:^(id<MTLCommandBuffer> _Nonnull commandBuffer) {
@@ -1482,7 +1493,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 
     DLog(@"  Recording final stats");
-    [frameData didCompleteWithAggregateStats:_stats owner:_identifier];
+    [frameData didCompleteWithAggregateStats:_stats
+                                  histograms:_statHistograms
+                                       owner:_identifier];
 
     @synchronized(self) {
         _framesInFlight--;

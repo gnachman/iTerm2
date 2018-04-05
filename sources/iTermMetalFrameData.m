@@ -14,6 +14,7 @@
 #import "iTermMetalRenderer.h"
 #import "iTermTexture.h"
 #import "iTermTexturePool.h"
+#import "NSArray+iTerm.h"
 
 #import <MetalKit/MetalKit.h>
 
@@ -24,69 +25,70 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
 
     const char *names[iTermMetalFrameDataStatCount] = {
         "endToEnd",
-        "cpu",
-        "mainQueue",
-        "privateQueue",
-
-        "mt.ExtractFromApp<",
-        "mt.GetDrawable<",
-        "mt.GetRenderPassD<",
-        "dispatchToPQ<",
-        "BuildRowData<",
-        "BuildIntermed<",
-        "BuildTemp<",
-        "UpdateRenderers<",
-        "CreateTransient<",
-
-        "badgeTS<<",
-        "backgroundImageTS<<",
-        "backgroundColorTS<<",
-        "cursorGuideTS<<",
-        "highlightRow<<",
-        "imageTS<<",
-        "bcastStripesTS<<",
-        "copyBackgroundTS<<",
-        "markTS<<",
-        "cursorTS<<",
-        "marginTS<<",
-        "textTS<<",
-        "indicatorsTS<<",
-        "timestampsTS<<",
-        "flashTS<<",
-        "cornerTS<<",
-
-        "PopulateTransient<",
-        "dispatchToMain<",
-        "EnqueueDrawCalls<",
-        "Create1stRE<<",
-        "DrawMargin<<",
-        "DrawBgImage<<",
-        "DrawBgColor<<",
-        "DrawStripes<<",
-        "DrawBadge<<",
-        "DrawCursor<<",
-        "DrawMarks<<",
-        "DrawCrGuide<<",
-        "DrawHighlite<<",
-        "DrawImage<<",
-
-        "EndEncodingInt<<",
-        "Create2ndRE<<",
-        "enqueueCopyBg<<",
-        "enqueueDrawText<<",
-        "DrawIndicators<<",
-        "DrawTimestamps<<",
-        "DrawFlash<<",
-        "DrawCorners<<",
-
-        "Create3rdRE<<",
-        "enqueueCopyToDr<<",
-        "EndEncodingDrwbl<<",
-        "PresentCommit<<",
 
         "gpu<",
         "scheduleWait<<",
-        "dispatchToPQ2<",
+        "dispatchToPQ2<<",
+
+        "cpu<",
+
+        "mainQueue<<",
+        "ExtractFromApp<<<",
+        "GetDrawable<<<",
+        "GetRenderPassD<<<",
+        "dispatchToPQ<<<",
+
+        "privateQueue<<",
+        "BuildRowData<<<",
+        "BuildIntermed<<<",
+        "BuildTemp<<<",
+        "UpdateRenderers<<<",
+
+        "CreateTransient<<<",
+        "badge<<<<",
+        "backgroundImage<<<<",
+        "backgroundColor<<<<",
+        "cursorGuide<<<<",
+        "highlightRow<<<<",
+        "image<<<<",
+        "bcastStripes<<<<",
+        "copyBackground<<<<",
+        "mark<<<<",
+        "cursor<<<<",
+        "margin<<<<",
+        "text<<<<",
+        "indicators<<<<",
+        "timestamps<<<<",
+        "flash<<<<",
+        "corner<<<<",
+
+        "PopulateTrans<<<",
+        "dispatchToMain<<<",
+
+        "EnqueueDrawCalls<<<",
+        "Create1stRE<<<<",
+        "DrawMargin<<<<",
+        "DrawBgImage<<<<",
+        "DrawBgColor<<<<",
+        "DrawStripes<<<<",
+        "DrawBadge<<<<",
+        "DrawCursor<<<<",
+        "DrawMarks<<<<",
+        "DrawCrGuide<<<<",
+        "DrawHighlite<<<<",
+        "DrawImage<<<<",
+        "EndEncodingInt<<<<",
+        "Create2ndRE<<<<",
+        "enqueueCopyBg<<<<",
+        "enqueueDrawText<<<<",
+        "DrawIndicators<<<<",
+        "DrawTimestamps<<<<",
+        "DrawFlash<<<<",
+        "DrawCorners<<<<",
+        "Create3rdRE<<<<",
+        "enqueueCopyToDr<<<<",
+        "EndEncDrawable<<<<",
+        "PresentCommit<<<<",
     };
 
     for (int i = 0; i < iTermMetalFrameDataStatCount; i++) {
@@ -117,7 +119,9 @@ static NSInteger gNextFrameDataNumber;
         _framePoolContext = [[iTermMetalBufferPoolContext alloc] init];
         _transientStates = [NSMutableDictionary dictionary];
         iTermMetalFrameDataStatsBundleInitialize(_stats);
-
+        _statHistograms = [[NSArray sequenceWithRange:NSMakeRange(0, iTermMetalFrameDataStatCount)] mapWithBlock:^id(NSNumber *anObject) {
+            return [[iTermHistogram alloc] init];
+        }];
         iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);
         iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatCPU]);
         iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatMainQueueTotal]);
@@ -151,22 +155,27 @@ static NSInteger gNextFrameDataNumber;
     self.status = [NSString stringWithUTF8String:_stats[stat].name];
     iTermPreciseTimerStatsStartTimer(&_stats[stat]);
     block();
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[stat]);
+    const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[stat]);
+    [_statHistograms[stat] addValue:duration * 1000];
 }
 
 - (void)extractStateFromAppInBlock:(void (^)(void))block {
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatMtExtractFromApp]);
     block();
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatMtExtractFromApp]);
+    const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatMtExtractFromApp]);
+    [_statHistograms[iTermMetalFrameDataStatMtExtractFromApp] addValue:duration * 1000];
 }
 
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block {
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatMainQueueTotal]);
+    const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatMainQueueTotal]);
+    [_statHistograms[iTermMetalFrameDataStatMainQueueTotal] addValue:duration * 1000];
 
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
     dispatch_async(queue, ^{
         iTermPreciseTimerStatsStartTimer(&self->_stats[iTermMetalFrameDataStatPrivateQueueTotal]);
-        iTermPreciseTimerStatsMeasureAndRecordTimer(&self->_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
+        const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&self->_stats[iTermMetalFrameDataStatDispatchToPrivateQueue]);
+        [self->_statHistograms[iTermMetalFrameDataStatPrivateQueueTotal] addValue:duration * 1000];
+
         block();
     });
 }
@@ -174,7 +183,9 @@ static NSInteger gNextFrameDataNumber;
 - (void)dispatchToMainQueueForDrawing:(void (^)(void))block {
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
     dispatch_async(dispatch_get_main_queue(), ^{
-        iTermPreciseTimerStatsMeasureAndRecordTimer(&self->_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
+        const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&self->_stats[iTermMetalFrameDataStatDispatchToMainQueue]);
+        [self->_statHistograms[iTermMetalFrameDataStatDispatchToMainQueue] addValue:duration * 1000];
+
         block();
     });
 }
@@ -184,14 +195,20 @@ static NSInteger gNextFrameDataNumber;
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion]);
     dispatch_async(queue, ^{
         self.status = @"completion handler on private queue";
-        iTermPreciseTimerStatsMeasureAndRecordTimer(&self->_stats[iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion]);
+        const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&self->_stats[iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion]);
+        [self->_statHistograms[iTermMetalFrameDataStatDispatchToPrivateQueueForCompletion] addValue:duration * 1000];
         block();
     });
 }
 
 - (void)willHandOffToGPU {
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatCPU]);
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatPrivateQueueTotal]);
+    double duration;
+    duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatCPU]);
+    [_statHistograms[iTermMetalFrameDataStatCPU] addValue:duration * 1000];
+
+    duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatPrivateQueueTotal]);
+    [_statHistograms[iTermMetalFrameDataStatPrivateQueueTotal] addValue:duration * 1000];
+
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatGpu]);
 }
 
@@ -291,13 +308,20 @@ static NSInteger gNextFrameDataNumber;
 }
 #endif
 
-- (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats owner:(NSString *)owner {
+- (void)didCompleteWithAggregateStats:(iTermPreciseTimerStats *)aggregateStats
+                           histograms:(NSArray<iTermHistogram *> *)aggregateHistograms
+                                owner:(NSString *)owner {
     self.status = @"complete";
     if (self.intermediateRenderPassDescriptor) {
         [[self sharedTexturePool] returnTexture:self.intermediateRenderPassDescriptor.colorAttachments[0].texture];
     }
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatGpu]);
-    iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);
+    double duration;
+
+    duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatGpu]);
+    [_statHistograms[iTermMetalFrameDataStatGpu] addValue:duration * 1000];
+
+    duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatEndToEnd]);
+    [_statHistograms[iTermMetalFrameDataStatEndToEnd] addValue:duration * 1000];
 
 #if ENABLE_PER_FRAME_METAL_STATS
     NSLog(@"Stats for %@", self);
@@ -329,8 +353,9 @@ static NSInteger gNextFrameDataNumber;
     iTermPreciseTimerStats temp[iTermMetalFrameDataStatCount];
     for (int i = 0; i < iTermMetalFrameDataStatCount; i++) {
         temp[i] = aggregateStats[i];
+        [aggregateHistograms[i] mergeFrom:_statHistograms[i]];
     }
-    iTermPreciseTimerPeriodicLog([NSString stringWithFormat:@"%@: Metal Frame Data", owner], temp, iTermMetalFrameDataStatCount, 1, YES);
+    iTermPreciseTimerPeriodicLog([NSString stringWithFormat:@"%@: Metal Frame Data", owner], temp, iTermMetalFrameDataStatCount, 1, YES, aggregateHistograms);
 }
 
 - (__kindof iTermMetalRendererTransientState *)transientStateForRenderer:(NSObject *)renderer {
