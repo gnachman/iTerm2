@@ -67,6 +67,8 @@ enum {
 }
 
 + (instancetype)mouseCursorOfType:(iTermMouseCursorType)cursorType {
+    return [NSCursor arrowCursor];
+    
     static NSMutableDictionary *cursors;
     @synchronized([iTermMouseCursor class]) {
         if (!cursors) {
