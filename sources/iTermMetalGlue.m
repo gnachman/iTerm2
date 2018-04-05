@@ -605,14 +605,15 @@ static NSColor *ColorForVector(vector_float4 v) {
 
 - (void)loadIndicatorsFromTextView:(PTYTextView *)textView {
     _indicators = [NSMutableArray array];
-    NSRect frame = NSMakeRect(0, 0, textView.visibleRect.size.width, textView.visibleRect.size.height);
+    const CGFloat vmargin = [iTermAdvancedSettingsModel terminalVMargin];
+    NSRect frame = NSMakeRect(0, vmargin, textView.visibleRect.size.width, textView.visibleRect.size.height);
     [textView.indicatorsHelper enumerateTopRightIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect rect) {
         rect.origin.y = frame.size.height - NSMaxY(rect);
         iTermIndicatorDescriptor *indicator = [[iTermIndicatorDescriptor alloc] init];
         indicator.identifier = identifier;
         indicator.image = image;
         indicator.frame = rect;
-        indicator.alpha = 0.5;
+        indicator.alpha = 0.75;
         [self->_indicators addObject:indicator];
     }];
     [textView.indicatorsHelper enumerateCenterIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect rect, CGFloat alpha) {

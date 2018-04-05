@@ -8,6 +8,7 @@
 
 #import "iTermIndicatorsHelper.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 
 static NSDictionary *gIndicatorImages;
 
@@ -123,7 +124,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 
 - (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect))block {
     NSArray *sequentialIdentifiers = [iTermIndicatorsHelper sequentiaIndicatorlIdentifiers];
-    static const CGFloat kIndicatorTopMargin = 4;
+    const CGFloat vmargin = [iTermAdvancedSettingsModel terminalVMargin];
+    const CGFloat kIndicatorTopMargin = MAX(5, vmargin);
     NSPoint point = NSMakePoint(frame.origin.x + frame.size.width,
                                 frame.origin.y + kIndicatorTopMargin);
     for (NSString *identifier in sequentialIdentifiers) {
