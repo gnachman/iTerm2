@@ -622,6 +622,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self populateTimestampsRendererTransientStateWithFrameData:frameData];
     [self populateFlashRendererTransientStateWithFrameData:frameData];
     [self populateImageRendererTransientStateWithFrameData:frameData];
+    [self populateBackgroundImageRendererTransientStateWithFrameData:frameData];
 }
 
 - (id<MTLTexture>)destinationTextureForFrameData:(iTermMetalFrameData *)frameData {
@@ -1107,6 +1108,12 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             [tState addRun:imageRun];
         }];
     }];
+}
+
+- (void)populateBackgroundImageRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    iTermBackgroundImageRendererTransientState *tState =
+        [frameData transientStateForRenderer:_backgroundImageRenderer];
+    tState.edgeInsets = frameData.perFrameState.edgeInsets;
 }
 
 #pragma mark - Draw

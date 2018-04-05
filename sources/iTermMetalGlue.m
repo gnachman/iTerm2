@@ -140,7 +140,8 @@ static NSColor *ColorForVector(vector_float4 v) {
     long long _lastVisibleAbsoluteLineNumber;
     BOOL _cutOutRightCorner;
     BOOL _cutOutLeftCorner;
-        
+    NSEdgeInsets _edgeInsets;
+
     // Row on screen to characters with annotation underline on that row.
     NSDictionary<NSNumber *, NSIndexSet *> *_rowToAnnotationRanges;
     NSArray<iTermHighlightedRow *> *_highlightedRows;
@@ -499,6 +500,12 @@ static NSColor *ColorForVector(vector_float4 v) {
     _backgroundImageBlending = textView.blend;
     _backgroundImageTiled = textView.delegate.backgroundImageTiled;
     _backgroundImage = [textView.delegate textViewBackgroundImage];
+
+    _edgeInsets = textView.delegate.textViewEdgeInsets;
+    _edgeInsets.top *= _scale;
+    _edgeInsets.bottom *= _scale;
+    _edgeInsets.left *= _scale;
+    _edgeInsets.right *= _scale;
 }
 
 - (void)loadUnderlineDescriptorsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper {
@@ -558,6 +565,10 @@ static NSColor *ColorForVector(vector_float4 v) {
 
 - (BOOL)cutOutRightCorner {
     return _cutOutRightCorner;
+}
+
+- (NSEdgeInsets)edgeInsets {
+    return _edgeInsets;
 }
 
 - (void)loadCornerCutoutsFromTextView:(PTYTextView *)textView {

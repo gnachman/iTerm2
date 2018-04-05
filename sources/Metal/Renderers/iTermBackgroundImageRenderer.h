@@ -1,9 +1,10 @@
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 #import "iTermMetalRenderer.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBackgroundImageRendererTransientState : iTermMetalRendererTransientState
+@property (nonatomic) NSEdgeInsets edgeInsets;
 @end
 
 @interface iTermBackgroundImageRenderer : NSObject<iTermMetalRenderer>

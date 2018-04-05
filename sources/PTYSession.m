@@ -7108,6 +7108,19 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (NSEdgeInsets)textViewEdgeInsets {
+    NSEdgeInsets insets;
+    const NSRect innerFrame = _view.scrollview.frame;
+    const NSSize containerSize = _view.contentRect.size;
+
+    insets.bottom = NSMinY(innerFrame);
+    insets.top = containerSize.height - NSMaxY(innerFrame);
+    insets.left = NSMinX(innerFrame);
+    insets.right = containerSize.width - NSMaxX(innerFrame);
+
+    return insets;
+}
+
 - (void)bury {
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];

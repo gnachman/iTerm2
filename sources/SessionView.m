@@ -308,7 +308,7 @@ static NSDate* lastResizeDate_;
 
 - (void)reallyUpdateMetalViewFrame {
     [_delegate sessionViewHideMetalViewUntilNextFrame];
-    _metalView.frame = [self frameByInsettingTopAndBottomForMetal:_scrollview.contentView.frame];
+    _metalView.frame = [self frameByInsettingTopAndBottomForMetal:_scrollview.frame];
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
 }
 
@@ -549,34 +549,14 @@ static NSDate* lastResizeDate_;
     // than the session view.
     // TODO(metal): This will be a performance issue. Use another view with a layer and background color.
     [super drawRect:dirtyRect];
-    if (_useMetal) {
-        [self metalDrawRect];
+    if (_useMetal && _metalView.alphaValue == 1) {
+        [self drawAroundFrame:_metalView.frame dirtyRect:dirtyRect];
     } else {
-        [self nonmetalDrawRect:dirtyRect];
+        [self drawAroundFrame:self.scrollview.frame dirtyRect:dirtyRect];
     }
 }
 
-// When metal is enabled this draws the slice of background above and below it.
-// The Metal view is inset by 5 points so windows can still have rounded corners.
-- (void)metalDrawRect {
-    NSRect scrollViewFrame = _scrollview.frame;
-    NSRect bottomSlice = NSMakeRect(0,
-                                    NSMinY(scrollViewFrame),
-                                    scrollViewFrame.size.width,
-                                    _metalView.frame.origin.y - NSMinY(scrollViewFrame));
-    NSRect topSlice = NSMakeRect(0,
-                                 NSMaxY(_metalView.frame),
-                                 scrollViewFrame.size.width,
-                                 NSMaxY(scrollViewFrame) - NSMaxY(_metalView.frame));
-
-    [self drawBackgroundInRect:topSlice];
-    [self drawBackgroundInRect:bottomSlice];
-    return;
-}
-
-- (void)nonmetalDrawRect:(NSRect)dirtyRect {
-    PTYScrollView *scrollView = [self scrollview];
-    NSRect svFrame = [scrollView frame];
+- (void)drawAroundFrame:(NSRect)svFrame dirtyRect:(NSRect)dirtyRect {
     if (svFrame.size.width < self.frame.size.width) {
         double widthDiff = self.frame.size.width - svFrame.size.width;
         [self drawBackgroundInRect:NSMakeRect(self.frame.size.width - widthDiff,

@@ -8,6 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermBackgroundImageRendererTransientState ()
 @property (nonatomic, strong) id<MTLTexture> texture;
 @property (nonatomic) BOOL tiled;
+@property (nonatomic) NSSize imageSize;
 @end
 
 @implementation iTermBackgroundImageRendererTransientState
@@ -65,6 +66,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
            transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundImageRendererTransientState *tState = transientState;
+    [self loadVertexBuffer:tState];
     [_metalRenderer drawWithTransientState:tState
                              renderEncoder:frameData.renderEncoder
                           numberOfVertices:6
@@ -91,10 +93,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)initializeTransientState:(iTermBackgroundImageRendererTransientState *)tState {
     tState.texture = _texture;
     tState.tiled = _tiled;
+    tState.imageSize = _image.size;
+}
 
+- (void)loadVertexBuffer:(iTermBackgroundImageRendererTransientState *)tState {
     const CGFloat scale = tState.configuration.scale;
-    const CGSize nativeTextureSize = NSMakeSize(_image.size.width * scale,
-                                                _image.size.height * scale);
+    const CGSize nativeTextureSize = NSMakeSize(tState.imageSize.width * scale,
+                                                tState.imageSize.height * scale);
     const CGSize size = CGSizeMake(tState.configuration.viewportSize.x,
                                    tState.configuration.viewportSize.y);
     CGSize textureSize;
@@ -104,11 +109,14 @@ NS_ASSUME_NONNULL_BEGIN
     } else {
         textureSize = CGSizeMake(1, 1);
     }
-    const CGFloat topMargin = [iTermAdvancedSettingsModel terminalVMargin] * scale;
-    const CGFloat bottomMargin = topMargin;
+    NSEdgeInsets insets = tState.edgeInsets;
+    const CGFloat vmargin = [iTermAdvancedSettingsModel terminalVMargin] * scale;
+    const CGFloat topMargin = insets.bottom + vmargin;
+    const CGFloat bottomMargin = insets.top + vmargin;
+    const CGFloat rightMargin = insets.right;
     tState.vertexBuffer = [_metalRenderer newQuadWithFrame:CGRectMake(0,
                                                                       -topMargin,
-                                                                      size.width,
+                                                                      size.width + rightMargin,
                                                                       size.height + topMargin + bottomMargin)
                                               textureFrame:CGRectMake(0,
                                                                       0,

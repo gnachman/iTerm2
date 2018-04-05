@@ -72,6 +72,8 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 
 @protocol PTYTextViewDelegate <NSObject>
 
+@property (nonatomic, readonly) NSEdgeInsets textViewEdgeInsets;
+
 - (BOOL)xtermMouseReporting;
 - (BOOL)xtermMouseReportingAllowMouseWheel;
 - (BOOL)isPasting;
