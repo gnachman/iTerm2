@@ -9365,6 +9365,10 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         if (!ok) {
             DLog(@"Schedule drawFrameAndRemoveTemporarilyDisablementOfMetal to run after a spin of the mainloop");
+            if (!_delegate) {
+                [self setUseMetal:NO];
+                return;
+            }
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (![_metalDisabledTokens containsObject:token]) {
                     DLog(@"[after a spin of the runloop] Token %@ is gone, not proceeding.", token);
