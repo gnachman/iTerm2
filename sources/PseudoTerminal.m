@@ -921,7 +921,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)windowIsResizing {
-    return liveResize_ || togglingLionFullScreen_ || exitingLionFullscreen_ || zooming_;
+    return togglingFullScreen_ || liveResize_ || togglingLionFullScreen_ || exitingLionFullscreen_ || zooming_;
 }
 
 - (void)hideToolbelt {
@@ -3607,6 +3607,33 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)toggleTraditionalFullScreenMode {
+    if (@available(macOS 10.11, *)) {
+        const BOOL anySessionInSelectedTabUsesMetal = [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *anObject) {
+            return anObject.useMetal && anObject.view.metalView.alphaValue == 1;
+        }];
+        if (anySessionInSelectedTabUsesMetal) {
+            NSArray *sessions = [self.currentTab.sessions copy];
+            NSArray *tokens = [[sessions mapWithBlock:^id(PTYSession *anObject) {
+                return [anObject temporarilyDisableMetal];
+            }] retain];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self reallyToggleTraditionalFullScreenMode];
+                [sessions enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                    id token = tokens[idx];
+                    [obj drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
+                }];
+                [sessions release];
+                [tokens release];
+            });
+            return;
+        }
+    }
+
+    // Pre-10.11 and non-metal code path
+    [self reallyToggleTraditionalFullScreenMode];
+}
+
+- (void)reallyToggleTraditionalFullScreenMode {
     [SessionView windowDidResize];
     PtyLog(@"toggleFullScreenMode called");
     CGFloat savedToolbeltWidth = _contentView.toolbeltWidth;

@@ -736,6 +736,8 @@ typedef enum {
 
 - (void)jumpToLocationWhereCurrentStatusChanged;
 - (void)updateMetalDriver;
+- (id)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11);
+- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token NS_AVAILABLE_MAC(10_11);
 
 #pragma mark - API
 
