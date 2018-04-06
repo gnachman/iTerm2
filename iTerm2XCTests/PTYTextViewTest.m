@@ -611,6 +611,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                            pathForResource:@"DefaultBookmark"
                            ofType:@"plist"];
     NSMutableDictionary* profile = [NSMutableDictionary dictionaryWithContentsOfFile:plistFile];
+    profile[KEY_GUID] = [ProfileModel freshGuid];
     for (NSString *key in profileOverrides) {
         profile[key] = profileOverrides[key];
     }
