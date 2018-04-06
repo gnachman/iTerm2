@@ -303,7 +303,7 @@ static NSInteger gNextFrameDataNumber;
         self.temporaryRenderPassDescriptor = [self newRenderPassDescriptorWithLabel:@"Temporary Texture"
                                                                                fast:YES];
 
-        [self->_debugInfo setTemporaryRenderPassDescriptor:self.intermediateRenderPassDescriptor];
+        [self->_debugInfo setTemporaryRenderPassDescriptor:self.temporaryRenderPassDescriptor];
     }];
 }
 #endif

@@ -1280,6 +1280,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [frameData updateRenderEncoderWithRenderPassDescriptor:descriptors[pass]
                                                       stat:stats[pass]
                                                      label:label];
+    frameData.destinationTexture = [descriptors[pass].colorAttachments[0] texture];
 }
 
 - (void)drawCursorBeforeTextWithFrameData:(iTermMetalFrameData *)frameData {
