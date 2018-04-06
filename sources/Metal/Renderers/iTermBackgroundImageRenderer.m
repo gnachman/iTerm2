@@ -113,10 +113,11 @@ NS_ASSUME_NONNULL_BEGIN
     const CGFloat vmargin = [iTermAdvancedSettingsModel terminalVMargin] * scale;
     const CGFloat topMargin = insets.bottom + vmargin;
     const CGFloat bottomMargin = insets.top + vmargin;
+    const CGFloat leftMargin = insets.left;
     const CGFloat rightMargin = insets.right;
-    tState.vertexBuffer = [_metalRenderer newQuadWithFrame:CGRectMake(0,
+    tState.vertexBuffer = [_metalRenderer newQuadWithFrame:CGRectMake(-leftMargin,
                                                                       -topMargin,
-                                                                      size.width + rightMargin,
+                                                                      size.width + leftMargin + rightMargin,
                                                                       size.height + topMargin + bottomMargin)
                                               textureFrame:CGRectMake(0,
                                                                       0,

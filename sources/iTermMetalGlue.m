@@ -502,6 +502,8 @@ static NSColor *ColorForVector(vector_float4 v) {
     _backgroundImage = [textView.delegate textViewBackgroundImage];
 
     _edgeInsets = textView.delegate.textViewEdgeInsets;
+    _edgeInsets.left++;
+    _edgeInsets.right++;
     _edgeInsets.top *= _scale;
     _edgeInsets.bottom *= _scale;
     _edgeInsets.left *= _scale;
