@@ -1432,8 +1432,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
     return [super beginDraggingSessionWithItems:items event:event source:source];
 }
 
-- (BOOL)ignoreModifierKeysWhileDragging
-{
+- (BOOL)ignoreModifierKeysForDraggingSession:(NSDraggingSession *)session {
     return YES;
 }
 
