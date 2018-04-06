@@ -308,12 +308,12 @@ static NSDate* lastResizeDate_;
 
 - (void)reallyUpdateMetalViewFrame {
     [_delegate sessionViewHideMetalViewUntilNextFrame];
-    _metalView.frame = [self frameByInsettingTopAndBottomForMetal:_scrollview.frame];
+    _metalView.frame = [self frameByInsettingForMetal:_scrollview.frame];
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
 }
 
-- (NSRect)frameByInsettingTopAndBottomForMetal:(NSRect)frame {
-    return NSInsetRect(frame, 0, [iTermAdvancedSettingsModel terminalVMargin]);
+- (NSRect)frameByInsettingForMetal:(NSRect)frame {
+    return NSInsetRect(frame, 1, [iTermAdvancedSettingsModel terminalVMargin]);
 }
 
 - (void)setDelegate:(id<iTermSessionViewDelegate>)delegate {
@@ -557,6 +557,12 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)drawAroundFrame:(NSRect)svFrame dirtyRect:(NSRect)dirtyRect {
+    // left
+    if (svFrame.origin.x > 0) {
+        [self drawBackgroundInRect:NSMakeRect(0, 0, svFrame.origin.x, svFrame.size.height)];
+    }
+
+    // right
     if (svFrame.size.width < self.frame.size.width) {
         double widthDiff = self.frame.size.width - svFrame.size.width;
         [self drawBackgroundInRect:NSMakeRect(self.frame.size.width - widthDiff,
@@ -564,15 +570,17 @@ static NSDate* lastResizeDate_;
                                               widthDiff,
                                               self.frame.size.height)];
     }
+    // bottom
     if (svFrame.origin.y != 0) {
         [self drawBackgroundInRect:NSMakeRect(0, 0, self.frame.size.width, svFrame.origin.y)];
     }
-    CGFloat maxY = svFrame.origin.y + svFrame.size.height;
-    if (maxY < self.frame.size.height) {
+
+    // top
+    if (NSMaxY(svFrame) < self.frame.size.height) {
         [self drawBackgroundInRect:NSMakeRect(dirtyRect.origin.x,
-                                              maxY,
+                                              NSMaxY(svFrame),
                                               dirtyRect.size.width,
-                                              self.frame.size.height - maxY)];
+                                              self.frame.size.height - NSMaxY(svFrame))];
     }
 }
 

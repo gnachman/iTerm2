@@ -100,7 +100,7 @@
 
     CGRect leftMarignRect = CGRectMake(0,
                                        0,
-                                       [iTermAdvancedSettingsModel terminalMargin] * scale,
+                                       ([iTermAdvancedSettingsModel terminalMargin] - 1) * scale,
                                        tState.cellConfiguration.cellSize.height);
     CGRect markRect = [iTermTextDrawingHelper frameForMarkContainedInRect:leftMarignRect
                                                                  cellSize:tState.cellConfiguration.cellSize

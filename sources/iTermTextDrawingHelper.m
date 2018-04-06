@@ -703,7 +703,7 @@ typedef struct iTermTextColorContext {
     const CGFloat verticalSpacing = MAX(0, scale * round((cellSize.height / scale - cellSizeWithoutSpacing.height / scale) / 2.0));
     CGRect rect = NSMakeRect(container.origin.x,
                              container.origin.y + verticalSpacing,
-                             [iTermAdvancedSettingsModel terminalMargin] * scale,
+                             container.size.width,
                              cellSizeWithoutSpacing.height);
     const CGFloat kMaxHeight = 15 * scale;
     const CGFloat kMinMargin = 3 * scale;
@@ -748,7 +748,10 @@ typedef struct iTermTextColorContext {
 - (void)drawMarkIfNeededOnLine:(int)line leftMarginRect:(NSRect)leftMargin {
     VT100ScreenMark *mark = [self.delegate drawingHelperMarkOnLine:line];
     if (mark.isVisible && self.drawMarkIndicators) {
-        NSRect rect = [iTermTextDrawingHelper frameForMarkContainedInRect:leftMargin
+        NSRect insetLeftMargin = leftMargin;
+        insetLeftMargin.origin.x += 1;
+        insetLeftMargin.size.width -= 1;
+        NSRect rect = [iTermTextDrawingHelper frameForMarkContainedInRect:insetLeftMargin
                                                                  cellSize:_cellSize
                                                    cellSizeWithoutSpacing:_cellSizeWithoutSpacing
                                                                     scale:1];
