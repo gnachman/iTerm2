@@ -56,6 +56,9 @@ enum {
     // Save copy paste history
     IBOutlet NSButton *_savePasteHistory;
 
+    // Use GPU?
+    IBOutlet NSButton *_gpuRendering;
+
     // Enable bonjour
     IBOutlet NSButton *_enableBonjour;
 
@@ -183,6 +186,15 @@ enum {
         [[iTermShellHistoryController sharedInstance] backingStoreTypeDidChange];
     };
 
+    if (@available(macOS 10.14, *)) {
+        [self defineControl:_gpuRendering
+                        key:kPreferenceKeyUseMetal
+                       type:kPreferenceInfoTypeCheckbox];
+    } else {
+        _gpuRendering.enabled = NO;
+        _gpuRendering.state = NSOffState;
+    }
+    
     [self defineControl:_enableBonjour
                     key:kPreferenceKeyAddBonjourHostsToProfiles
                             type:kPreferenceInfoTypeCheckbox];

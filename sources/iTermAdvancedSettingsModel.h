@@ -200,7 +200,6 @@
 + (BOOL)useExperimentalFontMetrics;
 + (BOOL)supportREPCode;
 + (BOOL)showBlockBoundaries;
-+ (BOOL)useMetal;
 + (BOOL)showMetalFPSmeter;
 + (BOOL)tabsWrapAround;
 + (BOOL)middleClickClosesTab;

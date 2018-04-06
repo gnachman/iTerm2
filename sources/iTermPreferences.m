@@ -52,6 +52,7 @@ NSString *const kPreferenceKeyLionStyleFullscren = @"UseLionStyleFullscreen";
 NSString *const kPreferenceKeyOpenTmuxWindowsIn = @"OpenTmuxWindowsIn";
 NSString *const kPreferenceKeyTmuxDashboardLimit = @"TmuxDashboardLimit";
 NSString *const kPreferenceKeyAutoHideTmuxClientSession = @"AutoHideTmuxClientSession";
+NSString *const kPreferenceKeyUseMetal = @"UseMetal";
 
 NSString *const kPreferenceKeyTabStyle = @"TabStyle";
 NSString *const kPreferenceKeyTabPosition = @"TabViewType";
@@ -222,6 +223,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyOpenTmuxWindowsIn: @(kOpenTmuxWindowsAsNativeWindows),
                   kPreferenceKeyTmuxDashboardLimit: @10,
                   kPreferenceKeyAutoHideTmuxClientSession: @NO,
+                  kPreferenceKeyUseMetal: @YES,
 
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabPosition: @(TAB_POSITION_TOP),

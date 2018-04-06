@@ -4429,7 +4429,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // is a horror and besides these are subviews of PTYTextView and I really don't
 // want to invest any more in this little-used feature.
 - (void)annotationVisibilityDidChange:(NSNotification *)notification {
-    if ([iTermAdvancedSettingsModel useMetal]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyUseMetal]) {
         [_delegate sessionUpdateMetalAllowed];
     }
 }
@@ -4786,7 +4786,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // renderer).
         //
         // Perhaps some day transparency and ligatures will be supported.
-        return ([iTermAdvancedSettingsModel useMetal] &&
+        return ([iTermPreferences boolForKey:kPreferenceKeyUseMetal] &&
                 [iTermAdvancedSettingsModel terminalVMargin] >= 2 &&  // Smaller margins break rounded window corners
                 machineSupportsMetal &&
                 _textview.transparencyAlpha == 1 &&

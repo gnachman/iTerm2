@@ -511,7 +511,7 @@ static NSDate* lastResizeDate_;
                                                                session:session
                                                               delegate:[MovePaneController sharedInstance]
                                                                   move:move];
-    _splitSelectionView.wantsLayer = [iTermAdvancedSettingsModel useMetal];
+    _splitSelectionView.wantsLayer = [iTermPreferences boolForKey:kPreferenceKeyUseMetal];
     [_splitSelectionView setFrameOrigin:NSMakePoint(0, 0)];
     [_splitSelectionView setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
     [self addSubview:_splitSelectionView];
@@ -598,7 +598,7 @@ static NSDate* lastResizeDate_;
                                                                                0,
                                                                                frame.size.width,
                                                                                frame.size.height)];
-    _splitSelectionView.wantsLayer = [iTermAdvancedSettingsModel useMetal];
+    _splitSelectionView.wantsLayer = [iTermPreferences boolForKey:kPreferenceKeyUseMetal];
     [self addSubview:_splitSelectionView];
     [_splitSelectionView release];
     [[self window] orderFront:nil];
