@@ -745,6 +745,7 @@ typedef enum {
 - (ITMGetPromptResponse *)handleGetPromptRequest:(ITMGetPromptRequest *)request;
 - (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request connection:(id)connection;
 - (ITMSetProfilePropertyResponse *)handleSetProfilePropertyForKey:(NSString *)key value:(id)value;
+- (ITMGetProfilePropertyResponse *)handleGetProfilePropertyForKeys:(NSArray<NSString *> *)keys;
 
 #pragma mark - Testing utilities
 

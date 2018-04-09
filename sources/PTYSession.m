@@ -9676,4 +9676,39 @@ ITERM_WEAKLY_REFERENCEABLE
     return response;
 }
 
+- (ITMGetProfilePropertyResponse *)handleGetProfilePropertyForKeys:(NSArray<NSString *> *)keys {
+    ITMGetProfilePropertyResponse *response = [[[ITMGetProfilePropertyResponse alloc] init] autorelease];
+    if (!keys.count) {
+        return [self handleGetProfilePropertyForKeys:[iTermProfilePreferences allKeys]];
+    }
+
+    for (NSString *key in keys) {
+        id value = [iTermProfilePreferences objectForKey:key inProfile:self.profile];
+        if (value) {
+            NSError *error;
+            NSData *json = nil;
+            if ([NSJSONSerialization isValidJSONObject:value]) {
+                json = [NSJSONSerialization dataWithJSONObject:value
+                                                       options:0
+                                                         error:&error];
+                if (error) {
+                    XLog(@"Failed to json encode value %@ for key %@", value, key);
+                }
+            } else if ([value isKindOfClass:[NSString class]]) {
+                json = [[value jsonEncodedString] dataUsingEncoding:NSUTF8StringEncoding];
+            } else if ([value isKindOfClass:[NSNumber class]]) {
+                json = [[value stringValue] dataUsingEncoding:NSUTF8StringEncoding];
+            }
+            if (json) {
+                ITMGetProfilePropertyResponse_Property *property = [[[ITMGetProfilePropertyResponse_Property alloc] init] autorelease];
+                property.key = key;
+                property.jsonValue = [[[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding] autorelease];
+                [response.propertiesArray addObject:property];
+            }
+        }
+    }
+    response.status = ITMSetProfilePropertyResponse_Status_Ok;
+    return response;
+}
+
 @end

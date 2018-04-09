@@ -18,6 +18,7 @@ message Request {
   optional SendTextRequest send_text_request = 107;
   optional CreateTabRequest create_tab_request = 108;
   optional SplitPaneRequest split_pane_request = 109;
+  optional GetProfilePropertyRequest get_profile_property_request = 110;
 }
 
 // All responses are wrapped in this message. This encoded message is the entirety of the payload
@@ -35,12 +36,13 @@ message Response {
   optional SendTextResponse send_text_response = 107;
   optional CreateTabResponse create_tab_response = 108;
   optional SplitPaneResponse split_pane_response = 109;
+  optional GetProfilePropertyResponse get_profile_property_response = 110;
 
   // This is the only response that is sent spontaneously. The 'id' field will not be set.
   optional Notification notification = 1000;
 }
 
-// Registers a toolbelt tool that displays a webvieww with a URL of your choice.
+// Registers a toolbelt tool that displays a webview with a URL of your choice.
 message RegisterToolRequest {
   // This name is displayed to the user.
   optional string name = 1;
@@ -230,6 +232,31 @@ message GetPromptResponse {
 
   optional string working_directory = 5;
   optional string command = 6;
+}
+
+message GetProfilePropertyRequest {
+  // Leave this empty to use the current session, if any.
+  optional string session = 1;
+
+  // If not set, all properties will be returned
+  repeated string keys = 2;
+}
+
+message GetProfilePropertyResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    REQUEST_MALFORMED = 2;
+    ERROR = 3;
+  }
+
+  optional Status status = 1 [default = OK];
+
+  message Property {
+    optional string key = 1;
+    optional string json_value = 2;
+  }
+  repeated Property properties = 3;
 }
 
 // Sets a value in a session's copy of the profile without modifying the underlying profile.

@@ -35,6 +35,9 @@ CF_EXTERN_C_BEGIN
 @class ITMCustomEscapeSequenceNotification;
 @class ITMGetBufferRequest;
 @class ITMGetBufferResponse;
+@class ITMGetProfilePropertyRequest;
+@class ITMGetProfilePropertyResponse;
+@class ITMGetProfilePropertyResponse_Property;
 @class ITMGetPromptRequest;
 @class ITMGetPromptResponse;
 @class ITMKeystrokeNotification;
@@ -193,6 +196,23 @@ GPBEnumDescriptor *ITMGetPromptResponse_Status_EnumDescriptor(void);
  **/
 BOOL ITMGetPromptResponse_Status_IsValidValue(int32_t value);
 
+#pragma mark - Enum ITMGetProfilePropertyResponse_Status
+
+typedef GPB_ENUM(ITMGetProfilePropertyResponse_Status) {
+  ITMGetProfilePropertyResponse_Status_Ok = 0,
+  ITMGetProfilePropertyResponse_Status_SessionNotFound = 1,
+  ITMGetProfilePropertyResponse_Status_RequestMalformed = 2,
+  ITMGetProfilePropertyResponse_Status_Error = 3,
+};
+
+GPBEnumDescriptor *ITMGetProfilePropertyResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMGetProfilePropertyResponse_Status_IsValidValue(int32_t value);
+
 #pragma mark - Enum ITMSetProfilePropertyResponse_Status
 
 typedef GPB_ENUM(ITMSetProfilePropertyResponse_Status) {
@@ -344,6 +364,7 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
   ITMRequest_FieldNumber_SendTextRequest = 107,
   ITMRequest_FieldNumber_CreateTabRequest = 108,
   ITMRequest_FieldNumber_SplitPaneRequest = 109,
+  ITMRequest_FieldNumber_GetProfilePropertyRequest = 110,
 };
 
 /**
@@ -396,6 +417,10 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
 /** Test to see if @c splitPaneRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasSplitPaneRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMGetProfilePropertyRequest *getProfilePropertyRequest;
+/** Test to see if @c getProfilePropertyRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasGetProfilePropertyRequest;
+
 @end
 
 #pragma mark - ITMResponse
@@ -412,6 +437,7 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
   ITMResponse_FieldNumber_SendTextResponse = 107,
   ITMResponse_FieldNumber_CreateTabResponse = 108,
   ITMResponse_FieldNumber_SplitPaneResponse = 109,
+  ITMResponse_FieldNumber_GetProfilePropertyResponse = 110,
   ITMResponse_FieldNumber_Notification = 1000,
 };
 
@@ -464,6 +490,10 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
 /** Test to see if @c splitPaneResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasSplitPaneResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMGetProfilePropertyResponse *getProfilePropertyResponse;
+/** Test to see if @c getProfilePropertyResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasGetProfilePropertyResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 /** Test to see if @c notification has been set. */
@@ -482,7 +512,7 @@ typedef GPB_ENUM(ITMRegisterToolRequest_FieldNumber) {
 };
 
 /**
- * Registers a toolbelt tool that displays a webvieww with a URL of your choice.
+ * Registers a toolbelt tool that displays a webview with a URL of your choice.
  **/
 @interface ITMRegisterToolRequest : GPBMessage
 
@@ -905,6 +935,64 @@ typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *command;
 /** Test to see if @c command has been set. */
 @property(nonatomic, readwrite) BOOL hasCommand;
+
+@end
+
+#pragma mark - ITMGetProfilePropertyRequest
+
+typedef GPB_ENUM(ITMGetProfilePropertyRequest_FieldNumber) {
+  ITMGetProfilePropertyRequest_FieldNumber_Session = 1,
+  ITMGetProfilePropertyRequest_FieldNumber_KeysArray = 2,
+};
+
+@interface ITMGetProfilePropertyRequest : GPBMessage
+
+/** Leave this empty to use the current session, if any. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
+
+/** If not set, all properties will be returned */
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *keysArray;
+/** The number of items in @c keysArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger keysArray_Count;
+
+@end
+
+#pragma mark - ITMGetProfilePropertyResponse
+
+typedef GPB_ENUM(ITMGetProfilePropertyResponse_FieldNumber) {
+  ITMGetProfilePropertyResponse_FieldNumber_Status = 1,
+  ITMGetProfilePropertyResponse_FieldNumber_PropertiesArray = 3,
+};
+
+@interface ITMGetProfilePropertyResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMGetProfilePropertyResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMGetProfilePropertyResponse_Property*> *propertiesArray;
+/** The number of items in @c propertiesArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger propertiesArray_Count;
+
+@end
+
+#pragma mark - ITMGetProfilePropertyResponse_Property
+
+typedef GPB_ENUM(ITMGetProfilePropertyResponse_Property_FieldNumber) {
+  ITMGetProfilePropertyResponse_Property_FieldNumber_Key = 1,
+  ITMGetProfilePropertyResponse_Property_FieldNumber_JsonValue = 2,
+};
+
+@interface ITMGetProfilePropertyResponse_Property : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *key;
+/** Test to see if @c key has been set. */
+@property(nonatomic, readwrite) BOOL hasKey;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *jsonValue;
+/** Test to see if @c jsonValue has been set. */
+@property(nonatomic, readwrite) BOOL hasJsonValue;
 
 @end
 

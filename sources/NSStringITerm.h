@@ -53,6 +53,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 @interface NSString (iTerm)
 
+@property (nonatomic, readonly) NSString *jsonEncodedString;
+
 + (NSString *)stringWithInt:(int)num;
 + (BOOL)isDoubleWidthCharacter:(int)unicode
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth

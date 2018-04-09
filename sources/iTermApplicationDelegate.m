@@ -2561,6 +2561,19 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     handler([session handleSetProfilePropertyForKey:request.key value:value]);
 }
 
+- (void)apiServerGetProfileProperty:(ITMGetProfilePropertyRequest *)request
+                            handler:(void (^)(ITMGetProfilePropertyResponse *))handler {
+    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
+    if (!session) {
+        ITMGetProfilePropertyResponse *response = [[[ITMGetProfilePropertyResponse alloc] init] autorelease];
+        response.status = ITMGetProfilePropertyResponse_Status_SessionNotFound;
+        handler(response);
+        return;
+    }
+
+    handler([session handleGetProfilePropertyForKeys:request.keysArray]);
+}
+
 - (void)apiServerListSessions:(ITMListSessionsRequest *)request
                       handler:(void (^)(ITMListSessionsResponse *))handler {
     handler([self newListSessionsResponse]);

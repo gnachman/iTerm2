@@ -142,6 +142,10 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     return NO;
 }
 
++ (NSArray<NSString *> *)allKeys {
+    return self.defaultValueMap.allKeys;
+}
+
 #pragma mark - Private
 
 + (BOOL)valueIsLegal:(id)value forKey:(NSString *)key {
