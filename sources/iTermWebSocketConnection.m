@@ -36,11 +36,11 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
 + (BOOL)validateRequest:(NSURLRequest *)request {
     if (![request.HTTPMethod isEqualToString:@"GET"]) {
-        DLog(@"Method not GET");
+        XLog(@"Method not GET");
         return NO;
     }
     if (request.URL.path.length == 0) {
-        DLog(@"Empty path");
+        XLog(@"Empty path");
         return NO;
     }
     NSDictionary<NSString *, NSString *> *headers = request.allHTTPHeaderFields;
@@ -51,7 +51,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
          };
     for (NSString *key in requiredValues) {
         if ([headers[key] caseInsensitiveCompare:requiredValues[key]] != NSOrderedSame) {
-            DLog(@"Header %@ has value <%@> but I require <%@>", key, headers[key], requiredValues[key]);
+            XLog(@"Header %@ has value <%@> but I require <%@>", key, headers[key], requiredValues[key]);
             return NO;
         }
     }
@@ -63,14 +63,14 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
            @"origin" ];
     for (NSString *key in requiredKeys) {
         if ([headers[key] length] == 0) {
-            DLog(@"Empty or missing value for header %@", key);
+            XLog(@"Empty or missing value for header %@", key);
             return NO;
         }
     }
 
     NSURL *originURL = [NSURL URLWithString:headers[@"origin"]];
     if (![originURL.host isEqualToString:@"localhost"]) {
-        DLog(@"Origin's host is not localhost: is %@ (string value is %@)", originURL.host, headers[@"origin"]);
+        XLog(@"Origin's host is not localhost: is %@ (string value is %@)", originURL.host, headers[@"origin"]);
         return NO;
     }
 
@@ -85,13 +85,13 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     }
     NSArray<NSString *> *loopbackNames = @[ @"localhost", @"127.0.0.1", @"[::1]" ];
     if (![loopbackNames containsObject:host]) {
-        DLog(@"Host header does not specify a loopback host: %@", host);
+        XLog(@"Host header does not specify a loopback host: %@", host);
         return NO;
     }
 
     NSString *version = headers[@"sec-websocket-version"];
     if ([version integerValue] < kWebSocketVersion) {
-        DLog(@"websocket version too old");
+        XLog(@"websocket version too old");
         return NO;
     }
 
