@@ -9685,14 +9685,14 @@ ITERM_WEAKLY_REFERENCEABLE
     for (NSString *key in keys) {
         id value = [iTermProfilePreferences objectForKey:key inProfile:self.profile];
         if (value) {
-            NSError *error;
+            NSError *error = nil;
             NSData *json = nil;
             if ([NSJSONSerialization isValidJSONObject:value]) {
                 json = [NSJSONSerialization dataWithJSONObject:value
                                                        options:0
                                                          error:&error];
                 if (error) {
-                    XLog(@"Failed to json encode value %@ for key %@", value, key);
+                    XLog(@"Failed to json encode value %@ for key %@: %@", value, key, error);
                 }
             } else if ([value isKindOfClass:[NSString class]]) {
                 json = [[value jsonEncodedString] dataUsingEncoding:NSUTF8StringEncoding];
