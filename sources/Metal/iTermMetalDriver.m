@@ -296,6 +296,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (BOOL)drawSynchronouslyInView:(MTKView *)view {
+    if (!view || !view.delegate) {
+        return NO;
+    }
     DLog(@"Start synchronous draw");
     iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view];
     dispatch_group_wait(context.group, DISPATCH_TIME_FOREVER);
