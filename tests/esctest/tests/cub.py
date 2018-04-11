@@ -1,5 +1,5 @@
 import esccmd
-from escutil import AssertEQ, GetCursorPosition, knownBug
+from escutil import AssertEQ, GetCursorPosition, knownBug, vtLevel
 from esctypes import Point
 
 class CUBTests(object):
@@ -23,6 +23,7 @@ class CUBTests(object):
     esccmd.CUB(99)
     AssertEQ(GetCursorPosition().x(), 1)
 
+  @vtLevel(4)
   def test_CUB_StopsAtLeftEdgeWhenBegunLeftOfScrollRegion(self):
     """When the cursor starts left of the scroll region, CUB moves it left to the
     left edge of the screen."""
@@ -39,6 +40,7 @@ class CUBTests(object):
     # Ensure it stopped at the left edge of the screen
     AssertEQ(GetCursorPosition().x(), 1)
 
+  @vtLevel(4)
   def test_CUB_StopsAtLeftMarginInScrollRegion(self):
     """When the cursor starts within the scroll region, CUB moves it left to the
     left margin but no farther."""

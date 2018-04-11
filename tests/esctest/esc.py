@@ -1,6 +1,7 @@
 import escargs
 
 NUL = chr(0)
+BEL = chr(7)
 BS = chr(8)
 TAB = chr(9)
 LF = chr(10)

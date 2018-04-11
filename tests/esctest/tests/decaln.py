@@ -1,8 +1,9 @@
 import esccmd
 import escio
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, Point, Rect, knownBug, optionRequired
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, Point, Rect, knownBug, optionRequired, vtLevel
 
 class DECALNTests(object):
+  @vtLevel(4)
   def test_DECALN_FillsScreen(self):
     """Makes sure DECALN fills the screen with the letter E (could be anything,
     but xterm uses E). Testing the whole screen would be slow so we just check
@@ -25,6 +26,7 @@ class DECALNTests(object):
     esccmd.DECALN()
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
+  @vtLevel(4)
   def test_DECALN_ClearsMargins(self):
     esccmd.DECSET(esccmd.DECLRMM)
     esccmd.DECSLRM(2, 3)

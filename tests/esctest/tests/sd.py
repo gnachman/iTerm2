@@ -2,7 +2,7 @@ from esc import NUL
 import esccmd
 import escio
 from esctypes import Point, Rect
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug, vtLevel
 
 class SDTests(object):
   def prepare(self):
@@ -26,6 +26,7 @@ class SDTests(object):
       escio.Write(line)
     esccmd.CUP(Point(3, 2))
 
+  @vtLevel(4)
   def test_SD_DefaultParam(self):
     """SD with no parameter should scroll the screen contents down one line."""
     self.prepare()
@@ -37,6 +38,7 @@ class SDTests(object):
                        "pqrst" ]
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5), expected_lines);
 
+  @vtLevel(4)
   def test_SD_ExplicitParam(self):
     """SD should scroll the screen down by the number of lines given in the parameter."""
     self.prepare()
@@ -48,7 +50,8 @@ class SDTests(object):
                        "klmno" ]
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5), expected_lines);
 
-  @knownBug(terminal="xterm", reason="Asserts", shouldTry=False)
+  # fixed in xterm #332
+  @vtLevel(4)
   def test_SD_CanClearScreen(self):
     """An SD equal to the height of the screen clears it."""
     # Fill the screen with 0001, 0002, ..., height. Fill expected_lines with empty rows.
@@ -66,6 +69,7 @@ class SDTests(object):
     # Ensure the screen is empty
     AssertScreenCharsInRectEqual(Rect(1, 1, 4, height), expected_lines);
 
+  @vtLevel(4)
   def test_SD_RespectsTopBottomScrollRegion(self):
     """When the cursor is inside the scroll region, SD should scroll the
     contents of the scroll region only."""
@@ -82,6 +86,7 @@ class SDTests(object):
                        "uvwxy" ]
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5), expected_lines);
 
+  @vtLevel(4)
   def test_SD_OutsideTopBottomScrollRegion(self):
     """When the cursor is outside the scroll region, SD should scroll the
     contents of the scroll region only."""
@@ -98,6 +103,7 @@ class SDTests(object):
                        "uvwxy" ]
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5), expected_lines);
 
+  @vtLevel(4)
   def test_SD_RespectsLeftRightScrollRegion(self):
     """When the cursor is inside the scroll region, SD should scroll the
     contents of the scroll region only."""
@@ -115,6 +121,7 @@ class SDTests(object):
                        "ulmny" ]
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5), expected_lines);
 
+  @vtLevel(4)
   def test_SD_OutsideLeftRightScrollRegion(self):
     """When the cursor is outside the scroll region, SD should scroll the
     contents of the scroll region only."""
@@ -135,6 +142,7 @@ class SDTests(object):
                        NUL + "vwx" + NUL ]
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 7), expected_lines);
 
+  @vtLevel(4)
   def test_SD_LeftRightAndTopBottomScrollRegion(self):
     """When the cursor is outside the scroll region, SD should scroll the
     contents of the scroll region only."""
@@ -154,6 +162,7 @@ class SDTests(object):
                        "uvwxy" ]
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5), expected_lines);
 
+  @vtLevel(4)
   def test_SD_BigScrollLeftRightAndTopBottomScrollRegion(self):
     """Scroll a lr and tb scroll region by more than its height."""
     self.prepare()

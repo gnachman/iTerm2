@@ -17,10 +17,10 @@ def Raise(e):
   if not escargs.args.force:
     raise e
 
-def AssertGE(actual, minimum):
+def AssertGE(actual, expected):
   global gHaveAsserted
   gHaveAsserted = True
-  if actual < minimum:
+  if actual < expected:
     Raise(esctypes.TestFailure(actual, expected))
 
 def AssertEQ(actual, expected):
@@ -53,6 +53,22 @@ def GetWindowSizePixels():
   AssertTrue(len(params) >= 3)
   return Size(params[2], params[1])
 
+def GetScreenSizePixels():
+  """Returns a Size giving the screen's size in pixels."""
+  esccmd.XTERM_WINOPS(esccmd.WINOP_REPORT_SCREEN_SIZE_PIXELS)
+  params = escio.ReadCSI("t")
+  AssertTrue(params[0] == 5)
+  AssertTrue(len(params) >= 3)
+  return Size(params[2], params[1])
+
+def GetCharSizePixels():
+  """Returns a Size giving the font's character-size in pixels."""
+  esccmd.XTERM_WINOPS(esccmd.WINOP_REPORT_CHAR_SIZE_PIXELS)
+  params = escio.ReadCSI("t")
+  AssertTrue(params[0] == 6)
+  AssertTrue(len(params) >= 3)
+  return Size(params[2], params[1])
+
 def GetWindowPosition():
   """Returns a Point giving the window's origin in screen pixels."""
   esccmd.XTERM_WINOPS(esccmd.WINOP_REPORT_WINDOW_POSITION)
@@ -82,9 +98,20 @@ def GetDisplaySize():
   params = escio.ReadCSI("t")
   return Size(params[2], params[1])
 
+# decorators are more elegant, but several of the tests would hang as written
+# without a direct check.  Use this to point out problems in the tests versus
+# problems in the terminal.
+def AssertVTLevel(minimum,reason):
+  if esc.vtLevel < minimum:
+    if reason is not None:
+      LogInfo("BUG: " + reason + " feature is not supported at this level")
+    raise esctypes.InsufficientVTLevel(esc.vtLevel, minimum)
+
 def AssertScreenCharsInRectEqual(rect, expected_lines):
   global gHaveAsserted
   gHaveAsserted = True
+
+  AssertVTLevel(4,"checksum")
 
   if rect.height() != len(expected_lines):
     raise esctypes.InternalError(
@@ -161,6 +188,7 @@ def GetChecksumOfRect(rect):
   i += 2
 
   hex_checksum = params[i:]
+  # LogInfo("GetChecksum " + str_pid + " = " + hex_checksum)
   return int(hex_checksum, 16)
 
 def vtLevel(minimum):

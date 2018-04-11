@@ -2,7 +2,7 @@ from esc import NUL
 import esccmd
 import escio
 from esctypes import Point, Rect
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, vtLevel
 
 class ILTests(object):
   def prepare_wide(self):
@@ -40,6 +40,7 @@ class ILTests(object):
     # Place cursor on the 'H'
     esccmd.CUP(Point(3, 2))
 
+  @vtLevel(4)
   def test_IL_DefaultParam(self):
     """Should insert a single line below the cursor."""
     self.prepare_wide();
@@ -50,6 +51,7 @@ class ILTests(object):
                                    NUL * 5,
                                    "klmno" ])
 
+  @vtLevel(4)
   def test_IL_ExplicitParam(self):
     """Should insert two lines below the cursor."""
     self.prepare_wide();
@@ -61,6 +63,7 @@ class ILTests(object):
                                    NUL * 5,
                                    "klmno" ])
 
+  @vtLevel(4)
   def test_IL_ScrollsOffBottom(self):
     """Lines should be scrolled off the bottom of the screen."""
     height = GetScreenSize().height()
@@ -79,6 +82,7 @@ class ILTests(object):
         AssertScreenCharsInRectEqual(Rect(1, y, 4, y), [ "%04d" % expected ])
         expected += 1
 
+  @vtLevel(4)
   def test_IL_RespectsScrollRegion(self):
     """When IL is invoked while the cursor is within the scroll region, lines
     within the scroll regions hould be scrolled down; lines within should
@@ -96,6 +100,7 @@ class ILTests(object):
                                    "pLMNt",
                                    "uvwxy" ])
 
+  @vtLevel(4)
   def test_IL_RespectsScrollRegion_Over(self):
     """Scroll by more than the available space in a region."""
     self.prepare_region()
@@ -111,6 +116,7 @@ class ILTests(object):
                                    "p" + NUL * 3 + "t",
                                    "uvwxy" ])
 
+  @vtLevel(4)
   def test_IL_AboveScrollRegion(self):
     """IL is a no-op outside the scroll region."""
     self.prepare_region()

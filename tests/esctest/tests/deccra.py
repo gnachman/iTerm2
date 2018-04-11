@@ -65,8 +65,7 @@ class DECCRATests(object):
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
-  @knownBug(terminal="xterm", reason="Crashes. Bug reported Feb 11, 2015.",
-            shouldTry=False)
+  @knownBug(terminal="notxterm", reason="Crashes. Bug reported Feb 11, 2015.")
   def test_DECCRA_destinationPartiallyOffscreen(self):
     self.prepare()
     size = GetScreenSize()
@@ -84,7 +83,7 @@ class DECCRATests(object):
                                       size.width(),
                                       size.height()),
                                  [ "jk",
-                                   "rj" ])
+                                   "rs" ])
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")

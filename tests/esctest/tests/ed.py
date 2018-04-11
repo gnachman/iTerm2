@@ -3,7 +3,7 @@ import escargs
 import esccmd
 import escio
 from esctypes import Point, Rect
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, knownBug
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, knownBug, vtLevel
 
 class EDTests(object):
   def prepare(self):
@@ -42,6 +42,7 @@ class EDTests(object):
 
     esccmd.CUP(Point(2, 3))
 
+  @vtLevel(4)
   def test_ED_Default(self):
     """Should be the same as ED_0."""
     self.prepare()
@@ -53,6 +54,7 @@ class EDTests(object):
                                    NUL * 3,
                                    NUL * 3 ])
 
+  @vtLevel(4)
   def test_ED_0(self):
     """Erase after cursor."""
     self.prepare()
@@ -64,6 +66,7 @@ class EDTests(object):
                                    NUL * 3,
                                    NUL * 3 ])
 
+  @vtLevel(4)
   def test_ED_1(self):
     """Erase before cursor."""
     self.prepare()
@@ -75,6 +78,7 @@ class EDTests(object):
                                    NUL * 3,
                                    "e" + NUL * 2 ])
 
+  @vtLevel(4)
   def test_ED_2(self):
     """Erase whole screen."""
     self.prepare()
@@ -86,6 +90,7 @@ class EDTests(object):
                                    NUL * 3,
                                    NUL * 3 ])
 
+  @vtLevel(4)
   def test_ED_3(self):
     """xterm supports a "3" parameter, which also erases scrollback history. There
     is no way to test if it's working, though. We can at least test that it doesn't
@@ -99,6 +104,7 @@ class EDTests(object):
                                    NUL * 3,
                                    "e" + NUL * 2 ])
 
+  @vtLevel(4)
   def test_ED_0_WithScrollRegion(self):
     """Erase after cursor with a scroll region present. The scroll region is ignored."""
     self.prepare_wide()
@@ -114,6 +120,7 @@ class EDTests(object):
                                    "fg" + NUL * 3,
                                    NUL * 5 ])
 
+  @vtLevel(4)
   def test_ED_1_WithScrollRegion(self):
     """Erase before cursor with a scroll region present. The scroll region is ignored."""
     self.prepare_wide()
@@ -129,6 +136,7 @@ class EDTests(object):
                                    blank() * 3 + "ij",
                                    "klmno" ])
 
+  @vtLevel(4)
   def test_ED_2_WithScrollRegion(self):
     """Erase whole screen with a scroll region present. The scroll region is ignored."""
     self.prepare_wide()
@@ -144,6 +152,7 @@ class EDTests(object):
                                    NUL * 5,
                                    NUL * 5 ])
 
+  @vtLevel(4)
   def test_ED_doesNotRespectDECProtection(self):
     """ED should not respect DECSCA"""
     escio.Write("a")
@@ -156,6 +165,7 @@ class EDTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 3, 1),
                                [ NUL * 3 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2",
             reason="Protection not implemented.")
   def test_ED_respectsISOProtection(self):

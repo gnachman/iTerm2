@@ -3,7 +3,7 @@ import escargs
 import esccmd
 import escio
 from esctypes import Point, Rect
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, knownBug
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, knownBug, vtLevel
 
 class DECSELTests(object):
 
@@ -14,6 +14,7 @@ class DECSELTests(object):
     escio.Write("abcdefghij")
     esccmd.CUP(Point(5, 1))
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECSEL_Default(self):
     """Should erase to right of cursor."""
@@ -22,6 +23,7 @@ class DECSELTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
                                  [ "abcd" + 6 * NUL ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECSEL_0(self):
     """Should erase to right of cursor."""
@@ -30,6 +32,7 @@ class DECSELTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
                                  [ "abcd" + 6 * NUL ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECSEL_1(self):
     """Should erase to left of cursor."""
@@ -38,6 +41,7 @@ class DECSELTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
                                  [ 5 * blank() + "fghij" ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECSEL_2(self):
     """Should erase whole line."""
@@ -46,6 +50,7 @@ class DECSELTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
                                  [ 10 * NUL ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECSEL_IgnoresScrollRegion(self):
     """Should erase whole line."""
@@ -58,6 +63,7 @@ class DECSELTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
                                  [ 10 * NUL ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECSEL_Default_Protection(self):
     """Should erase to right of cursor."""
@@ -74,6 +80,7 @@ class DECSELTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
                                  [ "abcdefghi" + NUL ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECSEL_0_Protection(self):
     """All letters are protected so nothing should happen."""
@@ -91,6 +98,7 @@ class DECSELTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
                                  [ "abcdefghi" + NUL ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECSEL_1_Protection(self):
     """All letters are protected so nothing should happen."""
@@ -107,6 +115,7 @@ class DECSELTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
                                  [ blank() + "bcdefghij" ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECSEL_2_Protection(self):
     """All letters are protected so nothing should happen."""
@@ -122,6 +131,7 @@ class DECSELTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
                                  [ blank() + "bcdefghij" ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECSEL_IgnoresScrollRegion_Protection(self):
     """All letters are protected so nothing should happen."""
@@ -141,6 +151,7 @@ class DECSELTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
                                  [ blank() + "bcdefghij" ])
 
+  @vtLevel(4)
   @knownBug(terminal="xterm",
             reason="DECSEL respects ISO protection for backward compatibility reasons, per email from Thomas")
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")

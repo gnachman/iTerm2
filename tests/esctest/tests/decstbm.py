@@ -1,12 +1,13 @@
 from esc import CR, LF, NUL
 import esccmd
 import escio
-from escutil import AssertEQ, GetCursorPosition, GetScreenSize, AssertScreenCharsInRectEqual, knownBug
+from escutil import AssertEQ, GetCursorPosition, GetScreenSize, AssertScreenCharsInRectEqual, knownBug, vtLevel
 from esctypes import Point, Rect
 
 class DECSTBMTests(object):
   """DECSTBM is tested pretty well in various other tests; this is meant to
   cover the basics."""
+  @vtLevel(4)
   def test_DECSTBM_ScrollsOnNewline(self):
     """Define a top-bottom margin, put text in it, and have newline scroll it."""
     esccmd.DECSTBM(2, 3)
@@ -18,6 +19,7 @@ class DECSTBMTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 3), [ "2", NUL ])
     AssertEQ(GetCursorPosition().y(), 3)
 
+  @vtLevel(4)
   def test_DECSTBM_NewlineBelowRegion(self):
     """A newline below the region has no effect on the region."""
     esccmd.DECSTBM(2, 3)
@@ -34,6 +36,7 @@ class DECSTBMTests(object):
     esccmd.DECSTBM(2, 3)
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
+  @vtLevel(4)
   def test_DECSTBM_TopBelowBottom(self):
     """The value of the top margin (Pt) must be less than the bottom margin (Pb)."""
     size = GetScreenSize()
@@ -55,6 +58,7 @@ class DECSTBMTests(object):
     y = size.height()
     AssertScreenCharsInRectEqual(Rect(1, y, 4, y), [ NUL * 4 ])
 
+  @vtLevel(4)
   def test_DECSTBM_DefaultRestores(self):
     """Default args restore to full screen scrolling."""
     esccmd.DECSTBM(2, 3)
@@ -69,6 +73,7 @@ class DECSTBMTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 3), [ "1", "2" ])
     AssertEQ(GetCursorPosition().y(), 4)
 
+  @vtLevel(4)
   def test_DECSTBM_CursorBelowRegionAtBottomTriesToScroll(self):
     """You cannot perform scrolling outside the margins."""
     esccmd.DECSTBM(2, 3)
@@ -83,6 +88,7 @@ class DECSTBMTests(object):
     AssertScreenCharsInRectEqual(Rect(1, size.height(), 1, size.height()), [ "3" ])
     AssertEQ(GetCursorPosition().y(), size.height())
 
+  @vtLevel(4)
   def test_DECSTBM_MaxSizeOfRegionIsPageSize(self):
     """The maximum size of the scrolling region is the page size."""
     # Write "x" at line 2
@@ -103,6 +109,7 @@ class DECSTBMTests(object):
     # Verify the cursor is at the last line on the page.
     AssertEQ(GetCursorPosition().y(), size.height())
 
+  @vtLevel(4)
   def test_DECSTBM_TopOfZeroIsTopOfScreen(self):
     """A zero value for the top arg gives the top of the screen."""
     esccmd.DECSTBM(0, 3)
@@ -113,6 +120,7 @@ class DECSTBMTests(object):
     escio.Write("4")
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 3), [ "2", "3", "4" ])
 
+  @vtLevel(4)
   def test_DECSTBM_BottomOfZeroIsBottomOfScreen(self):
     """A zero value for the bottom arg gives the bottom of the screen."""
     # Write "x" at line 3

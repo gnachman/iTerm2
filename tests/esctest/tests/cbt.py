@@ -1,6 +1,6 @@
 import esccmd
 from esctypes import Point
-from escutil import AssertEQ, GetCursorPosition, knownBug
+from escutil import AssertEQ, GetCursorPosition, knownBug, vtLevel
 
 class CBTTests(object):
   def test_CBT_OneTabStopByDefault(self):
@@ -22,6 +22,7 @@ class CBTTests(object):
     AssertEQ(position.x(), 1)
     AssertEQ(position.y(), 2)
 
+  @vtLevel(4)
   def test_CBT_IgnoresRegion(self):
     # Set a scroll region.
     esccmd.DECSET(esccmd.DECLRMM)

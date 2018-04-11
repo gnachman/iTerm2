@@ -2,7 +2,7 @@ import tests.fill_rectangle
 import esc
 import esccmd
 import escio
-from escutil import AssertScreenCharsInRectEqual, Point, Rect, knownBug
+from escutil import AssertScreenCharsInRectEqual, Point, Rect, knownBug, vtLevel
 
 class DECSERATests(tests.fill_rectangle.FillRectangleTests):
   def __init__(self):
@@ -48,8 +48,6 @@ class DECSERATests(tests.fill_rectangle.FillRectangleTests):
   def test_DECSERA_invalidRectDoesNothing(self):
     self.fillRectangle_invalidRectDoesNothing()
 
-  @knownBug(terminal="xterm",
-            reason="xterm doesn't accept all default params for DECSERA, although it does work if there is a single semicolon")
   def test_DECSERA_defaultArgs(self):
     try:
       self._always_return_blank = True
@@ -69,6 +67,7 @@ class DECSERATests(tests.fill_rectangle.FillRectangleTests):
   def test_DECSERA_ignoresMargins(self):
     self.fillRectangle_ignoresMargins()
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSERA_doesNotRespectISOProtect(self):
     """DECSERA does not respect ISO protection."""

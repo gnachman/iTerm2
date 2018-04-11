@@ -2,10 +2,11 @@ from esc import NUL, blank
 import escargs
 import esccmd
 import escio
-from escutil import AssertEQ, GetCursorPosition, GetScreenSize, AssertScreenCharsInRectEqual, knownBug
+from escutil import AssertEQ, GetCursorPosition, GetScreenSize, AssertScreenCharsInRectEqual, knownBug, vtLevel
 from esctypes import Point, Rect
 
 class ICHTests(object):
+  @vtLevel(4)
   def test_ICH_DefaultParam(self):
     """ Test ICH with default parameter """
     esccmd.CUP(Point(1, 1))
@@ -18,6 +19,7 @@ class ICHTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 8, 1),
                                  [ "a" + blank() + "bcdefg" ])
 
+  @vtLevel(4)
   def test_ICH_ExplicitParam(self):
     """Test ICH with explicit parameter. """
     esccmd.CUP(Point(1, 1))
@@ -30,6 +32,7 @@ class ICHTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 9, 1),
                                  [ "a" + blank() + blank() + "bcdefg"])
 
+  @vtLevel(4)
   def test_ICH_IsNoOpWhenCursorBeginsOutsideScrollRegion(self):
     """Ensure ICH does nothing when the cursor starts out outside the scroll region."""
     esccmd.CUP(Point(1, 1))
@@ -51,6 +54,7 @@ class ICHTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, len(s), 1),
                                  [ s ])
 
+  @vtLevel(4)
   def test_ICH_ScrollOffRightEdge(self):
     """Test ICH behavior when pushing text off the right edge. """
     width = GetScreenSize().width()
@@ -66,7 +70,7 @@ class ICHTests(object):
     # Ensure there is no wrap-around.
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 2), [ NUL ])
 
-  @knownBug(terminal="xterm", reason="Asserts", shouldTry=False)
+  @vtLevel(4)
   def test_ICH_ScrollEntirelyOffRightEdge(self):
     """Test ICH behavior when pushing text off the right edge. """
     width = GetScreenSize().width()
@@ -82,6 +86,7 @@ class ICHTests(object):
     # Ensure there is no wrap-around.
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 2), [ NUL ])
 
+  @vtLevel(4)
   def test_ICH_ScrollOffRightMarginInScrollRegion(self):
     """Test ICH when cursor is within the scroll region."""
     esccmd.CUP(Point(1, 1))

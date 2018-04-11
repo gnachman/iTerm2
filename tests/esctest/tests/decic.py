@@ -10,7 +10,7 @@ class DECICTests(object):
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
-  @knownBug(terminal="xterm", reason="xterm requires left-right mode for DECIC")
+  @knownBug(terminal="notxterm", reason="xterm requires left-right mode for DECIC")
   def test_DECIC_DefaultParam(self):
     """ Test DECIC with default parameter """
     esccmd.CUP(Point(1, 1))
@@ -26,7 +26,7 @@ class DECICTests(object):
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
-  @knownBug(terminal="xterm", reason="xterm requires left-right mode for DECIC")
+  @knownBug(terminal="notxterm", reason="xterm requires left-right mode for DECIC")
   def test_DECIC_ExplicitParam(self):
     """Test DECIC with explicit parameter. Also verifies lines above and below
     the cursor are affected."""
@@ -71,7 +71,7 @@ class DECICTests(object):
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2",reason="Not implemented", noop=True)
-  @knownBug(terminal="xterm",
+  @knownBug(terminal="notxterm",
             reason="xterm requires left-right mode for DECIC",
             noop=True)
   def test_DECIC_IsNoOpWhenCursorBeginsOutsideScrollRegion(self):
@@ -98,7 +98,7 @@ class DECICTests(object):
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
-  @knownBug(terminal="xterm", reason="xterm requires left-right mode for DECIC")
+  @knownBug(terminal="notxterm", reason="xterm requires left-right mode for DECIC")
   def test_DECIC_ScrollOffRightEdge(self):
     """Test DECIC behavior when pushing text off the right edge. """
     width = GetScreenSize().width()
@@ -119,7 +119,7 @@ class DECICTests(object):
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
-  @knownBug(terminal="xterm", reason="xterm requires left-right mode for DECIC")
+  @knownBug(terminal="notxterm", reason="xterm requires left-right mode for DECIC")
   def test_DECIC_ScrollEntirelyOffRightEdge(self):
     """Test DECIC behavior when pushing text off the right edge. """
     width = GetScreenSize().width()

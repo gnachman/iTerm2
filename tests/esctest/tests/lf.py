@@ -1,7 +1,7 @@
 from esc import LF, NUL
 import esccmd
 import escio
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug, vtLevel
 from esctypes import Point, Rect
 
 class LFTests(object):
@@ -15,6 +15,7 @@ class LFTests(object):
     AssertEQ(position.x(), 5)
     AssertEQ(position.y(), 4)
 
+  @vtLevel(4)
   def test_LF_Scrolls(self):
     """LF scrolls when it hits the bottom."""
     height = GetScreenSize().height()
@@ -38,6 +39,7 @@ class LFTests(object):
     AssertEQ(GetCursorPosition().y(), height)
     AssertScreenCharsInRectEqual(Rect(2, height - 2, 2, height), [ "a", "b", NUL ])
 
+  @vtLevel(4)
   def test_LF_ScrollsInTopBottomRegionStartingAbove(self):
     """LF scrolls when it hits the bottom region (starting above top)."""
     esccmd.DECSTBM(4, 5)
@@ -51,6 +53,7 @@ class LFTests(object):
     AssertEQ(GetCursorPosition(), Point(2, 5))
     AssertScreenCharsInRectEqual(Rect(2, 4, 2, 5), [ "x", NUL ])
 
+  @vtLevel(4)
   def test_LF_ScrollsInTopBottomRegionStartingWithin(self):
     """LF scrolls when it hits the bottom region (starting within region)."""
     esccmd.DECSTBM(4, 5)
@@ -63,6 +66,7 @@ class LFTests(object):
     AssertEQ(GetCursorPosition(), Point(2, 5))
     AssertScreenCharsInRectEqual(Rect(2, 4, 2, 5), [ "x", NUL ])
 
+  @vtLevel(4)
   def test_LF_MovesDoesNotScrollOutsideLeftRight(self):
     """Cursor moves down but won't scroll when outside left-right region."""
     esccmd.DECSTBM(2, 5)
@@ -103,6 +107,7 @@ class LFTests(object):
     AssertEQ(GetCursorPosition(), Point(1, height))
     AssertScreenCharsInRectEqual(Rect(3, 5, 3, 5), [ "x" ])
 
+  @vtLevel(4)
   def test_LF_StopsAtBottomLineWhenBegunBelowScrollRegion(self):
     """When the cursor starts below the scroll region, index moves it down to the
     bottom of the screen but won't scroll."""

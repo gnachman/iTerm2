@@ -1,7 +1,7 @@
 import esc
 import esccmd
 import escio
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug, vtLevel
 from esctypes import Point, Rect
 
 class BSTests(object):
@@ -36,6 +36,7 @@ class BSTests(object):
     escio.Write(esc.BS)
     AssertEQ(GetCursorPosition(), Point(1, 3))
 
+  @vtLevel(4)
   def test_BS_ReverseWrapWithLeftRight(self):
     esccmd.DECSET(esccmd.DECAWM)
     esccmd.DECSET(esccmd.ReverseWraparound)
@@ -45,6 +46,7 @@ class BSTests(object):
     escio.Write(esc.BS)
     AssertEQ(GetCursorPosition(), Point(10, 2))
 
+  @vtLevel(4)
   def test_BS_ReversewrapFromLeftEdgeToRightMargin(self):
     """If cursor starts at left edge of screen, left of left margin, backspace
     takes it to the right margin."""
@@ -56,16 +58,16 @@ class BSTests(object):
     escio.Write(esc.BS)
     AssertEQ(GetCursorPosition(), Point(10, 2))
 
-  @knownBug(terminal="xterm",
-            reason="BS wraps past top margin. Bad idea in my opinion, but there is no standard for reverse wrap.")
+  # The other tests assume reverse-wrap follows margins - modified this for consistency
   def test_BS_ReverseWrapWontPassTop(self):
     esccmd.DECSET(esccmd.DECAWM)
     esccmd.DECSET(esccmd.ReverseWraparound)
     esccmd.DECSTBM(2, 5)
     esccmd.CUP(Point(1, 2))
     escio.Write(esc.BS)
-    AssertEQ(GetCursorPosition(), Point(1, 2))
+    AssertEQ(GetCursorPosition(), Point(80, 5))
 
+  @vtLevel(4)
   def test_BS_StopsAtLeftMargin(self):
     esccmd.DECSET(esccmd.DECLRMM)
     esccmd.DECSLRM(5, 10)
@@ -74,6 +76,7 @@ class BSTests(object):
     esccmd.DECRESET(esccmd.DECLRMM)
     AssertEQ(GetCursorPosition(), Point(5, 1))
 
+  @vtLevel(4)
   def test_BS_MovesLeftWhenLeftOfLeftMargin(self):
     esccmd.DECSET(esccmd.DECLRMM)
     esccmd.DECSLRM(5, 10)
@@ -87,6 +90,7 @@ class BSTests(object):
     escio.Write(esc.BS)
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
+  @vtLevel(4)
   def test_BS_CursorStartsInDoWrapPosition(self):
     """Cursor is right of right edge of screen."""
     size = GetScreenSize()

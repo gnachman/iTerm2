@@ -1,12 +1,13 @@
 from esc import NUL
 import esccmd
 import escio
-from escutil import AssertScreenCharsInRectEqual, GetScreenSize
+from escutil import AssertScreenCharsInRectEqual, GetScreenSize, vtLevel
 from esctypes import Point, Rect
 
 # AM, SRM, and LNM should also be supported but are not currently testable
 # because they require user interaction.
 class RMTests(object):
+  @vtLevel(4)
   def test_RM_IRM(self):
     # First turn on insert mode
     esccmd.SM(esccmd.IRM)

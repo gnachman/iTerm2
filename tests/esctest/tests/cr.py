@@ -1,7 +1,7 @@
 import esc
 import esccmd
 import escio
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug, vtLevel
 from esctypes import Point, Rect
 
 class CRTests(object):
@@ -10,6 +10,7 @@ class CRTests(object):
     escio.Write(esc.CR)
     AssertEQ(GetCursorPosition(), Point(1, 3))
 
+  @vtLevel(4)
   def test_CR_MovesToLeftMarginWhenRightOfLeftMargin(self):
     """Move the cursor to the left margin if it starts right of it."""
     esccmd.DECSET(esccmd.DECLRMM)
@@ -19,6 +20,7 @@ class CRTests(object):
     esccmd.DECRESET(esccmd.DECLRMM)
     AssertEQ(GetCursorPosition(), Point(5, 1))
 
+  @vtLevel(4)
   def test_CR_MovesToLeftOfScreenWhenLeftOfLeftMargin(self):
     """Move the cursor to the left edge of the screen when it starts of left the margin."""
     esccmd.DECSET(esccmd.DECLRMM)
@@ -28,6 +30,7 @@ class CRTests(object):
     esccmd.DECRESET(esccmd.DECLRMM)
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
+  @vtLevel(4)
   def test_CR_StaysPutWhenAtLeftMargin(self):
     esccmd.DECSET(esccmd.DECLRMM)
     esccmd.DECSLRM(5, 10)
@@ -36,6 +39,7 @@ class CRTests(object):
     esccmd.DECRESET(esccmd.DECLRMM)
     AssertEQ(GetCursorPosition(), Point(5, 1))
 
+  @vtLevel(4)
   def test_CR_MovesToLeftMarginWhenLeftOfLeftMarginInOriginMode(self):
     """In origin mode, always go to the left margin, even if the cursor starts left of it."""
     esccmd.DECSET(esccmd.DECLRMM)
