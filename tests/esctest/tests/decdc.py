@@ -6,10 +6,11 @@ from escutil import AssertEQ, GetCursorPosition, GetScreenSize, AssertScreenChar
 from esctypes import Point, Rect
 import time
 
+# Refer to DEC STD 070.
+
 class DECDCTests(object):
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
-  @knownBug(terminal="xterm", reason="xterm requires left-right mode for DECDC")
   def test_DECDC_DefaultParam(self):
     """Test DECDC with default parameter """
     esccmd.CUP(Point(1, 1))
@@ -25,7 +26,6 @@ class DECDCTests(object):
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
-  @knownBug(terminal="xterm", reason="xterm requires left-right mode for DECDC")
   def test_DECDC_ExplicitParam(self):
     """Test DECDC with explicit parameter. Also verifies lines above and below
     the cursor are affected."""
@@ -70,9 +70,6 @@ class DECDCTests(object):
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2",reason="Not implemented", noop=True)
-  @knownBug(terminal="xterm",
-            reason="xterm requires left-right mode for DECDC",
-            noop=True)
   def test_DECDC_IsNoOpWhenCursorBeginsOutsideScrollRegion(self):
     """Ensure DECDC does nothing when the cursor starts out outside the scroll
     region."""
@@ -97,7 +94,6 @@ class DECDCTests(object):
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
-  @knownBug(terminal="xterm", reason="xterm requires left-right mode for DECDC")
   def test_DECDC_DeleteAll(self):
     """Test DECDC behavior when deleting more columns than are available."""
     width = GetScreenSize().width()

@@ -1,5 +1,5 @@
 import esccmd
-from escutil import AssertEQ, GetCursorPosition, GetScreenSize
+from escutil import AssertEQ, GetCursorPosition, GetScreenSize, vtLevel
 from esctypes import Point
 
 class CPLTests(object):
@@ -28,6 +28,7 @@ class CPLTests(object):
     AssertEQ(position.x(), 1)
     AssertEQ(position.y(), 1)
 
+  @vtLevel(4)
   def test_CPL_StopsAtTopLineWhenBegunAboveScrollRegion(self):
     """When the cursor starts above the scroll region, CPL moves it up to the
     top of the screen."""
@@ -48,6 +49,7 @@ class CPLTests(object):
     AssertEQ(position.y(), 1)
     AssertEQ(position.x(), 5)
 
+  @vtLevel(4)
   def test_CPL_StopsAtTopMarginInScrollRegion(self):
     """When the cursor starts within the scroll region, CPL moves it up to the
     top margin but no farther."""

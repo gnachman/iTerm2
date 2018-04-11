@@ -1,4 +1,5 @@
 from esc import ESC
+from escutil import AssertVTLevel
 import escargs
 import escio
 
@@ -41,7 +42,6 @@ DECSCLM = 4
 DECSCNM = 5
 DECTCEM = 25
 DECVCCM = 61
-DECVSSM = 69
 DECXRLM = 73
 MoreFix = 41  # Work around bug in more(1) (see details in test_DECSET_MoreFix)
 OPT_ALTBUF = 1047  # Switch to alt buf. DECRESET first clears the alt buf.
@@ -60,6 +60,8 @@ WINOP_FULLSCREEN = 10
 WINOP_REPORT_WINDOW_STATE = 11
 WINOP_REPORT_WINDOW_POSITION = 13
 WINOP_REPORT_WINDOW_SIZE_PIXELS = 14
+WINOP_REPORT_SCREEN_SIZE_PIXELS = 15
+WINOP_REPORT_CHAR_SIZE_PIXELS = 16
 WINOP_REPORT_TEXT_AREA_CHARS = 18
 WINOP_REPORT_SCREEN_SIZE_CHARS = 19
 WINOP_REPORT_ICON_LABEL = 20
@@ -68,6 +70,7 @@ WINOP_PUSH_TITLE = 22
 WINOP_POP_TITLE = 23
 
 # WINOP_MAXIMIZE sub-commands
+WINOP_MAXIMIZE_EXIT = 0
 WINOP_MAXIMIZE_HV = 1
 WINOP_MAXIMIZE_V = 2
 WINOP_MAXIMIZE_H = 3
@@ -386,6 +389,7 @@ def DECRQCRA(Pid, Pp=None, rect=None):
   # xterm versions 314 and earlier incorrectly expect the Pid in the second
   # argument and ignore Pp.
   # For the time being, iTerm2 is compatible with the bug.
+  AssertVTLevel(4,"DECRQCRA")
   if not escargs.args.disable_xterm_checksum_bug:
     Pid, Pp = Pp, Pid
 
@@ -403,12 +407,14 @@ def DECRQCRA(Pid, Pp=None, rect=None):
 
 def DECRQM(mode, DEC):
   """Requests if a mode is set or not."""
+  AssertVTLevel(3,"DECRQM")
   if DEC:
     escio.WriteCSI(params=[ mode ], intermediate='$', prefix='?', final='p')
   else:
     escio.WriteCSI(params=[ mode ], intermediate='$', final='p')
 
 def DECRQSS(Pt):
+  AssertVTLevel(4,"DECRQSS")
   escio.WriteDCS("$q", Pt)
 
 def DECRESET(Pm):
@@ -470,6 +476,7 @@ def DECSEL(Ps=None):
 
 def DECSERA(Pt, Pl, Pb, Pr):
   """Selective erase rectangle."""
+  AssertVTLevel(4,"DECSERA")
   escio.WriteCSI(params=[ Pt, Pl, Pb, Pr ], intermediate="$", final="{")
 
 def DECSET(Pm):
@@ -478,6 +485,7 @@ def DECSET(Pm):
 
 def DECSLRM(Pl, Pr):
   """Set the left and right margins."""
+  AssertVTLevel(4,"DECSLRM")
   escio.WriteCSI(params=[ Pl, Pr ], final='s')
 
 def DECSTBM(top=None, bottom=None):

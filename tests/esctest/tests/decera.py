@@ -17,8 +17,6 @@ class DECERATests(tests.fill_rectangle.FillRectangleTests):
   def test_DECERA_invalidRectDoesNothing(self):
     self.fillRectangle_invalidRectDoesNothing()
 
-  @knownBug(terminal="xterm",
-            reason="xterm doesn't accept all default params for DECERA, although it does work if there is a single semicolon")
   def test_DECERA_defaultArgs(self):
     self.fillRectangle_defaultArgs()
 

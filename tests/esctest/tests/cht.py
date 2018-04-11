@@ -1,6 +1,6 @@
 import esccmd
 from esctypes import Point
-from escutil import AssertEQ, GetCursorPosition, knownBug
+from escutil import AssertEQ, GetCursorPosition, knownBug, vtLevel
 
 class CHTTests(object):
   @knownBug(terminal="iTerm2", reason="iTerm2 doesn't support CHT")
@@ -15,8 +15,8 @@ class CHTTests(object):
     position = GetCursorPosition()
     AssertEQ(position.x(), 17)
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="iTerm2 doesn't support CHT")
-  @knownBug(terminal="xterm", reason="xterm respects scrolling regions for CHT")
   def test_CHT_IgnoresScrollingRegion(self):
     # Set a scroll region.
     esccmd.DECSET(esccmd.DECLRMM)
@@ -30,13 +30,13 @@ class CHTTests(object):
     position = GetCursorPosition()
     AssertEQ(position.x(), 17)
 
-    # Ensure that we can tab out of the region
+    # Ensure that we can't tab out of the region
     esccmd.CHT(2)
     position = GetCursorPosition()
-    AssertEQ(position.x(), 33)
+    AssertEQ(position.x(), 30)
 
     # Try again, starting before the region.
     esccmd.CUP(Point(1, 9))
     esccmd.CHT(9)
     position = GetCursorPosition()
-    AssertEQ(position.x(), 73)
+    AssertEQ(position.x(), 30)

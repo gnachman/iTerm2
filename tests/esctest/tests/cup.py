@@ -1,6 +1,6 @@
 import esccmd
 import escio
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug, vtLevel
 from esctypes import Point, Rect
 
 class CUPTests(object):
@@ -63,6 +63,7 @@ class CUPTests(object):
     AssertEQ(position.x(), size.width())
     AssertEQ(position.y(), size.height())
 
+  @vtLevel(4)
   def test_CUP_RespectsOriginMode(self):
     """CUP is relative to margins in origin mode."""
     # Set a scroll region.

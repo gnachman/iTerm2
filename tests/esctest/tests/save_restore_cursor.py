@@ -21,8 +21,9 @@
 #     XTerm extension, same as ESC 7 but can be disabled by a resource.
 import esc
 import esccmd
+import escargs
 import escio
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, Rect, knownBug
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, Rect, exclusiveVariant, inclusiveVariant, knownBug, vtLevel
 from esctypes import Point
 
 class SaveRestoreCursorTests(object):
@@ -41,6 +42,7 @@ class SaveRestoreCursorTests(object):
     self.restoreCursor()
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
+  @vtLevel(4)
   def test_SaveRestoreCursor_ResetsOriginMode(self):
     esccmd.CUP(Point(5, 6))
     self.saveCursor()
@@ -70,6 +72,7 @@ class SaveRestoreCursorTests(object):
     # Ensure the X was placed at the true origin
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "X" ])
 
+  @vtLevel(4)
   def test_SaveRestoreCursor_WorksInLRM(self, shouldWork=True):
     """Subclasses may cause shouldWork to be set to false."""
     esccmd.CUP(Point(2, 3))
@@ -87,6 +90,7 @@ class SaveRestoreCursorTests(object):
     else:
       AssertEQ(GetCursorPosition(), Point(2, 3))
 
+  # This is xterm-specific, not DEC.
   def test_SaveRestoreCursor_AltVsMain(self):
     """Separate saved cursor in alt screen vs main screen."""
     esccmd.CUP(Point(2, 3))
@@ -106,6 +110,7 @@ class SaveRestoreCursorTests(object):
     self.restoreCursor()
     AssertEQ(GetCursorPosition(), Point(6, 7))
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSCA and DECSERA not implemented", noop=True)
   def test_SaveRestoreCursor_Protection(self):
     # Turn on protection and save
@@ -121,7 +126,23 @@ class SaveRestoreCursorTests(object):
     esccmd.DECSERA(1, 1, 1, 1)
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "a" ])
 
-  def test_SaveRestoreCursor_Wrap(self):
+  @inclusiveVariant(terminals=["xterm"], "See bug-fix in xterm 328")
+  def test_SaveRestoreCursor_Wrap_xterm(self):
+    # Turn on wrap and save
+    esccmd.DECSET(esccmd.DECAWM)
+    self.saveCursor()
+
+    # Turn off and restore
+    esccmd.DECRESET(esccmd.DECAWM)
+    self.restoreCursor()
+
+    # See if we're wrapping.
+    esccmd.CUP(Point(GetScreenSize().width() - 1, 1))
+    escio.Write("abcd")
+    AssertEQ(GetCursorPosition().y(), 1)
+
+  @exclusiveVariant(terminals=["xterm"], "See bug-fix in xterm 328")
+  def test_SaveRestoreCursor_Wrap_notxterm(self):
     # Turn on wrap and save
     esccmd.DECSET(esccmd.DECAWM)
     self.saveCursor()
@@ -149,6 +170,7 @@ class SaveRestoreCursorTests(object):
     escio.Write(esc.BS)
     AssertEQ(GetCursorPosition().x(), 1)
 
+  @vtLevel(4)
   def test_SaveRestoreCursor_InsertNotAffected(self):
     # Turn on insert and save
     esccmd.SM(esccmd.IRM)

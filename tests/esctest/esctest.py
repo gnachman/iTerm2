@@ -101,6 +101,10 @@ def RunTest(name, method):
     RemoveSideChannel()
     escutil.AssertAssertionAsserted()
     esclog.LogInfo("Passed.")
+  except esctypes.Excluded, e:
+    RemoveSideChannel()
+    esclog.LogInfo("Excluded: " + str(e))
+    ok = None
   except esctypes.KnownBug, e:
     RemoveSideChannel()
     esclog.LogInfo("Fails as expected: " + str(e))

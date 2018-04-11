@@ -1,6 +1,6 @@
 import esccmd
 import escio
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug, vtLevel
 from esctypes import Point, Rect
 
 class HVPTests(object):
@@ -63,6 +63,7 @@ class HVPTests(object):
     AssertEQ(position.x(), size.width())
     AssertEQ(position.y(), size.height())
 
+  @vtLevel(4)
   def test_HVP_RespectsOriginMode(self):
     """HVP is relative to margins in origin mode."""
     # Set a scroll region.

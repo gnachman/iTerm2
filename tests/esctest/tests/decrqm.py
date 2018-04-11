@@ -53,6 +53,7 @@ class DECRQMTests(object):
 
   # Modifiable ANSI modes ----------------------------------------------------
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.")
   def test_DECRQM(self):
     """See if DECRQM works at all. Unlike all the other tests, this one should
@@ -62,18 +63,22 @@ class DECRQMTests(object):
     terminal."""
     AssertEQ(len(self.requestAnsiMode(esccmd.IRM)), 2)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_KAM(self):
     self.doModifiableAnsiTest(esccmd.KAM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_IRM(self):
     self.doModifiableAnsiTest(esccmd.IRM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_SRM(self):
     self.doModifiableAnsiTest(esccmd.SRM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_LNM(self):
     self.doModifiableAnsiTest(esccmd.LNM)
@@ -81,50 +86,62 @@ class DECRQMTests(object):
 
   # Permanently reset ANSI modes ----------------------------------------------
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_GATM(self):
     self.doPermanentlyResetAnsiTest(esccmd.GATM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_SRTM(self):
     self.doPermanentlyResetAnsiTest(esccmd.SRTM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_VEM(self):
     self.doPermanentlyResetAnsiTest(esccmd.VEM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_HEM(self):
     self.doPermanentlyResetAnsiTest(esccmd.HEM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_PUM(self):
     self.doPermanentlyResetAnsiTest(esccmd.PUM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_FEAM(self):
     self.doPermanentlyResetAnsiTest(esccmd.FEAM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_FETM(self):
     self.doPermanentlyResetAnsiTest(esccmd.FETM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_MATM(self):
     self.doPermanentlyResetAnsiTest(esccmd.MATM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_TTM(self):
     self.doPermanentlyResetAnsiTest(esccmd.TTM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_SATM(self):
     self.doPermanentlyResetAnsiTest(esccmd.SATM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_TSM(self):
     self.doPermanentlyResetAnsiTest(esccmd.TSM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_ANSI_EBM(self):
     self.doPermanentlyResetAnsiTest(esccmd.EBM)
@@ -132,10 +149,12 @@ class DECRQMTests(object):
 
   # Modifiable DEC modes ------------------------------------------------------
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECCKM(self):
     self.doModifiableDecTest(esccmd.DECCKM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECCOLM(self):
     needsPermission = escargs.args.expected_terminal in [ "xterm", "iTerm2" ]
@@ -145,96 +164,117 @@ class DECRQMTests(object):
     if needsPermission:
       esccmd.DECRESET(esccmd.Allow80To132)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECSCLM(self):
     self.doModifiableDecTest(esccmd.DECSCLM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECSCNM(self):
     self.doModifiableDecTest(esccmd.DECSCNM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECOM(self):
     self.doModifiableDecTest(esccmd.DECOM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECAWM(self):
     self.doModifiableDecTest(esccmd.DECAWM)
 
+  @vtLevel(3)
   @knownBug(terminal="xterm",
             reason="xterm always returns 4 (permanently reset)")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECARM(self):
     self.doModifiableDecTest(esccmd.DECARM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECPFF(self):
     self.doModifiableDecTest(esccmd.DECPFF)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECPEX(self):
     self.doModifiableDecTest(esccmd.DECPEX)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECTCEM(self):
     self.doModifiableDecTest(esccmd.DECTCEM)
 
+  @vtLevel(5)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECRLM(self):
     self.doModifiableDecTest(esccmd.DECRLM)
 
+  @vtLevel(5)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECHEBM(self):
     self.doModifiableDecTest(esccmd.DECHEBM)
 
+  @vtLevel(5)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECHEM(self):
     """Hebrew encoding mode."""
     self.doModifiableDecTest(esccmd.DECHEM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECNRCM(self):
     self.doModifiableDecTest(esccmd.DECNRCM)
 
+  @vtLevel(5)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECNAKB(self):
     self.doModifiableDecTest(esccmd.DECNAKB)
 
+  @vtLevel(3)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECVCCM(self):
     self.doModifiableDecTest(esccmd.DECVCCM)
 
+  @vtLevel(3)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECPCCM(self):
     self.doModifiableDecTest(esccmd.DECPCCM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECNKM(self):
     self.doModifiableDecTest(esccmd.DECNKM)
 
+  @vtLevel(3)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECBKM(self):
     self.doModifiableDecTest(esccmd.DECBKM)
 
+  @vtLevel(3)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECKBUM(self):
     self.doModifiableDecTest(esccmd.DECKBUM)
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
-  def test_DECRQM_DEC_DECVSSM(self):
-    self.doModifiableDecTest(esccmd.DECVSSM)
+  def test_DECRQM_DEC_DECLRMM(self):
+    self.doModifiableDecTest(esccmd.DECLRMM)
 
+  @vtLevel(4)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECXRLM(self):
     self.doModifiableDecTest(esccmd.DECXRLM)
 
+  @vtLevel(4)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECKPM(self):
@@ -253,52 +293,62 @@ class DECRQMTests(object):
     if needsPermission:
       esccmd.DECRESET(esccmd.Allow80To132)
 
+  @vtLevel(5)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECRLCM(self):
     self.doModifiableDecTest(esccmd.DECRLCM)
 
+  @vtLevel(5)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECCRTSM(self):
     self.doModifiableDecTest(esccmd.DECCRTSM)
 
+  @vtLevel(5)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECARSM(self):
     self.doModifiableDecTest(esccmd.DECARSM)
 
+  @vtLevel(5)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECMCM(self):
     self.doModifiableDecTest(esccmd.DECMCM)
 
+  @vtLevel(5)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECAAM(self):
     self.doModifiableDecTest(esccmd.DECAAM)
 
+  @vtLevel(5)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECCANSM(self):
     self.doModifiableDecTest(esccmd.DECCANSM)
 
+  @vtLevel(5)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECNULM(self):
     self.doModifiableDecTest(esccmd.DECNULM)
 
+  @vtLevel(5)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECHDPXM(self):
     """Set duplex."""
     self.doModifiableDecTest(esccmd.DECHDPXM)
 
+  @vtLevel(5)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECESKM(self):
     self.doModifiableDecTest(esccmd.DECESKM)
 
+  @vtLevel(5)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECOSCNM(self):
@@ -306,6 +356,7 @@ class DECRQMTests(object):
 
   # Permanently Reset DEC Modes -----------------------------------------------
 
+  @vtLevel(3)
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECHCCM(self):

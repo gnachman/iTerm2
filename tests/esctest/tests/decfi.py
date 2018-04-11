@@ -53,8 +53,6 @@ class DECFITests(object):
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented.")
-  @knownBug(terminal="xterm",
-            reason="While the docs for DECFI are self-contradictory, I believe the cursor should move in this case. xterm does not move it.")
   def test_DECFI_RightOfMargin(self):
     esccmd.DECSET(esccmd.DECLRMM)
     esccmd.DECSLRM(3, 5)
@@ -67,10 +65,8 @@ class DECFITests(object):
   @intentionalDeviationFromSpec(terminal="xterm",
                                 reason="The spec says 'If the cursor is at the right border of the page when the terminal receives DECFI, then the terminal ignores DECFI', but that only makes sense when the right margin is not at the right edge of the screen.")
   def test_DECFI_WholeScreenScrolls(self):
-    """The spec is confusing and contradictory. It first says "If the cursor is
-    at the right margin, then all screen data within the margin moves one column
-    to the left" and then says "DECFI is not affected by the margins." I don't
-    know what they could mean by the second part."""
+    """Refer to DEC STD 070, says if the cursor is at the right edge of the
+    page (outside the margins) the command is ignored."""
     size = GetScreenSize()
     esccmd.CUP(Point(size.width(), 1))
     escio.Write("x")

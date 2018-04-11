@@ -1,6 +1,6 @@
 import esccmd
 import escio
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug, vtLevel
 from esctypes import Point, Rect
 
 class VPATests(object):
@@ -39,6 +39,7 @@ class VPATests(object):
     AssertEQ(position.x(), 6)
     AssertEQ(position.y(), 2)
 
+  @vtLevel(4)
   def test_VPA_IgnoresOriginMode(self):
     """VPA does not respect origin mode."""
     # Set a scroll region.

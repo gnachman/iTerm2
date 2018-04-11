@@ -26,6 +26,10 @@ class KnownBug(Exception):
   def __init__(self, reason):
     super(KnownBug, self).__init__(reason)
 
+class Excluded(Exception):
+  def __init__(self, reason):
+    super(Excluded, self).__init__(reason)
+
 class BrokenTest(Exception):
   def __init__(self, reason):
     super(BrokenTest, self).__init__(reason)

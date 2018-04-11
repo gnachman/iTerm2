@@ -2,7 +2,7 @@ from esc import NUL, blank
 import escargs
 import esccmd
 import escio
-from escutil import AssertScreenCharsInRectEqual, knownBug
+from escutil import AssertScreenCharsInRectEqual, knownBug, vtLevel
 from esctypes import Point, Rect
 
 class DECSEDTests(object):
@@ -43,6 +43,7 @@ class DECSEDTests(object):
 
     esccmd.CUP(Point(2, 3))
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_Default(self):
     """Should be the same as DECSED_0."""
@@ -55,6 +56,7 @@ class DECSEDTests(object):
                                    NUL * 3,
                                    NUL * 3 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_0(self):
     """Erase after cursor."""
@@ -67,6 +69,7 @@ class DECSEDTests(object):
                                    NUL * 3,
                                    NUL * 3 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_1(self):
     """Erase before cursor."""
@@ -79,6 +82,7 @@ class DECSEDTests(object):
                                    NUL * 3,
                                    "e" + NUL * 2 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_2(self):
     """Erase whole screen."""
@@ -91,6 +95,7 @@ class DECSEDTests(object):
                                    NUL * 3,
                                    NUL * 3 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented", noop=True)
   def test_DECSED_3(self):
     """xterm supports a "3" parameter, which also erases scrollback history. There
@@ -106,6 +111,7 @@ class DECSEDTests(object):
                                    NUL * 3,
                                    "e" + NUL * 2 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_0_WithScrollRegion(self):
     """Erase after cursor with a scroll region present. The scroll region is ignored."""
@@ -122,6 +128,7 @@ class DECSEDTests(object):
                                    "fg" + NUL * 3,
                                    NUL * 5 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_1_WithScrollRegion(self):
     """Erase before cursor with a scroll region present. The scroll region is ignored."""
@@ -138,6 +145,7 @@ class DECSEDTests(object):
                                    blank() * 3 + "ij",
                                    "klmno" ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_2_WithScrollRegion(self):
     """Erase whole screen with a scroll region present. The scroll region is ignored."""
@@ -154,6 +162,7 @@ class DECSEDTests(object):
                                    NUL * 5,
                                    NUL * 5 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_Default_Protection(self):
     """Should be the same as DECSED_0."""
@@ -174,6 +183,7 @@ class DECSEDTests(object):
                                    NUL * 3,
                                    "e" + NUL * 2 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_DECSCA_2(self):
     """DECSCA 2 should be the same as DECSCA 0."""
@@ -194,6 +204,7 @@ class DECSEDTests(object):
                                    NUL * 3,
                                    "e" + NUL * 2 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_0_Protection(self):
     """Erase after cursor."""
@@ -216,6 +227,7 @@ class DECSEDTests(object):
                                    NUL * 3,
                                    "e" + NUL * 2 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_1_Protection(self):
     """Erase before cursor."""
@@ -236,6 +248,7 @@ class DECSEDTests(object):
                                    NUL * 3,
                                    "e" + NUL * 2 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_2_Protection(self):
     """Erase whole screen."""
@@ -256,6 +269,7 @@ class DECSEDTests(object):
                                    NUL * 3,
                                    "e" + NUL * 2 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented", noop=True)
   def test_DECSED_3_Protection(self):
     """xterm supports a "3" parameter, which also erases scrollback history. There
@@ -277,6 +291,7 @@ class DECSEDTests(object):
                                    NUL * 3,
                                    "e" + NUL * 2 ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_0_WithScrollRegion_Protection(self):
     """Erase after cursor with a scroll region present. The scroll region is ignored."""
@@ -306,6 +321,7 @@ class DECSEDTests(object):
                                    "fghij",
                                    blank() + "lmno" ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_1_WithScrollRegion_Protection(self):
     """Erase after cursor with a scroll region present. The scroll region is ignored."""
@@ -335,6 +351,7 @@ class DECSEDTests(object):
                                    "fghij",
                                    "klmno" ])
 
+  @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_2_WithScrollRegion_Protection(self):
     """Erase whole screen with a scroll region present. The scroll region is ignored."""
@@ -358,6 +375,7 @@ class DECSEDTests(object):
                                    "fghij",
                                    "klmno" ])
 
+  @vtLevel(4)
   @knownBug(terminal="xterm",
             reason="DECSED respects ISO protection for backward compatibility reasons, per email from Thomas")
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")

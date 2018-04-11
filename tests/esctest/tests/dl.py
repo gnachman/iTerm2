@@ -2,7 +2,7 @@ from esc import NUL
 import esccmd
 import escio
 from esctypes import Point, Rect
-from escutil import AssertScreenCharsInRectEqual, GetScreenSize, knownBug
+from escutil import AssertScreenCharsInRectEqual, GetScreenSize, knownBug, vtLevel
 
 class DLTests(object):
   def prepare(self):
@@ -37,6 +37,7 @@ class DLTests(object):
       escio.Write(line)
     esccmd.CUP(Point(3, 2))
 
+  @vtLevel(4)
   def test_DL_DefaultParam(self):
     """DL with no parameter should delete a single line."""
     # Set up the screen with 0001, 0002, ..., height
@@ -58,6 +59,7 @@ class DLTests(object):
     expected_lines.append(NUL * 4);
     AssertScreenCharsInRectEqual(Rect(1, 1, 4, height), expected_lines);
 
+  @vtLevel(4)
   def test_DL_ExplicitParam(self):
     """DL should delete the given number of lines."""
     # Set up the screen with 0001, 0002, ..., height
@@ -81,6 +83,7 @@ class DLTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 4, height), expected_lines);
 
+  @vtLevel(4)
   def test_DL_DeleteMoreThanVisible(self):
     """Test passing a too-big parameter to DL."""
     # Set up the screen with 0001, 0002, ..., height
@@ -98,6 +101,7 @@ class DLTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 4, height), expected_lines);
 
+  @vtLevel(4)
   def test_DL_InScrollRegion(self):
     """Test that DL does the right thing when the cursor is inside the scroll
     region."""
@@ -114,6 +118,7 @@ class DLTests(object):
                        "uvwxy" ]
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5), expected_lines);
 
+  @vtLevel(4)
   def test_DL_OutsideScrollRegion(self):
     """Test that DL does nothing when the cursor is outside the scroll
     region."""
@@ -131,6 +136,7 @@ class DLTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5), expected_lines);
 
+  @vtLevel(4)
   def test_DL_InLeftRightScrollRegion(self):
     """Test that DL respects left-right margins."""
     self.prepareForRegion()
@@ -148,8 +154,7 @@ class DLTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5), expected_lines);
 
-  @knownBug(terminal="xterm",
-            reason="xterm erases the area inside the scroll region incorrectly")
+  @vtLevel(4)
   def test_DL_OutsideLeftRightScrollRegion(self):
     """Test that DL does nothing outside a left-right margin."""
     self.prepareForRegion()
@@ -167,6 +172,7 @@ class DLTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5), expected_lines);
 
+  @vtLevel(4)
   def test_DL_InLeftRightAndTopBottomScrollRegion(self):
     """Test that DL respects left-right margins together with top-bottom."""
     self.prepareForRegion()
@@ -186,6 +192,7 @@ class DLTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5), expected_lines);
 
+  @vtLevel(4)
   def test_DL_ClearOutLeftRightAndTopBottomScrollRegion(self):
     """Erase the whole scroll region with both kinds of margins."""
     self.prepareForRegion()
@@ -205,6 +212,7 @@ class DLTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5), expected_lines);
 
+  @vtLevel(4)
   def test_DL_OutsideLeftRightAndTopBottomScrollRegion(self):
     """Test that DL does nothing outside left-right margins together with top-bottom."""
     self.prepareForRegion()

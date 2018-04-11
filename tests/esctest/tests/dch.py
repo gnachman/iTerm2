@@ -2,9 +2,10 @@ from esc import NUL
 import esccmd
 import escio
 from esctypes import Point, Rect
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug, vtLevel
 
 class DCHTests(object):
+  @vtLevel(4)
   def test_DCH_DefaultParam(self):
     """DCH with no parameter should delete one character at the cursor."""
     escio.Write("abcd")
@@ -12,6 +13,7 @@ class DCHTests(object):
     esccmd.DCH()
     AssertScreenCharsInRectEqual(Rect(1, 1, 4, 1), [ "acd" + NUL ]);
 
+  @vtLevel(4)
   def test_DCH_ExplicitParam(self):
     """DCH deletes the specified number of parameters."""
     escio.Write("abcd")
@@ -19,6 +21,7 @@ class DCHTests(object):
     esccmd.DCH(2)
     AssertScreenCharsInRectEqual(Rect(1, 1, 4, 1), [ "ad" + NUL * 2 ]);
 
+  @vtLevel(4)
   def test_DCH_RespectsMargins(self):
     """DCH respects left-right margins."""
     escio.Write("abcde")
@@ -30,6 +33,7 @@ class DCHTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 1), [ "abd" + NUL + "e" ]);
 
+  @vtLevel(4)
   def test_DCH_DeleteAllWithMargins(self):
     """Delete all characters up to right margin."""
     escio.Write("abcde")
@@ -41,6 +45,7 @@ class DCHTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 1), [ "ab" + NUL * 2 + "e" ]);
 
+  @vtLevel(4)
   def test_DCH_DoesNothingOutsideLeftRightMargin(self):
     """DCH should do nothing outside left-right margins."""
     escio.Write("abcde")
@@ -52,6 +57,7 @@ class DCHTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 1), [ "abcde" ])
 
+  @vtLevel(4)
   def test_DCH_WorksOutsideTopBottomMargin(self):
     """Per Thomas Dickey, DCH should work outside scrolling margin (see xterm
     changelog for patch 316)."""

@@ -1,5 +1,5 @@
 import esccmd
-from escutil import AssertEQ, GetCursorPosition, GetScreenSize
+from escutil import AssertEQ, GetCursorPosition, GetScreenSize, vtLevel
 from esctypes import Point
 
 class CNLTests(object):
@@ -28,6 +28,7 @@ class CNLTests(object):
     AssertEQ(position.x(), 1)
     AssertEQ(position.y(), height)
 
+  @vtLevel(4)
   def test_CNL_StopsAtBottomLineWhenBegunBelowScrollRegion(self):
     """When the cursor starts below the scroll region, CNL moves it down to the
     bottom of the screen."""
@@ -48,6 +49,7 @@ class CNLTests(object):
     AssertEQ(position.y(), height)
     AssertEQ(position.x(), 5)
 
+  @vtLevel(4)
   def test_CNL_StopsAtBottomMarginInScrollRegion(self):
     """When the cursor starts within the scroll region, CNL moves it down to the
     bottom margin but no farther."""

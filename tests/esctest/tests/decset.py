@@ -50,8 +50,15 @@ import time
 
 # TODO: test DECANM. It sets the font to USASCII and sets VT100 mode
 class DECSETTests(object):
+  @vtLevel(4)
   def test_DECSET_DECCOLM(self):
     """Set 132 column mode."""
+
+    # DECNCSM - No Clearing Screen On Column Change
+    # Ensure this is reset from other tests. Otherwise DECCOLM will not
+    # erase the screen.
+    esccmd.DECRESET(esccmd.DECNCSM)
+
     # From the docs:
     # When the terminal receives the sequence, the screen is erased and the
     # cursor moves to the home position. This also sets the scrolling region
@@ -62,7 +69,7 @@ class DECSETTests(object):
 
     # Write something to verify that it gets erased
     esccmd.CUP(Point(5, 5))
-    escio.Write("x")
+    escio.Write("xyz")
 
     # Set left-right and top-bottom margins to ensure they're removed.
     esccmd.DECSTBM(1, 2)
@@ -91,6 +98,7 @@ class DECSETTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 2, 5, 3), [ "Hello", "World" ])
     AssertScreenCharsInRectEqual(Rect(5, 5, 5, 5), [ NUL ])
 
+  @vtLevel(4)
   def test_DECSET_DECOM(self):
     """Set origin mode. Cursor positioning is relative to the scroll region's
     top left."""
@@ -111,6 +119,7 @@ class DECSETTests(object):
     # mode, so this is an extra wrinkle in this test.
     AssertScreenCharsInRectEqual(Rect(5, 5, 5, 5), [ "X" ])
 
+  @vtLevel(4)
   def test_DECSET_DECOM_SoftReset(self):
     """Soft reset turns off DECOM."""
     esccmd.DECSTBM(5, 7)
@@ -124,6 +133,7 @@ class DECSETTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "X" ])
 
+  @vtLevel(4)
   def test_DECSET_DECOM_DECRQCRA(self):
     """DECRQCRA should be relative to the origin in origin mode. DECRQCRA
     doesn't have its own test so this is tested here instead."""
@@ -137,10 +147,7 @@ class DECSETTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "X" ])
 
-  # This test is flaky so I turned off shouldTry to avoid false failures.
-  @knownBug(terminal="xterm",
-            reason="xterm produces incorrect output if ABC is written too quickly. A pause before writing the C produces correct output.",
-            shouldTry=False)
+  @vtLevel(4)
   def test_DECSET_DECAWM(self):
     """Auto-wrap mode."""
     size = GetScreenSize()
@@ -181,8 +188,7 @@ class DECSETTests(object):
     escio.Write("x")
     AssertEQ(GetCursorPosition().x(), 2)
 
-  # xterm doesn't implement auto-wrap mode when wide characters are disabled.
-  @optionRejects(terminal="xterm", option=escargs.DISABLE_WIDE_CHARS)
+  @vtLevel(4)
   def test_DECSET_DECAWM_OnRespectsLeftRightMargin(self):
     """Auto-wrap mode on respects left-right margins."""
     esccmd.DECSET(esccmd.DECLRMM)
@@ -194,6 +200,7 @@ class DECSETTests(object):
 
     AssertScreenCharsInRectEqual(Rect(5, 8, 9, 9), [ NUL * 3 + "ab", "cdef" + NUL ])
 
+  @vtLevel(4)
   def test_DECSET_DECAWM_OffRespectsLeftRightMargin(self):
     """Auto-wrap mode off respects left-right margins."""
     esccmd.DECSET(esccmd.DECLRMM)
@@ -267,6 +274,7 @@ class DECSETTests(object):
     AssertEQ(GetCursorPosition().y(), 1)
     escio.Write("X")
 
+  @vtLevel(4)
   def test_DECSET_DECAWM_NoLineWrapOnTabWithLeftRightMargin(self):
     esccmd.DECSET(esccmd.DECAWM)
     esccmd.XTERM_WINOPS(esccmd.WINOP_RESIZE_CHARS,
@@ -286,6 +294,7 @@ class DECSETTests(object):
     escio.Write(TAB)
     AssertEQ(GetCursorPosition(), Point(20, 1))
 
+  @vtLevel(4)
   def test_DECSET_MoreFix(self):
     """xterm supports DECSET 41 to enable a fix for a bug in curses where it
     would draw to the end of a row and then insert a tab. When 41 is set, the
@@ -358,6 +367,7 @@ class DECSETTests(object):
     escio.Write(BS)
     AssertEQ(GetCursorPosition().x(), 1)
 
+  @vtLevel(4)
   def doAltBuftest(self, code, altGetsClearedBeforeToMain, cursorSaved, movesCursorOnEnter=False):
     """|code| is the code to test with, either 47 or 1047."""
     # Scribble in main screen
@@ -436,7 +446,7 @@ class DECSETTests(object):
     self.doAltBuftest(esccmd.OPT_ALTBUF_CURSOR, True, True, True)
 
   # xterm doesn't implement auto-wrap mode when wide characters are disabled.
-  @optionRejects(terminal="xterm", option=escargs.DISABLE_WIDE_CHARS)
+  @vtLevel(4)
   def test_DECSET_DECLRMM(self):
     """Left-right margin. This is tested extensively in many other places as well."""
     # Turn on margins and write.
@@ -452,6 +462,7 @@ class DECSETTests(object):
     escio.Write("ABCDEFGH")
     AssertScreenCharsInRectEqual(Rect(1, 1, 8, 1), [ "ABCDEFGH" ])
 
+  @vtLevel(4)
   def test_DECSET_DECLRMM_MarginsResetByDECSTR(self):
     esccmd.DECSLRM(2, 4)
     esccmd.DECSTR()
@@ -460,6 +471,7 @@ class DECSETTests(object):
     escio.Write("abc")
     AssertEQ(GetCursorPosition().x(), 6)
 
+  @vtLevel(4)
   def test_DECSET_DECLRMM_ModeNotResetByDECSTR(self):
     esccmd.DECSET(esccmd.DECLRMM)
     esccmd.DECSTR()

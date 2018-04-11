@@ -17,10 +17,10 @@ def Raise(e):
   if not escargs.args.force:
     raise e
 
-def AssertGE(actual, minimum):
+def AssertGE(actual, expected):
   global gHaveAsserted
   gHaveAsserted = True
-  if actual < minimum:
+  if actual < expected:
     Raise(esctypes.TestFailure(actual, expected))
 
 def AssertEQ(actual, expected):
@@ -53,6 +53,22 @@ def GetWindowSizePixels():
   AssertTrue(len(params) >= 3)
   return Size(params[2], params[1])
 
+def GetScreenSizePixels():
+  """Returns a Size giving the screen's size in pixels."""
+  esccmd.XTERM_WINOPS(esccmd.WINOP_REPORT_SCREEN_SIZE_PIXELS)
+  params = escio.ReadCSI("t")
+  AssertTrue(params[0] == 5)
+  AssertTrue(len(params) >= 3)
+  return Size(params[2], params[1])
+
+def GetCharSizePixels():
+  """Returns a Size giving the font's character-size in pixels."""
+  esccmd.XTERM_WINOPS(esccmd.WINOP_REPORT_CHAR_SIZE_PIXELS)
+  params = escio.ReadCSI("t")
+  AssertTrue(params[0] == 6)
+  AssertTrue(len(params) >= 3)
+  return Size(params[2], params[1])
+
 def GetWindowPosition():
   """Returns a Point giving the window's origin in screen pixels."""
   esccmd.XTERM_WINOPS(esccmd.WINOP_REPORT_WINDOW_POSITION)
@@ -82,9 +98,22 @@ def GetDisplaySize():
   params = escio.ReadCSI("t")
   return Size(params[2], params[1])
 
+def AssertVTLevel(minimum, reason):
+  """Checks the that vt level exceeds some minimum.
+
+  This is used internally to verify that escape sequences sent by tests could
+  be expected to work.
+  """
+  if esc.vtLevel < minimum:
+    if reason is not None:
+      LogInfo("BUG: " + reason + " feature is not supported at this level")
+    raise esctypes.InsufficientVTLevel(esc.vtLevel, minimum)
+
 def AssertScreenCharsInRectEqual(rect, expected_lines):
   global gHaveAsserted
   gHaveAsserted = True
+
+  AssertVTLevel(4, "checksum")
 
   if rect.height() != len(expected_lines):
     raise esctypes.InternalError(
@@ -282,6 +311,34 @@ def knownBug(terminal, reason, noop=False, shouldTry=True):
       func_wrapper.func_dict[KNOWN_BUG_TERMINALS] = kbt
     kbt[terminal] = reason
 
+    return func_wrapper
+
+  return decorator
+
+def inclusiveVariant(terminals, reason=None):
+  """Decorator for a method that allows it to run only for listed terminals.
+  This is useful when a feature is defined broadly and different terminals
+  reasonly exhibit different behaviors."""
+  def decorator(func):
+    @functools.wraps(func)
+    def func_wrapper(self, *args, **kwargs):
+      if escargs.args.expected_terminal not in terminals:
+        raise esctypes.Excluded(reason)
+      func(self, *args, **kwargs)
+    return func_wrapper
+
+  return decorator
+
+def exclusiveVariant(terminals, reason=None):
+  """Decorator for a method that prevents it from running on certain terminals.
+  This is useful when a feature is defined broadly and different terminals
+  reasonly exhibit different behaviors."""
+  def decorator(func):
+    @functools.wraps(func)
+    def func_wrapper(self, *args, **kwargs):
+      if escargs.args.expected_terminal in terminals:
+        raise esctypes.Excluded(reason)
+      func(self, *args, **kwargs)
     return func_wrapper
 
   return decorator
