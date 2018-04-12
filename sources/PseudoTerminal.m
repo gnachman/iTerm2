@@ -5752,9 +5752,10 @@ ITERM_WEAKLY_REFERENCEABLE
     for (PTYSession *session in self.currentTab.sessions) {
         [session.view updateDim];
     }
-    if (targetSession.isDivorced) {
+    if ([[ProfileModel sessionsInstance] bookmarkWithGuid:newSession.profile[KEY_GUID]]) {
         // We assign directly to isDivorced because we know the GUID is unique and in sessions
-        // instance and the original guid is already set. _bookmarkToSplit took care of that.
+        // instance and the original guid is already set. This might be possible to do earlier,
+        // but I'm afraid of introducing bugs.
         newSession.isDivorced = YES;
     }
     if (![newSession.tabColor isEqual:tabColor] && newSession.tabColor != tabColor) {
@@ -5802,6 +5803,19 @@ ITERM_WEAKLY_REFERENCEABLE
         oldCWD = [[[self currentSession] shell] getWorkingDirectory];
     }
 
+    if ([[ProfileModel sessionsInstance] bookmarkWithGuid:theBookmark[KEY_GUID]]) {
+        // We were given a profile that belongs to an existing divorced session.
+        //
+        // Don't want to have two divorced sessions with the same guid. Allocate a new sessions
+        // instance bookmark with a unique GUID. The isDivorced flag gets set later,
+        // by splitVertically:before:...
+        NSMutableDictionary *temp = [[theBookmark mutableCopy] autorelease];
+        temp[KEY_GUID] = [ProfileModel freshGuid];
+        Profile *originalBookmark = targetSession.originalProfile;
+        temp[KEY_ORIGINAL_GUID] = [[originalBookmark[KEY_GUID] copy] autorelease];
+        [[ProfileModel sessionsInstance] addBookmark:temp];
+        theBookmark = temp;
+    }
     PTYSession* newSession = [[self newSessionWithBookmark:theBookmark] autorelease];
     [self splitVertically:isVertical
                    before:before
@@ -5843,16 +5857,6 @@ ITERM_WEAKLY_REFERENCEABLE
     // on.
     if (!theBookmark) {
         theBookmark = [[ProfileModel sharedInstance] defaultBookmark];
-    }
-
-    if (sourceSession.isDivorced) {
-        // Don't want to have two divorced sessions with the same guid. Allocate a new sessions
-        // instance bookmark with a unique GUID.
-        NSMutableDictionary *temp = [[theBookmark mutableCopy] autorelease];
-        temp[KEY_GUID] = [ProfileModel freshGuid];
-        temp[KEY_ORIGINAL_GUID] = [[originalBookmark[KEY_GUID] copy] autorelease];
-        [[ProfileModel sessionsInstance] addBookmark:temp];
-        theBookmark = temp;
     }
 
     return theBookmark;

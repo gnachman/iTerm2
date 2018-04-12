@@ -3250,16 +3250,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)sanityCheck {
-    // TODO(georgen): This is a workaround to a bug that causes frequent crashes but I haven't figured
-    // out how to reproduce it yet. Sometimes a divorced session's profile's GUID is not in sessionsInstance.
-    // The real fix to this is to get rid of sessionsInstance altogether and make PTYSession hold the
-    // only reference to the divorced profile, but that is too big a project to take on right now.
     if (_isDivorced) {
         NSDictionary *sessionsProfile =
             [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
-        if (!sessionsProfile && _profile) {
-            [[ProfileModel sessionsInstance] addBookmark:_profile];
-        }
+        assert(sessionsProfile || !_profile);
     }
 }
 
@@ -4547,10 +4541,8 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     Profile* bookmark = [self profile];
     NSString* guid = [bookmark objectForKey:KEY_GUID];
-    if (_isDivorced && [[ProfileModel sessionsInstance] bookmarkWithGuid:guid]) {
-        // Once, I saw a case where an already-divorced bookmark's guid was missing from
-        // sessionsInstance. I don't know why, but if that's the case, just create it there
-        // again. :(
+    if (_isDivorced) {
+        assert([[ProfileModel sessionsInstance] bookmarkWithGuid:guid]);
         return guid;
     }
     _isDivorced = YES;
