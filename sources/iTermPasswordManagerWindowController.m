@@ -404,6 +404,13 @@ static BOOL sAuthenticated;
                                                        error:&error];
     if (error) {
         DLog(@"selectedPassowrd: return nil, keychain gave error %@", error);
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            alert.messageText = [NSString stringWithFormat:@"Could not get password. Keychain query failed: %@", error];
+            [alert addButtonWithTitle:@"OK"];
+            [alert runModal];
+        });
         return nil;
     } else {
         DLog(@"selectedPassowrd: return nonnil password");
