@@ -255,17 +255,22 @@ static BOOL sAuthenticated;
 }
 
 - (IBAction)enterPassword:(id)sender {
+    DLog(@"enterPassword");
     NSString *password = [self selectedPassword];
     if (password) {
+        DLog(@"enterPassword: giving password to delegate");
         [_delegate iTermPasswordManagerEnterPassword:password];
+        DLog(@"enterPassword: closing sheet");
         [self closeOrEndSheet];
     }
 }
 
 - (void)closeOrEndSheet {
     if (self.window.isSheet) {
+        DLog(@"Ask parent to end sheet");
         [self.window.sheetParent endSheet:self.window];
     } else {
+        DLog(@"Close window");
         [self.window close];
     }
 }
@@ -383,11 +388,14 @@ static BOOL sAuthenticated;
 }
 
 - (NSString *)selectedPassword {
+    DLog(@"selectedPassowrd");
     if (!sAuthenticated) {
+        DLog(@"selectedPassowrd: return nil, not authenticated");
         return nil;
     }
     NSInteger index = [_tableView selectedRow];
     if (index < 0) {
+        DLog(@"selectedPassowrd: return nil, negative index");
         return nil;
     }
     NSError *error = nil;
@@ -395,8 +403,10 @@ static BOOL sAuthenticated;
                                                      account:_accounts[index]
                                                        error:&error];
     if (error) {
+        DLog(@"selectedPassowrd: return nil, keychain gave error %@", error);
         return nil;
     } else {
+        DLog(@"selectedPassowrd: return nonnil password");
         return password ?: @"";
     }
 }
