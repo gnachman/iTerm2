@@ -8,6 +8,8 @@
 
 #import "ToolNotes.h"
 #import "NSFileManager+iTerm.h"
+#import "PTYWindow.h"
+#import "PseudoTerminal.h"
 
 static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification";
 
@@ -78,6 +80,10 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
         [self addSubview:scrollview];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowAppearanceDidChange:)
+                                                     name:iTermWindowAppearanceDidChange
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(setText:)
                                                      name:kToolNotesSetTextNotification
                                                    object:nil];
@@ -127,6 +133,27 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
 - (CGFloat)minimumHeight
 {
     return 15;
+}
+
+- (void)updateAppearance {
+    if (!self.window) {
+        return;
+    }
+    if ([self.window.appearance.name isEqual:NSAppearanceNameVibrantDark]) {
+        textView_.backgroundColor = [NSColor blackColor];
+        textView_.textColor = [NSColor whiteColor];
+    } else {
+        textView_.backgroundColor = [NSColor whiteColor];
+        textView_.textColor = [NSColor blackColor];
+    }
+}
+
+- (void)viewDidMoveToWindow {
+    [self updateAppearance];
+}
+
+- (void)windowAppearanceDidChange:(NSNotification *)notification {
+    [self updateAppearance];
 }
 
 @end
