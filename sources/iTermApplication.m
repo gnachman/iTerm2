@@ -196,6 +196,10 @@ unsigned short iTermBogusVirtualKeyCode = 0xffff;
             [currentTerminal.currentTab setActiveSession:orderedSessions[digit - 1]];
             return YES;
         }
+        if (digit >= 1 && digit <= 9) {
+            // Ignore Modifier+Number if there's no matching split pane. Issue 6624.
+            return YES;
+        }
     }
     return NO;
 }
@@ -214,6 +218,10 @@ unsigned short iTermBogusVirtualKeyCode = 0xffff;
             // Command (or selected modifier)+number: Switch to tab by number.
             DLog(@"Switching tabs");
             [tabView selectTabViewItemAtIndex:digit-1];
+            return YES;
+        }
+        if (digit >= 1 && digit <= 9) {
+            // Ignore Modifier+Number if there's no matching tab. Issue 6624.
             return YES;
         }
     }
