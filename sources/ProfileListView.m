@@ -147,7 +147,6 @@ const CGFloat kDefaultTagsWidth = 80;
         [tableView_ setAllowsEmptySelection:YES];
         [tableView_ setAllowsMultipleSelection:NO];
         [tableView_ setAllowsTypeSelect:NO];
-        [tableView_ setBackgroundColor:[NSColor whiteColor]];
 
         tableColumn_ =
             [[NSTableColumn alloc] initWithIdentifier:@"name"];
@@ -538,6 +537,46 @@ const CGFloat kDefaultTagsWidth = 80;
     return [NSFont systemFontOfSize:self.mainFont.pointSize - reduction];
 }
 
+- (BOOL)lightTheme {
+    return ![self.window.appearance.name isEqual:NSAppearanceNameVibrantDark];
+}
+
+- (NSColor *)textColorWhenActiveAndSelected {
+    if ([self lightTheme]) {
+        return [NSColor whiteColor];
+    } else {
+        return [NSColor blackColor];
+    }
+}
+
+- (NSColor *)textColorWhenInactiveAndSelected {
+    if ([self lightTheme]) {
+        return [NSColor blackColor];
+    } else {
+        return [NSColor whiteColor];
+    }
+}
+
+- (NSColor *)tagColorWhenSelected {
+    if ([self lightTheme]) {
+        return [NSColor whiteColor];
+    } else {
+        return [NSColor blackColor];
+    }
+}
+
+- (NSColor *)textColorWhenUnselected {
+    if ([self lightTheme]) {
+        return [NSColor blackColor];
+    } else {
+        return [NSColor whiteColor];
+    }
+}
+
+- (NSColor *)tagColorWhenUnselected {
+    return [NSColor colorWithCalibratedWhite:0.5 alpha:1];
+}
+
 - (NSAttributedString *)attributedStringForName:(NSString *)name
                                            tags:(NSArray *)tags
                                        selected:(BOOL)selected
@@ -548,15 +587,15 @@ const CGFloat kDefaultTagsWidth = 80;
     NSColor *highlightedBackgroundColor;
     if (selected) {
         if ([NSApp isActive] && self.window.isKeyWindow) {
-            textColor = [NSColor whiteColor];
+            textColor = [self textColorWhenActiveAndSelected];
         } else {
-            textColor = [NSColor blackColor];
+            textColor = [self textColorWhenInactiveAndSelected];
         }
-        tagColor = [NSColor whiteColor];
+        tagColor = [self tagColorWhenSelected];
         highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
     } else {
-        textColor = [NSColor blackColor];
-        tagColor = [NSColor colorWithCalibratedWhite:0.5 alpha:1];
+        textColor = [self textColorWhenUnselected];
+        tagColor = [self tagColorWhenUnselected];
         highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
     }
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
