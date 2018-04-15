@@ -209,5 +209,6 @@
 + (BOOL)proportionalScrollWheelReporting;
 + (BOOL)useModernScrollWheelAccumulator;
 + (BOOL)openUntitledFile;
++ (BOOL)aggressiveFocusFollowsMouse;
 
 @end

@@ -75,6 +75,7 @@
 #import "NSArray+iTerm.h"
 #import "NSBundle+iTerm.h"
 #import "NSFileManager+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWindow+iTerm.h"
 #import "NSView+RecursiveDescription.h"
@@ -903,29 +904,36 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         [self setSecureInput:YES];
     }
 
-    // If focus follows mouse is on, find the window under the cursor and make it key. If a PTYTextView
-    // is under the cursor make it first responder.
-    NSPoint mouseLocation = [NSEvent mouseLocation];
-    if (!NSEqualPoints(mouseLocation, _savedMouseLocation) &&
-        [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
+        NSPoint mouseLocation = [NSEvent mouseLocation];
         NSRect mouseRect = {
             .origin = [NSEvent mouseLocation],
             .size = { 0, 0 }
         };
-        // Dispatch async because when you cmd-tab into iTerm2 the windows are briefly
-        // out of order. Looks like an OS bug to me. They fix themselves right away,
-        // and a dispatch async seems to give it enough time to right itself before
-        // we iterate front to back.
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self selectWindowAtMouseRect:mouseRect];
-        });
+        if ([iTermAdvancedSettingsModel aggressiveFocusFollowsMouse]) {
+            DLog(@"Using aggressive FFM");
+            // If focus follows mouse is on, find the window under the cursor and make it key. If a PTYTextView
+            // is under the cursor make it first responder.
+            if (!NSEqualPoints(mouseLocation, _savedMouseLocation)) {
+                // Dispatch async because when you cmd-tab into iTerm2 the windows are briefly
+                // out of order. Looks like an OS bug to me. They fix themselves right away,
+                // and a dispatch async seems to give it enough time to right itself before
+                // we iterate front to back.
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self selectWindowAtMouseRect:mouseRect];
+                });
+            }
+        } else {
+            DLog(@"Using non-aggressive FFM");
+            NSView *view = [self viewAtMouseRect:mouseRect];
+            [[PTYTextView castFrom:view] refuseFirstResponderAtCurrentMouseLocation];
+        }
     }
-
     [self hideStuckToolTips];
     iTermPreciseTimerClearLogs();
 }
 
-- (void)selectWindowAtMouseRect:(NSRect)mouseRect {
+- (NSView *)viewAtMouseRect:(NSRect)mouseRect {
     NSArray<NSWindow *> *frontToBackWindows = [[iTermApplication sharedApplication] orderedWindowsPlusVisibleHotkeyPanels];
     for (NSWindow *window in frontToBackWindows) {
         if (!window.isOnActiveSpace) {
@@ -939,16 +947,25 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             DLog(@"Consider window %@", window.title);
             NSView *view = [window.contentView hitTest:pointInWindow];
             if (view) {
-                DLog(@"Will activate %@", window.title);
-                [window makeKeyAndOrderFront:nil];
-                if ([view isKindOfClass:[PTYTextView class]]) {
-                    [window makeFirstResponder:view];
-                }
-                return;
+                return view;
             } else {
                 DLog(@"%@ failed hit test", window.title);
             }
         }
+    }
+    return nil;
+}
+
+- (void)selectWindowAtMouseRect:(NSRect)mouseRect {
+    NSView *view = [self viewAtMouseRect:mouseRect];
+    NSWindow *window = view.window;
+    if (view) {
+        DLog(@"Will activate %@", window.title);
+        [window makeKeyAndOrderFront:nil];
+        if ([view isKindOfClass:[PTYTextView class]]) {
+            [window makeFirstResponder:view];
+        }
+        return;
     }
 }
 
