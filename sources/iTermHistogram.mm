@@ -168,19 +168,6 @@ namespace iTerm2 {
     };
 }
 
-static inline int BucketFromValue(const double &value) {
-    const double logValue = std::log(value + 1) / std::log(M_SQRT2);
-    return std::min(255.0, std::floor(logValue));
-}
-
-static inline double BucketLowerBound(const int &bucket) {
-    return pow(M_SQRT2, bucket) - 1;
-}
-
-static inline double BucketUpperBound(const int &bucket) {
-    return pow(M_SQRT2, bucket + 1) - 1;
-}
-
 @implementation iTermHistogram {
     double _sum;
     double _min;
