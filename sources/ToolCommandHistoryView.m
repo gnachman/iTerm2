@@ -180,9 +180,33 @@ static const CGFloat kHelpMargin = 5;
     return filteredEntries_.count;
 }
 
-- (id)tableView:(NSTableView *)aTableView
-    objectValueForTableColumn:(NSTableColumn *)aTableColumn
-            row:(NSInteger)rowIndex {
+- (NSView *)tableView:(NSTableView *)tableView
+   viewForTableColumn:(NSTableColumn *)tableColumn
+                  row:(NSInteger)row {
+    static NSString *const identifier = @"ToolCommandHistoryViewEntry";
+    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
+    if (result == nil) {
+        result = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, tableColumn.width, 0)];
+        result.bezeled = NO;
+        result.editable = NO;
+        result.selectable = NO;
+        result.drawsBackground = NO;
+        result.identifier = identifier;
+    }
+
+    id value = [self stringOrAttributedStringForColumn:tableColumn row:row];
+    if ([value isKindOfClass:[NSAttributedString class]]) {
+        result.attributedStringValue = value;
+    } else {
+        result.stringValue = value;
+    }
+
+    return result;
+
+}
+
+- (id)stringOrAttributedStringForColumn:(NSTableColumn *)aTableColumn
+                                    row:(NSInteger)rowIndex {
     iTermCommandHistoryCommandUseMO *commandUse = filteredEntries_[rowIndex];
     if ([[aTableColumn identifier] isEqualToString:@"date"]) {
         // Date
