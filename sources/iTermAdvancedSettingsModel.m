@@ -127,6 +127,7 @@ DEFINE_BOOL(doubleReportScrollWheel, NO, @"Mouse: Double-report scroll wheel eve
 DEFINE_BOOL(stealKeyFocus, NO, @"Mouse: When Focus Follows Mouse is enabled, steal key focus even when inactive.");
 DEFINE_BOOL(aggressiveFocusFollowsMouse, NO, @"Mouse: When Focus Follows Mouse is enabled, activate the window under the cursor when iTerm2 becomes active?");
 DEFINE_BOOL(cmdClickWhenInactiveInvokesSemanticHistory, NO, @"Mouse: ⌘-click in an active pane while iTerm2 isn't the active app invokes Semantic History.\nBy default, iTerm2 respects the OS standard that ⌘-click in an app that doesn't have keyboard focus behaves like a non-⌘ click that does not raise the window.");
+DEFINE_BOOL(enableUnderlineSemanticHistoryOnCmdHover, YES, @"Mouse: Underline Semantic History-selectable items under the cursor while holding ⌘?");
 DEFINE_BOOL(sensitiveScrollWheel, NO, @"Mouse: Scroll on any scroll wheel movement, no matter how small?");
 
 #pragma mark Terminal

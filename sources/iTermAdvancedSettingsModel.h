@@ -210,5 +210,6 @@
 + (BOOL)useModernScrollWheelAccumulator;
 + (BOOL)openUntitledFile;
 + (BOOL)aggressiveFocusFollowsMouse;
++ (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
 
 @end
