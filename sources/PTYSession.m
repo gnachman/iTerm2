@@ -8350,7 +8350,7 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:title
                                                      style:kiTermAnnouncementViewStyleQuestion
-                                               withActions:@[ @"Yes", @"Always", @"Never" ]
+                                               withActions:@[ @"Yes", @"Always", @"Never", @"Help" ]
                                                 completion:^(int selection) {
             switch (selection) {
                 case -2:  // Dismiss programmatically
@@ -8372,6 +8372,11 @@ ITERM_WEAKLY_REFERENCEABLE
                 case 2: // Never
                     [[NSUserDefaults standardUserDefaults] setBool:NO
                                                             forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
+                    break;
+
+                case 3: // Help
+                    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/paste_bracketing"]];
+                    break;
             }
         }];
     [self queueAnnouncement:announcement identifier:kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier];
