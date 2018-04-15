@@ -159,7 +159,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     return 1;
 }
 
-void LogForNextCrash(const char *file, int line, const char *function, NSString* value) {
+void LogForNextCrash(const char *file, int line, const char *function, NSString* value, BOOL force) {
     static NSFileHandle *handle;
     NSFileHandle *handleToUse;
     static dispatch_once_t onceToken;
@@ -169,7 +169,7 @@ void LogForNextCrash(const char *file, int line, const char *function, NSString*
     });
     @synchronized (object) {
         static NSInteger numLines;
-        if (numLines % 100 == 0) {
+        if (force || (numLines % 100 == 0)) {
             static NSInteger fileNumber;
             NSString *path = [[[NSFileManager defaultManager] applicationSupportDirectory] stringByAppendingPathComponent:[NSString stringWithFormat:@"log.%ld.txt", fileNumber]];
             fileNumber = (fileNumber + 1) % 3;

@@ -57,6 +57,7 @@
 #import "NSImage+iTerm.h"
 #import "NSPasteboard+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSThread+iTerm.h"
 #import "NSURL+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
@@ -3253,7 +3254,28 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_isDivorced) {
         NSDictionary *sessionsProfile =
             [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
-        assert(sessionsProfile || !_profile);
+        NSArray *trimCallStack = [NSThread trimCallStackSymbols];
+        if (sessionsProfile || !_profile) {
+            [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: OK with guid %@, original guid %@ at\n%@",
+                                        self,
+                                        _profile[KEY_GUID],
+                                        _profile[KEY_ORIGINAL_GUID],
+                                        [trimCallStack componentsJoinedByString:@"\n"]]];
+        } else {
+            [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: NOT OK with guid %@, original guid %@ at\n%@",
+                                        self,
+                                        _profile[KEY_GUID],
+                                        _profile[KEY_ORIGINAL_GUID],
+                                        [trimCallStack componentsJoinedByString:@"\n"]]];
+            CrashLog(@"Sanity check failed:\n%@", [[ProfileModel debugHistory] componentsJoinedByString:@"\n"]);
+            const BOOL sane = NO;
+            ITBetaAssert(sane, @"Sanity check failed");
+        }
+    } else {
+        [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: not divorced. guid is %@ at\%@",
+                                    self,
+                                    _profile[KEY_GUID],
+                                    [NSThread callStackSymbols]]];
     }
 }
 

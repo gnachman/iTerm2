@@ -63,18 +63,24 @@ extern BOOL gDebugLogging;
         } \
     } while (0)
 
+// Write to crash log immediately and unconditionally. Use this when you expect to crash right away.
+#define CrashLog(args...) \
+    do { \
+        LogForNextCrash(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args], YES); \
+    } while (0)
+
 // Info log: no private info. Low-volume. Logged to crash reports.
 #define ILog(args...) \
     do { \
         DLog(args); \
-        LogForNextCrash(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args]); \
+        LogForNextCrash(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args], NO); \
     } while (0)
 
 // Error log: no private info. Low-volume. Logged to crash reports.
 #define ELog(args...) \
     do { \
         DLog(args); \
-        LogForNextCrash(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args]); \
+        LogForNextCrash(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args], NO); \
         NSLog(args); \
     } while (0)
 
@@ -158,7 +164,7 @@ extern BOOL gDebugLogging;
 
 void ToggleDebugLogging(void);
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
-void LogForNextCrash(const char *file, int line, const char *function, NSString* value);
+void LogForNextCrash(const char *file, int line, const char *function, NSString* value, BOOL force);
 void TurnOnDebugLoggingSilently(void);
 BOOL TurnOffDebugLoggingSilently(void);
 

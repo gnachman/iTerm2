@@ -234,7 +234,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     cellSizeWithoutSpacing.height *= scale;
 
     if (scale == 0) {
-        ELog(@"Warning: scale is 0");
+        DLog(@"Warning: scale is 0");
     }
     DLog(@"Cell size is now %@x%@, grid size is now %@x%@", @(cellSize.width), @(cellSize.height), @(gridSize.width), @(gridSize.height));
     self.mainThreadState->cellSize = cellSize;
@@ -335,19 +335,19 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     _total++;
     if (_total % 60 == 0) {
         @synchronized (self) {
-            ELog(@"fps=%f (%d in flight)", (_total - _dropped) / ([NSDate timeIntervalSinceReferenceDate] - _startTime), (int)_framesInFlight);
-            ELog(@"%@", _currentFrames);
+            DLog(@"fps=%f (%d in flight)", (_total - _dropped) / ([NSDate timeIntervalSinceReferenceDate] - _startTime), (int)_framesInFlight);
+            DLog(@"%@", _currentFrames);
         }
     }
 
     if (view.bounds.size.width == 0 || view.bounds.size.height == 0) {
-        ELog(@"  abort: 0x0 view");
+        DLog(@"  abort: 0x0 view");
         return NO;
     }
 
     iTermMetalFrameData *frameData = [self newFrameDataForView:view];
     if (VT100GridSizeEquals(frameData.gridSize, VT100GridSizeMake(0, 0))) {
-        ELog(@"  abort: 0x0 grid");
+        DLog(@"  abort: 0x0 grid");
         return NO;
     }
 
@@ -359,9 +359,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }
     }
     if (shouldDrop) {
-        ELog(@"  abort: busy (dropped %@%%, number in flight: %d)", @((_dropped * 100)/_total), (int)_framesInFlight);
+        DLog(@"  abort: busy (dropped %@%%, number in flight: %d)", @((_dropped * 100)/_total), (int)_framesInFlight);
         @synchronized(self) {
-            ELog(@"  current frames:\n%@", _currentFrames);
+            DLog(@"  current frames:\n%@", _currentFrames);
         }
 
         _dropped++;
@@ -379,7 +379,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #if ENABLE_PRIVATE_QUEUE
     [self acquireScarceResources:frameData view:view];
     if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
-        ELog(@"  abort: failed to get drawable or RPD");
+        DLog(@"  abort: failed to get drawable or RPD");
         self.needsDraw = YES;
         return NO;
     }
@@ -484,7 +484,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #if !ENABLE_PRIVATE_QUEUE
     [self acquireScarceResources:frameData view:view];
     if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
-        ELog(@"  abort: failed to get drawable or RPD");
+        DLog(@"  abort: failed to get drawable or RPD");
         self.needsDraw = YES;
         [self complete:frameData];
         return;

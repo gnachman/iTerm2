@@ -60,6 +60,7 @@ typedef struct {
 
 + (ProfileModel*)sharedInstance;
 + (ProfileModel*)sessionsInstance;
++ (NSMutableArray<NSString *> *)debugHistory;
 + (NSString*)freshGuid;
 + (void)migratePromptOnCloseInMutableBookmark:(NSMutableDictionary *)dict;
 + (BOOL)migrated;

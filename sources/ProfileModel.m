@@ -28,6 +28,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermProfileSearchToken.h"
 #import "NSStringITerm.h"
+#import "NSThread+iTerm.h"
 #import "PreferencePanel.h"
 
 NSString *const kReloadAddressBookNotification = @"iTermReloadAddressBook";
@@ -51,6 +52,19 @@ int gMigrated;
 + (BOOL)migrated
 {
     return gMigrated;
+}
+
++ (NSMutableArray<NSString *> *)debugHistory {
+#if BETA
+    static dispatch_once_t onceToken;
+    static NSMutableArray<NSString *> *gProfileHistory;
+    dispatch_once(&onceToken, ^{
+        gProfileHistory = [[NSMutableArray alloc] init];
+    });
+    return gProfileHistory;
+#else
+    return nil;
+#endif
 }
 
 - (ProfileModel*)initWithName:(NSString *)modelName {
@@ -88,6 +102,10 @@ int gMigrated;
     }
 
     return shared;
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<ProfileModel %@: %p>", _modelName, self];
 }
 
 - (void)dealloc
@@ -403,6 +421,9 @@ int gMigrated;
         [self setDefaultByGuid:[bookmark objectForKey:KEY_GUID]];
     }
     [self postChangeNotification];
+    [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: Add bookmark with guid %@ from\n%@",
+                                            self,
+                                            bookmark[KEY_GUID], [NSThread trimCallStackSymbols]]];
 }
 
 - (BOOL)bookmark:(Profile*)bookmark hasTag:(NSString*)tag
@@ -435,6 +456,10 @@ int gMigrated;
         assert(i >= 0);
 
         [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
+        [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: Remove bookmark with guid %@ from\n%@",
+                                                self,
+                                                bookmarks_[i][KEY_GUID],
+                                                [NSThread trimCallStackSymbols]]];
         [bookmarks_ removeObjectAtIndex:i];
         if (![self defaultBookmark] && [bookmarks_ count]) {
             [self setDefaultByGuid:[[bookmarks_ objectAtIndex:0] objectForKey:KEY_GUID]];
@@ -447,6 +472,10 @@ int gMigrated;
     DLog(@"Remove profile at index %d", i);
     assert(i >= 0);
     [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
+    [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: Remove bookmark with guid %@ from\n%@",
+                                            self,
+                                            bookmarks_[i][KEY_GUID],
+                                            [NSThread trimCallStackSymbols]]];
     [bookmarks_ removeObjectAtIndex:i];
     DLog(@"Number of profiles is now %d", (int)bookmarks_.count);
     if (![self defaultBookmark] && [bookmarks_ count]) {
