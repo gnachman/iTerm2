@@ -559,7 +559,7 @@ static NSDate* lastResizeDate_;
 - (void)drawAroundFrame:(NSRect)svFrame dirtyRect:(NSRect)dirtyRect {
     // left
     if (svFrame.origin.x > 0) {
-        [self drawBackgroundInRect:NSMakeRect(0, 0, svFrame.origin.x, svFrame.size.height)];
+        [self drawBackgroundInRect:NSMakeRect(0, 0, svFrame.origin.x, self.frame.size.height)];
     }
 
     // right
