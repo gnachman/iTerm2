@@ -1005,6 +1005,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     // Users used to be opted into the beta by default. Make sure the user is cool with that.
     [self promptAboutRemainingInBetaIfNeeded];
 
+    [self complainIfNightlyBuildIsTooOld];
+
     // Set the Appcast URL and when it changes update it.
     [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
     [iTermPreferences addObserverForKey:kPreferenceKeyCheckForTestReleases
@@ -1318,6 +1320,23 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 #pragma mark - Startup Helpers
+
+- (void)complainIfNightlyBuildIsTooOld {
+    if (![NSBundle it_isNightlyBuild]) {
+        return;
+    }
+    NSTimeInterval age = -[[NSBundle it_buildDate] timeIntervalSinceNow];
+    if (age > 30 * 24 * 60 * 60) {
+        iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:@"This nightly build is over 30 days old. Consider updating soon: you may be suffering from awful bugs in blissful ignorance."
+                                   actions:@[ @"I’ll Take My Chances", @"Update Now" ]
+                                identifier:@"NoSyncVeryOldNightlyBuildWarning"
+                               silenceable:kiTermWarningTypeSilencableForOneMonth];
+        if (selection == kiTermWarningSelection1) {
+            [[SUUpdater sharedUpdater] checkForUpdates:nil];
+        }
+    }
+}
 
 - (void)promptAboutRemainingInBetaIfNeeded {
     // For a long time—too long—users were opted into the beta program. There are too many of them

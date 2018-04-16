@@ -12,5 +12,6 @@
 
 + (BOOL)it_isNightlyBuild;
 + (BOOL)it_isEarlyAdopter;
++ (NSDate *)it_buildDate;
 
 @end

@@ -9,7 +9,8 @@
 typedef NS_ENUM(NSInteger, iTermWarningType) {
     kiTermWarningTypePersistent,
     kiTermWarningTypePermanentlySilenceable,
-    kiTermWarningTypeTemporarilySilenceable  // 10 minutes
+    kiTermWarningTypeTemporarilySilenceable,  // 10 minutes
+    kiTermWarningTypeSilencableForOneMonth  // 30 days
 };
 
 typedef NS_ENUM(NSInteger, iTermWarningSelection) {

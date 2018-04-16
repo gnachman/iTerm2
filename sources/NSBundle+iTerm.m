@@ -25,4 +25,12 @@
     return [testingFeed containsString:@"testing3.xml"];
 }
 
++ (NSDate *)it_buildDate {
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setLocale:[NSLocale localeWithLocaleIdentifier:@"en_US"]];
+    [dateFormatter setDateFormat:@"LLL d yyyy HH:mm:ss v"];
+    NSString *string = [NSString stringWithFormat:@"%s %s PT", __DATE__, __TIME__];
+    return [dateFormatter dateFromString:string];
+}
+
 @end
