@@ -13,6 +13,18 @@
 
 @implementation NSTextField (iTerm)
 
++ (instancetype)it_textFieldForTableViewWithIdentifier:(NSString *)identifier {
+    NSTextField *result = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
+    result.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+    result.bezeled = NO;
+    result.editable = NO;
+    result.selectable = NO;
+    result.drawsBackground = NO;
+    result.usesSingleLineMode = YES;
+    result.identifier = identifier;
+    return result;
+}
+
 - (BOOL)textFieldIsFirstResponder {
     BOOL inFocus = NO;
 

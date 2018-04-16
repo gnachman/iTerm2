@@ -8,8 +8,10 @@
 
 #import "ToolJobs.h"
 
+#import "iTermCompetentTableRowView.h"
 #import "iTermToolWrapper.h"
 #import "NSTableColumn+iTerm.h"
+#import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTask.h"
@@ -216,9 +218,6 @@ static const CGFloat kMargin = 4;
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
         [[col headerCell] setStringValue:@"Name"];
-        NSFont *theFont = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
-        [[col dataCell] setFont:theFont];
-        tableView_.rowHeight = col.suggestedRowHeight;
         [col release];
 
         col = [[NSTableColumn alloc] initWithIdentifier:@"pid"];
@@ -227,12 +226,13 @@ static const CGFloat kMargin = 4;
         [col setMinWidth:75];
         [col setMaxWidth:75];
         [tableView_ addTableColumn:col];
-        [[col dataCell] setFont:theFont];
         [[col headerCell] setStringValue:@"pid"];
         [col release];
 
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
+        tableView_.intercellSpacing = NSMakeSize(tableView_.intercellSpacing.width, 0);
+        tableView_.rowHeight = 15;
 
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
@@ -360,13 +360,31 @@ static const CGFloat kMargin = 4;
     return YES;
 }
 
+- (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
+    return [[[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect] autorelease];
+}
+
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
     return [names_ count];
 }
 
-- (id)tableView:(NSTableView *)aTableView
-objectValueForTableColumn:(NSTableColumn *)aTableColumn
-            row:(NSInteger)rowIndex {
+- (NSView *)tableView:(NSTableView *)tableView
+   viewForTableColumn:(NSTableColumn *)tableColumn
+                  row:(NSInteger)row {
+    static NSString *const identifier = @"ToolJobsEntry";
+    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
+    if (result == nil) {
+        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+    }
+
+    NSString *value = [self stringForTableColumn:tableColumn row:row];
+    result.stringValue = value;
+
+    return result;
+}
+
+- (NSString *)stringForTableColumn:(NSTableColumn *)aTableColumn
+                               row:(NSInteger)rowIndex {
     if ([[aTableColumn identifier] isEqualToString:@"name"]) {
         // name
         return [names_ objectAtIndex:rowIndex];

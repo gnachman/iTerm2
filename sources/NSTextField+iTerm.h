@@ -10,6 +10,8 @@
 
 @interface NSTextField (iTerm)
 
++ (instancetype)it_textFieldForTableViewWithIdentifier:(NSString *)identifier;
+
 - (BOOL)textFieldIsFirstResponder;
 - (void)setLabelEnabled:(BOOL)enabled;
 

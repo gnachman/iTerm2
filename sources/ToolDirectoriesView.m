@@ -8,6 +8,7 @@
 
 #import "ToolDirectoriesView.h"
 
+#import "iTermCompetentTableRowView.h"
 #import "iTermRecentDirectoryMO.h"
 #import "iTermRecentDirectoryMO+Additions.h"
 #import "iTermSearchField.h"
@@ -16,6 +17,8 @@
 #import "NSDateFormatterExtras.h"
 #import "NSStringITerm.h"
 #import "NSTableColumn+iTerm.h"
+#import "NSTextField+iTerm.h"
+#import "PseudoTerminal.h"
 #import "PTYSession.h"
 
 static const CGFloat kButtonHeight = 23;
@@ -85,13 +88,11 @@ static const CGFloat kHelpMargin = 5;
         col = [[[NSTableColumn alloc] initWithIdentifier:@"directories"] autorelease];
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
-        [[col headerCell] setStringValue:@"Directories"];
-        NSFont *theFont = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
-        [[col dataCell] setFont:theFont];
-        tableView_.rowHeight = col.suggestedRowHeight;
         [tableView_ setHeaderView:nil];
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
+        tableView_.intercellSpacing = NSMakeSize(tableView_.intercellSpacing.width, 0);
+        tableView_.rowHeight = 15;
 
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
@@ -112,13 +113,7 @@ static const CGFloat kHelpMargin = 5;
                                    keyEquivalent:@""];
         [tableView_.menu addItem:item];
 
-        // Save the bold version of the table's default font
-        NSFontManager *fontManager = [NSFontManager sharedFontManager];
-        NSFont *font = [[col dataCell] font];
-        boldFont_ = [[fontManager fontWithFamily:font.familyName
-                                          traits:NSBoldFontMask
-                                          weight:0
-                                            size:font.pointSize] retain];
+        boldFont_ = [NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]];
 
         [self relayout];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -126,6 +121,10 @@ static const CGFloat kHelpMargin = 5;
                                                      name:kDirectoriesDidChangeNotificationName
                                                    object:nil];
         [self performSelector:@selector(updateDirectories) withObject:nil afterDelay:0];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowAppearanceDidChange:)
+                                                     name:iTermWindowAppearanceDidChange
+                                                   object:nil];
     }
     return self;
 }
@@ -174,19 +173,32 @@ static const CGFloat kHelpMargin = 5;
     return filteredEntries_.count;
 }
 
-- (NSString *)tableView:(NSTableView *)tableView
-         toolTipForCell:(NSCell *)cell
-                   rect:(NSRectPointer)rect
-            tableColumn:(NSTableColumn *)tableColumn
-                    row:(NSInteger)row
-          mouseLocation:(NSPoint)mouseLocation {
+- (NSView *)tableView:(NSTableView *)tableView
+   viewForTableColumn:(NSTableColumn *)tableColumn
+                  row:(NSInteger)row {
+    static NSString *const identifier = @"ToolDirectoriesViewEntry";
+    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
+    if (result == nil) {
+        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+    }
+
     iTermRecentDirectoryMO *entry = filteredEntries_[row];
-    return entry.path;
+    NSString *tooltip = entry.path;
+
+    id value = [self stringOrAttributedStringForColumn:tableColumn row:row];
+    if ([value isKindOfClass:[NSAttributedString class]]) {
+        result.attributedStringValue = value;
+        result.toolTip = tooltip;
+    } else {
+        result.stringValue = value;
+        result.toolTip = tooltip;
+    }
+
+    return result;
 }
 
-- (id)tableView:(NSTableView *)aTableView
-    objectValueForTableColumn:(NSTableColumn *)aTableColumn
-            row:(NSInteger)rowIndex {
+- (id)stringOrAttributedStringForColumn:(NSTableColumn *)aTableColumn
+                                    row:(NSInteger)rowIndex {
     iTermRecentDirectoryMO *entry = filteredEntries_[rowIndex];
     NSIndexSet *indexes =
         [[iTermShellHistoryController sharedInstance] abbreviationSafeIndexesInRecentDirectory:entry];
@@ -293,6 +305,10 @@ static const CGFloat kHelpMargin = 5;
   return [self respondsToSelector:[item action]] && [tableView_ clickedRow] >= 0;
 }
 
+- (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
+    return [[[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect] autorelease];
+}
+
 - (void)toggleStar:(id)sender {
     NSInteger index = [tableView_ clickedRow];
     if (index >= 0) {
@@ -306,5 +322,21 @@ static const CGFloat kHelpMargin = 5;
 - (void)help:(id)sender {
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/shell_integration.html"]];
 }
+
+- (void)updateAppearance {
+    if (!self.window) {
+        return;
+    }
+    tableView_.appearance = self.window.appearance;
+}
+
+- (void)viewDidMoveToWindow {
+    [self updateAppearance];
+}
+
+- (void)windowAppearanceDidChange:(NSNotification *)notification {
+    [self updateAppearance];
+}
+
 
 @end

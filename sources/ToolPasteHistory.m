@@ -7,10 +7,12 @@
 
 #import "ToolPasteHistory.h"
 
+#import "iTermCompetentTableRowView.h"
 #import "iTermController.h"
 #import "iTermToolWrapper.h"
 #import "NSDateFormatterExtras.h"
 #import "NSTableColumn+iTerm.h"
+#import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 
 static const CGFloat kButtonHeight = 23;
@@ -51,17 +53,14 @@ static const CGFloat kMargin = 4;
         col = [[[NSTableColumn alloc] initWithIdentifier:@"contents"] autorelease];
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
-        [[col headerCell] setStringValue:@"Contents"];
-        NSFont *theFont = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
-        [[col dataCell] setFont:theFont];
-        tableView_.rowHeight = col.suggestedRowHeight;
         [tableView_ setHeaderView:nil];
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
+        tableView_.intercellSpacing = NSMakeSize(tableView_.intercellSpacing.width, 0);
+        tableView_.rowHeight = 15;
 
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable];
-
 
         [scrollView_ setDocumentView:tableView_];
         [self addSubview:scrollView_];
@@ -81,6 +80,7 @@ static const CGFloat kMargin = 4;
                                                              userInfo:nil
                                                               repeats:YES];
         [tableView_ performSelector:@selector(scrollToEndOfDocument:) withObject:nil afterDelay:0];
+        [tableView_ reloadData];
     }
     return self;
 }
@@ -119,13 +119,30 @@ static const CGFloat kMargin = 4;
     return YES;
 }
 
+- (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
+    return [[[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect] autorelease];
+}
+
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
     return pasteHistory_.entries.count;
 }
 
-- (id)tableView:(NSTableView *)aTableView
-    objectValueForTableColumn:(NSTableColumn *)aTableColumn
-                          row:(NSInteger)rowIndex {
+- (NSView *)tableView:(NSTableView *)tableView
+   viewForTableColumn:(NSTableColumn *)tableColumn
+                  row:(NSInteger)row {
+    static NSString *const identifier = @"ToolPasteHistoryEntry";
+    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
+    if (result == nil) {
+        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+    }
+
+    NSString *value = [self stringForTableColumn:tableColumn row:row];
+    result.stringValue = value;
+
+    return result;
+}
+
+- (NSString *)stringForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex {
     PasteboardEntry* entry = pasteHistory_.entries[rowIndex];
     if ([[aTableColumn identifier] isEqualToString:@"date"]) {
         // Date

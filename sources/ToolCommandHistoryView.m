@@ -10,10 +10,12 @@
 
 #import "iTermShellHistoryController.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
+#import "iTermCompetentTableRowView.h"
 #import "iTermSearchField.h"
 #import "NSDateFormatterExtras.h"
 #import "NSDate+iTerm.h"
 #import "NSTableColumn+iTerm.h"
+#import "NSTextField+iTerm.h"
 #import "PTYSession.h"
 
 static const CGFloat kButtonHeight = 23;
@@ -90,13 +92,11 @@ static const CGFloat kHelpMargin = 5;
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
         [[col headerCell] setStringValue:@"Commands"];
-        NSFont *theFont = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
-        [[col dataCell] setFont:theFont];
-        tableView_.rowHeight = col.suggestedRowHeight;
         [tableView_ setHeaderView:nil];
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
-
+        tableView_.intercellSpacing = NSMakeSize(tableView_.intercellSpacing.width, 0);
+        tableView_.rowHeight = 15;
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
@@ -109,12 +109,7 @@ static const CGFloat kHelpMargin = 5;
         [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
 
         // Save the bold version of the table's default font
-        NSFontManager *fontManager = [NSFontManager sharedFontManager];
-        NSFont *font = [[col dataCell] font];
-        boldFont_ = [[fontManager fontWithFamily:font.familyName
-                                          traits:NSBoldFontMask
-                                          weight:0
-                                            size:font.pointSize] retain];
+        boldFont_ = [NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]];
 
         [self relayout];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -180,29 +175,29 @@ static const CGFloat kHelpMargin = 5;
     return filteredEntries_.count;
 }
 
+- (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
+    return [[[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect] autorelease];
+}
+
 - (NSView *)tableView:(NSTableView *)tableView
    viewForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
     static NSString *const identifier = @"ToolCommandHistoryViewEntry";
     NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
     if (result == nil) {
-        result = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, tableColumn.width, 0)];
-        result.bezeled = NO;
-        result.editable = NO;
-        result.selectable = NO;
-        result.drawsBackground = NO;
-        result.identifier = identifier;
+        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
     }
 
     id value = [self stringOrAttributedStringForColumn:tableColumn row:row];
     if ([value isKindOfClass:[NSAttributedString class]]) {
         result.attributedStringValue = value;
+        result.toolTip = [value string];
     } else {
         result.stringValue = value;
+        result.toolTip = value;
     }
 
     return result;
-
 }
 
 - (id)stringOrAttributedStringForColumn:(NSTableColumn *)aTableColumn
