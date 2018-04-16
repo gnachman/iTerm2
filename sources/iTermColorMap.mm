@@ -120,6 +120,9 @@ const int kColorMapAnsiBrightModifier = 8;
     }
 
     _map[@(theKey)] = theColor;
+
+    // Get components again, now in SRGB (possibly it was already SRGB)
+    [theColor getComponents:components];
     (*_fastMap)[theKey] = (vector_float4){
         (float)components[0],
         (float)components[1],
