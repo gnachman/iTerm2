@@ -1460,14 +1460,24 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
 - (NSSet *)doubleDollarVariables {
     NSMutableSet *set = [NSMutableSet set];
-    [self enumerateStringsMatchedByRegex:@"\\$\\$(.*?)\\$\\$"
-                                 options:RKLNoOptions
-                                 inRange:NSMakeRange(0, self.length)
-                                   error:nil
-                      enumerationOptions:RKLRegexEnumerationNoOptions
-                              usingBlock:^(NSInteger captureCount, NSString *const *capturedStrings, const NSRange *capturedRanges, volatile BOOL *const stop) {
-                                  [set addObject:[[capturedStrings[0] copy] autorelease]];
-                              }];
+    NSRange rangeToSearch = NSMakeRange(0, self.length);
+    NSInteger start = -1;
+    NSRange range;
+    while (rangeToSearch.length > 0) {
+        range = [self rangeOfString:@"$$" options:NSLiteralSearch range:rangeToSearch];
+        if (start < 0) {
+            start = NSMaxRange(range);
+        } else {
+            NSRange capture = NSMakeRange(start, range.location - start);
+            NSString *string = [self substringWithRange:capture];
+            if (string.length > 0) {
+                [set addObject:string];
+            }
+            start = -1;
+        }
+        rangeToSearch = NSMakeRange(NSMaxRange(range), MAX(0, (NSInteger)self.length - (NSInteger)NSMaxRange(range)));
+    }
+
     return set;
 }
 
