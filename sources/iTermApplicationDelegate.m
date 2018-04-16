@@ -389,6 +389,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         return downloadsMenu_.submenu.itemArray.count > 2;
     } else if ([menuItem action] == @selector(clearAllUploads:)) {
         return uploadsMenu_.submenu.itemArray.count > 2;
+    } else if (menuItem.action == @selector(debugLogging:)) {
+        menuItem.state = gDebugLogging ? NSOnState : NSOffState;
+        return YES;
     } else {
         return YES;
     }
