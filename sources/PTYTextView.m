@@ -1785,7 +1785,8 @@ static const int kDragThreshold = 3;
         changed = [self setCursor:[NSCursor openHandCursor]];
     } else if (([event modifierFlags] & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
         changed = [self setCursor:[NSCursor crosshairCursor]];
-    } else if (([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask) {
+    } else if (action &&
+               ([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask) {
         changed = [self setCursor:[NSCursor pointingHandCursor]];
         if (action.hover && action.string.length) {
             hover = action.string;
