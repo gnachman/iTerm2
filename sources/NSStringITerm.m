@@ -1466,11 +1466,11 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     while (rangeToSearch.length > 0) {
         range = [self rangeOfString:@"$$" options:NSLiteralSearch range:rangeToSearch];
         if (start < 0) {
-            start = NSMaxRange(range);
+            start = range.location;
         } else {
-            NSRange capture = NSMakeRange(start, range.location - start);
+            NSRange capture = NSMakeRange(start, NSMaxRange(range) - start);
             NSString *string = [self substringWithRange:capture];
-            if (string.length > 0) {
+            if (string.length > 4) {  // length of 4 implies $$$$, which should be interpreted as $$
                 [set addObject:string];
             }
             start = -1;

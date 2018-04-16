@@ -427,14 +427,14 @@
 
 - (void)testDoubleDollarVariables_OneTrivialCapture {
     NSString *s = @"blah $$FOO$$ blah";
-    NSSet *expected = [NSSet setWithArray:@[ @"FOO" ]];
+    NSSet *expected = [NSSet setWithArray:@[ @"$$FOO$$" ]];
     NSSet *actual = [s doubleDollarVariables];
     XCTAssertEqualObjects(actual, expected);
 }
 
 - (void)testDoubleDollarVariables_TwoCaptures {
     NSString *s = @"blah $$FOO$$ blah $$BAR$$ baz";
-    NSSet *expected = [NSSet setWithArray:@[ @"FOO", @"BAR" ]];
+    NSSet *expected = [NSSet setWithArray:@[ @"$$FOO$$", @"$$BAR$$" ]];
     NSSet *actual = [s doubleDollarVariables];
     XCTAssertEqualObjects(actual, expected);
 }
@@ -448,7 +448,7 @@
 
 - (void)testDoubleDollarVariables_OneBigCapture {
     NSString *s = @"$$ foo bar baz $$";
-    NSSet *expected = [NSSet setWithArray:@[ @" foo bar baz " ]];
+    NSSet *expected = [NSSet setWithArray:@[ @"$$ foo bar baz $$" ]];
     NSSet *actual = [s doubleDollarVariables];
     XCTAssertEqualObjects(actual, expected);
 }

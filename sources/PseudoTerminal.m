@@ -7677,6 +7677,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (!substitutions) {
             return NO;
         }
+        cmd = [cmd stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
 
         name = [name stringByPerformingSubstitutions:substitutions];
         NSString *pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile
@@ -7813,6 +7814,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!substitutions) {
         return nil;
     }
+    commandForSubs = [commandForSubs stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
     if (command) {
         // Create a modified profile to run "command".
         NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
@@ -7961,6 +7963,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (!substitutions) {
             return nil;
         }
+        cmd = [cmd stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
 
         NSString *pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile forObjectType:objectType];
         if ([pwd length] == 0) {
