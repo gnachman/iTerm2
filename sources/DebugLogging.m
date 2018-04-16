@@ -7,6 +7,7 @@
 //
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "NSFileManager+iTerm.h"
 #import "NSView+RecursiveDescription.h"
@@ -77,7 +78,15 @@ static void FlushDebugLog() {
     WriteDebugLogFooter();
     [log appendString:gDebugLogStr ?: @""];
 
-    [log writeToFile:kDebugLogFilename atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    if ([iTermAdvancedSettingsModel appendToExistingDebugLog] &&
+        [[NSFileManager defaultManager] fileExistsAtPath:kDebugLogFilename]) {
+        NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:kDebugLogFilename];
+        [fileHandle seekToEndOfFile];
+        [fileHandle writeData:[log dataUsingEncoding:NSUTF8StringEncoding]];
+        [fileHandle closeFile];
+    } else {
+        [log writeToFile:kDebugLogFilename atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    }
 
     [gDebugLogStr setString:@""];
     [gDebugLogHeader release];
@@ -212,8 +221,10 @@ static void StartDebugLogging() {
     });
     [gDebugLogLock lock];
     if (!gDebugLogging) {
-        [[NSFileManager defaultManager] removeItemAtURL:[NSURL fileURLWithPath:kDebugLogFilename]
-                                                  error:nil];
+        if (![iTermAdvancedSettingsModel appendToExistingDebugLog]) {
+            [[NSFileManager defaultManager] removeItemAtURL:[NSURL fileURLWithPath:kDebugLogFilename]
+                                                      error:nil];
+        }
         gDebugLogStr = [[NSMutableString alloc] init];
         gDebugLogging = !gDebugLogging;
         WriteDebugLogHeader();

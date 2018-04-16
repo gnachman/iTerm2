@@ -84,6 +84,7 @@
 + (BOOL)optionIsMetaForSpecialChars;
 
 + (BOOL)startDebugLoggingAutomatically;
++ (BOOL)appendToExistingDebugLog;
 + (BOOL)aboutToPasteTabsWithCancel;
 
 + (BOOL)alwaysAcceptFirstMouse;

@@ -2147,6 +2147,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // TODO: for window type top, set width to screen width.
         rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
         rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+        DLog(@"Initialize nonfullscreen window to saved frame %@", NSStringFromRect(rect));
         [[term window] setFrame:rect display:NO];
     }
 
@@ -2418,6 +2419,8 @@ ITERM_WEAKLY_REFERENCEABLE
     result[TERMINAL_ARRANGEMENT_Y_ORIGIN] = @(rect.origin.y);
     result[TERMINAL_ARRANGEMENT_WIDTH] = @(rect.size.width);
     result[TERMINAL_ARRANGEMENT_HEIGHT] = @(rect.size.height);
+    DLog(@"While creating arrangement for %@ save frame of %@", self, NSStringFromRect(rect));
+    DLog(@"%@", [NSThread callStackSymbols]);
     result[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] = @(_contentView.shouldShowToolbelt);
     result[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] =
             @(hidingToolbeltShouldResizeWindow_);

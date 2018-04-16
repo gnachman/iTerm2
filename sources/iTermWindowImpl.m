@@ -397,6 +397,13 @@ ITERM_WEAKLY_REFERENCEABLE
     return NSWindowTabbingModeDisallowed;
 }
 
+- (void)setFrame:(NSRect)frameRect display:(BOOL)flag {
+    DLog(@"setFrame:%@ display:%@ from\n%@",
+         NSStringFromRect(frameRect), @(flag),
+         [NSThread callStackSymbols]);
+    [super setFrame:frameRect display:flag];
+}
+
 NS_ASSUME_NONNULL_END
 
 @end

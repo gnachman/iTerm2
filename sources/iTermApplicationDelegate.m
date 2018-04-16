@@ -979,6 +979,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     // Start automatic debug logging if it's enabled.
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
         TurnOnDebugLoggingSilently();
+        DLog(@"applicationWillFinishLaunching:");
     }
 
     [self buildScriptMenu:nil];
