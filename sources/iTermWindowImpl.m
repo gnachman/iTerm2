@@ -79,6 +79,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [super performMiniaturize:sender];
     } else {
         // NSWindow's performMiniaturize gates miniaturization on the presence of a miniaturize button.
+        DLog(@"performMiniaturize calling [self miniaturize:]");
         [self miniaturize:self];
     }
 }

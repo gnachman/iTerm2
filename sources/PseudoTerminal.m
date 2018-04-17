@@ -2468,8 +2468,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // NSWindow delegate methods
-- (void)windowDidDeminiaturize:(NSNotification *)aNotification
-{
+- (void)windowDidDeminiaturize:(NSNotification *)aNotification {
+    DLog(@"windowDidDeminiaturize: %@\n%@", self, [NSThread callStackSymbols]);
     [self.window.dockTile setBadgeLabel:@""];
     [self.window.dockTile setShowsApplicationBadge:NO];
     if ([[self currentTab] blur]) {
@@ -2675,8 +2675,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                       userInfo:nil];
 }
 
-- (void)windowWillMiniaturize:(NSNotification *)aNotification
-{
+- (void)windowWillMiniaturize:(NSNotification *)aNotification {
+    DLog(@"windowWillMiniaturize: %@\n%@", self, [NSThread callStackSymbols]);
     [self disableBlur];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowWillMiniaturize"
                                                         object:self
@@ -5288,13 +5288,13 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self window] setFrameTopLeftPoint:point];
 }
 
-- (void)windowPerformMiniaturize:(id)sender
-{
+- (void)windowPerformMiniaturize:(id)sender {
+    DLog(@"windowPerformMiniaturize: %@\n%@", self, [NSThread callStackSymbols]);
     [[self window] performMiniaturize:sender];
 }
 
-- (void)windowDeminiaturize:(id)sender
-{
+- (void)windowDeminiaturize:(id)sender {
+    DLog(@"windowDeminiaturize: %@\n%@", self, [NSThread callStackSymbols]);
     [[self window] deminiaturize:sender];
 }
 
@@ -5308,9 +5308,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self window] orderBack:sender];
 }
 
-- (BOOL)windowIsMiniaturized
-{
-    return [[self window] isMiniaturized];
+- (BOOL)windowIsMiniaturized {
+    const BOOL result = [[self window] isMiniaturized];
+    DLog(@"windowIsMiniaturized returning %@", @(result));
+    return result;
 }
 
 - (NSRect)windowFrame
