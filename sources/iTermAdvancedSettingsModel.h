@@ -212,5 +212,6 @@
 + (BOOL)openUntitledFile;
 + (BOOL)aggressiveFocusFollowsMouse;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
++ (BOOL)conservativeURLGuessing;
 
 @end

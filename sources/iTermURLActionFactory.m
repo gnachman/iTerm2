@@ -294,6 +294,29 @@
     NSString *stringWithoutNearbyPunctuation = [possibleUrl substringWithRange:rangeWithoutNearbyPunctuation];
     DLog(@"String without nearby punctuation: %@", stringWithoutNearbyPunctuation);
 
+    if ([iTermAdvancedSettingsModel conservativeURLGuessing]) {
+        if (![self stringLooksLikeURL:stringWithoutNearbyPunctuation]) {
+            return nil;
+        }
+
+        NSString *schemeRegex = @"^[a-z]+://";
+        // Hostname with two components
+        NSString *hostnameRegex = @"(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])";
+        NSString *pathRegex = @"/";
+        NSString *urlRegex = [NSString stringWithFormat:@"%@%@%@", schemeRegex, hostnameRegex, pathRegex];
+        if ([stringWithoutNearbyPunctuation rangeOfRegex:urlRegex].location != NSNotFound) {
+            return [self urlActionForString:stringWithoutNearbyPunctuation
+                                      range:rangeWithoutNearbyPunctuation
+                                     prefix:prefix
+                               prefixCoords:prefixCoords
+                                prefixChars:prefixChars
+                               suffixCoords:suffixCoords
+                                  extractor:extractor];
+        }
+
+        return nil;
+    }
+
     const BOOL hasColon = ([stringWithoutNearbyPunctuation rangeOfString:@":"].location != NSNotFound);
     BOOL looksLikeURL;
     if (hasColon) {
@@ -317,45 +340,61 @@
 
     if (looksLikeURL) {
         // If the string contains non-ascii characters, percent escape them. URLs are limited to ASCII.
-        NSURL *url = [NSURL URLWithUserSuppliedString:stringWithoutNearbyPunctuation];
-
-        // If something can handle the scheme then we're all set.
-        BOOL openable = (url &&
-                         [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] != nil &&
-                         prefixChars >= 0 &&
-                         prefixChars <= prefix.length);
-
-        if (openable) {
-            DLog(@"%@ is openable", url);
-            VT100GridWindowedRange range;
-            NSInteger j = prefix.length - prefixChars;
-            if (j < prefixCoords.count) {
-                range.coordRange.start = [prefixCoords[j] gridCoordValue];
-            } else if (j == prefixCoords.count && j > 0) {
-                range.coordRange.start = [extractor successorOfCoord:[prefixCoords[j - 1] gridCoordValue]];
-            } else {
-                DLog(@"prefixCoordscount=%@ j=%@", @(prefixCoords.count), @(j));
-                return nil;
-            }
-            NSInteger i = rangeWithoutNearbyPunctuation.length - prefixChars;
-            if (i < suffixCoords.count) {
-                range.coordRange.end = [suffixCoords[i] gridCoordValue];
-            } else if (i > 0 && i == suffixCoords.count) {
-                range.coordRange.end = [extractor successorOfCoord:[suffixCoords[i - 1] gridCoordValue]];
-            } else {
-                DLog(@"i=%@ suffixcoords.count=%@", @(i), @(suffixCoords.count));
-                return nil;
-            }
-            range.columnWindow = extractor.logicalWindow;
-            URLAction *action = [URLAction urlActionToOpenURL:stringWithoutNearbyPunctuation];
-            action.range = range;
-            return action;
-        } else {
-            DLog(@"%@ is not openable (couldn't convert it to a URL [%@] or no scheme handler",
-                 stringWithoutNearbyPunctuation, url);
-        }
+        return [self urlActionForString:stringWithoutNearbyPunctuation
+                                  range:rangeWithoutNearbyPunctuation
+                                 prefix:prefix
+                           prefixCoords:prefixCoords
+                            prefixChars:prefixChars
+                           suffixCoords:suffixCoords
+                              extractor:extractor];
     }
 
+    return nil;
+}
+
++ (URLAction *)urlActionForString:(NSString *)stringWithoutNearbyPunctuation
+                            range:(NSRange)rangeWithoutNearbyPunctuation
+                           prefix:(NSString *)prefix
+                     prefixCoords:(NSArray *)prefixCoords
+                      prefixChars:(int)prefixChars
+                     suffixCoords:(NSArray *)suffixCoords
+                        extractor:(iTermTextExtractor *)extractor {
+    NSURL *url = [NSURL URLWithUserSuppliedString:stringWithoutNearbyPunctuation];
+    // If something can handle the scheme then we're all set.
+    BOOL openable = (url &&
+                     [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] != nil &&
+                     prefixChars >= 0 &&
+                     prefixChars <= prefix.length);
+
+    if (openable) {
+        DLog(@"%@ is openable", url);
+        VT100GridWindowedRange range;
+        NSInteger j = prefix.length - prefixChars;
+        if (j < prefixCoords.count) {
+            range.coordRange.start = [prefixCoords[j] gridCoordValue];
+        } else if (j == prefixCoords.count && j > 0) {
+            range.coordRange.start = [extractor successorOfCoord:[prefixCoords[j - 1] gridCoordValue]];
+        } else {
+            DLog(@"prefixCoordscount=%@ j=%@", @(prefixCoords.count), @(j));
+            return nil;
+        }
+        NSInteger i = rangeWithoutNearbyPunctuation.length - prefixChars;
+        if (i < suffixCoords.count) {
+            range.coordRange.end = [suffixCoords[i] gridCoordValue];
+        } else if (i > 0 && i == suffixCoords.count) {
+            range.coordRange.end = [extractor successorOfCoord:[suffixCoords[i - 1] gridCoordValue]];
+        } else {
+            DLog(@"i=%@ suffixcoords.count=%@", @(i), @(suffixCoords.count));
+            return nil;
+        }
+        range.columnWindow = extractor.logicalWindow;
+        URLAction *action = [URLAction urlActionToOpenURL:stringWithoutNearbyPunctuation];
+        action.range = range;
+        return action;
+    } else {
+        DLog(@"%@ is not openable (couldn't convert it to a URL [%@] or no scheme handler",
+             stringWithoutNearbyPunctuation, url);
+    }
     return nil;
 }
 
