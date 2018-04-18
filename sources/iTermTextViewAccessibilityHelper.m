@@ -17,12 +17,6 @@
     NSMutableArray *_lineBreakIndexOffsets;
 }
 
-- (void)dealloc {
-    [_allText release];
-    [_lineBreakIndexOffsets release];
-    [super dealloc];
-}
-
 #pragma mark - Parameterized attributes
 
 // Range in _allText of the given line.
@@ -168,15 +162,15 @@
     return NSMakeRange(start, end - start);
 }
 
-- (NSNumber *)lineForIndex:(NSUInteger)theIndex {
-    return @([self lineNumberOfIndex:theIndex]);
+- (NSInteger)lineForIndex:(NSUInteger)theIndex {
+    return [self lineNumberOfIndex:theIndex];
 }
 
-- (NSValue *)rangeForLine:(NSUInteger)lineNumber {
+- (NSRange)rangeForLine:(NSUInteger)lineNumber {
     if (lineNumber >= [_lineBreakIndexOffsets count]) {
-        return [NSValue valueWithRange:NSMakeRange(NSNotFound, 0)];
+        return NSMakeRange(NSNotFound, 0);
     } else {
-        return [NSValue valueWithRange:[self rangeOfLine:lineNumber]];
+        return [self rangeOfLine:lineNumber];
     }
 }
 
@@ -184,16 +178,16 @@
     return [_allText substringWithRange:range];
 }
 
-- (NSValue *)rangeForPosition:(NSPoint)screenPosition {
+- (NSRange)rangeForPosition:(NSPoint)screenPosition {
     VT100GridCoord point = [_delegate accessibilityHelperCoordForPoint:screenPosition];
     if (point.y < 0) {
-        return [NSValue valueWithRange:NSMakeRange(0, 0)];
+        return NSMakeRange(0, 0);
     } else {
-        return [NSValue valueWithRange:[self rangeOfCharAtX:point.x y:point.y]];
+        return [self rangeOfCharAtX:point.x y:point.y];
     }
 }
 
-- (NSValue *)boundsForRange:(NSRange)range {
+- (NSRect)boundsForRange:(NSRange)range {
     int yStart = [self lineNumberOfChar:range.location];
     int y2 = [self lineNumberOfChar:range.location + range.length - 1];
     int xStart = [self columnOfChar:range.location inLine:yStart];
@@ -209,7 +203,7 @@
     int xMax = MAX(xStart, x2);
     NSRect result =
         [_delegate accessibilityHelperFrameForCoordRange:VT100GridCoordRangeMake(xMin, yMin, xMax, yMax)];
-    return [NSValue valueWithRect:result];
+    return result;
 }
 
 - (NSAttributedString *)attributedStringForRange:(NSRange)range {
@@ -217,7 +211,7 @@
         return nil;
     } else {
         NSString *theString = [_allText substringWithRange:range];
-        NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:theString] autorelease];
+        NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:theString];
         return attributedString;
     }
 }
@@ -229,10 +223,7 @@
 // it in place. It might be nice to ditch screen_char_t and use
 // NSAttributedString's with custom attributes, but unfortunately that would
 // have been a lot easier to do about five years ago.
-- (NSString*)allText {
-    [_allText release];
-    [_lineBreakIndexOffsets release];
-
+- (NSString *)allText {
     _allText = [[NSMutableString alloc] init];
     _lineBreakIndexOffsets = [[NSMutableArray alloc] init];
 
@@ -281,7 +272,7 @@
     return _allText;
 }
 
-- (NSString *)role {
+- (NSAccessibilityRole)role {
     return NSAccessibilityTextAreaRole;
 }
 
@@ -293,45 +284,44 @@
     return nil;
 }
 
-- (NSNumber *)focused {
-    return @YES;
+- (BOOL)focused {
+    return YES;
 }
 
-- (NSString *)description {
+- (NSString *)label {
     return @"shell";
 }
 
-- (NSNumber *)numberOfCharacters {
-    return @([[self allText] length]);
+- (NSInteger)numberOfCharacters {
+    return [[self allText] length];
 }
 
 - (NSString *)selectedText {
     return [_delegate accessibilityHelperSelectedText];
 }
 
-- (NSValue *)selectedTextRange {
+- (NSRange)selectedTextRange {
     // quick fix for ZoomText for Mac - it does not query AXValue or other
     // attributes that (re)generate _allText and especially lineBreak{Char,Index}Offsets_
     // which are needed for rangeOfCharAtX:y:
     [self allText];
 
     VT100GridCoordRange coordRange = [_delegate accessibilityHelperSelectedRange];
-    NSRange range = [self accessibilityRangeForCoordRange:coordRange];
-
-    return [NSValue valueWithRange:range];
+    return [self accessibilityRangeForCoordRange:coordRange];
 }
 
 - (NSArray *)selectedTextRanges {
-    return @[ [self accessibilityAttributeValue:NSAccessibilitySelectedTextRangeAttribute handled:nil] ];
+    NSRange range = [self selectedTextRange];
+    return @[ [NSValue valueWithRange:range] ];
 }
 
-- (NSNumber *)insertionPointLineNumber {
+- (NSInteger)insertionPointLineNumber {
     VT100GridCoord coord = [_delegate accessibilityHelperCursorCoord];
-    return @(coord.y);
+    return coord.y;
 }
 
-- (NSValue *)visibleCharacterRange {
-    return [NSValue valueWithRange:NSMakeRange(0, [[self allText] length])];
+- (NSRange)visibleCharacterRange {
+    return NSMakeRange(0, [[self allText] length]);
 }
 
 - (NSURL *)currentDocumentURL {
@@ -343,160 +333,6 @@
 - (void)setSelectedTextRange:(NSRange)range {
     VT100GridCoordRange coordRange = [self coordRangeForAccessibilityRange:range];
     [_delegate accessibilityHelperSetSelectedRange:coordRange];
-}
-
-#pragma mark - Public methods
-
-- (NSArray *)accessibilityAttributeNames {
-    DLog(@"Called");
-    return @[ NSAccessibilityRoleAttribute,
-              NSAccessibilityRoleDescriptionAttribute,
-              NSAccessibilityHelpAttribute,
-              NSAccessibilityFocusedAttribute,
-              NSAccessibilityParentAttribute,
-              NSAccessibilityChildrenAttribute,
-              NSAccessibilityWindowAttribute,
-              NSAccessibilityTopLevelUIElementAttribute,
-              NSAccessibilityPositionAttribute,
-              NSAccessibilitySizeAttribute,
-              NSAccessibilityDescriptionAttribute,
-              NSAccessibilityValueAttribute,
-              NSAccessibilityNumberOfCharactersAttribute,
-              NSAccessibilitySelectedTextAttribute,
-              NSAccessibilitySelectedTextRangeAttribute,
-              NSAccessibilitySelectedTextRangesAttribute,
-              NSAccessibilityInsertionPointLineNumberAttribute,
-              NSAccessibilityVisibleCharacterRangeAttribute,
-              NSAccessibilityDocumentAttribute ];
-}
-
-- (NSArray *)accessibilityParameterizedAttributeNames {
-    DLog(@"Called");
-    return @[ NSAccessibilityLineForIndexParameterizedAttribute,
-              NSAccessibilityRangeForLineParameterizedAttribute,
-              NSAccessibilityStringForRangeParameterizedAttribute,
-              NSAccessibilityRangeForPositionParameterizedAttribute,
-              NSAccessibilityRangeForIndexParameterizedAttribute,
-              NSAccessibilityBoundsForRangeParameterizedAttribute ];
-}
-
-- (id)accessibilityAttributeValue:(NSString *)attribute
-                     forParameter:(id)parameter
-                          handled:(BOOL *)handled {
-    id result = [self performAccessibilityAttributeValue:attribute forParameter:parameter handled:handled];
-    DLog(@"For attribute %@, parameter %@, return %@", attribute, parameter, result);
-    return result;
-}
-
-- (id)performAccessibilityAttributeValue:(NSString *)attribute
-                            forParameter:(id)parameter
-                                 handled:(BOOL *)handled {
-    *handled = YES;
-    if ([attribute isEqualToString:NSAccessibilityLineForIndexParameterizedAttribute]) {
-        //(NSNumber *) - line# for char index; param:(NSNumber *)
-        return [self lineForIndex:[(NSNumber*)parameter unsignedLongValue]];
-    } else if ([attribute isEqualToString:NSAccessibilityRangeForLineParameterizedAttribute]) {
-        //(NSValue *)  - (rangeValue) range of line; param:(NSNumber *)
-        return [self rangeForLine:[(NSNumber*)parameter unsignedLongValue]];
-    } else if ([attribute isEqualToString:NSAccessibilityStringForRangeParameterizedAttribute]) {
-        //(NSString *) - substring; param:(NSValue * - rangeValue)
-        return [self stringForRange:[(NSValue*)parameter rangeValue]];
-    } else if ([attribute isEqualToString:NSAccessibilityRangeForPositionParameterizedAttribute]) {
-        //(NSValue *)  - (rangeValue) composed char range; param:(NSValue * - pointValue)
-        return [self rangeForPosition:[(NSValue*)parameter pointValue]];
-    } else if ([attribute isEqualToString:NSAccessibilityRangeForIndexParameterizedAttribute]) {
-        //(NSValue *)  - (rangeValue) composed char range; param:(NSNumber *)
-        NSUInteger theIndex = [(NSNumber*)parameter unsignedLongValue];
-        return [NSValue valueWithRange:[self rangeOfIndex:theIndex]];
-    } else if ([attribute isEqualToString:NSAccessibilityBoundsForRangeParameterizedAttribute]) {
-        //(NSValue *)  - (rectValue) bounds of text; param:(NSValue * - rangeValue)
-        return [self boundsForRange:[(NSValue*)parameter rangeValue]];
-    } else if ([attribute isEqualToString:NSAccessibilityAttributedStringForRangeParameterizedAttribute]) {
-        //(NSAttributedString *) - substring; param:(NSValue * - rangeValue)
-        return [self attributedStringForRange:[(NSValue*)parameter rangeValue]];
-    } else {
-        *handled = NO;
-        return nil;
-    }
-}
-
-- (id)accessibilityAttributeValue:(NSString *)attribute
-                          handled:(BOOL *)handled {
-    id result = [self performAccessibilityAttributeValue:attribute handled:handled];
-    if (handled) {
-        DLog(@"For attribute %@, returning %@", attribute, result);
-    } else {
-        DLog(@"Unhandled");
-    }
-    return result;
-}
-
-- (id)performAccessibilityAttributeValue:(NSString *)attribute handled:(BOOL *)handled {
-    if (handled) {
-        *handled = YES;
-    }
-    if ([attribute isEqualToString:NSAccessibilityRoleAttribute]) {
-        return [self role];
-    } else if ([attribute isEqualToString:NSAccessibilityRoleDescriptionAttribute]) {
-        return [self roleDescription];
-    } else if ([attribute isEqualToString:NSAccessibilityHelpAttribute]) {
-        return [self help];
-    } else if ([attribute isEqualToString:NSAccessibilityFocusedAttribute]) {
-        return [self focused];
-    } else if ([attribute isEqualToString:NSAccessibilityDescriptionAttribute]) {
-        return [self description];
-    } else if ([attribute isEqualToString:NSAccessibilityValueAttribute]) {
-        return [self allText];
-    } else if ([attribute isEqualToString:NSAccessibilityNumberOfCharactersAttribute]) {
-        return [self numberOfCharacters];
-    } else if ([attribute isEqualToString:NSAccessibilitySelectedTextAttribute]) {
-        return [self selectedText];
-    } else if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
-        return [self selectedTextRange];
-    } else if ([attribute isEqualToString:NSAccessibilitySelectedTextRangesAttribute]) {
-        return [self selectedTextRanges];
-    } else if ([attribute isEqualToString:NSAccessibilityInsertionPointLineNumberAttribute]) {
-        return [self insertionPointLineNumber];
-    } else if ([attribute isEqualToString:NSAccessibilityVisibleCharacterRangeAttribute]) {
-        return [self visibleCharacterRange];
-    } else if ([attribute isEqualToString:NSAccessibilityDocumentAttribute]) {
-        return [[self currentDocumentURL] absoluteString];
-    } else {
-        if (handled) {
-            *handled = NO;
-        }
-        return nil;
-    }
-}
-
-- (BOOL)accessibilityIsAttributeSettable:(NSString *)attribute
-                                 handled:(BOOL *)handled {
-    BOOL result = [self performAccessibilityIsAttributeSettable:attribute handled:handled];
-    DLog(@"Return %@", @(result));
-    return result;
-}
-
-- (BOOL)performAccessibilityIsAttributeSettable:(NSString *)attribute
-                                        handled:(BOOL *)handled {
-    *handled = YES;
-    if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
-        return YES;
-    } else {
-        *handled = NO;
-        return NO;
-    }
-}
-
-- (void)accessibilitySetValue:(id)value
-                 forAttribute:(NSString *)attribute
-                      handled:(BOOL *)handled {
-    DLog(@"Set %@ to %@", attribute, value);
-    *handled = YES;
-    if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
-        [self setSelectedTextRange:[(NSValue *)value rangeValue]];
-    } else {
-        *handled = NO;
-    }
 }
 
 @end

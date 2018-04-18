@@ -1554,6 +1554,7 @@
 		A66B71231C826F4500D461E2 /* iTermTextExtractorTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A66B71211C826F4500D461E2 /* iTermTextExtractorTest.m */; };
 		A66BFADC1CD072DB00DA2346 /* iTermThroughputEstimator.h in Headers */ = {isa = PBXBuildFile; fileRef = A66BFADA1CD072DB00DA2346 /* iTermThroughputEstimator.h */; };
 		A66BFADD1CD072DB00DA2346 /* iTermThroughputEstimator.m in Sources */ = {isa = PBXBuildFile; fileRef = A66BFADB1CD072DB00DA2346 /* iTermThroughputEstimator.m */; };
+		A66DABFF20867749006391A3 /* iTermTextViewAccessibilityHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BD9121B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m */; };
 		A66DB80E1C8E182B00233E88 /* Info.png in Resources */ = {isa = PBXBuildFile; fileRef = A66DB80C1C8E182B00233E88 /* Info.png */; };
 		A66DB80F1C8E182B00233E88 /* Info@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66DB80D1C8E182B00233E88 /* Info@2x.png */; };
 		A66DB8321C8E4C2E00233E88 /* ChangeProfile.png in Resources */ = {isa = PBXBuildFile; fileRef = A66DB8301C8E4C2E00233E88 /* ChangeProfile.png */; };
@@ -2164,7 +2165,6 @@
 		A6C7631D1B45C52B00E3C992 /* iTermSelectionScrollHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F711A23D195009B1CB6 /* iTermSelectionScrollHelper.m */; };
 		A6C7631E1B45C52B00E3C992 /* iTermTemporaryDoubleBufferedGridController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2C65481AE9A2C900142CF5 /* iTermTemporaryDoubleBufferedGridController.m */; };
 		A6C7631F1B45C52B00E3C992 /* iTermTextDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1AE21AAE290700B49F79 /* iTermTextDrawingHelper.m */; };
-		A6C763201B45C52B00E3C992 /* iTermTextViewAccessibilityHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BD9121B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m */; };
 		A6C763211B45C52B00E3C992 /* iTermLaunchServices.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E713B918FCCDD1008D94DD /* iTermLaunchServices.m */; };
 		A6C763221B45C52B00E3C992 /* iTermWarning.m in Sources */ = {isa = PBXBuildFile; fileRef = A6099B0418D6B0FD00081FA9 /* iTermWarning.m */; };
 		A6C763231B45C52B00E3C992 /* MovePaneController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D29732614082676004C5DBE /* MovePaneController.m */; };
@@ -9003,6 +9003,7 @@
 				A68400B91FF97138008D3EE2 /* iTermTimestampDrawHelper.m in Sources */,
 				A66719631DCE3772000CE608 /* iTermSocketIPV4Address.m in Sources */,
 				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */,
+				A66DABFF20867749006391A3 /* iTermTextViewAccessibilityHelper.m in Sources */,
 				A66719611DCE3772000CE608 /* iTermIPV4Address.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -9242,7 +9243,6 @@
 				A6FEA26D1CF2C86800376F28 /* iTermBaseHotKey.m in Sources */,
 				A6C763A21B45C52B00E3C992 /* iTermToolbeltView.m in Sources */,
 				A6C763001B45C52B00E3C992 /* TransferrableFileMenuItemView.m in Sources */,
-				A6C763201B45C52B00E3C992 /* iTermTextViewAccessibilityHelper.m in Sources */,
 				A6CEC1071DCE8146009F4FD2 /* GPBArray.m in Sources */,
 				A6C763C11B45C52B00E3C992 /* VT100CSIParser.m in Sources */,
 				A66BFADD1CD072DB00DA2346 /* iTermThroughputEstimator.m in Sources */,

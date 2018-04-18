@@ -7174,53 +7174,92 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 #pragma mark - Accessibility
 
-- (BOOL)accessibilityIsIgnored {
-    return NO;
+- (BOOL)isAccessibilityElement {
+    return YES;
 }
 
-- (NSArray *)accessibilityAttributeNames {
-    return [_accessibilityHelper accessibilityAttributeNames];
+- (NSInteger)accessibilityLineForIndex:(NSInteger)index {
+    return [_accessibilityHelper lineForIndex:index];
 }
 
-- (NSArray *)accessibilityParameterizedAttributeNames {
-    return [_accessibilityHelper accessibilityParameterizedAttributeNames];
+- (NSRange)accessibilityRangeForLine:(NSInteger)line {
+    return [_accessibilityHelper rangeForLine:line];
 }
 
-- (id)accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter {
-    BOOL handled;
-    id result = [_accessibilityHelper accessibilityAttributeValue:attribute
-                                                     forParameter:parameter
-                                                          handled:&handled];
-    if (!handled) {
-        result = [super accessibilityAttributeValue:attribute forParameter:parameter];
-    }
-    return result;
+- (NSString *)accessibilityStringForRange:(NSRange)range {
+    return [_accessibilityHelper stringForRange:range];
 }
 
-- (BOOL)accessibilityIsAttributeSettable:(NSString *)attribute {
-    BOOL handled;
-    BOOL result = [_accessibilityHelper accessibilityIsAttributeSettable:attribute handled:&handled];
-    if (!handled) {
-        result = [super accessibilityIsAttributeSettable:attribute];
-    }
-    return result;
+- (NSRange)accessibilityRangeForPosition:(NSPoint)point {
+    return [_accessibilityHelper rangeForPosition:point];
 }
 
-- (void)accessibilitySetValue:(id)value forAttribute:(NSString *)attribute {
-    BOOL handled;
-    [_accessibilityHelper accessibilitySetValue:value forAttribute:attribute handled:&handled];
-    if (!handled) {
-        [super accessibilitySetValue:value forAttribute:attribute];
-    }
+- (NSRange)accessibilityRangeForIndex:(NSInteger)index {
+    return [_accessibilityHelper rangeOfIndex:index];
 }
 
-- (id)accessibilityAttributeValue:(NSString *)attribute {
-    BOOL handled;
-    id result = [_accessibilityHelper accessibilityAttributeValue:attribute handled:&handled];
-    if (!handled) {
-        result = [super accessibilityAttributeValue:attribute];
-    }
-    return result;
+- (NSRect)accessibilityFrameForRange:(NSRange)range {
+    return [_accessibilityHelper boundsForRange:range];
+}
+
+- (NSAttributedString *)accessibilityAttributedStringForRange:(NSRange)range {
+    return [_accessibilityHelper attributedStringForRange:range];
+}
+
+- (NSAccessibilityRole)accessibilityRole {
+    return [_accessibilityHelper role];
+}
+
+- (NSString *)accessibilityRoleDescription {
+    return [_accessibilityHelper roleDescription];
+}
+
+- (NSString *)accessibilityHelp {
+    return [_accessibilityHelper help];
+}
+
+- (BOOL)isAccessibilityFocused {
+    return [_accessibilityHelper focused];
+}
+
+- (NSString *)accessibilityLabel {
+    return [_accessibilityHelper label];
+}
+
+- (id)accessibilityValue {
+    return [_accessibilityHelper allText];
+}
+
+- (NSInteger)accessibilityNumberOfCharacters {
+    return [_accessibilityHelper numberOfCharacters];
+}
+
+- (NSString *)accessibilitySelectedText {
+    return [_accessibilityHelper selectedText];
+}
+
+- (NSRange)accessibilitySelectedTextRange {
+    return [_accessibilityHelper selectedTextRange];
+}
+
+- (NSArray<NSValue *> *)accessibilitySelectedTextRanges {
+    return [_accessibilityHelper selectedTextRanges];
+}
+
+- (NSInteger)accessibilityInsertionPointLineNumber {
+    return [_accessibilityHelper insertionPointLineNumber];
+}
+
+- (NSRange)accessibilityVisibleCharacterRange {
+    return [_accessibilityHelper visibleCharacterRange];
+}
+
+- (NSString *)accessibilityDocument {
+    return [[_accessibilityHelper currentDocumentURL] absoluteString];
+}
+
+- (void)setAccessibilitySelectedTextRange:(NSRange)accessibilitySelectedTextRange {
+    [_accessibilityHelper setSelectedTextRange:accessibilitySelectedTextRange];
 }
 
 #pragma mark - Accessibility Helper Delegate

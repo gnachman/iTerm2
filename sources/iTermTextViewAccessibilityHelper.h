@@ -54,11 +54,27 @@
 
 @property(nonatomic, assign) id<iTermTextViewAccessibilityHelperDelegate> delegate;
 
-- (NSArray *)accessibilityAttributeNames;
-- (NSArray *)accessibilityParameterizedAttributeNames;
-- (id)accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter handled:(BOOL *)handled;
-- (BOOL)accessibilityIsAttributeSettable:(NSString *)attribute handled:(BOOL *)handled;
-- (void)accessibilitySetValue:(id)value forAttribute:(NSString *)attribute handled:(BOOL *)handled;
-- (id)accessibilityAttributeValue:(NSString *)attribute handled:(BOOL *)handled;
+- (NSInteger)lineForIndex:(NSUInteger)theIndex;
+- (NSRange)rangeForLine:(NSUInteger)lineNumber;
+- (NSString *)stringForRange:(NSRange)range;
+- (NSRange)rangeForPosition:(NSPoint)screenPosition;
+- (NSRange)rangeOfIndex:(NSUInteger)theIndex;
+- (NSRect)boundsForRange:(NSRange)range;
+- (NSAttributedString *)attributedStringForRange:(NSRange)range;
+- (NSAccessibilityRole)role;
+- (NSString *)roleDescription;
+- (NSString *)help;
+- (BOOL)focused;
+- (NSString *)label;
+- (NSString *)allText;
+- (NSInteger)numberOfCharacters;
+- (NSString *)selectedText;
+- (NSRange)selectedTextRange;
+- (NSArray *)selectedTextRanges;
+- (NSInteger)insertionPointLineNumber;
+- (NSRange)visibleCharacterRange;
+- (NSURL *)currentDocumentURL;
+- (void)setSelectedTextRange:(NSRange)range;
+
 
 @end
