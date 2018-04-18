@@ -11,7 +11,7 @@ typedef struct {
     float2 backgroundTextureCoordinate;
     float4 textColor;
     float4 backgroundColor;
-    float4 underlineColor;
+    half4 underlineColor;
     bool recolor;
     int3 colorModelIndex;
     float2 textureOffset;  // Normalized offset in texture.
@@ -49,7 +49,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
 
     out.cellOffset = perInstanceUniforms[iid].offset.xy + offset[0];
     out.underlineStyle = perInstanceUniforms[iid].underlineStyle;
-    out.underlineColor = perInstanceUniforms[iid].underlineColor;
+    out.underlineColor = static_cast<half4>(perInstanceUniforms[iid].underlineColor);
 
     return out;
 }
@@ -342,7 +342,7 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
                                                                  textureSampler,
                                                                  dimensions->scale);
             return mix(bwColor,
-                       static_cast<half4>(in.underlineColor),
+                       in.underlineColor,
                        weight);
         } else {
             return bwColor;
@@ -365,7 +365,7 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
                                                          dimensions->scale);
             if (weight > 0) {
                 return mix(static_cast<half4>(in.backgroundColor),
-                           static_cast<half4>(in.underlineColor),
+                           in.underlineColor,
                            weight);
             } else {
                 discard_fragment();
@@ -411,45 +411,45 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
     if (!in.recolor) {
         // Emoji code path
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            const float weight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
-                                                                  in.clipSpacePosition.xy,
-                                                                  in.viewportSize,
-                                                                  in.cellOffset,
-                                                                  dimensions->underlineOffset,
-                                                                  dimensions->underlineThickness,
-                                                                  dimensions->textureSize,
-                                                                  in.textureOffset,
-                                                                  in.textureCoordinate,
-                                                                  dimensions->cellSize,
-                                                                  texture,
-                                                                  textureSampler,
-                                                                  dimensions->scale);
-            return static_cast<half4>(mix(static_cast<float4>(bwColor),
-                                          in.underlineColor,
-                                          weight));
+            const half weight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
+                                                                 in.clipSpacePosition.xy,
+                                                                 in.viewportSize,
+                                                                 in.cellOffset,
+                                                                 dimensions->underlineOffset,
+                                                                 dimensions->underlineThickness,
+                                                                 dimensions->textureSize,
+                                                                 in.textureOffset,
+                                                                 in.textureCoordinate,
+                                                                 dimensions->cellSize,
+                                                                 texture,
+                                                                 textureSampler,
+                                                                 dimensions->scale);
+            return mix(bwColor,
+                       in.underlineColor,
+                       weight);
         } else {
             return bwColor;
         }
     } else if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         // Background shows through completely. Not emoji.
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            const float weight = ComputeWeightOfUnderline(in.underlineStyle,
-                                                          in.clipSpacePosition.xy,
-                                                          in.viewportSize,
-                                                          in.cellOffset,
-                                                          dimensions->underlineOffset,
-                                                          dimensions->underlineThickness,
-                                                          dimensions->textureSize,
-                                                          in.textureOffset,
-                                                          in.textureCoordinate,
-                                                          dimensions->cellSize,
-                                                          texture,
-                                                          textureSampler,
-                                                          dimensions->scale);
+            const half weight = ComputeWeightOfUnderline(in.underlineStyle,
+                                                         in.clipSpacePosition.xy,
+                                                         in.viewportSize,
+                                                         in.cellOffset,
+                                                         dimensions->underlineOffset,
+                                                         dimensions->underlineThickness,
+                                                         dimensions->textureSize,
+                                                         in.textureOffset,
+                                                         in.textureCoordinate,
+                                                         dimensions->cellSize,
+                                                         texture,
+                                                         textureSampler,
+                                                         dimensions->scale);
             if (weight > 0) {
-                return static_cast<half4>(mix(backgroundColor,
-                                              in.underlineColor,
-                                              weight));
+                return mix(static_cast<half4>(backgroundColor),
+                           in.underlineColor,
+                           weight);
             }
         }
         discard_fragment();
