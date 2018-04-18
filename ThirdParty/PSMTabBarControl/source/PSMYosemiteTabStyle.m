@@ -603,15 +603,6 @@
     [self drawInteriorWithTabCell:cell inView:[cell controlView] highlightAmount:highlightAmount];
 }
 
-static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
-    static const double kRedComponentBrightness = 0.30;
-    static const double kGreenComponentBrightness = 0.59;
-    static const double kBlueComponentBrightness = 0.11;
-    return (kRedComponentBrightness * r +
-            kGreenComponentBrightness * g +
-            kBlueComponentBrightness * b);
-}
-
 - (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell {
     return [[self effectiveBackgroundColorForTabWithTabColor:cell.tabColor
                                                     selected:(cell.state == NSOnState)
