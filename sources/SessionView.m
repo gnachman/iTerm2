@@ -56,7 +56,7 @@ static NSDate* lastResizeDate_;
 @end
 
 
-@interface SessionView () <iTermAnnouncementDelegate, PTYScrollerDelegate>
+@interface SessionView () <iTermAnnouncementDelegate, NSDraggingSource, PTYScrollerDelegate>
 @property(nonatomic, retain) PTYScrollView *scrollview;
 @end
 
@@ -658,21 +658,22 @@ static NSDate* lastResizeDate_;
 
 #pragma mark NSDraggingSource protocol
 
-- (void)draggedImage:(NSImage *)draggedImage movedTo:(NSPoint)screenPoint {
+- (void)draggingSession:(NSDraggingSession *)session movedToPoint:(NSPoint)screenPoint {
     [[NSCursor closedHandCursor] set];
 }
 
-- (NSDragOperation)draggingSourceOperationMaskForLocal:(BOOL)isLocal {
+- (NSDragOperation)draggingSession:(NSDraggingSession *)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
+    const BOOL isLocal = (context == NSDraggingContextWithinApplication);
     return (isLocal ? NSDragOperationMove : NSDragOperationNone);
 }
 
-- (BOOL)ignoreModifierKeysWhileDragging {
+- (BOOL)ignoreModifierKeysForDraggingSession:(NSDraggingSession *)session {
     return YES;
 }
 
-- (void)draggedImage:(NSImage *)anImage
-             endedAt:(NSPoint)aPoint
-           operation:(NSDragOperation)operation {
+- (void)draggingSession:(NSDraggingSession *)session
+           endedAtPoint:(NSPoint)aPoint
+              operation:(NSDragOperation)operation {
     if (![[MovePaneController sharedInstance] dragFailed]) {
         [[MovePaneController sharedInstance] dropInSession:nil half:kNoHalf atPoint:aPoint];
     }
