@@ -43,6 +43,8 @@
     return nil;
 }
 
+#warning TODO
+/*
 // This is done to keep the framework from drawing the highlight and letting
 // higlightSelectionInClipRect: do it instead.
 - (NSCell *)preparedCellAtColumn:(NSInteger)column row:(NSInteger)row {
@@ -54,6 +56,7 @@
 
     return cell;
 }
+ */
 
 - (void)highlightSelectionInClipRect:(NSRect)theClipRect {
     if (!self.window.isKeyWindow) {

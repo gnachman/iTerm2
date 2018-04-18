@@ -353,6 +353,7 @@ unsigned short iTermBogusVirtualKeyCode = 0xffff;
         }
         DLog(@"NSKeyDown event taking the regular path");
     }
+    
     [super sendEvent:event];
 }
 

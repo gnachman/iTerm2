@@ -43,7 +43,6 @@
 
 @end
 
-static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 static const CGFloat kExtraMarginBetweenWindowBottomAndTabViewForEditCurrentSessionMode = 7;
 static const CGFloat kSideMarginsWithinInnerTabView = 11;
 NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEditing";
@@ -116,10 +115,6 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 - (instancetype)init {
     self = [super init];
     if (self) {
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(refreshProfileTable)
-                                                     name:kRefreshProfileTable
-                                                   object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(reloadProfiles)
                                                      name:kReloadAllProfiles
@@ -335,9 +330,6 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
     [self updateSubviewsForProfile:profile];
     if (!_tabView.isHidden) {
-        // Epilogue
-        [self reloadData];
-
         [[NSNotificationCenter defaultCenter] postNotificationName:kPreferencePanelDidUpdateProfileFields
                                                             object:nil
                                                           userInfo:nil];
@@ -684,10 +676,6 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 }
 
 #pragma mark - Notifications
-
-- (void)refreshProfileTable {
-    [self profileTableSelectionDidChange:_profilesListView];
-}
 
 - (void)reloadProfiles {
     [self refresh];

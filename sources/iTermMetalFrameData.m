@@ -355,7 +355,7 @@ static NSInteger gNextFrameDataNumber;
         temp[i] = aggregateStats[i];
         [aggregateHistograms[i] mergeFrom:_statHistograms[i]];
     }
-    iTermPreciseTimerPeriodicLog([NSString stringWithFormat:@"%@: Metal Frame Data", owner], temp, iTermMetalFrameDataStatCount, 1, YES, aggregateHistograms);
+    iTermPreciseTimerPeriodicLog([NSString stringWithFormat:@"%@: Metal Frame Data", owner], temp, iTermMetalFrameDataStatCount, 1, [iTermAdvancedSettingsModel logDrawingPerformance], aggregateHistograms);
 }
 
 - (__kindof iTermMetalRendererTransientState *)transientStateForRenderer:(NSObject *)renderer {

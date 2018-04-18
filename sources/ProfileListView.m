@@ -26,7 +26,10 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "NSArray+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
+#import "NSObject+iTerm.h"
+#import "NSTextField+iTerm.h"
 #import "PTYSession.h"
 #import "ProfileModel.h"
 #import "ProfileModelWrapper.h"
@@ -37,6 +40,51 @@
 #import "NSView+RecursiveDescription.h"
 
 #define kProfileTableViewDataType @"iTerm2ProfileGuid"
+
+// NSAttributedString attribute keys used as source values by
+// iTermProfileListViewTextField. One of these colors will be used as the
+// NSForegroundColorAttributeName's value when the background style changes.
+static NSString *const iTermRegularTextColorAttribute = @"iTermRegularTextColorAttribute";
+static NSString *const iTermSelectedActiveTextColorAttribute = @"iTermSelectedActiveTextColorAttribute";
+static NSString *const iTermSelectedInactiveTextColorAttribute = @"iTermSelectedInactiveTextColorAttribute";
+
+// This is a text field that updates its text colors depending on the current background style.
+@interface iTermProfileListViewTextField : NSTextField
+@end
+
+@implementation iTermProfileListViewTextField
+
+- (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
+    switch (backgroundStyle) {
+        case NSBackgroundStyleDark:
+            self.textColor = [NSColor whiteColor];
+            [self setAttributedTextColorsForKey:iTermSelectedActiveTextColorAttribute];
+            break;
+        case NSBackgroundStyleLight:
+            [self setAttributedTextColorsForKey:iTermRegularTextColorAttribute];
+            self.textColor = [NSColor blackColor];
+            break;
+
+        case NSBackgroundStyleRaised:
+        case NSBackgroundStyleLowered:
+            DLog(@"Unexpected background style %@", @(backgroundStyle));
+            break;
+    }
+}
+
+- (void)setAttributedTextColorsForKey:(NSString *)key {
+    NSMutableAttributedString *m = [self.attributedStringValue.mutableCopy autorelease];
+    [self.attributedStringValue enumerateAttributesInRange:NSMakeRange(0, self.attributedStringValue.string.length)
+                                                   options:0
+                                                usingBlock:^(NSDictionary<NSAttributedStringKey,id> * _Nonnull attrs, NSRange range, BOOL * _Nonnull stop) {
+                                                    NSMutableDictionary *newAttrs = [[attrs mutableCopy] autorelease];
+                                                    newAttrs[NSForegroundColorAttributeName] = attrs[key];
+                                                    [m setAttributes:newAttrs range:range];
+                                                }];
+    self.attributedStringValue = m;
+}
+
+@end
 
 NSString *const kProfileWasDeletedNotification = @"kProfileWasDeletedNotification";
 
@@ -71,6 +119,7 @@ const CGFloat kDefaultTagsWidth = 80;
     BOOL _haveHeights;
     CGFloat _heightWithTags;
     CGFloat _heightWithoutTags;
+    NSFont *_font;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -162,7 +211,7 @@ const CGFloat kDefaultTagsWidth = 80;
 
         NSTableHeaderView* header = [[[NSTableHeaderView alloc] init] autorelease];
         [tableView_ setHeaderView:header];
-        [[tableColumn_ headerCell] setStringValue:@"Profile Name"];
+        tableColumn_.title = @"Profile Name";
 
         [tableView_ sizeLastColumnToFit];
 
@@ -208,6 +257,7 @@ const CGFloat kDefaultTagsWidth = 80;
     if (tableView_.dataSource == self) {
         tableView_.dataSource = nil;
     }
+    [_font release];
     [super dealloc];
 }
 
@@ -310,14 +360,18 @@ const CGFloat kDefaultTagsWidth = 80;
     [[dataSource_ underlyingModel] rebuildMenus];
     [[dataSource_ underlyingModel] postChangeNotification];
 
+    [self selectGuids:guids];
+
+    [self reloadData];
+}
+
+- (void)selectGuids:(NSArray *)guids {
     NSMutableIndexSet* newIndexes = [[[NSMutableIndexSet alloc] init] autorelease];
     for (NSString* guid in guids) {
         int row = [dataSource_ indexOfProfileWithGuid:guid];
         [newIndexes addIndex:row];
     }
     [tableView_ selectRowIndexes:newIndexes byExtendingSelection:NO];
-
-    [self reloadData];
 }
 
 // End Drag drop -------------------------------
@@ -488,12 +542,12 @@ const CGFloat kDefaultTagsWidth = 80;
 
 - (CGFloat)heightOfRowWithTags:(BOOL)hasTags {
     if (!_haveHeights) {
-        _heightWithTags = [[self attributedStringForName:@"M"
-                                                    tags:@[ @"M" ]
+        _heightWithTags = [[self attributedStringForName:@"Mj"
+                                                    tags:@[ @"Mj" ]
                                                 selected:NO
                                                isDefault:YES
                                                   filter:nil] heightForWidth:100] + [self extraHeightWithTags:YES];
-        _heightWithoutTags = [[self attributedStringForName:@"M"
+        _heightWithoutTags = [[self attributedStringForName:@"Mj"
                                                        tags:nil
                                                    selected:NO
                                                   isDefault:YES
@@ -512,19 +566,15 @@ const CGFloat kDefaultTagsWidth = 80;
 }
 
 - (CGFloat)extraHeightWithTags:(BOOL)hasTags {
-    if (self.mainFont.pointSize <= [NSFont smallSystemFontSize]) {
-        if (hasTags) {
-            return 2;
-        } else {
-            return 1;
-        }
+    if (hasTags) {
+        return 4;
     } else {
         return 2;
     }
 }
 
 - (NSFont *)mainFont {
-    return [[tableColumn_ dataCell] font];
+    return _font ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
 }
 
 - (NSFont *)tagFont {
@@ -582,36 +632,37 @@ const CGFloat kDefaultTagsWidth = 80;
                                        selected:(BOOL)selected
                                       isDefault:(BOOL)isDefault
                                          filter:(NSString *)filter {
-    NSColor *textColor;
-    NSColor *tagColor;
-    NSColor *highlightedBackgroundColor;
-    if (selected) {
-        if ([NSApp isActive] && self.window.isKeyWindow) {
-            textColor = [self textColorWhenActiveAndSelected];
-        } else {
-            textColor = [self textColorWhenInactiveAndSelected];
-        }
-        tagColor = [self tagColorWhenSelected];
-        highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
-    } else {
-        textColor = [self textColorWhenUnselected];
-        tagColor = [self tagColorWhenUnselected];
-        highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
-    }
+    NSColor *highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
+
+    NSColor *selectedActiveTextColor = [self textColorWhenActiveAndSelected];
+    NSColor *selectedInactiveTextColor = [self textColorWhenInactiveAndSelected];
+    NSColor *selectedActiveTagColor = [self tagColorWhenSelected];
+    NSColor *selectedInactiveTagColor = [self tagColorWhenSelected];
+    NSColor *regularTextColor = [self textColorWhenUnselected];
+    NSColor *regularTagColor = [self tagColorWhenUnselected];
+
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
 
-    NSDictionary* plainAttributes = @{ NSForegroundColorAttributeName: textColor,
+        NSDictionary* plainAttributes = @{ iTermRegularTextColorAttribute: regularTextColor,
+                                       iTermSelectedActiveTextColorAttribute: selectedActiveTextColor,
+                                       iTermSelectedInactiveTextColorAttribute: selectedInactiveTextColor,
                                        NSParagraphStyleAttributeName: paragraphStyle,
                                        NSFontAttributeName: self.mainFont };
-    NSDictionary* highlightedNameAttributes = @{ NSForegroundColorAttributeName: textColor,
+    NSDictionary* highlightedNameAttributes = @{ iTermRegularTextColorAttribute: regularTextColor,
+                                                 iTermSelectedActiveTextColorAttribute: selectedActiveTextColor,
+                                                 iTermSelectedInactiveTextColorAttribute: selectedInactiveTextColor,
                                                  NSParagraphStyleAttributeName: paragraphStyle,
                                                  NSBackgroundColorAttributeName: highlightedBackgroundColor,
                                                  NSFontAttributeName: self.mainFont };
-    NSDictionary* smallAttributes = @{ NSForegroundColorAttributeName: tagColor,
+    NSDictionary* smallAttributes = @{ iTermRegularTextColorAttribute: regularTagColor,
+                                       iTermSelectedActiveTextColorAttribute: selectedActiveTagColor,
+                                       iTermSelectedInactiveTextColorAttribute: selectedInactiveTagColor,
                                        NSParagraphStyleAttributeName: paragraphStyle,
                                        NSFontAttributeName: self.tagFont };
-    NSDictionary* highlightedSmallAttributes = @{ NSForegroundColorAttributeName: tagColor,
+    NSDictionary* highlightedSmallAttributes = @{ iTermRegularTextColorAttribute: regularTagColor,
+                                                  iTermSelectedActiveTextColorAttribute: selectedActiveTagColor,
+                                                  iTermSelectedInactiveTextColorAttribute: selectedInactiveTagColor,
                                                   NSParagraphStyleAttributeName: paragraphStyle,
                                                   NSBackgroundColorAttributeName: highlightedBackgroundColor,
                                                   NSFontAttributeName: self.tagFont };
@@ -658,15 +709,59 @@ const CGFloat kDefaultTagsWidth = 80;
     return [[[NSAttributedString alloc] initWithString:string attributes:attributes] autorelease];
 }
 
-- (id)tableView:(NSTableView *)aTableView
-    objectValueForTableColumn:(NSTableColumn *)aTableColumn
-                          row:(NSInteger)rowIndex {
+- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
+    static NSString *const identifier = @"ProfileListViewIdentifier";
+    NSTableCellView *result = [tableView makeViewWithIdentifier:identifier owner:self];
+    if (result == nil) {
+        // Apple couldn't be bothered to document it but this method is kind of
+        // supposed to return an NSTableCellView. Its backgroundStyle gets
+        // changed when a row is selected/deselected. It's supposed to pass that
+        // on to its textField, which of course you have to manually create like
+        // an animal unless you use IB for this (which is silly).
+        result = [[[NSTableCellView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)] autorelease];
+        result.textField = [iTermProfileListViewTextField it_textFieldForTableViewWithIdentifier:identifier];
+        result.textField.frame = result.bounds;
+        result.textField.autoresizingMask = (NSViewWidthSizable |
+                                             NSViewHeightSizable);
+        result.autoresizesSubviews = YES;
+        [result addSubview:result.textField];
+    }
+    BOOL multiline = NO;
+    id value = [self stringOrAttributedStringForColumn:tableColumn row:row multiline:&multiline];
+    // Single line mode breaks vertical alignment
+    result.textField.usesSingleLineMode = NO;
+    if ([value isKindOfClass:[NSAttributedString class]]) {
+        result.textField.attributedStringValue = value;
+        result.textField.toolTip = [value string];
+    } else {
+        result.textField.stringValue = value;
+        result.textField.toolTip = value;
+    }
+    iTermProfileListViewTextField *textField = (id)result.textField;
+    NSTableRowView *rowView = [tableView rowViewAtRow:row makeIfNecessary:NO];
+    if (rowView) {
+        // An explicit call to rowViewAtRow:makeIfNecessary:YES as in
+        // -selectRowIndex: is needed for this to be initialized correctly
+        // if the background style is not default. If there's no rowView at
+        // the time this is called, the backgroundStyle never gets initialized.
+        // I think I'm going to become a farmer.
+        result.backgroundStyle = [rowView interiorBackgroundStyle];
+        textField.backgroundStyle = [rowView interiorBackgroundStyle];
+    }
+    return result;
+}
+
+- (id)stringOrAttributedStringForColumn:(NSTableColumn *)aTableColumn
+                                    row:(NSInteger)rowIndex
+                              multiline:(BOOL *)multilinePtr {
     Profile* bookmark = [dataSource_ profileAtIndex:rowIndex];
 
+    *multilinePtr = 0;
     if (aTableColumn == tableColumn_) {
         DLog(@"Getting name of profile at row %d. The dictionary's address is %p. Its name is %@",
              (int)rowIndex, bookmark, bookmark[KEY_NAME]);
         Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
+        *multilinePtr = [bookmark[KEY_TAGS] count] > 0;
         return [self attributedStringForName:bookmark[KEY_NAME] ?: @""
                                         tags:bookmark[KEY_TAGS]
                                     selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]
@@ -781,19 +876,26 @@ const CGFloat kDefaultTagsWidth = 80;
     [dataSource_ sync];
     DLog(@"calling reloadData on the profile tableview");
     [tableView_ reloadData];
-    if (self.delegate && ![selectedGuids_ isEqualToSet:[self selectedGuids]]) {
+    NSSet *newSelectedGuids = [NSSet setWithArray:[selectedGuids_.allObjects filteredArrayUsingBlock:^BOOL(id guid) {
+        return ([dataSource_ indexOfProfileWithGuid:guid] != -1);
+    }]];
+    if (self.delegate && ![selectedGuids_ isEqualToSet:newSelectedGuids]) {
         [selectedGuids_ release];
-        selectedGuids_ = [self selectedGuids];
+        selectedGuids_ = newSelectedGuids;
         [selectedGuids_ retain];
         if ([self.delegate respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
             [self.delegate profileTableSelectionDidChange:self];
         }
     }
+    [self selectGuids:newSelectedGuids.allObjects];
 }
 
 - (void)selectRowIndex:(int)theRow
 {
     NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:theRow];
+    // Make sure the rowview exists so its background style can be known when
+    // the NSTableCellView is created.
+    [tableView_ rowViewAtRow:theRow makeIfNecessary:YES];
     [tableView_ selectRowIndexes:indexes byExtendingSelection:NO];
     [tableView_ scrollRowToVisible:theRow];
 }
@@ -921,8 +1023,8 @@ const CGFloat kDefaultTagsWidth = 80;
 
     [tableColumn_ setWidth:250];
 
-    [[shortcutColumn_ headerCell] setStringValue:@"Shortcut"];
-    [[commandColumn_ headerCell] setStringValue:@"Command"];
+    shortcutColumn_.title = @"Shortcut";
+    commandColumn_.title = @"Command";
     [tableView_ sizeLastColumnToFit];
 }
 
@@ -992,9 +1094,7 @@ const CGFloat kDefaultTagsWidth = 80;
 - (void)setFont:(NSFont *)theFont
 {
     _haveHeights = NO;
-    for (NSTableColumn *col in [tableView_ tableColumns]) {
-        [[col dataCell] setFont:theFont];
-    }
+    _font = theFont;
 
     if ([theFont pointSize] < 13) {
         [[searchField_ cell] setFont:theFont];
