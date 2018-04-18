@@ -133,6 +133,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    _profilesListView.delegate = nil;
     [super dealloc];
 }
 

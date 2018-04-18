@@ -43,21 +43,6 @@
     return nil;
 }
 
-#warning TODO
-/*
-// This is done to keep the framework from drawing the highlight and letting
-// higlightSelectionInClipRect: do it instead.
-- (NSCell *)preparedCellAtColumn:(NSInteger)column row:(NSInteger)row {
-    NSCell *cell = [super preparedCellAtColumn:column row:row];
-    if (cell.isHighlighted && self.window.isKeyWindow) {
-        cell.backgroundStyle = NSBackgroundStyleDark;
-        cell.highlighted = NO;
-    }
-
-    return cell;
-}
- */
-
 - (void)highlightSelectionInClipRect:(NSRect)theClipRect {
     if (!self.window.isKeyWindow) {
         return [super highlightSelectionInClipRect:theClipRect];
