@@ -72,14 +72,6 @@ const CGFloat kEdgeWidth = 3;
     return self;
 }
 
-- (instancetype)initImageCell:(NSImage *)image {
-    self = [super initImageCell:image];
-    if (self) {
-        _alphaMultiplier = 1;
-    }
-    return self;
-}
-
 - (void)setFraction:(CGFloat)fraction {
     if (fraction == 1.0 && _fraction < 1.0) {
         _needsAnimation = YES;
