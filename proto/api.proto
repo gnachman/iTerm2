@@ -4,7 +4,7 @@ package iterm2;
 
 // All requests are wrapped in this message. This encoded message is the entirety of the payload
 // of messages sent over WebSocket from client to iTerm2.
-message Request {
+message ClientOriginatedMessage {
   optional int64 id = 1;
 
   // Set exactly one of these fields.
@@ -23,9 +23,10 @@ message Request {
 
 // All responses are wrapped in this message. This encoded message is the entirety of the payload
 // of messages sent over WebSocket from iTerm2 to client.
-message Response {
+message ServerOriginatedMessage {
   optional int64 id = 1;
 
+  // Responses to ClientOriginatedMessages of the corresponding type
   optional GetBufferResponse get_buffer_response = 100;
   optional GetPromptResponse get_prompt_response = 101;
   optional TransactionResponse transaction_response = 102;

@@ -355,28 +355,28 @@ BOOL ITMSplitPaneResponse_Status_IsValidValue(int32_t value);
 @interface ITMApiRoot : GPBRootObject
 @end
 
-#pragma mark - ITMRequest
+#pragma mark - ITMClientOriginatedMessage
 
-typedef GPB_ENUM(ITMRequest_FieldNumber) {
-  ITMRequest_FieldNumber_Id_p = 1,
-  ITMRequest_FieldNumber_GetBufferRequest = 100,
-  ITMRequest_FieldNumber_GetPromptRequest = 101,
-  ITMRequest_FieldNumber_TransactionRequest = 102,
-  ITMRequest_FieldNumber_NotificationRequest = 103,
-  ITMRequest_FieldNumber_RegisterToolRequest = 104,
-  ITMRequest_FieldNumber_SetProfilePropertyRequest = 105,
-  ITMRequest_FieldNumber_ListSessionsRequest = 106,
-  ITMRequest_FieldNumber_SendTextRequest = 107,
-  ITMRequest_FieldNumber_CreateTabRequest = 108,
-  ITMRequest_FieldNumber_SplitPaneRequest = 109,
-  ITMRequest_FieldNumber_GetProfilePropertyRequest = 110,
+typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
+  ITMClientOriginatedMessage_FieldNumber_Id_p = 1,
+  ITMClientOriginatedMessage_FieldNumber_GetBufferRequest = 100,
+  ITMClientOriginatedMessage_FieldNumber_GetPromptRequest = 101,
+  ITMClientOriginatedMessage_FieldNumber_TransactionRequest = 102,
+  ITMClientOriginatedMessage_FieldNumber_NotificationRequest = 103,
+  ITMClientOriginatedMessage_FieldNumber_RegisterToolRequest = 104,
+  ITMClientOriginatedMessage_FieldNumber_SetProfilePropertyRequest = 105,
+  ITMClientOriginatedMessage_FieldNumber_ListSessionsRequest = 106,
+  ITMClientOriginatedMessage_FieldNumber_SendTextRequest = 107,
+  ITMClientOriginatedMessage_FieldNumber_CreateTabRequest = 108,
+  ITMClientOriginatedMessage_FieldNumber_SplitPaneRequest = 109,
+  ITMClientOriginatedMessage_FieldNumber_GetProfilePropertyRequest = 110,
 };
 
 /**
  * All requests are wrapped in this message. This encoded message is the entirety of the payload
  * of messages sent over WebSocket from client to iTerm2.
  **/
-@interface ITMRequest : GPBMessage
+@interface ITMClientOriginatedMessage : GPBMessage
 
 @property(nonatomic, readwrite) int64_t id_p;
 
@@ -428,33 +428,34 @@ typedef GPB_ENUM(ITMRequest_FieldNumber) {
 
 @end
 
-#pragma mark - ITMResponse
+#pragma mark - ITMServerOriginatedMessage
 
-typedef GPB_ENUM(ITMResponse_FieldNumber) {
-  ITMResponse_FieldNumber_Id_p = 1,
-  ITMResponse_FieldNumber_GetBufferResponse = 100,
-  ITMResponse_FieldNumber_GetPromptResponse = 101,
-  ITMResponse_FieldNumber_TransactionResponse = 102,
-  ITMResponse_FieldNumber_NotificationResponse = 103,
-  ITMResponse_FieldNumber_RegisterToolResponse = 104,
-  ITMResponse_FieldNumber_SetProfilePropertyResponse = 105,
-  ITMResponse_FieldNumber_ListSessionsResponse = 106,
-  ITMResponse_FieldNumber_SendTextResponse = 107,
-  ITMResponse_FieldNumber_CreateTabResponse = 108,
-  ITMResponse_FieldNumber_SplitPaneResponse = 109,
-  ITMResponse_FieldNumber_GetProfilePropertyResponse = 110,
-  ITMResponse_FieldNumber_Notification = 1000,
+typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
+  ITMServerOriginatedMessage_FieldNumber_Id_p = 1,
+  ITMServerOriginatedMessage_FieldNumber_GetBufferResponse = 100,
+  ITMServerOriginatedMessage_FieldNumber_GetPromptResponse = 101,
+  ITMServerOriginatedMessage_FieldNumber_TransactionResponse = 102,
+  ITMServerOriginatedMessage_FieldNumber_NotificationResponse = 103,
+  ITMServerOriginatedMessage_FieldNumber_RegisterToolResponse = 104,
+  ITMServerOriginatedMessage_FieldNumber_SetProfilePropertyResponse = 105,
+  ITMServerOriginatedMessage_FieldNumber_ListSessionsResponse = 106,
+  ITMServerOriginatedMessage_FieldNumber_SendTextResponse = 107,
+  ITMServerOriginatedMessage_FieldNumber_CreateTabResponse = 108,
+  ITMServerOriginatedMessage_FieldNumber_SplitPaneResponse = 109,
+  ITMServerOriginatedMessage_FieldNumber_GetProfilePropertyResponse = 110,
+  ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
 /**
  * All responses are wrapped in this message. This encoded message is the entirety of the payload
  * of messages sent over WebSocket from iTerm2 to client.
  **/
-@interface ITMResponse : GPBMessage
+@interface ITMServerOriginatedMessage : GPBMessage
 
 @property(nonatomic, readwrite) int64_t id_p;
 
 @property(nonatomic, readwrite) BOOL hasId_p;
+/** Responses to ClientOriginamtedMessages of the corresponding type */
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetBufferResponse *getBufferResponse;
 /** Test to see if @c getBufferResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasGetBufferResponse;
@@ -499,7 +500,7 @@ typedef GPB_ENUM(ITMResponse_FieldNumber) {
 /** Test to see if @c getProfilePropertyResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasGetProfilePropertyResponse;
 
-/** This is the only response that is sent spontaneously. The 'id' field will not be set. */
+/** Spontaneously sent, not in response to another message. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 /** Test to see if @c notification has been set. */
 @property(nonatomic, readwrite) BOOL hasNotification;

@@ -50,7 +50,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
 @interface iTermAPIRequest : NSObject
 @property (nonatomic, weak) iTermWebSocketConnection *connection;
-@property (nonatomic) ITMRequest *request;
+@property (nonatomic) ITMClientOriginatedMessage *request;
 @end
 
 @implementation iTermAPIRequest
@@ -179,7 +179,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     dispatch_async(_queue, ^{
         iTermWebSocketConnection *webSocketConnection = self->_connections[connection];
         if (webSocketConnection) {
-            ITMResponse *response = [[ITMResponse alloc] init];
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.notification = notification;
             dispatch_async(self->_executionQueue, ^{
                 [self sendResponse:response onConnection:webSocketConnection];
@@ -240,13 +240,13 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     }
 }
 
-- (void)sendResponse:(ITMResponse *)response onConnection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)sendResponse:(ITMServerOriginatedMessage *)response onConnection:(iTermWebSocketConnection *)webSocketConnection {
     DLog(@"Sending response %@", response);
     [webSocketConnection sendBinary:[response data]];
 }
 
 // Runs on execution queue
-- (void)dispatchRequestWhileNotInTransaction:(ITMRequest *)request
+- (void)dispatchRequestWhileNotInTransaction:(ITMClientOriginatedMessage *)request
                                   connection:(iTermWebSocketConnection *)webSocketConnection {
     NSAssert(!self.transaction, @"Already in a transaction");
 
@@ -254,7 +254,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     if (request.hasTransactionRequest) {
         if (!request.transactionRequest.begin) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                ITMResponse *response = [[ITMResponse alloc] init];
+                ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
                 response.id_p = request.id_p;
                 response.transactionResponse = [[ITMTransactionResponse alloc] init];
                 response.transactionResponse.status = ITMTransactionResponse_Status_NoTransaction;
@@ -268,7 +268,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         self.transaction = transaction;
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            ITMResponse *response = [[ITMResponse alloc] init];
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.transactionResponse = [[ITMTransactionResponse alloc] init];
             response.transactionResponse.status = ITMTransactionResponse_Status_Ok;
@@ -296,7 +296,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         if (transactionRequest.request.hasTransactionRequest &&
             !transactionRequest.request.transactionRequest.begin) {
             // End the transaction by request.
-            ITMResponse *response = [[ITMResponse alloc] init];
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = transactionRequest.request.id_p;
             response.transactionResponse = [[ITMTransactionResponse alloc] init];
             response.transactionResponse.status = ITMTransactionResponse_Status_Ok;
@@ -322,12 +322,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 }
 
 // Runs on main queue, either in or not in a transaction.
-- (void)dispatchRequest:(ITMRequest *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)dispatchRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     __weak __typeof(self) weakSelf = self;
     DLog(@"Got request %@", request);
     if (request.hasTransactionRequest) {
         if (request.transactionRequest.begin) {
-            ITMResponse *response = [[ITMResponse alloc] init];
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.transactionResponse = [[ITMTransactionResponse alloc] init];
             response.transactionResponse.status = ITMTransactionResponse_Status_AlreadyInTransaction;
@@ -338,7 +338,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     if (request.hasGetBufferRequest) {
         [_delegate apiServerGetBuffer:request.getBufferRequest
                               handler:^(ITMGetBufferResponse *getBufferResponse) {
-                                  ITMResponse *response = [[ITMResponse alloc] init];
+                                  ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
                                   response.id_p = request.id_p;
                                   response.getBufferResponse = getBufferResponse;
                                   [weakSelf sendResponse:response onConnection:webSocketConnection];
@@ -347,7 +347,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     }
     if (request.hasGetPromptRequest) {
         [_delegate apiServerGetPrompt:request.getPromptRequest handler:^(ITMGetPromptResponse *getPromptResponse) {
-            ITMResponse *response = [[ITMResponse alloc] init];
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.getPromptResponse = getPromptResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
@@ -358,7 +358,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         [_delegate apiServerNotification:request.notificationRequest
                               connection:webSocketConnection.handle
                                  handler:^(ITMNotificationResponse *notificationResponse) {
-            ITMResponse *response = [[ITMResponse alloc] init];
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.notificationResponse = notificationResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
@@ -369,7 +369,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         [_delegate apiServerRegisterTool:request.registerToolRequest
                             peerIdentity:webSocketConnection.peerIdentity
                                  handler:^(ITMRegisterToolResponse *registerToolResponse) {
-            ITMResponse *response = [[ITMResponse alloc] init];
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.registerToolResponse = registerToolResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
@@ -379,7 +379,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     if (request.hasSetProfilePropertyRequest) {
         [_delegate apiServerSetProfileProperty:request.setProfilePropertyRequest
                                        handler:^(ITMSetProfilePropertyResponse *setProfilePropertyResponse) {
-            ITMResponse *response = [[ITMResponse alloc] init];
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.setProfilePropertyResponse = setProfilePropertyResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
@@ -389,7 +389,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     if (request.hasGetProfilePropertyRequest) {
         [_delegate apiServerGetProfileProperty:request.getProfilePropertyRequest
                                        handler:^(ITMGetProfilePropertyResponse *getProfilePropertyResponse) {
-                                           ITMResponse *response = [[ITMResponse alloc] init];
+                                           ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
                                            response.id_p = request.id_p;
                                            response.getProfilePropertyResponse = getProfilePropertyResponse;
                                            [weakSelf sendResponse:response onConnection:webSocketConnection];
@@ -399,7 +399,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     if (request.hasListSessionsRequest) {
         [_delegate apiServerListSessions:request.listSessionsRequest
                                  handler:^(ITMListSessionsResponse *listSessionsResponse) {
-            ITMResponse *response = [[ITMResponse alloc] init];
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.listSessionsResponse = listSessionsResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
@@ -408,7 +408,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     }
     if (request.hasSendTextRequest) {
         [_delegate apiServerSendText:request.sendTextRequest handler:^(ITMSendTextResponse *sendTextResponse) {
-            ITMResponse *response = [[ITMResponse alloc] init];
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.sendTextResponse = sendTextResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
@@ -417,7 +417,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     }
     if (request.hasCreateTabRequest) {
         [_delegate apiServerCreateTab:request.createTabRequest handler:^(ITMCreateTabResponse *createTabResponse) {
-            ITMResponse *response = [[ITMResponse alloc] init];
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.createTabResponse = createTabResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
@@ -426,7 +426,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     }
     if (request.hasSplitPaneRequest) {
         [_delegate apiServerSplitPane:request.splitPaneRequest handler:^(ITMSplitPaneResponse *splitPaneResponse) {
-            ITMResponse *response = [[ITMResponse alloc] init];
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.splitPaneResponse = splitPaneResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
@@ -446,7 +446,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 }
 
 // Runs on execution queue
-- (void)enqueueOrDispatchRequest:(ITMRequest *)request onConnection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)enqueueOrDispatchRequest:(ITMClientOriginatedMessage *)request onConnection:(iTermWebSocketConnection *)webSocketConnection {
     if (self.transaction) {
         iTermAPIRequest *apiRequest = [[iTermAPIRequest alloc] init];
         apiRequest.connection = webSocketConnection;
@@ -478,7 +478,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
 - (void)webSocketConnection:(iTermWebSocketConnection *)webSocketConnection didReadFrame:(iTermWebSocketFrame *)frame {
     if (frame.opcode == iTermWebSocketOpcodeBinary) {
-        ITMRequest *request = [ITMRequest parseFromData:frame.payload error:nil];
+        ITMClientOriginatedMessage *request = [ITMClientOriginatedMessage parseFromData:frame.payload error:nil];
         NSLog(@"Dispatch %@", request);
         if (request) {
             DLog(@"Received request: %@", request);

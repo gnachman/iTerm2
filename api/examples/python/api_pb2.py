@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='api.proto',
   package='iterm2',
   syntax='proto2',
-  serialized_pb=_b('\n\tapi.proto\x12\x06iterm2\"\x9f\x05\n\x07Request\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x34\n\x12get_buffer_request\x18\x64 \x01(\x0b\x32\x18.iterm2.GetBufferRequest\x12\x34\n\x12get_prompt_request\x18\x65 \x01(\x0b\x32\x18.iterm2.GetPromptRequest\x12\x37\n\x13transaction_request\x18\x66 \x01(\x0b\x32\x1a.iterm2.TransactionRequest\x12\x39\n\x14notification_request\x18g \x01(\x0b\x32\x1b.iterm2.NotificationRequest\x12:\n\x15register_tool_request\x18h \x01(\x0b\x32\x1b.iterm2.RegisterToolRequest\x12G\n\x1cset_profile_property_request\x18i \x01(\x0b\x32!.iterm2.SetProfilePropertyRequest\x12:\n\x15list_sessions_request\x18j \x01(\x0b\x32\x1b.iterm2.ListSessionsRequest\x12\x32\n\x11send_text_request\x18k \x01(\x0b\x32\x17.iterm2.SendTextRequest\x12\x34\n\x12\x63reate_tab_request\x18l \x01(\x0b\x32\x18.iterm2.CreateTabRequest\x12\x34\n\x12split_pane_request\x18m \x01(\x0b\x32\x18.iterm2.SplitPaneRequest\x12G\n\x1cget_profile_property_request\x18n \x01(\x0b\x32!.iterm2.GetProfilePropertyRequest\"\xe3\x05\n\x08Response\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x36\n\x13get_buffer_response\x18\x64 \x01(\x0b\x32\x19.iterm2.GetBufferResponse\x12\x36\n\x13get_prompt_response\x18\x65 \x01(\x0b\x32\x19.iterm2.GetPromptResponse\x12\x39\n\x14transaction_response\x18\x66 \x01(\x0b\x32\x1b.iterm2.TransactionResponse\x12;\n\x15notification_response\x18g \x01(\x0b\x32\x1c.iterm2.NotificationResponse\x12<\n\x16register_tool_response\x18h \x01(\x0b\x32\x1c.iterm2.RegisterToolResponse\x12I\n\x1dset_profile_property_response\x18i \x01(\x0b\x32\".iterm2.SetProfilePropertyResponse\x12<\n\x16list_sessions_response\x18j \x01(\x0b\x32\x1c.iterm2.ListSessionsResponse\x12\x34\n\x12send_text_response\x18k \x01(\x0b\x32\x18.iterm2.SendTextResponse\x12\x36\n\x13\x63reate_tab_response\x18l \x01(\x0b\x32\x19.iterm2.CreateTabResponse\x12\x36\n\x13split_pane_response\x18m \x01(\x0b\x32\x19.iterm2.SplitPaneResponse\x12I\n\x1dget_profile_property_response\x18n \x01(\x0b\x32\".iterm2.GetProfilePropertyResponse\x12+\n\x0cnotification\x18\xe8\x07 \x01(\x0b\x32\x14.iterm2.Notification\"\xd8\x01\n\x13RegisterToolRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\nidentifier\x18\x02 \x01(\t\x12+\n\x1creveal_if_already_registered\x18\x05 \x01(\x08:\x05\x66\x61lse\x12\x46\n\ttool_type\x18\x03 \x01(\x0e\x32$.iterm2.RegisterToolRequest.ToolType:\rWEB_VIEW_TOOL\x12\x0b\n\x03URL\x18\x04 \x01(\t\"\x1d\n\x08ToolType\x12\x11\n\rWEB_VIEW_TOOL\x10\x01\"\x8b\x01\n\x14RegisterToolResponse\x12\x33\n\x06status\x18\x01 \x01(\x0e\x32#.iterm2.RegisterToolResponse.Status\">\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11REQUEST_MALFORMED\x10\x01\x12\x15\n\x11PERMISSION_DENIED\x10\x02\"n\n\x13NotificationRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tsubscribe\x18\x02 \x01(\x08\x12\x33\n\x11notification_type\x18\x03 \x01(\x0e\x32\x18.iterm2.NotificationType\"\xb7\x01\n\x14NotificationResponse\x12\x33\n\x06status\x18\x01 \x01(\x0e\x32#.iterm2.NotificationResponse.Status\"j\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\x12\x15\n\x11REQUEST_MALFORMED\x10\x02\x12\x12\n\x0eNOT_SUBSCRIBED\x10\x03\x12\x16\n\x12\x41LREADY_SUBSCRIBED\x10\x04\"\xc5\x04\n\x0cNotification\x12=\n\x16keystroke_notification\x18\x01 \x01(\x0b\x32\x1d.iterm2.KeystrokeNotification\x12\x44\n\x1ascreen_update_notification\x18\x02 \x01(\x0b\x32 .iterm2.ScreenUpdateNotification\x12\x37\n\x13prompt_notification\x18\x03 \x01(\x0b\x32\x1a.iterm2.PromptNotification\x12H\n\x1clocation_change_notification\x18\x04 \x01(\x0b\x32\".iterm2.LocationChangeNotification\x12U\n#custom_escape_sequence_notification\x18\x05 \x01(\x0b\x32(.iterm2.CustomEscapeSequenceNotification\x12@\n\x18new_session_notification\x18\x06 \x01(\x0b\x32\x1e.iterm2.NewSessionNotification\x12L\n\x1eterminate_session_notification\x18\x07 \x01(\x0b\x32$.iterm2.TerminateSessionNotification\x12\x46\n\x1blayout_changed_notification\x18\x08 \x01(\x0b\x32!.iterm2.LayoutChangedNotification\"\x86\x02\n\x15KeystrokeNotification\x12\x12\n\ncharacters\x18\x01 \x01(\t\x12#\n\x1b\x63haractersIgnoringModifiers\x18\x02 \x01(\t\x12:\n\tmodifiers\x18\x03 \x03(\x0e\x32\'.iterm2.KeystrokeNotification.Modifiers\x12\x0f\n\x07keyCode\x18\x04 \x01(\x05\x12\x0f\n\x07session\x18\x05 \x01(\t\"V\n\tModifiers\x12\x0b\n\x07\x43ONTROL\x10\x01\x12\n\n\x06OPTION\x10\x02\x12\x0b\n\x07\x43OMMAND\x10\x03\x12\t\n\x05SHIFT\x10\x04\x12\x0c\n\x08\x46UNCTION\x10\x05\x12\n\n\x06NUMPAD\x10\x06\"+\n\x18ScreenUpdateNotification\x12\x0f\n\x07session\x18\x01 \x01(\t\"%\n\x12PromptNotification\x12\x0f\n\x07session\x18\x01 \x01(\t\"f\n\x1aLocationChangeNotification\x12\x11\n\thost_name\x18\x01 \x01(\t\x12\x11\n\tuser_name\x18\x02 \x01(\t\x12\x11\n\tdirectory\x18\x03 \x01(\t\x12\x0f\n\x07session\x18\x04 \x01(\t\"]\n CustomEscapeSequenceNotification\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x17\n\x0fsender_identity\x18\x02 \x01(\t\x12\x0f\n\x07payload\x18\x03 \x01(\t\"2\n\x16NewSessionNotification\x12\x18\n\x10uniqueIdentifier\x18\x01 \x01(\t\"8\n\x1cTerminateSessionNotification\x12\x18\n\x10uniqueIdentifier\x18\x01 \x01(\t\"Y\n\x19LayoutChangedNotification\x12<\n\x16list_sessions_response\x18\x01 \x01(\x0b\x32\x1c.iterm2.ListSessionsResponse\"J\n\x10GetBufferRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12%\n\nline_range\x18\x02 \x01(\x0b\x32\x11.iterm2.LineRange\"\xa6\x02\n\x11GetBufferResponse\x12\x34\n\x06status\x18\x01 \x01(\x0e\x32 .iterm2.GetBufferResponse.Status:\x02OK\x12\x1c\n\x05range\x18\x02 \x01(\x0b\x32\r.iterm2.Range\x12&\n\x08\x63ontents\x18\x03 \x03(\x0b\x32\x14.iterm2.LineContents\x12\x1d\n\x06\x63ursor\x18\x04 \x01(\x0b\x32\r.iterm2.Coord\x12\x1e\n\x16num_lines_above_screen\x18\x05 \x01(\x03\"V\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\x12\x16\n\x12INVALID_LINE_RANGE\x10\x02\x12\x15\n\x11REQUEST_MALFORMED\x10\x03\"#\n\x10GetPromptRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\"\xcc\x02\n\x11GetPromptResponse\x12\x34\n\x06status\x18\x01 \x01(\x0e\x32 .iterm2.GetPromptResponse.Status:\x02OK\x12(\n\x0cprompt_range\x18\x02 \x01(\x0b\x32\x12.iterm2.CoordRange\x12)\n\rcommand_range\x18\x03 \x01(\x0b\x32\x12.iterm2.CoordRange\x12(\n\x0coutput_range\x18\x04 \x01(\x0b\x32\x12.iterm2.CoordRange\x12\x19\n\x11working_directory\x18\x05 \x01(\t\x12\x0f\n\x07\x63ommand\x18\x06 \x01(\t\"V\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\x12\x15\n\x11REQUEST_MALFORMED\x10\x02\x12\x16\n\x12PROMPT_UNAVAILABLE\x10\x03\":\n\x19GetProfilePropertyRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x0c\n\x04keys\x18\x02 \x03(\t\"\x94\x02\n\x1aGetProfilePropertyResponse\x12=\n\x06status\x18\x01 \x01(\x0e\x32).iterm2.GetProfilePropertyResponse.Status:\x02OK\x12?\n\nproperties\x18\x03 \x03(\x0b\x32+.iterm2.GetProfilePropertyResponse.Property\x1a+\n\x08Property\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x12\n\njson_value\x18\x02 \x01(\t\"I\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\x12\x15\n\x11REQUEST_MALFORMED\x10\x02\x12\t\n\x05\x45RROR\x10\x03\"M\n\x19SetProfilePropertyRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x12\n\njson_value\x18\x03 \x01(\t\"\x9b\x01\n\x1aSetProfilePropertyResponse\x12=\n\x06status\x18\x01 \x01(\x0e\x32).iterm2.SetProfilePropertyResponse.Status:\x02OK\">\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\x12\x15\n\x11REQUEST_MALFORMED\x10\x02\"#\n\x12TransactionRequest\x12\r\n\x05\x62\x65gin\x18\x01 \x01(\x08\"\x8f\x01\n\x13TransactionResponse\x12\x36\n\x06status\x18\x01 \x01(\x0e\x32\".iterm2.TransactionResponse.Status:\x02OK\"@\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x12\n\x0eNO_TRANSACTION\x10\x01\x12\x1a\n\x16\x41LREADY_IN_TRANSACTION\x10\x02\"A\n\tLineRange\x12\x1c\n\x14screen_contents_only\x18\x01 \x01(\x08\x12\x16\n\x0etrailing_lines\x18\x02 \x01(\x05\")\n\x05Range\x12\x10\n\x08location\x18\x01 \x01(\x03\x12\x0e\n\x06length\x18\x02 \x01(\x03\"F\n\nCoordRange\x12\x1c\n\x05start\x18\x01 \x01(\x0b\x32\r.iterm2.Coord\x12\x1a\n\x03\x65nd\x18\x02 \x01(\x0b\x32\r.iterm2.Coord\"\x1d\n\x05\x43oord\x12\t\n\x01x\x18\x01 \x01(\x05\x12\t\n\x01y\x18\x02 \x01(\x03\"\xeb\x01\n\x0cLineContents\x12\x0c\n\x04text\x18\x01 \x01(\t\x12\x37\n\x14\x63ode_points_per_cell\x18\x02 \x03(\x0b\x32\x19.iterm2.CodePointsPerCell\x12N\n\x0c\x63ontinuation\x18\x03 \x01(\x0e\x32!.iterm2.LineContents.Continuation:\x15\x43ONTINUATION_HARD_EOL\"D\n\x0c\x43ontinuation\x12\x19\n\x15\x43ONTINUATION_HARD_EOL\x10\x01\x12\x19\n\x15\x43ONTINUATION_SOFT_EOL\x10\x02\"@\n\x11\x43odePointsPerCell\x12\x1a\n\x0fnum_code_points\x18\x01 \x01(\x05:\x01\x31\x12\x0f\n\x07repeats\x18\x02 \x01(\x05\"\x15\n\x13ListSessionsRequest\"0\n\x0fSendTextRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\"l\n\x10SendTextResponse\x12/\n\x06status\x18\x01 \x01(\x0e\x32\x1f.iterm2.SendTextResponse.Status\"\'\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\"%\n\x04Size\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\"\x1d\n\x05Point\x12\t\n\x01x\x18\x01 \x01(\x05\x12\t\n\x01y\x18\x02 \x01(\x05\"B\n\x05\x46rame\x12\x1d\n\x06origin\x18\x01 \x01(\x0b\x32\r.iterm2.Point\x12\x1a\n\x04size\x18\x02 \x01(\x0b\x32\x0c.iterm2.Size\"\x95\x05\n\x14ListSessionsResponse\x12\x34\n\x07windows\x18\x01 \x03(\x0b\x32#.iterm2.ListSessionsResponse.Window\x1ai\n\x06Window\x12.\n\x04tabs\x18\x01 \x03(\x0b\x32 .iterm2.ListSessionsResponse.Tab\x12\x11\n\twindow_id\x18\x02 \x01(\t\x12\x1c\n\x05\x66rame\x18\x03 \x01(\x0b\x32\r.iterm2.Frame\x1aO\n\x03Tab\x12\x38\n\x04root\x18\x03 \x01(\x0b\x32*.iterm2.ListSessionsResponse.SplitTreeNode\x12\x0e\n\x06tab_id\x18\x02 \x01(\t\x1a\x8a\x03\n\rSplitTreeNode\x12\x10\n\x08vertical\x18\x01 \x01(\x08\x12G\n\x05links\x18\x02 \x03(\x0b\x32\x38.iterm2.ListSessionsResponse.SplitTreeNode.SplitTreeLink\x1a\x9d\x02\n\rSplitTreeLink\x12S\n\x07session\x18\x01 \x01(\x0b\x32@.iterm2.ListSessionsResponse.SplitTreeNode.SplitTreeLink.SessionH\x00\x12:\n\x04node\x18\x02 \x01(\x0b\x32*.iterm2.ListSessionsResponse.SplitTreeNodeH\x00\x1ar\n\x07Session\x12\x19\n\x11unique_identifier\x18\x01 \x01(\t\x12\x1c\n\x05\x66rame\x18\x02 \x01(\x0b\x32\r.iterm2.Frame\x12\x1f\n\tgrid_size\x18\x03 \x01(\x0b\x32\x0c.iterm2.Size\x12\r\n\x05title\x18\x04 \x01(\tB\x07\n\x05\x63hild\"_\n\x10\x43reateTabRequest\x12\x14\n\x0cprofile_name\x18\x01 \x01(\t\x12\x11\n\twindow_id\x18\x02 \x01(\t\x12\x11\n\ttab_index\x18\x03 \x01(\r\x12\x0f\n\x07\x63ommand\x18\x04 \x01(\t\"\xf0\x01\n\x11\x43reateTabResponse\x12\x30\n\x06status\x18\x01 \x01(\x0e\x32 .iterm2.CreateTabResponse.Status\x12\x11\n\twindow_id\x18\x02 \x01(\t\x12\x0e\n\x06tab_id\x18\x03 \x01(\x05\x12\x12\n\nsession_id\x18\x04 \x01(\t\"r\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x18\n\x14INVALID_PROFILE_NAME\x10\x01\x12\x15\n\x11INVALID_WINDOW_ID\x10\x02\x12\x15\n\x11INVALID_TAB_INDEX\x10\x03\x12\x18\n\x14MISSING_SUBSTITUTION\x10\x04\"\xc2\x01\n\x10SplitPaneRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12@\n\x0fsplit_direction\x18\x02 \x01(\x0e\x32\'.iterm2.SplitPaneRequest.SplitDirection\x12\x15\n\x06\x62\x65\x66ore\x18\x03 \x01(\x08:\x05\x66\x61lse\x12\x14\n\x0cprofile_name\x18\x04 \x01(\t\".\n\x0eSplitDirection\x12\x0c\n\x08VERTICAL\x10\x00\x12\x0e\n\nHORIZONTAL\x10\x01\"\xae\x01\n\x11SplitPaneResponse\x12\x30\n\x06status\x18\x01 \x01(\x0e\x32 .iterm2.SplitPaneResponse.Status\x12\x12\n\nsession_id\x18\x02 \x01(\t\"S\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\x12\x18\n\x14INVALID_PROFILE_NAME\x10\x02\x12\x10\n\x0c\x43\x41NNOT_SPLIT\x10\x03*\xfc\x01\n\x10NotificationType\x12\x17\n\x13NOTIFY_ON_KEYSTROKE\x10\x01\x12\x1b\n\x17NOTIFY_ON_SCREEN_UPDATE\x10\x02\x12\x14\n\x10NOTIFY_ON_PROMPT\x10\x03\x12\x1d\n\x19NOTIFY_ON_LOCATION_CHANGE\x10\x04\x12$\n NOTIFY_ON_CUSTOM_ESCAPE_SEQUENCE\x10\x05\x12\x19\n\x15NOTIFY_ON_NEW_SESSION\x10\x06\x12\x1f\n\x1bNOTIFY_ON_TERMINATE_SESSION\x10\x07\x12\x1b\n\x17NOTIFY_ON_LAYOUT_CHANGE\x10\x08\x42\x06\xa2\x02\x03ITM')
+  serialized_pb=_b('\n\tapi.proto\x12\x06iterm2\"\xaf\x05\n\x17\x43lientOriginatedMessage\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x34\n\x12get_buffer_request\x18\x64 \x01(\x0b\x32\x18.iterm2.GetBufferRequest\x12\x34\n\x12get_prompt_request\x18\x65 \x01(\x0b\x32\x18.iterm2.GetPromptRequest\x12\x37\n\x13transaction_request\x18\x66 \x01(\x0b\x32\x1a.iterm2.TransactionRequest\x12\x39\n\x14notification_request\x18g \x01(\x0b\x32\x1b.iterm2.NotificationRequest\x12:\n\x15register_tool_request\x18h \x01(\x0b\x32\x1b.iterm2.RegisterToolRequest\x12G\n\x1cset_profile_property_request\x18i \x01(\x0b\x32!.iterm2.SetProfilePropertyRequest\x12:\n\x15list_sessions_request\x18j \x01(\x0b\x32\x1b.iterm2.ListSessionsRequest\x12\x32\n\x11send_text_request\x18k \x01(\x0b\x32\x17.iterm2.SendTextRequest\x12\x34\n\x12\x63reate_tab_request\x18l \x01(\x0b\x32\x18.iterm2.CreateTabRequest\x12\x34\n\x12split_pane_request\x18m \x01(\x0b\x32\x18.iterm2.SplitPaneRequest\x12G\n\x1cget_profile_property_request\x18n \x01(\x0b\x32!.iterm2.GetProfilePropertyRequest\"\xf2\x05\n\x17ServerOriginatedMessage\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x36\n\x13get_buffer_response\x18\x64 \x01(\x0b\x32\x19.iterm2.GetBufferResponse\x12\x36\n\x13get_prompt_response\x18\x65 \x01(\x0b\x32\x19.iterm2.GetPromptResponse\x12\x39\n\x14transaction_response\x18\x66 \x01(\x0b\x32\x1b.iterm2.TransactionResponse\x12;\n\x15notification_response\x18g \x01(\x0b\x32\x1c.iterm2.NotificationResponse\x12<\n\x16register_tool_response\x18h \x01(\x0b\x32\x1c.iterm2.RegisterToolResponse\x12I\n\x1dset_profile_property_response\x18i \x01(\x0b\x32\".iterm2.SetProfilePropertyResponse\x12<\n\x16list_sessions_response\x18j \x01(\x0b\x32\x1c.iterm2.ListSessionsResponse\x12\x34\n\x12send_text_response\x18k \x01(\x0b\x32\x18.iterm2.SendTextResponse\x12\x36\n\x13\x63reate_tab_response\x18l \x01(\x0b\x32\x19.iterm2.CreateTabResponse\x12\x36\n\x13split_pane_response\x18m \x01(\x0b\x32\x19.iterm2.SplitPaneResponse\x12I\n\x1dget_profile_property_response\x18n \x01(\x0b\x32\".iterm2.GetProfilePropertyResponse\x12+\n\x0cnotification\x18\xe8\x07 \x01(\x0b\x32\x14.iterm2.Notification\"\xd8\x01\n\x13RegisterToolRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\nidentifier\x18\x02 \x01(\t\x12+\n\x1creveal_if_already_registered\x18\x05 \x01(\x08:\x05\x66\x61lse\x12\x46\n\ttool_type\x18\x03 \x01(\x0e\x32$.iterm2.RegisterToolRequest.ToolType:\rWEB_VIEW_TOOL\x12\x0b\n\x03URL\x18\x04 \x01(\t\"\x1d\n\x08ToolType\x12\x11\n\rWEB_VIEW_TOOL\x10\x01\"\x8b\x01\n\x14RegisterToolResponse\x12\x33\n\x06status\x18\x01 \x01(\x0e\x32#.iterm2.RegisterToolResponse.Status\">\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11REQUEST_MALFORMED\x10\x01\x12\x15\n\x11PERMISSION_DENIED\x10\x02\"n\n\x13NotificationRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tsubscribe\x18\x02 \x01(\x08\x12\x33\n\x11notification_type\x18\x03 \x01(\x0e\x32\x18.iterm2.NotificationType\"\xb7\x01\n\x14NotificationResponse\x12\x33\n\x06status\x18\x01 \x01(\x0e\x32#.iterm2.NotificationResponse.Status\"j\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\x12\x15\n\x11REQUEST_MALFORMED\x10\x02\x12\x12\n\x0eNOT_SUBSCRIBED\x10\x03\x12\x16\n\x12\x41LREADY_SUBSCRIBED\x10\x04\"\xc5\x04\n\x0cNotification\x12=\n\x16keystroke_notification\x18\x01 \x01(\x0b\x32\x1d.iterm2.KeystrokeNotification\x12\x44\n\x1ascreen_update_notification\x18\x02 \x01(\x0b\x32 .iterm2.ScreenUpdateNotification\x12\x37\n\x13prompt_notification\x18\x03 \x01(\x0b\x32\x1a.iterm2.PromptNotification\x12H\n\x1clocation_change_notification\x18\x04 \x01(\x0b\x32\".iterm2.LocationChangeNotification\x12U\n#custom_escape_sequence_notification\x18\x05 \x01(\x0b\x32(.iterm2.CustomEscapeSequenceNotification\x12@\n\x18new_session_notification\x18\x06 \x01(\x0b\x32\x1e.iterm2.NewSessionNotification\x12L\n\x1eterminate_session_notification\x18\x07 \x01(\x0b\x32$.iterm2.TerminateSessionNotification\x12\x46\n\x1blayout_changed_notification\x18\x08 \x01(\x0b\x32!.iterm2.LayoutChangedNotification\"\x86\x02\n\x15KeystrokeNotification\x12\x12\n\ncharacters\x18\x01 \x01(\t\x12#\n\x1b\x63haractersIgnoringModifiers\x18\x02 \x01(\t\x12:\n\tmodifiers\x18\x03 \x03(\x0e\x32\'.iterm2.KeystrokeNotification.Modifiers\x12\x0f\n\x07keyCode\x18\x04 \x01(\x05\x12\x0f\n\x07session\x18\x05 \x01(\t\"V\n\tModifiers\x12\x0b\n\x07\x43ONTROL\x10\x01\x12\n\n\x06OPTION\x10\x02\x12\x0b\n\x07\x43OMMAND\x10\x03\x12\t\n\x05SHIFT\x10\x04\x12\x0c\n\x08\x46UNCTION\x10\x05\x12\n\n\x06NUMPAD\x10\x06\"+\n\x18ScreenUpdateNotification\x12\x0f\n\x07session\x18\x01 \x01(\t\"%\n\x12PromptNotification\x12\x0f\n\x07session\x18\x01 \x01(\t\"f\n\x1aLocationChangeNotification\x12\x11\n\thost_name\x18\x01 \x01(\t\x12\x11\n\tuser_name\x18\x02 \x01(\t\x12\x11\n\tdirectory\x18\x03 \x01(\t\x12\x0f\n\x07session\x18\x04 \x01(\t\"]\n CustomEscapeSequenceNotification\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x17\n\x0fsender_identity\x18\x02 \x01(\t\x12\x0f\n\x07payload\x18\x03 \x01(\t\"2\n\x16NewSessionNotification\x12\x18\n\x10uniqueIdentifier\x18\x01 \x01(\t\"8\n\x1cTerminateSessionNotification\x12\x18\n\x10uniqueIdentifier\x18\x01 \x01(\t\"Y\n\x19LayoutChangedNotification\x12<\n\x16list_sessions_response\x18\x01 \x01(\x0b\x32\x1c.iterm2.ListSessionsResponse\"J\n\x10GetBufferRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12%\n\nline_range\x18\x02 \x01(\x0b\x32\x11.iterm2.LineRange\"\xa6\x02\n\x11GetBufferResponse\x12\x34\n\x06status\x18\x01 \x01(\x0e\x32 .iterm2.GetBufferResponse.Status:\x02OK\x12\x1c\n\x05range\x18\x02 \x01(\x0b\x32\r.iterm2.Range\x12&\n\x08\x63ontents\x18\x03 \x03(\x0b\x32\x14.iterm2.LineContents\x12\x1d\n\x06\x63ursor\x18\x04 \x01(\x0b\x32\r.iterm2.Coord\x12\x1e\n\x16num_lines_above_screen\x18\x05 \x01(\x03\"V\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\x12\x16\n\x12INVALID_LINE_RANGE\x10\x02\x12\x15\n\x11REQUEST_MALFORMED\x10\x03\"#\n\x10GetPromptRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\"\xcc\x02\n\x11GetPromptResponse\x12\x34\n\x06status\x18\x01 \x01(\x0e\x32 .iterm2.GetPromptResponse.Status:\x02OK\x12(\n\x0cprompt_range\x18\x02 \x01(\x0b\x32\x12.iterm2.CoordRange\x12)\n\rcommand_range\x18\x03 \x01(\x0b\x32\x12.iterm2.CoordRange\x12(\n\x0coutput_range\x18\x04 \x01(\x0b\x32\x12.iterm2.CoordRange\x12\x19\n\x11working_directory\x18\x05 \x01(\t\x12\x0f\n\x07\x63ommand\x18\x06 \x01(\t\"V\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\x12\x15\n\x11REQUEST_MALFORMED\x10\x02\x12\x16\n\x12PROMPT_UNAVAILABLE\x10\x03\":\n\x19GetProfilePropertyRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x0c\n\x04keys\x18\x02 \x03(\t\"\x94\x02\n\x1aGetProfilePropertyResponse\x12=\n\x06status\x18\x01 \x01(\x0e\x32).iterm2.GetProfilePropertyResponse.Status:\x02OK\x12?\n\nproperties\x18\x03 \x03(\x0b\x32+.iterm2.GetProfilePropertyResponse.Property\x1a+\n\x08Property\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x12\n\njson_value\x18\x02 \x01(\t\"I\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\x12\x15\n\x11REQUEST_MALFORMED\x10\x02\x12\t\n\x05\x45RROR\x10\x03\"M\n\x19SetProfilePropertyRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x12\n\njson_value\x18\x03 \x01(\t\"\x9b\x01\n\x1aSetProfilePropertyResponse\x12=\n\x06status\x18\x01 \x01(\x0e\x32).iterm2.SetProfilePropertyResponse.Status:\x02OK\">\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\x12\x15\n\x11REQUEST_MALFORMED\x10\x02\"#\n\x12TransactionRequest\x12\r\n\x05\x62\x65gin\x18\x01 \x01(\x08\"\x8f\x01\n\x13TransactionResponse\x12\x36\n\x06status\x18\x01 \x01(\x0e\x32\".iterm2.TransactionResponse.Status:\x02OK\"@\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x12\n\x0eNO_TRANSACTION\x10\x01\x12\x1a\n\x16\x41LREADY_IN_TRANSACTION\x10\x02\"A\n\tLineRange\x12\x1c\n\x14screen_contents_only\x18\x01 \x01(\x08\x12\x16\n\x0etrailing_lines\x18\x02 \x01(\x05\")\n\x05Range\x12\x10\n\x08location\x18\x01 \x01(\x03\x12\x0e\n\x06length\x18\x02 \x01(\x03\"F\n\nCoordRange\x12\x1c\n\x05start\x18\x01 \x01(\x0b\x32\r.iterm2.Coord\x12\x1a\n\x03\x65nd\x18\x02 \x01(\x0b\x32\r.iterm2.Coord\"\x1d\n\x05\x43oord\x12\t\n\x01x\x18\x01 \x01(\x05\x12\t\n\x01y\x18\x02 \x01(\x03\"\xeb\x01\n\x0cLineContents\x12\x0c\n\x04text\x18\x01 \x01(\t\x12\x37\n\x14\x63ode_points_per_cell\x18\x02 \x03(\x0b\x32\x19.iterm2.CodePointsPerCell\x12N\n\x0c\x63ontinuation\x18\x03 \x01(\x0e\x32!.iterm2.LineContents.Continuation:\x15\x43ONTINUATION_HARD_EOL\"D\n\x0c\x43ontinuation\x12\x19\n\x15\x43ONTINUATION_HARD_EOL\x10\x01\x12\x19\n\x15\x43ONTINUATION_SOFT_EOL\x10\x02\"@\n\x11\x43odePointsPerCell\x12\x1a\n\x0fnum_code_points\x18\x01 \x01(\x05:\x01\x31\x12\x0f\n\x07repeats\x18\x02 \x01(\x05\"\x15\n\x13ListSessionsRequest\"0\n\x0fSendTextRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\"l\n\x10SendTextResponse\x12/\n\x06status\x18\x01 \x01(\x0e\x32\x1f.iterm2.SendTextResponse.Status\"\'\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\"%\n\x04Size\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\"\x1d\n\x05Point\x12\t\n\x01x\x18\x01 \x01(\x05\x12\t\n\x01y\x18\x02 \x01(\x05\"B\n\x05\x46rame\x12\x1d\n\x06origin\x18\x01 \x01(\x0b\x32\r.iterm2.Point\x12\x1a\n\x04size\x18\x02 \x01(\x0b\x32\x0c.iterm2.Size\"\x95\x05\n\x14ListSessionsResponse\x12\x34\n\x07windows\x18\x01 \x03(\x0b\x32#.iterm2.ListSessionsResponse.Window\x1ai\n\x06Window\x12.\n\x04tabs\x18\x01 \x03(\x0b\x32 .iterm2.ListSessionsResponse.Tab\x12\x11\n\twindow_id\x18\x02 \x01(\t\x12\x1c\n\x05\x66rame\x18\x03 \x01(\x0b\x32\r.iterm2.Frame\x1aO\n\x03Tab\x12\x38\n\x04root\x18\x03 \x01(\x0b\x32*.iterm2.ListSessionsResponse.SplitTreeNode\x12\x0e\n\x06tab_id\x18\x02 \x01(\t\x1a\x8a\x03\n\rSplitTreeNode\x12\x10\n\x08vertical\x18\x01 \x01(\x08\x12G\n\x05links\x18\x02 \x03(\x0b\x32\x38.iterm2.ListSessionsResponse.SplitTreeNode.SplitTreeLink\x1a\x9d\x02\n\rSplitTreeLink\x12S\n\x07session\x18\x01 \x01(\x0b\x32@.iterm2.ListSessionsResponse.SplitTreeNode.SplitTreeLink.SessionH\x00\x12:\n\x04node\x18\x02 \x01(\x0b\x32*.iterm2.ListSessionsResponse.SplitTreeNodeH\x00\x1ar\n\x07Session\x12\x19\n\x11unique_identifier\x18\x01 \x01(\t\x12\x1c\n\x05\x66rame\x18\x02 \x01(\x0b\x32\r.iterm2.Frame\x12\x1f\n\tgrid_size\x18\x03 \x01(\x0b\x32\x0c.iterm2.Size\x12\r\n\x05title\x18\x04 \x01(\tB\x07\n\x05\x63hild\"_\n\x10\x43reateTabRequest\x12\x14\n\x0cprofile_name\x18\x01 \x01(\t\x12\x11\n\twindow_id\x18\x02 \x01(\t\x12\x11\n\ttab_index\x18\x03 \x01(\r\x12\x0f\n\x07\x63ommand\x18\x04 \x01(\t\"\xf0\x01\n\x11\x43reateTabResponse\x12\x30\n\x06status\x18\x01 \x01(\x0e\x32 .iterm2.CreateTabResponse.Status\x12\x11\n\twindow_id\x18\x02 \x01(\t\x12\x0e\n\x06tab_id\x18\x03 \x01(\x05\x12\x12\n\nsession_id\x18\x04 \x01(\t\"r\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x18\n\x14INVALID_PROFILE_NAME\x10\x01\x12\x15\n\x11INVALID_WINDOW_ID\x10\x02\x12\x15\n\x11INVALID_TAB_INDEX\x10\x03\x12\x18\n\x14MISSING_SUBSTITUTION\x10\x04\"\xc2\x01\n\x10SplitPaneRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12@\n\x0fsplit_direction\x18\x02 \x01(\x0e\x32\'.iterm2.SplitPaneRequest.SplitDirection\x12\x15\n\x06\x62\x65\x66ore\x18\x03 \x01(\x08:\x05\x66\x61lse\x12\x14\n\x0cprofile_name\x18\x04 \x01(\t\".\n\x0eSplitDirection\x12\x0c\n\x08VERTICAL\x10\x00\x12\x0e\n\nHORIZONTAL\x10\x01\"\xae\x01\n\x11SplitPaneResponse\x12\x30\n\x06status\x18\x01 \x01(\x0e\x32 .iterm2.SplitPaneResponse.Status\x12\x12\n\nsession_id\x18\x02 \x01(\t\"S\n\x06Status\x12\x06\n\x02OK\x10\x00\x12\x15\n\x11SESSION_NOT_FOUND\x10\x01\x12\x18\n\x14INVALID_PROFILE_NAME\x10\x02\x12\x10\n\x0c\x43\x41NNOT_SPLIT\x10\x03*\xfc\x01\n\x10NotificationType\x12\x17\n\x13NOTIFY_ON_KEYSTROKE\x10\x01\x12\x1b\n\x17NOTIFY_ON_SCREEN_UPDATE\x10\x02\x12\x14\n\x10NOTIFY_ON_PROMPT\x10\x03\x12\x1d\n\x19NOTIFY_ON_LOCATION_CHANGE\x10\x04\x12$\n NOTIFY_ON_CUSTOM_ESCAPE_SEQUENCE\x10\x05\x12\x19\n\x15NOTIFY_ON_NEW_SESSION\x10\x06\x12\x1f\n\x1bNOTIFY_ON_TERMINATE_SESSION\x10\x07\x12\x1b\n\x17NOTIFY_ON_LAYOUT_CHANGE\x10\x08\x42\x06\xa2\x02\x03ITM')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -65,8 +65,8 @@ _NOTIFICATIONTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=7150,
-  serialized_end=7402,
+  serialized_start=7181,
+  serialized_end=7433,
 )
 _sym_db.RegisterEnumDescriptor(_NOTIFICATIONTYPE)
 
@@ -94,8 +94,8 @@ _REGISTERTOOLREQUEST_TOOLTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1625,
-  serialized_end=1654,
+  serialized_start=1656,
+  serialized_end=1685,
 )
 _sym_db.RegisterEnumDescriptor(_REGISTERTOOLREQUEST_TOOLTYPE)
 
@@ -120,8 +120,8 @@ _REGISTERTOOLRESPONSE_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1734,
-  serialized_end=1796,
+  serialized_start=1765,
+  serialized_end=1827,
 )
 _sym_db.RegisterEnumDescriptor(_REGISTERTOOLRESPONSE_STATUS)
 
@@ -154,8 +154,8 @@ _NOTIFICATIONRESPONSE_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1988,
-  serialized_end=2094,
+  serialized_start=2019,
+  serialized_end=2125,
 )
 _sym_db.RegisterEnumDescriptor(_NOTIFICATIONRESPONSE_STATUS)
 
@@ -192,8 +192,8 @@ _KEYSTROKENOTIFICATION_MODIFIERS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=2857,
-  serialized_end=2943,
+  serialized_start=2888,
+  serialized_end=2974,
 )
 _sym_db.RegisterEnumDescriptor(_KEYSTROKENOTIFICATION_MODIFIERS)
 
@@ -222,8 +222,8 @@ _GETBUFFERRESPONSE_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=3714,
-  serialized_end=3800,
+  serialized_start=3745,
+  serialized_end=3831,
 )
 _sym_db.RegisterEnumDescriptor(_GETBUFFERRESPONSE_STATUS)
 
@@ -252,8 +252,8 @@ _GETPROMPTRESPONSE_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=4086,
-  serialized_end=4172,
+  serialized_start=4117,
+  serialized_end=4203,
 )
 _sym_db.RegisterEnumDescriptor(_GETPROMPTRESPONSE_STATUS)
 
@@ -282,8 +282,8 @@ _GETPROFILEPROPERTYRESPONSE_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=4438,
-  serialized_end=4511,
+  serialized_start=4469,
+  serialized_end=4542,
 )
 _sym_db.RegisterEnumDescriptor(_GETPROFILEPROPERTYRESPONSE_STATUS)
 
@@ -308,8 +308,8 @@ _SETPROFILEPROPERTYRESPONSE_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1988,
-  serialized_end=2050,
+  serialized_start=2019,
+  serialized_end=2081,
 )
 _sym_db.RegisterEnumDescriptor(_SETPROFILEPROPERTYRESPONSE_STATUS)
 
@@ -334,8 +334,8 @@ _TRANSACTIONRESPONSE_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=4867,
-  serialized_end=4931,
+  serialized_start=4898,
+  serialized_end=4962,
 )
 _sym_db.RegisterEnumDescriptor(_TRANSACTIONRESPONSE_STATUS)
 
@@ -356,8 +356,8 @@ _LINECONTENTS_CONTINUATION = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=5314,
-  serialized_end=5382,
+  serialized_start=5345,
+  serialized_end=5413,
 )
 _sym_db.RegisterEnumDescriptor(_LINECONTENTS_CONTINUATION)
 
@@ -378,8 +378,8 @@ _SENDTEXTRESPONSE_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1988,
-  serialized_end=2027,
+  serialized_start=2019,
+  serialized_end=2058,
 )
 _sym_db.RegisterEnumDescriptor(_SENDTEXTRESPONSE_STATUS)
 
@@ -412,8 +412,8 @@ _CREATETABRESPONSE_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=6659,
-  serialized_end=6773,
+  serialized_start=6690,
+  serialized_end=6804,
 )
 _sym_db.RegisterEnumDescriptor(_CREATETABRESPONSE_STATUS)
 
@@ -434,8 +434,8 @@ _SPLITPANEREQUEST_SPLITDIRECTION = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=6924,
-  serialized_end=6970,
+  serialized_start=6955,
+  serialized_end=7001,
 )
 _sym_db.RegisterEnumDescriptor(_SPLITPANEREQUEST_SPLITDIRECTION)
 
@@ -464,98 +464,98 @@ _SPLITPANERESPONSE_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=7064,
-  serialized_end=7147,
+  serialized_start=7095,
+  serialized_end=7178,
 )
 _sym_db.RegisterEnumDescriptor(_SPLITPANERESPONSE_STATUS)
 
 
-_REQUEST = _descriptor.Descriptor(
-  name='Request',
-  full_name='iterm2.Request',
+_CLIENTORIGINATEDMESSAGE = _descriptor.Descriptor(
+  name='ClientOriginatedMessage',
+  full_name='iterm2.ClientOriginatedMessage',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='id', full_name='iterm2.Request.id', index=0,
+      name='id', full_name='iterm2.ClientOriginatedMessage.id', index=0,
       number=1, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='get_buffer_request', full_name='iterm2.Request.get_buffer_request', index=1,
+      name='get_buffer_request', full_name='iterm2.ClientOriginatedMessage.get_buffer_request', index=1,
       number=100, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='get_prompt_request', full_name='iterm2.Request.get_prompt_request', index=2,
+      name='get_prompt_request', full_name='iterm2.ClientOriginatedMessage.get_prompt_request', index=2,
       number=101, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='transaction_request', full_name='iterm2.Request.transaction_request', index=3,
+      name='transaction_request', full_name='iterm2.ClientOriginatedMessage.transaction_request', index=3,
       number=102, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='notification_request', full_name='iterm2.Request.notification_request', index=4,
+      name='notification_request', full_name='iterm2.ClientOriginatedMessage.notification_request', index=4,
       number=103, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='register_tool_request', full_name='iterm2.Request.register_tool_request', index=5,
+      name='register_tool_request', full_name='iterm2.ClientOriginatedMessage.register_tool_request', index=5,
       number=104, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='set_profile_property_request', full_name='iterm2.Request.set_profile_property_request', index=6,
+      name='set_profile_property_request', full_name='iterm2.ClientOriginatedMessage.set_profile_property_request', index=6,
       number=105, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='list_sessions_request', full_name='iterm2.Request.list_sessions_request', index=7,
+      name='list_sessions_request', full_name='iterm2.ClientOriginatedMessage.list_sessions_request', index=7,
       number=106, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='send_text_request', full_name='iterm2.Request.send_text_request', index=8,
+      name='send_text_request', full_name='iterm2.ClientOriginatedMessage.send_text_request', index=8,
       number=107, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='create_tab_request', full_name='iterm2.Request.create_tab_request', index=9,
+      name='create_tab_request', full_name='iterm2.ClientOriginatedMessage.create_tab_request', index=9,
       number=108, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='split_pane_request', full_name='iterm2.Request.split_pane_request', index=10,
+      name='split_pane_request', full_name='iterm2.ClientOriginatedMessage.split_pane_request', index=10,
       number=109, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='get_profile_property_request', full_name='iterm2.Request.get_profile_property_request', index=11,
+      name='get_profile_property_request', full_name='iterm2.ClientOriginatedMessage.get_profile_property_request', index=11,
       number=110, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -574,103 +574,103 @@ _REQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=22,
-  serialized_end=693,
+  serialized_end=709,
 )
 
 
-_RESPONSE = _descriptor.Descriptor(
-  name='Response',
-  full_name='iterm2.Response',
+_SERVERORIGINATEDMESSAGE = _descriptor.Descriptor(
+  name='ServerOriginatedMessage',
+  full_name='iterm2.ServerOriginatedMessage',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='id', full_name='iterm2.Response.id', index=0,
+      name='id', full_name='iterm2.ServerOriginatedMessage.id', index=0,
       number=1, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='get_buffer_response', full_name='iterm2.Response.get_buffer_response', index=1,
+      name='get_buffer_response', full_name='iterm2.ServerOriginatedMessage.get_buffer_response', index=1,
       number=100, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='get_prompt_response', full_name='iterm2.Response.get_prompt_response', index=2,
+      name='get_prompt_response', full_name='iterm2.ServerOriginatedMessage.get_prompt_response', index=2,
       number=101, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='transaction_response', full_name='iterm2.Response.transaction_response', index=3,
+      name='transaction_response', full_name='iterm2.ServerOriginatedMessage.transaction_response', index=3,
       number=102, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='notification_response', full_name='iterm2.Response.notification_response', index=4,
+      name='notification_response', full_name='iterm2.ServerOriginatedMessage.notification_response', index=4,
       number=103, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='register_tool_response', full_name='iterm2.Response.register_tool_response', index=5,
+      name='register_tool_response', full_name='iterm2.ServerOriginatedMessage.register_tool_response', index=5,
       number=104, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='set_profile_property_response', full_name='iterm2.Response.set_profile_property_response', index=6,
+      name='set_profile_property_response', full_name='iterm2.ServerOriginatedMessage.set_profile_property_response', index=6,
       number=105, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='list_sessions_response', full_name='iterm2.Response.list_sessions_response', index=7,
+      name='list_sessions_response', full_name='iterm2.ServerOriginatedMessage.list_sessions_response', index=7,
       number=106, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='send_text_response', full_name='iterm2.Response.send_text_response', index=8,
+      name='send_text_response', full_name='iterm2.ServerOriginatedMessage.send_text_response', index=8,
       number=107, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='create_tab_response', full_name='iterm2.Response.create_tab_response', index=9,
+      name='create_tab_response', full_name='iterm2.ServerOriginatedMessage.create_tab_response', index=9,
       number=108, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='split_pane_response', full_name='iterm2.Response.split_pane_response', index=10,
+      name='split_pane_response', full_name='iterm2.ServerOriginatedMessage.split_pane_response', index=10,
       number=109, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='get_profile_property_response', full_name='iterm2.Response.get_profile_property_response', index=11,
+      name='get_profile_property_response', full_name='iterm2.ServerOriginatedMessage.get_profile_property_response', index=11,
       number=110, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='notification', full_name='iterm2.Response.notification', index=12,
+      name='notification', full_name='iterm2.ServerOriginatedMessage.notification', index=12,
       number=1000, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -688,8 +688,8 @@ _RESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=696,
-  serialized_end=1435,
+  serialized_start=712,
+  serialized_end=1466,
 )
 
 
@@ -748,8 +748,8 @@ _REGISTERTOOLREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1438,
-  serialized_end=1654,
+  serialized_start=1469,
+  serialized_end=1685,
 )
 
 
@@ -780,8 +780,8 @@ _REGISTERTOOLRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1657,
-  serialized_end=1796,
+  serialized_start=1688,
+  serialized_end=1827,
 )
 
 
@@ -825,8 +825,8 @@ _NOTIFICATIONREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1798,
-  serialized_end=1908,
+  serialized_start=1829,
+  serialized_end=1939,
 )
 
 
@@ -857,8 +857,8 @@ _NOTIFICATIONRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1911,
-  serialized_end=2094,
+  serialized_start=1942,
+  serialized_end=2125,
 )
 
 
@@ -937,8 +937,8 @@ _NOTIFICATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2097,
-  serialized_end=2678,
+  serialized_start=2128,
+  serialized_end=2709,
 )
 
 
@@ -997,8 +997,8 @@ _KEYSTROKENOTIFICATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2681,
-  serialized_end=2943,
+  serialized_start=2712,
+  serialized_end=2974,
 )
 
 
@@ -1028,8 +1028,8 @@ _SCREENUPDATENOTIFICATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2945,
-  serialized_end=2988,
+  serialized_start=2976,
+  serialized_end=3019,
 )
 
 
@@ -1059,8 +1059,8 @@ _PROMPTNOTIFICATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2990,
-  serialized_end=3027,
+  serialized_start=3021,
+  serialized_end=3058,
 )
 
 
@@ -1111,8 +1111,8 @@ _LOCATIONCHANGENOTIFICATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3029,
-  serialized_end=3131,
+  serialized_start=3060,
+  serialized_end=3162,
 )
 
 
@@ -1156,8 +1156,8 @@ _CUSTOMESCAPESEQUENCENOTIFICATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3133,
-  serialized_end=3226,
+  serialized_start=3164,
+  serialized_end=3257,
 )
 
 
@@ -1187,8 +1187,8 @@ _NEWSESSIONNOTIFICATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3228,
-  serialized_end=3278,
+  serialized_start=3259,
+  serialized_end=3309,
 )
 
 
@@ -1218,8 +1218,8 @@ _TERMINATESESSIONNOTIFICATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3280,
-  serialized_end=3336,
+  serialized_start=3311,
+  serialized_end=3367,
 )
 
 
@@ -1249,8 +1249,8 @@ _LAYOUTCHANGEDNOTIFICATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3338,
-  serialized_end=3427,
+  serialized_start=3369,
+  serialized_end=3458,
 )
 
 
@@ -1287,8 +1287,8 @@ _GETBUFFERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3429,
-  serialized_end=3503,
+  serialized_start=3460,
+  serialized_end=3534,
 )
 
 
@@ -1347,8 +1347,8 @@ _GETBUFFERRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3506,
-  serialized_end=3800,
+  serialized_start=3537,
+  serialized_end=3831,
 )
 
 
@@ -1378,8 +1378,8 @@ _GETPROMPTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3802,
-  serialized_end=3837,
+  serialized_start=3833,
+  serialized_end=3868,
 )
 
 
@@ -1445,8 +1445,8 @@ _GETPROMPTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3840,
-  serialized_end=4172,
+  serialized_start=3871,
+  serialized_end=4203,
 )
 
 
@@ -1483,8 +1483,8 @@ _GETPROFILEPROPERTYREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4174,
-  serialized_end=4232,
+  serialized_start=4205,
+  serialized_end=4263,
 )
 
 
@@ -1521,8 +1521,8 @@ _GETPROFILEPROPERTYRESPONSE_PROPERTY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4393,
-  serialized_end=4436,
+  serialized_start=4424,
+  serialized_end=4467,
 )
 
 _GETPROFILEPROPERTYRESPONSE = _descriptor.Descriptor(
@@ -1559,8 +1559,8 @@ _GETPROFILEPROPERTYRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4235,
-  serialized_end=4511,
+  serialized_start=4266,
+  serialized_end=4542,
 )
 
 
@@ -1604,8 +1604,8 @@ _SETPROFILEPROPERTYREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4513,
-  serialized_end=4590,
+  serialized_start=4544,
+  serialized_end=4621,
 )
 
 
@@ -1636,8 +1636,8 @@ _SETPROFILEPROPERTYRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4593,
-  serialized_end=4748,
+  serialized_start=4624,
+  serialized_end=4779,
 )
 
 
@@ -1667,8 +1667,8 @@ _TRANSACTIONREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4750,
-  serialized_end=4785,
+  serialized_start=4781,
+  serialized_end=4816,
 )
 
 
@@ -1699,8 +1699,8 @@ _TRANSACTIONRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4788,
-  serialized_end=4931,
+  serialized_start=4819,
+  serialized_end=4962,
 )
 
 
@@ -1737,8 +1737,8 @@ _LINERANGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4933,
-  serialized_end=4998,
+  serialized_start=4964,
+  serialized_end=5029,
 )
 
 
@@ -1775,8 +1775,8 @@ _RANGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5000,
-  serialized_end=5041,
+  serialized_start=5031,
+  serialized_end=5072,
 )
 
 
@@ -1813,8 +1813,8 @@ _COORDRANGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5043,
-  serialized_end=5113,
+  serialized_start=5074,
+  serialized_end=5144,
 )
 
 
@@ -1851,8 +1851,8 @@ _COORD = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5115,
-  serialized_end=5144,
+  serialized_start=5146,
+  serialized_end=5175,
 )
 
 
@@ -1897,8 +1897,8 @@ _LINECONTENTS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5147,
-  serialized_end=5382,
+  serialized_start=5178,
+  serialized_end=5413,
 )
 
 
@@ -1935,8 +1935,8 @@ _CODEPOINTSPERCELL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5384,
-  serialized_end=5448,
+  serialized_start=5415,
+  serialized_end=5479,
 )
 
 
@@ -1959,8 +1959,8 @@ _LISTSESSIONSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5450,
-  serialized_end=5471,
+  serialized_start=5481,
+  serialized_end=5502,
 )
 
 
@@ -1997,8 +1997,8 @@ _SENDTEXTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5473,
-  serialized_end=5521,
+  serialized_start=5504,
+  serialized_end=5552,
 )
 
 
@@ -2029,8 +2029,8 @@ _SENDTEXTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5523,
-  serialized_end=5631,
+  serialized_start=5554,
+  serialized_end=5662,
 )
 
 
@@ -2067,8 +2067,8 @@ _SIZE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5633,
-  serialized_end=5670,
+  serialized_start=5664,
+  serialized_end=5701,
 )
 
 
@@ -2105,8 +2105,8 @@ _POINT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5672,
-  serialized_end=5701,
+  serialized_start=5703,
+  serialized_end=5732,
 )
 
 
@@ -2143,8 +2143,8 @@ _FRAME = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5703,
-  serialized_end=5769,
+  serialized_start=5734,
+  serialized_end=5800,
 )
 
 
@@ -2188,8 +2188,8 @@ _LISTSESSIONSRESPONSE_WINDOW = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5850,
-  serialized_end=5955,
+  serialized_start=5881,
+  serialized_end=5986,
 )
 
 _LISTSESSIONSRESPONSE_TAB = _descriptor.Descriptor(
@@ -2225,8 +2225,8 @@ _LISTSESSIONSRESPONSE_TAB = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5957,
-  serialized_end=6036,
+  serialized_start=5988,
+  serialized_end=6067,
 )
 
 _LISTSESSIONSRESPONSE_SPLITTREENODE_SPLITTREELINK_SESSION = _descriptor.Descriptor(
@@ -2276,8 +2276,8 @@ _LISTSESSIONSRESPONSE_SPLITTREENODE_SPLITTREELINK_SESSION = _descriptor.Descript
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6310,
-  serialized_end=6424,
+  serialized_start=6341,
+  serialized_end=6455,
 )
 
 _LISTSESSIONSRESPONSE_SPLITTREENODE_SPLITTREELINK = _descriptor.Descriptor(
@@ -2316,8 +2316,8 @@ _LISTSESSIONSRESPONSE_SPLITTREENODE_SPLITTREELINK = _descriptor.Descriptor(
       name='child', full_name='iterm2.ListSessionsResponse.SplitTreeNode.SplitTreeLink.child',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=6148,
-  serialized_end=6433,
+  serialized_start=6179,
+  serialized_end=6464,
 )
 
 _LISTSESSIONSRESPONSE_SPLITTREENODE = _descriptor.Descriptor(
@@ -2353,8 +2353,8 @@ _LISTSESSIONSRESPONSE_SPLITTREENODE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6039,
-  serialized_end=6433,
+  serialized_start=6070,
+  serialized_end=6464,
 )
 
 _LISTSESSIONSRESPONSE = _descriptor.Descriptor(
@@ -2383,8 +2383,8 @@ _LISTSESSIONSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5772,
-  serialized_end=6433,
+  serialized_start=5803,
+  serialized_end=6464,
 )
 
 
@@ -2435,8 +2435,8 @@ _CREATETABREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6435,
-  serialized_end=6530,
+  serialized_start=6466,
+  serialized_end=6561,
 )
 
 
@@ -2488,8 +2488,8 @@ _CREATETABRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6533,
-  serialized_end=6773,
+  serialized_start=6564,
+  serialized_end=6804,
 )
 
 
@@ -2541,8 +2541,8 @@ _SPLITPANEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6776,
-  serialized_end=6970,
+  serialized_start=6807,
+  serialized_end=7001,
 )
 
 
@@ -2580,33 +2580,33 @@ _SPLITPANERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6973,
-  serialized_end=7147,
+  serialized_start=7004,
+  serialized_end=7178,
 )
 
-_REQUEST.fields_by_name['get_buffer_request'].message_type = _GETBUFFERREQUEST
-_REQUEST.fields_by_name['get_prompt_request'].message_type = _GETPROMPTREQUEST
-_REQUEST.fields_by_name['transaction_request'].message_type = _TRANSACTIONREQUEST
-_REQUEST.fields_by_name['notification_request'].message_type = _NOTIFICATIONREQUEST
-_REQUEST.fields_by_name['register_tool_request'].message_type = _REGISTERTOOLREQUEST
-_REQUEST.fields_by_name['set_profile_property_request'].message_type = _SETPROFILEPROPERTYREQUEST
-_REQUEST.fields_by_name['list_sessions_request'].message_type = _LISTSESSIONSREQUEST
-_REQUEST.fields_by_name['send_text_request'].message_type = _SENDTEXTREQUEST
-_REQUEST.fields_by_name['create_tab_request'].message_type = _CREATETABREQUEST
-_REQUEST.fields_by_name['split_pane_request'].message_type = _SPLITPANEREQUEST
-_REQUEST.fields_by_name['get_profile_property_request'].message_type = _GETPROFILEPROPERTYREQUEST
-_RESPONSE.fields_by_name['get_buffer_response'].message_type = _GETBUFFERRESPONSE
-_RESPONSE.fields_by_name['get_prompt_response'].message_type = _GETPROMPTRESPONSE
-_RESPONSE.fields_by_name['transaction_response'].message_type = _TRANSACTIONRESPONSE
-_RESPONSE.fields_by_name['notification_response'].message_type = _NOTIFICATIONRESPONSE
-_RESPONSE.fields_by_name['register_tool_response'].message_type = _REGISTERTOOLRESPONSE
-_RESPONSE.fields_by_name['set_profile_property_response'].message_type = _SETPROFILEPROPERTYRESPONSE
-_RESPONSE.fields_by_name['list_sessions_response'].message_type = _LISTSESSIONSRESPONSE
-_RESPONSE.fields_by_name['send_text_response'].message_type = _SENDTEXTRESPONSE
-_RESPONSE.fields_by_name['create_tab_response'].message_type = _CREATETABRESPONSE
-_RESPONSE.fields_by_name['split_pane_response'].message_type = _SPLITPANERESPONSE
-_RESPONSE.fields_by_name['get_profile_property_response'].message_type = _GETPROFILEPROPERTYRESPONSE
-_RESPONSE.fields_by_name['notification'].message_type = _NOTIFICATION
+_CLIENTORIGINATEDMESSAGE.fields_by_name['get_buffer_request'].message_type = _GETBUFFERREQUEST
+_CLIENTORIGINATEDMESSAGE.fields_by_name['get_prompt_request'].message_type = _GETPROMPTREQUEST
+_CLIENTORIGINATEDMESSAGE.fields_by_name['transaction_request'].message_type = _TRANSACTIONREQUEST
+_CLIENTORIGINATEDMESSAGE.fields_by_name['notification_request'].message_type = _NOTIFICATIONREQUEST
+_CLIENTORIGINATEDMESSAGE.fields_by_name['register_tool_request'].message_type = _REGISTERTOOLREQUEST
+_CLIENTORIGINATEDMESSAGE.fields_by_name['set_profile_property_request'].message_type = _SETPROFILEPROPERTYREQUEST
+_CLIENTORIGINATEDMESSAGE.fields_by_name['list_sessions_request'].message_type = _LISTSESSIONSREQUEST
+_CLIENTORIGINATEDMESSAGE.fields_by_name['send_text_request'].message_type = _SENDTEXTREQUEST
+_CLIENTORIGINATEDMESSAGE.fields_by_name['create_tab_request'].message_type = _CREATETABREQUEST
+_CLIENTORIGINATEDMESSAGE.fields_by_name['split_pane_request'].message_type = _SPLITPANEREQUEST
+_CLIENTORIGINATEDMESSAGE.fields_by_name['get_profile_property_request'].message_type = _GETPROFILEPROPERTYREQUEST
+_SERVERORIGINATEDMESSAGE.fields_by_name['get_buffer_response'].message_type = _GETBUFFERRESPONSE
+_SERVERORIGINATEDMESSAGE.fields_by_name['get_prompt_response'].message_type = _GETPROMPTRESPONSE
+_SERVERORIGINATEDMESSAGE.fields_by_name['transaction_response'].message_type = _TRANSACTIONRESPONSE
+_SERVERORIGINATEDMESSAGE.fields_by_name['notification_response'].message_type = _NOTIFICATIONRESPONSE
+_SERVERORIGINATEDMESSAGE.fields_by_name['register_tool_response'].message_type = _REGISTERTOOLRESPONSE
+_SERVERORIGINATEDMESSAGE.fields_by_name['set_profile_property_response'].message_type = _SETPROFILEPROPERTYRESPONSE
+_SERVERORIGINATEDMESSAGE.fields_by_name['list_sessions_response'].message_type = _LISTSESSIONSRESPONSE
+_SERVERORIGINATEDMESSAGE.fields_by_name['send_text_response'].message_type = _SENDTEXTRESPONSE
+_SERVERORIGINATEDMESSAGE.fields_by_name['create_tab_response'].message_type = _CREATETABRESPONSE
+_SERVERORIGINATEDMESSAGE.fields_by_name['split_pane_response'].message_type = _SPLITPANERESPONSE
+_SERVERORIGINATEDMESSAGE.fields_by_name['get_profile_property_response'].message_type = _GETPROFILEPROPERTYRESPONSE
+_SERVERORIGINATEDMESSAGE.fields_by_name['notification'].message_type = _NOTIFICATION
 _REGISTERTOOLREQUEST.fields_by_name['tool_type'].enum_type = _REGISTERTOOLREQUEST_TOOLTYPE
 _REGISTERTOOLREQUEST_TOOLTYPE.containing_type = _REGISTERTOOLREQUEST
 _REGISTERTOOLRESPONSE.fields_by_name['status'].enum_type = _REGISTERTOOLRESPONSE_STATUS
@@ -2679,8 +2679,8 @@ _SPLITPANEREQUEST.fields_by_name['split_direction'].enum_type = _SPLITPANEREQUES
 _SPLITPANEREQUEST_SPLITDIRECTION.containing_type = _SPLITPANEREQUEST
 _SPLITPANERESPONSE.fields_by_name['status'].enum_type = _SPLITPANERESPONSE_STATUS
 _SPLITPANERESPONSE_STATUS.containing_type = _SPLITPANERESPONSE
-DESCRIPTOR.message_types_by_name['Request'] = _REQUEST
-DESCRIPTOR.message_types_by_name['Response'] = _RESPONSE
+DESCRIPTOR.message_types_by_name['ClientOriginatedMessage'] = _CLIENTORIGINATEDMESSAGE
+DESCRIPTOR.message_types_by_name['ServerOriginatedMessage'] = _SERVERORIGINATEDMESSAGE
 DESCRIPTOR.message_types_by_name['RegisterToolRequest'] = _REGISTERTOOLREQUEST
 DESCRIPTOR.message_types_by_name['RegisterToolResponse'] = _REGISTERTOOLRESPONSE
 DESCRIPTOR.message_types_by_name['NotificationRequest'] = _NOTIFICATIONREQUEST
@@ -2723,19 +2723,19 @@ DESCRIPTOR.message_types_by_name['SplitPaneRequest'] = _SPLITPANEREQUEST
 DESCRIPTOR.message_types_by_name['SplitPaneResponse'] = _SPLITPANERESPONSE
 DESCRIPTOR.enum_types_by_name['NotificationType'] = _NOTIFICATIONTYPE
 
-Request = _reflection.GeneratedProtocolMessageType('Request', (_message.Message,), dict(
-  DESCRIPTOR = _REQUEST,
+ClientOriginatedMessage = _reflection.GeneratedProtocolMessageType('ClientOriginatedMessage', (_message.Message,), dict(
+  DESCRIPTOR = _CLIENTORIGINATEDMESSAGE,
   __module__ = 'api_pb2'
-  # @@protoc_insertion_point(class_scope:iterm2.Request)
+  # @@protoc_insertion_point(class_scope:iterm2.ClientOriginatedMessage)
   ))
-_sym_db.RegisterMessage(Request)
+_sym_db.RegisterMessage(ClientOriginatedMessage)
 
-Response = _reflection.GeneratedProtocolMessageType('Response', (_message.Message,), dict(
-  DESCRIPTOR = _RESPONSE,
+ServerOriginatedMessage = _reflection.GeneratedProtocolMessageType('ServerOriginatedMessage', (_message.Message,), dict(
+  DESCRIPTOR = _SERVERORIGINATEDMESSAGE,
   __module__ = 'api_pb2'
-  # @@protoc_insertion_point(class_scope:iterm2.Response)
+  # @@protoc_insertion_point(class_scope:iterm2.ServerOriginatedMessage)
   ))
-_sym_db.RegisterMessage(Response)
+_sym_db.RegisterMessage(ServerOriginatedMessage)
 
 RegisterToolRequest = _reflection.GeneratedProtocolMessageType('RegisterToolRequest', (_message.Message,), dict(
   DESCRIPTOR = _REGISTERTOOLREQUEST,
