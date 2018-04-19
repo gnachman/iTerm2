@@ -2558,13 +2558,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         return;
     }
 
-    NSString *bundleId = peerIdentity[iTermWebSocketConnectionPeerIdentityBundleIdentifier];
-    if (![request.identifier hasPrefix:bundleId]) {
-        response.status = ITMRegisterToolResponse_Status_PermissionDenied;
-        handler(response);
-        return;
-    }
-
     if ([[iTermToolbeltView builtInToolNames] containsObject:request.name]) {
         response.status = ITMRegisterToolResponse_Status_PermissionDenied;
         handler(response);
@@ -2575,6 +2568,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                                                     name:request.name
                                                      URL:request.URL
                                revealIfAlreadyRegistered:request.revealIfAlreadyRegistered];
+    response.status = ITMRegisterToolResponse_Status_Ok;
+    handler(response);
 }
 
 - (void)apiServerSetProfileProperty:(ITMSetProfilePropertyRequest *)request
@@ -2624,17 +2619,16 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     for (PseudoTerminal *window in [[iTermController sharedInstance] terminals]) {
         ITMListSessionsResponse_Window *windowMessage = [[[ITMListSessionsResponse_Window alloc] init] autorelease];
         windowMessage.windowId = window.terminalGuid;
+        NSRect frame = window.window.frame;
+        windowMessage.frame.origin.x = frame.origin.x;
+        windowMessage.frame.origin.y = frame.origin.y;
+        windowMessage.frame.size.width = frame.size.width;
+        windowMessage.frame.size.height = frame.size.height;
 
         for (PTYTab *tab in window.tabs) {
             ITMListSessionsResponse_Tab *tabMessage = [[[ITMListSessionsResponse_Tab alloc] init] autorelease];
             tabMessage.tabId = [@(tab.uniqueId) stringValue];
-
-            for (PTYSession *session in tab.sessions) {
-                ITMListSessionsResponse_Session *sessionMessage = [[[ITMListSessionsResponse_Session alloc] init] autorelease];
-                sessionMessage.uniqueIdentifier = session.guid;
-                [tabMessage.sessionsArray addObject:sessionMessage];
-            }
-
+            tabMessage.root = [tab rootSplitTreeNode];
             [windowMessage.tabsArray addObject:tabMessage];
         }
 

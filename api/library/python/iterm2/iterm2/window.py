@@ -1,89 +1,38 @@
-#!/usr/bin/python
-# This is python 2.7 on macOS 10.12.
+import iterm2.api_pb2
+import iterm2.rpc
+import iterm2.session
+import iterm2.tab
+import iterm2.util
 
-from __future__ import print_function
+class CreateTabException(Exception):
+  pass
 
-import _depfuture as depfuture
-import session
-from _sharedstate import get_socket, wait
-import _socket as socket
-import api_pb2
-import tab
+class Window:
+  def __init__(self, connection, window_id, tabs, frame):
+    self.connection = connection
+    self.window_id = window_id
+    self.tabs = tabs
+    self.frame = frame
 
-class AbstractWindow(object):
   def __repr__(self):
-    raise NotImplementedError("unimplemented")
-
-  def get_status(self):
-    raise NotImplementedError("unimplemented")
-
-  def get_window_id(self):
-    raise NotImplementedError("unimplemented")
-
-  def get_tabs(self):
-    raise NotImplementedError("unimplemented")
-
-  def create_tab(self, profile=None, command=None, index=None):
-    raise NotImplementedError("unimplemented")
+    return "<Window id=%s tabs=%s frame=%s>" % (self.window_id, self.tabs, iterm2.util.frame_str(self.frame))
 
   def pretty_str(self, indent=""):
-    s = indent + "Window id=%s\n" % self.get_window_id()
-    for t in self.get_tabs():
+    s = indent + "Window id=%s frame=%s\n" % (self.get_window_id(), iterm2.util.frame_str(self.frame))
+    for t in self.tabs:
       s += t.pretty_str(indent=indent + "  ")
     return s
 
-class FutureWindow(AbstractWindow):
-  def __init__(self, future):
-    self.future = future
-    self.window = None
-    self.status = None
-
-  def __repr__(self):
-    return "<FutureWindow status=%s window=%s>" % (str(self.get_status()), repr(self._get_window()))
-
-  def get_window_id(self):
-    return self._get_window().get_window_id()
-
-  def get_tabs(self):
-    return self._get_window().get_tabs()
-
-  def create_tab(self, profile=None, command=None, index=None):
-    if self.future is None:
-      return self._get_window().create_tab(profile=profile, command=command, index=index)
-
-    def create_inner(response):
-      return get_socket().request_create_tab(
-          profile=profile, window=self.get_window_id(), index=index, command=command)
-    createTabFuture = depfuture.DependentFuture(self.future, create_inner)
-    return tab.FutureTab(createTabFuture);
-
-  def get_status(self):
-    self._parse_if_needed()
-    return self.status
-
-  def _get_window(self):
-    self._parse_if_needed()
-    return self.window
-
-  def _parse_if_needed(self):
-    if self.future is not None:
-      self._parse(self.future.get())
-      self.future = None
-
-  def _parse(self, response):
-    self.status = response.status
-    if self.status == api_pb2.CreateTabResponse.OK:
-      s = session.Session(response.session_id)
-      t = tab.Tab(response.tab_id, [ s ])
-      self.window = Window(response.window_id, [ t ])
-
-class Window(AbstractWindow):
-  def __init__(self, window_id, tabs):
-    self.window_id = window_id
-    self.tabs = tabs
-
-  def __repr__(self):
-    return "<Window id=%s tabs=%s>" % (self.window_id, self.tabs)
+  @staticmethod
+  async def create(connection, profile=None, command=None):
+    result = await iterm2.rpc.create_tab(connection, profile=profile, command=command)
+    if result.create_tab_response.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
+      session = iterm2.session.Session(connection, result.create_tab_response.session_id)
+      tab = iterm2.tab.Tab(connection, result.create_tab_response.tab_id, [session])
+      window = Window(connection, result.create_tab_response.window_id, [tab])
+      return window
+    else:
+      raise CreateTabException(iterm2.api_pb2.CreateTabResponse.Status.Name(result.create_tab_response.status))
 
   def get_window_id(self):
     return self.window_id
@@ -91,8 +40,11 @@ class Window(AbstractWindow):
   def get_tabs(self):
     return self.tabs
 
-  def create_tab(self, profile=None, command=None, index=None):
-    return tab.FutureTab(get_socket().request_create_tab(
-      profile=profile, window=self.window_id, index=index, command=command))
-
+  async def create_tab(self, profile=None, command=None, index=None):
+    result = await iterm2.rpc.create_tab(self.connection, profile=profile, window=self.window_id, index=index, command=command)
+    if result.create_tab_response.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
+      session = iterm2.session.Session(self.connection, result.create_tab_response.session_id)
+      return Tab(self.connection, result.create_tab_response.tab_index, [session])
+    else:
+      raise CreateTabException(iterm2.api_pb2.CreateTabResponse.Status.Name(result.create_tab_response.status))
 

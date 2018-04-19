@@ -18,6 +18,7 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#pragma clang diagnostic ignored "-Wdirect-ivar-access"
 
 #pragma mark - ITMApiRoot
 
@@ -2772,6 +2773,168 @@ BOOL ITMSendTextResponse_Status_IsValidValue(int32_t value__) {
   }
 }
 
+#pragma mark - ITMSize
+
+@implementation ITMSize
+
+@dynamic hasWidth, width;
+@dynamic hasHeight, height;
+
+typedef struct ITMSize__storage_ {
+  uint32_t _has_storage_[1];
+  int32_t width;
+  int32_t height;
+} ITMSize__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "width",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSize_FieldNumber_Width,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMSize__storage_, width),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt32,
+      },
+      {
+        .name = "height",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSize_FieldNumber_Height,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMSize__storage_, height),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt32,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMSize class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMSize__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMPoint
+
+@implementation ITMPoint
+
+@dynamic hasX, x;
+@dynamic hasY, y;
+
+typedef struct ITMPoint__storage_ {
+  uint32_t _has_storage_[1];
+  int32_t x;
+  int32_t y;
+} ITMPoint__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "x",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMPoint_FieldNumber_X,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMPoint__storage_, x),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt32,
+      },
+      {
+        .name = "y",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMPoint_FieldNumber_Y,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMPoint__storage_, y),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt32,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMPoint class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMPoint__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMFrame
+
+@implementation ITMFrame
+
+@dynamic hasOrigin, origin;
+@dynamic hasSize, size;
+
+typedef struct ITMFrame__storage_ {
+  uint32_t _has_storage_[1];
+  ITMPoint *origin;
+  ITMSize *size;
+} ITMFrame__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "origin",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMPoint),
+        .number = ITMFrame_FieldNumber_Origin,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMFrame__storage_, origin),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "size",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMSize),
+        .number = ITMFrame_FieldNumber_Size,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMFrame__storage_, size),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMFrame class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMFrame__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMListSessionsResponse
 
 @implementation ITMListSessionsResponse
@@ -2821,11 +2984,13 @@ typedef struct ITMListSessionsResponse__storage_ {
 
 @dynamic tabsArray, tabsArray_Count;
 @dynamic hasWindowId, windowId;
+@dynamic hasFrame, frame;
 
 typedef struct ITMListSessionsResponse_Window__storage_ {
   uint32_t _has_storage_[1];
   NSMutableArray *tabsArray;
   NSString *windowId;
+  ITMFrame *frame;
 } ITMListSessionsResponse_Window__storage_;
 
 // This method is threadsafe because it is initially called
@@ -2852,6 +3017,15 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },
+      {
+        .name = "frame",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMFrame),
+        .number = ITMListSessionsResponse_Window_FieldNumber_Frame,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Window__storage_, frame),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMListSessionsResponse_Window class]
@@ -2874,13 +3048,13 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
 
 @implementation ITMListSessionsResponse_Tab
 
-@dynamic sessionsArray, sessionsArray_Count;
+@dynamic hasRoot, root;
 @dynamic hasTabId, tabId;
 
 typedef struct ITMListSessionsResponse_Tab__storage_ {
   uint32_t _has_storage_[1];
-  NSMutableArray *sessionsArray;
   NSString *tabId;
+  ITMListSessionsResponse_SplitTreeNode *root;
 } ITMListSessionsResponse_Tab__storage_;
 
 // This method is threadsafe because it is initially called
@@ -2890,22 +3064,22 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
   if (!descriptor) {
     static GPBMessageFieldDescription fields[] = {
       {
-        .name = "sessionsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMListSessionsResponse_Session),
-        .number = ITMListSessionsResponse_Tab_FieldNumber_SessionsArray,
-        .hasIndex = GPBNoHasBit,
-        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, sessionsArray),
-        .flags = GPBFieldRepeated,
-        .dataType = GPBDataTypeMessage,
-      },
-      {
         .name = "tabId",
         .dataTypeSpecific.className = NULL,
         .number = ITMListSessionsResponse_Tab_FieldNumber_TabId,
-        .hasIndex = 0,
+        .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, tabId),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "root",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMListSessionsResponse_SplitTreeNode),
+        .number = ITMListSessionsResponse_Tab_FieldNumber_Root,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, root),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -2925,16 +3099,143 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
 
 @end
 
-#pragma mark - ITMListSessionsResponse_Session
+#pragma mark - ITMListSessionsResponse_SplitTreeNode
 
-@implementation ITMListSessionsResponse_Session
+@implementation ITMListSessionsResponse_SplitTreeNode
+
+@dynamic hasVertical, vertical;
+@dynamic linksArray, linksArray_Count;
+
+typedef struct ITMListSessionsResponse_SplitTreeNode__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *linksArray;
+} ITMListSessionsResponse_SplitTreeNode__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "vertical",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMListSessionsResponse_SplitTreeNode_FieldNumber_Vertical,
+        .hasIndex = 0,
+        .offset = 1,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "linksArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink),
+        .number = ITMListSessionsResponse_SplitTreeNode_FieldNumber_LinksArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_SplitTreeNode__storage_, linksArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMListSessionsResponse_SplitTreeNode class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMListSessionsResponse_SplitTreeNode__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMListSessionsResponse)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMListSessionsResponse_SplitTreeNode_SplitTreeLink
+
+@implementation ITMListSessionsResponse_SplitTreeNode_SplitTreeLink
+
+@dynamic childOneOfCase;
+@dynamic session;
+@dynamic node;
+
+typedef struct ITMListSessionsResponse_SplitTreeNode_SplitTreeLink__storage_ {
+  uint32_t _has_storage_[2];
+  ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session *session;
+  ITMListSessionsResponse_SplitTreeNode *node;
+} ITMListSessionsResponse_SplitTreeNode_SplitTreeLink__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "session",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session),
+        .number = ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_FieldNumber_Session,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink__storage_, session),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "node",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMListSessionsResponse_SplitTreeNode),
+        .number = ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_FieldNumber_Node,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink__storage_, node),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMListSessionsResponse_SplitTreeNode_SplitTreeLink class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    static const char *oneofs[] = {
+      "child",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMListSessionsResponse_SplitTreeNode)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+void ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_ClearChildOneOfCase(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
+#pragma mark - ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session
+
+@implementation ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session
 
 @dynamic hasUniqueIdentifier, uniqueIdentifier;
+@dynamic hasFrame, frame;
+@dynamic hasGridSize, gridSize;
+@dynamic hasTitle, title;
 
-typedef struct ITMListSessionsResponse_Session__storage_ {
+typedef struct ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session__storage_ {
   uint32_t _has_storage_[1];
   NSString *uniqueIdentifier;
-} ITMListSessionsResponse_Session__storage_;
+  ITMFrame *frame;
+  ITMSize *gridSize;
+  NSString *title;
+} ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session__storage_;
 
 // This method is threadsafe because it is initially called
 // in +initialize for each subclass.
@@ -2945,27 +3246,49 @@ typedef struct ITMListSessionsResponse_Session__storage_ {
       {
         .name = "uniqueIdentifier",
         .dataTypeSpecific.className = NULL,
-        .number = ITMListSessionsResponse_Session_FieldNumber_UniqueIdentifier,
+        .number = ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session_FieldNumber_UniqueIdentifier,
         .hasIndex = 0,
-        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Session__storage_, uniqueIdentifier),
-        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session__storage_, uniqueIdentifier),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "frame",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMFrame),
+        .number = ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session_FieldNumber_Frame,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session__storage_, frame),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "gridSize",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMSize),
+        .number = ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session_FieldNumber_GridSize,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session__storage_, gridSize),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "title",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session_FieldNumber_Title,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session__storage_, title),
+        .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },
     };
     GPBDescriptor *localDescriptor =
-        [GPBDescriptor allocDescriptorForClass:[ITMListSessionsResponse_Session class]
+        [GPBDescriptor allocDescriptorForClass:[ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session class]
                                      rootClass:[ITMApiRoot class]
                                           file:ITMApiRoot_FileDescriptor()
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
-                                   storageSize:sizeof(ITMListSessionsResponse_Session__storage_)
+                                   storageSize:sizeof(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
-#if !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
-    static const char *extraTextFormatInfo =
-        "\001\001\020\000";
-    [localDescriptor setupExtraTextInfo:extraTextFormatInfo];
-#endif  // !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMListSessionsResponse)];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink)];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }

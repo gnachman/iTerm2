@@ -536,17 +536,47 @@ message SendTextResponse {
   optional Status status = 1;
 }
 
+message Size {
+  optional int32 width = 1;
+  optional int32 height = 2;
+}
+
+message Point {
+  optional int32 x = 1;
+  optional int32 y = 2;
+}
+
+message Frame {
+  optional Point origin = 1;
+  optional Size size = 2;
+}
+
 message ListSessionsResponse {
   message Window {
     repeated Tab tabs = 1;
     optional string window_id = 2;
+    optional Frame frame = 3;
   }
   message Tab {
-    repeated Session sessions = 1;
+    optional SplitTreeNode root = 3;
     optional string tab_id = 2;
   }
-  message Session {
-      optional string uniqueIdentifier = 1;
+  message SplitTreeNode {
+    optional bool vertical = 1;  // Direction of split pane divider
+    repeated SplitTreeLink links = 2;  // Links to children
+
+    message SplitTreeLink {
+      oneof child {
+        Session session = 1;
+        SplitTreeNode node = 2;
+      }
+      message Session {
+          optional string unique_identifier = 1;
+          optional Frame frame = 2;
+          optional Size grid_size = 3;
+          optional string title = 4;
+      }
+    }
   }
   repeated Window windows = 1;
 }

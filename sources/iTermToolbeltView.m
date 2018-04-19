@@ -78,6 +78,7 @@ static NSString *const kDynamicToolURL = @"URL";
     }];
 
 }
+
 + (void)registerDynamicToolWithIdentifier:(NSString *)identifier name:(NSString *)name URL:(NSString *)url revealIfAlreadyRegistered:(BOOL)revealIfAlreadyRegistered {
     if (!url) {
         return;

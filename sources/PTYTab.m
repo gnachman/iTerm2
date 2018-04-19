@@ -3829,6 +3829,42 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [session2Tab.viewToSessionMap setObject:session1 forKey:session1.view];
 }
 
+- (void)_recursivePopulateSplitTreeNode:(ITMListSessionsResponse_SplitTreeNode *)node
+                                   from:(NSSplitView *)splitview {
+    node.vertical = splitview.isVertical;
+
+    for (__kindof NSView *view in splitview.subviews) {
+        if ([view isKindOfClass:[NSSplitView class]]) {
+            ITMListSessionsResponse_SplitTreeNode *child = [[[ITMListSessionsResponse_SplitTreeNode alloc] init] autorelease];
+            ITMListSessionsResponse_SplitTreeNode_SplitTreeLink *link = [[[ITMListSessionsResponse_SplitTreeNode_SplitTreeLink alloc] init] autorelease];
+            link.node = child;
+            [node.linksArray addObject:link];
+            [self _recursivePopulateSplitTreeNode:child from:view];
+        } else if ([view isKindOfClass:[SessionView class]]) {
+            ITMListSessionsResponse_SplitTreeNode_SplitTreeLink *link = [[[ITMListSessionsResponse_SplitTreeNode_SplitTreeLink alloc] init] autorelease];
+            PTYSession *session = [self sessionForSessionView:view];
+            link.session.uniqueIdentifier = session.guid;
+            link.session.frame.origin.x = view.frame.origin.x;
+            link.session.frame.origin.y = view.frame.origin.y;
+            link.session.frame.size.width = view.frame.size.width;
+            link.session.frame.size.height = view.frame.size.height;
+
+            link.session.gridSize.width = session.screen.width;
+            link.session.gridSize.height = session.screen.height;
+
+            link.session.title = session.name;
+            
+            [node.linksArray addObject:link];
+        }
+    }
+}
+
+- (ITMListSessionsResponse_SplitTreeNode *)rootSplitTreeNode {
+    ITMListSessionsResponse_SplitTreeNode *root = [[[ITMListSessionsResponse_SplitTreeNode alloc] init] autorelease];
+    [self _recursivePopulateSplitTreeNode:root from:root_];
+    return root;
+}
+
 #pragma mark NSSplitView delegate methods
 
 - (void)splitView:(PTYSplitView *)splitView draggingWillBeginOfSplit:(int)splitterIndex {
@@ -4019,7 +4055,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             // divided up in the same proportions as it was before the resize.
             NSRect newFrame = NSZeroRect;
             newFrame.size.height = lockedSize.height;
-            for (id subview in mySubviews) {
+            for (NSView *subview in mySubviews) {
                 if (subview != [lockedSession_ view]) {
                     // Resizing a non-locked child.
                     NSSize subviewSize = [subview frame].size;
@@ -4047,7 +4083,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             // divided up in the same proportions as it was before the resize.
             NSRect newFrame = NSZeroRect;
             newFrame.size.width = lockedSize.width;
-            for (id subview in mySubviews) {
+            for (NSView *subview in mySubviews) {
                 if (subview != [lockedSession_ view]) {
                     // Resizing a non-locked child.
                     NSSize subviewSize = [subview frame].size;

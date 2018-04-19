@@ -1,11 +1,13 @@
-from .hierarchy import Hierarchy
-from .notifications import NewSessionSubscription, TerminateSessionSubscription, KeystrokeSubscription, LayoutChangeSubscription, wait
-from .session import Session
-from .tab import Tab
-from .window import Window
-import _sharedstate as sharedstate
-
-def run(function):
-  function()
-  sharedstate.get_socket().finish()
-
+"""
+The iTerm2 module provides a Python interface for controlling iTerm2.
+"""
+import iterm2.hierarchy
+import iterm2.notifications
+import iterm2.profile
+import iterm2.rpc
+import iterm2.session
+import iterm2.transaction
+import iterm2.tab
+import iterm2.tool
+import iterm2.util
+import iterm2.window

@@ -8,6 +8,7 @@
 #import "PTYSplitView.h"
 #import "PTYTabDelegate.h"
 #import "WindowControllerInterface.h"
+#import "Api.pbobjc.h"
 
 @class PTYSession;
 @class PTYTab;
@@ -211,5 +212,6 @@ extern NSString *const iTermTabDidChangeWindowNotification;
 - (void)setTmuxWindowName:(NSString *)tmuxWindowName;
 
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11);
+- (ITMListSessionsResponse_SplitTreeNode *)rootSplitTreeNode;
 
 @end
