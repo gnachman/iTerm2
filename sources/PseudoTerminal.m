@@ -5720,10 +5720,11 @@ ITERM_WEAKLY_REFERENCEABLE
         // Inherit from tab.
         tabColor = [[[_contentView.tabBarControl tabColorForTabViewItem:[[self currentTab] tabViewItem]] retain] autorelease];
     }
-    [[self currentTab] splitVertically:isVertical
-                            newSession:newSession
-                                before:before
-                         targetSession:targetSession];
+    PTYTab *tab = [self tabForSession:targetSession] ?: [self currentTab];
+    [tab splitVertically:isVertical
+              newSession:newSession
+                  before:before
+           targetSession:targetSession];
     SessionView *sessionView = newSession.view;
     scrollView = sessionView.scrollview;
     NSSize size = [sessionView frame].size;

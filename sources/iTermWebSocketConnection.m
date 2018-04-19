@@ -9,6 +9,7 @@
 #import "iTermWebSocketConnection.h"
 #import "DebugLogging.h"
 #import "iTermHTTPConnection.h"
+#import "iTermWebSocketCookieJar.h"
 #import "iTermWebSocketFrame.h"
 #import "iTermWebSocketFrameBuilder.h"
 #import "NSData+iTerm.h"
@@ -34,14 +35,15 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     dispatch_io_t _channel;
 }
 
-+ (BOOL)validateRequest:(NSURLRequest *)request {
++ (instancetype)newWebSocketConnectionForRequest:(NSURLRequest *)request
+                                      connection:(iTermHTTPConnection *)connection {
     if (![request.HTTPMethod isEqualToString:@"GET"]) {
         XLog(@"Method not GET");
-        return NO;
+        return nil;
     }
     if (request.URL.path.length == 0) {
         XLog(@"Empty path");
-        return NO;
+        return nil;
     }
     NSDictionary<NSString *, NSString *> *headers = request.allHTTPHeaderFields;
     NSDictionary<NSString *, NSString *> *requiredValues =
@@ -52,7 +54,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     for (NSString *key in requiredValues) {
         if ([headers[key] caseInsensitiveCompare:requiredValues[key]] != NSOrderedSame) {
             XLog(@"Header %@ has value <%@> but I require <%@>", key, headers[key], requiredValues[key]);
-            return NO;
+            return nil;
         }
     }
 
@@ -64,14 +66,14 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     for (NSString *key in requiredKeys) {
         if ([headers[key] length] == 0) {
             XLog(@"Empty or missing value for header %@", key);
-            return NO;
+            return nil;
         }
     }
 
     NSURL *originURL = [NSURL URLWithString:headers[@"origin"]];
     if (![originURL.host isEqualToString:@"localhost"]) {
         XLog(@"Origin's host is not localhost: is %@ (string value is %@)", originURL.host, headers[@"origin"]);
-        return NO;
+        return nil;
     }
 
     NSString *host = headers[@"host"];
@@ -86,17 +88,30 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     NSArray<NSString *> *loopbackNames = @[ @"localhost", @"127.0.0.1", @"[::1]" ];
     if (![loopbackNames containsObject:host]) {
         XLog(@"Host header does not specify a loopback host: %@", host);
-        return NO;
+        return nil;
     }
 
     NSString *version = headers[@"sec-websocket-version"];
     if ([version integerValue] < kWebSocketVersion) {
         XLog(@"websocket version too old");
-        return NO;
+        return nil;
     }
 
+    BOOL authenticated = NO;
+    NSString *cookie = headers[@"x-iterm2-cookie"];
+    if (cookie) {
+        if ([[iTermWebSocketCookieJar sharedInstance] consumeCookie:cookie]) {
+            authenticated = YES;
+        } else {
+            return nil;
+        }
+    }
     DLog(@"Request validates as websocket upgrade request");
-    return YES;
+    iTermWebSocketConnection *conn = [[self alloc] initWithConnection:connection];
+    if (conn) {
+        conn->_authenticated = authenticated;
+    }
+    return conn;
 }
 
 - (instancetype)initWithConnection:(iTermHTTPConnection *)connection {

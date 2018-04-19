@@ -20,10 +20,13 @@
 @interface iTermWebSocketConnection : NSObject
 @property(nonatomic, assign) id<iTermWebSocketConnectionDelegate> delegate;
 @property(nonatomic, copy) NSDictionary *peerIdentity;
+@property(nonatomic, readonly) BOOL authenticated;
 
-+ (BOOL)validateRequest:(NSURLRequest *)request;
++ (instancetype)newWebSocketConnectionForRequest:(NSURLRequest *)request
+                                      connection:(iTermHTTPConnection *)connection;
 
-- (instancetype)initWithConnection:(iTermHTTPConnection *)connection;
+- (instancetype)init NS_UNAVAILABLE;
+
 - (void)handleRequest:(NSURLRequest *)request;
 - (void)close;
 - (void)sendBinary:(NSData *)binaryData;

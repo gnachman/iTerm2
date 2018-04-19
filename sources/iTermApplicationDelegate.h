@@ -28,6 +28,7 @@
 #import <Cocoa/Cocoa.h>
 #import <Carbon/Carbon.h>
 #import "DebugLogging.h"
+#import "iTermAPIHelper.h"
 #import "iTermApplication.h"
 
 @class ITMNotification;
@@ -37,7 +38,6 @@
 extern NSString *kUseBackgroundPatternIndicatorChangedNotification;
 extern NSString *const kSavedArrangementDidChangeNotification;
 extern NSString *const kNonTerminalWindowBecameKeyNotification;
-extern NSString *const iTermRemoveAPIServerSubscriptionsNotification;
 
 extern NSString *const kMarkAlertActionModalAlert;
 extern NSString *const kMarkAlertActionPostNotification;
@@ -60,6 +60,7 @@ extern NSString *const iTermApplicationWillTerminate;
 @property(nonatomic, readonly) BOOL warnBeforeMultiLinePaste;
 @property(nonatomic, readonly) NSMenu *downloadsMenu;
 @property(nonatomic, readonly) NSMenu *uploadsMenu;
+@property(nonatomic, readonly) iTermAPIHelper *apiHelper;
 
 - (void)updateMaximizePaneMenuItem;
 - (void)updateUseTransparencyMenuItem;
@@ -72,7 +73,6 @@ extern NSString *const iTermApplicationWillTerminate;
 
 - (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session;
 - (void)updateBuriedSessionsMenu;
-- (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection;
 
 #pragma mark - Actions
 

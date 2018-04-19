@@ -6,6 +6,7 @@
 #import "FileTransferManager.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
+#import "iTermAPIHelper.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplication.h"
@@ -5649,7 +5650,7 @@ ITERM_WEAKLY_REFERENCEABLE
             notification.keystrokeNotification = keystrokeNotification;
 
             [_keystrokeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-                [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+                [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification toConnection:key];
             }];
         }
         return YES;
@@ -6583,7 +6584,7 @@ ITERM_WEAKLY_REFERENCEABLE
         notification.screenUpdateNotification = [[[ITMScreenUpdateNotification alloc] init] autorelease];
         notification.screenUpdateNotification.session = self.guid;
         [_updateSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-            [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+            [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification toConnection:key];
         }];
     }
 }
@@ -7817,7 +7818,7 @@ ITERM_WEAKLY_REFERENCEABLE
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
         notification.promptNotification.session = self.guid;
-        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification toConnection:key];
     }];
 }
 
@@ -8253,7 +8254,7 @@ ITERM_WEAKLY_REFERENCEABLE
     notification.locationChangeNotification.userName = host.username;
     notification.locationChangeNotification.session = self.guid;
     [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification toConnection:key];
     }];
 }
 
@@ -8429,7 +8430,7 @@ ITERM_WEAKLY_REFERENCEABLE
     notification.locationChangeNotification.session = self.guid;
     notification.locationChangeNotification.directory = newPath;
     [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification toConnection:key];
     }];
 }
 
@@ -8441,7 +8442,7 @@ ITERM_WEAKLY_REFERENCEABLE
     notification.customEscapeSequenceNotification.senderIdentity = parameters[@"id"];
     notification.customEscapeSequenceNotification.payload = payload;
     [_customEscapeSequenceNotifications enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
+        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification toConnection:key];
     }];
 }
 

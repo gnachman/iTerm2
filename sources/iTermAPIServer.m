@@ -227,9 +227,10 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         [connection badRequest];
         return;
     }
-    if ([iTermWebSocketConnection validateRequest:request]) {
+    iTermWebSocketConnection *webSocketConnection = [iTermWebSocketConnection newWebSocketConnectionForRequest:request
+                                                                                                    connection:connection];
+    if (webSocketConnection) {
         DLog(@"Upgrading request to websocket");
-        iTermWebSocketConnection *webSocketConnection = [[iTermWebSocketConnection alloc] initWithConnection:connection];
         webSocketConnection.peerIdentity = identity;
         webSocketConnection.delegate = self;
         _connections[webSocketConnection.handle] = webSocketConnection;
