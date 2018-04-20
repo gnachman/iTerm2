@@ -20,6 +20,14 @@
     return instance;
 }
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _cookies = [NSMutableSet set];
+    }
+    return self;
+}
+
 - (BOOL)consumeCookie:(NSString *)cookie {
     if ([_cookies containsObject:cookie]) {
         [_cookies removeObject:cookie];
@@ -30,7 +38,24 @@
 }
 
 - (NSString *)newCookie {
-    NSString *cookie = [[NSUUID UUID] UUIDString];
+    FILE *fp = fopen("/dev/random", "r");
+
+    if (!fp) {
+        return nil;
+    }
+
+    const int length = 16;
+    NSMutableString *cookie = [NSMutableString string];
+    for (int i = 0; i < length; i++) {
+        int b = fgetc(fp);
+        if (b == EOF) {
+            fclose(fp);
+            return nil;
+        }
+        [cookie appendFormat:@"%02x", b];
+    }
+    fclose(fp);
+
     [_cookies addObject:cookie];
     return cookie;
 }

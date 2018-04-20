@@ -30,10 +30,12 @@
 #import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAPIScriptLauncher.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermBuriedSessions.h"
 #import "iTermHotKeyController.h"
+#import "iTermWebSocketCookieJar.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
@@ -1192,6 +1194,11 @@ static iTermController *gSharedInstance;
 - (void)launchScript:(id)sender {
     NSString *fullPath = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:[sender title]];
 
+    if ([iTermAdvancedSettingsModel enableAPIServer] &&
+        [[[sender title] pathExtension] isEqualToString:@"py"]) {
+        [iTermAPIScriptLauncher launchScript:fullPath];
+        return;
+    }
     if ([[[sender title] pathExtension] isEqualToString:@"scpt"]) {
         NSAppleScript *script;
         NSDictionary *errorInfo = nil;

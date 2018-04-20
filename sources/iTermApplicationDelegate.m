@@ -2002,6 +2002,11 @@ static BOOL hasBecomeActive = NO;
             [[file pathExtension] isEqualToString:@"app"] ) {
             [files addObject:file];
         }
+
+        if ([iTermAdvancedSettingsModel enableAPIServer] &&
+            [[file pathExtension] isEqualToString:@"py"]) {
+            [files addObject:file];
+        }
     }
     [files sortUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
     for (NSString *file in files) {

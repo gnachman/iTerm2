@@ -370,7 +370,7 @@ static int MyForkPty(int *amaster,
 
 // This is (I hope) the equivalent of the command "dscl . read /Users/$USER UserShell", which
 // appears to be how you get the user's shell nowadays. Returns nil if it can't be gotten.
-- (NSString *)userShell {
++ (NSString *)userShell {
     if (![iTermAdvancedSettingsModel useOpenDirectory]) {
         return nil;
     }
@@ -413,7 +413,7 @@ static int MyForkPty(int *amaster,
 }
 
 - (NSDictionary *)environmentBySettingShell:(NSDictionary *)originalEnvironment {
-    NSString *shell = [self userShell];
+    NSString *shell = [PTYTask userShell];
     if (!shell) {
         return originalEnvironment;
     }

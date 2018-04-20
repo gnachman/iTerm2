@@ -56,6 +56,8 @@ extern NSString *kCoprocessStatusChangeNotification;
 @property(atomic, readonly) BOOL hasCoprocess;
 @property(nonatomic, readonly) BOOL passwordInput;
 
++ (NSString *)userShell;
+
 - (instancetype)init;
 - (BOOL)hasBrokenPipe;
 // Command the profile was created with. nil for login shell or whatever's in the command field of the profile otherwise.

@@ -5,8 +5,11 @@
 //  Created by George Nachman on 4/19/18.
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 @interface iTermAPIScriptLauncher : NSObject
+
+// Launches an API script. Reads its output and waits for it to terminate.
++ (void)launchScript:(NSString *)filename;
 
 @end
