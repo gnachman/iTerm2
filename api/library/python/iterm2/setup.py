@@ -6,7 +6,7 @@ def readme():
 
 
 setup(name='iterm2',
-      version='0.2',
+      version='0.2.1',
       description='Python interface to iTerm2\'s scripting API',
       long_description=readme(),
       classifiers=[
