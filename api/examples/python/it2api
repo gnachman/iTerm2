@@ -1,156 +1,296 @@
-#!/usr/bin/python
-# This is python 2.7 on macOS 10.12.
+#!/usr/bin/env python3.6
 
-from __future__ import print_function
-
-import api_pb2
 import argparse
+import asyncio
+import iterm2
 import logging
+import re
 import sys
-import thread
-import time
 import traceback
-import websocket
 
-callbacks = []
+async def list_sessions(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  for w in h.windows:
+    for t in w.tabs:
+      sessions = t.get_sessions()
+      for s in sessions:
+        print(s.pretty_str(), end='')
 
-def list_sessions(ws, argv):
-    def callback(response):
-      print(str(response))
-      ws.close()
-    request = api_pb2.Request()
-    request.list_sessions_request.SetInParent()
-    SendRPC(ws, request, callback)
+async def send_text(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  s = await h.get_session_by_id(args.session)
+  await s.send_text(args.text)
 
-def send_text(ws, argv):
-  def callback(response):
-    print(str(response))
-    ws.close()
-  request = api_pb2.Request()
-  request.send_text_request.text = argv[2]
-  SendRPC(ws, request, callback)
-
-def create_tab(ws, argv):
-  def callback(response):
-    print(str(response))
-    ws.close()
-  parser = argparse.ArgumentParser(description='Create a tab or window')
-  parser.add_argument('--profile', type=str, nargs='?', help='Profile name')
-  parser.add_argument('--window', type=str, nargs='?', help='Window ID')
-  parser.add_argument('--index', type=int, nargs='?', help='Desired tab index')
-  parser.add_argument('--command', type=str, nargs='?', help='Command')
-  args = parser.parse_args(argv[2:])
-
-  request = api_pb2.Request()
-  request.create_tab_request.SetInParent()
-  if args.profile is not None:
-    request.create_tab_request.profile_name = args.profile
+async def create_tab(connection, args):
   if args.window is not None:
-    request.create_tab_request.window_id = args.window
-  if args.index is not None:
-    request.create_tab_request.tab_index = args.index
-  if args.command is not None:
-    request.create_tab_request.command = args.command
-  SendRPC(ws, request, callback)
-
-def split_pane(ws, argv):
-  def callback(response):
-    print(str(response))
-    ws.close()
-  parser = argparse.ArgumentParser(description='Split a pane')
-  parser.add_argument('--session', type=str, nargs='?', help='Session ID')
-  parser.add_argument('--vertical', action='store_true', help='Split vertically?', default=False)
-  parser.add_argument('--before', action='store_true', help='Spilt left or above target', default=False)
-  parser.add_argument('--profile', type=str, nargs='?', help='Profile name')
-  args = parser.parse_args(argv[2:])
-
-  request = api_pb2.Request()
-  request.split_pane_request.SetInParent()
-  if args.session is not None:
-    request.split_pane_request.session_id = args.session
-  if args.vertical is None:
-    request.split_pane_request.split_direction = api_pb2.SplitPaneRequest.VERTICAL
+    window_id = args.window
+    h = await iterm2.hierarchy.Hierarchy.construct(connection)
+    window = next(window for window in h.windows if window.window_id == window_id)
+    await window.create_tab(profile=args.profile, command=args.command, index=args.index)
   else:
-    request.split_pane_request.split_direction = api_pb2.SplitPaneRequest.HORIZONTAL;
-  if args.before is None:
-    request.split_pane_request.before = False
+    result = await iterm2.window.Window.create(connection, profile=args.profile, command=args.command)
+
+async def split_pane(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  s = await h.get_session_by_id(args.session)
+  await s.split_pane(vertical=args.vertical, before=args.before, profile=args.profile)
+
+async def get_buffer(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  s = await h.get_session_by_id(args.session)
+  result = await s.get_buffer_lines(args.trailing_lines)
+  for contents in result.contents:
+    print(contents.text)
+
+async def get_prompt(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  s = await h.get_session_by_id(args.session)
+  print(await s.get_prompt())
+
+
+def profile_property_type_map():
+  map = {
+      "allow_title_reporting":                       "bool",
+      "allow_title_setting":                         "bool",
+      "ambiguous_double_width":                      "bool",
+      "ansi_0_color":                                "color",
+      "ansi_10_color":                               "color",
+      "ansi_11_color":                               "color",
+      "ansi_12_color":                               "color",
+      "ansi_13_color":                               "color",
+      "ansi_14_color":                               "color",
+      "ansi_15_color":                               "color",
+      "ansi_1_color":                                "color",
+      "ansi_2_color":                                "color",
+      "ansi_3_color":                                "color",
+      "ansi_4_color":                                "color",
+      "ansi_5_color":                                "color",
+      "ansi_6_color":                                "color",
+      "ansi_7_color":                                "color",
+      "ansi_8_color":                                "color",
+      "ansi_9_color":                                "color",
+      "answerback_string":                           "str",
+      "application_keypad_allowed":                  "bool",
+      "ascii_anti_aliased":                          "bool",
+      "ascii_ligatures":                             "bool",
+      "background_color":                            "color",
+      "background_image_is_tiled":                   "bool",
+      "badge_color":                                 "color",
+      "badge_text":                                  "str",
+      "blend":                                       "float",
+      "blink_allowed":                               "bool",
+      "blinking_cursor":                             "bool",
+      "blur":                                        "float",
+      "blur_radius":                                 "float",
+      "bm_growl":                                    "bool",
+      "bold_color":                                  "color",
+      "character_encoding":                          "int",
+      "close_sessions_on_end":                       "bool",
+      "cursor_boost":                                "float",
+      "cursor_color":                                "color",
+      "cursor_guide_color":                          "color",
+      "cursor_text_color":                           "color",
+      "cursor_type":                                 "int",
+      "disable_printing":                            "bool",
+      "disable_smcup_rmcup":                         "bool",
+      "disable_window_resizing":                     "bool",
+      "flashing_bell":                               "bool",
+      "foreground_color":                            "color",
+      "horizontal_spacing":                          "float",
+      "idle_code":                                   "int",
+      "idle_period":                                 "float",
+      "link_color":                                  "color",
+      "minimum_contrast":                            "float",
+      "mouse_reporting":                             "bool",
+      "mouse_reporting_allow_mouse_wheel":           "bool",
+      "name":                                        "str",
+      "non_ascii_anti_aliased":                      "bool",
+      "non_ascii_ligatures":                         "bool",
+      "only_the_default_bg_color_uses_transparency": "bool",
+      "option_key_sends":                            "int",
+      "place_prompt_at_first_column":                "bool",
+      "prompt_before_closing_2":                     "bool",
+      "reduce_flicker":                              "bool",
+      "right_option_key_sends":                      "int",
+      "scrollback_in_alternate_screen":              "bool",
+      "scrollback_lines":                            "int",
+      "scrollback_with_status_bar":                  "bool",
+      "selected_text_color":                         "color",
+      "selection_color":                             "color",
+      "send_bell_alert":                             "bool",
+      "send_code_when_idle":                         "bool",
+      "send_idle_alert":                             "bool",
+      "send_new_output_alert":                       "bool",
+      "send_session_ended_alert":                    "bool",
+      "send_terminal_generated_alerts":              "bool",
+      "session_close_undo_timeout":                  "float",
+      "show_mark_indicators":                        "bool",
+      "silence_bell":                                "bool",
+      "smart_cursor_color":                          "color",
+      "smart_cursor_color":                          "color",
+      "sync_title":                                  "str",
+      "tab_color":                                   "color",
+      "thin_strokes":                                "int",
+      "transparency":                                "float",
+      "underline_color":                             "color",
+      "unicode_normalization":                       "int",
+      "unicode_version":                             "int",
+      "unlimited_scrollback":                        "bool",
+      "use_bold_font":                               "bool",
+      "use_bright_bold":                             "bool",
+      "use_cursor_guide":                            "bool",
+      "use_italic_font":                             "bool",
+      "use_non_ascii_font":                          "bool",
+      "use_tab_color":                               "bool",
+      "use_underline_color":                         "bool",
+      "vertical_spacing":                            "float",
+      "visual_bell":                                 "bool" }
+  return map
+
+def profile_properties():
+  return list(profile_property_type_map().keys())
+
+def profile_property_type(key):
+  return profile_property_type_map()[key]
+
+async def get_profile_property(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  s = await h.get_session_by_id(args.session)
+  profile = await s.get_profile()
+  if args.keys is not None:
+    keys = args.keys.split(",")
   else:
-    request.split_pane_request.before = args.before
-  if args.profile is not None:
-    request.split_pane_request.profile_name = args.profile
-  SendRPC(ws, request, callback)
+    keys = profile_properties()
+  for prop in keys:
+    fname = "get_" + prop
+    f = getattr(profile, fname)
+    print("{}: {}".format(prop, await f()))
 
-def handle_location_change_notification(location_change_notification):
-    print("Location changed")
-    print(str(location_change_notification))
+def encode_property_value(key, value):
+  type = profile_property_type(key)
+  if type == "bool":
+    assert value == "true" or value == "false"
+    return value == "true"
+  elif type == "str":
+    return value
+  elif type == "float":
+    return float(value)
+  elif type == "int":
+    return int(value)
+  elif type == "color":
+    # Accepted values look like: "(0,0,0,255 sRGB)"
+    match = re.search(r"\(([0-9]+), *([0-9]+), *([0-9]+), *([0-9]+)  *([A-Za-z]+)\)", value)
+    assert match is not None
+    return iterm2.profile.Color(
+        float(match.group(1)) / 255.0,
+        float(match.group(2)) / 255.0,
+        float(match.group(3)) / 255.0,
+        float(match.group(4)) / 255.0,
+        match.group(5))
 
-def SendRPC(ws, message, callback):
-    print(message)
-    ws.send(message.SerializeToString(), opcode=websocket.ABNF.OPCODE_BINARY)
-    callbacks.append(callback)
+async def set_profile_property(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  s = await h.get_session_by_id(args.session)
 
-def handle_notification(notification):
-    if notification.HasField('location_change_notification'):
-      handle_location_change_notification(notification.location_change_notification)
+  encoded_value = encode_property_value(args.key, args.value)
+  profile = await s.get_profile()
+  fname = "set_" + args.key
+  f = getattr(profile, fname)
+  await f(encoded_value)
 
-def handle_notification_response(response):
-  if not response.HasField('notification_response'):
-    print("Malformed notification response")
-    print(str(response))
-    return
-  if response.notification_response.status != api_pb2.NotificationResponse.OK:
-    print("Bad status in notification response")
-    print(str(response))
-    return
-  print("Notifcation response ok")
+async def read(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  s = await h.get_session_by_id(args.session)
+  if args.mode == "char":
+    print(await s.read_keystroke())
+  elif args.mode == "line":
+    async with s.get_keystroke_reader() as reader:
+      eol = False
+      line = ""
+      while not eol:
+        k = await reader.get()
+        for e in k:
+          c = e.characters
+          if c == "\r" or c == "\n":
+            eol = True
+            break
+          line += c
 
-def on_message(ws, message):
-    response = api_pb2.Response()
-    response.ParseFromString(message)
-    if response.HasField('notification'):
-      handle_notification(response.notification)
-    else:
-      global callbacks
-      callback = callbacks[0]
-      del callbacks[0]
-      callback(response)
+      print(line) 
 
-def on_error(ws, error):
-    print("Error: " + str(error))
+def make_parser():
+  parser = argparse.ArgumentParser(description='iTerm2 CLI')
+  subparsers = parser.add_subparsers(help='Commands')
 
-def on_close(ws):
-    print("Connection closed")
+  list_sessions_parser = subparsers.add_parser("list-sessions", help="List sessions")
+  list_sessions_parser.set_defaults(func=list_sessions)
+
+  send_text_parser = subparsers.add_parser("send-text", help="Send text as though the user had typed it")
+  send_text_parser.add_argument('session', type=str, help='Session ID')
+  send_text_parser.add_argument("text", type=str, help='Text to send')
+  send_text_parser.set_defaults(func=send_text)
+
+  create_tab_parser = subparsers.add_parser("create-tab", help="Create a new tab or window")
+  create_tab_parser.add_argument('--profile', type=str, nargs='?', help='Profile name')
+  create_tab_parser.add_argument('--window', type=str, nargs='?', help='Window ID')
+  create_tab_parser.add_argument('--index', type=int, nargs='?', help='Desired tab index')
+  create_tab_parser.add_argument('--command', type=str, nargs='?', help='Command')
+  create_tab_parser.set_defaults(func=create_tab)
+
+  split_pane_parser = subparsers.add_parser("split-pane", help="Split a pane into two")
+  split_pane_parser.add_argument('session', type=str, help='Session ID')
+  split_pane_parser.add_argument('--vertical', action='store_true', help='Split vertically?', default=False)
+  split_pane_parser.add_argument('--before', action='store_true', help='Spilt left or above target', default=False)
+  split_pane_parser.add_argument('--profile', type=str, nargs='?', help='Profile name')
+  split_pane_parser.set_defaults(func=split_pane)
+
+  get_buffer_parser = subparsers.add_parser("get-buffer", help="Get screen contents")
+  get_buffer_parser.add_argument("session", type=str, help="Session ID")
+  get_buffer_parser.add_argument("trailing_lines", type=int, help="Number of lines from the end of the buffer to fetch")
+  get_buffer_parser.set_defaults(func=get_buffer)
+
+  get_prompt_parser = subparsers.add_parser("get-prompt", help="Get info about prompt, if available. Gives either the current prompt or the last prompt if a command is being run. Requires shell integration for prompt detection.")
+  get_prompt_parser.add_argument("session", type=str, help="Session ID")
+  get_prompt_parser.set_defaults(func=get_prompt)
+
+  get_profile_property_parser = subparsers.add_parser("get-profile-property", help="Get a session's profile settings")
+  get_profile_property_parser.add_argument("session", type=str, help="Session ID")
+  get_profile_property_parser.add_argument("keys", type=str, nargs='?', help="Comma separated keys. Omit to get all. Valid keys are: " + ", ".join(profile_properties()))
+  get_profile_property_parser.set_defaults(func=get_profile_property)
+
+  set_profile_parser = subparsers.add_parser("set-profile-property", help="Set a session's profile setting")
+  set_profile_parser.add_argument("session", type=str, help="Session ID")
+  set_profile_parser.add_argument("key", type=str, help="Key to set. Valid keys are: " + ", ".join(profile_properties()))
+  set_profile_parser.add_argument("value", type=str, help="New value.")
+  set_profile_parser.set_defaults(func=set_profile_property)
+
+  read_parser = subparsers.add_parser("read", help="Wait for a input.")
+  read_parser.add_argument("session", type=str, help="Session ID")
+  read_parser.add_argument("mode", type=str, help="What to read", choices=[ "char", "line" ])
+  read_parser.set_defaults(func=read)
+  return parser
 
 def main(argv):
-    logging.basicConfig()
+  logging.basicConfig()
 
-    commands = { "list-sessions": list_sessions,
-                 "send-text": send_text,
-                 "create-tab": create_tab,
-                 "split-pane": split_pane }
-    if len(argv) < 2:
-      print("Not enough arguments")
-      return -1
-    if argv[1] not in commands:
-      print("Unrecognized command " + argv[1])
-      return -2
+  parser = make_parser()
+  args = parser.parse_args(argv[1:])
+  if "func" not in args:
+    print(parser.format_help())
+    raise argparse.ArgumentTypeError('Missing command')
 
-    def on_open(ws):
-      try:
-        f = commands[argv[1]]
-        f(ws, argv)
-      except Exception as e:
-        traceback.print_exc()
+  async def wrapper(connection):
+    try:
+      await args.func(connection, args)
+    except Exception as e:
+      print(traceback.format_exc())
 
-    #websocket.enableTrace(True)
-    ws = websocket.WebSocketApp("ws://localhost:1912/",
-                              on_message = on_message,
-                              on_error = on_error,
-                              on_close = on_close,
-                              subprotocols = [ 'api.iterm2.com' ])
-    ws.on_open = on_open
-    ws.run_forever()
+
+  c = iterm2.connection.Connection()
+  c.run(wrapper)
 
 if __name__ == "__main__":
+  try:
     main(sys.argv)
-
+  except:
+    sys.exit(1)
