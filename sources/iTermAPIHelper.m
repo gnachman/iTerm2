@@ -113,7 +113,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 #pragma mark - iTermAPIServerDelegate
 
-- (NSDictionary *)apiServerAuthorizeProcess:(pid_t)pid {
+- (NSDictionary *)apiServerAuthorizeProcess:(pid_t)pid reason:(out NSString *__autoreleasing *)reason displayName:(out NSString *__autoreleasing *)displayName {
+    *displayName = nil;
     NSMutableDictionary *bundles = [[[NSUserDefaults standardUserDefaults] objectForKey:kBundlesWithAPIAccessSettingKey] mutableCopy];
     if (!bundles) {
         bundles = [NSMutableDictionary dictionary];
@@ -129,11 +130,21 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     } else {
         processIdentifier = [iTermLSOF commandForProcess:pid execName:&processName];
         if (!processName || !processIdentifier) {
-            XLog(@"Could not identify name for process with pid %d", (int)pid);
+            *reason = [NSString stringWithFormat:@"Could not identify name for process with pid %d", (int)pid];
             return nil;
         }
         processName = [processName lastPathComponent];
+        if ([processName isEqualToString:@"python"] ||
+            [processName isEqualToString:@"python3.6"] ||
+            [processName isEqualToString:@"python3"]) {
+            NSArray<NSString *> *parts = [processIdentifier componentsInShellCommand];
+            if (parts.count > 1 && [parts[1] hasSuffix:@".py"]) {
+                processName = parts[1];
+            }
+        }
     }
+    *displayName = processName;
+
     NSDictionary *authorizedIdentity = @{ iTermWebSocketConnectionPeerIdentityBundleIdentifier: processIdentifier };
     NSString *key = [NSString stringWithFormat:@"bundle=%@", processIdentifier];
     NSDictionary *setting = bundles[key];
@@ -141,6 +152,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     if (setting) {
         if (![setting[kAPIAccessAllowed] boolValue]) {
             // Access permanently disallowed.
+            *reason = [NSString stringWithFormat:@"Access permanently disallowed by user preference to %@", processIdentifier];
             return nil;
         }
 
@@ -151,7 +163,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             NSDate *confirm = setting[kAPINextConfirmationDate];
             if ([[NSDate date] compare:confirm] == NSOrderedAscending) {
                 // No need to reauth, allow it.
-                XLog(@"Allowing API access to process id %d, name %@, bundle ID %@", pid, processName, processIdentifier);
+                *reason = [NSString stringWithFormat:@"Allowing continued API access to process id %d, name %@, bundle ID %@. User gave consent recently.", pid, processName, processIdentifier];
                 return authorizedIdentity;
             }
 
@@ -187,6 +199,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
     [[NSUserDefaults standardUserDefaults] setObject:bundles forKey:kBundlesWithAPIAccessSettingKey];
 
+    *reason = allow ? [NSString stringWithFormat:@"User accepted connection by %@", processIdentifier] : [NSString stringWithFormat:@"User rejected connection attempt by %@", processIdentifier];
     return allow ? authorizedIdentity : nil;
 }
 

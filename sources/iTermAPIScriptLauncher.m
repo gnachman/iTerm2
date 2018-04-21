@@ -8,6 +8,9 @@
 #import "iTermAPIScriptLauncher.h"
 
 #import "DebugLogging.h"
+#import "iTermAPIConnectionIdentifierController.h"
+#import "iTermScriptConsole.h"
+#import "iTermScriptHistory.h"
 #import "iTermWebSocketCookieJar.h"
 #import "NSStringITerm.h"
 #import "PTYTask.h"
@@ -15,42 +18,52 @@
 @implementation iTermAPIScriptLauncher
 
 + (void)launchScript:(NSString *)filename {
+    NSString *key = [[NSUUID UUID] UUIDString];
+    iTermScriptHistoryEntry *entry;
+    if ([[iTermScriptConsole sharedInstance] isWindowLoaded] &&
+        [[[iTermScriptConsole sharedInstance] window] isVisible]) {
+        entry = [[iTermScriptHistoryEntry alloc] initWithName:[[filename lastPathComponent] stringByDeletingPathExtension]
+                                                   identifier:[[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key]];
+        [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
+    }
     @try {
-        [self tryLaunchScript:filename];
+        [self tryLaunchScript:filename historyEntry:entry key:key];
     }
     @catch (NSException *e) {
+        [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
+        [entry addOutput:[NSString stringWithFormat:@"ERROR: Failed to launch: %@", e.reason]];
         [self didFailToLaunchScript:filename withException:e];
     }
 }
 
 // THROWS
-+ (void)tryLaunchScript:(NSString *)filename {
++ (void)tryLaunchScript:(NSString *)filename historyEntry:(iTermScriptHistoryEntry *)entry key:(NSString *)key {
     NSTask *task = [[NSTask alloc] init];
     NSString *shell = [PTYTask userShell];
 
     task.launchPath = shell;
     task.arguments = [self argumentsToRunScript:filename];
-    task.environment = [self environmentFromEnvironment:task.environment shell:shell];
+    NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] newCookie];
+    task.environment = [self environmentFromEnvironment:task.environment shell:shell cookie:cookie key:key];
 
     NSPipe *pipe = [[NSPipe alloc] init];
     [task setStandardOutput:pipe];
     [task setStandardError:pipe];
 
+    [entry addOutput:[NSString stringWithFormat:@"%@ %@\n", task.launchPath, [task.arguments componentsJoinedByString:@" "]]];
     [task launch];   // This can throw
 
-    [self waitForTask:task readFromPipe:pipe];
+    [self waitForTask:task readFromPipe:pipe historyEntry:entry];
 }
 
 + (NSDictionary *)environmentFromEnvironment:(NSDictionary *)initialEnvironment
-                                       shell:(NSString *)shell {
+                                       shell:(NSString *)shell
+                                      cookie:(NSString *)cookie
+                                         key:(NSString *)key {
     NSMutableDictionary *environment = [initialEnvironment ?: @{} mutableCopy];
 
-    NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] newCookie];
-    if (cookie) {
-        environment[@"ITERM2_COOKIE"] = cookie;
-    } else {
-        ELog(@"Failed to generate a cookie");
-    }
+    environment[@"ITERM2_COOKIE"] = cookie;
+    environment[@"ITERM2_KEY"] = key;
     environment[@"HOME"] = NSHomeDirectory();
     environment[@"SHELL"] = shell;
     return environment;
@@ -66,7 +79,7 @@
     return @[ @"-c", command ];
 }
 
-+ (void)waitForTask:(NSTask *)task readFromPipe:(NSPipe *)pipe {
++ (void)waitForTask:(NSTask *)task readFromPipe:(NSPipe *)pipe historyEntry:(iTermScriptHistoryEntry *)entry {
     static NSMutableArray<dispatch_queue_t> *queues;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -78,11 +91,16 @@
         NSFileHandle *readHandle = [pipe fileHandleForReading];
         NSData *inData = [readHandle availableData];
         while (inData.length) {
-            NSLog(@"%@", [[NSString alloc] initWithData:inData encoding:NSUTF8StringEncoding]);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [entry addOutput:[[NSString alloc] initWithData:inData encoding:NSUTF8StringEncoding]];
+            });
             inData = [readHandle availableData];
         }
 
         [task waitUntilExit];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [entry stopRunning];
+        });
         [queues removeObject:q];
     });
 }

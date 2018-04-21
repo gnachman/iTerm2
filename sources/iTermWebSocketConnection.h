@@ -21,9 +21,11 @@
 @property(nonatomic, assign) id<iTermWebSocketConnectionDelegate> delegate;
 @property(nonatomic, copy) NSDictionary *peerIdentity;
 @property(nonatomic, readonly) BOOL authenticated;
+@property(nonatomic, readonly) id key;
 
 + (instancetype)newWebSocketConnectionForRequest:(NSURLRequest *)request
-                                      connection:(iTermHTTPConnection *)connection;
+                                      connection:(iTermHTTPConnection *)connection
+                                          reason:(out NSString **)reason;
 
 - (instancetype)init NS_UNAVAILABLE;
 

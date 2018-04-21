@@ -22,7 +22,11 @@
 #import <Cocoa/Cocoa.h>
 
 NSString *const iTermWebSocketConnectionPeerIdentityBundleIdentifier = @"bundle id";
-
+NSString *const iTermAPIServerDidReceiveMessage = @"iTermAPIServerDidReceiveMessage";
+NSString *const iTermAPIServerWillSendMessage = @"iTermAPIServerWillSendMessage";
+NSString *const iTermAPIServerConnectionRejected = @"iTermAPIServerConnectionRejected";
+NSString *const iTermAPIServerConnectionAccepted = @"iTermAPIServerConnectionAccepted";
+NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClosed";
 
 @interface iTermWebSocketConnection(Handle)
 @property(nonatomic, readonly) id handle;
@@ -203,19 +207,38 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         }
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            NSDictionary *identity = [weakSelf.delegate apiServerAuthorizeProcess:pid];
+            NSString *reason = nil;
+            NSString *displayName = nil;
+            NSDictionary *identity = [weakSelf.delegate apiServerAuthorizeProcess:pid reason:&reason displayName:&displayName];
             if (identity) {
-                dispatch_async(queue, ^{ [weakSelf startRequestOnConnection:connection identity:identity]; });
+                dispatch_async(queue, ^{
+                    [weakSelf startRequestOnConnection:connection
+                                              identity:identity
+                                                   pid:pid
+                                           displayName:displayName
+                                            authReason:reason];
+                });
             } else {
                 XLog(@"Reject unauthenticated process (pid %d)", pid);
                 [connection unauthorized];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
+                                                                        object:nil
+                                                                      userInfo:@{ @"reason": reason ?: @"Unkown reason",
+                                                                                  @"job": displayName ?: [NSNull null],
+                                                                                  @"pid": @(pid) }];
+                });
                 return;
             }
         });
     });
 }
 
-- (void)startRequestOnConnection:(iTermHTTPConnection *)connection identity:(NSDictionary *)identity {
+- (void)startRequestOnConnection:(iTermHTTPConnection *)connection
+                        identity:(NSDictionary *)identity
+                             pid:(int)pid
+                     displayName:(NSString *)displayName
+                      authReason:(NSString *)authReason {
     NSURLRequest *request = [connection readRequest];
     if (!request) {
         XLog(@"Failed to read request from HTTP connection");
@@ -227,22 +250,43 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         [connection badRequest];
         return;
     }
+    NSString *reason = nil;
     iTermWebSocketConnection *webSocketConnection = [iTermWebSocketConnection newWebSocketConnectionForRequest:request
-                                                                                                    connection:connection];
+                                                                                                    connection:connection
+                                                                                                        reason:&reason];
     if (webSocketConnection) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionAccepted
+                                                                object:webSocketConnection.key
+                                                              userInfo:@{ @"reason": authReason ?: [NSNull null],
+                                                                          @"job": displayName ?: [NSNull null],
+                                                                          @"pid": @(pid) }];
+        });
         DLog(@"Upgrading request to websocket");
         webSocketConnection.peerIdentity = identity;
         webSocketConnection.delegate = self;
         _connections[webSocketConnection.handle] = webSocketConnection;
         [webSocketConnection handleRequest:request];
     } else {
-        XLog(@"Bad request %@", request);
+        XLog(@"Bad request %@: %@", request, reason);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
+                                                                object:request.allHTTPHeaderFields[@"x-iterm2-key"]
+                                                              userInfo:@{ @"reason": reason ?: @"Unkown reason",
+                                                                          @"job": displayName ?: [NSNull null],
+                                                                          @"pid": @(pid) }];
+        });
         [connection badRequest];
     }
 }
 
 - (void)sendResponse:(ITMServerOriginatedMessage *)response onConnection:(iTermWebSocketConnection *)webSocketConnection {
     DLog(@"Sending response %@", response);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerWillSendMessage
+                                                            object:webSocketConnection.key
+                                                          userInfo:@{ @"message": response }];
+    });
     [webSocketConnection sendBinary:[response data]];
 }
 
@@ -326,6 +370,9 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 - (void)dispatchRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     __weak __typeof(self) weakSelf = self;
     DLog(@"Got request %@", request);
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerDidReceiveMessage
+                                                        object:webSocketConnection.key
+                                                      userInfo:@{ @"request": request }];
     if (request.hasTransactionRequest) {
         if (request.transactionRequest.begin) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
@@ -473,6 +520,10 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         });
         dispatch_async(dispatch_get_main_queue(), ^{
             [self->_delegate apiServerRemoveSubscriptionsForConnection:webSocketConnection.handle];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionClosed
+                                                                    object:webSocketConnection.key];
+            });
         });
     });
 }

@@ -1380,10 +1380,6 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return result;
 }
 
-- (BOOL)containsString:(NSString *)substring {
-    return [self rangeOfString:substring].location != NSNotFound;
-}
-
 - (NSString *)stringRepeatedTimes:(int)n {
     NSMutableString *result = [NSMutableString string];
     for (int i = 0; i < n; i++) {

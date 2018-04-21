@@ -1,0 +1,333 @@
+//
+//  iTermScriptConsole.m
+//  iTerm2
+//
+//  Created by George Nachman on 4/19/18.
+//
+
+#import "iTermScriptConsole.h"
+
+#import "iTermAPIServer.h"
+#import "iTermScriptHistory.h"
+#import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
+#import "NSTextField+iTerm.h"
+
+typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
+    iTermScriptFilterControlTagAll = 0,
+    iTermScriptFilterControlTagRunning = 1
+};
+
+@interface iTermScriptConsole ()<NSTabViewDelegate, NSTableViewDataSource, NSTableViewDelegate>
+
+@end
+
+@implementation iTermScriptConsole {
+    IBOutlet NSTableView *_tableView;
+    IBOutlet NSTabView *_tabView;
+    IBOutlet NSTextView *_logsView;
+    IBOutlet NSTextView *_callsView;
+
+    IBOutlet NSTableColumn *_nameColumn;
+    IBOutlet NSTableColumn *_dateColumn;
+
+    IBOutlet NSSegmentedControl *_scriptFilterControl;
+
+    IBOutlet NSButton *_scrollToBottomOnUpdate;
+
+    NSDateFormatter *_dateFormatter;
+    IBOutlet NSTextField *_filter;
+
+    id _token;
+}
+
++ (instancetype)sharedInstance {
+    static id instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] initWithWindowNibName:@"iTermScriptConsole"];
+    });
+    return instance;
+}
+
+- (void)windowDidLoad {
+    [super windowDidLoad];
+
+    _tabView.tabViewItems[0].view = _logsView.enclosingScrollView;
+    _tabView.tabViewItems[1].view = _callsView.enclosingScrollView;
+
+    _dateFormatter = [[NSDateFormatter alloc] init];
+    _dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"Ld jj:mm:ss"
+                                                                options:0
+                                                                 locale:[NSLocale currentLocale]];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(numberOfScriptHistoryEntriesDidChange:)
+                                                 name:iTermScriptHistoryNumberOfEntriesDidChangeNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(historyEntryDidChange:)
+                                                 name:iTermScriptHistoryEntryDidChangeNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(connectionRejected:)
+                                                 name:iTermAPIServerConnectionRejected
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(connectionAccepted:)
+                                                 name:iTermAPIServerConnectionAccepted
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(connectionClosed:)
+                                                 name:iTermAPIServerConnectionClosed
+                                               object:nil];
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [self removeObserver];
+}
+
+- (IBAction)scriptFilterDidChange:(id)sender {
+    [_tableView reloadData];
+}
+
+- (NSString *)stringForRow:(NSInteger)row column:(NSTableColumn *)column {
+    iTermScriptHistoryEntry *entry = [[self filteredEntries] objectAtIndex:row];
+    if (column == _nameColumn) {
+        if (entry.isRunning) {
+            return entry.name;
+        } else {
+            return [NSString stringWithFormat:@"(%@)", entry.name];
+        }
+    } else {
+        return [_dateFormatter stringFromDate:entry.startDate];
+    }
+}
+
+- (NSArray<iTermScriptHistoryEntry *> *)filteredEntries {
+    if (_scriptFilterControl.selectedSegment == iTermScriptFilterControlTagAll) {
+        return [[iTermScriptHistory sharedInstance] entries];
+    } else {
+        return [[iTermScriptHistory sharedInstance] runningEntries];
+    }
+}
+
+#pragma mark - NSTableViewDataSource
+
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
+    return [[self filteredEntries] count];
+}
+
+- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
+    static NSString *const identifier = @"ScriptConsoleEntryIdentifier";
+    NSTextField *result = [tableView makeViewWithIdentifier:identifier owner:self];
+    if (result == nil) {
+        result = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+        result.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    }
+
+    id value = [self stringForRow:row column:tableColumn];
+    if ([value isKindOfClass:[NSAttributedString class]]) {
+        result.attributedStringValue = value;
+        result.toolTip = [value string];
+    } else {
+        result.stringValue = value;
+        result.toolTip = value;
+    }
+
+    return result;
+}
+
+#pragma mark - NSTabViewDelegate
+
+- (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    [self removeObserver];
+    if (!_tableView.numberOfSelectedRows) {
+        _logsView.string = @"";
+        _callsView.string = @"";
+    } else {
+        [self scrollLogsToBottomIfNeeded];
+        [self scrollCallsToBottomIfNeeded];
+        NSInteger row = _tableView.selectedRow;
+        iTermScriptHistoryEntry *entry = [[self filteredEntries] objectAtIndex:row];
+        _logsView.font = [NSFont fontWithName:@"Menlo" size:12];
+        _callsView.font = [NSFont fontWithName:@"Menlo" size:12];
+
+        _logsView.string = entry.logs;
+        _callsView.string = entry.calls;
+        __weak __typeof(self) weakSelf = self;
+        _token = [[NSNotificationCenter defaultCenter] addObserverForName:iTermScriptHistoryEntryDidChangeNotification
+                                                                   object:entry
+                                                                    queue:nil
+                                                               usingBlock:^(NSNotification * _Nonnull note) {
+                                                                   __typeof(self) strongSelf = weakSelf;
+                                                                   if (!strongSelf) {
+                                                                       return;
+                                                                   }
+                                                                   if (note.userInfo) {
+                                                                       NSString *delta = note.userInfo[iTermScriptHistoryEntryDelta];
+                                                                       NSString *property = note.userInfo[iTermScriptHistoryEntryFieldKey];
+                                                                       if ([property isEqualToString:iTermScriptHistoryEntryFieldLogsValue]) {
+                                                                           [strongSelf appendLogs:delta];
+                                                                           [strongSelf scrollLogsToBottomIfNeeded];
+                                                                       } else if ([property isEqualToString:iTermScriptHistoryEntryFieldRPCValue]) {
+                                                                           [strongSelf appendCalls:delta];
+                                                                           [strongSelf scrollCallsToBottomIfNeeded];
+                                                                       }
+                                                                   } else {
+                                                                       [strongSelf->_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:row]
+                                                                                                         columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+                                                                   }
+                                                               }];
+    }
+}
+
+- (void)appendLogs:(NSString *)delta {
+    if (!_filter.stringValue.length) {
+        [_logsView.textStorage.mutableString appendString:delta];
+    } else {
+        [self updateFilteredValue];
+    }
+}
+
+- (void)appendCalls:(NSString *)delta {
+    if (!_filter.stringValue.length) {
+        [_callsView.textStorage.mutableString appendString:delta];
+    } else {
+        [self updateFilteredValue];
+    }
+}
+
+- (void)scrollLogsToBottomIfNeeded {
+    if (_scrollToBottomOnUpdate.state == NSOnState && _tabView.selectedTabViewItem.view == _logsView.enclosingScrollView) {
+        [_logsView scrollRangeToVisible: NSMakeRange(_logsView.string.length, 0)];
+    }
+}
+
+- (void)scrollCallsToBottomIfNeeded {
+    if (_scrollToBottomOnUpdate.state == NSOnState && _tabView.selectedTabViewItem.view == _callsView.enclosingScrollView) {
+        [_callsView scrollRangeToVisible: NSMakeRange(_callsView.string.length, 0)];
+    }
+}
+
+- (IBAction)filterDidChange:(id)sender {
+    [self updateFilteredValue];
+}
+
+- (BOOL)line:(NSString *)line containsString:(NSString *)filter caseSensitive:(BOOL)caseSensitive {
+    if (caseSensitive) {
+        return [line containsString:filter];
+    } else {
+        return [line localizedCaseInsensitiveContainsString:filter];
+    }
+}
+
+- (void)updateFilteredValue {
+    if (_tableView.selectedRow == -1) {
+        _logsView.string = @"";
+        _callsView.string = @"";
+        return;
+    }
+    iTermScriptHistoryEntry *entry = [[self filteredEntries] objectAtIndex:_tableView.selectedRow];
+
+    NSString *filter = _filter.stringValue;
+    BOOL unfiltered = filter.length == 0;
+    BOOL caseSensitive = [filter rangeOfCharacterFromSet:[NSCharacterSet uppercaseLetterCharacterSet]].location != NSNotFound;
+    NSString *newValue = [[entry.logLines filteredArrayUsingBlock:^BOOL(NSString *line) {
+        return unfiltered || [self line:line containsString:filter caseSensitive:caseSensitive];
+    }] componentsJoinedByString:@"\n"];
+    _logsView.string = newValue;
+
+    newValue = [[entry.callEntries filteredArrayUsingBlock:^BOOL(NSString *line) {
+        return unfiltered || [self line:line containsString:filter caseSensitive:caseSensitive];
+    }] componentsJoinedByString:@"\n"];
+    _callsView.string = newValue;
+}
+
+- (void)controlTextDidChange:(NSNotification *)aNotification {
+    [self updateFilteredValue];
+}
+
+#pragma mark - Notifications
+
+- (void)numberOfScriptHistoryEntriesDidChange:(NSNotification *)notification {
+    [_tableView reloadData];
+}
+
+- (void)historyEntryDidChange:(NSNotification *)notification {
+    if (!notification.userInfo) {
+        [_tableView reloadData];
+    }
+}
+
+- (void)connectionRejected:(NSNotification *)notification {
+    NSString *key = notification.object;
+    iTermScriptHistoryEntry *entry = nil;
+    if (key) {
+        entry = [[iTermScriptHistory sharedInstance] entryWithIdentifier:key];
+    } else {
+        key = [[NSUUID UUID] UUIDString];  // Just needs to be something unique to identify this now-immutable log
+    }
+    if (!entry) {
+        NSString *name = [NSString castFrom:notification.userInfo[@"job"]];
+        if (!name) {
+            name = [NSString stringWithFormat:@"pid %@", notification.userInfo[@"pid"]];
+        }
+        if (!name) {
+            // Shouldn't happen as there ought to always be a PID
+            name = @"Unknown";
+        }
+        entry = [[iTermScriptHistoryEntry alloc] initWithName:name
+                                                   identifier:key];
+    }
+    [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
+    [entry addOutput:notification.userInfo[@"reason"]];
+    [entry stopRunning];
+}
+
+- (void)connectionAccepted:(NSNotification *)notification {
+    NSString *key = notification.object;
+    iTermScriptHistoryEntry *entry = nil;
+    if (key) {
+        entry = [[iTermScriptHistory sharedInstance] entryWithIdentifier:key];
+    } else {
+        assert(false);
+    }
+    if (!entry) {
+        NSString *name = [NSString castFrom:notification.userInfo[@"job"]];
+        if (!name) {
+            name = [NSString stringWithFormat:@"pid %@", notification.userInfo[@"pid"]];
+        }
+        if (!name) {
+            // Shouldn't happen as there ought to always be a PID
+            name = @"Unknown";
+        }
+        entry = [[iTermScriptHistoryEntry alloc] initWithName:name
+                                                   identifier:key];
+        [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
+    }
+    [entry addOutput:[NSString stringWithFormat:@"Connection accepted: %@\n", notification.userInfo[@"reason"]]];
+}
+
+- (void)connectionClosed:(NSNotification *)notification {
+    NSString *key = notification.object;
+    assert(key);
+    iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] entryWithIdentifier:key];
+    if (!entry) {
+        return;
+    }
+    [entry addOutput:@"\nConnection closed."];
+    [entry stopRunning];
+}
+
+#pragma mark - Private
+
+- (void)removeObserver {
+    if (_token) {
+        [[NSNotificationCenter defaultCenter] removeObserver:_token];
+        _token = nil;
+    }
+}
+
+@end

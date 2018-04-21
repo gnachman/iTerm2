@@ -59,6 +59,7 @@
 #import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
+#import "iTermScriptConsole.h"
 #import "iTermServiceProvider.h"
 #import "iTermQuickLookController.h"
 #import "iTermRemotePreferences.h"

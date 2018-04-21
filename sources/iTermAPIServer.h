@@ -10,9 +10,14 @@
 #import "Api.pbobjc.h"
 
 extern NSString *const iTermWebSocketConnectionPeerIdentityBundleIdentifier;
+extern NSString *const iTermAPIServerDidReceiveMessage;
+extern NSString *const iTermAPIServerWillSendMessage;
+extern NSString *const iTermAPIServerConnectionRejected;
+extern NSString *const iTermAPIServerConnectionAccepted;
+extern NSString *const iTermAPIServerConnectionClosed;
 
 @protocol iTermAPIServerDelegate<NSObject>
-- (NSDictionary *)apiServerAuthorizeProcess:(pid_t)pid;
+- (NSDictionary *)apiServerAuthorizeProcess:(pid_t)pid reason:(out NSString **)reason displayName:(out NSString **)displayName;
 - (void)apiServerGetBuffer:(ITMGetBufferRequest *)request handler:(void (^)(ITMGetBufferResponse *))handler;
 - (void)apiServerGetPrompt:(ITMGetPromptRequest *)request handler:(void (^)(ITMGetPromptResponse *))handler;
 - (void)apiServerNotification:(ITMNotificationRequest *)request

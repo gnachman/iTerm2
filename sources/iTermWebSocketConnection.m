@@ -8,6 +8,7 @@
 
 #import "iTermWebSocketConnection.h"
 #import "DebugLogging.h"
+#import "iTermAPIConnectionIdentifierController.h"
 #import "iTermHTTPConnection.h"
 #import "iTermWebSocketCookieJar.h"
 #import "iTermWebSocketFrame.h"
@@ -26,6 +27,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     iTermWebSocketConnectionStateClosed
 };
 
+
 @implementation iTermWebSocketConnection {
     iTermHTTPConnection *_connection;
     iTermWebSocketConnectionState _state;
@@ -36,13 +38,14 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 }
 
 + (instancetype)newWebSocketConnectionForRequest:(NSURLRequest *)request
-                                      connection:(iTermHTTPConnection *)connection {
+                                      connection:(iTermHTTPConnection *)connection
+                                          reason:(out NSString *__autoreleasing *)reason {
     if (![request.HTTPMethod isEqualToString:@"GET"]) {
-        XLog(@"Method not GET");
+        *reason = [NSString stringWithFormat:@"HTTP method %@ not accepted (must be GET)", request.HTTPMethod];
         return nil;
     }
     if (request.URL.path.length == 0) {
-        XLog(@"Empty path");
+        *reason = @"Request had an empty path in the HTTP request";
         return nil;
     }
     NSDictionary<NSString *, NSString *> *headers = request.allHTTPHeaderFields;
@@ -53,7 +56,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
          };
     for (NSString *key in requiredValues) {
         if ([headers[key] caseInsensitiveCompare:requiredValues[key]] != NSOrderedSame) {
-            XLog(@"Header %@ has value <%@> but I require <%@>", key, headers[key], requiredValues[key]);
+            *reason = [NSString stringWithFormat:@"Header %@ has value <%@> but I require <%@>", key, headers[key], requiredValues[key]];
             return nil;
         }
     }
@@ -65,14 +68,14 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
            @"origin" ];
     for (NSString *key in requiredKeys) {
         if ([headers[key] length] == 0) {
-            XLog(@"Empty or missing value for header %@", key);
+            *reason = [NSString stringWithFormat:@"Empty or missing value for required header %@", key];
             return nil;
         }
     }
 
     NSURL *originURL = [NSURL URLWithString:headers[@"origin"]];
     if (![originURL.host isEqualToString:@"localhost"]) {
-        XLog(@"Origin's host is not localhost: is %@ (string value is %@)", originURL.host, headers[@"origin"]);
+        *reason = [NSString stringWithFormat:@"Origin's host is not localhost: is %@ (string value is %@)", originURL.host, headers[@"origin"]];
         return nil;
     }
 
@@ -87,13 +90,13 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     }
     NSArray<NSString *> *loopbackNames = @[ @"localhost", @"127.0.0.1", @"[::1]" ];
     if (![loopbackNames containsObject:host]) {
-        XLog(@"Host header does not specify a loopback host: %@", host);
+        *reason = [NSString stringWithFormat:@"Host header is %@, but must be localhost, 127.0.01, or [::1].", host];
         return nil;
     }
 
     NSString *version = headers[@"sec-websocket-version"];
     if ([version integerValue] < kWebSocketVersion) {
-        XLog(@"websocket version too old");
+        *reason = [NSString stringWithFormat:@"sec-websocket-version of %@ is older than %@", version, @(kWebSocketVersion)];
         return nil;
     }
 
@@ -103,13 +106,17 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
         if ([[iTermWebSocketCookieJar sharedInstance] consumeCookie:cookie]) {
             authenticated = YES;
         } else {
+            *reason = [NSString stringWithFormat:@"x-iterm2-cookie of %@ not recognized", cookie];
             return nil;
         }
     }
+
     DLog(@"Request validates as websocket upgrade request");
     iTermWebSocketConnection *conn = [[self alloc] initWithConnection:connection];
     if (conn) {
         conn->_authenticated = authenticated;
+        NSString *key = headers[@"x-iterm2-key"] ?: [[NSUUID UUID] UUIDString];
+        conn->_key = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
     }
     return conn;
 }

@@ -24,7 +24,7 @@
 
 // Returns those elements of the array for which block(element) returns YES.
 // block is called on every element in order.
-- (NSArray *)filteredArrayUsingBlock:(BOOL (^)(ObjectType anObject))block;
+- (NSArray *)filteredArrayUsingBlock:(BOOL (NS_NOESCAPE ^)(ObjectType anObject))block;
 - (ObjectType)objectPassingTest:(BOOL (^)(ObjectType element, NSUInteger index, BOOL *stop))block;
 
 // Returns the first object that is a kind of `theClass` for which block returns YES.

@@ -59,7 +59,7 @@ class Hierarchy:
     else:
       return s
 
-  async def refresh(self):
+  async def refresh(self, connection=None, sub_notif=None):
     response = await iterm2.rpc.list_sessions(self.connection)
     # TODO: Calculate diffs so sessions don't get invalidated.
     self.windows = Hierarchy._windows_from_list_sessions_response(self.connection, response.list_sessions_response)
