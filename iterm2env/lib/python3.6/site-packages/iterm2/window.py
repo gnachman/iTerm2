@@ -27,10 +27,7 @@ class Window:
   async def create(connection, profile=None, command=None):
     result = await iterm2.rpc.create_tab(connection, profile=profile, command=command)
     if result.create_tab_response.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-      session = iterm2.session.Session(connection, result.create_tab_response.session_id)
-      tab = iterm2.tab.Tab(connection, result.create_tab_response.tab_id, [session])
-      window = Window(connection, result.create_tab_response.window_id, [tab])
-      return window
+      return result.create_tab_response.session_id
     else:
       raise CreateTabException(iterm2.api_pb2.CreateTabResponse.Status.Name(result.create_tab_response.status))
 
@@ -43,8 +40,7 @@ class Window:
   async def create_tab(self, profile=None, command=None, index=None):
     result = await iterm2.rpc.create_tab(self.connection, profile=profile, window=self.window_id, index=index, command=command)
     if result.create_tab_response.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-      session = iterm2.session.Session(self.connection, result.create_tab_response.session_id)
-      return Tab(self.connection, result.create_tab_response.tab_index, [session])
+      return result.create_tab_response.session_id
     else:
       raise CreateTabException(iterm2.api_pb2.CreateTabResponse.Status.Name(result.create_tab_response.status))
 
