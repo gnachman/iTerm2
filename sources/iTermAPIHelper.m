@@ -122,31 +122,40 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
     NSString *processName = nil;
     NSString *processIdentifier = nil;
+    NSString *processIdentifierWithoutArgs = nil;
 
     NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
     if (app.localizedName && app.bundleIdentifier) {
         processName = app.localizedName;
         processIdentifier = app.bundleIdentifier;
     } else {
-        processIdentifier = [iTermLSOF commandForProcess:pid execName:&processName];
-        if (!processName || !processIdentifier) {
+        NSString *execName = nil;
+        processIdentifier = [iTermLSOF commandForProcess:pid execName:&execName];
+        if (!execName || !processIdentifier) {
             *reason = [NSString stringWithFormat:@"Could not identify name for process with pid %d", (int)pid];
             return nil;
         }
-        processName = [processName lastPathComponent];
-        if ([processName isEqualToString:@"python"] ||
-            [processName isEqualToString:@"python3.6"] ||
-            [processName isEqualToString:@"python3"]) {
-            NSArray<NSString *> *parts = [processIdentifier componentsInShellCommand];
-            if (parts.count > 1 && [parts[1] hasSuffix:@".py"]) {
-                processName = parts[1];
+
+        NSArray<NSString *> *parts = [processIdentifier componentsInShellCommand];
+        NSString *maybePython = parts.firstObject.lastPathComponent;
+
+        if ([maybePython isEqualToString:@"python"] ||
+            [maybePython isEqualToString:@"python3.6"] ||
+            [maybePython isEqualToString:@"python3"]) {
+            if (parts.count > 1) {
+                processName = [parts[1] lastPathComponent];
+                processIdentifierWithoutArgs = [[parts subarrayWithRange:NSMakeRange(0, 2)] componentsJoinedByString:@" "];
             }
+        }
+        if (!processName) {
+            processName = execName.lastPathComponent;
+            processIdentifierWithoutArgs = execName;
         }
     }
     *displayName = processName;
 
-    NSDictionary *authorizedIdentity = @{ iTermWebSocketConnectionPeerIdentityBundleIdentifier: processIdentifier };
-    NSString *key = [NSString stringWithFormat:@"bundle=%@", processIdentifier];
+    NSDictionary *authorizedIdentity = @{ iTermWebSocketConnectionPeerIdentityBundleIdentifier: processIdentifierWithoutArgs };
+    NSString *key = [NSString stringWithFormat:@"bundle=%@", processIdentifierWithoutArgs];
     NSDictionary *setting = bundles[key];
     BOOL reauth = NO;
     if (setting) {
