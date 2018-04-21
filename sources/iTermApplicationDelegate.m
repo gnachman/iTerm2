@@ -2023,7 +2023,20 @@ static BOOL hasBecomeActive = NO;
 
         [[NSApp mainMenu] insertItem:scriptMenuItem atIndex:kScriptMenuItemIndex];
         [scriptMenuItem setTitle:kScriptTitle];
+
+        if ([iTermAdvancedSettingsModel enableAPIServer]) {
+            NSMenuItem *consoleItem = [[[NSMenuItem alloc] initWithTitle:@"Script Console"
+                                                                  action:@selector(openScriptConsole:)
+                                                           keyEquivalent:@"j"] autorelease];
+            consoleItem.keyEquivalentModifierMask = (NSEventModifierFlagCommand | NSEventModifierFlagOption);
+            consoleItem.target = self;
+            [scriptMenu addItem:consoleItem];
+        }
     }
+}
+
+- (void)openScriptConsole:(id)sender {
+    [[[iTermScriptConsole sharedInstance] window] makeKeyAndOrderFront:nil];
 }
 
 - (IBAction)saveWindowArrangement:(id)sender {
