@@ -620,7 +620,9 @@ typedef enum {
     NSString *key = [PointerPrefsController keyForButton:buttonNumber
                                                   clicks:numClicks
                                                modifiers:modMask];
-    return [[[PointerPrefsController settings] objectForKey:key] objectForKey:kArgumentKey];
+    NSDictionary *settings = [PointerPrefsController settings];
+    NSDictionary *setting = [settings objectForKey:key];
+    return [setting objectForKey:kArgumentKey];
 }
 
 + (NSString *)actionWithButton:(int)buttonNumber
@@ -631,7 +633,9 @@ typedef enum {
                                                   clicks:numClicks
                                                modifiers:modMask];
     DLog(@"Look up key %@", key);
-    NSString *action = [[[PointerPrefsController settings] objectForKey:key] objectForKey:kActionKey];
+    NSDictionary *settings = [PointerPrefsController settings];
+    NSDictionary *setting = [settings objectForKey:key];
+    NSString *action = [setting objectForKey:kActionKey];
     return action;
 }
 
@@ -666,7 +670,9 @@ typedef enum {
     key = [PointerPrefsController keyForGesture:gesture
                                       modifiers:modMask];
     DLog(@"Look up action for gesture %@", key);
-    return [[[PointerPrefsController settings] objectForKey:key] objectForKey:kActionKey];
+    NSDictionary *settings = [PointerPrefsController settings];
+    NSDictionary *setting = [settings objectForKey:key];
+    return [setting objectForKey:kActionKey];
 }
 
 + (NSString *)argumentForGesture:(NSString *)gesture
@@ -675,7 +681,9 @@ typedef enum {
     NSString *key;
     key = [PointerPrefsController keyForGesture:gesture
                                       modifiers:modMask];
-    return [[[PointerPrefsController settings] objectForKey:key] objectForKey:kArgumentKey];
+    NSDictionary *settings = [PointerPrefsController settings];
+    NSDictionary *setting = [settings objectForKey:key];
+    return [setting objectForKey:kArgumentKey];
 }
 
 + (BOOL)haveThreeFingerTapEvents
@@ -781,14 +789,14 @@ typedef enum {
     }
 }
 
-+ (NSString *)actionForKey:(NSString *)key
-{
-    return [[[PointerPrefsController settings] objectForKey:key] objectForKey:kActionKey];
++ (NSString *)actionForKey:(NSString *)key {
+    NSDictionary *setting = [[PointerPrefsController settings] objectForKey:key];
+    return [setting objectForKey:kActionKey];
 }
 
-+ (NSString *)argumentForKey:(NSString *)key
-{
-    return [[[PointerPrefsController settings] objectForKey:key] objectForKey:kArgumentKey];
++ (NSString *)argumentForKey:(NSString *)key {
+    NSDictionary *setting = [[PointerPrefsController settings] objectForKey:key];
+    return [setting objectForKey:kArgumentKey];
 }
 
 - (void)updateArgumentFieldsForAction:(NSString *)actionIdent argument:(NSString *)currentArg
