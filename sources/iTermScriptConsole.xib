@@ -197,26 +197,26 @@
             </connections>
             <point key="canvasLocation" x="202.5" y="331.5"/>
         </window>
-        <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="LJ5-c1-8iY" userLabel="Logs">
+        <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="LJ5-c1-8iY" userLabel="Logs">
             <rect key="frame" x="0.0" y="0.0" width="240" height="222"/>
             <autoresizingMask key="autoresizingMask"/>
             <clipView key="contentView" id="3XP-OX-1oQ">
                 <rect key="frame" x="1" y="1" width="238" height="220"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
-                    <textView editable="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" findStyle="panel" allowsCharacterPickerTouchBarItem="NO" allowsNonContiguousLayout="YES" textCompletion="NO" id="wrF-a6-UQL" customClass="WTFTextView">
+                    <textView editable="NO" importsGraphics="NO" richText="NO" horizontallyResizable="YES" verticallyResizable="YES" findStyle="bar" incrementalSearchingEnabled="YES" allowsCharacterPickerTouchBarItem="NO" allowsNonContiguousLayout="YES" textCompletion="NO" id="wrF-a6-UQL">
                         <rect key="frame" x="0.0" y="0.0" width="238" height="220"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <size key="minSize" width="238" height="220"/>
-                        <size key="maxSize" width="463" height="10000000"/>
+                        <size key="maxSize" width="10000000" height="10000000"/>
                         <color key="insertionPointColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                     </textView>
                 </subviews>
                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
             </clipView>
-            <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="YES" id="Lsd-F7-lce">
-                <rect key="frame" x="-100" y="-100" width="87" height="18"/>
+            <scroller key="horizontalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="YES" id="Lsd-F7-lce">
+                <rect key="frame" x="1" y="205" width="238" height="16"/>
                 <autoresizingMask key="autoresizingMask"/>
             </scroller>
             <scroller key="verticalScroller" verticalHuggingPriority="750" horizontal="NO" id="i0J-6h-0zQ">
@@ -225,26 +225,26 @@
             </scroller>
             <point key="canvasLocation" x="151" y="880"/>
         </scrollView>
-        <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="BoR-0b-whk" userLabel="Calls">
+        <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="BoR-0b-whk" userLabel="Calls">
             <rect key="frame" x="0.0" y="0.0" width="240" height="222"/>
             <autoresizingMask key="autoresizingMask"/>
             <clipView key="contentView" id="aGA-ed-GB6">
                 <rect key="frame" x="1" y="1" width="238" height="220"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
-                    <textView editable="NO" importsGraphics="NO" richText="NO" verticallyResizable="YES" findStyle="panel" allowsCharacterPickerTouchBarItem="NO" allowsNonContiguousLayout="YES" textCompletion="NO" spellingCorrection="YES" id="3YB-9P-sUx">
+                    <textView editable="NO" importsGraphics="NO" richText="NO" horizontallyResizable="YES" verticallyResizable="YES" findStyle="bar" incrementalSearchingEnabled="YES" allowsCharacterPickerTouchBarItem="NO" allowsNonContiguousLayout="YES" textCompletion="NO" spellingCorrection="YES" id="3YB-9P-sUx">
                         <rect key="frame" x="0.0" y="0.0" width="238" height="220"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <size key="minSize" width="238" height="220"/>
-                        <size key="maxSize" width="463" height="10000000"/>
+                        <size key="maxSize" width="10000000" height="10000000"/>
                         <color key="insertionPointColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                     </textView>
                 </subviews>
                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
             </clipView>
-            <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" horizontal="YES" id="OnL-oR-w0r">
-                <rect key="frame" x="-100" y="-100" width="87" height="18"/>
+            <scroller key="horizontalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="YES" id="OnL-oR-w0r">
+                <rect key="frame" x="1" y="205" width="238" height="16"/>
                 <autoresizingMask key="autoresizingMask"/>
             </scroller>
             <scroller key="verticalScroller" verticalHuggingPriority="750" horizontal="NO" id="fFe-rH-QBZ">

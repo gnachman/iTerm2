@@ -50,11 +50,63 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     return instance;
 }
 
+- (void)makeTextViewHorizontallyScrollable:(NSTextView *)textView {
+    [textView.enclosingScrollView setHasHorizontalScroller:YES];
+    [textView setMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
+    [textView setHorizontallyResizable:YES];
+    [[textView textContainer] setWidthTracksTextView:NO];
+    [[textView textContainer] setContainerSize:NSMakeSize(FLT_MAX, FLT_MAX)];
+}
+
+
+- (void)findNext:(id)sender {
+    NSControl *fakeSender = [[NSControl alloc] init];
+    fakeSender.tag = NSTextFinderActionNextMatch;
+    if (_tabView.selectedTabViewItem.view == _logsView.enclosingScrollView) {
+        [_logsView performFindPanelAction:fakeSender];
+    } else {
+        [_callsView performFindPanelAction:fakeSender];
+    }
+}
+
+- (void)findPrevious:(id)sender {
+    NSControl *fakeSender = [[NSControl alloc] init];
+    fakeSender.tag = NSTextFinderActionPreviousMatch;
+    if (_tabView.selectedTabViewItem.view == _logsView.enclosingScrollView) {
+        [_logsView performFindPanelAction:fakeSender];
+    } else {
+        [_callsView performFindPanelAction:fakeSender];
+    }
+}
+
+- (void)findWithSelection:(id)sender {
+    NSControl *fakeSender = [[NSControl alloc] init];
+    fakeSender.tag = NSTextFinderActionSetSearchString;
+    if (_tabView.selectedTabViewItem.view == _logsView.enclosingScrollView) {
+        [_logsView performFindPanelAction:fakeSender];
+    } else {
+        [_callsView performFindPanelAction:fakeSender];
+    }
+}
+
+- (void)showFindPanel:(id)sender {
+    NSControl *fakeSender = [[NSControl alloc] init];
+    fakeSender.tag = NSTextFinderActionShowFindInterface;
+    if (_tabView.selectedTabViewItem.view == _logsView.enclosingScrollView) {
+        [_logsView performFindPanelAction:fakeSender];
+    } else {
+        [_callsView performFindPanelAction:fakeSender];
+    }
+}
+
 - (void)windowDidLoad {
     [super windowDidLoad];
 
     _tabView.tabViewItems[0].view = _logsView.enclosingScrollView;
     _tabView.tabViewItems[1].view = _callsView.enclosingScrollView;
+
+    [self makeTextViewHorizontallyScrollable:_logsView];
+    [self makeTextViewHorizontallyScrollable:_callsView];
 
     _dateFormatter = [[NSDateFormatter alloc] init];
     _dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"Ld jj:mm:ss"
