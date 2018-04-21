@@ -1,6 +1,7 @@
 import asyncio
 import concurrent
 import iterm2.api_pb2
+import os
 import time
 import websockets
 
@@ -49,7 +50,7 @@ class Connection:
 
     This is a low-level operation that is not generally called by user code.
 
-    message: A protocol buffer of type iterm2.api_pb2.Request to send.
+    message: A protocol buffer of type iterm2.api_pb2.ClientOriginatedMessage to send.
     """
     await self.websocket.send(message.SerializeToString())
 
@@ -59,10 +60,10 @@ class Connection:
 
     This is a low-level operation that is not generally called by user code.
 
-    Returns: a protocol buffer message of type iterm2.api_pb2.Response.
+    Returns: a protocol buffer message of type iterm2.api_pb2.ServerOriginatedMessage.
     """
     data = await self.websocket.recv()
-    message = iterm2.api_pb2.Response()
+    message = iterm2.api_pb2.ServerOriginatedMessage()
     message.ParseFromString(data)
     return message
 
@@ -74,7 +75,13 @@ class Connection:
 
     coro: A coroutine to run once connected.
     """
+    cookie_key = 'ITERM2_COOKIE'
+    key_key = 'ITERM2_KEY'
     headers = { "origin": "ws://localhost/" }
+    if cookie_key in os.environ:
+      headers["x-iterm2-cookie"] = os.environ[cookie_key]
+    if key_key in os.environ:
+      headers["x-iterm2-key"] = os.environ[key_key]
     async with websockets.connect('ws://localhost:1912',
                                   extra_headers=headers,
                                   subprotocols=[ 'api.iterm2.com' ]) as websocket:

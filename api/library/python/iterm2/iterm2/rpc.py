@@ -29,7 +29,7 @@ async def notification_request(connection, subscribe, notification_type, session
   notification_type: iterm2.api_pb2.NotificationType
   session: The unique ID of the session or None.
 
-  Returns: iterm2.api_pb2.Response
+  Returns: iterm2.api_pb2.ServerOriginatedMessage
   """
   request = _alloc_request()
   if session is not None:
@@ -148,7 +148,7 @@ def _alloc_id():
   return result
 
 def _alloc_request():
-  request = iterm2.api_pb2.Request()
+  request = iterm2.api_pb2.ClientOriginatedMessage()
   request.id = _alloc_id()
   return request
 
