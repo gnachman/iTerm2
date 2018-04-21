@@ -99,9 +99,7 @@ class Session:
   async def split_pane(self, vertical=False, before=False, profile=None):
     result = await iterm2.rpc.split_pane(self.connection, self.session_id, vertical, before, profile)
     if result.split_pane_response.status == iterm2.api_pb2.SplitPaneResponse.Status.Value("OK"):
-      h = await iterm2.hierarchy.Hierarchy.construct(self.connection)
-      s = await h.get_session_by_id(result.split_pane_response.session_id)
-      return s
+      return result.split_pane_response.session_id
 
     else:
       raise SplitPaneException(iterm2.api_pb2.SplitPaneResponse.Status.Name(result.split_pane_response.status))
