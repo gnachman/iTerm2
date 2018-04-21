@@ -26,7 +26,7 @@ extern NSString *const kProfileSessionHotkeyDidChange;
 
 @interface ProfilePreferencesViewController : iTermPreferencesBaseViewController
 
-@property(nonatomic, assign) IBOutlet id<ProfilePreferencesViewControllerDelegate> delegate;
+@property(nonatomic, weak) IBOutlet id<ProfilePreferencesViewControllerDelegate> delegate;
 
 // Size of tab view.
 @property(nonatomic, readonly) NSSize size;
