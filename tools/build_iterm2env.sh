@@ -11,8 +11,7 @@ virtualenv -p python3.6 $SOURCE
 source venv/bin/activate
 pip3.6 install websockets
 pip3.6 install protobuf
-#pip3.6 install iterm2
-cp -R ~/iterm2-pypi/ "$SOURCE"/lib/python3.6/site-packages/iterm2/
+pip3.6 install iterm2
 
 rsync $SOURCE/ $DEST/ -a --copy-links -v
 
