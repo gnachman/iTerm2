@@ -1262,7 +1262,6 @@
 		A60C03552089672B00FE2F1F /* iterm2env in Resources */ = {isa = PBXBuildFile; fileRef = A60C03542089672B00FE2F1F /* iterm2env */; };
 		A60C03562089672B00FE2F1F /* iterm2env in Resources */ = {isa = PBXBuildFile; fileRef = A60C03542089672B00FE2F1F /* iterm2env */; };
 		A60C03572089672B00FE2F1F /* iterm2env in Resources */ = {isa = PBXBuildFile; fileRef = A60C03542089672B00FE2F1F /* iterm2env */; };
-		A60C03592089675100FE2F1F /* iterm2env in CopyFiles */ = {isa = PBXBuildFile; fileRef = A60C03542089672B00FE2F1F /* iterm2env */; };
 		A60C035C2089698500FE2F1F /* iTermAPIScriptLauncher.h in Headers */ = {isa = PBXBuildFile; fileRef = A60C035A2089698500FE2F1F /* iTermAPIScriptLauncher.h */; };
 		A60C035D2089698500FE2F1F /* iTermAPIScriptLauncher.m in Sources */ = {isa = PBXBuildFile; fileRef = A60C035B2089698500FE2F1F /* iTermAPIScriptLauncher.m */; };
 		A60C03622089897400FE2F1F /* iTermScriptConsole.h in Headers */ = {isa = PBXBuildFile; fileRef = A60C035F2089897400FE2F1F /* iTermScriptConsole.h */; };
@@ -2705,16 +2704,6 @@
 				A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */,
 				1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */,
 				5ECE4AE814513F05002A9CC2 /* Growl.framework in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		A60C03582089673E00FE2F1F /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 7;
-			files = (
-				A60C03592089675100FE2F1F /* iterm2env in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -7666,7 +7655,6 @@
 				874206510564169600CFC3F1 /* Frameworks */,
 				874206550564169600CFC3F1 /* Rez */,
 				874206560564169600CFC3F1 /* CopyFiles */,
-				A60C03582089673E00FE2F1F /* CopyFiles */,
 				A60C035E2089877600FE2F1F /* ShellScript */,
 				93BD20450FE16DD50059656D /* Update SVN Revision */,
 			);
