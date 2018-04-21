@@ -6,7 +6,7 @@ def readme():
 
 
 setup(name='iterm2',
-      version='0.1',
+      version='0.2',
       description='Python interface to iTerm2\'s scripting API',
       long_description=readme(),
       classifiers=[
@@ -21,7 +21,7 @@ setup(name='iterm2',
       packages=['iterm2'],
       install_requires=[
           'protobuf',
-          'websocket',
+          'websockets',
       ],
       include_package_data=True,
       zip_safe=False)
