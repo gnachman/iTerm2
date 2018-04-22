@@ -27,7 +27,7 @@ docs: force
 
 force:
 
-update: force
+upload: force
 	${PYTHON} setup.py bdist_wheel
 	${PYTHON} setup.py sdist
 	twine upload dist/*
