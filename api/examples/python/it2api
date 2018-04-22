@@ -285,7 +285,6 @@ def main(argv):
     except Exception as e:
       print(traceback.format_exc())
 
-
   c = iterm2.connection.Connection()
   c.run(wrapper)
 
