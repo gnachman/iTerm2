@@ -16,6 +16,10 @@ async def list_sessions(connection, args):
       for s in sessions:
         print(s.pretty_str(), end='')
 
+async def show_hierarchy(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  print(h.pretty_str())
+
 async def send_text(connection, args):
   h = await iterm2.hierarchy.Hierarchy.construct(connection)
   s = await h.get_session_by_id(args.session)
@@ -25,8 +29,12 @@ async def create_tab(connection, args):
   if args.window is not None:
     window_id = args.window
     h = await iterm2.hierarchy.Hierarchy.construct(connection)
-    window = next(window for window in h.windows if window.window_id == window_id)
-    await window.create_tab(profile=args.profile, command=args.command, index=args.index)
+    try:
+      window = next(window for window in h.windows if window.window_id == window_id)
+      await window.create_tab(profile=args.profile, command=args.command, index=args.index)
+    except:
+      print("bad window id {}".format(window_id))
+      sys.exit(1)
   else:
     result = await iterm2.window.Window.create(connection, profile=args.profile, command=args.command)
 
@@ -45,7 +53,8 @@ async def get_buffer(connection, args):
 async def get_prompt(connection, args):
   h = await iterm2.hierarchy.Hierarchy.construct(connection)
   s = await h.get_session_by_id(args.session)
-  print(await s.get_prompt())
+  result = await s.get_prompt()
+  print(result)
 
 
 def profile_property_type_map():
@@ -224,6 +233,9 @@ def make_parser():
 
   list_sessions_parser = subparsers.add_parser("list-sessions", help="List sessions")
   list_sessions_parser.set_defaults(func=list_sessions)
+
+  show_hierarchy_parser = subparsers.add_parser("show-hierarchy", help="Show all windows, tabs, and sessions")
+  show_hierarchy_parser.set_defaults(func=show_hierarchy)
 
   send_text_parser = subparsers.add_parser("send-text", help="Send text as though the user had typed it")
   send_text_parser.add_argument('session', type=str, help='Session ID')
