@@ -17,11 +17,13 @@ docs: force
 	pydoc3.6 -w iterm2.transaction
 	pydoc3.6 -w iterm2.util
 	pydoc3.6 -w iterm2.window
-	mv iterm2.html iterm2.connection.html iterm2.hierarchy.html iterm2.notifications.html iterm2.profile.html iterm2.rpc.html iterm2.session.html iterm2.tab.html iterm2.tool.html iterm2.transaction.html iterm2.util.html iterm2.window.html docs
+	mv iterm2.connection.html iterm2.hierarchy.html iterm2.notifications.html iterm2.profile.html iterm2.rpc.html iterm2.session.html iterm2.tab.html iterm2.tool.html iterm2.transaction.html iterm2.util.html iterm2.window.html docs
+	mv iterm2.html docs/index.html
         # pydoc crashes on protobuf files, lol. The source code makes lovely documentation in its stead.
 	echo '<pre>' > docs/iterm2.api_pb2.html
 	cat ../../../../proto/api.proto >> docs/iterm2.api_pb2.html
 	echo '</pre>' >> docs/iterm2.api_pb2.html
+	test -d ~/iterm2-website/source/python-api && cp docs/* ~/iterm2-website/source/python-api
 
 force:
 
