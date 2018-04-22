@@ -2,7 +2,9 @@ import asyncio
 import concurrent
 import iterm2.api_pb2
 import os
+import sys
 import time
+import traceback
 import websockets
 
 _helpers = []
@@ -86,7 +88,12 @@ class Connection:
                                   extra_headers=headers,
                                   subprotocols=[ 'api.iterm2.com' ]) as websocket:
       self.websocket = websocket
-      await coro(self)
+      try:
+        await coro(self)
+      except Exception as err:
+        traceback.print_tb(err.__traceback__)
+        sys.exit(1)
+
 
   async def dispatch_until_id(self, reqid):
     """
