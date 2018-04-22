@@ -60,7 +60,7 @@ async def split_pane(connection, session, vertical, before, profile=None):
     request.split_pane_request.split_direction = iterm2.api_pb2.SplitPaneRequest.VERTICAL
   else:
     request.split_pane_request.split_direction = iterm2.api_pb2.SplitPaneRequest.HORIZONTAL;
-  request.split_pane_request.before = False
+  request.split_pane_request.before = before
   if profile is not None:
     request.split_pane_request.profile_name = profile
   return await _call(connection, request)
@@ -118,11 +118,12 @@ async def register_web_view_tool(connection, display_name, identifier, reveal_if
   request.register_tool_request.URL = url
   return await _call(connection, request)
 
-async def set_profile_property(connection, key, value):
+async def set_profile_property(connection, session_id, key, value):
   """
   value: a python object that will be converted to json
   """
   request = _alloc_request()
+  request.set_profile_property_request.session = session_id
   request.set_profile_property_request.key = key
   request.set_profile_property_request.json_value = json.dumps(value)
   return await _call(connection, request)

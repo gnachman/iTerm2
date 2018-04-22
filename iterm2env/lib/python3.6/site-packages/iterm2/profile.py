@@ -25,24 +25,28 @@ class Profile:
 
   def __init__(self, session_id, connection, get_profile_property_response):
     self.connection = connection
+    self.session_id = session_id
     self.__props = {}
     for prop in get_profile_property_response.properties:
       self.__props[prop.key] = json.loads(prop.json_value)
 
   async def _simple_set(self, key, value):
     """value is a json type"""
-    await iterm2.rpc.set_profile_property(self.connection, key, value)
+    await iterm2.rpc.set_profile_property(self.connection, self.session_id, key, value)
 
   async def _simple_get(self, key):
     return self.__props[key]
 
   async def _color_set(self, key, value):
-    await iterm2.rpc.set_profile_property(self.connection, key, value.get_dict())
+    await iterm2.rpc.set_profile_property(self.connection, self.session_id, key, value.get_dict())
 
   async def _color_get(self, key):
-    c = Color()
-    c.from_dict(self.__props[key])
-    return c
+    try:
+      c = Color()
+      c.from_dict(self.__props[key])
+      return c
+    except:
+      return None
 
   async def get_foreground_color(self):
     return await self._color_get("Foreground Color")
@@ -683,11 +687,11 @@ class Color:
         }
 
   def from_dict(self, dict):
-    self.red = dict["Red Component"]
-    self.green = dict["Green Component"]
-    self.blue = dict["Blue Component"]
+    self.red = float(dict["Red Component"])
+    self.green = float(dict["Green Component"])
+    self.blue = float(dict["Blue Component"])
     if "Alpha Component" in dict:
-      self.alpha = dict["Alpha Component"]
+      self.alpha = float(dict["Alpha Component"])
     else:
       self.alpha = 1
     if "Color Space" in dict:
