@@ -1,0 +1,454 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module iterm2.session</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="iterm2.html"><font color="#ffffff">iterm2</font></a>.session</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/Users/gnachman/git/iTerm2/api/library/python/iterm2/iterm2/session.py">/Users/gnachman/git/iTerm2/api/library/python/iterm2/iterm2/session.py</a></font></td></tr></table>
+    <p></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="asyncio.html">asyncio</a><br>
+</td><td width="25%" valign=top><a href="iterm2.html">iterm2</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="builtins.html#Exception">builtins.Exception</a>(<a href="builtins.html#BaseException">builtins.BaseException</a>)
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="iterm2.session.html#InvalidSessionId">InvalidSessionId</a>
+</font></dt><dt><font face="helvetica, arial"><a href="iterm2.session.html#SplitPaneException">SplitPaneException</a>
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="builtins.html#object">builtins.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="iterm2.session.html#Session">Session</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="iterm2.session.html#ProxySession">ProxySession</a>
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="iterm2.session.html#Splitter">Splitter</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="InvalidSessionId">class <strong>InvalidSessionId</strong></a>(<a href="builtins.html#Exception">builtins.Exception</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>The&nbsp;specified&nbsp;session&nbsp;ID&nbsp;is&nbsp;not&nbsp;allowed&nbsp;in&nbsp;this&nbsp;method.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="iterm2.session.html#InvalidSessionId">InvalidSessionId</a></dd>
+<dd><a href="builtins.html#Exception">builtins.Exception</a></dd>
+<dd><a href="builtins.html#BaseException">builtins.BaseException</a></dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Methods inherited from <a href="builtins.html#Exception">builtins.Exception</a>:<br>
+<dl><dt><a name="InvalidSessionId-__init__"><strong>__init__</strong></a>(self, /, *args, **kwargs)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="InvalidSessionId-__new__"><strong>__new__</strong></a>(*args, **kwargs)<font color="#909090"><font face="helvetica, arial"> from <a href="builtins.html#type">builtins.type</a></font></font></dt><dd><tt>Create&nbsp;and&nbsp;return&nbsp;a&nbsp;new&nbsp;<a href="builtins.html#object">object</a>.&nbsp;&nbsp;See&nbsp;help(type)&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<hr>
+Methods inherited from <a href="builtins.html#BaseException">builtins.BaseException</a>:<br>
+<dl><dt><a name="InvalidSessionId-__delattr__"><strong>__delattr__</strong></a>(self, name, /)</dt><dd><tt>Implement&nbsp;delattr(self,&nbsp;name).</tt></dd></dl>
+
+<dl><dt><a name="InvalidSessionId-__getattribute__"><strong>__getattribute__</strong></a>(self, name, /)</dt><dd><tt>Return&nbsp;getattr(self,&nbsp;name).</tt></dd></dl>
+
+<dl><dt><a name="InvalidSessionId-__reduce__"><strong>__reduce__</strong></a>(...)</dt><dd><tt>helper&nbsp;for&nbsp;pickle</tt></dd></dl>
+
+<dl><dt><a name="InvalidSessionId-__repr__"><strong>__repr__</strong></a>(self, /)</dt><dd><tt>Return&nbsp;repr(self).</tt></dd></dl>
+
+<dl><dt><a name="InvalidSessionId-__setattr__"><strong>__setattr__</strong></a>(self, name, value, /)</dt><dd><tt>Implement&nbsp;setattr(self,&nbsp;name,&nbsp;value).</tt></dd></dl>
+
+<dl><dt><a name="InvalidSessionId-__setstate__"><strong>__setstate__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="InvalidSessionId-__str__"><strong>__str__</strong></a>(self, /)</dt><dd><tt>Return&nbsp;str(self).</tt></dd></dl>
+
+<dl><dt><a name="InvalidSessionId-with_traceback"><strong>with_traceback</strong></a>(...)</dt><dd><tt><a href="builtins.html#Exception">Exception</a>.<a href="#InvalidSessionId-with_traceback">with_traceback</a>(tb)&nbsp;--<br>
+set&nbsp;self.<strong>__traceback__</strong>&nbsp;to&nbsp;tb&nbsp;and&nbsp;return&nbsp;self.</tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="builtins.html#BaseException">builtins.BaseException</a>:<br>
+<dl><dt><strong>__cause__</strong></dt>
+<dd><tt>exception&nbsp;cause</tt></dd>
+</dl>
+<dl><dt><strong>__context__</strong></dt>
+<dd><tt>exception&nbsp;context</tt></dd>
+</dl>
+<dl><dt><strong>__dict__</strong></dt>
+</dl>
+<dl><dt><strong>__suppress_context__</strong></dt>
+</dl>
+<dl><dt><strong>__traceback__</strong></dt>
+</dl>
+<dl><dt><strong>args</strong></dt>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="ProxySession">class <strong>ProxySession</strong></a>(<a href="iterm2.session.html#Session">Session</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>A&nbsp;proxy&nbsp;for&nbsp;a&nbsp;<a href="#Session">Session</a>.<br>
+&nbsp;<br>
+This&nbsp;is&nbsp;used&nbsp;when&nbsp;you&nbsp;specify&nbsp;an&nbsp;abstract&nbsp;session&nbsp;ID&nbsp;like&nbsp;"all"&nbsp;or&nbsp;"active".<br>
+Since&nbsp;the&nbsp;session&nbsp;or&nbsp;set&nbsp;of&nbsp;sessions&nbsp;that&nbsp;refers&nbsp;to&nbsp;is&nbsp;ever-changing,&nbsp;this<br>
+proxy&nbsp;stands&nbsp;in&nbsp;for&nbsp;the&nbsp;real&nbsp;thing.&nbsp;It&nbsp;may&nbsp;limit&nbsp;functionality&nbsp;since&nbsp;it<br>
+doesn't&nbsp;make&nbsp;sense&nbsp;to,&nbsp;for&nbsp;example,&nbsp;get&nbsp;the&nbsp;screen&nbsp;contents&nbsp;of&nbsp;"all"<br>
+sessions.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="iterm2.session.html#ProxySession">ProxySession</a></dd>
+<dd><a href="iterm2.session.html#Session">Session</a></dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="ProxySession-__init__"><strong>__init__</strong></a>(self, connection, session_id)</dt><dd><tt>connection:&nbsp;iterm2.connection.Connection<br>
+link:&nbsp;iterm2.api_pb2.ListSessionsResponse.SplitTreeNode.SplitTreeLink</tt></dd></dl>
+
+<dl><dt><a name="ProxySession-__repr__"><strong>__repr__</strong></a>(self)</dt><dd><tt>Return&nbsp;repr(self).</tt></dd></dl>
+
+<dl><dt><a name="ProxySession-get_buffer_lines"><strong>get_buffer_lines</strong></a>(self, trailing_lines)</dt><dd><tt>Fetches&nbsp;the&nbsp;last&nbsp;lines&nbsp;of&nbsp;the&nbsp;session,&nbsp;reaching&nbsp;into&nbsp;history&nbsp;if&nbsp;needed.<br>
+&nbsp;<br>
+trailing_lines:&nbsp;The&nbsp;number&nbsp;of&nbsp;lines&nbsp;to&nbsp;fetch.<br>
+&nbsp;<br>
+Returns:&nbsp;The&nbsp;buffer&nbsp;contents,&nbsp;an&nbsp;iterm2.api_pb2.GetBufferResponse<br>
+&nbsp;<br>
+Raises:&nbsp;iterm2.rpc.RPCException&nbsp;if&nbsp;something&nbsp;goes&nbsp;wrong.</tt></dd></dl>
+
+<dl><dt><a name="ProxySession-get_profile"><strong>get_profile</strong></a>(self)</dt><dd><tt>Fetches&nbsp;the&nbsp;profile&nbsp;of&nbsp;this&nbsp;session<br>
+&nbsp;<br>
+Returns:&nbsp;iterm2.profile.Profile<br>
+&nbsp;<br>
+Raises:&nbsp;iterm2.rpc.RPCException&nbsp;if&nbsp;something&nbsp;goes&nbsp;wrong.</tt></dd></dl>
+
+<dl><dt><a name="ProxySession-get_prompt"><strong>get_prompt</strong></a>(self)</dt><dd><tt>Fetches&nbsp;info&nbsp;about&nbsp;the&nbsp;last&nbsp;prompt&nbsp;in&nbsp;this&nbsp;session.<br>
+&nbsp;<br>
+Returns:&nbsp;iterm2.api_pb2.GetPromptResponse<br>
+&nbsp;<br>
+Raises:&nbsp;iterm2.rpc.RPCException&nbsp;if&nbsp;something&nbsp;goes&nbsp;wrong.</tt></dd></dl>
+
+<dl><dt><a name="ProxySession-get_screen_contents"><strong>get_screen_contents</strong></a>(self)</dt><dd><tt>Returns:&nbsp;The&nbsp;screen&nbsp;contents,&nbsp;an&nbsp;iterm2.api_pb2.GetBufferResponse<br>
+&nbsp;<br>
+Raises:&nbsp;iterm2.rpc.RPCException&nbsp;if&nbsp;something&nbsp;goes&nbsp;wrong.</tt></dd></dl>
+
+<dl><dt><a name="ProxySession-pretty_str"><strong>pretty_str</strong></a>(self, indent='')</dt><dd><tt>Returns:&nbsp;A&nbsp;string&nbsp;describing&nbsp;the&nbsp;session.</tt></dd></dl>
+
+<hr>
+Methods inherited from <a href="iterm2.session.html#Session">Session</a>:<br>
+<dl><dt><a name="ProxySession-all_proxy"><strong>all_proxy</strong></a>(connection)</dt><dd><tt>Returns:&nbsp;A&nbsp;proxy&nbsp;for&nbsp;all&nbsp;sessions.</tt></dd></dl>
+
+<dl><dt><a name="ProxySession-get_keystroke_reader"><strong>get_keystroke_reader</strong></a>(self)</dt><dd><tt>Returns:&nbsp;a&nbsp;keystroke&nbsp;reader.<br>
+&nbsp;<br>
+Usage:<br>
+&nbsp;<br>
+&nbsp;&nbsp;async&nbsp;with&nbsp;session.<a href="#ProxySession-get_keystroke_reader">get_keystroke_reader</a>()&nbsp;as&nbsp;reader:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;condition():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_keystrokes(reader.get())<br>
+&nbsp;<br>
+&nbsp;&nbsp;Each&nbsp;call&nbsp;to&nbsp;reader.get()&nbsp;returns&nbsp;an&nbsp;array&nbsp;of&nbsp;new&nbsp;keystrokes.</tt></dd></dl>
+
+<dl><dt><a name="ProxySession-get_screen_streamer"><strong>get_screen_streamer</strong></a>(self, want_contents=True)</dt></dl>
+
+<dl><dt><a name="ProxySession-get_session_id"><strong>get_session_id</strong></a>(self)</dt><dd><tt>Returns:&nbsp;the&nbsp;globally&nbsp;unique&nbsp;identifier&nbsp;for&nbsp;this&nbsp;session.</tt></dd></dl>
+
+<dl><dt><a name="ProxySession-read_keystroke"><strong>read_keystroke</strong></a>(self)</dt><dd><tt>Blocks&nbsp;until&nbsp;a&nbsp;keystroke&nbsp;is&nbsp;received.&nbsp;Returns&nbsp;a&nbsp;KeystrokeNotification.<br>
+&nbsp;<br>
+See&nbsp;also&nbsp;<a href="#ProxySession-get_keystroke_reader">get_keystroke_reader</a>().<br>
+&nbsp;<br>
+Returns:&nbsp;iterm2.api_pb2.KeystrokeNotification</tt></dd></dl>
+
+<dl><dt><a name="ProxySession-send_text"><strong>send_text</strong></a>(self, text)</dt><dd><tt>Send&nbsp;text&nbsp;as&nbsp;though&nbsp;the&nbsp;user&nbsp;had&nbsp;typed&nbsp;it.<br>
+&nbsp;<br>
+text:&nbsp;The&nbsp;text&nbsp;to&nbsp;send.</tt></dd></dl>
+
+<dl><dt><a name="ProxySession-set_profile_property"><strong>set_profile_property</strong></a>(self, key, json_value)</dt><dd><tt>Sets&nbsp;the&nbsp;value&nbsp;of&nbsp;a&nbsp;property&nbsp;in&nbsp;this&nbsp;session.<br>
+&nbsp;<br>
+key:&nbsp;The&nbsp;name&nbsp;of&nbsp;the&nbsp;property<br>
+json_value:&nbsp;The&nbsp;json-encoded&nbsp;value&nbsp;to&nbsp;set<br>
+&nbsp;<br>
+Returns:&nbsp;iterm2.api_pb2.SetProfilePropertyResponse<br>
+&nbsp;<br>
+Raises:&nbsp;iterm2.rpc.RPCException&nbsp;if&nbsp;something&nbsp;goes&nbsp;wrong.</tt></dd></dl>
+
+<dl><dt><a name="ProxySession-split_pane"><strong>split_pane</strong></a>(self, vertical=False, before=False, profile=None)</dt><dd><tt>Splits&nbsp;the&nbsp;pane,&nbsp;creating&nbsp;a&nbsp;new&nbsp;session.<br>
+&nbsp;<br>
+vertical:&nbsp;Bool.&nbsp;If&nbsp;true,&nbsp;the&nbsp;divider&nbsp;is&nbsp;vertical,&nbsp;else&nbsp;horizontal.<br>
+before:&nbsp;Bool,&nbsp;whether&nbsp;the&nbsp;new&nbsp;session&nbsp;should&nbsp;be&nbsp;left/above&nbsp;the&nbsp;existing&nbsp;one.<br>
+profile:&nbsp;The&nbsp;profile&nbsp;name&nbsp;to&nbsp;use.&nbsp;None&nbsp;for&nbsp;the&nbsp;default&nbsp;profile.<br>
+&nbsp;<br>
+Returns:&nbsp;New&nbsp;session&nbsp;ID.<br>
+&nbsp;<br>
+Raises:&nbsp;<a href="#SplitPaneException">SplitPaneException</a>&nbsp;if&nbsp;something&nbsp;goes&nbsp;wrong.</tt></dd></dl>
+
+<dl><dt><a name="ProxySession-wait_for_screen_update"><strong>wait_for_screen_update</strong></a>(self)</dt><dd><tt>Blocks&nbsp;until&nbsp;the&nbsp;screen&nbsp;contents&nbsp;change.<br>
+&nbsp;<br>
+Returns:&nbsp;iterm2.api_pb2.ScreenUpdateNotification</tt></dd></dl>
+
+<hr>
+Static methods inherited from <a href="iterm2.session.html#Session">Session</a>:<br>
+<dl><dt><a name="ProxySession-active_proxy"><strong>active_proxy</strong></a>(connection)</dt><dd><tt>Returns:&nbsp;A&nbsp;proxy&nbsp;for&nbsp;the&nbsp;currently&nbsp;active&nbsp;session.</tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="iterm2.session.html#Session">Session</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Data and other attributes inherited from <a href="iterm2.session.html#Session">Session</a>:<br>
+<dl><dt><strong>KeystrokeReader</strong> = &lt;class 'iterm2.session.Session.KeystrokeReader'&gt;<dd><tt>An&nbsp;asyncio&nbsp;context&nbsp;manager&nbsp;for&nbsp;reading&nbsp;keystrokes.<br>
+&nbsp;<br>
+Don't&nbsp;create&nbsp;this&nbsp;yourself.&nbsp;Use&nbsp;<a href="#Session">Session</a>.<a href="#ProxySession-get_keystroke_reader">get_keystroke_reader</a>()&nbsp;instead.&nbsp;See<br>
+its&nbsp;docstring&nbsp;for&nbsp;more&nbsp;info.</tt></dl>
+
+<dl><dt><strong>ScreenStreamer</strong> = &lt;class 'iterm2.session.Session.ScreenStreamer'&gt;<dd><tt>An&nbsp;asyncio&nbsp;context&nbsp;manager&nbsp;for&nbsp;monitoring&nbsp;the&nbsp;screen&nbsp;contents.<br>
+&nbsp;<br>
+Don't&nbsp;create&nbsp;this&nbsp;yourself.&nbsp;Use&nbsp;<a href="#Session">Session</a>.<a href="#ProxySession-get_screen_streamer">get_screen_streamer</a>()&nbsp;instead.&nbsp;See<br>
+its&nbsp;docstring&nbsp;for&nbsp;more&nbsp;info.</tt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Session">class <strong>Session</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Represents&nbsp;an&nbsp;iTerm2&nbsp;session.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Session-__init__"><strong>__init__</strong></a>(self, connection, link)</dt><dd><tt>connection:&nbsp;iterm2.connection.Connection<br>
+link:&nbsp;iterm2.api_pb2.ListSessionsResponse.SplitTreeNode.SplitTreeLink</tt></dd></dl>
+
+<dl><dt><a name="Session-__repr__"><strong>__repr__</strong></a>(self)</dt><dd><tt>Return&nbsp;repr(self).</tt></dd></dl>
+
+<dl><dt><a name="Session-all_proxy"><strong>all_proxy</strong></a>(connection)</dt><dd><tt>Returns:&nbsp;A&nbsp;proxy&nbsp;for&nbsp;all&nbsp;sessions.</tt></dd></dl>
+
+<dl><dt><a name="Session-get_buffer_lines"><strong>get_buffer_lines</strong></a>(self, trailing_lines)</dt><dd><tt>Fetches&nbsp;the&nbsp;last&nbsp;lines&nbsp;of&nbsp;the&nbsp;session,&nbsp;reaching&nbsp;into&nbsp;history&nbsp;if&nbsp;needed.<br>
+&nbsp;<br>
+trailing_lines:&nbsp;The&nbsp;number&nbsp;of&nbsp;lines&nbsp;to&nbsp;fetch.<br>
+&nbsp;<br>
+Returns:&nbsp;The&nbsp;buffer&nbsp;contents,&nbsp;an&nbsp;iterm2.api_pb2.GetBufferResponse<br>
+&nbsp;<br>
+Raises:&nbsp;iterm2.rpc.RPCException&nbsp;if&nbsp;something&nbsp;goes&nbsp;wrong.</tt></dd></dl>
+
+<dl><dt><a name="Session-get_keystroke_reader"><strong>get_keystroke_reader</strong></a>(self)</dt><dd><tt>Returns:&nbsp;a&nbsp;keystroke&nbsp;reader.<br>
+&nbsp;<br>
+Usage:<br>
+&nbsp;<br>
+&nbsp;&nbsp;async&nbsp;with&nbsp;session.<a href="#Session-get_keystroke_reader">get_keystroke_reader</a>()&nbsp;as&nbsp;reader:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;condition():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_keystrokes(reader.get())<br>
+&nbsp;<br>
+&nbsp;&nbsp;Each&nbsp;call&nbsp;to&nbsp;reader.get()&nbsp;returns&nbsp;an&nbsp;array&nbsp;of&nbsp;new&nbsp;keystrokes.</tt></dd></dl>
+
+<dl><dt><a name="Session-get_profile"><strong>get_profile</strong></a>(self)</dt><dd><tt>Fetches&nbsp;the&nbsp;profile&nbsp;of&nbsp;this&nbsp;session<br>
+&nbsp;<br>
+Returns:&nbsp;iterm2.profile.Profile<br>
+&nbsp;<br>
+Raises:&nbsp;iterm2.rpc.RPCException&nbsp;if&nbsp;something&nbsp;goes&nbsp;wrong.</tt></dd></dl>
+
+<dl><dt><a name="Session-get_prompt"><strong>get_prompt</strong></a>(self)</dt><dd><tt>Fetches&nbsp;info&nbsp;about&nbsp;the&nbsp;last&nbsp;prompt&nbsp;in&nbsp;this&nbsp;session.<br>
+&nbsp;<br>
+Returns:&nbsp;iterm2.api_pb2.GetPromptResponse<br>
+&nbsp;<br>
+Raises:&nbsp;iterm2.rpc.RPCException&nbsp;if&nbsp;something&nbsp;goes&nbsp;wrong.</tt></dd></dl>
+
+<dl><dt><a name="Session-get_screen_contents"><strong>get_screen_contents</strong></a>(self)</dt><dd><tt>Returns:&nbsp;The&nbsp;screen&nbsp;contents,&nbsp;an&nbsp;iterm2.api_pb2.GetBufferResponse<br>
+&nbsp;<br>
+Raises:&nbsp;iterm2.rpc.RPCException&nbsp;if&nbsp;something&nbsp;goes&nbsp;wrong.</tt></dd></dl>
+
+<dl><dt><a name="Session-get_screen_streamer"><strong>get_screen_streamer</strong></a>(self, want_contents=True)</dt></dl>
+
+<dl><dt><a name="Session-get_session_id"><strong>get_session_id</strong></a>(self)</dt><dd><tt>Returns:&nbsp;the&nbsp;globally&nbsp;unique&nbsp;identifier&nbsp;for&nbsp;this&nbsp;session.</tt></dd></dl>
+
+<dl><dt><a name="Session-pretty_str"><strong>pretty_str</strong></a>(self, indent='')</dt><dd><tt>Returns:&nbsp;A&nbsp;string&nbsp;describing&nbsp;the&nbsp;session.</tt></dd></dl>
+
+<dl><dt><a name="Session-read_keystroke"><strong>read_keystroke</strong></a>(self)</dt><dd><tt>Blocks&nbsp;until&nbsp;a&nbsp;keystroke&nbsp;is&nbsp;received.&nbsp;Returns&nbsp;a&nbsp;KeystrokeNotification.<br>
+&nbsp;<br>
+See&nbsp;also&nbsp;<a href="#Session-get_keystroke_reader">get_keystroke_reader</a>().<br>
+&nbsp;<br>
+Returns:&nbsp;iterm2.api_pb2.KeystrokeNotification</tt></dd></dl>
+
+<dl><dt><a name="Session-send_text"><strong>send_text</strong></a>(self, text)</dt><dd><tt>Send&nbsp;text&nbsp;as&nbsp;though&nbsp;the&nbsp;user&nbsp;had&nbsp;typed&nbsp;it.<br>
+&nbsp;<br>
+text:&nbsp;The&nbsp;text&nbsp;to&nbsp;send.</tt></dd></dl>
+
+<dl><dt><a name="Session-set_profile_property"><strong>set_profile_property</strong></a>(self, key, json_value)</dt><dd><tt>Sets&nbsp;the&nbsp;value&nbsp;of&nbsp;a&nbsp;property&nbsp;in&nbsp;this&nbsp;session.<br>
+&nbsp;<br>
+key:&nbsp;The&nbsp;name&nbsp;of&nbsp;the&nbsp;property<br>
+json_value:&nbsp;The&nbsp;json-encoded&nbsp;value&nbsp;to&nbsp;set<br>
+&nbsp;<br>
+Returns:&nbsp;iterm2.api_pb2.SetProfilePropertyResponse<br>
+&nbsp;<br>
+Raises:&nbsp;iterm2.rpc.RPCException&nbsp;if&nbsp;something&nbsp;goes&nbsp;wrong.</tt></dd></dl>
+
+<dl><dt><a name="Session-split_pane"><strong>split_pane</strong></a>(self, vertical=False, before=False, profile=None)</dt><dd><tt>Splits&nbsp;the&nbsp;pane,&nbsp;creating&nbsp;a&nbsp;new&nbsp;session.<br>
+&nbsp;<br>
+vertical:&nbsp;Bool.&nbsp;If&nbsp;true,&nbsp;the&nbsp;divider&nbsp;is&nbsp;vertical,&nbsp;else&nbsp;horizontal.<br>
+before:&nbsp;Bool,&nbsp;whether&nbsp;the&nbsp;new&nbsp;session&nbsp;should&nbsp;be&nbsp;left/above&nbsp;the&nbsp;existing&nbsp;one.<br>
+profile:&nbsp;The&nbsp;profile&nbsp;name&nbsp;to&nbsp;use.&nbsp;None&nbsp;for&nbsp;the&nbsp;default&nbsp;profile.<br>
+&nbsp;<br>
+Returns:&nbsp;New&nbsp;session&nbsp;ID.<br>
+&nbsp;<br>
+Raises:&nbsp;<a href="#SplitPaneException">SplitPaneException</a>&nbsp;if&nbsp;something&nbsp;goes&nbsp;wrong.</tt></dd></dl>
+
+<dl><dt><a name="Session-wait_for_screen_update"><strong>wait_for_screen_update</strong></a>(self)</dt><dd><tt>Blocks&nbsp;until&nbsp;the&nbsp;screen&nbsp;contents&nbsp;change.<br>
+&nbsp;<br>
+Returns:&nbsp;iterm2.api_pb2.ScreenUpdateNotification</tt></dd></dl>
+
+<hr>
+Static methods defined here:<br>
+<dl><dt><a name="Session-active_proxy"><strong>active_proxy</strong></a>(connection)</dt><dd><tt>Returns:&nbsp;A&nbsp;proxy&nbsp;for&nbsp;the&nbsp;currently&nbsp;active&nbsp;session.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>KeystrokeReader</strong> = &lt;class 'iterm2.session.Session.KeystrokeReader'&gt;<dd><tt>An&nbsp;asyncio&nbsp;context&nbsp;manager&nbsp;for&nbsp;reading&nbsp;keystrokes.<br>
+&nbsp;<br>
+Don't&nbsp;create&nbsp;this&nbsp;yourself.&nbsp;Use&nbsp;<a href="#Session">Session</a>.<a href="#Session-get_keystroke_reader">get_keystroke_reader</a>()&nbsp;instead.&nbsp;See<br>
+its&nbsp;docstring&nbsp;for&nbsp;more&nbsp;info.</tt></dl>
+
+<dl><dt><strong>ScreenStreamer</strong> = &lt;class 'iterm2.session.Session.ScreenStreamer'&gt;<dd><tt>An&nbsp;asyncio&nbsp;context&nbsp;manager&nbsp;for&nbsp;monitoring&nbsp;the&nbsp;screen&nbsp;contents.<br>
+&nbsp;<br>
+Don't&nbsp;create&nbsp;this&nbsp;yourself.&nbsp;Use&nbsp;<a href="#Session">Session</a>.<a href="#Session-get_screen_streamer">get_screen_streamer</a>()&nbsp;instead.&nbsp;See<br>
+its&nbsp;docstring&nbsp;for&nbsp;more&nbsp;info.</tt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="SplitPaneException">class <strong>SplitPaneException</strong></a>(<a href="builtins.html#Exception">builtins.Exception</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Something&nbsp;went&nbsp;wrong&nbsp;when&nbsp;trying&nbsp;to&nbsp;split&nbsp;a&nbsp;pane.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="iterm2.session.html#SplitPaneException">SplitPaneException</a></dd>
+<dd><a href="builtins.html#Exception">builtins.Exception</a></dd>
+<dd><a href="builtins.html#BaseException">builtins.BaseException</a></dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Methods inherited from <a href="builtins.html#Exception">builtins.Exception</a>:<br>
+<dl><dt><a name="SplitPaneException-__init__"><strong>__init__</strong></a>(self, /, *args, **kwargs)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="SplitPaneException-__new__"><strong>__new__</strong></a>(*args, **kwargs)<font color="#909090"><font face="helvetica, arial"> from <a href="builtins.html#type">builtins.type</a></font></font></dt><dd><tt>Create&nbsp;and&nbsp;return&nbsp;a&nbsp;new&nbsp;<a href="builtins.html#object">object</a>.&nbsp;&nbsp;See&nbsp;help(type)&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<hr>
+Methods inherited from <a href="builtins.html#BaseException">builtins.BaseException</a>:<br>
+<dl><dt><a name="SplitPaneException-__delattr__"><strong>__delattr__</strong></a>(self, name, /)</dt><dd><tt>Implement&nbsp;delattr(self,&nbsp;name).</tt></dd></dl>
+
+<dl><dt><a name="SplitPaneException-__getattribute__"><strong>__getattribute__</strong></a>(self, name, /)</dt><dd><tt>Return&nbsp;getattr(self,&nbsp;name).</tt></dd></dl>
+
+<dl><dt><a name="SplitPaneException-__reduce__"><strong>__reduce__</strong></a>(...)</dt><dd><tt>helper&nbsp;for&nbsp;pickle</tt></dd></dl>
+
+<dl><dt><a name="SplitPaneException-__repr__"><strong>__repr__</strong></a>(self, /)</dt><dd><tt>Return&nbsp;repr(self).</tt></dd></dl>
+
+<dl><dt><a name="SplitPaneException-__setattr__"><strong>__setattr__</strong></a>(self, name, value, /)</dt><dd><tt>Implement&nbsp;setattr(self,&nbsp;name,&nbsp;value).</tt></dd></dl>
+
+<dl><dt><a name="SplitPaneException-__setstate__"><strong>__setstate__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="SplitPaneException-__str__"><strong>__str__</strong></a>(self, /)</dt><dd><tt>Return&nbsp;str(self).</tt></dd></dl>
+
+<dl><dt><a name="SplitPaneException-with_traceback"><strong>with_traceback</strong></a>(...)</dt><dd><tt><a href="builtins.html#Exception">Exception</a>.<a href="#SplitPaneException-with_traceback">with_traceback</a>(tb)&nbsp;--<br>
+set&nbsp;self.<strong>__traceback__</strong>&nbsp;to&nbsp;tb&nbsp;and&nbsp;return&nbsp;self.</tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="builtins.html#BaseException">builtins.BaseException</a>:<br>
+<dl><dt><strong>__cause__</strong></dt>
+<dd><tt>exception&nbsp;cause</tt></dd>
+</dl>
+<dl><dt><strong>__context__</strong></dt>
+<dd><tt>exception&nbsp;context</tt></dd>
+</dl>
+<dl><dt><strong>__dict__</strong></dt>
+</dl>
+<dl><dt><strong>__suppress_context__</strong></dt>
+</dl>
+<dl><dt><strong>__traceback__</strong></dt>
+</dl>
+<dl><dt><strong>args</strong></dt>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Splitter">class <strong>Splitter</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>A&nbsp;container&nbsp;of&nbsp;split&nbsp;pane&nbsp;sessions&nbsp;where&nbsp;the&nbsp;dividers&nbsp;are&nbsp;all&nbsp;aligned&nbsp;the&nbsp;same&nbsp;way.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Splitter-__init__"><strong>__init__</strong></a>(self, vertical=False)</dt><dd><tt>vertical:&nbsp;Bool.&nbsp;If&nbsp;true,&nbsp;the&nbsp;divider&nbsp;is&nbsp;vertical,&nbsp;else&nbsp;horizontal.</tt></dd></dl>
+
+<dl><dt><a name="Splitter-add_child"><strong>add_child</strong></a>(self, child)</dt><dd><tt>Adds&nbsp;one&nbsp;or&nbsp;more&nbsp;new&nbsp;sessions&nbsp;to&nbsp;a&nbsp;splitter.<br>
+&nbsp;<br>
+child:&nbsp;A&nbsp;<a href="#Session">Session</a>&nbsp;or&nbsp;a&nbsp;<a href="#Splitter">Splitter</a>.</tt></dd></dl>
+
+<dl><dt><a name="Splitter-all_sessions"><strong>all_sessions</strong></a>(self)</dt><dd><tt>Returns:&nbsp;All&nbsp;sessions&nbsp;in&nbsp;this&nbsp;splitter&nbsp;and&nbsp;all&nbsp;nested&nbsp;splitters.&nbsp;A&nbsp;list&nbsp;of&nbsp;<a href="#Session">Session</a>'s.</tt></dd></dl>
+
+<dl><dt><a name="Splitter-get_children"><strong>get_children</strong></a>(self)</dt><dd><tt>Returns:&nbsp;this&nbsp;splitter's&nbsp;children.&nbsp;A&nbsp;list&nbsp;of&nbsp;<a href="#Session">Session</a>'s.</tt></dd></dl>
+
+<dl><dt><a name="Splitter-pretty_str"><strong>pretty_str</strong></a>(self, indent='')</dt><dd><tt>Returns:&nbsp;A&nbsp;string&nbsp;describing&nbsp;this&nbsp;splitter.&nbsp;Has&nbsp;newlines.</tt></dd></dl>
+
+<hr>
+Static methods defined here:<br>
+<dl><dt><a name="Splitter-from_node"><strong>from_node</strong></a>(node, connection)</dt><dd><tt>Creates&nbsp;a&nbsp;new&nbsp;<a href="#Splitter">Splitter</a>&nbsp;from&nbsp;a&nbsp;node.<br>
+&nbsp;<br>
+node:&nbsp;iterm2.api_pb2.ListSessionsResponse.SplitTreeNode<br>
+connection:&nbsp;iterm2.connection.Connection<br>
+&nbsp;<br>
+Returns:&nbsp;A&nbsp;new&nbsp;<a href="#Splitter">Splitter</a>.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table></td></tr></table>
+</body></html>
