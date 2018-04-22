@@ -23,7 +23,7 @@ extern NSString *const iTermAPIServerConnectionClosed;
 - (void)apiServerNotification:(ITMNotificationRequest *)request
                    connection:(id)connection
                       handler:(void (^)(ITMNotificationResponse *))handler;
-- (void)apiServerRemoveSubscriptionsForConnection:(id)connection;
+- (void)apiServerDidCloseConnection:(id)connection;
 - (void)apiServerRegisterTool:(ITMRegisterToolRequest *)request
                  peerIdentity:(NSDictionary *)peerIdentity
                       handler:(void (^)(ITMRegisterToolResponse *))handler;
@@ -39,6 +39,7 @@ extern NSString *const iTermAPIServerConnectionClosed;
                    handler:(void (^)(ITMCreateTabResponse *))handler;
 - (void)apiServerSplitPane:(ITMSplitPaneRequest *)request
                    handler:(void (^)(ITMSplitPaneResponse *))handler;
+
 @end
 
 @interface iTermAPIServer : NSObject

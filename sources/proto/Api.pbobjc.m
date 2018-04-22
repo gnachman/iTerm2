@@ -3604,12 +3604,12 @@ BOOL ITMSplitPaneRequest_SplitDirection_IsValidValue(int32_t value__) {
 @implementation ITMSplitPaneResponse
 
 @dynamic hasStatus, status;
-@dynamic hasSessionId, sessionId;
+@dynamic sessionIdArray, sessionIdArray_Count;
 
 typedef struct ITMSplitPaneResponse__storage_ {
   uint32_t _has_storage_[1];
   ITMSplitPaneResponse_Status status;
-  NSString *sessionId;
+  NSMutableArray *sessionIdArray;
 } ITMSplitPaneResponse__storage_;
 
 // This method is threadsafe because it is initially called
@@ -3628,12 +3628,12 @@ typedef struct ITMSplitPaneResponse__storage_ {
         .dataType = GPBDataTypeEnum,
       },
       {
-        .name = "sessionId",
+        .name = "sessionIdArray",
         .dataTypeSpecific.className = NULL,
-        .number = ITMSplitPaneResponse_FieldNumber_SessionId,
-        .hasIndex = 1,
-        .offset = (uint32_t)offsetof(ITMSplitPaneResponse__storage_, sessionId),
-        .flags = GPBFieldOptional,
+        .number = ITMSplitPaneResponse_FieldNumber_SessionIdArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMSplitPaneResponse__storage_, sessionIdArray),
+        .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeString,
       },
     };

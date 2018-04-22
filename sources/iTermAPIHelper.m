@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermLSOF.h"
 #import "MovePaneController.h"
+#import "NSArray+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
@@ -23,12 +24,21 @@ static NSString *const kAPINextConfirmationDate = @"next confirmation";
 static NSString *const kAPIAccessLocalizedName = @"app name";
 static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
+@interface iTermAllSessionsSubscription : NSObject
+@property (nonatomic, strong) ITMNotificationRequest *request;
+@property (nonatomic, strong) id connection;
+@end
+
+@implementation iTermAllSessionsSubscription
+@end
+
 @implementation iTermAPIHelper {
     iTermAPIServer *_apiServer;
     BOOL _layoutChanged;
     NSMutableDictionary<id, ITMNotificationRequest *> *_newSessionSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_terminateSessionSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_layoutChangeSubscriptions;
+    NSMutableArray<iTermAllSessionsSubscription *> *_allSessionsSubscriptions;
 }
 
 - (instancetype)init {
@@ -73,6 +83,10 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)sessionCreated:(NSNotification *)notification {
+    for (iTermAllSessionsSubscription *sub in _allSessionsSubscriptions) {
+        [self handleAPINotificationRequest:sub.request connection:sub.connection];
+    }
+
     PTYSession *session = notification.object;
     [_newSessionSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[ITMNotification alloc] init];
@@ -213,7 +227,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (PTYSession *)sessionForAPIIdentifier:(NSString *)identifier {
-    if (identifier) {
+    if ([identifier isEqualToString:@"active"]) {
+        return [[[iTermController sharedInstance] currentTerminal] currentSession];
+    } else if (identifier) {
         for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
             for (PTYSession *session in term.allSessions) {
                 if ([session.guid isEqualToString:identifier]) {
@@ -221,15 +237,13 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                 }
             }
         }
-        return nil;
-    } else {
-        return [[[iTermController sharedInstance] currentTerminal] currentSession];
     }
+    return nil;
 }
 
 - (void)apiServerGetBuffer:(ITMGetBufferRequest *)request
                    handler:(void (^)(ITMGetBufferResponse *))handler {
-    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
+    PTYSession *session = [self sessionForAPIIdentifier:request.session];
     if (!session) {
         ITMGetBufferResponse *response = [[ITMGetBufferResponse alloc] init];
         response.status = ITMGetBufferResponse_Status_SessionNotFound;
@@ -241,7 +255,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 - (void)apiServerGetPrompt:(ITMGetPromptRequest *)request
                    handler:(void (^)(ITMGetPromptResponse *))handler {
-    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
+    PTYSession *session = [self sessionForAPIIdentifier:request.session];
     if (!session) {
         ITMGetPromptResponse *response = [[ITMGetPromptResponse alloc] init];
         response.status = ITMGetPromptResponse_Status_SessionNotFound;
@@ -290,6 +304,12 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     return response;
 }
 
+- (NSArray<PTYSession *> *)allSessions {
+    return [[[iTermController sharedInstance] terminals] flatMapWithBlock:^id(PseudoTerminal *windowController) {
+        return windowController.allSessions;
+    }];
+}
+
 - (void)apiServerNotification:(ITMNotificationRequest *)request
                    connection:(id)connection
                       handler:(void (^)(ITMNotificationResponse *))handler {
@@ -297,8 +317,25 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         request.notificationType == ITMNotificationType_NotifyOnTerminateSession |
         request.notificationType == ITMNotificationType_NotifyOnLayoutChange) {
         handler([self handleAPINotificationRequest:request connection:connection]);
+    } else if ([request.session isEqualToString:@"all"]) {
+        iTermAllSessionsSubscription *sub = [[iTermAllSessionsSubscription alloc] init];
+        sub.request = [request copy];
+        sub.connection = connection;
+
+        for (PTYSession *session in [self allSessions]) {
+            ITMNotificationResponse *response = [session handleAPINotificationRequest:request connection:connection];
+            if (response.status != ITMNotificationResponse_Status_AlreadySubscribed &&
+                response.status != ITMNotificationResponse_Status_NotSubscribed &&
+                response.status != ITMNotificationResponse_Status_Ok) {
+                handler(response);
+                return;
+            }
+        }
+        ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
+        response.status = ITMNotificationResponse_Status_Ok;
+        handler(response);
     } else {
-        PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
+        PTYSession *session = [self sessionForAPIIdentifier:request.session];
         if (!session) {
             ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
             response.status = ITMNotificationResponse_Status_SessionNotFound;
@@ -309,8 +346,11 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
 }
 
-- (void)apiServerRemoveSubscriptionsForConnection:(id)connection {
+- (void)apiServerDidCloseConnection:(id)connection {
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermRemoveAPIServerSubscriptionsNotification object:connection];
+    [_allSessionsSubscriptions removeObjectsPassingTest:^BOOL(iTermAllSessionsSubscription *sub) {
+        return [sub.connection isEqual:connection];
+    }];
 }
 
 - (void)apiServerRegisterTool:(ITMRegisterToolRequest *)request
@@ -345,31 +385,47 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 - (void)apiServerSetProfileProperty:(ITMSetProfilePropertyRequest *)request
                             handler:(void (^)(ITMSetProfilePropertyResponse *))handler {
-    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
-    if (!session) {
-        ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
-        response.status = ITMSetProfilePropertyResponse_Status_SessionNotFound;
-        handler(response);
-        return;
+    NSArray<PTYSession *> *sessions;
+    if ([request.session isEqualToString:@"all"]) {
+        sessions = [self allSessions];
+    } else {
+        PTYSession *session = [self sessionForAPIIdentifier:request.session];
+        if (!session) {
+            ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
+            response.status = ITMSetProfilePropertyResponse_Status_SessionNotFound;
+            handler(response);
+            return;
+        }
+        sessions = @[ session ];
     }
 
-    NSError *error = nil;
-    id value = [NSJSONSerialization JSONObjectWithData:[request.jsonValue dataUsingEncoding:NSUTF8StringEncoding]
-                                               options:NSJSONReadingAllowFragments
-                                                 error:&error];
-    if (!value || error) {
-        XLog(@"JSON parsing error %@ for value in request %@", error, request);
-        ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
-        response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
-        handler(response);
+    for (PTYSession *session in sessions) {
+        NSError *error = nil;
+        id value = [NSJSONSerialization JSONObjectWithData:[request.jsonValue dataUsingEncoding:NSUTF8StringEncoding]
+                                                   options:NSJSONReadingAllowFragments
+                                                     error:&error];
+        if (!value || error) {
+            XLog(@"JSON parsing error %@ for value in request %@", error, request);
+            ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
+            response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
+            handler(response);
+        }
+
+        ITMSetProfilePropertyResponse *response = [session handleSetProfilePropertyForKey:request.key value:value];
+        if (response.status != ITMSetProfilePropertyResponse_Status_Ok) {
+            handler(response);
+            return;
+        }
     }
 
-    handler([session handleSetProfilePropertyForKey:request.key value:value]);
+    ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
+    response.status = ITMSetProfilePropertyResponse_Status_Ok;
+    handler(response);
 }
 
 - (void)apiServerGetProfileProperty:(ITMGetProfilePropertyRequest *)request
                             handler:(void (^)(ITMGetProfilePropertyResponse *))handler {
-    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
+    PTYSession *session = [self sessionForAPIIdentifier:request.session];
     if (!session) {
         ITMGetProfilePropertyResponse *response = [[ITMGetProfilePropertyResponse alloc] init];
         response.status = ITMGetProfilePropertyResponse_Status_SessionNotFound;
@@ -409,14 +465,23 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)apiServerSendText:(ITMSendTextRequest *)request handler:(void (^)(ITMSendTextResponse *))handler {
-    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
-    if (!session || session.exited) {
-        ITMSendTextResponse *response = [[ITMSendTextResponse alloc] init];
-        response.status = ITMSendTextResponse_Status_SessionNotFound;
-        handler(response);
-        return;
+    NSArray<PTYSession *> *sessions;
+    if ([request.session isEqualToString:@"all"]) {
+        sessions = [self allSessions];
+    } else {
+        PTYSession *session = [self sessionForAPIIdentifier:request.session];
+        if (!session || session.exited) {
+            ITMSendTextResponse *response = [[ITMSendTextResponse alloc] init];
+            response.status = ITMSendTextResponse_Status_SessionNotFound;
+            handler(response);
+            return;
+        }
+        sessions = @[ session ];
     }
-    [session writeTask:request.text];
+
+    for (PTYSession *session in sessions) {
+        [session writeTask:request.text];
+    }
     ITMSendTextResponse *response = [[ITMSendTextResponse alloc] init];
     response.status = ITMSendTextResponse_Status_Ok;
     handler(response);
@@ -483,13 +548,28 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)apiServerSplitPane:(ITMSplitPaneRequest *)request handler:(void (^)(ITMSplitPaneResponse *))handler {
-    PTYSession *session = [self sessionForAPIIdentifier:request.hasSession ? request.session : nil];
-    PseudoTerminal *term = session ? [[iTermController sharedInstance] terminalWithSession:session] : nil;
-    if (!term || !session || session.exited) {
-        ITMSplitPaneResponse *response = [[ITMSplitPaneResponse alloc] init];
-        response.status = ITMSplitPaneResponse_Status_SessionNotFound;
-        handler(response);
-        return;
+    NSArray<PTYSession *> *sessions;
+    if ([request.session isEqualToString:@"all"]) {
+        sessions = [self allSessions];
+    } else {
+        PTYSession *session = [self sessionForAPIIdentifier:request.session];
+        if (!session || session.exited) {
+            ITMSplitPaneResponse *response = [[ITMSplitPaneResponse alloc] init];
+            response.status = ITMSplitPaneResponse_Status_SessionNotFound;
+            handler(response);
+            return;
+        }
+        sessions = @[ session ];
+    }
+
+    for (PTYSession *session in sessions) {
+        PseudoTerminal *term = [[iTermController sharedInstance] terminalWithSession:session];
+        if (!term) {
+            ITMSplitPaneResponse *response = [[ITMSplitPaneResponse alloc] init];
+            response.status = ITMSplitPaneResponse_Status_SessionNotFound;
+            handler(response);
+            return;
+        }
     }
 
     Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
@@ -503,22 +583,21 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         }
     }
 
-    PTYSession *newSession = [term splitVertically:request.splitDirection == ITMSplitPaneRequest_SplitDirection_Vertical
-                                            before:request.before
-                                           profile:profile
-                                     targetSession:session];
-    if (newSession == nil && !session.isTmuxClient) {
-        ITMSplitPaneResponse *response = [[ITMSplitPaneResponse alloc] init];
-        response.status = ITMSplitPaneResponse_Status_CannotSplit;
-        handler(response);
-        return;
-    }
-
     ITMSplitPaneResponse *response = [[ITMSplitPaneResponse alloc] init];
     response.status = ITMSplitPaneResponse_Status_Ok;
-    if (newSession != nil) {
-        response.sessionId = newSession.guid;
+    for (PTYSession *session in sessions) {
+        PseudoTerminal *term = [[iTermController sharedInstance] terminalWithSession:session];
+        PTYSession *newSession = [term splitVertically:request.splitDirection == ITMSplitPaneRequest_SplitDirection_Vertical
+                                                before:request.before
+                                               profile:profile
+                                         targetSession:session];
+        if (newSession == nil && !session.isTmuxClient) {
+            response.status = ITMSplitPaneResponse_Status_CannotSplit;
+        } else {
+            [response.sessionIdArray addObject:newSession.guid];
+        }
     }
+
     handler(response);
 }
 

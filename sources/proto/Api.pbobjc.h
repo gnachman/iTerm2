@@ -328,7 +328,11 @@ typedef GPB_ENUM(ITMSplitPaneResponse_Status) {
   ITMSplitPaneResponse_Status_SessionNotFound = 1,
   ITMSplitPaneResponse_Status_InvalidProfileName = 2,
 
-  /** This can happen if the session to be split is too small. */
+  /**
+   * This can happen if the session to be split is too small. If splitting multiple sessions and
+   * one or more cannot be split, the status will be set to CANNOT_SPLIT, even if some did succeed
+   * (in which case there will be one or more session_id's).
+   **/
   ITMSplitPaneResponse_Status_CannotSplit = 3,
 };
 
@@ -455,7 +459,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
 @property(nonatomic, readwrite) int64_t id_p;
 
 @property(nonatomic, readwrite) BOOL hasId_p;
-/** Responses to ClientOriginamtedMessages of the corresponding type */
+/** Responses to ClientOriginatedMessages of the corresponding type */
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetBufferResponse *getBufferResponse;
 /** Test to see if @c getBufferResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasGetBufferResponse;
@@ -500,7 +504,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
 /** Test to see if @c getProfilePropertyResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasGetProfilePropertyResponse;
 
-/** Spontaneously sent, not in response to another message. */
+/** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 /** Test to see if @c notification has been set. */
 @property(nonatomic, readwrite) BOOL hasNotification;
@@ -576,7 +580,10 @@ typedef GPB_ENUM(ITMNotificationRequest_FieldNumber) {
 
 @interface ITMNotificationRequest : GPBMessage
 
-/** Leave this empty to use the current session, if any. */
+/**
+ * See documentation on session IDs. NOTIFY_ON_NEW_SESSION, NOTIFY_ON_TERMINATE_SESSION, and
+ * NOTIFY_ON_LAYOUT_CHANGE do not use the session ID and are posted on all such events.
+ **/
 @property(nonatomic, readwrite, copy, null_resettable) NSString *session;
 /** Test to see if @c session has been set. */
 @property(nonatomic, readwrite) BOOL hasSession;
@@ -831,7 +838,7 @@ typedef GPB_ENUM(ITMGetBufferRequest_FieldNumber) {
  **/
 @interface ITMGetBufferRequest : GPBMessage
 
-/** Leave this empty to use the current session, if any. */
+/** See documentation on session IDs. "all" not accepted. */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *session;
 /** Test to see if @c session has been set. */
 @property(nonatomic, readwrite) BOOL hasSession;
@@ -896,7 +903,7 @@ typedef GPB_ENUM(ITMGetPromptRequest_FieldNumber) {
  **/
 @interface ITMGetPromptRequest : GPBMessage
 
-/** Leave this empty to use the current session, if any. */
+/** See documentation on session IDs. "all" not accepted. */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *session;
 /** Test to see if @c session has been set. */
 @property(nonatomic, readwrite) BOOL hasSession;
@@ -953,7 +960,7 @@ typedef GPB_ENUM(ITMGetProfilePropertyRequest_FieldNumber) {
 
 @interface ITMGetProfilePropertyRequest : GPBMessage
 
-/** Leave this empty to use the current session, if any. */
+/** See documentation on session IDs */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *session;
 /** Test to see if @c session has been set. */
 @property(nonatomic, readwrite) BOOL hasSession;
@@ -1015,7 +1022,7 @@ typedef GPB_ENUM(ITMSetProfilePropertyRequest_FieldNumber) {
  **/
 @interface ITMSetProfilePropertyRequest : GPBMessage
 
-/** Leave this empty to use the current session, if any. */
+/** See documentation on session IDs */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *session;
 /** Test to see if @c session has been set. */
 @property(nonatomic, readwrite) BOOL hasSession;
@@ -1397,7 +1404,7 @@ typedef GPB_ENUM(ITMSendTextRequest_FieldNumber) {
 
 @interface ITMSendTextRequest : GPBMessage
 
-/** Leave this empty to use the current session, if any. */
+/** See documentation on session IDs */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *session;
 /** Test to see if @c session has been set. */
 @property(nonatomic, readwrite) BOOL hasSession;
@@ -1682,7 +1689,7 @@ typedef GPB_ENUM(ITMSplitPaneRequest_FieldNumber) {
 
 @interface ITMSplitPaneRequest : GPBMessage
 
-/** Leave this empty to use the current session, if any. */
+/** See documentation on session IDs */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *session;
 /** Test to see if @c session has been set. */
 @property(nonatomic, readwrite) BOOL hasSession;
@@ -1705,7 +1712,7 @@ typedef GPB_ENUM(ITMSplitPaneRequest_FieldNumber) {
 
 typedef GPB_ENUM(ITMSplitPaneResponse_FieldNumber) {
   ITMSplitPaneResponse_FieldNumber_Status = 1,
-  ITMSplitPaneResponse_FieldNumber_SessionId = 2,
+  ITMSplitPaneResponse_FieldNumber_SessionIdArray = 2,
 };
 
 @interface ITMSplitPaneResponse : GPBMessage
@@ -1716,10 +1723,12 @@ typedef GPB_ENUM(ITMSplitPaneResponse_FieldNumber) {
 /**
  * TODO(gln): this will not be set for tmux integration because the split happens only if/when the
  * tmux server acts on the request.
+ * See documentation on session IDs.
+ * If more than one session was split, there will be multiple session_id's.
  **/
-@property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
-/** Test to see if @c sessionId has been set. */
-@property(nonatomic, readwrite) BOOL hasSessionId;
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *sessionIdArray;
+/** The number of items in @c sessionIdArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger sessionIdArray_Count;
 
 @end
 

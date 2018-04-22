@@ -519,7 +519,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             }
         });
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self->_delegate apiServerRemoveSubscriptionsForConnection:webSocketConnection.handle];
+            [self->_delegate apiServerDidCloseConnection:webSocketConnection.handle];
             dispatch_async(dispatch_get_main_queue(), ^{
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionClosed
                                                                     object:webSocketConnection.key];
