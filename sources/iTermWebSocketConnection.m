@@ -153,6 +153,8 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
         while (weakSelf) {
             NSMutableData *data = [self->_connection read];
             if (!data) {
+                DLog(@"Read EOF from connection");
+                [weakSelf abort];
                 return;
             }
             [weakSelf didReceiveData:data];
