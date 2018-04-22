@@ -2,6 +2,13 @@ syntax = "proto2";
 option objc_class_prefix = "ITM";
 package iterm2;
 
+// A note on session IDs:
+// In requests, session IDs may take one of three values;
+// 1. A unique ID as returned in ListSessionsResponse
+// 2. The special value "all", which applies to all sessions. This is sometimes not accepted. See
+//    comments in the request message for details.
+// 3. The special value "active", which applies to the session with keyboard focus.
+
 // All requests are wrapped in this message. This encoded message is the entirety of the payload
 // of messages sent over WebSocket from client to iTerm2.
 message ClientOriginatedMessage {
@@ -92,7 +99,8 @@ enum NotificationType {
 }
 
 message NotificationRequest {
-  // Leave this empty to use the current session, if any.
+  // See documentation on session IDs. NOTIFY_ON_NEW_SESSION, NOTIFY_ON_TERMINATE_SESSION, and
+  // NOTIFY_ON_LAYOUT_CHANGE do not use the session ID and are posted on all such events.
   optional string session = 1;
 
   // Set to true to subscribe, false to unsubscribe.
@@ -178,7 +186,7 @@ message LayoutChangedNotification {
 
 // Requests the contents of a range of lines.
 message GetBufferRequest {
-  // Leave this empty to use the current session, if any.
+  // See documentation on session IDs. "all" not accepted.
   optional string session = 1;
 
   // Which lines to return?
@@ -212,7 +220,7 @@ message GetBufferResponse {
 
 // Requests metadata about the current shell prompt.
 message GetPromptRequest {
-  // Leave this empty to use the current session, if any.
+  // See documentation on session IDs. "all" not accepted.
   optional string session = 1;
 }
 
@@ -236,7 +244,7 @@ message GetPromptResponse {
 }
 
 message GetProfilePropertyRequest {
-  // Leave this empty to use the current session, if any.
+  // See documentation on session IDs
   optional string session = 1;
 
   // If not set, all properties will be returned
@@ -262,7 +270,7 @@ message GetProfilePropertyResponse {
 
 // Sets a value in a session's copy of the profile without modifying the underlying profile.
 message SetProfilePropertyRequest {
-  // Leave this empty to use the current session, if any.
+  // See documentation on session IDs
   optional string session = 1;
 
   // The following keys are allowed. This table also gives the type that's expected in json_value:
@@ -520,7 +528,7 @@ message ListSessionsRequest {
 }
 
 message SendTextRequest {
-  // Leave this empty to use the current session, if any.
+  // See documentation on session IDs
   optional string session = 1;
 
   // The text to send. As usual for proto buffers, this should be UTF-8
@@ -613,7 +621,7 @@ message CreateTabResponse {
 }
 
 message SplitPaneRequest {
-  // Leave this empty to use the current session, if any.
+  // See documentation on session IDs
   optional string session = 1;
 
   enum SplitDirection {
@@ -634,12 +642,16 @@ message SplitPaneResponse {
     OK = 0;
     SESSION_NOT_FOUND = 1;
     INVALID_PROFILE_NAME = 2;
-    // This can happen if the session to be split is too small.
+    // This can happen if the session to be split is too small. If splitting multiple sessions and
+    // one or more cannot be split, the status will be set to CANNOT_SPLIT, even if some did succeed
+    // (in which case there will be one or more session_id's).
     CANNOT_SPLIT = 3;
   }
   optional Status status = 1;
 
   // TODO(gln): this will not be set for tmux integration because the split happens only if/when the
   // tmux server acts on the request.
-  optional string session_id = 2;
+  // See documentation on session IDs.
+  // If more than one session was split, there will be multiple session_id's.
+  repeated string session_id = 2;
 }
