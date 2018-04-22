@@ -5,11 +5,22 @@ import iterm2.tab
 import iterm2.window
 
 class CreateWindowException(Exception):
+  """A problem was encountered while creating a window."""
   pass
 
 class Hierarchy:
+  """Holds a collection of terminal windows and provides utilities for them.
+
+  This object keeps itself up to date by getting notifications when sessions,
+  tabs, or windows change.
+  """
+
   @staticmethod
   async def construct(connection):
+    """Use this to construct a new hierarchy instead of __init__.
+
+    This exists only because __init__ can't be async.
+    """
     response = await iterm2.rpc.list_sessions(connection)
     list_sessions_response = response.list_sessions_response
     windows = Hierarchy._windows_from_list_sessions_response(connection, list_sessions_response)
@@ -29,6 +40,7 @@ class Hierarchy:
     return windows
 
   def __init__(self, connection, windows):
+    """Do not call this directly. Use Hierarchy.construct() instead."""
     self.connection = connection
     self.windows = windows
     self.tokens = []
@@ -57,6 +69,10 @@ class Hierarchy:
     return None
 
   async def get_session_by_id(self, session_id):
+    """Finds a session exactly matching the passed-in id.
+
+    Returns: An iterm2.Session or None.
+    """
     s = self._search_for_session_id(session_id)
     if s is None:
       await self.refresh()
@@ -65,11 +81,22 @@ class Hierarchy:
       return s
 
   async def refresh(self, connection=None, sub_notif=None):
+    """Reloads the hierarchy.
+
+    You shouldn't need to call this explicitly. It will update itself from notifications.
+    """
     response = await iterm2.rpc.list_sessions(self.connection)
     # TODO: Calculate diffs so sessions don't get invalidated.
     self.windows = Hierarchy._windows_from_list_sessions_response(self.connection, response.list_sessions_response)
 
   def get_tab_and_window_for_session(self, session):
+    """Finds the tab and window that own a session.
+
+    Arguments:
+      session: An iterm2.Session object.
+
+    Returns: A tuple of (iterm2.Window, iterm2.Tab).
+    """
     session_id = session.get_session_id()
     for w in self.windows:
       for t in w.tabs:
@@ -78,6 +105,14 @@ class Hierarchy:
     return None, None
 
   async def create_window(self, profile=None, command=None):
+    """Creates a new window.
+
+    Arguments:
+      profile: The name of the profile to use for the new window.
+      command: A command to run in lieu of the shell in the new session.
+
+    Throws CreateWindowException if something went wrong.
+    """
     result = await iterm2.rpc.create_tab(self.connection, profile=profile, window=None, command=command)
     ctr = result.create_tab_response
     if ctr.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):

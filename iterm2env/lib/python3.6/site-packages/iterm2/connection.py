@@ -10,10 +10,18 @@ import websockets
 _helpers = []
 
 class Connection:
+  """Represents a loopback network connection from the script to iTerm2.
+
+  Provides functionality for sending and receiving messages. Supports
+  dispatching incoming messages."""
+
   @staticmethod
   def register_helper(helper):
     """
     Registers a function that handles incoming messages.
+
+    You probably don't want to call this. It's used internally for dispatching
+    notifications.
 
     helper: A coroutine that will be called on incoming messages that were not
       previously handled.
@@ -25,18 +33,12 @@ class Connection:
   def __init__(self):
     self.__deferred = None
 
-  """
-  This class holds the websocket connection to iTerm2.
-
-  It provides the ability send and receive messages at a low level.
-  """
-
   def run(self, coro):
     """
     Convenience method to start a program.
 
     Connects to the API endpoint, begins an asyncio event loop, and runs the
-    passed in coroutine.
+    passed in coroutine. Exceptions will be caught and printed to stdout.
 
     coro: A coroutine (async function) to run after connecting.
     """
@@ -73,7 +75,14 @@ class Connection:
     """
     Establishes a websocket connection.
 
-    Connects to iTerm2 on localhost. Once connected, awaits execution of coro.
+    You probably want to use Connection.run(), which takes care of runloop
+    setup for you. Connects to iTerm2 on localhost. Once connected, awaits
+    execution of coro.
+
+    This uses ITERM2_COOKIE and ITERM2_KEY environment variables to help with
+    authentication. ITERM2_COOKIE has a shared secret that lets user-launched
+    scripts skip the auth dialog. ITERM2_KEY is used to tie together the output
+    of this program with its entry in the scripting console.
 
     coro: A coroutine to run once connected.
     """
@@ -101,6 +110,9 @@ class Connection:
 
     Messages not having the expected id get dispatched asynchronously by a
     registered helper if one exists.
+
+    You probably don't want to use this. It's used while waiting for the
+    response to an RPC, and has logic specific that that use.
 
     reqid: The request ID to look for.
 
