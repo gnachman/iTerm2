@@ -4762,9 +4762,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     const BOOL allSessionsAllowMetal = [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
         return anObject.metalAllowed;
     }];
+    const BOOL allSessionsIdle = (allSessionsAllowMetal &&
+                                  [iTermAdvancedSettingsModel disableMetalWhenIdle] &&
+                                  [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
+        return anObject.idleForMetal;
+    }]);
     const BOOL allowed = (!resizing &&
                           powerOK &&
-                          allSessionsAllowMetal);
+                          allSessionsAllowMetal &&
+                          !allSessionsIdle);
     const BOOL ONLY_KEY_WINDOWS_USE_METAL = NO;
     const BOOL isKey = [[[self realParentWindow] window] isKeyWindow];
     const BOOL satisfiesKeyRequirement = (isKey || !ONLY_KEY_WINDOWS_USE_METAL);

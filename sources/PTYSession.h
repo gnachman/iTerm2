@@ -353,6 +353,7 @@ typedef enum {
 
 // Returns whether this session considers itself eligible to use the Metal renderer.
 @property(nonatomic, readonly) BOOL metalAllowed;
+@property(nonatomic, readonly) BOOL idleForMetal;
 
 // Controls whether this session uses the Metal renderer.
 @property(nonatomic) BOOL useMetal;

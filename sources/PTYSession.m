@@ -4773,21 +4773,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)metalAllowed {
     if (@available(macOS 10.11, *)) {
-        if (!self.canProduceMetalFramecap) {
-            return NO;
-        }
-        return (![iTermAdvancedSettingsModel disableMetalWhenIdle] ||
-                _cadenceController.isActive ||
-                _view.verticalScroller.userScroll ||
-                self.overrideGlobalDisableMetalWhenIdleSetting ||
-                _view.driver.captureDebugInfoForNextFrame);
-    } else {
-        return NO;
-    }
-}
-
-- (BOOL)canProduceMetalFramecap {
-    if (@available(macOS 10.11, *)) {
         static dispatch_once_t onceToken;
         static BOOL machineSupportsMetal;
         dispatch_once(&onceToken, ^{
@@ -4811,6 +4796,18 @@ ITERM_WEAKLY_REFERENCEABLE
                 !_pasteHelper.pasteViewIsVisible &&
                 _view.currentAnnouncement == nil &&
                 !_view.hasHoverURL);
+    } else {
+        return NO;
+    }
+}
+
+- (BOOL)idleForMetal {
+    if (@available(macOS 10.11, *)) {
+        return (!_cadenceController.isActive &&
+                !_view.verticalScroller.userScroll &&
+                !self.overrideGlobalDisableMetalWhenIdleSetting &&
+                !_view.driver.captureDebugInfoForNextFrame);
+
     } else {
         return NO;
     }
