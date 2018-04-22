@@ -43,6 +43,11 @@ class Hierarchy:
     return s
 
   def _search_for_session_id(self, session_id):
+    if session_id == "active":
+      return iterm2.session.Session.active_proxy(self.connection)
+    if session_id == "all":
+      return iterm2.session.Session.all_proxy(self.connection)
+
     for w in self.windows:
       for t in w.tabs:
         sessions = t.get_sessions()

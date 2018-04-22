@@ -49,6 +49,13 @@ class Splitter:
     return s
 
 class Session:
+  @staticmethod
+  def active_proxy(connection):
+    return ProxySession(connection, "active")
+
+  def all_proxy(connection):
+    return ProxySession(connection, "all")
+
   def __init__(self, connection, link):
     self.connection = connection
 
@@ -231,3 +238,39 @@ class Session:
       if self.want_contents:
         result = await iterm2.rpc.get_buffer_with_screen_contents(self.connection, self.session_id)
         return result
+
+class InvalidSessionId(Exception):
+    pass
+
+class ProxySession(Session):
+  def __init__(self, connection, session_id):
+    self.connection = connection
+    self.session_id = session_id
+
+  def __repr__(self):
+    return "<ProxySession %s>" % self.session_id
+
+  def pretty_str(self, indent=""):
+    return indent + "ProxySession %s" % self.session_id
+
+  async def get_screen_contents(self):
+    if self.session_id == "all":
+      raise InvalidSessionId()
+    return await super(ProxySession, self).get_screen_contents()
+
+  async def get_buffer_lines(self, trailing_lines):
+    if self.session_id == "all":
+      raise InvalidSessionId()
+    return await super(ProxySession, self).get_buffer_lines(trailing_lines)
+
+  async def get_prompt(self):
+    if self.session_id == "all":
+      raise InvalidSessionId()
+    return await super(ProxySession, self).get_prompt()
+
+  async def get_profile(self):
+    if self.session_id == "all":
+      return iterm2.profile.WriteOnlyProfile(self.session_id, self.connection)
+    else:
+      return await super(ProxySession, self).get_profile()
+
