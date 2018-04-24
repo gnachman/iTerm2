@@ -30,7 +30,6 @@
 #import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
-#import "iTermAPIScriptLauncher.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermBuriedSessions.h"
@@ -1189,52 +1188,6 @@ static iTermController *gSharedInstance;
     }
 
     return session;
-}
-
-- (void)launchScript:(id)sender {
-    NSString *fullPath = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:[sender title]];
-
-    if ([iTermAdvancedSettingsModel enableAPIServer] &&
-        [[[sender title] pathExtension] isEqualToString:@"py"]) {
-        [iTermAPIScriptLauncher launchScript:fullPath];
-        return;
-    }
-    if ([[[sender title] pathExtension] isEqualToString:@"scpt"]) {
-        NSAppleScript *script;
-        NSDictionary *errorInfo = nil;
-        NSURL *aURL = [NSURL fileURLWithPath:fullPath];
-
-        // Make sure our script suite registry is loaded
-        [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
-
-        script = [[NSAppleScript alloc] initWithContentsOfURL:aURL error:&errorInfo];
-        if (script) {
-            [script executeAndReturnError:&errorInfo];
-            if (errorInfo) {
-                [self showAlertForScript:fullPath error:errorInfo];
-            }
-            [script release];
-        } else {
-            [self showAlertForScript:fullPath error:errorInfo];
-        }
-    } else {
-        [[NSWorkspace sharedWorkspace] launchApplication:fullPath];
-    }
-
-}
-
-- (void)showAlertForScript:(NSString *)fullPath error:(NSDictionary *)errorInfo {
-    NSValue *range = errorInfo[NSAppleScriptErrorRange];
-    NSString *location = @"Location of error not known.";
-    if (range) {
-        location = [NSString stringWithFormat:@"The error starts at byte %d of the script.",
-                    (int)[range rangeValue].location];
-    }
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = @"Error running script";
-    alert.informativeText = [NSString stringWithFormat:@"Script at \"%@\" failed.\n\nThe error was: \"%@\"\n\n%@",
-                             fullPath, errorInfo[NSAppleScriptErrorMessage], location];
-    [alert runModal];
 }
 
 - (PTYTextView *)frontTextView {

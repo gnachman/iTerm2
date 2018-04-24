@@ -143,8 +143,12 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return useLegacy ? legacyPath : modernPath;
 }
 
-- (NSString *)autolaunchScriptPath {
+- (NSString *)legacyAutolaunchScriptPath {
     return [[self scriptsPath] stringByAppendingPathComponent:@"AutoLaunch.scpt"];
+}
+
+- (NSString *)autolaunchScriptPath {
+    return [[self scriptsPath] stringByAppendingPathComponent:@"AutoLaunch"];
 }
 
 - (NSString *)quietFilePath {

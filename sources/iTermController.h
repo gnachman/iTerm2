@@ -80,7 +80,6 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 - (void)nextTerminal;
 - (void)newSessionsInWindow:(id)sender;
 - (void)newSessionsInNewWindow:(id)sender;
-- (void)launchScript:(id)sender;
 
 - (void)arrangeHorizontally;
 - (void)newSessionInTabAtIndex:(id)sender;

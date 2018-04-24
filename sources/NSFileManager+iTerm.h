@@ -53,7 +53,8 @@
 - (NSString *)scriptsPath;
 
 // Path to special auto-launch script that is run at startup.
-- (NSString *)autolaunchScriptPath;
+- (NSString *)legacyAutolaunchScriptPath;  // applescript
+- (NSString *)autolaunchScriptPath;  // scripting API
 
 // Path to special file that, if it exists at launch time, suppresses autolaunch script and
 // window restoration.

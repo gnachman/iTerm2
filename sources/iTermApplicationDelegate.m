@@ -64,6 +64,7 @@
 #import "iTermQuickLookController.h"
 #import "iTermRemotePreferences.h"
 #import "iTermRestorableSession.h"
+#import "iTermScriptsMenuController.h"
 #import "iTermSystemVersion.h"
 #import "iTermTipController.h"
 #import "iTermTipWindowController.h"
@@ -125,7 +126,6 @@ NSString *const iTermApplicationWillTerminate = @"iTermApplicationWillTerminate"
 static BOOL gStartupActivitiesPerformed = NO;
 // Prior to 8/7/11, there was only one window arrangement, always called Default.
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
-static BOOL ranAutoLaunchScript = NO;
 static BOOL hasBecomeActive = NO;
 
 @interface iTermApplicationDelegate () <iTermPasswordManagerDelegate>
@@ -193,6 +193,7 @@ static BOOL hasBecomeActive = NO;
 
     // Location of mouse when the app became inactive.
     NSPoint _savedMouseLocation;
+    iTermScriptsMenuController *_scriptsMenuController;
 }
 
 - (instancetype)init {
@@ -1313,50 +1314,35 @@ static BOOL hasBecomeActive = NO;
         return;
     }
     [[iTermController sharedInstance] setStartingUp:YES];
+
     // Check if we have an autolaunch script to execute. Do it only once, i.e. at application launch.
-    NSString *autolaunchScriptPath = [[NSFileManager defaultManager] autolaunchScriptPath];
-    if (ranAutoLaunchScript == NO &&
-        [[NSFileManager defaultManager] fileExistsAtPath:autolaunchScriptPath]) {
-        ranAutoLaunchScript = YES;
+    BOOL ranAutoLaunchScripts = [self.scriptsMenuController runAutoLaunchScriptsIfNeeded];
 
-        NSAppleScript *autoLaunchScript;
-        NSDictionary *errorInfo = [NSDictionary dictionary];
-        NSURL *aURL = [NSURL fileURLWithPath:autolaunchScriptPath];
+    if ([WindowArrangements defaultArrangementName] == nil &&
+        [WindowArrangements arrangementWithName:LEGACY_DEFAULT_ARRANGEMENT_NAME] != nil) {
+        [WindowArrangements makeDefaultArrangement:LEGACY_DEFAULT_ARRANGEMENT_NAME];
+    }
 
-        // Make sure our script suite registry is loaded
-        [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
+    if ([iTermPreferences boolForKey:kPreferenceKeyOpenBookmark]) {
+        // Open bookmarks window at startup.
+        [self showBookmarkWindow:nil];
+    }
 
-        autoLaunchScript = [[NSAppleScript alloc] initWithContentsOfURL:aURL
-                                                                  error:&errorInfo];
-        [autoLaunchScript executeAndReturnError:&errorInfo];
-        [autoLaunchScript release];
-    } else {
-        if ([WindowArrangements defaultArrangementName] == nil &&
-            [WindowArrangements arrangementWithName:LEGACY_DEFAULT_ARRANGEMENT_NAME] != nil) {
-            [WindowArrangements makeDefaultArrangement:LEGACY_DEFAULT_ARRANGEMENT_NAME];
-        }
-
-        if ([iTermPreferences boolForKey:kPreferenceKeyOpenBookmark]) {
-            // Open bookmarks window at startup.
-            [self showBookmarkWindow:nil];
-        }
-
-        if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
-            // Open the saved arrangement at startup.
-            [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
-        } else if (![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] &&
-                   ![PseudoTerminalRestorer willOpenWindows] &&
-                   [[[iTermController sharedInstance] terminals] count] == 0 &&
-                   ![self isApplescriptTestApp] &&
-                   [[[iTermHotKeyController sharedInstance] profileHotKeys] count] == 0 &&
-                   [[[iTermBuriedSessions sharedInstance] buriedSessions] count] == 0) {
-            [self newWindow:nil];
-        }
+    if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
+        // Open the saved arrangement at startup.
+        [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
+    } else if (!ranAutoLaunchScripts &&
+               ![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] &&
+               ![PseudoTerminalRestorer willOpenWindows] &&
+               [[[iTermController sharedInstance] terminals] count] == 0 &&
+               ![self isApplescriptTestApp] &&
+               [[[iTermHotKeyController sharedInstance] profileHotKeys] count] == 0 &&
+               [[[iTermBuriedSessions sharedInstance] buriedSessions] count] == 0) {
+        [self newWindow:nil];
     }
 
     [[iTermController sharedInstance] setStartingUp:NO];
     [PTYSession removeAllRegisteredSessions];
-    ranAutoLaunchScript = YES;
 
     [[iTermTipController sharedInstance] applicationDidFinishLaunching];
 }
@@ -1968,48 +1954,15 @@ static BOOL hasBecomeActive = NO;
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://www.iterm2.com/documentation.html"]];
 }
 
-- (void)addFile:(NSString *)file toScriptMenu:(NSMenu *)scriptMenu {
-    NSMenuItem *scriptItem = [[[NSMenuItem alloc] initWithTitle:file
-                                                         action:@selector(launchScript:)
-                                                  keyEquivalent:@""] autorelease];
-    [scriptItem setTarget:[iTermController sharedInstance]];
-    [scriptMenu addItem:scriptItem];
+- (iTermScriptsMenuController *)scriptsMenuController {
+    if (!_scriptsMenuController) {
+        _scriptsMenuController = [[iTermScriptsMenuController alloc] initWithMenu:_scriptsMenu];
+    }
+    return _scriptsMenuController;
 }
 
 - (IBAction)buildScriptMenu:(id)sender {
-    NSInteger i = 0;
-    while (![_scriptsMenu.itemArray[i].identifier isEqualToString:@"Separator"]) {
-        i++;
-    }
-    i++;
-    while (_scriptsMenu.itemArray.count > i) {
-        [_scriptsMenu removeItemAtIndex:i];
-    }
-
-    NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
-    NSDirectoryEnumerator *directoryEnumerator =
-        [[NSFileManager defaultManager] enumeratorAtPath:scriptsPath];
-    NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
-    NSMutableArray<NSString *> *files = [NSMutableArray array];
-    for (NSString *file in directoryEnumerator) {
-        NSString *path = [scriptsPath stringByAppendingPathComponent:file];
-        if ([workspace isFilePackageAtPath:path]) {
-            [directoryEnumerator skipDescendents];
-        }
-        if ([[file pathExtension] isEqualToString:@"scpt"] ||
-            [[file pathExtension] isEqualToString:@"app"] ) {
-            [files addObject:file];
-        }
-
-        if ([iTermAdvancedSettingsModel enableAPIServer] &&
-            [[file pathExtension] isEqualToString:@"py"]) {
-            [files addObject:file];
-        }
-    }
-    [files sortUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
-    for (NSString *file in files) {
-        [self addFile:file toScriptMenu:_scriptsMenu];
-    }
+    [self.scriptsMenuController build];
 }
 
 - (IBAction)openScriptConsole:(id)sender {
@@ -2017,12 +1970,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)revealScriptsInFinder:(id)sender {
-    NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
-    [[NSFileManager defaultManager] createDirectoryAtPath:scriptsPath
-                              withIntermediateDirectories:YES
-                                               attributes:nil
-                                                    error:nil];
-    [[NSWorkspace sharedWorkspace]openFile:scriptsPath withApplication:@"Finder"];
+    [_scriptsMenuController revealScriptsInFinder];
 }
 
 - (IBAction)saveWindowArrangement:(id)sender {
