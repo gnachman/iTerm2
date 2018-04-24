@@ -255,6 +255,14 @@ async def set_window_property(connection, args):
     elif args.name == "fullscreen":
       await w.set_fullscreen(connection, args.value == "true")
 
+async def inject(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  s = await h.get_session_by_id(args.session)
+  if s is None:
+    print("bad session ID")
+  else:
+    await s.inject(args.data.encode())
+
 def make_parser():
   parser = argparse.ArgumentParser(description='iTerm2 CLI')
   subparsers = parser.add_subparsers(help='Commands')
@@ -319,6 +327,11 @@ def make_parser():
   set_window_property_parser.add_argument("name", type=str, help="Property name", choices=["frame", "fullscreen"])
   set_window_property_parser.add_argument("value", type=str, help="New value. For frame: x,y,width,height; for fullscreen: true or false")
   set_window_property_parser.set_defaults(func=set_window_property)
+
+  inject_parser = subparsers.add_parser("inject", help="Inject a string as though it were program output")
+  inject_parser.add_argument("session", type=str, help="Session ID")
+  inject_parser.add_argument("data", type=str, help="Data to inject")
+  inject_parser.set_defaults(func=inject)
 
   return parser
 

@@ -494,6 +494,14 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
     }
+    if (request.hasInjectRequest) {
+        [_delegate apiServerInject:request.injectRequest handler:^(ITMInjectResponse *injectResponse) {
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
+            response.id_p = request.id_p;
+            response.injectResponse = injectResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
+    }
 }
 
 // Runs on execution queue.

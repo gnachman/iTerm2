@@ -15,7 +15,6 @@ typedef struct {
     int count;
 } CVector;
 
-#if !__has_feature(objc_arc)
 NS_INLINE void CVectorCreate(CVector *vector, int capacity) {
     vector->capacity = capacity;
     vector->elements = (void **)malloc(vector->capacity * sizeof(void *));
@@ -35,7 +34,7 @@ NS_INLINE int CVectorCount(const CVector *vector) {
 }
 
 NS_INLINE id CVectorGetObject(const CVector *vector, int index) {
-    return (id) vector->elements[index];
+    return (__bridge id) vector->elements[index];
 }
 
 NS_INLINE void CVectorSet(const CVector *vector, int index, void *value) {
@@ -54,9 +53,8 @@ NS_INLINE id CVectorLastObject(const CVector *vector) {
     if (vector->count == 0) {
         return nil;
     }
-    return CVectorGet(vector, vector->count - 1);
+    return (__bridge id)(CVectorGet(vector, vector->count - 1));
 }
-#endif
 
 // Hacky but fast templates in C.
 //

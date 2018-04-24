@@ -240,10 +240,23 @@ async def set_property(connection, name, json_value, window_id=None):
   return await _call(connection, request)
 
 async def get_property(connection, name, window_id=None):
+  """
+  Gets a property of an object (currently only of a window).
+  """
   request = _alloc_request()
   request.get_property_request.SetInParent()
   request.get_property_request.window_id = window_id
   request.get_property_request.name = name
+  return await _call(connection, request)
+
+async def inject(connection, data, sessions):
+  """
+  Injects bytes/string into sessions, as though it was program output.
+  """
+  request = _alloc_request()
+  request.inject_request.SetInParent()
+  request.inject_request.session_id.extend(sessions)
+  request.inject_request.data = data
   return await _call(connection, request)
 
 ## Private --------------------------------------------------------------------

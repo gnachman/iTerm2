@@ -7,6 +7,7 @@
 
 #import "iTermAPIHelper.h"
 
+#import "CVector.h"
 #import "DebugLogging.h"
 #import "iTermLSOF.h"
 #import "MovePaneController.h"
@@ -15,6 +16,7 @@
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
+#import "VT100Parser.h"
 
 static NSString *const kBundlesWithAPIAccessSettingKey = @"NoSyncBundlesWithAPIAccessSettings";
 NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";
@@ -738,6 +740,41 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     } else {
         return nil;
     }
+}
+
+- (void)apiServerInject:(ITMInjectRequest *)request handler:(void (^)(ITMInjectResponse *))handler {
+    ITMInjectResponse *response = [[ITMInjectResponse alloc] init];
+    for (NSString *sessionID in request.sessionIdArray) {
+        if ([sessionID isEqualToString:@"all"]) {
+            for (PTYSession *session in [self allSessions]) {
+                [self inject:request.data_p into:session];
+            }
+            [response.statusArray addValue:ITMInjectResponse_Status_Ok];
+        } else {
+            PTYSession *session = [self sessionForAPIIdentifier:sessionID];
+            if (session) {
+                [self inject:request.data_p into:session];
+                [response.statusArray addValue:ITMInjectResponse_Status_Ok];
+            } else {
+                [response.statusArray addValue:ITMInjectResponse_Status_SessionNotFound];
+            }
+        }
+    }
+    handler(response);
+}
+
+- (void)inject:(NSData *)data into:(PTYSession *)session {
+    VT100Parser *parser = [[VT100Parser alloc] init];
+    parser.encoding = session.terminal.encoding;
+    [parser putStreamData:data.bytes length:data.length];
+    CVector vector;
+    CVectorCreate(&vector, 100);
+    [parser addParsedTokensToVector:&vector];
+    if (CVectorCount(&vector) == 0) {
+        CVectorDestroy(&vector);
+        return;
+    }
+    [session executeTokens:&vector bytesHandled:data.length];
 }
 
 @end

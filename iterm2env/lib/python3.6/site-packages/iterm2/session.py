@@ -279,6 +279,17 @@ class Session:
     else:
       raise iterm2.rpc.RPCException(iterm2.api_pb2.GetProfilePropertyResponse.Status.Name(status))
 
+  async def inject(self, data):
+    """
+    Injects data as though it were program output.
+
+    data: bytes
+    """
+    response = await iterm2.rpc.inject(self.connection, data, [self.session_id])
+    status = response.inject_response.status[0]
+    if status != iterm2.api_pb2.InjectResponse.Status.Value("OK"):
+      raise iterm2.rpc.RPCException(iterm2.api_pb2.InjectResponse.Status.Name(status))
+
   class KeystrokeReader:
     """An asyncio context manager for reading keystrokes.
 

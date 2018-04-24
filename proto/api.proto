@@ -28,6 +28,7 @@ message ClientOriginatedMessage {
   optional GetProfilePropertyRequest get_profile_property_request = 110;
   optional SetPropertyRequest set_property_request = 111;
   optional GetPropertyRequest get_property_request = 112;
+  optional InjectRequest inject_request = 113;
 }
 
 // All responses are wrapped in this message. This encoded message is the entirety of the payload
@@ -49,9 +50,25 @@ message ServerOriginatedMessage {
   optional GetProfilePropertyResponse get_profile_property_response = 110;
   optional SetPropertyResponse set_property_response = 111;
   optional GetPropertyResponse get_property_response = 112;
+  optional InjectResponse inject_response = 113;
 
   // This is the only response that is sent spontaneously. The 'id' field will not be set.
   optional Notification notification = 1000;
+}
+
+// Injects bytes as input to the terminal, as though the running program had produced them.
+message InjectRequest {
+  repeated string session_id = 1;
+  optional bytes data = 2;
+}
+
+message InjectResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+  }
+  // One status per session_id in the request
+  repeated Status status = 1;
 }
 
 message GetPropertyRequest {

@@ -43,6 +43,8 @@ CF_EXTERN_C_BEGIN
 @class ITMGetPromptResponse;
 @class ITMGetPropertyRequest;
 @class ITMGetPropertyResponse;
+@class ITMInjectRequest;
+@class ITMInjectResponse;
 @class ITMKeystrokeNotification;
 @class ITMLayoutChangedNotification;
 @class ITMLineContents;
@@ -104,6 +106,21 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
  **/
 BOOL ITMNotificationType_IsValidValue(int32_t value);
 
+#pragma mark - Enum ITMInjectResponse_Status
+
+typedef GPB_ENUM(ITMInjectResponse_Status) {
+  ITMInjectResponse_Status_Ok = 0,
+  ITMInjectResponse_Status_SessionNotFound = 1,
+};
+
+GPBEnumDescriptor *ITMInjectResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMInjectResponse_Status_IsValidValue(int32_t value);
+
 #pragma mark - Enum ITMGetPropertyResponse_Status
 
 typedef GPB_ENUM(ITMGetPropertyResponse_Status) {
@@ -125,7 +142,11 @@ BOOL ITMGetPropertyResponse_Status_IsValidValue(int32_t value);
 typedef GPB_ENUM(ITMSetPropertyResponse_Status) {
   ITMSetPropertyResponse_Status_Ok = 0,
   ITMSetPropertyResponse_Status_UnrecognizedName = 1,
+
+  /** e.g., bad JSON value */
   ITMSetPropertyResponse_Status_InvalidValue = 2,
+
+  /** e.g., bogus window_id */
   ITMSetPropertyResponse_Status_InvalidTarget = 3,
 };
 
@@ -413,6 +434,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_GetProfilePropertyRequest = 110,
   ITMClientOriginatedMessage_FieldNumber_SetPropertyRequest = 111,
   ITMClientOriginatedMessage_FieldNumber_GetPropertyRequest = 112,
+  ITMClientOriginatedMessage_FieldNumber_InjectRequest = 113,
 };
 
 /**
@@ -477,6 +499,10 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
 /** Test to see if @c getPropertyRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasGetPropertyRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMInjectRequest *injectRequest;
+/** Test to see if @c injectRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasInjectRequest;
+
 @end
 
 #pragma mark - ITMServerOriginatedMessage
@@ -496,6 +522,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_GetProfilePropertyResponse = 110,
   ITMServerOriginatedMessage_FieldNumber_SetPropertyResponse = 111,
   ITMServerOriginatedMessage_FieldNumber_GetPropertyResponse = 112,
+  ITMServerOriginatedMessage_FieldNumber_InjectResponse = 113,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -561,10 +588,52 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
 /** Test to see if @c getPropertyResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasGetPropertyResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMInjectResponse *injectResponse;
+/** Test to see if @c injectResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasInjectResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 /** Test to see if @c notification has been set. */
 @property(nonatomic, readwrite) BOOL hasNotification;
+
+@end
+
+#pragma mark - ITMInjectRequest
+
+typedef GPB_ENUM(ITMInjectRequest_FieldNumber) {
+  ITMInjectRequest_FieldNumber_SessionIdArray = 1,
+  ITMInjectRequest_FieldNumber_Data_p = 2,
+};
+
+/**
+ * Injects bytes as input to the terminal, as though the running program had produced them.
+ **/
+@interface ITMInjectRequest : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *sessionIdArray;
+/** The number of items in @c sessionIdArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger sessionIdArray_Count;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSData *data_p;
+/** Test to see if @c data_p has been set. */
+@property(nonatomic, readwrite) BOOL hasData_p;
+
+@end
+
+#pragma mark - ITMInjectResponse
+
+typedef GPB_ENUM(ITMInjectResponse_FieldNumber) {
+  ITMInjectResponse_FieldNumber_StatusArray = 1,
+};
+
+@interface ITMInjectResponse : GPBMessage
+
+/** One status per session_id in the request */
+// |statusArray| contains |ITMInjectResponse_Status|
+@property(nonatomic, readwrite, strong, null_resettable) GPBEnumArray *statusArray;
+/** The number of items in @c statusArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger statusArray_Count;
 
 @end
 
@@ -582,6 +651,11 @@ typedef GPB_ENUM(ITMGetPropertyRequest_Identifier_OneOfCase) {
 
 @interface ITMGetPropertyRequest : GPBMessage
 
+/**
+ * Eventually you'll be able to request properties on other things besides
+ * window_id. The kind of ID that's set determines the kind of object you're
+ * querying.
+ **/
 @property(nonatomic, readonly) ITMGetPropertyRequest_Identifier_OneOfCase identifierOneOfCase;
 
 @property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
@@ -606,6 +680,12 @@ typedef GPB_ENUM(ITMGetPropertyResponse_FieldNumber) {
 
 @interface ITMGetPropertyResponse : GPBMessage
 
+/**
+ * Name           Example value
+ * -------------  ---------------
+ * frame          { "origin": { "x": 0, "y": 0 }, "size": { "width": 1024, "height": 768 }}
+ * fullscreen     true, false
+ **/
 @property(nonatomic, readwrite) ITMGetPropertyResponse_Status status;
 
 @property(nonatomic, readwrite) BOOL hasStatus;
@@ -630,6 +710,11 @@ typedef GPB_ENUM(ITMSetPropertyRequest_Identifier_OneOfCase) {
 
 @interface ITMSetPropertyRequest : GPBMessage
 
+/**
+ * Eventually you'll be able to set properties on other things besides
+ * window_id. The kind of ID that's set determines the kind of object you're
+ * updating.
+ **/
 @property(nonatomic, readonly) ITMSetPropertyRequest_Identifier_OneOfCase identifierOneOfCase;
 
 @property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
@@ -637,7 +722,7 @@ typedef GPB_ENUM(ITMSetPropertyRequest_Identifier_OneOfCase) {
 /**
  * Name           Example JSON
  * -------------  ---------------
- * frame          { "origin": { "x": x, "y": y }, "size": { "width": width, "height": height }}
+ * frame          { "origin": { "x": 0, "y": 0 }, "size": { "width": 1024, "height": 768 }}
  * fullscreen     true, false
  **/
 @property(nonatomic, readwrite, copy, null_resettable) NSString *name;
