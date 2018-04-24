@@ -11,5 +11,7 @@
 
 // Launches an API script. Reads its output and waits for it to terminate.
 + (void)launchScript:(NSString *)filename;
++ (void)launchScript:(NSString *)filename withVirtualEnv:(NSString *)virtualenv;
++ (BOOL)isScriptWithEnvironment:(NSString *)path;
 
 @end

@@ -61,13 +61,21 @@ NS_ASSUME_NONNULL_BEGIN
         if ([workspace isFilePackageAtPath:path]) {
             [directoryEnumerator skipDescendents];
         }
+        BOOL isDirectory;
+        [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
+
+        if ([iTermAPIScriptLauncher isScriptWithEnvironment:path]) {
+            [files addObject:file];
+            [directoryEnumerator skipDescendents];
+            continue;
+        }
+
         if ([[file pathExtension] isEqualToString:@"scpt"] ||
             [[file pathExtension] isEqualToString:@"app"] ) {
             [files addObject:file];
         }
 
-        if ([iTermAdvancedSettingsModel enableAPIServer] &&
-            [[file pathExtension] isEqualToString:@"py"]) {
+        if ([[file pathExtension] isEqualToString:@"py"]) {
             [files addObject:file];
         }
     }
@@ -101,8 +109,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchScript:(id)sender {
     NSString *fullPath = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:[sender title]];
 
-    if ([iTermAdvancedSettingsModel enableAPIServer] &&
-        [[[sender title] pathExtension] isEqualToString:@"py"]) {
+    if ([iTermAPIScriptLauncher isScriptWithEnvironment:fullPath]) {
+        [iTermAPIScriptLauncher launchScript:[fullPath stringByAppendingPathComponent:@"main.py"]
+                              withVirtualEnv:[fullPath stringByAppendingPathComponent:@"env"]];
+        return;
+    }
+
+    if ([[[sender title] pathExtension] isEqualToString:@"py"]) {
         [iTermAPIScriptLauncher launchScript:fullPath];
         return;
     }
