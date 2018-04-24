@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="13771" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14109" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="13771"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14109"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -834,6 +834,26 @@ DQ
                         </items>
                     </menu>
                 </menuItem>
+                <menuItem title="Scripts" id="eAB-5s-fVh">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="Scripts" id="CZD-7u-bch">
+                        <items>
+                            <menuItem title="Reveal in Finder" identifier="Reveal in Finder" id="eeH-ly-45H">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="revealScriptsInFinder:" target="201" id="2jN-7I-BfW"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Script Console" identifier="Script Console" id="YqT-f8-W2j">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="openScriptConsole:" target="201" id="DYl-Yt-fdf"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" identifier="Separator" id="fcT-12-G86"/>
+                        </items>
+                    </menu>
+                </menuItem>
                 <menuItem title="Profiles" id="591">
                     <menu key="submenu" title="Profiles" id="592">
                         <items>
@@ -1124,6 +1144,7 @@ DQ
         <customObject id="201" userLabel="iTermApplicationDelegate" customClass="iTermApplicationDelegate">
             <connections>
                 <outlet property="_buriedSessions" destination="PTu-aD-qbz" id="Fl9-Gn-jv2"/>
+                <outlet property="_scriptsMenu" destination="CZD-7u-bch" id="2Q5-aI-74T"/>
                 <outlet property="_showTipOfTheDay" destination="ft3-BP-igZ" id="WZt-qp-iuC"/>
                 <outlet property="bookmarkMenu" destination="592" id="874"/>
                 <outlet property="closeTab" destination="635" id="795"/>

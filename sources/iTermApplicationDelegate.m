@@ -156,6 +156,7 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *windowArrangementsAsTabs_;
     IBOutlet NSMenu *_buriedSessions;
     NSMenu *_statusIconBuriedSessions;  // unsafe unretained
+    IBOutlet NSMenu *_scriptsMenu;
 
     IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
@@ -1976,19 +1977,15 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)buildScriptMenu:(id)sender {
-    static NSString *kScriptTitle = @"Scripts";
-    static const int kScriptMenuItemIndex = 5;
-    if ([[[[NSApp mainMenu] itemAtIndex:kScriptMenuItemIndex] title] isEqualToString:kScriptTitle]) {
-        [[NSApp mainMenu] removeItemAtIndex:kScriptMenuItemIndex];
+    NSInteger i = 0;
+    while (![_scriptsMenu.itemArray[i].identifier isEqualToString:@"Separator"]) {
+        i++;
+    }
+    i++;
+    while (_scriptsMenu.itemArray.count > i) {
+        [_scriptsMenu removeItemAtIndex:i];
     }
 
-    // create menu item with no title and set image
-    NSMenuItem *scriptMenuItem = [[[NSMenuItem alloc] initWithTitle:kScriptTitle action: nil keyEquivalent: @""] autorelease];
-
-    // create submenu
-    NSMenu *scriptMenu = [[[NSMenu alloc] initWithTitle:kScriptTitle] autorelease];
-    [scriptMenuItem setSubmenu:scriptMenu];
-    // populate the submenu with ascripts found in the script directory
     NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
     NSDirectoryEnumerator *directoryEnumerator =
         [[NSFileManager defaultManager] enumeratorAtPath:scriptsPath];
@@ -2011,32 +2008,21 @@ static BOOL hasBecomeActive = NO;
     }
     [files sortUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
     for (NSString *file in files) {
-        [self addFile:file toScriptMenu:scriptMenu];
-    }
-    if (files.count > 0) {
-        [scriptMenu addItem:[NSMenuItem separatorItem]];
-        NSMenuItem *scriptItem = [[[NSMenuItem alloc] initWithTitle:@"Refresh"
-                                                             action:@selector(buildScriptMenu:)
-                                                      keyEquivalent:@""] autorelease];
-        [scriptItem setTarget:self];
-        [scriptMenu addItem:scriptItem];
-
-        [[NSApp mainMenu] insertItem:scriptMenuItem atIndex:kScriptMenuItemIndex];
-        [scriptMenuItem setTitle:kScriptTitle];
-
-        if ([iTermAdvancedSettingsModel enableAPIServer]) {
-            NSMenuItem *consoleItem = [[[NSMenuItem alloc] initWithTitle:@"Script Console"
-                                                                  action:@selector(openScriptConsole:)
-                                                           keyEquivalent:@"j"] autorelease];
-            consoleItem.keyEquivalentModifierMask = (NSEventModifierFlagCommand | NSEventModifierFlagOption);
-            consoleItem.target = self;
-            [scriptMenu addItem:consoleItem];
-        }
+        [self addFile:file toScriptMenu:_scriptsMenu];
     }
 }
 
-- (void)openScriptConsole:(id)sender {
+- (IBAction)openScriptConsole:(id)sender {
     [[[iTermScriptConsole sharedInstance] window] makeKeyAndOrderFront:nil];
+}
+
+- (IBAction)revealScriptsInFinder:(id)sender {
+    NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
+    [[NSFileManager defaultManager] createDirectoryAtPath:scriptsPath
+                              withIntermediateDirectories:YES
+                                               attributes:nil
+                                                    error:nil];
+    [[NSWorkspace sharedWorkspace]openFile:scriptsPath withApplication:@"Finder"];
 }
 
 - (IBAction)saveWindowArrangement:(id)sender {
