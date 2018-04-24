@@ -9,6 +9,7 @@
 #import "iTermLSOF.h"
 
 #import "iTermSocketAddress.h"
+#import "NSStringITerm.h"
 #import "ProcessCache.h"
 #include <arpa/inet.h>
 #include <libproc.h>
@@ -90,7 +91,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
     while (offset < argmax && argv.count < nargs) {
         if (procargs[offset] == 0) {
             NSString *string = [NSString stringWithUTF8String:start];
-            [argv addObject:string];
+            [argv addObject:[string stringWithEscapedShellCharactersIncludingNewlines:YES]];
             start = procargs + offset + 1;
         }
         offset++;

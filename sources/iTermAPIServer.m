@@ -194,7 +194,6 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
 - (void)didAcceptConnectionOnFileDescriptor:(int)fd fromAddress:(iTermSocketAddress *)address {
     DLog(@"Accepted connection");
-    __weak __typeof(self) weakSelf = self;
     dispatch_queue_t queue = _queue;
     dispatch_async(queue, ^{
         iTermHTTPConnection *connection = [[iTermHTTPConnection alloc] initWithFileDescriptor:fd clientAddress:address];
@@ -206,77 +205,75 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             return;
         }
 
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSString *reason = nil;
-            NSString *displayName = nil;
-            NSDictionary *identity = [weakSelf.delegate apiServerAuthorizeProcess:pid reason:&reason displayName:&displayName];
-            if (identity) {
-                dispatch_async(queue, ^{
-                    [weakSelf startRequestOnConnection:connection
-                                              identity:identity
-                                                   pid:pid
-                                           displayName:displayName
-                                            authReason:reason];
-                });
-            } else {
-                XLog(@"Reject unauthenticated process (pid %d)", pid);
+        [self startRequestOnConnection:connection pid:pid completion:^(BOOL ok, NSString *reason) {
+            if (!ok) {
+                XLog(@"Reject unauthenticated process (pid %d): %@", pid, reason);
                 [connection unauthorized];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
-                                                                        object:nil
-                                                                      userInfo:@{ @"reason": reason ?: @"Unkown reason",
-                                                                                  @"job": displayName ?: [NSNull null],
-                                                                                  @"pid": @(pid) }];
-                });
-                return;
             }
-        });
+        }];
     });
 }
 
-- (void)startRequestOnConnection:(iTermHTTPConnection *)connection
-                        identity:(NSDictionary *)identity
-                             pid:(int)pid
-                     displayName:(NSString *)displayName
-                      authReason:(NSString *)authReason {
+- (void)startRequestOnConnection:(iTermHTTPConnection *)connection pid:(int)pid completion:(void (^)(BOOL, NSString *))completion {
     NSURLRequest *request = [connection readRequest];
     if (!request) {
-        XLog(@"Failed to read request from HTTP connection");
         [connection badRequest];
+        completion(NO, @"Failed to read request from HTTP connection");
         return;
     }
     if (![request.URL.path isEqualToString:@"/"]) {
-        XLog(@"Path %@ not known", request.URL.path);
         [connection badRequest];
+        completion(NO, [NSString stringWithFormat:@"Path %@ not known", request.URL.path]);
         return;
     }
-    NSString *reason = nil;
+    NSString *authReason = nil;
     iTermWebSocketConnection *webSocketConnection = [iTermWebSocketConnection newWebSocketConnectionForRequest:request
                                                                                                     connection:connection
-                                                                                                        reason:&reason];
+                                                                                                        reason:&authReason];
     if (webSocketConnection) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionAccepted
-                                                                object:webSocketConnection.key
-                                                              userInfo:@{ @"reason": authReason ?: [NSNull null],
-                                                                          @"job": displayName ?: [NSNull null],
-                                                                          @"pid": @(pid) }];
+            NSString *reason = nil;
+            NSString *displayName = nil;
+            NSDictionary *identity = [self.delegate apiServerAuthorizeProcess:pid
+                                                                preauthorized:webSocketConnection.preauthorized
+                                                                       reason:&reason
+                                                                  displayName:&displayName];
+            if (identity) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionAccepted
+                                                                    object:webSocketConnection.key
+                                                                  userInfo:@{ @"reason": reason ?: [NSNull null],
+                                                                              @"job": displayName ?: [NSNull null],
+                                                                              @"pid": @(pid) }];
+                dispatch_async(self->_queue, ^{
+                    DLog(@"Upgrading request to websocket");
+                    webSocketConnection.displayName = displayName;
+                    webSocketConnection.peerIdentity = identity;
+                    webSocketConnection.delegate = self;
+                    self->_connections[webSocketConnection.handle] = webSocketConnection;
+                    [webSocketConnection handleRequest:request];
+                    completion(YES, nil);
+                });
+            } else {
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
+                                                                    object:request.allHTTPHeaderFields[@"x-iterm2-key"]
+                                                                  userInfo:@{ @"reason": reason ?: @"Unknown reason",
+                                                                              @"job": displayName ?: [NSNull null],
+                                                                              @"pid": @(pid) }];
+                dispatch_async(self->_queue, ^{
+                    [connection unauthorized];
+                    completion(NO, reason);
+                });
+            }
         });
-        DLog(@"Upgrading request to websocket");
-        webSocketConnection.peerIdentity = identity;
-        webSocketConnection.delegate = self;
-        _connections[webSocketConnection.handle] = webSocketConnection;
-        [webSocketConnection handleRequest:request];
     } else {
-        XLog(@"Bad request %@: %@", request, reason);
         dispatch_async(dispatch_get_main_queue(), ^{
             [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
                                                                 object:request.allHTTPHeaderFields[@"x-iterm2-key"]
-                                                              userInfo:@{ @"reason": reason ?: @"Unkown reason",
-                                                                          @"job": displayName ?: [NSNull null],
+                                                              userInfo:@{ @"reason": authReason ?: @"Unknown reason",
                                                                           @"pid": @(pid) }];
         });
         [connection badRequest];
+        completion(NO, authReason);
     }
 }
 

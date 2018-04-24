@@ -127,7 +127,10 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 #pragma mark - iTermAPIServerDelegate
 
-- (NSDictionary *)apiServerAuthorizeProcess:(pid_t)pid reason:(out NSString *__autoreleasing *)reason displayName:(out NSString *__autoreleasing *)displayName {
+- (NSDictionary *)apiServerAuthorizeProcess:(pid_t)pid
+                              preauthorized:(BOOL)preauthorized
+                                     reason:(out NSString *__autoreleasing *)reason
+                                displayName:(out NSString *__autoreleasing *)displayName {
     *displayName = nil;
     NSMutableDictionary *bundles = [[[NSUserDefaults standardUserDefaults] objectForKey:kBundlesWithAPIAccessSettingKey] mutableCopy];
     if (!bundles) {
@@ -169,6 +172,11 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     *displayName = processName;
 
     NSDictionary *authorizedIdentity = @{ iTermWebSocketConnectionPeerIdentityBundleIdentifier: processIdentifierWithoutArgs };
+    if (preauthorized) {
+        *reason = @"Script launched by user action";
+        return authorizedIdentity;
+    }
+
     NSString *key = [NSString stringWithFormat:@"bundle=%@", processIdentifierWithoutArgs];
     NSDictionary *setting = bundles[key];
     BOOL reauth = NO;

@@ -114,7 +114,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     DLog(@"Request validates as websocket upgrade request");
     iTermWebSocketConnection *conn = [[self alloc] initWithConnection:connection];
     if (conn) {
-        conn->_authenticated = authenticated;
+        conn->_preauthorized = authenticated;
         NSString *key = headers[@"x-iterm2-key"] ?: [[NSUUID UUID] UUIDString];
         conn->_key = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
     }

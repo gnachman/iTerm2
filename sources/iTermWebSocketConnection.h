@@ -20,7 +20,8 @@
 @interface iTermWebSocketConnection : NSObject
 @property(nonatomic, assign) id<iTermWebSocketConnectionDelegate> delegate;
 @property(nonatomic, copy) NSDictionary *peerIdentity;
-@property(nonatomic, readonly) BOOL authenticated;
+@property(nonatomic, copy) NSString *displayName;
+@property(nonatomic, readonly) BOOL preauthorized;
 @property(nonatomic, readonly) id key;
 
 + (instancetype)newWebSocketConnectionForRequest:(NSURLRequest *)request
