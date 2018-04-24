@@ -7,21 +7,32 @@
 
 #import "iTermScriptsMenuController.h"
 
+#import "DebugLogging.h"
 #import "iTermAPIScriptLauncher.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "NSFileManager+iTerm.h"
+#import "SCEvents.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
+@interface iTermScriptsMenuController()<SCEventListenerProtocol>
+@end
 
 @implementation iTermScriptsMenuController {
     NSMenu *_scriptsMenu;
     BOOL _ranAutoLaunchScript;
+    SCEvents *_events;
 }
 
 - (instancetype)initWithMenu:(NSMenu *)menu {
     self = [super init];
     if (self) {
         _scriptsMenu = menu;
+        _events = [[SCEvents alloc] init];
+        _events.delegate = self;
+        NSString *path = [[NSFileManager defaultManager] scriptsPath];
+        [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil];
+        [_events startWatchingPaths:@[ path ]];
     }
     return self;
 }
@@ -42,6 +53,10 @@ NS_ASSUME_NONNULL_BEGIN
     NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
     NSMutableArray<NSString *> *files = [NSMutableArray array];
     for (NSString *file in directoryEnumerator) {
+        if ([[[file pathComponents] firstObject] isEqualToString:@"AutoLaunch"] ||
+            [[[file pathComponents] firstObject] isEqualToString:@"AutoLaunch.scpt"]) {
+            continue;
+        }
         NSString *path = [scriptsPath stringByAppendingPathComponent:file];
         if ([workspace isFilePackageAtPath:path]) {
             [directoryEnumerator skipDescendents];
@@ -184,6 +199,13 @@ NS_ASSUME_NONNULL_BEGIN
     NSAppleScript *autoLaunchScript = [[NSAppleScript alloc] initWithContentsOfURL:aURL
                                                                              error:&errorInfo];
     [autoLaunchScript executeAndReturnError:&errorInfo];
+}
+
+#pragma mark - SCEventListenerProtocol
+
+- (void)pathWatcher:(SCEvents *)pathWatcher eventOccurred:(SCEvent *)event {
+    DLog(@"Path watcher noticed a change to scripts directory");
+    [self build];
 }
 
 @end
