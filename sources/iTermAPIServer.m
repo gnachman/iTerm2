@@ -478,6 +478,22 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         }];
         return;
     }
+    if (request.hasSetPropertyRequest) {
+        [_delegate apiServerSetProperty:request.setPropertyRequest handler:^(ITMSetPropertyResponse *setPropertyResponse) {
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
+            response.id_p = request.id_p;
+            response.setPropertyResponse = setPropertyResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
+    }
+    if (request.hasGetPropertyRequest) {
+        [_delegate apiServerGetProperty:request.getPropertyRequest handler:^(ITMGetPropertyResponse *getPropertyResponse) {
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
+            response.id_p = request.id_p;
+            response.getPropertyResponse = getPropertyResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
+    }
 }
 
 // Runs on execution queue.

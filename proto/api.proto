@@ -26,6 +26,8 @@ message ClientOriginatedMessage {
   optional CreateTabRequest create_tab_request = 108;
   optional SplitPaneRequest split_pane_request = 109;
   optional GetProfilePropertyRequest get_profile_property_request = 110;
+  optional SetPropertyRequest set_property_request = 111;
+  optional GetPropertyRequest get_property_request = 112;
 }
 
 // All responses are wrapped in this message. This encoded message is the entirety of the payload
@@ -45,9 +47,60 @@ message ServerOriginatedMessage {
   optional CreateTabResponse create_tab_response = 108;
   optional SplitPaneResponse split_pane_response = 109;
   optional GetProfilePropertyResponse get_profile_property_response = 110;
+  optional SetPropertyResponse set_property_response = 111;
+  optional GetPropertyResponse get_property_response = 112;
 
   // This is the only response that is sent spontaneously. The 'id' field will not be set.
   optional Notification notification = 1000;
+}
+
+message GetPropertyRequest {
+  // Eventually you'll be able to request properties on other things besides
+  // window_id. The kind of ID that's set determines the kind of object you're
+  // querying.
+  oneof identifier {
+    string window_id = 1;
+  }
+  optional string name = 2;
+}
+
+message GetPropertyResponse {
+  enum Status {
+    OK = 0;
+    UNRECOGNIZED_NAME = 1;
+    INVALID_TARGET = 2;
+  }
+  // Name           Example value
+  // -------------  ---------------
+  // frame          { "origin": { "x": 0, "y": 0 }, "size": { "width": 1024, "height": 768 }}
+  // fullscreen     true, false
+  optional Status status = 1;
+  optional string json_value = 2;
+}
+
+message SetPropertyRequest {
+  // Eventually you'll be able to set properties on other things besides
+  // window_id. The kind of ID that's set determines the kind of object you're
+  // updating.
+  oneof identifier {
+    string window_id = 1;
+  }
+  // Name           Example JSON
+  // -------------  ---------------
+  // frame          { "origin": { "x": 0, "y": 0 }, "size": { "width": 1024, "height": 768 }}
+  // fullscreen     true, false
+  optional string name = 3;
+  optional string json_value = 4;
+}
+
+message SetPropertyResponse {
+  enum Status {
+    OK = 0;
+    UNRECOGNIZED_NAME = 1;
+    INVALID_VALUE = 2;  // e.g., bad JSON value
+    INVALID_TARGET = 3;  // e.g., bogus window_id
+  }
+  optional Status status = 1;
 }
 
 // Registers a toolbelt tool that displays a webview with a URL of your choice.

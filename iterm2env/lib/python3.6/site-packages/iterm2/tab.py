@@ -6,7 +6,7 @@ class Tab:
     self.root = root
 
   def __repr__(self):
-    return "<Tab id=%s sessions=%s>" % (self.tab_id, self.sessions)
+    return "<Tab id=%s sessions=%s>" % (self.tab_id, self.get_sessions())
 
   def get_tab_id(self):
     """

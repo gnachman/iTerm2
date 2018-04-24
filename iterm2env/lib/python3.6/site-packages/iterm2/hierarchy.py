@@ -68,10 +68,20 @@ class Hierarchy:
             return s
     return None
 
+  async def get_window_by_id(self, window_id):
+    """Finds a window exactly matching the passed-in id.
+
+    Returns: An iterm2.window.Window or None.
+    """
+    for w in self.windows:
+      if w.window_id == window_id:
+        return w
+    return None
+
   async def get_session_by_id(self, session_id):
     """Finds a session exactly matching the passed-in id.
 
-    Returns: An iterm2.Session or None.
+    Returns: An iterm2.session.Session or None.
     """
     s = self._search_for_session_id(session_id)
     if s is None:

@@ -11,6 +11,7 @@
 #import "iTermLSOF.h"
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
@@ -607,6 +608,136 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
 
     handler(response);
+}
+
+- (void)apiServerSetProperty:(ITMSetPropertyRequest *)request handler:(void (^)(ITMSetPropertyResponse *))handler {
+    ITMSetPropertyResponse *response = [[ITMSetPropertyResponse alloc] init];
+    switch (request.identifierOneOfCase) {
+        case ITMSetPropertyRequest_Identifier_OneOfCase_GPBUnsetOneOfCase:
+            response.status = ITMSetPropertyResponse_Status_InvalidTarget;
+            handler(response);
+            return;
+
+        case ITMSetPropertyRequest_Identifier_OneOfCase_WindowId: {
+            PseudoTerminal *term = [[iTermController sharedInstance] terminalWithGuid:request.windowId];
+            if (!term) {
+                response.status = ITMSetPropertyResponse_Status_InvalidTarget;
+                handler(response);
+                return;
+            }
+            NSError *error = nil;
+            id value = [NSJSONSerialization JSONObjectWithData:[request.jsonValue dataUsingEncoding:NSUTF8StringEncoding]
+                                                       options:NSJSONReadingAllowFragments
+                                                         error:&error];
+            if (!value || error) {
+                XLog(@"JSON parsing error %@ for value in request %@", error, request);
+                ITMSetPropertyResponse *response = [[ITMSetPropertyResponse alloc] init];
+                response.status = ITMSetPropertyResponse_Status_InvalidValue;
+                handler(response);
+            }
+            response.status = [self setPropertyInWindow:term name:request.name value:value];
+            handler(response);
+        }
+    }
+}
+
+- (ITMSetPropertyResponse_Status)setPropertyInWindow:(PseudoTerminal *)term name:(NSString *)name value:(id)value {
+    typedef ITMSetPropertyResponse_Status (^SetWindowPropertyBlock)(void);
+    SetWindowPropertyBlock setFrame = ^ITMSetPropertyResponse_Status {
+        NSDictionary *dict = [NSDictionary castFrom:value];
+        NSDictionary *origin = dict[@"origin"];
+        NSDictionary *size = dict[@"size"];
+        NSNumber *x = origin[@"x"];
+        NSNumber *y = origin[@"y"];
+        NSNumber *width = size[@"width"];
+        NSNumber *height = size[@"height"];
+        if (!x || !y || !width || !height) {
+            return ITMSetPropertyResponse_Status_InvalidValue;
+        }
+        NSRect rect = NSMakeRect(x.doubleValue, y.doubleValue, width.doubleValue, height.doubleValue);
+        [term.window setFrame:rect display:YES];
+        return ITMSetPropertyResponse_Status_Ok;
+    };
+
+    SetWindowPropertyBlock setFullScreen = ^ITMSetPropertyResponse_Status {
+        NSNumber *number = [NSNumber castFrom:value];
+        if (!number) {
+            return ITMSetPropertyResponse_Status_InvalidValue;
+        }
+        BOOL fullscreen = number.boolValue;
+        if (!!term.anyFullScreen == !!fullscreen) {
+            return ITMSetPropertyResponse_Status_Ok;
+        } else {
+            [term toggleFullScreenMode:nil];
+        }
+        return ITMSetPropertyResponse_Status_Ok;
+    };
+    NSDictionary<NSString *, SetWindowPropertyBlock> *handlers =
+        @{ @"frame": setFrame,
+           @"fullscreen": setFullScreen };
+    SetWindowPropertyBlock block = handlers[name];
+    if (block) {
+        return block();
+    } else {
+        return ITMSetPropertyResponse_Status_UnrecognizedName;
+    }
+}
+
+- (void)apiServerGetProperty:(ITMGetPropertyRequest *)request handler:(void (^)(ITMGetPropertyResponse *))handler {
+    ITMGetPropertyResponse *response = [[ITMGetPropertyResponse alloc] init];
+    switch (request.identifierOneOfCase) {
+        case ITMGetPropertyRequest_Identifier_OneOfCase_GPBUnsetOneOfCase:
+            response.status = ITMGetPropertyResponse_Status_InvalidTarget;
+            handler(response);
+            return;
+
+        case ITMGetPropertyRequest_Identifier_OneOfCase_WindowId: {
+            PseudoTerminal *term = [[iTermController sharedInstance] terminalWithGuid:request.windowId];
+            if (!term) {
+                response.status = ITMGetPropertyResponse_Status_InvalidTarget;
+                handler(response);
+                return;
+            }
+            NSString *jsonValue = [self getPropertyFromWindow:term name:request.name];
+            if (jsonValue) {
+                response.jsonValue = jsonValue;
+                response.status = ITMGetPropertyResponse_Status_Ok;
+            } else {
+                response.status = ITMGetPropertyResponse_Status_UnrecognizedName;
+            }
+            handler(response);
+        }
+    }
+}
+
+- (NSString *)getPropertyFromWindow:(PseudoTerminal *)term name:(NSString *)name {
+    typedef NSString * (^GetWindowPropertyBlock)(void);
+
+    GetWindowPropertyBlock getFrame = ^NSString * {
+        NSRect frame = term.window.frame;
+        NSDictionary *dict =
+            @{ @"origin": @{ @"x": @(frame.origin.x),
+                             @"y": @(frame.origin.y) },
+               @"size": @{ @"width": @(frame.size.width),
+                           @"height": @(frame.size.height) } };
+        NSData *data = [NSJSONSerialization dataWithJSONObject:dict options:0 error:nil];
+        return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    };
+
+    GetWindowPropertyBlock getFullScreen = ^NSString * {
+        return term.anyFullScreen ? @"true" : @"false";
+    };
+
+    NSDictionary<NSString *, GetWindowPropertyBlock> *handlers =
+        @{ @"frame": getFrame,
+           @"fullscreen": getFullScreen };
+
+    GetWindowPropertyBlock block = handlers[name];
+    if (block) {
+        return block();
+    } else {
+        return nil;
+    }
 }
 
 @end

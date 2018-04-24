@@ -41,6 +41,8 @@ CF_EXTERN_C_BEGIN
 @class ITMGetProfilePropertyResponse_Property;
 @class ITMGetPromptRequest;
 @class ITMGetPromptResponse;
+@class ITMGetPropertyRequest;
+@class ITMGetPropertyResponse;
 @class ITMKeystrokeNotification;
 @class ITMLayoutChangedNotification;
 @class ITMLineContents;
@@ -67,6 +69,8 @@ CF_EXTERN_C_BEGIN
 @class ITMSendTextResponse;
 @class ITMSetProfilePropertyRequest;
 @class ITMSetProfilePropertyResponse;
+@class ITMSetPropertyRequest;
+@class ITMSetPropertyResponse;
 @class ITMSize;
 @class ITMSplitPaneRequest;
 @class ITMSplitPaneResponse;
@@ -99,6 +103,39 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMNotificationType_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMGetPropertyResponse_Status
+
+typedef GPB_ENUM(ITMGetPropertyResponse_Status) {
+  ITMGetPropertyResponse_Status_Ok = 0,
+  ITMGetPropertyResponse_Status_UnrecognizedName = 1,
+  ITMGetPropertyResponse_Status_InvalidTarget = 2,
+};
+
+GPBEnumDescriptor *ITMGetPropertyResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMGetPropertyResponse_Status_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMSetPropertyResponse_Status
+
+typedef GPB_ENUM(ITMSetPropertyResponse_Status) {
+  ITMSetPropertyResponse_Status_Ok = 0,
+  ITMSetPropertyResponse_Status_UnrecognizedName = 1,
+  ITMSetPropertyResponse_Status_InvalidValue = 2,
+  ITMSetPropertyResponse_Status_InvalidTarget = 3,
+};
+
+GPBEnumDescriptor *ITMSetPropertyResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMSetPropertyResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMRegisterToolRequest_ToolType
 
@@ -374,6 +411,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_CreateTabRequest = 108,
   ITMClientOriginatedMessage_FieldNumber_SplitPaneRequest = 109,
   ITMClientOriginatedMessage_FieldNumber_GetProfilePropertyRequest = 110,
+  ITMClientOriginatedMessage_FieldNumber_SetPropertyRequest = 111,
+  ITMClientOriginatedMessage_FieldNumber_GetPropertyRequest = 112,
 };
 
 /**
@@ -430,6 +469,14 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
 /** Test to see if @c getProfilePropertyRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasGetProfilePropertyRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMSetPropertyRequest *setPropertyRequest;
+/** Test to see if @c setPropertyRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasSetPropertyRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMGetPropertyRequest *getPropertyRequest;
+/** Test to see if @c getPropertyRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasGetPropertyRequest;
+
 @end
 
 #pragma mark - ITMServerOriginatedMessage
@@ -447,6 +494,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_CreateTabResponse = 108,
   ITMServerOriginatedMessage_FieldNumber_SplitPaneResponse = 109,
   ITMServerOriginatedMessage_FieldNumber_GetProfilePropertyResponse = 110,
+  ITMServerOriginatedMessage_FieldNumber_SetPropertyResponse = 111,
+  ITMServerOriginatedMessage_FieldNumber_GetPropertyResponse = 112,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -504,11 +553,119 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
 /** Test to see if @c getProfilePropertyResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasGetProfilePropertyResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMSetPropertyResponse *setPropertyResponse;
+/** Test to see if @c setPropertyResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasSetPropertyResponse;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMGetPropertyResponse *getPropertyResponse;
+/** Test to see if @c getPropertyResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasGetPropertyResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 /** Test to see if @c notification has been set. */
 @property(nonatomic, readwrite) BOOL hasNotification;
 
+@end
+
+#pragma mark - ITMGetPropertyRequest
+
+typedef GPB_ENUM(ITMGetPropertyRequest_FieldNumber) {
+  ITMGetPropertyRequest_FieldNumber_WindowId = 1,
+  ITMGetPropertyRequest_FieldNumber_Name = 2,
+};
+
+typedef GPB_ENUM(ITMGetPropertyRequest_Identifier_OneOfCase) {
+  ITMGetPropertyRequest_Identifier_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMGetPropertyRequest_Identifier_OneOfCase_WindowId = 1,
+};
+
+@interface ITMGetPropertyRequest : GPBMessage
+
+@property(nonatomic, readonly) ITMGetPropertyRequest_Identifier_OneOfCase identifierOneOfCase;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+/** Test to see if @c name has been set. */
+@property(nonatomic, readwrite) BOOL hasName;
+
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'identifier'.
+ **/
+void ITMGetPropertyRequest_ClearIdentifierOneOfCase(ITMGetPropertyRequest *message);
+
+#pragma mark - ITMGetPropertyResponse
+
+typedef GPB_ENUM(ITMGetPropertyResponse_FieldNumber) {
+  ITMGetPropertyResponse_FieldNumber_Status = 1,
+  ITMGetPropertyResponse_FieldNumber_JsonValue = 2,
+};
+
+@interface ITMGetPropertyResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMGetPropertyResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *jsonValue;
+/** Test to see if @c jsonValue has been set. */
+@property(nonatomic, readwrite) BOOL hasJsonValue;
+
+@end
+
+#pragma mark - ITMSetPropertyRequest
+
+typedef GPB_ENUM(ITMSetPropertyRequest_FieldNumber) {
+  ITMSetPropertyRequest_FieldNumber_WindowId = 1,
+  ITMSetPropertyRequest_FieldNumber_Name = 3,
+  ITMSetPropertyRequest_FieldNumber_JsonValue = 4,
+};
+
+typedef GPB_ENUM(ITMSetPropertyRequest_Identifier_OneOfCase) {
+  ITMSetPropertyRequest_Identifier_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMSetPropertyRequest_Identifier_OneOfCase_WindowId = 1,
+};
+
+@interface ITMSetPropertyRequest : GPBMessage
+
+@property(nonatomic, readonly) ITMSetPropertyRequest_Identifier_OneOfCase identifierOneOfCase;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+
+/**
+ * Name           Example JSON
+ * -------------  ---------------
+ * frame          { "origin": { "x": x, "y": y }, "size": { "width": width, "height": height }}
+ * fullscreen     true, false
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+/** Test to see if @c name has been set. */
+@property(nonatomic, readwrite) BOOL hasName;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *jsonValue;
+/** Test to see if @c jsonValue has been set. */
+@property(nonatomic, readwrite) BOOL hasJsonValue;
+
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'identifier'.
+ **/
+void ITMSetPropertyRequest_ClearIdentifierOneOfCase(ITMSetPropertyRequest *message);
+
+#pragma mark - ITMSetPropertyResponse
+
+typedef GPB_ENUM(ITMSetPropertyResponse_FieldNumber) {
+  ITMSetPropertyResponse_FieldNumber_Status = 1,
+};
+
+@interface ITMSetPropertyResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMSetPropertyResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
 @end
 
 #pragma mark - ITMRegisterToolRequest

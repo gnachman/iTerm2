@@ -1,3 +1,4 @@
+import json
 import iterm2.api_pb2
 import iterm2.rpc
 import iterm2.session
@@ -5,6 +6,12 @@ import iterm2.tab
 import iterm2.util
 
 class CreateTabException(Exception):
+  pass
+
+class SetPropertyException(Exception):
+  pass
+
+class GetPropertyException(Exception):
   pass
 
 class Window:
@@ -74,4 +81,78 @@ class Window:
       return result.create_tab_response.session_id
     else:
       raise CreateTabException(iterm2.api_pb2.CreateTabResponse.Status.Name(result.create_tab_response.status))
+
+  async def get_frame(self, connection):
+    """
+    Gets the window's frame.
+
+    0,0 is the *bottom* right of the main screen.
+
+    connection: A connected iterm2.Connection.
+
+    Returns: api_pb2.Frame
+
+    Raises: GetPropertyException if something goes wrong.
+    """
+
+    response = await iterm2.rpc.get_property(connection, "frame", self.window_id)
+    if response.get_property_response.status == iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
+      d = json.loads(response.get_property_response.json_value)
+      frame = iterm2.api_pb2.Frame()
+      frame.origin.x = d["origin"]["x"]
+      frame.origin.y = d["origin"]["y"]
+      frame.size.width = d["size"]["width"]
+      frame.size.height = d["size"]["height"]
+      return frame
+    else:
+      raise GetPropertyException(response.get_property_response.status)
+
+  async def set_frame(self, connection, frame):
+    """
+    Sets the window's frame.
+
+    connection: A connected iterm2.Connection.
+    frame: api_pb2.Frame
+
+    Raises: SetPropertyException if something goes wrong.
+    """
+    dict = { "origin": { "x": frame.origin.x,
+                         "y": frame.origin.y },
+             "size": { "width": frame.size.width,
+                       "height": frame.size.height } }
+    json_value = json.dumps(dict)
+    response = await iterm2.rpc.set_property(connection, "frame", json_value, window_id=self.window_id)
+    if response.set_property_response.status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
+      raise SetPropertyException(response.get_property_response.status)
+
+  async def get_fullscreen(self, connection):
+    """
+    Checks if the window is full-screen.
+
+    connection: A connected iterm2.Connection.
+
+    Returns: True (fullscreen) or False (not fullscreen)
+
+    Raises: GetPropertyException if something goes wrong.
+    """
+    response = await iterm2.rpc.get_property(connection, "fullscreen", self.window_id)
+    if response.get_property_response.status == iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
+      return json.loads(response.get_property_response.json_value)
+    else:
+      raise GetPropertyException(response.get_property_response.status)
+
+
+  async def set_fullscreen(self, connection, fullscreen):
+    """
+    Changes the window's full-screen status.
+
+    connection: A connected iterm2.Connection.
+    fullscreen: True to make fullscreen, False to make not-fullscreen
+
+    Raises: SetPropertyException if something goes wrong.
+    """
+    json_value = json.dumps(fullscreen)
+    response = await iterm2.rpc.set_property(connection, "fullscreen", json_value, window_id=self.window_id)
+    if response.get_property_response.status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
+      raise SetPropertyException(response.get_property_response.status)
 

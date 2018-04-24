@@ -227,6 +227,25 @@ async def get_profile(connection, session=None, keys=None):
       request.get_profile_property_request.keys.append(key)
   return await _call(connection, request)
 
+async def set_property(connection, name, json_value, window_id=None):
+  """
+  Sets a property of an object (currently only of a window).
+  """
+  assert window_id is not None
+  request = _alloc_request()
+  request.set_property_request.SetInParent()
+  request.set_property_request.window_id = window_id
+  request.set_property_request.name = name
+  request.set_property_request.json_value = json_value
+  return await _call(connection, request)
+
+async def get_property(connection, name, window_id=None):
+  request = _alloc_request()
+  request.get_property_request.SetInParent()
+  request.get_property_request.window_id = window_id
+  request.get_property_request.name = name
+  return await _call(connection, request)
+
 ## Private --------------------------------------------------------------------
 
 _nextId = 0

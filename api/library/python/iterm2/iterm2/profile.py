@@ -1,5 +1,5 @@
-import iterm2.rpc
 import json
+import iterm2.rpc
 
 class WriteOnlyProfile:
   """A profile that can be modified but not read. Useful for changing many

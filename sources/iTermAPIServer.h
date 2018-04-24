@@ -39,7 +39,10 @@ extern NSString *const iTermAPIServerConnectionClosed;
                    handler:(void (^)(ITMCreateTabResponse *))handler;
 - (void)apiServerSplitPane:(ITMSplitPaneRequest *)request
                    handler:(void (^)(ITMSplitPaneResponse *))handler;
-
+- (void)apiServerSetProperty:(ITMSetPropertyRequest *)request
+                     handler:(void (^)(ITMSetPropertyResponse *))handler;
+- (void)apiServerGetProperty:(ITMGetPropertyRequest *)request
+                     handler:(void (^)(ITMGetPropertyResponse *))handler;
 @end
 
 @interface iTermAPIServer : NSObject

@@ -225,7 +225,35 @@ async def read(connection, args):
             break
           line += c
 
-      print(line) 
+      print(line)
+
+async def get_window_property(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  w = await h.get_window_by_id(args.id)
+  if w is None:
+    print("bad window ID")
+  else:
+    if args.name == "frame":
+      print(await w.get_frame(connection))
+    elif args.name == "fullscreen":
+      print(await w.get_fullscreen(connection))
+
+async def set_window_property(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  w = await h.get_window_by_id(args.id)
+  if w is None:
+    print("bad window ID")
+  else:
+    if args.name == "frame":
+      frame = iterm2.api_pb2.Frame()
+      parts = args.value.split(",")
+      frame.origin.x = int(parts[0])
+      frame.origin.y = int(parts[1])
+      frame.size.width = int(parts[2])
+      frame.size.height = int(parts[3])
+      await w.set_frame(connection, frame)
+    elif args.name == "fullscreen":
+      await w.set_fullscreen(connection, args.value == "true")
 
 def make_parser():
   parser = argparse.ArgumentParser(description='iTerm2 CLI')
@@ -280,6 +308,18 @@ def make_parser():
   read_parser.add_argument("session", type=str, help="Session ID")
   read_parser.add_argument("mode", type=str, help="What to read", choices=[ "char", "line" ])
   read_parser.set_defaults(func=read)
+
+  get_window_property_parser = subparsers.add_parser("get-window-property", help="Get a property of a window")
+  get_window_property_parser.add_argument("id", type=str, help="Window ID")
+  get_window_property_parser.add_argument("name", type=str, help="Property name", choices=["frame", "fullscreen"])
+  get_window_property_parser.set_defaults(func=get_window_property)
+
+  set_window_property_parser = subparsers.add_parser("set-window-property", help="Set a property of a window")
+  set_window_property_parser.add_argument("id", type=str, help="Window ID")
+  set_window_property_parser.add_argument("name", type=str, help="Property name", choices=["frame", "fullscreen"])
+  set_window_property_parser.add_argument("value", type=str, help="New value. For frame: x,y,width,height; for fullscreen: true or false")
+  set_window_property_parser.set_defaults(func=set_window_property)
+
   return parser
 
 def main(argv):
