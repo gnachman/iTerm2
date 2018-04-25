@@ -108,6 +108,10 @@
     NSTimer *timer_;
 }
 
++ (BOOL)isCompatibleWithResponsiveScrolling {
+    return YES;
+}
+
 - (instancetype)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller {
     self = [super initWithFrame:frame];
     if (self) {
