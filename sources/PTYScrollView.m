@@ -169,6 +169,7 @@
 
     CGFloat amount = [self accumulateVerticalScrollFromEvent:theEvent];
     scrollRect.origin.y -= amount * self.verticalLineScroll;
+    [super scrollWheel:theEvent];
     [[self documentView] scrollRectToVisible:scrollRect];
 
     [self detectUserScroll];
