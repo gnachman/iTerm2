@@ -14,10 +14,6 @@
 #import "iTermHistogram.h"
 #import "iTermThroughputEstimator.h"
 
-// Timer period between updates when active (not idle, tab is visible or title bar is changing,
-// etc.)
-static const NSTimeInterval kActiveUpdateCadence = 1 / 60.0;
-
 // Timer period between updates when adaptive frame rate is enabled and throughput is low but not 0.
 static const NSTimeInterval kFastUpdateCadence = 1.0 / 60.0;
 
@@ -41,6 +37,10 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
     iTermThroughputEstimator *_throughputEstimator;
     NSTimeInterval _lastUpdate;
+
+    // Timer period between updates when active (not idle, tab is visible or title bar is changing,
+    // etc.)
+    NSTimeInterval _activeUpdateCadence;
 }
 
 - (instancetype)initWithThroughputEstimator:(iTermThroughputEstimator *)throughputEstimator {
@@ -49,6 +49,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         _useGCDUpdateTimer = [iTermAdvancedSettingsModel useGCDUpdateTimer];
         _throughputEstimator = throughputEstimator;
         _histogram = [[iTermHistogram alloc] init];
+        _activeUpdateCadence = 1.0 / MAX(1, [iTermAdvancedSettingsModel activeUpdateCadence]);
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidBecomeActive:)
                                                      name:NSApplicationDidBecomeActiveNotification
@@ -114,7 +115,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
                 [self setUpdateCadence:1.0 / state.slowFrameRate liveResizing:state.liveResizing force:force];
             }
         } else {
-            [self setUpdateCadence:kActiveUpdateCadence liveResizing:state.liveResizing force:force];
+            [self setUpdateCadence:_activeUpdateCadence liveResizing:state.liveResizing force:force];
         }
     } else {
         [self setUpdateCadence:kBackgroundUpdateCadence liveResizing:state.liveResizing force:force];
@@ -141,7 +142,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
         // I'm worried about the possible side effects it might have since there's no way to
         // know all the tracking event loops.
         [_updateTimer invalidate];
-        _updateTimer = [NSTimer weakTimerWithTimeInterval:kActiveUpdateCadence
+        _updateTimer = [NSTimer weakTimerWithTimeInterval:_activeUpdateCadence
                                                    target:self
                                                  selector:@selector(updateDisplay)
                                                  userInfo:nil
@@ -162,7 +163,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     }
 }
 - (void)setGCDUpdateCadence:(NSTimeInterval)cadence liveResizing:(BOOL)liveResizing force:(BOOL)force {
-    const NSTimeInterval period = liveResizing ? kActiveUpdateCadence : cadence;
+    const NSTimeInterval period = liveResizing ? _activeUpdateCadence : cadence;
     if (_cadence == period) {
         DLog(@"No change to cadence.");
         return;

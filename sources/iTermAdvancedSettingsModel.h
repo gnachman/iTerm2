@@ -213,5 +213,6 @@
 + (BOOL)aggressiveFocusFollowsMouse;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
 + (BOOL)conservativeURLGuessing;
++ (double)activeUpdateCadence;
 
 @end
