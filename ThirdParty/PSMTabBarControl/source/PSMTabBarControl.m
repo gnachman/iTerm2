@@ -412,6 +412,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
     }
     NSCountedSet *prefixCounts = [[[NSCountedSet alloc] init] autorelease];
     NSCountedSet *suffixCounts = [[[NSCountedSet alloc] init] autorelease];
+    NSCountedSet *suffixIgnoringParenthesizedPartCounts = [[[NSCountedSet alloc] init] autorelease];
     NSMutableSet *uniqueTitles = [NSMutableSet set];
     static NSInteger const kPrefixOrSuffixLength = 5;
     for (PSMTabBarCell *cell in _cells) {
@@ -425,12 +426,22 @@ const NSInteger kPSMStartResizeAnimation = 0;
         
         [prefixCounts addObject:prefix];
         [suffixCounts addObject:suffix];
+
+        if ([title hasSuffix:@")"]) {
+            NSInteger openParen = [title rangeOfString:@" (" options:NSBackwardsSearch].location;
+            if (openParen != NSNotFound && openParen > kPrefixOrSuffixLength) {
+                suffix = [title substringWithRange:NSMakeRange(openParen - kPrefixOrSuffixLength, kPrefixOrSuffixLength)];
+                [suffixIgnoringParenthesizedPartCounts addObject:suffix];
+            }
+        }
     }
     if (uniqueTitles.count == 0) {
         return NSLineBreakByTruncatingTail;
     }
 
-    if (prefixCounts.count >= suffixCounts.count) {
+    NSUInteger suffixCount = MAX(suffixCounts.count,
+                                 suffixIgnoringParenthesizedPartCounts.count);
+    if (prefixCounts.count >= suffixCount) {
         return NSLineBreakByTruncatingTail;
     } else {
         return NSLineBreakByTruncatingHead;
