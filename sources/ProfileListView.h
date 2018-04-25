@@ -61,7 +61,7 @@ extern NSString *const kProfileWasDeletedNotification;
   ProfileTableMenuHandler>
 
 @property(nonatomic, readonly) BOOL tagsVisible;
-@property(nonatomic, assign) IBOutlet id<ProfileListViewDelegate> delegate;
+@property(nonatomic, weak) IBOutlet id<ProfileListViewDelegate> delegate;
 @property(nonatomic, readonly) NSInteger numberOfRows;
 @property(nonatomic, readonly) NSSet<NSString*> *selectedGuids;
 @property(nonatomic, readonly) BOOL hasSelection;

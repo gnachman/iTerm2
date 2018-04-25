@@ -48,10 +48,10 @@ static BOOL gIntrospecting;
 static NSDictionary *gIntrospection;
 
 @implementation iTermAdvancedSettingsViewController {
-    IBOutlet NSTableColumn *_settingColumn;
-    IBOutlet NSTableColumn *_valueColumn;
-    IBOutlet NSSearchField *_searchField;
-    IBOutlet NSTableView *_tableView;
+    __weak IBOutlet NSTableColumn *_settingColumn;
+    __weak IBOutlet NSTableColumn *_valueColumn;
+    __weak IBOutlet NSSearchField *_searchField;
+    __weak IBOutlet NSTableView *_tableView;
 
     NSArray *_filteredAdvancedSettings;
 }

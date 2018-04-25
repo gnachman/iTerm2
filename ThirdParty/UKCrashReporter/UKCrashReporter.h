@@ -35,15 +35,15 @@ void	UKCrashReporterCheckForCrash(void);
 
 @interface UKCrashReporter : UKNibOwner
 {
-	IBOutlet NSWindow*				reportWindow;
+	__weak IBOutlet NSWindow*				reportWindow;
 	IBOutlet NSTextView*			informationField;
 	IBOutlet NSTextView*			crashLogField;
-	IBOutlet NSTextField*			explanationField;
-	IBOutlet NSProgressIndicator*	progressIndicator;
-	IBOutlet NSButton*				sendButton;
-	IBOutlet NSButton*				remindButton;
-	IBOutlet NSButton*				discardButton;
-	IBOutlet NSTabView*				switchTabView;
+	__weak IBOutlet NSTextField*			explanationField;
+	__weak IBOutlet NSProgressIndicator*	progressIndicator;
+	__weak IBOutlet NSButton*				sendButton;
+	__weak IBOutlet NSButton*				remindButton;
+	__weak IBOutlet NSButton*				discardButton;
+	__weak IBOutlet NSTabView*				switchTabView;
 	NSURLConnection*				connection;
 	BOOL							feedbackMode;
 }

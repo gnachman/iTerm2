@@ -15,12 +15,12 @@ extern NSString *kWindowPasteboardType;
     NSMutableArray *model_;
     BOOL canAttachToSelectedSession_;
 
-    IBOutlet NSTableColumn *checkColumn_;
-    IBOutlet NSTableColumn *nameColumn_;
-    IBOutlet NSTableView *tableView_;
-    IBOutlet NSButton *attachButton_;
-    IBOutlet NSButton *detachButton_;
-    IBOutlet NSButton *removeButton_;
+    __weak IBOutlet NSTableColumn *checkColumn_;
+    __weak IBOutlet NSTableColumn *nameColumn_;
+    __weak IBOutlet NSTableView *tableView_;
+    __weak IBOutlet NSButton *attachButton_;
+    __weak IBOutlet NSButton *detachButton_;
+    __weak IBOutlet NSButton *removeButton_;
 }
 
 @synthesize delegate = delegate_;

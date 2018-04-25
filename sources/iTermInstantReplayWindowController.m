@@ -49,10 +49,10 @@ static const float kAlphaValue = 0.9;
 @end
 
 @implementation iTermInstantReplayWindowController {
-    IBOutlet NSSlider *_slider;
-    IBOutlet NSTextField *_currentTimeLabel;
-    IBOutlet NSTextField *_earliestTimeLabel;
-    IBOutlet NSTextField *_latestTimeLabel;
+    __weak IBOutlet NSSlider *_slider;
+    __weak IBOutlet NSTextField *_currentTimeLabel;
+    __weak IBOutlet NSTextField *_earliestTimeLabel;
+    __weak IBOutlet NSTextField *_latestTimeLabel;
 }
 
 - (instancetype)init {

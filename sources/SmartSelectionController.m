@@ -27,12 +27,12 @@ NSString *const kVeryHighPrecision = @"very_high";
 static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 
 @implementation SmartSelectionController {
-    IBOutlet NSTableView *tableView_;
-    IBOutlet NSTableColumn *regexColumn_;
-    IBOutlet NSTableColumn *notesColumn_;
-    IBOutlet NSTableColumn *precisionColumn_;
-    IBOutlet ContextMenuActionPrefsController *contextMenuPrefsController_;
-    IBOutlet NSButton *logDebugInfo_;
+    __weak IBOutlet NSTableView *tableView_;
+    __weak IBOutlet NSTableColumn *regexColumn_;
+    __weak IBOutlet NSTableColumn *notesColumn_;
+    __weak IBOutlet NSTableColumn *precisionColumn_;
+    __weak IBOutlet ContextMenuActionPrefsController *contextMenuPrefsController_;
+    __weak IBOutlet NSButton *logDebugInfo_;
 }
 
 @synthesize guid = guid_;

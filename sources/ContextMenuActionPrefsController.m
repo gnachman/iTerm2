@@ -16,10 +16,10 @@ static NSString* kActionKey = @"action";
 static NSString* kParameterKey = @"parameter";
 
 @implementation ContextMenuActionPrefsController {
-    IBOutlet NSTableView *_tableView;
-    IBOutlet NSTableColumn *_titleColumn;
-    IBOutlet NSTableColumn *_actionColumn;
-    IBOutlet NSTableColumn *_parameterColumn;
+    __weak IBOutlet NSTableView *_tableView;
+    __weak IBOutlet NSTableColumn *_titleColumn;
+    __weak IBOutlet NSTableColumn *_actionColumn;
+    __weak IBOutlet NSTableColumn *_parameterColumn;
     NSMutableArray *_model;
 }
 

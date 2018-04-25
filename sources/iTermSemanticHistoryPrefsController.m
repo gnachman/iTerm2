@@ -32,10 +32,10 @@ NSString *kSemanticHistoryCoprocessAction = @"coprocess";
 
 @implementation iTermSemanticHistoryPrefsController {
     NSString *guid_;
-    IBOutlet NSPopUpButton *action_;
-    IBOutlet NSTextField *text_;
-    IBOutlet NSPopUpButton *editors_;
-    IBOutlet NSTextField *caveat_;
+    __weak IBOutlet NSPopUpButton *action_;
+    __weak IBOutlet NSTextField *text_;
+    __weak IBOutlet NSPopUpButton *editors_;
+    __weak IBOutlet NSTextField *caveat_;
 }
 
 enum {

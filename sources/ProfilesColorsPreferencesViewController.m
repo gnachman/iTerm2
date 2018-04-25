@@ -20,52 +20,52 @@
 static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery";
 
 @implementation ProfilesColorsPreferencesViewController {
-    IBOutlet CPKColorWell *_ansi0Color;
-    IBOutlet CPKColorWell *_ansi1Color;
-    IBOutlet CPKColorWell *_ansi2Color;
-    IBOutlet CPKColorWell *_ansi3Color;
-    IBOutlet CPKColorWell *_ansi4Color;
-    IBOutlet CPKColorWell *_ansi5Color;
-    IBOutlet CPKColorWell *_ansi6Color;
-    IBOutlet CPKColorWell *_ansi7Color;
-    IBOutlet CPKColorWell *_ansi8Color;
-    IBOutlet CPKColorWell *_ansi9Color;
-    IBOutlet CPKColorWell *_ansi10Color;
-    IBOutlet CPKColorWell *_ansi11Color;
-    IBOutlet CPKColorWell *_ansi12Color;
-    IBOutlet CPKColorWell *_ansi13Color;
-    IBOutlet CPKColorWell *_ansi14Color;
-    IBOutlet CPKColorWell *_ansi15Color;
-    IBOutlet CPKColorWell *_foregroundColor;
-    IBOutlet CPKColorWell *_backgroundColor;
-    IBOutlet CPKColorWell *_boldColor;
-    IBOutlet CPKColorWell *_linkColor;
-    IBOutlet CPKColorWell *_selectionColor;
-    IBOutlet CPKColorWell *_selectedTextColor;
-    IBOutlet CPKColorWell *_cursorColor;
-    IBOutlet CPKColorWell *_cursorTextColor;
-    IBOutlet CPKColorWell *_tabColor;
-    IBOutlet CPKColorWell *_underlineColor;
-    IBOutlet CPKColorWell *_badgeColor;
+    __weak IBOutlet CPKColorWell *_ansi0Color;
+    __weak IBOutlet CPKColorWell *_ansi1Color;
+    __weak IBOutlet CPKColorWell *_ansi2Color;
+    __weak IBOutlet CPKColorWell *_ansi3Color;
+    __weak IBOutlet CPKColorWell *_ansi4Color;
+    __weak IBOutlet CPKColorWell *_ansi5Color;
+    __weak IBOutlet CPKColorWell *_ansi6Color;
+    __weak IBOutlet CPKColorWell *_ansi7Color;
+    __weak IBOutlet CPKColorWell *_ansi8Color;
+    __weak IBOutlet CPKColorWell *_ansi9Color;
+    __weak IBOutlet CPKColorWell *_ansi10Color;
+    __weak IBOutlet CPKColorWell *_ansi11Color;
+    __weak IBOutlet CPKColorWell *_ansi12Color;
+    __weak IBOutlet CPKColorWell *_ansi13Color;
+    __weak IBOutlet CPKColorWell *_ansi14Color;
+    __weak IBOutlet CPKColorWell *_ansi15Color;
+    __weak IBOutlet CPKColorWell *_foregroundColor;
+    __weak IBOutlet CPKColorWell *_backgroundColor;
+    __weak IBOutlet CPKColorWell *_boldColor;
+    __weak IBOutlet CPKColorWell *_linkColor;
+    __weak IBOutlet CPKColorWell *_selectionColor;
+    __weak IBOutlet CPKColorWell *_selectedTextColor;
+    __weak IBOutlet CPKColorWell *_cursorColor;
+    __weak IBOutlet CPKColorWell *_cursorTextColor;
+    __weak IBOutlet CPKColorWell *_tabColor;
+    __weak IBOutlet CPKColorWell *_underlineColor;
+    __weak IBOutlet CPKColorWell *_badgeColor;
 
-    IBOutlet NSTextField *_cursorColorLabel;
-    IBOutlet NSTextField *_cursorTextColorLabel;
+    __weak IBOutlet NSTextField *_cursorColorLabel;
+    __weak IBOutlet NSTextField *_cursorTextColorLabel;
 
-    IBOutlet NSButton *_useTabColor;
-    IBOutlet NSButton *_useUnderlineColor;
-    IBOutlet NSButton *_useSmartCursorColor;
+    __weak IBOutlet NSButton *_useTabColor;
+    __weak IBOutlet NSButton *_useUnderlineColor;
+    __weak IBOutlet NSButton *_useSmartCursorColor;
 
-    IBOutlet NSSlider *_minimumContrast;
-    IBOutlet NSSlider *_cursorBoost;
+    __weak IBOutlet NSSlider *_minimumContrast;
+    __weak IBOutlet NSSlider *_cursorBoost;
 
-    IBOutlet NSMenu *_presetsMenu;
+    __weak IBOutlet NSMenu *_presetsMenu;
 
-    IBOutlet NSButton *_useGuide;
-    IBOutlet CPKColorWell *_guideColor;
+    __weak IBOutlet NSButton *_useGuide;
+    __weak IBOutlet CPKColorWell *_guideColor;
 
-    IBOutlet NSPopUpButton *_presetsPopupButton;
-    IBOutlet NSView *_bwWarning1;
-    IBOutlet NSView *_bwWarning2;
+    __weak IBOutlet NSPopUpButton *_presetsPopupButton;
+    __weak IBOutlet NSView *_bwWarning1;
+    __weak IBOutlet NSView *_bwWarning2;
 }
 
 + (NSArray<NSString *> *)presetNames {

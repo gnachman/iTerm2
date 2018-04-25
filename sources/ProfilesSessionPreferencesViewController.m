@@ -16,21 +16,21 @@
 @end
 
 @implementation ProfilesSessionPreferencesViewController {
-    IBOutlet NSButton *_closeSessionsOnEnd;
-    IBOutlet NSMatrix *_promptBeforeClosing;
-    IBOutlet NSTableView *_jobsTable;
-    IBOutlet NSButton *_removeJob;
-    IBOutlet NSButton *_autoLog;
-    IBOutlet NSTextField *_logDir;
-    IBOutlet NSButton *_sendCodeWhenIdle;
-    IBOutlet NSTextField *_idleCode;
-    IBOutlet NSTextField *_idlePeriod;
+    __weak IBOutlet NSButton *_closeSessionsOnEnd;
+    __weak IBOutlet NSMatrix *_promptBeforeClosing;
+    __weak IBOutlet NSTableView *_jobsTable;
+    __weak IBOutlet NSButton *_removeJob;
+    __weak IBOutlet NSButton *_autoLog;
+    __weak IBOutlet NSTextField *_logDir;
+    __weak IBOutlet NSButton *_sendCodeWhenIdle;
+    __weak IBOutlet NSTextField *_idleCode;
+    __weak IBOutlet NSTextField *_idlePeriod;
 
-    IBOutlet NSImageView *_logDirWarning;
-    IBOutlet NSButton *_changeLogDir;
+    __weak IBOutlet NSImageView *_logDirWarning;
+    __weak IBOutlet NSButton *_changeLogDir;
 
-    IBOutlet NSTextField *_undoTimeout;
-    IBOutlet NSButton *_reduceFlicker;
+    __weak IBOutlet NSTextField *_undoTimeout;
+    __weak IBOutlet NSButton *_reduceFlicker;
 
     BOOL _awoken;
 }

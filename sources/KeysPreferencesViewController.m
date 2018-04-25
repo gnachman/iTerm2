@@ -28,23 +28,23 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 @end
 
 @implementation KeysPreferencesViewController {
-    IBOutlet NSPopUpButton *_controlButton;
-    IBOutlet NSPopUpButton *_leftOptionButton;
-    IBOutlet NSPopUpButton *_rightOptionButton;
-    IBOutlet NSPopUpButton *_leftCommandButton;
-    IBOutlet NSPopUpButton *_rightCommandButton;
+    __weak IBOutlet NSPopUpButton *_controlButton;
+    __weak IBOutlet NSPopUpButton *_leftOptionButton;
+    __weak IBOutlet NSPopUpButton *_rightOptionButton;
+    __weak IBOutlet NSPopUpButton *_leftCommandButton;
+    __weak IBOutlet NSPopUpButton *_rightCommandButton;
 
-    IBOutlet NSPopUpButton *_switchPaneModifierButton;
-    IBOutlet NSPopUpButton *_switchTabModifierButton;
-    IBOutlet NSPopUpButton *_switchWindowModifierButton;
+    __weak IBOutlet NSPopUpButton *_switchPaneModifierButton;
+    __weak IBOutlet NSPopUpButton *_switchTabModifierButton;
+    __weak IBOutlet NSPopUpButton *_switchWindowModifierButton;
 
     // Hotkey
-    IBOutlet NSButton *_hotkeyEnabled;
-    IBOutlet NSView *_horizontalLine;
-    IBOutlet NSTextField *_shortcutOverloaded;
-    IBOutlet NSTextField *_hotkeyField;
-    IBOutlet NSTextField *_hotkeyLabel;
-    IBOutlet NSButton *_configureHotKeyWindow;
+    __weak IBOutlet NSButton *_hotkeyEnabled;
+    __weak IBOutlet NSView *_horizontalLine;
+    __weak IBOutlet NSTextField *_shortcutOverloaded;
+    __weak IBOutlet NSTextField *_hotkeyField;
+    __weak IBOutlet NSTextField *_hotkeyLabel;
+    __weak IBOutlet NSButton *_configureHotKeyWindow;
 }
 
 - (void)dealloc {

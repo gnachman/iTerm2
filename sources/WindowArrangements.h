@@ -10,12 +10,12 @@
 #import "ArrangementPreviewView.h"
 
 @interface WindowArrangements : NSViewController <NSTableViewDataSource, NSTableViewDelegate> {
-    IBOutlet NSTableColumn *defaultColumn_;
-    IBOutlet NSTableColumn *titleColumn_;
-    IBOutlet NSTableView *tableView_;
-    IBOutlet ArrangementPreviewView *previewView_;
-    IBOutlet NSButton *deleteButton_;
-    IBOutlet NSButton *defaultButton_;
+    __weak IBOutlet NSTableColumn *defaultColumn_;
+    __weak IBOutlet NSTableColumn *titleColumn_;
+    __weak IBOutlet NSTableView *tableView_;
+    __weak IBOutlet ArrangementPreviewView *previewView_;
+    __weak IBOutlet NSButton *deleteButton_;
+    __weak IBOutlet NSButton *defaultButton_;
 }
 
 + (WindowArrangements *)sharedInstance;

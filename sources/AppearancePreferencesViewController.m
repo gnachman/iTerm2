@@ -16,74 +16,74 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
 @implementation AppearancePreferencesViewController {
     // This is actually the tab style. See TAB_STYLE_XXX defines.
-    IBOutlet NSPopUpButton *_tabStyle;
+    __weak IBOutlet NSPopUpButton *_tabStyle;
 
     // Tab position within window. See TAB_POSITION_XXX defines.
-    IBOutlet NSPopUpButton *_tabPosition;
+    __weak IBOutlet NSPopUpButton *_tabPosition;
 
     // Hide tab bar when there is only one session
-    IBOutlet NSButton *_hideTab;
+    __weak IBOutlet NSButton *_hideTab;
 
     // Remove tab number from tabs.
-    IBOutlet NSButton *_hideTabNumber;
+    __weak IBOutlet NSButton *_hideTabNumber;
 
     // Remove close button from tabs.
-    IBOutlet NSButton *_hideTabCloseButton;
+    __weak IBOutlet NSButton *_hideTabCloseButton;
 
     // Hide activity indicator.
-    IBOutlet NSButton *_hideActivityIndicator;
+    __weak IBOutlet NSButton *_hideActivityIndicator;
 
     // Show new-output indicator
-    IBOutlet NSButton *_showNewOutputIndicator;
+    __weak IBOutlet NSButton *_showNewOutputIndicator;
 
     // Show per-pane title bar with split panes.
-    IBOutlet NSButton *_showPaneTitles;
+    __weak IBOutlet NSButton *_showPaneTitles;
 
     // Hide menu bar in non-lion fullscreen.
-    IBOutlet NSButton *_hideMenuBarInFullscreen;
+    __weak IBOutlet NSButton *_hideMenuBarInFullscreen;
 
     // Exclude from dock and cmd-tab (LSUIElement)
-    IBOutlet NSButton *_uiElement;
+    __weak IBOutlet NSButton *_uiElement;
 
-    IBOutlet NSButton *_flashTabBarInFullscreenWhenSwitchingTabs;
-    IBOutlet NSButton *_showTabBarInFullscreen;
+    __weak IBOutlet NSButton *_flashTabBarInFullscreenWhenSwitchingTabs;
+    __weak IBOutlet NSButton *_showTabBarInFullscreen;
 
-    IBOutlet NSButton *_stretchTabsToFillBar;
+    __weak IBOutlet NSButton *_stretchTabsToFillBar;
 
     // Show window number in title bar.
-    IBOutlet NSButton *_windowNumber;
+    __weak IBOutlet NSButton *_windowNumber;
 
     // Show job name in title
-    IBOutlet NSButton *_jobName;
+    __weak IBOutlet NSButton *_jobName;
 
     // Show bookmark name in title.
-    IBOutlet NSButton *_showBookmarkName;
+    __weak IBOutlet NSButton *_showBookmarkName;
 
     // Dim text (and non-default background colors).
-    IBOutlet NSButton *_dimOnlyText;
+    __weak IBOutlet NSButton *_dimOnlyText;
 
     // Dimming amount.
-    IBOutlet NSSlider *_dimmingAmount;
+    __weak IBOutlet NSSlider *_dimmingAmount;
 
     // Dim inactive split panes.
-    IBOutlet NSButton *_dimInactiveSplitPanes;
+    __weak IBOutlet NSButton *_dimInactiveSplitPanes;
 
     // Dim background windows.
-    IBOutlet NSButton *_dimBackgroundWindows;
+    __weak IBOutlet NSButton *_dimBackgroundWindows;
 
     // Window border.
-    IBOutlet NSButton *_showWindowBorder;
+    __weak IBOutlet NSButton *_showWindowBorder;
 
     // Hide scrollbar.
-    IBOutlet NSButton *_hideScrollbar;
+    __weak IBOutlet NSButton *_hideScrollbar;
 
     // Disable transparency in fullscreen by default.
-    IBOutlet NSButton *_disableFullscreenTransparency;
+    __weak IBOutlet NSButton *_disableFullscreenTransparency;
 
     // Draw line under title bar when the tab bar is not visible
-    IBOutlet NSButton *_enableDivisionView;
+    __weak IBOutlet NSButton *_enableDivisionView;
 
-    IBOutlet NSButton *_enableProxyIcon;
+    __weak IBOutlet NSButton *_enableProxyIcon;
 }
 
 - (void)awakeFromNib {

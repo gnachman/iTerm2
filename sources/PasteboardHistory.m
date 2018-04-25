@@ -200,7 +200,7 @@
 @end
 
 @implementation PasteboardHistoryWindowController {
-    IBOutlet NSTableView *table_;
+    __weak IBOutlet NSTableView *table_;
     NSTimer *minuteRefreshTimer_;
 }
 

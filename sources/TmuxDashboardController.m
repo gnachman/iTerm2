@@ -25,9 +25,9 @@
 @end
 
 @implementation TmuxDashboardController {
-    IBOutlet TmuxSessionsTable *sessionsTable_;
-    IBOutlet TmuxWindowsTable *windowsTable_;
-    IBOutlet NSPopUpButton *connectionsButton_;
+    __weak IBOutlet TmuxSessionsTable *sessionsTable_;
+    __weak IBOutlet TmuxWindowsTable *windowsTable_;
+    __weak IBOutlet NSPopUpButton *connectionsButton_;
 }
 
 + (TmuxDashboardController *)sharedInstance {

@@ -23,20 +23,20 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 @end
 
 @implementation iTermScriptConsole {
-    IBOutlet NSTableView *_tableView;
-    IBOutlet NSTabView *_tabView;
+    __weak IBOutlet NSTableView *_tableView;
+    __weak IBOutlet NSTabView *_tabView;
     IBOutlet NSTextView *_logsView;
     IBOutlet NSTextView *_callsView;
 
-    IBOutlet NSTableColumn *_nameColumn;
-    IBOutlet NSTableColumn *_dateColumn;
+    __weak IBOutlet NSTableColumn *_nameColumn;
+    __weak IBOutlet NSTableColumn *_dateColumn;
 
-    IBOutlet NSSegmentedControl *_scriptFilterControl;
+    __weak IBOutlet NSSegmentedControl *_scriptFilterControl;
 
-    IBOutlet NSButton *_scrollToBottomOnUpdate;
+    __weak IBOutlet NSButton *_scrollToBottomOnUpdate;
 
     NSDateFormatter *_dateFormatter;
-    IBOutlet NSTextField *_filter;
+    __weak IBOutlet NSTextField *_filter;
 
     id _token;
 }

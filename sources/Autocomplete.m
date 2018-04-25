@@ -22,7 +22,7 @@ const int kMaxResultContextWords = 4;
 @implementation AutocompleteView
 {
     // Table view that displays choices.
-    IBOutlet NSTableView* table_;
+    __weak IBOutlet NSTableView* table_;
 
     // Word before cursor.
     NSMutableString* prefix_;

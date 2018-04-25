@@ -12,8 +12,8 @@
 
 @implementation iTermAdditionalHotKeyTableCellView {
     iTermAdditionalHotKeyObjectValue *_objectValue;
-    IBOutlet iTermShortcutInputView *_shortcut;
-    IBOutlet NSView *_duplicateWarning;
+    __weak IBOutlet iTermShortcutInputView *_shortcut;
+    __weak IBOutlet NSView *_duplicateWarning;
 }
 
 - (void)awakeFromNib {

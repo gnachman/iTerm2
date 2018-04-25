@@ -17,6 +17,6 @@
 
 @interface iTermImageWell : NSImageView
 
-@property(nonatomic, assign) IBOutlet id<iTermImageWellDelegate> delegate;
+@property(nonatomic, weak) IBOutlet id<iTermImageWellDelegate> delegate;
 
 @end

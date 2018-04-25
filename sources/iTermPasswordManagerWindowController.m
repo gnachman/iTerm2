@@ -27,13 +27,13 @@ static BOOL sAuthenticated;
 @end
 
 @implementation iTermPasswordManagerWindowController {
-    IBOutlet NSTableView *_tableView;
-    IBOutlet NSTableColumn *_accountNameColumn;
-    IBOutlet NSTableColumn *_passwordColumn;
-    IBOutlet NSButton *_removeButton;
-    IBOutlet NSButton *_editButton;
-    IBOutlet NSButton *_enterPasswordButton;
-    IBOutlet iTermSearchField *_searchField;
+    __weak IBOutlet NSTableView *_tableView;
+    __weak IBOutlet NSTableColumn *_accountNameColumn;
+    __weak IBOutlet NSTableColumn *_passwordColumn;
+    __weak IBOutlet NSButton *_removeButton;
+    __weak IBOutlet NSButton *_editButton;
+    __weak IBOutlet NSButton *_enterPasswordButton;
+    __weak IBOutlet iTermSearchField *_searchField;
     NSArray *_accounts;
     NSString *_passwordBeingShown;
     NSInteger _rowForPasswordBeingShown;

@@ -21,19 +21,19 @@
 @end
 
 @implementation iTermEditKeyActionWindowController {
-    IBOutlet iTermShortcutInputView *_shortcutField;
-    IBOutlet NSTextField *_keyboardShortcutLabel;
-    IBOutlet NSTextField *_touchBarLabel;
-    IBOutlet NSPopUpButton *_actionPopup;
-    IBOutlet NSTextField *_parameter;
-    IBOutlet NSTextField *_parameterLabel;
-    IBOutlet NSPopUpButton *_profilePopup;
-    IBOutlet NSPopUpButton *_selectionMovementUnit;
-    IBOutlet NSPopUpButton *_menuToSelectPopup;
-    IBOutlet NSTextField *_profileLabel;
-    IBOutlet NSTextField *_colorPresetsLabel;
-    IBOutlet NSPopUpButton *_colorPresetsPopup;
-    IBOutlet NSView *_pasteSpecialViewContainer;
+    __weak IBOutlet iTermShortcutInputView *_shortcutField;
+    __weak IBOutlet NSTextField *_keyboardShortcutLabel;
+    __weak IBOutlet NSTextField *_touchBarLabel;
+    __weak IBOutlet NSPopUpButton *_actionPopup;
+    __weak IBOutlet NSTextField *_parameter;
+    __weak IBOutlet NSTextField *_parameterLabel;
+    __weak IBOutlet NSPopUpButton *_profilePopup;
+    __weak IBOutlet NSPopUpButton *_selectionMovementUnit;
+    __weak IBOutlet NSPopUpButton *_menuToSelectPopup;
+    __weak IBOutlet NSTextField *_profileLabel;
+    __weak IBOutlet NSTextField *_colorPresetsLabel;
+    __weak IBOutlet NSPopUpButton *_colorPresetsPopup;
+    __weak IBOutlet NSView *_pasteSpecialViewContainer;
 
     iTermPasteSpecialViewController *_pasteSpecialViewController;
 }

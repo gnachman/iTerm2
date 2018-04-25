@@ -14,12 +14,12 @@
 static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 
 @implementation iTermKeyMappingViewController {
-    IBOutlet NSButton *_addTouchBarItem;
-    IBOutlet NSTableView *_tableView;
-    IBOutlet NSTableColumn *_keyCombinationColumn;
-    IBOutlet NSTableColumn *_actionColumn;
-    IBOutlet NSButton *_removeMappingButton;
-    IBOutlet NSPopUpButton *_presetsPopup;
+    __weak IBOutlet NSButton *_addTouchBarItem;
+    __weak IBOutlet NSTableView *_tableView;
+    __weak IBOutlet NSTableColumn *_keyCombinationColumn;
+    __weak IBOutlet NSTableColumn *_actionColumn;
+    __weak IBOutlet NSButton *_removeMappingButton;
+    __weak IBOutlet NSPopUpButton *_presetsPopup;
 }
 
 - (instancetype)init {

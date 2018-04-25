@@ -121,28 +121,28 @@ typedef enum {
 @end
 
 @implementation PointerPrefsController {
-    IBOutlet NSTableView *tableView_;
-    IBOutlet NSTableColumn *buttonColumn_;
-    IBOutlet NSTableColumn *actionColumn_;
+    __weak IBOutlet NSTableView *tableView_;
+    __weak IBOutlet NSTableColumn *buttonColumn_;
+    __weak IBOutlet NSTableColumn *actionColumn_;
 
-    IBOutlet NSPanel *panel_;
-    IBOutlet NSTextField *editButtonLabel_;
-    IBOutlet NSPopUpButton *editButton_;
-    IBOutlet NSTextField *editModifiersLabel_;
-    IBOutlet NSButton *editModifiersCommand_;
-    IBOutlet NSButton *editModifiersOption_;
-    IBOutlet NSButton *editModifiersShift_;
-    IBOutlet NSButton *editModifiersControl_;
-    IBOutlet NSTextField *editActionLabel_;
-    IBOutlet NSPopUpButton *editAction_;
-    IBOutlet NSTextField *editClickTypeLabel_;
-    IBOutlet NSPopUpButton *editClickType_;
-    IBOutlet NSTextField *editArgumentLabel_;
-    IBOutlet NSPopUpButton *editArgumentButton_;
-    IBOutlet NSTextField *editArgumentField_;
+    __weak IBOutlet NSPanel *panel_;
+    __weak IBOutlet NSTextField *editButtonLabel_;
+    __weak IBOutlet NSPopUpButton *editButton_;
+    __weak IBOutlet NSTextField *editModifiersLabel_;
+    __weak IBOutlet NSButton *editModifiersCommand_;
+    __weak IBOutlet NSButton *editModifiersOption_;
+    __weak IBOutlet NSButton *editModifiersShift_;
+    __weak IBOutlet NSButton *editModifiersControl_;
+    __weak IBOutlet NSTextField *editActionLabel_;
+    __weak IBOutlet NSPopUpButton *editAction_;
+    __weak IBOutlet NSTextField *editClickTypeLabel_;
+    __weak IBOutlet NSPopUpButton *editClickType_;
+    __weak IBOutlet NSTextField *editArgumentLabel_;
+    __weak IBOutlet NSPopUpButton *editArgumentButton_;
+    __weak IBOutlet NSTextField *editArgumentField_;
 
-    IBOutlet NSButton *ok_;
-    IBOutlet NSButton *remove_;
+    __weak IBOutlet NSButton *ok_;
+    __weak IBOutlet NSButton *remove_;
 
     NSString *origKey_;
 }

@@ -13,30 +13,30 @@
 @end
 
 @implementation iTermHotkeyPreferencesWindowController {
-    IBOutlet iTermShortcutInputView *_hotKey;
-    IBOutlet NSButton *_ok;
-    IBOutlet NSTextField *_explanation;
-    IBOutlet NSTextField *_duplicateWarning;
-    IBOutlet NSTextField *_duplicateWarningForModifierActivation;
+    __weak IBOutlet iTermShortcutInputView *_hotKey;
+    __weak IBOutlet NSButton *_ok;
+    __weak IBOutlet NSTextField *_explanation;
+    __weak IBOutlet NSTextField *_duplicateWarning;
+    __weak IBOutlet NSTextField *_duplicateWarningForModifierActivation;
 
-    IBOutlet NSButton *_activateWithModifier;
-    IBOutlet NSPopUpButton *_modifierActivation;
+    __weak IBOutlet NSButton *_activateWithModifier;
+    __weak IBOutlet NSPopUpButton *_modifierActivation;
 
     // Check boxes
-    IBOutlet NSButton *_pinned;
-    IBOutlet NSButton *_showAutoHiddenWindowOnAppActivation;
-    IBOutlet NSButton *_animate;
-    IBOutlet NSButton *_floats;
+    __weak IBOutlet NSButton *_pinned;
+    __weak IBOutlet NSButton *_showAutoHiddenWindowOnAppActivation;
+    __weak IBOutlet NSButton *_animate;
+    __weak IBOutlet NSButton *_floats;
 
     // Radio buttons
-    IBOutlet NSButton *_doNotShowOnDockClick;
-    IBOutlet NSButton *_alwaysShowOnDockClick;
-    IBOutlet NSButton *_showIfNoWindowsOpenOnDockClick;
+    __weak IBOutlet NSButton *_doNotShowOnDockClick;
+    __weak IBOutlet NSButton *_alwaysShowOnDockClick;
+    __weak IBOutlet NSButton *_showIfNoWindowsOpenOnDockClick;
 
-    IBOutlet NSButton *_editAdditionalButton;
-    IBOutlet NSButton *_removeAdditional;
-    IBOutlet NSPanel *_editAdditionalWindow;
-    IBOutlet NSTableView *_tableView;
+    __weak IBOutlet NSButton *_editAdditionalButton;
+    __weak IBOutlet NSButton *_removeAdditional;
+    __weak IBOutlet NSPanel *_editAdditionalWindow;
+    __weak IBOutlet NSTableView *_tableView;
     NSMutableArray<iTermShortcut *> *_mutableShortcuts;  // Model for _tableView. Only nonnil while additional shortcuts sheet is open.
 }
 

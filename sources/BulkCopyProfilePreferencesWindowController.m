@@ -25,16 +25,16 @@ typedef enum {
 
 @implementation BulkCopyProfilePreferencesWindowController {
     // Copy Profile Settings...
-    IBOutlet NSTextField *_bulkCopyLabel;
-    IBOutlet NSButton *_copyColors;
-    IBOutlet NSButton *_copyText;
-    IBOutlet NSButton *_copyTerminal;
-    IBOutlet NSButton *_copyWindow;
-    IBOutlet NSButton *_copyKeyboard;
-    IBOutlet NSButton *_copySession;
-    IBOutlet NSButton *_copyAdvanced;
-    IBOutlet ProfileListView *_copyTo;
-    IBOutlet NSButton *_copyButton;
+    __weak IBOutlet NSTextField *_bulkCopyLabel;
+    __weak IBOutlet NSButton *_copyColors;
+    __weak IBOutlet NSButton *_copyText;
+    __weak IBOutlet NSButton *_copyTerminal;
+    __weak IBOutlet NSButton *_copyWindow;
+    __weak IBOutlet NSButton *_copyKeyboard;
+    __weak IBOutlet NSButton *_copySession;
+    __weak IBOutlet NSButton *_copyAdvanced;
+    __weak IBOutlet ProfileListView *_copyTo;
+    __weak IBOutlet NSButton *_copyButton;
 }
 
 - (instancetype)init {

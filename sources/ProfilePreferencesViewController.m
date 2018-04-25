@@ -56,58 +56,58 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 @end
 
 @implementation ProfilePreferencesViewController {
-    IBOutlet ProfileListView *_profilesListView;
+    __weak IBOutlet ProfileListView *_profilesListView;
 
     // Other actions… under list of profiles in prefs>profiles.
-    IBOutlet NSPopUpButton *_otherActionsPopup;
+    __weak IBOutlet NSPopUpButton *_otherActionsPopup;
 
     // Tab view for profiles (general/colors/text/window/terminal/session/keys/advanced)
-    IBOutlet NSTabView *_tabView;
+    __weak IBOutlet NSTabView *_tabView;
 
     // Minus under table view to delete the selected profile.
-    IBOutlet NSButton *_removeProfileButton;
+    __weak IBOutlet NSButton *_removeProfileButton;
 
     // Plus under table view to add a new profile.
-    IBOutlet NSButton *_addProfileButton;
+    __weak IBOutlet NSButton *_addProfileButton;
 
     // < Tags button
-    IBOutlet NSButton *_toggleTagsButton;
+    __weak IBOutlet NSButton *_toggleTagsButton;
 
     // Copy current (divorced) settings to profile.
-    IBOutlet NSButton *_copyToProfileButton;
+    __weak IBOutlet NSButton *_copyToProfileButton;
 
     // General tab view controller
-    IBOutlet ProfilesGeneralPreferencesViewController *_generalViewController;
+    __weak IBOutlet ProfilesGeneralPreferencesViewController *_generalViewController;
 
-    IBOutlet NSTabViewItem *_generalTab;
-    IBOutlet NSTabViewItem *_colorsTab;
-    IBOutlet NSTabViewItem *_textTab;
-    IBOutlet NSTabViewItem *_windowTab;
-    IBOutlet NSTabViewItem *_terminalTab;
-    IBOutlet NSTabViewItem *_sessionTab;
-    IBOutlet NSTabViewItem *_keysTab;
-    IBOutlet NSTabViewItem *_advancedTab;
+    __weak IBOutlet NSTabViewItem *_generalTab;
+    __weak IBOutlet NSTabViewItem *_colorsTab;
+    __weak IBOutlet NSTabViewItem *_textTab;
+    __weak IBOutlet NSTabViewItem *_windowTab;
+    __weak IBOutlet NSTabViewItem *_terminalTab;
+    __weak IBOutlet NSTabViewItem *_sessionTab;
+    __weak IBOutlet NSTabViewItem *_keysTab;
+    __weak IBOutlet NSTabViewItem *_advancedTab;
 
     // Colors tab view controller
-    IBOutlet ProfilesColorsPreferencesViewController *_colorsViewController;
+    __weak IBOutlet ProfilesColorsPreferencesViewController *_colorsViewController;
 
     // Text tab view controller
-    IBOutlet ProfilesTextPreferencesViewController *_textViewController;
+    __weak IBOutlet ProfilesTextPreferencesViewController *_textViewController;
 
     // Window tab view controller
-    IBOutlet ProfilesWindowPreferencesViewController *_windowViewController;
+    __weak IBOutlet ProfilesWindowPreferencesViewController *_windowViewController;
 
     // Terminal tab view controller
-    IBOutlet ProfilesTerminalPreferencesViewController *_terminalViewController;
+    __weak IBOutlet ProfilesTerminalPreferencesViewController *_terminalViewController;
 
     // Sessions tab view controller
-    IBOutlet ProfilesSessionPreferencesViewController *_sessionViewController;
+    __weak IBOutlet ProfilesSessionPreferencesViewController *_sessionViewController;
 
     // Keys tab view controller
-    IBOutlet ProfilesKeysPreferencesViewController *_keysViewController;
+    __weak IBOutlet ProfilesKeysPreferencesViewController *_keysViewController;
 
     // Advanced tab view controller
-    IBOutlet ProfilesAdvancedPreferencesViewController *_advancedViewController;
+    __weak IBOutlet ProfilesAdvancedPreferencesViewController *_advancedViewController;
 
     CGFloat _minWidth;
 }

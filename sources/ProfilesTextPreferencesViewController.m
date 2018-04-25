@@ -28,41 +28,41 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 @implementation ProfilesTextPreferencesViewController {
     // cursor type: underline/vertical bar/box
     // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
-    IBOutlet NSMatrix *_cursorType;
-    IBOutlet NSButton *_blinkingCursor;
-    IBOutlet NSButton *_useBoldFont;
-    IBOutlet NSButton *_useBrightBold;  // Bold text in bright colors
-    IBOutlet NSButton *_blinkAllowed;
-    IBOutlet NSButton *_useItalicFont;
-    IBOutlet NSButton *_ambiguousIsDoubleWidth;
-    IBOutlet NSPopUpButton *_normalization;
-    IBOutlet NSSlider *_horizontalSpacing;
-    IBOutlet NSSlider *_verticalSpacing;
-    IBOutlet NSButton *_useNonAsciiFont;
-    IBOutlet NSButton *_asciiAntiAliased;
-    IBOutlet NSButton *_nonasciiAntiAliased;
-    IBOutlet NSPopUpButton *_thinStrokes;
-    IBOutlet NSButton *_unicodeVersion9;
-    IBOutlet NSButton *_asciiLigatures;
-    IBOutlet NSButton *_nonAsciiLigatures;
+    __weak IBOutlet NSMatrix *_cursorType;
+    __weak IBOutlet NSButton *_blinkingCursor;
+    __weak IBOutlet NSButton *_useBoldFont;
+    __weak IBOutlet NSButton *_useBrightBold;  // Bold text in bright colors
+    __weak IBOutlet NSButton *_blinkAllowed;
+    __weak IBOutlet NSButton *_useItalicFont;
+    __weak IBOutlet NSButton *_ambiguousIsDoubleWidth;
+    __weak IBOutlet NSPopUpButton *_normalization;
+    __weak IBOutlet NSSlider *_horizontalSpacing;
+    __weak IBOutlet NSSlider *_verticalSpacing;
+    __weak IBOutlet NSButton *_useNonAsciiFont;
+    __weak IBOutlet NSButton *_asciiAntiAliased;
+    __weak IBOutlet NSButton *_nonasciiAntiAliased;
+    __weak IBOutlet NSPopUpButton *_thinStrokes;
+    __weak IBOutlet NSButton *_unicodeVersion9;
+    __weak IBOutlet NSButton *_asciiLigatures;
+    __weak IBOutlet NSButton *_nonAsciiLigatures;
 
     // Labels indicating current font. Not registered as controls.
-    IBOutlet NSTextField *_normalFontDescription;
-    IBOutlet NSTextField *_nonAsciiFontDescription;
+    __weak IBOutlet NSTextField *_normalFontDescription;
+    __weak IBOutlet NSTextField *_nonAsciiFontDescription;
 
     // Warning labels
-    IBOutlet NSTextField *_normalFontWantsAntialiasing;
-    IBOutlet NSTextField *_nonasciiFontWantsAntialiasing;
+    __weak IBOutlet NSTextField *_normalFontWantsAntialiasing;
+    __weak IBOutlet NSTextField *_nonasciiFontWantsAntialiasing;
 
     // Hide this view to hide all non-ASCII font settings.
-    IBOutlet NSView *_nonAsciiFontView;
+    __weak IBOutlet NSView *_nonAsciiFontView;
 
     // If set, the font picker was last opened to change the non-ascii font.
     // Used to interpret messages from it.
     BOOL _fontPickerIsForNonAsciiFont;
 
     // This view is added to the font panel.
-    IBOutlet NSView *_displayFontAccessoryView;
+    __weak IBOutlet NSView *_displayFontAccessoryView;
 
     CGFloat _heightWithNonAsciiControls;
     CGFloat _heightWithoutNonAsciiControls;

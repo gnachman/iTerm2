@@ -35,80 +35,80 @@ enum {
 
 @implementation GeneralPreferencesViewController {
     // open bookmarks when iterm starts
-    IBOutlet NSButton *_openBookmark;
+    __weak IBOutlet NSButton *_openBookmark;
 
     // Open saved window arrangement at startup
-    IBOutlet NSPopUpButton *_openWindowsAtStartup;
-    IBOutlet NSMenuItem *_openDefaultWindowArrangementItem;
+    __weak IBOutlet NSPopUpButton *_openWindowsAtStartup;
+    __weak IBOutlet NSMenuItem *_openDefaultWindowArrangementItem;
 
     // Quit when all windows are closed
-    IBOutlet NSButton *_quitWhenAllWindowsClosed;
+    __weak IBOutlet NSButton *_quitWhenAllWindowsClosed;
 
     // Confirm closing multiple sessions
-    IBOutlet id _confirmClosingMultipleSessions;
+    __weak IBOutlet id _confirmClosingMultipleSessions;
 
     // Warn when quitting
-    IBOutlet id _promptOnQuit;
+    __weak IBOutlet id _promptOnQuit;
 
     // Instant replay memory usage.
-    IBOutlet NSTextField *_irMemory;
+    __weak IBOutlet NSTextField *_irMemory;
 
     // Save copy paste history
-    IBOutlet NSButton *_savePasteHistory;
+    __weak IBOutlet NSButton *_savePasteHistory;
 
     // Use GPU?
-    IBOutlet NSButton *_gpuRendering;
+    __weak IBOutlet NSButton *_gpuRendering;
 
     // Enable bonjour
-    IBOutlet NSButton *_enableBonjour;
+    __weak IBOutlet NSButton *_enableBonjour;
 
     // Check for updates automatically
-    IBOutlet NSButton *_checkUpdate;
+    __weak IBOutlet NSButton *_checkUpdate;
 
     // Prompt for test-release updates
-    IBOutlet NSButton *_checkTestRelease;
+    __weak IBOutlet NSButton *_checkTestRelease;
 
     // Load prefs from custom folder
-    IBOutlet NSButton *_loadPrefsFromCustomFolder;  // Should load?
-    IBOutlet iTermCustomFolderTextFieldCell *_customFolderTextFieldCell;
-    IBOutlet NSTextField *_prefsCustomFolder;  // Path or URL text field
-    IBOutlet NSImageView *_prefsDirWarning;  // Image shown when path is not writable
-    IBOutlet NSButton *_browseCustomFolder;  // Push button to open file browser
-    IBOutlet NSButton *_pushToCustomFolder;  // Push button to copy local to remote
-    IBOutlet NSButton *_autoSaveOnQuit;  // Save settings to folder on quit
+    __weak IBOutlet NSButton *_loadPrefsFromCustomFolder;  // Should load?
+    __weak IBOutlet iTermCustomFolderTextFieldCell *_customFolderTextFieldCell;
+    __weak IBOutlet NSTextField *_prefsCustomFolder;  // Path or URL text field
+    __weak IBOutlet NSImageView *_prefsDirWarning;  // Image shown when path is not writable
+    __weak IBOutlet NSButton *_browseCustomFolder;  // Push button to open file browser
+    __weak IBOutlet NSButton *_pushToCustomFolder;  // Push button to copy local to remote
+    __weak IBOutlet NSButton *_autoSaveOnQuit;  // Save settings to folder on quit
 
     // Copy to clipboard on selection
-    IBOutlet NSButton *_selectionCopiesText;
+    __weak IBOutlet NSButton *_selectionCopiesText;
 
     // Copy includes trailing newline
-    IBOutlet NSButton *_copyLastNewline;
+    __weak IBOutlet NSButton *_copyLastNewline;
 
     // Allow clipboard access by terminal applications
-    IBOutlet NSButton *_allowClipboardAccessFromTerminal;
+    __weak IBOutlet NSButton *_allowClipboardAccessFromTerminal;
 
     // Characters considered part of word
-    IBOutlet NSTextField *_wordChars;
+    __weak IBOutlet NSTextField *_wordChars;
 
     // Smart window placement
-    IBOutlet NSButton *_smartPlacement;
+    __weak IBOutlet NSButton *_smartPlacement;
 
     // Adjust window size when changing font size
-    IBOutlet NSButton *_adjustWindowForFontSizeChange;
+    __weak IBOutlet NSButton *_adjustWindowForFontSizeChange;
 
     // Zoom vertically only
-    IBOutlet NSButton *_maxVertically;
+    __weak IBOutlet NSButton *_maxVertically;
 
     // Lion-style fullscreen
-    IBOutlet NSButton *_lionStyleFullscreen;
+    __weak IBOutlet NSButton *_lionStyleFullscreen;
 
     // Open tmux windows in [windows, tabs]
-    IBOutlet NSPopUpButton *_openTmuxWindows;
+    __weak IBOutlet NSPopUpButton *_openTmuxWindows;
 
     // Open tmux dashboard if there are more than N windows
-    IBOutlet NSTextField *_tmuxDashboardLimit;
+    __weak IBOutlet NSTextField *_tmuxDashboardLimit;
 
     // Hide the tmux client session
-    IBOutlet NSButton *_autoHideTmuxClientSession;
+    __weak IBOutlet NSButton *_autoHideTmuxClientSession;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {

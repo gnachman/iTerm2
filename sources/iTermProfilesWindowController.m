@@ -56,15 +56,15 @@ typedef enum {
 
 
 @implementation iTermProfilesWindowController {
-    IBOutlet ProfileListView* tableView_;
-    IBOutlet NSSegmentedControl* actions_;
-    IBOutlet NSButton* horizontalPaneButton_;
-    IBOutlet NSButton* verticalPaneButton_;
-    IBOutlet NSButton* tabButton_;
-    IBOutlet NSButton* windowButton_;
-    IBOutlet NSButton* closeAfterOpeningBookmark_;
-    IBOutlet NSButton* newTabsInNewWindowButton_;
-    IBOutlet NSButton* toggleTagsButton_;
+    __weak IBOutlet ProfileListView* tableView_;
+    __weak IBOutlet NSSegmentedControl* actions_;
+    __weak IBOutlet NSButton* horizontalPaneButton_;
+    __weak IBOutlet NSButton* verticalPaneButton_;
+    __weak IBOutlet NSButton* tabButton_;
+    __weak IBOutlet NSButton* windowButton_;
+    __weak IBOutlet NSButton* closeAfterOpeningBookmark_;
+    __weak IBOutlet NSButton* newTabsInNewWindowButton_;
+    __weak IBOutlet NSButton* toggleTagsButton_;
 }
 
 + (iTermProfilesWindowController*)sharedInstance {

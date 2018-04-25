@@ -13,8 +13,8 @@
 #import "ThreeFingerTapGestureRecognizer.h"
 
 @implementation EventMonitorView {
-    IBOutlet PointerPrefsController *pointerPrefs_;
-    IBOutlet NSTextField *label_;
+    __weak IBOutlet PointerPrefsController *pointerPrefs_;
+    __weak IBOutlet NSTextField *label_;
     int numTouches_;
 
     ThreeFingerTapGestureRecognizer *_threeFingerTapGestureRecognizer;

@@ -11,8 +11,8 @@
 
 @implementation iTermNumberOfSpacesAccessoryViewController {
     int _numberOfSpaces;
-    IBOutlet NSTextField *_textField;
-    IBOutlet NSStepper *_stepper;
+    __weak IBOutlet NSTextField *_textField;
+    __weak IBOutlet NSStepper *_stepper;
 }
 
 - (instancetype)init {

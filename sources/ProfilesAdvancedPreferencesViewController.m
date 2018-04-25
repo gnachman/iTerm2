@@ -28,20 +28,20 @@
 @end
 
 @implementation ProfilesAdvancedPreferencesViewController {
-    IBOutlet TriggerController *_triggerWindowController;
-    IBOutlet SmartSelectionController *_smartSelectionWindowController;
-    IBOutlet iTermSemanticHistoryPrefsController *_semanticHistoryPrefController;
-    IBOutlet NSButton *_removeHost;
-    IBOutlet NSTableView *_boundHostsTableView;
+    __weak IBOutlet TriggerController *_triggerWindowController;
+    __weak IBOutlet SmartSelectionController *_smartSelectionWindowController;
+    __weak IBOutlet iTermSemanticHistoryPrefsController *_semanticHistoryPrefController;
+    __weak IBOutlet NSButton *_removeHost;
+    __weak IBOutlet NSTableView *_boundHostsTableView;
 
-    IBOutlet NSControl *_boundHostTitle;
-    IBOutlet NSControl *_boundHostLabel;
-    IBOutlet NSControl *_addBoundHost;
-    IBOutlet NSControl *_removeBoundHost;
-    IBOutlet NSControl *_boundHostShellIntegrationWarning;
-    IBOutlet NSControl *_boundHostHelp;
+    __weak IBOutlet NSControl *_boundHostTitle;
+    __weak IBOutlet NSControl *_boundHostLabel;
+    __weak IBOutlet NSControl *_addBoundHost;
+    __weak IBOutlet NSControl *_removeBoundHost;
+    __weak IBOutlet NSControl *_boundHostShellIntegrationWarning;
+    __weak IBOutlet NSControl *_boundHostHelp;
 
-    IBOutlet NSTextField *_disabledTip;
+    __weak IBOutlet NSTextField *_disabledTip;
 
     BOOL _addingBoundHost;  // Don't remove empty-named hosts while this is set
 }

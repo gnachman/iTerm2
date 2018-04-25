@@ -23,28 +23,28 @@
 @end
 
 @implementation ProfilesWindowPreferencesViewController {
-    IBOutlet NSSlider *_transparency;
-    IBOutlet NSButton *_useBlur;
-    IBOutlet NSSlider *_blurRadius;
-    IBOutlet NSButton *_useBackgroundImage;
-    IBOutlet iTermImageWell *_backgroundImagePreview;
-    IBOutlet NSButton *_backgroundImageTiled;
-    IBOutlet NSSlider *_blendAmount;
-    IBOutlet NSTextField *_columnsField;
-    IBOutlet NSTextField *_rowsField;
-    IBOutlet NSButton *_hideAfterOpening;
-    IBOutlet NSPopUpButton *_windowStyle;
-    IBOutlet NSPopUpButton *_screen;
-    IBOutlet NSTextField *_screenLabel;
-    IBOutlet NSPopUpButton *_space;
-    IBOutlet NSTextField *_columnsLabel;
-    IBOutlet NSTextField *_rowsLabel;
-    IBOutlet NSTextField *_windowStyleLabel;
-    IBOutlet NSTextField *_spaceLabel;
-    IBOutlet NSButton *_syncTitle;
-    IBOutlet NSButton *_preventTab;
-    IBOutlet NSButton *_transparencyAffectsOnlyDefaultBackgroundColor;
-    IBOutlet NSButton *_openToolbelt;
+    __weak IBOutlet NSSlider *_transparency;
+    __weak IBOutlet NSButton *_useBlur;
+    __weak IBOutlet NSSlider *_blurRadius;
+    __weak IBOutlet NSButton *_useBackgroundImage;
+    __weak IBOutlet iTermImageWell *_backgroundImagePreview;
+    __weak IBOutlet NSButton *_backgroundImageTiled;
+    __weak IBOutlet NSSlider *_blendAmount;
+    __weak IBOutlet NSTextField *_columnsField;
+    __weak IBOutlet NSTextField *_rowsField;
+    __weak IBOutlet NSButton *_hideAfterOpening;
+    __weak IBOutlet NSPopUpButton *_windowStyle;
+    __weak IBOutlet NSPopUpButton *_screen;
+    __weak IBOutlet NSTextField *_screenLabel;
+    __weak IBOutlet NSPopUpButton *_space;
+    __weak IBOutlet NSTextField *_columnsLabel;
+    __weak IBOutlet NSTextField *_rowsLabel;
+    __weak IBOutlet NSTextField *_windowStyleLabel;
+    __weak IBOutlet NSTextField *_spaceLabel;
+    __weak IBOutlet NSButton *_syncTitle;
+    __weak IBOutlet NSButton *_preventTab;
+    __weak IBOutlet NSButton *_transparencyAffectsOnlyDefaultBackgroundColor;
+    __weak IBOutlet NSButton *_openToolbelt;
 }
 
 - (void)dealloc {

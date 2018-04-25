@@ -12,7 +12,7 @@
 #import "PSMTabBarControl.h"
 
 @implementation iTermWindowShortcutLabelTitlebarAccessoryViewController {
-    IBOutlet NSTextField *_label;
+    __weak IBOutlet NSTextField *_label;
 }
 
 - (void)awakeFromNib {

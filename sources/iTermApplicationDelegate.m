@@ -139,30 +139,30 @@ static BOOL hasBecomeActive = NO;
     iTermPasswordManagerWindowController *_passwordManagerWindowController;
 
     // Menu items
-    IBOutlet NSMenu *bookmarkMenu;
-    IBOutlet NSMenu *toolbeltMenu;
+    __weak IBOutlet NSMenu *bookmarkMenu;
+    __weak IBOutlet NSMenu *toolbeltMenu;
     NSMenuItem *downloadsMenu_;
     NSMenuItem *uploadsMenu_;
-    IBOutlet NSMenuItem *selectTab;
-    IBOutlet NSMenuItem *logStart;
-    IBOutlet NSMenuItem *logStop;
-    IBOutlet NSMenuItem *closeTab;
-    IBOutlet NSMenuItem *closeWindow;
-    IBOutlet NSMenuItem *sendInputToAllSessions;
-    IBOutlet NSMenuItem *sendInputToAllPanes;
-    IBOutlet NSMenuItem *sendInputNormally;
-    IBOutlet NSMenuItem *irPrev;
-    IBOutlet NSMenuItem *windowArrangements_;
-    IBOutlet NSMenuItem *windowArrangementsAsTabs_;
-    IBOutlet NSMenu *_buriedSessions;
+    __weak IBOutlet NSMenuItem *selectTab;
+    __weak IBOutlet NSMenuItem *logStart;
+    __weak IBOutlet NSMenuItem *logStop;
+    __weak IBOutlet NSMenuItem *closeTab;
+    __weak IBOutlet NSMenuItem *closeWindow;
+    __weak IBOutlet NSMenuItem *sendInputToAllSessions;
+    __weak IBOutlet NSMenuItem *sendInputToAllPanes;
+    __weak IBOutlet NSMenuItem *sendInputNormally;
+    __weak IBOutlet NSMenuItem *irPrev;
+    __weak IBOutlet NSMenuItem *windowArrangements_;
+    __weak IBOutlet NSMenuItem *windowArrangementsAsTabs_;
+    __weak IBOutlet NSMenu *_buriedSessions;
     NSMenu *_statusIconBuriedSessions;  // unsafe unretained
-    IBOutlet NSMenu *_scriptsMenu;
+    __weak IBOutlet NSMenu *_scriptsMenu;
 
-    IBOutlet NSMenuItem *showFullScreenTabs;
-    IBOutlet NSMenuItem *useTransparency;
-    IBOutlet NSMenuItem *maximizePane;
-    IBOutlet SUUpdater * suUpdater;
-    IBOutlet NSMenuItem *_showTipOfTheDay;  // Here because we must remove it for older OS versions.
+    __weak IBOutlet NSMenuItem *showFullScreenTabs;
+    __weak IBOutlet NSMenuItem *useTransparency;
+    __weak IBOutlet NSMenuItem *maximizePane;
+    __weak IBOutlet SUUpdater * suUpdater;
+    __weak IBOutlet NSMenuItem *_showTipOfTheDay;  // Here because we must remove it for older OS versions.
     BOOL secureInputDesired_;
     BOOL quittingBecauseLastWindowClosed_;
 

@@ -185,7 +185,7 @@ const CGFloat kEdgeWidth = 3;
 @end
 
 @implementation FindViewController {
-    IBOutlet NSSearchField* findBarTextField_;
+    __weak IBOutlet NSSearchField* findBarTextField_;
 
     FindState *savedState_;
     FindState *state_;

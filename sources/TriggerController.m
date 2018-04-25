@@ -75,12 +75,12 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     // Gives the index of the row being edited while a textfield cell is editing.
     NSInteger _textEditingRow;
 
-    IBOutlet NSTableView *_tableView;
-    IBOutlet NSTableColumn *_regexColumn;
-    IBOutlet NSTableColumn *_partialLineColumn;
-    IBOutlet NSTableColumn *_actionColumn;
-    IBOutlet NSTableColumn *_parametersColumn;
-    IBOutlet NSButton *_removeTriggerButton;
+    __weak IBOutlet NSTableView *_tableView;
+    __weak IBOutlet NSTableColumn *_regexColumn;
+    __weak IBOutlet NSTableColumn *_partialLineColumn;
+    __weak IBOutlet NSTableColumn *_actionColumn;
+    __weak IBOutlet NSTableColumn *_parametersColumn;
+    __weak IBOutlet NSButton *_removeTriggerButton;
 }
 
 - (instancetype)init {

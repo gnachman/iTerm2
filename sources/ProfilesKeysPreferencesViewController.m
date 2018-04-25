@@ -23,14 +23,14 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 @end
 
 @implementation ProfilesKeysPreferencesViewController {
-    IBOutlet NSMatrix *_optionKeySends;
-    IBOutlet NSMatrix *_rightOptionKeySends;
-    IBOutlet NSButton *_deleteSendsCtrlHButton;
-    IBOutlet NSButton *_applicationKeypadAllowed;
-    IBOutlet NSButton *_hasHotkey;
-    IBOutlet NSButton *_configureHotKey;
-    IBOutlet NSView *_hotKeyContainerView;
-    IBOutlet iTermKeyMappingViewController *_keyMappingViewController;
+    __weak IBOutlet NSMatrix *_optionKeySends;
+    __weak IBOutlet NSMatrix *_rightOptionKeySends;
+    __weak IBOutlet NSButton *_deleteSendsCtrlHButton;
+    __weak IBOutlet NSButton *_applicationKeypadAllowed;
+    __weak IBOutlet NSButton *_hasHotkey;
+    __weak IBOutlet NSButton *_configureHotKey;
+    __weak IBOutlet NSView *_hotKeyContainerView;
+    __weak IBOutlet iTermKeyMappingViewController *_keyMappingViewController;
 }
 
 - (void)dealloc {

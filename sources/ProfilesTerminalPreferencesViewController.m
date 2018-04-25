@@ -13,35 +13,35 @@
 #import "iTermShellHistoryController.h"
 
 @implementation ProfilesTerminalPreferencesViewController {
-    IBOutlet NSTextField *_numScrollbackLines;
-    IBOutlet NSButton *_unlimitedScrollback;
-    IBOutlet NSButton *_scrollbackWithStatusBar;
-    IBOutlet NSButton *_scrollbackInAlternateScreen;
-    IBOutlet NSPopUpButton *_characterEncoding;
-    IBOutlet NSComboBox *_terminalType;
-    IBOutlet NSTextField *_answerBackString;
-    IBOutlet NSButton *_xtermMouseReporting;
-    IBOutlet NSButton *_xtermMouseReportingAllowMouseWheel;
-    IBOutlet NSButton *_allowTitleReporting;
-    IBOutlet NSButton *_allowTitleSetting;
-    IBOutlet NSButton *_disablePrinting;
-    IBOutlet NSButton *_disableAltScreen;
-    IBOutlet NSButton *_disableWindowResizing;
-    IBOutlet NSButton *_silenceBell;
-    IBOutlet NSButton *_postNotifications;
-    IBOutlet NSButton *_filterAlertsButton;
-    IBOutlet NSButton *_flashingBell;
-    IBOutlet NSButton *_bellIconInTabs;
-    IBOutlet NSButton *_setLocaleVars;
-    IBOutlet NSButton *_forceCommandPromptToFirstColumn;
-    IBOutlet NSButton *_showMarkIndicators;
+    __weak IBOutlet NSTextField *_numScrollbackLines;
+    __weak IBOutlet NSButton *_unlimitedScrollback;
+    __weak IBOutlet NSButton *_scrollbackWithStatusBar;
+    __weak IBOutlet NSButton *_scrollbackInAlternateScreen;
+    __weak IBOutlet NSPopUpButton *_characterEncoding;
+    __weak IBOutlet NSComboBox *_terminalType;
+    __weak IBOutlet NSTextField *_answerBackString;
+    __weak IBOutlet NSButton *_xtermMouseReporting;
+    __weak IBOutlet NSButton *_xtermMouseReportingAllowMouseWheel;
+    __weak IBOutlet NSButton *_allowTitleReporting;
+    __weak IBOutlet NSButton *_allowTitleSetting;
+    __weak IBOutlet NSButton *_disablePrinting;
+    __weak IBOutlet NSButton *_disableAltScreen;
+    __weak IBOutlet NSButton *_disableWindowResizing;
+    __weak IBOutlet NSButton *_silenceBell;
+    __weak IBOutlet NSButton *_postNotifications;
+    __weak IBOutlet NSButton *_filterAlertsButton;
+    __weak IBOutlet NSButton *_flashingBell;
+    __weak IBOutlet NSButton *_bellIconInTabs;
+    __weak IBOutlet NSButton *_setLocaleVars;
+    __weak IBOutlet NSButton *_forceCommandPromptToFirstColumn;
+    __weak IBOutlet NSButton *_showMarkIndicators;
 
-    IBOutlet NSPanel *_filterAlertsPanel;
-    IBOutlet NSButton *_bellAlert;
-    IBOutlet NSButton *_idleAlert;
-    IBOutlet NSButton *_newOutputAlert;
-    IBOutlet NSButton *_sessionEndedAlert;
-    IBOutlet NSButton *_terminalGeneratedAlerts;
+    __weak IBOutlet NSPanel *_filterAlertsPanel;
+    __weak IBOutlet NSButton *_bellAlert;
+    __weak IBOutlet NSButton *_idleAlert;
+    __weak IBOutlet NSButton *_newOutputAlert;
+    __weak IBOutlet NSButton *_sessionEndedAlert;
+    __weak IBOutlet NSButton *_terminalGeneratedAlerts;
 }
 
 - (void)awakeFromNib {

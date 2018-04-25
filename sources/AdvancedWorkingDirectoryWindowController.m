@@ -16,12 +16,12 @@ static const NSInteger kRecycleDirectoryTag = 2;
 
 @implementation AdvancedWorkingDirectoryWindowController {
     // Advanced working dir sheet
-    IBOutlet NSMatrix* _windowDirectoryType;
-    IBOutlet NSTextField* _windowDirectory;
-    IBOutlet NSMatrix* _tabDirectoryType;
-    IBOutlet NSTextField* _tabDirectory;
-    IBOutlet NSMatrix* _paneDirectoryType;
-    IBOutlet NSTextField* _paneDirectory;
+    __weak IBOutlet NSMatrix* _windowDirectoryType;
+    __weak IBOutlet NSTextField* _windowDirectory;
+    __weak IBOutlet NSMatrix* _tabDirectoryType;
+    __weak IBOutlet NSTextField* _tabDirectory;
+    __weak IBOutlet NSMatrix* _paneDirectoryType;
+    __weak IBOutlet NSTextField* _paneDirectory;
 }
 
 - (instancetype)init {

@@ -34,38 +34,38 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 @implementation ProfilesGeneralPreferencesViewController {
     // Labels
-    IBOutlet NSTextField *_basicsLabel;
-    IBOutlet NSTextField *_shortcutLabel;
-    IBOutlet NSTextField *_tagsLabel;
-    IBOutlet NSTextField *_commandLabel;
-    IBOutlet NSTextField *_sendTextAtStartLabel;
-    IBOutlet NSTextField *_directoryLabel;
-    IBOutlet NSTextField *_schemesHeaderLabel;
-    IBOutlet NSTextField *_schemesLabel;
+    __weak IBOutlet NSTextField *_basicsLabel;
+    __weak IBOutlet NSTextField *_shortcutLabel;
+    __weak IBOutlet NSTextField *_tagsLabel;
+    __weak IBOutlet NSTextField *_commandLabel;
+    __weak IBOutlet NSTextField *_sendTextAtStartLabel;
+    __weak IBOutlet NSTextField *_directoryLabel;
+    __weak IBOutlet NSTextField *_schemesHeaderLabel;
+    __weak IBOutlet NSTextField *_schemesLabel;
 
     // Controls
-    IBOutlet NSTextField *_profileNameField;
-    IBOutlet NSTextField *_profileNameFieldForEditCurrentSession;
-    IBOutlet NSPopUpButton *_profileShortcut;
-    IBOutlet NSTokenField *_tagsTokenField;
-    IBOutlet NSMatrix *_commandType;  // Login shell vs custom command radio buttons
-    IBOutlet NSTextField *_customCommand;  // Command to use instead of login shell
-    IBOutlet NSTextField *_sendTextAtStart;
-    IBOutlet NSMatrix *_initialDirectoryType;  // Home/Reuse/Custom/Advanced
-    IBOutlet NSTextField *_customDirectory;  // Path to custom initial directory
-    IBOutlet NSButton *_editAdvancedConfigButton;  // Advanced initial directory button
-    IBOutlet AdvancedWorkingDirectoryWindowController *_advancedWorkingDirWindowController;
-    IBOutlet NSPopUpButton *_urlSchemes;
-    IBOutlet NSTextField *_badgeText;
-    IBOutlet NSTextField *_badgeTextForEditCurrentSession;
+    __weak IBOutlet NSTextField *_profileNameField;
+    __weak IBOutlet NSTextField *_profileNameFieldForEditCurrentSession;
+    __weak IBOutlet NSPopUpButton *_profileShortcut;
+    __weak IBOutlet NSTokenField *_tagsTokenField;
+    __weak IBOutlet NSMatrix *_commandType;  // Login shell vs custom command radio buttons
+    __weak IBOutlet NSTextField *_customCommand;  // Command to use instead of login shell
+    __weak IBOutlet NSTextField *_sendTextAtStart;
+    __weak IBOutlet NSMatrix *_initialDirectoryType;  // Home/Reuse/Custom/Advanced
+    __weak IBOutlet NSTextField *_customDirectory;  // Path to custom initial directory
+    __weak IBOutlet NSButton *_editAdvancedConfigButton;  // Advanced initial directory button
+    __weak IBOutlet AdvancedWorkingDirectoryWindowController *_advancedWorkingDirWindowController;
+    __weak IBOutlet NSPopUpButton *_urlSchemes;
+    __weak IBOutlet NSTextField *_badgeText;
+    __weak IBOutlet NSTextField *_badgeTextForEditCurrentSession;
 
     // Controls for Edit Info
-    IBOutlet ProfileListView *_profiles;
-    IBOutlet iTermShortcutInputView *_sessionHotkeyInputView;
+    __weak IBOutlet ProfileListView *_profiles;
+    __weak IBOutlet iTermShortcutInputView *_sessionHotkeyInputView;
 
-    IBOutlet NSView *_editCurrentSessionView;
-    IBOutlet NSButton *_copySettingsToProfile;
-    IBOutlet NSButton *_copyProfleToSession;
+    __weak IBOutlet NSView *_editCurrentSessionView;
+    __weak IBOutlet NSButton *_copySettingsToProfile;
+    __weak IBOutlet NSButton *_copyProfleToSession;
 
     BOOL _profileNameChangePending;
     NSTimer *_timer;

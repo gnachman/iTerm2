@@ -23,7 +23,7 @@
 // You can assign the shortcutDelegate in IB as it is an IBOutlet.
 @interface iTermShortcutInputView : NSView
 
-@property(nonatomic, assign) IBOutlet id<iTermShortcutInputViewDelegate> shortcutDelegate;
+@property(nonatomic, weak) IBOutlet id<iTermShortcutInputViewDelegate> shortcutDelegate;
 @property(nonatomic, assign) BOOL disableKeyRemapping;
 @property(nonatomic, assign, getter=isEnabled) BOOL enabled;
 @property(nonatomic, copy) NSString *stringValue;

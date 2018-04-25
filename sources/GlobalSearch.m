@@ -332,8 +332,8 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 @end
 
 @implementation GlobalSearch {
-    IBOutlet iTermSearchField* searchField_;
-    IBOutlet NSTableView* tableView_;
+    __weak IBOutlet iTermSearchField* searchField_;
+    __weak IBOutlet NSTableView* tableView_;
     NSTimer* timer_;
     NSMutableArray* searches_;
     NSMutableArray* combinedResults_;
