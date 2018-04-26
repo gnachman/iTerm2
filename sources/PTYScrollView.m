@@ -108,6 +108,10 @@
     NSTimer *timer_;
 }
 
++ (BOOL)isCompatibleWithResponsiveScrolling {
+    return NO;
+}
+
 - (instancetype)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller {
     self = [super initWithFrame:frame];
     if (self) {
@@ -119,7 +123,7 @@
         aScroller = [[PTYScroller alloc] init];
         [self setVerticalScroller:aScroller];
         [aScroller release];
-
+        self.verticalScrollElasticity = NSScrollElasticityNone;
         creationDate_ = [[NSDate date] retain];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(it_scrollViewDidScroll:) name:NSScrollViewDidLiveScrollNotification object:self];
     }
@@ -149,6 +153,10 @@
     [self detectUserScroll];
 }
 
+// Note: this doesn't affect scrolling of this view. It's just a helper for reporting scroll wheel
+// events. Overriding scrollwheel: is a terrible idea. It breaks a lot of things. For example, in
+// issue 6637 we see that not calling [super scrollWheel:] breaks fiddling with the thickness of
+// the scroller. But calling it causes a world of jank—it insists on moving the visible region.
 - (CGFloat)accumulateVerticalScrollFromEvent:(NSEvent *)theEvent {
     const CGFloat lineHeight = self.verticalLineScroll;
     if ([iTermAdvancedSettingsModel useModernScrollWheelAccumulator]) {
@@ -156,19 +164,6 @@
     } else {
         return [self.ptyVerticalScroller.accumulator legacyDeltaYForEvent:theEvent lineHeight:lineHeight];
     }
-}
-
-- (void)scrollWheel:(NSEvent *)theEvent {
-    NSRect scrollRect;
-
-    scrollRect = [self documentVisibleRect];
-
-    CGFloat amount = [self accumulateVerticalScrollFromEvent:theEvent];
-    scrollRect.origin.y -= amount * self.verticalLineScroll;
-    [super scrollWheel:theEvent];
-    [[self documentView] scrollRectToVisible:scrollRect];
-
-    [self detectUserScroll];
 }
 
 - (void)detectUserScroll {
