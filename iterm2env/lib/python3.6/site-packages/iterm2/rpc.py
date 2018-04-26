@@ -3,6 +3,9 @@ import iterm2.api_pb2
 import iterm2.connection
 import json
 
+ACTIVATE_RAISE_ALL_WINDOWS = 1
+ACTIVATE_IGNORING_OTHER_APPS = 2
+
 class RPCException(Exception):
   pass
 
@@ -259,7 +262,7 @@ async def inject(connection, data, sessions):
   request.inject_request.data = data
   return await _call(connection, request)
 
-async def activate(connection, select_session, select_tab, order_window_front, session_id=None, tab_id=None, window_id=None):
+async def activate(connection, select_session, select_tab, order_window_front, session_id=None, tab_id=None, window_id=None, activate_app_opts=None):
   """
   Activates a session, tab, or window.
   """
@@ -270,6 +273,12 @@ async def activate(connection, select_session, select_tab, order_window_front, s
     request.activate_request.tab_id = tab_id;
   if window_id is not None:
     request.activate_request.window_id = window_id;
+  if activate_app_opts is not None:
+    request.activate_request.activate_app.SetInParent()
+    if ACTIVATE_RAISE_ALL_WINDOWS in activate_app_opts:
+      request.activate_request.activate_app.raise_all_windows = True
+    if ACTIVATE_IGNORING_OTHER_APPS:
+      request.activate_request.activate_app.ignoring_other_apps = True
   request.activate_request.order_window_front = order_window_front
   request.activate_request.select_tab = select_tab
   request.activate_request.select_session = select_session

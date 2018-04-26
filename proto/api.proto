@@ -87,6 +87,7 @@ message VariableResponse {
 }
 
 message ActivateRequest {
+  // To activate the app without changing anything else omit the identifier.
   oneof identifier {
     string window_id = 1;
     string tab_id = 2;
@@ -99,6 +100,13 @@ message ActivateRequest {
 
   // This may be enabled if session_id is set.
   optional bool select_session = 6;
+
+  // Activate the app?
+  message App {
+    optional bool raise_all_windows = 1;
+    optional bool ignoring_other_apps = 2;
+  }
+  optional App activate_app = 7;
 }
 
 message ActivateResponse {

@@ -799,12 +799,14 @@ BOOL ITMVariableResponse_Status_IsValidValue(int32_t value__) {
 @dynamic hasOrderWindowFront, orderWindowFront;
 @dynamic hasSelectTab, selectTab;
 @dynamic hasSelectSession, selectSession;
+@dynamic hasActivateApp, activateApp;
 
 typedef struct ITMActivateRequest__storage_ {
   uint32_t _has_storage_[2];
   NSString *windowId;
   NSString *tabId;
   NSString *sessionId;
+  ITMActivateRequest_App *activateApp;
 } ITMActivateRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -867,6 +869,15 @@ typedef struct ITMActivateRequest__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeBool,
       },
+      {
+        .name = "activateApp",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMActivateRequest_App),
+        .number = ITMActivateRequest_FieldNumber_ActivateApp,
+        .hasIndex = 6,
+        .offset = (uint32_t)offsetof(ITMActivateRequest__storage_, activateApp),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMActivateRequest class]
@@ -895,6 +906,59 @@ void ITMActivateRequest_ClearIdentifierOneOfCase(ITMActivateRequest *message) {
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMActivateRequest_App
+
+@implementation ITMActivateRequest_App
+
+@dynamic hasRaiseAllWindows, raiseAllWindows;
+@dynamic hasIgnoringOtherApps, ignoringOtherApps;
+
+typedef struct ITMActivateRequest_App__storage_ {
+  uint32_t _has_storage_[1];
+} ITMActivateRequest_App__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "raiseAllWindows",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMActivateRequest_App_FieldNumber_RaiseAllWindows,
+        .hasIndex = 0,
+        .offset = 1,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "ignoringOtherApps",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMActivateRequest_App_FieldNumber_IgnoringOtherApps,
+        .hasIndex = 2,
+        .offset = 3,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMActivateRequest_App class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMActivateRequest_App__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMActivateRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMActivateResponse
 
 @implementation ITMActivateResponse

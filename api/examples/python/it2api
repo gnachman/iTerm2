@@ -284,6 +284,10 @@ async def activate(connection, args):
     else:
       await w.activate(connection)
 
+async def activate_app(connection, args):
+  a = iterm2.app.App(connection)
+  await a.activate(raise_all_windows=args.raise_all_windows, ignoring_other_apps=args.ignoring_other_apps)
+
 async def set_variable(connection, args):
   h = await iterm2.hierarchy.Hierarchy.construct(connection)
   s = await h.get_session_by_id(args.session)
@@ -386,6 +390,11 @@ def make_parser():
   activate_parser.add_argument("mode", type=str, help="What kind of object to activate", choices=["session", "tab", "window"])
   activate_parser.add_argument("id", type=str, help="ID of object to activate")
   activate_parser.set_defaults(func=activate)
+
+  activate_app_parser = subparsers.add_parser("activate-app", help="Activate the app")
+  activate_app_parser.add_argument('--raise_all_windows', action='store_true', help='Raise all windows?', default=False)
+  activate_app_parser.add_argument('--ignoring_other_apps', action='store_true', help='Activate ignoring other apps (may steal focus)', default=False)
+  activate_app_parser.set_defaults(func=activate_app)
 
   set_variable_parser = subparsers.add_parser("set-variable", help="Set a user-defined variable in a session. See Badges documentation for details.")
   set_variable_parser.add_argument("session", type=str, help="Session ID")

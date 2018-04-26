@@ -28,6 +28,7 @@
 CF_EXTERN_C_BEGIN
 
 @class ITMActivateRequest;
+@class ITMActivateRequest_App;
 @class ITMActivateResponse;
 @class ITMCodePointsPerCell;
 @class ITMCoord;
@@ -724,6 +725,7 @@ typedef GPB_ENUM(ITMActivateRequest_FieldNumber) {
   ITMActivateRequest_FieldNumber_OrderWindowFront = 4,
   ITMActivateRequest_FieldNumber_SelectTab = 5,
   ITMActivateRequest_FieldNumber_SelectSession = 6,
+  ITMActivateRequest_FieldNumber_ActivateApp = 7,
 };
 
 typedef GPB_ENUM(ITMActivateRequest_Identifier_OneOfCase) {
@@ -754,12 +756,36 @@ typedef GPB_ENUM(ITMActivateRequest_Identifier_OneOfCase) {
 @property(nonatomic, readwrite) BOOL selectSession;
 
 @property(nonatomic, readwrite) BOOL hasSelectSession;
+@property(nonatomic, readwrite, strong, null_resettable) ITMActivateRequest_App *activateApp;
+/** Test to see if @c activateApp has been set. */
+@property(nonatomic, readwrite) BOOL hasActivateApp;
+
 @end
 
 /**
  * Clears whatever value was set for the oneof 'identifier'.
  **/
 void ITMActivateRequest_ClearIdentifierOneOfCase(ITMActivateRequest *message);
+
+#pragma mark - ITMActivateRequest_App
+
+typedef GPB_ENUM(ITMActivateRequest_App_FieldNumber) {
+  ITMActivateRequest_App_FieldNumber_RaiseAllWindows = 1,
+  ITMActivateRequest_App_FieldNumber_IgnoringOtherApps = 2,
+};
+
+/**
+ * Activate the app?
+ **/
+@interface ITMActivateRequest_App : GPBMessage
+
+@property(nonatomic, readwrite) BOOL raiseAllWindows;
+
+@property(nonatomic, readwrite) BOOL hasRaiseAllWindows;
+@property(nonatomic, readwrite) BOOL ignoringOtherApps;
+
+@property(nonatomic, readwrite) BOOL hasIgnoringOtherApps;
+@end
 
 #pragma mark - ITMActivateResponse
 

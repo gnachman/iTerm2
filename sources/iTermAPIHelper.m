@@ -818,10 +818,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             return;
         }
         windowController = [PseudoTerminal castFrom:tab.realParentWindow];
-    } else {
-        response.status = ITMActivateResponse_Status_BadIdentifier;
-        handler(response);
-        return;
     }
 
     if (request.selectSession) {
@@ -845,8 +841,25 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
 
     if (request.orderWindowFront) {
+        if (!windowController) {
+            response.status = ITMActivateResponse_Status_InvalidOption;
+            handler(response);
+            return;
+        }
         [windowController.window makeKeyAndOrderFront:nil];
     }
+
+    if (request.hasActivateApp) {
+        NSApplicationActivationOptions options = 0;
+        if (request.activateApp.raiseAllWindows) {
+            options |= NSApplicationActivateAllWindows;
+        }
+        if (request.activateApp.ignoringOtherApps) {
+            options |= NSApplicationActivateIgnoringOtherApps;
+        }
+        [[NSRunningApplication currentApplication] activateWithOptions:options];
+    }
+
     response.status = ITMActivateResponse_Status_Ok;
     handler(response);
 }
