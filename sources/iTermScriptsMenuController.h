@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)build;
 - (BOOL)runAutoLaunchScriptsIfNeeded;
 - (void)revealScriptsInFinder;
+- (void)newPythonScript;
 
 @end
 

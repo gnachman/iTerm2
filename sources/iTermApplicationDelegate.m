@@ -222,7 +222,7 @@ static BOOL hasBecomeActive = NO;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(reloadSessionMenus:)
-                                                     name:@"iTermSessionBecameKey"
+                                                     name:iTermSessionBecameKey
                                                    object:nil];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -1971,6 +1971,10 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)revealScriptsInFinder:(id)sender {
     [_scriptsMenuController revealScriptsInFinder];
+}
+
+- (IBAction)newPythonScript:(id)sender {
+    [_scriptsMenuController newPythonScript];
 }
 
 - (IBAction)saveWindowArrangement:(id)sender {

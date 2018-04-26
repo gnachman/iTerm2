@@ -139,7 +139,18 @@ NS_ASSUME_NONNULL_BEGIN
     } else {
         [[NSWorkspace sharedWorkspace] launchApplication:fullPath];
     }
+}
 
+- (void)newPythonScript {
+    NSSavePanel *savePanel = [NSSavePanel savePanel];
+    savePanel.allowedFileTypes = @[ @"py" ];
+    savePanel.directoryURL = [NSURL fileURLWithPath:[[NSFileManager defaultManager] scriptsPath]];
+    if ([savePanel runModal] == NSFileHandlingPanelOKButton) {
+        NSString *templatePath = [[NSBundle mainBundle] pathForResource:@"template" ofType:@"py"];
+        NSString *template = [NSString stringWithContentsOfFile:templatePath encoding:NSUTF8StringEncoding error:nil];
+        [template writeToURL:savePanel.URL atomically:NO encoding:NSUTF8StringEncoding error:nil];
+        [[NSWorkspace sharedWorkspace] openFile:savePanel.URL.path withApplication:@"TextEdit"];
+    }
 }
 
 #pragma mark - Private

@@ -1203,6 +1203,9 @@
 		53AFFC931DD38F1500E6CEC6 /* ToolWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = 53AFFC911DD38F1500E6CEC6 /* ToolWebView.m */; };
 		53E184F11FE32F2800DB78F3 /* iTermMetalBufferPool.h in Headers */ = {isa = PBXBuildFile; fileRef = 53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */; };
 		53E184F21FE32F2800DB78F3 /* iTermMetalBufferPool.m in Sources */ = {isa = PBXBuildFile; fileRef = 53E184F01FE32F2800DB78F3 /* iTermMetalBufferPool.m */; };
+		53FF980B20918D23008688D7 /* template.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template.py */; };
+		53FF980C20918D23008688D7 /* template.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template.py */; };
+		53FF980D20918D23008688D7 /* template.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template.py */; };
 		5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
 		5ECE4AE814513F05002A9CC2 /* Growl.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5ECE4AC41451343E002A9CC2 /* Growl.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */ = {isa = PBXBuildFile; fileRef = 5ECE4AE914514058002A9CC2 /* Growl Registration Ticket.growlRegDict */; };
@@ -3258,6 +3261,7 @@
 		53EBF2B81DCCF66600766613 /* iTermWebSocketFrameBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWebSocketFrameBuilder.m; sourceTree = "<group>"; };
 		53EBF2BB1DCCF6A700766613 /* iTermWebSocketConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermWebSocketConnection.h; sourceTree = "<group>"; };
 		53EBF2BC1DCCF6A700766613 /* iTermWebSocketConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWebSocketConnection.m; sourceTree = "<group>"; };
+		53FF980A20918D23008688D7 /* template.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = template.py; path = sources/template.py; sourceTree = "<group>"; };
 		5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminalRestorer.h; sourceTree = "<group>"; tabWidth = 4; };
 		5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PseudoTerminalRestorer.m; sourceTree = "<group>"; tabWidth = 4; };
 		5ECE4AC41451343E002A9CC2 /* Growl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Growl.framework; sourceTree = "<group>"; };
@@ -4867,6 +4871,7 @@
 				1D03D42619144C140049EB8F /* Property Lists */,
 				1D093C131217412B0029F9AD /* Images */,
 				0464AB22006CD2EC7F000001 /* Interface Builder Files */,
+				53FF980A20918D23008688D7 /* template.py */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -7898,6 +7903,7 @@
 				A67D0D791A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
 				A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */,
 				1D6ED9BB19AEA20D005A7799 /* SmartSelectionRules.plist in Resources */,
+				53FF980D20918D23008688D7 /* template.py in Resources */,
 				A65B72571B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D6ED9BC19AEA20D005A7799 /* closebutton.png in Resources */,
 				1D6ED9BD19AEA20D005A7799 /* BroadcastInput.png in Resources */,
@@ -8088,6 +8094,7 @@
 				1D44D0891CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testRegionStartingWithDWCRight.png in Resources */,
 				1D44D05B1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBlinkingTextVisible.png in Resources */,
 				A65B72AD1B3285A300F947A7 /* DisableTips@2x.png in Resources */,
+				53FF980C20918D23008688D7 /* template.py in Resources */,
 				1D44D07C1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testIME.png in Resources */,
 				1D44D09A1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_reverseVideoNondefaultBackground.png in Resources */,
 				1D44D09E1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png in Resources */,
@@ -8416,6 +8423,7 @@
 				A65B72551B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
+				53FF980B20918D23008688D7 /* template.py in Resources */,
 				A6EFF2321D2049A300806EEF /* Erase@2x.png in Resources */,
 				A67D0D7A1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				1D8BBA841B31DC0D0005A852 /* ChevronDown.png in Resources */,

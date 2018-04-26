@@ -844,8 +844,14 @@ DQ
                                     <action selector="revealScriptsInFinder:" target="201" id="2jN-7I-BfW"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Script Console" identifier="Script Console" id="YqT-f8-W2j">
+                            <menuItem title="New Python Script" identifier="Reveal in Finder" id="ds5-gY-cX0">
                                 <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="newPythonScript:" target="201" id="v2b-iE-k7t"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Script Console" keyEquivalent="j" identifier="Script Console" id="YqT-f8-W2j">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="openScriptConsole:" target="201" id="DYl-Yt-fdf"/>
                                 </connections>
