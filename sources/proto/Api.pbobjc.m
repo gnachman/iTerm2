@@ -114,6 +114,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
 @dynamic hasGetPropertyRequest, getPropertyRequest;
 @dynamic hasInjectRequest, injectRequest;
 @dynamic hasActivateRequest, activateRequest;
+@dynamic hasVariableRequest, variableRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[1];
@@ -132,6 +133,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMGetPropertyRequest *getPropertyRequest;
   ITMInjectRequest *injectRequest;
   ITMActivateRequest *activateRequest;
+  ITMVariableRequest *variableRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -285,6 +287,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "variableRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMVariableRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_VariableRequest,
+        .hasIndex = 16,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, variableRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -322,6 +333,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
 @dynamic hasGetPropertyResponse, getPropertyResponse;
 @dynamic hasInjectResponse, injectResponse;
 @dynamic hasActivateResponse, activateResponse;
+@dynamic hasVariableResponse, variableResponse;
 @dynamic hasNotification, notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -341,6 +353,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMGetPropertyResponse *getPropertyResponse;
   ITMInjectResponse *injectResponse;
   ITMActivateResponse *activateResponse;
+  ITMVariableResponse *variableResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -496,10 +509,19 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "variableResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMVariableResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_VariableResponse,
+        .hasIndex = 16,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, variableResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
-        .hasIndex = 16,
+        .hasIndex = 17,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, notification),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -520,6 +542,216 @@ typedef struct ITMServerOriginatedMessage__storage_ {
 }
 
 @end
+
+#pragma mark - ITMVariableRequest
+
+@implementation ITMVariableRequest
+
+@dynamic hasSessionId, sessionId;
+@dynamic setArray, setArray_Count;
+@dynamic getArray, getArray_Count;
+
+typedef struct ITMVariableRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *sessionId;
+  NSMutableArray *setArray;
+  NSMutableArray *getArray;
+} ITMVariableRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "sessionId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMVariableRequest_FieldNumber_SessionId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMVariableRequest__storage_, sessionId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "setArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMVariableRequest_Set),
+        .number = ITMVariableRequest_FieldNumber_SetArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMVariableRequest__storage_, setArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "getArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMVariableRequest_FieldNumber_GetArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMVariableRequest__storage_, getArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMVariableRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMVariableRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMVariableRequest_Set
+
+@implementation ITMVariableRequest_Set
+
+@dynamic hasName, name;
+@dynamic hasValue, value;
+
+typedef struct ITMVariableRequest_Set__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *name;
+  NSString *value;
+} ITMVariableRequest_Set__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "name",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMVariableRequest_Set_FieldNumber_Name,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMVariableRequest_Set__storage_, name),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "value",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMVariableRequest_Set_FieldNumber_Value,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMVariableRequest_Set__storage_, value),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMVariableRequest_Set class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMVariableRequest_Set__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMVariableRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMVariableResponse
+
+@implementation ITMVariableResponse
+
+@dynamic hasStatus, status;
+@dynamic valuesArray, valuesArray_Count;
+
+typedef struct ITMVariableResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMVariableResponse_Status status;
+  NSMutableArray *valuesArray;
+} ITMVariableResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMVariableResponse_Status_EnumDescriptor,
+        .number = ITMVariableResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMVariableResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "valuesArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMVariableResponse_FieldNumber_ValuesArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMVariableResponse__storage_, valuesArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMVariableResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMVariableResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMVariableResponse_Status
+
+GPBEnumDescriptor *ITMVariableResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000SessionNotFound\000InvalidName\000";
+    static const int32_t values[] = {
+        ITMVariableResponse_Status_Ok,
+        ITMVariableResponse_Status_SessionNotFound,
+        ITMVariableResponse_Status_InvalidName,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMVariableResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMVariableResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMVariableResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMVariableResponse_Status_Ok:
+    case ITMVariableResponse_Status_SessionNotFound:
+    case ITMVariableResponse_Status_InvalidName:
+      return YES;
+    default:
+      return NO;
+  }
+}
 
 #pragma mark - ITMActivateRequest
 

@@ -275,6 +275,20 @@ async def activate(connection, select_session, select_tab, order_window_front, s
   request.activate_request.select_session = select_session
   return await _call(connection, request)
 
+async def variable(connection, session_id, sets, gets):
+  """
+  Gets or sets session variables.
+  """
+  request = _alloc_request()
+  request.variable_request.session_id = session_id
+  request.variable_request.get.extend(gets)
+  for (name, value) in sets:
+    s = iterm2.api_pb2.VariableRequest.Set()
+    s.name = name
+    s.value = value
+    request.variable_request.set.extend([s])
+  return await _call(connection, request)
+
 ## Private --------------------------------------------------------------------
 
 _nextId = 0

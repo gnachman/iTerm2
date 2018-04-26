@@ -81,6 +81,9 @@ CF_EXTERN_C_BEGIN
 @class ITMTerminateSessionNotification;
 @class ITMTransactionRequest;
 @class ITMTransactionResponse;
+@class ITMVariableRequest;
+@class ITMVariableRequest_Set;
+@class ITMVariableResponse;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -107,6 +110,24 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMNotificationType_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMVariableResponse_Status
+
+typedef GPB_ENUM(ITMVariableResponse_Status) {
+  ITMVariableResponse_Status_Ok = 0,
+  ITMVariableResponse_Status_SessionNotFound = 1,
+
+  /** Names you set must begin with "user." */
+  ITMVariableResponse_Status_InvalidName = 2,
+};
+
+GPBEnumDescriptor *ITMVariableResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMVariableResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMActivateResponse_Status
 
@@ -454,6 +475,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_GetPropertyRequest = 112,
   ITMClientOriginatedMessage_FieldNumber_InjectRequest = 113,
   ITMClientOriginatedMessage_FieldNumber_ActivateRequest = 114,
+  ITMClientOriginatedMessage_FieldNumber_VariableRequest = 115,
 };
 
 /**
@@ -526,6 +548,10 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
 /** Test to see if @c activateRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasActivateRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMVariableRequest *variableRequest;
+/** Test to see if @c variableRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasVariableRequest;
+
 @end
 
 #pragma mark - ITMServerOriginatedMessage
@@ -547,6 +573,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_GetPropertyResponse = 112,
   ITMServerOriginatedMessage_FieldNumber_InjectResponse = 113,
   ITMServerOriginatedMessage_FieldNumber_ActivateResponse = 114,
+  ITMServerOriginatedMessage_FieldNumber_VariableResponse = 115,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -620,10 +647,77 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
 /** Test to see if @c activateResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasActivateResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMVariableResponse *variableResponse;
+/** Test to see if @c variableResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasVariableResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 /** Test to see if @c notification has been set. */
 @property(nonatomic, readwrite) BOOL hasNotification;
+
+@end
+
+#pragma mark - ITMVariableRequest
+
+typedef GPB_ENUM(ITMVariableRequest_FieldNumber) {
+  ITMVariableRequest_FieldNumber_SessionId = 1,
+  ITMVariableRequest_FieldNumber_SetArray = 2,
+  ITMVariableRequest_FieldNumber_GetArray = 3,
+};
+
+@interface ITMVariableRequest : GPBMessage
+
+/** "all" is allowed only if no gets (only sets allowed) */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
+/** Test to see if @c sessionId has been set. */
+@property(nonatomic, readwrite) BOOL hasSessionId;
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMVariableRequest_Set*> *setArray;
+/** The number of items in @c setArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger setArray_Count;
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *getArray;
+/** The number of items in @c getArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger getArray_Count;
+
+@end
+
+#pragma mark - ITMVariableRequest_Set
+
+typedef GPB_ENUM(ITMVariableRequest_Set_FieldNumber) {
+  ITMVariableRequest_Set_FieldNumber_Name = 1,
+  ITMVariableRequest_Set_FieldNumber_Value = 2,
+};
+
+@interface ITMVariableRequest_Set : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+/** Test to see if @c name has been set. */
+@property(nonatomic, readwrite) BOOL hasName;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *value;
+/** Test to see if @c value has been set. */
+@property(nonatomic, readwrite) BOOL hasValue;
+
+@end
+
+#pragma mark - ITMVariableResponse
+
+typedef GPB_ENUM(ITMVariableResponse_FieldNumber) {
+  ITMVariableResponse_FieldNumber_Status = 1,
+  ITMVariableResponse_FieldNumber_ValuesArray = 2,
+};
+
+@interface ITMVariableResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMVariableResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+/** 1:1 with get field in request. Empty and undefined are the same. */
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *valuesArray;
+/** The number of items in @c valuesArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger valuesArray_Count;
 
 @end
 

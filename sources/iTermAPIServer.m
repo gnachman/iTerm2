@@ -510,6 +510,14 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
     }
+    if (request.hasVariableRequest) {
+        [_delegate apiServerVariable:request.variableRequest handler:^(ITMVariableResponse *variableResponse) {
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
+            response.id_p = request.id_p;
+            response.variableResponse = variableResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
+    }
 }
 
 // Runs on execution queue.

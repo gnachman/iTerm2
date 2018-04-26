@@ -284,6 +284,34 @@ async def activate(connection, args):
     else:
       await w.activate(connection)
 
+async def set_variable(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  s = await h.get_session_by_id(args.session)
+  if s is None:
+    print("bad session ID")
+    return
+  await s.set_variable(args.name, args.value)
+
+async def get_variable(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  s = await h.get_session_by_id(args.session)
+  if s is None:
+    print("bad session ID")
+    return
+  value = await s.get_variable(args.name)
+  print(value)
+
+async def list_variables(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  s = await h.get_session_by_id(args.session)
+  if s is None:
+    print("bad session ID")
+    return
+  value = await s.get_variable("*")
+  names = value.split(",")
+  for name in names:
+    print(name)
+
 def make_parser():
   parser = argparse.ArgumentParser(description='iTerm2 CLI')
   subparsers = parser.add_subparsers(help='Commands')
@@ -359,6 +387,21 @@ def make_parser():
   activate_parser.add_argument("id", type=str, help="ID of object to activate")
   activate_parser.set_defaults(func=activate)
 
+  set_variable_parser = subparsers.add_parser("set-variable", help="Set a user-defined variable in a session. See Badges documentation for details.")
+  set_variable_parser.add_argument("session", type=str, help="Session ID")
+  set_variable_parser.add_argument("name", type=str, help="Variable name. Starts with \"user.\"")
+  set_variable_parser.add_argument("value", type=str, help="New value")
+  set_variable_parser.set_defaults(func=set_variable)
+
+  get_variable_parser = subparsers.add_parser("get-variable", help="Get a variable in a session. See Badges documentation for details.")
+  get_variable_parser.add_argument("session", type=str, help="Session ID")
+  get_variable_parser.add_argument("name", type=str, help="Variable name. Starts with \"user.\"")
+  get_variable_parser.set_defaults(func=get_variable)
+
+  list_variables_parser = subparsers.add_parser("list-variables", help="Lists variable names available in a session.")
+  list_variables_parser.add_argument("session", type=str, help="Session ID")
+  list_variables_parser.set_defaults(func=list_variables)
+
   return parser
 
 def main(argv):
@@ -382,5 +425,6 @@ def main(argv):
 if __name__ == "__main__":
   try:
     main(sys.argv)
-  except:
+  except Exception as e:
+    print(traceback.format_exc())
     sys.exit(1)

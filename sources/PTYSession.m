@@ -8131,11 +8131,17 @@ ITERM_WEAKLY_REFERENCEABLE
     NSArray *kvp = [kvpString keyValuePair];
     if (kvp) {
         NSString *key = [NSString stringWithFormat:@"user.%@", kvp[0]];
-        if (![kvp[1] length]) {
-            [_variables removeObjectForKey:key];
-        } else {
-            _variables[key] = [kvp[1] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
-        }
+        [self setVariableNamed:key toValue:[kvp[1] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding]];
+    } else {
+        [_textview setBadgeLabel:[self badgeLabel]];
+    }
+}
+
+- (void)setVariableNamed:(NSString *)name toValue:(NSString *)newValue {
+    if (!name.length) {
+        [_variables removeObjectForKey:name];
+    } else {
+        _variables[name] = newValue;
     }
     [_textview setBadgeLabel:[self badgeLabel]];
 }

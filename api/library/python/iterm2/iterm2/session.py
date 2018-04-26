@@ -300,6 +300,30 @@ class Session:
      """
      await iterm2.rpc.activate(self.connection, True, select_tab, order_window_front, session_id=self.session_id)
 
+  async def set_variable(self, name, value):
+      """
+      Sets a user-defined variable in the session.
+
+      See Badges documentation for more information on user-defined variables.
+      """
+      result = await iterm2.rpc.variable(self.connection, self.session_id, [(name, value)], [])
+      status = result.variable_response.status
+      if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
+        raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
+
+  async def get_variable(self, name):
+      """
+      Fetches a session variable.
+
+      See Badges documentation for more information on user-defined variables.
+      """
+      result = await iterm2.rpc.variable(self.connection, self.session_id, [], [name])
+      status = result.variable_response.status
+      if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
+        raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
+      else:
+        return result.variable_response.values[0]
+
   class KeystrokeReader:
     """An asyncio context manager for reading keystrokes.
 

@@ -741,6 +741,7 @@ typedef enum {
 - (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token NS_AVAILABLE_MAC(10_11);
 
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length;
+- (void)setVariableNamed:(NSString *)name toValue:(NSString *)newValue;
 
 #pragma mark - API
 

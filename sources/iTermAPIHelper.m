@@ -851,4 +851,51 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     handler(response);
 }
 
+- (void)apiServerVariable:(ITMVariableRequest *)request handler:(void (^)(ITMVariableResponse *))handler {
+    ITMVariableResponse *response = [[ITMVariableResponse alloc] init];
+    const BOOL allSetNamesLegal = [request.setArray allWithBlock:^BOOL(ITMVariableRequest_Set *setRequest) {
+        return [setRequest.name hasPrefix:@"user."];
+    }];
+    if (!allSetNamesLegal) {
+        response.status = ITMVariableResponse_Status_InvalidName;
+        handler(response);
+        return;
+    }
+    if ([request.sessionId isEqualToString:@"all"]) {
+        if (request.getArray_Count > 0) {
+            response.status = ITMVariableResponse_Status_SessionNotFound;
+            handler(response);
+            return;
+        }
+        for (PTYSession *session in [self allSessions]) {
+            [request.setArray enumerateObjectsUsingBlock:^(ITMVariableRequest_Set * _Nonnull setRequest, NSUInteger idx, BOOL * _Nonnull stop) {
+                [session setVariableNamed:setRequest.name toValue:setRequest.value];
+            }];
+        }
+        response.status = ITMVariableResponse_Status_Ok;
+        handler(response);
+        return;
+    }
+
+    PTYSession *session = [self sessionForAPIIdentifier:request.sessionId];
+    if (!session) {
+        response.status = ITMVariableResponse_Status_SessionNotFound;
+        handler(response);
+        return;
+    }
+
+    [request.setArray enumerateObjectsUsingBlock:^(ITMVariableRequest_Set * _Nonnull setRequest, NSUInteger idx, BOOL * _Nonnull stop) {
+        [session setVariableNamed:setRequest.name toValue:setRequest.value];
+    }];
+    [request.getArray enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([name isEqualToString:@"*"]) {
+            [response.valuesArray addObject:[session.variables.allKeys componentsJoinedByString:@"\n"]];
+        } else {
+            NSString *value = session.variables[name] ?: @"";
+            [response.valuesArray addObject:value];
+        }
+    }];
+    handler(response);
+}
+
 @end

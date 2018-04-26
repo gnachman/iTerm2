@@ -30,6 +30,7 @@ message ClientOriginatedMessage {
   optional GetPropertyRequest get_property_request = 112;
   optional InjectRequest inject_request = 113;
   optional ActivateRequest activate_request = 114;
+  optional VariableRequest variable_request = 115;
 }
 
 // All responses are wrapped in this message. This encoded message is the entirety of the payload
@@ -53,33 +54,55 @@ message ServerOriginatedMessage {
   optional GetPropertyResponse get_property_response = 112;
   optional InjectResponse inject_response = 113;
   optional ActivateResponse activate_response = 114;
+  optional VariableResponse variable_response = 115;
 
   // This is the only response that is sent spontaneously. The 'id' field will not be set.
   optional Notification notification = 1000;
 }
 
+message VariableRequest {
+  optional string session_id = 1;  // "all" is allowed only if no gets (only sets allowed)
+
+  message Set {
+    optional string name = 1;
+    optional string value = 2;
+  }
+  repeated Set set = 2;
+  repeated string get = 3;  // Set to special value "*" to get all in newline-delimited list.
+}
+
+message VariableResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    INVALID_NAME = 2;  // Names you set must begin with "user."
+  }
+  optional Status status = 1;
+  repeated string values = 2;  // 1:1 with get field in request. Empty and undefined are the same.
+}
+
 message ActivateRequest {
-    oneof identifier {
-        string window_id = 1;
-        string tab_id = 2;
-        string session_id = 3;
-    }
-    optional bool order_window_front = 4;
+  oneof identifier {
+    string window_id = 1;
+    string tab_id = 2;
+    string session_id = 3;
+  }
+  optional bool order_window_front = 4;
 
-    // This may be enabled if tab_id or session_id is set.
-    optional bool select_tab = 5;
+  // This may be enabled if tab_id or session_id is set.
+  optional bool select_tab = 5;
 
-    // This may be enabled if session_id is set.
-    optional bool select_session = 6;
+  // This may be enabled if session_id is set.
+  optional bool select_session = 6;
 }
 
 message ActivateResponse {
-    enum Status {
-        OK = 0;
-        BAD_IDENTIFIER = 1;
-        INVALID_OPTION = 2;
-    }
-    optional Status status = 1;
+  enum Status {
+    OK = 0;
+    BAD_IDENTIFIER = 1;
+    INVALID_OPTION = 2;
+  }
+  optional Status status = 1;
 }
 
 // Injects bytes as input to the terminal, as though the running program had produced them.
