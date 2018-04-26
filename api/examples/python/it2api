@@ -316,6 +316,23 @@ async def list_variables(connection, args):
   for name in names:
     print(name)
 
+async def saved_arrangement(connection, args):
+  if args.window is not None:
+    h = await iterm2.hierarchy.Hierarchy.construct(connection)
+    w = await h.get_window_by_id(args.window)
+    if w is None:
+      print("bad window ID")
+      return
+    if args.action == "save":
+      await w.save_window_as_arrangement(args.name)
+    elif args.action == "restore":
+      await w.restore_window_arrangement(args.name)
+  else:
+    if args.action == "save":
+      await iterm2.app.App(connection).save_window_arrangement(args.name)
+    elif args.action == "restore":
+      await iterm2.app.App(connection).restore_window_arrangement(args.name)
+
 def make_parser():
   parser = argparse.ArgumentParser(description='iTerm2 CLI')
   subparsers = parser.add_subparsers(help='Commands')
@@ -410,6 +427,12 @@ def make_parser():
   list_variables_parser = subparsers.add_parser("list-variables", help="Lists variable names available in a session.")
   list_variables_parser.add_argument("session", type=str, help="Session ID")
   list_variables_parser.set_defaults(func=list_variables)
+
+  saved_arrangement_parser = subparsers.add_parser("saved-arrangement", help="Saves and restores window arrangements")
+  saved_arrangement_parser.add_argument("action", type=str, help="Action to perform", choices=["save", "restore"])
+  saved_arrangement_parser.add_argument("name", type=str, help="Arrangement name")
+  saved_arrangement_parser.add_argument('--window', type=str, nargs='?', help='Window ID to save/restore to')
+  saved_arrangement_parser.set_defaults(func=saved_arrangement)
 
   return parser
 

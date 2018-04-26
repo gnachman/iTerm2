@@ -502,6 +502,13 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             response.variableResponse = variableResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_SavedArrangementRequest) {
+        [_delegate apiServerSavedArrangement:request.savedArrangementRequest handler:^(ITMSavedArrangementResponse *savedArrangementResponse) {
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
+            response.id_p = request.id_p;
+            response.savedArrangementResponse = savedArrangementResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
     } else {
         ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
         response.id_p = request.id_p;

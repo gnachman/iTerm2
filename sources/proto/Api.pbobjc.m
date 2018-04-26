@@ -116,6 +116,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
 @dynamic injectRequest;
 @dynamic activateRequest;
 @dynamic variableRequest;
+@dynamic savedArrangementRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -135,6 +136,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMInjectRequest *injectRequest;
   ITMActivateRequest *activateRequest;
   ITMVariableRequest *variableRequest;
+  ITMSavedArrangementRequest *savedArrangementRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -297,6 +299,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "savedArrangementRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMSavedArrangementRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_SavedArrangementRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, savedArrangementRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -348,6 +359,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic injectResponse;
 @dynamic activateResponse;
 @dynamic variableResponse;
+@dynamic savedArrangementResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -369,6 +381,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMInjectResponse *injectResponse;
   ITMActivateResponse *activateResponse;
   ITMVariableResponse *variableResponse;
+  ITMSavedArrangementResponse *savedArrangementResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -542,6 +555,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "savedArrangementResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMSavedArrangementResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_SavedArrangementResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, savedArrangementResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
@@ -578,6 +600,187 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMSavedArrangementRequest
+
+@implementation ITMSavedArrangementRequest
+
+@dynamic hasName, name;
+@dynamic hasAction, action;
+@dynamic hasWindowId, windowId;
+
+typedef struct ITMSavedArrangementRequest__storage_ {
+  uint32_t _has_storage_[1];
+  ITMSavedArrangementRequest_Action action;
+  NSString *name;
+  NSString *windowId;
+} ITMSavedArrangementRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "name",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSavedArrangementRequest_FieldNumber_Name,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMSavedArrangementRequest__storage_, name),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "action",
+        .dataTypeSpecific.enumDescFunc = ITMSavedArrangementRequest_Action_EnumDescriptor,
+        .number = ITMSavedArrangementRequest_FieldNumber_Action,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMSavedArrangementRequest__storage_, action),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "windowId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSavedArrangementRequest_FieldNumber_WindowId,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMSavedArrangementRequest__storage_, windowId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMSavedArrangementRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMSavedArrangementRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMSavedArrangementRequest_Action
+
+GPBEnumDescriptor *ITMSavedArrangementRequest_Action_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Restore\000Save\000";
+    static const int32_t values[] = {
+        ITMSavedArrangementRequest_Action_Restore,
+        ITMSavedArrangementRequest_Action_Save,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMSavedArrangementRequest_Action)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMSavedArrangementRequest_Action_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMSavedArrangementRequest_Action_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMSavedArrangementRequest_Action_Restore:
+    case ITMSavedArrangementRequest_Action_Save:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - ITMSavedArrangementResponse
+
+@implementation ITMSavedArrangementResponse
+
+@dynamic hasStatus, status;
+
+typedef struct ITMSavedArrangementResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMSavedArrangementResponse_Status status;
+} ITMSavedArrangementResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMSavedArrangementResponse_Status_EnumDescriptor,
+        .number = ITMSavedArrangementResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMSavedArrangementResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMSavedArrangementResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMSavedArrangementResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMSavedArrangementResponse_Status
+
+GPBEnumDescriptor *ITMSavedArrangementResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000ArrangementNotFound\000WindowNotFound\000Re"
+        "questMalformed\000";
+    static const int32_t values[] = {
+        ITMSavedArrangementResponse_Status_Ok,
+        ITMSavedArrangementResponse_Status_ArrangementNotFound,
+        ITMSavedArrangementResponse_Status_WindowNotFound,
+        ITMSavedArrangementResponse_Status_RequestMalformed,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMSavedArrangementResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMSavedArrangementResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMSavedArrangementResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMSavedArrangementResponse_Status_Ok:
+    case ITMSavedArrangementResponse_Status_ArrangementNotFound:
+    case ITMSavedArrangementResponse_Status_WindowNotFound:
+    case ITMSavedArrangementResponse_Status_RequestMalformed:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
 #pragma mark - ITMVariableRequest
 
 @implementation ITMVariableRequest

@@ -1666,7 +1666,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)restoreWindowArrangementAsTabs:(id)sender {
-    [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title] asTabs:YES];
+    [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title] asTabsInTerminal:[[iTermController sharedInstance] currentTerminal]];
 }
 
 - (IBAction)togglePinHotkeyWindow:(id)sender {

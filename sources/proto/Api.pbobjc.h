@@ -69,6 +69,8 @@ CF_EXTERN_C_BEGIN
 @class ITMRange;
 @class ITMRegisterToolRequest;
 @class ITMRegisterToolResponse;
+@class ITMSavedArrangementRequest;
+@class ITMSavedArrangementResponse;
 @class ITMScreenUpdateNotification;
 @class ITMSendTextRequest;
 @class ITMSendTextResponse;
@@ -111,6 +113,45 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMNotificationType_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMSavedArrangementRequest_Action
+
+typedef GPB_ENUM(ITMSavedArrangementRequest_Action) {
+  /** Restore an existing arrangement with the given name */
+  ITMSavedArrangementRequest_Action_Restore = 0,
+
+  /** Save windows to a new arrangment with the given name */
+  ITMSavedArrangementRequest_Action_Save = 1,
+};
+
+GPBEnumDescriptor *ITMSavedArrangementRequest_Action_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMSavedArrangementRequest_Action_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMSavedArrangementResponse_Status
+
+typedef GPB_ENUM(ITMSavedArrangementResponse_Status) {
+  ITMSavedArrangementResponse_Status_Ok = 0,
+
+  /** Tried to restore, but name doesn't exist */
+  ITMSavedArrangementResponse_Status_ArrangementNotFound = 1,
+
+  /** Bad window ID provided */
+  ITMSavedArrangementResponse_Status_WindowNotFound = 2,
+  ITMSavedArrangementResponse_Status_RequestMalformed = 3,
+};
+
+GPBEnumDescriptor *ITMSavedArrangementResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMSavedArrangementResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMVariableResponse_Status
 
@@ -477,6 +518,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_InjectRequest = 113,
   ITMClientOriginatedMessage_FieldNumber_ActivateRequest = 114,
   ITMClientOriginatedMessage_FieldNumber_VariableRequest = 115,
+  ITMClientOriginatedMessage_FieldNumber_SavedArrangementRequest = 116,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -497,6 +539,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_InjectRequest = 113,
   ITMClientOriginatedMessage_Submessage_OneOfCase_ActivateRequest = 114,
   ITMClientOriginatedMessage_Submessage_OneOfCase_VariableRequest = 115,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_SavedArrangementRequest = 116,
 };
 
 /**
@@ -542,6 +585,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMVariableRequest *variableRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMSavedArrangementRequest *savedArrangementRequest;
+
 @end
 
 /**
@@ -570,6 +615,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_InjectResponse = 113,
   ITMServerOriginatedMessage_FieldNumber_ActivateResponse = 114,
   ITMServerOriginatedMessage_FieldNumber_VariableResponse = 115,
+  ITMServerOriginatedMessage_FieldNumber_SavedArrangementResponse = 116,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -592,6 +638,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_InjectResponse = 113,
   ITMServerOriginatedMessage_Submessage_OneOfCase_ActivateResponse = 114,
   ITMServerOriginatedMessage_Submessage_OneOfCase_VariableResponse = 115,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_SavedArrangementResponse = 116,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -642,6 +689,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMVariableResponse *variableResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMSavedArrangementResponse *savedArrangementResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 
@@ -651,6 +700,43 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
  * Clears whatever value was set for the oneof 'submessage'.
  **/
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
+
+#pragma mark - ITMSavedArrangementRequest
+
+typedef GPB_ENUM(ITMSavedArrangementRequest_FieldNumber) {
+  ITMSavedArrangementRequest_FieldNumber_Name = 1,
+  ITMSavedArrangementRequest_FieldNumber_Action = 2,
+  ITMSavedArrangementRequest_FieldNumber_WindowId = 3,
+};
+
+@interface ITMSavedArrangementRequest : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+/** Test to see if @c name has been set. */
+@property(nonatomic, readwrite) BOOL hasName;
+
+@property(nonatomic, readwrite) ITMSavedArrangementRequest_Action action;
+
+@property(nonatomic, readwrite) BOOL hasAction;
+/** If given and the action is SAVE then only the tabs in the identified window are saved. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+/** Test to see if @c windowId has been set. */
+@property(nonatomic, readwrite) BOOL hasWindowId;
+
+@end
+
+#pragma mark - ITMSavedArrangementResponse
+
+typedef GPB_ENUM(ITMSavedArrangementResponse_FieldNumber) {
+  ITMSavedArrangementResponse_FieldNumber_Status = 1,
+};
+
+@interface ITMSavedArrangementResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMSavedArrangementResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@end
 
 #pragma mark - ITMVariableRequest
 
@@ -737,6 +823,7 @@ typedef GPB_ENUM(ITMActivateRequest_Identifier_OneOfCase) {
 
 @interface ITMActivateRequest : GPBMessage
 
+/** To activate the app without changing anything else omit the identifier. */
 @property(nonatomic, readonly) ITMActivateRequest_Identifier_OneOfCase identifierOneOfCase;
 
 @property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;

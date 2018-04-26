@@ -31,6 +31,7 @@ message ClientOriginatedMessage {
     InjectRequest inject_request = 113;
     ActivateRequest activate_request = 114;
     VariableRequest variable_request = 115;
+    SavedArrangementRequest saved_arrangement_request = 116;
   }
 }
 
@@ -59,10 +60,37 @@ message ServerOriginatedMessage {
     InjectResponse inject_response = 113;
     ActivateResponse activate_response = 114;
     VariableResponse variable_response = 115;
+    SavedArrangementResponse saved_arrangement_response = 116;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
   }
+}
+
+message SavedArrangementRequest {
+  optional string name = 1;
+  enum Action {
+    // Restore an existing arrangement with the given name
+    RESTORE = 0;
+
+    // Save windows to a new arrangment with the given name
+    SAVE = 1;
+  }
+  optional Action action = 2;
+
+  // If given and the action is SAVE then only the tabs in the identified window are saved.
+  // If given and the action is RESTORE then the arrangement will be restored as tabs in the identified window.
+  optional string window_id = 3;
+}
+
+message SavedArrangementResponse {
+  enum Status {
+    OK = 0;
+    ARRANGEMENT_NOT_FOUND = 1;  // Tried to restore, but name doesn't exist
+    WINDOW_NOT_FOUND = 2;  // Bad window ID provided
+    REQUEST_MALFORMED = 3;
+  }
+  optional Status status = 1;
 }
 
 message VariableRequest {

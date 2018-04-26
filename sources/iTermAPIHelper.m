@@ -911,4 +911,57 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     handler(response);
 }
 
+- (void)apiServerSavedArrangement:(ITMSavedArrangementRequest *)request handler:(void (^)(ITMSavedArrangementResponse *))handler {
+    switch (request.action) {
+        case ITMSavedArrangementRequest_Action_Save:
+            [self saveArrangementNamed:request.name windowID:request.windowId handler:handler];
+            break;
+
+        case ITMSavedArrangementRequest_Action_Restore:
+            [self restoreArrangementNamed:request.name windowID:request.windowId handler:handler];
+            break;
+    }
+    ITMSavedArrangementResponse *response = [[ITMSavedArrangementResponse alloc] init];
+    response.status = ITMSavedArrangementResponse_Status_RequestMalformed;
+    handler(response);
+}
+
+- (void)saveArrangementNamed:(NSString *)name
+                    windowID:(NSString *)windowID
+                     handler:(void (^)(ITMSavedArrangementResponse *))handler {
+    ITMSavedArrangementResponse *response = [[ITMSavedArrangementResponse alloc] init];
+    if (windowID.length) {
+        PseudoTerminal *term = [[iTermController sharedInstance] terminalWithGuid:windowID];
+        if (!term) {
+            response.status = ITMSavedArrangementResponse_Status_WindowNotFound;
+            handler(response);
+            return;
+        }
+
+        [[iTermController sharedInstance] saveWindowArrangementForWindow:term name:name];
+    } else {
+        [[iTermController sharedInstance] saveWindowArrangmentForAllWindows:YES name:name];
+    }
+    response.status = ITMSavedArrangementResponse_Status_Ok;
+    handler(response);
+}
+
+- (void)restoreArrangementNamed:(NSString *)name
+                       windowID:(NSString *)windowID
+                        handler:(void (^)(ITMSavedArrangementResponse *))handler {
+    ITMSavedArrangementResponse *response = [[ITMSavedArrangementResponse alloc] init];
+    PseudoTerminal *term = nil;
+    if (windowID.length) {
+        term = [[iTermController sharedInstance] terminalWithGuid:windowID];
+        if (!term) {
+            response.status = ITMSavedArrangementResponse_Status_WindowNotFound;
+            handler(response);
+            return;
+        }
+    }
+    [[iTermController sharedInstance] loadWindowArrangementWithName:name asTabsInTerminal:term];
+    response.status = ITMSavedArrangementResponse_Status_Ok;
+    handler(response);
+}
+
 @end

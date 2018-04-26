@@ -14,6 +14,9 @@ class SetPropertyException(Exception):
 class GetPropertyException(Exception):
   pass
 
+class SavedArrangementException(Exception):
+  pass
+
 class Window:
   """Represents an iTerm2 window."""
   def __init__(self, connection, window_id, tabs, frame):
@@ -162,3 +165,15 @@ class Window:
     Gives the window keyboard focus and orders it to the front.
     """
     await iterm2.rpc.activate(self.connection, False, False, True, window_id=self.window_id)
+
+  async def save_window_as_arrangement(self, name):
+    """Save the current window as a new arrangement."""
+    result = await iterm2.rpc.save_arrangement(self.connection, name, self.window_id)
+    if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
+      raise SavedArrangementException(iterm2.api_pb2.SavedArrangementResponse.Status.Name(result.saved_arrangement_response.status))
+
+  async def restore_window_arrangement(self, name):
+    """Restore a window arrangement as tabs in this window."""
+    result = await iterm2.rpc.restore_arrangement(self.connection, name, self.window_id)
+    if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
+      raise SavedArrangementException(iterm2.api_pb2.SavedArrangementResponse.Status.Name(result.saved_arrangement_response.status))

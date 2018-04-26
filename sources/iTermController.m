@@ -367,23 +367,35 @@ static iTermController *gSharedInstance;
     if (!name) {
         return;
     }
-    NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
+    [self saveWindowArrangmentForAllWindows:allWindows name:name];
+}
+
+- (void)saveWindowArrangmentForAllWindows:(BOOL)allWindows name:(NSString *)name {
     if (allWindows) {
+        NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
         for (PseudoTerminal *terminal in _terminalWindows) {
             NSDictionary *arrangement = [terminal arrangement];
             if (arrangement) {
                 [terminalArrangements addObject:arrangement];
             }
         }
+        if (terminalArrangements.count) {
+            [WindowArrangements setArrangement:terminalArrangements withName:name];
+        }
     } else {
         PseudoTerminal *currentTerminal = [self currentTerminal];
         if (!currentTerminal) {
             return;
         }
-        NSDictionary *arrangement = [currentTerminal arrangement];
-        if (arrangement) {
-            [terminalArrangements addObject:arrangement];
-        }
+        [self saveWindowArrangementForWindow:currentTerminal name:name];
+    }
+}
+
+- (void)saveWindowArrangementForWindow:(PseudoTerminal *)currentTerminal name:(NSString *)name {
+    NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
+    NSDictionary *arrangement = [currentTerminal arrangement];
+    if (arrangement) {
+        [terminalArrangements addObject:arrangement];
     }
     if (terminalArrangements.count) {
         [WindowArrangements setArrangement:terminalArrangements withName:name];
@@ -391,16 +403,13 @@ static iTermController *gSharedInstance;
 }
 
 - (void)tryOpenArrangement:(NSDictionary *)terminalArrangement {
-    [self tryOpenArrangement:terminalArrangement asTabs:NO];
+    [self tryOpenArrangement:terminalArrangement asTabsInWindow:nil];
 }
 
-- (void)tryOpenArrangement:(NSDictionary *)terminalArrangement asTabs:(BOOL)asTabs {
-    if (asTabs) {
-        PseudoTerminal *term = [self currentTerminal];
-        if (term) {
-            [term restoreTabsFromArrangement:terminalArrangement sessions:nil];
-            return;
-        }
+- (void)tryOpenArrangement:(NSDictionary *)terminalArrangement asTabsInWindow:(PseudoTerminal *)term {
+    if (term) {
+        [term restoreTabsFromArrangement:terminalArrangement sessions:nil];
+        return;
     }
     BOOL shouldDelay = NO;
     DLog(@"Try to open arrangement %p...", terminalArrangement);
@@ -427,19 +436,19 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (void)loadWindowArrangementWithName:(NSString *)theName asTabs:(BOOL)asTabs {
+- (void)loadWindowArrangementWithName:(NSString *)theName asTabsInTerminal:(PseudoTerminal *)term {
     _savedArrangementNameBeingRestored = [[theName retain] autorelease];
     NSArray *terminalArrangements = [WindowArrangements arrangementWithName:theName];
     if (terminalArrangements) {
         for (NSDictionary *terminalArrangement in terminalArrangements) {
-            [self tryOpenArrangement:terminalArrangement asTabs:asTabs];
+            [self tryOpenArrangement:terminalArrangement asTabsInWindow:term];
         }
     }
     _savedArrangementNameBeingRestored = nil;
 }
 
 - (void)loadWindowArrangementWithName:(NSString *)theName {
-    [self loadWindowArrangementWithName:theName asTabs:NO];
+    [self loadWindowArrangementWithName:theName asTabsInTerminal:nil];
 }
 
 // Return all the terminals in the given screen.

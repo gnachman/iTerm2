@@ -201,7 +201,7 @@
         } else if ([object isKindOfClass:[iTermOpenQuicklyArrangementItem class]]) {
             // Load window arrangement
             iTermOpenQuicklyArrangementItem *item = (iTermOpenQuicklyArrangementItem *)object;
-            [[iTermController sharedInstance] loadWindowArrangementWithName:item.identifier asTabs:item.inTabs];
+            [[iTermController sharedInstance] loadWindowArrangementWithName:item.identifier asTabsInTerminal:item.inTabs ? [[iTermController sharedInstance] currentTerminal] : nil];
         } else if ([object isKindOfClass:[iTermOpenQuicklyChangeProfileItem class]]) {
             // Change profile
             PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
