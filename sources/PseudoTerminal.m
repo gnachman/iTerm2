@@ -97,6 +97,7 @@ NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
 NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWindowControllerWasCreatedNotification";
 NSString *const iTermDidDecodeWindowRestorableStateNotification = @"iTermDidDecodeWindowRestorableStateNotification";
 NSString *const iTermTabDidChangePositionInWindowNotification = @"iTermTabDidChangePositionInWindowNotification";
+NSString *const iTermSelectedTabDidChange = @"iTermSelectedTabDidChange";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 
@@ -2758,7 +2759,7 @@ ITERM_WEAKLY_REFERENCEABLE
         PtyLog(@"makeCurrentSessionFirstResponder. New first responder will be %@. The current first responder is %@",
                [[self currentSession] textview], [[self window] firstResponder]);
         [[self window] makeFirstResponder:[[self currentSession] textview]];
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
                                                             object:[self currentSession]
                                                           userInfo:nil];
     } else {
@@ -4247,7 +4248,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [_instantReplayWindowController updateInstantReplayView];
     // Post notifications
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
                                                         object:[[tabViewItem identifier] activeSession]];
 
     PTYSession *activeSession = [self currentSession];
@@ -4283,6 +4284,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self updateCurrentLocation];
     [self updateUseMetalInAllTabs];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
 }
 
 - (void)updateUseMetalInAllTabs {
@@ -7212,7 +7214,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[self currentSession] logStart];
     }
     // send a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
                                                         object:[self currentSession]];
 }
 
@@ -7222,7 +7224,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[self currentSession] logStop];
     }
     // send a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
                                                         object:[self currentSession]];
 }
 

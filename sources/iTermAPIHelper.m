@@ -41,6 +41,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     NSMutableDictionary<id, ITMNotificationRequest *> *_newSessionSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_terminateSessionSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_layoutChangeSubscriptions;
+    NSMutableDictionary<id, ITMNotificationRequest *> *_focusChangeSubscriptions;
     NSMutableArray<iTermAllSessionsSubscription *> *_allSessionsSubscriptions;
 }
 
@@ -72,6 +73,30 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(layoutChanged:)
                                                      name:iTermTabDidChangePositionInWindowNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidBecomeActive:)
+                                                     name:NSApplicationDidBecomeActiveNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidResignActive:)
+                                                     name:NSApplicationDidResignActiveNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidBecomeKey:)
+                                                     name:NSWindowDidBecomeKeyNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidResignKey:)
+                                                     name:NSWindowDidResignKeyNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(selectedTabDidChange:)
+                                                     name:iTermSelectedTabDidChange
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(activeSessionDidChange:)
+                                                     name:iTermSessionBecameKey
                                                    object:nil];
     }
     return self;
@@ -124,6 +149,83 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     [_layoutChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[ITMNotification alloc] init];
         notification.layoutChangedNotification.listSessionsResponse = [self newListSessionsResponse];
+        [self postAPINotification:notification toConnection:key];
+    }];
+}
+
+/*
+ oneof event {
+ // true: application became active. false: application resigned active.
+ bool application_active = 1;
+
+ // true: window became key. false: window resigned key.
+ bool window_key = 2;
+
+ // If set, selected tab changed to the one identified herein.
+ Tab selected_tab = 3;
+
+ // If set, the given session became active in its tab.
+ string session = 4;
+ }
+*/
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
+    ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
+    focusChange.applicationActive = YES;
+    [self handleFocusChange:focusChange];
+}
+
+- (void)applicationDidResignActive:(NSNotification *)notification {
+    ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
+    focusChange.applicationActive = NO;
+    [self handleFocusChange:focusChange];
+}
+
+- (void)windowDidBecomeKey:(NSNotification *)notification {
+    ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
+    NSWindow *window = notification.object;
+    PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:window];
+    if (window) {
+        focusChange.windowId = term.terminalGuid;
+        focusChange.windowKey = YES;
+        [self handleFocusChange:focusChange];
+    }
+}
+
+- (void)windowDidResignKey:(NSNotification *)notification {
+    ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
+    NSWindow *window = notification.object;
+    PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:window];
+    if (window) {
+        focusChange.windowId = term.terminalGuid;
+        focusChange.windowKey = NO;
+        [self handleFocusChange:focusChange];
+    }
+}
+
+- (void)selectedTabDidChange:(NSNotification *)notification {
+    PTYTab *tab = notification.object;
+    ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
+    focusChange.selectedTab = [@(tab.uniqueId) stringValue];
+    [self handleFocusChange:focusChange];
+}
+
+- (void)activeSessionDidChange:(NSNotification *)notification {
+    NSDictionary *userInfo = notification.userInfo;
+    NSNumber *changed = userInfo[@"changed"];
+    if (changed && !changed.boolValue) {
+        return;
+    }
+    PTYSession *session = notification.object;
+    ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
+    focusChange.session = session.guid;
+    [self handleFocusChange:focusChange];
+}
+
+- (void)handleFocusChange:(ITMFocusChangedNotification *)notif {
+    [_focusChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+        ITMNotification *notification = [[ITMNotification alloc] init];
+        notification.focusChangedNotification = notif;
         [self postAPINotification:notification toConnection:key];
     }];
 }
@@ -286,6 +388,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         _newSessionSubscriptions = [[NSMutableDictionary alloc] init];
         _terminateSessionSubscriptions = [[NSMutableDictionary alloc] init];
         _layoutChangeSubscriptions = [[NSMutableDictionary alloc] init];
+        _focusChangeSubscriptions = [[NSMutableDictionary alloc] init];
     }
     NSMutableDictionary<id, ITMNotificationRequest *> *subscriptions;
     if (request.notificationType == ITMNotificationType_NotifyOnNewSession) {
@@ -294,6 +397,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         subscriptions = _terminateSessionSubscriptions;
     } else if (request.notificationType == ITMNotificationType_NotifyOnLayoutChange) {
         subscriptions = _layoutChangeSubscriptions;
+    } else if (request.notificationType == ITMNotificationType_NotifyOnFocusChange) {
+        subscriptions = _focusChangeSubscriptions;
     } else {
         assert(false);
     }
@@ -325,8 +430,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
                    connection:(id)connection
                       handler:(void (^)(ITMNotificationResponse *))handler {
     if (request.notificationType == ITMNotificationType_NotifyOnNewSession ||
-        request.notificationType == ITMNotificationType_NotifyOnTerminateSession |
-        request.notificationType == ITMNotificationType_NotifyOnLayoutChange) {
+        request.notificationType == ITMNotificationType_NotifyOnTerminateSession ||
+        request.notificationType == ITMNotificationType_NotifyOnLayoutChange ||
+        request.notificationType == ITMNotificationType_NotifyOnFocusChange) {
         handler([self handleAPINotificationRequest:request connection:connection]);
     } else if ([request.session isEqualToString:@"all"]) {
         iTermAllSessionsSubscription *sub = [[iTermAllSessionsSubscription alloc] init];
@@ -961,6 +1067,39 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
     [[iTermController sharedInstance] loadWindowArrangementWithName:name asTabsInTerminal:term];
     response.status = ITMSavedArrangementResponse_Status_Ok;
+    handler(response);
+}
+
+- (void)apiServerFocus:(ITMFocusRequest *)request handler:(void (^)(ITMFocusResponse *))handler {
+    ITMFocusResponse *response = [[ITMFocusResponse alloc] init];
+
+    ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
+    focusChange.applicationActive = [NSApp isActive];
+    [response.notificationsArray addObject:focusChange];
+
+    focusChange = [[ITMFocusChangedNotification alloc] init];
+    NSWindow *keyWindow = [NSApp keyWindow];
+    PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:keyWindow];
+    if (term) {
+        focusChange.windowKey = YES;
+        focusChange.windowId = term.terminalGuid;
+    } else {
+        focusChange.windowKey = NO;
+    }
+    [response.notificationsArray addObject:focusChange];
+
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        focusChange = [[ITMFocusChangedNotification alloc] init];
+        PTYTab *tab = term.currentTab;
+        focusChange.selectedTab = [@(tab.uniqueId) stringValue];
+        [response.notificationsArray addObject:focusChange];
+
+        for (PTYTab *tab in term.tabs) {
+            focusChange = [[ITMFocusChangedNotification alloc] init];
+            focusChange.session = tab.activeSession.guid;
+            [response.notificationsArray addObject:focusChange];
+        }
+    }
     handler(response);
 }
 

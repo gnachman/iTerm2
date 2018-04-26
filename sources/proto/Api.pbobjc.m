@@ -54,7 +54,7 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
         "otifyOnPrompt\000NotifyOnLocationChange\000Not"
         "ifyOnCustomEscapeSequence\000NotifyOnNewSes"
         "sion\000NotifyOnTerminateSession\000NotifyOnLa"
-        "youtChange\000";
+        "youtChange\000NotifyOnFocusChange\000";
     static const int32_t values[] = {
         ITMNotificationType_NotifyOnKeystroke,
         ITMNotificationType_NotifyOnScreenUpdate,
@@ -64,6 +64,7 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
         ITMNotificationType_NotifyOnNewSession,
         ITMNotificationType_NotifyOnTerminateSession,
         ITMNotificationType_NotifyOnLayoutChange,
+        ITMNotificationType_NotifyOnFocusChange,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMNotificationType)
@@ -88,6 +89,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
     case ITMNotificationType_NotifyOnNewSession:
     case ITMNotificationType_NotifyOnTerminateSession:
     case ITMNotificationType_NotifyOnLayoutChange:
+    case ITMNotificationType_NotifyOnFocusChange:
       return YES;
     default:
       return NO;
@@ -117,6 +119,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
 @dynamic activateRequest;
 @dynamic variableRequest;
 @dynamic savedArrangementRequest;
+@dynamic focusRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -137,6 +140,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMActivateRequest *activateRequest;
   ITMVariableRequest *variableRequest;
   ITMSavedArrangementRequest *savedArrangementRequest;
+  ITMFocusRequest *focusRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -308,6 +312,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "focusRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMFocusRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_FocusRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, focusRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -360,6 +373,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic activateResponse;
 @dynamic variableResponse;
 @dynamic savedArrangementResponse;
+@dynamic focusResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -382,6 +396,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMActivateResponse *activateResponse;
   ITMVariableResponse *variableResponse;
   ITMSavedArrangementResponse *savedArrangementResponse;
+  ITMFocusResponse *focusResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -564,6 +579,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "focusResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMFocusResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_FocusResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, focusResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
@@ -600,6 +624,79 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMFocusRequest
+
+@implementation ITMFocusRequest
+
+
+typedef struct ITMFocusRequest__storage_ {
+  uint32_t _has_storage_[1];
+} ITMFocusRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMFocusRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:NULL
+                                    fieldCount:0
+                                   storageSize:sizeof(ITMFocusRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMFocusResponse
+
+@implementation ITMFocusResponse
+
+@dynamic notificationsArray, notificationsArray_Count;
+
+typedef struct ITMFocusResponse__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *notificationsArray;
+} ITMFocusResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "notificationsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMFocusChangedNotification),
+        .number = ITMFocusResponse_FieldNumber_NotificationsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMFocusResponse__storage_, notificationsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMFocusResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMFocusResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMSavedArrangementRequest
 
 @implementation ITMSavedArrangementRequest
@@ -2057,6 +2154,7 @@ BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value__) {
 @dynamic hasNewSessionNotification, newSessionNotification;
 @dynamic hasTerminateSessionNotification, terminateSessionNotification;
 @dynamic hasLayoutChangedNotification, layoutChangedNotification;
+@dynamic hasFocusChangedNotification, focusChangedNotification;
 
 typedef struct ITMNotification__storage_ {
   uint32_t _has_storage_[1];
@@ -2068,6 +2166,7 @@ typedef struct ITMNotification__storage_ {
   ITMNewSessionNotification *newSessionNotification;
   ITMTerminateSessionNotification *terminateSessionNotification;
   ITMLayoutChangedNotification *layoutChangedNotification;
+  ITMFocusChangedNotification *focusChangedNotification;
 } ITMNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -2145,6 +2244,15 @@ typedef struct ITMNotification__storage_ {
         .number = ITMNotification_FieldNumber_LayoutChangedNotification,
         .hasIndex = 7,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, layoutChangedNotification),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "focusChangedNotification",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMFocusChangedNotification),
+        .number = ITMNotification_FieldNumber_FocusChangedNotification,
+        .hasIndex = 8,
+        .offset = (uint32_t)offsetof(ITMNotification__storage_, focusChangedNotification),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
@@ -2575,6 +2683,103 @@ typedef struct ITMNewSessionNotification__storage_ {
 
 @end
 
+#pragma mark - ITMFocusChangedNotification
+
+@implementation ITMFocusChangedNotification
+
+@dynamic eventOneOfCase;
+@dynamic applicationActive;
+@dynamic windowKey;
+@dynamic selectedTab;
+@dynamic session;
+@dynamic hasWindowId, windowId;
+
+typedef struct ITMFocusChangedNotification__storage_ {
+  uint32_t _has_storage_[2];
+  NSString *selectedTab;
+  NSString *session;
+  NSString *windowId;
+} ITMFocusChangedNotification__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "applicationActive",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMFocusChangedNotification_FieldNumber_ApplicationActive,
+        .hasIndex = -1,
+        .offset = 0,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "windowKey",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMFocusChangedNotification_FieldNumber_WindowKey,
+        .hasIndex = -1,
+        .offset = 1,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "selectedTab",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMFocusChangedNotification_FieldNumber_SelectedTab,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMFocusChangedNotification__storage_, selectedTab),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "session",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMFocusChangedNotification_FieldNumber_Session,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMFocusChangedNotification__storage_, session),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "windowId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMFocusChangedNotification_FieldNumber_WindowId,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMFocusChangedNotification__storage_, windowId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMFocusChangedNotification class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMFocusChangedNotification__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    static const char *oneofs[] = {
+      "event",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+void ITMFocusChangedNotification_ClearEventOneOfCase(ITMFocusChangedNotification *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
 #pragma mark - ITMTerminateSessionNotification
 
 @implementation ITMTerminateSessionNotification

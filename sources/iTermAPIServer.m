@@ -509,6 +509,13 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             response.savedArrangementResponse = savedArrangementResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_FocusRequest) {
+        [_delegate apiServerFocus:request.focusRequest handler:^(ITMFocusResponse *focusResponse) {
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
+            response.id_p = request.id_p;
+            response.focusResponse = focusResponse;
+            [weakSelf sendResponse:response onConnection:webSocketConnection];
+        }];
     } else {
         ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
         response.id_p = request.id_p;

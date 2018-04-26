@@ -26,6 +26,7 @@ class Hierarchy:
     windows = Hierarchy._windows_from_list_sessions_response(connection, list_sessions_response)
     h = Hierarchy(connection, windows)
     await h._listen()
+    await h._refresh_focus()
     return h
 
   @staticmethod
@@ -44,6 +45,10 @@ class Hierarchy:
     self.connection = connection
     self.windows = windows
     self.tokens = []
+
+    # None in these fields means unknown. Notifications will update them.
+    self.app_active = None
+    self.key_window_id = None
 
   def pretty_str(self):
     """Returns the hierarchy as a human-readable string"""
@@ -81,6 +86,11 @@ class Hierarchy:
         return w
     return None
 
+  async def _refresh_focus(self):
+    focus_info = await iterm2.rpc.get_focus_info(self.connection)
+    for notif in focus_info.focus_response.notifications:
+      await self._focus_change(self.connection, notif)
+
   async def get_window_by_id(self, window_id):
     """Finds a window exactly matching the passed-in id.
 
@@ -104,28 +114,47 @@ class Hierarchy:
       return s
 
   async def get_tab_by_id(self, tab_id):
-      """Finds a tab exactly matching the passed-in id.
+    """Finds a tab exactly matching the passed-in id.
 
-      Returns: An iterm2.tab.Tab or None
-      """
-      t = self._search_for_tab_id(tab_id)
-      if t is None:
-        await self.refresh()
-        return self._search_for_tab_id(tab_id)
-      else:
-        return t
+    Returns: An iterm2.tab.Tab or None
+    """
+    t = self._search_for_tab_id(tab_id)
+    if t is None:
+      await self.refresh()
+      return self._search_for_tab_id(tab_id)
+    else:
+      return t
 
   async def get_window_by_id(self, window_id):
-      """Finds a window exactly matching the passed-in id.
+    """Finds a window exactly matching the passed-in id.
 
-      Returns: An iterm2.window.Window or None
-      """
-      w = self._search_for_window_id(window_id)
-      if w is None:
-        await self.refresh()
-        return self._search_for_window_id(window_id)
-      else:
-        return w
+    Returns: An iterm2.window.Window or None
+    """
+    w = self._search_for_window_id(window_id)
+    if w is None:
+      await self.refresh()
+      return self._search_for_window_id(window_id)
+    else:
+      return w
+
+  async def get_window_for_tab(self, tab_id):
+    """Finds the window that contains the passed-in tab id.
+
+    Returns: An iterm2.window.Window or None
+    """
+    w = self._search_for_window_with_tab(tab_id)
+    if w is None:
+      await self.refresh()
+      return self._search_for_window_with_tab(tab_id)
+    else:
+      return w
+
+  def _search_for_window_with_tab(self, tab_id):
+    for w in self.windows:
+      for t in w.tabs:
+        if t.tab_id == tab_id:
+          return w
+    return None
 
   async def refresh(self, connection=None, sub_notif=None):
     """Reloads the hierarchy.
@@ -135,6 +164,32 @@ class Hierarchy:
     response = await iterm2.rpc.list_sessions(self.connection)
     # TODO: Calculate diffs so sessions don't get invalidated.
     self.windows = Hierarchy._windows_from_list_sessions_response(self.connection, response.list_sessions_response)
+
+  async def _focus_change(self, connection, sub_notif):
+    """Updates the record of what is in focus."""
+    if sub_notif.HasField("application_active"):
+      self.app_active = sub_notif.application_active
+    elif sub_notif.HasField("window_key"):
+      self.key_window_id = sub_notif.window_id
+    elif sub_notif.HasField("selected_tab"):
+      window = await self.get_window_for_tab(sub_notif.selected_tab)
+      window.selected_tab_id = sub_notif.selected_tab
+    elif sub_notif.HasField("session"):
+      s = await self.get_session_by_id(sub_notif.session)
+      w, t = self.get_tab_and_window_for_session(s)
+      t.active_session_id = sub_notif.session
+
+  async def get_key_window(self):
+    """Gets the key window.
+
+    Returns: iterm2.window.Window or None
+    """
+    if self.key_window_id is None:
+      await self._refresh_focus()
+    if self.key_window_id is None:
+      return None
+    else:
+      return self.get_window_by_id(self.key_window_id)
 
   def get_tab_and_window_for_session(self, session):
     """Finds the tab and window that own a session.
@@ -174,4 +229,5 @@ class Hierarchy:
     self.tokens.append(await iterm2.notifications.subscribe_to_new_session_notification(connection, self.refresh))
     self.tokens.append(await iterm2.notifications.subscribe_to_terminate_session_notification(connection, self.refresh))
     self.tokens.append(await iterm2.notifications.subscribe_to_layout_change_notification(connection, self.refresh))
+    self.tokens.append(await iterm2.notifications.subscribe_to_focus_change_notification(connection, self._focus_change))
 

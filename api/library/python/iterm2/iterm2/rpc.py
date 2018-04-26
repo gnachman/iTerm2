@@ -299,26 +299,34 @@ async def variable(connection, session_id, sets, gets):
   return await _call(connection, request)
 
 async def save_arrangement(connection, name, window_id=None):
-    """
-    Save a window arrangement.
-    """
-    request = _alloc_request()
-    request.saved_arrangement_request.name = name
-    request.saved_arrangement_request.action = iterm2.api_pb2.SavedArrangementRequest.Action.Value("SAVE")
-    if window_id is not None:
-      request.saved_arrangement_request.window_id = window_id
-    return await _call(connection, request)
+  """
+  Save a window arrangement.
+  """
+  request = _alloc_request()
+  request.saved_arrangement_request.name = name
+  request.saved_arrangement_request.action = iterm2.api_pb2.SavedArrangementRequest.Action.Value("SAVE")
+  if window_id is not None:
+    request.saved_arrangement_request.window_id = window_id
+  return await _call(connection, request)
 
 async def restore_arrangement(connection, name, window_id=None):
-    """
-    Restore a window arrangement.
-    """
-    request = _alloc_request()
-    request.saved_arrangement_request.name = name
-    request.saved_arrangement_request.action = iterm2.api_pb2.SavedArrangementRequest.Action.Value("RESTORE")
-    if window_id is not None:
-      request.saved_arrangement_request.window_id = window_id
-    return await _call(connection, request)
+  """
+  Restore a window arrangement.
+  """
+  request = _alloc_request()
+  request.saved_arrangement_request.name = name
+  request.saved_arrangement_request.action = iterm2.api_pb2.SavedArrangementRequest.Action.Value("RESTORE")
+  if window_id is not None:
+    request.saved_arrangement_request.window_id = window_id
+  return await _call(connection, request)
+
+async def get_focus_info(connection):
+  """
+  Fetches the focused state of everything.
+  """
+  request = _alloc_request()
+  request.focus_request.SetInParent()
+  return await _call(connection, request)
 
 ## Private --------------------------------------------------------------------
 

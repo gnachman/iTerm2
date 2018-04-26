@@ -33,6 +33,7 @@
 #define PtyLog DLog
 
 NSString *const iTermTabDidChangeWindowNotification = @"iTermTabDidChangeWindowNotification";
+NSString *const iTermSessionBecameKey = @"iTermSessionBecameKey";
 
 // No growl output/idle alerts for a few seconds after a window is resized because there will be bogus bg activity
 const int POST_WINDOW_RESIZE_SILENCE_SEC = 5;
@@ -603,8 +604,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [[aSession textview] setNeedsDisplay:YES];
     }
     [self updateLabelAttributes];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
-                                                        object:activeSession_];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
+                                                        object:activeSession_
+                                                      userInfo:@{ @"changed": @(changed) }];
     // If the active session changed in the active tab in the key window then update the
     // focused state of all sessions in that window.
     if ([[self realParentWindow] currentTab] == self &&

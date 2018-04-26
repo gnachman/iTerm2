@@ -24,6 +24,8 @@ class Window:
     self.window_id = window_id
     self.tabs = tabs
     self.frame = frame
+    # None means unknown. Can get set later.
+    self.seelcted_tab_id = None
 
   def __repr__(self):
     return "<Window id=%s tabs=%s frame=%s>" % (self.window_id, self.tabs, iterm2.util.frame_str(self.frame))

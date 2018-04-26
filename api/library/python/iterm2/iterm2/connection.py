@@ -34,7 +34,7 @@ class Connection:
   def __init__(self):
     self.__deferred = None
 
-  def run(self, coro):
+  def run(self, coro, *args):
     """
     Convenience method to start a program.
 
@@ -42,9 +42,10 @@ class Connection:
     passed in coroutine. Exceptions will be caught and printed to stdout.
 
     coro: A coroutine (async function) to run after connecting.
+    *args: Passed to coro after its first argument (this connection)
     """
     async def main(loop):
-      await self.connect(coro)
+      await self.connect(coro, *args)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main(loop))
 
@@ -72,7 +73,7 @@ class Connection:
     message.ParseFromString(data)
     return message
 
-  async def connect(self, coro):
+  async def connect(self, coro, *args):
     """
     Establishes a websocket connection.
 
@@ -86,6 +87,7 @@ class Connection:
     of this program with its entry in the scripting console.
 
     coro: A coroutine to run once connected.
+    *args: Passed to coro after its first argument (this connection)
     """
     cookie_key = 'ITERM2_COOKIE'
     key_key = 'ITERM2_KEY'
@@ -100,9 +102,9 @@ class Connection:
                                   subprotocols=[ 'api.iterm2.com' ]) as websocket:
       self.websocket = websocket
       try:
-        await coro(self)
+        await coro(self, *args)
       except Exception as err:
-        traceback.print_tb(err.__traceback__)
+        traceback.print_exc()
         sys.exit(1)
 
 
@@ -126,7 +128,7 @@ class Connection:
       if message.id == reqid:
         if ownsDeferred:
           for d in self._iterate_deferred():
-            self._dispatch(d)
+            await self._dispatch(d)
         return message
       else:
         self._defer(message)
@@ -185,7 +187,7 @@ class Connection:
     while len(self.__deferred) > 0:
       deferred = self.__deferred
       self.__deferred = []
-      for d in self.__deferred:
+      for d in deferred:
         yield(d)
     self.__deferred = None
 
@@ -194,7 +196,6 @@ class Connection:
     Dispatch a message to all registered helpers.
     """
     global _helpers
-
     for helper in _helpers:
       assert helper is not None
       if await helper(self, message):

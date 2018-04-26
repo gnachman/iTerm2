@@ -134,6 +134,18 @@ async def subscribe_to_layout_change_notification(connection, callback):
   """
   return await _subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_LAYOUT_CHANGE, callback, session=None)
 
+async def subscribe_to_focus_change_notification(connection, callback):
+  """
+  Registers a callback to be run when focus changes.
+
+  connection: A connected iterm2.Connection
+  callback: A coroutine taking two arguments: an iterm2.Connection and
+    iterm2.api_pb2.FocusChangedNotification.
+
+  Returns: A token that can be passed to unsubscribe.
+  """
+  return await _subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_FOCUS_CHANGE, callback, session=None)
+
 ## Private --------------------------------------------------------------------
 
 async def _subscribe(connection, subscribe, notification_type, callback, session=None):
@@ -195,6 +207,9 @@ def _get_handler_key_from_notification(notification):
   elif notification.HasField('layout_changed_notification'):
     key = (None, iterm2.api_pb2.NOTIFY_ON_LAYOUT_CHANGE)
     notification = notification.layout_changed_notification
+  elif notification.HasField('focus_changed_notification'):
+    key = (None, iterm2.api_pb2.NOTIFY_ON_FOCUS_CHANGE)
+    notification = notification.focus_changed_notification
 
   return key, notification
 

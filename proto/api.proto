@@ -32,6 +32,7 @@ message ClientOriginatedMessage {
     ActivateRequest activate_request = 114;
     VariableRequest variable_request = 115;
     SavedArrangementRequest saved_arrangement_request = 116;
+    FocusRequest focus_request = 117;
   }
 }
 
@@ -61,10 +62,20 @@ message ServerOriginatedMessage {
     ActivateResponse activate_response = 114;
     VariableResponse variable_response = 115;
     SavedArrangementResponse saved_arrangement_response = 116;
+    FocusResponse focus_response = 117;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
   }
+}
+
+message FocusRequest {
+}
+
+message FocusResponse {
+  // A collection of notifications that completely describe the state of every tab and window and
+  // the application itself.
+  repeated FocusChangedNotification notifications = 1;
 }
 
 message SavedArrangementRequest {
@@ -256,6 +267,7 @@ enum NotificationType {
   NOTIFY_ON_NEW_SESSION = 6;
   NOTIFY_ON_TERMINATE_SESSION = 7;
   NOTIFY_ON_LAYOUT_CHANGE = 8;
+  NOTIFY_ON_FOCUS_CHANGE = 9;
 }
 
 message NotificationRequest {
@@ -290,6 +302,7 @@ message Notification {
   optional NewSessionNotification new_session_notification = 6;
   optional TerminateSessionNotification terminate_session_notification = 7;
   optional LayoutChangedNotification layout_changed_notification = 8;
+  optional FocusChangedNotification focus_changed_notification = 9;
 }
 
 message KeystrokeNotification {
@@ -333,6 +346,26 @@ message CustomEscapeSequenceNotification {
 // Sent when a new session is created or a closure is undone.
 message NewSessionNotification {
   optional string uniqueIdentifier = 1;
+}
+
+// Note this is sent when the app becomes/resigns active, the key window changes, the selected tab
+// of a window changes, or the active pane of a tab changes. Note that you may receive duplicate
+// notifications at times. Ignore those that do not signify a change.
+message FocusChangedNotification {
+  oneof event {
+    // true: application became active. false: application resigned active.
+    bool application_active = 1;
+
+    // true: window became key. false: window resigned key. Window identified in window_id field.
+    bool window_key = 2;
+
+    // If set, selected tab changed to the one identified herein.
+    string selected_tab = 3;
+
+    // If set, the given session became active in its tab.
+    string session = 4;
+  }
+  optional string window_id = 5;
 }
 
 // Note this is sent when a session is removed from the screen but its closure remains undoable.

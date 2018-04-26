@@ -36,6 +36,9 @@ CF_EXTERN_C_BEGIN
 @class ITMCreateTabRequest;
 @class ITMCreateTabResponse;
 @class ITMCustomEscapeSequenceNotification;
+@class ITMFocusChangedNotification;
+@class ITMFocusRequest;
+@class ITMFocusResponse;
 @class ITMFrame;
 @class ITMGetBufferRequest;
 @class ITMGetBufferResponse;
@@ -104,6 +107,7 @@ typedef GPB_ENUM(ITMNotificationType) {
   ITMNotificationType_NotifyOnNewSession = 6,
   ITMNotificationType_NotifyOnTerminateSession = 7,
   ITMNotificationType_NotifyOnLayoutChange = 8,
+  ITMNotificationType_NotifyOnFocusChange = 9,
 };
 
 GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
@@ -519,6 +523,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_ActivateRequest = 114,
   ITMClientOriginatedMessage_FieldNumber_VariableRequest = 115,
   ITMClientOriginatedMessage_FieldNumber_SavedArrangementRequest = 116,
+  ITMClientOriginatedMessage_FieldNumber_FocusRequest = 117,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -540,6 +545,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_ActivateRequest = 114,
   ITMClientOriginatedMessage_Submessage_OneOfCase_VariableRequest = 115,
   ITMClientOriginatedMessage_Submessage_OneOfCase_SavedArrangementRequest = 116,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_FocusRequest = 117,
 };
 
 /**
@@ -587,6 +593,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSavedArrangementRequest *savedArrangementRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMFocusRequest *focusRequest;
+
 @end
 
 /**
@@ -616,6 +624,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_ActivateResponse = 114,
   ITMServerOriginatedMessage_FieldNumber_VariableResponse = 115,
   ITMServerOriginatedMessage_FieldNumber_SavedArrangementResponse = 116,
+  ITMServerOriginatedMessage_FieldNumber_FocusResponse = 117,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -639,6 +648,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_ActivateResponse = 114,
   ITMServerOriginatedMessage_Submessage_OneOfCase_VariableResponse = 115,
   ITMServerOriginatedMessage_Submessage_OneOfCase_SavedArrangementResponse = 116,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_FocusResponse = 117,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -691,6 +701,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSavedArrangementResponse *savedArrangementResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMFocusResponse *focusResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 
@@ -700,6 +712,30 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
  * Clears whatever value was set for the oneof 'submessage'.
  **/
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
+
+#pragma mark - ITMFocusRequest
+
+@interface ITMFocusRequest : GPBMessage
+
+@end
+
+#pragma mark - ITMFocusResponse
+
+typedef GPB_ENUM(ITMFocusResponse_FieldNumber) {
+  ITMFocusResponse_FieldNumber_NotificationsArray = 1,
+};
+
+@interface ITMFocusResponse : GPBMessage
+
+/**
+ * A collection of notifications that completely describe the state of every tab and window and
+ * the application itself.
+ **/
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMFocusChangedNotification*> *notificationsArray;
+/** The number of items in @c notificationsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger notificationsArray_Count;
+
+@end
 
 #pragma mark - ITMSavedArrangementRequest
 
@@ -718,7 +754,10 @@ typedef GPB_ENUM(ITMSavedArrangementRequest_FieldNumber) {
 @property(nonatomic, readwrite) ITMSavedArrangementRequest_Action action;
 
 @property(nonatomic, readwrite) BOOL hasAction;
-/** If given and the action is SAVE then only the tabs in the identified window are saved. */
+/**
+ * If given and the action is SAVE then only the tabs in the identified window are saved.
+ * If given and the action is RESTORE then the arrangement will be restored as tabs in the identified window.
+ **/
 @property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
 /** Test to see if @c windowId has been set. */
 @property(nonatomic, readwrite) BOOL hasWindowId;
@@ -1152,6 +1191,7 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
   ITMNotification_FieldNumber_NewSessionNotification = 6,
   ITMNotification_FieldNumber_TerminateSessionNotification = 7,
   ITMNotification_FieldNumber_LayoutChangedNotification = 8,
+  ITMNotification_FieldNumber_FocusChangedNotification = 9,
 };
 
 @interface ITMNotification : GPBMessage
@@ -1187,6 +1227,10 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMLayoutChangedNotification *layoutChangedNotification;
 /** Test to see if @c layoutChangedNotification has been set. */
 @property(nonatomic, readwrite) BOOL hasLayoutChangedNotification;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMFocusChangedNotification *focusChangedNotification;
+/** Test to see if @c focusChangedNotification has been set. */
+@property(nonatomic, readwrite) BOOL hasFocusChangedNotification;
 
 @end
 
@@ -1324,6 +1368,56 @@ typedef GPB_ENUM(ITMNewSessionNotification_FieldNumber) {
 @property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
 
 @end
+
+#pragma mark - ITMFocusChangedNotification
+
+typedef GPB_ENUM(ITMFocusChangedNotification_FieldNumber) {
+  ITMFocusChangedNotification_FieldNumber_ApplicationActive = 1,
+  ITMFocusChangedNotification_FieldNumber_WindowKey = 2,
+  ITMFocusChangedNotification_FieldNumber_SelectedTab = 3,
+  ITMFocusChangedNotification_FieldNumber_Session = 4,
+  ITMFocusChangedNotification_FieldNumber_WindowId = 5,
+};
+
+typedef GPB_ENUM(ITMFocusChangedNotification_Event_OneOfCase) {
+  ITMFocusChangedNotification_Event_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMFocusChangedNotification_Event_OneOfCase_ApplicationActive = 1,
+  ITMFocusChangedNotification_Event_OneOfCase_WindowKey = 2,
+  ITMFocusChangedNotification_Event_OneOfCase_SelectedTab = 3,
+  ITMFocusChangedNotification_Event_OneOfCase_Session = 4,
+};
+
+/**
+ * Note this is sent when the app becomes/resigns active, the key window changes, the selected tab
+ * of a window changes, or the active pane of a tab changes. Note that you may receive duplicate
+ * notifications at times. Ignore those that do not signify a change.
+ **/
+@interface ITMFocusChangedNotification : GPBMessage
+
+@property(nonatomic, readonly) ITMFocusChangedNotification_Event_OneOfCase eventOneOfCase;
+
+/** true: application became active. false: application resigned active. */
+@property(nonatomic, readwrite) BOOL applicationActive;
+
+/** true: window became key. false: window resigned key. Window identified in window_id field. */
+@property(nonatomic, readwrite) BOOL windowKey;
+
+/** If set, selected tab changed to the one identified herein. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *selectedTab;
+
+/** If set, the given session became active in its tab. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+/** Test to see if @c windowId has been set. */
+@property(nonatomic, readwrite) BOOL hasWindowId;
+
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'event'.
+ **/
+void ITMFocusChangedNotification_ClearEventOneOfCase(ITMFocusChangedNotification *message);
 
 #pragma mark - ITMTerminateSessionNotification
 

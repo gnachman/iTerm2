@@ -333,6 +333,19 @@ async def saved_arrangement(connection, args):
     elif args.action == "restore":
       await iterm2.app.App(connection).restore_window_arrangement(args.name)
 
+async def show_focus(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  if h.app_active:
+    print("App is active")
+  w = await h.get_window_by_id(h.key_window_id)
+  print("Key window: {}".format(w.window_id))
+  print("")
+  for w in h.windows:
+    t = await h.get_tab_by_id(w.selected_tab_id)
+    print("Selected tab in {}: {}".format(w.window_id, t.tab_id))
+    s = await h.get_session_by_id(t.active_session_id)
+    print("  Active session is: {}".format(s.pretty_str()))
+
 def make_parser():
   parser = argparse.ArgumentParser(description='iTerm2 CLI')
   subparsers = parser.add_subparsers(help='Commands')
@@ -433,6 +446,9 @@ def make_parser():
   saved_arrangement_parser.add_argument("name", type=str, help="Arrangement name")
   saved_arrangement_parser.add_argument('--window', type=str, nargs='?', help='Window ID to save/restore to')
   saved_arrangement_parser.set_defaults(func=saved_arrangement)
+
+  show_focus_parser = subparsers.add_parser("show-focus", help="Show active windows, tabs, and panes")
+  show_focus_parser.set_defaults(func=show_focus)
 
   return parser
 

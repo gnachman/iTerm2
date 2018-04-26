@@ -6,6 +6,7 @@ class Tab:
     self.connection = connection
     self.tab_id = tab_id
     self.root = root
+    self.active_session_id = None
 
   def __repr__(self):
     return "<Tab id=%s sessions=%s>" % (self.tab_id, self.get_sessions())
