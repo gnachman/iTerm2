@@ -214,5 +214,6 @@
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
 + (BOOL)conservativeURLGuessing;
 + (double)activeUpdateCadence;
++ (BOOL)openNewWindowAtStartup;
 
 @end

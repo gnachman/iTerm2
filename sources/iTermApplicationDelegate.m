@@ -1332,6 +1332,7 @@ static BOOL hasBecomeActive = NO;
         // Open the saved arrangement at startup.
         [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
     } else if (!ranAutoLaunchScripts &&
+               [iTermAdvancedSettingsModel openNewWindowAtStartup] &&
                ![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] &&
                ![PseudoTerminalRestorer willOpenWindows] &&
                [[[iTermController sharedInstance] terminals] count] == 0 &&
