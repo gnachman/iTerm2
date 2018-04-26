@@ -6,6 +6,7 @@ import sys
 import time
 import traceback
 import websockets
+from iterm2._version import __version__
 
 _helpers = []
 
@@ -93,6 +94,7 @@ class Connection:
       headers["x-iterm2-cookie"] = os.environ[cookie_key]
     if key_key in os.environ:
       headers["x-iterm2-key"] = os.environ[key_key]
+    headers["x-iterm2-library-version"] = "python {}".format(__version__)
     async with websockets.connect('ws://localhost:1912',
                                   extra_headers=headers,
                                   subprotocols=[ 'api.iterm2.com' ]) as websocket:

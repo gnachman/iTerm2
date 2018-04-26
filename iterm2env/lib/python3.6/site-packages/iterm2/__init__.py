@@ -11,3 +11,4 @@ import iterm2.tab
 import iterm2.tool
 import iterm2.util
 import iterm2.window
+from iterm2._version import __version__

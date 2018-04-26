@@ -111,6 +111,22 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
         }
     }
 
+    NSString *libver = headers[@"x-iterm2-library-version"];
+    if (libver) {
+        NSArray<NSString *> *parts = [libver componentsSeparatedByString:@" "];
+        if (parts.count == 2) {
+            NSDictionary *minimums = @{ @"python": [NSDecimalNumber decimalNumberWithString:@"0.24"] };
+            NSString *name = parts[0];
+            NSDecimalNumber *min = minimums[name];
+            NSDecimalNumber *version = [NSDecimalNumber decimalNumberWithString:parts[1]];
+            NSComparisonResult result = [min compare:version];
+            if (result == NSOrderedDescending) {
+                *reason = [NSString stringWithFormat:@"Library version too old. %@ library version reported as %@. Minimum supported by this version of iTerm2 is %@",
+                           name, version, min];
+                return nil;
+            }
+        }
+    }
     DLog(@"Request validates as websocket upgrade request");
     iTermWebSocketConnection *conn = [[self alloc] initWithConnection:connection];
     if (conn) {
