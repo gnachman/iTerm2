@@ -293,7 +293,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     NSAssert(!self.transaction, @"Already in a transaction");
 
     __weak __typeof(self) weakSelf = self;
-    if (request.hasTransactionRequest) {
+    if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_TransactionRequest) {
         if (!request.transactionRequest.begin) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
@@ -335,7 +335,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         }
         iTermAPIRequest *transactionRequest = [transaction dequeueRequestFromAnyConnection:NO];
 
-        if (transactionRequest.request.hasTransactionRequest &&
+        if (transactionRequest.request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_TransactionRequest &&
             !transactionRequest.request.transactionRequest.begin) {
             // End the transaction by request.
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
@@ -370,7 +370,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerDidReceiveMessage
                                                         object:webSocketConnection.key
                                                       userInfo:@{ @"request": request }];
-    if (request.hasTransactionRequest) {
+    if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_TransactionRequest) {
         if (request.transactionRequest.begin) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
@@ -379,8 +379,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }
         return;
-    }
-    if (request.hasGetBufferRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_GetBufferRequest) {
         [_delegate apiServerGetBuffer:request.getBufferRequest
                               handler:^(ITMGetBufferResponse *getBufferResponse) {
                                   ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
@@ -389,8 +388,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
                                   [weakSelf sendResponse:response onConnection:webSocketConnection];
                               }];
         return;
-    }
-    if (request.hasGetPromptRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_GetPromptRequest) {
         [_delegate apiServerGetPrompt:request.getPromptRequest handler:^(ITMGetPromptResponse *getPromptResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
@@ -398,8 +396,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
         return;
-    }
-    if (request.hasNotificationRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_NotificationRequest) {
         [_delegate apiServerNotification:request.notificationRequest
                               connection:webSocketConnection.handle
                                  handler:^(ITMNotificationResponse *notificationResponse) {
@@ -409,8 +406,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
         return;
-    }
-    if (request.hasRegisterToolRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_RegisterToolRequest) {
         [_delegate apiServerRegisterTool:request.registerToolRequest
                             peerIdentity:webSocketConnection.peerIdentity
                                  handler:^(ITMRegisterToolResponse *registerToolResponse) {
@@ -420,8 +416,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
         return;
-    }
-    if (request.hasSetProfilePropertyRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_SetProfilePropertyRequest) {
         [_delegate apiServerSetProfileProperty:request.setProfilePropertyRequest
                                        handler:^(ITMSetProfilePropertyResponse *setProfilePropertyResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
@@ -430,8 +425,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
         return;
-    }
-    if (request.hasGetProfilePropertyRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_GetProfilePropertyRequest) {
         [_delegate apiServerGetProfileProperty:request.getProfilePropertyRequest
                                        handler:^(ITMGetProfilePropertyResponse *getProfilePropertyResponse) {
                                            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
@@ -440,8 +434,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
                                            [weakSelf sendResponse:response onConnection:webSocketConnection];
                                        }];
         return;
-    }
-    if (request.hasListSessionsRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_ListSessionsRequest) {
         [_delegate apiServerListSessions:request.listSessionsRequest
                                  handler:^(ITMListSessionsResponse *listSessionsResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
@@ -450,8 +443,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
         return;
-    }
-    if (request.hasSendTextRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_SendTextRequest) {
         [_delegate apiServerSendText:request.sendTextRequest handler:^(ITMSendTextResponse *sendTextResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
@@ -459,8 +451,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
         return;
-    }
-    if (request.hasCreateTabRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_CreateTabRequest) {
         [_delegate apiServerCreateTab:request.createTabRequest handler:^(ITMCreateTabResponse *createTabResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
@@ -468,8 +459,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
         return;
-    }
-    if (request.hasSplitPaneRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_SplitPaneRequest) {
         [_delegate apiServerSplitPane:request.splitPaneRequest handler:^(ITMSplitPaneResponse *splitPaneResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
@@ -477,40 +467,35 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
         return;
-    }
-    if (request.hasSetPropertyRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_SetPropertyRequest) {
         [_delegate apiServerSetProperty:request.setPropertyRequest handler:^(ITMSetPropertyResponse *setPropertyResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.setPropertyResponse = setPropertyResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
-    }
-    if (request.hasGetPropertyRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_GetPropertyRequest) {
         [_delegate apiServerGetProperty:request.getPropertyRequest handler:^(ITMGetPropertyResponse *getPropertyResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.getPropertyResponse = getPropertyResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
-    }
-    if (request.hasInjectRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_InjectRequest) {
         [_delegate apiServerInject:request.injectRequest handler:^(ITMInjectResponse *injectResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.injectResponse = injectResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
-    }
-    if (request.hasActivateRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_ActivateRequest) {
         [_delegate apiServerActivate:request.activateRequest handler:^(ITMActivateResponse *activateResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.activateResponse = activateResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
-    }
-    if (request.hasVariableRequest) {
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_VariableRequest) {
         [_delegate apiServerVariable:request.variableRequest handler:^(ITMVariableResponse *variableResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;

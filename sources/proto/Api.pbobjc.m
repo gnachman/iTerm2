@@ -98,26 +98,27 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
 
 @implementation ITMClientOriginatedMessage
 
+@dynamic submessageOneOfCase;
 @dynamic hasId_p, id_p;
-@dynamic hasGetBufferRequest, getBufferRequest;
-@dynamic hasGetPromptRequest, getPromptRequest;
-@dynamic hasTransactionRequest, transactionRequest;
-@dynamic hasNotificationRequest, notificationRequest;
-@dynamic hasRegisterToolRequest, registerToolRequest;
-@dynamic hasSetProfilePropertyRequest, setProfilePropertyRequest;
-@dynamic hasListSessionsRequest, listSessionsRequest;
-@dynamic hasSendTextRequest, sendTextRequest;
-@dynamic hasCreateTabRequest, createTabRequest;
-@dynamic hasSplitPaneRequest, splitPaneRequest;
-@dynamic hasGetProfilePropertyRequest, getProfilePropertyRequest;
-@dynamic hasSetPropertyRequest, setPropertyRequest;
-@dynamic hasGetPropertyRequest, getPropertyRequest;
-@dynamic hasInjectRequest, injectRequest;
-@dynamic hasActivateRequest, activateRequest;
-@dynamic hasVariableRequest, variableRequest;
+@dynamic getBufferRequest;
+@dynamic getPromptRequest;
+@dynamic transactionRequest;
+@dynamic notificationRequest;
+@dynamic registerToolRequest;
+@dynamic setProfilePropertyRequest;
+@dynamic listSessionsRequest;
+@dynamic sendTextRequest;
+@dynamic createTabRequest;
+@dynamic splitPaneRequest;
+@dynamic getProfilePropertyRequest;
+@dynamic setPropertyRequest;
+@dynamic getPropertyRequest;
+@dynamic injectRequest;
+@dynamic activateRequest;
+@dynamic variableRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
-  uint32_t _has_storage_[1];
+  uint32_t _has_storage_[2];
   ITMGetBufferRequest *getBufferRequest;
   ITMGetPromptRequest *getPromptRequest;
   ITMTransactionRequest *transactionRequest;
@@ -156,7 +157,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "getBufferRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMGetBufferRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_GetBufferRequest,
-        .hasIndex = 1,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, getBufferRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -165,7 +166,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "getPromptRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMGetPromptRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_GetPromptRequest,
-        .hasIndex = 2,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, getPromptRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -174,7 +175,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "transactionRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMTransactionRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_TransactionRequest,
-        .hasIndex = 3,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, transactionRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -183,7 +184,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "notificationRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotificationRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_NotificationRequest,
-        .hasIndex = 4,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, notificationRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -192,7 +193,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "registerToolRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMRegisterToolRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_RegisterToolRequest,
-        .hasIndex = 5,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, registerToolRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -201,7 +202,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "setProfilePropertyRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMSetProfilePropertyRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_SetProfilePropertyRequest,
-        .hasIndex = 6,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, setProfilePropertyRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -210,7 +211,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "listSessionsRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMListSessionsRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_ListSessionsRequest,
-        .hasIndex = 7,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, listSessionsRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -219,7 +220,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "sendTextRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMSendTextRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_SendTextRequest,
-        .hasIndex = 8,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, sendTextRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -228,7 +229,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "createTabRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMCreateTabRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_CreateTabRequest,
-        .hasIndex = 9,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, createTabRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -237,7 +238,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "splitPaneRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMSplitPaneRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_SplitPaneRequest,
-        .hasIndex = 10,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, splitPaneRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -246,7 +247,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "getProfilePropertyRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMGetProfilePropertyRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_GetProfilePropertyRequest,
-        .hasIndex = 11,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, getProfilePropertyRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -255,7 +256,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "setPropertyRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMSetPropertyRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_SetPropertyRequest,
-        .hasIndex = 12,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, setPropertyRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -264,7 +265,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "getPropertyRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMGetPropertyRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_GetPropertyRequest,
-        .hasIndex = 13,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, getPropertyRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -273,7 +274,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "injectRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMInjectRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_InjectRequest,
-        .hasIndex = 14,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, injectRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -282,7 +283,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "activateRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMActivateRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_ActivateRequest,
-        .hasIndex = 15,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, activateRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -291,7 +292,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .name = "variableRequest",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMVariableRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_VariableRequest,
-        .hasIndex = 16,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, variableRequest),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -305,6 +306,12 @@ typedef struct ITMClientOriginatedMessage__storage_ {
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMClientOriginatedMessage__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
+    static const char *oneofs[] = {
+      "submessage",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }
@@ -313,31 +320,37 @@ typedef struct ITMClientOriginatedMessage__storage_ {
 
 @end
 
+void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMessage *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
 #pragma mark - ITMServerOriginatedMessage
 
 @implementation ITMServerOriginatedMessage
 
+@dynamic submessageOneOfCase;
 @dynamic hasId_p, id_p;
-@dynamic hasGetBufferResponse, getBufferResponse;
-@dynamic hasGetPromptResponse, getPromptResponse;
-@dynamic hasTransactionResponse, transactionResponse;
-@dynamic hasNotificationResponse, notificationResponse;
-@dynamic hasRegisterToolResponse, registerToolResponse;
-@dynamic hasSetProfilePropertyResponse, setProfilePropertyResponse;
-@dynamic hasListSessionsResponse, listSessionsResponse;
-@dynamic hasSendTextResponse, sendTextResponse;
-@dynamic hasCreateTabResponse, createTabResponse;
-@dynamic hasSplitPaneResponse, splitPaneResponse;
-@dynamic hasGetProfilePropertyResponse, getProfilePropertyResponse;
-@dynamic hasSetPropertyResponse, setPropertyResponse;
-@dynamic hasGetPropertyResponse, getPropertyResponse;
-@dynamic hasInjectResponse, injectResponse;
-@dynamic hasActivateResponse, activateResponse;
-@dynamic hasVariableResponse, variableResponse;
-@dynamic hasNotification, notification;
+@dynamic getBufferResponse;
+@dynamic getPromptResponse;
+@dynamic transactionResponse;
+@dynamic notificationResponse;
+@dynamic registerToolResponse;
+@dynamic setProfilePropertyResponse;
+@dynamic listSessionsResponse;
+@dynamic sendTextResponse;
+@dynamic createTabResponse;
+@dynamic splitPaneResponse;
+@dynamic getProfilePropertyResponse;
+@dynamic setPropertyResponse;
+@dynamic getPropertyResponse;
+@dynamic injectResponse;
+@dynamic activateResponse;
+@dynamic variableResponse;
+@dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
-  uint32_t _has_storage_[1];
+  uint32_t _has_storage_[2];
   ITMGetBufferResponse *getBufferResponse;
   ITMGetPromptResponse *getPromptResponse;
   ITMTransactionResponse *transactionResponse;
@@ -377,7 +390,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "getBufferResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMGetBufferResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_GetBufferResponse,
-        .hasIndex = 1,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, getBufferResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -386,7 +399,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "getPromptResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMGetPromptResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_GetPromptResponse,
-        .hasIndex = 2,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, getPromptResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -395,7 +408,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "transactionResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMTransactionResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_TransactionResponse,
-        .hasIndex = 3,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, transactionResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -404,7 +417,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "notificationResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotificationResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_NotificationResponse,
-        .hasIndex = 4,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, notificationResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -413,7 +426,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "registerToolResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMRegisterToolResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_RegisterToolResponse,
-        .hasIndex = 5,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, registerToolResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -422,7 +435,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "setProfilePropertyResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMSetProfilePropertyResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_SetProfilePropertyResponse,
-        .hasIndex = 6,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, setProfilePropertyResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -431,7 +444,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "listSessionsResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMListSessionsResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_ListSessionsResponse,
-        .hasIndex = 7,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, listSessionsResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -440,7 +453,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "sendTextResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMSendTextResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_SendTextResponse,
-        .hasIndex = 8,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, sendTextResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -449,7 +462,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "createTabResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMCreateTabResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_CreateTabResponse,
-        .hasIndex = 9,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, createTabResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -458,7 +471,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "splitPaneResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMSplitPaneResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_SplitPaneResponse,
-        .hasIndex = 10,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, splitPaneResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -467,7 +480,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "getProfilePropertyResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMGetProfilePropertyResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_GetProfilePropertyResponse,
-        .hasIndex = 11,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, getProfilePropertyResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -476,7 +489,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "setPropertyResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMSetPropertyResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_SetPropertyResponse,
-        .hasIndex = 12,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, setPropertyResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -485,7 +498,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "getPropertyResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMGetPropertyResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_GetPropertyResponse,
-        .hasIndex = 13,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, getPropertyResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -494,7 +507,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "injectResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMInjectResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_InjectResponse,
-        .hasIndex = 14,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, injectResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -503,7 +516,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "activateResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMActivateResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_ActivateResponse,
-        .hasIndex = 15,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, activateResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -512,7 +525,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "variableResponse",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMVariableResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_VariableResponse,
-        .hasIndex = 16,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, variableResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -521,7 +534,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
-        .hasIndex = 17,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, notification),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
@@ -535,6 +548,12 @@ typedef struct ITMServerOriginatedMessage__storage_ {
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMServerOriginatedMessage__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
+    static const char *oneofs[] = {
+      "submessage",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }
@@ -543,6 +562,11 @@ typedef struct ITMServerOriginatedMessage__storage_ {
 
 @end
 
+void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
 #pragma mark - ITMVariableRequest
 
 @implementation ITMVariableRequest

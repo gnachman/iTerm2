@@ -478,6 +478,26 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_VariableRequest = 115,
 };
 
+typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
+  ITMClientOriginatedMessage_Submessage_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_GetBufferRequest = 100,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_GetPromptRequest = 101,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_TransactionRequest = 102,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_NotificationRequest = 103,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_RegisterToolRequest = 104,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_SetProfilePropertyRequest = 105,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_ListSessionsRequest = 106,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_SendTextRequest = 107,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_CreateTabRequest = 108,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_SplitPaneRequest = 109,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_GetProfilePropertyRequest = 110,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_SetPropertyRequest = 111,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_GetPropertyRequest = 112,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_InjectRequest = 113,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_ActivateRequest = 114,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_VariableRequest = 115,
+};
+
 /**
  * All requests are wrapped in this message. This encoded message is the entirety of the payload
  * of messages sent over WebSocket from client to iTerm2.
@@ -487,72 +507,46 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
 @property(nonatomic, readwrite) int64_t id_p;
 
 @property(nonatomic, readwrite) BOOL hasId_p;
-/** Set exactly one of these fields. */
+@property(nonatomic, readonly) ITMClientOriginatedMessage_Submessage_OneOfCase submessageOneOfCase;
+
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetBufferRequest *getBufferRequest;
-/** Test to see if @c getBufferRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasGetBufferRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetPromptRequest *getPromptRequest;
-/** Test to see if @c getPromptRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasGetPromptRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMTransactionRequest *transactionRequest;
-/** Test to see if @c transactionRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasTransactionRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotificationRequest *notificationRequest;
-/** Test to see if @c notificationRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasNotificationRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMRegisterToolRequest *registerToolRequest;
-/** Test to see if @c registerToolRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasRegisterToolRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSetProfilePropertyRequest *setProfilePropertyRequest;
-/** Test to see if @c setProfilePropertyRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasSetProfilePropertyRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMListSessionsRequest *listSessionsRequest;
-/** Test to see if @c listSessionsRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasListSessionsRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSendTextRequest *sendTextRequest;
-/** Test to see if @c sendTextRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasSendTextRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMCreateTabRequest *createTabRequest;
-/** Test to see if @c createTabRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasCreateTabRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSplitPaneRequest *splitPaneRequest;
-/** Test to see if @c splitPaneRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasSplitPaneRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetProfilePropertyRequest *getProfilePropertyRequest;
-/** Test to see if @c getProfilePropertyRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasGetProfilePropertyRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSetPropertyRequest *setPropertyRequest;
-/** Test to see if @c setPropertyRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasSetPropertyRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetPropertyRequest *getPropertyRequest;
-/** Test to see if @c getPropertyRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasGetPropertyRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMInjectRequest *injectRequest;
-/** Test to see if @c injectRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasInjectRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMActivateRequest *activateRequest;
-/** Test to see if @c activateRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasActivateRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMVariableRequest *variableRequest;
-/** Test to see if @c variableRequest has been set. */
-@property(nonatomic, readwrite) BOOL hasVariableRequest;
 
 @end
+
+/**
+ * Clears whatever value was set for the oneof 'submessage'.
+ **/
+void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMessage *message);
 
 #pragma mark - ITMServerOriginatedMessage
 
@@ -577,6 +571,27 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
+typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
+  ITMServerOriginatedMessage_Submessage_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_GetBufferResponse = 100,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_GetPromptResponse = 101,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_TransactionResponse = 102,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_NotificationResponse = 103,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_RegisterToolResponse = 104,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_SetProfilePropertyResponse = 105,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_ListSessionsResponse = 106,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_SendTextResponse = 107,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_CreateTabResponse = 108,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_SplitPaneResponse = 109,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_GetProfilePropertyResponse = 110,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_SetPropertyResponse = 111,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_GetPropertyResponse = 112,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_InjectResponse = 113,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_ActivateResponse = 114,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_VariableResponse = 115,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
+};
+
 /**
  * All responses are wrapped in this message. This encoded message is the entirety of the payload
  * of messages sent over WebSocket from iTerm2 to client.
@@ -587,76 +602,49 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
 
 @property(nonatomic, readwrite) BOOL hasId_p;
 /** Responses to ClientOriginatedMessages of the corresponding type */
+@property(nonatomic, readonly) ITMServerOriginatedMessage_Submessage_OneOfCase submessageOneOfCase;
+
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetBufferResponse *getBufferResponse;
-/** Test to see if @c getBufferResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasGetBufferResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetPromptResponse *getPromptResponse;
-/** Test to see if @c getPromptResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasGetPromptResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMTransactionResponse *transactionResponse;
-/** Test to see if @c transactionResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasTransactionResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotificationResponse *notificationResponse;
-/** Test to see if @c notificationResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasNotificationResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMRegisterToolResponse *registerToolResponse;
-/** Test to see if @c registerToolResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasRegisterToolResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSetProfilePropertyResponse *setProfilePropertyResponse;
-/** Test to see if @c setProfilePropertyResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasSetProfilePropertyResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMListSessionsResponse *listSessionsResponse;
-/** Test to see if @c listSessionsResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasListSessionsResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSendTextResponse *sendTextResponse;
-/** Test to see if @c sendTextResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasSendTextResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMCreateTabResponse *createTabResponse;
-/** Test to see if @c createTabResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasCreateTabResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSplitPaneResponse *splitPaneResponse;
-/** Test to see if @c splitPaneResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasSplitPaneResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetProfilePropertyResponse *getProfilePropertyResponse;
-/** Test to see if @c getProfilePropertyResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasGetProfilePropertyResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSetPropertyResponse *setPropertyResponse;
-/** Test to see if @c setPropertyResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasSetPropertyResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetPropertyResponse *getPropertyResponse;
-/** Test to see if @c getPropertyResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasGetPropertyResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMInjectResponse *injectResponse;
-/** Test to see if @c injectResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasInjectResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMActivateResponse *activateResponse;
-/** Test to see if @c activateResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasActivateResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMVariableResponse *variableResponse;
-/** Test to see if @c variableResponse has been set. */
-@property(nonatomic, readwrite) BOOL hasVariableResponse;
 
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
-/** Test to see if @c notification has been set. */
-@property(nonatomic, readwrite) BOOL hasNotification;
 
 @end
+
+/**
+ * Clears whatever value was set for the oneof 'submessage'.
+ **/
+void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
 
 #pragma mark - ITMVariableRequest
 
@@ -677,6 +665,7 @@ typedef GPB_ENUM(ITMVariableRequest_FieldNumber) {
 /** The number of items in @c setArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger setArray_Count;
 
+/** Set to special value "*" to get all in newline-delimited list. */
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *getArray;
 /** The number of items in @c getArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger getArray_Count;

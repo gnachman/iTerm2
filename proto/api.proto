@@ -14,23 +14,24 @@ package iterm2;
 message ClientOriginatedMessage {
   optional int64 id = 1;
 
-  // Set exactly one of these fields.
-  optional GetBufferRequest get_buffer_request = 100;
-  optional GetPromptRequest get_prompt_request = 101;
-  optional TransactionRequest transaction_request = 102;
-  optional NotificationRequest notification_request = 103;
-  optional RegisterToolRequest register_tool_request = 104;
-  optional SetProfilePropertyRequest set_profile_property_request = 105;
-  optional ListSessionsRequest list_sessions_request = 106;
-  optional SendTextRequest send_text_request = 107;
-  optional CreateTabRequest create_tab_request = 108;
-  optional SplitPaneRequest split_pane_request = 109;
-  optional GetProfilePropertyRequest get_profile_property_request = 110;
-  optional SetPropertyRequest set_property_request = 111;
-  optional GetPropertyRequest get_property_request = 112;
-  optional InjectRequest inject_request = 113;
-  optional ActivateRequest activate_request = 114;
-  optional VariableRequest variable_request = 115;
+  oneof submessage {
+    GetBufferRequest get_buffer_request = 100;
+    GetPromptRequest get_prompt_request = 101;
+    TransactionRequest transaction_request = 102;
+    NotificationRequest notification_request = 103;
+    RegisterToolRequest register_tool_request = 104;
+    SetProfilePropertyRequest set_profile_property_request = 105;
+    ListSessionsRequest list_sessions_request = 106;
+    SendTextRequest send_text_request = 107;
+    CreateTabRequest create_tab_request = 108;
+    SplitPaneRequest split_pane_request = 109;
+    GetProfilePropertyRequest get_profile_property_request = 110;
+    SetPropertyRequest set_property_request = 111;
+    GetPropertyRequest get_property_request = 112;
+    InjectRequest inject_request = 113;
+    ActivateRequest activate_request = 114;
+    VariableRequest variable_request = 115;
+  }
 }
 
 // All responses are wrapped in this message. This encoded message is the entirety of the payload
@@ -39,25 +40,27 @@ message ServerOriginatedMessage {
   optional int64 id = 1;
 
   // Responses to ClientOriginatedMessages of the corresponding type
-  optional GetBufferResponse get_buffer_response = 100;
-  optional GetPromptResponse get_prompt_response = 101;
-  optional TransactionResponse transaction_response = 102;
-  optional NotificationResponse notification_response = 103;
-  optional RegisterToolResponse register_tool_response = 104;
-  optional SetProfilePropertyResponse set_profile_property_response = 105;
-  optional ListSessionsResponse list_sessions_response = 106;
-  optional SendTextResponse send_text_response = 107;
-  optional CreateTabResponse create_tab_response = 108;
-  optional SplitPaneResponse split_pane_response = 109;
-  optional GetProfilePropertyResponse get_profile_property_response = 110;
-  optional SetPropertyResponse set_property_response = 111;
-  optional GetPropertyResponse get_property_response = 112;
-  optional InjectResponse inject_response = 113;
-  optional ActivateResponse activate_response = 114;
-  optional VariableResponse variable_response = 115;
+  oneof submessage {
+    GetBufferResponse get_buffer_response = 100;
+    GetPromptResponse get_prompt_response = 101;
+    TransactionResponse transaction_response = 102;
+    NotificationResponse notification_response = 103;
+    RegisterToolResponse register_tool_response = 104;
+    SetProfilePropertyResponse set_profile_property_response = 105;
+    ListSessionsResponse list_sessions_response = 106;
+    SendTextResponse send_text_response = 107;
+    CreateTabResponse create_tab_response = 108;
+    SplitPaneResponse split_pane_response = 109;
+    GetProfilePropertyResponse get_profile_property_response = 110;
+    SetPropertyResponse set_property_response = 111;
+    GetPropertyResponse get_property_response = 112;
+    InjectResponse inject_response = 113;
+    ActivateResponse activate_response = 114;
+    VariableResponse variable_response = 115;
 
-  // This is the only response that is sent spontaneously. The 'id' field will not be set.
-  optional Notification notification = 1000;
+    // This is the only response that is sent spontaneously. The 'id' field will not be set.
+    Notification notification = 1000;
+  }
 }
 
 message VariableRequest {
