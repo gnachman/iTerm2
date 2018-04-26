@@ -27,6 +27,8 @@
 
 CF_EXTERN_C_BEGIN
 
+@class ITMActivateRequest;
+@class ITMActivateResponse;
 @class ITMCodePointsPerCell;
 @class ITMCoord;
 @class ITMCoordRange;
@@ -105,6 +107,22 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMNotificationType_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMActivateResponse_Status
+
+typedef GPB_ENUM(ITMActivateResponse_Status) {
+  ITMActivateResponse_Status_Ok = 0,
+  ITMActivateResponse_Status_BadIdentifier = 1,
+  ITMActivateResponse_Status_InvalidOption = 2,
+};
+
+GPBEnumDescriptor *ITMActivateResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMActivateResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMInjectResponse_Status
 
@@ -435,6 +453,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_SetPropertyRequest = 111,
   ITMClientOriginatedMessage_FieldNumber_GetPropertyRequest = 112,
   ITMClientOriginatedMessage_FieldNumber_InjectRequest = 113,
+  ITMClientOriginatedMessage_FieldNumber_ActivateRequest = 114,
 };
 
 /**
@@ -503,6 +522,10 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
 /** Test to see if @c injectRequest has been set. */
 @property(nonatomic, readwrite) BOOL hasInjectRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMActivateRequest *activateRequest;
+/** Test to see if @c activateRequest has been set. */
+@property(nonatomic, readwrite) BOOL hasActivateRequest;
+
 @end
 
 #pragma mark - ITMServerOriginatedMessage
@@ -523,6 +546,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_SetPropertyResponse = 111,
   ITMServerOriginatedMessage_FieldNumber_GetPropertyResponse = 112,
   ITMServerOriginatedMessage_FieldNumber_InjectResponse = 113,
+  ITMServerOriginatedMessage_FieldNumber_ActivateResponse = 114,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -592,11 +616,74 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
 /** Test to see if @c injectResponse has been set. */
 @property(nonatomic, readwrite) BOOL hasInjectResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMActivateResponse *activateResponse;
+/** Test to see if @c activateResponse has been set. */
+@property(nonatomic, readwrite) BOOL hasActivateResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 /** Test to see if @c notification has been set. */
 @property(nonatomic, readwrite) BOOL hasNotification;
 
+@end
+
+#pragma mark - ITMActivateRequest
+
+typedef GPB_ENUM(ITMActivateRequest_FieldNumber) {
+  ITMActivateRequest_FieldNumber_WindowId = 1,
+  ITMActivateRequest_FieldNumber_TabId = 2,
+  ITMActivateRequest_FieldNumber_SessionId = 3,
+  ITMActivateRequest_FieldNumber_OrderWindowFront = 4,
+  ITMActivateRequest_FieldNumber_SelectTab = 5,
+  ITMActivateRequest_FieldNumber_SelectSession = 6,
+};
+
+typedef GPB_ENUM(ITMActivateRequest_Identifier_OneOfCase) {
+  ITMActivateRequest_Identifier_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMActivateRequest_Identifier_OneOfCase_WindowId = 1,
+  ITMActivateRequest_Identifier_OneOfCase_TabId = 2,
+  ITMActivateRequest_Identifier_OneOfCase_SessionId = 3,
+};
+
+@interface ITMActivateRequest : GPBMessage
+
+@property(nonatomic, readonly) ITMActivateRequest_Identifier_OneOfCase identifierOneOfCase;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
+
+@property(nonatomic, readwrite) BOOL orderWindowFront;
+
+@property(nonatomic, readwrite) BOOL hasOrderWindowFront;
+/** This may be enabled if tab_id or session_id is set. */
+@property(nonatomic, readwrite) BOOL selectTab;
+
+@property(nonatomic, readwrite) BOOL hasSelectTab;
+/** This may be enabled if session_id is set. */
+@property(nonatomic, readwrite) BOOL selectSession;
+
+@property(nonatomic, readwrite) BOOL hasSelectSession;
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'identifier'.
+ **/
+void ITMActivateRequest_ClearIdentifierOneOfCase(ITMActivateRequest *message);
+
+#pragma mark - ITMActivateResponse
+
+typedef GPB_ENUM(ITMActivateResponse_FieldNumber) {
+  ITMActivateResponse_FieldNumber_Status = 1,
+};
+
+@interface ITMActivateResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMActivateResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
 @end
 
 #pragma mark - ITMInjectRequest

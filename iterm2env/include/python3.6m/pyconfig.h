@@ -141,9 +141,6 @@
 /* Define to 1 if you have the `copysign' function. */
 #define HAVE_COPYSIGN 1
 
-/* Define to 1 if you have the <crypt.h> header file. */
-/* #undef HAVE_CRYPT_H */
-
 /* Define to 1 if you have the `ctermid' function. */
 #define HAVE_CTERMID 1
 

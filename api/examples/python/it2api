@@ -263,6 +263,27 @@ async def inject(connection, args):
   else:
     await s.inject(args.data.encode())
 
+async def activate(connection, args):
+  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  if args.mode == "session":
+    s = await h.get_session_by_id(args.id)
+    if s is None:
+      print("bad session ID")
+    else:
+      await s.activate()
+  elif args.mode == "tab":
+    t = await h.get_tab_by_id(args.id)
+    if t is None:
+      print("bad tab ID")
+    else:
+      await t.select()
+  elif args.mode == "window":
+    w = await h.get_window_by_id(args.id)
+    if w is None:
+      print("bad window ID")
+    else:
+      await w.activate(connection)
+
 def make_parser():
   parser = argparse.ArgumentParser(description='iTerm2 CLI')
   subparsers = parser.add_subparsers(help='Commands')
@@ -332,6 +353,11 @@ def make_parser():
   inject_parser.add_argument("session", type=str, help="Session ID")
   inject_parser.add_argument("data", type=str, help="Data to inject")
   inject_parser.set_defaults(func=inject)
+
+  activate_parser = subparsers.add_parser("activate", help="Activate a session, tab, or window.")
+  activate_parser.add_argument("mode", type=str, help="What kind of object to activate", choices=["session", "tab", "window"])
+  activate_parser.add_argument("id", type=str, help="ID of object to activate")
+  activate_parser.set_defaults(func=activate)
 
   return parser
 

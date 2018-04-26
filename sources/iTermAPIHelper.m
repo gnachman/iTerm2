@@ -777,4 +777,78 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     [session executeTokens:&vector bytesHandled:data.length];
 }
 
+- (void)apiServerActivate:(ITMActivateRequest *)request handler:(void (^)(ITMActivateResponse *))handler {
+    ITMActivateResponse *response = [[ITMActivateResponse alloc] init];
+    PTYSession *session;
+    PTYTab *tab;
+    PseudoTerminal *windowController;
+    if (request.identifierOneOfCase == ITMActivateRequest_Identifier_OneOfCase_TabId) {
+        for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+            tab = [term tabWithUniqueId:request.tabId.intValue];
+            if (tab) {
+                windowController = term;
+                break;
+            }
+        }
+        if (!tab) {
+            response.status = ITMActivateResponse_Status_BadIdentifier;
+            handler(response);
+            return;
+        }
+    } else if (request.identifierOneOfCase == ITMActivateRequest_Identifier_OneOfCase_WindowId) {
+        windowController = [[[iTermController sharedInstance] terminals] objectPassingTest:^BOOL(PseudoTerminal *element, NSUInteger index, BOOL *stop) {
+            return [element.terminalGuid isEqual:request.windowId];
+        }];
+        if (!windowController) {
+            response.status = ITMActivateResponse_Status_BadIdentifier;
+            handler(response);
+            return;
+        }
+    } else if (request.identifierOneOfCase == ITMActivateRequest_Identifier_OneOfCase_SessionId) {
+        session = [self sessionForAPIIdentifier:request.sessionId];
+        if (!session) {
+            response.status = ITMActivateResponse_Status_BadIdentifier;
+            handler(response);
+            return;
+        }
+        tab = [session.delegate.realParentWindow tabForSession:session];
+        if (!tab) {
+            response.status = ITMActivateResponse_Status_BadIdentifier;
+            handler(response);
+            return;
+        }
+        windowController = [PseudoTerminal castFrom:tab.realParentWindow];
+    } else {
+        response.status = ITMActivateResponse_Status_BadIdentifier;
+        handler(response);
+        return;
+    }
+
+    if (request.selectSession) {
+        if (!session) {
+            response.status = ITMActivateResponse_Status_InvalidOption;
+            handler(response);
+            return;
+        }
+        [tab setActiveSession:session];
+        response.status = ITMActivateResponse_Status_Ok;
+        handler(response);
+    }
+
+    if (request.selectTab) {
+        if (!tab) {
+            response.status = ITMActivateResponse_Status_InvalidOption;
+            handler(response);
+            return;
+        }
+        [windowController.tabView selectTabViewItemWithIdentifier:tab];
+    }
+
+    if (request.orderWindowFront) {
+        [windowController.window makeKeyAndOrderFront:nil];
+    }
+    response.status = ITMActivateResponse_Status_Ok;
+    handler(response);
+}
+
 @end

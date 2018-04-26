@@ -68,6 +68,19 @@ class Hierarchy:
             return s
     return None
 
+  def _search_for_tab_id(self, tab_id):
+    for w in self.windows:
+      for t in w.tabs:
+        if tab_id == t.tab_id:
+          return t
+    return None
+
+  def _search_for_window_id(self, window_id):
+    for w in self.windows:
+      if window_id == w.window_id:
+        return w
+    return None
+
   async def get_window_by_id(self, window_id):
     """Finds a window exactly matching the passed-in id.
 
@@ -89,6 +102,30 @@ class Hierarchy:
       return self._search_for_session_id(session_id)
     else:
       return s
+
+  async def get_tab_by_id(self, tab_id):
+      """Finds a tab exactly matching the passed-in id.
+
+      Returns: An iterm2.tab.Tab or None
+      """
+      t = self._search_for_tab_id(tab_id)
+      if t is None:
+        await self.refresh()
+        return self._search_for_tab_id(tab_id)
+      else:
+        return t
+
+  async def get_window_by_id(self, window_id):
+      """Finds a window exactly matching the passed-in id.
+
+      Returns: An iterm2.window.Window or None
+      """
+      w = self._search_for_window_id(window_id)
+      if w is None:
+        await self.refresh()
+        return self._search_for_window_id(window_id)
+      else:
+        return w
 
   async def refresh(self, connection=None, sub_notif=None):
     """Reloads the hierarchy.

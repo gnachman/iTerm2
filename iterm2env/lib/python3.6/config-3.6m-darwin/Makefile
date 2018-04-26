@@ -29,8 +29,8 @@ MODLIBS=        $(LOCALMODLIBS) $(BASEMODLIBS)
 VERSION=	3.6
 srcdir=		.
 
-abs_srcdir=	/private/tmp/python-20180418-50389-124tsqn/Python-3.6.5
-abs_builddir=	/private/tmp/python-20180418-50389-124tsqn/Python-3.6.5
+abs_srcdir=	/private/tmp/python3-20180106-44904-199rytw/Python-3.6.4
+abs_builddir=	/private/tmp/python3-20180106-44904-199rytw/Python-3.6.4
 
 
 CC=		clang
@@ -81,13 +81,13 @@ MAKESETUP=      $(srcdir)/Modules/makesetup
 OPT=		-DNDEBUG -g -fwrapv -O3 -Wall -Wstrict-prototypes
 BASECFLAGS=	 -Wno-unused-result -Wsign-compare -Wunreachable-code -fno-common -dynamic
 BASECPPFLAGS=	
-CONFIGURE_CFLAGS=	-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk/System/Library/Frameworks/Tk.framework/Versions/8.5/Headers
+CONFIGURE_CFLAGS=	
 # CFLAGS_NODIST is used for building the interpreter and stdlib C extensions.
 # Use it when a compiler flag should _not_ be part of the distutils CFLAGS
 # once Python is installed (Issue #21121).
 CONFIGURE_CFLAGS_NODIST= -std=c99 -Wextra -Wno-unused-result -Wno-unused-parameter -Wno-missing-field-initializers
-CONFIGURE_CPPFLAGS=	-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk/usr/include
-CONFIGURE_LDFLAGS=	-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk
+CONFIGURE_CPPFLAGS=	
+CONFIGURE_LDFLAGS=	
 # Avoid assigning CFLAGS, LDFLAGS, etc. so users can use them on the
 # command line to append to these values without stomping the pre-set
 # values.
@@ -120,13 +120,13 @@ MULTIARCH=	darwin
 MULTIARCH_CPPFLAGS = -DMULTIARCH=\"darwin\"
 
 # Install prefix for architecture-independent files
-prefix=		/usr/local/opt/python/Frameworks/Python.framework/Versions/3.6
+prefix=		/usr/local/opt/python3/Frameworks/Python.framework/Versions/3.6
 
 # Install prefix for architecture-dependent files
 exec_prefix=	${prefix}
 
 # Install prefix for data files
-datarootdir=    /usr/local/opt/python/share
+datarootdir=    /usr/local/opt/python3/share
 
 # Expanded directories
 BINDIR=		${exec_prefix}/bin
@@ -159,8 +159,8 @@ BUILDEXE=	.exe
 UNIVERSALSDK=
 PYTHONFRAMEWORK=	Python
 PYTHONFRAMEWORKDIR=	Python.framework
-PYTHONFRAMEWORKPREFIX=	/usr/local/opt/python/Frameworks
-PYTHONFRAMEWORKINSTALLDIR= /usr/local/opt/python/Frameworks/Python.framework
+PYTHONFRAMEWORKPREFIX=	/usr/local/opt/python3/Frameworks
+PYTHONFRAMEWORKINSTALLDIR= /usr/local/opt/python3/Frameworks/Python.framework
 # Deployment target selected during configure, to be checked
 # by distutils. The export statement is needed to ensure that the
 # deployment target is active during build.
@@ -177,7 +177,7 @@ LIPO_32BIT_FLAGS=
 OTHER_LIBTOOL_OPT=
 
 # Environment to run shared python without installed libraries
-RUNSHARED=       DYLD_FRAMEWORK_PATH=/private/tmp/python-20180418-50389-124tsqn/Python-3.6.5
+RUNSHARED=       DYLD_FRAMEWORK_PATH=/private/tmp/python3-20180106-44904-199rytw/Python-3.6.4
 
 # ensurepip options
 ENSUREPIP=      no
@@ -189,7 +189,7 @@ EXEMODE=	755
 FILEMODE=	644
 
 # configure script arguments
-CONFIG_ARGS=	 '--prefix=/usr/local/opt/python' '--enable-ipv6' '--datarootdir=/usr/local/opt/python/share' '--datadir=/usr/local/opt/python/share' '--enable-framework=/usr/local/opt/python/Frameworks' '--enable-loadable-sqlite-extensions' '--without-ensurepip' '--with-dtrace' '--without-gcc' 'MACOSX_DEPLOYMENT_TARGET=10.13' 'CFLAGS=-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk/System/Library/Frameworks/Tk.framework/Versions/8.5/Headers' 'LDFLAGS=-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk' 'CPPFLAGS=-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk/usr/include' 'CC=clang' 'PKG_CONFIG_PATH=/usr/local/opt/openssl/lib/pkgconfig:/usr/local/opt/sqlite/lib/pkgconfig:/usr/local/opt/xz/lib/pkgconfig' 'PKG_CONFIG_LIBDIR=/usr/lib/pkgconfig:/usr/local/Homebrew/Library/Homebrew/os/mac/pkgconfig/10.13'
+CONFIG_ARGS=	 '--prefix=/usr/local/opt/python3' '--enable-ipv6' '--datarootdir=/usr/local/opt/python3/share' '--datadir=/usr/local/opt/python3/share' '--enable-framework=/usr/local/opt/python3/Frameworks' '--without-ensurepip' '--with-dtrace' '--without-gcc' '--enable-loadable-sqlite-extensions' 'MACOSX_DEPLOYMENT_TARGET=10.13' 'CC=clang' 'PKG_CONFIG_PATH=/usr/local/opt/sqlite/lib/pkgconfig:/usr/local/opt/openssl/lib/pkgconfig:/usr/local/opt/xz/lib/pkgconfig' 'PKG_CONFIG_LIBDIR=/usr/lib/pkgconfig:/usr/local/Homebrew/Library/Homebrew/os/mac/pkgconfig/10.13'
 
 
 # Subdirectories with code
@@ -234,8 +234,8 @@ PYTHON_FOR_REGEN=python
 UPDATE_FILE=python $(srcdir)/Tools/scripts/update_file.py
 PYTHON_FOR_BUILD=./$(BUILDPYTHON) -E
 _PYTHON_HOST_PLATFORM=
-BUILD_GNU_TYPE=	x86_64-apple-darwin17.5.0
-HOST_GNU_TYPE=	x86_64-apple-darwin17.5.0
+BUILD_GNU_TYPE=	x86_64-apple-darwin17.3.0
+HOST_GNU_TYPE=	x86_64-apple-darwin17.3.0
 
 # Tcl and Tk config info from --with-tcltk-includes and -libs options
 TCLTK_INCLUDES=	
@@ -551,9 +551,10 @@ coverage-report: regen-grammar regen-importlib
 	$(MAKE) coverage-lcov
 
 # Run "Argument Clinic" over all source files
+# (depends on python having already been built)
 .PHONY=clinic
-clinic: check-clean-src $(srcdir)/Modules/_blake2/blake2s_impl.c
-	$(PYTHON_FOR_REGEN) ./Tools/clinic/clinic.py --make
+clinic: check-clean-src $(BUILDPYTHON) $(srcdir)/Modules/_blake2/blake2s_impl.c
+	$(RUNSHARED) $(PYTHON_FOR_BUILD) ./Tools/clinic/clinic.py --make
 
 # Build the interpreter
 $(BUILDPYTHON):	Programs/python.o $(LIBRARY) $(LDLIBRARY) $(PY3LIBRARY)
@@ -583,9 +584,9 @@ Modules/_math.o: Modules/_math.c Modules/_math.h
 	$(CC) -c $(CCSHARED) $(PY_CORE_CFLAGS) -o $@ $<
 
 # blake2s is auto-generated from blake2b
-$(srcdir)/Modules/_blake2/blake2s_impl.c: $(srcdir)/Modules/_blake2/blake2b_impl.c $(srcdir)/Modules/_blake2/blake2b2s.py
-	$(PYTHON_FOR_REGEN) $(srcdir)/Modules/_blake2/blake2b2s.py
-	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/clinic/clinic.py -f $@
+$(srcdir)/Modules/_blake2/blake2s_impl.c: $(BUILDPYTHON) $(srcdir)/Modules/_blake2/blake2b_impl.c $(srcdir)/Modules/_blake2/blake2b2s.py
+	$(RUNSHARED) $(PYTHON_FOR_BUILD) $(srcdir)/Modules/_blake2/blake2b2s.py
+	$(RUNSHARED) $(PYTHON_FOR_BUILD) $(srcdir)/Tools/clinic/clinic.py -f $@
 
 # Build the shared modules
 # Under GNU make, MAKEFLAGS are sorted and normalized; the 's' for
@@ -732,8 +733,7 @@ regen-importlib: Programs/_freeze_importlib
 ############################################################################
 # Regenerate all generated files
 
-regen-all: regen-opcode regen-opcode-targets regen-typeslots regen-grammar \
-	regen-ast regen-importlib clinic
+regen-all: regen-opcode regen-opcode-targets regen-typeslots regen-grammar regen-ast regen-importlib
 
 ############################################################################
 # Special rules for object files

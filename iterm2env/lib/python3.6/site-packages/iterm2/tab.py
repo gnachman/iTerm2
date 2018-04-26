@@ -1,3 +1,5 @@
+import iterm2.rpc
+
 class Tab:
   """Represents a tab."""
   def __init__(self, connection, tab_id, root):
@@ -33,3 +35,12 @@ class Tab:
     s = indent + "Tab id=%s\n" % self.get_tab_id()
     s += self.root.pretty_str(indent=indent + "  ")
     return s
+
+  async def select(self, order_window_front=True):
+    """
+    Selects this tab.
+
+    order_window_front: Whether the window this session is in should be
+      brought to the front and given keyboard focus.
+    """
+    await iterm2.rpc.activate(self.connection, False, True, order_window_front, tab_id=self.tab_id)

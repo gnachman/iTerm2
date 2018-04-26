@@ -156,3 +156,9 @@ class Window:
     if response.get_property_response.status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
       raise SetPropertyException(response.get_property_response.status)
 
+
+  async def activate(self, connection):
+    """
+    Gives the window keyboard focus and orders it to the front.
+    """
+    await iterm2.rpc.activate(self.connection, False, False, True, window_id=self.window_id)

@@ -45,6 +45,9 @@ extern NSString *const iTermAPIServerConnectionClosed;
                      handler:(void (^)(ITMGetPropertyResponse *))handler;
 - (void)apiServerInject:(ITMInjectRequest *)request
                 handler:(void (^)(ITMInjectResponse *))handler;
+- (void)apiServerActivate:(ITMActivateRequest *)request
+                  handler:(void (^)(ITMActivateResponse *))handler;
+
 @end
 
 @interface iTermAPIServer : NSObject

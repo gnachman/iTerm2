@@ -259,6 +259,22 @@ async def inject(connection, data, sessions):
   request.inject_request.data = data
   return await _call(connection, request)
 
+async def activate(connection, select_session, select_tab, order_window_front, session_id=None, tab_id=None, window_id=None):
+  """
+  Activates a session, tab, or window.
+  """
+  request = _alloc_request()
+  if session_id is not None:
+    request.activate_request.session_id = session_id;
+  if tab_id is not None:
+    request.activate_request.tab_id = tab_id;
+  if window_id is not None:
+    request.activate_request.window_id = window_id;
+  request.activate_request.order_window_front = order_window_front
+  request.activate_request.select_tab = select_tab
+  request.activate_request.select_session = select_session
+  return await _call(connection, request)
+
 ## Private --------------------------------------------------------------------
 
 _nextId = 0

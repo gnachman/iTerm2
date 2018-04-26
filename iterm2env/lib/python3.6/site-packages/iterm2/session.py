@@ -290,6 +290,16 @@ class Session:
     if status != iterm2.api_pb2.InjectResponse.Status.Value("OK"):
       raise iterm2.rpc.RPCException(iterm2.api_pb2.InjectResponse.Status.Name(status))
 
+  async def activate(self, select_tab=True, order_window_front=True):
+     """
+     Makes the session the active session in its tab.
+
+     select_tab: Whether the tab this session is in should be selected.
+     order_window_front: Whether the window this session is in should be
+       brought to the front and given keyboard focus.
+     """
+     await iterm2.rpc.activate(self.connection, True, select_tab, order_window_front, session_id=self.session_id)
+
   class KeystrokeReader:
     """An asyncio context manager for reading keystrokes.
 
