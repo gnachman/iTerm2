@@ -202,8 +202,9 @@ def itn(n, digits=8, format=DEFAULT_FORMAT):
     # base-256 representation. This allows values up to (256**(digits-1))-1.
     # A 0o200 byte indicates a positive number, a 0o377 byte a negative
     # number.
+    n = int(n)
     if 0 <= n < 8 ** (digits - 1):
-        s = bytes("%0*o" % (digits - 1, int(n)), "ascii") + NUL
+        s = bytes("%0*o" % (digits - 1, n), "ascii") + NUL
     elif format == GNU_FORMAT and -256 ** (digits - 1) <= n < 256 ** (digits - 1):
         if n >= 0:
             s = bytearray([0o200])
@@ -1056,7 +1057,7 @@ class TarInfo(object):
 
         # The old GNU sparse format occupies some of the unused
         # space in the buffer for up to 4 sparse structures.
-        # Save the them for later processing in _proc_sparse().
+        # Save them for later processing in _proc_sparse().
         if obj.type == GNUTYPE_SPARSE:
             pos = 386
             structs = []

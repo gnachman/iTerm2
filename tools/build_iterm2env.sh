@@ -37,4 +37,5 @@ rm -rf $DEST/lib/python3.6/site-packages/pip-7.1.2.dist-info/
 rm -rf $DEST/lib/python3.6/site-packages/setuptools-18.2.dist-info/
 rm -rf $DEST/lib/python3.6/site-packages/wheel-0.24.0.dist-info/
 rm -rf $DEST/lib/python3.6/distutils
+rm -f $DEST/bin/activate* $DEST/bin/easy_install* $DEST/bin/pip* $DEST/bin/wheel
 rm -rf "$SOURCE"
