@@ -307,4 +307,8 @@ def _alloc_request():
 async def _call(connection, request):
   future = asyncio.Future()
   await connection.send_message(request)
-  return await connection.dispatch_until_id(request.id)
+  response = await connection.dispatch_until_id(request.id)
+  if response.HasField("error"):
+    raise RPCException(response.error)
+  else:
+    return response

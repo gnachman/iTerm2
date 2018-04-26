@@ -41,6 +41,8 @@ message ServerOriginatedMessage {
 
   // Responses to ClientOriginatedMessages of the corresponding type
   oneof submessage {
+    string error = 2;  // Set if request was malformed
+
     GetBufferResponse get_buffer_response = 100;
     GetPromptResponse get_prompt_response = 101;
     TransactionResponse transaction_response = 102;

@@ -552,6 +552,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 
 typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_Id_p = 1,
+  ITMServerOriginatedMessage_FieldNumber_Error = 2,
   ITMServerOriginatedMessage_FieldNumber_GetBufferResponse = 100,
   ITMServerOriginatedMessage_FieldNumber_GetPromptResponse = 101,
   ITMServerOriginatedMessage_FieldNumber_TransactionResponse = 102,
@@ -573,6 +574,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
 
 typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_Error = 2,
   ITMServerOriginatedMessage_Submessage_OneOfCase_GetBufferResponse = 100,
   ITMServerOriginatedMessage_Submessage_OneOfCase_GetPromptResponse = 101,
   ITMServerOriginatedMessage_Submessage_OneOfCase_TransactionResponse = 102,
@@ -603,6 +605,9 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 @property(nonatomic, readwrite) BOOL hasId_p;
 /** Responses to ClientOriginatedMessages of the corresponding type */
 @property(nonatomic, readonly) ITMServerOriginatedMessage_Submessage_OneOfCase submessageOneOfCase;
+
+/** Set if request was malformed */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *error;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetBufferResponse *getBufferResponse;
 

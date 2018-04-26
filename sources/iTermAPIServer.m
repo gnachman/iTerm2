@@ -502,6 +502,11 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             response.variableResponse = variableResponse;
             [weakSelf sendResponse:response onConnection:webSocketConnection];
         }];
+    } else {
+        ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
+        response.id_p = request.id_p;
+        response.error = @"Invalid request. Upgrade iTerm2 to a newer version.";
+        [weakSelf sendResponse:response onConnection:webSocketConnection];
     }
 }
 

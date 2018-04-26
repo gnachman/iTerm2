@@ -331,6 +331,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 
 @dynamic submessageOneOfCase;
 @dynamic hasId_p, id_p;
+@dynamic error;
 @dynamic getBufferResponse;
 @dynamic getPromptResponse;
 @dynamic transactionResponse;
@@ -351,6 +352,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 
 typedef struct ITMServerOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
+  NSString *error;
   ITMGetBufferResponse *getBufferResponse;
   ITMGetPromptResponse *getPromptResponse;
   ITMTransactionResponse *transactionResponse;
@@ -385,6 +387,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, id_p),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeInt64,
+      },
+      {
+        .name = "error",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMServerOriginatedMessage_FieldNumber_Error,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, error),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
       },
       {
         .name = "getBufferResponse",
