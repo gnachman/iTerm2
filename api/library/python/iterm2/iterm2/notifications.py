@@ -150,7 +150,8 @@ async def subscribe_to_focus_change_notification(connection, callback):
 
 async def _subscribe(connection, subscribe, notification_type, callback, session=None):
   _register_helper_if_needed()
-  response = await iterm2.rpc.notification_request(connection, subscribe, notification_type, session)
+  transformed_session = session if session is not None else "all"
+  response = await iterm2.rpc.notification_request(connection, subscribe, notification_type, transformed_session)
   status = response.notification_response.status
   status_ok = (status == iterm2.api_pb2.NotificationResponse.Status.Value("OK"))
 
