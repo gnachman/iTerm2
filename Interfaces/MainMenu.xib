@@ -844,7 +844,7 @@ DQ
                                     <action selector="revealScriptsInFinder:" target="201" id="2jN-7I-BfW"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="New Python Script" identifier="Reveal in Finder" id="ds5-gY-cX0">
+                            <menuItem title="New Python Script" identifier="New Python Script" id="ds5-gY-cX0">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="newPythonScript:" target="201" id="v2b-iE-k7t"/>
