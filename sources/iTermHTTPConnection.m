@@ -13,7 +13,8 @@
 #include <sys/time.h>
 
 @implementation iTermHTTPConnection {
-    int _fd;
+    int _fd;  // @synchronized(_fdSync)
+    NSObject *_fdSync;
     iTermSocketAddress *_clientAddress;
     NSURLRequest *_request;
     NSTimeInterval _deadline;
@@ -24,60 +25,68 @@
     self = [super init];
     if (self) {
         _fd = fd;
+        _fdSync = [[NSObject alloc] init];
         _buffer = [[NSMutableData alloc] init];
         _clientAddress = address;
+        _queue = dispatch_queue_create("com.iterm2.httpconn", NULL);
     }
     return self;
 }
 
 - (dispatch_io_t)newChannelOnQueue:(dispatch_queue_t)queue {
-    return dispatch_io_create(DISPATCH_IO_STREAM, _fd, queue, ^(int error) {
-        DLog(@"Channel closed");
-    });
+    @synchronized(_fdSync) {
+        return dispatch_io_create(DISPATCH_IO_STREAM, _fd, queue, ^(int error) {
+            DLog(@"Channel closed");
+        });
+    }
 }
 
-- (void)close {
-    if (_fd >= 0) {
-        DLog(@"Close http connection from %@", [NSThread callStackSymbols]);
-        int rc = close(_fd);
-        if (rc != 0) {
-            XLog(@"close failed with %s", strerror(errno));
+- (void)threadSafeClose {
+    @synchronized(_fdSync) {
+        if (_fd >= 0) {
+            DLog(@"Close http connection from %@", [NSThread callStackSymbols]);
+            int rc = close(_fd);
+            if (rc != 0) {
+                XLog(@"close failed with %s", strerror(errno));
+            }
+            _fd = -1;
         }
-        _fd = -1;
     }
 }
 
 - (BOOL)sendResponseWithCode:(int)code reason:(NSString *)reason headers:(NSDictionary *)headers {
-    if (_fd < 0) {
-        return NO;
-    }
-
-    DLog(@"Send %d code", code);
-    BOOL ok;
-    ok = [self writeString:[NSString stringWithFormat:@"HTTP/1.1 %d %@\r\n", code, reason]];
-    if (!ok) {
-        [self close];
-        return NO;
-    }
-    for (NSString *key in headers) {
-        ok = [self writeString:[NSString stringWithFormat:@"%@: %@\r\n", key, headers[key]]];
-        if (!ok) {
-            [self close];
+    @synchronized(_fdSync) {
+        if (_fd < 0) {
             return NO;
         }
-    }
-    ok = [self writeString:[NSString stringWithFormat:@"\r\n"]];
-    if (!ok) {
-        [self close];
-        return NO;
-    }
 
-    if (code >= 100 && code < 200) {
-        DLog(@"Removing deadline because code is in the 100s");
-        _deadline = INFINITY;
-    } else {
-        DLog(@"Non-10x code, closing connection");
-        [self close];
+        DLog(@"Send %d code", code);
+        BOOL ok;
+        ok = [self writeString:[NSString stringWithFormat:@"HTTP/1.1 %d %@\r\n", code, reason]];
+        if (!ok) {
+            [self threadSafeClose];
+            return NO;
+        }
+        for (NSString *key in headers) {
+            ok = [self writeString:[NSString stringWithFormat:@"%@: %@\r\n", key, headers[key]]];
+            if (!ok) {
+                [self threadSafeClose];
+                return NO;
+            }
+        }
+        ok = [self writeString:[NSString stringWithFormat:@"\r\n"]];
+        if (!ok) {
+            [self threadSafeClose];
+            return NO;
+        }
+
+        if (code >= 100 && code < 200) {
+            DLog(@"Removing deadline because code is in the 100s");
+            _deadline = INFINITY;
+        } else {
+            DLog(@"Non-10x code, closing connection");
+            [self threadSafeClose];
+        }
     }
     return YES;
 }
@@ -90,6 +99,7 @@
     [self sendResponseWithCode:401 reason:@"Unauthorized" headers:@{}];
 }
 
+// queue
 - (NSURLRequest *)readRequest {
     DLog(@"Begin reading request. Begin clock towards deadline.");
     _deadline = [NSDate timeIntervalSinceReferenceDate] + 30;
@@ -188,7 +198,7 @@
     return nil;
 }
 
-- (NSMutableData *)read {
+- (NSMutableData *)readSynchronously {
     if (!_buffer.length) {
         [self readFromFileDescriptor];
     }
@@ -226,59 +236,65 @@
 }
 
 - (BOOL)readFromFileDescriptor {
-    if (![self waitForIO:YES]) {
-        return NO;
-    }
-
-    char buffer[4096];
-    int rc;
-    do {
-        rc = read(_fd, buffer, sizeof(buffer));
-    } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
-    if (rc <= 0) {
-        if (rc < 0) {
-            DLog(@"Read failed with %s", strerror(errno));
-        } else {
-            DLog(@"EOF reached");
+    @synchronized(_fdSync) {
+        if (![self waitForIO:YES]) {
+            return NO;
         }
-        _fd = -1;
-        return NO;
-    }
 
-    [_buffer appendBytes:buffer length:rc];
-    return YES;
+        char buffer[4096];
+        int rc;
+        do {
+            rc = read(_fd, buffer, sizeof(buffer));
+        } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
+        if (rc <= 0) {
+            if (rc < 0) {
+                DLog(@"Read failed with %s", strerror(errno));
+            } else {
+                DLog(@"EOF reached");
+            }
+            _fd = -1;
+            return NO;
+        }
+
+        [_buffer appendBytes:buffer length:rc];
+        return YES;
+    }
 }
 
 - (BOOL)waitForIO:(BOOL)read {
-    if (_fd < 0) {
-        DLog(@"Tried select on closed file descriptor");
-        return NO;
-    }
+    int fd;
     fd_set set;
-    FD_ZERO(&set);
-    FD_SET(_fd, &set);
-
-    struct timeval *timeoutPointer = NULL;
     struct timeval timeout;
-    if (!isinf(_deadline)) {
-        CGFloat dt = _deadline - [NSDate timeIntervalSinceReferenceDate];
-        if (!read) {
-            // The deadline for writes is extended so we can send an error after timing out.
-            dt += 5;
-        }
-        if (dt < 0) {
+    struct timeval *timeoutPointer = NULL;
+    @synchronized(_fdSync) {
+        if (_fd < 0) {
+            DLog(@"Tried select on closed file descriptor");
             return NO;
         }
-        timeout.tv_sec = floor(dt);
-        timeout.tv_usec = fmod(dt, 1.0) * 1000000;
-        timeoutPointer = &timeout;
+        FD_ZERO(&set);
+        FD_SET(_fd, &set);
+
+        if (!isinf(_deadline)) {
+            CGFloat dt = _deadline - [NSDate timeIntervalSinceReferenceDate];
+            if (!read) {
+                // The deadline for writes is extended so we can send an error after timing out.
+                dt += 5;
+            }
+            if (dt < 0) {
+                return NO;
+            }
+            timeout.tv_sec = floor(dt);
+            timeout.tv_usec = fmod(dt, 1.0) * 1000000;
+            timeoutPointer = &timeout;
+        }
+        fd = _fd;
     }
     int rc;
     do {
         if (read) {
-            rc = select(_fd + 1, &set, NULL, NULL, timeoutPointer);
+            rc = select(fd + 1, &set, NULL, NULL, timeoutPointer);
         } else {
-            rc = select(_fd + 1, NULL, &set, NULL, timeoutPointer);
+            rc = select(fd + 1, NULL, &set, NULL, timeoutPointer);
         }
     } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
     if (rc == 0) {
@@ -304,9 +320,13 @@
             return NO;
         }
 
+        int fd;
+        @synchronized(_fdSync) {
+            fd = _fd;
+        }
         int rc;
         do {
-            rc = write(_fd, data.bytes + offset, data.length - offset);
+            rc = write(fd, data.bytes + offset, data.length - offset);
         } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
         if (rc <= 0) {
             if (rc < 0) {
@@ -314,7 +334,9 @@
             } else {
                 DLog(@"EOF reached");
             }
-            _fd = -1;
+            @synchronized(_fdSync) {
+                _fd = -1;
+            }
             return NO;
         }
         offset += rc;

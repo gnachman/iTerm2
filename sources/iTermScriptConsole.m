@@ -175,7 +175,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         if (entry.isRunning && entry.pid) {
             [entry addOutput:@"\n*Terminate button pressed*\n"];
             kill(entry.pid, 1);
-            [entry.websocketConnection abort];
+            [entry.websocketConnection abortWithCompletion:nil];
         }
     }
 }

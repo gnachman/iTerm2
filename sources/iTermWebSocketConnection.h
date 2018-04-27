@@ -18,7 +18,8 @@
 @end
 
 @interface iTermWebSocketConnection : NSObject
-@property(nonatomic, assign) id<iTermWebSocketConnectionDelegate> delegate;
+@property(nonatomic, weak) id<iTermWebSocketConnectionDelegate> delegate;
+@property(nonatomic, weak) dispatch_queue_t delegateQueue;
 @property(nonatomic, copy) NSDictionary *peerIdentity;
 @property(nonatomic, copy) NSString *displayName;
 @property(nonatomic, readonly) BOOL preauthorized;
@@ -30,10 +31,13 @@
 
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)handleRequest:(NSURLRequest *)request;
-- (void)close;  // Send close frame
-- (void)abort;  // Close TCP connection
-- (void)sendBinary:(NSData *)binaryData;
-- (void)sendText:(NSString *)text;
+- (void)handleRequest:(NSURLRequest *)request
+           completion:(void (^)(void))completion;
+- (void)closeWithCompletion:(void (^)(void))completion;  // Send close frame
+- (void)abortWithCompletion:(void (^)(void))completion;  // Close TCP connection
+- (void)sendBinary:(NSData *)binaryData
+        completion:(void (^)(void))completion;
+- (void)sendText:(NSString *)text
+      completion:(void (^)(void))completion;
 
 @end

@@ -141,56 +141,85 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     self = [super init];
     if (self) {
         _connection = connection;
+        _queue = dispatch_queue_create("com.iterm2.websocket", NULL);
     }
     return self;
 }
 
-- (void)handleRequest:(NSURLRequest *)request {
+// any queue
+- (void)handleRequest:(NSURLRequest *)request completion:(void (^)(void))completion {
+    dispatch_async(_queue, ^{
+        [self reallyHandleRequest:request completion:^{
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion();
+            });
+        }];
+    });
+}
+
+// queue
+- (void)reallyHandleRequest:(NSURLRequest *)request completion:(void (^)(void))completion {
     DLog(@"Handling websocket request %@", request);
     NSAssert(_state == iTermWebSocketConnectionStateConnecting, @"Request already handled");
 
-    if (![self sendUpgradeResponseWithKey:request.allHTTPHeaderFields[@"sec-websocket-key"]
-                                  version:[request.allHTTPHeaderFields[@"sec-websocket-version"] integerValue]]) {
-        [_connection badRequest];
+    [self sendUpgradeResponseWithKey:request.allHTTPHeaderFields[@"sec-websocket-key"]
+                             version:[request.allHTTPHeaderFields[@"sec-websocket-version"] integerValue]
+                          completion:^(BOOL status) {
+                              [self didUpgradeSuccessfully:status];
+                              completion();
+                          }];
+}
+
+// queue
+- (void)didUpgradeSuccessfully:(BOOL)upgradeOK {
+    if (!upgradeOK) {
+        dispatch_async(_connection.queue, ^{
+            [self->_connection badRequest];
+        });
         _state = iTermWebSocketConnectionStateClosed;
-        [_delegate webSocketConnectionDidTerminate:self];
+        dispatch_async(self.delegateQueue, ^{
+            [self.delegate webSocketConnectionDidTerminate:self];
+        });
         return;
     }
 
     _state = iTermWebSocketConnectionStateOpen;
 
     _frameBuilder = [[iTermWebSocketFrameBuilder alloc] init];
-    _queue = dispatch_queue_create("com.iterm2.api-io", NULL);
     _channel = [_connection newChannelOnQueue:_queue];
 
     // I tried using dispatch_read but it didn't work reliably. Seems to work OK for writing.
     __weak __typeof(self) weakSelf = self;
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async(self->_connection.queue, ^{
         while (weakSelf) {
-            NSMutableData *data = [self->_connection read];
+            NSMutableData *data = [self->_connection readSynchronously];
             if (!data) {
                 DLog(@"Read EOF from connection");
-                [weakSelf abort];
+                [weakSelf abortWithCompletion:nil];
                 return;
             }
-            [weakSelf didReceiveData:data];
+            dispatch_async(self->_queue, ^{
+                [weakSelf didReceiveData:data];
+            });
         }
     });
 }
 
+// queue
 - (BOOL)didReceiveData:(NSMutableData *)data {
     DLog(@"Read %@ bytes of data", @(data.length));
     __weak __typeof(self) weakSelf = self;
     [_frameBuilder addData:data
                      frame:^(iTermWebSocketFrame *frame, BOOL *stop) {
                          if (!stop) {
-                             [weakSelf abort];
+                             [weakSelf reallyAbort];
                          }
                          *stop = [weakSelf didReceiveFrame:frame];
                      }];
     return _state != iTermWebSocketConnectionStateClosed;
 }
 
+// queue
 - (BOOL)didReceiveFrame:(iTermWebSocketFrame *)frame {
     if (_state != iTermWebSocketConnectionStateClosed) {
         [self handleFrame:frame];
@@ -198,7 +227,20 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     return (_state == iTermWebSocketConnectionStateClosed);
 }
 
-- (void)sendBinary:(NSData *)binaryData {
+// any queue
+- (void)sendBinary:(NSData *)binaryData completion:(void (^)(void))completion {
+    dispatch_async(_queue, ^{
+        [self reallySendBinary:binaryData];
+        if (completion) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion();
+            });
+        }
+    });
+}
+
+// queue
+- (void)reallySendBinary:(NSData *)binaryData {
     if (_state == iTermWebSocketConnectionStateOpen) {
         DLog(@"Sending binary frame");
         [self sendFrame:[iTermWebSocketFrame binaryFrameWithData:binaryData]];
@@ -207,7 +249,20 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     }
 }
 
-- (void)sendText:(NSString *)text {
+// any queue
+- (void)sendText:(NSString *)text completion:(void (^)(void))completion {
+    dispatch_async(_queue, ^{
+        [self reallySendText:text];
+        if (completion) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion();
+            });
+        }
+    });
+}
+
+// queue
+- (void)reallySendText:(NSString *)text {
     if (_state == iTermWebSocketConnectionStateOpen) {
         DLog(@"Sending text frame");
         [self sendFrame:[iTermWebSocketFrame textFrameWithString:text]];
@@ -216,11 +271,13 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     }
 }
 
+// queue
 - (void)sendFrame:(iTermWebSocketFrame *)frame {
     DLog(@"Send frame %@", frame);
     [self sendData:frame.data];
 }
 
+// queue
 - (void)sendData:(NSData *)data {
     dispatch_data_t dispatchData = dispatch_data_create(data.bytes, data.length, _queue, ^{
         DLog(@"Disposing of data %p", data);
@@ -231,20 +288,37 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     dispatch_io_write(_channel, 0, dispatchData, _queue, ^(bool done, dispatch_data_t  _Nullable data, int error) {
         DLog(@"Write progress: done=%d error=%d", (int)done, (int)error);
         if (error) {
-            [weakSelf abort];
+            [weakSelf reallyAbort];
         }
     });
 }
 
-- (void)abort {
+// any queue
+- (void)abortWithCompletion:(void (^)(void))completion {
+    dispatch_async(_queue, ^{
+        [self reallyAbort];
+        if (completion) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion();
+            });
+        }
+    });
+}
+
+// queue
+- (void)reallyAbort {
     if (_state != iTermWebSocketConnectionStateClosed) {
         DLog(@"Aborting connection");
         _state = iTermWebSocketConnectionStateClosed;
-        [_delegate webSocketConnectionDidTerminate:self];
-        [_connection close];
+        dispatch_async(self.delegateQueue, ^{
+            [self.delegate webSocketConnectionDidTerminate:self];
+        });
+        iTermHTTPConnection *connection = _connection;
+        [connection threadSafeClose];
     }
 }
 
+// queue
 - (void)handleFrame:(iTermWebSocketFrame *)frame {
     DLog(@"Handle frame %@", frame);
     switch (frame.opcode) {
@@ -253,16 +327,18 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
             if (_state == iTermWebSocketConnectionStateOpen) {
                 if (frame.fin) {
                     DLog(@"Pass finished frame to delegate");
-                    [_delegate webSocketConnection:self didReadFrame:frame];
+                    dispatch_async(self.delegateQueue, ^{
+                        [self.delegate webSocketConnection:self didReadFrame:frame];
+                    });
                 } else if (_fragment == nil) {
                     DLog(@"Begin fragmented frame");
                     _fragment = frame;
                 } else {
                     DLog(@"Already have a fragmented frame started. Opcode should have been Continuation");
-                    [self abort];
+                    [self reallyAbort];
                 }
             } else {
-                [self abort];
+                [self reallyAbort];
             }
             break;
 
@@ -271,7 +347,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                 DLog(@"Sending pong");
                 [self sendFrame:[iTermWebSocketFrame pongFrameForPingFrame:frame]];
             } else {
-                [self abort];
+                [self reallyAbort];
             }
             break;
 
@@ -283,18 +359,21 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
             if (_state == iTermWebSocketConnectionStateOpen) {
                 if (!_fragment) {
                     DLog(@"Continuation without fragment");
-                    [self abort];
+                    [self reallyAbort];
                     break;
                 }
                 DLog(@"Append fragment");
                 [_fragment appendFragment:frame];
                 if (frame.fin) {
                     DLog(@"Fragmented frame finished. Sending to delegate");
-                    [_delegate webSocketConnection:self didReadFrame:_fragment];
+                    iTermWebSocketFrame *fragment = _fragment;
                     _fragment = nil;
+                    dispatch_async(self.delegateQueue, ^{
+                        [self.delegate webSocketConnection:self didReadFrame:fragment];
+                    });
                 }
             } else {
-                [self abort];
+                [self reallyAbort];
             }
             break;
 
@@ -305,19 +384,36 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                 [self sendFrame:[iTermWebSocketFrame closeFrame]];
 
                 _state = iTermWebSocketConnectionStateClosed;
-                [_delegate webSocketConnectionDidTerminate:self];
-                [_connection close];
+                dispatch_async(self.delegateQueue, ^{
+                    [self.delegate webSocketConnectionDidTerminate:self];
+                });
+                [_connection threadSafeClose];
             } else if (_state == iTermWebSocketConnectionStateClosing) {
                 DLog(@"closing->closed");
                 _state = iTermWebSocketConnectionStateClosed;
-                [_delegate webSocketConnectionDidTerminate:self];
-                [_connection close];
+                dispatch_async(self.delegateQueue, ^{
+                    [self.delegate webSocketConnectionDidTerminate:self];
+                });
+                [_connection threadSafeClose];
             }
             break;
     }
 }
 
-- (void)close {
+// Any queue
+- (void)closeWithCompletion:(void (^)(void))completion {
+    dispatch_async(_queue, ^{
+        [self reallyClose];
+        if (completion) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion();
+            });
+        }
+    });
+}
+
+// queue
+- (void)reallyClose {
     DLog(@"Client initiated close");
     if (_state == iTermWebSocketConnectionStateOpen) {
         DLog(@"Send close frame");
@@ -326,7 +422,11 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     }
 }
 
-- (BOOL)sendUpgradeResponseWithKey:(NSString *)key version:(NSInteger)version {
+// queue
+// Completion block called on _queue
+- (void)sendUpgradeResponseWithKey:(NSString *)key
+                           version:(NSInteger)version
+                        completion:(void (^)(BOOL))completion {
     DLog(@"Upgrading with key %@", key);
     key = [key stringByAppendingString:@"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"];
 
@@ -347,11 +447,16 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
             headers = temp;
         }
         DLog(@"Send headers %@", headers);
-        return [_connection sendResponseWithCode:101
-                                          reason:@"Switching Protocols"
-                                         headers:headers];
+        dispatch_async(_connection.queue, ^{
+            BOOL result = [self->_connection sendResponseWithCode:101
+                                                           reason:@"Switching Protocols"
+                                                          headers:headers];
+            dispatch_async(self->_queue, ^{
+                completion(result);
+            });
+        });
     } else {
-        return NO;
+        completion(NO);
     }
 }
 

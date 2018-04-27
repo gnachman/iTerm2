@@ -128,12 +128,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
 @interface iTermAPIServer()
 @property (atomic) iTermAPITransaction *transaction;
+@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation iTermAPIServer {
     iTermSocket *_socket;
     NSMutableDictionary<id, iTermWebSocketConnection *> *_connections;
-    dispatch_queue_t _queue;
     dispatch_queue_t _executionQueue;
 }
 
@@ -201,28 +201,50 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         pid_t pid = [iTermLSOF processIDWithConnectionFromAddress:address];
         if (pid == -1) {
             XLog(@"Reject connection from unidentifiable process with address %@", address);
-            [connection unauthorized];
+            dispatch_async(connection.queue, ^{
+                [connection unauthorized];
+            });
             return;
         }
 
         [self startRequestOnConnection:connection pid:pid completion:^(BOOL ok, NSString *reason) {
             if (!ok) {
                 XLog(@"Reject unauthenticated process (pid %d): %@", pid, reason);
-                [connection unauthorized];
+                dispatch_async(connection.queue, ^{
+                    [connection unauthorized];
+                });
             }
         }];
     });
 }
 
+// _queue
 - (void)startRequestOnConnection:(iTermHTTPConnection *)connection pid:(int)pid completion:(void (^)(BOOL, NSString *))completion {
-    NSURLRequest *request = [connection readRequest];
+    dispatch_async(connection.queue, ^{
+        NSURLRequest *request = [connection readRequest];
+        dispatch_async(self->_queue, ^{
+            [self reallyStartRequestOnConnection:connection pid:pid request:request completion:completion];
+        });
+    });
+}
+
+// queue
+// completion called on queue
+- (void)reallyStartRequestOnConnection:(iTermHTTPConnection *)connection
+                                   pid:(int)pid
+                               request:(NSURLRequest *)request
+                            completion:(void (^)(BOOL, NSString *))completion {
     if (!request) {
-        [connection badRequest];
+        dispatch_async(connection.queue, ^{
+            [connection badRequest];
+        });
         completion(NO, @"Failed to read request from HTTP connection");
         return;
     }
     if (![request.URL.path isEqualToString:@"/"]) {
-        [connection badRequest];
+        dispatch_async(connection.queue, ^{
+            [connection badRequest];
+        });
         completion(NO, [NSString stringWithFormat:@"Path %@ not known", request.URL.path]);
         return;
     }
@@ -250,9 +272,13 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
                     webSocketConnection.displayName = displayName;
                     webSocketConnection.peerIdentity = identity;
                     webSocketConnection.delegate = self;
+                    webSocketConnection.delegateQueue = self->_queue;
                     self->_connections[webSocketConnection.handle] = webSocketConnection;
-                    [webSocketConnection handleRequest:request];
-                    completion(YES, nil);
+                    [webSocketConnection handleRequest:request completion:^{
+                        dispatch_async(self->_queue, ^{
+                            completion(YES, nil);
+                        });
+                    }];
                 });
             } else {
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionRejected
@@ -260,8 +286,10 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
                                                                   userInfo:@{ @"reason": reason ?: @"Unknown reason",
                                                                               @"job": displayName ?: [NSNull null],
                                                                               @"pid": @(pid) }];
-                dispatch_async(self->_queue, ^{
+                dispatch_async(connection.queue, ^{
                     [connection unauthorized];
+                });
+                dispatch_async(self->_queue, ^{
                     completion(NO, reason);
                 });
             }
@@ -273,11 +301,14 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
                                                               userInfo:@{ @"reason": authReason ?: @"Unknown reason",
                                                                           @"pid": @(pid) }];
         });
-        [connection badRequest];
+        dispatch_async(connection.queue, ^{
+            [connection badRequest];
+        });
         completion(NO, authReason);
     }
 }
 
+// queue
 - (void)sendResponse:(ITMServerOriginatedMessage *)response onConnection:(iTermWebSocketConnection *)webSocketConnection {
     DLog(@"Sending response %@", response);
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -285,7 +316,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
                                                             object:webSocketConnection.key
                                                           userInfo:@{ @"message": response }];
     });
-    [webSocketConnection sendBinary:[response data]];
+    [webSocketConnection sendBinary:[response data] completion:nil];
 }
 
 // Runs on execution queue
@@ -295,6 +326,11 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
     __weak __typeof(self) weakSelf = self;
     if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_TransactionRequest) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerDidReceiveMessage
+                                                                object:webSocketConnection.key
+                                                              userInfo:@{ @"request": request }];
+        });
         if (!request.transactionRequest.begin) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
@@ -310,13 +346,16 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         transaction.connection = webSocketConnection;
         self.transaction = transaction;
 
+        // Enter the main queue before sending the transaction response. This guarantees the main
+        // thread doesn't do anything after that response is sent.
         dispatch_async(dispatch_get_main_queue(), ^{
-            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
-            response.id_p = request.id_p;
-            response.transactionResponse = [[ITMTransactionResponse alloc] init];
-            response.transactionResponse.status = ITMTransactionResponse_Status_Ok;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
-
+            dispatch_async(self->_queue, ^{
+                ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
+                response.id_p = request.id_p;
+                response.transactionResponse = [[ITMTransactionResponse alloc] init];
+                response.transactionResponse.status = ITMTransactionResponse_Status_Ok;
+                [weakSelf sendResponse:response onConnection:webSocketConnection];
+            });
             [weakSelf drainTransaction:transaction];
         });
     } else {
@@ -338,12 +377,17 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
         if (transactionRequest.request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_TransactionRequest &&
             !transactionRequest.request.transactionRequest.begin) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerDidReceiveMessage
+                                                                object:transactionRequest.connection.key
+                                                              userInfo:@{ @"request": transactionRequest.request }];
             // End the transaction by request.
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = transactionRequest.request.id_p;
             response.transactionResponse = [[ITMTransactionResponse alloc] init];
             response.transactionResponse.status = ITMTransactionResponse_Status_Ok;
-            [self sendResponse:response onConnection:transactionRequest.connection];
+            dispatch_async(_queue, ^{
+                [self sendResponse:response onConnection:transactionRequest.connection];
+            });
             break;
         }
 
@@ -377,7 +421,9 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             response.id_p = request.id_p;
             response.transactionResponse = [[ITMTransactionResponse alloc] init];
             response.transactionResponse.status = ITMTransactionResponse_Status_AlreadyInTransaction;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            dispatch_async(_queue, ^{
+                [weakSelf sendResponse:response onConnection:webSocketConnection];
+            });
         }
         return;
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_GetBufferRequest) {
@@ -386,7 +432,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
                                   ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
                                   response.id_p = request.id_p;
                                   response.getBufferResponse = getBufferResponse;
-                                  [weakSelf sendResponse:response onConnection:webSocketConnection];
+                                  __typeof(self) strongSelf = weakSelf;
+                                  if (strongSelf) {
+                                      dispatch_async(strongSelf.queue, ^{
+                                          [weakSelf sendResponse:response onConnection:webSocketConnection];
+                                      });
+                                  }
                               }];
         return;
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_GetPromptRequest) {
@@ -394,7 +445,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.getPromptResponse = getPromptResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
         return;
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_NotificationRequest) {
@@ -404,7 +460,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.notificationResponse = notificationResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
         return;
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_RegisterToolRequest) {
@@ -414,7 +475,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.registerToolResponse = registerToolResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
         return;
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_SetProfilePropertyRequest) {
@@ -423,7 +489,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.setProfilePropertyResponse = setProfilePropertyResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
         return;
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_GetProfilePropertyRequest) {
@@ -432,7 +503,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
                                            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
                                            response.id_p = request.id_p;
                                            response.getProfilePropertyResponse = getProfilePropertyResponse;
-                                           [weakSelf sendResponse:response onConnection:webSocketConnection];
+                                           __typeof(self) strongSelf = weakSelf;
+                                           if (strongSelf) {
+                                               dispatch_async(strongSelf.queue, ^{
+                                                   [strongSelf sendResponse:response onConnection:webSocketConnection];
+                                               });
+                                           }
                                        }];
         return;
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_ListSessionsRequest) {
@@ -441,7 +517,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.listSessionsResponse = listSessionsResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
         return;
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_SendTextRequest) {
@@ -449,7 +530,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.sendTextResponse = sendTextResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
         return;
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_CreateTabRequest) {
@@ -457,7 +543,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.createTabResponse = createTabResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
         return;
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_SplitPaneRequest) {
@@ -465,7 +556,12 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.splitPaneResponse = splitPaneResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
         return;
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_SetPropertyRequest) {
@@ -473,55 +569,95 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.setPropertyResponse = setPropertyResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_GetPropertyRequest) {
         [_delegate apiServerGetProperty:request.getPropertyRequest handler:^(ITMGetPropertyResponse *getPropertyResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.getPropertyResponse = getPropertyResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_InjectRequest) {
         [_delegate apiServerInject:request.injectRequest handler:^(ITMInjectResponse *injectResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.injectResponse = injectResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_ActivateRequest) {
         [_delegate apiServerActivate:request.activateRequest handler:^(ITMActivateResponse *activateResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.activateResponse = activateResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_VariableRequest) {
         [_delegate apiServerVariable:request.variableRequest handler:^(ITMVariableResponse *variableResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.variableResponse = variableResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_SavedArrangementRequest) {
         [_delegate apiServerSavedArrangement:request.savedArrangementRequest handler:^(ITMSavedArrangementResponse *savedArrangementResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.savedArrangementResponse = savedArrangementResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
     } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_FocusRequest) {
         [_delegate apiServerFocus:request.focusRequest handler:^(ITMFocusResponse *focusResponse) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.id_p = request.id_p;
             response.focusResponse = focusResponse;
-            [weakSelf sendResponse:response onConnection:webSocketConnection];
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
         }];
     } else {
         ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
         response.id_p = request.id_p;
         response.error = @"Invalid request. Upgrade iTerm2 to a newer version.";
-        [weakSelf sendResponse:response onConnection:webSocketConnection];
+        __typeof(self) strongSelf = weakSelf;
+        if (strongSelf) {
+            dispatch_async(strongSelf.queue, ^{
+                [strongSelf sendResponse:response onConnection:webSocketConnection];
+            });
+        }
     }
 }
 
@@ -549,27 +685,27 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
 #pragma mark - iTermWebSocketConnectionDelegate
 
+// _queue
 - (void)webSocketConnectionDidTerminate:(iTermWebSocketConnection *)webSocketConnection {
-    dispatch_async(_queue, ^{
-        DLog(@"Connection terminated");
-        [self->_connections removeObjectForKey:webSocketConnection.handle];
-        dispatch_async(self->_executionQueue, ^{
-            if (self.transaction.connection == webSocketConnection) {
-                iTermAPITransaction *transaction = self.transaction;
-                self.transaction = nil;
-                [transaction signal];
-            }
-        });
+    DLog(@"Connection terminated");
+    [self->_connections removeObjectForKey:webSocketConnection.handle];
+    dispatch_async(self->_executionQueue, ^{
+        if (self.transaction.connection == webSocketConnection) {
+            iTermAPITransaction *transaction = self.transaction;
+            self.transaction = nil;
+            [transaction signal];
+        }
+    });
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self->_delegate apiServerDidCloseConnection:webSocketConnection.handle];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self->_delegate apiServerDidCloseConnection:webSocketConnection.handle];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionClosed
-                                                                    object:webSocketConnection.key];
-            });
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionClosed
+                                                                object:webSocketConnection.key];
         });
     });
 }
 
+// _queue
 - (void)webSocketConnection:(iTermWebSocketConnection *)webSocketConnection didReadFrame:(iTermWebSocketFrame *)frame {
     if (frame.opcode == iTermWebSocketOpcodeBinary) {
         ITMClientOriginatedMessage *request = [ITMClientOriginatedMessage parseFromData:frame.payload error:nil];

@@ -12,16 +12,20 @@
 
 @interface iTermHTTPConnection : NSObject
 
+@property (nonatomic, readonly) dispatch_queue_t queue;
+
 - (instancetype)initWithFileDescriptor:(int)fd clientAddress:(iTermSocketAddress *)address;
+
+// All methods methods should only be called on self.queue:
 - (NSURLRequest *)readRequest;
 - (BOOL)sendResponseWithCode:(int)code reason:(NSString *)reason headers:(NSDictionary *)headers;
-- (void)close;
+- (void)threadSafeClose;
 - (dispatch_io_t)newChannelOnQueue:(dispatch_queue_t)queue;
 - (void)badRequest;
 - (void)unauthorized;
 
 // read a chunk of bytes. blocks.
-- (NSMutableData *)read;
+- (NSMutableData *)readSynchronously;
 
 // For testing
 - (NSData *)nextByte;
