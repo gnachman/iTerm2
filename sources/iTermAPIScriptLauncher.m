@@ -27,7 +27,8 @@
     if ([[iTermScriptConsole sharedInstance] isWindowLoaded] &&
         [[[iTermScriptConsole sharedInstance] window] isVisible]) {
         NSString *name = [[filename lastPathComponent] stringByDeletingPathExtension];
-        if ([self isScriptWithEnvironment:[filename stringByDeletingLastPathComponent]]) {
+        if (virtualenv) {
+            // Convert /foo/bar/Name/main.py to Name
             name = [[[filename stringByDeletingLastPathComponent] pathComponents] lastObject];
         }
         entry = [[iTermScriptHistoryEntry alloc] initWithName:name
@@ -79,7 +80,8 @@
 
 + (NSArray *)argumentsToRunScript:(NSString *)filename withVirtualEnv:(NSString *)providedVirtualEnv {
     NSString *wrapper = [[NSBundle mainBundle] pathForResource:@"it2_api_wrapper" ofType:@"sh"];
-    NSString *virtualEnv = providedVirtualEnv ?: [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"iterm2env"];
+    NSString *iterm2env = [self pyenvAt:[[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"iterm2env"]];
+    NSString *virtualEnv = providedVirtualEnv ?: iterm2env;
     NSString *command = [NSString stringWithFormat:@"%@ %@ %@",
                          [wrapper stringWithEscapedShellCharactersExceptTabAndNewline],
                          [virtualEnv stringWithEscapedShellCharactersExceptTabAndNewline],
@@ -122,15 +124,37 @@
     [alert runModal];
 }
 
-+ (BOOL)isScriptWithEnvironment:(NSString *)path {
-    // Scripts that need their own virtual env must have a hierarchy like this:
-    // iTerm2/Scripts/MyScript/main.py
-    // iTerm2/Scripts/MyScript/env/... (virtualenv goes here)
-    NSString *env = [path stringByAppendingPathComponent:@"env"];
-    NSString *python = [[env stringByAppendingPathComponent:@"bin"] stringByAppendingPathComponent:@"python"];
-    return ([[NSFileManager defaultManager] fileExistsAtPath:[path stringByAppendingPathComponent:@"main.py"] isDirectory:nil] &&
-            [[NSFileManager defaultManager] fileExistsAtPath:python isDirectory:nil]);
++ (NSString *)pyenvAt:(NSString *)root {
+    NSString *path = [root stringByAppendingPathComponent:@"versions"];
+    for (NSString *version in [[NSFileManager defaultManager] enumeratorAtPath:path]) {
+        if ([version hasPrefix:@"3."]) {
+            path = [path stringByAppendingPathComponent:version];
+            path = [path stringByAppendingPathComponent:@"bin"];
+            path = [path stringByAppendingPathComponent:@"python3"];
+            return path;
+        }
+    }
+    return nil;
+}
 
++ (NSString *)environmentForScript:(NSString *)path  {
+    if (![[NSFileManager defaultManager] fileExistsAtPath:[path stringByAppendingPathComponent:@"main.py"] isDirectory:nil]) {
+        return nil;
+    }
+
+    // Does it have a pyenv?
+    NSString *pyenvPython = [[self pyenvAt:[path stringByAppendingPathComponent:@"pyenv"]] stringByAppendingPathComponent:@"python3"];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:pyenvPython isDirectory:nil]) {
+        return pyenvPython;
+    }
+
+    // Does it have a virtualenv?
+    NSString *virtualenvPython = [[[path stringByAppendingPathComponent:@"virtualenv"] stringByAppendingPathComponent:@"bin"] stringByAppendingPathComponent:@"python3"];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:virtualenvPython isDirectory:nil]) {
+        return virtualenvPython;
+    }
+
+    return nil;
 }
 
 @end

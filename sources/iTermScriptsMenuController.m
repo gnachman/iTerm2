@@ -64,7 +64,7 @@ NS_ASSUME_NONNULL_BEGIN
         BOOL isDirectory;
         [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
 
-        if ([iTermAPIScriptLauncher isScriptWithEnvironment:path]) {
+        if ([iTermAPIScriptLauncher environmentForScript:path]) {
             [files addObject:file];
             [directoryEnumerator skipDescendents];
             continue;
@@ -109,9 +109,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchScript:(id)sender {
     NSString *fullPath = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:[sender title]];
 
-    if ([iTermAPIScriptLauncher isScriptWithEnvironment:fullPath]) {
+    NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath];
+    if (venv) {
         [iTermAPIScriptLauncher launchScript:[fullPath stringByAppendingPathComponent:@"main.py"]
-                              withVirtualEnv:[fullPath stringByAppendingPathComponent:@"env"]];
+                              withVirtualEnv:venv];
         return;
     }
 
