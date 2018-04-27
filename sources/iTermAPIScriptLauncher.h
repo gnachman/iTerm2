@@ -13,5 +13,9 @@
 + (void)launchScript:(NSString *)filename;
 + (void)launchScript:(NSString *)filename withVirtualEnv:(NSString *)virtualenv;
 + (NSString *)environmentForScript:(NSString *)path;
++ (NSString *)pythonVersion;
++ (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name;
++ (NSString *)pathToStandardPyenvPython;
++ (NSString *)pathToStandardPyenv;
 
 @end

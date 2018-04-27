@@ -12,6 +12,7 @@
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermWebSocketCookieJar.h"
+#import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "PTYTask.h"
 
@@ -78,9 +79,17 @@
     return environment;
 }
 
++ (NSString *)pathToStandardPyenvPython {
+    return [self pyenvAt:[[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"iterm2env"]];
+}
+
++ (NSString *)pathToStandardPyenv {
+    return [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"iterm2env"];
+}
+
 + (NSArray *)argumentsToRunScript:(NSString *)filename withVirtualEnv:(NSString *)providedVirtualEnv {
     NSString *wrapper = [[NSBundle mainBundle] pathForResource:@"it2_api_wrapper" ofType:@"sh"];
-    NSString *iterm2env = [self pyenvAt:[[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"iterm2env"]];
+    NSString *iterm2env = [self pathToStandardPyenvPython];
     NSString *virtualEnv = providedVirtualEnv ?: iterm2env;
     NSString *command = [NSString stringWithFormat:@"%@ %@ %@",
                          [wrapper stringWithEscapedShellCharactersExceptTabAndNewline],
@@ -124,6 +133,11 @@
     [alert runModal];
 }
 
++ (NSString *)pythonVersion {
+    // The python version distributed with iTerm2
+    return @"3.6.5";
+}
+
 + (NSString *)pyenvAt:(NSString *)root {
     NSString *path = [root stringByAppendingPathComponent:@"versions"];
     for (NSString *version in [[NSFileManager defaultManager] enumeratorAtPath:path]) {
@@ -137,21 +151,24 @@
     return nil;
 }
 
++ (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name {
+    NSArray<NSString *> *components = @[ name, @"pyenv", @"versions", [self pythonVersion], @"bin", @"python3" ];
+    NSString *path = [[NSFileManager defaultManager] scriptsPath];
+    for (NSString *part in components) {
+        path = [path stringByAppendingPathComponent:part];
+    }
+    return path;
+}
+
 + (NSString *)environmentForScript:(NSString *)path  {
     if (![[NSFileManager defaultManager] fileExistsAtPath:[path stringByAppendingPathComponent:@"main.py"] isDirectory:nil]) {
         return nil;
     }
 
-    // Does it have a pyenv?
-    NSString *pyenvPython = [[self pyenvAt:[path stringByAppendingPathComponent:@"pyenv"]] stringByAppendingPathComponent:@"python3"];
+    // Does it have an iterm2env?
+    NSString *pyenvPython = [self pyenvAt:[path stringByAppendingPathComponent:@"iterm2env"]];
     if ([[NSFileManager defaultManager] fileExistsAtPath:pyenvPython isDirectory:nil]) {
         return pyenvPython;
-    }
-
-    // Does it have a virtualenv?
-    NSString *virtualenvPython = [[[path stringByAppendingPathComponent:@"virtualenv"] stringByAppendingPathComponent:@"bin"] stringByAppendingPathComponent:@"python3"];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:virtualenvPython isDirectory:nil]) {
-        return virtualenvPython;
     }
 
     return nil;

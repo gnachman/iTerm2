@@ -10,12 +10,14 @@
 #import "DebugLogging.h"
 #import "iTermAPIScriptLauncher.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermScriptTemplatePickerWindowController.h"
 #import "NSFileManager+iTerm.h"
+#import "NSStringITerm.h"
 #import "SCEvents.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermScriptsMenuController()<SCEventListenerProtocol>
+@interface iTermScriptsMenuController()<NSOpenSavePanelDelegate, SCEventListenerProtocol>
 @end
 
 @implementation iTermScriptsMenuController {
@@ -142,16 +144,108 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
+- (NSString *)pathToTemplateForPicker:(iTermScriptTemplatePickerWindowController *)picker {
+    NSArray<NSString *> *environmentNamePart = @[ @"na", @"basic", @"pyenv" ];
+    NSArray<NSString *> *templateNamePart = @[ @"na", @"simple", @"daemon" ];
+    NSString *templateName = [NSString stringWithFormat:@"template_%@_%@",
+                              environmentNamePart[picker.selectedEnvironment],
+                              templateNamePart[picker.selectedTemplate]];
+    NSString *templatePath = [[NSBundle mainBundle] pathForResource:templateName ofType:@"py"];
+    return templatePath;
+}
+
 - (void)newPythonScript {
+    iTermScriptTemplatePickerWindowController *picker = [[iTermScriptTemplatePickerWindowController alloc] initWithWindowNibName:@"iTermScriptTemplatePickerWindowController"];
+    [NSApp runModalForWindow:picker.window];
+    [picker.window close];
+
+    if (picker.selectedEnvironment == iTermScriptEnvironmentNone ||
+        picker.selectedTemplate == iTermScriptTemplateNone) {
+        return;
+    }
+
+    NSURL *url = [self runSavePanelForNewScriptWithPicker:picker];
+    if (url) {
+        if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
+            [self createFullEnvironmentForScriptURL:url];
+        }
+
+        NSString *destinationTemplatePath = [self destinationTemplatePathForPicker:picker url:url];
+        NSString *template = [self templateForPicker:picker url:url];
+        [template writeToURL:[NSURL fileURLWithPath:destinationTemplatePath]
+                  atomically:NO
+                    encoding:NSUTF8StringEncoding
+                       error:nil];
+        [[NSWorkspace sharedWorkspace] openFile:destinationTemplatePath];
+    }
+}
+
+- (NSURL *)runSavePanelForNewScriptWithPicker:(iTermScriptTemplatePickerWindowController *)picker {
     NSSavePanel *savePanel = [NSSavePanel savePanel];
-    savePanel.allowedFileTypes = @[ @"py" ];
+    savePanel.delegate = self;
+    if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
+        savePanel.allowedFileTypes = @[ @"" ];
+    } else {
+        savePanel.allowedFileTypes = @[ @"py" ];
+    }
     savePanel.directoryURL = [NSURL fileURLWithPath:[[NSFileManager defaultManager] scriptsPath]];
     if ([savePanel runModal] == NSFileHandlingPanelOKButton) {
-        NSString *templatePath = [[NSBundle mainBundle] pathForResource:@"template" ofType:@"py"];
-        NSString *template = [NSString stringWithContentsOfFile:templatePath encoding:NSUTF8StringEncoding error:nil];
-        [template writeToURL:savePanel.URL atomically:NO encoding:NSUTF8StringEncoding error:nil];
-        [[NSWorkspace sharedWorkspace] openFile:savePanel.URL.path withApplication:@"TextEdit"];
+        return savePanel.URL;
+    } else {
+        return nil;
     }
+}
+- (NSString *)templateForPicker:(iTermScriptTemplatePickerWindowController *)picker
+                            url:(NSURL *)url {
+    NSString *python = [self pythonForPicker:picker url:url];
+    python = [python stringByDeletingLastPathComponent];
+    NSDictionary *subs = @{ @"$$PYTHON_BIN$$": python };
+    NSString *templatePath = [self pathToTemplateForPicker:picker];
+    NSMutableString *template = [NSMutableString stringWithContentsOfFile:templatePath
+                                                                 encoding:NSUTF8StringEncoding
+                                                                    error:nil];
+    [subs enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        [template replaceOccurrencesOfString:key withString:obj options:0 range:NSMakeRange(0, template.length)];
+    }];
+    return template;
+}
+
+- (void)createFullEnvironmentForScriptURL:(NSURL *)url {
+    NSString *folder = [self folderForFullEnvironmentSavePanelURL:url];
+    [[NSFileManager defaultManager] createDirectoryAtPath:folder
+                              withIntermediateDirectories:YES
+                                               attributes:nil
+                                                    error:nil];
+    [[NSFileManager defaultManager] copyItemAtPath:[iTermAPIScriptLauncher pathToStandardPyenv]
+                                            toPath:[folder stringByAppendingPathComponent:@"iterm2env"]
+                                             error:nil];
+}
+
+- (NSString *)folderForFullEnvironmentSavePanelURL:(NSURL *)url {
+    NSString *name = url.path.lastPathComponent;
+    NSString *folder = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:name];
+    return folder;
+}
+
+- (NSString *)destinationTemplatePathForPicker:(iTermScriptTemplatePickerWindowController *)picker
+                                           url:(NSURL *)url {
+    if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
+        NSString *folder = [self folderForFullEnvironmentSavePanelURL:url];
+        return [folder stringByAppendingPathComponent:@"main.py"];
+    } else {
+        return url.path;
+    }
+}
+
+- (NSString *)pythonForPicker:(iTermScriptTemplatePickerWindowController *)picker
+                          url:(NSURL *)url {
+    NSString *fullPath;
+    if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
+        fullPath = [iTermAPIScriptLauncher prospectivePythonPathForPyenvScriptNamed:url.lastPathComponent];
+    } else {
+        fullPath = [iTermAPIScriptLauncher pathToStandardPyenvPython];
+    }
+    return [fullPath stringByDeletingLastPathComponent];
 }
 
 #pragma mark - Private
@@ -231,6 +325,23 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)pathWatcher:(SCEvents *)pathWatcher eventOccurred:(SCEvent *)event {
     DLog(@"Path watcher noticed a change to scripts directory");
     [self build];
+}
+
+#pragma mark - NSOpenSavePanelDelegate
+
+- (BOOL)panel:(id)sender shouldEnableURL:(NSURL *)url {
+    NSString *folder = [url.path stringByDeletingLastPathComponent];
+    return [folder isEqual:[[NSFileManager defaultManager] scriptsPath]];
+}
+
+- (void)panel:(NSSavePanel *)sender didChangeToDirectoryURL:(nullable NSURL *)url {
+    sender.directoryURL = [NSURL fileURLWithPath:[[NSFileManager defaultManager] scriptsPath]];
+}
+
+- (BOOL)panel:(id)sender validateURL:(NSURL *)url error:(NSError **)outError {
+    NSString *path = [url path];
+    NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
+    return [[path stringByDeletingLastPathComponent] isEqualToString:scriptsPath];
 }
 
 @end

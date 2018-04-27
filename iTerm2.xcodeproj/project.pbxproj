@@ -1203,9 +1203,24 @@
 		53AFFC931DD38F1500E6CEC6 /* ToolWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = 53AFFC911DD38F1500E6CEC6 /* ToolWebView.m */; };
 		53E184F11FE32F2800DB78F3 /* iTermMetalBufferPool.h in Headers */ = {isa = PBXBuildFile; fileRef = 53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */; };
 		53E184F21FE32F2800DB78F3 /* iTermMetalBufferPool.m in Sources */ = {isa = PBXBuildFile; fileRef = 53E184F01FE32F2800DB78F3 /* iTermMetalBufferPool.m */; };
-		53FF980B20918D23008688D7 /* template.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template.py */; };
-		53FF980C20918D23008688D7 /* template.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template.py */; };
-		53FF980D20918D23008688D7 /* template.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template.py */; };
+		53FF980B20918D23008688D7 /* template_basic_simple.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template_basic_simple.py */; };
+		53FF980C20918D23008688D7 /* template_basic_simple.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template_basic_simple.py */; };
+		53FF980D20918D23008688D7 /* template_basic_simple.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template_basic_simple.py */; };
+		53FF9813209247E2008688D7 /* iTermScriptTemplatePickerWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 53FF980E209247E2008688D7 /* iTermScriptTemplatePickerWindowController.h */; };
+		53FF9817209247E2008688D7 /* iTermScriptTemplatePickerWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 53FF980F209247E2008688D7 /* iTermScriptTemplatePickerWindowController.m */; };
+		53FF9818209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 53FF9810209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib */; };
+		53FF9819209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 53FF9810209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib */; };
+		53FF981A209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 53FF9810209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib */; };
+		53FF981C20927F1E008688D7 /* template_pyenv_simple.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF981B20927F1E008688D7 /* template_pyenv_simple.py */; };
+		53FF981D20927F1E008688D7 /* template_pyenv_simple.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF981B20927F1E008688D7 /* template_pyenv_simple.py */; };
+		53FF981E20927F1E008688D7 /* template_pyenv_simple.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF981B20927F1E008688D7 /* template_pyenv_simple.py */; };
+		53FF9820209283BE008688D7 /* template_basic_daemon.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF981F209283BE008688D7 /* template_basic_daemon.py */; };
+		53FF9821209283BE008688D7 /* template_basic_daemon.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF981F209283BE008688D7 /* template_basic_daemon.py */; };
+		53FF9822209283BE008688D7 /* template_basic_daemon.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF981F209283BE008688D7 /* template_basic_daemon.py */; };
+		53FF9824209283D2008688D7 /* template_pyenv_daemon.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF9823209283D2008688D7 /* template_pyenv_daemon.py */; };
+		53FF9825209283D2008688D7 /* template_pyenv_daemon.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF9823209283D2008688D7 /* template_pyenv_daemon.py */; };
+		53FF9826209283D2008688D7 /* template_pyenv_daemon.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF9823209283D2008688D7 /* template_pyenv_daemon.py */; };
+		53FF98272092A079008688D7 /* iTermScriptsMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = A60C0392208F8B5000FE2F1F /* iTermScriptsMenuController.m */; };
 		5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
 		5ECE4AE814513F05002A9CC2 /* Growl.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5ECE4AC41451343E002A9CC2 /* Growl.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */ = {isa = PBXBuildFile; fileRef = 5ECE4AE914514058002A9CC2 /* Growl Registration Ticket.growlRegDict */; };
@@ -1279,7 +1294,6 @@
 		A60C0372208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.h in Headers */ = {isa = PBXBuildFile; fileRef = A60C0370208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.h */; };
 		A60C0373208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.m in Sources */ = {isa = PBXBuildFile; fileRef = A60C0371208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.m */; };
 		A60C0393208F8B5000FE2F1F /* iTermScriptsMenuController.h in Headers */ = {isa = PBXBuildFile; fileRef = A60C0391208F8B5000FE2F1F /* iTermScriptsMenuController.h */; };
-		A60C0394208F8B5000FE2F1F /* iTermScriptsMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = A60C0392208F8B5000FE2F1F /* iTermScriptsMenuController.m */; };
 		A60D85A81A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */; };
 		A60D85A91A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */; };
 		A60EBD171FAED952008C7F5B /* iTermCopyBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */; };
@@ -3261,7 +3275,13 @@
 		53EBF2B81DCCF66600766613 /* iTermWebSocketFrameBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWebSocketFrameBuilder.m; sourceTree = "<group>"; };
 		53EBF2BB1DCCF6A700766613 /* iTermWebSocketConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermWebSocketConnection.h; sourceTree = "<group>"; };
 		53EBF2BC1DCCF6A700766613 /* iTermWebSocketConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWebSocketConnection.m; sourceTree = "<group>"; };
-		53FF980A20918D23008688D7 /* template.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = template.py; path = sources/template.py; sourceTree = "<group>"; };
+		53FF980A20918D23008688D7 /* template_basic_simple.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = template_basic_simple.py; path = sources/template_basic_simple.py; sourceTree = "<group>"; };
+		53FF980E209247E2008688D7 /* iTermScriptTemplatePickerWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermScriptTemplatePickerWindowController.h; sourceTree = "<group>"; };
+		53FF980F209247E2008688D7 /* iTermScriptTemplatePickerWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScriptTemplatePickerWindowController.m; sourceTree = "<group>"; };
+		53FF9810209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermScriptTemplatePickerWindowController.xib; sourceTree = "<group>"; };
+		53FF981B20927F1E008688D7 /* template_pyenv_simple.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = template_pyenv_simple.py; path = sources/template_pyenv_simple.py; sourceTree = "<group>"; };
+		53FF981F209283BE008688D7 /* template_basic_daemon.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = template_basic_daemon.py; path = sources/template_basic_daemon.py; sourceTree = "<group>"; };
+		53FF9823209283D2008688D7 /* template_pyenv_daemon.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = template_pyenv_daemon.py; path = sources/template_pyenv_daemon.py; sourceTree = "<group>"; };
 		5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminalRestorer.h; sourceTree = "<group>"; tabWidth = 4; };
 		5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PseudoTerminalRestorer.m; sourceTree = "<group>"; tabWidth = 4; };
 		5ECE4AC41451343E002A9CC2 /* Growl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Growl.framework; sourceTree = "<group>"; };
@@ -4871,7 +4891,10 @@
 				1D03D42619144C140049EB8F /* Property Lists */,
 				1D093C131217412B0029F9AD /* Images */,
 				0464AB22006CD2EC7F000001 /* Interface Builder Files */,
-				53FF980A20918D23008688D7 /* template.py */,
+				53FF980A20918D23008688D7 /* template_basic_simple.py */,
+				53FF981B20927F1E008688D7 /* template_pyenv_simple.py */,
+				53FF981F209283BE008688D7 /* template_basic_daemon.py */,
+				53FF9823209283D2008688D7 /* template_pyenv_daemon.py */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -6295,6 +6318,9 @@
 				A62A1F731E711BC000363EE9 /* iTermHelpMessageViewController.h */,
 				A62A1F741E711BC000363EE9 /* iTermHelpMessageViewController.m */,
 				A62A1F751E711BC000363EE9 /* iTermHelpMessageViewController.xib */,
+				53FF980E209247E2008688D7 /* iTermScriptTemplatePickerWindowController.h */,
+				53FF980F209247E2008688D7 /* iTermScriptTemplatePickerWindowController.m */,
+				53FF9810209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -7445,6 +7471,7 @@
 				A667194E1DCE36C3000CE608 /* iTermInitialDirectory.h in Headers */,
 				A68400AF1FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.h in Headers */,
 				A667194F1DCE36C3000CE608 /* NSWindow+iTerm.h in Headers */,
+				53FF9813209247E2008688D7 /* iTermScriptTemplatePickerWindowController.h in Headers */,
 				A66719501DCE36C3000CE608 /* iTermWebViewWrapperViewController.h in Headers */,
 				A66719511DCE36C3000CE608 /* iTermPreferences.h in Headers */,
 				53AFFC8F1DD2A04600E6CEC6 /* iTermLSOF.h in Headers */,
@@ -7877,6 +7904,7 @@
 				A65B72B31B33C07D00F947A7 /* NextTip.png in Resources */,
 				A65B725F1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
 				1D6ED9A219AEA20D005A7799 /* ColorPresets.plist in Resources */,
+				53FF981E20927F1E008688D7 /* template_pyenv_simple.py in Resources */,
 				1D6ED9A319AEA20D005A7799 /* DefaultBookmark.plist in Resources */,
 				1D6ED9A519AEA20D005A7799 /* MigrationMap.plist in Resources */,
 				1D6ED9A619AEA20D005A7799 /* DefaultGlobalKeyMap.plist in Resources */,
@@ -7901,9 +7929,10 @@
 				1D6ED9B919AEA20D005A7799 /* wrap_to_top.png in Resources */,
 				A67D0D701A2EE12A003A8B35 /* MainMenu.strings in Resources */,
 				A67D0D791A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
+				53FF981A209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */,
 				A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */,
 				1D6ED9BB19AEA20D005A7799 /* SmartSelectionRules.plist in Resources */,
-				53FF980D20918D23008688D7 /* template.py in Resources */,
+				53FF980D20918D23008688D7 /* template_basic_simple.py in Resources */,
 				A65B72571B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D6ED9BC19AEA20D005A7799 /* closebutton.png in Resources */,
 				1D6ED9BD19AEA20D005A7799 /* BroadcastInput.png in Resources */,
@@ -7926,6 +7955,7 @@
 				A67D0D821A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
 				A67D0D611A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
 				A67D0D581A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
+				53FF9826209283D2008688D7 /* template_pyenv_daemon.py in Resources */,
 				A67D0D341A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
 				1D6ED9C519AEA20D005A7799 /* LogoShadow.png in Resources */,
 				A623D94D1F89846A0011F8C3 /* key.png in Resources */,
@@ -7966,6 +7996,7 @@
 				1D6ED9E419AEA20D005A7799 /* PrefsProfile.png in Resources */,
 				1D6ED9E519AEA20D005A7799 /* PrefsProfile@2x.png in Resources */,
 				1D6ED9E619AEA20D005A7799 /* PrefsKeyboard.png in Resources */,
+				53FF9822209283BE008688D7 /* template_basic_daemon.py in Resources */,
 				A6EFF23B1D20F6C000806EEF /* EraseDarkBackground.png in Resources */,
 				1D6ED9E719AEA20D005A7799 /* PrefsKeyboard@2x.png in Resources */,
 				A67D0D8E1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
@@ -8094,7 +8125,7 @@
 				1D44D0891CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testRegionStartingWithDWCRight.png in Resources */,
 				1D44D05B1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBlinkingTextVisible.png in Resources */,
 				A65B72AD1B3285A300F947A7 /* DisableTips@2x.png in Resources */,
-				53FF980C20918D23008688D7 /* template.py in Resources */,
+				53FF980C20918D23008688D7 /* template_basic_simple.py in Resources */,
 				1D44D07C1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testIME.png in Resources */,
 				1D44D09A1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_reverseVideoNondefaultBackground.png in Resources */,
 				1D44D09E1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png in Resources */,
@@ -8207,6 +8238,7 @@
 				A67D0D631A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */,
 				1D44D0821CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testMinimumContrastAndCursorBoost.png in Resources */,
 				1D44CFC61CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testOversizeGlyphs.png in Resources */,
+				53FF9819209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */,
 				1D44D0721CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testDontUseNonAsciiFont.png in Resources */,
 				1D44D0521CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBackgroundImageWithTransparency.png in Resources */,
 				A67D0D331A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
@@ -8236,6 +8268,7 @@
 				1D44D00F1CC7F5A600BE5630 /* PTYTextViewTest-golden-testDimmingTextAndCursorBoostAndMinimumContrast.png in Resources */,
 				1D44CFBC1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testIMEWithAmbiguousIsNotDoubleWidth.png in Resources */,
 				1D44D0411CC7F5A600BE5630 /* PTYTextViewTest-golden-testSurrogatePairWithCombiningMark.png in Resources */,
+				53FF981D20927F1E008688D7 /* template_pyenv_simple.py in Resources */,
 				1D44CFAC1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndMinimumContrast.png in Resources */,
 				1D44D0881CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testOversizeGlyphs.png in Resources */,
 				1D44D0841CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testNoAntiAlias.png in Resources */,
@@ -8262,6 +8295,7 @@
 				1D44D0301CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_allDarkGray.png in Resources */,
 				1DBBA5E21B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
 				A67D0D6C1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
+				53FF9825209283D2008688D7 /* template_pyenv_daemon.py in Resources */,
 				1D44CFA61CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseOfDelegateOverride.png in Resources */,
 				1D44CF891CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-test256Colors.png in Resources */,
 				1D44CFF51CC7F5A600BE5630 /* PTYTextViewTest-golden-testBarCursorReverseVideo.png in Resources */,
@@ -8286,6 +8320,7 @@
 				1D44D0931CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_allWhiteDarkRedFore.png in Resources */,
 				1D44CFC51CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testNote.png in Resources */,
 				1D44D0571CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBasicDraw.png in Resources */,
+				53FF9821209283BE008688D7 /* template_basic_daemon.py in Resources */,
 				1D44CFAB1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png in Resources */,
 				A6B3A73C1AC74E02008E8D4E /* FindCursorCell2.png in Resources */,
 				A663010C19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
@@ -8423,7 +8458,7 @@
 				A65B72551B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
-				53FF980B20918D23008688D7 /* template.py in Resources */,
+				53FF980B20918D23008688D7 /* template_basic_simple.py in Resources */,
 				A6EFF2321D2049A300806EEF /* Erase@2x.png in Resources */,
 				A67D0D7A1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				1D8BBA841B31DC0D0005A852 /* ChevronDown.png in Resources */,
@@ -8441,9 +8476,11 @@
 				A6FEA28B1CF4DD2900376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */,
 				1DB40A411B1FDC75005B83C7 /* NoColor@2x.png in Resources */,
 				A67D0D591A2EE12A003A8B35 /* iTerm.strings in Resources */,
+				53FF9824209283D2008688D7 /* template_pyenv_daemon.py in Resources */,
 				A6B70FBB19830C37007A4284 /* dead.png in Resources */,
 				A623D94E1F8984700011F8C3 /* key@2x.png in Resources */,
 				93A6FEFA10685E9900A5F905 /* dsa_pub.pem in Resources */,
+				53FF9820209283BE008688D7 /* template_basic_daemon.py in Resources */,
 				1DCF3CB71222FF1400AD56F1 /* PresetKeyMappings.plist in Resources */,
 				A67D0D411A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */,
 				1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */,
@@ -8464,6 +8501,7 @@
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
 				A623D94B1F8984690011F8C3 /* key.png in Resources */,
 				A68E33351DE746F5003F1D8E /* Next Mark Touch Bar Icon.png in Resources */,
+				53FF981C20927F1E008688D7 /* template_pyenv_simple.py in Resources */,
 				A686A1151C86A6CB0024C2DE /* NewOutputForDarkTheme.png in Resources */,
 				1DC742A0127C96F90069594C /* IBarCursor.png in Resources */,
 				A6B70FC319830F0D007A4284 /* NewOutput@2x.png in Resources */,
@@ -8474,6 +8512,7 @@
 				A65B72A91B3285A300F947A7 /* DisableTips.png in Resources */,
 				1D94EAB012D64022008225A9 /* UKCrashReporter.nib in Resources */,
 				A66DB80F1C8E182B00233E88 /* Info@2x.png in Resources */,
+				53FF9818209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */,
 				1D94EAB112D64022008225A9 /* UKCrashReporter.strings in Resources */,
 				A67D0D651A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
 				A6374A211DEA08C5000A136F /* PTYTextViewTest-golden-testCustomUnderline.png in Resources */,
@@ -9049,6 +9088,7 @@
 				A66719621DCE3772000CE608 /* iTermSocketAddress.m in Sources */,
 				53AFFC8E1DD2A04100E6CEC6 /* iTermLSOF.m in Sources */,
 				A6C1FD571FC2B210006B9A69 /* iTermMargin.metal in Sources */,
+				53FF98272092A079008688D7 /* iTermScriptsMenuController.m in Sources */,
 				A66719671DCE3772000CE608 /* iTermWebSocketFrameBuilder.m in Sources */,
 				A655E6962066C78700DC21B9 /* iTermScrollAccumulator.m in Sources */,
 				A614F2631FE47D8600EEE919 /* iTermCharacterBitmap.m in Sources */,
@@ -9072,7 +9112,6 @@
 				A67960E41F8201A1008A42BC /* iTermMetalDriver.m in Sources */,
 				A614F2671FE4B16400EEE919 /* iTermCharacterParts.m in Sources */,
 				A66719641DCE3772000CE608 /* iTermSocket.m in Sources */,
-				A60C0394208F8B5000FE2F1F /* iTermScriptsMenuController.m in Sources */,
 				A67960D41F81FCBB008A42BC /* iTermCursorGuideRenderer.m in Sources */,
 				A6556EAA1FCB42E0000CC89C /* iTermCharacterSource.m in Sources */,
 				A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */,
@@ -9104,6 +9143,7 @@
 				5337A316203E065300024BEA /* iTermPowerManager.m in Sources */,
 				A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */,
 				A6DBC04A2005F09100F1466D /* iTermHighlightRowRenderer.mm in Sources */,
+				53FF9817209247E2008688D7 /* iTermScriptTemplatePickerWindowController.m in Sources */,
 				A68AC8F41F05C0860023A216 /* NSBundle+iTerm.m in Sources */,
 				A67960CD1F81FCB6008A42BC /* iTermMetalRenderer.m in Sources */,
 				A68400B91FF97138008D3EE2 /* iTermTimestampDrawHelper.m in Sources */,
