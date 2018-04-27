@@ -77,7 +77,7 @@
 }
 
 + (void)animateWithDuration:(NSTimeInterval)duration
-                 animations:(void (^)(void))animations
+                 animations:(void (NS_NOESCAPE ^)(void))animations
                  completion:(void (^)(BOOL finished))completion {
    NSAnimationContext *context = [NSAnimationContext currentContext];
    NSTimeInterval savedDuration = [context duration];
@@ -93,6 +93,13 @@
                           completion(YES);
                       });
    }
+}
+
+- (void)enumerateHierarchy:(void (NS_NOESCAPE ^)(NSView *))block {
+    block(self);
+    for (NSView *view in self.subviews) {
+        [view enumerateHierarchy:block];
+    }
 }
 
 @end

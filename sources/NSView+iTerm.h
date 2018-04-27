@@ -32,7 +32,9 @@
 // A non-cancelable version of animateWithDuration:delay:animations:completion:.
 // Remember to retain self until completion runs if you use it.
 + (void)animateWithDuration:(NSTimeInterval)duration
-                 animations:(void (^)(void))animations
+                 animations:(void (NS_NOESCAPE ^)(void))animations
                  completion:(void (^)(BOOL finished))completion;
+
+- (void)enumerateHierarchy:(void (NS_NOESCAPE ^)(NSView *))block;
 
 @end
