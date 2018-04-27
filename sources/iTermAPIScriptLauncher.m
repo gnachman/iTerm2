@@ -104,7 +104,7 @@
     dispatch_once(&onceToken, ^{
         queues = [NSMutableArray array];
     });
-    dispatch_queue_t q = dispatch_queue_create("com.iterm2.script", NULL);
+    dispatch_queue_t q = dispatch_queue_create("com.iterm2.script-launcher", NULL);
     [queues addObject:q];
     dispatch_async(q, ^{
         NSFileHandle *readHandle = [pipe fileHandleForReading];
