@@ -243,7 +243,8 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
                                                                     object:webSocketConnection.key
                                                                   userInfo:@{ @"reason": reason ?: [NSNull null],
                                                                               @"job": displayName ?: [NSNull null],
-                                                                              @"pid": @(pid) }];
+                                                                              @"pid": @(pid),
+                                                                              @"websocket": webSocketConnection }];
                 dispatch_async(self->_queue, ^{
                     DLog(@"Upgrading request to websocket");
                     webSocketConnection.displayName = displayName;

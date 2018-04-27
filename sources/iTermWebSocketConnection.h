@@ -31,7 +31,8 @@
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)handleRequest:(NSURLRequest *)request;
-- (void)close;
+- (void)close;  // Send close frame
+- (void)abort;  // Close TCP connection
 - (void)sendBinary:(NSData *)binaryData;
 - (void)sendText:(NSString *)text;
 

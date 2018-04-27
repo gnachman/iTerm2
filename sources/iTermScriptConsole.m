@@ -9,6 +9,7 @@
 
 #import "iTermAPIServer.h"
 #import "iTermScriptHistory.h"
+#import "iTermWebSocketConnection.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -37,6 +38,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
     NSDateFormatter *_dateFormatter;
     __weak IBOutlet NSTextField *_filter;
+    __weak IBOutlet NSButton *_terminateButton;
 
     id _token;
 }
@@ -142,6 +144,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
 - (IBAction)scriptFilterDidChange:(id)sender {
     [_tableView reloadData];
+    _terminateButton.enabled = NO;
 }
 
 - (NSString *)stringForRow:(NSInteger)row column:(NSTableColumn *)column {
@@ -162,6 +165,18 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         return [[iTermScriptHistory sharedInstance] entries];
     } else {
         return [[iTermScriptHistory sharedInstance] runningEntries];
+    }
+}
+
+- (IBAction)terminate:(id)sender {
+    NSInteger row = _tableView.selectedRow;
+    if (row >= 0 && row < self.filteredEntries.count) {
+        iTermScriptHistoryEntry *entry = [[self filteredEntries] objectAtIndex:row];
+        if (entry.isRunning && entry.pid) {
+            [entry addOutput:@"\n*Terminate button pressed*\n"];
+            kill(entry.pid, 1);
+            [entry.websocketConnection abort];
+        }
     }
 }
 
@@ -198,11 +213,13 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     if (!_tableView.numberOfSelectedRows) {
         _logsView.string = @"";
         _callsView.string = @"";
+        _terminateButton.enabled = NO;
     } else {
         [self scrollLogsToBottomIfNeeded];
         [self scrollCallsToBottomIfNeeded];
         NSInteger row = _tableView.selectedRow;
         iTermScriptHistoryEntry *entry = [[self filteredEntries] objectAtIndex:row];
+        _terminateButton.enabled = entry.isRunning && (entry.pid != 0);
         _logsView.font = [NSFont fontWithName:@"Menlo" size:12];
         _callsView.font = [NSFont fontWithName:@"Menlo" size:12];
 
@@ -305,11 +322,13 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
 - (void)numberOfScriptHistoryEntriesDidChange:(NSNotification *)notification {
     [_tableView reloadData];
+    _terminateButton.enabled = NO;
 }
 
 - (void)historyEntryDidChange:(NSNotification *)notification {
     if (!notification.userInfo) {
         [_tableView reloadData];
+        _terminateButton.enabled = NO;
     }
 }
 
@@ -333,6 +352,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         entry = [[iTermScriptHistoryEntry alloc] initWithName:name
                                                    identifier:key];
     }
+    entry.pid = [notification.userInfo[@"pid"] intValue];
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
     [entry addOutput:notification.userInfo[@"reason"]];
     [entry stopRunning];
@@ -357,8 +377,10 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         }
         entry = [[iTermScriptHistoryEntry alloc] initWithName:name
                                                    identifier:key];
+        entry.pid = [notification.userInfo[@"pid"] intValue];
         [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
     }
+    entry.websocketConnection = notification.userInfo[@"websocket"];
     [entry addOutput:[NSString stringWithFormat:@"Connection accepted: %@\n", notification.userInfo[@"reason"]]];
 }
 

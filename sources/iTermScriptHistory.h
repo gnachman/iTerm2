@@ -15,6 +15,8 @@ extern NSString *const iTermScriptHistoryEntryFieldKey;  // User info key giving
 extern NSString *const iTermScriptHistoryEntryFieldLogsValue;  // Logs changed
 extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
 
+@class iTermWebSocketConnection;
+
 @interface iTermScriptHistoryEntry : NSObject
 
 @property (nonatomic, readonly) NSString *logs;
@@ -26,6 +28,7 @@ extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
 @property (nonatomic) int pid;
 @property (nonatomic, readonly) NSArray<NSString *> *logLines;
 @property (nonatomic, readonly) NSArray<NSString *> *callEntries;
+@property (nonatomic, weak) iTermWebSocketConnection *websocketConnection;
 
 - (instancetype)initWithName:(NSString *)name identifier:(NSString *)identifier NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

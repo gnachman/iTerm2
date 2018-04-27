@@ -62,7 +62,7 @@
 
     [entry addOutput:[NSString stringWithFormat:@"%@ %@\n", task.launchPath, [task.arguments componentsJoinedByString:@" "]]];
     [task launch];   // This can throw
-
+    entry.pid = task.processIdentifier;
     [self waitForTask:task readFromPipe:pipe historyEntry:entry];
 }
 
