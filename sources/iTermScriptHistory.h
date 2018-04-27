@@ -19,8 +19,6 @@ extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
 
 @interface iTermScriptHistoryEntry : NSObject
 
-@property (nonatomic, readonly) NSString *logs;
-@property (nonatomic, readonly) NSString *calls;
 @property (nonatomic, readonly) NSDate *startDate;
 @property (nonatomic, readonly) BOOL isRunning;
 @property (nonatomic, readonly) NSString *name;
@@ -29,6 +27,7 @@ extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
 @property (nonatomic, readonly) NSArray<NSString *> *logLines;
 @property (nonatomic, readonly) NSArray<NSString *> *callEntries;
 @property (nonatomic, weak) iTermWebSocketConnection *websocketConnection;
+@property (nonatomic, readonly) BOOL lastLogLineContinues;
 
 - (instancetype)initWithName:(NSString *)name identifier:(NSString *)identifier NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

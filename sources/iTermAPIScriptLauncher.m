@@ -24,18 +24,16 @@
 
 + (void)launchScript:(NSString *)filename withVirtualEnv:(NSString *)virtualenv {
     NSString *key = [[NSUUID UUID] UUIDString];
-    iTermScriptHistoryEntry *entry;
-    if ([[iTermScriptConsole sharedInstance] isWindowLoaded] &&
-        [[[iTermScriptConsole sharedInstance] window] isVisible]) {
-        NSString *name = [[filename lastPathComponent] stringByDeletingPathExtension];
-        if (virtualenv) {
-            // Convert /foo/bar/Name/main.py to Name
-            name = [[[filename stringByDeletingLastPathComponent] pathComponents] lastObject];
-        }
-        entry = [[iTermScriptHistoryEntry alloc] initWithName:name
-                                                   identifier:[[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key]];
-        [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
+    NSString *name = [[filename lastPathComponent] stringByDeletingPathExtension];
+    if (virtualenv) {
+        // Convert /foo/bar/Name/main.py to Name
+        name = [[[filename stringByDeletingLastPathComponent] pathComponents] lastObject];
     }
+    NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
+    iTermScriptHistoryEntry *entry = [[iTermScriptHistoryEntry alloc] initWithName:name
+                                                                        identifier:identifier];
+    [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
+
     @try {
         [self tryLaunchScript:filename historyEntry:entry key:key withVirtualEnv:virtualenv];
     }
@@ -47,7 +45,10 @@
 }
 
 // THROWS
-+ (void)tryLaunchScript:(NSString *)filename historyEntry:(iTermScriptHistoryEntry *)entry key:(NSString *)key withVirtualEnv:(NSString *)virtualenv {
++ (void)tryLaunchScript:(NSString *)filename
+           historyEntry:(iTermScriptHistoryEntry *)entry
+                    key:(NSString *)key
+         withVirtualEnv:(NSString *)virtualenv {
     NSTask *task = [[NSTask alloc] init];
     NSString *shell = [PTYTask userShell];
 

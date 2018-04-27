@@ -1963,6 +1963,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)buildScriptMenu:(id)sender {
+    [iTermScriptConsole sharedInstance];
     [self.scriptsMenuController build];
 }
 

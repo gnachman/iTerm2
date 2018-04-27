@@ -101,6 +101,38 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     }
 }
 
+- (instancetype)initWithWindowNibName:(NSNibName)windowNibName {
+    self = [super initWithWindowNibName:windowNibName];
+    if (self) {
+        _dateFormatter = [[NSDateFormatter alloc] init];
+        _dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"Ld jj:mm:ss"
+                                                                    options:0
+                                                                     locale:[NSLocale currentLocale]];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(numberOfScriptHistoryEntriesDidChange:)
+                                                     name:iTermScriptHistoryNumberOfEntriesDidChangeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(historyEntryDidChange:)
+                                                     name:iTermScriptHistoryEntryDidChangeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(connectionRejected:)
+                                                     name:iTermAPIServerConnectionRejected
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(connectionAccepted:)
+                                                     name:iTermAPIServerConnectionAccepted
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(connectionClosed:)
+                                                     name:iTermAPIServerConnectionClosed
+                                                   object:nil];
+    }
+    return self;
+}
+
 - (void)windowDidLoad {
     [super windowDidLoad];
 
@@ -109,32 +141,6 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
     [self makeTextViewHorizontallyScrollable:_logsView];
     [self makeTextViewHorizontallyScrollable:_callsView];
-
-    _dateFormatter = [[NSDateFormatter alloc] init];
-    _dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"Ld jj:mm:ss"
-                                                                options:0
-                                                                 locale:[NSLocale currentLocale]];
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(numberOfScriptHistoryEntriesDidChange:)
-                                                 name:iTermScriptHistoryNumberOfEntriesDidChangeNotification
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(historyEntryDidChange:)
-                                                 name:iTermScriptHistoryEntryDidChangeNotification
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(connectionRejected:)
-                                                 name:iTermAPIServerConnectionRejected
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(connectionAccepted:)
-                                                 name:iTermAPIServerConnectionAccepted
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(connectionClosed:)
-                                                 name:iTermAPIServerConnectionClosed
-                                               object:nil];
 }
 
 - (void)dealloc {
@@ -223,8 +229,11 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         _logsView.font = [NSFont fontWithName:@"Menlo" size:12];
         _callsView.font = [NSFont fontWithName:@"Menlo" size:12];
 
-        _logsView.string = entry.logs;
-        _callsView.string = entry.calls;
+        _logsView.string = [entry.logLines componentsJoinedByString:@"\n"];
+        if (!entry.lastLogLineContinues) {
+            _logsView.string = [_logsView.string stringByAppendingString:@"\n"];
+        }
+        _callsView.string = [entry.callEntries componentsJoinedByString:@"\n"];
         __weak __typeof(self) weakSelf = self;
         _token = [[NSNotificationCenter defaultCenter] addObserverForName:iTermScriptHistoryEntryDidChangeNotification
                                                                    object:entry

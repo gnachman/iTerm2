@@ -20,10 +20,7 @@ NSString *const iTermScriptHistoryEntryFieldLogsValue = @"logs";
 NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
 
 @implementation iTermScriptHistoryEntry {
-    NSMutableString *_calls;
-    NSMutableString *_logs;
     NSDateFormatter *_dateFormatter;
-    BOOL _lastLogLineContinues;
     NSMutableArray<NSString *> *_logLines;
     NSMutableArray<NSString *> *_callEntries;
 }
@@ -33,8 +30,6 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
     if (self) {
         _name = [name copy];
         _identifier = [identifier copy];
-        _calls = [NSMutableString string];
-        _logs = [NSMutableString string];
         _startDate = [NSDate date];
         _isRunning = YES;
         _dateFormatter = [[NSDateFormatter alloc] init];
@@ -80,7 +75,7 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
         output = [output stringByAppendingString:@"\n"];
     }
 
-    if (_logs.length == 0 || [_logs hasSuffix:@"\n"]) {
+    if (!_lastLogLineContinues) {
         output = [NSString stringWithFormat:@"%@: %@", [_dateFormatter stringFromDate:[NSDate date]], output];
     }
 
@@ -116,11 +111,14 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
 }
 
 - (void)appendLogs:(NSString *)delta {
-    [_logs appendString:delta];
-    NSArray<NSString *> *newLines = [delta componentsSeparatedByString:@"\n"];
-    if (newLines.count == 0) {
+    if (delta.length == 0) {
         return;
     }
+    BOOL endsWithNewline = [delta hasSuffix:@"\n"];
+    if (endsWithNewline) {
+        delta = [delta substringWithRange:NSMakeRange(0, delta.length - 1)];
+    }
+    NSArray<NSString *> *newLines = [delta componentsSeparatedByString:@"\n"];
     if (_lastLogLineContinues) {
         NSString *amended = [_logLines.lastObject stringByAppendingString:newLines.firstObject];
         newLines = [newLines subarrayWithRange:NSMakeRange(1, newLines.count - 1)];
@@ -128,12 +126,18 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
 
     }
     [_logLines addObjectsFromArray:newLines];
-    _lastLogLineContinues = [delta hasSuffix:@"\n"];
+    _lastLogLineContinues = !endsWithNewline;
+
+    while (_logLines.count > 1000) {
+        [_logLines removeObjectAtIndex:0];
+    }
 }
 
 - (void)appendCalls:(NSString *)delta {
-    [_calls appendString:delta];
     [_callEntries addObject:delta];
+    while (_callEntries.count > 100) {
+        [_callEntries removeObjectAtIndex:0];
+    }
 }
 
 @end
