@@ -189,7 +189,7 @@ class Hierarchy:
     if self.key_window_id is None:
       return None
     else:
-      return self.get_window_by_id(self.key_window_id)
+      return await self.get_window_by_id(self.key_window_id)
 
   def get_tab_and_window_for_session(self, session):
     """Finds the tab and window that own a session.
