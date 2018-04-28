@@ -28,6 +28,7 @@ docs: force
 force:
 
 upload: force
+	rm dist/*
 	${PYTHON} setup.py bdist_wheel
 	${PYTHON} setup.py sdist
 	twine upload dist/*
