@@ -15,7 +15,5 @@
 + (NSString *)environmentForScript:(NSString *)path;
 + (NSString *)pythonVersion;
 + (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name;
-+ (NSString *)pathToStandardPyenvPython;
-+ (NSString *)pathToStandardPyenv;
 
 @end

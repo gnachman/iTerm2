@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermAPIScriptLauncher.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermPythonRuntimeDownloader.h"
 #import "iTermScriptTemplatePickerWindowController.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
@@ -216,7 +217,7 @@ NS_ASSUME_NONNULL_BEGIN
                               withIntermediateDirectories:YES
                                                attributes:nil
                                                     error:nil];
-    [[NSFileManager defaultManager] copyItemAtPath:[iTermAPIScriptLauncher pathToStandardPyenv]
+    [[NSFileManager defaultManager] copyItemAtPath:[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenv]
                                             toPath:[folder stringByAppendingPathComponent:@"iterm2env"]
                                              error:nil];
 }
@@ -243,7 +244,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
         fullPath = [iTermAPIScriptLauncher prospectivePythonPathForPyenvScriptNamed:url.lastPathComponent];
     } else {
-        fullPath = [iTermAPIScriptLauncher pathToStandardPyenvPython];
+        fullPath = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython];
     }
     return [fullPath stringByDeletingLastPathComponent];
 }

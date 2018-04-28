@@ -7,6 +7,7 @@
 //
 
 #import "TransferrableFileMenuItemView.h"
+#import "NSStringITerm.h"
 
 const CGFloat rightMargin = 5;
 
@@ -36,20 +37,6 @@ const CGFloat rightMargin = 5;
     [_statusMessage release];
     [_progressIndicator release];
     [super dealloc];
-}
-
-- (NSString *)formattedSize:(long long)size {
-    if (size < 0) {
-        return @"?";
-    } else if (size < 1024) {
-        return [NSString stringWithFormat:@"%lld bytes", size];
-    } else if (size < 1024 * 1024) {
-        return [NSString stringWithFormat:@"%lld KB", size / 1024];
-    } else if (size < 1024 * 1024 * 1024) {
-        return [NSString stringWithFormat:@"%0.1f MB", size / (1024.0 * 1024.0)];
-    } else {
-        return [NSString stringWithFormat:@"%0.2f GB", size / (1024.0 * 1024.0 * 1024.0)];
-    }
 }
 
 // Works around an OS bug. If the menu is closed with an item selected and then reopened, the
@@ -121,8 +108,8 @@ const CGFloat rightMargin = 5;
     if (_size >= 0) {
         sizeString =
             [NSString stringWithFormat:@"%@ of %@",
-                [self formattedSize:_bytesTransferred],
-                [self formattedSize:_size]];
+                [NSString it_formatBytes:_bytesTransferred],
+                [NSString it_formatBytes:_size]];
     } else {
         sizeString = @"";
     }
