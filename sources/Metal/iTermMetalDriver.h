@@ -20,6 +20,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) VT100GridCoord coord;
 @property (nonatomic) ITermCursorType type;
 @property (nonatomic, strong) NSColor *cursorColor;
+@property (nonatomic) BOOL doubleWidth;
 
 // Block cursors care about drawing the character overtop the cursor in a
 // different color than the character would normally be. If this is set, the

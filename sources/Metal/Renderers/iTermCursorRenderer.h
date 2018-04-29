@@ -9,6 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermCursorRendererTransientState : iTermMetalCellRendererTransientState
 @property (nonatomic, strong) NSColor *color;
 @property (nonatomic) VT100GridCoord coord;
+@property (nonatomic) BOOL doubleWidth;
 @end
 
 @interface iTermCursorRenderer : NSObject<iTermMetalCellRenderer>

@@ -436,14 +436,27 @@ static NSColor *ColorForVector(vector_float4 v) {
         _cursorVisible &&
         _visibleRange.start.y <= lineWithCursor &&
         lineWithCursor < _visibleRange.end.y) {
+        
         _cursorInfo.cursorVisible = YES;
         _cursorInfo.type = drawingHelper.cursorType;
         _cursorInfo.cursorColor = [self backgroundColorForCursor];
+        const screen_char_t *line = (screen_char_t *)_lines[_cursorInfo.coord.y].mutableBytes;
+        screen_char_t screenChar = line[_cursorInfo.coord.x];
+        if (screenChar.code) {
+            if (screenChar.code == DWC_RIGHT) {
+                _cursorInfo.doubleWidth = NO;
+            } else {
+                const int column = _cursorInfo.coord.x;
+                _cursorInfo.doubleWidth = (column < _gridSize.width - 1) && (line[column + 1].code == DWC_RIGHT);
+            }
+        } else {
+            _cursorInfo.doubleWidth = NO;
+        }
+
         if (_cursorInfo.type == CURSOR_BOX) {
             _cursorInfo.shouldDrawText = YES;
-            const screen_char_t *line = (screen_char_t *)_lines[_cursorInfo.coord.y].mutableBytes;
-            screen_char_t screenChar = line[_cursorInfo.coord.x];
             const BOOL focused = ((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor);
+
 
             iTermSmartCursorColor *smartCursorColor = nil;
             if (drawingHelper.useSmartCursorColor) {

@@ -900,16 +900,19 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                 iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_underlineCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
+                tState.doubleWidth = cursorInfo.doubleWidth;
                 break;
             }
             case CURSOR_BOX: {
                 iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_blockCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
+                tState.doubleWidth = cursorInfo.doubleWidth;
 
                 tState = [frameData transientStateForRenderer:_frameCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
+                tState.doubleWidth = cursorInfo.doubleWidth;
                 break;
             }
             case CURSOR_VERTICAL: {
