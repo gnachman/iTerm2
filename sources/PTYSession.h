@@ -511,7 +511,8 @@ typedef enum {
                          withDelegate:(id<PTYSessionDelegate>)delegate
                         forObjectType:(iTermObjectType)objectType;
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
-                                         bookmark:(Profile *)bookmark;
+                                         bookmark:(Profile *)bookmark
+                                   tmuxController:(TmuxController *)tmuxController;
 + (NSString *)guidInArrangement:(NSDictionary *)arrangement;
 
 - (void)textViewFontDidChange;

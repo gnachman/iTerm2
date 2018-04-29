@@ -47,6 +47,7 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 @property(nonatomic, readonly, getter=isAttached) BOOL attached;
 @property(nonatomic, readonly) BOOL detaching;
 @property(nonatomic, copy) Profile *profile;
+@property(nonatomic, readonly) NSDictionary *fontOverrides;
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
                      clientName:(NSString *)clientName

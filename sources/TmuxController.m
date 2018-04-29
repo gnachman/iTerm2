@@ -146,7 +146,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     BOOL _haveOpenendInitialWindows;
     Profile *_profile;
     ProfileModel *_profileModel;
-    NSDictionary *_fontOverrides;
     NSMutableIndexSet *_pendingNewWindows;
 }
 
@@ -1455,20 +1454,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                          KEY_NON_ASCII_FONT: [nonAsciiFont stringValue],
                          KEY_HORIZONTAL_SPACING: @(hs),
                          KEY_VERTICAL_SPACING: @(vs) } retain];
-
-    [_profileModel setObject:[font stringValue]
-                      forKey:KEY_NORMAL_FONT
-                  inBookmark:self.profile];
-    [_profileModel setObject:[nonAsciiFont stringValue]
-                      forKey:KEY_NON_ASCII_FONT
-                  inBookmark:self.profile];
-    [_profileModel setObject:[NSNumber numberWithDouble:hs]
-                      forKey:KEY_HORIZONTAL_SPACING
-                  inBookmark:self.profile];
-    [_profileModel setObject:[NSNumber numberWithDouble:vs]
-                      forKey:KEY_VERTICAL_SPACING
-                  inBookmark:self.profile];
-    [_profileModel postChangeNotification];
 }
 
 #pragma mark - Private

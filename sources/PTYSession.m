@@ -176,6 +176,7 @@ static NSString *const SESSION_ARRANGEMENT_PROGRAM = @"Program";  // Dictionary.
 static NSString *const SESSION_ARRANGEMENT_ENVIRONMENT = @"Environment";  // Dictionary of environment vars program was run in
 static NSString *const SESSION_ARRANGEMENT_IS_UTF_8 = @"Is UTF-8";  // TTY is in utf-8 mode
 static NSString *const SESSION_ARRANGEMENT_HOTKEY = @"Session Hotkey";  // NSDictionary iTermShortcut dictionaryValue
+static NSString *const SESSION_ARRANGEMENT_FONT_OVERRIDES = @"Font Overrides";  // Not saved; just used internally when creating a new tmux session.
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -990,6 +991,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
         theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
         needDivorce = YES;
+    }
+    NSDictionary<NSString *, NSString *> *overrides = arrangement[SESSION_ARRANGEMENT_FONT_OVERRIDES];
+    if (overrides) {
+        NSMutableDictionary *temp = [[theBookmark mutableCopy] autorelease];
+        [overrides enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
+            temp[key] = obj;
+        }];
+        theBookmark = temp;
     }
     if ([arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE]) {
         // This is a tmux arrangement.
@@ -4149,7 +4158,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
                                          bookmark:(Profile *)bookmark
-{
+                                   tmuxController:(TmuxController *)tmuxController {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
     [result setObject:[parseNode objectForKey:kLayoutDictWidthKey] forKey:SESSION_ARRANGEMENT_COLUMNS];
     [result setObject:[parseNode objectForKey:kLayoutDictHeightKey] forKey:SESSION_ARRANGEMENT_ROWS];
@@ -4176,6 +4185,10 @@ ITERM_WEAKLY_REFERENCEABLE
     value = parseNode[kLayoutDictTabColorKey];
     if (value) {
         result[SESSION_ARRANGEMENT_TMUX_TAB_COLOR] = value;
+    }
+    NSDictionary *fontOverrides = tmuxController.fontOverrides;
+    if (fontOverrides) {
+        result[SESSION_ARRANGEMENT_FONT_OVERRIDES] = fontOverrides;
     }
 
     return result;

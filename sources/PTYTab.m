@@ -2803,7 +2803,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                         bookmark:(Profile *)bookmark
                                                           origin:(NSPoint)origin
                                                 activeWindowPane:(int)activeWp
-{
+                                                  tmuxController:(TmuxController *)tmuxController {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     BOOL isVertical = YES;
     switch ([[parseTree objectForKey:kLayoutDictNodeType] intValue]) {
@@ -2814,7 +2814,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             frame.size.width = [[parseTree objectForKey:kLayoutDictPixelWidthKey] intValue];
             frame.size.height = [[parseTree objectForKey:kLayoutDictPixelHeightKey] intValue];
             [dict setObject:[PTYTab frameToDict:frame] forKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME];
-            [dict setObject:[PTYSession arrangementFromTmuxParsedLayout:parseTree bookmark:bookmark]
+            [dict setObject:[PTYSession arrangementFromTmuxParsedLayout:parseTree bookmark:bookmark tmuxController:tmuxController]
                      forKey:TAB_ARRANGEMENT_SESSION];
             int wp = [[parseTree objectForKey:kLayoutDictWindowPaneKey] intValue];
             [dict setObject:[NSNumber numberWithInt:wp]
@@ -2845,7 +2845,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 NSDictionary *childDict = [PTYTab _recursiveArrangementForDecoratedTmuxParseTree:child
                                                                                         bookmark:bookmark
                                                                                           origin:childOrigin
-                                                                                activeWindowPane:activeWp];
+                                                                                activeWindowPane:activeWp
+                                                                                  tmuxController:tmuxController];
                 [subviews addObject:childDict];
                 NSRect childFrame = [PTYTab dictToFrame:[childDict objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
                 if (isVertical) {
@@ -2864,12 +2865,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 + (NSDictionary *)arrangementForDecoratedTmuxParseTree:(NSDictionary *)parseTree
                                               bookmark:(Profile *)bookmark
                                       activeWindowPane:(int)activeWp
-{
+                                        tmuxController:(TmuxController *)tmuxController {
     NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
     [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
                                                                          bookmark:bookmark
                                                                            origin:NSZeroPoint
-                                                                 activeWindowPane:activeWp]
+                                                                 activeWindowPane:activeWp
+                                                                   tmuxController:tmuxController]
                     forKey:TAB_ARRANGEMENT_ROOT];
     // -- BEGIN HACK --
     // HACK! Set the first session we find as the active one.
@@ -2968,7 +2970,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // Now we can make an arrangement and restore it.
     NSDictionary *arrangement = [PTYTab arrangementForDecoratedTmuxParseTree:parseTree
                                                                     bookmark:tmuxController.profile
-                                                            activeWindowPane:0];
+                                                            activeWindowPane:0
+                                                              tmuxController:tmuxController];
     PTYTab *theTab = [self tabWithArrangement:arrangement
                                    inTerminal:term
                               hasFlexibleView:YES
@@ -3259,13 +3262,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
-- (void)resizeViewsInViewHierarchy:(NSView *)view forNewLayout:(NSMutableDictionary *)parseTree
-{
+- (void)resizeViewsInViewHierarchy:(NSView *)view forNewLayout:(NSMutableDictionary *)parseTree {
     Profile *bookmark = [[ProfileModel sharedInstance] defaultBookmark];
     NSDictionary *arrangement = [PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
                                                                               bookmark:bookmark
                                                                                 origin:NSZeroPoint
-                                                                      activeWindowPane:[activeSession_ tmuxPane]];
+                                                                      activeWindowPane:[activeSession_ tmuxPane]
+                                                                        tmuxController:nil];
     ++tmuxOriginatedResizeInProgress_;
     [realParentWindow_ beginTmuxOriginatedResize];
     [self _recursiveResizeViewsInViewHierarchy:view forArrangement:arrangement];
@@ -3300,13 +3303,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return tmuxController_;
 }
 
-- (void)replaceViewHierarchyWithParseTree:(NSMutableDictionary *)parseTree {
+- (void)replaceViewHierarchyWithParseTree:(NSMutableDictionary *)parseTree
+                           tmuxController:(TmuxController *)tmuxController {
     NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
     parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
     [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
                                                                          bookmark:self.tmuxController.profile
                                                                            origin:NSZeroPoint
-                                                                 activeWindowPane:[activeSession_ tmuxPane]]
+                                                                 activeWindowPane:[activeSession_ tmuxPane]
+                                                                   tmuxController:tmuxController]
                     forKey:TAB_ARRANGEMENT_ROOT];
 
     // Create a map of window pane -> SessionView *
@@ -3404,7 +3409,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         if ([[self realParentWindow] inInstantReplay]) {
             [[self realParentWindow] showHideInstantReplay];
         }
-        [self replaceViewHierarchyWithParseTree:parseTree];
+        [self replaceViewHierarchyWithParseTree:parseTree
+                                 tmuxController:tmuxController];
         shouldZoom = NO;
     }
     [self updateFlexibleViewColors];
