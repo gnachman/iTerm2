@@ -5,7 +5,7 @@ import iterm2
 import sys
 # To install packages from PyPI, use this command, changing package_name to the package you
 # wish to install:
-#   $$PYTHON_BIN$$/pip3 install package_name
+#   "$$PYTHON_BIN$$/pip3" install package_name
 
 
 # This is an example of a callback function. In this template, on_custom_esc is called when a

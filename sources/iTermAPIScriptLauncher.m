@@ -95,8 +95,8 @@
 
 + (NSArray *)argumentsToRunScript:(NSString *)filename withVirtualEnv:(NSString *)providedVirtualEnv {
     NSString *wrapper = [[NSBundle mainBundle] pathForResource:@"it2_api_wrapper" ofType:@"sh"];
-    NSString *iterm2env = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython];
-    NSString *virtualEnv = providedVirtualEnv ?: iterm2env;
+    NSString *pyenv = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython];
+    NSString *virtualEnv = providedVirtualEnv ?: pyenv;
     NSString *command = [NSString stringWithFormat:@"%@ %@ %@",
                          [wrapper stringWithEscapedShellCharactersExceptTabAndNewline],
                          [virtualEnv stringWithEscapedShellCharactersExceptTabAndNewline],
@@ -145,20 +145,22 @@
 }
 
 + (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name {
-    NSArray<NSString *> *components = @[ name, @"pyenv", @"versions", [self pythonVersion], @"bin", @"python3" ];
-    NSString *path = [[NSFileManager defaultManager] scriptsPath];
+    NSArray<NSString *> *components = @[ name, @"iterm2env", @"versions", [self pythonVersion], @"bin", @"python3" ];
+    NSString *path = [[NSFileManager defaultManager] scriptsPathWithoutSpaces];
     for (NSString *part in components) {
         path = [path stringByAppendingPathComponent:part];
     }
     return path;
 }
 
-+ (NSString *)environmentForScript:(NSString *)path  {
-    if (![[NSFileManager defaultManager] fileExistsAtPath:[path stringByAppendingPathComponent:@"main.py"] isDirectory:nil]) {
-        return nil;
++ (NSString *)environmentForScript:(NSString *)path checkForMain:(BOOL)checkForMain {
+    if (checkForMain) {
+        if (![[NSFileManager defaultManager] fileExistsAtPath:[path stringByAppendingPathComponent:@"main.py"] isDirectory:nil]) {
+            return nil;
+        }
     }
 
-    // Does it have an iterm2env?
+    // Does it have an pyenv?
     NSString *pyenvPython = [[iTermPythonRuntimeDownloader sharedInstance] pyenvAt:[path stringByAppendingPathComponent:@"iterm2env"]];
     if ([[NSFileManager defaultManager] fileExistsAtPath:pyenvPython isDirectory:nil]) {
         return pyenvPython;

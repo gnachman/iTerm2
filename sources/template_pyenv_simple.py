@@ -5,7 +5,7 @@ import iterm2
 import sys
 # To install packages from PyPI, use this command, changing package_name to the package you
 # wish to install:
-#   $$PYTHON_BIN$$/pip3 install package_name
+#   "$$PYTHON_BIN$$/pip3" install package_name
 
 async def main(connection, argv):
     # Your code goes here. Here's a bit of example code that adds a tab to the current window:

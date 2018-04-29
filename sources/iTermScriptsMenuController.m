@@ -67,7 +67,7 @@ NS_ASSUME_NONNULL_BEGIN
         BOOL isDirectory;
         [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
 
-        if ([iTermAPIScriptLauncher environmentForScript:path]) {
+        if ([iTermAPIScriptLauncher environmentForScript:path checkForMain:NO]) {
             [files addObject:file];
             [directoryEnumerator skipDescendents];
             continue;
@@ -112,7 +112,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchScript:(id)sender {
     NSString *fullPath = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:[sender title]];
 
-    NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath];
+    NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath checkForMain:YES];
     if (venv) {
         [iTermAPIScriptLauncher launchScript:[fullPath stringByAppendingPathComponent:@"main.py"]
                               withVirtualEnv:venv];
@@ -168,17 +168,33 @@ NS_ASSUME_NONNULL_BEGIN
     NSURL *url = [self runSavePanelForNewScriptWithPicker:picker];
     if (url) {
         if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
-            [self createFullEnvironmentForScriptURL:url];
+            NSURL *folder = [NSURL fileURLWithPath:[self folderForFullEnvironmentSavePanelURL:url]];
+            [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder completion:^(BOOL ok) {
+                if (ok) {
+                    [self finishInstallingNewPythonScriptForPicker:picker url:url];
+                } else {
+                    NSAlert *alert = [[NSAlert alloc] init];
+                    alert.messageText = @"Installation Failed";
+                    alert.informativeText = @"Remove ~/Library/Application Support/iTerm2/iterm2env and try again.";
+                    [alert runModal];
+                    return;
+                }
+            }];
+        } else {
+            [self finishInstallingNewPythonScriptForPicker:picker url:url];
         }
-
-        NSString *destinationTemplatePath = [self destinationTemplatePathForPicker:picker url:url];
-        NSString *template = [self templateForPicker:picker url:url];
-        [template writeToURL:[NSURL fileURLWithPath:destinationTemplatePath]
-                  atomically:NO
-                    encoding:NSUTF8StringEncoding
-                       error:nil];
-        [[NSWorkspace sharedWorkspace] openFile:destinationTemplatePath];
     }
+}
+
+- (void)finishInstallingNewPythonScriptForPicker:(iTermScriptTemplatePickerWindowController *)picker
+                                             url:(NSURL *)url {
+    NSString *destinationTemplatePath = [self destinationTemplatePathForPicker:picker url:url];
+    NSString *template = [self templateForPicker:picker url:url];
+    [template writeToURL:[NSURL fileURLWithPath:destinationTemplatePath]
+              atomically:NO
+                encoding:NSUTF8StringEncoding
+                   error:nil];
+    [[NSWorkspace sharedWorkspace] openFile:destinationTemplatePath];
 }
 
 - (NSURL *)runSavePanelForNewScriptWithPicker:(iTermScriptTemplatePickerWindowController *)picker {
@@ -211,20 +227,9 @@ NS_ASSUME_NONNULL_BEGIN
     return template;
 }
 
-- (void)createFullEnvironmentForScriptURL:(NSURL *)url {
-    NSString *folder = [self folderForFullEnvironmentSavePanelURL:url];
-    [[NSFileManager defaultManager] createDirectoryAtPath:folder
-                              withIntermediateDirectories:YES
-                                               attributes:nil
-                                                    error:nil];
-    [[NSFileManager defaultManager] copyItemAtPath:[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenv]
-                                            toPath:[folder stringByAppendingPathComponent:@"iterm2env"]
-                                             error:nil];
-}
-
 - (NSString *)folderForFullEnvironmentSavePanelURL:(NSURL *)url {
     NSString *name = url.path.lastPathComponent;
-    NSString *folder = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:name];
+    NSString *folder = [[[NSFileManager defaultManager] scriptsPathWithoutSpaces] stringByAppendingPathComponent:name];
     return folder;
 }
 
@@ -246,7 +251,7 @@ NS_ASSUME_NONNULL_BEGIN
     } else {
         fullPath = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython];
     }
-    return [fullPath stringByDeletingLastPathComponent];
+    return fullPath;
 }
 
 #pragma mark - Private

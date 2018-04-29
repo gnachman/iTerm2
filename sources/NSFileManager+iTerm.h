@@ -27,6 +27,9 @@
 
 - (NSString *)applicationSupportDirectory;
 
+// Gives a symlink called ApplicationSupport because shebangs can't handle spaces and this breaks pyenv.
+- (NSString *)applicationSupportDirectoryWithoutSpaces;
+
 - (NSString *)legacyApplicationSupportDirectory;
 
 - (NSString *)temporaryDirectory;
@@ -51,6 +54,7 @@
 
 // Directory where scripts live. These are loaded and added to a menu or auto-run at startup.
 - (NSString *)scriptsPath;
+- (NSString *)scriptsPathWithoutSpaces;
 
 // Path to special auto-launch script that is run at startup.
 - (NSString *)legacyAutolaunchScriptPath;  // applescript

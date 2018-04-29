@@ -26,4 +26,7 @@
 // Returns the path of the python binary given a root directory having a pyenv.
 - (NSString *)pyenvAt:(NSString *)root;
 
+// Install a copy of the current environment somewhere.
+- (void)installPythonEnvironmentTo:(NSURL *)container completion:(void (^)(BOOL))completion;
+
 @end

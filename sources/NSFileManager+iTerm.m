@@ -116,6 +116,20 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return result;
 }
 
+- (NSString *)applicationSupportDirectoryWithoutSpaces {
+    NSError *error;
+    NSString *realAppSupport = [self findOrCreateDirectory:NSApplicationSupportDirectory
+                                                  inDomain:NSUserDomainMask
+                                       appendPathComponent:nil
+                                                     error:&error];
+    NSString *nospaces = [realAppSupport stringByReplacingOccurrencesOfString:@"Application Support" withString:@"ApplicationSupport"];
+    [[NSFileManager defaultManager] createSymbolicLinkAtPath:nospaces withDestinationPath:realAppSupport error:nil];
+
+    NSString *executableName =
+        [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
+    return [nospaces stringByAppendingPathComponent:executableName];
+}
+
 - (NSString *)legacyApplicationSupportDirectory {
     NSError *error;
     NSString *result = [self findOrCreateDirectory:NSApplicationSupportDirectory
@@ -135,12 +149,18 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 - (NSString *)scriptsPath {
     static dispatch_once_t onceToken;
     NSString *legacyPath = [[self legacyApplicationSupportDirectory] stringByAppendingPathComponent:@"Scripts"];
+#warning Deprecate the legacy path. Tell users to move their files and don't use it.
     NSString *modernPath = [[self applicationSupportDirectory] stringByAppendingPathComponent:@"Scripts"];
     static BOOL useLegacy;
     dispatch_once(&onceToken, ^{
         useLegacy = [self fileExistsAtPath:legacyPath] && ![self fileExistsAtPath:modernPath];
     });
     return useLegacy ? legacyPath : modernPath;
+}
+
+- (NSString *)scriptsPathWithoutSpaces {
+    NSString *modernPath = [[self applicationSupportDirectoryWithoutSpaces] stringByAppendingPathComponent:@"Scripts"];
+    return modernPath;
 }
 
 - (NSString *)legacyAutolaunchScriptPath {
