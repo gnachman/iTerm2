@@ -10,8 +10,10 @@
 #import "DebugLogging.h"
 #import "iTermAPIScriptLauncher.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermBuildingScriptWindowController.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermScriptTemplatePickerWindowController.h"
+#import "iTermWarning.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "SCEvents.h"
@@ -169,10 +171,27 @@ NS_ASSUME_NONNULL_BEGIN
     if (url) {
         if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
             NSURL *folder = [NSURL fileURLWithPath:[self folderForFullEnvironmentSavePanelURL:url]];
+            NSURL *existingEnv = [folder URLByAppendingPathComponent:@"iterm2env"];
+            [[NSFileManager defaultManager] removeItemAtURL:existingEnv error:nil];
+            iTermBuildingScriptWindowController *pleaseWait = [[iTermBuildingScriptWindowController alloc] initWithWindowNibName:@"iTermBuildingScriptWindowController"];
+            pleaseWait.window.alphaValue = 0;
+            NSScreen *screen = pleaseWait.window.screen;
+            NSRect screenFrame = screen.frame;
+            NSSize windowSize = pleaseWait.window.frame.size;
+            NSPoint screenCenter = NSMakePoint(NSMinX(screenFrame) + NSWidth(screenFrame) / 2,
+                                               NSMinY(screenFrame) + NSHeight(screenFrame) / 2);
+            NSPoint windowOrigin = NSMakePoint(screenCenter.x - windowSize.width / 2,
+                                               screenCenter.y - windowSize.height / 2);
+            [pleaseWait.window setFrameOrigin:windowOrigin];
+            pleaseWait.window.alphaValue = 1;
+
+            [pleaseWait.window makeKeyAndOrderFront:nil];
             [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder completion:^(BOOL ok) {
                 if (ok) {
+                    [pleaseWait.window close];
                     [self finishInstallingNewPythonScriptForPicker:picker url:url];
                 } else {
+                    [pleaseWait.window close];
                     NSAlert *alert = [[NSAlert alloc] init];
                     alert.messageText = @"Installation Failed";
                     alert.informativeText = @"Remove ~/Library/Application Support/iTerm2/iterm2env and try again.";
@@ -194,7 +213,21 @@ NS_ASSUME_NONNULL_BEGIN
               atomically:NO
                 encoding:NSUTF8StringEncoding
                    error:nil];
-    [[NSWorkspace sharedWorkspace] openFile:destinationTemplatePath];
+
+    NSString *app;
+    NSString *type;
+    BOOL ok = [[NSWorkspace sharedWorkspace] getInfoForFile:destinationTemplatePath application:&app type:&type];
+    if (ok) {
+        iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Open new script in %@?", app]
+                                                                     actions:@[ @"OK", @"Show in Finder" ]
+                                                                  identifier:@"NoSyncOpenNewPythonScriptInDefaultEditor"
+                                                                 silenceable:kiTermWarningTypePermanentlySilenceable];
+        if (selection == kiTermWarningSelection0) {
+            [[NSWorkspace sharedWorkspace] openFile:destinationTemplatePath];
+            return;
+        }
+    }
+    [[NSWorkspace sharedWorkspace] selectFile:destinationTemplatePath inFileViewerRootedAtPath:@""];
 }
 
 - (NSURL *)runSavePanelForNewScriptWithPicker:(iTermScriptTemplatePickerWindowController *)picker {
