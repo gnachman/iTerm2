@@ -63,24 +63,37 @@
 }
 
 - (BOOL)shouldDownloadEnvironment {
+    static const NSInteger minimumVersion = 1;
+    return (self.installedVersion < minimumVersion);
+}
+
+// Returns 0 if no version is installed, otherwise returns the installed version of the python runtime.
+- (int)installedVersion {
     NSData *data = [NSData dataWithContentsOfURL:[self pathToMetadata]];
     if (!data) {
-        return YES;
+        return 0;
     }
 
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
     if (!dict) {
-        return YES;
+        return 0;
     }
 
     NSNumber *version = dict[@"version"];
     if (!version) {
-        return YES;
+        return 0;
     }
 
-    NSInteger installedVersion = version.integerValue;
-    static const NSInteger minimumVersion = 1;
-    return installedVersion < minimumVersion;
+    return version.intValue;
+}
+
+- (void)upgradeIfPossible {
+    const int installedVersion = [self installedVersion];
+    if (installedVersion == 0) {
+        return;
+    }
+
+    [self createDownloadControllerIfNeededRequestingVersionGreaterThan:installedVersion];
 }
 
 - (void)downloadOptionalComponentsIfNeededWithCompletion:(void (^)(void))completion {
@@ -89,7 +102,7 @@
         return;
     }
 
-    [self createDownloadControllerIfNeeded];
+    [self createDownloadControllerIfNeededRequestingVersionGreaterThan:0];
 
     dispatch_group_notify(_downloadGroup, dispatch_get_main_queue(), ^{
         completion();
@@ -127,25 +140,46 @@
     });
 }
 
-- (void)createDownloadControllerIfNeeded {
+- (void)createDownloadControllerIfNeededRequestingVersionGreaterThan:(int)installedVersion {
+    BOOL shouldBeginDownload = NO;
     if (!_downloadController) {
         _downloadGroup = dispatch_group_create();
         dispatch_group_enter(_downloadGroup);
         _downloadController = [[iTermOptionalComponentDownloadWindowController alloc] initWithWindowNibName:@"iTermOptionalComponentDownloadWindowController"];
+        shouldBeginDownload = YES;
+    } else if (!_downloadController.currentPhase) {
+        shouldBeginDownload = YES;
+    }
+
+    if (shouldBeginDownload) {
         NSURL *url = [NSURL URLWithString:@"https://iterm2.com/downloads/pyenv/manifest.json"];
         iTermManifestDownloadPhase *manifestPhase = [[iTermManifestDownloadPhase alloc] initWithURL:url
                                                                                    nextPhaseFactory:^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *currentPhase) {
                                                                                        iTermManifestDownloadPhase *mphase = [iTermManifestDownloadPhase castFrom:currentPhase];
-                                                                                       return [[iTermPayloadDownloadPhase alloc] initWithURL:mphase.nextURL
-                                                                                                                           expectedSignature:mphase.signature];
+                                                                                       if (mphase.version > installedVersion) {
+                                                                                           return [[iTermPayloadDownloadPhase alloc] initWithURL:mphase.nextURL
+                                                                                                                               expectedSignature:mphase.signature];
+                                                                                       } else {
+                                                                                           return nil;
+                                                                                       }
                                                                                    }];
         __weak __typeof(self) weakSelf = self;
         _downloadController.completion = ^(iTermOptionalComponentDownloadPhase *lastPhase) {
-            [weakSelf downloadDidCompleteWithFinalPhase:lastPhase];
+            if (lastPhase == manifestPhase) {
+                iTermPythonRuntimeDownloader *strongSelf = weakSelf;
+                if (strongSelf) {
+                    [strongSelf->_downloadController showMessage:@"✅ The Python runtime is up to date."];
+                }
+            } else {
+                [weakSelf downloadDidCompleteWithFinalPhase:lastPhase];
+            }
         };
         [_downloadController.window makeKeyAndOrderFront:nil];
         [_downloadController beginPhase:manifestPhase];
         [[iTermNotificationController sharedInstance] notify:@"Downloading scripting environment…"];
+    } else if (_downloadController.isWindowLoaded && !_downloadController.window.visible) {
+        // Already existed and had a current phase.
+        [[_downloadController window] makeKeyAndOrderFront:nil];
     }
 }
 

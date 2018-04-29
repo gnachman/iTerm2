@@ -37,7 +37,7 @@
                             </menuItem>
                             <menuItem title="Check For Updates…" identifier="Check For Updates…" id="880">
                                 <connections>
-                                    <action selector="checkForUpdates:" target="879" id="881"/>
+                                    <action selector="checkForUpdatesFromMenu:" target="201" id="vmh-LD-TwW"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Toggle Debug Logging" enabled="NO" identifier="Toggle Debug Logging" id="950">

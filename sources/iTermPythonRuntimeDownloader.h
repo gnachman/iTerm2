@@ -17,6 +17,10 @@
 
 + (instancetype)sharedInstance;
 
+// This downloads if any version is already installed and there's a newer version available.
+- (void)upgradeIfPossible;
+
+// This downloads only if the minimum version is not installed.
 - (void)downloadOptionalComponentsIfNeededWithCompletion:(void (^)(void))completion;
 
 // Returns the path of the python binary given a root directory having a pyenv.

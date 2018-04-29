@@ -30,6 +30,7 @@
 @interface iTermManifestDownloadPhase : iTermOptionalComponentDownloadPhase
 @property (nonatomic, readonly) NSURL *nextURL;
 @property (nonatomic, readonly) NSString *signature;
+@property (nonatomic, readonly) int version;
 
 - (instancetype)initWithURL:(NSURL *)url
            nextPhaseFactory:(iTermOptionalComponentDownloadPhase *(^)(iTermOptionalComponentDownloadPhase *))nextPhaseFactory;
@@ -47,8 +48,10 @@
 
 @interface iTermOptionalComponentDownloadWindowController : NSWindowController
 @property (nonatomic, copy) void (^completion)(iTermOptionalComponentDownloadPhase *);
+@property (nonatomic, readonly) iTermOptionalComponentDownloadPhase *currentPhase;
 
 - (void)beginPhase:(iTermOptionalComponentDownloadPhase *)phase;
+- (void)showMessage:(NSString *)message;
 
 @end
 

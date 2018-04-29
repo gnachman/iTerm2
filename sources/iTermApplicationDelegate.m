@@ -49,6 +49,7 @@
 #import "iTermLSOF.h"
 #import "iTermModifierRemapper.h"
 #import "iTermPreferences.h"
+#import "iTermPythonRuntimeDownloader.h"
 #import "iTermRemotePreferences.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermOpenQuicklyWindowController.h"
@@ -1492,6 +1493,7 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)checkForUpdatesFromMenu:(id)sender {
     [suUpdater checkForUpdates:(sender)];
+    [[iTermPythonRuntimeDownloader sharedInstance] upgradeIfPossible];
 }
 
 - (void)warnAboutChangeToDefaultPasteBehavior {

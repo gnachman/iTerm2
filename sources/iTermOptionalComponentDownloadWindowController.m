@@ -100,13 +100,13 @@ didCompleteWithError:(nullable NSError *)error {
 
 - (instancetype)initWithURL:(NSURL *)url
            nextPhaseFactory:(iTermOptionalComponentDownloadPhase *(^)(iTermOptionalComponentDownloadPhase *))nextPhaseFactory {
-    return [super initWithURL:url title:@"Fetching manifest" nextPhaseFactory:nextPhaseFactory];
+    return [super initWithURL:url title:@"Finding latest version…" nextPhaseFactory:nextPhaseFactory];
 }
 
 - (NSDictionary *)parsedManifestFromInputStream:(NSInputStream *)stream {
     id obj = [NSJSONSerialization JSONObjectWithStream:stream options:0 error:nil];
     NSDictionary *dict = [NSDictionary castFrom:obj];
-    if (dict[@"url"] && dict[@"signature"]) {
+    if (dict[@"url"] && dict[@"signature"] && dict[@"version"]) {
         return dict;
     } else {
         return nil;
@@ -123,6 +123,7 @@ didCompleteWithError:(nullable NSError *)error {
             if (dict) {
                 self->_nextURL = [NSURL URLWithString:dict[@"url"]];
                 self->_signature = dict[@"signature"];
+                self->_version = [dict[@"version"] intValue];
             } else {
                 innerError = [NSError errorWithDomain:@"com.iterm2" code:2 userInfo:@{ NSLocalizedDescriptionKey: @"Manifest missing required field" }];
             }
@@ -138,7 +139,7 @@ didCompleteWithError:(nullable NSError *)error {
 @implementation iTermPayloadDownloadPhase
 
 - (instancetype)initWithURL:(NSURL *)url expectedSignature:(NSString *)expectedSignature {
-    self = [super initWithURL:url title:@"Downloading Python runtime" nextPhaseFactory:nil];
+    self = [super initWithURL:url title:@"Downloading Python runtime…" nextPhaseFactory:nil];
     if (self) {
         _expectedSignature = [expectedSignature copy];
     }
@@ -157,7 +158,7 @@ didCompleteWithError:(nullable NSError *)error {
     __weak IBOutlet NSProgressIndicator *_progressIndicator;
     __weak IBOutlet NSButton *_button;
     iTermOptionalComponentDownloadPhase *_firstPhase;
-    iTermOptionalComponentDownloadPhase *_currentPhase;
+    BOOL _showingMessage;
 }
 
 - (void)windowDidLoad {
@@ -168,6 +169,7 @@ didCompleteWithError:(nullable NSError *)error {
 }
 
 - (void)beginPhase:(iTermOptionalComponentDownloadPhase *)phase {
+    _showingMessage = NO;
     assert(!_currentPhase.downloading);
     if (!_currentPhase) {
         _firstPhase = phase;
@@ -181,8 +183,18 @@ didCompleteWithError:(nullable NSError *)error {
     _button.title = @"Cancel";
 }
 
+- (void)showMessage:(NSString *)message {
+    _showingMessage = YES;
+    _titleLabel.stringValue = message;
+    _progressLabel.stringValue = @"";
+    _button.enabled = YES;
+    _button.title = @"OK";
+}
+
 - (IBAction)button:(id)sender {
-    if (_currentPhase.downloading) {
+    if (_showingMessage) {
+        [self.window close];
+    } else if (_currentPhase.downloading) {
         [_currentPhase cancel];
     } else {
         [self beginPhase:_firstPhase];
@@ -210,7 +222,13 @@ didCompleteWithError:(nullable NSError *)error {
         [self downloadDidFailWithError:sender.error];
     } else if (sender.nextPhaseFactory) {
         iTermOptionalComponentDownloadPhase *nextPhase = sender.nextPhaseFactory(_currentPhase);
-        [self beginPhase:nextPhase];
+        if (nextPhase) {
+            [self beginPhase:nextPhase];
+        } else {
+            iTermOptionalComponentDownloadPhase *phase = _currentPhase;
+            _currentPhase = nil;
+            self.completion(phase);
+        }
     } else {
         _button.enabled = NO;
         _progressLabel.stringValue = @"Finished";
