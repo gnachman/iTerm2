@@ -239,6 +239,15 @@ static NSDate* lastResizeDate_;
     }
 }
 
+- (void)setNeedsDisplay:(BOOL)needsDisplay {
+    [super setNeedsDisplay:needsDisplay];
+    if (@available(macOS 10.11, *)) {
+        if (needsDisplay) {
+            [_metalView setNeedsDisplay:YES];
+        }
+    }
+}
+
 - (void)addSubview:(NSView *)aView {
     BOOL wasRunning = _inAddSubview;
     _inAddSubview = YES;
