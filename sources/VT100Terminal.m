@@ -2169,13 +2169,15 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalSendReport:[self.output reportColor:theColor atIndex:xtermIndex prefix:@""]];
     } else {
         NSArray<NSNumber *> *components = [self xtermParseColorArgument:arg];
-        NSColor *srgb = [NSColor colorWithSRGBRed:components[0].doubleValue
-                                            green:components[1].doubleValue
-                                             blue:components[2].doubleValue
-                                            alpha:1];
-        NSColor *theColor = [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-        [delegate_ terminalSetColorTableEntryAtIndex:ptyIndex
-                                               color:theColor];
+        if (components) {
+            NSColor *srgb = [NSColor colorWithSRGBRed:components[0].doubleValue
+                                                green:components[1].doubleValue
+                                                 blue:components[2].doubleValue
+                                                alpha:1];
+            NSColor *theColor = [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+            [delegate_ terminalSetColorTableEntryAtIndex:ptyIndex
+                                                   color:theColor];
+        }
     }
 }
 
