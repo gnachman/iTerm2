@@ -480,6 +480,7 @@ static const NSUInteger kMaxHosts = 100;
     BOOL _metalFrameChangePending;
     int _nextMetalDisabledToken;
     NSMutableSet *_metalDisabledTokens;
+    BOOL _metalDeviceChanging;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -4810,6 +4811,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 !_pasteHelper.pasteViewIsVisible &&
                 _view.currentAnnouncement == nil &&
                 !_view.hasHoverURL &&
+                !_metalDeviceChanging &&
                 [self metalViewSizeIsLegal]);
     } else {
         return NO;
@@ -9447,6 +9449,21 @@ ITERM_WEAKLY_REFERENCEABLE
             _metalFrameChangePending = NO;
             [_view reallyUpdateMetalViewFrame];
             [self drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
+        });
+    }
+}
+
+- (void)sessionViewRecreateMetalView {
+    if (@available(macOS 10.11, *)) {
+        if (_metalDeviceChanging) {
+            return;
+        }
+        _metalDeviceChanging = YES;
+        [self.textview setNeedsDisplay:YES];
+        [_delegate sessionUpdateMetalAllowed];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            _metalDeviceChanging = NO;
+            [_delegate sessionUpdateMetalAllowed];
         });
     }
 }

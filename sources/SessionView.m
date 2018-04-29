@@ -6,6 +6,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermMetalClipView.h"
+#import "iTermMetalDeviceProvider.h"
 #import "iTermPreferences.h"
 #import "NSView+iTerm.h"
 #import "MovePaneController.h"
@@ -144,11 +145,19 @@ static NSDate* lastResizeDate_;
 
         // assign the main view
         [self addSubview:_scrollview];
+
+        if (@available(macOS 10.11, *)) {
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(preferredMetalDeviceDidChange:)
+                                                         name:iTermMetalDeviceProviderPreferredDeviceDidChangeNotification
+                                                       object:nil];
+        }
     }
     return self;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     _inDealloc = YES;
     if (self.verticalScroller.ptyScrollerDelegate == self) {
         self.verticalScroller.ptyScrollerDelegate = nil;
@@ -191,10 +200,16 @@ static NSDate* lastResizeDate_;
     }
 }
 
+- (void)preferredMetalDeviceDidChange:(NSNotification *)notification NS_AVAILABLE_MAC(10_11) {
+    if (_metalView) {
+        [self.delegate sessionViewRecreateMetalView];
+    }
+}
+
 - (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
     // Allocate a new metal view
     _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
-                                         device:MTLCreateSystemDefaultDevice()];
+                                         device:[[iTermMetalDeviceProvider sharedInstance] preferredDevice]];
     _metalView.layer.opaque = YES;
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;

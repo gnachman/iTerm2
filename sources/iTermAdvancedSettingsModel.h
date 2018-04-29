@@ -216,5 +216,6 @@
 + (double)activeUpdateCadence;
 + (BOOL)openNewWindowAtStartup;
 + (BOOL)resetSGROnPrompt;
++ (BOOL)useLowPowerGPUWhenUnplugged;
 
 @end

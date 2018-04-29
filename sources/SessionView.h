@@ -128,6 +128,9 @@
 - (void)sessionViewDidChangeHoverURLVisible:(BOOL)visible;
 - (void)sessionViewNeedsMetalFrameUpdate;
 
+// Please stop using metal and then start again.
+- (void)sessionViewRecreateMetalView;
+
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>
