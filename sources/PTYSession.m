@@ -4801,6 +4801,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // Perhaps some day transparency and ligatures will be supported.
         return ([iTermPreferences boolForKey:kPreferenceKeyUseMetal] &&
                 [iTermAdvancedSettingsModel terminalVMargin] >= 2 &&  // Smaller margins break rounded window corners
+                [_textview verticalSpacing] >= 1 &&  // Metal cuts off the tops of letters when line height reduced
                 machineSupportsMetal &&
                 _textview.transparencyAlpha == 1 &&
                 ![self ligaturesEnabledInEitherFont] &&
