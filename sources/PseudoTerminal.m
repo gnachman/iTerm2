@@ -6286,10 +6286,10 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     if (mode == BROADCAST_TO_ALL_PANES) {
-            [[self currentTab] setBroadcasting:YES];
-            mode = BROADCAST_OFF;
+        [[self currentTab] setBroadcasting:YES];
+        mode = BROADCAST_OFF;
     } else {
-            [[self currentTab] setBroadcasting:NO];
+        [[self currentTab] setBroadcasting:NO];
     }
     broadcastMode_ = mode;
     [self setDimmingForSessions];
