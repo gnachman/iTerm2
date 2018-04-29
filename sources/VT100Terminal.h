@@ -103,4 +103,7 @@
 // Restores values saved in -saveCursor.
 - (void)restoreCursor;
 
+// Reset colors, etc. Anything affected by SGR.
+- (void)resetGraphicRendition;
+
 @end

@@ -3848,6 +3848,9 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     // FinalTerm uses this to define the start of a collapsable region. That would be a nightmare
     // to add to iTerm, and our answer to this is marks, which already existed anyway.
     [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+    if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
+        [terminal_ resetGraphicRendition];
+    }
 }
 
 - (void)terminalCommandDidStart {

@@ -326,5 +326,6 @@ DEFINE_BOOL(disableMetalWhenIdle, NO, @"Experimental Features: Disable metal ren
 
 DEFINE_BOOL(proportionalScrollWheelReporting, YES_IF_BETA_ELSE_NO, @"Experimental Features: Report multiple mouse scroll events when scrolling quickly?");
 DEFINE_BOOL(useModernScrollWheelAccumulator, NO, @"Experimental Features: Use modern scroll wheel accumulator.\nThis should support wheel mice better and feel more natural.");
+DEFINE_BOOL(resetSGROnPrompt, YES_IF_BETA_ELSE_NO, @"Experimental Features: Reset colors at shell prompt?\nUses shell integration to detect a shell prompt and, if enabled, resets colors to their defaults.");
 
 @end

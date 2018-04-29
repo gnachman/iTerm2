@@ -215,5 +215,6 @@
 + (BOOL)conservativeURLGuessing;
 + (double)activeUpdateCadence;
 + (BOOL)openNewWindowAtStartup;
++ (BOOL)resetSGROnPrompt;
 
 @end
