@@ -9,6 +9,7 @@
 
 #import "iTermNotificationController.h"
 #import "iTermOptionalComponentDownloadWindowController.h"
+#import "iTermSignatureVerifier.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSWorkspace+iTerm.h"
@@ -149,7 +150,8 @@
 }
 
 - (void)downloadDidCompleteWithFinalPhase:(iTermOptionalComponentDownloadPhase *)lastPhase {
-    if (lastPhase.error) {
+    iTermPayloadDownloadPhase *payloadPhase = [iTermPayloadDownloadPhase castFrom:lastPhase];
+    if (!payloadPhase || payloadPhase.error) {
         [_downloadController.window makeKeyAndOrderFront:nil];
         [[iTermNotificationController sharedInstance] notify:@"Download failed ☹️"];
         return;
@@ -160,7 +162,7 @@
     NSMutableData *buffer = [NSMutableData dataWithLength:4096];
     BOOL ok = NO;
     while (YES) {
-        NSInteger n = [lastPhase.stream read:buffer.mutableBytes maxLength:buffer.length];
+        NSInteger n = [payloadPhase.stream read:buffer.mutableBytes maxLength:buffer.length];
         if (n < 0) {
             break;
         }
@@ -171,27 +173,38 @@
         [outputStream write:buffer.mutableBytes maxLength:n];
     }
     [outputStream close];
-    [lastPhase.stream close];
+    [payloadPhase.stream close];
     if (!ok) {
         [[iTermNotificationController sharedInstance] notify:@"Could not extract archive ☹️"];
         return;
     }
 
-    [self unzip:[NSURL fileURLWithPath:tempfile isDirectory:NO] to:[self urlOfStandardEnvironmentContainer] completion:^(BOOL unzipOk) {
-        if (unzipOk) {
-            [[iTermNotificationController sharedInstance] notify:@"Download finished!"];
-            [self->_downloadController.window close];
-            self->_downloadController = nil;
-            dispatch_group_leave(self->_downloadGroup);
-        } else {
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Error unzipping python environment";
-            alert.informativeText = @"An error occurred while unzipping the downloaded python environment";
-            [alert runModal];
-        }
-        [[NSFileManager defaultManager] removeItemAtPath:tempfile error:nil];
-    }];
-
+    NSURL *zipURL = [NSURL fileURLWithPath:tempfile isDirectory:NO];
+    NSString *pubkey = [NSString stringWithContentsOfURL:[[NSBundle mainBundle] URLForResource:@"rsa_pub" withExtension:@"pem"]
+                                                encoding:NSUTF8StringEncoding
+                                                   error:nil];
+    NSError *verifyError = [iTermSignatureVerifier validateFileURL:zipURL withEncodedSignature:payloadPhase.expectedSignature publicKey:pubkey];
+    if (verifyError) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"Signature Verification Failed";
+        alert.informativeText = [NSString stringWithFormat:@"The Python runtime's signature failed validation: %@", verifyError.localizedDescription];
+        [alert runModal];
+    } else {
+        [self unzip:zipURL to:[self urlOfStandardEnvironmentContainer] completion:^(BOOL unzipOk) {
+            if (unzipOk) {
+                [[iTermNotificationController sharedInstance] notify:@"Download finished!"];
+                [self->_downloadController.window close];
+                self->_downloadController = nil;
+                dispatch_group_leave(self->_downloadGroup);
+            } else {
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = @"Error unzipping python environment";
+                alert.informativeText = @"An error occurred while unzipping the downloaded python environment";
+                [alert runModal];
+            }
+            [[NSFileManager defaultManager] removeItemAtPath:tempfile error:nil];
+        }];
+    }
 }
 
 @end

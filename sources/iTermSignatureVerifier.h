@@ -37,7 +37,7 @@ typedef NS_ENUM(NSInteger, iTermSignatureVerifierErrorCode) {
 //                                                            withEncodedSignature:@"base64 signature here"
 //                                                                       publicKey"@"-----BEGIN PUBLIC KEY----\n..."];
 // if (error) {
-//   NSLog(@"Validation failed");
+//   NSLog(@"Validation failed: %@", error.localizedDescription);
 // } else {
 //   NSLog(@"lgtm");
 // }

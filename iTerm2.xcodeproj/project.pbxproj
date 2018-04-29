@@ -2610,6 +2610,9 @@
 		A6FE8D0F2093893900B5C648 /* iTermOptionalComponentDownloadWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D02209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.xib */; };
 		A6FE8D12209528F400B5C648 /* iTermPythonRuntimeDownloader.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FE8D10209528F300B5C648 /* iTermPythonRuntimeDownloader.h */; };
 		A6FE8D13209528F400B5C648 /* iTermPythonRuntimeDownloader.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FE8D11209528F400B5C648 /* iTermPythonRuntimeDownloader.m */; };
+		A6FE8D15209541BC00B5C648 /* rsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D14209541BC00B5C648 /* rsa_pub.pem */; };
+		A6FE8D16209541BC00B5C648 /* rsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D14209541BC00B5C648 /* rsa_pub.pem */; };
+		A6FE8D17209541BC00B5C648 /* rsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D14209541BC00B5C648 /* rsa_pub.pem */; };
 		A6FEA25F1CF0F20B00376F28 /* iTermEventTap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FEA25D1CF0F20B00376F28 /* iTermEventTap.h */; };
 		A6FEA2601CF0F20B00376F28 /* iTermEventTap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA25E1CF0F20B00376F28 /* iTermEventTap.m */; };
 		A6FEA2631CF0F33300376F28 /* iTermModifierRemapper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FEA2611CF0F33300376F28 /* iTermModifierRemapper.h */; };
@@ -4295,6 +4298,7 @@
 		A6FE8D06209382C000B5C648 /* download.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = download.png; path = images/download.png; sourceTree = "<group>"; };
 		A6FE8D10209528F300B5C648 /* iTermPythonRuntimeDownloader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPythonRuntimeDownloader.h; sourceTree = "<group>"; };
 		A6FE8D11209528F400B5C648 /* iTermPythonRuntimeDownloader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPythonRuntimeDownloader.m; sourceTree = "<group>"; };
+		A6FE8D14209541BC00B5C648 /* rsa_pub.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = rsa_pub.pem; path = OtherResources/rsa_pub.pem; sourceTree = "<group>"; };
 		A6FEA25D1CF0F20B00376F28 /* iTermEventTap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermEventTap.h; sourceTree = "<group>"; };
 		A6FEA25E1CF0F20B00376F28 /* iTermEventTap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermEventTap.m; sourceTree = "<group>"; };
 		A6FEA2611CF0F33300376F28 /* iTermModifierRemapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermModifierRemapper.h; sourceTree = "<group>"; };
@@ -5000,6 +5004,7 @@
 		1D03D42719144C3B0049EB8F /* Other Assets */ = {
 			isa = PBXGroup;
 			children = (
+				A6FE8D14209541BC00B5C648 /* rsa_pub.pem */,
 				A60C0350208964FA00FE2F1F /* it2_api_wrapper.sh */,
 				A6ECA5921D7535E700D19511 /* image_decoder.sb */,
 				93A6FEF910685E9900A5F905 /* dsa_pub.pem */,
@@ -8015,6 +8020,7 @@
 				1DEDF56B19C917FD005B023A /* new-tab.png in Resources */,
 				1D6ED9D519AEA20D005A7799 /* TabClose_Front.png in Resources */,
 				A60C036B2089897400FE2F1F /* iTermScriptConsole.xib in Resources */,
+				A6FE8D17209541BC00B5C648 /* rsa_pub.pem in Resources */,
 				1D6ED9D919AEA20D005A7799 /* important@2x.png in Resources */,
 				1D6ED9DA19AEA20D005A7799 /* Alert@2x.png in Resources */,
 				A67D0D3A1A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */,
@@ -8339,6 +8345,7 @@
 				53FF9825209283D2008688D7 /* template_pyenv_daemon.py in Resources */,
 				1D44CFA61CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testCursorFilledInBecauseOfDelegateOverride.png in Resources */,
 				1D44CF891CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-test256Colors.png in Resources */,
+				A6FE8D16209541BC00B5C648 /* rsa_pub.pem in Resources */,
 				1D44CFF51CC7F5A600BE5630 /* PTYTextViewTest-golden-testBarCursorReverseVideo.png in Resources */,
 				1D44CFCC1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSelectedTabOrphan.png in Resources */,
 				1D44D0941CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testSmartCursorColor_frameAllCursorColor.png in Resources */,
@@ -8648,6 +8655,7 @@
 				A6FD85351B768B7800EB9DCE /* BigArrow@2x.png in Resources */,
 				A68E333F1DE79284003F1D8E /* Color Preset Touch Bar Icon.png in Resources */,
 				A6B3A73B1AC74E02008E8D4E /* FindCursorCell2.png in Resources */,
+				A6FE8D15209541BC00B5C648 /* rsa_pub.pem in Resources */,
 				1DEF5E6D185F889600300319 /* Alert.png in Resources */,
 				9DB3D6E4176CB4D80071CCF8 /* PrefsProfile.png in Resources */,
 				9DB3D6E5176CB4D80071CCF8 /* PrefsProfile@2x.png in Resources */,
