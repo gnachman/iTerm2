@@ -4808,10 +4808,17 @@ ITERM_WEAKLY_REFERENCEABLE
                 !_view.findViewController.isVisible &&
                 !_pasteHelper.pasteViewIsVisible &&
                 _view.currentAnnouncement == nil &&
-                !_view.hasHoverURL);
+                !_view.hasHoverURL &&
+                [self metalViewSizeIsLegal]);
     } else {
         return NO;
     }
+}
+
+- (BOOL)metalViewSizeIsLegal NS_AVAILABLE_MAC(10_11) {
+    NSSize size = _view.frame.size;
+    // When closing a session I once got an insane height that caused an assertion.
+    return size.width > 0 && size.width < 16384 && size.height > 0 && size.height < 16384;
 }
 
 - (BOOL)idleForMetal {
