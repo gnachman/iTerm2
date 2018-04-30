@@ -11,10 +11,14 @@ class SplitPaneException(Exception):
   pass
 
 class Splitter:
-  """A container of split pane sessions where the dividers are all aligned the same way."""
+  """A container of split pane sessions where the dividers are all aligned the same way.
+  
+  :ivar vertical: Whether the split pane dividers in this Splitter are vertical
+    or horizontal.
+  """
   def __init__(self, vertical=False):
     """
-    vertical: Bool. If true, the divider is vertical, else horizontal.
+    :param vertical: Bool. If true, the divider is vertical, else horizontal.
     """
     self.vertical = vertical
     self.children = []
@@ -27,7 +31,7 @@ class Splitter:
     node: iterm2.api_pb2.ListSessionsResponse.SplitTreeNode
     connection: iterm2.connection.Connection
 
-    Returns: A new Splitter.
+    :returns: A new Splitter.
     """
     splitter = Splitter(node.vertical)
     for link in node.links:
@@ -53,19 +57,20 @@ class Splitter:
 
   def get_children(self):
     """
-    Returns: this splitter's children. A list of Session's.
+    :returns: This splitter's children. A list of iterm2.session.Session objects.
     """
     return self.children
 
   def all_sessions(self):
     """
-    Returns: All sessions in this splitter and all nested splitters. A list of Session's.
+    :returns: All sessions in this splitter and all nested splitters. A list of
+      iterm2.session.Session objects.
     """
     return self.sessions
 
   def pretty_str(self, indent=""):
     """
-    Returns: A string describing this splitter. Has newlines.
+    :returns: A string describing this splitter. Has newlines.
     """
     s = indent + "Splitter %s\n" % (
         "|" if self.vertical else "-")
@@ -81,13 +86,19 @@ class Session:
   @staticmethod
   def active_proxy(connection):
     """
-    Returns: A proxy for the currently active session.
+    Use this to register notifications against the currently active session.
+
+    :returns: A proxy for the currently active session.
     """
     return ProxySession(connection, "active")
 
+  @staticmethod
   def all_proxy(connection):
     """
-    Returns: A proxy for all sessions.
+    Use this to register notifications against all sessions, including those
+    not yet created.
+
+    :returns: A proxy for all sessions.
     """
     return ProxySession(connection, "all")
 
@@ -108,7 +119,7 @@ class Session:
 
   def pretty_str(self, indent=""):
     """
-    Returns: A string describing the session.
+    :returns: A string describing the session.
     """
     return indent + "Session \"%s\" id=%s %s frame=%s\n" % (
         self.name,
@@ -118,32 +129,42 @@ class Session:
 
   def get_session_id(self):
     """
-    Returns: the globally unique identifier for this session.
+    :returns: the globally unique identifier for this session.
     """
     return self.session_id
 
   def get_keystroke_reader(self):
     """
-    Returns: a keystroke reader.
+    Provides a nice interface for observing a sequence of keystrokes.
 
-    Usage:
+    :returns: a keystroke reader, an iterm2.session.Session.KeystrokeReader.
+
+    :Example:
 
       async with session.get_keystroke_reader() as reader:
         while condition():
           handle_keystrokes(reader.get())
 
-      Each call to reader.get() returns an array of new keystrokes.
+    .. note:: Each call to reader.get() returns an array of new keystrokes.
     """
     return self.KeystrokeReader(self.connection, self.session_id)
 
   def get_screen_streamer(self, want_contents=True):
+    """
+    Provides a nice interface for receiving updates to the screne.
+
+    The screen is the mutable part of a session (its last lines, excluding
+    scrollback history).
+
+    :returns: An iterm2.session.Session.ScreenStreamer
+    """
     return self.ScreenStreamer(self.connection, self.session_id, want_contents=want_contents)
 
   async def send_text(self, text):
     """
     Send text as though the user had typed it.
 
-    text: The text to send.
+    :param text: The text to send.
     """
     await iterm2.rpc.send_text(self.connection, self.session_id, text)
 
@@ -151,13 +172,13 @@ class Session:
     """
     Splits the pane, creating a new session.
 
-    vertical: Bool. If true, the divider is vertical, else horizontal.
-    before: Bool, whether the new session should be left/above the existing one.
-    profile: The profile name to use. None for the default profile.
+    :param vertical: Bool. If true, the divider is vertical, else horizontal.
+    :param before: Bool, whether the new session should be left/above the existing one.
+    :param profile: The profile name to use. None for the default profile.
 
-    Returns: New session ID.
+    :returns: New session ID.
 
-    Raises: SplitPaneException if something goes wrong.
+    :throws: SplitPaneException if something goes wrong.
     """
     result = await iterm2.rpc.split_pane(self.connection, self.session_id, vertical, before, profile)
     if result.split_pane_response.status == iterm2.api_pb2.SplitPaneResponse.Status.Value("OK"):
@@ -172,7 +193,7 @@ class Session:
 
     See also get_keystroke_reader().
 
-    Returns: iterm2.api_pb2.KeystrokeNotification
+    :returns: iterm2.api_pb2.KeystrokeNotification
     """
     future = asyncio.Future()
     async def on_keystroke(connection, message):
@@ -187,7 +208,7 @@ class Session:
     """
     Blocks until the screen contents change.
 
-    Returns: iterm2.api_pb2.ScreenUpdateNotification
+    :returns: iterm2.api_pb2.ScreenUpdateNotification
     """
     future = asyncio.Future()
     async def on_update(connection, message):
@@ -200,9 +221,9 @@ class Session:
 
   async def get_screen_contents(self):
     """
-    Returns: The screen contents, an iterm2.api_pb2.GetBufferResponse
+    :returns: The screen contents, an iterm2.api_pb2.GetBufferResponse
 
-    Raises: iterm2.rpc.RPCException if something goes wrong.
+    :throws: iterm2.rpc.RPCException if something goes wrong.
     """
     response = await iterm2.rpc.get_buffer_with_screen_contents(self.connection, self.session_id)
     status = response.get_buffer_response.status
@@ -215,11 +236,11 @@ class Session:
     """
     Fetches the last lines of the session, reaching into history if needed.
 
-    trailing_lines: The number of lines to fetch.
+    :param trailing_lines: The number of lines to fetch.
 
-    Returns: The buffer contents, an iterm2.api_pb2.GetBufferResponse
+    :returns: The buffer contents, an iterm2.api_pb2.GetBufferResponse
 
-    Raises: iterm2.rpc.RPCException if something goes wrong.
+    :throws: iterm2.rpc.RPCException if something goes wrong.
     """
     response = await iterm2.rpc.get_buffer_lines(self.connection, trailing_lines, self.session_id)
     status = response.get_buffer_response.status
@@ -232,9 +253,9 @@ class Session:
     """
     Fetches info about the last prompt in this session.
 
-    Returns: iterm2.api_pb2.GetPromptResponse
+    :returns: iterm2.api_pb2.GetPromptResponse
 
-    Raises: iterm2.rpc.RPCException if something goes wrong.
+    :throws: iterm2.rpc.RPCException if something goes wrong.
     """
     response = await iterm2.rpc.get_prompt(self.connection, self.session_id)
     status = response.get_prompt_response.status
@@ -249,12 +270,12 @@ class Session:
     """
     Sets the value of a property in this session.
 
-    key: The name of the property
-    json_value: The json-encoded value to set
+    :param key: The name of the property
+    :param json_value: The json-encoded value to set
 
-    Returns: iterm2.api_pb2.SetProfilePropertyResponse
+    :returns: iterm2.api_pb2.SetProfilePropertyResponse
 
-    Raises: iterm2.rpc.RPCException if something goes wrong.
+    :throws: iterm2.rpc.RPCException if something goes wrong.
     """
     response = await iterm2.rpc.set_profile_property(self.connection, key, json_value)
     status = response.set_profile_property_response.status
@@ -267,9 +288,9 @@ class Session:
     """
     Fetches the profile of this session
 
-    Returns: iterm2.profile.Profile
+    :returns: iterm2.profile.Profile
 
-    Raises: iterm2.rpc.RPCException if something goes wrong.
+    :throws: iterm2.rpc.RPCException if something goes wrong.
     """
     response = await iterm2.rpc.get_profile(self.connection, self.session_id)
     status = response.get_profile_property_response.status
@@ -282,7 +303,7 @@ class Session:
     """
     Injects data as though it were program output.
 
-    data: bytes
+    :param data: A byte array to inject.
     """
     response = await iterm2.rpc.inject(self.connection, data, [self.session_id])
     status = response.inject_response.status[0]
@@ -293,8 +314,8 @@ class Session:
      """
      Makes the session the active session in its tab.
 
-     select_tab: Whether the tab this session is in should be selected.
-     order_window_front: Whether the window this session is in should be
+     :param select_tab: Whether the tab this session is in should be selected.
+     :param order_window_front: Whether the window this session is in should be
        brought to the front and given keyboard focus.
      """
      await iterm2.rpc.activate(self.connection, True, select_tab, order_window_front, session_id=self.session_id)
@@ -304,6 +325,9 @@ class Session:
       Sets a user-defined variable in the session.
 
       See Badges documentation for more information on user-defined variables.
+
+      :param name: The variable's name.
+      :param value: The new value to assign.
       """
       result = await iterm2.rpc.variable(self.connection, self.session_id, [(name, value)], [])
       status = result.variable_response.status
@@ -315,6 +339,10 @@ class Session:
       Fetches a session variable.
 
       See Badges documentation for more information on user-defined variables.
+
+      :param name: The variable's name.
+
+      :returns: The variable's value or empty string if it is undefined.
       """
       result = await iterm2.rpc.variable(self.connection, self.session_id, [], [name])
       status = result.variable_response.status
@@ -345,6 +373,11 @@ class Session:
       return self
 
     async def get(self):
+      """
+      Get the next keystroke.
+
+      :returns: An iterm2.api_pb2.KeystrokeNotification.
+      """
       self.future = asyncio.Future()
       await self.connection.dispatch_until_future(self.future)
       result = self.future.result()
@@ -383,6 +416,11 @@ class Session:
       await iterm2.notifications.unsubscribe(self.connection, self.token)
 
     async def get(self):
+      """
+      Gets the screen contents, waiting until they change if needed.
+
+      :returns: An iterm2.api_pb2.GetBufferResponse.
+      """
       future = asyncio.Future()
       self.future = future
       await self.connection.dispatch_until_future(self.future)

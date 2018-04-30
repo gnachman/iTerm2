@@ -6,15 +6,19 @@ import iterm2.tab
 import iterm2.util
 
 class CreateTabException(Exception):
+  """Something went wrong creating a tab."""
   pass
 
 class SetPropertyException(Exception):
+  """Something went wrong setting a property."""
   pass
 
 class GetPropertyException(Exception):
+  """Something went wrong fetching a property."""
   pass
 
 class SavedArrangementException(Exception):
+  """Something went wrong saving or restoring a saved arrangement."""
   pass
 
 class Window:
@@ -32,7 +36,7 @@ class Window:
 
   def pretty_str(self, indent=""):
     """
-    Returns: A nicely formatted string describing the window, its tabs, and their sessions.
+    :returns: A nicely formatted string describing the window, its tabs, and their sessions.
     """
     s = indent + "Window id=%s frame=%s\n" % (self.get_window_id(), iterm2.util.frame_str(self.frame))
     for t in self.tabs:
@@ -44,12 +48,12 @@ class Window:
     """
     Creates a new window.
 
-    profile: The profile name to use or None for the default profile.
-    command: The command to run in the new session, or None for the default for the profile.
+    :param profile: The profile name to use or None for the default profile.
+    :param command: The command to run in the new session, or None for the default for the profile.
 
-    Returns: A session_id
+    :returns: A session_id
 
-    Raises: CreateTabException if something goes wrong.
+    :raises: CreateTabException if something goes wrong.
     """
     result = await iterm2.rpc.create_tab(connection, profile=profile, command=command)
     if result.create_tab_response.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
@@ -59,13 +63,13 @@ class Window:
 
   def get_window_id(self):
     """
-    Returns: the window's unique identifier.
+    :returns: the window's unique identifier.
     """
     return self.window_id
 
   def get_tabs(self):
     """
-    Returns: a list of iterm2.tab.Tab objects.
+    :returns: a list of iterm2.tab.Tab objects.
     """
     return self.tabs
 
@@ -73,13 +77,13 @@ class Window:
     """
     Creates a new tab in this window.
 
-    profile: The profile name to use or None for the default profile.
-    command: The command to run in the new session, or None for the default for the profile.
-    index: The index in the window where the new tab should go (0=first position, etc.)
+    :param profile: The profile name to use or None for the default profile.
+    :param command: The command to run in the new session, or None for the default for the profile.
+    :param index: The index in the window where the new tab should go (0=first position, etc.)
 
-    Returns: A session_id
+    :returns: A session_id
 
-    Raises: CreateTabException if something goes wrong.
+    :raises: CreateTabException if something goes wrong.
     """
     result = await iterm2.rpc.create_tab(self.connection, profile=profile, window=self.window_id, index=index, command=command)
     if result.create_tab_response.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
@@ -93,11 +97,11 @@ class Window:
 
     0,0 is the *bottom* right of the main screen.
 
-    connection: A connected iterm2.Connection.
+    :param connection: A connected iterm2.Connection.
 
-    Returns: api_pb2.Frame
+    :returns: api_pb2.Frame
 
-    Raises: GetPropertyException if something goes wrong.
+    :raises: GetPropertyException if something goes wrong.
     """
 
     response = await iterm2.rpc.get_property(connection, "frame", self.window_id)
@@ -116,10 +120,10 @@ class Window:
     """
     Sets the window's frame.
 
-    connection: A connected iterm2.Connection.
-    frame: api_pb2.Frame
+    :param connection: A connected iterm2.Connection.
+    :param frame: api_pb2.Frame
 
-    Raises: SetPropertyException if something goes wrong.
+    :raises: SetPropertyException if something goes wrong.
     """
     dict = { "origin": { "x": frame.origin.x,
                          "y": frame.origin.y },
@@ -134,11 +138,11 @@ class Window:
     """
     Checks if the window is full-screen.
 
-    connection: A connected iterm2.Connection.
+    :param connection: A connected iterm2.Connection.
 
-    Returns: True (fullscreen) or False (not fullscreen)
+    :returns: True (fullscreen) or False (not fullscreen)
 
-    Raises: GetPropertyException if something goes wrong.
+    :raises: GetPropertyException if something goes wrong.
     """
     response = await iterm2.rpc.get_property(connection, "fullscreen", self.window_id)
     if response.get_property_response.status == iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
@@ -151,10 +155,10 @@ class Window:
     """
     Changes the window's full-screen status.
 
-    connection: A connected iterm2.Connection.
-    fullscreen: True to make fullscreen, False to make not-fullscreen
+    :param connection: A connected iterm2.Connection.
+    :param fullscreen: True to make fullscreen, False to make not-fullscreen
 
-    Raises: SetPropertyException if something goes wrong.
+    :raises: SetPropertyException if something goes wrong.
     """
     json_value = json.dumps(fullscreen)
     response = await iterm2.rpc.set_property(connection, "fullscreen", json_value, window_id=self.window_id)
@@ -165,17 +169,26 @@ class Window:
   async def activate(self, connection):
     """
     Gives the window keyboard focus and orders it to the front.
+
+    :param connection: A connected iterm2.Connection.
     """
     await iterm2.rpc.activate(self.connection, False, False, True, window_id=self.window_id)
 
   async def save_window_as_arrangement(self, name):
-    """Save the current window as a new arrangement."""
+    """Save the current window as a new arrangement.
+    
+    :param name: The name to save as. Will overwrite if one already exists with this name.
+    """
     result = await iterm2.rpc.save_arrangement(self.connection, name, self.window_id)
     if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
       raise SavedArrangementException(iterm2.api_pb2.SavedArrangementResponse.Status.Name(result.saved_arrangement_response.status))
 
   async def restore_window_arrangement(self, name):
-    """Restore a window arrangement as tabs in this window."""
+    """Restore a window arrangement as tabs in this window.
+    
+    :param name: The name to restore.
+    
+    :raises: SavedArrangementException if the named arrangement does not exist."""
     result = await iterm2.rpc.restore_arrangement(self.connection, name, self.window_id)
     if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
       raise SavedArrangementException(iterm2.api_pb2.SavedArrangementResponse.Status.Name(result.saved_arrangement_response.status))

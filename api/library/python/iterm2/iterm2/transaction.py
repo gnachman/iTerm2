@@ -9,7 +9,12 @@ class Transaction:
   transaction and you'll know the state of the terminal will remain unchanged
   during it.
 
-  Usage:
+  Be really careful with this. No user interaction is possible during a
+  transaction. If you try to do something that requires UI work, such as
+  creating a new window via an API call, it will hang.
+
+  :Example:
+
     async with iterm2.transaction.Transaction():
       do stuff
   """

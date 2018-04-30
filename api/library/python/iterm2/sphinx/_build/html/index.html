@@ -1,0 +1,3890 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>iTerm2 Python API Documentation &#8212; iTerm2 Python API 0.26 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="iterm2-python-api-documentation">
+<h1>iTerm2 Python API Documentation<a class="headerlink" href="#iterm2-python-api-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="module-iterm2.app">
+<span id="the-app-module"></span><h2>The “app” module<a class="headerlink" href="#module-iterm2.app" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-iterm2.app"></span><dl class="class">
+<dt id="iterm2.app.App">
+<em class="property">class </em><code class="descclassname">iterm2.app.</code><code class="descname">App</code><span class="sig-paren">(</span><em>connection</em>, <em>windows</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.app.App" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents the application.</p>
+<p>Stores and provides access to app-global state. Holds a collection of
+terminal windows and provides utilities for them.</p>
+<p>This object keeps itself up to date by getting notifications when sessions,
+tabs, or windows change.</p>
+<dl class="method">
+<dt id="iterm2.app.App.activate">
+<code class="descname">activate</code><span class="sig-paren">(</span><em>raise_all_windows=True</em>, <em>ignoring_other_apps=False</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.app.App.activate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Activate the app, giving it keyboard focus.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>raise_all_windows</strong> – Raise all windows if True, or only the key window. Defaults to True.</li>
+<li><strong>ignoring_other_apps</strong> – If True, activate even if the user interacts with another app after the call.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.app.App.create_window">
+<code class="descname">create_window</code><span class="sig-paren">(</span><em>profile=None</em>, <em>command=None</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.app.App.create_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new window.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>profile</strong> – The name of the profile to use for the new window.</li>
+<li><strong>command</strong> – A command to run in lieu of the shell in the new session.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Throws:</th><td class="field-body"><p class="first last">CreateWindowException if something went wrong.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.app.App.get_key_window">
+<code class="descname">get_key_window</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.app.App.get_key_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the key window.</p>
+<p>The key window is the window that receives keyboard input when iTerm2 is
+the active application.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">iterm2.window.Window or None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.app.App.get_session_by_id">
+<code class="descname">get_session_by_id</code><span class="sig-paren">(</span><em>session_id</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.app.App.get_session_by_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds a session exactly matching the passed-in id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>session_id</strong> – The session ID to search for.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.session.Session or None.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.app.App.get_tab_and_window_for_session">
+<code class="descname">get_tab_and_window_for_session</code><span class="sig-paren">(</span><em>session</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.app.App.get_tab_and_window_for_session" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the tab and window that own a session.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>session</strong> – An iterm2.Session object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A tuple of (iterm2.window.Window, iterm2.tab.Tab).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.app.App.get_tab_by_id">
+<code class="descname">get_tab_by_id</code><span class="sig-paren">(</span><em>tab_id</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.app.App.get_tab_by_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds a tab exactly matching the passed-in id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tab_id</strong> – The tab ID to search for.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.tab.Tab or None.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.app.App.get_window_by_id">
+<code class="descname">get_window_by_id</code><span class="sig-paren">(</span><em>window_id</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.app.App.get_window_by_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds a window exactly matching the passed-in id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>window_id</strong> – The window ID to search for.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.window.Window or None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.app.App.get_window_for_tab">
+<code class="descname">get_window_for_tab</code><span class="sig-paren">(</span><em>tab_id</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.app.App.get_window_for_tab" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the window that contains the passed-in tab id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tab_id</strong> – The tab ID to search for.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.window.Window or None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.app.App.pretty_str">
+<code class="descname">pretty_str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.app.App.pretty_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the hierarchy as a human-readable string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.app.App.restore_window_arrangement">
+<code class="descname">restore_window_arrangement</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.app.App.restore_window_arrangement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restore a saved window arrangement.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – The name of the arrangement to restore.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Throws:</th><td class="field-body">SavedArrangementException</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.app.App.save_window_arrangement">
+<code class="descname">save_window_arrangement</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.app.App.save_window_arrangement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save all windows as a new arrangement.</p>
+<p>Replaces the arrangement with the given name if it already exists.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – The name of the arrangement.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Throws:</th><td class="field-body">SavedArrangementException</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="iterm2.app.CreateWindowException">
+<em class="property">class </em><code class="descclassname">iterm2.app.</code><code class="descname">CreateWindowException</code><a class="headerlink" href="#iterm2.app.CreateWindowException" title="Permalink to this definition">¶</a></dt>
+<dd><p>A problem was encountered while creating a window.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="iterm2.app.SavedArrangementException">
+<em class="property">class </em><code class="descclassname">iterm2.app.</code><code class="descname">SavedArrangementException</code><a class="headerlink" href="#iterm2.app.SavedArrangementException" title="Permalink to this definition">¶</a></dt>
+<dd><p>A problem was encountered while saving or restoring an arrangement.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-iterm2.connection">
+<span id="the-connection-module"></span><h2>The “connection” module<a class="headerlink" href="#module-iterm2.connection" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="iterm2.connection.Connection">
+<em class="property">class </em><code class="descclassname">iterm2.connection.</code><code class="descname">Connection</code><a class="headerlink" href="#iterm2.connection.Connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a loopback network connection from the script to iTerm2.</p>
+<p>Provides functionality for sending and receiving messages. Supports
+dispatching incoming messages.</p>
+<dl class="method">
+<dt id="iterm2.connection.Connection.dispatch_for_duration">
+<code class="descname">dispatch_for_duration</code><span class="sig-paren">(</span><em>duration</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.connection.Connection.dispatch_for_duration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle incoming messages for a fixed duration of time.</p>
+<p>This is typically used when you wish to receive notifications for a fixed period of time.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>duration</strong> – The minimum time to run while waiting for incoming messages.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.connection.Connection.dispatch_until_future">
+<code class="descname">dispatch_until_future</code><span class="sig-paren">(</span><em>future</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.connection.Connection.dispatch_until_future" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle incoming messages until a future has a result.</p>
+<p>This is used when you wish to receive notifications indefinitely, or until
+some condition satisfied by reciving a notification is reached.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>future</strong> – An asyncio.Future that will get a result.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.connection.Connection.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>coro</em>, <em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.connection.Connection.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience method to start a program.</p>
+<p>Connects to the API endpoint, begins an asyncio event loop, and runs the
+passed in coroutine. Exceptions will be caught and printed to stdout.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>coro</strong> – A coroutine (async function) to run after connecting.</li>
+<li><strong>args</strong> – Passed to coro after its first argument (this connection).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-iterm2.notifications">
+<span id="the-notifications-module"></span><h2>The “notifications” module<a class="headerlink" href="#module-iterm2.notifications" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="iterm2.notifications.unsubscribe">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">unsubscribe</code><span class="sig-paren">(</span><em>connection</em>, <em>token</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.unsubscribe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unsubscribes from a notification.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection.</li>
+<li><strong>token</strong> – The result of a previous subscribe call.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_new_session_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_new_session_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_new_session_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when a new session is created.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection.</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an
+iterm2.connection.Connection and iterm2.api_pb2.NewSessionNotification.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_keystroke_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_keystroke_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em>, <em>session=None</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_keystroke_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when a key is pressed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.KeystrokeNotification.</li>
+<li><strong>session</strong> – The session to monitor, or None.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: A token that can be passed to unsubscribe.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_screen_update_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_screen_update_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em>, <em>session=None</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_screen_update_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when the screen contents change.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.ScreenUpdateNotification..</li>
+<li><strong>session</strong> – The session to monitor, or None.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_prompt_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_prompt_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em>, <em>session=None</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_prompt_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when a shell prompt is received.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.PromptNotification.</li>
+<li><strong>session</strong> – The session to monitor, or None.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_location_change_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_location_change_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em>, <em>session=None</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_location_change_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when the host or current directory changes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.LocationChangeNotification.</li>
+<li><strong>session</strong> – The session to monitor, or None.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_custom_escape_sequence_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_custom_escape_sequence_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em>, <em>session=None</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_custom_escape_sequence_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when a custom escape sequence is received.</p>
+<p>The escape sequence is OSC 1337 ; Custom=id=&lt;identity&gt;:&lt;payload&gt; ST</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.CustomEscapeSequenceNotification.</li>
+<li><strong>session</strong> – The session to monitor, or None.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_terminate_session_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_terminate_session_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_terminate_session_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when a session terminates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.TerminateSessionNotification.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_layout_change_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_layout_change_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_layout_change_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when the relationship between sessions, tabs,
+and windows changes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.LayoutChangedNotification.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_focus_change_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_focus_change_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_focus_change_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when focus changes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.FocusChangedNotification.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-iterm2.profile">
+<span id="the-profile-module"></span><h2>The “profile” module<a class="headerlink" href="#module-iterm2.profile" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="iterm2.profile.Profile">
+<em class="property">class </em><code class="descclassname">iterm2.profile.</code><code class="descname">Profile</code><span class="sig-paren">(</span><em>session_id</em>, <em>connection</em>, <em>get_profile_property_response</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a session’s current profile settings.</p>
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_allow_title_reporting">
+<code class="descname">get_allow_title_reporting</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_allow_title_reporting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the session title can be reported</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_allow_title_setting">
+<code class="descname">get_allow_title_setting</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_allow_title_setting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the session title can be changed by escape sequence</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ambiguous_double_width">
+<code class="descname">get_ambiguous_double_width</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ambiguous_double_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether ambiguous-width text should be treated as double-width.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_0_color">
+<code class="descname">get_ansi_0_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_0_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 0 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_10_color">
+<code class="descname">get_ansi_10_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_10_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 10 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_11_color">
+<code class="descname">get_ansi_11_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_11_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 11 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_12_color">
+<code class="descname">get_ansi_12_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_12_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 12 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_13_color">
+<code class="descname">get_ansi_13_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_13_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 13 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_14_color">
+<code class="descname">get_ansi_14_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_14_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 14 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_15_color">
+<code class="descname">get_ansi_15_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_15_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 15 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_1_color">
+<code class="descname">get_ansi_1_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_1_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 1 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_2_color">
+<code class="descname">get_ansi_2_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_2_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 2 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_3_color">
+<code class="descname">get_ansi_3_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_3_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 3 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_4_color">
+<code class="descname">get_ansi_4_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_4_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 4 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_5_color">
+<code class="descname">get_ansi_5_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_5_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 5 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_6_color">
+<code class="descname">get_ansi_6_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_6_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 6 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_7_color">
+<code class="descname">get_ansi_7_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_7_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 7 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_8_color">
+<code class="descname">get_ansi_8_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_8_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 8 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ansi_9_color">
+<code class="descname">get_ansi_9_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ansi_9_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ANSI 9 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_answerback_string">
+<code class="descname">get_answerback_string</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_answerback_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the answerback string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A string</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_application_keypad_allowed">
+<code class="descname">get_application_keypad_allowed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_application_keypad_allowed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the terminal may be placed in application keypad mode</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ascii_anti_aliased">
+<code class="descname">get_ascii_anti_aliased</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ascii_anti_aliased" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether ASCII text is anti-aliased.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_ascii_ligatures">
+<code class="descname">get_ascii_ligatures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_ascii_ligatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether ligatures should be used for ASCII text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_background_color">
+<code class="descname">get_background_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_background_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the background color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_background_image_is_tiled">
+<code class="descname">get_background_image_is_tiled</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_background_image_is_tiled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the background image is tiled (true) or stretched (false)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_badge_color">
+<code class="descname">get_badge_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_badge_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the badge color. The alpha value is respected.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_badge_text">
+<code class="descname">get_badge_text</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_badge_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the badge text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_blend">
+<code class="descname">get_blend</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_blend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns tow much the default background color gets blended with the background image.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A float in 0 to 1</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_blink_allowed">
+<code class="descname">get_blink_allowed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_blink_allowed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether blinking text is allowed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_blinking_cursor">
+<code class="descname">get_blinking_cursor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_blinking_cursor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the cursor blinks.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_blur">
+<code class="descname">get_blur</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_blur" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether background blur should be enabled.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_blur_radius">
+<code class="descname">get_blur_radius</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_blur_radius" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the blur radius (how blurry). Requires blur to be enabled.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A float between 0 and 30</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_bm_growl">
+<code class="descname">get_bm_growl</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_bm_growl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether notifications should be shown.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_bold_color">
+<code class="descname">get_bold_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_bold_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the bold text color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_character_encoding">
+<code class="descname">get_character_encoding</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_character_encoding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the character encoding</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">CHARACTER_ENCODING_xxx</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_close_sessions_on_end">
+<code class="descname">get_close_sessions_on_end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_close_sessions_on_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the session should close when it ends.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_cursor_boost">
+<code class="descname">get_cursor_boost</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_cursor_boost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the cursor boost level.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A float in 0 to 1</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_cursor_color">
+<code class="descname">get_cursor_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_cursor_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the cursor color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_cursor_guide_color">
+<code class="descname">get_cursor_guide_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_cursor_guide_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the cursor guide color. The alpha value is respected.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_cursor_text_color">
+<code class="descname">get_cursor_text_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_cursor_text_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the cursor text color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_cursor_type">
+<code class="descname">get_cursor_type</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_cursor_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the cursor type</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">CURSOR_TYPE_xxx</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_disable_printing">
+<code class="descname">get_disable_printing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_disable_printing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether printing by escape sequence is disabled.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_disable_smcup_rmcup">
+<code class="descname">get_disable_smcup_rmcup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_disable_smcup_rmcup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether alternate screen mode is disabled</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_disable_window_resizing">
+<code class="descname">get_disable_window_resizing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_disable_window_resizing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the terminal can resize the window with an escape sequence.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_flashing_bell">
+<code class="descname">get_flashing_bell</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_flashing_bell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the bell should flash the screen</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_foreground_color">
+<code class="descname">get_foreground_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_foreground_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the foreground color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_horizontal_spacing">
+<code class="descname">get_horizontal_spacing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_horizontal_spacing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the fraction of horizontal spacing.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A float at least 0</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_idle_code">
+<code class="descname">get_idle_code</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_idle_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ASCII code to send on idle</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An int in 0…255</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_idle_period">
+<code class="descname">get_idle_period</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_idle_period" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns how often to send a code when idle</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A float at least 0</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_left_option_key_sends">
+<code class="descname">get_left_option_key_sends</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_left_option_key_sends" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the behavior of the left option key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">OPTION_KEY_xxx</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_link_color">
+<code class="descname">get_link_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_link_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the link color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_minimum_contrast">
+<code class="descname">get_minimum_contrast</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_minimum_contrast" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the minimum contrast.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A float in 0 to 1</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_mouse_reporting">
+<code class="descname">get_mouse_reporting</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_mouse_reporting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether mouse reporting is allowed</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_mouse_reporting_allow_mouse_wheel">
+<code class="descname">get_mouse_reporting_allow_mouse_wheel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_mouse_reporting_allow_mouse_wheel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether mouse reporting reports the mouse wheel’s movements.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_name">
+<code class="descname">get_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A string</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_non_ascii_anti_aliased">
+<code class="descname">get_non_ascii_anti_aliased</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_non_ascii_anti_aliased" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether non-ASCII text is anti-aliased.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_non_ascii_ligatures">
+<code class="descname">get_non_ascii_ligatures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_non_ascii_ligatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether ligatures should be used for non-ASCII text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_only_the_default_bg_color_uses_transparency">
+<code class="descname">get_only_the_default_bg_color_uses_transparency</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_only_the_default_bg_color_uses_transparency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether window transparency shows through non-default background colors.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_place_prompt_at_first_column">
+<code class="descname">get_place_prompt_at_first_column</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_place_prompt_at_first_column" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the prompt should always begin at the first column (requires shell integration)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_prompt_before_closing">
+<code class="descname">get_prompt_before_closing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_prompt_before_closing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the session should prompt before closign</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_reduce_flicker">
+<code class="descname">get_reduce_flicker</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_reduce_flicker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the flicker fixer is on.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_right_option_key_sends">
+<code class="descname">get_right_option_key_sends</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_right_option_key_sends" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the behavior of the right option key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">OPTION_KEY_xxx</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_scrollback_in_alternate_screen">
+<code class="descname">get_scrollback_in_alternate_screen</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_scrollback_in_alternate_screen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether text gets appended to scrollback in alternate screen mode</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_scrollback_lines">
+<code class="descname">get_scrollback_lines</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_scrollback_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of scrollback lines.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An int at least 0</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_scrollback_with_status_bar">
+<code class="descname">get_scrollback_with_status_bar</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_scrollback_with_status_bar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether text gets appended to scrollback when there is an app status bar</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_selected_text_color">
+<code class="descname">get_selected_text_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_selected_text_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the selection text color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_selection_color">
+<code class="descname">get_selection_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_selection_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the selection background color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_send_bell_alert">
+<code class="descname">get_send_bell_alert</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_send_bell_alert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether notifications should be shown for the bell ringing</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_send_code_when_idle">
+<code class="descname">get_send_code_when_idle</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_send_code_when_idle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether to send a code when idle</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_send_idle_alert">
+<code class="descname">get_send_idle_alert</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_send_idle_alert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether notifications should be shown for becoming idle</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_send_new_output_alert">
+<code class="descname">get_send_new_output_alert</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_send_new_output_alert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether notifications should be shown for new output</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_send_session_ended_alert">
+<code class="descname">get_send_session_ended_alert</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_send_session_ended_alert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether notifications should be shown for a session ending</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_send_terminal_generated_alerts">
+<code class="descname">get_send_terminal_generated_alerts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_send_terminal_generated_alerts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether notifications should be shown for escape-sequence originated notifications</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_session_close_undo_timeout">
+<code class="descname">get_session_close_undo_timeout</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_session_close_undo_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns tmount of time you can undo closing a session</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A float at least 0</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_show_mark_indicators">
+<code class="descname">get_show_mark_indicators</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_show_mark_indicators" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether mark indicators should be visible</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_silence_bell">
+<code class="descname">get_silence_bell</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_silence_bell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the bell makes noise.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_smart_cursor_color">
+<code class="descname">get_smart_cursor_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_smart_cursor_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the smart cursor text color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A string</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">get_smart_cursor_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Returns the smart cursor text color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A string</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_sync_title">
+<code class="descname">get_sync_title</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_sync_title" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the profile name stays in the tab title, even if changed by an escape sequence.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_tab_color">
+<code class="descname">get_tab_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_tab_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the tab color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_thin_strokes">
+<code class="descname">get_thin_strokes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_thin_strokes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether thin strokes are used.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">THIN_STROKES_SETTING_xxx</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_transparency">
+<code class="descname">get_transparency</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_transparency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the level of transparency.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A float between 0 and 1</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_underline_color">
+<code class="descname">get_underline_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_underline_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the underline color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color or None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_unicode_normalization">
+<code class="descname">get_unicode_normalization</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_unicode_normalization" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the unicode normalization form to use</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">UNICODE_NORMALIZATION_xxx</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_unicode_version">
+<code class="descname">get_unicode_version</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_unicode_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the unicode version for wcwidth</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_unlimited_scrollback">
+<code class="descname">get_unlimited_scrollback</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_unlimited_scrollback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the scrollback buffer’s length is unlimited.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_use_bold_font">
+<code class="descname">get_use_bold_font</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_use_bold_font" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether to use the bold variant of the font for bold text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_use_bright_bold">
+<code class="descname">get_use_bright_bold</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_use_bright_bold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether bright colors should be used for bold text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_use_cursor_guide">
+<code class="descname">get_use_cursor_guide</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_use_cursor_guide" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the cursor guide should be used.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A boolean</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_use_italic_font">
+<code class="descname">get_use_italic_font</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_use_italic_font" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether italic text is allowed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_use_non_ascii_font">
+<code class="descname">get_use_non_ascii_font</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_use_non_ascii_font" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether to use a different font for non-ASCII text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_use_tab_color">
+<code class="descname">get_use_tab_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_use_tab_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the tab color should be used.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A string</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_use_underline_color">
+<code class="descname">get_use_underline_color</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_use_underline_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the underline color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_vertical_spacing">
+<code class="descname">get_vertical_spacing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_vertical_spacing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the fraction of vertical spacing.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A float at least 0</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.get_visual_bell">
+<code class="descname">get_visual_bell</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.get_visual_bell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether a bell should be shown when the bell rings</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_allow_title_reporting">
+<code class="descname">set_allow_title_reporting</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_allow_title_reporting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the session title can be reported</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_allow_title_setting">
+<code class="descname">set_allow_title_setting</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_allow_title_setting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the session title can be changed by escape sequence</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ambiguous_double_width">
+<code class="descname">set_ambiguous_double_width</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ambiguous_double_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether ambiguous-width text should be treated as double-width.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_0_color">
+<code class="descname">set_ansi_0_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_0_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 0 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_10_color">
+<code class="descname">set_ansi_10_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_10_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 10 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_11_color">
+<code class="descname">set_ansi_11_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_11_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 11 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_12_color">
+<code class="descname">set_ansi_12_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_12_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 12 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_13_color">
+<code class="descname">set_ansi_13_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_13_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 13 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_14_color">
+<code class="descname">set_ansi_14_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_14_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 14 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_15_color">
+<code class="descname">set_ansi_15_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_15_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 15 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_1_color">
+<code class="descname">set_ansi_1_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_1_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 1 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_2_color">
+<code class="descname">set_ansi_2_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_2_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 2 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_3_color">
+<code class="descname">set_ansi_3_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_3_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 3 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_4_color">
+<code class="descname">set_ansi_4_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_4_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 4 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_5_color">
+<code class="descname">set_ansi_5_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_5_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 5 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_6_color">
+<code class="descname">set_ansi_6_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_6_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 6 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_7_color">
+<code class="descname">set_ansi_7_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_7_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 7 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_8_color">
+<code class="descname">set_ansi_8_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_8_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 8 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ansi_9_color">
+<code class="descname">set_ansi_9_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ansi_9_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ANSI 9 color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_answerback_string">
+<code class="descname">set_answerback_string</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_answerback_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the answerback string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A string</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_application_keypad_allowed">
+<code class="descname">set_application_keypad_allowed</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_application_keypad_allowed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the terminal may be placed in application keypad mode</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ascii_anti_aliased">
+<code class="descname">set_ascii_anti_aliased</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ascii_anti_aliased" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether ASCII text is anti-aliased.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_ascii_ligatures">
+<code class="descname">set_ascii_ligatures</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_ascii_ligatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether ligatures should be used for ASCII text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_background_color">
+<code class="descname">set_background_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_background_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the background color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_background_image_is_tiled">
+<code class="descname">set_background_image_is_tiled</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_background_image_is_tiled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the background image is tiled (true) or stretched (false)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_badge_color">
+<code class="descname">set_badge_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_badge_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the badge color. The alpha value is respected.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_badge_text">
+<code class="descname">set_badge_text</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_badge_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the badge text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_blend">
+<code class="descname">set_blend</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_blend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets how much the default background color gets blended with the background image.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A float in 0 to 1</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_blink_allowed">
+<code class="descname">set_blink_allowed</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_blink_allowed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether blinking text is allowed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_blinking_cursor">
+<code class="descname">set_blinking_cursor</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_blinking_cursor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the cursor blinks.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_blur">
+<code class="descname">set_blur</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_blur" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether background blur should be enabled.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_blur_radius">
+<code class="descname">set_blur_radius</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_blur_radius" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the blur radius (how blurry). Requires blur to be enabled.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A float between 0 and 30</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_bm_growl">
+<code class="descname">set_bm_growl</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_bm_growl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether notifications should be shown.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_bold_color">
+<code class="descname">set_bold_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_bold_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the bold text color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_character_encoding">
+<code class="descname">set_character_encoding</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_character_encoding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the character encoding</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – CHARACTER_ENCODING_xxx</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_close_sessions_on_end">
+<code class="descname">set_close_sessions_on_end</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_close_sessions_on_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the session should close when it ends.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_cursor_boost">
+<code class="descname">set_cursor_boost</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_cursor_boost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the cursor boost level.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A float in 0 to 1</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_cursor_color">
+<code class="descname">set_cursor_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_cursor_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the cursor color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_cursor_guide_color">
+<code class="descname">set_cursor_guide_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_cursor_guide_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the cursor guide color. The alpha value is respected.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_cursor_text_color">
+<code class="descname">set_cursor_text_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_cursor_text_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the cursor text color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_cursor_type">
+<code class="descname">set_cursor_type</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_cursor_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the cursor type</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – CURSOR_TYPE_xxx</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_disable_printing">
+<code class="descname">set_disable_printing</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_disable_printing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether printing by escape sequence is disabled.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_disable_smcup_rmcup">
+<code class="descname">set_disable_smcup_rmcup</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_disable_smcup_rmcup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether alternate screen mode is disabled</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_disable_window_resizing">
+<code class="descname">set_disable_window_resizing</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_disable_window_resizing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the terminal can resize the window with an escape sequence.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_flashing_bell">
+<code class="descname">set_flashing_bell</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_flashing_bell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the bell should flash the screen</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_foreground_color">
+<code class="descname">set_foreground_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_foreground_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the foreground color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_horizontal_spacing">
+<code class="descname">set_horizontal_spacing</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_horizontal_spacing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the fraction of horizontal spacing.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A float at least 0</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_idle_code">
+<code class="descname">set_idle_code</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_idle_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the ASCII code to send on idle</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An int in 0…255</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_idle_period">
+<code class="descname">set_idle_period</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_idle_period" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets how often to send a code when idle</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A float at least 0</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_left_option_key_sends">
+<code class="descname">set_left_option_key_sends</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_left_option_key_sends" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the behavior of the left option key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – OPTION_KEY_xxx</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_link_color">
+<code class="descname">set_link_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_link_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the link color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_minimum_contrast">
+<code class="descname">set_minimum_contrast</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_minimum_contrast" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the minimum contrast.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A float in 0 to 1</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_mouse_reporting">
+<code class="descname">set_mouse_reporting</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_mouse_reporting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether mouse reporting is allowed</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_mouse_reporting_allow_mouse_wheel">
+<code class="descname">set_mouse_reporting_allow_mouse_wheel</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_mouse_reporting_allow_mouse_wheel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether mouse reporting reports the mouse wheel’s movements.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_name">
+<code class="descname">set_name</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A string</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_non_ascii_anti_aliased">
+<code class="descname">set_non_ascii_anti_aliased</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_non_ascii_anti_aliased" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether non-ASCII text is anti-aliased.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_non_ascii_ligatures">
+<code class="descname">set_non_ascii_ligatures</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_non_ascii_ligatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether ligatures should be used for non-ASCII text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_only_the_default_bg_color_uses_transparency">
+<code class="descname">set_only_the_default_bg_color_uses_transparency</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_only_the_default_bg_color_uses_transparency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether window transparency shows through non-default background colors.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_place_prompt_at_first_column">
+<code class="descname">set_place_prompt_at_first_column</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_place_prompt_at_first_column" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the prompt should always begin at the first column (requires shell integration)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_prompt_before_closing">
+<code class="descname">set_prompt_before_closing</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_prompt_before_closing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the session should prompt before closign</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_reduce_flicker">
+<code class="descname">set_reduce_flicker</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_reduce_flicker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the flicker fixer is on.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_right_option_key_sends">
+<code class="descname">set_right_option_key_sends</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_right_option_key_sends" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the behavior of the right option key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – OPTION_KEY_xxx</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_scrollback_in_alternate_screen">
+<code class="descname">set_scrollback_in_alternate_screen</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_scrollback_in_alternate_screen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether text gets appended to scrollback in alternate screen mode</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_scrollback_lines">
+<code class="descname">set_scrollback_lines</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_scrollback_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the number of scrollback lines.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An int at least 0</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_scrollback_with_status_bar">
+<code class="descname">set_scrollback_with_status_bar</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_scrollback_with_status_bar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether text gets appended to scrollback when there is an app status bar</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_selected_text_color">
+<code class="descname">set_selected_text_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_selected_text_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the selection text color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_selection_color">
+<code class="descname">set_selection_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_selection_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the selection background color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_send_bell_alert">
+<code class="descname">set_send_bell_alert</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_send_bell_alert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether notifications should be shown for the bell ringing</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_send_code_when_idle">
+<code class="descname">set_send_code_when_idle</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_send_code_when_idle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether to send a code when idle</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_send_idle_alert">
+<code class="descname">set_send_idle_alert</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_send_idle_alert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether notifications should be shown for becoming idle</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_send_new_output_alert">
+<code class="descname">set_send_new_output_alert</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_send_new_output_alert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether notifications should be shown for new output</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_send_session_ended_alert">
+<code class="descname">set_send_session_ended_alert</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_send_session_ended_alert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether notifications should be shown for a session ending</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_send_terminal_generated_alerts">
+<code class="descname">set_send_terminal_generated_alerts</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_send_terminal_generated_alerts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether notifications should be shown for escape-sequence originated notifications</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_session_close_undo_timeout">
+<code class="descname">set_session_close_undo_timeout</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_session_close_undo_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets amount of time you can undo closing a session</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A float at least 0</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_show_mark_indicators">
+<code class="descname">set_show_mark_indicators</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_show_mark_indicators" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether mark indicators should be visible</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_silence_bell">
+<code class="descname">set_silence_bell</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_silence_bell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the bell makes noise.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_smart_cursor_color">
+<code class="descname">set_smart_cursor_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_smart_cursor_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the smart cursor text color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A string</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">set_smart_cursor_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span></dt>
+<dd><p>Sets the smart cursor text color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A string</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_sync_title">
+<code class="descname">set_sync_title</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_sync_title" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the profile name stays in the tab title, even if changed by an escape sequence.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_tab_color">
+<code class="descname">set_tab_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_tab_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the tab color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_thin_strokes">
+<code class="descname">set_thin_strokes</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_thin_strokes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether thin strokes are used.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – THIN_STROKES_SETTING_xxx</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_transparency">
+<code class="descname">set_transparency</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_transparency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the level of transparency.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A float between 0 and 1</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_underline_color">
+<code class="descname">set_underline_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_underline_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the underline color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color or None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_unicode_normalization">
+<code class="descname">set_unicode_normalization</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_unicode_normalization" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the unicode normalization form to use</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – UNICODE_NORMALIZATION_xxx</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_unicode_version">
+<code class="descname">set_unicode_version</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_unicode_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the unicode version for wcwidth</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_unlimited_scrollback">
+<code class="descname">set_unlimited_scrollback</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_unlimited_scrollback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the scrollback buffer’s length is unlimited.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_use_bold_font">
+<code class="descname">set_use_bold_font</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_use_bold_font" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether to use the bold variant of the font for bold text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_use_bright_bold">
+<code class="descname">set_use_bright_bold</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_use_bright_bold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether bright colors should be used for bold text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_use_cursor_guide">
+<code class="descname">set_use_cursor_guide</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_use_cursor_guide" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the cursor guide should be used.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A boolean</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_use_italic_font">
+<code class="descname">set_use_italic_font</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_use_italic_font" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether italic text is allowed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_use_non_ascii_font">
+<code class="descname">set_use_non_ascii_font</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_use_non_ascii_font" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether to use a different font for non-ASCII text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_use_tab_color">
+<code class="descname">set_use_tab_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_use_tab_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether the tab color should be used.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A string</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_use_underline_color">
+<code class="descname">set_use_underline_color</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_use_underline_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the underline color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – An iterm2.profile.Color</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_vertical_spacing">
+<code class="descname">set_vertical_spacing</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_vertical_spacing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the fraction of vertical spacing.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A float at least 0</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.profile.Profile.set_visual_bell">
+<code class="descname">set_visual_bell</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.profile.Profile.set_visual_bell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets whether a bell should be shown when the bell rings</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> – A bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-iterm2.session">
+<span id="the-session-module"></span><h2>The “session” module<a class="headerlink" href="#module-iterm2.session" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="iterm2.session.Session">
+<em class="property">class </em><code class="descclassname">iterm2.session.</code><code class="descname">Session</code><span class="sig-paren">(</span><em>connection</em>, <em>link</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Session" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents an iTerm2 session.</p>
+<dl class="class">
+<dt id="iterm2.session.Session.KeystrokeReader">
+<em class="property">class </em><code class="descname">KeystrokeReader</code><span class="sig-paren">(</span><em>connection</em>, <em>session_id</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Session.KeystrokeReader" title="Permalink to this definition">¶</a></dt>
+<dd><p>An asyncio context manager for reading keystrokes.</p>
+<p>Don’t create this yourself. Use Session.get_keystroke_reader() instead. See
+its docstring for more info.</p>
+<dl class="method">
+<dt id="iterm2.session.Session.KeystrokeReader.get">
+<code class="descname">get</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Session.KeystrokeReader.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the next keystroke.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.api_pb2.KeystrokeNotification.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="iterm2.session.Session.ScreenStreamer">
+<em class="property">class </em><code class="descname">ScreenStreamer</code><span class="sig-paren">(</span><em>connection</em>, <em>session_id</em>, <em>want_contents=True</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Session.ScreenStreamer" title="Permalink to this definition">¶</a></dt>
+<dd><p>An asyncio context manager for monitoring the screen contents.</p>
+<p>Don’t create this yourself. Use Session.get_screen_streamer() instead. See
+its docstring for more info.</p>
+<dl class="method">
+<dt id="iterm2.session.Session.ScreenStreamer.get">
+<code class="descname">get</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Session.ScreenStreamer.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the screen contents, waiting until they change if needed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.api_pb2.GetBufferResponse.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="iterm2.session.Session.active_proxy">
+<em class="property">static </em><code class="descname">active_proxy</code><span class="sig-paren">(</span><em>connection</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Session.active_proxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use this to register notifications against the currently active session.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A proxy for the currently active session.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="iterm2.session.Session.all_proxy">
+<em class="property">static </em><code class="descname">all_proxy</code><span class="sig-paren">(</span><em>connection</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Session.all_proxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use this to register notifications against all sessions, including those
+not yet created.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A proxy for all sessions.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.session.Session.get_keystroke_reader">
+<code class="descname">get_keystroke_reader</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Session.get_keystroke_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a nice interface for observing a sequence of keystrokes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">a keystroke reader, an iterm2.session.Session.KeystrokeReader.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Example:</th><td class="field-body"><dl class="first last docutils">
+<dt>async with session.get_keystroke_reader() as reader:</dt>
+<dd><dl class="first last docutils">
+<dt>while condition():</dt>
+<dd><p class="first last">handle_keystrokes(reader.get())</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Each call to reader.get() returns an array of new keystrokes.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.session.Session.get_session_id">
+<code class="descname">get_session_id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Session.get_session_id" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the globally unique identifier for this session.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.session.Session.pretty_str">
+<code class="descname">pretty_str</code><span class="sig-paren">(</span><em>indent=''</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Session.pretty_str" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A string describing the session.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="iterm2.session.InvalidSessionId">
+<em class="property">class </em><code class="descclassname">iterm2.session.</code><code class="descname">InvalidSessionId</code><a class="headerlink" href="#iterm2.session.InvalidSessionId" title="Permalink to this definition">¶</a></dt>
+<dd><p>The specified session ID is not allowed in this method.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="iterm2.session.Splitter">
+<em class="property">class </em><code class="descclassname">iterm2.session.</code><code class="descname">Splitter</code><span class="sig-paren">(</span><em>vertical=False</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Splitter" title="Permalink to this definition">¶</a></dt>
+<dd><p>A container of split pane sessions where the dividers are all aligned the same way.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Variables:</th><td class="field-body"><strong>vertical</strong> – Whether the split pane dividers in this Splitter are vertical
+or horizontal.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="iterm2.session.Splitter.all_sessions">
+<code class="descname">all_sessions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Splitter.all_sessions" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">All sessions in this splitter and all nested splitters. A list of
+iterm2.session.Session objects.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.session.Splitter.get_children">
+<code class="descname">get_children</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Splitter.get_children" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">This splitter’s children. A list of iterm2.session.Session objects.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.session.Splitter.pretty_str">
+<code class="descname">pretty_str</code><span class="sig-paren">(</span><em>indent=''</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.session.Splitter.pretty_str" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A string describing this splitter. Has newlines.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-iterm2.tab">
+<span id="the-tab-module"></span><h2>The “tab” module<a class="headerlink" href="#module-iterm2.tab" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="iterm2.tab.Tab">
+<em class="property">class </em><code class="descclassname">iterm2.tab.</code><code class="descname">Tab</code><span class="sig-paren">(</span><em>connection</em>, <em>tab_id</em>, <em>root</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.tab.Tab" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a tab.</p>
+<dl class="method">
+<dt id="iterm2.tab.Tab.get_root">
+<code class="descname">get_root</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.tab.Tab.get_root" title="Permalink to this definition">¶</a></dt>
+<dd><p>A tab’s sessions are stored in a tree. This returns the root.</p>
+<p>An interior node of the tree is a Splitter. That corresponds to a
+collection of adjacent sessions with split pane dividers that are all
+either vertical or horizontal.</p>
+<p>Leaf nodes are Sessions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An iterm2.session.Splitter forming the root of this tab’s session tree.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.tab.Tab.get_sessions">
+<code class="descname">get_sessions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.tab.Tab.get_sessions" title="Permalink to this definition">¶</a></dt>
+<dd><p>A tab contains a list of sessions, which are its split panes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A list of iterm2.session.Session objects belonging to this tab.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.tab.Tab.get_tab_id">
+<code class="descname">get_tab_id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.tab.Tab.get_tab_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Each tab has a globally unique identifier.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The tab’s identifier.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.tab.Tab.pretty_str">
+<code class="descname">pretty_str</code><span class="sig-paren">(</span><em>indent=''</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.tab.Tab.pretty_str" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A human readable description of the tab and its sessions.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.tab.Tab.select">
+<code class="descname">select</code><span class="sig-paren">(</span><em>order_window_front=True</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.tab.Tab.select" title="Permalink to this definition">¶</a></dt>
+<dd><p>Selects this tab.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>order_window_front</strong> – Whether the window this session is in should be
+brought to the front and given keyboard focus.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-iterm2.tool">
+<span id="the-tool-module"></span><h2>The “tool” module<a class="headerlink" href="#module-iterm2.tool" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="iterm2.tool.register_web_view_tool">
+<code class="descclassname">iterm2.tool.</code><code class="descname">register_web_view_tool</code><span class="sig-paren">(</span><em>connection</em>, <em>display_name</em>, <em>identifier</em>, <em>reveal_if_already_registered</em>, <em>url</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.tool.register_web_view_tool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a toolbelt tool that shows a webview.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection.</li>
+<li><strong>display_name</strong> – The name of the tool. User-visible.</li>
+<li><strong>identifier</strong> – A unique ID that prevents duplicate registration.</li>
+<li><strong>reveal_if_already_registered</strong> – Bool. If True, shows the tool on a duplicate registration attempt.</li>
+<li><strong>url</strong> – The URL to show in the webview.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">iterm2.api_pb2.RegisterToolResponse on success</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">iterm2.rpc.RPCException if something goes wrong</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-iterm2.transaction">
+<span id="the-transaction-module"></span><h2>The “transaction” module<a class="headerlink" href="#module-iterm2.transaction" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="iterm2.transaction.Transaction">
+<em class="property">class </em><code class="descclassname">iterm2.transaction.</code><code class="descname">Transaction</code><span class="sig-paren">(</span><em>connection</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.transaction.Transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>An asyncio context manager for transactions.</p>
+<p>A transaction is a sequence of API calls that occur without anything else
+happening in between. If you’re worried about state mutating between reading
+the screen contents and then sending text, for example, do it in a
+transaction and you’ll know the state of the terminal will remain unchanged
+during it.</p>
+<p>Be really careful with this. No user interaction is possible during a
+transaction. If you try to do something that requires UI work, such as
+creating a new window via an API call, it will hang.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><dl class="first last docutils">
+<dt>async with iterm2.transaction.Transaction():</dt>
+<dd><p class="first last">do stuff</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-iterm2.util">
+<span id="the-util-module"></span><h2>The “util” module<a class="headerlink" href="#module-iterm2.util" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="iterm2.util.frame_str">
+<code class="descclassname">iterm2.util.</code><code class="descname">frame_str</code><span class="sig-paren">(</span><em>frame</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.util.frame_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Formats an api_pb2.Frame as a human-readable string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>frame</strong> – An api_pb2.Frame</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A human-readable string.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.util.size_str">
+<code class="descclassname">iterm2.util.</code><code class="descname">size_str</code><span class="sig-paren">(</span><em>size</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.util.size_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Formats an api_pb2.Size as a human-readable string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>frame</strong> – An api_pb2.Size</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A human-readable string.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-iterm2.window">
+<span id="the-window-module"></span><h2>The “window” module<a class="headerlink" href="#module-iterm2.window" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="iterm2.window.CreateTabException">
+<em class="property">exception </em><code class="descclassname">iterm2.window.</code><code class="descname">CreateTabException</code><a class="headerlink" href="#iterm2.window.CreateTabException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Something went wrong creating a tab.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="iterm2.window.SetPropertyException">
+<em class="property">exception </em><code class="descclassname">iterm2.window.</code><code class="descname">SetPropertyException</code><a class="headerlink" href="#iterm2.window.SetPropertyException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Something went wrong setting a property.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="iterm2.window.GetPropertyException">
+<em class="property">exception </em><code class="descclassname">iterm2.window.</code><code class="descname">GetPropertyException</code><a class="headerlink" href="#iterm2.window.GetPropertyException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Something went wrong fetching a property.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="iterm2.window.SavedArrangementException">
+<em class="property">exception </em><code class="descclassname">iterm2.window.</code><code class="descname">SavedArrangementException</code><a class="headerlink" href="#iterm2.window.SavedArrangementException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Something went wrong saving or restoring a saved arrangement.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="iterm2.window.Window">
+<em class="property">class </em><code class="descclassname">iterm2.window.</code><code class="descname">Window</code><span class="sig-paren">(</span><em>connection</em>, <em>window_id</em>, <em>tabs</em>, <em>frame</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.window.Window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents an iTerm2 window.</p>
+<dl class="method">
+<dt id="iterm2.window.Window.activate">
+<code class="descname">activate</code><span class="sig-paren">(</span><em>connection</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.window.Window.activate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives the window keyboard focus and orders it to the front.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>connection</strong> – A connected iterm2.Connection.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="iterm2.window.Window.create">
+<em class="property">static </em><code class="descname">create</code><span class="sig-paren">(</span><em>connection</em>, <em>profile=None</em>, <em>command=None</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.window.Window.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new window.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>profile</strong> – The profile name to use or None for the default profile.</li>
+<li><strong>command</strong> – The command to run in the new session, or None for the default for the profile.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A session_id</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">CreateTabException if something goes wrong.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.window.Window.create_tab">
+<code class="descname">create_tab</code><span class="sig-paren">(</span><em>profile=None</em>, <em>command=None</em>, <em>index=None</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.window.Window.create_tab" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new tab in this window.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>profile</strong> – The profile name to use or None for the default profile.</li>
+<li><strong>command</strong> – The command to run in the new session, or None for the default for the profile.</li>
+<li><strong>index</strong> – The index in the window where the new tab should go (0=first position, etc.)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A session_id</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">CreateTabException if something goes wrong.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.window.Window.get_frame">
+<code class="descname">get_frame</code><span class="sig-paren">(</span><em>connection</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.window.Window.get_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the window’s frame.</p>
+<p>0,0 is the <em>bottom</em> right of the main screen.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>connection</strong> – A connected iterm2.Connection.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">api_pb2.Frame</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">GetPropertyException if something goes wrong.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.window.Window.get_fullscreen">
+<code class="descname">get_fullscreen</code><span class="sig-paren">(</span><em>connection</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.window.Window.get_fullscreen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the window is full-screen.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>connection</strong> – A connected iterm2.Connection.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True (fullscreen) or False (not fullscreen)</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">GetPropertyException if something goes wrong.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.window.Window.get_tabs">
+<code class="descname">get_tabs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.window.Window.get_tabs" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a list of iterm2.tab.Tab objects.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.window.Window.get_window_id">
+<code class="descname">get_window_id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.window.Window.get_window_id" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the window’s unique identifier.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.window.Window.pretty_str">
+<code class="descname">pretty_str</code><span class="sig-paren">(</span><em>indent=''</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.window.Window.pretty_str" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A nicely formatted string describing the window, its tabs, and their sessions.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.window.Window.restore_window_arrangement">
+<code class="descname">restore_window_arrangement</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.window.Window.restore_window_arrangement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restore a window arrangement as tabs in this window.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – The name to restore.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">SavedArrangementException if the named arrangement does not exist.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.window.Window.save_window_as_arrangement">
+<code class="descname">save_window_as_arrangement</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.window.Window.save_window_as_arrangement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the current window as a new arrangement.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – The name to save as. Will overwrite if one already exists with this name.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.window.Window.set_frame">
+<code class="descname">set_frame</code><span class="sig-paren">(</span><em>connection</em>, <em>frame</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.window.Window.set_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the window’s frame.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.Connection.</li>
+<li><strong>frame</strong> – api_pb2.Frame</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">SetPropertyException if something goes wrong.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.window.Window.set_fullscreen">
+<code class="descname">set_fullscreen</code><span class="sig-paren">(</span><em>connection</em>, <em>fullscreen</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.window.Window.set_fullscreen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Changes the window’s full-screen status.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.Connection.</li>
+<li><strong>fullscreen</strong> – True to make fullscreen, False to make not-fullscreen</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">SetPropertyException if something goes wrong.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">iTerm2 Python API Documentation</a><ul>
+<li><a class="reference internal" href="#module-iterm2.app">The “app” module</a></li>
+<li><a class="reference internal" href="#module-iterm2.connection">The “connection” module</a></li>
+<li><a class="reference internal" href="#module-iterm2.notifications">The “notifications” module</a></li>
+<li><a class="reference internal" href="#module-iterm2.profile">The “profile” module</a></li>
+<li><a class="reference internal" href="#module-iterm2.session">The “session” module</a></li>
+<li><a class="reference internal" href="#module-iterm2.tab">The “tab” module</a></li>
+<li><a class="reference internal" href="#module-iterm2.tool">The “tool” module</a></li>
+<li><a class="reference internal" href="#module-iterm2.transaction">The “transaction” module</a></li>
+<li><a class="reference internal" href="#module-iterm2.util">The “util” module</a></li>
+<li><a class="reference internal" href="#module-iterm2.window">The “window” module</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, George Nachman.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

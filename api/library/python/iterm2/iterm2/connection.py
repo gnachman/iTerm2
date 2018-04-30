@@ -24,8 +24,9 @@ class Connection:
     You probably don't want to call this. It's used internally for dispatching
     notifications.
 
-    helper: A coroutine that will be called on incoming messages that were not
-      previously handled.
+    Arguments:
+      helper: A coroutine that will be called on incoming messages that were not
+	previously handled.
     """
     global _helpers
     assert helper is not None
@@ -41,8 +42,8 @@ class Connection:
     Connects to the API endpoint, begins an asyncio event loop, and runs the
     passed in coroutine. Exceptions will be caught and printed to stdout.
 
-    coro: A coroutine (async function) to run after connecting.
-    *args: Passed to coro after its first argument (this connection)
+    :param coro: A coroutine (async function) to run after connecting.
+    :param args: Passed to coro after its first argument (this connection).
     """
     async def main(loop):
       await self.connect(coro, *args)
@@ -87,7 +88,7 @@ class Connection:
     of this program with its entry in the scripting console.
 
     coro: A coroutine to run once connected.
-    *args: Passed to coro after its first argument (this connection)
+    args: Passed to coro after its first argument (this connection)
     """
     cookie_key = 'ITERM2_COOKIE'
     key_key = 'ITERM2_KEY'
@@ -137,9 +138,9 @@ class Connection:
     """
     Handle incoming messages for a fixed duration of time.
 
-    duration: A time in seconds
+    This is typically used when you wish to receive notifications for a fixed period of time.
 
-    Returns after that duration.
+    :param duration: The minimum time to run while waiting for incoming messages.
     """
     try:
       now = time.time()
@@ -155,7 +156,10 @@ class Connection:
     """
     Handle incoming messages until a future has a result.
 
-    future: A future that will get a result.
+    This is used when you wish to receive notifications indefinitely, or until
+    some condition satisfied by reciving a notification is reached.
+
+    :param future: An asyncio.Future that will get a result.
     """
     while not future.done():
       message = await self.recv_message()

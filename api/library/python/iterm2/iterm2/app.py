@@ -4,14 +4,20 @@ import iterm2.session
 import iterm2.tab
 import iterm2.window
 
+_app = None
 async def get_app(connection):
-  return await App.construct(connection)
+  """Returns the app singleton, creating it if needed."""
+  global _app
+  if _app is None:
+    _app = await App.construct(connection)
+  return _app
 
 class CreateWindowException(Exception):
   """A problem was encountered while creating a window."""
   pass
 
 class SavedArrangementException(Exception):
+  """A problem was encountered while saving or restoring an arrangement."""
   pass
 
 class App:
@@ -43,7 +49,11 @@ class App:
     self.connection = connection
 
   async def activate(self, raise_all_windows=True, ignoring_other_apps=False):
-    """Activate the app, giving it keyboard focus."""
+    """Activate the app, giving it keyboard focus.
+    
+    :param raise_all_windows: Raise all windows if True, or only the key window. Defaults to True.
+    :param ignoring_other_apps: If True, activate even if the user interacts with another app after the call.
+    """
     opts = []
     if raise_all_windows:
       opts.append(iterm2.rpc.ACTIVATE_RAISE_ALL_WINDOWS)
@@ -52,13 +62,25 @@ class App:
     await iterm2.rpc.activate(self.connection, False, False, False, activate_app_opts=opts)
 
   async def save_window_arrangement(self, name):
-    """Save all windows as a new arrangement."""
+    """Save all windows as a new arrangement.
+    
+    Replaces the arrangement with the given name if it already exists.
+
+    :param name: The name of the arrangement.
+    
+    :throws: SavedArrangementException
+    """
     result = await iterm2.rpc.save_arrangement(self.connection, name)
     if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
       raise SavedArrangementException(iterm2.api_pb2.SavedArrangementResponse.Status.Name(result.saved_arrangement_response.status))
 
   async def restore_window_arrangement(self, name):
-    """Restore a saved window arrangement."""
+    """Restore a saved window arrangement.
+    
+    :param name: The name of the arrangement to restore.
+
+    :throws: SavedArrangementException
+    """
     result = await iterm2.rpc.restore_arrangement(self.connection, name)
     if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
       raise SavedArrangementException(iterm2.api_pb2.SavedArrangementResponse.Status.Name(result.saved_arrangement_response.status))
@@ -125,20 +147,12 @@ class App:
     for notif in focus_info.focus_response.notifications:
       await self._focus_change(self.connection, notif)
 
-  async def get_window_by_id(self, window_id):
-    """Finds a window exactly matching the passed-in id.
-
-    Returns: An iterm2.window.Window or None.
-    """
-    for w in self.windows:
-      if w.window_id == window_id:
-        return w
-    return None
-
   async def get_session_by_id(self, session_id):
     """Finds a session exactly matching the passed-in id.
 
-    Returns: An iterm2.session.Session or None.
+    :param session_id: The session ID to search for.
+
+    :returns: An iterm2.session.Session or None.
     """
     s = self._search_for_session_id(session_id)
     if s is None:
@@ -150,7 +164,9 @@ class App:
   async def get_tab_by_id(self, tab_id):
     """Finds a tab exactly matching the passed-in id.
 
-    Returns: An iterm2.tab.Tab or None
+    :param tab_id: The tab ID to search for.
+
+    :returns: An iterm2.tab.Tab or None.
     """
     t = self._search_for_tab_id(tab_id)
     if t is None:
@@ -162,7 +178,9 @@ class App:
   async def get_window_by_id(self, window_id):
     """Finds a window exactly matching the passed-in id.
 
-    Returns: An iterm2.window.Window or None
+    :param window_id: The window ID to search for.
+
+    :returns: An iterm2.window.Window or None
     """
     w = self._search_for_window_id(window_id)
     if w is None:
@@ -174,7 +192,9 @@ class App:
   async def get_window_for_tab(self, tab_id):
     """Finds the window that contains the passed-in tab id.
 
-    Returns: An iterm2.window.Window or None
+    :param tab_id: The tab ID to search for.
+
+    :returns: An iterm2.window.Window or None
     """
     w = self._search_for_window_with_tab(tab_id)
     if w is None:
@@ -216,7 +236,10 @@ class App:
   async def get_key_window(self):
     """Gets the key window.
 
-    Returns: iterm2.window.Window or None
+    The key window is the window that receives keyboard input when iTerm2 is
+    the active application.
+
+    :returns: iterm2.window.Window or None
     """
     if self.key_window_id is None:
       await self._refresh_focus()
@@ -228,10 +251,9 @@ class App:
   def get_tab_and_window_for_session(self, session):
     """Finds the tab and window that own a session.
 
-    Arguments:
-      session: An iterm2.Session object.
+    :param session: An iterm2.Session object.
 
-    Returns: A tuple of (iterm2.Window, iterm2.Tab).
+    :returns: A tuple of (iterm2.window.Window, iterm2.tab.Tab).
     """
     session_id = session.get_session_id()
     for w in self.windows:
@@ -243,11 +265,10 @@ class App:
   async def create_window(self, profile=None, command=None):
     """Creates a new window.
 
-    Arguments:
-      profile: The name of the profile to use for the new window.
-      command: A command to run in lieu of the shell in the new session.
+    :param profile: The name of the profile to use for the new window.
+    :param command: A command to run in lieu of the shell in the new session.
 
-    Throws CreateWindowException if something went wrong.
+    :throws: CreateWindowException if something went wrong.
     """
     result = await iterm2.rpc.create_tab(self.connection, profile=profile, window=None, command=command)
     ctr = result.create_tab_response
