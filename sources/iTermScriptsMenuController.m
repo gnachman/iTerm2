@@ -200,7 +200,9 @@ NS_ASSUME_NONNULL_BEGIN
                 }
             }];
         } else {
-            [self finishInstallingNewPythonScriptForPicker:picker url:url];
+            [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithCompletion:^{
+                [self finishInstallingNewPythonScriptForPicker:picker url:url];
+            }];
         }
     }
 }
@@ -240,7 +242,23 @@ NS_ASSUME_NONNULL_BEGIN
     }
     savePanel.directoryURL = [NSURL fileURLWithPath:[[NSFileManager defaultManager] scriptsPath]];
     if ([savePanel runModal] == NSFileHandlingPanelOKButton) {
-        return savePanel.URL;
+        NSURL *url = savePanel.URL;
+        NSString *filename = [url lastPathComponent];
+        NSString *safeFilename = [filename stringByReplacingOccurrencesOfString:@" " withString:@"_"];
+        if ([filename isEqualToString:safeFilename]) {
+            return url;
+        } else {
+            NSAlert *alert = [[NSAlert alloc] init];
+            alert.messageText = @"Spaces Not Allowed";
+            alert.informativeText = @"Scripts can't have space characters in their filenames.";
+            [alert addButtonWithTitle:@"Use _ Instead of Space"];
+            [alert addButtonWithTitle:@"Change Name"];
+            if ([alert runModal] == NSAlertFirstButtonReturn) {
+                return [[url URLByDeletingLastPathComponent] URLByAppendingPathComponent:safeFilename];
+            } else {
+                return [self runSavePanelForNewScriptWithPicker:picker];
+            }
+        }
     } else {
         return nil;
     }
