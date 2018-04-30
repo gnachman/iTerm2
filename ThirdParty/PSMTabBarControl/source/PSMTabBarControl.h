@@ -179,6 +179,7 @@ enum {
 @property(nonatomic, assign) id<PSMTabBarControlDelegate> delegate;
 @property(nonatomic, retain) id partnerView;
 @property(nonatomic, readonly) PSMOverflowPopUpButton *overflowPopUpButton;
+@property(nonatomic, assign) BOOL ignoreTrailingParentheticalsForSmartTruncation;
 
 // control characteristics
 + (NSBundle *)bundle;

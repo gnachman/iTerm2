@@ -427,7 +427,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
         [prefixCounts addObject:prefix];
         [suffixCounts addObject:suffix];
 
-        if ([title hasSuffix:@")"]) {
+        if (self.ignoreTrailingParentheticalsForSmartTruncation && [title hasSuffix:@")"]) {
             NSInteger openParen = [title rangeOfString:@" (" options:NSBackwardsSearch].location;
             if (openParen != NSNotFound && openParen > kPrefixOrSuffixLength) {
                 suffix = [title substringWithRange:NSMakeRange(openParen - kPrefixOrSuffixLength, kPrefixOrSuffixLength)];

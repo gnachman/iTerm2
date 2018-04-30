@@ -8,6 +8,7 @@
 
 #import "iTermTabBarControlView.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermPreferences.h"
 #import "DebugLogging.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
@@ -32,6 +33,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     if (self) {
         [self setTabsHaveCloseButtons:![iTermAdvancedSettingsModel eliminateCloseButtons]];
         self.minimumTabDragDistance = [iTermAdvancedSettingsModel minimumTabDragDistance];
+        self.ignoreTrailingParentheticalsForSmartTruncation = [iTermPreferences boolForKey:kPreferenceKeyShowJobName];
     }
     return self;
 }
