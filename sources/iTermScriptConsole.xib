@@ -157,7 +157,7 @@
                         </connections>
                     </tabView>
                     <segmentedControl verticalHuggingPriority="750" misplaced="YES" id="fNr-Eh-eoa">
-                        <rect key="frame" x="70" y="577" width="120" height="24"/>
+                        <rect key="frame" x="70" y="577" width="121" height="24"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <segmentedCell key="cell" borderStyle="border" alignment="left" style="rounded" trackingMode="selectOne" id="0bO-7H-4vq">
                             <font key="font" metaFont="system"/>
