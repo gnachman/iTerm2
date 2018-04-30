@@ -1,7 +1,6 @@
 import asyncio
 
 import iterm2.connection
-import iterm2.hierarchy
 import iterm2.notifications
 import iterm2.profile
 import iterm2.rpc

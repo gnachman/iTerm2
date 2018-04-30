@@ -2,7 +2,6 @@
 The iTerm2 module provides a Python interface for controlling iTerm2.
 """
 import iterm2.app
-import iterm2.hierarchy
 import iterm2.notifications
 import iterm2.profile
 import iterm2.rpc

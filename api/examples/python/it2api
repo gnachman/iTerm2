@@ -9,28 +9,28 @@ import sys
 import traceback
 
 async def list_sessions(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  for w in h.windows:
+  a = await iterm2.app.get_app(connection)
+  for w in a.windows:
     for t in w.tabs:
       sessions = t.get_sessions()
       for s in sessions:
         print(s.pretty_str(), end='')
 
 async def show_hierarchy(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  print(h.pretty_str())
+  a = await iterm2.app.get_app(connection)
+  print(a.pretty_str())
 
 async def send_text(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  s = await h.get_session_by_id(args.session)
+  a = await iterm2.app.get_app(connection)
+  s = await a.get_session_by_id(args.session)
   await s.send_text(args.text)
 
 async def create_tab(connection, args):
   if args.window is not None:
     window_id = args.window
-    h = await iterm2.hierarchy.Hierarchy.construct(connection)
+    a = await iterm2.app.get_app(connection)
     try:
-      window = next(window for window in h.windows if window.window_id == window_id)
+      window = next(window for window in a.windows if window.window_id == window_id)
       await window.create_tab(profile=args.profile, command=args.command, index=args.index)
     except:
       print("bad window id {}".format(window_id))
@@ -39,20 +39,20 @@ async def create_tab(connection, args):
     result = await iterm2.window.Window.create(connection, profile=args.profile, command=args.command)
 
 async def split_pane(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  s = await h.get_session_by_id(args.session)
+  a = await iterm2.app.get_app(connection)
+  s = await a.get_session_by_id(args.session)
   await s.split_pane(vertical=args.vertical, before=args.before, profile=args.profile)
 
 async def get_buffer(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  s = await h.get_session_by_id(args.session)
+  a = await iterm2.app.get_app(connection)
+  s = await a.get_session_by_id(args.session)
   result = await s.get_buffer_lines(args.trailing_lines)
   for contents in result.contents:
     print(contents.text)
 
 async def get_prompt(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  s = await h.get_session_by_id(args.session)
+  a = await iterm2.app.get_app(connection)
+  s = await a.get_session_by_id(args.session)
   result = await s.get_prompt()
   print(result)
 
@@ -163,8 +163,8 @@ def profile_property_type(key):
   return profile_property_type_map()[key]
 
 async def get_profile_property(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  s = await h.get_session_by_id(args.session)
+  a = await iterm2.app.get_app(connection)
+  s = await a.get_session_by_id(args.session)
   profile = await s.get_profile()
   if args.keys is not None:
     keys = args.keys.split(",")
@@ -198,8 +198,8 @@ def encode_property_value(key, value):
         match.group(5))
 
 async def set_profile_property(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  s = await h.get_session_by_id(args.session)
+  a = await iterm2.app.get_app(connection)
+  s = await a.get_session_by_id(args.session)
 
   encoded_value = encode_property_value(args.key, args.value)
   profile = await s.get_profile()
@@ -208,8 +208,8 @@ async def set_profile_property(connection, args):
   await f(encoded_value)
 
 async def read(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  s = await h.get_session_by_id(args.session)
+  a = await iterm2.app.get_app(connection)
+  s = await a.get_session_by_id(args.session)
   if args.mode == "char":
     print(await s.read_keystroke())
   elif args.mode == "line":
@@ -228,8 +228,8 @@ async def read(connection, args):
       print(line)
 
 async def get_window_property(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  w = await h.get_window_by_id(args.id)
+  a = await iterm2.app.get_app(connection)
+  w = await a.get_window_by_id(args.id)
   if w is None:
     print("bad window ID")
   else:
@@ -239,8 +239,8 @@ async def get_window_property(connection, args):
       print(await w.get_fullscreen(connection))
 
 async def set_window_property(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  w = await h.get_window_by_id(args.id)
+  a = await iterm2.app.get_app(connection)
+  w = await a.get_window_by_id(args.id)
   if w is None:
     print("bad window ID")
   else:
@@ -256,29 +256,29 @@ async def set_window_property(connection, args):
       await w.set_fullscreen(connection, args.value == "true")
 
 async def inject(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  s = await h.get_session_by_id(args.session)
+  a = await iterm2.app.get_app(connection)
+  s = await a.get_session_by_id(args.session)
   if s is None:
     print("bad session ID")
   else:
     await s.inject(args.data.encode())
 
 async def activate(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
+  a = await iterm2.app.get_app(connection)
   if args.mode == "session":
-    s = await h.get_session_by_id(args.id)
+    s = await a.get_session_by_id(args.id)
     if s is None:
       print("bad session ID")
     else:
       await s.activate()
   elif args.mode == "tab":
-    t = await h.get_tab_by_id(args.id)
+    t = await a.get_tab_by_id(args.id)
     if t is None:
       print("bad tab ID")
     else:
       await t.select()
   elif args.mode == "window":
-    w = await h.get_window_by_id(args.id)
+    w = await a.get_window_by_id(args.id)
     if w is None:
       print("bad window ID")
     else:
@@ -289,16 +289,16 @@ async def activate_app(connection, args):
   await a.activate(raise_all_windows=args.raise_all_windows, ignoring_other_apps=args.ignoring_other_apps)
 
 async def set_variable(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  s = await h.get_session_by_id(args.session)
+  a = await iterm2.app.get_app(connection)
+  s = await a.get_session_by_id(args.session)
   if s is None:
     print("bad session ID")
     return
   await s.set_variable(args.name, args.value)
 
 async def get_variable(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  s = await h.get_session_by_id(args.session)
+  a = await iterm2.app.get_app(connection)
+  s = await a.get_session_by_id(args.session)
   if s is None:
     print("bad session ID")
     return
@@ -306,8 +306,8 @@ async def get_variable(connection, args):
   print(value)
 
 async def list_variables(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  s = await h.get_session_by_id(args.session)
+  a = await iterm2.app.get_app(connection)
+  s = await a.get_session_by_id(args.session)
   if s is None:
     print("bad session ID")
     return
@@ -318,8 +318,8 @@ async def list_variables(connection, args):
 
 async def saved_arrangement(connection, args):
   if args.window is not None:
-    h = await iterm2.hierarchy.Hierarchy.construct(connection)
-    w = await h.get_window_by_id(args.window)
+    a = await iterm2.app.get_app(connection)
+    w = await a.get_window_by_id(args.window)
     if w is None:
       print("bad window ID")
       return
@@ -334,16 +334,16 @@ async def saved_arrangement(connection, args):
       await iterm2.app.App(connection).restore_window_arrangement(args.name)
 
 async def show_focus(connection, args):
-  h = await iterm2.hierarchy.Hierarchy.construct(connection)
-  if h.app_active:
+  a = await iterm2.app.get_app(connection)
+  if a.app_active:
     print("App is active")
-  w = await h.get_window_by_id(h.key_window_id)
+  w = await a.get_window_by_id(a.key_window_id)
   print("Key window: {}".format(w.window_id))
   print("")
-  for w in h.windows:
-    t = await h.get_tab_by_id(w.selected_tab_id)
+  for w in a.windows:
+    t = await a.get_tab_by_id(w.selected_tab_id)
     print("Selected tab in {}: {}".format(w.window_id, t.tab_id))
-    s = await h.get_session_by_id(t.active_session_id)
+    s = await a.get_session_by_id(t.active_session_id)
     print("  Active session is: {}".format(s.pretty_str()))
 
 def make_parser():
@@ -463,12 +463,17 @@ def main(argv):
 
   async def wrapper(connection):
     try:
+      print("Await the func")
       await args.func(connection, args)
+      print("Func returned")
     except Exception as e:
+      print("Exception")
       print(traceback.format_exc())
 
   c = iterm2.connection.Connection()
+  print("Running...")
   c.run(wrapper)
+  print("Returned")
 
 if __name__ == "__main__":
   try:
