@@ -236,29 +236,37 @@
 }
 
 - (BOOL)readFromFileDescriptor {
-    @synchronized(_fdSync) {
-        if (![self waitForIO:YES]) {
-            return NO;
-        }
-
-        char buffer[4096];
-        int rc;
-        do {
-            rc = read(_fd, buffer, sizeof(buffer));
-        } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
-        if (rc <= 0) {
-            if (rc < 0) {
-                DLog(@"Read failed with %s", strerror(errno));
-            } else {
-                DLog(@"EOF reached");
-            }
-            _fd = -1;
-            return NO;
-        }
-
-        [_buffer appendBytes:buffer length:rc];
-        return YES;
+    if (![self waitForIO:YES]) {
+        return NO;
     }
+
+    int fd;
+    @synchronized(_fdSync) {
+        fd = _fd;
+    }
+    if (fd < 0) {
+        return NO;
+    }
+
+    char buffer[4096];
+    int rc;
+    do {
+        rc = read(fd, buffer, sizeof(buffer));
+    } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
+    if (rc <= 0) {
+        if (rc < 0) {
+            DLog(@"Read failed with %s", strerror(errno));
+        } else {
+            DLog(@"EOF reached");
+        }
+        @synchronized(_fdSync) {
+            _fd = -1;
+        }
+        return NO;
+    }
+
+    [_buffer appendBytes:buffer length:rc];
+    return YES;
 }
 
 - (BOOL)waitForIO:(BOOL)read {
