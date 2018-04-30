@@ -1281,7 +1281,6 @@
 		A60C0351208964FD00FE2F1F /* it2_api_wrapper.sh in Resources */ = {isa = PBXBuildFile; fileRef = A60C0350208964FA00FE2F1F /* it2_api_wrapper.sh */; };
 		A60C0352208964FE00FE2F1F /* it2_api_wrapper.sh in Resources */ = {isa = PBXBuildFile; fileRef = A60C0350208964FA00FE2F1F /* it2_api_wrapper.sh */; };
 		A60C0353208964FE00FE2F1F /* it2_api_wrapper.sh in Resources */ = {isa = PBXBuildFile; fileRef = A60C0350208964FA00FE2F1F /* it2_api_wrapper.sh */; };
-		A60C03552089672B00FE2F1F /* iterm2env in Resources */ = {isa = PBXBuildFile; fileRef = A60C03542089672B00FE2F1F /* iterm2env */; };
 		A60C03562089672B00FE2F1F /* iterm2env in Resources */ = {isa = PBXBuildFile; fileRef = A60C03542089672B00FE2F1F /* iterm2env */; };
 		A60C03572089672B00FE2F1F /* iterm2env in Resources */ = {isa = PBXBuildFile; fileRef = A60C03542089672B00FE2F1F /* iterm2env */; };
 		A60C035C2089698500FE2F1F /* iTermAPIScriptLauncher.h in Headers */ = {isa = PBXBuildFile; fileRef = A60C035A2089698500FE2F1F /* iTermAPIScriptLauncher.h */; };
@@ -8596,7 +8595,6 @@
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
 				A68E33371DE746F5003F1D8E /* Previous Mark Touch Bar Icon.png in Resources */,
 				A65B72B11B33C07D00F947A7 /* NextTip.png in Resources */,
-				A60C03552089672B00FE2F1F /* iterm2env in Resources */,
 				1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */,
 				A68E33341DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png in Resources */,
 				A67D0D6E1A2EE12A003A8B35 /* MainMenu.strings in Resources */,
