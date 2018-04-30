@@ -1,0 +1,312 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>The “notifications” module &#8212; iTerm2 Python API 0.26 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The “profile” module" href="profile.html" />
+    <link rel="prev" title="The “connection” module" href="connection.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-iterm2.notifications">
+<span id="the-notifications-module"></span><h1>The “notifications” module<a class="headerlink" href="#module-iterm2.notifications" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="iterm2.notifications.unsubscribe">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">unsubscribe</code><span class="sig-paren">(</span><em>connection</em>, <em>token</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.unsubscribe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unsubscribes from a notification.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection.</li>
+<li><strong>token</strong> – The result of a previous subscribe call.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_new_session_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_new_session_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_new_session_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when a new session is created.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection.</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an
+iterm2.connection.Connection and iterm2.api_pb2.NewSessionNotification.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_keystroke_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_keystroke_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em>, <em>session=None</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_keystroke_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when a key is pressed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.KeystrokeNotification.</li>
+<li><strong>session</strong> – The session to monitor, or None.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: A token that can be passed to unsubscribe.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_screen_update_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_screen_update_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em>, <em>session=None</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_screen_update_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when the screen contents change.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.ScreenUpdateNotification..</li>
+<li><strong>session</strong> – The session to monitor, or None.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_prompt_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_prompt_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em>, <em>session=None</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_prompt_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when a shell prompt is received.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.PromptNotification.</li>
+<li><strong>session</strong> – The session to monitor, or None.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_location_change_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_location_change_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em>, <em>session=None</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_location_change_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when the host or current directory changes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.LocationChangeNotification.</li>
+<li><strong>session</strong> – The session to monitor, or None.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_custom_escape_sequence_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_custom_escape_sequence_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em>, <em>session=None</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_custom_escape_sequence_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when a custom escape sequence is received.</p>
+<p>The escape sequence is OSC 1337 ; Custom=id=&lt;identity&gt;:&lt;payload&gt; ST</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.CustomEscapeSequenceNotification.</li>
+<li><strong>session</strong> – The session to monitor, or None.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_terminate_session_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_terminate_session_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_terminate_session_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when a session terminates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.TerminateSessionNotification.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_layout_change_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_layout_change_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_layout_change_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when the relationship between sessions, tabs,
+and windows changes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.LayoutChangedNotification.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="iterm2.notifications.subscribe_to_focus_change_notification">
+<code class="descclassname">iterm2.notifications.</code><code class="descname">subscribe_to_focus_change_notification</code><span class="sig-paren">(</span><em>connection</em>, <em>callback</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.notifications.subscribe_to_focus_change_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a callback to be run when focus changes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>connection</strong> – A connected iterm2.connection.Connection</li>
+<li><strong>callback</strong> – A coroutine taking two arguments: an iterm2.connection.Connection and
+iterm2.api_pb2.FocusChangedNotification.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A token that can be passed to unsubscribe.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="connection.html" title="previous chapter">The “connection” module</a></li>
+      <li>Next: <a href="profile.html" title="next chapter">The “profile” module</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/notifications.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, George Nachman.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/notifications.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

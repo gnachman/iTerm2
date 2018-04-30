@@ -1,0 +1,150 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>The “connection” module &#8212; iTerm2 Python API 0.26 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The “notifications” module" href="notifications.html" />
+    <link rel="prev" title="The “app” module" href="app.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-iterm2.connection">
+<span id="the-connection-module"></span><h1>The “connection” module<a class="headerlink" href="#module-iterm2.connection" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="iterm2.connection.Connection">
+<em class="property">class </em><code class="descclassname">iterm2.connection.</code><code class="descname">Connection</code><a class="headerlink" href="#iterm2.connection.Connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a loopback network connection from the script to iTerm2.</p>
+<p>Provides functionality for sending and receiving messages. Supports
+dispatching incoming messages.</p>
+<dl class="method">
+<dt id="iterm2.connection.Connection.dispatch_for_duration">
+<code class="descname">dispatch_for_duration</code><span class="sig-paren">(</span><em>duration</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.connection.Connection.dispatch_for_duration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle incoming messages for a fixed duration of time.</p>
+<p>This is typically used when you wish to receive notifications for a fixed period of time.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>duration</strong> – The minimum time to run while waiting for incoming messages.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.connection.Connection.dispatch_until_future">
+<code class="descname">dispatch_until_future</code><span class="sig-paren">(</span><em>future</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.connection.Connection.dispatch_until_future" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle incoming messages until a future has a result.</p>
+<p>This is used when you wish to receive notifications indefinitely, or until
+some condition satisfied by reciving a notification is reached.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>future</strong> – An asyncio.Future that will get a result.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="iterm2.connection.Connection.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>coro</em>, <em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#iterm2.connection.Connection.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience method to start a program.</p>
+<p>Connects to the API endpoint, begins an asyncio event loop, and runs the
+passed in coroutine. Exceptions will be caught and printed to stdout.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>coro</strong> – A coroutine (async function) to run after connecting.</li>
+<li><strong>args</strong> – Passed to coro after its first argument (this connection).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="app.html" title="previous chapter">The “app” module</a></li>
+      <li>Next: <a href="notifications.html" title="next chapter">The “notifications” module</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/connection.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, George Nachman.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/connection.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
