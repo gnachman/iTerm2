@@ -270,10 +270,19 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
     iTermCursorRendererTransientState *tState = transientState;
+
+    const CGFloat rowNumber = (tState.cellConfiguration.gridSize.height - tState.coord.y - 1);
+    const CGSize cellSize = tState.cellConfiguration.cellSize;
+    const CGSize cellSizeWithoutSpacing = tState.cellConfiguration.cellSizeWithoutSpacing;
+    CGFloat y = rowNumber * cellSize.height;
+    if (![iTermAdvancedSettingsModel fullHeightCursor]) {
+        const CGFloat scale = tState.configuration.scale;
+        y += cellSize.height - MAX(0, round(((cellSize.height - cellSizeWithoutSpacing.height) / 2) / scale) * scale) - tState.cursorHeight;
+    }
     iTermCursorDescription description = {
         .origin = {
             tState.cellConfiguration.cellSize.width * tState.coord.x,
-            tState.cellConfiguration.cellSize.height * (tState.cellConfiguration.gridSize.height - tState.coord.y - 1),
+            y
         },
         .color = {
             tState.color.redComponent,
@@ -342,9 +351,12 @@ NS_ASSUME_NONNULL_BEGIN
     int d = tState.doubleWidth ? 2 : 1;
     const CGFloat width = MIN(tState.cellConfiguration.cellSize.width,
                               tState.cellConfiguration.cellSizeWithoutSpacing.width);
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(width * d,
-                                                                  [tState cursorHeight])
-                                           poolContext:tState.poolContext];
+    tState.vertexBuffer = [_cellRenderer newQuadWithFrame:CGRectMake(0,
+                                                                     0,
+                                                                     width * d,
+                                                                     tState.cursorHeight)
+                                             textureFrame:CGRectMake(0, 0, 1, 1)
+                                              poolContext:tState.poolContext];
     [super drawWithFrameData:frameData transientState:transientState];
 }
 
@@ -370,9 +382,12 @@ NS_ASSUME_NONNULL_BEGIN
     int d = tState.doubleWidth ? 2 : 1;
     const CGFloat width = MIN(tState.cellConfiguration.cellSize.width,
                               tState.cellConfiguration.cellSizeWithoutSpacing.width);
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(width * d,
-                                                                  [tState cursorHeight])
-                                           poolContext:tState.poolContext];
+    tState.vertexBuffer = [_cellRenderer newQuadWithFrame:CGRectMake(0,
+                                                                     0,
+                                                                     width * d,
+                                                                     tState.cursorHeight)
+                                             textureFrame:CGRectMake(0, 0, 1, 1)
+                                              poolContext:tState.poolContext];
     iTermCursorDescription description = {
         .origin = {
             tState.cellConfiguration.cellSize.width * tState.coord.x,
