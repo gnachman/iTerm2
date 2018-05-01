@@ -1,5 +1,6 @@
 import json
 import iterm2.api_pb2
+import iterm2.app
 import iterm2.rpc
 import iterm2.session
 import iterm2.tab
@@ -29,10 +30,25 @@ class Window:
     self.tabs = tabs
     self.frame = frame
     # None means unknown. Can get set later.
-    self.seelcted_tab_id = None
+    self.selected_tab_id = None
 
   def __repr__(self):
     return "<Window id=%s tabs=%s frame=%s>" % (self.window_id, self.tabs, iterm2.util.frame_str(self.frame))
+
+  def update_from(self, other):
+    """Copies state from other window to this one."""
+    self.tabs = other.tabs
+    self.frame = other.frame
+    self.selected_tab_id = other.selected_tab_id
+
+  def update_tab(self, t):
+    """Replace references to a tab."""
+    i = 0
+    for ot in self.tabs:
+      if ot.tab_id == t.tab_id:
+        self.tabs[i] = t
+        return
+      i += 1
 
   def pretty_str(self, indent=""):
     """
@@ -42,24 +58,6 @@ class Window:
     for t in self.tabs:
       s += t.pretty_str(indent=indent + "  ")
     return s
-
-  @staticmethod
-  async def create(connection, profile=None, command=None):
-    """
-    Creates a new window.
-
-    :param profile: The profile name to use or None for the default profile.
-    :param command: The command to run in the new session, or None for the default for the profile.
-
-    :returns: A session_id
-
-    :raises: CreateTabException if something goes wrong.
-    """
-    result = await iterm2.rpc.create_tab(connection, profile=profile, command=command)
-    if result.create_tab_response.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-      return result.create_tab_response.session_id
-    else:
-      raise CreateTabException(iterm2.api_pb2.CreateTabResponse.Status.Name(result.create_tab_response.status))
 
   def get_window_id(self):
     """
@@ -81,13 +79,17 @@ class Window:
     :param command: The command to run in the new session, or None for the default for the profile.
     :param index: The index in the window where the new tab should go (0=first position, etc.)
 
-    :returns: A session_id
+    :returns: An iterm2.tab.Tab
 
     :raises: CreateTabException if something goes wrong.
     """
     result = await iterm2.rpc.create_tab(self.connection, profile=profile, window=self.window_id, index=index, command=command)
     if result.create_tab_response.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-      return result.create_tab_response.session_id
+      session_id = result.create_tab_response.session_id
+      app = await iterm2.app.get_app(self.connection)
+      s = await app.get_session_by_id(session_id)
+      w, t = app.get_tab_and_window_for_session(s)
+      return t
     else:
       raise CreateTabException(iterm2.api_pb2.CreateTabResponse.Status.Name(result.create_tab_response.status))
 

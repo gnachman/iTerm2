@@ -1,5 +1,6 @@
 import asyncio
 
+import iterm2.app
 import iterm2.connection
 import iterm2.notifications
 import iterm2.profile
@@ -21,7 +22,9 @@ class Splitter:
     :param vertical: Bool. If true, the divider is vertical, else horizontal.
     """
     self.vertical = vertical
+    # Elements are either Splitter or Session
     self.children = []
+    # Elements are Session
     self.sessions = []
 
   @staticmethod
@@ -78,6 +81,29 @@ class Splitter:
       s += child.pretty_str("  " + indent)
     return s
 
+  def update_session(self, s):
+    """
+    Finds a session with the same ID as s. If it exists, replace the reference with s.
+
+    :returns: True if the update occurred.
+    """
+    i = 0
+    for c in self.children:
+      if type(c) is Session and c.session_id == s.session_id:
+        self.children[i] = s
+
+        # Update the entry in self.sessions
+        for j in xrange(len(self.sessions)):
+          if self.sessions[j].session_id == s.session_id:
+            self.sessions[j] = s
+            break
+
+        return True
+      elif type(c) is Splitter:
+        if c.update_session(s):
+          return True
+      i += 1
+
 class Session:
   """
   Represents an iTerm2 session.
@@ -116,6 +142,12 @@ class Session:
 
   def __repr__(self):
     return "<Session name=%s id=%s>" % (self.name, self.session_id)
+
+  def update_from(self, s):
+    """Replace internal state with that of another session."""
+    self.frame = s.frame
+    self.grid_size = s.grid_size
+    self.name = s.name
 
   def pretty_str(self, indent=""):
     """
@@ -176,14 +208,16 @@ class Session:
     :param before: Bool, whether the new session should be left/above the existing one.
     :param profile: The profile name to use. None for the default profile.
 
-    :returns: New session ID.
+    :returns: New iterm.session.Session.
 
     :throws: SplitPaneException if something goes wrong.
     """
     result = await iterm2.rpc.split_pane(self.connection, self.session_id, vertical, before, profile)
     if result.split_pane_response.status == iterm2.api_pb2.SplitPaneResponse.Status.Value("OK"):
-      return result.split_pane_response.session_id
-
+      new_session_id = result.split_pane_response.session_id[0]
+      app = await iterm2.app.get_app(self.connection)
+      app.refresh()
+      return await app.get_session_by_id(new_session_id)
     else:
       raise SplitPaneException(iterm2.api_pb2.SplitPaneResponse.Status.Name(result.split_pane_response.status))
 

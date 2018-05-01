@@ -71,7 +71,7 @@ class App:
     :throws: SavedArrangementException
     """
     result = await iterm2.rpc.save_arrangement(self.connection, name)
-    if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
+    if result.saved_arrangement_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
       raise SavedArrangementException(iterm2.api_pb2.SavedArrangementResponse.Status.Name(result.saved_arrangement_response.status))
 
   async def restore_window_arrangement(self, name):
@@ -82,7 +82,7 @@ class App:
     :throws: SavedArrangementException
     """
     result = await iterm2.rpc.restore_arrangement(self.connection, name)
-    if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
+    if result.saved_arrangement_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
       raise SavedArrangementException(iterm2.api_pb2.SavedArrangementResponse.Status.Name(result.saved_arrangement_response.status))
 
   @staticmethod
@@ -154,12 +154,7 @@ class App:
 
     :returns: An iterm2.session.Session or None.
     """
-    s = self._search_for_session_id(session_id)
-    if s is None:
-      await self.refresh()
-      return self._search_for_session_id(session_id)
-    else:
-      return s
+    return self._search_for_session_id(session_id)
 
   async def get_tab_by_id(self, tab_id):
     """Finds a tab exactly matching the passed-in id.
@@ -168,12 +163,7 @@ class App:
 
     :returns: An iterm2.tab.Tab or None.
     """
-    t = self._search_for_tab_id(tab_id)
-    if t is None:
-      await self.refresh()
-      return self._search_for_tab_id(tab_id)
-    else:
-      return t
+    return self._search_for_tab_id(tab_id)
 
   async def get_window_by_id(self, window_id):
     """Finds a window exactly matching the passed-in id.
@@ -182,12 +172,7 @@ class App:
 
     :returns: An iterm2.window.Window or None
     """
-    w = self._search_for_window_id(window_id)
-    if w is None:
-      await self.refresh()
-      return self._search_for_window_id(window_id)
-    else:
-      return w
+    return self._search_for_window_id(window_id)
 
   async def get_window_for_tab(self, tab_id):
     """Finds the window that contains the passed-in tab id.
@@ -196,12 +181,7 @@ class App:
 
     :returns: An iterm2.window.Window or None
     """
-    w = self._search_for_window_with_tab(tab_id)
-    if w is None:
-      await self.refresh()
-      return self._search_for_window_with_tab(tab_id)
-    else:
-      return w
+    return self._search_for_window_with_tab(tab_id)
 
   def _search_for_window_with_tab(self, tab_id):
     for w in self.windows:
@@ -216,8 +196,28 @@ class App:
     You shouldn't need to call this explicitly. It will update itself from notifications.
     """
     response = await iterm2.rpc.list_sessions(self.connection)
-    # TODO: Calculate diffs so sessions don't get invalidated.
-    self.windows = App._windows_from_list_sessions_response(self.connection, response.list_sessions_response)
+    new_windows = App._windows_from_list_sessions_response(self.connection, response.list_sessions_response)
+    windows = []
+    for nw in new_windows:
+      old = await self.get_window_by_id(nw.window_id)
+      if old is None:
+        windows.append(nw)
+      else:
+        old.update_from(nw)
+        windows.append(old)
+
+      for nt in nw.tabs:
+        old = await self.get_tab_by_id(nt.tab_id)
+        if old is not None:
+          old.update_from(nt)
+          nw.update_tab(old)
+
+        for ns in nt.get_sessions():
+          old = await self.get_session_by_id(ns.session_id)
+          if old is not None:
+            old.update_from(ns)
+
+    self.windows = windows
 
   async def _focus_change(self, connection, sub_notif):
     """Updates the record of what is in focus."""
@@ -267,6 +267,8 @@ class App:
 
     :param profile: The name of the profile to use for the new window.
     :param command: A command to run in lieu of the shell in the new session.
+
+    :returns: A new iterm2.window.Window.
 
     :throws: CreateWindowException if something went wrong.
     """

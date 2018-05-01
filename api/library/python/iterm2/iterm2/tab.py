@@ -11,6 +11,15 @@ class Tab:
   def __repr__(self):
     return "<Tab id=%s sessions=%s>" % (self.tab_id, self.get_sessions())
 
+  def update_from(self, other):
+    """Copies state from another tab into this one."""
+    self.root = other.root
+    self.active_session_id = other.active_session_id
+
+  def update_sesion(self, s):
+    """Replaces references to a session."""
+    self.root.update_session(s)
+
   def get_tab_id(self):
     """
     Each tab has a globally unique identifier.
