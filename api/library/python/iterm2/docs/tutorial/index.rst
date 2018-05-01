@@ -17,9 +17,9 @@ deal of control.
 Scripts generally take one of two forms:
 
   * "Simple" scripts that perform a series of actions, such as creating windows,
-    * and then terminate.
+    and then terminate.
   * "Long-running daemons" that stay running indefintely while observing
-    * notifications.
+    notifications or performing some action periodically.
 
 Creating a New Script
 ---------------------
@@ -39,9 +39,11 @@ daemon:
 
 .. image:: new_script_simple_or_daemon.png
 
-Select *Simple*, since our example script will just create a window and then
-exit. Next, a save panel opens. Give your script a name, and it will be opened
-in your editor.
+Select *Simple*, since the tutorial's example script will just create a window
+and then exit.
+
+Next, a save panel opens. Give your script a name, and it will be opened in
+your editor.
 
 The script will be filled with a working example.
 

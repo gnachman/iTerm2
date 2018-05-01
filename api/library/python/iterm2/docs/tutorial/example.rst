@@ -5,7 +5,7 @@ Here's the example script that iTerm2 provides for you, minus some comments:
 
 .. code-block:: python
 
-    #!/usr/bin/env python3
+    #!/home/yourname/Library/ApplicationSupport/iTerm2/iterm2env/versions/3.6.5/bin/python3
 
     import asyncio
     import iterm2
@@ -26,9 +26,12 @@ There's a lot going on here. Let's take it part by part.
 
 .. code-block:: python
 
-    #!/usr/bin/env python3
+    #!/home/yourname/Library/ApplicationSupport/iTerm2/iterm2env/versions/3.6.5/bin/python3
 
-This is standard Python boilerplate so that the script can be run from the command line.
+Python determines where to load its modules from the location of the `python3`
+binary with which a script was run. This "shebang" line instructs the system to
+use iTerm2's shared Python environment, which is used by all "simple" scripts.
+iTerm2 manages this Python installation and upgrades it periodically.
 
 .. code-block:: python
 
@@ -44,7 +47,7 @@ started.
 
 The next import is `iterm2`. That's a Python module (available on PyPI) that
 provides a nice interface to communicate with iTerm2. The underlying
-implementation uses Google protobuf and websockets. For simple scripts, that is
+implementation uses Google protobuf and websockets. For most purposes, that is
 completely abstracted away.
 
 Finally, `sys` is imported so that the script can parse command-line arguments.
@@ -54,8 +57,8 @@ Finally, `sys` is imported so that the script can parse command-line arguments.
     async def main(connection, argv):
 
 Your code goes inside `main`. The first argument is a `connection` that holds
-the link to a running iTerm2 process. If `main` gets called, then the
-connection is established. If the connection terminates (e.g., if you quit
+the link to a running iTerm2 process. `main` gets called only after a
+connection is established.  If the connection terminates (e.g., if you quit
 iTerm2) then any attempt to use it will raise an exception and terminate your
 script.
 
@@ -124,7 +127,7 @@ script.
 	iterm2.connection.Connection().run(main, sys.argv)
 
 The `if` statement is a bit of standard Python boilerplate; you can ignore it
-as its condition will always be True.
+as its condition will always be `True`.
 
 The next line establishes a websocket connection to iTerm2 and then runs your
 `main` function, passing it `sys.argv` which holds the command-line arguments.

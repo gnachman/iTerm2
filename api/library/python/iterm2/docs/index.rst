@@ -11,7 +11,7 @@ iTerm2 Python API Documentation
    :caption: Contents:
 
    api
-   tutorial
+   tutorial/index
 
 Indices and tables
 ==================
