@@ -217,5 +217,6 @@
 + (BOOL)openNewWindowAtStartup;
 + (BOOL)resetSGROnPrompt;
 + (BOOL)useLowPowerGPUWhenUnplugged;
++ (BOOL)retinaInlineImages;
 
 @end

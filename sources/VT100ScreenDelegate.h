@@ -228,6 +228,7 @@
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath;
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
                                                    payload:(NSString *)payload;
+- (CGFloat)screenBackingScaleFactor;
 
 // Ok to write to shell?
 - (BOOL)screenShouldSendReport;

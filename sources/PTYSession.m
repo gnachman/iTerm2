@@ -8472,6 +8472,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }];
 }
 
+- (CGFloat)screenBackingScaleFactor {
+    return _view.window.screen.backingScaleFactor;
+}
+
 - (BOOL)screenShouldSendReport {
     return (_shell != nil) && (![self isTmuxClient]);
 }

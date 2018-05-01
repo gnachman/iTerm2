@@ -3479,6 +3479,16 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         assert(image);
     }
 
+    NSSize scaledSize = image.size;
+    CGFloat scale;
+    if ([iTermAdvancedSettingsModel retinaInlineImages]) {
+        scale = MAX(1, [delegate_ screenBackingScaleFactor]);
+    } else {
+        scale = 1;
+    }
+    scaledSize.width /= scale;
+    scaledSize.height /= scale;
+
     BOOL needsWidth = NO;
     NSSize cellSize = [delegate_ screenCellSize];
     switch (widthUnits) {
@@ -3495,7 +3505,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
         case kVT100TerminalUnitsAuto:
             if (heightUnits == kVT100TerminalUnitsAuto) {
-                width = ceil((double)image.size.width / cellSize.width);
+                width = ceil((double)scaledSize.width / cellSize.width);
             } else {
                 needsWidth = YES;
             }
@@ -3515,16 +3525,16 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
         case kVT100TerminalUnitsAuto:
             if (widthUnits == kVT100TerminalUnitsAuto) {
-                height = ceil((double)image.size.height / cellSize.height);
+                height = ceil((double)scaledSize.height / cellSize.height);
             } else {
-                double aspectRatio = image.size.width / image.size.height;
+                double aspectRatio = scaledSize.width / scaledSize.height;
                 height = ((double)(width * cellSize.width) / aspectRatio) / cellSize.height;
             }
             break;
     }
 
     if (needsWidth) {
-        double aspectRatio = image.size.width / image.size.height;
+        double aspectRatio = scaledSize.width / scaledSize.height;
         width = ((double)(height * cellSize.height) * aspectRatio) / cellSize.width;
     }
 
