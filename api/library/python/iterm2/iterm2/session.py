@@ -93,7 +93,7 @@ class Splitter:
         self.children[i] = s
 
         # Update the entry in self.sessions
-        for j in xrange(len(self.sessions)):
+        for j in range(len(self.sessions)):
           if self.sessions[j].session_id == s.session_id:
             self.sessions[j] = s
             break
@@ -216,7 +216,7 @@ class Session:
     if result.split_pane_response.status == iterm2.api_pb2.SplitPaneResponse.Status.Value("OK"):
       new_session_id = result.split_pane_response.session_id[0]
       app = await iterm2.app.get_app(self.connection)
-      app.refresh()
+      await app.refresh()
       return await app.get_session_by_id(new_session_id)
     else:
       raise SplitPaneException(iterm2.api_pb2.SplitPaneResponse.Status.Name(result.split_pane_response.status))

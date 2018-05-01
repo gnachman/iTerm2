@@ -1204,7 +1204,7 @@ class Profile(WriteOnlyProfile):
 
 class Color:
   """Describes a color."""
-  def __init__(self, r=0, g=0, b=0, a=0, color_space="sRGB"):
+  def __init__(self, r=0, g=0, b=0, a=255, color_space="sRGB"):
     """Create a color.
 
       r: Red, in 0-255
@@ -1268,10 +1268,10 @@ class Color:
 
   def get_dict(self):
     return {
-        "Red Component": self.red,
-        "Green Component": self.green,
-        "Blue Component": self.blue,
-        "Alpha Component": self.alpha,
+        "Red Component": self.red / 255.0,
+        "Green Component": self.green / 255.0,
+        "Blue Component": self.blue / 255.0,
+        "Alpha Component": self.alpha / 255.0,
         "Color Space": self.color_space
         }
 

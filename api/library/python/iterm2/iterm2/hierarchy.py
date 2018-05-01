@@ -4,86 +4,30 @@ import iterm2.session
 import iterm2.tab
 import iterm2.window
 
-_app = None
-async def get_app(connection):
-  """Returns the app singleton, creating it if needed."""
-  global _app
-  if _app is None:
-    _app = await App.construct(connection)
-  return _app
-
 class CreateWindowException(Exception):
   """A problem was encountered while creating a window."""
   pass
 
-class SavedArrangementException(Exception):
-  """A problem was encountered while saving or restoring an arrangement."""
-  pass
-
-class App:
-  """Represents the application.
-  
-  Stores and provides access to app-global state. Holds a collection of
-  terminal windows and provides utilities for them.
+class Hierarchy:
+  """Holds a collection of terminal windows and provides utilities for them.
 
   This object keeps itself up to date by getting notifications when sessions,
   tabs, or windows change.
   """
+
   @staticmethod
   async def construct(connection):
-    """Don't use this directly. Use iterm2.app.get_app().
-    
-    Use this to construct a new hierarchy instead of __init__.
+    """Use this to construct a new hierarchy instead of __init__.
+
     This exists only because __init__ can't be async.
     """
     response = await iterm2.rpc.list_sessions(connection)
     list_sessions_response = response.list_sessions_response
-    windows = App._windows_from_list_sessions_response(connection, list_sessions_response)
-    h = App(connection, windows)
+    windows = Hierarchy._windows_from_list_sessions_response(connection, list_sessions_response)
+    h = Hierarchy(connection, windows)
     await h._listen()
     await h._refresh_focus()
     return h
-
-  def __init__(self, connection):
-    """Don't call this directly. Use construct."""
-    self.connection = connection
-
-  async def activate(self, raise_all_windows=True, ignoring_other_apps=False):
-    """Activate the app, giving it keyboard focus.
-    
-    :param raise_all_windows: Raise all windows if True, or only the key window. Defaults to True.
-    :param ignoring_other_apps: If True, activate even if the user interacts with another app after the call.
-    """
-    opts = []
-    if raise_all_windows:
-      opts.append(iterm2.rpc.ACTIVATE_RAISE_ALL_WINDOWS)
-    if ignoring_other_apps:
-      opts.append(iterm2.rpc.ACTIVATE_IGNORING_OTHER_APPS)
-    await iterm2.rpc.activate(self.connection, False, False, False, activate_app_opts=opts)
-
-  async def save_window_arrangement(self, name):
-    """Save all windows as a new arrangement.
-    
-    Replaces the arrangement with the given name if it already exists.
-
-    :param name: The name of the arrangement.
-    
-    :throws: SavedArrangementException
-    """
-    result = await iterm2.rpc.save_arrangement(self.connection, name)
-    if result.saved_arrangement_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-      raise SavedArrangementException(iterm2.api_pb2.SavedArrangementResponse.Status.Name(result.saved_arrangement_response.status))
-
-  async def restore_window_arrangement(self, name):
-    """Restore a saved window arrangement.
-    
-    :param name: The name of the arrangement to restore.
-
-    :throws: SavedArrangementException
-    """
-    result = await iterm2.rpc.restore_arrangement(self.connection, name)
-    if result.saved_arrangement_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-      raise SavedArrangementException(iterm2.api_pb2.SavedArrangementResponse.Status.Name(result.saved_arrangement_response.status))
 
   @staticmethod
   def _windows_from_list_sessions_response(connection, response):
@@ -97,7 +41,7 @@ class App:
     return windows
 
   def __init__(self, connection, windows):
-    """Do not call this directly. Use App.construct() instead."""
+    """Do not call this directly. Use Hierarchy.construct() instead."""
     self.connection = connection
     self.windows = windows
     self.tokens = []
@@ -147,41 +91,63 @@ class App:
     for notif in focus_info.focus_response.notifications:
       await self._focus_change(self.connection, notif)
 
+  async def get_window_by_id(self, window_id):
+    """Finds a window exactly matching the passed-in id.
+
+    Returns: An iterm2.window.Window or None.
+    """
+    for w in self.windows:
+      if w.window_id == window_id:
+        return w
+    return None
+
   async def get_session_by_id(self, session_id):
     """Finds a session exactly matching the passed-in id.
 
-    :param session_id: The session ID to search for.
-
-    :returns: An iterm2.session.Session or None.
+    Returns: An iterm2.session.Session or None.
     """
-    return self._search_for_session_id(session_id)
+    s = self._search_for_session_id(session_id)
+    if s is None:
+      await self.refresh()
+      return self._search_for_session_id(session_id)
+    else:
+      return s
 
   async def get_tab_by_id(self, tab_id):
     """Finds a tab exactly matching the passed-in id.
 
-    :param tab_id: The tab ID to search for.
-
-    :returns: An iterm2.tab.Tab or None.
+    Returns: An iterm2.tab.Tab or None
     """
-    return self._search_for_tab_id(tab_id)
+    t = self._search_for_tab_id(tab_id)
+    if t is None:
+      await self.refresh()
+      return self._search_for_tab_id(tab_id)
+    else:
+      return t
 
   async def get_window_by_id(self, window_id):
     """Finds a window exactly matching the passed-in id.
 
-    :param window_id: The window ID to search for.
-
-    :returns: An iterm2.window.Window or None
+    Returns: An iterm2.window.Window or None
     """
-    return self._search_for_window_id(window_id)
+    w = self._search_for_window_id(window_id)
+    if w is None:
+      await self.refresh()
+      return self._search_for_window_id(window_id)
+    else:
+      return w
 
   async def get_window_for_tab(self, tab_id):
     """Finds the window that contains the passed-in tab id.
 
-    :param tab_id: The tab ID to search for.
-
-    :returns: An iterm2.window.Window or None
+    Returns: An iterm2.window.Window or None
     """
-    return self._search_for_window_with_tab(tab_id)
+    w = self._search_for_window_with_tab(tab_id)
+    if w is None:
+      await self.refresh()
+      return self._search_for_window_with_tab(tab_id)
+    else:
+      return w
 
   def _search_for_window_with_tab(self, tab_id):
     for w in self.windows:
@@ -196,33 +162,8 @@ class App:
     You shouldn't need to call this explicitly. It will update itself from notifications.
     """
     response = await iterm2.rpc.list_sessions(self.connection)
-    new_windows = App._windows_from_list_sessions_response(self.connection, response.list_sessions_response)
-    windows = []
-    for nw in new_windows:
-      for nt in nw.tabs:
-        for ns in nt.get_sessions():
-          old = await self.get_session_by_id(ns.session_id)
-          if old is not None:
-            # Upgrade the old session's state
-            old.update_from(ns)
-            # Replace references to the new session in the new tab with the old session
-            nt.update_session(old)
-          ot = await self.get_tab_by_id(nt.tab_id)
-          if ot is not None:
-            # Upgrade the old tab's state. This copies the root over. The new tab
-            # has references to old sessions, so it's ok. The only problem is that
-            # splitters are left in the old state.
-            ot.update_from(nt)
-            # Replace the reference in the new window to the old tab.
-            nw.update_tab(ot)
-          ow = await self.get_window_by_id(nw.window_id)
-          if ow is not None:
-            ow.update_from(nw)
-            windows.append(ow)
-          else:
-            windows.append(nw)
-
-    self.windows = windows
+    # TODO: Calculate diffs so sessions don't get invalidated.
+    self.windows = Hierarchy._windows_from_list_sessions_response(self.connection, response.list_sessions_response)
 
   async def _focus_change(self, connection, sub_notif):
     """Updates the record of what is in focus."""
@@ -241,10 +182,7 @@ class App:
   async def get_key_window(self):
     """Gets the key window.
 
-    The key window is the window that receives keyboard input when iTerm2 is
-    the active application.
-
-    :returns: iterm2.window.Window or None
+    Returns: iterm2.window.Window or None
     """
     if self.key_window_id is None:
       await self._refresh_focus()
@@ -256,9 +194,10 @@ class App:
   def get_tab_and_window_for_session(self, session):
     """Finds the tab and window that own a session.
 
-    :param session: An iterm2.Session object.
+    Arguments:
+      session: An iterm2.Session object.
 
-    :returns: A tuple of (iterm2.window.Window, iterm2.tab.Tab).
+    Returns: A tuple of (iterm2.Window, iterm2.Tab).
     """
     session_id = session.get_session_id()
     for w in self.windows:
@@ -270,12 +209,11 @@ class App:
   async def create_window(self, profile=None, command=None):
     """Creates a new window.
 
-    :param profile: The name of the profile to use for the new window.
-    :param command: A command to run in lieu of the shell in the new session.
+    Arguments:
+      profile: The name of the profile to use for the new window.
+      command: A command to run in lieu of the shell in the new session.
 
-    :returns: A new iterm2.window.Window.
-
-    :throws: CreateWindowException if something went wrong.
+    Throws CreateWindowException if something went wrong.
     """
     result = await iterm2.rpc.create_tab(self.connection, profile=profile, window=None, command=command)
     ctr = result.create_tab_response

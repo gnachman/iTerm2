@@ -16,7 +16,7 @@ class Tab:
     self.root = other.root
     self.active_session_id = other.active_session_id
 
-  def update_sesion(self, s):
+  def update_session(self, s):
     """Replaces references to a session."""
     self.root.update_session(s)
 
