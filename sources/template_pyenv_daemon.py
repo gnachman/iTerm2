@@ -7,6 +7,7 @@ import sys
 # wish to install:
 #   "$$PYTHON_BIN$$/pip3" install package_name
 
+_APP = None
 
 # This is an example of a callback function. In this template, on_custom_esc is called when a
 # custom escape sequence is received. You can send a custom escape sequence with this command:
@@ -16,16 +17,18 @@ async def on_custom_esc(connection, notification):
     print("Received a custom escape sequence")
     if notification.sender_identity == "shared-secret":
         if notification.payload == "create-window":
-            await iterm2.window.Window.create(connection)
+            await _APP.async_create_window()
 
 async def main(connection, argv):
+    global _APP
+    _APP = await iterm2.app.async_get_app(connection)
     # Your program should register for notifications it wants to receive here. This example
     # watches for custom escape sequences.
-    await iterm2.notifications.subscribe_to_custom_escape_sequence_notification(connection, on_custom_esc)
+    await iterm2.notifications.async_subscribe_to_custom_escape_sequence_notification(connection, on_custom_esc)
 
     # Wait for messages indefinitely. This program will terminate when iTerm2 exits because
     # dispatch_until_future will raise an exception when its connection closes.
-    await connection.dispatch_until_future(asyncio.Future())
+    await connection.async_dispatch_until_future(asyncio.Future())
 
 if __name__ == "__main__":
     iterm2.connection.Connection().run(main, sys.argv)

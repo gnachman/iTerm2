@@ -1,7 +1,8 @@
 import asyncio
+import json
+
 import iterm2.api_pb2
 import iterm2.connection
-import json
 
 ACTIVATE_RAISE_ALL_WINDOWS = 1
 ACTIVATE_IGNORING_OTHER_APPS = 2
@@ -11,7 +12,7 @@ class RPCException(Exception):
 
 ## APIs -----------------------------------------------------------------------
 
-async def list_sessions(connection):
+async def async_list_sessions(connection):
   """
   Requests a list of sessions.
 
@@ -21,9 +22,9 @@ async def list_sessions(connection):
   """
   request = _alloc_request()
   request.list_sessions_request.SetInParent()
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def notification_request(connection, subscribe, notification_type, session=None):
+async def async_notification_request(connection, subscribe, notification_type, session=None):
   """
   Requests a change to a notification subscription.
 
@@ -39,9 +40,9 @@ async def notification_request(connection, subscribe, notification_type, session
     request.notification_request.session = session
   request.notification_request.subscribe = subscribe
   request.notification_request.notification_type = notification_type
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def send_text(connection, session, text):
+async def async_send_text(connection, session, text):
   """
   Sends text to a session, as though it had been typed.
 
@@ -54,9 +55,9 @@ async def send_text(connection, session, text):
   request = _alloc_request()
   request.send_text_request.session = session
   request.send_text_request.text = text
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def split_pane(connection, session, vertical, before, profile=None):
+async def async_split_pane(connection, session, vertical, before, profile=None):
   """
   Splits a session into two.
 
@@ -75,13 +76,13 @@ async def split_pane(connection, session, vertical, before, profile=None):
   if vertical:
     request.split_pane_request.split_direction = iterm2.api_pb2.SplitPaneRequest.VERTICAL
   else:
-    request.split_pane_request.split_direction = iterm2.api_pb2.SplitPaneRequest.HORIZONTAL;
+    request.split_pane_request.split_direction = iterm2.api_pb2.SplitPaneRequest.HORIZONTAL
   request.split_pane_request.before = before
   if profile is not None:
     request.split_pane_request.profile_name = profile
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def create_tab(connection, profile=None, window=None, index=None, command=None):
+async def async_create_tab(connection, profile=None, window=None, index=None, command=None):
   """
   Creates a new tab or window.
 
@@ -103,9 +104,9 @@ async def create_tab(connection, profile=None, window=None, index=None, command=
     request.create_tab_request.tab_index = index
   if command is not None:
     request.create_tab_request.command = command
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def get_buffer_with_screen_contents(connection, session=None):
+async def async_get_buffer_with_screen_contents(connection, session=None):
   """
   Gets the contents of a session's mutable area.
 
@@ -118,9 +119,9 @@ async def get_buffer_with_screen_contents(connection, session=None):
   if session is not None:
     request.get_buffer_request.session = session
   request.get_buffer_request.line_range.screen_contents_only = True
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def get_buffer_lines(connection, trailing_lines, session=None):
+async def async_get_buffer_lines(connection, trailing_lines, session=None):
   """
   Gets the last lines of text from a session
 
@@ -134,9 +135,9 @@ async def get_buffer_lines(connection, trailing_lines, session=None):
   if session is not None:
     request.get_buffer_request.session = session
   request.get_buffer_request.line_range.trailing_lines = trailing_lines
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def get_prompt(connection, session=None):
+async def async_get_prompt(connection, session=None):
   """
   Gets info about the last prompt in a session
 
@@ -149,9 +150,9 @@ async def get_prompt(connection, session=None):
   request.get_prompt_request.SetInParent()
   if session is not None:
     request.get_prompt_request.session = session
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def start_transaction(connection):
+async def async_start_transaction(connection):
   """
   Begins a transaction, locking iTerm2 until the transaction ends. Be careful with this.
 
@@ -161,8 +162,8 @@ async def start_transaction(connection):
   """
   request = _alloc_request()
   request.transaction_request.begin = True
-  return await _call(connection, request) 
-async def end_transaction(connection):
+  return await _async_call(connection, request)
+async def async_end_transaction(connection):
   """
   Ends a transaction begun with start_transaction()
 
@@ -172,9 +173,9 @@ async def end_transaction(connection):
   """
   request = _alloc_request()
   request.transaction_request.begin = False
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def register_web_view_tool(connection, display_name, identifier, reveal_if_already_registered, url):
+async def async_register_web_view_tool(connection, display_name, identifier, reveal_if_already_registered, url):
   """
   Registers a toolbelt tool showing a webview.
 
@@ -192,9 +193,9 @@ async def register_web_view_tool(connection, display_name, identifier, reveal_if
   request.register_tool_request.reveal_if_already_registered = reveal_if_already_registered
   request.register_tool_request.tool_type = iterm2.api_pb2.RegisterToolRequest.ToolType.Value("WEB_VIEW_TOOL")
   request.register_tool_request.URL = url
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def set_profile_property(connection, session_id, key, value):
+async def async_set_profile_property(connection, session_id, key, value):
   """
   Sets a property of a session's profile.
 
@@ -209,9 +210,9 @@ async def set_profile_property(connection, session_id, key, value):
   request.set_profile_property_request.session = session_id
   request.set_profile_property_request.key = key
   request.set_profile_property_request.json_value = json.dumps(value)
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def get_profile(connection, session=None, keys=None):
+async def async_get_profile(connection, session=None, keys=None):
   """
   Fetches a session's profile
 
@@ -228,9 +229,9 @@ async def get_profile(connection, session=None, keys=None):
   if keys is not None:
     for key in keys:
       request.get_profile_property_request.keys.append(key)
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def set_property(connection, name, json_value, window_id=None):
+async def async_set_property(connection, name, json_value, window_id=None):
   """
   Sets a property of an object (currently only of a window).
   """
@@ -240,9 +241,9 @@ async def set_property(connection, name, json_value, window_id=None):
   request.set_property_request.window_id = window_id
   request.set_property_request.name = name
   request.set_property_request.json_value = json_value
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def get_property(connection, name, window_id=None):
+async def async_get_property(connection, name, window_id=None):
   """
   Gets a property of an object (currently only of a window).
   """
@@ -250,9 +251,9 @@ async def get_property(connection, name, window_id=None):
   request.get_property_request.SetInParent()
   request.get_property_request.window_id = window_id
   request.get_property_request.name = name
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def inject(connection, data, sessions):
+async def async_inject(connection, data, sessions):
   """
   Injects bytes/string into sessions, as though it was program output.
   """
@@ -260,19 +261,19 @@ async def inject(connection, data, sessions):
   request.inject_request.SetInParent()
   request.inject_request.session_id.extend(sessions)
   request.inject_request.data = data
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def activate(connection, select_session, select_tab, order_window_front, session_id=None, tab_id=None, window_id=None, activate_app_opts=None):
+async def async_activate(connection, select_session, select_tab, order_window_front, session_id=None, tab_id=None, window_id=None, activate_app_opts=None):
   """
   Activates a session, tab, or window.
   """
   request = _alloc_request()
   if session_id is not None:
-    request.activate_request.session_id = session_id;
+    request.activate_request.session_id = session_id
   if tab_id is not None:
-    request.activate_request.tab_id = tab_id;
+    request.activate_request.tab_id = tab_id
   if window_id is not None:
-    request.activate_request.window_id = window_id;
+    request.activate_request.window_id = window_id
   if activate_app_opts is not None:
     request.activate_request.activate_app.SetInParent()
     if ACTIVATE_RAISE_ALL_WINDOWS in activate_app_opts:
@@ -282,9 +283,9 @@ async def activate(connection, select_session, select_tab, order_window_front, s
   request.activate_request.order_window_front = order_window_front
   request.activate_request.select_tab = select_tab
   request.activate_request.select_session = select_session
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def variable(connection, session_id, sets, gets):
+async def async_variable(connection, session_id, sets, gets):
   """
   Gets or sets session variables.
   """
@@ -296,9 +297,9 @@ async def variable(connection, session_id, sets, gets):
     s.name = name
     s.value = value
     request.variable_request.set.extend([s])
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def save_arrangement(connection, name, window_id=None):
+async def async_save_arrangement(connection, name, window_id=None):
   """
   Save a window arrangement.
   """
@@ -307,9 +308,9 @@ async def save_arrangement(connection, name, window_id=None):
   request.saved_arrangement_request.action = iterm2.api_pb2.SavedArrangementRequest.Action.Value("SAVE")
   if window_id is not None:
     request.saved_arrangement_request.window_id = window_id
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def restore_arrangement(connection, name, window_id=None):
+async def async_restore_arrangement(connection, name, window_id=None):
   """
   Restore a window arrangement.
   """
@@ -318,15 +319,15 @@ async def restore_arrangement(connection, name, window_id=None):
   request.saved_arrangement_request.action = iterm2.api_pb2.SavedArrangementRequest.Action.Value("RESTORE")
   if window_id is not None:
     request.saved_arrangement_request.window_id = window_id
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
-async def get_focus_info(connection):
+async def async_get_focus_info(connection):
   """
   Fetches the focused state of everything.
   """
   request = _alloc_request()
   request.focus_request.SetInParent()
-  return await _call(connection, request)
+  return await _async_call(connection, request)
 
 ## Private --------------------------------------------------------------------
 
@@ -343,10 +344,9 @@ def _alloc_request():
   request.id = _alloc_id()
   return request
 
-async def _call(connection, request):
-  future = asyncio.Future()
-  await connection.send_message(request)
-  response = await connection.dispatch_until_id(request.id)
+async def _async_call(connection, request):
+  await connection.async_send_message(request)
+  response = await connection.async_dispatch_until_id(request.id)
   if response.HasField("error"):
     raise RPCException(response.error)
   else:

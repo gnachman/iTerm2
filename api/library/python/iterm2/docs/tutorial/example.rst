@@ -12,10 +12,10 @@ Here's the example script that iTerm2 provides for you, minus some comments:
     import sys
 
     async def main(connection, argv):
-	a = await iterm2.app.get_app(connection)
-	w = await a.get_key_window()
+	a = await iterm2.app.async_get_app(connection)
+	w = await a.async_get_key_window()
 	if w is not None:
-	    await w.create_tab()
+	    await w.async_create_tab()
 	else:
 	    print("No current window")
 
@@ -79,7 +79,7 @@ notifications from iTerm2. We'll see more about that later.
 
 .. code-block:: python
 
-	a = await iterm2.app.get_app(connection)
+	a = await iterm2.app.async_get_app(connection)
 
 The purpose of this line is to get a reference to the :class:`iterm2.app.App`
 object, which is useful for most things you'll want to do in a simple script.
@@ -93,19 +93,22 @@ state (such as the list of windows). The returned value is an
 :class:`iterm2.app.App`.
 
 If you forget to use `await` you'll get a warning in the Script Console.
+iTerm2's library follows a naming convention to help you remember to use await:
+any function that is declared `async` will have a name that begins with
+`async_`.
 
 .. code-block:: python
 
-	w = await a.get_key_window()
+	w = await a.async_get_key_window()
 
 The fetches the "key window" from the app. The key window is the window that
 receives keyboard input. If iTerm2 is not active or has no windows, then no
-window will be key and :meth:`iterm2.app.App.get_key_window` returns `None`.
+window will be key and :meth:`iterm2.app.App.async_get_key_window` returns `None`.
 
 .. code-block:: python
 
 	if w is not None:
-	    await w.create_tab()
+	    await w.async_create_tab()
 
 If there is a key window, add a tab to it. The new tab uses the default
 profile.

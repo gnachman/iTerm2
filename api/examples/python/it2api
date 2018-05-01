@@ -9,7 +9,7 @@ import sys
 import traceback
 
 async def list_sessions(connection, args):
-  a = await iterm2.app.get_app(connection)
+  a = await iterm2.app.async_get_app(connection)
   for w in a.windows:
     for t in w.tabs:
       sessions = t.get_sessions()
@@ -17,43 +17,44 @@ async def list_sessions(connection, args):
         print(s.pretty_str(), end='')
 
 async def show_hierarchy(connection, args):
-  a = await iterm2.app.get_app(connection)
+  a = await iterm2.app.async_get_app(connection)
   print(a.pretty_str())
 
 async def send_text(connection, args):
-  a = await iterm2.app.get_app(connection)
-  s = await a.get_session_by_id(args.session)
-  await s.send_text(args.text)
+  a = await iterm2.app.async_get_app(connection)
+  s = await a.async_get_session_by_id(args.session)
+  await s.async_send_text(args.text)
 
 async def create_tab(connection, args):
+  a = await iterm2.app.async_get_app(connection)
   if args.window is not None:
     window_id = args.window
-    a = await iterm2.app.get_app(connection)
     try:
       window = next(window for window in a.windows if window.window_id == window_id)
-      await window.create_tab(profile=args.profile, command=args.command, index=args.index)
+      await window.async_create_tab(profile=args.profile, command=args.command, index=args.index)
     except:
       print("bad window id {}".format(window_id))
       sys.exit(1)
   else:
-    result = await iterm2.window.Window.create(connection, profile=args.profile, command=args.command)
+    print(iterm2.window.Window)
+    result = await a.async_create_window(profile=args.profile, command=args.command)
 
 async def split_pane(connection, args):
-  a = await iterm2.app.get_app(connection)
-  s = await a.get_session_by_id(args.session)
-  await s.split_pane(vertical=args.vertical, before=args.before, profile=args.profile)
+  a = await iterm2.app.async_get_app(connection)
+  s = await a.async_get_session_by_id(args.session)
+  await s.async_split_pane(vertical=args.vertical, before=args.before, profile=args.profile)
 
 async def get_buffer(connection, args):
-  a = await iterm2.app.get_app(connection)
-  s = await a.get_session_by_id(args.session)
-  result = await s.get_buffer_lines(args.trailing_lines)
+  a = await iterm2.app.async_get_app(connection)
+  s = await a.async_get_session_by_id(args.session)
+  result = await s.async_get_buffer_lines(args.trailing_lines)
   for contents in result.contents:
     print(contents.text)
 
 async def get_prompt(connection, args):
-  a = await iterm2.app.get_app(connection)
-  s = await a.get_session_by_id(args.session)
-  result = await s.get_prompt()
+  a = await iterm2.app.async_get_app(connection)
+  s = await a.async_get_session_by_id(args.session)
+  result = await s.async_get_prompt()
   print(result)
 
 
@@ -116,9 +117,9 @@ def profile_property_type_map():
       "non_ascii_anti_aliased":                      "bool",
       "non_ascii_ligatures":                         "bool",
       "only_the_default_bg_color_uses_transparency": "bool",
-      "option_key_sends":                            "int",
+      "left_option_key_sends":                       "int",
       "place_prompt_at_first_column":                "bool",
-      "prompt_before_closing_2":                     "bool",
+      "prompt_before_closing":                       "bool",
       "reduce_flicker":                              "bool",
       "right_option_key_sends":                      "int",
       "scrollback_in_alternate_screen":              "bool",
@@ -163,15 +164,15 @@ def profile_property_type(key):
   return profile_property_type_map()[key]
 
 async def get_profile_property(connection, args):
-  a = await iterm2.app.get_app(connection)
-  s = await a.get_session_by_id(args.session)
-  profile = await s.get_profile()
+  a = await iterm2.app.async_get_app(connection)
+  s = await a.async_get_session_by_id(args.session)
+  profile = await s.async_get_profile()
   if args.keys is not None:
     keys = args.keys.split(",")
   else:
     keys = profile_properties()
   for prop in keys:
-    fname = "get_" + prop
+    fname = "async_get_" + prop
     f = getattr(profile, fname)
     print("{}: {}".format(prop, await f()))
 
@@ -198,20 +199,20 @@ def encode_property_value(key, value):
         match.group(5))
 
 async def set_profile_property(connection, args):
-  a = await iterm2.app.get_app(connection)
-  s = await a.get_session_by_id(args.session)
+  a = await iterm2.app.async_get_app(connection)
+  s = await a.async_get_session_by_id(args.session)
 
   encoded_value = encode_property_value(args.key, args.value)
-  profile = await s.get_profile()
-  fname = "set_" + args.key
+  profile = await s.async_get_profile()
+  fname = "async_set_" + args.key
   f = getattr(profile, fname)
   await f(encoded_value)
 
 async def read(connection, args):
-  a = await iterm2.app.get_app(connection)
-  s = await a.get_session_by_id(args.session)
+  a = await iterm2.app.async_get_app(connection)
+  s = await a.async_get_session_by_id(args.session)
   if args.mode == "char":
-    print(await s.read_keystroke())
+    print(await s.async_read_keystroke())
   elif args.mode == "line":
     async with s.get_keystroke_reader() as reader:
       eol = False
@@ -228,19 +229,19 @@ async def read(connection, args):
       print(line)
 
 async def get_window_property(connection, args):
-  a = await iterm2.app.get_app(connection)
-  w = await a.get_window_by_id(args.id)
+  a = await iterm2.app.async_get_app(connection)
+  w = await a.async_get_window_by_id(args.id)
   if w is None:
     print("bad window ID")
   else:
     if args.name == "frame":
-      print(await w.get_frame(connection))
+      print(await w.async_get_frame(connection))
     elif args.name == "fullscreen":
-      print(await w.get_fullscreen(connection))
+      print(await w.async_get_fullscreen(connection))
 
 async def set_window_property(connection, args):
-  a = await iterm2.app.get_app(connection)
-  w = await a.get_window_by_id(args.id)
+  a = await iterm2.app.async_get_app(connection)
+  w = await a.async_get_window_by_id(args.id)
   if w is None:
     print("bad window ID")
   else:
@@ -251,99 +252,100 @@ async def set_window_property(connection, args):
       frame.origin.y = int(parts[1])
       frame.size.width = int(parts[2])
       frame.size.height = int(parts[3])
-      await w.set_frame(connection, frame)
+      await w.async_set_frame(connection, frame)
     elif args.name == "fullscreen":
-      await w.set_fullscreen(connection, args.value == "true")
+      await w.async_set_fullscreen(connection, args.value == "true")
 
 async def inject(connection, args):
-  a = await iterm2.app.get_app(connection)
-  s = await a.get_session_by_id(args.session)
+  a = await iterm2.app.async_get_app(connection)
+  s = await a.async_get_session_by_id(args.session)
   if s is None:
     print("bad session ID")
   else:
-    await s.inject(args.data.encode())
+    await s.async_inject(args.data.encode())
 
 async def activate(connection, args):
-  a = await iterm2.app.get_app(connection)
+  a = await iterm2.app.async_get_app(connection)
   if args.mode == "session":
-    s = await a.get_session_by_id(args.id)
+    s = await a.async_get_session_by_id(args.id)
     if s is None:
       print("bad session ID")
     else:
-      await s.activate()
+      await s.async_activate()
   elif args.mode == "tab":
-    t = await a.get_tab_by_id(args.id)
+    t = await a.async_get_tab_by_id(args.id)
     if t is None:
       print("bad tab ID")
     else:
-      await t.select()
+      await t.async_select()
   elif args.mode == "window":
-    w = await a.get_window_by_id(args.id)
+    w = await a.async_get_window_by_id(args.id)
     if w is None:
       print("bad window ID")
     else:
-      await w.activate(connection)
+      await w.async_activate(connection)
 
 async def activate_app(connection, args):
-  a = iterm2.app.App(connection)
-  await a.activate(raise_all_windows=args.raise_all_windows, ignoring_other_apps=args.ignoring_other_apps)
+  a = await iterm2.app.async_get_app(connection)
+  await a.async_activate(raise_all_windows=args.raise_all_windows, ignoring_other_apps=args.ignoring_other_apps)
 
 async def set_variable(connection, args):
-  a = await iterm2.app.get_app(connection)
-  s = await a.get_session_by_id(args.session)
+  a = await iterm2.app.async_get_app(connection)
+  s = await a.async_get_session_by_id(args.session)
   if s is None:
     print("bad session ID")
     return
-  await s.set_variable(args.name, args.value)
+  await s.async_set_variable(args.name, args.value)
 
 async def get_variable(connection, args):
-  a = await iterm2.app.get_app(connection)
-  s = await a.get_session_by_id(args.session)
+  a = await iterm2.app.async_get_app(connection)
+  s = await a.async_get_session_by_id(args.session)
   if s is None:
     print("bad session ID")
     return
-  value = await s.get_variable(args.name)
+  value = await s.async_get_variable(args.name)
   print(value)
 
 async def list_variables(connection, args):
-  a = await iterm2.app.get_app(connection)
-  s = await a.get_session_by_id(args.session)
+  a = await iterm2.app.async_get_app(connection)
+  s = await a.async_get_session_by_id(args.session)
   if s is None:
     print("bad session ID")
     return
-  value = await s.get_variable("*")
+  value = await s.async_get_variable("*")
   names = value.split(",")
   for name in names:
     print(name)
 
 async def saved_arrangement(connection, args):
   if args.window is not None:
-    a = await iterm2.app.get_app(connection)
-    w = await a.get_window_by_id(args.window)
+    a = await iterm2.app.async_get_app(connection)
+    w = await a.async_get_window_by_id(args.window)
     if w is None:
       print("bad window ID")
       return
     if args.action == "save":
-      await w.save_window_as_arrangement(args.name)
+      await w.async_save_window_as_arrangement(args.name)
     elif args.action == "restore":
-      await w.restore_window_arrangement(args.name)
+      await w.async_restore_window_arrangement(args.name)
   else:
+    a = await iterm2.app.async_get_app(connection)
     if args.action == "save":
-      await iterm2.app.App(connection).save_window_arrangement(args.name)
+      await a.async_save_window_arrangement(args.name)
     elif args.action == "restore":
-      await iterm2.app.App(connection).restore_window_arrangement(args.name)
+      await a.async_restore_window_arrangement(args.name)
 
 async def show_focus(connection, args):
-  a = await iterm2.app.get_app(connection)
+  a = await iterm2.app.async_get_app(connection)
   if a.app_active:
     print("App is active")
-  w = await a.get_window_by_id(a.key_window_id)
+  w = await a.async_get_window_by_id(a.key_window_id)
   print("Key window: {}".format(w.window_id))
   print("")
   for w in a.windows:
-    t = await a.get_tab_by_id(w.selected_tab_id)
+    t = await a.async_get_tab_by_id(w.selected_tab_id)
     print("Selected tab in {}: {}".format(w.window_id, t.tab_id))
-    s = await a.get_session_by_id(t.active_session_id)
+    s = await a.async_get_session_by_id(t.active_session_id)
     print("  Active session is: {}".format(s.pretty_str()))
 
 def make_parser():
@@ -463,17 +465,12 @@ def main(argv):
 
   async def wrapper(connection):
     try:
-      print("Await the func")
       await args.func(connection, args)
-      print("Func returned")
     except Exception as e:
-      print("Exception")
       print(traceback.format_exc())
 
   c = iterm2.connection.Connection()
-  print("Running...")
   c.run(wrapper)
-  print("Returned")
 
 if __name__ == "__main__":
   try:

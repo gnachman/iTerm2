@@ -22,8 +22,8 @@ class Transaction:
       self.connection = connection
 
   async def __aenter__(self):
-    await iterm2.rpc.start_transaction(self.connection)
+    await iterm2.rpc.async_start_transaction(self.connection)
 
   async def __aexit__(self, exc_type, exc, tb):
-    await iterm2.rpc.end_transaction(self.connection)
+    await iterm2.rpc.async_end_transaction(self.connection)
 

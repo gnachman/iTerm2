@@ -1,6 +1,6 @@
 import iterm2.rpc
 
-async def register_web_view_tool(connection, display_name, identifier, reveal_if_already_registered, url):
+async def async_register_web_view_tool(connection, display_name, identifier, reveal_if_already_registered, url):
   """
   Registers a toolbelt tool that shows a webview.
 
@@ -14,9 +14,7 @@ async def register_web_view_tool(connection, display_name, identifier, reveal_if
 
   :raises: iterm2.rpc.RPCException if something goes wrong
   """
-  print("Sending rpc..")
-  result = await iterm2.rpc.register_web_view_tool(connection, display_name, identifier, reveal_if_already_registered, url)
-  print("Processing result")
+  result = await iterm2.rpc.async_register_web_view_tool(connection, display_name, identifier, reveal_if_already_registered, url)
   status = result.register_tool_response.status
   if status == iterm2.api_pb2.RegisterToolResponse.Status.Value("OK"):
     return result

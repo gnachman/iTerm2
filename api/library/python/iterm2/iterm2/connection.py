@@ -1,11 +1,12 @@
 import asyncio
 import concurrent
-import iterm2.api_pb2
 import os
 import sys
 import time
 import traceback
 import websockets
+
+import iterm2.api_pb2
 from iterm2._version import __version__
 
 _helpers = []
@@ -34,6 +35,7 @@ class Connection:
 
   def __init__(self):
     self.__deferred = None
+    self.websocket = None
 
   def run(self, coro, *args):
     """
@@ -45,13 +47,13 @@ class Connection:
     :param coro: A coroutine (async function) to run after connecting.
     :param args: Passed to coro after its first argument (this connection).
     """
-    async def main(loop):
-      await self.connect(coro, *args)
+    async def async_main(loop):
+      await self.async_connect(coro, *args)
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main(loop))
+    loop.run_until_complete(async_main(loop))
 
 
-  async def send_message(self, message):
+  async def async_send_message(self, message):
     """
     Sends a message.
 
@@ -61,7 +63,7 @@ class Connection:
     """
     await self.websocket.send(message.SerializeToString())
 
-  async def recv_message(self):
+  async def async_recv_message(self):
     """
     Asynchronously receives a message.
 
@@ -74,7 +76,7 @@ class Connection:
     message.ParseFromString(data)
     return message
 
-  async def connect(self, coro, *args):
+  async def async_connect(self, coro, *args):
     """
     Establishes a websocket connection.
 
@@ -109,7 +111,7 @@ class Connection:
         sys.exit(1)
 
 
-  async def dispatch_until_id(self, reqid):
+  async def async_dispatch_until_id(self, reqid):
     """
     Handle incoming messages until one with the specified id is received.
 
@@ -125,16 +127,16 @@ class Connection:
     """
     ownsDeferred = self._begin_deferring()
     while True:
-      message = await self.recv_message()
+      message = await self.async_recv_message()
       if message.id == reqid:
         if ownsDeferred:
           for d in self._iterate_deferred():
-            await self._dispatch(d)
+            await self._async_dispatch(d)
         return message
       else:
         self._defer(message)
 
-  async def dispatch_for_duration(self, duration):
+  async def async_dispatch_for_duration(self, duration):
     """
     Handle incoming messages for a fixed duration of time.
 
@@ -146,13 +148,13 @@ class Connection:
       now = time.time()
       end = now + duration
       while now < end:
-        message = await asyncio.wait_for(self.recv_message(), end - now)
-        await self._dispatch(message)
+        message = await asyncio.wait_for(self.async_recv_message(), end - now)
+        await self._async_dispatch(message)
         now = time.time()
     except concurrent.futures._base.TimeoutError:
       return
 
-  async def dispatch_until_future(self, future):
+  async def async_dispatch_until_future(self, future):
     """
     Handle incoming messages until a future has a result.
 
@@ -162,8 +164,8 @@ class Connection:
     :param future: An asyncio.Future that will get a result.
     """
     while not future.done():
-      message = await self.recv_message()
-      await self._dispatch(message)
+      message = await self.async_recv_message()
+      await self._async_dispatch(message)
 
 
   def _begin_deferring(self):
@@ -195,7 +197,7 @@ class Connection:
         yield(d)
     self.__deferred = None
 
-  async def _dispatch(self, message):
+  async def _async_dispatch(self, message):
     """
     Dispatch a message to all registered helpers.
     """

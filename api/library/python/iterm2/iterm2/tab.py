@@ -39,7 +39,7 @@ class Tab:
   def get_root(self):
     """
     A tab's sessions are stored in a tree. This returns the root.
-    
+
     An interior node of the tree is a Splitter. That corresponds to a
     collection of adjacent sessions with split pane dividers that are all
     either vertical or horizontal.
@@ -58,11 +58,11 @@ class Tab:
     s += self.root.pretty_str(indent=indent + "  ")
     return s
 
-  async def select(self, order_window_front=True):
+  async def async_select(self, order_window_front=True):
     """
     Selects this tab.
 
     :param order_window_front: Whether the window this session is in should be
       brought to the front and given keyboard focus.
     """
-    await iterm2.rpc.activate(self.connection, False, True, order_window_front, tab_id=self.tab_id)
+    await iterm2.rpc.async_activate(self.connection, False, True, order_window_front, tab_id=self.tab_id)

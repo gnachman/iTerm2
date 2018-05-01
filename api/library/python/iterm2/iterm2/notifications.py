@@ -12,7 +12,7 @@ _handlers = {}
 class SubscriptionException(Exception):
   pass
 
-async def unsubscribe(connection, token):
+async def async_unsubscribe(connection, token):
   """
   Unsubscribes from a notification.
 
@@ -28,9 +28,9 @@ async def unsubscribe(connection, token):
   else:
     del _handlers[key]
     session, notification_type = key
-    await _subscribe(connection, False, notification_type, None, session=session)
+    await _async_subscribe(connection, False, notification_type, None, session=session)
 
-async def subscribe_to_new_session_notification(connection, callback):
+async def async_subscribe_to_new_session_notification(connection, callback):
   """
   Registers a callback to be run when a new session is created.
 
@@ -40,9 +40,9 @@ async def subscribe_to_new_session_notification(connection, callback):
 
   :returns: A token that can be passed to unsubscribe.
   """
-  return await _subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_NEW_SESSION, callback)
+  return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_NEW_SESSION, callback)
 
-async def subscribe_to_keystroke_notification(connection, callback, session=None):
+async def async_subscribe_to_keystroke_notification(connection, callback, session=None):
   """
   Registers a callback to be run when a key is pressed.
 
@@ -53,9 +53,9 @@ async def subscribe_to_keystroke_notification(connection, callback, session=None
 
   Returns: A token that can be passed to unsubscribe.
   """
-  return await _subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_KEYSTROKE, callback, session=session)
+  return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_KEYSTROKE, callback, session=session)
 
-async def subscribe_to_screen_update_notification(connection, callback, session=None):
+async def async_subscribe_to_screen_update_notification(connection, callback, session=None):
   """
   Registers a callback to be run when the screen contents change.
 
@@ -66,9 +66,9 @@ async def subscribe_to_screen_update_notification(connection, callback, session=
 
   :returns: A token that can be passed to unsubscribe.
   """
-  return await _subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_SCREEN_UPDATE, callback, session=session)
+  return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_SCREEN_UPDATE, callback, session=session)
 
-async def subscribe_to_prompt_notification(connection, callback, session=None):
+async def async_subscribe_to_prompt_notification(connection, callback, session=None):
   """
   Registers a callback to be run when a shell prompt is received.
 
@@ -79,9 +79,9 @@ async def subscribe_to_prompt_notification(connection, callback, session=None):
 
   :returns: A token that can be passed to unsubscribe.
   """
-  return await _subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_PROMPT, callback, session=session)
+  return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_PROMPT, callback, session=session)
 
-async def subscribe_to_location_change_notification(connection, callback, session=None):
+async def async_subscribe_to_location_change_notification(connection, callback, session=None):
   """
   Registers a callback to be run when the host or current directory changes.
 
@@ -92,9 +92,9 @@ async def subscribe_to_location_change_notification(connection, callback, sessio
 
   :returns: A token that can be passed to unsubscribe.
   """
-  return await _subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_LOCATION_CHANGE, callback, session=session)
+  return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_LOCATION_CHANGE, callback, session=session)
 
-async def subscribe_to_custom_escape_sequence_notification(connection, callback, session=None):
+async def async_subscribe_to_custom_escape_sequence_notification(connection, callback, session=None):
   """
   Registers a callback to be run when a custom escape sequence is received.
 
@@ -107,9 +107,9 @@ async def subscribe_to_custom_escape_sequence_notification(connection, callback,
 
   :returns: A token that can be passed to unsubscribe.
   """
-  return await _subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_CUSTOM_ESCAPE_SEQUENCE, callback, session=session)
+  return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_CUSTOM_ESCAPE_SEQUENCE, callback, session=session)
 
-async def subscribe_to_terminate_session_notification(connection, callback):
+async def async_subscribe_to_terminate_session_notification(connection, callback):
   """
   Registers a callback to be run when a session terminates.
 
@@ -119,9 +119,9 @@ async def subscribe_to_terminate_session_notification(connection, callback):
 
   :returns: A token that can be passed to unsubscribe.
   """
-  return await _subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_TERMINATE_SESSION, callback, session=None)
+  return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_TERMINATE_SESSION, callback, session=None)
 
-async def subscribe_to_layout_change_notification(connection, callback):
+async def async_subscribe_to_layout_change_notification(connection, callback):
   """
   Registers a callback to be run when the relationship between sessions, tabs,
   and windows changes.
@@ -132,9 +132,9 @@ async def subscribe_to_layout_change_notification(connection, callback):
 
   :returns: A token that can be passed to unsubscribe.
   """
-  return await _subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_LAYOUT_CHANGE, callback, session=None)
+  return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_LAYOUT_CHANGE, callback, session=None)
 
-async def subscribe_to_focus_change_notification(connection, callback):
+async def async_subscribe_to_focus_change_notification(connection, callback):
   """
   Registers a callback to be run when focus changes.
 
@@ -144,14 +144,14 @@ async def subscribe_to_focus_change_notification(connection, callback):
 
   :returns: A token that can be passed to unsubscribe.
   """
-  return await _subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_FOCUS_CHANGE, callback, session=None)
+  return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_FOCUS_CHANGE, callback, session=None)
 
 ## Private --------------------------------------------------------------------
 
-async def _subscribe(connection, subscribe, notification_type, callback, session=None):
+async def _async_subscribe(connection, subscribe, notification_type, callback, session=None):
   _register_helper_if_needed()
   transformed_session = session if session is not None else "all"
-  response = await iterm2.rpc.notification_request(connection, subscribe, notification_type, transformed_session)
+  response = await iterm2.rpc.async_notification_request(connection, subscribe, notification_type, transformed_session)
   status = response.notification_response.status
   status_ok = (status == iterm2.api_pb2.NotificationResponse.Status.Value("OK"))
 
@@ -171,9 +171,9 @@ def _register_helper_if_needed():
   global _haveRegisteredHelper
   if not _haveRegisteredHelper:
     _haveRegisteredHelper = True
-    iterm2.connection.Connection.register_helper(_dispatch_helper)
+    iterm2.connection.Connection.register_helper(_async_dispatch_helper)
 
-async def _dispatch_helper(connection, message):
+async def _async_dispatch_helper(connection, message):
   handlers, sub_notification = _get_notification_handlers(message)
   for handler in handlers:
     assert handler is not None
