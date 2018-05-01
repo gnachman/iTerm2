@@ -1021,11 +1021,11 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     switch (request.action) {
         case ITMSavedArrangementRequest_Action_Save:
             [self saveArrangementNamed:request.name windowID:request.windowId handler:handler];
-            break;
+            return;
 
         case ITMSavedArrangementRequest_Action_Restore:
             [self restoreArrangementNamed:request.name windowID:request.windowId handler:handler];
-            break;
+            return;
     }
     ITMSavedArrangementResponse *response = [[ITMSavedArrangementResponse alloc] init];
     response.status = ITMSavedArrangementResponse_Status_RequestMalformed;
@@ -1065,8 +1065,12 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
             return;
         }
     }
-    [[iTermController sharedInstance] loadWindowArrangementWithName:name asTabsInTerminal:term];
-    response.status = ITMSavedArrangementResponse_Status_Ok;
+    BOOL ok = [[iTermController sharedInstance] loadWindowArrangementWithName:name asTabsInTerminal:term];
+    if (ok) {
+        response.status = ITMSavedArrangementResponse_Status_Ok;
+    } else {
+        response.status = ITMSavedArrangementResponse_Status_ArrangementNotFound;
+    }
     handler(response);
 }
 

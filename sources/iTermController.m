@@ -436,15 +436,18 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (void)loadWindowArrangementWithName:(NSString *)theName asTabsInTerminal:(PseudoTerminal *)term {
+- (BOOL)loadWindowArrangementWithName:(NSString *)theName asTabsInTerminal:(PseudoTerminal *)term {
+    BOOL ok = NO;
     _savedArrangementNameBeingRestored = [[theName retain] autorelease];
     NSArray *terminalArrangements = [WindowArrangements arrangementWithName:theName];
     if (terminalArrangements) {
         for (NSDictionary *terminalArrangement in terminalArrangements) {
             [self tryOpenArrangement:terminalArrangement asTabsInWindow:term];
+            ok = YES;
         }
     }
     _savedArrangementNameBeingRestored = nil;
+    return ok;
 }
 
 - (void)loadWindowArrangementWithName:(NSString *)theName {
