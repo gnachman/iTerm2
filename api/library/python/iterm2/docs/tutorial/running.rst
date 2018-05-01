@@ -28,6 +28,8 @@ To invoke a script at the command line, you can simply run it as you would any
 other command. Scripts are stored in
 `$HOME/Library/ApplicationSupport/iTerm2/Scripts`.
 
+Make sure you don't have `PYTHONPATH` set when you run your script.
+
 Note that iTerm2 creates the `ApplicationSupport` symlink to `Application
 Support` because shell scripts may not have spaces in their paths.
 
