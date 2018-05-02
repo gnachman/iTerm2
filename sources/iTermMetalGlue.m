@@ -873,6 +873,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     NSIndexSet *annotatedIndexes = _rowToAnnotationRanges[@(row)];
     NSUInteger sketch = *sketchPtr;
     vector_float4 lastUnprocessedBackgroundColor = simd_make_float4(0, 0, 0, 0);
+    BOOL lastSelected = NO;
 
     // Prime numbers chosen more or less arbitrarily.
     const vector_float4 bmul = simd_make_float4(7, 11, 13, 1) * 255;
@@ -885,6 +886,18 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         BOOL findMatch = NO;
         if (findMatches && !selected) {
             findMatch = CheckFindMatchAtIndex(findMatches, x);
+        }
+        if (lastSelected && line[x].code == DWC_RIGHT && !line[x].complexChar) {
+            // If the left half of a DWC was selected, extend the selection to the right half.
+            lastSelected = selected;
+            selected = YES;
+        } else if (!lastSelected && selected && line[x].code == DWC_RIGHT && !line[x].complexChar) {
+            // If the right half of a DWC is selected but the left half is not, un-select the right half.
+            lastSelected = YES;
+            selected = NO;
+        } else {
+            // Normal code path
+            lastSelected = selected;
         }
         const BOOL annotated = [annotatedIndexes containsIndex:x];
         const BOOL inUnderlinedRange = NSLocationInRange(x, underlinedRange) || annotated;
