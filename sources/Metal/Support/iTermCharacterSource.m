@@ -272,6 +272,7 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 0.5;
     if (_fakeBold) {
         [self drawRuns:runs atOffset:CGPointMake(offset.x + iTermCharacterSourceFakeBoldShiftPoints * _scale, ty) skew:skew];
     }
+    _haveDrawn = YES;
 }
 
 - (void)fillBackground {
