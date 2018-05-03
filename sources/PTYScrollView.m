@@ -153,16 +153,45 @@
     [self detectUserScroll];
 }
 
-// Note: this doesn't affect scrolling of this view. It's just a helper for reporting scroll wheel
-// events. Overriding scrollwheel: is a terrible idea. It breaks a lot of things. For example, in
-// issue 6637 we see that not calling [super scrollWheel:] breaks fiddling with the thickness of
-// the scroller. But calling it causes a world of jank—it insists on moving the visible region.
 - (CGFloat)accumulateVerticalScrollFromEvent:(NSEvent *)theEvent {
     const CGFloat lineHeight = self.verticalLineScroll;
     if ([iTermAdvancedSettingsModel useModernScrollWheelAccumulator]) {
         return [self.ptyVerticalScroller.accumulator deltaYForEvent:theEvent lineHeight:lineHeight];
     } else {
         return [self.ptyVerticalScroller.accumulator legacyDeltaYForEvent:theEvent lineHeight:lineHeight];
+    }
+}
+
+// The scroll wheel handling code is like Mr. Burns: it has every possible
+// disease and they are in perfect balance.
+//
+// Overriding scrollWheel: is a horror show of undocumented crazytimes. This is
+// hinted at in various places in the documentation, release notes from a
+// decade ago, stack overflow, and my nightmares. But it must be done.
+//
+// If you turn on the "hide scrollbars" setting then PTYTextView's scrollWheel:
+// does not get momentum scrolling. The only way to get momentum scrolling in
+// that case is to do what is done in the else branch here.
+//
+// Note that -[PTYTextView scrollWheel:] can elect not to call [super
+// scrollWheel] when reporting mouse events, in which case this does not get
+// called.
+//
+// We HAVE to call super when the scroll bars are not hidden because otherwise
+// you get issue 6637.
+- (void)scrollWheel:(NSEvent *)theEvent {
+    if (self.hasVerticalScroller) {
+        [super scrollWheel:theEvent];
+    } else {
+        NSRect scrollRect;
+
+        scrollRect = [self documentVisibleRect];
+
+        CGFloat amount = [self accumulateVerticalScrollFromEvent:theEvent];
+        scrollRect.origin.y -= amount * self.verticalLineScroll;
+        [[self documentView] scrollRectToVisible:scrollRect];
+
+        [self detectUserScroll];
     }
 }
 
