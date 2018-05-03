@@ -5739,6 +5739,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case KEY_ACTION_SWAP_PANE_RIGHT:
         case KEY_ACTION_SWAP_PANE_ABOVE:
         case KEY_ACTION_SWAP_PANE_BELOW:
+        case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
             return NO;
             break;
 
@@ -6024,7 +6025,9 @@ ITERM_WEAKLY_REFERENCEABLE
         case KEY_ACTION_SWAP_PANE_BELOW:
             [[[iTermController sharedInstance] currentTerminal] swapPaneDown];
             break;
-
+        case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
+            [self setXtermMouseReporting:![self xtermMouseReporting]];
+            break;
         default:
             XLog(@"Unknown key action %d", keyBindingAction);
             break;

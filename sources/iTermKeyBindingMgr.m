@@ -559,7 +559,9 @@ exit:
         case KEY_ACTION_SWAP_PANE_BELOW:
             actionString = @"Swap With Split Pane Below";
             break;
-
+        case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
+            actionString = @"Toggle Mouse Reporting";
+            break;
         default:
             actionString = [NSString stringWithFormat: @"%@ %d", @"Unknown Action ID", action];
             break;
