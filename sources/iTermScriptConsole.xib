@@ -213,14 +213,14 @@
             <rect key="frame" x="0.0" y="0.0" width="240" height="222"/>
             <autoresizingMask key="autoresizingMask"/>
             <clipView key="contentView" id="3XP-OX-1oQ">
-                <rect key="frame" x="1" y="1" width="223" height="205"/>
+                <rect key="frame" x="1" y="1" width="238" height="220"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textView editable="NO" importsGraphics="NO" richText="NO" horizontallyResizable="YES" verticallyResizable="YES" findStyle="bar" incrementalSearchingEnabled="YES" allowsCharacterPickerTouchBarItem="NO" allowsNonContiguousLayout="YES" textCompletion="NO" id="wrF-a6-UQL">
-                        <rect key="frame" x="0.0" y="0.0" width="223" height="205"/>
+                        <rect key="frame" x="0.0" y="0.0" width="238" height="220"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                        <size key="minSize" width="223" height="205"/>
+                        <size key="minSize" width="238" height="220"/>
                         <size key="maxSize" width="10000000" height="10000000"/>
                         <color key="insertionPointColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                     </textView>
@@ -241,14 +241,14 @@
             <rect key="frame" x="0.0" y="0.0" width="240" height="222"/>
             <autoresizingMask key="autoresizingMask"/>
             <clipView key="contentView" id="aGA-ed-GB6">
-                <rect key="frame" x="1" y="1" width="223" height="205"/>
+                <rect key="frame" x="1" y="1" width="238" height="220"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textView editable="NO" importsGraphics="NO" richText="NO" horizontallyResizable="YES" verticallyResizable="YES" findStyle="bar" incrementalSearchingEnabled="YES" allowsCharacterPickerTouchBarItem="NO" allowsNonContiguousLayout="YES" textCompletion="NO" spellingCorrection="YES" id="3YB-9P-sUx">
-                        <rect key="frame" x="0.0" y="0.0" width="223" height="205"/>
+                        <rect key="frame" x="0.0" y="0.0" width="238" height="220"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                        <size key="minSize" width="223" height="205"/>
+                        <size key="minSize" width="238" height="220"/>
                         <size key="maxSize" width="10000000" height="10000000"/>
                         <color key="insertionPointColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                     </textView>
