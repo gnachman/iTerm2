@@ -74,14 +74,28 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     DLog(@" Strip trailing chars, leaving %@", path);
 
     if (lineNumber != nil) {
-        *lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
+        NSString *value = [path stringByMatching:@":(\\d+)" capture:1];
+        if (!value) {
+            value = [path stringByMatching:@"\\[(\\d+), \\d+]" capture:1];
+        }
+        *lineNumber = value;
     }
     if (columnNumber != nil) {
-        *columnNumber = [path stringByMatching:@":(\\d+):(\\d+)" capture:2];
+        NSString *value = [path stringByMatching:@":(\\d+):(\\d+)" capture:2];
+        if (!value) {
+            value = [path stringByMatching:@"\\[(\\d+), (\\d+)]" capture:2];
+        }
+        *columnNumber = value;
     }
-    path = [[path stringByReplacingOccurrencesOfRegex:@":\\d*(?::.*)?$"
-                                           withString:@""]
-               stringByExpandingTildeInPath];
+    NSString *pathExLineNumberAndColumn = nil;
+    if ([path stringByMatching:@"\\[(\\d+), (\\d+)]"]) {
+        pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@"\\[\\d+, \\d+](?::.*)?$"
+                                                                   withString:@""];
+    } else {
+        pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@":\\d*(?::.*)?$"
+                                                                   withString:@""];
+    }
+    path = [pathExLineNumberAndColumn stringByExpandingTildeInPath];
     DLog(@"  Strip line number suffix leaving %@", path);
     if ([path length] == 0) {
         // Everything was stripped out, meaning we'd try to open the working directory.
