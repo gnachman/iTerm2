@@ -374,12 +374,13 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
 
 
         __block id<MTLBuffer> textureDimensionsBuffer;
+        const float underlineThickness = underlineDescriptor.thickness * scale;
         [tState measureTimeForStat:iTermTextRendererStatNewDims ofBlock:^{
             iTermTextureDimensions textureDimensions = {
                 .textureSize = simd_make_float2(textureSize.x, textureSize.y),
                 .cellSize = simd_make_float2(cellSize.x, cellSize.y),
-                .underlineOffset = cellSize.y - (underlineDescriptor.offset * scale),
-                .underlineThickness = underlineDescriptor.thickness * scale,
+                .underlineOffset = MAX(underlineThickness, cellSize.y - (underlineDescriptor.offset * scale)),
+                .underlineThickness = underlineThickness,
                 .scale = scale,
                 .disableExactColorModels = static_cast<bool>(tState.disableIndividualColorModels)
             };

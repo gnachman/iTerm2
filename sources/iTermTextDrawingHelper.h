@@ -325,7 +325,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 
 - (VT100GridCoordRange)coordRangeForRect:(NSRect)rect;
 
-- (CGFloat)yOriginForUnderlineGivenFontXHeight:(CGFloat)xHeight yOffset:(CGFloat)yOffset;
+- (CGFloat)yOriginForUnderlineForFont:(NSFont *)font yOffset:(CGFloat)yOffset cellHeight:(CGFloat)cellHeight;
 - (CGFloat)underlineThicknessForFont:(NSFont *)font;
 - (NSRange)underlinedRangeOnLine:(long long)row;
 
