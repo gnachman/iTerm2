@@ -1021,7 +1021,7 @@ static iTermController *gSharedInstance;
             NSString *username = [urlRep user];
             if (username) {
                 NSMutableCharacterSet *legalCharacters = [NSMutableCharacterSet alphanumericCharacterSet];
-                [legalCharacters addCharactersInString:@"_-+"];
+                [legalCharacters addCharactersInString:@"_-+."];
                 NSCharacterSet *illegalCharacters = [legalCharacters invertedSet];
                 NSRange range = [username rangeOfCharacterFromSet:illegalCharacters];
                 if (range.location != NSNotFound) {
