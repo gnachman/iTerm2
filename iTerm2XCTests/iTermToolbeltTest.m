@@ -223,6 +223,13 @@
 
 #pragma mark Command History
 
+- (NSAttributedString *)attributedStringInTableView:(NSTableView *)tableView row:(NSInteger)row {
+    id textField = [tableView.delegate tableView:tableView
+                              viewForTableColumn:tableView.tableColumns[0]
+                                             row:row];
+    return [textField attributedStringValue];
+}
+
 - (void)testCommandHistoryBoldsCommandsForCurrentSession {
     PTYSession *otherSession = [[iTermController sharedInstance] launchBookmark:nil
                                                                      inTerminal:_windowController];
@@ -246,12 +253,8 @@
 
     // Select tab 0 and get its two commands from the table view.
     [_windowController.tabView selectTabViewItemAtIndex:0];
-    NSArray *values = @[ [tool.tableView.dataSource tableView:tool.tableView
-                                    objectValueForTableColumn:tool.tableView.tableColumns[0]
-                                                          row:0],
-                         [tool.tableView.dataSource tableView:tool.tableView
-                                    objectValueForTableColumn:tool.tableView.tableColumns[0]
-                                                          row:1] ];
+    NSArray *values = @[ [self attributedStringInTableView:tool.tableView row:0],
+                         [self attributedStringInTableView:tool.tableView row:1] ];
 
     // TODO(georgen): Test that the first one should be bold.
     XCTAssert([values[0] isKindOfClass:[NSAttributedString class]]);
@@ -259,12 +262,8 @@
 
     // Select tab 1 and get its two commands from the table view.
     [_windowController.tabView selectTabViewItemAtIndex:1];
-    values = @[ [tool.tableView.dataSource tableView:tool.tableView
-                           objectValueForTableColumn:tool.tableView.tableColumns[0]
-                                                 row:0],
-                [tool.tableView.dataSource tableView:tool.tableView
-                           objectValueForTableColumn:tool.tableView.tableColumns[0]
-                                                 row:1] ];
+    values = @[ [self attributedStringInTableView:tool.tableView row:0],
+                [self attributedStringInTableView:tool.tableView row:1] ];
 
     // TODO(georgen): Test that the second one should be bold.
     XCTAssert([values[0] isKindOfClass:[NSAttributedString class]]);
@@ -405,14 +404,10 @@
         (ToolDirectoriesView *)[_view.toolbelt toolWithName:kRecentDirectoriesToolName];
     XCTAssertEqual(tool.tableView.numberOfRows, 2);
 
-    NSAttributedString *object = [tool.tableView.dataSource tableView:tool.tableView
-                                            objectValueForTableColumn:tool.tableView.tableColumns[0]
-                                                        row:0];
+    NSAttributedString *object = [self attributedStringInTableView:tool.tableView row:0];
     XCTAssertEqualObjects([object string], @"/dir");
 
-    object = [tool.tableView.dataSource tableView:tool.tableView
-                        objectValueForTableColumn:tool.tableView.tableColumns[0]
-                                              row:1];
+    object = [self attributedStringInTableView:tool.tableView row:1];
     XCTAssertEqualObjects([object string], @"/tmp");
 }
 
