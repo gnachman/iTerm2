@@ -36,7 +36,7 @@ class Tab:
         """
         A tab contains a list of sessions, which are its split panes.
 
-        :returns: A list of iterm2.session.Session objects belonging to this tab.
+        :returns: A list of :class:`Session` objects belonging to this tab.
         """
         return self.__root.sessions
 
@@ -51,7 +51,7 @@ class Tab:
 
         Leaf nodes are Sessions.
 
-        :returns: An iterm2.session.Splitter forming the root of this tab's session tree.
+        :returns: An :class:`Splitter` forming the root of this tab's session tree.
         """
         return self.__root
 

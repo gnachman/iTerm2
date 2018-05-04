@@ -30,175 +30,175 @@ class WriteOnlyProfile:
     async def async_set_foreground_color(self, value):
         """Sets the foreground color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Foreground Color", value)
 
     async def async_set_background_color(self, value):
         """Sets the background color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Background Color", value)
 
     async def async_set_bold_color(self, value):
         """Sets the bold text color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Bold Color", value)
 
     async def async_set_link_color(self, value):
         """Sets the link color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Link Color", value)
 
     async def async_set_selection_color(self, value):
         """Sets the selection background color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Selection Color", value)
 
     async def async_set_selected_text_color(self, value):
         """Sets the selection text color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Selected Text Color", value)
 
     async def async_set_cursor_color(self, value):
         """Sets the cursor color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Cursor Color", value)
 
     async def async_set_cursor_text_color(self, value):
         """Sets the cursor text color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Cursor Text Color", value)
 
     async def async_set_ansi_0_color(self, value):
         """Sets the ANSI 0 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 0 Color", value)
 
     async def async_set_ansi_1_color(self, value):
         """Sets the ANSI 1 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 1 Color", value)
 
     async def async_set_ansi_2_color(self, value):
         """Sets the ANSI 2 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 2 Color", value)
 
     async def async_set_ansi_3_color(self, value):
         """Sets the ANSI 3 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 3 Color", value)
 
     async def async_set_ansi_4_color(self, value):
         """Sets the ANSI 4 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 4 Color", value)
 
     async def async_set_ansi_5_color(self, value):
         """Sets the ANSI 5 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 5 Color", value)
 
     async def async_set_ansi_6_color(self, value):
         """Sets the ANSI 6 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 6 Color", value)
 
     async def async_set_ansi_7_color(self, value):
         """Sets the ANSI 7 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 7 Color", value)
 
     async def async_set_ansi_8_color(self, value):
         """Sets the ANSI 8 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 8 Color", value)
 
     async def async_set_ansi_9_color(self, value):
         """Sets the ANSI 9 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 9 Color", value)
 
     async def async_set_ansi_10_color(self, value):
         """Sets the ANSI 10 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 10 Color", value)
 
     async def async_set_ansi_11_color(self, value):
         """Sets the ANSI 11 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 11 Color", value)
 
     async def async_set_ansi_12_color(self, value):
         """Sets the ANSI 12 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 12 Color", value)
 
     async def async_set_ansi_13_color(self, value):
         """Sets the ANSI 13 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 13 Color", value)
 
     async def async_set_ansi_14_color(self, value):
         """Sets the ANSI 14 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 14 Color", value)
 
     async def async_set_ansi_15_color(self, value):
         """Sets the ANSI 15 color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Ansi 15 Color", value)
 
     async def async_set_smart_cursor_color(self, value):
         """Sets the smart cursor color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_simple_set("Smart Cursor Color", value)
 
     async def async_set_tab_color(self, value):
         """Sets the tab color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Tab Color", value)
 
     async def async_set_underline_color(self, value):
         """Sets the underline color.
 
-        :param value: An iterm2.profile.Color or None"""
+        :param value: A :class:`Color` or None"""
         return await self._async_color_set("Underline Color", value)
 
     async def async_set_cursor_guide_color(self, value):
         """Sets the cursor guide color. The alpha value is respected.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Cursor Guide Color", value)
 
     async def async_set_badge_color(self, value):
         """Sets the badge color. The alpha value is respected.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_color_set("Badge Color", value)
 
     async def async_set_name(self, value):
@@ -210,7 +210,7 @@ class WriteOnlyProfile:
     async def async_set_badge_text(self, value):
         """Sets the badge text.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_simple_set("Badge Text", value)
 
     async def async_set_answerback_string(self, value):
@@ -234,7 +234,7 @@ class WriteOnlyProfile:
     async def async_set_use_underline_color(self, value):
         """Sets the underline color.
 
-        :param value: An iterm2.profile.Color"""
+        :param value: A :class:`Color`"""
         return await self._async_simple_set("Use Underline Color", value)
 
     async def async_set_minimum_contrast(self, value):
@@ -642,203 +642,203 @@ class Profile(WriteOnlyProfile):
     def foreground_color(self):
         """Returns the foreground color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Foreground Color")
 
     @property
     def background_color(self):
         """Returns the background color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Background Color")
 
     @property
     def bold_color(self):
         """Returns the bold text color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Bold Color")
 
     @property
     def link_color(self):
         """Returns the link color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Link Color")
 
     @property
     def selection_color(self):
         """Returns the selection background color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Selection Color")
 
     @property
     def selected_text_color(self):
         """Returns the selection text color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Selected Text Color")
 
     @property
     def cursor_color(self):
         """Returns the cursor color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Cursor Color")
 
     @property
     def cursor_text_color(self):
         """Returns the cursor text color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Cursor Text Color")
 
     @property
     def ansi_0_color(self):
         """Returns the ANSI 0 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 0 Color")
 
     @property
     def ansi_1_color(self):
         """Returns the ANSI 1 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 1 Color")
 
     @property
     def ansi_2_color(self):
         """Returns the ANSI 2 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 2 Color")
 
     @property
     def ansi_3_color(self):
         """Returns the ANSI 3 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 3 Color")
 
     @property
     def ansi_4_color(self):
         """Returns the ANSI 4 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 4 Color")
 
     @property
     def ansi_5_color(self):
         """Returns the ANSI 5 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 5 Color")
 
     @property
     def ansi_6_color(self):
         """Returns the ANSI 6 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 6 Color")
 
     @property
     def ansi_7_color(self):
         """Returns the ANSI 7 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 7 Color")
 
     @property
     def ansi_8_color(self):
         """Returns the ANSI 8 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 8 Color")
 
     @property
     def ansi_9_color(self):
         """Returns the ANSI 9 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 9 Color")
 
     @property
     def ansi_10_color(self):
         """Returns the ANSI 10 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 10 Color")
 
     @property
     def ansi_11_color(self):
         """Returns the ANSI 11 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 11 Color")
 
     @property
     def ansi_12_color(self):
         """Returns the ANSI 12 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 12 Color")
 
     @property
     def ansi_13_color(self):
         """Returns the ANSI 13 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 13 Color")
 
     @property
     def ansi_14_color(self):
         """Returns the ANSI 14 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 14 Color")
 
     @property
     def ansi_15_color(self):
         """Returns the ANSI 15 color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Ansi 15 Color")
 
     @property
     def smart_cursor_color(self):
         """Returns whether smart cursor color is in use for box cursors.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._simple_get("Smart Cursor Color")
 
     @property
     def tab_color(self):
         """Returns the tab color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Tab Color")
 
     @property
     def underline_color(self):
         """Returns the underline color.
 
-        :returns: An iterm2.profile.Color or None"""
+        :returns: A :class:`Color` or None"""
         return self._color_get("Underline Color")
 
     @property
     def cursor_guide_color(self):
         """Returns the cursor guide color. The alpha value is respected.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Cursor Guide Color")
 
     @property
     def badge_color(self):
         """Returns the badge color. The alpha value is respected.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._color_get("Badge Color")
 
     @property
@@ -852,7 +852,7 @@ class Profile(WriteOnlyProfile):
     def badge_text(self):
         """Returns the badge text.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._simple_get("Badge Text")
 
     @property
@@ -880,7 +880,7 @@ class Profile(WriteOnlyProfile):
     def use_underline_color(self):
         """Returns the underline color.
 
-        :returns: An iterm2.profile.Color"""
+        :returns: A :class:`Color`"""
         return self._simple_get("Use Underline Color")
 
     @property

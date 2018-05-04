@@ -157,3 +157,4 @@ texinfo_documents = [
 
 
 # -- Extension configuration -------------------------------------------------
+add_module_names = False

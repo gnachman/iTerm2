@@ -87,7 +87,7 @@ class Window:
             default for the profile.
         :param index: The index in the window where the new tab should go (0=first position, etc.)
 
-        :returns: An iterm2.tab.Tab
+        :returns: :class:`Tab`
 
         :raises: CreateTabException if something goes wrong.
         """
@@ -107,20 +107,18 @@ class Window:
             raise CreateTabException(
                 iterm2.api_pb2.CreateTabResponse.Status.Name(result.create_tab_response.status))
 
-    async def async_get_frame(self, connection):
+    async def async_get_frame(self):
         """
         Gets the window's frame.
 
         0,0 is the *bottom* right of the main screen.
 
-        :param connection: A connected iterm2.Connection.
-
         :returns: api_pb2.Frame
 
-        :raises: GetPropertyException if something goes wrong.
+        :raises: :class:`GetPropertyException` if something goes wrong.
         """
 
-        response = await iterm2.rpc.async_get_property(connection, "frame", self.__window_id)
+        response = await iterm2.rpc.async_get_property(self.connection, "frame", self.__window_id)
         status = response.get_property_response.status
         if status == iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
             frame_dict = json.loads(response.get_property_response.json_value)
@@ -133,14 +131,13 @@ class Window:
         else:
             raise GetPropertyException(response.get_property_response.status)
 
-    async def async_set_frame(self, connection, frame):
+    async def async_set_frame(self, frame):
         """
         Sets the window's frame.
 
-        :param connection: A connected iterm2.Connection.
         :param frame: api_pb2.Frame
 
-        :raises: SetPropertyException if something goes wrong.
+        :raises: :class:`SetPropertyException` if something goes wrong.
         """
         frame_dict = {"origin": {"x": frame.origin.x,
                                  "y": frame.origin.y},
@@ -148,7 +145,7 @@ class Window:
                                "height": frame.size.height}}
         json_value = json.dumps(frame_dict)
         response = await iterm2.rpc.async_set_property(
-            connection,
+            self.connection,
             "frame",
             json_value,
             window_id=self.__window_id)
@@ -156,17 +153,15 @@ class Window:
         if status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
             raise SetPropertyException(response.get_property_response.status)
 
-    async def async_get_fullscreen(self, connection):
+    async def async_get_fullscreen(self):
         """
         Checks if the window is full-screen.
 
-        :param connection: A connected iterm2.Connection.
-
         :returns: True (fullscreen) or False (not fullscreen)
 
-        :raises: GetPropertyException if something goes wrong.
+        :raises: :class:`GetPropertyException` if something goes wrong.
         """
-        response = await iterm2.rpc.async_get_property(connection, "fullscreen", self.__window_id)
+        response = await iterm2.rpc.async_get_property(self.connection, "fullscreen", self.__window_id)
         status = response.get_property_response.status
         if status == iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
             return json.loads(response.get_property_response.json_value)
@@ -174,18 +169,17 @@ class Window:
             raise GetPropertyException(response.get_property_response.status)
 
 
-    async def async_set_fullscreen(self, connection, fullscreen):
+    async def async_set_fullscreen(self, fullscreen):
         """
         Changes the window's full-screen status.
 
-        :param connection: A connected iterm2.Connection.
         :param fullscreen: True to make fullscreen, False to make not-fullscreen
 
-        :raises: SetPropertyException if something goes wrong.
+        :raises: :class:`SetPropertyException` if something goes wrong.
         """
         json_value = json.dumps(fullscreen)
         response = await iterm2.rpc.async_set_property(
-            connection,
+            self.connection,
             "fullscreen",
             json_value,
             window_id=self.__window_id)
@@ -221,7 +215,7 @@ class Window:
 
         :param name: The name to restore.
 
-        :raises: SavedArrangementException if the named arrangement does not exist."""
+        :raises: :class:`SavedArrangementException` if the named arrangement does not exist."""
         result = await iterm2.rpc.async_restore_arrangement(self.connection, name, self.__window_id)
         if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
             raise SavedArrangementException(

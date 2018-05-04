@@ -1,7 +1,4 @@
-"""Manages the details of the websocket connection.
-
-Connection: Represents a websocket connection to iTerm2.
-"""
+"""Manages the details of the websocket connection. """
 
 import asyncio
 import concurrent

@@ -33,7 +33,7 @@ class Splitter:
         """Creates a new Splitter from a node.
 
         node: iterm2.api_pb2.ListSessionsResponse.SplitTreeNode
-        connection: iterm2.connection.Connection
+        connection: :class:`Connection`
 
         :returns: A new Splitter.
         """
@@ -62,7 +62,7 @@ class Splitter:
     @property
     def children(self):
         """
-        :returns: This splitter's children. A list of iterm2.session.Session objects.
+        :returns: This splitter's children. A list of :class:`Session` objects.
         """
         return self.__children
 
@@ -70,7 +70,7 @@ class Splitter:
     def sessions(self):
         """
         :returns: All sessions in this splitter and all nested splitters. A list of
-          iterm2.session.Session objects.
+          :class:`Session` objects.
         """
         return self.__sessions
 
@@ -135,7 +135,7 @@ class Session:
 
     def __init__(self, connection, link):
         """
-        connection: iterm2.connection.Connection
+        connection: :class:`Connection`
         link: iterm2.api_pb2.ListSessionsResponse.SplitTreeNode.SplitTreeLink
         """
         self.connection = connection
@@ -176,7 +176,7 @@ class Session:
         """
         Provides a nice interface for observing a sequence of keystrokes.
 
-        :returns: a keystroke reader, an iterm2.session.Session.KeystrokeReader.
+        :returns: a keystroke reader, a :class:`Session.KeystrokeReader`.
 
         :Example:
 
@@ -195,7 +195,7 @@ class Session:
         The screen is the mutable part of a session (its last lines, excluding
         scrollback history).
 
-        :returns: An iterm2.session.Session.ScreenStreamer
+        :returns: A :class:`Session.ScreenStreamer`.
         """
         return self.ScreenStreamer(self.connection, self.__session_id, want_contents=want_contents)
 
@@ -240,7 +240,7 @@ class Session:
 
         See also get_keystroke_reader().
 
-        :returns: iterm2.api_pb2.KeystrokeNotification
+        :returns: :class:`api_pb2.KeystrokeNotification`
         """
         future = asyncio.Future()
         async def async_on_keystroke(_connection, message):
@@ -279,7 +279,7 @@ class Session:
         """
         :returns: The screen contents, an iterm2.api_pb2.GetBufferResponse
 
-        :throws: iterm2.rpc.RPCException if something goes wrong.
+        :throws: :class:`RPCException` if something goes wrong.
         """
         response = await iterm2.rpc.async_get_buffer_with_screen_contents(
             self.connection,
@@ -298,7 +298,7 @@ class Session:
 
         :returns: The buffer contents, an iterm2.api_pb2.GetBufferResponse
 
-        :throws: iterm2.rpc.RPCException if something goes wrong.
+        :throws: :class:`RPCException` if something goes wrong.
         """
         response = await iterm2.rpc.async_get_buffer_lines(
             self.connection,
@@ -316,7 +316,7 @@ class Session:
 
         :returns: iterm2.api_pb2.GetPromptResponse
 
-        :throws: iterm2.rpc.RPCException if something goes wrong.
+        :throws: :class:`RPCException` if something goes wrong.
         """
         response = await iterm2.rpc.async_get_prompt(self.connection, self.__session_id)
         status = response.get_prompt_response.status
@@ -336,7 +336,7 @@ class Session:
 
         :returns: iterm2.api_pb2.SetProfilePropertyResponse
 
-        :throws: iterm2.rpc.RPCException if something goes wrong.
+        :throws: :class:`RPCException` if something goes wrong.
         """
         response = await iterm2.rpc.async_set_profile_property(
             self.connection,
@@ -353,9 +353,9 @@ class Session:
         """
         Fetches the profile of this session
 
-        :returns: iterm2.profile.Profile
+        :returns: :class:`Profile`.
 
-        :throws: iterm2.rpc.RPCException if something goes wrong.
+        :throws: :class:`RPCException` if something goes wrong.
         """
         response = await iterm2.rpc.async_get_profile(self.connection, self.__session_id)
         status = response.get_profile_property_response.status

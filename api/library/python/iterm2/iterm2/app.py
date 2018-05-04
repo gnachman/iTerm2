@@ -1,11 +1,6 @@
 """Provides access to application-level structures.
 
 This module is the starting point for getting access to windows and other application-global data.
-
-async_get_app: Use this function get the App singleton
-App: Provides accessors to read application-level data and functions to mutate them.
-CreateWindowException: Raised when a window could not be created.
-SavedArrangementException: Raised when a saved arrangement could not be loaded or saved.
 """
 
 import iterm2.notifications
@@ -41,7 +36,7 @@ class App:
 
     @staticmethod
     async def async_construct(connection):
-        """Don't use this directly. Use iterm2.app.get_app().
+        """Don't use this directly. Use :func:`async_get_app()`.
 
         Use this to construct a new hierarchy instead of __init__.
         This exists only because __init__ can't be async.
@@ -172,7 +167,7 @@ class App:
 
         :param session_id: The session ID to search for.
 
-        :returns: An iterm2.session.Session or None.
+        :returns: A :class:`Session` or None.
         """
         return self._search_for_session_id(session_id)
 
@@ -181,7 +176,7 @@ class App:
 
         :param tab_id: The tab ID to search for.
 
-        :returns: An iterm2.tab.Tab or None.
+        :returns: A :class:`Tab` or None.
         """
         return self._search_for_tab_id(tab_id)
 
@@ -190,7 +185,7 @@ class App:
 
         :param window_id: The window ID to search for.
 
-        :returns: An iterm2.window.Window or None
+        :returns: A :class:`Window` or None
         """
         return self._search_for_window_id(window_id)
 
@@ -199,7 +194,7 @@ class App:
 
         :param tab_id: The tab ID to search for.
 
-        :returns: An iterm2.window.Window or None
+        :returns: A :class:`Window` or None
         """
         return self._search_for_window_with_tab(tab_id)
 
@@ -267,16 +262,16 @@ class App:
         The key window is the window that receives keyboard input when iTerm2 is
         the active application.
 
-        :returns: iterm2.window.Window or None
+        :returns: :class:`Window` or None
         """
         return self.get_window_by_id(self.key_window_id)
 
     def get_tab_and_window_for_session(self, session):
         """Finds the tab and window that own a session.
 
-        :param session: An iterm2.Session object.
+        :param session: A :class:`Session` object.
 
-        :returns: A tuple of (iterm2.window.Window, iterm2.tab.Tab).
+        :returns: A tuple of (:class:`Window`, :class:`Tab`).
         """
         for window in self.windows:
             for tab in window.tabs:
@@ -290,7 +285,7 @@ class App:
         :param profile: The name of the profile to use for the new window.
         :param command: A command to run in lieu of the shell in the new session.
 
-        :returns: A new iterm2.window.Window.
+        :returns: A new :class:`Window`.
 
         :throws: CreateWindowException if something went wrong.
         """

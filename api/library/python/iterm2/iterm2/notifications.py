@@ -27,7 +27,7 @@ async def async_unsubscribe(connection, token):
     """
     Unsubscribes from a notification.
 
-    :param connection: A connected iterm2.connection.Connection.
+    :param connection: A connected :class:`Connection`.
     :param token: The result of a previous subscribe call.
     """
     key, coro = token
@@ -44,9 +44,9 @@ async def async_subscribe_to_new_session_notification(connection, callback):
     """
     Registers a callback to be run when a new session is created.
 
-    :param connection: A connected iterm2.connection.Connection.
+    :param connection: A connected :class:`Connection`.
     :param callback: A coroutine taking two arguments: an
-      iterm2.connection.Connection and iterm2.api_pb2.NewSessionNotification.
+      :class:`Connection` and iterm2.api_pb2.NewSessionNotification.
 
     :returns: A token that can be passed to unsubscribe.
     """
@@ -56,8 +56,8 @@ async def async_subscribe_to_keystroke_notification(connection, callback, sessio
     """
     Registers a callback to be run when a key is pressed.
 
-    :param connection: A connected iterm2.connection.Connection
-    :param callback: A coroutine taking two arguments: an iterm2.connection.Connection and
+    :param connection: A connected :class:`Connection`.
+    :param callback: A coroutine taking two arguments: an :class:`Connection` and
       iterm2.api_pb2.KeystrokeNotification.
     :param session: The session to monitor, or None.
 
@@ -74,8 +74,8 @@ async def async_subscribe_to_screen_update_notification(connection, callback, se
     """
     Registers a callback to be run when the screen contents change.
 
-    :param connection: A connected iterm2.connection.Connection
-    :param callback: A coroutine taking two arguments: an iterm2.connection.Connection and
+    :param connection: A connected :class:`Connection`.
+    :param callback: A coroutine taking two arguments: an :class:`Connection` and
       iterm2.api_pb2.ScreenUpdateNotification..
     :param session: The session to monitor, or None.
 
@@ -92,8 +92,8 @@ async def async_subscribe_to_prompt_notification(connection, callback, session=N
     """
     Registers a callback to be run when a shell prompt is received.
 
-    :param connection: A connected iterm2.connection.Connection
-    :param callback: A coroutine taking two arguments: an iterm2.connection.Connection and
+    :param connection: A connected :class:`Connection`.
+    :param callback: A coroutine taking two arguments: an :class:`Connection` and
       iterm2.api_pb2.PromptNotification.
     :param session: The session to monitor, or None.
 
@@ -110,8 +110,8 @@ async def async_subscribe_to_location_change_notification(connection, callback, 
     """
     Registers a callback to be run when the host or current directory changes.
 
-    :param connection: A connected iterm2.connection.Connection
-    :param callback: A coroutine taking two arguments: an iterm2.connection.Connection and
+    :param connection: A connected :class:`Connection`.
+    :param callback: A coroutine taking two arguments: an :class:`Connection` and
       iterm2.api_pb2.LocationChangeNotification.
     :param session: The session to monitor, or None.
 
@@ -132,8 +132,8 @@ async def async_subscribe_to_custom_escape_sequence_notification(connection,
 
     The escape sequence is OSC 1337 ; Custom=id=<identity>:<payload> ST
 
-    :param connection: A connected iterm2.connection.Connection
-    :param callback: A coroutine taking two arguments: an iterm2.connection.Connection and
+    :param connection: A connected :class:`Connection`.
+    :param callback: A coroutine taking two arguments: an :class:`Connection` and
       iterm2.api_pb2.CustomEscapeSequenceNotification.
     :param session: The session to monitor, or None.
 
@@ -150,8 +150,8 @@ async def async_subscribe_to_terminate_session_notification(connection, callback
     """
     Registers a callback to be run when a session terminates.
 
-    :param connection: A connected iterm2.connection.Connection
-    :param callback: A coroutine taking two arguments: an iterm2.connection.Connection and
+    :param connection: A connected :class:`Connection`.
+    :param callback: A coroutine taking two arguments: an :class:`Connection` and
       iterm2.api_pb2.TerminateSessionNotification.
 
     :returns: A token that can be passed to unsubscribe.
@@ -168,8 +168,8 @@ async def async_subscribe_to_layout_change_notification(connection, callback):
     Registers a callback to be run when the relationship between sessions, tabs,
     and windows changes.
 
-    :param connection: A connected iterm2.connection.Connection
-    :param callback: A coroutine taking two arguments: an iterm2.connection.Connection and
+    :param connection: A connected :class:`Connection`.
+    :param callback: A coroutine taking two arguments: an :class:`Connection` and
       iterm2.api_pb2.LayoutChangedNotification.
 
     :returns: A token that can be passed to unsubscribe.
@@ -185,8 +185,8 @@ async def async_subscribe_to_focus_change_notification(connection, callback):
     """
     Registers a callback to be run when focus changes.
 
-    :param connection: A connected iterm2.connection.Connection
-    :param callback: A coroutine taking two arguments: an iterm2.connection.Connection and
+    :param connection: A connected :class:`Connection`.
+    :param callback: A coroutine taking two arguments: an :class:`Connection` and
       iterm2.api_pb2.FocusChangedNotification.
 
     :returns: A token that can be passed to unsubscribe.
