@@ -591,7 +591,9 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     DLog(@"Finished rolling out %p. key window is %@.", profileHotKey.windowController, [[NSApp keyWindow] windowController]);
     if (![self otherHotKeyWindowWillBecomeKeyAfterOrderOut:profileHotKey]) {
         DLog(@"Restoring the previous state %p", self.previousState);
-        BOOL result = [self.previousState restoreAllowingAppSwitch:!profileHotKey.closedByOtherHotkeyWindowOpening];
+        iTermPreviousState *previousState = [self.previousState retain];
+        BOOL result = [previousState restoreAllowingAppSwitch:!profileHotKey.closedByOtherHotkeyWindowOpening];
+        [previousState autorelease];
         if (!profileHotKey.closedByOtherHotkeyWindowOpening) {
             self.previousState = nil;
         }
