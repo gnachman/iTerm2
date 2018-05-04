@@ -187,7 +187,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         };
         [_downloadController.window makeKeyAndOrderFront:nil];
         [_downloadController beginPhase:manifestPhase];
-        [[iTermNotificationController sharedInstance] notify:@"Downloading scripting environment…"];
+        [[iTermNotificationController sharedInstance] notify:@"Downloading Python runtime…"];
     } else if (_downloadController.isWindowLoaded && !_downloadController.window.visible) {
         // Already existed and had a current phase.
         [[_downloadController window] makeKeyAndOrderFront:nil];
