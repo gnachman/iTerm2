@@ -15,6 +15,8 @@
 #import "NSObject+iTerm.h"
 #import "NSWorkspace+iTerm.h"
 
+NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iTermPythonRuntimeDownloaderDidInstallRuntimeNotification";
+
 @implementation iTermPythonRuntimeDownloader {
     iTermOptionalComponentDownloadWindowController *_downloadController;
     dispatch_group_t _downloadGroup;
@@ -70,6 +72,10 @@
 - (BOOL)shouldDownloadEnvironment {
     static const NSInteger minimumVersion = 1;
     return (self.installedVersion < minimumVersion);
+}
+
+- (BOOL)isPythonRuntimeInstalled {
+    return ![self shouldDownloadEnvironment];
 }
 
 // Returns 0 if no version is installed, otherwise returns the installed version of the python runtime.
@@ -219,6 +225,7 @@
         NSURL *container = [self urlOfStandardEnvironmentContainer];
         [self installPythonEnvironmentTo:container completion:^(BOOL ok) {
             if (ok) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermPythonRuntimeDownloaderDidInstallRuntimeNotification object:nil];
                 [[iTermNotificationController sharedInstance] notify:@"Download finished!"];
                 [self->_downloadController.window close];
                 self->_downloadController = nil;

@@ -38,8 +38,20 @@ NS_ASSUME_NONNULL_BEGIN
         NSString *path = [[NSFileManager defaultManager] scriptsPath];
         [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil];
         [_events startWatchingPaths:@[ path ]];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(didInstallPythonRuntime:)
+                                                     name:iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
+                                                   object:nil];
     }
     return self;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)didInstallPythonRuntime:(NSNotification *)notification {
+    [self removeInstallMenuItem];
 }
 
 - (void)build {
@@ -107,6 +119,20 @@ NS_ASSUME_NONNULL_BEGIN
                                                attributes:nil
                                                     error:nil];
     [[NSWorkspace sharedWorkspace] openFile:scriptsPath withApplication:@"Finder"];
+}
+
+- (void)setInstallRuntimeMenuItem:(NSMenuItem *)installRuntimeMenuItem {
+    _installRuntimeMenuItem = installRuntimeMenuItem;
+    if ([[iTermPythonRuntimeDownloader sharedInstance] isPythonRuntimeInstalled]) {
+        [self removeInstallMenuItem];
+    }
+}
+
+- (void)removeInstallMenuItem {
+    if (_installRuntimeMenuItem) {
+        [_scriptsMenu removeItem:_installRuntimeMenuItem];
+        _installRuntimeMenuItem = nil;
+    }
 }
 
 #pragma mark - Actions

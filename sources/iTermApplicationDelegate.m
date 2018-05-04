@@ -155,6 +155,7 @@ static BOOL hasBecomeActive = NO;
     __weak IBOutlet NSMenuItem *irPrev;
     __weak IBOutlet NSMenuItem *windowArrangements_;
     __weak IBOutlet NSMenuItem *windowArrangementsAsTabs_;
+    __weak IBOutlet NSMenuItem *_installPythonRuntime;
     __weak IBOutlet NSMenu *_buriedSessions;
     NSMenu *_statusIconBuriedSessions;  // unsafe unretained
     __weak IBOutlet NSMenu *_scriptsMenu;
@@ -1960,8 +1961,13 @@ static BOOL hasBecomeActive = NO;
 - (iTermScriptsMenuController *)scriptsMenuController {
     if (!_scriptsMenuController) {
         _scriptsMenuController = [[iTermScriptsMenuController alloc] initWithMenu:_scriptsMenu];
+        _scriptsMenuController.installRuntimeMenuItem = _installPythonRuntime;
     }
     return _scriptsMenuController;
+}
+
+- (IBAction)installPythonRuntime:(id)sender {
+    [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithCompletion:^{}];
 }
 
 - (IBAction)buildScriptMenu:(id)sender {

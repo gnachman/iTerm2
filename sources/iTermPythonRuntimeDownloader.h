@@ -7,7 +7,11 @@
 
 #import <Foundation/Foundation.h>
 
+extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification;
+
 @interface iTermPythonRuntimeDownloader : NSObject
+
+@property (nonatomic, readonly) BOOL isPythonRuntimeInstalled;
 
 // Returns the path of the standard python binary.
 @property (nonatomic, readonly) NSString *pathToStandardPyenvPython;
