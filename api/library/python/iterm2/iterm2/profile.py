@@ -1,3 +1,4 @@
+"""Provides classes for representing, querying, and modifying iTerm2 profiles."""
 import json
 import iterm2.rpc
 
@@ -14,9 +15,17 @@ class WriteOnlyProfile:
 
     async def _async_color_set(self, key, value):
         if value is None:
-            await iterm2.rpc.async_set_profile_property(self.connection, self.session_id, key, "null")
+            await iterm2.rpc.async_set_profile_property(
+                self.connection,
+                self.session_id,
+                key,
+                "null")
         else:
-            await iterm2.rpc.async_set_profile_property(self.connection, self.session_id, key, value.get_dict())
+            await iterm2.rpc.async_set_profile_property(
+                self.connection,
+                self.session_id,
+                key,
+                value.get_dict())
 
     async def async_set_foreground_color(self, value):
         """Sets the foreground color.
@@ -166,7 +175,7 @@ class WriteOnlyProfile:
         """Sets the smart cursor color.
 
         :param value: An iterm2.profile.Color"""
-        return await self._async_color_set("Smart Cursor Color", value)
+        return await self._async_simple_set("Smart Cursor Color", value)
 
     async def async_set_tab_color(self, value):
         """Sets the tab color.
@@ -227,12 +236,6 @@ class WriteOnlyProfile:
 
         :param value: An iterm2.profile.Color"""
         return await self._async_simple_set("Use Underline Color", value)
-
-    async def async_set_smart_cursor_color(self, value):
-        """Sets the smart cursor text color.
-
-        :param value: A string"""
-        return await self._async_simple_set("Smart Cursor Color", value)
 
     async def async_set_minimum_contrast(self, value):
         """Sets the minimum contrast.
@@ -343,7 +346,8 @@ class WriteOnlyProfile:
         return await self._async_simple_set("Blend", value)
 
     async def async_set_sync_title(self, value):
-        """Sets whether the profile name stays in the tab title, even if changed by an escape sequence.
+        """Sets whether the profile name stays in the tab title, even if changed by an escape
+        sequence.
 
         :param value: A bool"""
         return await self._async_simple_set("Sync Title", value)
@@ -523,7 +527,8 @@ class WriteOnlyProfile:
         return await self._async_simple_set("Application Keypad Allowed", value)
 
     async def async_set_place_prompt_at_first_column(self, value):
-        """Sets whether the prompt should always begin at the first column (requires shell integration)
+        """Sets whether the prompt should always begin at the first column (requires shell
+        integration)
 
         :param value: A bool"""
         return await self._async_simple_set("Place Prompt at First Column", value)
@@ -625,10 +630,12 @@ class Profile(WriteOnlyProfile):
 
     def _color_get(self, key):
         try:
-            c = Color()
-            c.from_dict(self.__props[key])
-            return c
-        except:
+            color = Color()
+            color.from_dict(self.__props[key])
+            return color
+        except ValueError:
+            return None
+        except KeyError:
             return None
 
     @property
@@ -801,10 +808,10 @@ class Profile(WriteOnlyProfile):
 
     @property
     def smart_cursor_color(self):
-        """Returns the smart cursor color.
+        """Returns whether smart cursor color is in use for box cursors.
 
         :returns: An iterm2.profile.Color"""
-        return self._color_get("Smart Cursor Color")
+        return self._simple_get("Smart Cursor Color")
 
     @property
     def tab_color(self):
@@ -1004,7 +1011,8 @@ class Profile(WriteOnlyProfile):
 
     @property
     def sync_title(self):
-        """Returns whether the profile name stays in the tab title, even if changed by an escape sequence.
+        """Returns whether the profile name stays in the tab title, even if changed by an escape
+        sequence.
 
         :returns: A bool"""
         return self._simple_get("Sync Title")
@@ -1151,7 +1159,8 @@ class Profile(WriteOnlyProfile):
 
     @property
     def send_terminal_generated_alerts(self):
-        """Returns whether notifications should be shown for escape-sequence originated notifications
+        """Returns whether notifications should be shown for escape-sequence originated
+        notifications
 
         :returns: A bool"""
         return self._simple_get("Send Terminal Generated Alerts")
@@ -1214,7 +1223,8 @@ class Profile(WriteOnlyProfile):
 
     @property
     def place_prompt_at_first_column(self):
-        """Returns whether the prompt should always begin at the first column (requires shell integration)
+        """Returns whether the prompt should always begin at the first column (requires shell
+        integration)
 
         :returns: A bool"""
         return self._simple_get("Place Prompt at First Column")
@@ -1308,53 +1318,66 @@ class Color:
 
     def __repr__(self):
         return "({},{},{},{} {})".format(
-            round(255 * self.red),
-            round(255 * self.green),
-            round(255 * self.blue),
-            round(255 * self.alpha),
+            round(self.red),
+            round(self.green),
+            round(self.blue),
+            round(self.alpha),
             self.color_space)
 
     @property
     def red(self):
+        """The color's red component."""
         return self.__red
 
     @red.setter
     def red(self, value):
+        """Sets the color's red component."""
         self.__red = value
 
     @property
     def green(self):
+        """The color's green component."""
         return self.__green
 
     @green.setter
     def green(self, value):
+        """Sets the color's green component."""
         self.__green = value
 
     @property
     def blue(self):
+        """The color's blue component."""
         return self.__blue
 
     @blue.setter
     def blue(self, value):
+        """Sets the color's blue component."""
         self.__blue = value
 
     @property
     def alpha(self):
+        """The color's alpha component."""
         return self.__alpha
 
     @alpha.setter
     def alpha(self, value):
+        """Sets the color's alpha component."""
         self.__alpha = value
 
     @property
     def color_space(self):
+        """The color's color space."""
         return self.__color_space
 
     @color_space.setter
     def color_space(self, value):
+        """Sets the color's scolor space."""
         self.__color_space = value
 
     def get_dict(self):
+        """Returns a dictionary representation of this color.
+
+        Suitable for conversion to a JSON object to pass to iTerm2."""
         return {
             "Red Component": self.red / 255.0,
             "Green Component": self.green / 255.0,
@@ -1364,11 +1387,12 @@ class Color:
             }
 
     def from_dict(self, input_dict):
-        self.red = float(input_dict["Red Component"])
-        self.green = float(input_dict["Green Component"])
-        self.blue = float(input_dict["Blue Component"])
+        """Updates the color from the dictionary's contents."""
+        self.red = float(input_dict["Red Component"]) * 255
+        self.green = float(input_dict["Green Component"]) * 255
+        self.blue = float(input_dict["Blue Component"]) * 255
         if "Alpha Component" in input_dict:
-            self.alpha = float(input_dict["Alpha Component"])
+            self.alpha = float(input_dict["Alpha Component"]) * 255
         else:
             self.alpha = 1
         if "Color Space" in input_dict:

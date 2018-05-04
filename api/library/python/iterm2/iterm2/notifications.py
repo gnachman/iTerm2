@@ -1,15 +1,26 @@
+"""Subscribe/unsubscribe from async notifications.
+
+This module provides functions that let you subscribe and unsubscribe from notifications. iTerm2
+posts notifications when some event of interest (for example, a keystroke) occurs. By subscribing to
+a notifications your async callback will be run when the event occurs.
+"""
 import iterm2.api_pb2
 import iterm2.connection
 import iterm2.rpc
 
-_haveRegisteredHelper = False
+def _get_handlers():
+    """Returns the registered notification handlers.
 
-# (session, notification_type) -> [coroutine, ...]
-_handlers = {}
+    :returns: (session, notification_type) -> [coroutine, ...]
+    """
+    if not hasattr(_get_handlers, 'handlers'):
+        _get_handlers.handlers = {}
+    return _get_handlers.handlers
 
 ## APIs -----------------------------------------------------------------------
 
 class SubscriptionException(Exception):
+    """Raised when a subscription attempt fails."""
     pass
 
 async def async_unsubscribe(connection, token):
@@ -19,14 +30,13 @@ async def async_unsubscribe(connection, token):
     :param connection: A connected iterm2.connection.Connection.
     :param token: The result of a previous subscribe call.
     """
-    global _handlers
     key, coro = token
-    coros = _handlers[key]
+    coros = _get_handlers()[key]
     coros.remove(coro)
-    if len(coros) > 0:
-        _handlers[key] = coros
+    if coros:
+        _get_handlers()[key] = coros
     else:
-        del _handlers[key]
+        del _get_handlers()[key]
         session, notification_type = key
         await _async_subscribe(connection, False, notification_type, None, session=session)
 
@@ -53,7 +63,12 @@ async def async_subscribe_to_keystroke_notification(connection, callback, sessio
 
     Returns: A token that can be passed to unsubscribe.
     """
-    return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_KEYSTROKE, callback, session=session)
+    return await _async_subscribe(
+        connection,
+        True,
+        iterm2.api_pb2.NOTIFY_ON_KEYSTROKE,
+        callback,
+        session=session)
 
 async def async_subscribe_to_screen_update_notification(connection, callback, session=None):
     """
@@ -66,7 +81,12 @@ async def async_subscribe_to_screen_update_notification(connection, callback, se
 
     :returns: A token that can be passed to unsubscribe.
     """
-    return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_SCREEN_UPDATE, callback, session=session)
+    return await _async_subscribe(
+        connection,
+        True,
+        iterm2.api_pb2.NOTIFY_ON_SCREEN_UPDATE,
+        callback,
+        session=session)
 
 async def async_subscribe_to_prompt_notification(connection, callback, session=None):
     """
@@ -79,7 +99,12 @@ async def async_subscribe_to_prompt_notification(connection, callback, session=N
 
     :returns: A token that can be passed to unsubscribe.
     """
-    return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_PROMPT, callback, session=session)
+    return await _async_subscribe(
+        connection,
+        True,
+        iterm2.api_pb2.NOTIFY_ON_PROMPT,
+        callback,
+        session=session)
 
 async def async_subscribe_to_location_change_notification(connection, callback, session=None):
     """
@@ -92,9 +117,16 @@ async def async_subscribe_to_location_change_notification(connection, callback, 
 
     :returns: A token that can be passed to unsubscribe.
     """
-    return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_LOCATION_CHANGE, callback, session=session)
+    return await _async_subscribe(
+        connection,
+        True,
+        iterm2.api_pb2.NOTIFY_ON_LOCATION_CHANGE,
+        callback,
+        session=session)
 
-async def async_subscribe_to_custom_escape_sequence_notification(connection, callback, session=None):
+async def async_subscribe_to_custom_escape_sequence_notification(connection,
+                                                                 callback,
+                                                                 session=None):
     """
     Registers a callback to be run when a custom escape sequence is received.
 
@@ -107,7 +139,12 @@ async def async_subscribe_to_custom_escape_sequence_notification(connection, cal
 
     :returns: A token that can be passed to unsubscribe.
     """
-    return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_CUSTOM_ESCAPE_SEQUENCE, callback, session=session)
+    return await _async_subscribe(
+        connection,
+        True,
+        iterm2.api_pb2.NOTIFY_ON_CUSTOM_ESCAPE_SEQUENCE,
+        callback,
+        session=session)
 
 async def async_subscribe_to_terminate_session_notification(connection, callback):
     """
@@ -119,7 +156,12 @@ async def async_subscribe_to_terminate_session_notification(connection, callback
 
     :returns: A token that can be passed to unsubscribe.
     """
-    return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_TERMINATE_SESSION, callback, session=None)
+    return await _async_subscribe(
+        connection,
+        True,
+        iterm2.api_pb2.NOTIFY_ON_TERMINATE_SESSION,
+        callback,
+        session=None)
 
 async def async_subscribe_to_layout_change_notification(connection, callback):
     """
@@ -132,7 +174,12 @@ async def async_subscribe_to_layout_change_notification(connection, callback):
 
     :returns: A token that can be passed to unsubscribe.
     """
-    return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_LAYOUT_CHANGE, callback, session=None)
+    return await _async_subscribe(
+        connection,
+        True,
+        iterm2.api_pb2.NOTIFY_ON_LAYOUT_CHANGE,
+        callback,
+        session=None)
 
 async def async_subscribe_to_focus_change_notification(connection, callback):
     """
@@ -144,14 +191,23 @@ async def async_subscribe_to_focus_change_notification(connection, callback):
 
     :returns: A token that can be passed to unsubscribe.
     """
-    return await _async_subscribe(connection, True, iterm2.api_pb2.NOTIFY_ON_FOCUS_CHANGE, callback, session=None)
+    return await _async_subscribe(
+        connection,
+        True,
+        iterm2.api_pb2.NOTIFY_ON_FOCUS_CHANGE,
+        callback,
+        session=None)
 
 ## Private --------------------------------------------------------------------
 
 async def _async_subscribe(connection, subscribe, notification_type, callback, session=None):
     _register_helper_if_needed()
     transformed_session = session if session is not None else "all"
-    response = await iterm2.rpc.async_notification_request(connection, subscribe, notification_type, transformed_session)
+    response = await iterm2.rpc.async_notification_request(
+        connection,
+        subscribe,
+        notification_type,
+        transformed_session)
     status = response.notification_response.status
     status_ok = (status == iterm2.api_pb2.NotificationResponse.Status.Value("OK"))
 
@@ -168,9 +224,8 @@ async def _async_subscribe(connection, subscribe, notification_type, callback, s
     raise SubscriptionException(iterm2.api_pb2.NotificationResponse.Status.Name(status))
 
 def _register_helper_if_needed():
-    global _haveRegisteredHelper
-    if not _haveRegisteredHelper:
-        _haveRegisteredHelper = True
+    if not hasattr(_register_helper_if_needed, 'haveRegisteredHelper'):
+        _register_helper_if_needed.haveRegisteredHelper = True
         iterm2.connection.Connection.register_helper(_async_dispatch_helper)
 
 async def _async_dispatch_helper(connection, message):
@@ -178,26 +233,28 @@ async def _async_dispatch_helper(connection, message):
     for handler in handlers:
         assert handler is not None
         await handler(connection, sub_notification)
-    return len(handlers) > 0
+    return bool(handlers)
 
 def _get_handler_key_from_notification(notification):
     key = None
 
     if notification.HasField('keystroke_notification'):
         key = (notification.keystroke_notification.session, iterm2.api_pb2.NOTIFY_ON_KEYSTROKE)
-        notification=notification.keystroke_notification
+        notification = notification.keystroke_notification
     elif notification.HasField('screen_update_notification'):
-        key = (notification.screen_update_notification.session, iterm2.api_pb2.NOTIFY_ON_SCREEN_UPDATE)
+        key = (notification.screen_update_notification.session,
+               iterm2.api_pb2.NOTIFY_ON_SCREEN_UPDATE)
         notification = notification.screen_update_notification
     elif notification.HasField('prompt_notification'):
         key = (notification.prompt_notification.session, iterm2.api_pb2.NOTIFY_ON_PROMPT)
         notification = notification.prompt_notification
     elif notification.HasField('location_change_notification'):
-        key = (notification.location_change_notification.session, iterm2.api_pb2.NOTIFY_ON_LOCATION_CHANGE)
+        key = (notification.location_change_notification.session,
+               iterm2.api_pb2.NOTIFY_ON_LOCATION_CHANGE)
         notification = notification.location_change_notification
     elif notification.HasField('custom_escape_sequence_notification'):
         key = (notification.custom_escape_sequence_notification.session,
-            iterm2.api_pb2.NOTIFY_ON_CUSTOM_ESCAPE_SEQUENCE)
+               iterm2.api_pb2.NOTIFY_ON_CUSTOM_ESCAPE_SEQUENCE)
         notification = notification.custom_escape_sequence_notification
     elif notification.HasField('new_session_notification'):
         key = (None, iterm2.api_pb2.NOTIFY_ON_NEW_SESSION)
@@ -221,18 +278,15 @@ def _get_notification_handlers(message):
 
     fallback = (None, key[1])
 
-    if key in _handlers:
-        return (_handlers[key], sub_notification)
-    elif fallback in _handlers:
-        return (_handlers[fallback], sub_notification)
-    else:
-        return ([], None)
+    if key in _get_handlers():
+        return (_get_handlers()[key], sub_notification)
+    elif fallback in _get_handlers():
+        return (_get_handlers()[fallback], sub_notification)
+    return ([], None)
 
 def _register_notification_handler(session, notification_type, coro):
-    global _handlers
     assert coro is not None
     key = (session, notification_type)
-    if key in _handlers:
-        _handlers[key].append(coro)
-    else:
-        _handlers[key] = [coro]
+    if key in _get_handlers():
+        _get_handlers()[key].append(coro)
+    _get_handlers()[key] = [coro]

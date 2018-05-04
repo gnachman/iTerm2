@@ -1,3 +1,5 @@
+"""Provides a class that represents an iTerm2 tab."""
+
 import iterm2.rpc
 
 class Tab:
@@ -9,16 +11,16 @@ class Tab:
         self.active_session_id = None
 
     def __repr__(self):
-        return "<Tab id=%s sessions=%s>" % (self.__tab_id, self.get_sessions())
+        return "<Tab id=%s sessions=%s>" % (self.__tab_id, self.sessions)
 
     def update_from(self, other):
         """Copies state from another tab into this one."""
         self.__root = other.root
         self.active_session_id = other.active_session_id
 
-    def update_session(self, s):
+    def update_session(self, session):
         """Replaces references to a session."""
-        self.__root.update_session(s)
+        self.__root.update_session(session)
 
     @property
     def tab_id(self):
@@ -57,9 +59,9 @@ class Tab:
         """
         :returns: A human readable description of the tab and its sessions.
         """
-        s = indent + "Tab id=%s\n" % self.tab_id
-        s += self.__root.pretty_str(indent=indent + "  ")
-        return s
+        session = indent + "Tab id=%s\n" % self.tab_id
+        session += self.__root.pretty_str(indent=indent + "  ")
+        return session
 
     async def async_select(self, order_window_front=True):
         """
@@ -68,4 +70,9 @@ class Tab:
         :param order_window_front: Whether the window this session is in should be
           brought to the front and given keyboard focus.
         """
-        await iterm2.rpc.async_activate(self.connection, False, True, order_window_front, tab_id=self.__tab_id)
+        await iterm2.rpc.async_activate(
+            self.connection,
+            False,
+            True,
+            order_window_front,
+            tab_id=self.__tab_id)

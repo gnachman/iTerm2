@@ -1,3 +1,4 @@
+"""Provides classes for interacting with iTerm2 sessions."""
 import asyncio
 
 import iterm2.app
@@ -53,7 +54,7 @@ class Splitter:
         child: A Session or a Splitter.
         """
         self.__children.append(child)
-        if type(child) is Session:
+        if isinstance(child, Session):
             self.__sessions.append(child)
         else:
             self.__sessions.extend(child.sessions)
@@ -77,34 +78,36 @@ class Splitter:
         """
         :returns: A string describing this splitter. Has newlines.
         """
-        s = indent + "Splitter %s\n" % (
+        string_value = indent + "Splitter %s\n" % (
             "|" if self.vertical else "-")
         for child in self.__children:
-            s += child.pretty_str("  " + indent)
-        return s
+            string_value += child.pretty_str("  " + indent)
+        return string_value
 
-    def update_session(self, s):
+    def update_session(self, session):
         """
-        Finds a session with the same ID as s. If it exists, replace the reference with s.
+        Finds a session with the same ID as session. If it exists, replace the reference with
+        session.
 
         :returns: True if the update occurred.
         """
         i = 0
-        for c in self.__children:
-            if type(c) is Session and c.session_id == s.session_id:
-                self.__children[i] = s
+        for child in self.__children:
+            if isinstance(child, Session) and child.session_id == session.session_id:
+                self.__children[i] = session
 
                 # Update the entry in self.__sessions
                 for j in range(len(self.__sessions)):
-                    if self.__sessions[j].session_id == s.session_id:
-                        self.__sessions[j] = s
+                    if self.__sessions[j].session_id == session.session_id:
+                        self.__sessions[j] = session
                         break
 
                 return True
-            elif type(c) is Splitter:
-                if c.update_session(s):
+            elif isinstance(child, Splitter):
+                if child.update_session(session):
                     return True
             i += 1
+        return False
 
 class Session:
     """
@@ -137,19 +140,20 @@ class Session:
         """
         self.connection = connection
 
-        self.__session_id = link.session.unique_identifier
-        self.frame = link.session.frame
-        self.grid_size = link.session.grid_size
-        self.name = link.session.title
+        if link is not None:
+            self.__session_id = link.session.unique_identifier
+            self.frame = link.session.frame
+            self.grid_size = link.session.grid_size
+            self.name = link.session.title
 
     def __repr__(self):
         return "<Session name=%s id=%s>" % (self.name, self.__session_id)
 
-    def update_from(self, s):
+    def update_from(self, session):
         """Replace internal state with that of another session."""
-        self.frame = s.frame
-        self.grid_size = s.grid_size
-        self.name = s.name
+        self.frame = session.frame
+        self.grid_size = session.grid_size
+        self.name = session.name
 
     def pretty_str(self, indent=""):
         """
@@ -215,14 +219,20 @@ class Session:
 
         :throws: SplitPaneException if something goes wrong.
         """
-        result = await iterm2.rpc.async_split_pane(self.connection, self.__session_id, vertical, before, profile)
+        result = await iterm2.rpc.async_split_pane(
+            self.connection,
+            self.__session_id,
+            vertical,
+            before,
+            profile)
         if result.split_pane_response.status == iterm2.api_pb2.SplitPaneResponse.Status.Value("OK"):
             new_session_id = result.split_pane_response.session_id[0]
             app = await iterm2.app.async_get_app(self.connection)
             await app.async_refresh()
-            return await app.async_get_session_by_id(new_session_id)
+            return app.get_session_by_id(new_session_id)
         else:
-            raise SplitPaneException(iterm2.api_pb2.SplitPaneResponse.Status.Name(result.split_pane_response.status))
+            raise SplitPaneException(
+                iterm2.api_pb2.SplitPaneResponse.Status.Name(result.split_pane_response.status))
 
     async def async_read_keystroke(self):
         """
@@ -233,10 +243,14 @@ class Session:
         :returns: iterm2.api_pb2.KeystrokeNotification
         """
         future = asyncio.Future()
-        async def async_on_keystroke(connection, message):
+        async def async_on_keystroke(_connection, message):
+            """Called on keystroke to finish the future so async_read_keystroke will return."""
             future.set_result(message)
 
-        token = await iterm2.notifications.async_subscribe_to_keystroke_notification(self.connection, async_on_keystroke, self.__session_id)
+        token = await iterm2.notifications.async_subscribe_to_keystroke_notification(
+            self.connection,
+            async_on_keystroke,
+            self.__session_id)
         await self.connection.async_dispatch_until_future(future)
         await iterm2.notifications.async_unsubscribe(self.connection, token)
         return future.result()
@@ -248,10 +262,15 @@ class Session:
         :returns: iterm2.api_pb2.ScreenUpdateNotification
         """
         future = asyncio.Future()
-        async def async_on_update(connection, message):
+        async def async_on_update(_connection, message):
+            """Called when the screen changes to finish the future so async_wait_for_screen_update
+            will return."""
             future.set_result(message)
 
-        token = await iterm2.notifications.async_subscribe_to_screen_update_notification(self.connection, async_on_update, self.__session_id)
+        token = await iterm2.notifications.async_subscribe_to_screen_update_notification(
+            self.connection,
+            async_on_update,
+            self.__session_id)
         await self.connection.async_dispatch_until_future(future)
         await iterm2.notifications.async_unsubscribe(self.connection, token)
         return future.result
@@ -262,7 +281,9 @@ class Session:
 
         :throws: iterm2.rpc.RPCException if something goes wrong.
         """
-        response = await iterm2.rpc.async_get_buffer_with_screen_contents(self.connection, self.__session_id)
+        response = await iterm2.rpc.async_get_buffer_with_screen_contents(
+            self.connection,
+            self.__session_id)
         status = response.get_buffer_response.status
         if status == iterm2.api_pb2.GetBufferResponse.Status.Value("OK"):
             return response.get_buffer_response
@@ -279,7 +300,10 @@ class Session:
 
         :throws: iterm2.rpc.RPCException if something goes wrong.
         """
-        response = await iterm2.rpc.async_get_buffer_lines(self.connection, trailing_lines, self.__session_id)
+        response = await iterm2.rpc.async_get_buffer_lines(
+            self.connection,
+            trailing_lines,
+            self.__session_id)
         status = response.get_buffer_response.status
         if status == iterm2.api_pb2.GetBufferResponse.Status.Value("OK"):
             return response.get_buffer_response
@@ -314,7 +338,11 @@ class Session:
 
         :throws: iterm2.rpc.RPCException if something goes wrong.
         """
-        response = await iterm2.rpc.async_set_profile_property(self.connection, key, json_value)
+        response = await iterm2.rpc.async_set_profile_property(
+            self.connection,
+            self.session_id,
+            key,
+            json_value)
         status = response.set_profile_property_response.status
         if status == iterm2.api_pb2.SetProfilePropertyResponse.Status.Value("OK"):
             return response.set_profile_property_response
@@ -332,9 +360,13 @@ class Session:
         response = await iterm2.rpc.async_get_profile(self.connection, self.__session_id)
         status = response.get_profile_property_response.status
         if status == iterm2.api_pb2.GetProfilePropertyResponse.Status.Value("OK"):
-            return iterm2.profile.Profile(self.__session_id, self.connection, response.get_profile_property_response)
+            return iterm2.profile.Profile(
+                self.__session_id,
+                self.connection,
+                response.get_profile_property_response)
         else:
-            raise iterm2.rpc.RPCException(iterm2.api_pb2.GetProfilePropertyResponse.Status.Name(status))
+            raise iterm2.rpc.RPCException(
+                iterm2.api_pb2.GetProfilePropertyResponse.Status.Name(status))
 
     async def async_inject(self, data):
         """
@@ -355,7 +387,12 @@ class Session:
         :param order_window_front: Whether the window this session is in should be
           brought to the front and given keyboard focus.
         """
-        await iterm2.rpc.async_activate(self.connection, True, select_tab, order_window_front, session_id=self.__session_id)
+        await iterm2.rpc.async_activate(
+            self.connection,
+            True,
+            select_tab,
+            order_window_front,
+            session_id=self.__session_id)
 
     async def async_set_variable(self, name, value):
         """
@@ -366,7 +403,11 @@ class Session:
         :param name: The variable's name.
         :param value: The new value to assign.
         """
-        result = await iterm2.rpc.async_variable(self.connection, self.__session_id, [(name, value)], [])
+        result = await iterm2.rpc.async_variable(
+            self.connection,
+            self.__session_id,
+            [(name, value)],
+            [])
         status = result.variable_response.status
         if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
@@ -395,18 +436,24 @@ class Session:
         its docstring for more info."""
         def __init__(self, connection, session_id):
             self.connection = connection
-            self.__session_id = session_id
+            self.session_id = session_id
             self.buffer = []
+            self.token = None
+            self.future = None
 
         async def __aenter__(self):
-            async def async_on_keystroke(connection, message):
+            async def async_on_keystroke(_connection, message):
+                """Called on keystroke. Saves the keystroke in a buffer."""
                 self.buffer.append(message)
                 if self.future is not None:
                     temp = self.buffer
                     self.buffer = []
                     self.future.set_result(temp)
 
-            self.token = await iterm2.notifications.async_subscribe_to_keystroke_notification(self.connection, async_on_keystroke, self.__session_id)
+            self.token = await iterm2.notifications.async_subscribe_to_keystroke_notification(
+                self.connection,
+                async_on_keystroke,
+                self.session_id)
             return self
 
         async def get(self):
@@ -421,7 +468,7 @@ class Session:
             self.future = None
             return result
 
-        async def __aexit__(self, exc_type, exc, tb):
+        async def __aexit__(self, exc_type, exc, _tb):
             await iterm2.notifications.async_unsubscribe(self.connection, self.token)
             return self.buffer
 
@@ -432,11 +479,14 @@ class Session:
         its docstring for more info."""
         def __init__(self, connection, session_id, want_contents=True):
             self.connection = connection
-            self.__session_id = session_id
+            self.session_id = session_id
             self.want_contents = want_contents
+            self.future = None
+            self.token = None
 
         async def __aenter__(self):
-            async def async_on_update(connection, message):
+            async def async_on_update(_connection, message):
+                """Called on screen update. Saves the update message."""
                 future = self.future
                 if future is None:
                     # Ignore reentrant calls
@@ -446,10 +496,13 @@ class Session:
                 if future is not None and not future.done():
                     future.set_result(message)
 
-            self.token = await iterm2.notifications.async_subscribe_to_screen_update_notification(self.connection, async_on_update, self.__session_id)
+            self.token = await iterm2.notifications.async_subscribe_to_screen_update_notification(
+                self.connection,
+                async_on_update,
+                self.session_id)
             return self
 
-        async def __aexit__(self, exc_type, exc, tb):
+        async def __aexit__(self, exc_type, exc, _tb):
             await iterm2.notifications.async_unsubscribe(self.connection, self.token)
 
         async def get(self):
@@ -464,7 +517,9 @@ class Session:
             self.future = None
 
             if self.want_contents:
-                result = await iterm2.rpc.async_get_buffer_with_screen_contents(self.connection, self.__session_id)
+                result = await iterm2.rpc.async_get_buffer_with_screen_contents(
+                    self.connection,
+                    self.session_id)
                 return result
 
 class InvalidSessionId(Exception):
@@ -481,7 +536,7 @@ class ProxySession(Session):
     sessions.
     """
     def __init__(self, connection, session_id):
-        self.connection = connection
+        super().__init__(connection, session_id)
         self.__session_id = session_id
 
     def __repr__(self):
@@ -508,5 +563,4 @@ class ProxySession(Session):
     async def async_get_profile(self):
         if self.__session_id == "all":
             return iterm2.profile.WriteOnlyProfile(self.__session_id, self.connection)
-        else:
-            return await super(ProxySession, self).async_get_profile()
+        return await super(ProxySession, self).async_get_profile()

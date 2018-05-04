@@ -1,3 +1,4 @@
+"""Provides classes that represent iTerm2 windows."""
 import json
 import iterm2.api_pb2
 import iterm2.app
@@ -33,7 +34,10 @@ class Window:
         self.selected_tab_id = None
 
     def __repr__(self):
-        return "<Window id=%s tabs=%s frame=%s>" % (self.__window_id, self.__tabs, iterm2.util.frame_str(self.frame))
+        return "<Window id=%s tabs=%s frame=%s>" % (
+            self.__window_id,
+            self.__tabs,
+            iterm2.util.frame_str(self.frame))
 
     def update_from(self, other):
         """Copies state from other window to this one."""
@@ -41,12 +45,12 @@ class Window:
         self.frame = other.frame
         self.selected_tab_id = other.selected_tab_id
 
-    def update_tab(self, t):
+    def update_tab(self, tab):
         """Replace references to a tab."""
         i = 0
-        for ot in self.__tabs:
-            if ot.tab_id == t.tab_id:
-                self.__tabs[i] = t
+        for old_tab in self.__tabs:
+            if old_tab.tab_id == tab.tab_id:
+                self.__tabs[i] = tab
                 return
             i += 1
 
@@ -54,10 +58,11 @@ class Window:
         """
         :returns: A nicely formatted string describing the window, its tabs, and their sessions.
         """
-        s = indent + "Window id=%s frame=%s\n" % (self.window_id, iterm2.util.frame_str(self.frame))
-        for t in self.__tabs:
-            s += t.pretty_str(indent=indent + "  ")
-        return s
+        session = indent + "Window id=%s frame=%s\n" % (
+            self.window_id, iterm2.util.frame_str(self.frame))
+        for tab in self.__tabs:
+            session += tab.pretty_str(indent=indent + "  ")
+        return session
 
     @property
     def window_id(self):
@@ -78,22 +83,29 @@ class Window:
         Creates a new tab in this window.
 
         :param profile: The profile name to use or None for the default profile.
-        :param command: The command to run in the new session, or None for the default for the profile.
+        :param command: The command to run in the new session, or None for the
+            default for the profile.
         :param index: The index in the window where the new tab should go (0=first position, etc.)
 
         :returns: An iterm2.tab.Tab
 
         :raises: CreateTabException if something goes wrong.
         """
-        result = await iterm2.rpc.async_create_tab(self.connection, profile=profile, window=self.__window_id, index=index, command=command)
+        result = await iterm2.rpc.async_create_tab(
+            self.connection,
+            profile=profile,
+            window=self.__window_id,
+            index=index,
+            command=command)
         if result.create_tab_response.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
             session_id = result.create_tab_response.session_id
             app = await iterm2.app.async_get_app(self.connection)
-            s = await app.async_get_session_by_id(session_id)
-            w, t = await app.async_get_tab_and_window_for_session(s)
-            return t
+            session = app.get_session_by_id(session_id)
+            _window, tab = await app.async_get_tab_and_window_for_session(session)
+            return tab
         else:
-            raise CreateTabException(iterm2.api_pb2.CreateTabResponse.Status.Name(result.create_tab_response.status))
+            raise CreateTabException(
+                iterm2.api_pb2.CreateTabResponse.Status.Name(result.create_tab_response.status))
 
     async def async_get_frame(self, connection):
         """
@@ -109,13 +121,14 @@ class Window:
         """
 
         response = await iterm2.rpc.async_get_property(connection, "frame", self.__window_id)
-        if response.get_property_response.status == iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
-            d = json.loads(response.get_property_response.json_value)
+        status = response.get_property_response.status
+        if status == iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
+            frame_dict = json.loads(response.get_property_response.json_value)
             frame = iterm2.api_pb2.Frame()
-            frame.origin.x = d["origin"]["x"]
-            frame.origin.y = d["origin"]["y"]
-            frame.size.width = d["size"]["width"]
-            frame.size.height = d["size"]["height"]
+            frame.origin.x = frame_dict["origin"]["x"]
+            frame.origin.y = frame_dict["origin"]["y"]
+            frame.size.width = frame_dict["size"]["width"]
+            frame.size.height = frame_dict["size"]["height"]
             return frame
         else:
             raise GetPropertyException(response.get_property_response.status)
@@ -129,13 +142,18 @@ class Window:
 
         :raises: SetPropertyException if something goes wrong.
         """
-        dict = { "origin": { "x": frame.origin.x,
-                             "y": frame.origin.y },
-                 "size": { "width": frame.size.width,
-                           "height": frame.size.height } }
-        json_value = json.dumps(dict)
-        response = await iterm2.rpc.async_set_property(connection, "frame", json_value, window_id=self.__window_id)
-        if response.set_property_response.status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
+        frame_dict = {"origin": {"x": frame.origin.x,
+                                 "y": frame.origin.y},
+                      "size": {"width": frame.size.width,
+                               "height": frame.size.height}}
+        json_value = json.dumps(frame_dict)
+        response = await iterm2.rpc.async_set_property(
+            connection,
+            "frame",
+            json_value,
+            window_id=self.__window_id)
+        status = response.set_property_response.status
+        if status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
             raise SetPropertyException(response.get_property_response.status)
 
     async def async_get_fullscreen(self, connection):
@@ -149,7 +167,8 @@ class Window:
         :raises: GetPropertyException if something goes wrong.
         """
         response = await iterm2.rpc.async_get_property(connection, "fullscreen", self.__window_id)
-        if response.get_property_response.status == iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
+        status = response.get_property_response.status
+        if status == iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
             return json.loads(response.get_property_response.json_value)
         else:
             raise GetPropertyException(response.get_property_response.status)
@@ -165,18 +184,26 @@ class Window:
         :raises: SetPropertyException if something goes wrong.
         """
         json_value = json.dumps(fullscreen)
-        response = await iterm2.rpc.async_set_property(connection, "fullscreen", json_value, window_id=self.__window_id)
-        if response.get_property_response.status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
+        response = await iterm2.rpc.async_set_property(
+            connection,
+            "fullscreen",
+            json_value,
+            window_id=self.__window_id)
+        status = response.get_property_response.status
+        if status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
             raise SetPropertyException(response.get_property_response.status)
 
 
-    async def async_activate(self, connection):
+    async def async_activate(self):
         """
         Gives the window keyboard focus and orders it to the front.
-
-        :param connection: A connected iterm2.Connection.
         """
-        await iterm2.rpc.async_activate(self.connection, False, False, True, window_id=self.__window_id)
+        await iterm2.rpc.async_activate(
+            self.connection,
+            False,
+            False,
+            True,
+            window_id=self.__window_id)
 
     async def async_save_window_as_arrangement(self, name):
         """Save the current window as a new arrangement.
@@ -185,7 +212,9 @@ class Window:
         """
         result = await iterm2.rpc.async_save_arrangement(self.connection, name, self.__window_id)
         if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-            raise SavedArrangementException(iterm2.api_pb2.SavedArrangementResponse.Status.Name(result.saved_arrangement_response.status))
+            raise SavedArrangementException(
+                iterm2.api_pb2.SavedArrangementResponse.Status.Name(
+                    result.saved_arrangement_response.status))
 
     async def async_restore_window_arrangement(self, name):
         """Restore a window arrangement as tabs in this window.
@@ -195,4 +224,6 @@ class Window:
         :raises: SavedArrangementException if the named arrangement does not exist."""
         result = await iterm2.rpc.async_restore_arrangement(self.connection, name, self.__window_id)
         if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-            raise SavedArrangementException(iterm2.api_pb2.SavedArrangementResponse.Status.Name(result.saved_arrangement_response.status))
+            raise SavedArrangementException(
+                iterm2.api_pb2.SavedArrangementResponse.Status.Name(
+                    result.saved_arrangement_response.status))

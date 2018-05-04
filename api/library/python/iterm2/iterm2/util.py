@@ -1,3 +1,5 @@
+"""Provides handy functions."""
+
 def frame_str(frame):
     """Formats an api_pb2.Frame as a human-readable string.
 

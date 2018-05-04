@@ -1,4 +1,4 @@
-import asyncio
+"""Provides methods that build and send RPCs to iTerm2."""
 import json
 
 import iterm2.api_pb2
@@ -8,6 +8,7 @@ ACTIVATE_RAISE_ALL_WINDOWS = 1
 ACTIVATE_IGNORING_OTHER_APPS = 2
 
 class RPCException(Exception):
+    """Raised when a response contains an error signaling a malformed request."""
     pass
 
 ## APIs -----------------------------------------------------------------------
@@ -175,7 +176,11 @@ async def async_end_transaction(connection):
     request.transaction_request.begin = False
     return await _async_call(connection, request)
 
-async def async_register_web_view_tool(connection, display_name, identifier, reveal_if_already_registered, url):
+async def async_register_web_view_tool(connection,
+                                       display_name,
+                                       identifier,
+                                       reveal_if_already_registered,
+                                       url):
     """
     Registers a toolbelt tool showing a webview.
 
@@ -191,7 +196,8 @@ async def async_register_web_view_tool(connection, display_name, identifier, rev
     request.register_tool_request.name = display_name
     request.register_tool_request.identifier = identifier
     request.register_tool_request.reveal_if_already_registered = reveal_if_already_registered
-    request.register_tool_request.tool_type = iterm2.api_pb2.RegisterToolRequest.ToolType.Value("WEB_VIEW_TOOL")
+    request.register_tool_request.tool_type = iterm2.api_pb2.RegisterToolRequest.ToolType.Value(
+        "WEB_VIEW_TOOL")
     request.register_tool_request.URL = url
     return await _async_call(connection, request)
 
@@ -263,7 +269,14 @@ async def async_inject(connection, data, sessions):
     request.inject_request.data = data
     return await _async_call(connection, request)
 
-async def async_activate(connection, select_session, select_tab, order_window_front, session_id=None, tab_id=None, window_id=None, activate_app_opts=None):
+async def async_activate(connection,
+                         select_session,
+                         select_tab,
+                         order_window_front,
+                         session_id=None,
+                         tab_id=None,
+                         window_id=None,
+                         activate_app_opts=None):
     """
     Activates a session, tab, or window.
     """
@@ -293,10 +306,10 @@ async def async_variable(connection, session_id, sets, gets):
     request.variable_request.session_id = session_id
     request.variable_request.get.extend(gets)
     for (name, value) in sets:
-        s = iterm2.api_pb2.VariableRequest.Set()
-        s.name = name
-        s.value = value
-        request.variable_request.set.extend([s])
+        session = iterm2.api_pb2.VariableRequest.Set()
+        session.name = name
+        session.value = value
+        request.variable_request.set.extend([session])
     return await _async_call(connection, request)
 
 async def async_save_arrangement(connection, name, window_id=None):
@@ -305,7 +318,8 @@ async def async_save_arrangement(connection, name, window_id=None):
     """
     request = _alloc_request()
     request.saved_arrangement_request.name = name
-    request.saved_arrangement_request.action = iterm2.api_pb2.SavedArrangementRequest.Action.Value("SAVE")
+    request.saved_arrangement_request.action = iterm2.api_pb2.SavedArrangementRequest.Action.Value(
+        "SAVE")
     if window_id is not None:
         request.saved_arrangement_request.window_id = window_id
     return await _async_call(connection, request)
@@ -316,7 +330,8 @@ async def async_restore_arrangement(connection, name, window_id=None):
     """
     request = _alloc_request()
     request.saved_arrangement_request.name = name
-    request.saved_arrangement_request.action = iterm2.api_pb2.SavedArrangementRequest.Action.Value("RESTORE")
+    request.saved_arrangement_request.action = iterm2.api_pb2.SavedArrangementRequest.Action.Value(
+        "RESTORE")
     if window_id is not None:
         request.saved_arrangement_request.window_id = window_id
     return await _async_call(connection, request)
@@ -331,12 +346,11 @@ async def async_get_focus_info(connection):
 
 ## Private --------------------------------------------------------------------
 
-_nextId = 0
-
 def _alloc_id():
-    global _nextId
-    result = _nextId
-    _nextId += 1
+    if not hasattr(_alloc_id, 'next_id'):
+        _alloc_id.next_id = 0
+    result = _alloc_id.next_id
+    _alloc_id.next_id += 1
     return result
 
 def _alloc_request():

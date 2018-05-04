@@ -1,3 +1,8 @@
+"""Manages the details of the websocket connection.
+
+Connection: Represents a websocket connection to iTerm2.
+"""
+
 import asyncio
 import concurrent
 import os
@@ -9,14 +14,12 @@ import websockets
 import iterm2.api_pb2
 from iterm2._version import __version__
 
-_helpers = []
-
 class Connection:
     """Represents a loopback network connection from the script to iTerm2.
 
     Provides functionality for sending and receiving messages. Supports
     dispatching incoming messages."""
-
+    helpers = []
     @staticmethod
     def register_helper(helper):
         """
@@ -29,9 +32,8 @@ class Connection:
           helper: A coroutine that will be called on incoming messages that were not
             previously handled.
         """
-        global _helpers
         assert helper is not None
-        _helpers.append(helper)
+        Connection.helpers.append(helper)
 
     def __init__(self):
         self.__deferred = None
@@ -47,7 +49,8 @@ class Connection:
         :param coro: A coroutine (async function) to run after connecting.
         :param args: Passed to coro after its first argument (this connection).
         """
-        async def async_main(loop):
+        async def async_main(_loop):
+            """Wrapper around the user-provided coroutine that passes it argv."""
             await self.async_connect(coro, *args)
         loop = asyncio.get_event_loop()
         loop.run_until_complete(async_main(loop))
@@ -94,7 +97,7 @@ class Connection:
         """
         cookie_key = 'ITERM2_COOKIE'
         key_key = 'ITERM2_KEY'
-        headers = { "origin": "ws://localhost/" }
+        headers = {"origin": "ws://localhost/"}
         if cookie_key in os.environ:
             headers["x-iterm2-cookie"] = os.environ[cookie_key]
         if key_key in os.environ:
@@ -102,11 +105,11 @@ class Connection:
         headers["x-iterm2-library-version"] = "python {}".format(__version__)
         async with websockets.connect('ws://localhost:1912',
                                       extra_headers=headers,
-                                      subprotocols=[ 'api.iterm2.com' ]) as websocket:
+                                      subprotocols=['api.iterm2.com']) as websocket:
             self.websocket = websocket
             try:
                 await coro(self, *args)
-            except Exception as err:
+            except Exception as _err:
                 traceback.print_exc()
                 sys.exit(1)
 
@@ -125,13 +128,13 @@ class Connection:
 
         Returns: A message with the specified request id.
         """
-        ownsDeferred = self._begin_deferring()
+        owns_deferred = self._begin_deferring()
         while True:
             message = await self.async_recv_message()
             if message.id == reqid:
-                if ownsDeferred:
-                    for d in self._iterate_deferred():
-                        await self._async_dispatch(d)
+                if owns_deferred:
+                    for deferred_message in self._iterate_deferred():
+                        await self._async_dispatch(deferred_message)
                 return message
             else:
                 self._defer(message)
@@ -176,33 +179,31 @@ class Connection:
         if self.__deferred is None:
             self.__deferred = []
             return True
-        else:
-            return False
+        return False
 
     def _defer(self, message):
         """
         Add message to the deferred list.
         """
-        assert(self.__deferred is not None)
+        assert self.__deferred is not None
         self.__deferred.append(message)
 
     def _iterate_deferred(self):
         """
         A generator that yeilds deferred messages in the order they were added.
         """
-        while len(self.__deferred) > 0:
+        while self.__deferred:
             deferred = self.__deferred
             self.__deferred = []
-            for d in deferred:
-                yield(d)
+            for deferred_message in deferred:
+                yield deferred_message
         self.__deferred = None
 
     async def _async_dispatch(self, message):
         """
         Dispatch a message to all registered helpers.
         """
-        global _helpers
-        for helper in _helpers:
+        for helper in Connection.helpers:
             assert helper is not None
             if await helper(self, message):
                 break
