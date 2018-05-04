@@ -590,6 +590,9 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 - (BOOL)imageIsVisible:(iTermImageInfo *)image;
 
+// Turns on the flicker fixer (if enabled) while drawing.
+- (void)performBlockWithFlickerFixerGrid:(void (^)(void))block;
+
 #pragma mark - Testing only
 
 - (id)selectedTextAttributed:(BOOL)attributed

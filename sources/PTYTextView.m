@@ -1091,15 +1091,21 @@ static const int kDragThreshold = 3;
     return _primaryFont.underlineOffset;
 }
 
-- (iTermTextDrawingHelper *)drawingHelper {
+- (void)performBlockWithFlickerFixerGrid:(void (^)(void))block {
     // Try to use a saved grid if one is available. If it succeeds, that implies that the cursor was
     // recently hidden and what we're drawing is how the screen looked just before the cursor was
     // hidden. Therefore, we'll temporarily show the cursor, but we'll need to restore cursorVisible's
     // value when we're done.
+    BOOL savedCursorVisible = _drawingHelper.cursorVisible;
     if ([_dataSource setUseSavedGridIfAvailable:YES]) {
         _drawingHelper.cursorVisible = YES;
     }
+    block();
+    [_dataSource setUseSavedGridIfAvailable:NO];
+    _drawingHelper.cursorVisible = savedCursorVisible;
+}
 
+- (iTermTextDrawingHelper *)drawingHelper {
     _drawingHelper.showStripes = (_showStripesWhenBroadcastingInput &&
                                   [_delegate textViewSessionIsBroadcastingInput]);
     _drawingHelper.cursorBlinking = [self isCursorBlinking];
@@ -1173,41 +1179,38 @@ static const int kDragThreshold = 3;
         ITCriticalError(_dataSource.width < 0, @"Negative datasource width of %@", @(_dataSource.width));
         return;
     }
-    BOOL savedCursorVisible = _drawingHelper.cursorVisible;
-
     DLog(@"drawing document visible rect %@", NSStringFromRect(self.enclosingScrollView.documentVisibleRect));
 
     const NSRect *rectArray;
     NSInteger rectCount;
     [self getRectsBeingDrawn:&rectArray count:&rectCount];
 
-    // Initialize drawing helper
-    [self drawingHelper];
+    [self performBlockWithFlickerFixerGrid:^{
+        // Initialize drawing helper
+        [self drawingHelper];
 
-    if (_drawingHook) {
-        // This is used by tests to customize the draw helper.
-        _drawingHook(_drawingHelper);
-    }
+        if (_drawingHook) {
+            // This is used by tests to customize the draw helper.
+            _drawingHook(_drawingHelper);
+        }
 
-    [_drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
+        [_drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
 
-    [_indicatorsHelper drawInFrame:_drawingHelper.indicatorFrame];
-    [_drawingHelper drawTimestamps];
+        [_indicatorsHelper drawInFrame:_drawingHelper.indicatorFrame];
+        [_drawingHelper drawTimestamps];
 
-    // Not sure why this is needed, but for some reason this view draws over its subviews.
-    for (NSView *subview in [self subviews]) {
-        [subview setNeedsDisplay:YES];
-    }
+        // Not sure why this is needed, but for some reason this view draws over its subviews.
+        for (NSView *subview in [self subviews]) {
+            [subview setNeedsDisplay:YES];
+        }
 
-    if (_drawingHelper.blinkingFound) {
-        // The user might have used the scroll wheel to cause blinking text to become
-        // visible. Make sure the timer is running if anything onscreen is
-        // blinking.
-        [self.delegate textViewWillNeedUpdateForBlink];
-    }
-
-    [_dataSource setUseSavedGridIfAvailable:NO];
-    _drawingHelper.cursorVisible = savedCursorVisible;
+        if (_drawingHelper.blinkingFound) {
+            // The user might have used the scroll wheel to cause blinking text to become
+            // visible. Make sure the timer is running if anything onscreen is
+            // blinking.
+            [self.delegate textViewWillNeedUpdateForBlink];
+        }
+    }];
 }
 
 - (BOOL)getAndResetDrawingAnimatedImageFlag {

@@ -274,38 +274,40 @@ static NSColor *ColorForVector(vector_float4 v) {
     if (self) {
         _startTime = [NSDate timeIntervalSinceReferenceDate];
 
-        // Getting the drawingHelper may reset the cursorVisible flag as a side effect of the
-        // hacky flicker fixer.
-        BOOL savedCursorVisible = textView.cursorVisible;
-        iTermTextDrawingHelper *drawingHelper = textView.drawingHelper;
-        _cursorVisible = drawingHelper.cursorVisible;
-        drawingHelper.cursorVisible = savedCursorVisible;
+        [textView performBlockWithFlickerFixerGrid:^{
+            // Getting the drawingHelper may reset the cursorVisible flag as a side effect of the
+            // hacky flicker fixer.
+            BOOL savedCursorVisible = textView.cursorVisible;
+            iTermTextDrawingHelper *drawingHelper = textView.drawingHelper;
+            _cursorVisible = drawingHelper.cursorVisible;
+            drawingHelper.cursorVisible = savedCursorVisible;
 
-        // Copy lines from model. Always use these for consistency. I should also copy the color map
-        // and any other data dependencies.
-        _lines = [NSMutableArray array];
-        _dates = [NSMutableArray array];
-        _markStyles = [NSMutableArray array];
-        _selectedIndexes = [NSMutableArray array];
-        _matches = [NSMutableDictionary dictionary];
-        _underlinedRanges = [NSMutableDictionary dictionary];
+            // Copy lines from model. Always use these for consistency. I should also copy the color map
+            // and any other data dependencies.
+            _lines = [NSMutableArray array];
+            _dates = [NSMutableArray array];
+            _markStyles = [NSMutableArray array];
+            _selectedIndexes = [NSMutableArray array];
+            _matches = [NSMutableDictionary dictionary];
+            _underlinedRanges = [NSMutableDictionary dictionary];
 
-        [self loadMetricsWithDrawingHelper:drawingHelper textView:textView screen:screen];
-        [self loadSettingsWithDrawingHelper:drawingHelper textView:textView];
-        [self loadLinesWithDrawingHelper:drawingHelper textView:textView screen:screen];
-        [self loadBadgeWithDrawingHelper:drawingHelper textView:textView];
-        [self loadBlinkingCursorWithTextView:textView glue:glue];
-        [self loadCursorInfoWithDrawingHelper:drawingHelper textView:textView];
-        [self loadCursorGuideWithDrawingHelper:drawingHelper];
-        [self loadBackgroundImageWithTextView:textView];
-        [self loadUnderlineDescriptorsWithDrawingHelper:drawingHelper];
-        [self loadMarkedTextWithDrawingHelper:drawingHelper];
-        [self loadIndicatorsFromTextView:textView];
-        [self loadHighlightedRowsFromTextView:textView];
-        [self loadAnnotationRangesFromTextView:textView];
-        [self loadCornerCutoutsFromTextView:textView];
+            [self loadMetricsWithDrawingHelper:drawingHelper textView:textView screen:screen];
+            [self loadSettingsWithDrawingHelper:drawingHelper textView:textView];
+            [self loadLinesWithDrawingHelper:drawingHelper textView:textView screen:screen];
+            [self loadBadgeWithDrawingHelper:drawingHelper textView:textView];
+            [self loadBlinkingCursorWithTextView:textView glue:glue];
+            [self loadCursorInfoWithDrawingHelper:drawingHelper textView:textView];
+            [self loadCursorGuideWithDrawingHelper:drawingHelper];
+            [self loadBackgroundImageWithTextView:textView];
+            [self loadUnderlineDescriptorsWithDrawingHelper:drawingHelper];
+            [self loadMarkedTextWithDrawingHelper:drawingHelper];
+            [self loadIndicatorsFromTextView:textView];
+            [self loadHighlightedRowsFromTextView:textView];
+            [self loadAnnotationRangesFromTextView:textView];
+            [self loadCornerCutoutsFromTextView:textView];
 
-        [textView.dataSource setUseSavedGridIfAvailable:NO];
+            [textView.dataSource setUseSavedGridIfAvailable:NO];
+        }];
     }
     return self;
 }
