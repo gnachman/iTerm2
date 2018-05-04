@@ -4775,10 +4775,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                   [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
         return anObject.idleForMetal;
     }]);
+
+    // Limit the number of split panes using metal because each gets its own thread and I've seen
+    // some crazy stuff where people have over 50 split panes.
+    const NSInteger maxNumberOfSplitPanesForMetal = 6;
+    const BOOL numberOfSplitPanesIsReasonable = self.sessions.count < maxNumberOfSplitPanesForMetal;
+
     const BOOL allowed = (!resizing &&
                           powerOK &&
                           allSessionsAllowMetal &&
-                          !allSessionsIdle);
+                          !allSessionsIdle &&
+                          numberOfSplitPanesIsReasonable);
     const BOOL ONLY_KEY_WINDOWS_USE_METAL = NO;
     const BOOL isKey = [[[self realParentWindow] window] isKeyWindow];
     const BOOL satisfiesKeyRequirement = (isKey || !ONLY_KEY_WINDOWS_USE_METAL);
