@@ -23,9 +23,9 @@ class Splitter:
     """
     self.vertical = vertical
     # Elements are either Splitter or Session
-    self.children = []
+    self.__children = []
     # Elements are Session
-    self.sessions = []
+    self.__sessions = []
 
   @staticmethod
   def from_node(node, connection):
@@ -52,24 +52,26 @@ class Splitter:
 
     child: A Session or a Splitter.
     """
-    self.children.append(child)
+    self.__children.append(child)
     if type(child) is Session:
-      self.sessions.append(child)
+      self.__sessions.append(child)
     else:
-      self.sessions.extend(child.all_sessions())
+      self.__sessions.extend(child.sessions)
 
-  def get_children(self):
+  @property
+  def children(self):
     """
     :returns: This splitter's children. A list of iterm2.session.Session objects.
     """
-    return self.children
+    return self.__children
 
-  def all_sessions(self):
+  @property
+  def sessions(self):
     """
     :returns: All sessions in this splitter and all nested splitters. A list of
       iterm2.session.Session objects.
     """
-    return self.sessions
+    return self.__sessions
 
   def pretty_str(self, indent=""):
     """
@@ -77,7 +79,7 @@ class Splitter:
     """
     s = indent + "Splitter %s\n" % (
         "|" if self.vertical else "-")
-    for child in self.children:
+    for child in self.__children:
       s += child.pretty_str("  " + indent)
     return s
 
@@ -88,14 +90,14 @@ class Splitter:
     :returns: True if the update occurred.
     """
     i = 0
-    for c in self.children:
+    for c in self.__children:
       if type(c) is Session and c.session_id == s.session_id:
-        self.children[i] = s
+        self.__children[i] = s
 
-        # Update the entry in self.sessions
-        for j in range(len(self.sessions)):
-          if self.sessions[j].session_id == s.session_id:
-            self.sessions[j] = s
+        # Update the entry in self.__sessions
+        for j in range(len(self.__sessions)):
+          if self.__sessions[j].session_id == s.session_id:
+            self.__sessions[j] = s
             break
 
         return True
@@ -135,13 +137,13 @@ class Session:
     """
     self.connection = connection
 
-    self.session_id = link.session.unique_identifier
+    self.__session_id = link.session.unique_identifier
     self.frame = link.session.frame
     self.grid_size = link.session.grid_size
     self.name = link.session.title
 
   def __repr__(self):
-    return "<Session name=%s id=%s>" % (self.name, self.session_id)
+    return "<Session name=%s id=%s>" % (self.name, self.__session_id)
 
   def update_from(self, s):
     """Replace internal state with that of another session."""
@@ -155,15 +157,16 @@ class Session:
     """
     return indent + "Session \"%s\" id=%s %s frame=%s\n" % (
         self.name,
-        self.session_id,
+        self.__session_id,
         iterm2.util.size_str(self.grid_size),
         iterm2.util.frame_str(self.frame))
 
-  def get_session_id(self):
+  @property
+  def session_id(self):
     """
     :returns: the globally unique identifier for this session.
     """
-    return self.session_id
+    return self.__session_id
 
   def get_keystroke_reader(self):
     """
@@ -179,7 +182,7 @@ class Session:
 
     .. note:: Each call to reader.get() returns an array of new keystrokes.
     """
-    return self.KeystrokeReader(self.connection, self.session_id)
+    return self.KeystrokeReader(self.connection, self.__session_id)
 
   def get_screen_streamer(self, want_contents=True):
     """
@@ -190,7 +193,7 @@ class Session:
 
     :returns: An iterm2.session.Session.ScreenStreamer
     """
-    return self.ScreenStreamer(self.connection, self.session_id, want_contents=want_contents)
+    return self.ScreenStreamer(self.connection, self.__session_id, want_contents=want_contents)
 
   async def async_send_text(self, text):
     """
@@ -198,7 +201,7 @@ class Session:
 
     :param text: The text to send.
     """
-    await iterm2.rpc.async_send_text(self.connection, self.session_id, text)
+    await iterm2.rpc.async_send_text(self.connection, self.__session_id, text)
 
   async def async_split_pane(self, vertical=False, before=False, profile=None):
     """
@@ -212,7 +215,7 @@ class Session:
 
     :throws: SplitPaneException if something goes wrong.
     """
-    result = await iterm2.rpc.async_split_pane(self.connection, self.session_id, vertical, before, profile)
+    result = await iterm2.rpc.async_split_pane(self.connection, self.__session_id, vertical, before, profile)
     if result.split_pane_response.status == iterm2.api_pb2.SplitPaneResponse.Status.Value("OK"):
       new_session_id = result.split_pane_response.session_id[0]
       app = await iterm2.app.async_get_app(self.connection)
@@ -233,7 +236,7 @@ class Session:
     async def async_on_keystroke(connection, message):
       future.set_result(message)
 
-    token = await iterm2.notifications.async_subscribe_to_keystroke_notification(self.connection, async_on_keystroke, self.session_id)
+    token = await iterm2.notifications.async_subscribe_to_keystroke_notification(self.connection, async_on_keystroke, self.__session_id)
     await self.connection.async_dispatch_until_future(future)
     await iterm2.notifications.async_unsubscribe(self.connection, token)
     return future.result()
@@ -248,7 +251,7 @@ class Session:
     async def async_on_update(connection, message):
       future.set_result(message)
 
-    token = await iterm2.notifications.async_subscribe_to_screen_update_notification(self.connection, async_on_update, self.session_id)
+    token = await iterm2.notifications.async_subscribe_to_screen_update_notification(self.connection, async_on_update, self.__session_id)
     await self.connection.async_dispatch_until_future(future)
     await iterm2.notifications.async_unsubscribe(self.connection, token)
     return future.result
@@ -259,7 +262,7 @@ class Session:
 
     :throws: iterm2.rpc.RPCException if something goes wrong.
     """
-    response = await iterm2.rpc.async_get_buffer_with_screen_contents(self.connection, self.session_id)
+    response = await iterm2.rpc.async_get_buffer_with_screen_contents(self.connection, self.__session_id)
     status = response.get_buffer_response.status
     if status == iterm2.api_pb2.GetBufferResponse.Status.Value("OK"):
       return response.get_buffer_response
@@ -276,7 +279,7 @@ class Session:
 
     :throws: iterm2.rpc.RPCException if something goes wrong.
     """
-    response = await iterm2.rpc.async_get_buffer_lines(self.connection, trailing_lines, self.session_id)
+    response = await iterm2.rpc.async_get_buffer_lines(self.connection, trailing_lines, self.__session_id)
     status = response.get_buffer_response.status
     if status == iterm2.api_pb2.GetBufferResponse.Status.Value("OK"):
       return response.get_buffer_response
@@ -291,7 +294,7 @@ class Session:
 
     :throws: iterm2.rpc.RPCException if something goes wrong.
     """
-    response = await iterm2.rpc.async_get_prompt(self.connection, self.session_id)
+    response = await iterm2.rpc.async_get_prompt(self.connection, self.__session_id)
     status = response.get_prompt_response.status
     if status == iterm2.api_pb2.GetPromptResponse.Status.Value("OK"):
       return response.get_prompt_response
@@ -326,10 +329,10 @@ class Session:
 
     :throws: iterm2.rpc.RPCException if something goes wrong.
     """
-    response = await iterm2.rpc.async_get_profile(self.connection, self.session_id)
+    response = await iterm2.rpc.async_get_profile(self.connection, self.__session_id)
     status = response.get_profile_property_response.status
     if status == iterm2.api_pb2.GetProfilePropertyResponse.Status.Value("OK"):
-      return iterm2.profile.Profile(self.session_id, self.connection, response.get_profile_property_response)
+      return iterm2.profile.Profile(self.__session_id, self.connection, response.get_profile_property_response)
     else:
       raise iterm2.rpc.RPCException(iterm2.api_pb2.GetProfilePropertyResponse.Status.Name(status))
 
@@ -339,7 +342,7 @@ class Session:
 
     :param data: A byte array to inject.
     """
-    response = await iterm2.rpc.async_inject(self.connection, data, [self.session_id])
+    response = await iterm2.rpc.async_inject(self.connection, data, [self.__session_id])
     status = response.inject_response.status[0]
     if status != iterm2.api_pb2.InjectResponse.Status.Value("OK"):
       raise iterm2.rpc.RPCException(iterm2.api_pb2.InjectResponse.Status.Name(status))
@@ -352,7 +355,7 @@ class Session:
      :param order_window_front: Whether the window this session is in should be
        brought to the front and given keyboard focus.
      """
-     await iterm2.rpc.async_activate(self.connection, True, select_tab, order_window_front, session_id=self.session_id)
+     await iterm2.rpc.async_activate(self.connection, True, select_tab, order_window_front, session_id=self.__session_id)
 
   async def async_set_variable(self, name, value):
       """
@@ -363,7 +366,7 @@ class Session:
       :param name: The variable's name.
       :param value: The new value to assign.
       """
-      result = await iterm2.rpc.async_variable(self.connection, self.session_id, [(name, value)], [])
+      result = await iterm2.rpc.async_variable(self.connection, self.__session_id, [(name, value)], [])
       status = result.variable_response.status
       if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
         raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
@@ -378,7 +381,7 @@ class Session:
 
       :returns: The variable's value or empty string if it is undefined.
       """
-      result = await iterm2.rpc.async_variable(self.connection, self.session_id, [], [name])
+      result = await iterm2.rpc.async_variable(self.connection, self.__session_id, [], [name])
       status = result.variable_response.status
       if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
         raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
@@ -392,7 +395,7 @@ class Session:
     its docstring for more info."""
     def __init__(self, connection, session_id):
       self.connection = connection
-      self.session_id = session_id
+      self.__session_id = session_id
       self.buffer = []
 
     async def __aenter__(self):
@@ -403,7 +406,7 @@ class Session:
           self.buffer = []
           self.future.set_result(temp)
 
-      self.token = await iterm2.notifications.async_subscribe_to_keystroke_notification(self.connection, async_on_keystroke, self.session_id)
+      self.token = await iterm2.notifications.async_subscribe_to_keystroke_notification(self.connection, async_on_keystroke, self.__session_id)
       return self
 
     async def get(self):
@@ -429,7 +432,7 @@ class Session:
     its docstring for more info."""
     def __init__(self, connection, session_id, want_contents=True):
       self.connection = connection
-      self.session_id = session_id
+      self.__session_id = session_id
       self.want_contents = want_contents
 
     async def __aenter__(self):
@@ -443,7 +446,7 @@ class Session:
         if future is not None and not future.done():
           future.set_result(message)
 
-      self.token = await iterm2.notifications.async_subscribe_to_screen_update_notification(self.connection, async_on_update, self.session_id)
+      self.token = await iterm2.notifications.async_subscribe_to_screen_update_notification(self.connection, async_on_update, self.__session_id)
       return self
 
     async def __aexit__(self, exc_type, exc, tb):
@@ -461,7 +464,7 @@ class Session:
       self.future = None
 
       if self.want_contents:
-        result = await iterm2.rpc.async_get_buffer_with_screen_contents(self.connection, self.session_id)
+        result = await iterm2.rpc.async_get_buffer_with_screen_contents(self.connection, self.__session_id)
         return result
 
 class InvalidSessionId(Exception):
@@ -479,32 +482,32 @@ class ProxySession(Session):
   """
   def __init__(self, connection, session_id):
     self.connection = connection
-    self.session_id = session_id
+    self.__session_id = session_id
 
   def __repr__(self):
-    return "<ProxySession %s>" % self.session_id
+    return "<ProxySession %s>" % self.__session_id
 
   def pretty_str(self, indent=""):
-    return indent + "ProxySession %s" % self.session_id
+    return indent + "ProxySession %s" % self.__session_id
 
   async def async_get_screen_contents(self):
-    if self.session_id == "all":
+    if self.__session_id == "all":
       raise InvalidSessionId()
     return await super(ProxySession, self).async_get_screen_contents()
 
   async def async_get_buffer_lines(self, trailing_lines):
-    if self.session_id == "all":
+    if self.__session_id == "all":
       raise InvalidSessionId()
     return await super(ProxySession, self).async_get_buffer_lines(trailing_lines)
 
   async def async_get_prompt(self):
-    if self.session_id == "all":
+    if self.__session_id == "all":
       raise InvalidSessionId()
     return await super(ProxySession, self).async_get_prompt()
 
   async def async_get_profile(self):
-    if self.session_id == "all":
-      return iterm2.profile.WriteOnlyProfile(self.session_id, self.connection)
+    if self.__session_id == "all":
+      return iterm2.profile.WriteOnlyProfile(self.__session_id, self.connection)
     else:
       return await super(ProxySession, self).async_get_profile()
 

@@ -620,10 +620,10 @@ class Profile(WriteOnlyProfile):
     for prop in get_profile_property_response.properties:
       self.__props[prop.key] = json.loads(prop.json_value)
 
-  async def _async_simple_get(self, key):
+  def _simple_get(self, key):
     return self.__props[key]
 
-  async def _async_color_get(self, key):
+  def _color_get(self, key):
     try:
       c = Color()
       c.from_dict(self.__props[key])
@@ -631,569 +631,663 @@ class Profile(WriteOnlyProfile):
     except:
       return None
 
-  async def async_get_foreground_color(self):
+  @property
+  def foreground_color(self):
     """Returns the foreground color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Foreground Color")
+    return self._color_get("Foreground Color")
 
-  async def async_get_background_color(self):
+  @property
+  def background_color(self):
     """Returns the background color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Background Color")
+    return self._color_get("Background Color")
 
-  async def async_get_bold_color(self):
+  @property
+  def bold_color(self):
     """Returns the bold text color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Bold Color")
+    return self._color_get("Bold Color")
 
-  async def async_get_link_color(self):
+  @property
+  def link_color(self):
     """Returns the link color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Link Color")
+    return self._color_get("Link Color")
 
-  async def async_get_selection_color(self):
+  @property
+  def selection_color(self):
     """Returns the selection background color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Selection Color")
+    return self._color_get("Selection Color")
 
-  async def async_get_selected_text_color(self):
+  @property
+  def selected_text_color(self):
     """Returns the selection text color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Selected Text Color")
+    return self._color_get("Selected Text Color")
 
-  async def async_get_cursor_color(self):
+  @property
+  def cursor_color(self):
     """Returns the cursor color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Cursor Color")
+    return self._color_get("Cursor Color")
 
-  async def async_get_cursor_text_color(self):
+  @property
+  def cursor_text_color(self):
     """Returns the cursor text color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Cursor Text Color")
+    return self._color_get("Cursor Text Color")
 
-  async def async_get_ansi_0_color(self):
+  @property
+  def ansi_0_color(self):
     """Returns the ANSI 0 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 0 Color")
+    return self._color_get("Ansi 0 Color")
 
-  async def async_get_ansi_1_color(self):
+  @property
+  def ansi_1_color(self):
     """Returns the ANSI 1 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 1 Color")
+    return self._color_get("Ansi 1 Color")
 
-  async def async_get_ansi_2_color(self):
+  @property
+  def ansi_2_color(self):
     """Returns the ANSI 2 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 2 Color")
+    return self._color_get("Ansi 2 Color")
 
-  async def async_get_ansi_3_color(self):
+  @property
+  def ansi_3_color(self):
     """Returns the ANSI 3 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 3 Color")
+    return self._color_get("Ansi 3 Color")
 
-  async def async_get_ansi_4_color(self):
+  @property
+  def ansi_4_color(self):
     """Returns the ANSI 4 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 4 Color")
+    return self._color_get("Ansi 4 Color")
 
-  async def async_get_ansi_5_color(self):
+  @property
+  def ansi_5_color(self):
     """Returns the ANSI 5 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 5 Color")
+    return self._color_get("Ansi 5 Color")
 
-  async def async_get_ansi_6_color(self):
+  @property
+  def ansi_6_color(self):
     """Returns the ANSI 6 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 6 Color")
+    return self._color_get("Ansi 6 Color")
 
-  async def async_get_ansi_7_color(self):
+  @property
+  def ansi_7_color(self):
     """Returns the ANSI 7 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 7 Color")
+    return self._color_get("Ansi 7 Color")
 
-  async def async_get_ansi_8_color(self):
+  @property
+  def ansi_8_color(self):
     """Returns the ANSI 8 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 8 Color")
+    return self._color_get("Ansi 8 Color")
 
-  async def async_get_ansi_9_color(self):
+  @property
+  def ansi_9_color(self):
     """Returns the ANSI 9 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 9 Color")
+    return self._color_get("Ansi 9 Color")
 
-  async def async_get_ansi_10_color(self):
+  @property
+  def ansi_10_color(self):
     """Returns the ANSI 10 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 10 Color")
+    return self._color_get("Ansi 10 Color")
 
-  async def async_get_ansi_11_color(self):
+  @property
+  def ansi_11_color(self):
     """Returns the ANSI 11 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 11 Color")
+    return self._color_get("Ansi 11 Color")
 
-  async def async_get_ansi_12_color(self):
+  @property
+  def ansi_12_color(self):
     """Returns the ANSI 12 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 12 Color")
+    return self._color_get("Ansi 12 Color")
 
-  async def async_get_ansi_13_color(self):
+  @property
+  def ansi_13_color(self):
     """Returns the ANSI 13 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 13 Color")
+    return self._color_get("Ansi 13 Color")
 
-  async def async_get_ansi_14_color(self):
+  @property
+  def ansi_14_color(self):
     """Returns the ANSI 14 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 14 Color")
+    return self._color_get("Ansi 14 Color")
 
-  async def async_get_ansi_15_color(self):
+  @property
+  def ansi_15_color(self):
     """Returns the ANSI 15 color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Ansi 15 Color")
+    return self._color_get("Ansi 15 Color")
 
-  async def async_get_smart_cursor_color(self):
+  @property
+  def smart_cursor_color(self):
     """Returns the smart cursor color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Smart Cursor Color")
+    return self._color_get("Smart Cursor Color")
 
-  async def async_get_tab_color(self):
+  @property
+  def tab_color(self):
     """Returns the tab color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Tab Color")
+    return self._color_get("Tab Color")
 
-  async def async_get_underline_color(self):
+  @property
+  def underline_color(self):
     """Returns the underline color.
 
     :returns: An iterm2.profile.Color or None"""
-    return await self._async_color_get("Underline Color")
+    return self._color_get("Underline Color")
 
-  async def async_get_cursor_guide_color(self):
+  @property
+  def cursor_guide_color(self):
     """Returns the cursor guide color. The alpha value is respected.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Cursor Guide Color")
+    return self._color_get("Cursor Guide Color")
 
-  async def async_get_badge_color(self):
+  @property
+  def badge_color(self):
     """Returns the badge color. The alpha value is respected.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_color_get("Badge Color")
+    return self._color_get("Badge Color")
 
-  async def async_get_name(self):
+  @property
+  def name(self):
     """Returns the name.
 
     :returns: A string"""
-    return await self._async_simple_get("Name")
+    return self._simple_get("Name")
 
-  async def async_get_badge_text(self):
+  @property
+  def badge_text(self):
     """Returns the badge text.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_simple_get("Badge Text")
+    return self._simple_get("Badge Text")
 
-  async def async_get_answerback_string(self):
+  @property
+  def answerback_string(self):
     """Returns the answerback string.
 
     :returns: A string"""
-    return await self._async_simple_get("Answerback String")
+    return self._simple_get("Answerback String")
 
-  async def async_get_use_cursor_guide(self):
+  @property
+  def use_cursor_guide(self):
     """Returns whether the cursor guide should be used.
 
     :returns: A boolean"""
-    return await self._async_simple_get("Use Cursor Guide")
+    return self._simple_get("Use Cursor Guide")
 
-  async def async_get_use_tab_color(self):
+  @property
+  def use_tab_color(self):
     """Returns whether the tab color should be used.
 
     :returns: A string"""
-    return await self._async_simple_get("Use Tab Color")
+    return self._simple_get("Use Tab Color")
 
-  async def async_get_use_underline_color(self):
+  @property
+  def use_underline_color(self):
     """Returns the underline color.
 
     :returns: An iterm2.profile.Color"""
-    return await self._async_simple_get("Use Underline Color")
+    return self._simple_get("Use Underline Color")
 
-  async def async_get_minimum_contrast(self):
+  @property
+  def minimum_contrast(self):
     """Returns the minimum contrast.
 
     :returns: A float in 0 to 1"""
-    return await self._async_simple_get("Minimum Contrast")
+    return self._simple_get("Minimum Contrast")
 
-  async def async_get_cursor_boost(self):
+  @property
+  def cursor_boost(self):
     """Returns the cursor boost level.
 
     :returns: A float in 0 to 1"""
-    return await self._async_simple_get("Cursor Boost")
+    return self._simple_get("Cursor Boost")
 
-  async def async_get_blinking_cursor(self):
+  @property
+  def blinking_cursor(self):
     """Returns whether the cursor blinks.
 
     :returns: A bool"""
-    return await self._async_simple_get("Blinking Cursor")
+    return self._simple_get("Blinking Cursor")
 
-  async def async_get_use_bold_font(self):
+  @property
+  def use_bold_font(self):
     """Returns whether to use the bold variant of the font for bold text.
 
     :returns: A bool"""
-    return await self._async_simple_get("Use Bold Font")
+    return self._simple_get("Use Bold Font")
 
-  async def async_get_ascii_ligatures(self):
+  @property
+  def ascii_ligatures(self):
     """Returns whether ligatures should be used for ASCII text.
 
     :returns: A bool"""
-    return await self._async_simple_get("ASCII Ligatures")
+    return self._simple_get("ASCII Ligatures")
 
-  async def async_get_non_ascii_ligatures(self):
+  @property
+  def non_ascii_ligatures(self):
     """Returns whether ligatures should be used for non-ASCII text.
 
     :returns: A bool"""
-    return await self._async_simple_get("Non-ASCII Ligatures")
+    return self._simple_get("Non-ASCII Ligatures")
 
-  async def async_get_use_bright_bold(self):
+  @property
+  def use_bright_bold(self):
     """Returns whether bright colors should be used for bold text.
 
     :returns: A bool"""
-    return await self._async_simple_get("Use Bright Bold")
+    return self._simple_get("Use Bright Bold")
 
-  async def async_get_blink_allowed(self):
+  @property
+  def blink_allowed(self):
     """Returns whether blinking text is allowed.
 
     :returns: A bool"""
-    return await self._async_simple_get("Blink Allowed")
+    return self._simple_get("Blink Allowed")
 
-  async def async_get_use_italic_font(self):
+  @property
+  def use_italic_font(self):
     """Returns whether italic text is allowed.
 
     :returns: A bool"""
-    return await self._async_simple_get("Use Italic Font")
+    return self._simple_get("Use Italic Font")
 
-  async def async_get_ambiguous_double_width(self):
+  @property
+  def ambiguous_double_width(self):
     """Returns whether ambiguous-width text should be treated as double-width.
 
     :returns: A bool"""
-    return await self._async_simple_get("Ambiguous Double Width")
+    return self._simple_get("Ambiguous Double Width")
 
-  async def async_get_horizontal_spacing(self):
+  @property
+  def horizontal_spacing(self):
     """Returns the fraction of horizontal spacing.
 
     :returns: A float at least 0"""
-    return await self._async_simple_get("Horizontal Spacing")
+    return self._simple_get("Horizontal Spacing")
 
-  async def async_get_vertical_spacing(self):
+  @property
+  def vertical_spacing(self):
     """Returns the fraction of vertical spacing.
 
     :returns: A float at least 0"""
-    return await self._async_simple_get("Vertical Spacing")
+    return self._simple_get("Vertical Spacing")
 
-  async def async_get_use_non_ascii_font(self):
+  @property
+  def use_non_ascii_font(self):
     """Returns whether to use a different font for non-ASCII text.
 
     :returns: A bool"""
-    return await self._async_simple_get("Use Non-ASCII Font")
+    return self._simple_get("Use Non-ASCII Font")
 
-  async def async_get_transparency(self):
+  @property
+  def transparency(self):
     """Returns the level of transparency.
 
     :returns: A float between 0 and 1"""
-    return await self._async_simple_get("Transparency")
+    return self._simple_get("Transparency")
 
-  async def async_get_blur(self):
+  @property
+  def blur(self):
     """Returns whether background blur should be enabled.
 
     :returns: A bool"""
-    return await self._async_simple_get("Blur")
+    return self._simple_get("Blur")
 
-  async def async_get_blur_radius(self):
+  @property
+  def blur_radius(self):
     """Returns the blur radius (how blurry). Requires blur to be enabled.
 
     :returns: A float between 0 and 30"""
-    return await self._async_simple_get("Blur Radius")
+    return self._simple_get("Blur Radius")
 
-  async def async_get_background_image_is_tiled(self):
+  @property
+  def background_image_is_tiled(self):
     """Returns whether the background image is tiled (true) or stretched (false)
 
     :returns: A bool"""
-    return await self._async_simple_get("Background Image Is Tiled")
+    return self._simple_get("Background Image Is Tiled")
 
-  async def async_get_blend(self):
+  @property
+  def blend(self):
     """Returns tow much the default background color gets blended with the background image.
 
     :returns: A float in 0 to 1"""
-    return await self._async_simple_get("Blend")
+    return self._simple_get("Blend")
 
-  async def async_get_sync_title(self):
+  @property
+  def sync_title(self):
     """Returns whether the profile name stays in the tab title, even if changed by an escape sequence.
 
     :returns: A bool"""
-    return await self._async_simple_get("Sync Title")
+    return self._simple_get("Sync Title")
 
-  async def async_get_disable_window_resizing(self):
+  @property
+  def disable_window_resizing(self):
     """Returns whether the terminal can resize the window with an escape sequence.
 
     :returns: A bool"""
-    return await self._async_simple_get("Disable Window Resizing")
+    return self._simple_get("Disable Window Resizing")
 
-  async def async_get_only_the_default_bg_color_uses_transparency(self):
+  @property
+  def only_the_default_bg_color_uses_transparency(self):
     """Returns whether window transparency shows through non-default background colors.
 
     :returns: A bool"""
-    return await self._async_simple_get("Only The Default BG Color Uses Transparency")
+    return self._simple_get("Only The Default BG Color Uses Transparency")
 
-  async def async_get_ascii_anti_aliased(self):
+  @property
+  def ascii_anti_aliased(self):
     """Returns whether ASCII text is anti-aliased.
 
     :returns: A bool"""
-    return await self._async_simple_get("ASCII Anti Aliased")
+    return self._simple_get("ASCII Anti Aliased")
 
-  async def async_get_non_ascii_anti_aliased(self):
+  @property
+  def non_ascii_anti_aliased(self):
     """Returns whether non-ASCII text is anti-aliased.
 
     :returns: A bool"""
-    return await self._async_simple_get("Non-ASCII Anti Aliased")
+    return self._simple_get("Non-ASCII Anti Aliased")
 
-  async def async_get_scrollback_lines(self):
+  @property
+  def scrollback_lines(self):
     """Returns the number of scrollback lines.
 
     :returns: An int at least 0"""
-    return await self._async_simple_get("Scrollback Lines")
+    return self._simple_get("Scrollback Lines")
 
-  async def async_get_unlimited_scrollback(self):
+  @property
+  def unlimited_scrollback(self):
     """Returns whether the scrollback buffer's length is unlimited.
 
     :returns: A bool"""
-    return await self._async_simple_get("Unlimited Scrollback")
+    return self._simple_get("Unlimited Scrollback")
 
-  async def async_get_scrollback_with_status_bar(self):
+  @property
+  def scrollback_with_status_bar(self):
     """Returns whether text gets appended to scrollback when there is an app status bar
 
     :returns: A bool"""
-    return await self._async_simple_get("Scrollback With Status Bar")
+    return self._simple_get("Scrollback With Status Bar")
 
-  async def async_get_scrollback_in_alternate_screen(self):
+  @property
+  def scrollback_in_alternate_screen(self):
     """Returns whether text gets appended to scrollback in alternate screen mode
 
     :returns: A bool"""
-    return await self._async_simple_get("Scrollback in Alternate Screen")
+    return self._simple_get("Scrollback in Alternate Screen")
 
-  async def async_get_mouse_reporting(self):
+  @property
+  def mouse_reporting(self):
     """Returns whether mouse reporting is allowed
 
     :returns: A bool"""
-    return await self._async_simple_get("Mouse Reporting")
+    return self._simple_get("Mouse Reporting")
 
-  async def async_get_mouse_reporting_allow_mouse_wheel(self):
+  @property
+  def mouse_reporting_allow_mouse_wheel(self):
     """Returns whether mouse reporting reports the mouse wheel's movements.
 
     :returns: A bool"""
-    return await self._async_simple_get("Mouse Reporting allow mouse wheel")
+    return self._simple_get("Mouse Reporting allow mouse wheel")
 
-  async def async_get_allow_title_reporting(self):
+  @property
+  def allow_title_reporting(self):
     """Returns whether the session title can be reported
 
     :returns: A bool"""
-    return await self._async_simple_get("Allow Title Reporting")
+    return self._simple_get("Allow Title Reporting")
 
-  async def async_get_allow_title_setting(self):
+  @property
+  def allow_title_setting(self):
     """Returns whether the session title can be changed by escape sequence
 
     :returns: A bool"""
-    return await self._async_simple_get("Allow Title Setting")
+    return self._simple_get("Allow Title Setting")
 
-  async def async_get_disable_printing(self):
+  @property
+  def disable_printing(self):
     """Returns whether printing by escape sequence is disabled.
 
     :returns: A bool"""
-    return await self._async_simple_get("Disable Printing")
+    return self._simple_get("Disable Printing")
 
-  async def async_get_disable_smcup_rmcup(self):
+  @property
+  def disable_smcup_rmcup(self):
     """Returns whether alternate screen mode is disabled
 
     :returns: A bool"""
-    return await self._async_simple_get("Disable Smcup Rmcup")
+    return self._simple_get("Disable Smcup Rmcup")
 
-  async def async_get_silence_bell(self):
+  @property
+  def silence_bell(self):
     """Returns whether the bell makes noise.
 
     :returns: A bool"""
-    return await self._async_simple_get("Silence Bell")
+    return self._simple_get("Silence Bell")
 
-  async def async_get_bm_growl(self):
+  @property
+  def bm_growl(self):
     """Returns whether notifications should be shown.
 
     :returns: A bool"""
-    return await self._async_simple_get("BM Growl")
+    return self._simple_get("BM Growl")
 
-  async def async_get_send_bell_alert(self):
+  @property
+  def send_bell_alert(self):
     """Returns whether notifications should be shown for the bell ringing
 
     :returns: A bool"""
-    return await self._async_simple_get("Send Bell Alert")
+    return self._simple_get("Send Bell Alert")
 
-  async def async_get_send_idle_alert(self):
+  @property
+  def send_idle_alert(self):
     """Returns whether notifications should be shown for becoming idle
 
     :returns: A bool"""
-    return await self._async_simple_get("Send Idle Alert")
+    return self._simple_get("Send Idle Alert")
 
-  async def async_get_send_new_output_alert(self):
+  @property
+  def send_new_output_alert(self):
     """Returns whether notifications should be shown for new output
 
     :returns: A bool"""
-    return await self._async_simple_get("Send New Output Alert")
+    return self._simple_get("Send New Output Alert")
 
-  async def async_get_send_session_ended_alert(self):
+  @property
+  def send_session_ended_alert(self):
     """Returns whether notifications should be shown for a session ending
 
     :returns: A bool"""
-    return await self._async_simple_get("Send Session Ended Alert")
+    return self._simple_get("Send Session Ended Alert")
 
-  async def async_get_send_terminal_generated_alerts(self):
+  @property
+  def send_terminal_generated_alerts(self):
     """Returns whether notifications should be shown for escape-sequence originated notifications
 
     :returns: A bool"""
-    return await self._async_simple_get("Send Terminal Generated Alerts")
+    return self._simple_get("Send Terminal Generated Alerts")
 
-  async def async_get_flashing_bell(self):
+  @property
+  def flashing_bell(self):
     """Returns whether the bell should flash the screen
 
     :returns: A bool"""
-    return await self._async_simple_get("Flashing Bell")
+    return self._simple_get("Flashing Bell")
 
-  async def async_get_visual_bell(self):
+  @property
+  def visual_bell(self):
     """Returns whether a bell should be shown when the bell rings
 
     :returns: A bool"""
-    return await self._async_simple_get("Visual Bell")
+    return self._simple_get("Visual Bell")
 
-  async def async_get_close_sessions_on_end(self):
+  @property
+  def close_sessions_on_end(self):
     """Returns whether the session should close when it ends.
 
     :returns: A bool"""
-    return await self._async_simple_get("Close Sessions On End")
+    return self._simple_get("Close Sessions On End")
 
-  async def async_get_prompt_before_closing(self):
+  @property
+  def prompt_before_closing(self):
     """Returns whether the session should prompt before closign
 
     :returns: A bool"""
-    return await self._async_simple_get("Prompt Before Closing 2")
+    return self._simple_get("Prompt Before Closing 2")
 
-  async def async_get_session_close_undo_timeout(self):
+  @property
+  def session_close_undo_timeout(self):
     """Returns tmount of time you can undo closing a session
 
     :returns: A float at least 0"""
-    return await self._async_simple_get("Session Close Undo Timeout")
+    return self._simple_get("Session Close Undo Timeout")
 
-  async def async_get_reduce_flicker(self):
+  @property
+  def reduce_flicker(self):
     """Returns whether the flicker fixer is on.
 
     :returns: A bool"""
-    return await self._async_simple_get("Reduce Flicker")
+    return self._simple_get("Reduce Flicker")
 
-  async def async_get_send_code_when_idle(self):
+  @property
+  def send_code_when_idle(self):
     """Returns whether to send a code when idle
 
     :returns: A bool"""
-    return await self._async_simple_get("Send Code When Idle")
+    return self._simple_get("Send Code When Idle")
 
-  async def async_get_application_keypad_allowed(self):
+  @property
+  def application_keypad_allowed(self):
     """Returns whether the terminal may be placed in application keypad mode
 
     :returns: A bool"""
-    return await self._async_simple_get("Application Keypad Allowed")
+    return self._simple_get("Application Keypad Allowed")
 
-  async def async_get_place_prompt_at_first_column(self):
+  @property
+  def place_prompt_at_first_column(self):
     """Returns whether the prompt should always begin at the first column (requires shell integration)
 
     :returns: A bool"""
-    return await self._async_simple_get("Place Prompt at First Column")
+    return self._simple_get("Place Prompt at First Column")
 
-  async def async_get_show_mark_indicators(self):
+  @property
+  def show_mark_indicators(self):
     """Returns whether mark indicators should be visible
 
     :returns: A bool"""
-    return await self._async_simple_get("Show Mark Indicators")
+    return self._simple_get("Show Mark Indicators")
 
-  async def async_get_idle_code(self):
+  @property
+  def idle_code(self):
     """Returns the ASCII code to send on idle
 
     :returns: An int in 0...255"""
-    return await self._async_simple_get("Idle Code")
+    return self._simple_get("Idle Code")
 
-  async def async_get_idle_period(self):
+  @property
+  def idle_period(self):
     """Returns how often to send a code when idle
 
     :returns: A float at least 0"""
-    return await self._async_simple_get("Idle Period")
+    return self._simple_get("Idle Period")
 
-  async def async_get_unicode_version(self):
+  @property
+  def unicode_version(self):
     """Returns the unicode version for wcwidth
 
     :returns: A bool"""
-    return await self._async_simple_get("Unicode Version")
+    return self._simple_get("Unicode Version")
 
-  async def async_get_cursor_type(self):
+  @property
+  def cursor_type(self):
     """Returns the cursor type
 
     :returns: CURSOR_TYPE_xxx"""
-    return await self._async_simple_get("Cursor Type")
+    return self._simple_get("Cursor Type")
 
-  async def async_get_thin_strokes(self):
+  @property
+  def thin_strokes(self):
     """Returns whether thin strokes are used.
 
     :returns: THIN_STROKES_SETTING_xxx"""
-    return await self._async_simple_get("Thin Strokes")
+    return self._simple_get("Thin Strokes")
 
-  async def async_get_unicode_normalization(self):
+  @property
+  def unicode_normalization(self):
     """Returns the unicode normalization form to use
 
     :returns: UNICODE_NORMALIZATION_xxx"""
-    return await self._async_simple_get("Unicode Normalization")
+    return self._simple_get("Unicode Normalization")
 
-  async def async_get_character_encoding(self):
+  @property
+  def character_encoding(self):
     """Returns the character encoding
 
     :returns: CHARACTER_ENCODING_xxx"""
-    return await self._async_simple_get("Character Encoding")
+    return self._simple_get("Character Encoding")
 
-  async def async_get_left_option_key_sends(self):
+  @property
+  def left_option_key_sends(self):
     """Returns the behavior of the left option key.
 
     :returns: OPTION_KEY_xxx"""
-    return await self._async_simple_get("Option Key Sends")
+    return self._simple_get("Option Key Sends")
 
-  async def async_get_right_option_key_sends(self):
+  @property
+  def right_option_key_sends(self):
     """Returns the behavior of the right option key.
 
     :returns: OPTION_KEY_xxx"""
-    return await self._async_simple_get("Right Option Key Sends")
+    return self._simple_get("Right Option Key Sends")
 
 
 class Color:

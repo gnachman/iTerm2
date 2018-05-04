@@ -119,9 +119,9 @@ class App:
 
     for w in self.windows:
       for t in w.tabs:
-        sessions = t.get_sessions()
+        sessions = t.sessions
         for s in sessions:
-          if s.get_session_id() == session_id:
+          if s.session_id == session_id:
             return s
     return None
 
@@ -143,7 +143,7 @@ class App:
     for notif in focus_info.focus_response.notifications:
       await self._async_focus_change(self.connection, notif)
 
-  async def async_get_session_by_id(self, session_id):
+  def get_session_by_id(self, session_id):
     """Finds a session exactly matching the passed-in id.
 
     :param session_id: The session ID to search for.
@@ -152,7 +152,7 @@ class App:
     """
     return self._search_for_session_id(session_id)
 
-  async def async_get_tab_by_id(self, tab_id):
+  def get_tab_by_id(self, tab_id):
     """Finds a tab exactly matching the passed-in id.
 
     :param tab_id: The tab ID to search for.
@@ -161,7 +161,7 @@ class App:
     """
     return self._search_for_tab_id(tab_id)
 
-  async def async_get_window_by_id(self, window_id):
+  def get_window_by_id(self, window_id):
     """Finds a window exactly matching the passed-in id.
 
     :param window_id: The window ID to search for.
@@ -170,7 +170,7 @@ class App:
     """
     return self._search_for_window_id(window_id)
 
-  async def async_get_window_for_tab(self, tab_id):
+  def get_window_for_tab(self, tab_id):
     """Finds the window that contains the passed-in tab id.
 
     :param tab_id: The tab ID to search for.
@@ -196,14 +196,14 @@ class App:
     windows = []
     for nw in new_windows:
       for nt in nw.tabs:
-        for ns in nt.get_sessions():
+        for ns in nt.sessions:
           old = await self.async_get_session_by_id(ns.session_id)
           if old is not None:
             # Upgrade the old session's state
             old.update_from(ns)
             # Replace references to the new session in the new tab with the old session
             nt.update_session(old)
-          ot = await self.async_get_tab_by_id(nt.tab_id)
+          ot = self.get_tab_by_id(nt.tab_id)
           if ot is not None:
             # Upgrade the old tab's state. This copies the root over. The new tab
             # has references to old sessions, so it's ok. The only problem is that
@@ -211,7 +211,7 @@ class App:
             ot.update_from(nt)
             # Replace the reference in the new window to the old tab.
             nw.update_tab(ot)
-          ow = await self.async_get_window_by_id(nw.window_id)
+          ow = self.get_window_by_id(nw.window_id)
           if ow is not None:
             ow.update_from(nw)
             windows.append(ow)
@@ -227,14 +227,15 @@ class App:
     elif sub_notif.HasField("window_key"):
       self.key_window_id = sub_notif.window_id
     elif sub_notif.HasField("selected_tab"):
-      window = await self.async_get_window_for_tab(sub_notif.selected_tab)
+      window = self.get_window_for_tab(sub_notif.selected_tab)
       window.selected_tab_id = sub_notif.selected_tab
     elif sub_notif.HasField("session"):
       s = await self.async_get_session_by_id(sub_notif.session)
-      w, t = await self.async_get_tab_and_window_for_session(s)
+      w, t = self.get_tab_and_window_for_session(s)
       t.active_session_id = sub_notif.session
 
-  async def async_get_key_window(self):
+  @property
+  def key_window(self):
     """Gets the key window.
 
     The key window is the window that receives keyboard input when iTerm2 is
@@ -242,24 +243,19 @@ class App:
 
     :returns: iterm2.window.Window or None
     """
-    if self.key_window_id is None:
-      await self._async_refresh_focus()
-    if self.key_window_id is None:
-      return None
-    else:
-      return await self.async_get_window_by_id(self.key_window_id)
+    return self.get_window_by_id(self.key_window_id)
 
-  async def async_get_tab_and_window_for_session(self, session):
+  async def get_tab_and_window_for_session(self, session):
     """Finds the tab and window that own a session.
 
     :param session: An iterm2.Session object.
 
     :returns: A tuple of (iterm2.window.Window, iterm2.tab.Tab).
     """
-    session_id = session.get_session_id()
+    session_id = session.session_id
     for w in self.windows:
       for t in w.tabs:
-        if session in t.get_sessions():
+        if session in t.sessions:
           return w, t
     return None, None
 
@@ -276,8 +272,8 @@ class App:
     result = await iterm2.rpc.async_create_tab(self.connection, profile=profile, window=None, command=command)
     ctr = result.create_tab_response
     if ctr.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-      session = await self.async_get_session_by_id(ctr.session_id)
-      window, tab = await self.async_get_tab_and_window_for_session(session)
+      session = self.get_session_by_id(ctr.session_id)
+      window, tab = self.get_tab_and_window_for_session(session)
       return window
     else:
       raise CreateWindowException(iterm2.api_pb2.CreateTabResponse.Status.Name(result.create_tab_response.status))
