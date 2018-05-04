@@ -54,15 +54,24 @@ NS_ASSUME_NONNULL_BEGIN
     [self removeInstallMenuItem];
 }
 
-- (void)build {
-    NSInteger i = 0;
-    while (![_scriptsMenu.itemArray[i].identifier isEqualToString:@"Separator"]) {
+- (NSInteger)separatorIndex {
+    return [_scriptsMenu.itemArray indexOfObjectPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [obj.identifier isEqualToString:@"Separator"];
+    }];
+}
+
+- (void)removeMenuItemsAfterSeparator {
+    NSInteger i = [self separatorIndex];
+    if (i != NSNotFound) {
         i++;
+        while (_scriptsMenu.itemArray.count > i) {
+            [_scriptsMenu removeItemAtIndex:i];
+        }
     }
-    i++;
-    while (_scriptsMenu.itemArray.count > i) {
-        [_scriptsMenu removeItemAtIndex:i];
-    }
+}
+
+- (void)build {
+    [self removeMenuItemsAfterSeparator];
 
     NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
     NSDirectoryEnumerator *directoryEnumerator =
