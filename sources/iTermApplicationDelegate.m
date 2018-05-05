@@ -944,6 +944,7 @@ static BOOL hasBecomeActive = NO;
         DLog(@"applicationWillFinishLaunching:");
     }
 
+    [[iTermController sharedInstance] migrateApplicationSupportDirectoryIfNeeded];
     [self buildScriptMenu:nil];
 
     // Fix up various user defaults settings.
