@@ -74,40 +74,49 @@ NS_ASSUME_NONNULL_BEGIN
     [self removeMenuItemsAfterSeparator];
 
     NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
+
+    [self addMenuItemsAt:scriptsPath toMenu:_scriptsMenu];
+}
+
+- (void)addMenuItemsAt:(NSString *)root toMenu:(NSMenu *)menu {
     NSDirectoryEnumerator *directoryEnumerator =
-        [[NSFileManager defaultManager] enumeratorAtPath:scriptsPath];
+        [[NSFileManager defaultManager] enumeratorAtPath:root];
     NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
     NSMutableArray<NSString *> *files = [NSMutableArray array];
+    NSMutableDictionary<NSString *, NSMenu *> *submenus = [NSMutableDictionary dictionary];
+    NSSet<NSString *> *scriptExtensions = [NSSet setWithArray:@[ @"scpt", @"app", @"py" ]];
     for (NSString *file in directoryEnumerator) {
-        if ([[[file pathComponents] firstObject] isEqualToString:@"AutoLaunch"] ||
-            [[[file pathComponents] firstObject] isEqualToString:@"AutoLaunch.scpt"]) {
-            continue;
-        }
-        NSString *path = [scriptsPath stringByAppendingPathComponent:file];
-        if ([workspace isFilePackageAtPath:path]) {
-            [directoryEnumerator skipDescendents];
-        }
-        BOOL isDirectory;
+        NSString *path = [root stringByAppendingPathComponent:file];
+        BOOL isDirectory = NO;
         [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
-
-        if ([iTermAPIScriptLauncher environmentForScript:path checkForMain:NO]) {
-            [files addObject:file];
+        if (isDirectory) {
             [directoryEnumerator skipDescendents];
-            continue;
-        }
-
-        if ([[file pathExtension] isEqualToString:@"scpt"] ||
-            [[file pathExtension] isEqualToString:@"app"] ) {
-            [files addObject:file];
-        }
-
-        if ([[file pathExtension] isEqualToString:@"py"]) {
+            if ([workspace isFilePackageAtPath:path] ||
+                [iTermAPIScriptLauncher environmentForScript:path checkForMain:NO]) {
+                [files addObject:file];
+            } else {
+                NSMenu *submenu = [[NSMenu alloc] initWithTitle:file];
+                submenus[file] = submenu;
+                [self addMenuItemsAt:path toMenu:submenu];
+                if (submenu.itemArray.count == 0) {
+                    [submenus removeObjectForKey:file];
+                }
+            }
+        } else if ([scriptExtensions containsObject:[file pathExtension]]) {
             [files addObject:file];
         }
     }
     [files sortUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+    NSArray<NSString *> *folders = [submenus.allKeys sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+
+    for (NSString *folder in folders) {
+        NSMenuItem *submenuItem = [[NSMenuItem alloc] init];
+        submenuItem.title = folder;
+        submenuItem.submenu = submenus[folder];
+        [menu addItem:submenuItem];
+    }
     for (NSString *file in files) {
-        [self addFile:file toScriptMenu:_scriptsMenu];
+        [self addFile:file withFullPath:[root stringByAppendingPathComponent:file] toScriptMenu:menu];
     }
 }
 
@@ -146,8 +155,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Actions
 
-- (void)launchScript:(id)sender {
-    NSString *fullPath = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:[sender title]];
+- (void)launchScript:(NSMenuItem *)sender {
+    NSString *fullPath = sender.identifier;
 
     NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath checkForMain:YES];
     if (venv) {
@@ -342,12 +351,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Private
 
-- (void)addFile:(NSString *)file toScriptMenu:(NSMenu *)scriptMenu {
+- (void)addFile:(NSString *)file withFullPath:(NSString *)path toScriptMenu:(NSMenu *)scriptMenu {
     NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle:file
                                                         action:@selector(launchScript:)
                                                  keyEquivalent:@""];
 
     [scriptItem setTarget:self];
+    scriptItem.identifier = path;
     [scriptMenu addItem:scriptItem];
 }
 
@@ -421,19 +431,24 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - NSOpenSavePanelDelegate
 
+- (BOOL)urlIsUnderScripts:(NSURL *)folder {
+    NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
+    return ([folder.path isEqualToString:scriptsPath] ||
+            [folder.path hasPrefix:[scriptsPath stringByAppendingString:@"/"]]);
+}
+
 - (BOOL)panel:(id)sender shouldEnableURL:(NSURL *)url {
-    NSString *folder = [url.path stringByDeletingLastPathComponent];
-    return [folder isEqual:[[NSFileManager defaultManager] scriptsPath]];
+    return [self urlIsUnderScripts:url];
 }
 
 - (void)panel:(NSSavePanel *)sender didChangeToDirectoryURL:(nullable NSURL *)url {
-    sender.directoryURL = [NSURL fileURLWithPath:[[NSFileManager defaultManager] scriptsPath]];
+    if (![self urlIsUnderScripts:url]) {
+        sender.directoryURL = [NSURL fileURLWithPath:[[NSFileManager defaultManager] scriptsPath]];
+    }
 }
 
 - (BOOL)panel:(id)sender validateURL:(NSURL *)url error:(NSError **)outError {
-    NSString *path = [url path];
-    NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
-    return [[path stringByDeletingLastPathComponent] isEqualToString:scriptsPath];
+    return [self urlIsUnderScripts:url];
 }
 
 @end
