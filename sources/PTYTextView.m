@@ -1091,7 +1091,7 @@ static const int kDragThreshold = 3;
     return _primaryFont.underlineOffset;
 }
 
-- (void)performBlockWithFlickerFixerGrid:(void (^)(void))block {
+- (void)performBlockWithFlickerFixerGrid:(void (NS_NOESCAPE ^)(void))block {
     // Try to use a saved grid if one is available. If it succeeds, that implies that the cursor was
     // recently hidden and what we're drawing is how the screen looked just before the cursor was
     // hidden. Therefore, we'll temporarily show the cursor, but we'll need to restore cursorVisible's
