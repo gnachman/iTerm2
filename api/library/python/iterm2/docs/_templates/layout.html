@@ -1,0 +1,146 @@
+{% extends '!layout.html' %}
+
+{% block doctype %}
+<!DOCTYPE html>
+{% endblock %}
+
+{% block extrahead %}
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+{% endblock %}
+
+{% block header %}
+  <header >
+    <div class="row">
+      <div class="small-12 medium-12 large-10 large-centered columns wide-row">
+        <div class="text-center"><a href="/index.html"><img src="https://iterm2.com/img/logo2x.jpg" width=800 height=312></a></div>
+        <div class="sticky contain-to-grid">
+          <nav class="top-bar" data-topbar>
+            <ul class="title-area">
+              <li class="name">
+
+              </li>
+              <li class="toggle-topbar menu-icon"><a href="#">Menu</a></li>
+              <li class="small-screen-donate">
+		  <a href="/donate.html"><img src="https://iterm2.com/images/DonateButton.png" width="92" height="26"></a>
+                </li>
+            </ul>
+
+            <section class="top-bar-section">
+              <!-- Right Nav Section -->
+              <ul class="right"> <li>
+		  <a href="/donate.html"><img src="https://iterm2.com/images/DonateButton.png" width="92" height="26"></a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <!-- Left Nav Section -->
+          <ul class="left">
+            <li><a href="/index.html">Home</a></li>
+            <li ><a href="/news.html">News</a></li>
+            <li ><a href="/features.html">Features</a></li>
+            <li ><a href="/faq.html">FAQ</a></li>
+            <li class="active"><a href="/documentation.html">Documentation</a></li>
+            <li ><a href="/downloads.html">Downloads</a></li>
+          </ul>
+        </section>
+      </nav>
+    </div>
+  </div>
+</div>
+</header>
+
+{% endblock %}
+
+{%- block document %}
+<div class="row">
+  <div class="small-12 medium-12 large-10 large-centered columns wide-row">
+    <div class="main panel">
+
+      <div class="doc-wrapper">
+	<a href="#" data-dropdown="drop-menu">Table of Contents</a>
+	<div id="drop-menu" data-dropdown-content class="f-dropdown content">
+	  <div class="inner-menu">
+	    <ul class="sub-nav">
+	      <div class="toc_subhead">Introduction</div>
+
+	      <li><a href="documentation-highlights.html">Highlights for New Users</a></li>
+	      <li><a href="documentation-general-usage.html">General Usage</a></li>
+
+	      <div class="toc_subhead">User Interface</div>
+
+	      <li><a href="documentation-menu-items.html">Menu Items</a></li>
+	      <li><a href="documentation-preferences.html">Preferences</a></li>
+	      <li><a href="documentation-touch-bar.html">Touch Bar</a></li>
+	      <li><a href="documentation-copymode.html">Copy Mode</a></li>
+	      <li><a href="documentation-fonts.html">Fonts</a></li>
+	      <li><a href="documentation-search-syntax.html">Profile Search Syntax</a></li>
+
+	      <div class="toc_subhead">Features</div>
+
+	      <li><a href="documentation-automatic-profile-switching.html">Automatic Profile Switching</a></li>
+	      <li><a href="documentation-badges.html">Badges</a></li>
+	      <li><a href="documentation-buried-sessions.html">Buried Sessions</a></li>
+	      <li><a href="documentation-captured-output.html">Captured Output</a></li>
+	      <li><a href="documentation-coprocesses.html">Coprocesses</a></li>
+	      <li><a href="documentation-hotkey.html">Hotkeys</a></li>
+	      <li><a href="documentation-restoration.html">Session Restoration</a></li>
+	      <li><a href="documentation-shell-integration.html">Shell Integration</a></li>
+	      <li><a href="documentation-smart-selection.html">Smart Selection</a></li>
+	      <li><a href="documentation-tmux-integration.html">tmux Integration</a></li>
+	      <li><a href="documentation-triggers.html">Triggers</a></li>
+	      <li><a href="documentation-utilities.html">Utilities</a></li>
+
+	      <div class="toc_subhead">Advanced</div>
+
+	      <li><a href="documentation-scripting.html">Scripting</a></li>
+	      <li><a href="documentation-dynamic-profiles.html">Dynamic Profiles</a></li>
+	      <li><a href="documentation-images.html">Inline Images Protocol</a></li>
+	      <li><a href="documentation-escape-codes.html">Proprietary Escape Codes</a></li>
+
+	    </ul>
+	  </div>
+	</div>
+      </div>
+
+<hr/>
+
+      <div class="documentwrapper">
+	{%- if render_sidebar %}
+	<div class="bodywrapper">
+	  {%- endif %}
+	  <div class="body" role="main">
+	    {% block body %} {% endblock %}
+	  </div>
+	  {%- if render_sidebar %}
+	</div>
+	{%- endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://iterm2.com/js/scripts.js"></script>                
+<script type="text/javascript">
+  function showId(id) {
+    document.getElementById("changelist" + id).style.display = 'block';
+    document.getElementById("show" + id).style.display = 'none';
+    document.getElementById("hide" + id).style.display = 'inline';
+  }
+
+  function hideId(id) {
+    document.getElementById("changelist" + id).style.display = 'none';
+    document.getElementById("show" + id).style.display = 'inline';
+    document.getElementById("hide" + id).style.display = 'none';
+  }
+  $(document).foundation();
+</script>
+
+{%- endblock %}
+
+
+{% block sidebar1 %}{% endblock %}
+{% block sidebar2 %}{% endblock %}
+

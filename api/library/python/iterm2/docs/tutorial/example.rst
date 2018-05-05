@@ -136,3 +136,11 @@ The next line establishes a websocket connection to iTerm2 and then runs your
 `main` function, passing it `sys.argv` which holds the command-line arguments.
 
 Continue to the next section, :doc:`running`.
+
+----
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`search`

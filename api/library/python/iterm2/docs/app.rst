@@ -1,6 +1,5 @@
-The "app" module
-----------------
-.. automodule:: iterm2.app
+App
+---
 .. automodule:: iterm2.app
 .. autofunction:: iterm2.async_get_app
 .. autoclass:: iterm2.App
@@ -9,3 +8,11 @@ The "app" module
 .. autoclass:: iterm2.app.SavedArrangementException
 
 
+
+----
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`search`

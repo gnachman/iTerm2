@@ -5,7 +5,7 @@ iTerm2 Python API Class Reference
    :maxdepth: 2
    :caption: Contents:
 
-   app
+   App
    connection
    notifications
    profile
@@ -15,3 +15,11 @@ iTerm2 Python API Class Reference
    transaction
    util
    window
+
+----
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`search`

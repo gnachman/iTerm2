@@ -1,3 +1,4 @@
+.. _tutorial-index:
 .. iTerm2 Python API Tutorial
 
 iTerm2 Python API Tutorial
@@ -16,10 +17,8 @@ deal of control.
 
 Scripts generally take one of two forms:
 
-  * "Simple" scripts that perform a series of actions, such as creating windows,
-    and then terminate.
-  * "Long-running daemons" that stay running indefintely while observing
-    notifications or performing some action periodically.
+* "Simple" scripts that perform a series of actions, such as creating windows, and then terminate.
+* "Long-running daemons" that stay running indefintely while observing notifications or performing some action periodically.
 
 Creating a New Script
 ---------------------
@@ -48,3 +47,11 @@ your editor.
 The script will be filled with a working example.
 
 Continue to the next section, :doc:`example`.
+
+----
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`search`
