@@ -1639,6 +1639,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     newSession.view = newView;
     [self.viewToSessionMap setObject:newSession forKey:newView];
     [self checkInvariants:@"After splitting"];
+    if (@available(macOS 10.11, *)) {
+        newSession.useMetal = NO;
+        [self updateUseMetal];
+    }
 }
 
 + (NSSize)_sessionSizeWithCellSize:(NSSize)cellSize
