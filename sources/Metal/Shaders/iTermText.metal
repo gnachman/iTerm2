@@ -381,6 +381,9 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
                                                    textureSampler,
                                                    dimensions->scale);
     }
+    if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
+        discard_fragment();
+    }
 
     half4 textColor;
     if (dimensions->disableExactColorModels) {
@@ -456,6 +459,9 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
                                                    texture,
                                                    textureSampler,
                                                    dimensions->scale);
+    }
+    if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
+        discard_fragment();
     }
 
     half4 textColor = RemapColor(in.textColor * 17.0, backgroundColor, static_cast<float4>(bwColor), colorModels);
