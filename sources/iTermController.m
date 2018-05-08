@@ -177,12 +177,21 @@ static iTermController *gSharedInstance;
             @"Now, only the iTerm2 version is supported. But you have files in both so please move everything from iTerm to iTerm2.";
         [alert addButtonWithTitle:@"Open in Finder"];
         [alert addButtonWithTitle:@"I Fixed It"];
-        if ([alert runModal] == NSAlertFirstButtonReturn) {
-            [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:legacy],
+        [alert addButtonWithTitle:@"Not Now"];
+        switch ([alert runModal]) {
+            case NSAlertFirstButtonReturn:
+                [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:legacy],
                                                                               [NSURL fileURLWithPath:modern] ]];
+                [self migrateApplicationSupportDirectoryIfNeeded];
+                break;
+
+            case NSAlertThirdButtonReturn:
+                return;
+
+            default:
+                [self migrateApplicationSupportDirectoryIfNeeded];
+                break;
         }
-        [self migrateApplicationSupportDirectoryIfNeeded];
-        return;
     }
 }
 
