@@ -1141,6 +1141,7 @@ typedef struct iTermTextColorContext {
             offsetPoint.y -= round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0);
             numCellsDrawn = [self drawFastPathString:(iTermCheapAttributedString *)singlePartAttributedString
                                              atPoint:offsetPoint
+                                              origin:origin
                                            positions:subpositions
                                            inContext:ctx
                                      backgroundColor:backgroundColor];
@@ -1195,12 +1196,27 @@ typedef struct iTermTextColorContext {
 // CGContextShowGlyphsAtPositions instead of CTFontDrawGlyphs.
 - (int)drawFastPathString:(iTermCheapAttributedString *)cheapString
                   atPoint:(NSPoint)point
+                   origin:(VT100GridCoord)origin
                 positions:(CGFloat *)positions
                 inContext:(CGContextRef)ctx
           backgroundColor:(NSColor *)backgroundColor {
     if (cheapString.length == 0) {
         return 0;
     }
+    NSDictionary *attributes = cheapString.attributes;
+    if (attributes[iTermImageCodeAttribute]) {
+        // Handle cells that are part of an image.
+        VT100GridCoord originInImage = VT100GridCoordMake([attributes[iTermImageColumnAttribute] intValue],
+                                                          [attributes[iTermImageLineAttribute] intValue]);
+        int displayColumn = [attributes[iTermImageDisplayColumnAttribute] intValue];
+        [self drawImageWithCode:[attributes[iTermImageCodeAttribute] shortValue]
+                         origin:VT100GridCoordMake(displayColumn, origin.y)
+                         length:cheapString.length
+                        atPoint:NSMakePoint(positions[0] + point.x, point.y)
+                  originInImage:originInImage];
+        return cheapString.length;
+    }
+
     CGGlyph glyphs[cheapString.length];
     NSFont *const font = cheapString.attributes[NSFontAttributeName];
     BOOL ok = CTFontGetGlyphsForCharacters((CTFontRef)font,
@@ -2186,12 +2202,15 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                    length:(NSInteger)length
                   atPoint:(NSPoint)point
             originInImage:(VT100GridCoord)originInImage {
+    //DLog(@"Drawing image at %@ with code %@", VT100GridCoordDescription(origin), @(code));
     iTermImageInfo *imageInfo = GetImageInfo(code);
     NSImage *image = [imageInfo imageWithCellSize:_cellSize];
     if (!image) {
         if (!imageInfo) {
+            DLog(@"Image is missing (brown)");
             [[NSColor brownColor] set];
         } else {
+            DLog(@"Image isn't loaded yet (gray)");
             [_missingImages addObject:imageInfo.uniqueIdentifier];
 
             [[NSColor grayColor] set];

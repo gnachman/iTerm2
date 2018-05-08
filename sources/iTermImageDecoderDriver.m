@@ -130,6 +130,7 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
          fromChildWithProcessID:(pid_t)pid
                         writeFD:(int)writeFD
                          readFD:(int)readFD {
+    DLog(@"Write compressed data to sandbox");
     BOOL ok = [self writeCompressedImage:compressedData toFileDescriptor:writeFD];
     if (ok) {
         // Close the write file descriptor so image_decoder knows to stop reading.
@@ -139,6 +140,7 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
 
     NSData *data = nil;
     if (ok) {
+        DLog(@"Read decompressed data from sandbox");
         data = [self readDecompressedImageFromFileDescriptor:readFD];
         ok = data != nil;
     }
@@ -152,6 +154,7 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
     }
     [self reapProcessID:pid];
 
+    DLog(@"Decompression ok=%@", @(ok));
     return data;
 }
 

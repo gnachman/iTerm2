@@ -3470,11 +3470,13 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     iTermImage *image;
     if (nativeImage) {
         image = [iTermImage imageWithNativeImage:nativeImage];
+        DLog(@"Image is native");
     } else {
         image = [iTermImage imageWithCompressedData:data];
     }
     const BOOL isBroken = !image;
     if (isBroken) {
+        DLog(@"Image is broken");
         image = [iTermImage imageWithNativeImage:[NSImage imageNamed:@"broken_image"]];
         assert(image);
     }
@@ -3575,12 +3577,14 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
                                            fractionalInset);
     iTermImageInfo *imageInfo = GetImageInfo(c.code);
     imageInfo.broken = isBroken;
+    DLog(@"Append %d rows of image characters with %d columns. The value of c.image is %@", height, width, @(c.image));
     for (int y = 0; y < height; y++) {
         if (y > 0) {
             [self linefeed];
         }
         for (int x = xOffset; x < xOffset + width && x < screenWidth; x++) {
             SetPositionInImageChar(&c, x - xOffset, y);
+            // DLog(@"Set character at %@,%@: %@", @(x), @(currentGrid_.cursorY), DebugStringForScreenChar(c));
             [currentGrid_ setCharsFrom:VT100GridCoordMake(x, currentGrid_.cursorY)
                                     to:VT100GridCoordMake(x, currentGrid_.cursorY)
                                 toChar:c];
@@ -3620,6 +3624,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 - (void)terminalDidFinishReceivingFile {
     if (inlineFileInfo_) {
+        DLog(@"Inline file received");
         // TODO: Handle objects other than images.
         NSData *data = [NSData dataWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
         [self appendImageAtCursorWithName:inlineFileInfo_[kInlineFileName]
@@ -3635,6 +3640,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         inlineFileInfo_ = nil;
         [delegate_ screenDidFinishReceivingInlineFile];
     } else {
+        DLog(@"Download finished");
         [delegate_ screenDidFinishReceivingFile];
     }
 }
