@@ -5,7 +5,7 @@ iTerm2 Python API Class Reference
    :maxdepth: 2
    :caption: Contents:
 
-   App
+   app
    connection
    notifications
    profile

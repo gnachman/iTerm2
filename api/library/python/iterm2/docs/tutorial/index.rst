@@ -1,15 +1,8 @@
 .. _tutorial-index:
-.. iTerm2 Python API Tutorial
+.. Python API Introduction
 
-iTerm2 Python API Tutorial
-==========================
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Other Sections:
-
-   example
-   running
+Python API Introduction
+=======================
 
 The iTerm2 Python API is a replacement for the Applescript API that preceded
 it. It offers a more powerful set of APIs that give the script writer a great
@@ -49,6 +42,16 @@ The script will be filled with a working example.
 Continue to the next section, :doc:`example`.
 
 ----
+
+--------------
+Other Sections
+--------------
+
+* :doc:`/index`
+    * Python API Introduction
+    * :doc:`example`
+    * :doc:`running`
+    * :doc:`daemons`
 
 Indices and tables
 ==================

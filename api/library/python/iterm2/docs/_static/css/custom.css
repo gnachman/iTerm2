@@ -198,7 +198,7 @@ div.body p, div.body dd, div.body li {
 div.admonition {
     margin: 20px 0px;
     padding: 10px 30px;
-    background-color: #EEE;
+    background-color: #fff;
     border: 1px solid #CCC;
 }
 
@@ -209,11 +209,11 @@ div.admonition tt.xref, div.admonition code.xref, div.admonition a tt {
 
 div.admonition p.admonition-title {
     font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
-    font-weight: normal;
-    font-size: 24px;
-    margin: 0 0 10px 0;
-    padding: 0;
+    font-weight: bold;
+    font-size: 16px;
+    margin: 0 0 8pt 0;
     line-height: 1;
+    display: inline-block;
 }
 
 div.admonition p.last {
@@ -265,7 +265,7 @@ div.important {
 }
 
 div.note {
-    background-color: #EEE;
+    background-color: #FFE;
     border: 1px solid #CCC;
 }
 
@@ -655,6 +655,13 @@ meta.foundation-mq-xlarge {
 meta.foundation-mq-xxlarge {
     font-family: "/only screen and (min-width:120.063em)/";
     width: 120.063em;
+}
+
+
+*, *:before, *:after {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 html, body {

@@ -9,7 +9,9 @@ Python API
 iTerm2 offers a Python package which makes it easy to write Python scripts that
 control iTerm2 and extend its behavior. Start by following the
 :ref:`tutorial <tutorial-index>`, which gives a step-by-step guide to writing a
-script. For details on individual interfaces, see the Class Reference below.  
+script and descripts the architecture of iTerm2's scripting system.
+
+For details on individual interfaces, see the Class Reference below.  
 
 .. toctree::
    :maxdepth: 1
