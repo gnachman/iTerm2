@@ -1399,7 +1399,6 @@ static const int kDragThreshold = 3;
 // * "special" keys, like Enter which go through doCommandBySelector
 // * Repeated special keys
 - (void)keyDown:(NSEvent *)event {
-    event = [event eventByChangingYenToBackslash];
     [_altScreenMouseScrollInferer keyDown:event];
     if (![_delegate textViewShouldAcceptKeyDownEvent:event]) {
         return;
@@ -5237,6 +5236,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [gCurrentKeyEventTextView insertText:aString];
         return;
     }
+
+    // See issue 6699
+    aString = [aString stringByReplacingOccurrencesOfString:@"¥" withString:@"\\"];
+
     DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
         DLog(@"insertText: clear marked text");
