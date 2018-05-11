@@ -289,4 +289,5 @@ def _register_notification_handler(session, notification_type, coro):
     key = (session, notification_type)
     if key in _get_handlers():
         _get_handlers()[key].append(coro)
-    _get_handlers()[key] = [coro]
+    else:
+        _get_handlers()[key] = [coro]
