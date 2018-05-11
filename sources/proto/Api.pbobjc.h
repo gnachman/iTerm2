@@ -37,6 +37,7 @@ CF_EXTERN_C_BEGIN
 @class ITMCreateTabResponse;
 @class ITMCustomEscapeSequenceNotification;
 @class ITMFocusChangedNotification;
+@class ITMFocusChangedNotification_Window;
 @class ITMFocusRequest;
 @class ITMFocusResponse;
 @class ITMFrame;
@@ -309,6 +310,27 @@ GPBEnumDescriptor *ITMKeystrokeNotification_Modifiers_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMKeystrokeNotification_Modifiers_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMFocusChangedNotification_Window_WindowStatus
+
+typedef GPB_ENUM(ITMFocusChangedNotification_Window_WindowStatus) {
+  /** `window_id` became key */
+  ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowBecameKey = 0,
+
+  /** `window_id` is not key, but is the current terminal window. Some other non-terminal window is key. */
+  ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowIsCurrent = 1,
+
+  /** `window_id` is no longer key. */
+  ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowResignedKey = 2,
+};
+
+GPBEnumDescriptor *ITMFocusChangedNotification_Window_WindowStatus_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMFocusChangedNotification_Window_WindowStatus_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMGetBufferResponse_Status
 
@@ -1373,16 +1395,15 @@ typedef GPB_ENUM(ITMNewSessionNotification_FieldNumber) {
 
 typedef GPB_ENUM(ITMFocusChangedNotification_FieldNumber) {
   ITMFocusChangedNotification_FieldNumber_ApplicationActive = 1,
-  ITMFocusChangedNotification_FieldNumber_WindowKey = 2,
+  ITMFocusChangedNotification_FieldNumber_Window = 2,
   ITMFocusChangedNotification_FieldNumber_SelectedTab = 3,
   ITMFocusChangedNotification_FieldNumber_Session = 4,
-  ITMFocusChangedNotification_FieldNumber_WindowId = 5,
 };
 
 typedef GPB_ENUM(ITMFocusChangedNotification_Event_OneOfCase) {
   ITMFocusChangedNotification_Event_OneOfCase_GPBUnsetOneOfCase = 0,
   ITMFocusChangedNotification_Event_OneOfCase_ApplicationActive = 1,
-  ITMFocusChangedNotification_Event_OneOfCase_WindowKey = 2,
+  ITMFocusChangedNotification_Event_OneOfCase_Window = 2,
   ITMFocusChangedNotification_Event_OneOfCase_SelectedTab = 3,
   ITMFocusChangedNotification_Event_OneOfCase_Session = 4,
 };
@@ -1399,8 +1420,8 @@ typedef GPB_ENUM(ITMFocusChangedNotification_Event_OneOfCase) {
 /** true: application became active. false: application resigned active. */
 @property(nonatomic, readwrite) BOOL applicationActive;
 
-/** true: window became key. false: window resigned key. Window identified in window_id field. */
-@property(nonatomic, readwrite) BOOL windowKey;
+/** If set, gives info about a change to window focus. */
+@property(nonatomic, readwrite, strong, null_resettable) ITMFocusChangedNotification_Window *window;
 
 /** If set, selected tab changed to the one identified herein. */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *selectedTab;
@@ -1408,16 +1429,32 @@ typedef GPB_ENUM(ITMFocusChangedNotification_Event_OneOfCase) {
 /** If set, the given session became active in its tab. */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *session;
 
-@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
-/** Test to see if @c windowId has been set. */
-@property(nonatomic, readwrite) BOOL hasWindowId;
-
 @end
 
 /**
  * Clears whatever value was set for the oneof 'event'.
  **/
 void ITMFocusChangedNotification_ClearEventOneOfCase(ITMFocusChangedNotification *message);
+
+#pragma mark - ITMFocusChangedNotification_Window
+
+typedef GPB_ENUM(ITMFocusChangedNotification_Window_FieldNumber) {
+  ITMFocusChangedNotification_Window_FieldNumber_WindowStatus = 1,
+  ITMFocusChangedNotification_Window_FieldNumber_WindowId = 2,
+};
+
+@interface ITMFocusChangedNotification_Window : GPBMessage
+
+/** Describes how to interpret window_id. */
+@property(nonatomic, readwrite) ITMFocusChangedNotification_Window_WindowStatus windowStatus;
+
+@property(nonatomic, readwrite) BOOL hasWindowStatus;
+/** The affected window_id */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+/** Test to see if @c windowId has been set. */
+@property(nonatomic, readwrite) BOOL hasWindowId;
+
+@end
 
 #pragma mark - ITMTerminateSessionNotification
 

@@ -352,12 +352,29 @@ message NewSessionNotification {
 // of a window changes, or the active pane of a tab changes. Note that you may receive duplicate
 // notifications at times. Ignore those that do not signify a change.
 message FocusChangedNotification {
+  message Window {
+    enum WindowStatus {
+      // `window_id` became key
+      TERMINAL_WINDOW_BECAME_KEY = 0;
+
+      // `window_id` is not key, but is the current terminal window. Some other non-terminal window is key.
+      TERMINAL_WINDOW_IS_CURRENT = 1;
+
+      // `window_id` is no longer key.
+      TERMINAL_WINDOW_RESIGNED_KEY = 2;
+    }
+    // Describes how to interpret window_id.
+    optional WindowStatus window_status = 1;
+
+    // The affected window_id
+    optional string window_id = 2;
+  }
   oneof event {
     // true: application became active. false: application resigned active.
     bool application_active = 1;
 
-    // true: window became key. false: window resigned key. Window identified in window_id field.
-    bool window_key = 2;
+    // If set, gives info about a change to window focus.
+    Window window = 2;
 
     // If set, selected tab changed to the one identified herein.
     string selected_tab = 3;
@@ -365,7 +382,6 @@ message FocusChangedNotification {
     // If set, the given session became active in its tab.
     string session = 4;
   }
-  optional string window_id = 5;
 }
 
 // Note this is sent when a session is removed from the screen but its closure remains undoable.

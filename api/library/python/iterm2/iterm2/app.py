@@ -245,8 +245,11 @@ class App:
         """Updates the record of what is in focus."""
         if sub_notif.HasField("application_active"):
             self.app_active = sub_notif.application_active
-        elif sub_notif.HasField("window_key"):
-            self.key_window_id = sub_notif.window_id
+        elif sub_notif.HasField("window"):
+            # Ignore window resigned key notifications because we track the
+            # current terminal.
+            if sub_notif.window.window_status != iterm2.api_pb2.FocusChangedNotification.Window.WindowStatus.Value("TERMINAL_WINDOW_RESIGNED_KEY"):
+                self.key_window_id = sub_notif.window.window_id
         elif sub_notif.HasField("selected_tab"):
             window = self.get_window_for_tab(sub_notif.selected_tab)
             if window is None:

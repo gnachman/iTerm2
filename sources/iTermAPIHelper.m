@@ -9,6 +9,7 @@
 
 #import "CVector.h"
 #import "DebugLogging.h"
+#import "iTermController.h"
 #import "iTermLSOF.h"
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
@@ -185,20 +186,29 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
     NSWindow *window = notification.object;
     PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:window];
-    if (window) {
-        focusChange.windowId = term.terminalGuid;
-        focusChange.windowKey = YES;
-        [self handleFocusChange:focusChange];
+    if (term) {
+        focusChange.window.windowId = term.terminalGuid;
+        focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowBecameKey;
+    } else {
+        term = [[iTermController sharedInstance] currentTerminal];
+        if (!term) {
+            // Non-terminal window became key and no terminal is current (e.g., you opened prefs).
+            // Not very interesting.
+            return;
+        }
+        focusChange.window.windowId = [term terminalGuid];
+        focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowIsCurrent;
     }
+    [self handleFocusChange:focusChange];
 }
 
 - (void)windowDidResignKey:(NSNotification *)notification {
     ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
     NSWindow *window = notification.object;
     PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:window];
-    if (window) {
-        focusChange.windowId = term.terminalGuid;
-        focusChange.windowKey = NO;
+    if (window && term) {
+        focusChange.window.windowId = term.terminalGuid;
+        focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowResignedKey;
         [self handleFocusChange:focusChange];
     }
 }
@@ -1082,14 +1092,15 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     [response.notificationsArray addObject:focusChange];
 
     focusChange = [[ITMFocusChangedNotification alloc] init];
-    NSWindow *keyWindow = [NSApp keyWindow];
-    PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:keyWindow];
-    if (term) {
-        focusChange.windowKey = YES;
-        focusChange.windowId = term.terminalGuid;
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    if (term && term.window == NSApp.keyWindow) {
+        focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowBecameKey;
+    } else if (term) {
+        focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowIsCurrent;
     } else {
-        focusChange.windowKey = NO;
+        focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowResignedKey;
     }
+    focusChange.window.windowId = term.terminalGuid;
     [response.notificationsArray addObject:focusChange];
 
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
