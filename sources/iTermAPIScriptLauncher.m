@@ -124,6 +124,15 @@
 
         [task waitUntilExit];
         dispatch_async(dispatch_get_main_queue(), ^{
+            if (!task.isRunning && (task.terminationReason == NSTaskTerminationReasonUncaughtSignal || task.terminationStatus != 0)) {
+                if (task.terminationReason == NSTaskTerminationReasonUncaughtSignal) {
+                    [entry addOutput:@"\n** Script was killed by a signal **"];
+                } else {
+                    [entry addOutput:[NSString stringWithFormat:@"\n** Script exited with status %@ **", @(task.terminationStatus)]];
+                }
+                NSString *message = [NSString stringWithFormat:@"Script “%@” failed.", entry.name];
+                [[iTermNotificationController sharedInstance] notify:message];
+            }
             [entry stopRunning];
         });
         [queues removeObject:q];
