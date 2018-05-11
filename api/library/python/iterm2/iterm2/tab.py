@@ -55,6 +55,16 @@ class Tab:
         """
         return self.__root
 
+    @property
+    def current_session(self):
+        """
+        :returns: The active iterm2.Session in this tab or None if it could not be determined.
+        """
+        for session in self.sessions:
+            if session.session_id == self.active_session_id:
+                return session
+        return None
+
     def pretty_str(self, indent=""):
         """
         :returns: A human readable description of the tab and its sessions.

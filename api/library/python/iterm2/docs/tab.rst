@@ -2,7 +2,7 @@ Tab
 ---
 .. automodule:: iterm2.tab
 .. autoclass:: iterm2.Tab
-   :members: tab_id, sessions, root, pretty_str, async_select
+   :members: tab_id, sessions, root, pretty_str, async_select, current_session
 
 
 
