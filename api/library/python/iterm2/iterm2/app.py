@@ -57,7 +57,7 @@ class App:
 
         # None in these fields means unknown. Notifications will update them.
         self.app_active = None
-        self.key_window_id = None
+        self.current_terminal_window_id = None
 
     async def async_activate(self, raise_all_windows=True, ignoring_other_apps=False):
         """Activate the app, giving it keyboard focus.
@@ -249,7 +249,7 @@ class App:
             # Ignore window resigned key notifications because we track the
             # current terminal.
             if sub_notif.window.window_status != iterm2.api_pb2.FocusChangedNotification.Window.WindowStatus.Value("TERMINAL_WINDOW_RESIGNED_KEY"):
-                self.key_window_id = sub_notif.window.window_id
+                self.current_terminal_window_id = sub_notif.window.window_id
         elif sub_notif.HasField("selected_tab"):
             window = self.get_window_for_tab(sub_notif.selected_tab)
             if window is None:
@@ -267,15 +267,15 @@ class App:
                 tab.active_session_id = sub_notif.session
 
     @property
-    def key_window(self):
-        """Gets the key window.
+    def current_terminal_window(self):
+        """Gets the topmost terminal window.
 
-        The key window is the window that receives keyboard input when iTerm2 is
-        the active application.
+        The current terminal window is the window that receives keyboard input
+        when iTerm2 is the active application.
 
         :returns: :class:`Window` or None
         """
-        return self.get_window_by_id(self.key_window_id)
+        return self.get_window_by_id(self.current_terminal_window_id)
 
     def get_tab_and_window_for_session(self, session):
         """Finds the tab and window that own a session.

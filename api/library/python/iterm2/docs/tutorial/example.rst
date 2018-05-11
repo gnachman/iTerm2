@@ -12,7 +12,7 @@ Here's the example script that iTerm2 provides for you, minus some comments:
 
     async def main(connection, argv):
         app = await iterm2.async_get_app(connection)
-        window = app.key_window
+        window = app.current_terminal_window
         if window is not None:
             await window.async_create_tab()
         else:
@@ -92,11 +92,14 @@ with `async_`.
 
 .. code-block:: python
 
-        window = app.key_window
+        window = app.current_terminal_window
 
-The fetches the "key window" from the app. The key window is the window that
-receives keyboard input. If iTerm2 is not active or has no windows, then no
-window will be key and :meth:`iterm2.App.async_get_key_window` returns `None`.
+The fetches the "current terminal window" from the app. The curren terminal
+window is the terminal window (and not, for example, the preferences window or
+some other non-terminal window) that receives keyboard input. 
+
+If there are no terminal windows then :meth:`iterm2.App.async_get_key_window`
+returns `None`.
 
 .. code-block:: python
 

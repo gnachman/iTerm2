@@ -8,7 +8,7 @@ import sys
 async def main(connection, argv):
     # Your code goes here. Here's a bit of example code that adds a tab to the current window:
     app = await iterm2.async_get_app(connection)
-    window = app.key_window
+    window = app.current_terminal_window
     if window is not None:
         await window.async_create_tab()
     else:
