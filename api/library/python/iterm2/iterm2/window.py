@@ -101,7 +101,7 @@ class Window:
             session_id = result.create_tab_response.session_id
             app = await iterm2.app.async_get_app(self.connection)
             session = app.get_session_by_id(session_id)
-            _window, tab = await app.async_get_tab_and_window_for_session(session)
+            _window, tab = app.get_tab_and_window_for_session(session)
             return tab
         else:
             raise CreateTabException(
