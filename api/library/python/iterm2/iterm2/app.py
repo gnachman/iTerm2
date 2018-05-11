@@ -249,11 +249,19 @@ class App:
             self.key_window_id = sub_notif.window_id
         elif sub_notif.HasField("selected_tab"):
             window = self.get_window_for_tab(sub_notif.selected_tab)
-            window.selected_tab_id = sub_notif.selected_tab
+            if window is None:
+                await self.async_refresh()
+                await self.async_refresh_focus()
+            else:
+                window.selected_tab_id = sub_notif.selected_tab
         elif sub_notif.HasField("session"):
             session = self.get_session_by_id(sub_notif.session)
             window, tab = self.get_tab_and_window_for_session(session)
-            tab.active_session_id = sub_notif.session
+            if tab is None:
+                await self.async_refresh()
+                await self.async_refresh_focus()
+            else:
+                tab.active_session_id = sub_notif.session
 
     @property
     def key_window(self):
