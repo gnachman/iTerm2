@@ -4818,6 +4818,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (BOOL)canProduceMetalFramecap {
+    if (@available(macOS 10.11, *)) {
+        return _useMetal && _view.metalView.alphaValue == 1 && _wrapper.useMetal && _textview.suppressDrawing;
+    } else {
+        return NO;
+    }
+}
+
 - (BOOL)metalViewSizeIsLegal NS_AVAILABLE_MAC(10_11) {
     NSSize size = _view.frame.size;
     // When closing a session I once got an insane height that caused an assertion.
