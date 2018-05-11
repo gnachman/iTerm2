@@ -356,6 +356,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermMark *_lastMark;
 
     VT100GridCoordRange _commandRange;
+    VT100GridAbsCoordRange _lastOrCurrentlyRunningCommandAbsRange;
     long long _lastPromptLine;  // Line where last prompt began
 
     // -2: Within command output (inferred)
@@ -543,6 +544,7 @@ static const NSUInteger kMaxHosts = 100;
         _tmuxSecureLogging = NO;
         _tailFindContext = [[FindContext alloc] init];
         _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
+        _lastOrCurrentlyRunningCommandAbsRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _activityCounter = [@0 retain];
         _announcements = [[NSMutableDictionary alloc] init];
         _queuedTokens = [[NSMutableArray alloc] init];
@@ -6975,13 +6977,20 @@ ITERM_WEAKLY_REFERENCEABLE
         [iTermShellHistoryController showInformationalMessage];
         return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     } else {
-        VT100GridAbsCoordRange range =
-            VT100GridAbsCoordRangeMake(_commandRange.start.x,
-                                       _commandRange.start.y + _screen.totalScrollbackOverflow,
-                                       _commandRange.end.x,
-                                       _commandRange.end.y + _screen.totalScrollbackOverflow);
+        VT100GridAbsCoordRange range;
+        iTermTextExtractorTrimTrailingWhitespace trailing;
+        if (self.isAtShellPrompt) {
+            range = VT100GridAbsCoordRangeMake(_commandRange.start.x,
+                                               _commandRange.start.y + _screen.totalScrollbackOverflow,
+                                               _commandRange.end.x,
+                                               _commandRange.end.y + _screen.totalScrollbackOverflow);
+            trailing = iTermTextExtractorTrimTrailingWhitespaceAll;
+        } else {
+            range = _lastOrCurrentlyRunningCommandAbsRange;
+            trailing = iTermTextExtractorTrimTrailingWhitespaceOneLine;
+        }
         iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
-        return [extractor rangeByTrimmingWhitespaceFromRange:range];
+        return [extractor rangeByTrimmingWhitespaceFromRange:range leading:YES trailing:trailing];
     }
 }
 
@@ -6995,7 +7004,10 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)textViewCanSelectCurrentCommand {
     // Return YES if command history has never been used so we can show the informational message.
     return (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed] ||
-            self.isAtShellPrompt);
+            self.isAtShellPrompt ||
+            (_lastOrCurrentlyRunningCommandAbsRange.start.x >= 0 &&
+             // It cannot select when the currently running command is lost due to scrollback overflow.
+             _lastOrCurrentlyRunningCommandAbsRange.start.y >= _screen.totalScrollbackOverflow));
 }
 
 - (iTermUnicodeNormalization)textViewUnicodeNormalizationForm {
@@ -8636,6 +8648,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     self.lastCommand = command;
     [self updateVariables];
+    // `_commandRange` is from the beginning of command, to the cursor, not necessarily the end of the command.
+    // `range` here includes the entire command and a new line.
+    _lastOrCurrentlyRunningCommandAbsRange = VT100GridAbsCoordRangeFromCoordRange(range, _screen.totalScrollbackOverflow);
     _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
     DLog(@"Hide ACH because command ended");
     [[_delegate realParentWindow] hideAutoCommandHistoryForSession:self];
