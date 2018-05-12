@@ -1976,6 +1976,13 @@ static BOOL hasBecomeActive = NO;
     [self.scriptsMenuController build];
 }
 
+- (IBAction)openREPL:(id)sender {
+    [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithCompletion:^{
+        NSString *command = [[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"];
+        [[iTermController sharedInstance] openSingleUseWindowWithCommand:command];
+    }];
+}
+
 - (IBAction)openScriptConsole:(id)sender {
     [[[iTermScriptConsole sharedInstance] window] makeKeyAndOrderFront:nil];
 }

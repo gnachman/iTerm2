@@ -1511,6 +1511,7 @@ static iTermController *gSharedInstance;
         [windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
         windowProfile = [windowProfile dictionaryBySettingObject:@(WINDOW_TYPE_NORMAL) forKey:KEY_WINDOW_TYPE];
     }
+
     [self launchBookmark:windowProfile
               inTerminal:nil
                  withURL:nil
@@ -1520,7 +1521,7 @@ static iTermController *gSharedInstance;
                  command:command
                    block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
                        profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];
-                       profile = [profile dictionaryBySettingObject:@YES forKey:KEY_CLOSE_SESSIONS_ON_END];
+                       profile = [profile dictionaryBySettingObject:@NO forKey:KEY_CLOSE_SESSIONS_ON_END];
                        term.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
                        PTYSession *session = [term createTabWithProfile:profile withCommand:command];
                        session.isSingleUseSession = YES;

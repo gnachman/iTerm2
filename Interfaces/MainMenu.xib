@@ -856,6 +856,12 @@ DQ
                                     <action selector="openScriptConsole:" target="201" id="DYl-Yt-fdf"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Open Python REPL" identifier="Open Interactive Window" id="jXH-0I-Wtc">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="openREPL:" target="201" id="1Pl-tK-Km1"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Install Python Runtime" identifier="Install Python Runtime" id="wHh-8e-oU2">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
