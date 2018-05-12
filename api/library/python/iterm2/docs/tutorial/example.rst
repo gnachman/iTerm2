@@ -94,9 +94,10 @@ with `async_`.
 
         window = app.current_terminal_window
 
-The fetches the "current terminal window" from the app. The curren terminal
+This fetches the "current terminal window" from the app. The current terminal
 window is the terminal window (and not, for example, the preferences window or
-some other non-terminal window) that receives keyboard input. 
+some other non-terminal window) that receives keyboard input when iTerm2 is
+active. 
 
 If there are no terminal windows then :meth:`iterm2.App.async_get_key_window`
 returns `None`.
@@ -106,8 +107,8 @@ returns `None`.
         if window is not None:
             await window.async_create_tab()
 
-If there is a key window, add a tab to it. The new tab uses the default
-profile.
+If there is a current terminal window, add a tab to it. The new tab uses the
+default profile.
 
 .. code-block:: python
 
