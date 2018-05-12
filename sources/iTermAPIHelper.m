@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "iTermController.h"
 #import "iTermLSOF.h"
+#import "iTermPythonArgumentParser.h"
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -27,6 +28,96 @@ static NSString *const kAPIAccessDate = @"date";
 static NSString *const kAPINextConfirmationDate = @"next confirmation";
 static NSString *const kAPIAccessLocalizedName = @"app name";
 static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
+
+@interface iTermAPIAuthRequest : NSObject
+@property (nonatomic, readonly) NSString *humanReadableName;
+@property (nonatomic, readonly) NSString *fullCommandOrBundleID;
+@property (nonatomic, readonly) NSString *keyForAuth;
+@property (nonatomic, readonly) NSString *reason;
+@property (nonatomic, readonly) BOOL identified;
+
+- (instancetype)initWithProcessID:(pid_t)pid;
+@end
+
+@implementation iTermAPIAuthRequest
+
+- (instancetype)initWithProcessID:(pid_t)pid {
+    self = [super init];
+    if (self) {
+        NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
+        if (app.localizedName && app.bundleIdentifier) {
+            _humanReadableName = [app.localizedName copy];
+            _fullCommandOrBundleID = [app.bundleIdentifier copy];
+            _keyForAuth = [_fullCommandOrBundleID copy];
+        } else {
+            NSString *execName = nil;
+            _fullCommandOrBundleID = [[iTermLSOF commandForProcess:pid execName:&execName] copy];
+            if (!execName || !_fullCommandOrBundleID) {
+                _reason = [NSString stringWithFormat:@"Could not identify name for process with pid %d", (int)pid];
+                return self;
+            }
+
+            NSArray<NSString *> *parts = [_fullCommandOrBundleID componentsInShellCommand];
+            NSString *maybePython = parts.firstObject.lastPathComponent;
+
+            if ([maybePython isEqualToString:@"python"] ||
+                [maybePython isEqualToString:@"python3.6"] ||
+                [maybePython isEqualToString:@"python3"]) {
+                iTermPythonArgumentParser *pythonArgumentParser = [[iTermPythonArgumentParser alloc] initWithArgs:parts];
+                NSArray<NSString *> *idParts = [self pythonIdentifierArrayWithArgParser:pythonArgumentParser];
+                NSArray<NSString *> *escapedIdParts = [self pythonEscapedIdentifierArrayWithArgParser:pythonArgumentParser];
+
+                _keyForAuth = [escapedIdParts componentsJoinedByString:@" "];
+                if (idParts.count > 1) {
+                    _humanReadableName = [[idParts subarrayFromIndex:1] componentsJoinedByString:@" "];
+                } else {
+                    _humanReadableName = [idParts[0] lastPathComponent];
+                }
+            } else {
+                _humanReadableName = execName.lastPathComponent;
+                _keyForAuth = execName;
+            }
+        }
+        _identified = YES;
+    }
+    return self;
+}
+
+- (NSArray<NSString *> *)pythonIdentifierArrayWithArgParser:(iTermPythonArgumentParser *)pythonArgumentParser {
+    NSMutableArray *idParts = [NSMutableArray array];
+    [idParts addObject:pythonArgumentParser.fullPythonPath];
+    if (pythonArgumentParser.module) {
+        [idParts addObject:@"-m"];
+        [idParts addObject:pythonArgumentParser.module];
+    }
+    if (pythonArgumentParser.statement) {
+        [idParts addObject:@"-c"];
+        [idParts addObject:pythonArgumentParser.statement];
+    }
+    if (pythonArgumentParser.script) {
+        [idParts addObject:pythonArgumentParser.script];
+    }
+    return idParts;
+}
+
+- (NSArray<NSString *> *)pythonEscapedIdentifierArrayWithArgParser:(iTermPythonArgumentParser *)pythonArgumentParser {
+    NSMutableArray *idParts = [NSMutableArray array];
+    [idParts addObject:pythonArgumentParser.escapedFullPythonPath];
+    if (pythonArgumentParser.module) {
+        [idParts addObject:@"-m"];
+        [idParts addObject:pythonArgumentParser.escapedModule];
+    }
+    if (pythonArgumentParser.statement) {
+        [idParts addObject:@"-c"];
+        [idParts addObject:pythonArgumentParser.escapedStatement];
+    }
+    if (pythonArgumentParser.script) {
+        [idParts addObject:pythonArgumentParser.escapedScript];
+    }
+    return idParts;
+}
+
+@end
 
 @interface iTermAllSessionsSubscription : NSObject
 @property (nonatomic, strong) ITMNotificationRequest *request;
@@ -254,64 +345,37 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         bundles = [NSMutableDictionary dictionary];
     }
 
-    NSString *processName = nil;
-    NSString *processIdentifier = nil;
-    NSString *processIdentifierWithoutArgs = nil;
-
-    NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
-    if (app.localizedName && app.bundleIdentifier) {
-        processName = app.localizedName;
-        processIdentifier = app.bundleIdentifier;
-    } else {
-        NSString *execName = nil;
-        processIdentifier = [iTermLSOF commandForProcess:pid execName:&execName];
-        if (!execName || !processIdentifier) {
-            *reason = [NSString stringWithFormat:@"Could not identify name for process with pid %d", (int)pid];
-            return nil;
-        }
-
-        NSArray<NSString *> *parts = [processIdentifier componentsInShellCommand];
-        NSString *maybePython = parts.firstObject.lastPathComponent;
-
-        if ([maybePython isEqualToString:@"python"] ||
-            [maybePython isEqualToString:@"python3.6"] ||
-            [maybePython isEqualToString:@"python3"]) {
-            if (parts.count > 1) {
-                processName = [parts[1] lastPathComponent];
-                processIdentifierWithoutArgs = [[parts subarrayWithRange:NSMakeRange(0, 2)] componentsJoinedByString:@" "];
-            }
-        }
-        if (!processName) {
-            processName = execName.lastPathComponent;
-            processIdentifierWithoutArgs = execName;
-        }
+    iTermAPIAuthRequest *authRequest = [[iTermAPIAuthRequest alloc] initWithProcessID:pid];
+    if (!authRequest.identified) {
+        *reason = authRequest.reason;
+        return nil;
     }
-    *displayName = processName;
+    *displayName = authRequest.humanReadableName;
 
-    NSDictionary *authorizedIdentity = @{ iTermWebSocketConnectionPeerIdentityBundleIdentifier: processIdentifierWithoutArgs };
+    NSDictionary *authorizedIdentity = @{ iTermWebSocketConnectionPeerIdentityBundleIdentifier: authRequest.keyForAuth };
     if (preauthorized) {
         *reason = @"Script launched by user action";
         return authorizedIdentity;
     }
 
-    NSString *key = [NSString stringWithFormat:@"bundle=%@", processIdentifierWithoutArgs];
+    NSString *key = [NSString stringWithFormat:@"bundle=%@", authRequest.keyForAuth];
     NSDictionary *setting = bundles[key];
     BOOL reauth = NO;
     if (setting) {
         if (![setting[kAPIAccessAllowed] boolValue]) {
             // Access permanently disallowed.
-            *reason = [NSString stringWithFormat:@"Access permanently disallowed by user preference to %@", processIdentifier];
+            *reason = [NSString stringWithFormat:@"Access permanently disallowed by user preference to %@", authRequest.fullCommandOrBundleID];
             return nil;
         }
 
         NSString *name = setting[kAPIAccessLocalizedName];
-        if ([processName isEqualToString:name]) {
+        if ([authRequest.humanReadableName isEqualToString:name]) {
             // Access is permanently allowed and the display name is unchanged. Do we need to reauth?
 
             NSDate *confirm = setting[kAPINextConfirmationDate];
             if ([[NSDate date] compare:confirm] == NSOrderedAscending) {
                 // No need to reauth, allow it.
-                *reason = [NSString stringWithFormat:@"Allowing continued API access to process id %d, name %@, bundle ID %@. User gave consent recently.", pid, processName, processIdentifier];
+                *reason = [NSString stringWithFormat:@"Allowing continued API access to process id %d, name %@, bundle ID %@. User gave consent recently.", pid, authRequest.humanReadableName, authRequest.fullCommandOrBundleID];
                 return authorizedIdentity;
             }
 
@@ -322,10 +386,10 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     NSAlert *alert = [[NSAlert alloc] init];
     if (reauth) {
         alert.messageText = @"Reauthorize API Access";
-        alert.informativeText = [NSString stringWithFormat:@"The application “%@” (%@) has API access, which grants it permission to see and control your activity. Would you like it to continue?", processName, processIdentifier];
+        alert.informativeText = [NSString stringWithFormat:@"The application “%@” (%@) has API access, which grants it permission to see and control your activity. Would you like it to continue?", authRequest.humanReadableName, authRequest.fullCommandOrBundleID];
     } else {
         alert.messageText = @"API Access Request";
-        alert.informativeText = [NSString stringWithFormat:@"The application “%@” (%@) would like to control iTerm2. This exposes a significant amount of data in iTerm2 to %@. Allow this request?", processName, processIdentifier, processName];
+        alert.informativeText = [NSString stringWithFormat:@"The application “%@” (%@) would like to control iTerm2. This exposes a significant amount of data in iTerm2 to %@. Allow this request?", authRequest.humanReadableName, authRequest.fullCommandOrBundleID, authRequest.humanReadableName];
     }
     [alert addButtonWithTitle:@"Deny"];
     [alert addButtonWithTitle:@"Allow"];
@@ -341,13 +405,13 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         bundles[key] = @{ kAPIAccessAllowed: @(allow),
                           kAPIAccessDate: [NSDate date],
                           kAPINextConfirmationDate: [[NSDate date] dateByAddingTimeInterval:kOneMonth],
-                          kAPIAccessLocalizedName: processName };
+                          kAPIAccessLocalizedName: authRequest.humanReadableName };
     } else {
         [bundles removeObjectForKey:key];
     }
     [[NSUserDefaults standardUserDefaults] setObject:bundles forKey:kBundlesWithAPIAccessSettingKey];
 
-    *reason = allow ? [NSString stringWithFormat:@"User accepted connection by %@", processIdentifier] : [NSString stringWithFormat:@"User rejected connection attempt by %@", processIdentifier];
+    *reason = allow ? [NSString stringWithFormat:@"User accepted connection by %@", authRequest.fullCommandOrBundleID] : [NSString stringWithFormat:@"User rejected connection attempt by %@", authRequest.fullCommandOrBundleID];
     return allow ? authorizedIdentity : nil;
 }
 
