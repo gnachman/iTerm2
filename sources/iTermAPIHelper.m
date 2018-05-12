@@ -9,7 +9,9 @@
 
 #import "CVector.h"
 #import "DebugLogging.h"
+#import "iTermAPIAuthorizationController.h"
 #import "iTermController.h"
+#import "iTermDisclosableView.h"
 #import "iTermLSOF.h"
 #import "iTermPythonArgumentParser.h"
 #import "MovePaneController.h"
@@ -20,104 +22,7 @@
 #import "PTYTab.h"
 #import "VT100Parser.h"
 
-static NSString *const kBundlesWithAPIAccessSettingKey = @"NoSyncBundlesWithAPIAccessSettings";
 NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";
-
-static NSString *const kAPIAccessAllowed = @"allowed";
-static NSString *const kAPIAccessDate = @"date";
-static NSString *const kAPINextConfirmationDate = @"next confirmation";
-static NSString *const kAPIAccessLocalizedName = @"app name";
-static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
-
-@interface iTermAPIAuthRequest : NSObject
-@property (nonatomic, readonly) NSString *humanReadableName;
-@property (nonatomic, readonly) NSString *fullCommandOrBundleID;
-@property (nonatomic, readonly) NSString *keyForAuth;
-@property (nonatomic, readonly) NSString *reason;
-@property (nonatomic, readonly) BOOL identified;
-
-- (instancetype)initWithProcessID:(pid_t)pid;
-@end
-
-@implementation iTermAPIAuthRequest
-
-- (instancetype)initWithProcessID:(pid_t)pid {
-    self = [super init];
-    if (self) {
-        NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
-        if (app.localizedName && app.bundleIdentifier) {
-            _humanReadableName = [app.localizedName copy];
-            _fullCommandOrBundleID = [app.bundleIdentifier copy];
-            _keyForAuth = [_fullCommandOrBundleID copy];
-        } else {
-            NSString *execName = nil;
-            _fullCommandOrBundleID = [[iTermLSOF commandForProcess:pid execName:&execName] copy];
-            if (!execName || !_fullCommandOrBundleID) {
-                _reason = [NSString stringWithFormat:@"Could not identify name for process with pid %d", (int)pid];
-                return self;
-            }
-
-            NSArray<NSString *> *parts = [_fullCommandOrBundleID componentsInShellCommand];
-            NSString *maybePython = parts.firstObject.lastPathComponent;
-
-            if ([maybePython isEqualToString:@"python"] ||
-                [maybePython isEqualToString:@"python3.6"] ||
-                [maybePython isEqualToString:@"python3"]) {
-                iTermPythonArgumentParser *pythonArgumentParser = [[iTermPythonArgumentParser alloc] initWithArgs:parts];
-                NSArray<NSString *> *idParts = [self pythonIdentifierArrayWithArgParser:pythonArgumentParser];
-                NSArray<NSString *> *escapedIdParts = [self pythonEscapedIdentifierArrayWithArgParser:pythonArgumentParser];
-
-                _keyForAuth = [escapedIdParts componentsJoinedByString:@" "];
-                if (idParts.count > 1) {
-                    _humanReadableName = [[idParts subarrayFromIndex:1] componentsJoinedByString:@" "];
-                } else {
-                    _humanReadableName = [idParts[0] lastPathComponent];
-                }
-            } else {
-                _humanReadableName = execName.lastPathComponent;
-                _keyForAuth = execName;
-            }
-        }
-        _identified = YES;
-    }
-    return self;
-}
-
-- (NSArray<NSString *> *)pythonIdentifierArrayWithArgParser:(iTermPythonArgumentParser *)pythonArgumentParser {
-    NSMutableArray *idParts = [NSMutableArray array];
-    [idParts addObject:pythonArgumentParser.fullPythonPath];
-    if (pythonArgumentParser.module) {
-        [idParts addObject:@"-m"];
-        [idParts addObject:pythonArgumentParser.module];
-    }
-    if (pythonArgumentParser.statement) {
-        [idParts addObject:@"-c"];
-        [idParts addObject:pythonArgumentParser.statement];
-    }
-    if (pythonArgumentParser.script) {
-        [idParts addObject:pythonArgumentParser.script];
-    }
-    return idParts;
-}
-
-- (NSArray<NSString *> *)pythonEscapedIdentifierArrayWithArgParser:(iTermPythonArgumentParser *)pythonArgumentParser {
-    NSMutableArray *idParts = [NSMutableArray array];
-    [idParts addObject:pythonArgumentParser.escapedFullPythonPath];
-    if (pythonArgumentParser.module) {
-        [idParts addObject:@"-m"];
-        [idParts addObject:pythonArgumentParser.escapedModule];
-    }
-    if (pythonArgumentParser.statement) {
-        [idParts addObject:@"-c"];
-        [idParts addObject:pythonArgumentParser.escapedStatement];
-    }
-    if (pythonArgumentParser.script) {
-        [idParts addObject:pythonArgumentParser.escapedScript];
-    }
-    return idParts;
-}
-
-@end
 
 @interface iTermAllSessionsSubscription : NSObject
 @property (nonatomic, strong) ITMNotificationRequest *request;
@@ -335,62 +240,29 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 #pragma mark - iTermAPIServerDelegate
 
-- (NSDictionary *)apiServerAuthorizeProcess:(pid_t)pid
-                              preauthorized:(BOOL)preauthorized
-                                     reason:(out NSString *__autoreleasing *)reason
-                                displayName:(out NSString *__autoreleasing *)displayName {
-    *displayName = nil;
-    NSMutableDictionary *bundles = [[[NSUserDefaults standardUserDefaults] objectForKey:kBundlesWithAPIAccessSettingKey] mutableCopy];
-    if (!bundles) {
-        bundles = [NSMutableDictionary dictionary];
-    }
-
-    iTermAPIAuthRequest *authRequest = [[iTermAPIAuthRequest alloc] initWithProcessID:pid];
-    if (!authRequest.identified) {
-        *reason = authRequest.reason;
-        return nil;
-    }
-    *displayName = authRequest.humanReadableName;
-
-    NSDictionary *authorizedIdentity = @{ iTermWebSocketConnectionPeerIdentityBundleIdentifier: authRequest.keyForAuth };
-    if (preauthorized) {
-        *reason = @"Script launched by user action";
-        return authorizedIdentity;
-    }
-
-    NSString *key = [NSString stringWithFormat:@"bundle=%@", authRequest.keyForAuth];
-    NSDictionary *setting = bundles[key];
-    BOOL reauth = NO;
-    if (setting) {
-        if (![setting[kAPIAccessAllowed] boolValue]) {
-            // Access permanently disallowed.
-            *reason = [NSString stringWithFormat:@"Access permanently disallowed by user preference to %@", authRequest.fullCommandOrBundleID];
-            return nil;
-        }
-
-        NSString *name = setting[kAPIAccessLocalizedName];
-        if ([authRequest.humanReadableName isEqualToString:name]) {
-            // Access is permanently allowed and the display name is unchanged. Do we need to reauth?
-
-            NSDate *confirm = setting[kAPINextConfirmationDate];
-            if ([[NSDate date] compare:confirm] == NSOrderedAscending) {
-                // No need to reauth, allow it.
-                *reason = [NSString stringWithFormat:@"Allowing continued API access to process id %d, name %@, bundle ID %@. User gave consent recently.", pid, authRequest.humanReadableName, authRequest.fullCommandOrBundleID];
-                return authorizedIdentity;
-            }
-
-            // It's been a month since API access was confirmed. Request it again.
-            reauth = YES;
-        }
-    }
+- (BOOL)askUserToGrantAuthForController:(iTermAPIAuthorizationController *)controller
+                      isReauthorization:(BOOL)reauth
+                               remember:(out BOOL *)remember {
     NSAlert *alert = [[NSAlert alloc] init];
     if (reauth) {
         alert.messageText = @"Reauthorize API Access";
-        alert.informativeText = [NSString stringWithFormat:@"The application “%@” (%@) has API access, which grants it permission to see and control your activity. Would you like it to continue?", authRequest.humanReadableName, authRequest.fullCommandOrBundleID];
+        alert.informativeText = [NSString stringWithFormat:@"The application “%@” has API access, which grants it permission to see and control your activity. Would you like it to continue?",
+                                 controller.humanReadableName];
     } else {
         alert.messageText = @"API Access Request";
-        alert.informativeText = [NSString stringWithFormat:@"The application “%@” (%@) would like to control iTerm2. This exposes a significant amount of data in iTerm2 to %@. Allow this request?", authRequest.humanReadableName, authRequest.fullCommandOrBundleID, authRequest.humanReadableName];
+        alert.informativeText = [NSString stringWithFormat:@"The application “%@” would like to control iTerm2. This exposes a significant amount of data in iTerm2 to %@. Allow this request?",
+                                 controller.humanReadableName, controller.humanReadableName];
     }
+
+    iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
+                                                                           prompt:@"Full Command"
+                                                                          message:controller.fullCommandOrBundleID];
+    accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
+    accessory.requestLayout = ^{
+        [alert layout];
+    };
+    alert.accessoryView = accessory;
+
     [alert addButtonWithTitle:@"Deny"];
     [alert addButtonWithTitle:@"Allow"];
     if (!reauth) {
@@ -399,20 +271,66 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         alert.showsSuppressionButton = YES;
     }
     NSModalResponse response = [alert runModal];
-    BOOL allow = (response == NSAlertSecondButtonReturn);
+    *remember = (alert.suppressionButton.state == NSOnState);
+    return (response == NSAlertSecondButtonReturn);
+}
 
-    if (reauth || alert.suppressionButton.state == NSOnState) {
-        bundles[key] = @{ kAPIAccessAllowed: @(allow),
-                          kAPIAccessDate: [NSDate date],
-                          kAPINextConfirmationDate: [[NSDate date] dateByAddingTimeInterval:kOneMonth],
-                          kAPIAccessLocalizedName: authRequest.humanReadableName };
-    } else {
-        [bundles removeObjectForKey:key];
+- (NSDictionary *)apiServerAuthorizeProcess:(pid_t)pid
+                              preauthorized:(BOOL)preauthorized
+                                     reason:(out NSString *__autoreleasing *)reason
+                                displayName:(out NSString *__autoreleasing *)displayName {
+    iTermAPIAuthorizationController *controller = [[iTermAPIAuthorizationController alloc] initWithProcessID:pid];
+    *reason = [controller identificationFailureReason];
+    if (*reason) {
+        return nil;
     }
-    [[NSUserDefaults standardUserDefaults] setObject:bundles forKey:kBundlesWithAPIAccessSettingKey];
+    *displayName = controller.humanReadableName;
 
-    *reason = allow ? [NSString stringWithFormat:@"User accepted connection by %@", authRequest.fullCommandOrBundleID] : [NSString stringWithFormat:@"User rejected connection attempt by %@", authRequest.fullCommandOrBundleID];
-    return allow ? authorizedIdentity : nil;
+    if (preauthorized) {
+        *reason = @"Script launched by user action";
+        return controller.identity;
+    }
+
+
+    BOOL reauth = NO;
+    switch (controller.setting) {
+        case iTermAPIAuthorizationSettingPermanentlyDenied:
+            // Access permanently disallowed.
+            *reason = [NSString stringWithFormat:@"Access permanently disallowed by user preference to %@",
+                       controller.fullCommandOrBundleID];
+            return nil;
+
+        case iTermAPIAuthorizationSettingRecentConsent:
+            // No need to reauth, allow it.
+            *reason = [NSString stringWithFormat:@"Allowing continued API access to process id %d, name %@, bundle ID %@. User gave consent recently.",
+                       pid, controller.humanReadableName, controller.fullCommandOrBundleID];
+            return controller.identity;
+
+        case iTermAPIAuthorizationSettingExpiredConsent:
+            // It's been a month since API access was confirmed. Request it again.
+            reauth = YES;
+            break;
+
+        case iTermAPIAuthorizationSettingUnknown:
+            break;
+    }
+
+    BOOL remember = NO;
+    BOOL allow = [self askUserToGrantAuthForController:controller isReauthorization:reauth remember:&remember];
+
+    if (reauth || remember) {
+        [controller setAllowed:allow];
+    } else {
+        [controller removeSetting];
+    }
+
+    if (allow) {
+        *reason = [NSString stringWithFormat:@"User accepted connection by %@", controller.fullCommandOrBundleID];
+        return controller.identity;
+    } else {
+        *reason = [NSString stringWithFormat:@"User rejected connection attempt by %@", controller.fullCommandOrBundleID];
+        return nil;
+    }
 }
 
 - (PTYSession *)sessionForAPIIdentifier:(NSString *)identifier {
