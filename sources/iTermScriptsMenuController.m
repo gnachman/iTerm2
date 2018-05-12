@@ -55,8 +55,12 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSInteger)separatorIndex {
+    __block int count = 0;
     return [_scriptsMenu.itemArray indexOfObjectPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        return [obj.identifier isEqualToString:@"Separator"];
+        if ([obj.identifier isEqualToString:@"Separator"]) {
+            count++;
+        }
+        return count == 2;
     }];
 }
 

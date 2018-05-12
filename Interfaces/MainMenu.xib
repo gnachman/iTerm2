@@ -838,34 +838,35 @@ DQ
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="Scripts" id="CZD-7u-bch">
                         <items>
+                            <menuItem title="Install Python Runtime" identifier="Install Python Runtime" id="wHh-8e-oU2">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="installPythonRuntime:" target="201" id="r4H-5W-hCN"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="New Python Script" identifier="New Python Script" id="ds5-gY-cX0">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="newPythonScript:" target="201" id="v2b-iE-k7t"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Reveal in Finder" identifier="Reveal in Finder" id="eeH-ly-45H">
+                            <menuItem title="Reveal Scripts in Finder" identifier="Reveal in Finder" id="eeH-ly-45H">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="revealScriptsInFinder:" target="201" id="2jN-7I-BfW"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Script Console" keyEquivalent="j" identifier="Script Console" id="YqT-f8-W2j">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="openScriptConsole:" target="201" id="DYl-Yt-fdf"/>
-                                </connections>
-                            </menuItem>
+                            <menuItem isSeparatorItem="YES" identifier="Separator" id="Rsa-x0-U18"/>
                             <menuItem title="Open Python REPL" identifier="Open Interactive Window" id="jXH-0I-Wtc">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="openREPL:" target="201" id="1Pl-tK-Km1"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Install Python Runtime" identifier="Install Python Runtime" id="wHh-8e-oU2">
-                                <modifierMask key="keyEquivalentModifierMask"/>
+                            <menuItem title="Script Console" keyEquivalent="j" identifier="Script Console" id="YqT-f8-W2j">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
-                                    <action selector="installPythonRuntime:" target="201" id="r4H-5W-hCN"/>
+                                    <action selector="openScriptConsole:" target="201" id="DYl-Yt-fdf"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" identifier="Separator" id="fcT-12-G86"/>
