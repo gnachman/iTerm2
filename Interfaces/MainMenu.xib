@@ -856,7 +856,7 @@ DQ
                                     <action selector="revealScriptsInFinder:" target="201" id="2jN-7I-BfW"/>
                                 </connections>
                             </menuItem>
-                            <menuItem isSeparatorItem="YES" identifier="Separator" id="Rsa-x0-U18"/>
+                            <menuItem isSeparatorItem="YES" id="Rsa-x0-U18"/>
                             <menuItem title="Open Python REPL" identifier="Open Interactive Window" id="jXH-0I-Wtc">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
