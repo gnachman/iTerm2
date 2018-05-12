@@ -11,6 +11,37 @@ import websockets
 import iterm2.api_pb2
 from iterm2._version import __version__
 
+def _getenv(key):
+    """Gets an environment variable safely.
+
+    Returns None if it does not exist.
+    """
+    if key in os.environ:
+        return os.environ[key]
+    else:
+        return None
+
+def _cookie_and_key():
+    cookie = _getenv('ITERM2_COOKIE')
+    key = _getenv('ITERM2_KEY')
+    return cookie, key
+
+def _headers():
+    cookie, key = _cookie_and_key()
+    headers = {"origin": "ws://localhost/",
+               "x-iterm2-library-version": "python {}".format(__version__)}
+    if cookie is not None:
+        headers["x-iterm2-cookie"] = cookie
+    if key is not None:
+        headers["x-iterm2-key"] = key
+    return headers
+
+def _uri():
+    return "ws://localhost:1912"
+
+def _subprotocols():
+    return ['api.iterm2.com']
+
 class Connection:
     """Represents a loopback network connection from the script to iTerm2.
 
@@ -31,6 +62,18 @@ class Connection:
         """
         assert helper is not None
         Connection.helpers.append(helper)
+
+    @staticmethod
+    async def async_create():
+        """Creates a new connection.
+
+        This is intended for use in an apython REPL. It constructs a new
+        connection and returns it without creating an asyncio envet loop.
+        """
+        connection = Connection()
+        cookie, key = _cookie_and_key()
+        connection.websocket = await websockets.connect(_uri(), extra_headers=_headers(), subprotocols=_subprotocols())
+        return connection
 
     def __init__(self):
         self.__deferred = None
@@ -92,24 +135,13 @@ class Connection:
         coro: A coroutine to run once connected.
         args: Passed to coro after its first argument (this connection)
         """
-        cookie_key = 'ITERM2_COOKIE'
-        key_key = 'ITERM2_KEY'
-        headers = {"origin": "ws://localhost/"}
-        if cookie_key in os.environ:
-            headers["x-iterm2-cookie"] = os.environ[cookie_key]
-        if key_key in os.environ:
-            headers["x-iterm2-key"] = os.environ[key_key]
-        headers["x-iterm2-library-version"] = "python {}".format(__version__)
-        async with websockets.connect('ws://localhost:1912',
-                                      extra_headers=headers,
-                                      subprotocols=['api.iterm2.com']) as websocket:
+        async with websockets.connect(_uri(), extra_headers=_headers(), subprotocols=_subprotocols()) as websocket:
             self.websocket = websocket
             try:
                 await coro(self, *args)
             except Exception as _err:
                 traceback.print_exc()
                 sys.exit(1)
-
 
     async def async_dispatch_until_id(self, reqid):
         """
