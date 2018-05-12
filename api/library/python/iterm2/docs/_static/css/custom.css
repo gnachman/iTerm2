@@ -3311,7 +3311,11 @@ h2:first-child {
   text-align: right;
 }
 
-div#indices-and-tables > h1,h2 {
+#indices-and-tables h1 {
+  display: none;
+}
+
+#indices-and-tables h2 {
   display: none;
 }
 
