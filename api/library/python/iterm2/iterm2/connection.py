@@ -68,7 +68,7 @@ class Connection:
         """Creates a new connection.
 
         This is intended for use in an apython REPL. It constructs a new
-        connection and returns it without creating an asyncio envet loop.
+        connection and returns it without creating an asyncio event loop.
         """
         connection = Connection()
         cookie, key = _cookie_and_key()
