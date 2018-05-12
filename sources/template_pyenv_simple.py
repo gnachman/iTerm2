@@ -18,4 +18,4 @@ async def main(connection, argv):
         print("No current window")
 
 if __name__ == "__main__":
-    iterm2.connection.Connection().run(main, sys.argv)
+    iterm2.Connection().run(main, sys.argv)

@@ -170,6 +170,7 @@ void OnHotKeyEvent(void);
 - (void)makeTerminalWindowFullScreen:(NSWindowController<iTermWindowController> *)term;
 
 - (void)openSingleUseWindowWithCommand:(NSString *)command;
+- (void)openSingleUseWindowWithCommand:(NSString *)command inject:(NSData *)injection;
 - (void)migrateApplicationSupportDirectoryIfNeeded;
 
 @end

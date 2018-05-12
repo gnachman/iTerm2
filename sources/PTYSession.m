@@ -8180,6 +8180,20 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
+- (void)injectData:(NSData *)data {
+    VT100Parser *parser = [[VT100Parser alloc] init];
+    parser.encoding = self.terminal.encoding;
+    [parser putStreamData:data.bytes length:data.length];
+    CVector vector;
+    CVectorCreate(&vector, 100);
+    [parser addParsedTokensToVector:&vector];
+    if (CVectorCount(&vector) == 0) {
+        CVectorDestroy(&vector);
+        return;
+    }
+    [self executeTokens:&vector bytesHandled:data.length];
+}
+
 - (iTermColorMap *)screenColorMap {
     return _colorMap;
 }

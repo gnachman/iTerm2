@@ -34,7 +34,7 @@ get started:
         await connection.async_dispatch_until_future(asyncio.Future())
 
     if __name__ == "__main__":
-        iterm2.connection.Connection().run(main, sys.argv)
+        iterm2.Connection().run(main, sys.argv)
 
 Let's examine it line by line.
 

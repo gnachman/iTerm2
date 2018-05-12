@@ -1499,6 +1499,10 @@ static iTermController *gSharedInstance;
 }
 
 - (void)openSingleUseWindowWithCommand:(NSString *)command {
+    [self openSingleUseWindowWithCommand:command inject:nil];
+}
+
+- (void)openSingleUseWindowWithCommand:(NSString *)command inject:(NSData *)injection {
     if ([command hasSuffix:@"&"] && command.length > 1) {
         command = [command substringToIndex:command.length - 1];
         system(command.UTF8String);
@@ -1525,6 +1529,9 @@ static iTermController *gSharedInstance;
                        term.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
                        PTYSession *session = [term createTabWithProfile:profile withCommand:command];
                        session.isSingleUseSession = YES;
+                       if (injection) {
+                           [session injectData:injection];
+                       }
                        return session;
                    }];
 }

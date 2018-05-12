@@ -19,7 +19,7 @@ Here's the example script that iTerm2 provides for you, minus some comments:
             print("No current window")
 
     if __name__ == "__main__":
-	iterm2.connection.Connection().run(main, sys.argv)
+	iterm2.Connection().run(main, sys.argv)
 
 There's a lot going on here. Let's take it part by part.
 
@@ -123,7 +123,7 @@ script.
 .. code-block:: python
 
     if __name__ == "__main__":
-	iterm2.connection.Connection().run(main, sys.argv)
+	iterm2.Connection().run(main, sys.argv)
 
 The `if` statement is a bit of standard Python boilerplate; you can ignore it
 as its condition will always be `True`.

@@ -864,17 +864,7 @@ NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPI
 }
 
 - (void)inject:(NSData *)data into:(PTYSession *)session {
-    VT100Parser *parser = [[VT100Parser alloc] init];
-    parser.encoding = session.terminal.encoding;
-    [parser putStreamData:data.bytes length:data.length];
-    CVector vector;
-    CVectorCreate(&vector, 100);
-    [parser addParsedTokensToVector:&vector];
-    if (CVectorCount(&vector) == 0) {
-        CVectorDestroy(&vector);
-        return;
-    }
-    [session executeTokens:&vector bytesHandled:data.length];
+    [session injectData:data];
 }
 
 - (void)apiServerActivate:(ITMActivateRequest *)request handler:(void (^)(ITMActivateResponse *))handler {
