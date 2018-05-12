@@ -186,6 +186,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
     NSWindow *window = notification.object;
     PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:window];
+    focusChange.window = [[ITMFocusChangedNotification_Window alloc] init];
     if (term) {
         focusChange.window.windowId = term.terminalGuid;
         focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowBecameKey;
@@ -207,6 +208,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     NSWindow *window = notification.object;
     PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:window];
     if (window && term) {
+        focusChange.window = [[ITMFocusChangedNotification_Window alloc] init];
         focusChange.window.windowId = term.terminalGuid;
         focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowResignedKey;
         [self handleFocusChange:focusChange];
@@ -1093,6 +1095,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
     focusChange = [[ITMFocusChangedNotification alloc] init];
     PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    focusChange.window = [[ITMFocusChangedNotification_Window alloc] init];
     if (term && term.window == NSApp.keyWindow) {
         focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowBecameKey;
     } else if (term) {
