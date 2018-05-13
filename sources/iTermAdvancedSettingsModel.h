@@ -216,7 +216,10 @@
 + (double)activeUpdateCadence;
 + (BOOL)openNewWindowAtStartup;
 + (BOOL)resetSGROnPrompt;
-+ (BOOL)useLowPowerGPUWhenUnplugged;
+
+#warning Bring this back
+//+ (BOOL)useLowPowerGPUWhenUnplugged;
+
 + (BOOL)retinaInlineImages;
 
 @end

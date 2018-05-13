@@ -4,7 +4,8 @@
 //
 //  Created by George Nachman on 4/29/18.
 //
-
+#warning Bring this back
+#if 0
 #import "iTermMetalDeviceProvider.h"
 
 #import "iTermAdvancedSettingsModel.h"
@@ -100,3 +101,4 @@ NSString *const iTermMetalDeviceProviderPreferredDeviceDidChangeNotification = @
 @end
 
 NS_ASSUME_NONNULL_END
+#endif
