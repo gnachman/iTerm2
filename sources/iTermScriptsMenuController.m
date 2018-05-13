@@ -55,9 +55,8 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSInteger)separatorIndex {
-    return [_scriptsMenu.itemArray indexOfObjectPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        return [obj.identifier isEqualToString:@"Separator"];
-    }];
+    // For the 3.2 branch I've forcibly removed the new stuff in the scripts menu that goes in master.
+    return 0;
 }
 
 - (void)removeMenuItemsAfterSeparator {
