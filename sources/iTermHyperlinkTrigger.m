@@ -28,6 +28,11 @@
 
 - (NSString *)paramPlaceholder
 {
+    return [self paramDefault];
+}
+
+- (NSString *)paramDefault
+{
     return @"https://\\0";
 }
 
