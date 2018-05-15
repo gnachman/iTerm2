@@ -32,6 +32,7 @@ extern NSString * const kTriggerPartialLineKey;
 // Subclasses should implement:
 - (NSString *)title;
 - (NSString *)paramPlaceholder;
+- (NSString *)paramDefault;
 // Returns true if this kind of action takes a parameter.
 - (BOOL)takesParameter;
 // Returns true if the parameter this action takes is a popupbutton.
