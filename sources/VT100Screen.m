@@ -4289,18 +4289,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)linkRun:(VT100GridRun)run
-       withURLCode:(unsigned short)code {
-    screen_char_t fg = { 0 };
-    screen_char_t bg = { 0 };
-    
-    fg.urlCode = code;
+    withURLCode:(unsigned short)code {
     
     for (NSValue *value in [currentGrid_ rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];
-        [currentGrid_ setBackgroundColor:bg
-                         foregroundColor:fg
-                              inRectFrom:rect.origin
-                                      to:VT100GridRectMax(rect)];
+        [currentGrid_ setURLCode:code
+                      inRectFrom:rect.origin
+                              to:VT100GridRectMax(rect)];
     }
 }
 
