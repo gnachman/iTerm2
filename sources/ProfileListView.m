@@ -120,6 +120,7 @@ const CGFloat kDefaultTagsWidth = 80;
     CGFloat _heightWithTags;
     CGFloat _heightWithoutTags;
     NSFont *_font;
+    NSInteger _restoringSelection;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -854,6 +855,11 @@ const CGFloat kDefaultTagsWidth = 80;
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
+    if (_restoringSelection) {
+        // After reloadData, setting selection back to what it was.
+        return;
+    }
+
     // There was a click on a row
     if (self.delegate && [self.delegate respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
         [self.delegate profileTableSelectionDidChange:self];
@@ -879,15 +885,25 @@ const CGFloat kDefaultTagsWidth = 80;
     NSSet *newSelectedGuids = [NSSet setWithArray:[selectedGuids_.allObjects filteredArrayUsingBlock:^BOOL(id guid) {
         return ([dataSource_ indexOfProfileWithGuid:guid] != -1);
     }]];
-    if (self.delegate && ![selectedGuids_ isEqualToSet:newSelectedGuids]) {
-        [selectedGuids_ release];
-        selectedGuids_ = newSelectedGuids;
-        [selectedGuids_ retain];
-        if ([self.delegate respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
-            [self.delegate profileTableSelectionDidChange:self];
+    if (self.delegate && [selectedGuids_ isEqualToSet:newSelectedGuids]) {
+        // No change to selection. Don't tell the delegate.
+        _restoringSelection++;
+        [self selectGuids:newSelectedGuids.allObjects];
+        _restoringSelection--;
+    } else {
+        if (self.delegate && ![selectedGuids_ isEqualToSet:newSelectedGuids]) {
+            // Selection is changing.
+            [selectedGuids_ release];
+            selectedGuids_ = newSelectedGuids;
+            [selectedGuids_ retain];
+            if ([self.delegate respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
+                [self.delegate profileTableSelectionDidChange:self];
+            }
         }
-    }
-    [self selectGuids:newSelectedGuids.allObjects];
+
+        // Selection changed or there is no delegate.
+        [self selectGuids:newSelectedGuids.allObjects];
+     }
 }
 
 - (void)selectRowIndex:(int)theRow
