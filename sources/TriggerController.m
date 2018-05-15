@@ -29,6 +29,7 @@
 #import "SetDirectoryTrigger.h"
 #import "SetHostnameTrigger.h"
 #import "StopTrigger.h"
+#import "iTermHyperlinkTrigger.h"
 #import "Trigger.h"
 
 #import <ColorPicker/ColorPicker.h>
@@ -116,6 +117,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                              [HighlightTrigger class],
                              [MarkTrigger class],
                              [PasswordTrigger class],
+                             [iTermHyperlinkTrigger class],
                              [SetDirectoryTrigger class],
                              [SetHostnameTrigger class],
                              [StopTrigger class] ];
@@ -615,6 +617,8 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     Trigger *triggerObj = [self triggerWithAction:triggerDictionary[kTriggerActionKey]];
     if ([triggerObj paramIsPopupButton]) {
         triggerDictionary[kTriggerParameterKey] = [triggerObj defaultPopupParameterObject];
+    } else if ([triggerObj paramDefault]) {
+        triggerDictionary[kTriggerParameterKey] = [triggerObj paramDefault];
     }
     [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:YES];
 }

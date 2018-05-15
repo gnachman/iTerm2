@@ -623,6 +623,20 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
+- (void)setURLCode:(unsigned short)code
+        inRectFrom:(VT100GridCoord)from
+                to:(VT100GridCoord)to {
+    for (int y = from.y; y <= to.y; y++) {
+        screen_char_t *line = [self screenCharsAtLineNumber:y];
+        for (int x = from.x; x <= to.x; x++) {
+            line[x].urlCode = code;
+        }
+        [self markCharsDirty:YES
+                  inRectFrom:VT100GridCoordMake(from.x, y)
+                          to:VT100GridCoordMake(to.x, y)];
+    }
+}
+
 - (void)copyCharsFromGrid:(VT100Grid *)otherGrid {
     if (otherGrid == self) {
         return;

@@ -1411,6 +1411,17 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     }
 }
 
+- (void)linkTextInRange:(NSRange)range
+basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                  URLCode:(unsigned short)code {
+    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - self.numberOfScrollbackLines;
+    
+    VT100GridRun gridRun = [currentGrid_ gridRunFromRange:range relativeToRow:lineNumber];
+    if (gridRun.length > 0) {
+        [self linkRun:gridRun withURLCode:code];
+    }
+}
+
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info
 {
     assert(len == (info.width + 1) * info.height * sizeof(screen_char_t));
@@ -4275,6 +4286,17 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 - (void)dumpScreen
 {
     NSLog(@"%@", [self debugString]);
+}
+
+- (void)linkRun:(VT100GridRun)run
+    withURLCode:(unsigned short)code {
+    
+    for (NSValue *value in [currentGrid_ rectsForRun:run]) {
+        VT100GridRect rect = [value gridRectValue];
+        [currentGrid_ setURLCode:code
+                      inRectFrom:rect.origin
+                              to:VT100GridRectMax(rect)];
+    }
 }
 
 // Set the color of prototypechar to all chars between startPoint and endPoint on the screen.

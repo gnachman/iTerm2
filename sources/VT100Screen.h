@@ -123,6 +123,10 @@ extern int kVT100ScreenMinRows;
    basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                       colors:(NSDictionary *)colors;
 
+- (void)linkTextInRange:(NSRange)range
+   basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                     URLCode:(unsigned short)code;
+
 // Load a frame from a dvr decoder.
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
 

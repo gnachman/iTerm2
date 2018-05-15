@@ -183,6 +183,11 @@
                 inRectFrom:(VT100GridCoord)from
                         to:(VT100GridCoord)to;
 
+// Set URLCode in a range.
+- (void)setURLCode:(unsigned short)code
+        inRectFrom:(VT100GridCoord)from
+                to:(VT100GridCoord)to;
+
 // Converts a range relative to the start of a row into a grid run. If row is negative, a smaller-
 // than-range.length (but valid!) grid run will be returned.
 - (VT100GridRun)gridRunFromRange:(NSRange)range relativeToRow:(int)row;
