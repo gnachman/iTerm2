@@ -5447,6 +5447,18 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (BOOL)wantsCommandHistoryUpdatesFromSession:(PTYSession *)session {
+    if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
+        return YES;
+    }
+    if (_autocompleteCandidateListItem && session == self.currentSession) {
+        return YES;
+    }
+    return NO;
+}
+
+// NOTE: If you change the conditions under which action is taken here also
+// update wantsCommandHistoryUpdatesFromSession:
 - (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix inSession:(PTYSession *)session popIfNeeded:(BOOL)popIfNeeded {
     if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
         if (!commandHistoryPopup) {

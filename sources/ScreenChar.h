@@ -386,6 +386,8 @@ int EffectiveLineLength(screen_char_t* theLine, int totalLength);
 NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
                                        int lineLength);
 
+NSString *DebugStringForScreenChar(screen_char_t c);
+
 // Convert an array of chars to a string, quickly.
 NSString* CharArrayToString(unichar* charHaystack, int o);
 

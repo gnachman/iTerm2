@@ -10,6 +10,7 @@
 #import "EquivalenceClassSet.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermNotificationController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermShortcut.h"
@@ -404,6 +405,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         DLog(@"Hidden windows existing, showing dashboard");
         [[TmuxDashboardController sharedInstance] showWindow:nil];
         [[[TmuxDashboardController sharedInstance] window] makeKeyAndOrderFront:nil];
+        [[iTermNotificationController sharedInstance] notify:@"Too many tmux windows!" withDescription:@"Use the tmux dashboard to select which to open."];
     }
     for (NSArray *record in windowsToOpen) {
         DLog(@"Open window %@", record);

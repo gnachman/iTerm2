@@ -743,6 +743,7 @@ typedef enum {
 
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length;
 - (void)setVariableNamed:(NSString *)name toValue:(NSString *)newValue;
+- (void)injectData:(NSData *)data;
 
 #pragma mark - API
 

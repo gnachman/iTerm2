@@ -2689,16 +2689,15 @@ typedef struct ITMNewSessionNotification__storage_ {
 
 @dynamic eventOneOfCase;
 @dynamic applicationActive;
-@dynamic windowKey;
+@dynamic window;
 @dynamic selectedTab;
 @dynamic session;
-@dynamic hasWindowId, windowId;
 
 typedef struct ITMFocusChangedNotification__storage_ {
   uint32_t _has_storage_[2];
+  ITMFocusChangedNotification_Window *window;
   NSString *selectedTab;
   NSString *session;
-  NSString *windowId;
 } ITMFocusChangedNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -2717,13 +2716,13 @@ typedef struct ITMFocusChangedNotification__storage_ {
         .dataType = GPBDataTypeBool,
       },
       {
-        .name = "windowKey",
-        .dataTypeSpecific.className = NULL,
-        .number = ITMFocusChangedNotification_FieldNumber_WindowKey,
+        .name = "window",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMFocusChangedNotification_Window),
+        .number = ITMFocusChangedNotification_FieldNumber_Window,
         .hasIndex = -1,
-        .offset = 1,  // Stored in _has_storage_ to save space.
+        .offset = (uint32_t)offsetof(ITMFocusChangedNotification__storage_, window),
         .flags = GPBFieldOptional,
-        .dataType = GPBDataTypeBool,
+        .dataType = GPBDataTypeMessage,
       },
       {
         .name = "selectedTab",
@@ -2740,15 +2739,6 @@ typedef struct ITMFocusChangedNotification__storage_ {
         .number = ITMFocusChangedNotification_FieldNumber_Session,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMFocusChangedNotification__storage_, session),
-        .flags = GPBFieldOptional,
-        .dataType = GPBDataTypeString,
-      },
-      {
-        .name = "windowId",
-        .dataTypeSpecific.className = NULL,
-        .number = ITMFocusChangedNotification_FieldNumber_WindowId,
-        .hasIndex = 2,
-        .offset = (uint32_t)offsetof(ITMFocusChangedNotification__storage_, windowId),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },
@@ -2780,6 +2770,98 @@ void ITMFocusChangedNotification_ClearEventOneOfCase(ITMFocusChangedNotification
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMFocusChangedNotification_Window
+
+@implementation ITMFocusChangedNotification_Window
+
+@dynamic hasWindowStatus, windowStatus;
+@dynamic hasWindowId, windowId;
+
+typedef struct ITMFocusChangedNotification_Window__storage_ {
+  uint32_t _has_storage_[1];
+  ITMFocusChangedNotification_Window_WindowStatus windowStatus;
+  NSString *windowId;
+} ITMFocusChangedNotification_Window__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "windowStatus",
+        .dataTypeSpecific.enumDescFunc = ITMFocusChangedNotification_Window_WindowStatus_EnumDescriptor,
+        .number = ITMFocusChangedNotification_Window_FieldNumber_WindowStatus,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMFocusChangedNotification_Window__storage_, windowStatus),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "windowId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMFocusChangedNotification_Window_FieldNumber_WindowId,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMFocusChangedNotification_Window__storage_, windowId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMFocusChangedNotification_Window class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMFocusChangedNotification_Window__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMFocusChangedNotification)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMFocusChangedNotification_Window_WindowStatus
+
+GPBEnumDescriptor *ITMFocusChangedNotification_Window_WindowStatus_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "TerminalWindowBecameKey\000TerminalWindowIs"
+        "Current\000TerminalWindowResignedKey\000";
+    static const int32_t values[] = {
+        ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowBecameKey,
+        ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowIsCurrent,
+        ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowResignedKey,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMFocusChangedNotification_Window_WindowStatus)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMFocusChangedNotification_Window_WindowStatus_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMFocusChangedNotification_Window_WindowStatus_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowBecameKey:
+    case ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowIsCurrent:
+    case ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowResignedKey:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
 #pragma mark - ITMTerminateSessionNotification
 
 @implementation ITMTerminateSessionNotification

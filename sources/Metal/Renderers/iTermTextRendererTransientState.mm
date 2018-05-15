@@ -656,6 +656,12 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                     piu->underlineStyle = attributes[x].underlineStyle;
                     piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
                 }
+                if (part != iTermTextureMapMiddleCharacterPart) {
+                    // Only underline center part of the character. There are weird artifacts otherwise,
+                    // such as floating underlines (for parts above and below) or doubly drawn
+                    // underlines.
+                    piu->underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
+                }
 
                 // Set color info or queue for fixup since color info may not exist yet.
                 if (entry->_part == iTermTextureMapMiddleCharacterPart) {

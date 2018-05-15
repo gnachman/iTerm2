@@ -186,6 +186,22 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     }
 }
 
+- (IBAction)closeCurrentSession:(id)sender {
+    [self close];
+}
+
+- (void)closeWindow:(id)sender {
+    [self close];
+}
+
+- (BOOL)autoHidesHotKeyWindow {
+    return NO;
+}
+
+- (void)cancel:(id)sender {
+    [self close];
+}
+
 #pragma mark - NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {

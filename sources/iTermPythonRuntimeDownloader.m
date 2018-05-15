@@ -70,7 +70,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 }
 
 - (BOOL)shouldDownloadEnvironment {
-    static const NSInteger minimumVersion = 1;
+    static const NSInteger minimumVersion = 11;
     return (self.installedVersion < minimumVersion);
 }
 
@@ -221,6 +221,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         [alert runModal];
     } else {
         NSString *zip = [self pathToZIP];
+        [[NSFileManager defaultManager] removeItemAtPath:zip error:nil];
         [[NSFileManager defaultManager] moveItemAtPath:tempfile toPath:zip error:nil];
         NSURL *container = [self urlOfStandardEnvironmentContainer];
         [self installPythonEnvironmentTo:container completion:^(BOOL ok) {

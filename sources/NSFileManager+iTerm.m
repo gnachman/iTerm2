@@ -143,19 +143,11 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 }
 
 - (NSString *)versionNumberFilename {
-    return [[self legacyApplicationSupportDirectory] stringByAppendingPathComponent:@"version.txt"];
+    return [[self applicationSupportDirectory] stringByAppendingPathComponent:@"version.txt"];
 }
 
 - (NSString *)scriptsPath {
-    static dispatch_once_t onceToken;
-    NSString *legacyPath = [[self legacyApplicationSupportDirectory] stringByAppendingPathComponent:@"Scripts"];
-#warning Deprecate the legacy path. Tell users to move their files and don't use it.
-    NSString *modernPath = [[self applicationSupportDirectory] stringByAppendingPathComponent:@"Scripts"];
-    static BOOL useLegacy;
-    dispatch_once(&onceToken, ^{
-        useLegacy = [self fileExistsAtPath:legacyPath] && ![self fileExistsAtPath:modernPath];
-    });
-    return useLegacy ? legacyPath : modernPath;
+    return [[self applicationSupportDirectory] stringByAppendingPathComponent:@"Scripts"];
 }
 
 - (NSString *)scriptsPathWithoutSpaces {
@@ -172,7 +164,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 }
 
 - (NSString *)quietFilePath {
-    return [[self legacyApplicationSupportDirectory] stringByAppendingPathComponent:@"quiet"];
+    return [[self applicationSupportDirectory] stringByAppendingPathComponent:@"quiet"];
 }
 
 - (NSString *)temporaryDirectory {
@@ -265,6 +257,26 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         ok = NO;
     }
     return ok;
+}
+
+- (BOOL)itemIsDirectory:(NSString *)path {
+    NSDictionary<NSFileAttributeKey, id> *attributes = [self attributesOfItemAtPath:path error:nil];
+    return [attributes[NSFileType] isEqual:NSFileTypeDirectory];
+}
+
+- (BOOL)itemIsSymlink:(NSString *)path {
+    NSDictionary<NSFileAttributeKey, id> *attributes = [self attributesOfItemAtPath:path error:nil];
+    return [attributes[NSFileType] isEqual:NSFileTypeSymbolicLink];
+}
+
+- (BOOL)directoryEmpty:(NSString *)path {
+    NSDirectoryEnumerator *enumerator = [self enumeratorAtPath:path];
+    for (NSString *file in enumerator) {
+        if (file) {
+            return NO;
+        }
+    }
+    return YES;
 }
 
 @end

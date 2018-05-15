@@ -388,6 +388,9 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Remove the ACH window. It won't come back until showAutoCommandHistoryForSession is called.
 - (void)hideAutoCommandHistoryForSession:(PTYSession *)session;
 
+// Should updateAutoCommandHistoryForPrefix:inSession:popIfNeeded: be called?
+- (BOOL)wantsCommandHistoryUpdatesFromSession:(PTYSession *)session;
+
 // Set the current command prefix for a given session, updating the ACH window
 // if open. If it was shown with showAutoCommandHistoryForSession but then
 // taken offscreen because there were no entries, this may cause it to return

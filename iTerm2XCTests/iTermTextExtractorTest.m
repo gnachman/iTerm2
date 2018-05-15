@@ -488,6 +488,45 @@ static const NSInteger kUnicodeVersion = 9;
     XCTAssertEqual(actual, 1);
 }
 
+- (void)testHaveNonWhitespaceInFirstLineOfRange_OneLineOfWhitespace {
+    // u+2003 is em space
+    [self appendWrappedLine:@"  \t \u2003 " width:30 eol:EOL_HARD];
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    VT100GridWindowedRange range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, _lines.count), 0, 0);
+    BOOL actual = [extractor haveNonWhitespaceInFirstLineOfRange:range];
+    XCTAssertFalse(actual);
+}
+
+- (void)testHaveNonWhitespaceInFirstLineOfRange_NonWhitespaceOnSecondLine {
+    // u+2003 is em space
+    [self appendWrappedLine:@"  \t \u2003 " width:30 eol:EOL_HARD];
+    [self appendWrappedLine:@"x" width:30 eol:EOL_HARD];
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    VT100GridWindowedRange range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, _lines.count), 0, 0);
+    BOOL actual = [extractor haveNonWhitespaceInFirstLineOfRange:range];
+    XCTAssertFalse(actual);
+}
+
+- (void)testHaveNonWhitespaceInFirstLineOfRange_NonWhitespaceOnFirstLine {
+    // u+2003 is em space
+    [self appendWrappedLine:@"  \tx \u2003 " width:30 eol:EOL_HARD];
+    [self appendWrappedLine:@"x" width:30 eol:EOL_HARD];
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    VT100GridWindowedRange range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, _lines.count), 0, 0);
+    BOOL actual = [extractor haveNonWhitespaceInFirstLineOfRange:range];
+    XCTAssertTrue(actual);
+}
+
+- (void)testHaveNonWhitespaceInFirstLineOfRange_ComplexNonWhitespaceOnFirstLine {
+    // u+2003 is em space
+    [self appendWrappedLine:@"  \t😀 \u2003 " width:30 eol:EOL_HARD];
+    [self appendWrappedLine:@"x" width:30 eol:EOL_HARD];
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    VT100GridWindowedRange range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, _lines.count), 0, 0);
+    BOOL actual = [extractor haveNonWhitespaceInFirstLineOfRange:range];
+    XCTAssertTrue(actual);
+}
+
 #pragma mark - iTermTextDataSource
 
 - (int)lengthOfLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer {

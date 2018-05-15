@@ -147,6 +147,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
 #endif
 
 - (instancetype)initWithJson:(NSData *)json {
+    DLog(@"Initialize iTermImage");
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:json options:0 error:nil];
     if (!dict) {
         DLog(@"nil json");
@@ -230,6 +231,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
             [_images addObject:image];
         }
     }
+    DLog(@"Successfully inited iTermImage");
 
     return self;
 }

@@ -944,6 +944,7 @@ static BOOL hasBecomeActive = NO;
         DLog(@"applicationWillFinishLaunching:");
     }
 
+    [[iTermController sharedInstance] migrateApplicationSupportDirectoryIfNeeded];
     [self buildScriptMenu:nil];
 
     // Fix up various user defaults settings.
@@ -1973,6 +1974,16 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)buildScriptMenu:(id)sender {
     [iTermScriptConsole sharedInstance];
     [self.scriptsMenuController build];
+}
+
+- (IBAction)openREPL:(id)sender {
+    [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithCompletion:^{
+        NSString *command = [[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"];
+        NSURL *injectionURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
+        NSData *injection = [NSData dataWithContentsOfURL:injectionURL];
+        [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
+                                                                  inject:injection];
+    }];
 }
 
 - (IBAction)openScriptConsole:(id)sender {

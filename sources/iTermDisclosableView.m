@@ -7,18 +7,19 @@
 //
 
 #import "iTermDisclosableView.h"
+#import "NSMutableAttributedString+iTerm.h"
 
 @implementation iTermDisclosableView {
     NSTextView *_textView;
-    __unsafe_unretained NSButton *_disclosureButton;
+    NSButton *_disclosureButton;
     NSRect _originalWindowFrame;
-    __unsafe_unretained NSTextField *_labelField;
+    NSTextField *_labelField;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect prompt:(NSString *)prompt message:(NSString *)message {
     self = [super initWithFrame:frameRect];
     if (self) {
-        _disclosureButton = [[[NSButton alloc] initWithFrame:NSMakeRect(0, 2, 24, 24)] autorelease];
+        _disclosureButton = [[NSButton alloc] initWithFrame:NSMakeRect(0, 2, 24, 24)];
         [_disclosureButton setButtonType:NSOnOffButton];
         [_disclosureButton setBezelStyle:NSDisclosureBezelStyle];
         [_disclosureButton setImagePosition:NSImageOnly];
@@ -27,7 +28,7 @@
         [_disclosureButton setAction:@selector(disclosureButtonPressed:)];
         [_disclosureButton sizeToFit];
 
-        _labelField = [[[NSTextField alloc] initWithFrame:NSMakeRect(NSMaxX(_disclosureButton.frame), 0, frameRect.size.width-NSMaxX(_disclosureButton.frame), 18)] autorelease];
+        _labelField = [[NSTextField alloc] initWithFrame:NSMakeRect(NSMaxX(_disclosureButton.frame), 0, frameRect.size.width-NSMaxX(_disclosureButton.frame), 18)];
         [_labelField setDrawsBackground:NO];
         [_labelField setBordered:NO];
         [_labelField setEditable:NO];
@@ -49,18 +50,23 @@
         [_textView setVerticallyResizable:YES];
         [_textView setHorizontallyResizable:YES];
         [[_textView textContainer] setWidthTracksTextView:YES];
-        [_textView sizeToFit];
+
+        NSTextStorage *storage = [_textView textStorage];
+        NSMutableParagraphStyle *style = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+        [style setLineBreakMode:NSLineBreakByWordWrapping];
+        [storage addAttribute:NSParagraphStyleAttributeName value:style range:NSMakeRange(0, [storage length])];
+
+        CGFloat height = [_textView.attributedString heightForWidth:300];
+        NSRect frame = _textView.frame;
+        frame.size.width = 300;
+        frame.size.height = height;
+        _textView.frame = frame;
 
         [self addSubview:_disclosureButton];
         [self addSubview:_labelField];
         [self addSubview:_textView];
     }
     return self;
-}
-
-- (void)dealloc {
-    [_textView release];
-    [super dealloc];
 }
 
 - (BOOL)isFlipped {

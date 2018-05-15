@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "Api.pbobjc.h"
 
-extern NSString *const iTermWebSocketConnectionPeerIdentityBundleIdentifier;
+extern NSString *const iTermAPIServerAuthorizationKey;
 extern NSString *const iTermAPIServerDidReceiveMessage;
 extern NSString *const iTermAPIServerWillSendMessage;
 extern NSString *const iTermAPIServerConnectionRejected;

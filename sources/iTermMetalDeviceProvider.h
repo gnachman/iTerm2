@@ -4,7 +4,8 @@
 //
 //  Created by George Nachman on 4/29/18.
 //
-
+#warning Bring this back
+#if 0
 #import <Metal/Metal.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -21,3 +22,4 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @end
 
 NS_ASSUME_NONNULL_END
+#endif

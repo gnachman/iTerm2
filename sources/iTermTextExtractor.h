@@ -108,6 +108,8 @@ extern const NSInteger kLongMaximumWordLength;
                      forward:(BOOL)forward
       forCharacterMatchingFilter:(BOOL (^)(screen_char_t, VT100GridCoord))block;
 
+- (BOOL)haveNonWhitespaceInFirstLineOfRange:(VT100GridWindowedRange)windowedRange;
+
 // Returns content in the specified range, ignoring hard newlines. If |forward| is set then content
 // is captured up to the first null; otherwise, content after the last null in the range is returned.
 // If |continuationChars| is non-nil and a character that should be ignored is found, its location

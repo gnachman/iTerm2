@@ -9,7 +9,11 @@
 
 #import "CVector.h"
 #import "DebugLogging.h"
+#import "iTermAPIAuthorizationController.h"
+#import "iTermController.h"
+#import "iTermDisclosableView.h"
 #import "iTermLSOF.h"
+#import "iTermPythonArgumentParser.h"
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -18,14 +22,7 @@
 #import "PTYTab.h"
 #import "VT100Parser.h"
 
-static NSString *const kBundlesWithAPIAccessSettingKey = @"NoSyncBundlesWithAPIAccessSettings";
 NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";
-
-static NSString *const kAPIAccessAllowed = @"allowed";
-static NSString *const kAPIAccessDate = @"date";
-static NSString *const kAPINextConfirmationDate = @"next confirmation";
-static NSString *const kAPIAccessLocalizedName = @"app name";
-static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 @interface iTermAllSessionsSubscription : NSObject
 @property (nonatomic, strong) ITMNotificationRequest *request;
@@ -185,20 +182,31 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
     NSWindow *window = notification.object;
     PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:window];
-    if (window) {
-        focusChange.windowId = term.terminalGuid;
-        focusChange.windowKey = YES;
-        [self handleFocusChange:focusChange];
+    focusChange.window = [[ITMFocusChangedNotification_Window alloc] init];
+    if (term) {
+        focusChange.window.windowId = term.terminalGuid;
+        focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowBecameKey;
+    } else {
+        term = [[iTermController sharedInstance] currentTerminal];
+        if (!term) {
+            // Non-terminal window became key and no terminal is current (e.g., you opened prefs).
+            // Not very interesting.
+            return;
+        }
+        focusChange.window.windowId = [term terminalGuid];
+        focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowIsCurrent;
     }
+    [self handleFocusChange:focusChange];
 }
 
 - (void)windowDidResignKey:(NSNotification *)notification {
     ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
     NSWindow *window = notification.object;
     PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:window];
-    if (window) {
-        focusChange.windowId = term.terminalGuid;
-        focusChange.windowKey = NO;
+    if (window && term) {
+        focusChange.window = [[ITMFocusChangedNotification_Window alloc] init];
+        focusChange.window.windowId = term.terminalGuid;
+        focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowResignedKey;
         [self handleFocusChange:focusChange];
     }
 }
@@ -232,89 +240,29 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 #pragma mark - iTermAPIServerDelegate
 
-- (NSDictionary *)apiServerAuthorizeProcess:(pid_t)pid
-                              preauthorized:(BOOL)preauthorized
-                                     reason:(out NSString *__autoreleasing *)reason
-                                displayName:(out NSString *__autoreleasing *)displayName {
-    *displayName = nil;
-    NSMutableDictionary *bundles = [[[NSUserDefaults standardUserDefaults] objectForKey:kBundlesWithAPIAccessSettingKey] mutableCopy];
-    if (!bundles) {
-        bundles = [NSMutableDictionary dictionary];
-    }
-
-    NSString *processName = nil;
-    NSString *processIdentifier = nil;
-    NSString *processIdentifierWithoutArgs = nil;
-
-    NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
-    if (app.localizedName && app.bundleIdentifier) {
-        processName = app.localizedName;
-        processIdentifier = app.bundleIdentifier;
-    } else {
-        NSString *execName = nil;
-        processIdentifier = [iTermLSOF commandForProcess:pid execName:&execName];
-        if (!execName || !processIdentifier) {
-            *reason = [NSString stringWithFormat:@"Could not identify name for process with pid %d", (int)pid];
-            return nil;
-        }
-
-        NSArray<NSString *> *parts = [processIdentifier componentsInShellCommand];
-        NSString *maybePython = parts.firstObject.lastPathComponent;
-
-        if ([maybePython isEqualToString:@"python"] ||
-            [maybePython isEqualToString:@"python3.6"] ||
-            [maybePython isEqualToString:@"python3"]) {
-            if (parts.count > 1) {
-                processName = [parts[1] lastPathComponent];
-                processIdentifierWithoutArgs = [[parts subarrayWithRange:NSMakeRange(0, 2)] componentsJoinedByString:@" "];
-            }
-        }
-        if (!processName) {
-            processName = execName.lastPathComponent;
-            processIdentifierWithoutArgs = execName;
-        }
-    }
-    *displayName = processName;
-
-    NSDictionary *authorizedIdentity = @{ iTermWebSocketConnectionPeerIdentityBundleIdentifier: processIdentifierWithoutArgs };
-    if (preauthorized) {
-        *reason = @"Script launched by user action";
-        return authorizedIdentity;
-    }
-
-    NSString *key = [NSString stringWithFormat:@"bundle=%@", processIdentifierWithoutArgs];
-    NSDictionary *setting = bundles[key];
-    BOOL reauth = NO;
-    if (setting) {
-        if (![setting[kAPIAccessAllowed] boolValue]) {
-            // Access permanently disallowed.
-            *reason = [NSString stringWithFormat:@"Access permanently disallowed by user preference to %@", processIdentifier];
-            return nil;
-        }
-
-        NSString *name = setting[kAPIAccessLocalizedName];
-        if ([processName isEqualToString:name]) {
-            // Access is permanently allowed and the display name is unchanged. Do we need to reauth?
-
-            NSDate *confirm = setting[kAPINextConfirmationDate];
-            if ([[NSDate date] compare:confirm] == NSOrderedAscending) {
-                // No need to reauth, allow it.
-                *reason = [NSString stringWithFormat:@"Allowing continued API access to process id %d, name %@, bundle ID %@. User gave consent recently.", pid, processName, processIdentifier];
-                return authorizedIdentity;
-            }
-
-            // It's been a month since API access was confirmed. Request it again.
-            reauth = YES;
-        }
-    }
+- (BOOL)askUserToGrantAuthForController:(iTermAPIAuthorizationController *)controller
+                      isReauthorization:(BOOL)reauth
+                               remember:(out BOOL *)remember {
     NSAlert *alert = [[NSAlert alloc] init];
     if (reauth) {
         alert.messageText = @"Reauthorize API Access";
-        alert.informativeText = [NSString stringWithFormat:@"The application “%@” (%@) has API access, which grants it permission to see and control your activity. Would you like it to continue?", processName, processIdentifier];
+        alert.informativeText = [NSString stringWithFormat:@"The application “%@” has API access, which grants it permission to see and control your activity. Would you like it to continue?",
+                                 controller.humanReadableName];
     } else {
         alert.messageText = @"API Access Request";
-        alert.informativeText = [NSString stringWithFormat:@"The application “%@” (%@) would like to control iTerm2. This exposes a significant amount of data in iTerm2 to %@. Allow this request?", processName, processIdentifier, processName];
+        alert.informativeText = [NSString stringWithFormat:@"The application “%@” would like to control iTerm2. This exposes a significant amount of data in iTerm2 to %@. Allow this request?",
+                                 controller.humanReadableName, controller.humanReadableName];
     }
+
+    iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
+                                                                           prompt:@"Full Command"
+                                                                          message:controller.fullCommandOrBundleID];
+    accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
+    accessory.requestLayout = ^{
+        [alert layout];
+    };
+    alert.accessoryView = accessory;
+
     [alert addButtonWithTitle:@"Deny"];
     [alert addButtonWithTitle:@"Allow"];
     if (!reauth) {
@@ -323,20 +271,66 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         alert.showsSuppressionButton = YES;
     }
     NSModalResponse response = [alert runModal];
-    BOOL allow = (response == NSAlertSecondButtonReturn);
+    *remember = (alert.suppressionButton.state == NSOnState);
+    return (response == NSAlertSecondButtonReturn);
+}
 
-    if (reauth || alert.suppressionButton.state == NSOnState) {
-        bundles[key] = @{ kAPIAccessAllowed: @(allow),
-                          kAPIAccessDate: [NSDate date],
-                          kAPINextConfirmationDate: [[NSDate date] dateByAddingTimeInterval:kOneMonth],
-                          kAPIAccessLocalizedName: processName };
-    } else {
-        [bundles removeObjectForKey:key];
+- (NSDictionary *)apiServerAuthorizeProcess:(pid_t)pid
+                              preauthorized:(BOOL)preauthorized
+                                     reason:(out NSString *__autoreleasing *)reason
+                                displayName:(out NSString *__autoreleasing *)displayName {
+    iTermAPIAuthorizationController *controller = [[iTermAPIAuthorizationController alloc] initWithProcessID:pid];
+    *reason = [controller identificationFailureReason];
+    if (*reason) {
+        return nil;
     }
-    [[NSUserDefaults standardUserDefaults] setObject:bundles forKey:kBundlesWithAPIAccessSettingKey];
+    *displayName = controller.humanReadableName;
 
-    *reason = allow ? [NSString stringWithFormat:@"User accepted connection by %@", processIdentifier] : [NSString stringWithFormat:@"User rejected connection attempt by %@", processIdentifier];
-    return allow ? authorizedIdentity : nil;
+    if (preauthorized) {
+        *reason = @"Script launched by user action";
+        return controller.identity;
+    }
+
+
+    BOOL reauth = NO;
+    switch (controller.setting) {
+        case iTermAPIAuthorizationSettingPermanentlyDenied:
+            // Access permanently disallowed.
+            *reason = [NSString stringWithFormat:@"Access permanently disallowed by user preference to %@",
+                       controller.fullCommandOrBundleID];
+            return nil;
+
+        case iTermAPIAuthorizationSettingRecentConsent:
+            // No need to reauth, allow it.
+            *reason = [NSString stringWithFormat:@"Allowing continued API access to process id %d, name %@, bundle ID %@. User gave consent recently.",
+                       pid, controller.humanReadableName, controller.fullCommandOrBundleID];
+            return controller.identity;
+
+        case iTermAPIAuthorizationSettingExpiredConsent:
+            // It's been a month since API access was confirmed. Request it again.
+            reauth = YES;
+            break;
+
+        case iTermAPIAuthorizationSettingUnknown:
+            break;
+    }
+
+    BOOL remember = NO;
+    BOOL allow = [self askUserToGrantAuthForController:controller isReauthorization:reauth remember:&remember];
+
+    if (reauth || remember) {
+        [controller setAllowed:allow];
+    } else {
+        [controller removeSetting];
+    }
+
+    if (allow) {
+        *reason = [NSString stringWithFormat:@"User accepted connection by %@", controller.fullCommandOrBundleID];
+        return controller.identity;
+    } else {
+        *reason = [NSString stringWithFormat:@"User rejected connection attempt by %@", controller.fullCommandOrBundleID];
+        return nil;
+    }
 }
 
 - (PTYSession *)sessionForAPIIdentifier:(NSString *)identifier {
@@ -870,17 +864,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)inject:(NSData *)data into:(PTYSession *)session {
-    VT100Parser *parser = [[VT100Parser alloc] init];
-    parser.encoding = session.terminal.encoding;
-    [parser putStreamData:data.bytes length:data.length];
-    CVector vector;
-    CVectorCreate(&vector, 100);
-    [parser addParsedTokensToVector:&vector];
-    if (CVectorCount(&vector) == 0) {
-        CVectorDestroy(&vector);
-        return;
-    }
-    [session executeTokens:&vector bytesHandled:data.length];
+    [session injectData:data];
 }
 
 - (void)apiServerActivate:(ITMActivateRequest *)request handler:(void (^)(ITMActivateResponse *))handler {
@@ -1082,14 +1066,16 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     [response.notificationsArray addObject:focusChange];
 
     focusChange = [[ITMFocusChangedNotification alloc] init];
-    NSWindow *keyWindow = [NSApp keyWindow];
-    PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:keyWindow];
-    if (term) {
-        focusChange.windowKey = YES;
-        focusChange.windowId = term.terminalGuid;
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    focusChange.window = [[ITMFocusChangedNotification_Window alloc] init];
+    if (term && term.window == NSApp.keyWindow) {
+        focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowBecameKey;
+    } else if (term) {
+        focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowIsCurrent;
     } else {
-        focusChange.windowKey = NO;
+        focusChange.window.windowStatus = ITMFocusChangedNotification_Window_WindowStatus_TerminalWindowResignedKey;
     }
+    focusChange.window.windowId = term.terminalGuid;
     [response.notificationsArray addObject:focusChange];
 
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {

@@ -25,12 +25,11 @@
 
 @interface NSFileManager (iTerm)
 
+- (NSString *)legacyApplicationSupportDirectory;
 - (NSString *)applicationSupportDirectory;
 
 // Gives a symlink called ApplicationSupport because shebangs can't handle spaces and this breaks pyenv.
 - (NSString *)applicationSupportDirectoryWithoutSpaces;
-
-- (NSString *)legacyApplicationSupportDirectory;
 
 - (NSString *)temporaryDirectory;
 
@@ -63,5 +62,8 @@
 // Path to special file that, if it exists at launch time, suppresses autolaunch script and
 // window restoration.
 - (NSString *)quietFilePath;
+- (BOOL)directoryEmpty:(NSString *)path;
+- (BOOL)itemIsSymlink:(NSString *)path;
+- (BOOL)itemIsDirectory:(NSString *)path;
 
 @end

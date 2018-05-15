@@ -1181,6 +1181,38 @@ const NSInteger kLongMaximumWordLength = 100000;
                                                                 end)];
 }
 
+- (BOOL)haveNonWhitespaceInFirstLineOfRange:(VT100GridWindowedRange)windowedRange {
+    __block BOOL result = NO;
+    NSMutableCharacterSet *whitespaceCharacterSet = [NSMutableCharacterSet whitespaceCharacterSet];
+    [whitespaceCharacterSet addCharactersInRange:NSMakeRange(TAB_FILLER, 1)];
+
+    [self enumerateCharsInRange:windowedRange
+                      charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+                          if (theChar.image) {
+                              return NO;
+                          }
+                          if (theChar.complexChar) {
+                              NSString *string = ScreenCharToStr(&theChar);
+                              if ([string rangeOfCharacterFromSet:whitespaceCharacterSet].location != NSNotFound) {
+                                  result = YES;
+                                  return YES;
+                              } else {
+                                  return NO;
+                              }
+                          }
+                          if ([whitespaceCharacterSet characterIsMember:theChar.code]) {
+                              return NO;
+                          } else {
+                              result = YES;
+                              return YES;
+                          }
+                      }
+                       eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                           return (code == EOL_HARD);
+                       }];
+    return result;
+}
+
 - (id)contentInRange:(VT100GridWindowedRange)windowedRange
    attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
           nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy

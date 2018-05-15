@@ -382,6 +382,9 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 - (NSArray *)orderedToolbarIdentifiers {
+    if (!_globalToolbarItem) {
+        return @[];
+    }
     return @[ [_globalToolbarItem itemIdentifier],
               [_appearanceToolbarItem itemIdentifier],
               [_bookmarksToolbarItem itemIdentifier],
@@ -392,6 +395,9 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 - (NSDictionary *)toolbarIdentifierToItemDictionary {
+    if (!_globalToolbarItem) {
+        return @{};
+    }
     return @{ [_globalToolbarItem itemIdentifier]: _globalToolbarItem,
               [_appearanceToolbarItem itemIdentifier]: _appearanceToolbarItem,
               [_bookmarksToolbarItem itemIdentifier]: _bookmarksToolbarItem,

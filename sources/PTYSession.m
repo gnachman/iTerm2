@@ -4818,6 +4818,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (BOOL)canProduceMetalFramecap {
+    if (@available(macOS 10.11, *)) {
+        return _useMetal && _view.metalView.alphaValue == 1 && _wrapper.useMetal && _textview.suppressDrawing;
+    } else {
+        return NO;
+    }
+}
+
 - (BOOL)metalViewSizeIsLegal NS_AVAILABLE_MAC(10_11) {
     NSSize size = _view.frame.size;
     // When closing a session I once got an insane height that caused an assertion.
@@ -8172,6 +8180,20 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
+- (void)injectData:(NSData *)data {
+    VT100Parser *parser = [[VT100Parser alloc] init];
+    parser.encoding = self.terminal.encoding;
+    [parser putStreamData:data.bytes length:data.length];
+    CVector vector;
+    CVectorCreate(&vector, 100);
+    [parser addParsedTokensToVector:&vector];
+    if (CVectorCount(&vector) == 0) {
+        CVectorDestroy(&vector);
+        return;
+    }
+    [self executeTokens:&vector bytesHandled:data.length];
+}
+
 - (iTermColorMap *)screenColorMap {
     return _colorMap;
 }
@@ -8483,7 +8505,25 @@ ITERM_WEAKLY_REFERENCEABLE
     return (_shell != nil) && (![self isTmuxClient]);
 }
 
-// FinalTerm
+- (BOOL)haveCommandInRange:(VT100GridCoordRange)range {
+    if (range.start.x == -1) {
+        return NO;
+    }
+
+    // If semantic history goes nuts and the end-of-command code isn't received (which seems to be a
+    // common problem, probably because of buggy old versions of SH scripts) , the command can grow
+    // without bound. We'll limit the length of a command to avoid performance problems.
+    const int kMaxLines = 50;
+    if (range.end.y - range.start.y > kMaxLines) {
+        range.end.y = range.start.y + kMaxLines;
+    }
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
+    return [extractor haveNonWhitespaceInFirstLineOfRange:VT100GridWindowedRangeMake(range, 0, 0)];
+}
+
+#pragma mark - FinalTerm
+
+// NOTE: If you change this you probably want to change -haveCommandInRange:, too.
 - (NSString *)commandInRange:(VT100GridCoordRange)range {
     if (range.start.x == -1) {
         return nil;
@@ -8539,9 +8579,9 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
     DLog(@"FinalTerm: command changed. New range is %@", VT100GridCoordRangeDescription(range));
     _shellIntegrationEverUsed = YES;
-    BOOL hadCommand = _commandRange.start.x >= 0 && [[self commandInRange:_commandRange] length] > 0;
+    BOOL hadCommand = _commandRange.start.x >= 0 && [self haveCommandInRange:_commandRange];
     _commandRange = range;
-    BOOL haveCommand = _commandRange.start.x >= 0 && [[self commandInRange:_commandRange] length] > 0;
+    BOOL haveCommand = _commandRange.start.x >= 0 && [self haveCommandInRange:_commandRange];
 
     if (haveCommand) {
         VT100ScreenMark *mark = [_screen markOnLine:_lastPromptLine - [_screen totalScrollbackOverflow]];
@@ -8558,12 +8598,14 @@ ITERM_WEAKLY_REFERENCEABLE
             DLog(@"Show because I have a range but didn't have a command");
             [[_delegate realParentWindow] showAutoCommandHistoryForSession:self];
         }
-        NSString *command = haveCommand ? [self commandInRange:_commandRange] : @"";
-        DLog(@"Update command to %@, have=%d, range.start.x=%d", command, (int)haveCommand, range.start.x);
-        if (haveCommand) {
-            [[_delegate realParentWindow] updateAutoCommandHistoryForPrefix:command
-                                                                  inSession:self
-                                                                popIfNeeded:NO];
+        if ([[_delegate realParentWindow] wantsCommandHistoryUpdatesFromSession:self]) {
+            NSString *command = haveCommand ? [self commandInRange:_commandRange] : @"";
+            DLog(@"Update command to %@, have=%d, range.start.x=%d", command, (int)haveCommand, range.start.x);
+            if (haveCommand) {
+                [[_delegate realParentWindow] updateAutoCommandHistoryForPrefix:command
+                                                                      inSession:self
+                                                                    popIfNeeded:NO];
+            }
         }
     }
 }

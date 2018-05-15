@@ -120,8 +120,8 @@ static iTermController *gSharedInstance;
     if (self) {
         UKCrashReporterCheckForCrash();
 
-        // create the "~/Library/Application Support/iTerm" directory if it does not exist
-        [[NSFileManager defaultManager] legacyApplicationSupportDirectory];
+        // create the "~/Library/Application Support/iTerm2" directory if it does not exist
+        [[NSFileManager defaultManager] applicationSupportDirectory];
 
         _terminalWindows = [[NSMutableArray alloc] init];
         _restorableSessions = [[NSMutableArray alloc] init];
@@ -140,6 +140,59 @@ static iTermController *gSharedInstance;
     }
 
     return (self);
+}
+
+- (void)migrateApplicationSupportDirectoryIfNeeded {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *modern = [fileManager applicationSupportDirectory];
+    NSString *legacy = [fileManager legacyApplicationSupportDirectory];
+
+    if ([fileManager itemIsSymlink:legacy]) {
+        // Looks migrated, or crazy and impossible to reason about.
+        return;
+    }
+
+    if ([fileManager itemIsDirectory:modern] && [fileManager itemIsDirectory:legacy]) {
+        // This is the normal code path for migrating users.
+        const BOOL legacyEmpty = [fileManager directoryEmpty:legacy];
+
+        if (legacyEmpty) {
+            [fileManager removeItemAtPath:legacy error:nil];
+            [fileManager createSymbolicLinkAtPath:legacy withDestinationPath:modern error:nil];
+            return;
+        }
+
+        const BOOL modernEmpty = [fileManager directoryEmpty:modern];
+        if (modernEmpty) {
+            [fileManager removeItemAtPath:modern error:nil];
+            [fileManager moveItemAtPath:legacy toPath:modern error:nil];
+            [fileManager createSymbolicLinkAtPath:legacy withDestinationPath:modern error:nil];
+            return;
+        }
+
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"Manual Update Needed";
+        alert.informativeText = @"iTerm2's Application Support directory has changed.\n\n"
+            @"Previously, both ~/Library/Application Support/iTerm and ~/Library/Application Support/iTerm2 were supported.\n\n"
+            @"Now, only the iTerm2 version is supported. But you have files in both so please move everything from iTerm to iTerm2.";
+        [alert addButtonWithTitle:@"Open in Finder"];
+        [alert addButtonWithTitle:@"I Fixed It"];
+        [alert addButtonWithTitle:@"Not Now"];
+        switch ([alert runModal]) {
+            case NSAlertFirstButtonReturn:
+                [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:legacy],
+                                                                              [NSURL fileURLWithPath:modern] ]];
+                [self migrateApplicationSupportDirectoryIfNeeded];
+                break;
+
+            case NSAlertThirdButtonReturn:
+                return;
+
+            default:
+                [self migrateApplicationSupportDirectoryIfNeeded];
+                break;
+        }
+    }
 }
 
 - (BOOL)willRestoreWindowsAtNextLaunch {
@@ -1446,6 +1499,10 @@ static iTermController *gSharedInstance;
 }
 
 - (void)openSingleUseWindowWithCommand:(NSString *)command {
+    [self openSingleUseWindowWithCommand:command inject:nil];
+}
+
+- (void)openSingleUseWindowWithCommand:(NSString *)command inject:(NSData *)injection {
     if ([command hasSuffix:@"&"] && command.length > 1) {
         command = [command substringToIndex:command.length - 1];
         system(command.UTF8String);
@@ -1458,6 +1515,7 @@ static iTermController *gSharedInstance;
         [windowProfile[KEY_WINDOW_TYPE] integerValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
         windowProfile = [windowProfile dictionaryBySettingObject:@(WINDOW_TYPE_NORMAL) forKey:KEY_WINDOW_TYPE];
     }
+
     [self launchBookmark:windowProfile
               inTerminal:nil
                  withURL:nil
@@ -1467,10 +1525,13 @@ static iTermController *gSharedInstance;
                  command:command
                    block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
                        profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];
-                       profile = [profile dictionaryBySettingObject:@YES forKey:KEY_CLOSE_SESSIONS_ON_END];
+                       profile = [profile dictionaryBySettingObject:@NO forKey:KEY_CLOSE_SESSIONS_ON_END];
                        term.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
                        PTYSession *session = [term createTabWithProfile:profile withCommand:command];
                        session.isSingleUseSession = YES;
+                       if (injection) {
+                           [session injectData:injection];
+                       }
                        return session;
                    }];
 }

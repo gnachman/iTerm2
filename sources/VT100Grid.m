@@ -1251,7 +1251,9 @@ static NSString *const kGridSizeKey = @"Size";
                     dirtyline[ox] = ':';
                 }
             }
-            if (p[x].code && !p[x].complexChar) {
+            if (p[x].image) {
+                line[ox] = 'I';
+            } else if (p[x].code && !p[x].complexChar) {
                 if (p[x].code > 0 && p[x].code < 128) {
                     line[ox] = p[x].code;
                 } else if (p[x].code == DWC_RIGHT) {

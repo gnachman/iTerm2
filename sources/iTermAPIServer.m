@@ -21,7 +21,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-NSString *const iTermWebSocketConnectionPeerIdentityBundleIdentifier = @"bundle id";
 NSString *const iTermAPIServerDidReceiveMessage = @"iTermAPIServerDidReceiveMessage";
 NSString *const iTermAPIServerWillSendMessage = @"iTermAPIServerWillSendMessage";
 NSString *const iTermAPIServerConnectionRejected = @"iTermAPIServerConnectionRejected";

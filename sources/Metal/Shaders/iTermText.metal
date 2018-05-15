@@ -59,16 +59,17 @@ void SampleNeighbors(float2 textureSize,
                      float2 textureOffset,
                      float2 textureCoordinate,
                      float2 cellSize,
+                     float scale,
                      texture2d<half> texture,
                      sampler textureSampler,
                      thread half4 *result) {
-    const float2 pixel = 1.0 / textureSize;
+    const float2 pixel = (scale / 2) / textureSize;
     // I have to inset the limits by one pixel on the left and right. I guess
     // this is because clip space coordinates represent the center of a pixel,
     // so they are offset by a half pixel and will sample their neighbors. I'm
     // not 100% sure what's going on here, but it's definitely required.
-    const float2 minTextureCoord = textureOffset + float2(pixel.x, 0);
-    const float2 maxTextureCoord = minTextureCoord + (cellSize / textureSize) - float2(2 * pixel.x, 0);
+    const float2 minTextureCoord = textureOffset + pixel;
+    const float2 maxTextureCoord = minTextureCoord + (cellSize / textureSize) - (scale * pixel.x * 2);
 
     result[0] = texture.sample(textureSampler, clamp(textureCoordinate + float2(-pixel.x, -pixel.y), minTextureCoord, maxTextureCoord));
     result[1] = texture.sample(textureSampler, clamp(textureCoordinate + float2(       0, -pixel.y), minTextureCoord, maxTextureCoord));
@@ -85,6 +86,7 @@ half4 GetMinimumColorComponentsOfNeighbors(float2 textureSize,
                                            float2 textureOffset,
                                            float2 textureCoordinate,
                                            float2 cellSize,
+                                           float scale,
                                            texture2d<half> texture,
                                            sampler textureSampler) {
     half4 neighbors[8];
@@ -92,6 +94,7 @@ half4 GetMinimumColorComponentsOfNeighbors(float2 textureSize,
                     textureOffset,
                     textureCoordinate,
                     cellSize,
+                    scale,
                     texture,
                     textureSampler,
                     neighbors);
@@ -112,6 +115,7 @@ half4 GetMaximumColorComponentsOfNeighbors(float2 textureSize,
                                            float2 textureOffset,
                                            float2 textureCoordinate,
                                            float2 cellSize,
+                                           float scale,
                                            texture2d<half> texture,
                                            sampler textureSampler) {
     half4 neighbors[8];
@@ -119,6 +123,7 @@ half4 GetMaximumColorComponentsOfNeighbors(float2 textureSize,
                     textureOffset,
                     textureCoordinate,
                     cellSize,
+                    scale,
                     texture,
                     textureSampler,
                     neighbors);
@@ -239,12 +244,18 @@ float ComputeWeightOfUnderline(int underlineStyle,  // iTermMetalGlyphAttributes
                                                       textureOffset,
                                                       textureCoordinate,
                                                       cellSize,
+                                                      scale,
                                                       texture,
                                                       textureSampler);
-    if (mask.x + mask.y + mask.z >= 3) {
-        return weight;
+    float opacity = (mask.x + mask.y + mask.z) / 3.0;
+    if (scale > 1) {
+        if (opacity >= 0.99) {
+            return weight;
+        } else {
+            return 0;
+        }
     } else {
-        return 0;
+        return weight * min(1.0, pow(opacity * 1.1, 10));
     }
 }
 
@@ -278,12 +289,18 @@ float ComputeWeightOfUnderlineForEmoji(int underlineStyle,  // iTermMetalGlyphAt
                                                          textureOffset,
                                                          textureCoordinate,
                                                          cellSize,
+                                                         scale,
                                                          texture,
                                                          textureSampler).w;
-    if (maxAlpha == 0) {
-        return weight;
+    float opacity = 1 - maxAlpha;
+    if (scale > 1) {
+        if (opacity >= 0.99) {
+            return weight;
+        } else {
+            return 0;
+        }
     } else {
-        return 0;
+        return weight * min(1.0, pow(opacity * 1.1, 10));
     }
 }
 
@@ -324,62 +341,56 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
                                      min_filter::linear);
 
     half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
+    half underlineWeight = 0;
 
     if (!in.recolor) {
         // Emoji code path
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            const half weight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
-                                                                 in.clipSpacePosition.xy,
-                                                                 in.viewportSize,
-                                                                 in.cellOffset,
-                                                                 dimensions->underlineOffset,
-                                                                 dimensions->underlineThickness,
-                                                                 dimensions->textureSize,
-                                                                 in.textureOffset,
-                                                                 in.textureCoordinate,
-                                                                 dimensions->cellSize,
-                                                                 texture,
-                                                                 textureSampler,
-                                                                 dimensions->scale);
+            underlineWeight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
+                                                               in.clipSpacePosition.xy,
+                                                               in.viewportSize,
+                                                               in.cellOffset,
+                                                               dimensions->underlineOffset,
+                                                               dimensions->underlineThickness,
+                                                               dimensions->textureSize,
+                                                               in.textureOffset,
+                                                               in.textureCoordinate,
+                                                               dimensions->cellSize,
+                                                               texture,
+                                                               textureSampler,
+                                                               dimensions->scale);
             return mix(bwColor,
                        in.underlineColor,
-                       weight);
+                       underlineWeight);
         } else {
             return bwColor;
         }
-    } else if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
-        // Background shows through completely. Not emoji.
-        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            const half weight = ComputeWeightOfUnderline(in.underlineStyle,
-                                                         in.clipSpacePosition.xy,
-                                                         in.viewportSize,
-                                                         in.cellOffset,
-                                                         dimensions->underlineOffset,
-                                                         dimensions->underlineThickness,
-                                                         dimensions->textureSize,
-                                                         in.textureOffset,
-                                                         in.textureCoordinate,
-                                                         dimensions->cellSize,
-                                                         texture,
-                                                         textureSampler,
-                                                         dimensions->scale);
-            if (weight > 0) {
-                return mix(static_cast<half4>(in.backgroundColor),
-                           in.underlineColor,
-                           weight);
-            } else {
-                discard_fragment();
-            }
-        } else {
-            discard_fragment();
-        }
+    } else if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
+        // Underlined. Not emoji.
+        underlineWeight = ComputeWeightOfUnderline(in.underlineStyle,
+                                                   in.clipSpacePosition.xy,
+                                                   in.viewportSize,
+                                                   in.cellOffset,
+                                                   dimensions->underlineOffset,
+                                                   dimensions->underlineThickness,
+                                                   dimensions->textureSize,
+                                                   in.textureOffset,
+                                                   in.textureCoordinate,
+                                                   dimensions->cellSize,
+                                                   texture,
+                                                   textureSampler,
+                                                   dimensions->scale);
+    }
+    if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
+        discard_fragment();
     }
 
+    half4 textColor;
     if (dimensions->disableExactColorModels) {
-        return RemapColor(in.textColor * 17.0,
-                          in.backgroundColor,
-                          static_cast<float4>(bwColor),
-                          colorModelsTexture);
+        textColor = RemapColor(in.textColor * 17.0,
+                               in.backgroundColor,
+                               static_cast<float4>(bwColor),
+                               colorModelsTexture);
     } else {
         const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
         // Base index for this color model
@@ -389,8 +400,10 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
                                    exactColorModels[i.y + bwIntIndices.y],
                                    exactColorModels[i.z + bwIntIndices.z],
                                    255);
-        return static_cast<half4>(rgba) / 255;
+        textColor = static_cast<half4>(rgba) / 255;
     }
+
+    return mix(textColor, in.underlineColor, underlineWeight);
 }
 
 // This path is slow but can deal with any combination of foreground/background
@@ -407,54 +420,51 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
 
     half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
     const float4 backgroundColor = static_cast<float4>(drawable.sample(textureSampler, in.backgroundTextureCoordinate));
+    half underlineWeight = 0;
 
     if (!in.recolor) {
         // Emoji code path
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            const half weight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
-                                                                 in.clipSpacePosition.xy,
-                                                                 in.viewportSize,
-                                                                 in.cellOffset,
-                                                                 dimensions->underlineOffset,
-                                                                 dimensions->underlineThickness,
-                                                                 dimensions->textureSize,
-                                                                 in.textureOffset,
-                                                                 in.textureCoordinate,
-                                                                 dimensions->cellSize,
-                                                                 texture,
-                                                                 textureSampler,
-                                                                 dimensions->scale);
+            underlineWeight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
+                                                               in.clipSpacePosition.xy,
+                                                               in.viewportSize,
+                                                               in.cellOffset,
+                                                               dimensions->underlineOffset,
+                                                               dimensions->underlineThickness,
+                                                               dimensions->textureSize,
+                                                               in.textureOffset,
+                                                               in.textureCoordinate,
+                                                               dimensions->cellSize,
+                                                               texture,
+                                                               textureSampler,
+                                                               dimensions->scale);
             return mix(bwColor,
                        in.underlineColor,
-                       weight);
+                       underlineWeight);
         } else {
             return bwColor;
         }
-    } else if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
-        // Background shows through completely. Not emoji.
-        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            const half weight = ComputeWeightOfUnderline(in.underlineStyle,
-                                                         in.clipSpacePosition.xy,
-                                                         in.viewportSize,
-                                                         in.cellOffset,
-                                                         dimensions->underlineOffset,
-                                                         dimensions->underlineThickness,
-                                                         dimensions->textureSize,
-                                                         in.textureOffset,
-                                                         in.textureCoordinate,
-                                                         dimensions->cellSize,
-                                                         texture,
-                                                         textureSampler,
-                                                         dimensions->scale);
-            if (weight > 0) {
-                return mix(static_cast<half4>(backgroundColor),
-                           in.underlineColor,
-                           weight);
-            }
-        }
+    } else if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
+        // Underlined. Not emoji.
+        underlineWeight = ComputeWeightOfUnderline(in.underlineStyle,
+                                                   in.clipSpacePosition.xy,
+                                                   in.viewportSize,
+                                                   in.cellOffset,
+                                                   dimensions->underlineOffset,
+                                                   dimensions->underlineThickness,
+                                                   dimensions->textureSize,
+                                                   in.textureOffset,
+                                                   in.textureCoordinate,
+                                                   dimensions->cellSize,
+                                                   texture,
+                                                   textureSampler,
+                                                   dimensions->scale);
+    }
+    if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
     }
 
-    return RemapColor(in.textColor * 17.0, backgroundColor, static_cast<float4>(bwColor), colorModels);
+    half4 textColor = RemapColor(in.textColor * 17.0, backgroundColor, static_cast<float4>(bwColor), colorModels);
+    return mix(textColor, in.underlineColor, underlineWeight);
 }
 
