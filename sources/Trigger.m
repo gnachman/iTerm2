@@ -68,6 +68,11 @@ NSString * const kTriggerPartialLineKey = @"partial";
     assert(false);
 }
 
+- (NSString *)paramDefault
+{
+    return @"";
+}
+
 - (BOOL)takesParameter
 {
     assert(false);
@@ -167,6 +172,9 @@ NSString * const kTriggerPartialLineKey = @"partial";
 - (NSString *)paramWithBackreferencesReplacedWithValues:(NSString * const*)strings
                                                   count:(NSInteger)count {
     NSString *p = self.param;
+    if ([p isEqualToString:@""]) {
+        p = [self paramDefault];
+    }
     for (int i = 0; i < 9; i++) {
         NSString *rep = @"";
         if (count > i) {
