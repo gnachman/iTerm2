@@ -2130,7 +2130,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 }
 
 - (CGFloat)underlineThicknessForFont:(NSFont *)font {
-    return MAX(0.75, [self retinaRound:font.underlineThickness]);
+    return MAX(0.5, [self retinaRound:font.underlineThickness]);
 }
 
 - (void)drawUnderlineOfColor:(NSColor *)color
