@@ -272,9 +272,9 @@ static BOOL hasBecomeActive = NO;
     NSMenu *viewMenu = [self topLevelViewNamed:@"View"];
     [viewMenu addItem:[NSMenuItem separatorItem]];
 
-    ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
-                                           initWithFrame:NSMakeRect(0, 0, 180, 50)] autorelease];
-    [self addMenuItemView:labelTrackView toMenu:viewMenu title:@"Current Tab Color"];
+//    ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
+//                                           initWithFrame:NSMakeRect(0, 0, 180, 50)] autorelease];
+//    [self addMenuItemView:labelTrackView toMenu:viewMenu title:@"Current Tab Color"];
 
     if (![iTermTipController sharedInstance]) {
         [_showTipOfTheDay.menu removeItem:_showTipOfTheDay];

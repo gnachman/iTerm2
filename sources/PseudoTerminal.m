@@ -4721,6 +4721,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // add label
     [rootMenu addItem: [NSMenuItem separatorItem]];
+    /*
     ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
                                               initWithFrame:NSMakeRect(0, 0, 180, 50)] autorelease];
     item = [[[NSMenuItem alloc] initWithTitle:@"Tab Color"
@@ -4729,7 +4730,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [item setView:labelTrackView];
     [item setRepresentedObject:tabViewItem];
     [rootMenu addItem:item];
-
+*/
     return rootMenu;
 }
 
