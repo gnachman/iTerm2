@@ -7,6 +7,8 @@
 //
 
 #import "iTermSetTitleTrigger.h"
+
+#import "iTermSessionNameController.h"
 #import "PTYSession.h"
 
 @implementation iTermSetTitleTrigger
@@ -33,8 +35,9 @@
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                                     stop:(BOOL *)stop {
-    aSession.name = [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                              count:captureCount];
+    NSString *newName = [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                                                  count:captureCount];
+    [aSession.nameController triggerDidChangeNameTo:newName];
     return YES;
 }
 

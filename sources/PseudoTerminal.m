@@ -5201,13 +5201,18 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession *newSession;
 
     // Initialize a new session
-    newSession = [[[PTYSession alloc] initSynthetic:YES] autorelease];
+    Profile *profile = [self profileForNewSessionPreferringProfile:oldSession.profile];
+    NSString *titleFormat = [iTermSessionNameController titleFormatForProfile:profile];
+    newSession = [[[PTYSession alloc] initSynthetic:YES
+                                               name:profile[KEY_NAME]
+                                        titleFormat:titleFormat] autorelease];
     // NSLog(@"New session for IR view is at %p", newSession);
 
     // set our preferences
-    [newSession setProfile:[oldSession profile]];
+    newSession.profile = profile;
+
     [[newSession screen] setMaxScrollbackLines:0];
-    [self setupSession:newSession title:nil withSize:nil];
+    [self setupSession:newSession withSize:nil];
     [[newSession view] setViewId:[[oldSession view] viewId]];
     [[newSession view] setShowTitle:[[oldSession view] showTitle] adjustScrollView:YES];
 
@@ -5749,7 +5754,7 @@ ITERM_WEAKLY_REFERENCEABLE
     scrollView = sessionView.scrollview;
     NSSize size = [sessionView frame].size;
     if (performSetup) {
-        [self setupSession:newSession title:nil withSize:&size];
+        [self setupSession:newSession withSize:&size];
         scrollView = [[[newSession view] subviews] objectAtIndex:0];
     } else {
         [newSession setScrollViewDocumentView];
@@ -6925,37 +6930,39 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-// Set the session's profile dictionary and initialize its screen and name. Sets the
-// window title to the session's name. If size is not nil then the session is initialized to fit
-// a view of that size; otherwise the size is derived from the existing window if there is already
-// an open tab, or its bookmark's preference if it's the first session in the window.
-- (void)setupSession:(PTYSession *)aSession
-               title:(NSString *)title
-            withSize:(NSSize*)size {
-    NSDictionary *tempPrefs;
-    NSParameterAssert(aSession != nil);
-
+- (Profile *)profileForNewSessionPreferringProfile:(Profile *)preferred {
     // set some default parameters
-    if ([aSession profile] == nil) {
-        tempPrefs = [[ProfileModel sharedInstance] defaultBookmark];
+    if (preferred == nil) {
+        Profile *tempPrefs = [[ProfileModel sharedInstance] defaultBookmark];
         if (tempPrefs != nil) {
             // Use the default bookmark. This path is taken with applescript's
             // "make new session at the end of sessions" command.
-            [aSession setProfile:tempPrefs];
+            return tempPrefs;
         } else {
             // get the hardcoded defaults
             NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
             [ITAddressBookMgr setDefaultsInBookmark:dict];
             [dict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-            [aSession setProfile:dict];
-            tempPrefs = dict;
+            return dict;
         }
     } else {
-        tempPrefs = [aSession profile];
+        return preferred;
     }
-    PtyLog(@"Open session with prefs: %@", tempPrefs);
-    int rows = [[tempPrefs objectForKey:KEY_ROWS] intValue];
-    int columns = [[tempPrefs objectForKey:KEY_COLUMNS] intValue];
+}
+
+// Set the session's profile dictionary and initialize its screen.
+// If size is not nil then the session is initialized to fit
+// a view of that size; otherwise the size is derived from the existing window if there is already
+// an open tab, or its bookmark's preference if it's the first session in the window.
+- (void)setupSession:(PTYSession *)aSession
+            withSize:(NSSize*)size {
+    NSDictionary *profile;
+    NSParameterAssert(aSession != nil);
+
+    profile = aSession.profile;
+    PtyLog(@"Open session with prefs: %@", profile);
+    int rows = [[profile objectForKey:KEY_ROWS] intValue];
+    int columns = [[profile objectForKey:KEY_COLUMNS] intValue];
     if (self.tabs.count == 0 && desiredRows_ < 0) {
         desiredRows_ = rows;
         desiredColumns_ = columns;
@@ -6970,9 +6977,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     // rows, columns are set to the bookmark defaults. Make sure they'll fit.
 
-    NSSize charSize = [PTYTextView charSizeForFont:[ITAddressBookMgr fontWithDesc:[tempPrefs objectForKey:KEY_NORMAL_FONT]]
-                                 horizontalSpacing:[[tempPrefs objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
-                                   verticalSpacing:[[tempPrefs objectForKey:KEY_VERTICAL_SPACING] floatValue]];
+    NSSize charSize = [PTYTextView charSizeForFont:[ITAddressBookMgr fontWithDesc:[profile objectForKey:KEY_NORMAL_FONT]]
+                                 horizontalSpacing:[[profile objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
+                                   verticalSpacing:[[profile objectForKey:KEY_VERTICAL_SPACING] floatValue]];
 
     if (size == nil && [_contentView.tabView numberOfTabViewItems] != 0) {
         NSSize contentSize = [[[[self currentSession] view] scrollview] documentVisibleRect].size;
@@ -7001,16 +7008,9 @@ ITERM_WEAKLY_REFERENCEABLE
         PtyLog(@"setupSession - call safelySetSessionSize");
         [self safelySetSessionSize:aSession rows:rows columns:columns];
         PtyLog(@"setupSession - call setPreferencesFromAddressBookEntry");
-        [aSession setPreferencesFromAddressBookEntry:tempPrefs];
+        [aSession setPreferencesFromAddressBookEntry:profile];
         [aSession loadInitialColorTable];
-        [aSession setBookmarkName:[tempPrefs objectForKey:KEY_NAME]];
         [aSession.screen resetTimestamps];
-
-        if (title) {
-            [aSession setName:title];
-            [aSession setDefaultName:title];
-            [self setWindowTitle];
-        }
     }
 }
 
@@ -7153,29 +7153,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)currentSessionName {
     PTYSession* session = [self currentSession];
-    return [session windowTitle] ? [session windowTitle] : [session defaultName];
+    return [session windowTitle] ? [session windowTitle] : session.nameController.presentationOriginalName;
 }
 
-- (void)setName:(NSString *)theSessionName forSession:(PTYSession*)aSession
-{
-    if (theSessionName != nil) {
-        [aSession setDefaultName:theSessionName];
-        [aSession setName:theSessionName];
-    } else {
-        NSMutableString *title = [NSMutableString string];
-        NSString *progpath = [NSString stringWithFormat: @"%@ #%ld",
-                              [[[[aSession shell] path] pathComponents] lastObject],
-                              (long)[_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]];
-
-        if ([aSession exited]) {
-            [title appendString:@"Finish"];
-        } else {
-            [title appendString:progpath];
-        }
-
-        [aSession setName:title];
-        [aSession setDefaultName:title];
-    }
+- (void)setName:(NSString *)theSessionName forSession:(PTYSession *)aSession {
+    [aSession.nameController didInitializeSessionWithName:theSessionName];
 }
 
 // Assign a value to the 'uniqueNumber_' member variable which is used for storing
@@ -7608,10 +7590,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [[self tabForSession:session] recheckBlur];
             NSDictionary *profile = [session profile];
             if (![[profile objectForKey:KEY_NAME] isEqualToString:oldName]) {
-                // Set name, which overrides any session-set icon name.
-                [session setName:[profile objectForKey:KEY_NAME]];
-                // set default name, which will appear as a prefix if the session changes the name.
-                [session setDefaultName:[profile objectForKey:KEY_NAME]];
+                [session.nameController profileNameDidChangeTo:profile[KEY_NAME]];
             }
             if ([session isDivorced] &&
                 [[[PreferencePanel sessionsInstance] currentProfileGuid] isEqualToString:guid] &&
@@ -7662,18 +7641,21 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // Allocate a new session and assign it a bookmark. Returns a retained object.
-- (PTYSession*)newSessionWithBookmark:(Profile*)bookmark {
-    assert(bookmark);
+- (PTYSession*)newSessionWithBookmark:(Profile *)profile {
+    assert(profile);
     PTYSession *aSession;
 
     // Initialize a new session
-    aSession = [[PTYSession alloc] initSynthetic:NO];
+    NSString *titleFormat = [iTermSessionNameController titleFormatForProfile:profile];
+    aSession = [[PTYSession alloc] initSynthetic:NO
+                                            name:profile[KEY_NAME]
+                                     titleFormat:titleFormat];
 
-    [[aSession screen] setUnlimitedScrollback:[[bookmark objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
-    [[aSession screen] setMaxScrollbackLines:[[bookmark objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+    [[aSession screen] setUnlimitedScrollback:[[profile objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
+    [[aSession screen] setMaxScrollbackLines:[[profile objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     // set our preferences
-    [aSession setProfile:bookmark];
+    aSession.profile = [self profileForNewSessionPreferringProfile:profile];
     return aSession;
 }
 
@@ -7811,7 +7793,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     // Initialize a new session
-    PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
+    NSString *titleFormat = [iTermSessionNameController titleFormatForProfile:profile];
+    PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO
+                                                         name:profile[KEY_NAME]
+                                                  titleFormat:titleFormat] autorelease];
     [[aSession screen] setUnlimitedScrollback:[[profile objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession screen] setMaxScrollbackLines:[[profile objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
@@ -7845,11 +7830,13 @@ ITERM_WEAKLY_REFERENCEABLE
         profile = temp;
 
     } else if (substitutions.count && profile[KEY_NAME]) {
+#warning Why isn't PTYSession initialized with this?
         preferredName = [profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
 
     // set our preferences
-    [aSession setProfile:profile];
+    aSession.profile = profile;
+
     // Add this session to our term and make it current
     [self addSessionInNewTab:aSession];
     if ([aSession screen]) {
@@ -7955,11 +7942,13 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession *aSession;
 
     // Initialize a new session
-    aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
+    NSString *titleFormat = [iTermSessionNameController titleFormatForProfile:profile];
+    aSession = [[[PTYSession alloc] initSynthetic:NO
+                                             name:profile[KEY_NAME]
+                                      titleFormat:titleFormat] autorelease];
     [[aSession screen] setUnlimitedScrollback:[profile[KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession screen] setMaxScrollbackLines:[profile[KEY_SCROLLBACK_LINES] intValue]];
-    // set our preferences
-    [aSession setProfile:profile];
+    aSession.profile = [self profileForNewSessionPreferringProfile:profile];
     // Add this session to our term and make it current
     [self addSessionInNewTab: aSession];
     if ([aSession screen]) {
@@ -8018,7 +8007,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Increment tabViewItemsBeingAdded so that the maximum content size will
     // be calculated with the tab bar if it's about to open.
     ++tabViewItemsBeingAdded;
-    [self setupSession:object title:nil withSize:nil];
+    [self setupSession:object withSize:nil];
     tabViewItemsBeingAdded--;
     if ([object screen]) {  // screen initialized ok
         if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {

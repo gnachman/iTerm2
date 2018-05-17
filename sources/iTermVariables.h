@@ -20,6 +20,10 @@ extern NSString *const iTermVariableKeySessionRows;
 extern NSString *const iTermVariableKeySessionTTY;
 extern NSString *const iTermVariableKeySessionUsername;
 extern NSString *const iTermVariableKeyTermID;
+extern NSString *const iTermVariableKeySessionProfileName;
+extern NSString *const iTermVariableKeySessionIconName;
+extern NSString *const iTermVariableKeySessionWindowName;
+extern NSString *const iTermVariableKeySessionJob;
 
 // Returns an array of all known variables.
 NSArray<NSString *> *iTermVariablesGetAll(void);

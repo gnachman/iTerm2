@@ -137,6 +137,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                     [defaultValue isKindOfClass:[NSArray class]]);
         case kPreferenceInfoTypeMatrix:
             return [defaultValue isKindOfClass:[NSString class]];
+        case kPreferenceInfoTypeRadioButton:
+            return [defaultValue isKindOfClass:[NSString class]];
         case kPreferenceInfoTypeColorWell:
             return ([defaultValue isKindOfClass:[NSNull class]] ||
                     [defaultValue isKindOfClass:[NSDictionary class]]);
@@ -348,6 +350,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_HOTKEY_ACTIVATE_WITH_MODIFIER: @NO,
                   KEY_HOTKEY_ALTERNATE_SHORTCUTS: @[],
                   KEY_SESSION_HOTKEY: @{},
+                  KEY_TITLE_COMPONENTS: @(iTermTitleComponentsProfileName),
+                  KEY_CUSTOM_TITLE: @"",
+#warning TODO: Add API support for title components
                   // Remember to update valueIsLegal:forKey: and the websocket
                   // README.md when adding a new value that should be
                   // API-settable.

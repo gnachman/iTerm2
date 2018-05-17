@@ -7,6 +7,7 @@
 #import "iTermWeakReference.h"
 #import "ITAddressBookMgr.h"
 #import "iTermPopupWindowController.h"
+#import "iTermSessionNameController.h"
 #import "LineBuffer.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
@@ -250,26 +251,15 @@ typedef enum {
 // than tab colors.
 @property(nonatomic, assign) BOOL havePostedNewOutputNotification;
 
-// Session name; can be changed via escape code. The getter will add formatting to it; to retrieve
-// the value that was set, use -rawName.
-@property(nonatomic, copy) NSString *name;
+@property(nonatomic, readonly) iTermSessionNameController *nameController;
 
-// Unformatted version of -name.
-@property(nonatomic, readonly) NSString *rawName;
-
-// The original bookmark name.
-@property(nonatomic, copy) NSString *bookmarkName;
-
-// defaultName cannot be changed by the host. The getter returns a formatted name. Use
-// joblessDefaultName to get the value that was set.
-@property(nonatomic, copy) NSString *defaultName;
-
-// The value to which defaultName was last set, unadorned with additional formatting.
-@property(nonatomic, readonly) NSString *joblessDefaultName;
+// Returns the presentationName from the nameController. This is only here because
+// it's nearly impossible to find all the call sites for it.
+@property (nonatomic, readonly) NSString *name;
 
 // The window title that should be used when this session is current. Otherwise defaultName
 // should be used.
-@property(nonatomic, copy) NSString *windowTitle;
+@property(nonatomic, readonly) NSString *windowTitle;
 
 // Shell wraps the underlying file descriptor pair.
 @property(nonatomic, retain) PTYTask *shell;
@@ -482,7 +472,9 @@ typedef enum {
 + (void)removeAllRegisteredSessions;
 
 - (instancetype)init NS_UNAVAILABLE;
-- (instancetype)initSynthetic:(BOOL)synthetic NS_DESIGNATED_INITIALIZER;
+- (instancetype)initSynthetic:(BOOL)synthetic
+                         name:(NSString *)name
+                  titleFormat:(NSString *)titleFormat NS_DESIGNATED_INITIALIZER;
 
 // Jump to a particular point in time.
 - (long long)irSeekToAtLeast:(long long)timestamp;
