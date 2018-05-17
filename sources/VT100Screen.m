@@ -2533,6 +2533,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 {
     [currentGrid_ moveCursorLeft:n];
     [delegate_ screenTriggerableChangeDidOccur];
+    if (commandStartX_ != -1) {
+        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+    }
 }
 
 - (void)terminalCursorDown:(int)n andToStartOfLine:(BOOL)toStart {
@@ -2541,12 +2544,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [currentGrid_ moveCursorToLeftMargin];
     }
     [delegate_ screenTriggerableChangeDidOccur];
+    if (commandStartX_ != -1) {
+        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+    }
 }
 
 - (void)terminalCursorRight:(int)n
 {
     [currentGrid_ moveCursorRight:n];
     [delegate_ screenTriggerableChangeDidOccur];
+    if (commandStartX_ != -1) {
+        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+    }
 }
 
 - (void)terminalCursorUp:(int)n andToStartOfLine:(BOOL)toStart{
@@ -2555,12 +2564,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [currentGrid_ moveCursorToLeftMargin];
     }
     [delegate_ screenTriggerableChangeDidOccur];
+    if (commandStartX_ != -1) {
+        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+    }
 }
 
 - (void)terminalMoveCursorToX:(int)x y:(int)y
 {
     [self cursorToX:x Y:y];
     [delegate_ screenTriggerableChangeDidOccur];
+    if (commandStartX_ != -1) {
+        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+    }
 }
 
 - (BOOL)terminalShouldSendReport
@@ -2712,6 +2727,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [currentGrid_ moveCursorToLeftMargin];
     }
     [delegate_ screenTriggerableChangeDidOccur];
+    if (commandStartX_ != -1) {
+        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
+    }
 }
 
 - (void)terminalReverseIndex {
