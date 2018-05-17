@@ -22,6 +22,7 @@
 #import "iTermColorPresets.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermController.h"
+#import "iTermEval.h"
 #import "iTermFindCursorView.h"
 #import "iTermFontPanel.h"
 #import "iTermNotificationController.h"
@@ -174,7 +175,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
 @implementation PseudoTerminal {
     NSPoint preferredOrigin_;
-
 
     ////////////////////////////////////////////////////////////////////////////
     // Instant Replay
@@ -5193,11 +5193,16 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession *newSession;
 
     // Initialize a new session
-    newSession = [[[PTYSession alloc] initSynthetic:YES] autorelease];
+    Profile *profile = [self profileForNewSessionPreferringProfile:oldSession.profile];
+    NSString *titleFormat = [iTermSessionNameController titleFormatForProfile:profile];
+    newSession = [[[PTYSession alloc] initSynthetic:YES
+                                               name:profile[KEY_NAME]
+                                        titleFormat:titleFormat] autorelease];
     // NSLog(@"New session for IR view is at %p", newSession);
 
     // set our preferences
-    [newSession setProfile:[oldSession profile]];
+    newSession.profile = profile;
+
     [[newSession screen] setMaxScrollbackLines:0];
     [self setupSession:newSession title:nil withSize:nil];
     [[newSession view] setViewId:[[oldSession view] viewId]];
@@ -6883,6 +6888,26 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (Profile *)profileForNewSessionPreferringProfile:(Profile *)preferred {
+    // set some default parameters
+    if (preferred == nil) {
+        Profile *tempPrefs = [[ProfileModel sharedInstance] defaultBookmark];
+        if (tempPrefs != nil) {
+            // Use the default bookmark. This path is taken with applescript's
+            // "make new session at the end of sessions" command.
+            return tempPrefs;
+        } else {
+            // get the hardcoded defaults
+            NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
+            [ITAddressBookMgr setDefaultsInBookmark:dict];
+            [dict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
+            return dict;
+        }
+    } else {
+        return preferred;
+    }
+}
+
 // Set the session's profile dictionary and initialize its screen and name. Sets the
 // window title to the session's name. If size is not nil then the session is initialized to fit
 // a view of that size; otherwise the size is derived from the existing window if there is already
@@ -6890,30 +6915,13 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setupSession:(PTYSession *)aSession
                title:(NSString *)title
             withSize:(NSSize*)size {
-    NSDictionary *tempPrefs;
+    NSDictionary *profile;
     NSParameterAssert(aSession != nil);
 
-    // set some default parameters
-    if ([aSession profile] == nil) {
-        tempPrefs = [[ProfileModel sharedInstance] defaultBookmark];
-        if (tempPrefs != nil) {
-            // Use the default bookmark. This path is taken with applescript's
-            // "make new session at the end of sessions" command.
-            [aSession setProfile:tempPrefs];
-        } else {
-            // get the hardcoded defaults
-            NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
-            [ITAddressBookMgr setDefaultsInBookmark:dict];
-            [dict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-            [aSession setProfile:dict];
-            tempPrefs = dict;
-        }
-    } else {
-        tempPrefs = [aSession profile];
-    }
-    PtyLog(@"Open session with prefs: %@", tempPrefs);
-    int rows = [[tempPrefs objectForKey:KEY_ROWS] intValue];
-    int columns = [[tempPrefs objectForKey:KEY_COLUMNS] intValue];
+    profile = aSession.profile;
+    PtyLog(@"Open session with prefs: %@", profile);
+    int rows = [[profile objectForKey:KEY_ROWS] intValue];
+    int columns = [[profile objectForKey:KEY_COLUMNS] intValue];
     if (self.tabs.count == 0 && desiredRows_ < 0) {
         desiredRows_ = rows;
         desiredColumns_ = columns;
@@ -6928,9 +6936,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     // rows, columns are set to the bookmark defaults. Make sure they'll fit.
 
-    NSSize charSize = [PTYTextView charSizeForFont:[ITAddressBookMgr fontWithDesc:[tempPrefs objectForKey:KEY_NORMAL_FONT]]
-                                 horizontalSpacing:[[tempPrefs objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
-                                   verticalSpacing:[[tempPrefs objectForKey:KEY_VERTICAL_SPACING] floatValue]];
+    NSSize charSize = [PTYTextView charSizeForFont:[ITAddressBookMgr fontWithDesc:[profile objectForKey:KEY_NORMAL_FONT]]
+                                 horizontalSpacing:[[profile objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
+                                   verticalSpacing:[[profile objectForKey:KEY_VERTICAL_SPACING] floatValue]];
 
     if (size == nil && [_contentView.tabView numberOfTabViewItems] != 0) {
         NSSize contentSize = [[[[self currentSession] view] scrollview] documentVisibleRect].size;
@@ -6959,11 +6967,11 @@ ITERM_WEAKLY_REFERENCEABLE
         PtyLog(@"setupSession - call safelySetSessionSize");
         [self safelySetSessionSize:aSession rows:rows columns:columns];
         PtyLog(@"setupSession - call setPreferencesFromAddressBookEntry");
-        [aSession setPreferencesFromAddressBookEntry:tempPrefs];
+        [aSession setPreferencesFromAddressBookEntry:profile];
         [aSession loadInitialColorTable];
-        [aSession setBookmarkName:[tempPrefs objectForKey:KEY_NAME]];
         [aSession.screen resetTimestamps];
 
+#warning TODO: Figure out what to do with the title
         if (title) {
             [aSession setName:title];
             [aSession setDefaultName:title];
@@ -7111,29 +7119,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)currentSessionName {
     PTYSession* session = [self currentSession];
-    return [session windowTitle] ? [session windowTitle] : [session defaultName];
+    return [session windowTitle] ? [session windowTitle] : session.nameController.presentationOriginalName;
 }
 
-- (void)setName:(NSString *)theSessionName forSession:(PTYSession*)aSession
-{
-    if (theSessionName != nil) {
-        [aSession setDefaultName:theSessionName];
-        [aSession setName:theSessionName];
-    } else {
-        NSMutableString *title = [NSMutableString string];
-        NSString *progpath = [NSString stringWithFormat: @"%@ #%ld",
-                              [[[[aSession shell] path] pathComponents] lastObject],
-                              (long)[_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]];
-
-        if ([aSession exited]) {
-            [title appendString:@"Finish"];
-        } else {
-            [title appendString:progpath];
-        }
-
-        [aSession setName:title];
-        [aSession setDefaultName:title];
-    }
+- (void)setName:(NSString *)theSessionName forSession:(PTYSession *)aSession {
+    [aSession.nameController didInitializeSessionWithName:theSessionName];
 }
 
 // Assign a value to the 'uniqueNumber_' member variable which is used for storing
@@ -7550,10 +7540,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [[self tabForSession:session] recheckBlur];
             NSDictionary *profile = [session profile];
             if (![[profile objectForKey:KEY_NAME] isEqualToString:oldName]) {
-                // Set name, which overrides any session-set icon name.
-                [session setName:[profile objectForKey:KEY_NAME]];
-                // set default name, which will appear as a prefix if the session changes the name.
-                [session setDefaultName:[profile objectForKey:KEY_NAME]];
+                [session.nameController profileNameDidChangeTo:profile[KEY_NAME]];
             }
             if ([session isDivorced] &&
                 [[[PreferencePanel sessionsInstance] currentProfileGuid] isEqualToString:guid] &&
@@ -7596,6 +7583,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     return result;
 }
+
+#warning anywhere a PTYSession is allocated it needs a title format like [iTermSessionNameController titleFormatForProfile:profile]
 
 - (void)_loadFindStringFromSharedPasteboard
 {
@@ -7702,6 +7691,8 @@ ITERM_WEAKLY_REFERENCEABLE
                     dictionaryBySettingObject:command forKey:KEY_COMMAND_LINE];
 
     }
+#warning Why isn't PTYSession initialized with this? Is this a merge oopsie? WTF is this?
+    preferredName = profile[KEY_NAME];
 
     // Initialize a new session
     PTYSession *aSession = [self.sessionFactory newSessionWithProfile:profile];

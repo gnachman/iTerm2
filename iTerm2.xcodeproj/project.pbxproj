@@ -1464,6 +1464,8 @@
 		A65429B220C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65429B120C4931100CE71B1 /* iTermParameterPanelWindowController.xib */; };
 		A65429B320C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65429B120C4931100CE71B1 /* iTermParameterPanelWindowController.xib */; };
 		A65429B420C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65429B120C4931100CE71B1 /* iTermParameterPanelWindowController.xib */; };
+		A653B6CE20AD3C4100B481F1 /* iTermSessionNameController.h in Headers */ = {isa = PBXBuildFile; fileRef = A653B6CC20AD3C4100B481F1 /* iTermSessionNameController.h */; };
+		A653B6CF20AD3C4100B481F1 /* iTermSessionNameController.m in Sources */ = {isa = PBXBuildFile; fileRef = A653B6CD20AD3C4100B481F1 /* iTermSessionNameController.m */; };
 		A6556EA91FCB42E0000CC89C /* iTermCharacterSource.h in Headers */ = {isa = PBXBuildFile; fileRef = A6556EA71FCB42E0000CC89C /* iTermCharacterSource.h */; };
 		A6556EAA1FCB42E0000CC89C /* iTermCharacterSource.m in Sources */ = {isa = PBXBuildFile; fileRef = A6556EA81FCB42E0000CC89C /* iTermCharacterSource.m */; };
 		A6556EAD1FD37ED6000CC89C /* iTermASCIITexture.h in Headers */ = {isa = PBXBuildFile; fileRef = A6556EAB1FD37ED6000CC89C /* iTermASCIITexture.h */; };
@@ -3729,6 +3731,8 @@
 		A65429AD20C492F000CE71B1 /* iTermParameterPanelWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermParameterPanelWindowController.h; sourceTree = "<group>"; };
 		A65429AE20C492F000CE71B1 /* iTermParameterPanelWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermParameterPanelWindowController.m; sourceTree = "<group>"; };
 		A65429B120C4931100CE71B1 /* iTermParameterPanelWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = iTermParameterPanelWindowController.xib; path = Interfaces/iTermParameterPanelWindowController.xib; sourceTree = SOURCE_ROOT; };
+		A653B6CC20AD3C4100B481F1 /* iTermSessionNameController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSessionNameController.h; sourceTree = "<group>"; };
+		A653B6CD20AD3C4100B481F1 /* iTermSessionNameController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionNameController.m; sourceTree = "<group>"; };
 		A6556EA71FCB42E0000CC89C /* iTermCharacterSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermCharacterSource.h; path = Metal/Support/iTermCharacterSource.h; sourceTree = "<group>"; };
 		A6556EA81FCB42E0000CC89C /* iTermCharacterSource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermCharacterSource.m; path = Metal/Support/iTermCharacterSource.m; sourceTree = "<group>"; };
 		A6556EAB1FD37ED6000CC89C /* iTermASCIITexture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermASCIITexture.h; path = Metal/Infrastructure/iTermASCIITexture.h; sourceTree = "<group>"; };
@@ -6611,6 +6615,8 @@
 				530AB8BB20B3D3D000D2AA08 /* iTermWindowHacks.m */,
 				53C166A820C21FBB003B03AF /* iTermMigrationHelper.h */,
 				53C166A920C21FBB003B03AF /* iTermMigrationHelper.m */,
+				A653B6CC20AD3C4100B481F1 /* iTermSessionNameController.h */,
+				A653B6CD20AD3C4100B481F1 /* iTermSessionNameController.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -7866,6 +7872,7 @@
 				A60C035C2089698500FE2F1F /* iTermAPIScriptLauncher.h in Headers */,
 				A66EF82C1EF59CFC0005891A /* iTermRateLimitedUpdate.h in Headers */,
 				A614F2621FE47D8600EEE919 /* iTermCharacterBitmap.h in Headers */,
+				A653B6CE20AD3C4100B481F1 /* iTermSessionNameController.h in Headers */,
 				A66719521DCE36C3000CE608 /* iTermRecentDirectoryMO+CoreDataProperties.h in Headers */,
 				A66719531DCE36C3000CE608 /* iTermSocketAddress.h in Headers */,
 				A6E5D20B1FA3C55700EDD002 /* iTermMetalRowData.h in Headers */,
@@ -9475,6 +9482,7 @@
 				A67960D71F81FCBB008A42BC /* iTermTextRenderer.mm in Sources */,
 				A6A4866020B6762E00493302 /* AppearancePreferencesViewController.m in Sources */,
 				A6A4866620B676EB00493302 /* GeneralPreferencesViewController.m in Sources */,
+				A653B6CF20AD3C4100B481F1 /* iTermSessionNameController.m in Sources */,
 				A64AE5182084128500D02F06 /* NSThread+iTerm.m in Sources */,
 				530AB7B520A615D900D2AA08 /* iTermPythonArgumentParser.m in Sources */,
 				A68400BD1FF98101008D3EE2 /* iTermTimestampsRenderer.m in Sources */,

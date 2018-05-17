@@ -53,12 +53,6 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     // Show window number in title bar.
     IBOutlet NSButton *_windowNumber;
 
-    // Show job name in title
-    IBOutlet NSButton *_jobName;
-
-    // Show bookmark name in title.
-    IBOutlet NSButton *_showBookmarkName;
-
     // Dim text (and non-default background colors).
     IBOutlet NSButton *_dimOnlyText;
 
@@ -189,16 +183,6 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     info = [self defineControl:_windowNumber
                            key:kPreferenceKeyShowWindowNumber
-                          type:kPreferenceInfoTypeCheckbox];
-    info.onChange = ^() { [weakSelf postUpdateLabelsNotification]; };
-
-    info = [self defineControl:_jobName
-                           key:kPreferenceKeyShowJobName
-                          type:kPreferenceInfoTypeCheckbox];
-    info.onChange = ^() { [weakSelf postUpdateLabelsNotification]; };
-
-    info = [self defineControl:_showBookmarkName
-                           key:kPreferenceKeyShowProfileName
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postUpdateLabelsNotification]; };
 
