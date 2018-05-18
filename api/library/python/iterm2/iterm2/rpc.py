@@ -356,6 +356,7 @@ async def async_list_profiles(connection, guids, properties):
     "param properties: If None, get all properties. Otherwise, a list of strings giving property keys to fetch.
     """
     request = _alloc_request()
+    request.list_profiles_request.SetInParent()
     if guids is not None:
         request.list_profiles_request.guids.extend(guids)
     if properties is not None:
