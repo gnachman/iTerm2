@@ -1,13 +1,13 @@
-[1mWelcome to the iTerm2 Python REPL![m
-
-This is an interactive Python interpreter where you can experiment with
-scripts. Unlike standard Python interpreters, you can use "await" not inside an
-async function. Here's an example script to try:
-
-import iterm2
-connection=await iterm2.Connection.async_create()
-app=await iterm2.async_get_app(connection)
-await app.async_create_window()
-
-]8;;https://iterm2.com/python-api⌘-click here for iTerm2 Python API Docs]8;;
+[1mWelcome to the iTerm2 Python REPL![m
+
+This is an interactive Python interpreter where you can experiment with
+scripts. Unlike standard Python interpreters, you can use "await" not inside an
+async function. Here's an example script to try:
+
+import iterm2
+connection=await iterm2.Connection.async_create()
+app=await iterm2.async_get_app(connection)
+await app.async_create_window()
+
+]8;;https://iterm2.com/python-api⌘-click here for iTerm2 Python API Docs]8;;
 

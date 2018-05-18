@@ -1979,10 +1979,10 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)openREPL:(id)sender {
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithCompletion:^{
         NSString *command = [[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"];
-        NSURL *injectionURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
-        NSData *injection = [NSData dataWithContentsOfURL:injectionURL];
+        NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
+        command = [command stringByAppendingFormat:@" --banner=\"`cat %@`\"", bannerURL.path];
         [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
-                                                                  inject:injection];
+                                                                  inject:nil];
     }];
 }
 
