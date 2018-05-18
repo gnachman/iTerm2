@@ -342,9 +342,7 @@ class App:
         :param properties: Lists the properties to fetch. Pass None for all.
         :param guids: Lists GUIDs to list. Pass None for all profiles.
 
-        :returns: If properties is a list, returns :class:`PartialProfile` with
-        only the specified properties set. If properties is `None` then returns
-        :class:`Profile`.
+        :returns: If properties is a list, returns :class:`PartialProfile` with only the specified properties set. If properties is `None` then returns :class:`Profile`.
         """
         response = await iterm2.rpc.async_list_profiles(self.connection, guids, properties)
         profiles = []
