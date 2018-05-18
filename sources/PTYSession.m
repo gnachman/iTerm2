@@ -8129,13 +8129,13 @@ return;
                     break;
 
                 case 0: // Yes
-                    self.terminal.reportFocus = NO;
+                    self.terminal.bracketedPasteMode = NO;
                     break;
 
                 case 1: // Always
                     [[NSUserDefaults standardUserDefaults] setBool:YES
                                                             forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
-                    self.terminal.reportFocus = NO;
+                    self.terminal.bracketedPasteMode = NO;
                     break;
 
                 case 2: // Never
