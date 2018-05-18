@@ -164,18 +164,20 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 
     if (shouldBeginDownload) {
         NSURL *url = [NSURL URLWithString:@"https://iterm2.com/downloads/pyenv/manifest.json"];
-        iTermManifestDownloadPhase *manifestPhase = [[iTermManifestDownloadPhase alloc] initWithURL:url
-                                                                                   nextPhaseFactory:^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *currentPhase) {
-                                                                                       iTermManifestDownloadPhase *mphase = [iTermManifestDownloadPhase castFrom:currentPhase];
-                                                                                       if (mphase.version > installedVersion) {
-                                                                                           return [[iTermPayloadDownloadPhase alloc] initWithURL:mphase.nextURL
-                                                                                                                               expectedSignature:mphase.signature];
-                                                                                       } else {
-                                                                                           return nil;
-                                                                                       }
-                                                                                   }];
+        iTermManifestDownloadPhase *manifestPhase = [[iTermManifestDownloadPhase alloc] initWithURL:url nextPhaseFactory:^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *currentPhase) {
+            iTermManifestDownloadPhase *mphase = [iTermManifestDownloadPhase castFrom:currentPhase];
+            if (mphase.version > installedVersion) {
+                return [[iTermPayloadDownloadPhase alloc] initWithURL:mphase.nextURL
+                                                    expectedSignature:mphase.signature];
+            } else {
+                return nil;
+            }
+        }];
         __weak __typeof(self) weakSelf = self;
         _downloadController.completion = ^(iTermOptionalComponentDownloadPhase *lastPhase) {
+            if (lastPhase.error) {
+                return;
+            }
             if (lastPhase == manifestPhase) {
                 iTermPythonRuntimeDownloader *strongSelf = weakSelf;
                 if (strongSelf) {

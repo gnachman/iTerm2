@@ -10,6 +10,10 @@
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
+@import Sparkle;
+
+static const int iTermMinimumPythonEnvironmentVersion = 12;
+
 @protocol iTermOptionalComponentDownloadPhaseDelegate<NSObject>
 - (void)optionalComponentDownloadPhaseDidComplete:(iTermOptionalComponentDownloadPhase *)sender;
 - (void)optionalComponentDownloadPhase:(iTermOptionalComponentDownloadPhase *)sender
@@ -80,9 +84,9 @@ didFinishDownloadingToURL:(NSURL *)location {
               task:(NSURLSessionTask *)task
 didCompleteWithError:(nullable NSError *)error {
     self.downloading = NO;
+    _urlSession = nil;
+    _task = nil;
     if (!error) {
-        _urlSession = nil;
-        _task = nil;
         int statusCode = [[NSHTTPURLResponse castFrom:task.response] statusCode];
         if (statusCode != 200) {
             error = [NSError errorWithDomain:@"com.iterm2" code:1 userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Server returned status code %@: %@", @(statusCode), [NSHTTPURLResponse localizedStringForStatusCode:statusCode] ] }];
@@ -103,8 +107,59 @@ didCompleteWithError:(nullable NSError *)error {
     return [super initWithURL:url title:@"Finding latest version…" nextPhaseFactory:nextPhaseFactory];
 }
 
+- (BOOL)iTermVersionAtLeast:(NSString *)minVersion
+                     atMost:(NSString *)maxVersion {
+    NSString *version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+    if (!version) {
+        return NO;
+    }
+
+    id<SUVersionComparison> comparator = [SUStandardVersionComparator defaultComparator];
+    NSComparisonResult result;
+    if (minVersion) {
+        result = [comparator compareVersion:version toVersion:minVersion];
+        if (result == NSOrderedAscending) {
+            return NO;
+        }
+    }
+
+    if (maxVersion) {
+        result = [comparator compareVersion:version toVersion:maxVersion];
+        if (result == NSOrderedDescending) {
+            return NO;
+        }
+    }
+
+    return YES;
+}
+
 - (NSDictionary *)parsedManifestFromInputStream:(NSInputStream *)stream {
     id obj = [NSJSONSerialization JSONObjectWithStream:stream options:0 error:nil];
+    NSArray *array = [NSArray castFrom:obj];
+    if (array) {
+        int bestVersion = -1;
+        NSDictionary *bestDict = nil;
+        for (id element in array) {
+            NSDictionary *dict = [NSDictionary castFrom:element];
+            if (!dict) {
+                continue;
+            }
+            if (dict[@"url"] && dict[@"signature"] && dict[@"version"]) {
+                int version = [dict[@"version"] intValue];
+                if (version > bestVersion) {
+                    NSString *minimumTermVersion = dict[@"mininum_iterm_version"];
+                    NSString *maximumTermVersion = dict[@"maximum_iterm_version"];
+                    if ([self iTermVersionAtLeast:minimumTermVersion atMost:maximumTermVersion]) {
+                        bestVersion = version;
+                        bestDict = dict;
+                    }
+                }
+            }
+        }
+        return bestDict;
+    }
+
+    // Deprecated. OK to delete after June 2018
     NSDictionary *dict = [NSDictionary castFrom:obj];
     if (dict[@"url"] && dict[@"signature"] && dict[@"version"]) {
         return dict;
@@ -120,12 +175,15 @@ didCompleteWithError:(nullable NSError *)error {
         dispatch_async(dispatch_get_main_queue(), ^{
             NSDictionary *dict = [self parsedManifestFromInputStream:self.stream];
             NSError *innerError = nil;
-            if (dict) {
+            const int version = [dict[@"version"] intValue];
+            if (version < iTermMinimumPythonEnvironmentVersion) {
+                innerError = [NSError errorWithDomain:@"com.iterm2" code:3 userInfo:@{ NSLocalizedDescriptionKey: @"☹️ No usable version found." }];
+            } else if (dict) {
                 self->_nextURL = [NSURL URLWithString:dict[@"url"]];
                 self->_signature = dict[@"signature"];
-                self->_version = [dict[@"version"] intValue];
+                self->_version = version;
             } else {
-                innerError = [NSError errorWithDomain:@"com.iterm2" code:2 userInfo:@{ NSLocalizedDescriptionKey: @"Manifest missing required field" }];
+                innerError = [NSError errorWithDomain:@"com.iterm2" code:2 userInfo:@{ NSLocalizedDescriptionKey: @"☹️ Malformed manifest." }];
             }
             [super URLSession:session task:task didCompleteWithError:innerError];
         });
@@ -206,8 +264,10 @@ didCompleteWithError:(nullable NSError *)error {
     _button.title = @"Try Again";
     if (error.code == -999) {
         _progressLabel.stringValue = @"Canceled";
+        _titleLabel.stringValue = @"";
     } else {
-        _progressLabel.stringValue = error.localizedDescription;
+        _progressLabel.stringValue = @"";
+        _titleLabel.stringValue = error.localizedDescription;
     }
     _progressIndicator.doubleValue = 0;
     iTermOptionalComponentDownloadPhase *phase = _currentPhase;
