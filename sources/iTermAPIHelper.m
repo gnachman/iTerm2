@@ -13,10 +13,12 @@
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
 #import "iTermLSOF.h"
+#import "iTermProfilePreferences.h"
 #import "iTermPythonArgumentParser.h"
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "ProfileModel.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
@@ -496,40 +498,74 @@ NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPI
 
 - (void)apiServerSetProfileProperty:(ITMSetProfilePropertyRequest *)request
                             handler:(void (^)(ITMSetProfilePropertyResponse *))handler {
-    NSArray<PTYSession *> *sessions;
-    if ([request.session isEqualToString:@"all"]) {
-        sessions = [self allSessions];
-    } else {
-        PTYSession *session = [self sessionForAPIIdentifier:request.session];
-        if (!session) {
-            ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
-            response.status = ITMSetProfilePropertyResponse_Status_SessionNotFound;
+    ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
+    ITMSetProfilePropertyResponse_Status (^setter)(id object, NSString *key, id value) = nil;
+    NSMutableArray *objects = [NSMutableArray array];
+
+    switch (request.targetOneOfCase) {
+        case ITMSetProfilePropertyRequest_Target_OneOfCase_GPBUnsetOneOfCase: {
+            response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
             handler(response);
             return;
         }
-        sessions = @[ session ];
-    }
 
-    for (PTYSession *session in sessions) {
-        NSError *error = nil;
-        id value = [NSJSONSerialization JSONObjectWithData:[request.jsonValue dataUsingEncoding:NSUTF8StringEncoding]
-                                                   options:NSJSONReadingAllowFragments
-                                                     error:&error];
-        if (!value || error) {
-            XLog(@"JSON parsing error %@ for value in request %@", error, request);
-            ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
-            response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
-            handler(response);
+        case ITMSetProfilePropertyRequest_Target_OneOfCase_GuidList: {
+            setter = ^ITMSetProfilePropertyResponse_Status(id object, NSString *key, id value) {
+                Profile *profile = object;
+                [iTermProfilePreferences setObject:value forKey:key inProfile:profile model:[ProfileModel sharedInstance]];
+                return ITMSetProfilePropertyResponse_Status_Ok;
+            };
+            for (NSString *guid in request.guidList.guidsArray) {
+                Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+                if (!profile) {
+                    response.status = ITMSetProfilePropertyResponse_Status_BadGuid;
+                    handler(response);
+                    return;
+                }
+                [objects addObject:profile];
+            }
+            break;
         }
 
-        ITMSetProfilePropertyResponse *response = [session handleSetProfilePropertyForKey:request.key value:value];
+        case ITMSetProfilePropertyRequest_Target_OneOfCase_Session: {
+            setter = ^ITMSetProfilePropertyResponse_Status(id object, NSString *key, id value) {
+                return [(PTYSession *)object handleSetProfilePropertyForKey:request.key value:value];
+            };
+            if ([request.session isEqualToString:@"all"]) {
+                [objects addObjectsFromArray:[self allSessions]];
+            } else {
+                PTYSession *session = [self sessionForAPIIdentifier:request.session];
+                if (!session) {
+                    ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
+                    response.status = ITMSetProfilePropertyResponse_Status_SessionNotFound;
+                    handler(response);
+                    return;
+                }
+                [objects addObject:session];
+            }
+            break;
+        }
+    }
+
+    NSError *error = nil;
+    id value = [NSJSONSerialization JSONObjectWithData:[request.jsonValue dataUsingEncoding:NSUTF8StringEncoding]
+                                               options:NSJSONReadingAllowFragments
+                                                 error:&error];
+    if (!value || error) {
+        XLog(@"JSON parsing error %@ for value in request %@", error, request);
+        ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
+        response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
+        handler(response);
+    }
+
+    for (id object in objects) {
+        response.status = setter(object, request.key, value);
         if (response.status != ITMSetProfilePropertyResponse_Status_Ok) {
             handler(response);
             return;
         }
     }
 
-    ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
     response.status = ITMSetProfilePropertyResponse_Status_Ok;
     handler(response);
 }
@@ -1088,6 +1124,51 @@ NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPI
             focusChange = [[ITMFocusChangedNotification alloc] init];
             focusChange.session = tab.activeSession.guid;
             [response.notificationsArray addObject:focusChange];
+        }
+    }
+    handler(response);
+}
+
+- (void)apiServerListProfiles:(ITMListProfilesRequest *)request handler:(void (^)(ITMListProfilesResponse *))handler {
+    ITMListProfilesResponse *response = [[ITMListProfilesResponse alloc] init];
+    NSArray<NSString *> *desiredProperties = nil;
+    if (request.propertiesArray_Count > 0) {
+        desiredProperties = request.propertiesArray;
+    }
+    NSSet<NSString *> *desiredGuids = nil;
+    if (request.guidsArray_Count > 0) {
+        desiredGuids = [NSSet setWithArray:request.guidsArray];
+    }
+    for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
+        BOOL matches = NO;
+        if (desiredGuids) {
+            if ([desiredGuids containsObject:profile[KEY_GUID]]) {
+                matches = YES;
+            }
+        } else {
+            matches = YES;
+        }
+        if (matches) {
+            ITMListProfilesResponse_Profile *responseProfile = [[ITMListProfilesResponse_Profile alloc] init];
+            NSArray<NSString *> *keys = nil;
+            if (desiredProperties == nil) {
+                keys = [iTermProfilePreferences allKeys];
+            } else {
+                keys = desiredProperties;
+            }
+            for (NSString *key in keys) {
+                id value = [iTermProfilePreferences objectForKey:key inProfile:profile];
+                if (value) {
+                    NSString *jsonString = [iTermProfilePreferences jsonEncodedValueForKey:key inProfile:profile];
+                    if (jsonString) {
+                        ITMProfileProperty *property = [[ITMProfileProperty alloc] init];
+                        property.key = key;
+                        property.jsonValue = jsonString;
+                        [responseProfile.propertiesArray addObject:property];
+                    }
+                }
+            }
+            [response.profilesArray addObject:responseProfile];
         }
     }
     handler(response);

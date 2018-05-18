@@ -9789,17 +9789,14 @@ ITERM_WEAKLY_REFERENCEABLE
     return response;
 }
 
-- (ITMSetProfilePropertyResponse *)handleSetProfilePropertyForKey:(NSString *)key value:(id)value {
-    ITMSetProfilePropertyResponse *response = [[[ITMSetProfilePropertyResponse alloc] init] autorelease];
+- (ITMSetProfilePropertyResponse_Status)handleSetProfilePropertyForKey:(NSString *)key value:(id)value {
     if (![iTermProfilePreferences valueIsLegal:value forKey:key]) {
         XLog(@"Value %@ is not legal for key %@", value, key);
-        response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
-        return response;
+        return ITMSetProfilePropertyResponse_Status_RequestMalformed;
     }
 
     [self setSessionSpecificProfileValues:@{ key: value }];
-    response.status = ITMSetProfilePropertyResponse_Status_Ok;
-    return response;
+    return ITMSetProfilePropertyResponse_Status_Ok;
 }
 
 - (ITMGetProfilePropertyResponse *)handleGetProfilePropertyForKeys:(NSArray<NSString *> *)keys {
@@ -9811,24 +9808,11 @@ ITERM_WEAKLY_REFERENCEABLE
     for (NSString *key in keys) {
         id value = [iTermProfilePreferences objectForKey:key inProfile:self.profile];
         if (value) {
-            NSError *error = nil;
-            NSData *json = nil;
-            if ([NSJSONSerialization isValidJSONObject:value]) {
-                json = [NSJSONSerialization dataWithJSONObject:value
-                                                       options:0
-                                                         error:&error];
-                if (error) {
-                    XLog(@"Failed to json encode value %@ for key %@: %@", value, key, error);
-                }
-            } else if ([value isKindOfClass:[NSString class]]) {
-                json = [[value jsonEncodedString] dataUsingEncoding:NSUTF8StringEncoding];
-            } else if ([value isKindOfClass:[NSNumber class]]) {
-                json = [[value stringValue] dataUsingEncoding:NSUTF8StringEncoding];
-            }
-            if (json) {
-                ITMGetProfilePropertyResponse_Property *property = [[[ITMGetProfilePropertyResponse_Property alloc] init] autorelease];
+            NSString *jsonString = [iTermProfilePreferences jsonEncodedValueForKey:key inProfile:self.profile];
+            if (jsonString) {
+                ITMProfileProperty *property = [[[ITMProfileProperty alloc] init] autorelease];
                 property.key = key;
-                property.jsonValue = [[[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding] autorelease];
+                property.jsonValue = jsonString;
                 [response.propertiesArray addObject:property];
             }
         }

@@ -83,4 +83,7 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 + (BOOL)keyHasDefaultValue:(NSString *)key;
 + (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type;
 
+// Returns nil if the value is nil, the key is bogus, or it could not be json encoded for some reason.
++ (NSString *)jsonEncodedValueForKey:(NSString *)key inProfile:(Profile *)profile;
+
 @end

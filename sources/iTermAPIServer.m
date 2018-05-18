@@ -647,6 +647,18 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
                 });
             }
         }];
+    } else if (request.submessageOneOfCase == ITMClientOriginatedMessage_Submessage_OneOfCase_ListProfilesRequest) {
+        [_delegate apiServerListProfiles:request.listProfilesRequest handler:^(ITMListProfilesResponse *listProfilesResponse) {
+            ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
+            response.id_p = request.id_p;
+            response.listProfilesResponse = listProfilesResponse;
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                dispatch_async(strongSelf.queue, ^{
+                    [strongSelf sendResponse:response onConnection:webSocketConnection];
+                });
+            }
+        }];
     } else {
         ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
         response.id_p = request.id_p;

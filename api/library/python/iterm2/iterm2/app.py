@@ -4,6 +4,7 @@ This module is the starting point for getting access to windows and other applic
 """
 
 import iterm2.notifications
+import iterm2.profile
 import iterm2.rpc
 import iterm2.session
 import iterm2.tab
@@ -334,3 +335,19 @@ class App:
             await iterm2.notifications.async_subscribe_to_focus_change_notification(
                 connection,
                 self._async_focus_change))
+
+    async def async_list_profiles(self, guids=None, properties=["Guid", "Name"]):
+        """Fetches a list of profiles.
+
+        :param properties: Lists the properties to fetch. Pass None for all.
+        :param guids: Lists GUIDs to list. Pass None for all profiles.
+
+        :returns: A :class:`PartialProfile` with only the specified properties set.
+        """
+        response = await iterm2.rpc.async_list_profiles(self.connection, guids, properties)
+        profiles = []
+        for responseProfile in response.list_profiles_response.profiles:
+            profile = iterm2.profile.PartialProfile(None, self.connection, responseProfile.properties)
+            profiles.append(profile)
+        return profiles
+

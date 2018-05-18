@@ -7,6 +7,8 @@
 //
 
 #import "iTermProfilePreferences.h"
+
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermCursor.h"
 #import "NSColor+iTerm.h"
@@ -143,7 +145,36 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 }
 
 + (NSArray<NSString *> *)allKeys {
-    return self.defaultValueMap.allKeys;
+    // Add GUID because it lacks a default value and so is not in defaultValueMap.
+    return [self.defaultValueMap.allKeys arrayByAddingObject:KEY_GUID];
+}
+
++ (NSString *)jsonEncodedValueForKey:(NSString *)key inProfile:(Profile *)profile {
+    NSError *error = nil;
+    NSData *json = nil;
+
+    id value = [self objectForKey:key inProfile:profile];
+    if (!value) {
+        return nil;
+    }
+
+    if ([NSJSONSerialization isValidJSONObject:value]) {
+        json = [NSJSONSerialization dataWithJSONObject:value
+                                               options:0
+                                                 error:&error];
+        if (error) {
+            XLog(@"Failed to json encode value %@ for key %@: %@", value, key, error);
+        }
+    } else if ([value isKindOfClass:[NSString class]]) {
+        json = [[value jsonEncodedString] dataUsingEncoding:NSUTF8StringEncoding];
+    } else if ([value isKindOfClass:[NSNumber class]]) {
+        json = [[value stringValue] dataUsingEncoding:NSUTF8StringEncoding];
+    }
+    if (!json) {
+        return nil;
+    }
+
+    return [[[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding] autorelease];
 }
 
 #pragma mark - Private

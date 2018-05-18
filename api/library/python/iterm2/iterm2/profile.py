@@ -2,16 +2,25 @@
 import json
 import iterm2.rpc
 
+class BadGUIDException(Exception):
+    """Raised when a profile does not have a GUID or the GUID is unknown."""
+
 class WriteOnlyProfile:
     """A profile that can be modified but not read. Useful for changing many
     sessions' profiles at once without knowing what they are."""
-    def __init__(self, session_id, connection):
+    def __init__(self, session_id, connection, guid=None):
         self.connection = connection
         self.session_id = session_id
+        self.__guid = guid
 
     async def _async_simple_set(self, key, value):
         """value is a json type"""
-        await iterm2.rpc.async_set_profile_property(self.connection, self.session_id, key, value)
+        await iterm2.rpc.async_set_profile_property(
+                self.connection,
+                self.session_id,
+                key,
+                value,
+                self._guids_for_set())
 
     async def _async_color_set(self, key, value):
         if value is None:
@@ -19,13 +28,22 @@ class WriteOnlyProfile:
                 self.connection,
                 self.session_id,
                 key,
-                "null")
+                "null",
+                self._guids_for_set())
         else:
             await iterm2.rpc.async_set_profile_property(
                 self.connection,
                 self.session_id,
                 key,
-                value.get_dict())
+                value.get_dict(),
+                self._guids_for_set())
+
+    def _guids_for_set(self):
+        if self.session_id is None:
+            assert self.__guid is not None
+            return [self.__guid]
+        else:
+            return self.session_id
 
     async def async_set_foreground_color(self, value):
         """Sets the foreground color.
@@ -595,7 +613,10 @@ class WriteOnlyProfile:
 
 
 class Profile(WriteOnlyProfile):
-    """Represents a session's current profile settings."""
+    """Represents a profile.
+    
+    If a session_id is set then this is the profile attached to a session.
+    Otherwise, it is a shared profile."""
     CURSOR_TYPE_UNDERLINE = 0
     CURSOR_TYPE_VERTICAL = 1
     CURSOR_TYPE_BOX = 2
@@ -617,16 +638,28 @@ class Profile(WriteOnlyProfile):
     OPTION_KEY_META = 1
     OPTION_KEY_ESC = 2
 
-    def __init__(self, session_id, connection, get_profile_property_response):
-        super().__init__(session_id, connection)
+    def __init__(self, session_id, connection, profile_property_list):
+        props = {}
+        for prop in profile_property_list:
+            props[prop.key] = json.loads(prop.json_value)
+
+        guid_key = "Guid"
+        if guid_key in props:
+            guid = props[guid_key]
+        else:
+            guid = None
+
+        super().__init__(session_id, connection, guid)
+
         self.connection = connection
         self.session_id = session_id
-        self.__props = {}
-        for prop in get_profile_property_response.properties:
-            self.__props[prop.key] = json.loads(prop.json_value)
+        self.__props = props
 
     def _simple_get(self, key):
-        return self.__props[key]
+        if key in self.__props:
+            return self.__props[key]
+        else:
+            return None
 
     def _color_get(self, key):
         try:
@@ -637,6 +670,10 @@ class Profile(WriteOnlyProfile):
             return None
         except KeyError:
             return None
+
+    @property
+    def all_properties(self):
+        return dict(self.__props)
 
     @property
     def foreground_color(self):
@@ -1299,6 +1336,13 @@ class Profile(WriteOnlyProfile):
         :returns: OPTION_KEY_xxx"""
         return self._simple_get("Right Option Key Sends")
 
+    @property
+    def guid(self):
+        """Returns globally unique ID for this profile.
+
+        :returns: A string identifying this profile"""
+        return self._simple_get("Guid")
+
 
 class Color:
     """Describes a color."""
@@ -1399,3 +1443,24 @@ class Color:
             self.color_space = input_dict["Color Space"]
         else:
             self.color_space = "sRGB"
+
+class PartialProfile(Profile):
+    """Represents a profile that has only a subset of fields available for reading."""
+    
+    def __init__(self, session_id, connection, profile_property_list):
+        """Initializes a PartialProfile from a profile_property_list protobuf."""
+        super().__init__(session_id, connection, profile_property_list)
+
+    async def async_get_full_profile(self):
+        """Requests a full profile and returns it.
+
+        Raises BadGUIDException if the Guid is not set or does not match a profile.
+        
+        :returns: A :class:`Profile`."""
+        if self.guid is None:
+            raise 
+        response = await iterm2.rpc.async_list_profiles(self.connection, [self.guid], None)
+        if len(response.list_profiles_response.profiles) != 1:
+            raise BadGUIDException()
+        return Profile(None, self.connection, response.list_profiles_response.profiles[0].properties)
+

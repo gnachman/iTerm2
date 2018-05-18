@@ -363,7 +363,7 @@ class Session:
             return iterm2.profile.Profile(
                 self.__session_id,
                 self.connection,
-                response.get_profile_property_response)
+                response.get_profile_property_response.properties)
         else:
             raise iterm2.rpc.RPCException(
                 iterm2.api_pb2.GetProfilePropertyResponse.Status.Name(status))

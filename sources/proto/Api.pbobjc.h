@@ -45,7 +45,6 @@ CF_EXTERN_C_BEGIN
 @class ITMGetBufferResponse;
 @class ITMGetProfilePropertyRequest;
 @class ITMGetProfilePropertyResponse;
-@class ITMGetProfilePropertyResponse_Property;
 @class ITMGetPromptRequest;
 @class ITMGetPromptResponse;
 @class ITMGetPropertyRequest;
@@ -56,6 +55,9 @@ CF_EXTERN_C_BEGIN
 @class ITMLayoutChangedNotification;
 @class ITMLineContents;
 @class ITMLineRange;
+@class ITMListProfilesRequest;
+@class ITMListProfilesResponse;
+@class ITMListProfilesResponse_Profile;
 @class ITMListSessionsRequest;
 @class ITMListSessionsResponse;
 @class ITMListSessionsResponse_SplitTreeNode;
@@ -69,6 +71,7 @@ CF_EXTERN_C_BEGIN
 @class ITMNotificationRequest;
 @class ITMNotificationResponse;
 @class ITMPoint;
+@class ITMProfileProperty;
 @class ITMPromptNotification;
 @class ITMRange;
 @class ITMRegisterToolRequest;
@@ -79,6 +82,7 @@ CF_EXTERN_C_BEGIN
 @class ITMSendTextRequest;
 @class ITMSendTextResponse;
 @class ITMSetProfilePropertyRequest;
+@class ITMSetProfilePropertyRequest_GuidList;
 @class ITMSetProfilePropertyResponse;
 @class ITMSetPropertyRequest;
 @class ITMSetPropertyResponse;
@@ -389,6 +393,7 @@ typedef GPB_ENUM(ITMSetProfilePropertyResponse_Status) {
   ITMSetProfilePropertyResponse_Status_Ok = 0,
   ITMSetProfilePropertyResponse_Status_SessionNotFound = 1,
   ITMSetProfilePropertyResponse_Status_RequestMalformed = 2,
+  ITMSetProfilePropertyResponse_Status_BadGuid = 3,
 };
 
 GPBEnumDescriptor *ITMSetProfilePropertyResponse_Status_EnumDescriptor(void);
@@ -546,6 +551,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_VariableRequest = 115,
   ITMClientOriginatedMessage_FieldNumber_SavedArrangementRequest = 116,
   ITMClientOriginatedMessage_FieldNumber_FocusRequest = 117,
+  ITMClientOriginatedMessage_FieldNumber_ListProfilesRequest = 118,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -568,6 +574,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_VariableRequest = 115,
   ITMClientOriginatedMessage_Submessage_OneOfCase_SavedArrangementRequest = 116,
   ITMClientOriginatedMessage_Submessage_OneOfCase_FocusRequest = 117,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_ListProfilesRequest = 118,
 };
 
 /**
@@ -617,6 +624,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMFocusRequest *focusRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMListProfilesRequest *listProfilesRequest;
+
 @end
 
 /**
@@ -647,6 +656,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_VariableResponse = 115,
   ITMServerOriginatedMessage_FieldNumber_SavedArrangementResponse = 116,
   ITMServerOriginatedMessage_FieldNumber_FocusResponse = 117,
+  ITMServerOriginatedMessage_FieldNumber_ListProfilesResponse = 118,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -671,6 +681,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_VariableResponse = 115,
   ITMServerOriginatedMessage_Submessage_OneOfCase_SavedArrangementResponse = 116,
   ITMServerOriginatedMessage_Submessage_OneOfCase_FocusResponse = 117,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_ListProfilesResponse = 118,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -725,6 +736,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMFocusResponse *focusResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMListProfilesResponse *listProfilesResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 
@@ -734,6 +747,64 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
  * Clears whatever value was set for the oneof 'submessage'.
  **/
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
+
+#pragma mark - ITMListProfilesRequest
+
+typedef GPB_ENUM(ITMListProfilesRequest_FieldNumber) {
+  ITMListProfilesRequest_FieldNumber_PropertiesArray = 1,
+  ITMListProfilesRequest_FieldNumber_GuidsArray = 2,
+};
+
+/**
+ * Requests a list of all profiles.
+ **/
+@interface ITMListProfilesRequest : GPBMessage
+
+/**
+ * The profile properties to respond with. See SetProfilePropertyRequest for a list of values.
+ * If empty, all properties will be returned.
+ **/
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *propertiesArray;
+/** The number of items in @c propertiesArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger propertiesArray_Count;
+
+/**
+ * If empty, all profiles will be returned. Otherwise, only profiles with one of the listed
+ * GUIDs will be returned.
+ **/
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *guidsArray;
+/** The number of items in @c guidsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger guidsArray_Count;
+
+@end
+
+#pragma mark - ITMListProfilesResponse
+
+typedef GPB_ENUM(ITMListProfilesResponse_FieldNumber) {
+  ITMListProfilesResponse_FieldNumber_ProfilesArray = 1,
+};
+
+@interface ITMListProfilesResponse : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMListProfilesResponse_Profile*> *profilesArray;
+/** The number of items in @c profilesArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger profilesArray_Count;
+
+@end
+
+#pragma mark - ITMListProfilesResponse_Profile
+
+typedef GPB_ENUM(ITMListProfilesResponse_Profile_FieldNumber) {
+  ITMListProfilesResponse_Profile_FieldNumber_PropertiesArray = 1,
+};
+
+@interface ITMListProfilesResponse_Profile : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMProfileProperty*> *propertiesArray;
+/** The number of items in @c propertiesArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger propertiesArray_Count;
+
+@end
 
 #pragma mark - ITMFocusRequest
 
@@ -1633,6 +1704,25 @@ typedef GPB_ENUM(ITMGetProfilePropertyRequest_FieldNumber) {
 
 @end
 
+#pragma mark - ITMProfileProperty
+
+typedef GPB_ENUM(ITMProfileProperty_FieldNumber) {
+  ITMProfileProperty_FieldNumber_Key = 1,
+  ITMProfileProperty_FieldNumber_JsonValue = 2,
+};
+
+@interface ITMProfileProperty : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *key;
+/** Test to see if @c key has been set. */
+@property(nonatomic, readwrite) BOOL hasKey;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *jsonValue;
+/** Test to see if @c jsonValue has been set. */
+@property(nonatomic, readwrite) BOOL hasJsonValue;
+
+@end
+
 #pragma mark - ITMGetProfilePropertyResponse
 
 typedef GPB_ENUM(ITMGetProfilePropertyResponse_FieldNumber) {
@@ -1645,28 +1735,9 @@ typedef GPB_ENUM(ITMGetProfilePropertyResponse_FieldNumber) {
 @property(nonatomic, readwrite) ITMGetProfilePropertyResponse_Status status;
 
 @property(nonatomic, readwrite) BOOL hasStatus;
-@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMGetProfilePropertyResponse_Property*> *propertiesArray;
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMProfileProperty*> *propertiesArray;
 /** The number of items in @c propertiesArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger propertiesArray_Count;
-
-@end
-
-#pragma mark - ITMGetProfilePropertyResponse_Property
-
-typedef GPB_ENUM(ITMGetProfilePropertyResponse_Property_FieldNumber) {
-  ITMGetProfilePropertyResponse_Property_FieldNumber_Key = 1,
-  ITMGetProfilePropertyResponse_Property_FieldNumber_JsonValue = 2,
-};
-
-@interface ITMGetProfilePropertyResponse_Property : GPBMessage
-
-@property(nonatomic, readwrite, copy, null_resettable) NSString *key;
-/** Test to see if @c key has been set. */
-@property(nonatomic, readwrite) BOOL hasKey;
-
-@property(nonatomic, readwrite, copy, null_resettable) NSString *jsonValue;
-/** Test to see if @c jsonValue has been set. */
-@property(nonatomic, readwrite) BOOL hasJsonValue;
 
 @end
 
@@ -1674,8 +1745,15 @@ typedef GPB_ENUM(ITMGetProfilePropertyResponse_Property_FieldNumber) {
 
 typedef GPB_ENUM(ITMSetProfilePropertyRequest_FieldNumber) {
   ITMSetProfilePropertyRequest_FieldNumber_Session = 1,
-  ITMSetProfilePropertyRequest_FieldNumber_Key = 2,
-  ITMSetProfilePropertyRequest_FieldNumber_JsonValue = 3,
+  ITMSetProfilePropertyRequest_FieldNumber_GuidList = 2,
+  ITMSetProfilePropertyRequest_FieldNumber_Key = 3,
+  ITMSetProfilePropertyRequest_FieldNumber_JsonValue = 4,
+};
+
+typedef GPB_ENUM(ITMSetProfilePropertyRequest_Target_OneOfCase) {
+  ITMSetProfilePropertyRequest_Target_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMSetProfilePropertyRequest_Target_OneOfCase_Session = 1,
+  ITMSetProfilePropertyRequest_Target_OneOfCase_GuidList = 2,
 };
 
 /**
@@ -1683,10 +1761,12 @@ typedef GPB_ENUM(ITMSetProfilePropertyRequest_FieldNumber) {
  **/
 @interface ITMSetProfilePropertyRequest : GPBMessage
 
+@property(nonatomic, readonly) ITMSetProfilePropertyRequest_Target_OneOfCase targetOneOfCase;
+
 /** See documentation on session IDs */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *session;
-/** Test to see if @c session has been set. */
-@property(nonatomic, readwrite) BOOL hasSession;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMSetProfilePropertyRequest_GuidList *guidList;
 
 /**
  * The following keys are allowed. This table also gives the type that's expected in json_value:
@@ -1807,6 +1887,25 @@ typedef GPB_ENUM(ITMSetProfilePropertyRequest_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *jsonValue;
 /** Test to see if @c jsonValue has been set. */
 @property(nonatomic, readwrite) BOOL hasJsonValue;
+
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'target'.
+ **/
+void ITMSetProfilePropertyRequest_ClearTargetOneOfCase(ITMSetProfilePropertyRequest *message);
+
+#pragma mark - ITMSetProfilePropertyRequest_GuidList
+
+typedef GPB_ENUM(ITMSetProfilePropertyRequest_GuidList_FieldNumber) {
+  ITMSetProfilePropertyRequest_GuidList_FieldNumber_GuidsArray = 1,
+};
+
+@interface ITMSetProfilePropertyRequest_GuidList : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *guidsArray;
+/** The number of items in @c guidsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger guidsArray_Count;
 
 @end
 

@@ -120,6 +120,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
 @dynamic variableRequest;
 @dynamic savedArrangementRequest;
 @dynamic focusRequest;
+@dynamic listProfilesRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -141,6 +142,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMVariableRequest *variableRequest;
   ITMSavedArrangementRequest *savedArrangementRequest;
   ITMFocusRequest *focusRequest;
+  ITMListProfilesRequest *listProfilesRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -321,6 +323,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "listProfilesRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMListProfilesRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_ListProfilesRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, listProfilesRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -374,6 +385,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic variableResponse;
 @dynamic savedArrangementResponse;
 @dynamic focusResponse;
+@dynamic listProfilesResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -397,6 +409,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMVariableResponse *variableResponse;
   ITMSavedArrangementResponse *savedArrangementResponse;
   ITMFocusResponse *focusResponse;
+  ITMListProfilesResponse *listProfilesResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -588,6 +601,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "listProfilesResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMListProfilesResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_ListProfilesResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, listProfilesResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
@@ -624,6 +646,147 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMListProfilesRequest
+
+@implementation ITMListProfilesRequest
+
+@dynamic propertiesArray, propertiesArray_Count;
+@dynamic guidsArray, guidsArray_Count;
+
+typedef struct ITMListProfilesRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *propertiesArray;
+  NSMutableArray *guidsArray;
+} ITMListProfilesRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "propertiesArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMListProfilesRequest_FieldNumber_PropertiesArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMListProfilesRequest__storage_, propertiesArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "guidsArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMListProfilesRequest_FieldNumber_GuidsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMListProfilesRequest__storage_, guidsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMListProfilesRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMListProfilesRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMListProfilesResponse
+
+@implementation ITMListProfilesResponse
+
+@dynamic profilesArray, profilesArray_Count;
+
+typedef struct ITMListProfilesResponse__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *profilesArray;
+} ITMListProfilesResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "profilesArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMListProfilesResponse_Profile),
+        .number = ITMListProfilesResponse_FieldNumber_ProfilesArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMListProfilesResponse__storage_, profilesArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMListProfilesResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMListProfilesResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMListProfilesResponse_Profile
+
+@implementation ITMListProfilesResponse_Profile
+
+@dynamic propertiesArray, propertiesArray_Count;
+
+typedef struct ITMListProfilesResponse_Profile__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *propertiesArray;
+} ITMListProfilesResponse_Profile__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "propertiesArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMProfileProperty),
+        .number = ITMListProfilesResponse_Profile_FieldNumber_PropertiesArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMListProfilesResponse_Profile__storage_, propertiesArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMListProfilesResponse_Profile class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMListProfilesResponse_Profile__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMListProfilesResponse)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMFocusRequest
 
 @implementation ITMFocusRequest
@@ -3367,6 +3530,60 @@ typedef struct ITMGetProfilePropertyRequest__storage_ {
 
 @end
 
+#pragma mark - ITMProfileProperty
+
+@implementation ITMProfileProperty
+
+@dynamic hasKey, key;
+@dynamic hasJsonValue, jsonValue;
+
+typedef struct ITMProfileProperty__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *key;
+  NSString *jsonValue;
+} ITMProfileProperty__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "key",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMProfileProperty_FieldNumber_Key,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMProfileProperty__storage_, key),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "jsonValue",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMProfileProperty_FieldNumber_JsonValue,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMProfileProperty__storage_, jsonValue),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMProfileProperty class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMProfileProperty__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMGetProfilePropertyResponse
 
 @implementation ITMGetProfilePropertyResponse
@@ -3397,7 +3614,7 @@ typedef struct ITMGetProfilePropertyResponse__storage_ {
       },
       {
         .name = "propertiesArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetProfilePropertyResponse_Property),
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMProfileProperty),
         .number = ITMGetProfilePropertyResponse_FieldNumber_PropertiesArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMGetProfilePropertyResponse__storage_, propertiesArray),
@@ -3460,72 +3677,20 @@ BOOL ITMGetProfilePropertyResponse_Status_IsValidValue(int32_t value__) {
   }
 }
 
-#pragma mark - ITMGetProfilePropertyResponse_Property
-
-@implementation ITMGetProfilePropertyResponse_Property
-
-@dynamic hasKey, key;
-@dynamic hasJsonValue, jsonValue;
-
-typedef struct ITMGetProfilePropertyResponse_Property__storage_ {
-  uint32_t _has_storage_[1];
-  NSString *key;
-  NSString *jsonValue;
-} ITMGetProfilePropertyResponse_Property__storage_;
-
-// This method is threadsafe because it is initially called
-// in +initialize for each subclass.
-+ (GPBDescriptor *)descriptor {
-  static GPBDescriptor *descriptor = nil;
-  if (!descriptor) {
-    static GPBMessageFieldDescription fields[] = {
-      {
-        .name = "key",
-        .dataTypeSpecific.className = NULL,
-        .number = ITMGetProfilePropertyResponse_Property_FieldNumber_Key,
-        .hasIndex = 0,
-        .offset = (uint32_t)offsetof(ITMGetProfilePropertyResponse_Property__storage_, key),
-        .flags = GPBFieldOptional,
-        .dataType = GPBDataTypeString,
-      },
-      {
-        .name = "jsonValue",
-        .dataTypeSpecific.className = NULL,
-        .number = ITMGetProfilePropertyResponse_Property_FieldNumber_JsonValue,
-        .hasIndex = 1,
-        .offset = (uint32_t)offsetof(ITMGetProfilePropertyResponse_Property__storage_, jsonValue),
-        .flags = GPBFieldOptional,
-        .dataType = GPBDataTypeString,
-      },
-    };
-    GPBDescriptor *localDescriptor =
-        [GPBDescriptor allocDescriptorForClass:[ITMGetProfilePropertyResponse_Property class]
-                                     rootClass:[ITMApiRoot class]
-                                          file:ITMApiRoot_FileDescriptor()
-                                        fields:fields
-                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
-                                   storageSize:sizeof(ITMGetProfilePropertyResponse_Property__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMGetProfilePropertyResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
-    descriptor = localDescriptor;
-  }
-  return descriptor;
-}
-
-@end
-
 #pragma mark - ITMSetProfilePropertyRequest
 
 @implementation ITMSetProfilePropertyRequest
 
-@dynamic hasSession, session;
+@dynamic targetOneOfCase;
+@dynamic session;
+@dynamic guidList;
 @dynamic hasKey, key;
 @dynamic hasJsonValue, jsonValue;
 
 typedef struct ITMSetProfilePropertyRequest__storage_ {
-  uint32_t _has_storage_[1];
+  uint32_t _has_storage_[2];
   NSString *session;
+  ITMSetProfilePropertyRequest_GuidList *guidList;
   NSString *key;
   NSString *jsonValue;
 } ITMSetProfilePropertyRequest__storage_;
@@ -3540,16 +3705,25 @@ typedef struct ITMSetProfilePropertyRequest__storage_ {
         .name = "session",
         .dataTypeSpecific.className = NULL,
         .number = ITMSetProfilePropertyRequest_FieldNumber_Session,
-        .hasIndex = 0,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMSetProfilePropertyRequest__storage_, session),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },
       {
+        .name = "guidList",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMSetProfilePropertyRequest_GuidList),
+        .number = ITMSetProfilePropertyRequest_FieldNumber_GuidList,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMSetProfilePropertyRequest__storage_, guidList),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "key",
         .dataTypeSpecific.className = NULL,
         .number = ITMSetProfilePropertyRequest_FieldNumber_Key,
-        .hasIndex = 1,
+        .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSetProfilePropertyRequest__storage_, key),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
@@ -3558,7 +3732,7 @@ typedef struct ITMSetProfilePropertyRequest__storage_ {
         .name = "jsonValue",
         .dataTypeSpecific.className = NULL,
         .number = ITMSetProfilePropertyRequest_FieldNumber_JsonValue,
-        .hasIndex = 2,
+        .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMSetProfilePropertyRequest__storage_, jsonValue),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
@@ -3572,6 +3746,61 @@ typedef struct ITMSetProfilePropertyRequest__storage_ {
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSetProfilePropertyRequest__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
+    static const char *oneofs[] = {
+      "target",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+void ITMSetProfilePropertyRequest_ClearTargetOneOfCase(ITMSetProfilePropertyRequest *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
+#pragma mark - ITMSetProfilePropertyRequest_GuidList
+
+@implementation ITMSetProfilePropertyRequest_GuidList
+
+@dynamic guidsArray, guidsArray_Count;
+
+typedef struct ITMSetProfilePropertyRequest_GuidList__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *guidsArray;
+} ITMSetProfilePropertyRequest_GuidList__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "guidsArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSetProfilePropertyRequest_GuidList_FieldNumber_GuidsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMSetProfilePropertyRequest_GuidList__storage_, guidsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMSetProfilePropertyRequest_GuidList class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMSetProfilePropertyRequest_GuidList__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMSetProfilePropertyRequest)];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }
@@ -3629,11 +3858,13 @@ GPBEnumDescriptor *ITMSetProfilePropertyResponse_Status_EnumDescriptor(void) {
   static GPBEnumDescriptor *descriptor = NULL;
   if (!descriptor) {
     static const char *valueNames =
-        "Ok\000SessionNotFound\000RequestMalformed\000";
+        "Ok\000SessionNotFound\000RequestMalformed\000BadG"
+        "uid\000";
     static const int32_t values[] = {
         ITMSetProfilePropertyResponse_Status_Ok,
         ITMSetProfilePropertyResponse_Status_SessionNotFound,
         ITMSetProfilePropertyResponse_Status_RequestMalformed,
+        ITMSetProfilePropertyResponse_Status_BadGuid,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMSetProfilePropertyResponse_Status)
@@ -3653,6 +3884,7 @@ BOOL ITMSetProfilePropertyResponse_Status_IsValidValue(int32_t value__) {
     case ITMSetProfilePropertyResponse_Status_Ok:
     case ITMSetProfilePropertyResponse_Status_SessionNotFound:
     case ITMSetProfilePropertyResponse_Status_RequestMalformed:
+    case ITMSetProfilePropertyResponse_Status_BadGuid:
       return YES;
     default:
       return NO;

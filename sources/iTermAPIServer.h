@@ -53,6 +53,8 @@ extern NSString *const iTermAPIServerConnectionClosed;
                           handler:(void (^)(ITMSavedArrangementResponse *))response;
 - (void)apiServerFocus:(ITMFocusRequest *)request
                handler:(void (^)(ITMFocusResponse *))response;
+- (void)apiServerListProfiles:(ITMListProfilesRequest *)request
+                      handler:(void (^)(ITMListProfilesResponse *))response;
 
 @end
 

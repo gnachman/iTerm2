@@ -33,6 +33,7 @@ message ClientOriginatedMessage {
     VariableRequest variable_request = 115;
     SavedArrangementRequest saved_arrangement_request = 116;
     FocusRequest focus_request = 117;
+    ListProfilesRequest list_profiles_request = 118;
   }
 }
 
@@ -63,10 +64,29 @@ message ServerOriginatedMessage {
     VariableResponse variable_response = 115;
     SavedArrangementResponse saved_arrangement_response = 116;
     FocusResponse focus_response = 117;
+    ListProfilesResponse list_profiles_response = 118;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
   }
+}
+
+// Requests a list of all profiles.
+message ListProfilesRequest {
+    // The profile properties to respond with. See SetProfilePropertyRequest for a list of values.
+    // If empty, all properties will be returned.
+    repeated string properties = 1;
+
+    // If empty, all profiles will be returned. Otherwise, only profiles with one of the listed
+    // GUIDs will be returned.
+    repeated string guids = 2;
+}
+
+message ListProfilesResponse {
+    message Profile {
+        repeated ProfileProperty properties = 1;
+    }
+    repeated Profile profiles = 1;
 }
 
 message FocusRequest {
@@ -460,6 +480,11 @@ message GetProfilePropertyRequest {
   repeated string keys = 2;
 }
 
+message ProfileProperty {
+    optional string key = 1;
+    optional string json_value = 2;
+}
+
 message GetProfilePropertyResponse {
   enum Status {
     OK = 0;
@@ -470,17 +495,19 @@ message GetProfilePropertyResponse {
 
   optional Status status = 1 [default = OK];
 
-  message Property {
-    optional string key = 1;
-    optional string json_value = 2;
-  }
-  repeated Property properties = 3;
+  repeated ProfileProperty properties = 3;
 }
 
 // Sets a value in a session's copy of the profile without modifying the underlying profile.
 message SetProfilePropertyRequest {
-  // See documentation on session IDs
-  optional string session = 1;
+  message GuidList {
+    repeated string guids = 1;
+  }
+  oneof target {
+    // See documentation on session IDs
+    string session = 1;
+    GuidList guid_list = 2;
+  }
 
   // The following keys are allowed. This table also gives the type that's expected in json_value:
   // Name                                            String
@@ -584,7 +611,7 @@ message SetProfilePropertyRequest {
   // And an optional key with a value in 0 to 1:
   //   Alpha Component
   //
-  optional string key = 2;
+  optional string key = 3;
 
   // Does not need to be a dictionary. Here are examples of JSON protos having JSON values:
   // Numeric example:
@@ -593,7 +620,7 @@ message SetProfilePropertyRequest {
   //   "json_value": "\"Hello world\""
   // Color example:
   //   "json_value": "{\"Red Component\": 1, \"Green Component\": 0, \"Blue Component\": 0, \"Alpha Component\": 1}"
-  optional string json_value = 3;
+  optional string json_value = 4;
 }
 
 message SetProfilePropertyResponse {
@@ -601,6 +628,7 @@ message SetProfilePropertyResponse {
     OK = 0;
     SESSION_NOT_FOUND = 1;
     REQUEST_MALFORMED = 2;
+    BAD_GUID = 3;
   }
 
   optional Status status = 1 [default = OK];

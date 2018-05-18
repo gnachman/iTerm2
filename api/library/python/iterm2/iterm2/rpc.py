@@ -201,19 +201,23 @@ async def async_register_web_view_tool(connection,
     request.register_tool_request.URL = url
     return await _async_call(connection, request)
 
-async def async_set_profile_property(connection, session_id, key, value):
+async def async_set_profile_property(connection, session_id, key, value, guids=None):
     """
     Sets a property of a session's profile.
 
-    connection: A connected iterm2.Connection.
-    session_id: Session ID
-    key: The key to set
-    value: a Python object, whose type depends on the key
+    :param connection: A connected iterm2.Connection.
+    :param session_id: Session ID to modify or None. If None, guids must be set.
+    :param key: The key to set
+    :param value: a Python object, whose type depends on the key
+    :param guids: List of GUIDs of the profile to modify or None. If None, session_id must be set.
 
     Returns: iterm2.api_pb2.ServerOriginatedMessage
     """
     request = _alloc_request()
-    request.set_profile_property_request.session = session_id
+    if session_id is None:
+        request.set_profile_property_request.guid_list.guids.extend(guids);
+    else:
+        request.set_profile_property_request.session = session_id
     request.set_profile_property_request.key = key
     request.set_profile_property_request.json_value = json.dumps(value)
     return await _async_call(connection, request)
@@ -342,6 +346,20 @@ async def async_get_focus_info(connection):
     """
     request = _alloc_request()
     request.focus_request.SetInParent()
+    return await _async_call(connection, request)
+
+async def async_list_profiles(connection, guids, properties):
+    """
+    Gets a list of all profiles.
+
+    :param guid: If None, get all profiles. Otherwise, a list of GUIDs (strings) to fetch.
+    "param properties: If None, get all properties. Otherwise, a list of strings giving property keys to fetch.
+    """
+    request = _alloc_request()
+    if guids is not None:
+        request.list_profiles_request.guids.extend(guids)
+    if properties is not None:
+        request.list_profiles_request.properties.extend(properties)
     return await _async_call(connection, request)
 
 ## Private --------------------------------------------------------------------
