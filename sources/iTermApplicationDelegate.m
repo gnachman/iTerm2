@@ -1978,7 +1978,7 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)openREPL:(id)sender {
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithCompletion:^{
-        NSString *command = [[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"];
+        NSString *command = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithEscapedShellCharactersIncludingNewlines:YES];
         NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
         command = [command stringByAppendingFormat:@" --banner=\"`cat %@`\"", bannerURL.path];
         [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
