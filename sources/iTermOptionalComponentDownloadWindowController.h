@@ -7,6 +7,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+extern const int iTermMinimumPythonEnvironmentVersion;
+
 @class iTermOptionalComponentDownloadWindowController;
 
 @protocol iTermOptionalComponentDownloadWindowControllerDelegate<NSObject>

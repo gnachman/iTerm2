@@ -12,7 +12,7 @@
 
 @import Sparkle;
 
-static const int iTermMinimumPythonEnvironmentVersion = 12;
+const int iTermMinimumPythonEnvironmentVersion = 12;
 
 @protocol iTermOptionalComponentDownloadPhaseDelegate<NSObject>
 - (void)optionalComponentDownloadPhaseDidComplete:(iTermOptionalComponentDownloadPhase *)sender;

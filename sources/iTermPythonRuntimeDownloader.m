@@ -70,8 +70,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 }
 
 - (BOOL)shouldDownloadEnvironment {
-    static const NSInteger minimumVersion = 11;
-    return (self.installedVersion < minimumVersion);
+    return (self.installedVersion < iTermMinimumPythonEnvironmentVersion);
 }
 
 - (BOOL)isPythonRuntimeInstalled {
