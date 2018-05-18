@@ -3277,6 +3277,51 @@
 		530AB7B620A6242C00D2AA08 /* iTermAPIAuthorizationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAPIAuthorizationController.h; sourceTree = "<group>"; };
 		530AB7B720A6242C00D2AA08 /* iTermAPIAuthorizationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermAPIAuthorizationController.m; sourceTree = "<group>"; };
 		530AB7BB20A641E000D2AA08 /* repl_banner.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = repl_banner.txt; path = sources/repl_banner.txt; sourceTree = "<group>"; };
+		530AB7F020AE85DE00D2AA08 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		530AB7F120AE85DE00D2AA08 /* MANIFEST.in */ = {isa = PBXFileReference; lastKnownFileType = text; path = MANIFEST.in; sourceTree = "<group>"; };
+		530AB7F320AE85DE00D2AA08 /* app.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = app.rst; sourceTree = "<group>"; };
+		530AB7F420AE85DE00D2AA08 /* index.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.rst; sourceTree = "<group>"; };
+		530AB7F720AE85DE00D2AA08 /* index.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.rst; sourceTree = "<group>"; };
+		530AB7F820AE85DE00D2AA08 /* new_script_simple_or_daemon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = new_script_simple_or_daemon.png; sourceTree = "<group>"; };
+		530AB7F920AE85DE00D2AA08 /* example.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = example.rst; sourceTree = "<group>"; };
+		530AB7FA20AE85DE00D2AA08 /* new_script_basic_or_full.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = new_script_basic_or_full.png; sourceTree = "<group>"; };
+		530AB7FB20AE85DE00D2AA08 /* running.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = running.rst; sourceTree = "<group>"; };
+		530AB7FC20AE85DE00D2AA08 /* daemons.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = daemons.rst; sourceTree = "<group>"; };
+		530AB7FD20AE85DE00D2AA08 /* connection.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = connection.rst; sourceTree = "<group>"; };
+		530AB7FE20AE85DE00D2AA08 /* tool.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = tool.rst; sourceTree = "<group>"; };
+		530AB7FF20AE85DE00D2AA08 /* transaction.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = transaction.rst; sourceTree = "<group>"; };
+		530AB80020AE85DE00D2AA08 /* tab.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = tab.rst; sourceTree = "<group>"; };
+		530AB80220AE85DE00D2AA08 /* layout.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = layout.html; sourceTree = "<group>"; };
+		530AB80320AE85DE00D2AA08 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		530AB80420AE85DE00D2AA08 /* conf.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = conf.py; sourceTree = "<group>"; };
+		530AB80720AE85DE00D2AA08 /* custom.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = custom.css; sourceTree = "<group>"; };
+		530AB80820AE85DE00D2AA08 /* session.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = session.rst; sourceTree = "<group>"; };
+		530AB80920AE85DE00D2AA08 /* notifications.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = notifications.rst; sourceTree = "<group>"; };
+		530AB80A20AE85DE00D2AA08 /* build.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = build.sh; sourceTree = "<group>"; };
+		530AB80B20AE85DE00D2AA08 /* profile.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = profile.rst; sourceTree = "<group>"; };
+		530AB86720AE85DF00D2AA08 /* window.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = window.rst; sourceTree = "<group>"; };
+		530AB86820AE85DF00D2AA08 /* util.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = util.rst; sourceTree = "<group>"; };
+		530AB86920AE85DF00D2AA08 /* api.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = api.rst; sourceTree = "<group>"; };
+		530AB86A20AE85DF00D2AA08 /* setup.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = setup.py; sourceTree = "<group>"; };
+		530AB86C20AE85DF00D2AA08 /* window.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = window.py; sourceTree = "<group>"; };
+		530AB86D20AE85DF00D2AA08 /* _version.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = _version.py; sourceTree = "<group>"; };
+		530AB86E20AE85DF00D2AA08 /* util.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = util.py; sourceTree = "<group>"; };
+		530AB86F20AE85DF00D2AA08 /* transaction.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = transaction.py; sourceTree = "<group>"; };
+		530AB87020AE85DF00D2AA08 /* profile.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = profile.py; sourceTree = "<group>"; };
+		530AB87120AE85DF00D2AA08 /* session.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = session.py; sourceTree = "<group>"; };
+		530AB87220AE85DF00D2AA08 /* __init__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __init__.py; sourceTree = "<group>"; };
+		530AB87320AE85DF00D2AA08 /* api_pb2.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = api_pb2.py; sourceTree = "<group>"; };
+		530AB88320AE85DF00D2AA08 /* hierarchy.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = hierarchy.py; sourceTree = "<group>"; };
+		530AB88420AE85DF00D2AA08 /* connection.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = connection.py; sourceTree = "<group>"; };
+		530AB88520AE85DF00D2AA08 /* rpc.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = rpc.py; sourceTree = "<group>"; };
+		530AB88620AE85DF00D2AA08 /* app.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = app.py; sourceTree = "<group>"; };
+		530AB88720AE85DF00D2AA08 /* notifications.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = notifications.py; sourceTree = "<group>"; };
+		530AB88820AE85DF00D2AA08 /* tab.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = tab.py; sourceTree = "<group>"; };
+		530AB88920AE85DF00D2AA08 /* tool.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = tool.py; sourceTree = "<group>"; };
+		530AB88E20AE85DF00D2AA08 /* README.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.rst; sourceTree = "<group>"; };
+		530AB89120AE85DF00D2AA08 /* api_pb2.pyc */ = {isa = PBXFileReference; lastKnownFileType = file; path = api_pb2.pyc; sourceTree = "<group>"; };
+		530AB89220AE85DF00D2AA08 /* it2api */ = {isa = PBXFileReference; lastKnownFileType = text; path = it2api; sourceTree = "<group>"; };
+		530AB89320AE85DF00D2AA08 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		5337A313203E065300024BEA /* iTermPowerManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPowerManager.h; sourceTree = "<group>"; };
 		5337A314203E065300024BEA /* iTermPowerManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPowerManager.m; sourceTree = "<group>"; };
 		534690231C94FE8000B7E4E9 /* overflowImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overflowImage.png; sourceTree = "<group>"; };
@@ -4526,6 +4571,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				530AB7EC20AE85DE00D2AA08 /* api */,
 				A6D22A701BC8C27E004084E0 /* NSManagedObjects */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
@@ -5560,6 +5606,146 @@
 				1DFA7C6B1923E83600DF1410 /* SSKeychain-Prefix.pch */,
 			);
 			name = SSKeychain;
+			sourceTree = "<group>";
+		};
+		530AB7EC20AE85DE00D2AA08 /* api */ = {
+			isa = PBXGroup;
+			children = (
+				530AB7ED20AE85DE00D2AA08 /* library */,
+				530AB88F20AE85DF00D2AA08 /* examples */,
+			);
+			path = api;
+			sourceTree = "<group>";
+		};
+		530AB7ED20AE85DE00D2AA08 /* library */ = {
+			isa = PBXGroup;
+			children = (
+				530AB7EE20AE85DE00D2AA08 /* python */,
+			);
+			path = library;
+			sourceTree = "<group>";
+		};
+		530AB7EE20AE85DE00D2AA08 /* python */ = {
+			isa = PBXGroup;
+			children = (
+				530AB7EF20AE85DE00D2AA08 /* iterm2 */,
+			);
+			path = python;
+			sourceTree = "<group>";
+		};
+		530AB7EF20AE85DE00D2AA08 /* iterm2 */ = {
+			isa = PBXGroup;
+			children = (
+				530AB7F020AE85DE00D2AA08 /* Makefile */,
+				530AB7F120AE85DE00D2AA08 /* MANIFEST.in */,
+				530AB7F220AE85DE00D2AA08 /* docs */,
+				530AB86A20AE85DF00D2AA08 /* setup.py */,
+				530AB86B20AE85DF00D2AA08 /* iterm2 */,
+				530AB88E20AE85DF00D2AA08 /* README.rst */,
+			);
+			path = iterm2;
+			sourceTree = "<group>";
+		};
+		530AB7F220AE85DE00D2AA08 /* docs */ = {
+			isa = PBXGroup;
+			children = (
+				530AB7F320AE85DE00D2AA08 /* app.rst */,
+				530AB7F420AE85DE00D2AA08 /* index.rst */,
+				530AB7F620AE85DE00D2AA08 /* tutorial */,
+				530AB7FD20AE85DE00D2AA08 /* connection.rst */,
+				530AB7FE20AE85DE00D2AA08 /* tool.rst */,
+				530AB7FF20AE85DE00D2AA08 /* transaction.rst */,
+				530AB80020AE85DE00D2AA08 /* tab.rst */,
+				530AB80120AE85DE00D2AA08 /* _templates */,
+				530AB80320AE85DE00D2AA08 /* Makefile */,
+				530AB80420AE85DE00D2AA08 /* conf.py */,
+				530AB80520AE85DE00D2AA08 /* _static */,
+				530AB80820AE85DE00D2AA08 /* session.rst */,
+				530AB80920AE85DE00D2AA08 /* notifications.rst */,
+				530AB80A20AE85DE00D2AA08 /* build.sh */,
+				530AB80B20AE85DE00D2AA08 /* profile.rst */,
+				530AB86720AE85DF00D2AA08 /* window.rst */,
+				530AB86820AE85DF00D2AA08 /* util.rst */,
+				530AB86920AE85DF00D2AA08 /* api.rst */,
+			);
+			path = docs;
+			sourceTree = "<group>";
+		};
+		530AB7F620AE85DE00D2AA08 /* tutorial */ = {
+			isa = PBXGroup;
+			children = (
+				530AB7F720AE85DE00D2AA08 /* index.rst */,
+				530AB7F820AE85DE00D2AA08 /* new_script_simple_or_daemon.png */,
+				530AB7F920AE85DE00D2AA08 /* example.rst */,
+				530AB7FA20AE85DE00D2AA08 /* new_script_basic_or_full.png */,
+				530AB7FB20AE85DE00D2AA08 /* running.rst */,
+				530AB7FC20AE85DE00D2AA08 /* daemons.rst */,
+			);
+			path = tutorial;
+			sourceTree = "<group>";
+		};
+		530AB80120AE85DE00D2AA08 /* _templates */ = {
+			isa = PBXGroup;
+			children = (
+				530AB80220AE85DE00D2AA08 /* layout.html */,
+			);
+			path = _templates;
+			sourceTree = "<group>";
+		};
+		530AB80520AE85DE00D2AA08 /* _static */ = {
+			isa = PBXGroup;
+			children = (
+				530AB80620AE85DE00D2AA08 /* css */,
+			);
+			path = _static;
+			sourceTree = "<group>";
+		};
+		530AB80620AE85DE00D2AA08 /* css */ = {
+			isa = PBXGroup;
+			children = (
+				530AB80720AE85DE00D2AA08 /* custom.css */,
+			);
+			path = css;
+			sourceTree = "<group>";
+		};
+		530AB86B20AE85DF00D2AA08 /* iterm2 */ = {
+			isa = PBXGroup;
+			children = (
+				530AB86C20AE85DF00D2AA08 /* window.py */,
+				530AB86D20AE85DF00D2AA08 /* _version.py */,
+				530AB86E20AE85DF00D2AA08 /* util.py */,
+				530AB86F20AE85DF00D2AA08 /* transaction.py */,
+				530AB87020AE85DF00D2AA08 /* profile.py */,
+				530AB87120AE85DF00D2AA08 /* session.py */,
+				530AB87220AE85DF00D2AA08 /* __init__.py */,
+				530AB87320AE85DF00D2AA08 /* api_pb2.py */,
+				530AB88320AE85DF00D2AA08 /* hierarchy.py */,
+				530AB88420AE85DF00D2AA08 /* connection.py */,
+				530AB88520AE85DF00D2AA08 /* rpc.py */,
+				530AB88620AE85DF00D2AA08 /* app.py */,
+				530AB88720AE85DF00D2AA08 /* notifications.py */,
+				530AB88820AE85DF00D2AA08 /* tab.py */,
+				530AB88920AE85DF00D2AA08 /* tool.py */,
+			);
+			path = iterm2;
+			sourceTree = "<group>";
+		};
+		530AB88F20AE85DF00D2AA08 /* examples */ = {
+			isa = PBXGroup;
+			children = (
+				530AB89020AE85DF00D2AA08 /* python */,
+			);
+			path = examples;
+			sourceTree = "<group>";
+		};
+		530AB89020AE85DF00D2AA08 /* python */ = {
+			isa = PBXGroup;
+			children = (
+				530AB89120AE85DF00D2AA08 /* api_pb2.pyc */,
+				530AB89220AE85DF00D2AA08 /* it2api */,
+				530AB89320AE85DF00D2AA08 /* README.md */,
+			);
+			path = python;
 			sourceTree = "<group>";
 		};
 		53EBF29A1DCBFF6D00766613 /* API */ = {
