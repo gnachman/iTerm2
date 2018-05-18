@@ -153,7 +153,22 @@ def profile_property_type_map():
       "use_tab_color":                               "bool",
       "use_underline_color":                         "bool",
       "vertical_spacing":                            "float",
-      "visual_bell":                                 "bool" }
+      "visual_bell":                                 "bool",
+      "triggers":                                    "dict",
+      "smart_selection_rules":                       "list",
+      "semantic_history":                            "dict",
+      "automatic_profile_switching_rules":           "list",
+      "advanced_working_directory_window_setting":   "string",
+      "advanced_working_directory_window_directory": "string",
+      "advanced_working_directory_tab_setting":      "string",
+      "advanced_working_directory_tab_directory":    "string",
+      "advanced_working_directory_pane_setting":     "string",
+      "advanced_working_directory_pane_directory":   "string",
+      "normal_font":                                 "string",
+      "non_ascii_font":                              "string",
+      "background_image_location":                   "string",
+      "key_mappings":                                "dict",
+      "touchbar_mappings":                           "dict" }
   return map
 
 def profile_properties():
@@ -186,6 +201,9 @@ def encode_property_value(key, value):
     return float(value)
   elif type == "int":
     return int(value)
+  elif type == "dict" or type == "list":
+    class TypeNotSupportedException(Exception): Pass
+    raise TypeNotSupportedException("this property's type is not supported")
   elif type == "color":
     # Accepted values look like: "(0,0,0,255 sRGB)"
     match = re.search(r"\(([0-9]+), *([0-9]+), *([0-9]+), *([0-9]+)  *([A-Za-z]+)\)", value)
@@ -347,6 +365,19 @@ async def show_focus(connection, args):
     s = a.get_session_by_id(t.active_session_id)
     print("  Active session is: {}".format(s.pretty_str()))
 
+async def list_profiles(connection, args):
+  a = await iterm2.async_get_app(connection)
+  guids = args.guids.split(",") if args.guids is not None else None
+  properties = args.properties.split(",") if args.properties is not None else None
+  profiles = await a.async_list_profiles(guids=guids, properties=properties)
+  for profile in profiles:
+    keys = list(profile.all_properties.keys())
+    keys.sort()
+    for k in keys:
+      v = profile.all_properties[k]
+      print("{}: {}".format(k, v))
+    print("")
+  
 def make_parser():
   parser = argparse.ArgumentParser(description='iTerm2 CLI')
   subparsers = parser.add_subparsers(help='Commands')
@@ -450,6 +481,11 @@ def make_parser():
 
   show_focus_parser = subparsers.add_parser("show-focus", help="Show active windows, tabs, and panes")
   show_focus_parser.set_defaults(func=show_focus)
+
+  list_profiles_parser = subparsers.add_parser("list-profiles", help="List profiles")
+  list_profiles_parser.add_argument("guids", type=str, nargs='?', help="Comma-delimited list of profiles to list. Omit to get all of them.")
+  list_profiles_parser.add_argument("properties", type=str, nargs='?', help="Comma-delimited list of properties to request. Omit to get all of them.")
+  list_profiles_parser.set_defaults(func=list_profiles)
 
   return parser
 
