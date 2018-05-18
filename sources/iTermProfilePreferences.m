@@ -145,8 +145,14 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 }
 
 + (NSArray<NSString *> *)allKeys {
-    // Add GUID because it lacks a default value and so is not in defaultValueMap.
-    return [self.defaultValueMap.allKeys arrayByAddingObject:KEY_GUID];
+    // KEY_ASK_ABOUT_OUTDATED_KEYMAPS excluded because it should be deprecated.
+    NSArray<NSString *> *keysWithoutDefaultValues =
+        @[ KEY_GUID, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES, KEY_SEMANTIC_HISTORY, KEY_BOUND_HOSTS,
+           KEY_ORIGINAL_GUID, KEY_AWDS_WIN_OPTION, KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_OPTION,
+           KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
+           KEY_NORMAL_FONT, KEY_NON_ASCII_FONT, KEY_BACKGROUND_IMAGE_LOCATION, KEY_KEYBOARD_MAP,
+           KEY_TOUCHBAR_MAP, KEY_DYNAMIC_PROFILE_PARENT_NAME, KEY_DYNAMIC_PROFILE_FILENAME ];
+    return [self.defaultValueMap.allKeys arrayByAddingObjectsFromArray:keysWithoutDefaultValues];
 }
 
 + (NSString *)jsonEncodedValueForKey:(NSString *)key inProfile:(Profile *)profile {

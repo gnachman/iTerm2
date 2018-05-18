@@ -611,6 +611,100 @@ class WriteOnlyProfile:
         :param value: OPTION_KEY_xxx"""
         return await self._async_simple_set("Right Option Key Sends", value)
 
+    async def async_set_triggers(self, value):
+        """Sets the triggers.
+
+        :param value: A list of dicts of trigger definitions."""
+        return await self._async_simple_set("Triggers", value)
+
+    async def async_set_smart_selection_rules(self, value):
+        """Sets the smart selection rules.
+
+        :param value: A list of dicts of smart selection rules"""
+        return await self._async_simple_set("Smart Selection Rules", value)
+
+    async def async_set_semantic_history(self, value):
+        """Sets the semantic history prefs.
+
+        :param value: Semantic history settings dict."""
+        return await self._async_simple_set("Semantic History", value)
+
+    async def async_set_automatic_profile_switching_rules(self, value):
+        """Sets the automatic profile switching rules.
+
+        :param value: A list of rules (strings)."""
+        return await self._async_simple_set("Bound Hosts", value)
+
+    async def async_set_advanced_working_directory_window_setting(self, value):
+        """Sets the advanced working directory window setting.
+
+        :param value: INITIAL_WORKING_DIRECTORY_xxx, excluding ADVANCED."""
+        return await self._async_simple_set("AWDS Window Option", value)
+
+    async def async_set_advanced_working_directory_window_directory(self, value):
+        """Sets the advanced working directory window directory.
+
+        :param value: Path."""
+        return await self._async_simple_set("AWDS Window Directory", value)
+
+    async def async_set_advanced_working_directory_tab_setting(self, value):
+        """Sets the advanced working directory tab setting.
+
+        :param value: INITIAL_WORKING_DIRECTORY_xxx, excluding ADVANCED."""
+        return await self._async_simple_set("AWDS Tab Option", value)
+
+    async def async_set_advanced_working_directory_tab_directory(self, value):
+        """Sets the advanced working directory tab directory.
+
+        :param value: Path."""
+        return await self._async_simple_set("AWDS Tab Directory", value)
+
+    async def async_set_advanced_working_directory_pane_setting(self, value):
+        """Sets the advanced working directory pane setting.
+
+        :param value: INITIAL_WORKING_DIRECTORY_xxx, excluding ADVANCED."""
+        return await self._async_simple_set("AWDS Pane Option", value)
+
+    async def async_set_advanced_working_directory_pane_directory(self, value):
+        """Sets the advanced working directory pane directory.
+
+        :param value: Path."""
+        return await self._async_simple_set("AWDS Pane Directory", value)
+
+    async def async_set_normal_font(self, value):
+        """Sets the normal font.
+        
+        The normal font is used for either ASCII or all characters depending on
+        whether a separate font is used for non-ascii.
+
+        :param value: Font name and size as a string."""
+        return await self._async_simple_set("Normal Font", value)
+
+    async def async_set_normal_font(self, value):
+        """Sets the non-ASCII font.
+        
+        This is used for non-ASCII characters if use_non_ascii_font is enabled.
+
+        :param value: Font name and size as a string."""
+        return await self._async_simple_set("Non Ascii Font", value)
+
+    async def async_set_background_image_location(self, value):
+        """Sets path to the background image.
+        
+        :param value: Path."""
+        return await self._async_simple_set("Background Image Location", value)
+
+    async def async_set_key_mappings(self, value):
+        """Sets the keyboard shortcuts.
+        
+        :param value: Dictionary mapping keystroke to action."""
+        return await self._async_simple_set("Keyboard Map", value)
+
+    async def async_set_touchbar_mappings(self, value):
+        """Sets the touchbar actions.
+        
+        :param value: Dictionary mapping touch bar item to action."""
+        return await self._async_simple_set("Touch Bar Map", value)
 
 class Profile(WriteOnlyProfile):
     """Represents a profile.
@@ -637,6 +731,11 @@ class Profile(WriteOnlyProfile):
     OPTION_KEY_NORMAL = 0
     OPTION_KEY_META = 1
     OPTION_KEY_ESC = 2
+
+    INITIAL_WORKING_DIRECTORY_CUSTOM = "Yes"
+    INITIAL_WORKING_DIRECTORY_HOME = "No"
+    INITIAL_WORKING_DIRECTORY_RECYCLE = "Recycle"
+    INITIAL_WORKING_DIRECTORY_ADVANCED = "Advanced"
 
     def __init__(self, session_id, connection, profile_property_list):
         props = {}
@@ -1343,6 +1442,140 @@ class Profile(WriteOnlyProfile):
         :returns: A string identifying this profile"""
         return self._simple_get("Guid")
 
+    @property
+    def triggers(self):
+        """The triggers.
+
+        :returns: A list of dicts of trigger definitions."""
+        return self._simple_get("Triggers")
+
+    @property
+    def smart_selection_rules(self):
+        """The smart selection rules.
+
+        :returns: A list of dicts of smart selection rules"""
+        return self._simple_get("Smart Selection Rules")
+
+    @property
+    def semantic_history(self):
+        """The semantic history prefs.
+
+        :returns: Semantic history settings dict."""
+        return self._simple_get("Semantic History")
+
+    @property
+    def automatic_profile_switching_rules(self):
+        """The automatic profile switching rules.
+
+        :returns: A list of rules (strings)."""
+        return self._simple_get("Bound Hosts")
+
+    @property
+    def advanced_working_directory_window_setting(self):
+        """The advanced working directory window setting.
+
+        :returns: INITIAL_WORKING_DIRECTORY_xxx, excluding ADVANCED."""
+        return self._simple_get("AWDS Window Option")
+
+    @property
+    def advanced_working_directory_window_directory(self):
+        """The advanced working directory window directory.
+
+        :returns: Path."""
+        return self._simple_get("AWDS Window Directory")
+
+    @property
+    def advanced_working_directory_tab_setting(self):
+        """The advanced working directory tab setting.
+
+        :returns: INITIAL_WORKING_DIRECTORY_xxx, excluding ADVANCED."""
+        return self._simple_get("AWDS Tab Option")
+
+    @property
+    def advanced_working_directory_tab_directory(self):
+        """The advanced working directory tab directory.
+
+        :returns: Path."""
+        return self._simple_get("AWDS Tab Directory")
+
+    @property
+    def advanced_working_directory_pane_setting(self):
+        """The advanced working directory pane setting.
+
+        :returns: INITIAL_WORKING_DIRECTORY_xxx, excluding ADVANCED."""
+        return self._simple_get("AWDS Pane Option")
+
+    @property
+    def advanced_working_directory_pane_directory(self):
+        """The advanced working directory pane directory.
+
+        :returns: Path."""
+        return self._simple_get("AWDS Pane Directory")
+
+    @property
+    def normal_font(self):
+        """The normal font.
+        
+        The normal font is used for either ASCII or all characters depending on
+        whether a separate font is used for non-ascii.
+
+        :returns: Font name and size as a string."""
+        return self._simple_get("Normal Font")
+
+    @property
+    def non_ascii_font(self):
+        """The non-ASCII font.
+        
+        This is used for non-ASCII characters if use_non_ascii_font is enabled.
+
+        :returns: Font name and size as a string."""
+        return self._simple_get("Non Ascii Font")
+
+    @property
+    def background_image_location(self):
+        """Gets path to the background image.
+        
+        :returns: Path."""
+        return self._simple_get("Background Image Location")
+
+    @property
+    def key_mappings(self):
+        """The keyboard shortcuts.
+        
+        :returns: Dictionary mapping keystroke to action."""
+        return self._simple_get("Keyboard Map")
+
+    @property
+    def touchbar_mappings(self):
+        """The touchbar actions.
+        
+        :returns: Dictionary mapping touch bar item to action."""
+        return self._simple_get("Touch Bar Map")
+
+    @property
+    def original_guid(self):
+        """The GUID of the original profile from which this one was derived.
+
+        Used for sessions whose profile has been modified from the underlying
+        profile. Otherwise not set.
+
+        :returns: Guid"""
+        return self._simple_get("Original Guid")
+
+    @property
+    def dynamic_profile_parent_name(self):
+        """If the profile is a dynamic profile, returns the name of the parent profile.
+
+        :returns: String name"""
+        return self._simple_get("Dynamic Profile Parent Name")
+
+    @property
+    def dynamic_profile_file_name(self):
+        """If the profile is a dynamic profile, returns the path to the file
+        from which it came.
+
+        :returns: String file name"""
+        return self._simple_get("Dynamic Profile Filename")
 
 class Color:
     """Describes a color."""

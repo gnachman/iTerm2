@@ -37,23 +37,25 @@
 #define KEY_DEPRECATED_BOOKMARKS        @"Bookmarks"  // Deprecated
 #define KEY_NEW_BOOKMARKS               @"New Bookmarks"
 
-// Bookmark-level keys
-#define KEY_CHILDREN                    @"Children"
+#pragma mark - Profile-level keys
+// IMPORATANT: If you add keys, also modify doCopyFrom in PreferencePanel.m.
+
+#define KEY_CHILDREN                    @"Children"  // Deprecated
 #define KEY_NAME                        @"Name"
-#define KEY_DESCRIPTION                 @"Description"
+#define KEY_DESCRIPTION                 @"Description"  // Deprecated
 #define KEY_CUSTOM_COMMAND              @"Custom Command"
 #define KEY_COMMAND_LINE                @"Command"
 #define KEY_INITIAL_TEXT                @"Initial Text"
 #define KEY_CUSTOM_DIRECTORY            @"Custom Directory"  // values are Yes, No, Recycle
 #define KEY_WORKING_DIRECTORY           @"Working Directory"
 #define KEY_BADGE_FORMAT                @"Badge Text"
-#define KEY_TERMINAL_PROFILE            @"Terminal Profile"
-#define KEY_KEYBOARD_PROFILE            @"Keyboard Profile"
-#define KEY_DISPLAY_PROFILE             @"Display Profile"
+#define KEY_TERMINAL_PROFILE            @"Terminal Profile"  // Deprecated
+#define KEY_KEYBOARD_PROFILE            @"Keyboard Profile"  // Deprecated
+#define KEY_DISPLAY_PROFILE             @"Display Profile"  // Deprecated
 #define KEY_SHORTCUT                    @"Shortcut"
-#define KEY_BONJOUR_GROUP               @"Bonjour Group"
-#define KEY_BONJOUR_SERVICE             @"Bonjour Service"
-#define KEY_BONJOUR_SERVICE_ADDRESS     @"Bonjour Service Address"
+#define KEY_BONJOUR_GROUP               @"Bonjour Group"  // Deprecated
+#define KEY_BONJOUR_SERVICE             @"Bonjour Service"  // Deprecated
+#define KEY_BONJOUR_SERVICE_ADDRESS     @"Bonjour Service Address"  // Deprecated
 #define KEY_TAGS                        @"Tags"
 #define KEY_GUID                        @"Guid"
 #define KEY_ORIGINAL_GUID               @"Original Guid"  // GUID before divorce. Not saved to preferences plist.
@@ -67,9 +69,6 @@
 #define KEY_AWDS_TAB_DIRECTORY          @"AWDS Tab Directory"
 #define KEY_AWDS_PANE_OPTION            @"AWDS Pane Option"
 #define KEY_AWDS_PANE_DIRECTORY         @"AWDS Pane Directory"
-
-// Per-bookmark keys ----------------------------------------------------------
-// IMPORATANT: If you add keys, also modify doCopyFrom in PreferencePanel.m.
 
 // Colors
 #define KEY_FOREGROUND_COLOR       @"Foreground Color"
@@ -178,7 +177,7 @@
 #define KEY_UNLIMITED_SCROLLBACK              @"Unlimited Scrollback"
 #define KEY_TERMINAL_TYPE                     @"Terminal Type"
 #define KEY_ANSWERBACK_STRING                 @"Answerback String"
-#define KEY_USE_CANONICAL_PARSER              @"Use Canonical Parser"
+#define KEY_USE_CANONICAL_PARSER              @"Use Canonical Parser"  // Deprecated
 #define KEY_PLACE_PROMPT_AT_FIRST_COLUMN      @"Place Prompt at First Column"
 #define KEY_SHOW_MARK_INDICATORS              @"Show Mark Indicators"
 

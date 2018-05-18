@@ -605,6 +605,26 @@ message SetProfilePropertyRequest {
   // Application Keypad Allowed                      Number (boolean)
   // Place Prompt at First Column                    Number (boolean)
   // Show Mark Indicators                            Number (boolean)
+  // Guid                                            String
+  // Triggers                                        List of dictionaries
+  // Smart Selection Rules                           List of dictionaries
+  // Semantic History                                Dictionary
+  // Bound Hosts                                     List of strings
+  // Original Guid                                   String
+  // AWDS Window Option                              String
+  // AWDS Window Directory                           String
+  // AWDS Tab Option                                 String
+  // AWDS Tab Directory                              String
+  // AWDS Pane Option                                String
+  // AWDS Pane Directory                             String
+  // Normal Font                                     String
+  // Non Ascii Font                                  String
+  // Background Image Location                       String
+  // Keyboard Map                                    Dictionary
+  // Touch Bar Map                                   Dictionary
+  // Dynamic Profile Parent Name                     String
+  // Dynamic Profile Filename                        String
+
   //
   // Color dictionaries have these mandatory keys taking numeric values between 0 and 1:
   //   Red Component, Green Component, Blue Component
