@@ -70,7 +70,7 @@ This is an iTerm2 `proprietary escape code <https://www.iterm2.com/documentation
 		await session.async_inject(code)
 
 This iterates over every session and injects the ClearScrollback code.
-Injecting a byte array is makes the session appear to receive that byte array
+Injecting a byte array makes the session appear to receive that byte array
 as input, as though it had been output by the running app in the terminal.
 Injection is safe to use even while receiving input because it uses its own
 parser (so there's no interaction between a half-received escape sequence in
@@ -123,6 +123,9 @@ from being made. If you modify the path to end with `?` that signals it is
 optional. Optional variables, when unset, are passed as `None` to the Python
 function.
 
+If a terminal session does not have keyboard focus then no `session.` variables
+will be available.
+
 2. A number, like `123`.
 
 Numbers are integers or floating point numbers. They can be negative, and you
@@ -138,11 +141,41 @@ Timeouts
 Functions must return within five seconds. Otherwise, the user will be shown an
 error.
 
-Return Values
--------------
+Composition
+-----------
 
-Functions may return values but they are not used.
+Functions may be composed. A registered function can return a value which the
+becomes an argument to a subsequent function call. Here's a snippet of an
+example, which you can add to the `main` function of the previous example:
 
+.. code-block:: python
+
+    async def add(a, b):
+        return a + b
+
+    async def times(a, b):
+        return a * b
+
+    async def show(s):
+        session = app.current_terminal_window.current_tab.current_session
+        await session.async_inject(bytes(str(s), encoding="utf-8"))
+
+    await app.async_register_rpc_handler("times", times)
+    await app.async_register_rpc_handler("add", add)
+    await app.async_register_rpc_handler("show", show)
+
+
+To compute 1+2*3 and inject it into the current session, use this invocation:
+
+.. code-block:: python
+
+    show(s: add(a: 1, b: times(a: 2, b: 3)))
+
+Note that if there are invocations that have no dependencies, they may run
+concurrently. There is no guarantee on the order of invocations except that an
+RPC will not be made until all its dependencies have completed without errors.
+
+Errors are propagated up the call chain and shown in an alert with a traceback.
 ----
 
 --------------

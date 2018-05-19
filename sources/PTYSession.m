@@ -5712,7 +5712,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } copy];
 }
 
-- (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)keyBindingText {
++ (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)keyBindingText {
     NSString *message = [NSString stringWithFormat:@"Error running “%@”:\n%@",
                          keyBindingText, error.localizedDescription];
     NSString *traceback = error.localizedFailureReason;
@@ -5803,10 +5803,11 @@ ITERM_WEAKLY_REFERENCEABLE
                                            source:[self functionCallSource]
                                        completion:^(id value, NSError *error) {
                                            if (error) {
-                                               [self reportFunctionCallError:error forInvocation:keyBindingText];
+                                               [PTYSession reportFunctionCallError:error forInvocation:keyBindingText];
                                            }
                                        }];
-            break;
+            return YES;
+
         case KEY_ACTION_SELECT_MENU_ITEM:
             [PTYSession selectMenuItem:keyBindingText];
             return YES;
@@ -6097,7 +6098,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                            source:[self functionCallSource]
                                        completion:^(id value, NSError *error) {
                                            if (error) {
-                                               [self reportFunctionCallError:error forInvocation:keyBindingText];
+                                               [PTYSession reportFunctionCallError:error forInvocation:keyBindingText];
                                            }
                                        }];
             break;

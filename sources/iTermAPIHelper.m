@@ -612,10 +612,10 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 
         NSString *signatureString = request.rpcSignature.it_stringRepresentation;
         subscriptions = _serverOriginatedRPCSubscriptions[signatureString];
-        if (subscriptions) {
+        if (subscriptions.count > 0) {
             response.status = ITMNotificationResponse_Status_DuplicateServerOriginatedRpc;
             return response;
-        } else {
+        } else if (!subscriptions) {
             subscriptions = [NSMutableDictionary dictionary];
             _serverOriginatedRPCSubscriptions[signatureString] = subscriptions;
         }

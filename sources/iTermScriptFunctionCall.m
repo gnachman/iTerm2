@@ -9,6 +9,7 @@
 
 #import "iTermAPIHelper.h"
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
@@ -94,8 +95,9 @@
         @"7  expression ::= <path> '?';"
         @"8  expression ::= 'Number';"
         @"9  expression ::= 'String';"
-        @"10 path       ::= 'Identifier';"
-        @"11 path       ::= 'Identifier' '.' <path>;";
+        @"10 expression ::= <call>;"
+        @"11 path       ::= 'Identifier';"
+        @"12 path       ::= 'Identifier' '.' <path>;";
         NSError *error = nil;
         CPGrammar *grammar = [CPGrammar grammarWithStart:@"call"
                                           backusNaurForm:bnf
@@ -150,6 +152,8 @@
             for (NSDictionary *arg in children[1]) {
                 if (arg[@"value"]) {
                     [call addParameterWithName:arg[@"name"] value:arg[@"value"]];
+                } else if (arg[@"call"]) {
+                    [call addParameterWithName:arg[@"name"] value:arg[@"call"]];
                 } else if (arg[@"error"]) {
                     call.error = [NSError errorWithDomain:@"com.iterm2.parser"
                                                      code:1
@@ -181,6 +185,14 @@
             //             {"name":NSString, "error":NSString}
             NSString *argName = [(CPIdentifierToken *)children[0] identifier];
             id expression = children[2];
+            iTermScriptFunctionCall *call = [iTermScriptFunctionCall castFrom:expression];
+            if (call.error) {
+                return @{ @"name": argName,
+                          @"error": [NSString stringWithFormat:@"Expression \"%@\" had an error: %@", expression, call.error.localizedDescription] };
+            } else if (call) {
+                return @{ @"name": argName, @"value": call };
+            }
+
             NSDictionary *dict = [NSDictionary castFrom:expression];
             NSString *str = [NSString castFrom:expression];
             BOOL optional = [str hasSuffix:@"?"];
@@ -219,11 +231,15 @@
             return @{ @"literal": [(CPQuotedToken *)children[0] content] };
         }
 
-        case 10: {  // path ::= 'Identifier' -> NSString
+        case 10: {  // expression ::= <call> -> iTermScriptFunctionCall*
+            return children[0];
+        }
+
+        case 11: {  // path ::= 'Identifier' -> NSString
             return [(CPIdentifierToken *)children[0] identifier];
         }
 
-        case 11: {  // path ::= 'Identifier' '.' <path> -> NSString
+        case 12: {  // path ::= 'Identifier' '.' <path> -> NSString
             return [NSString stringWithFormat:@"%@.%@",
                     [(CPIdentifierToken *)children[0] identifier],
                     children[2]];
@@ -252,12 +268,14 @@
 
 @implementation iTermScriptFunctionCall {
     NSMutableDictionary<NSString *, id> *_parameters;
+    NSMutableDictionary<NSString *, iTermScriptFunctionCall *> *_dependencies;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         _parameters = [NSMutableDictionary dictionary];
+        _dependencies = [NSMutableDictionary dictionary];
     }
     return self;
 }
@@ -272,16 +290,51 @@
 
 - (void)addParameterWithName:(NSString *)name value:(id)value {
     _parameters[name] = value;
+    iTermScriptFunctionCall *call = [iTermScriptFunctionCall castFrom:value];
+    if (call) {
+        _dependencies[name] = call;
+    }
 }
 
 - (void)callWithCompletion:(void (^)(id, NSError *))completion {
     if (self.error) {
         completion(nil, self.error);
     } else {
-        [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name
-                                                   arguments:_parameters
-                                                  completion:completion];
+        dispatch_group_t group = dispatch_group_create();
+        [self resolveDependenciesWithGroup:group];
+        dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+            [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name
+                                                       arguments:self->_parameters
+                                                      completion:completion];
+        });
     }
+}
+
+- (void)resolveDependenciesWithGroup:(dispatch_group_t)group {
+    [_dependencies enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermScriptFunctionCall * _Nonnull call, BOOL * _Nonnull stop) {
+        if (self.error) {
+            *stop = YES;
+        }
+        dispatch_group_enter(group);
+        [call callWithCompletion:^(id result, NSError *error) {
+            if (error) {
+                NSString *reason = [NSString stringWithFormat:@"In call to %@: %@", call.name, error.localizedDescription];
+                NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: reason };
+
+                NSString *traceback = error.localizedFailureReason;
+                if (traceback) {
+                    userInfo = [userInfo dictionaryBySettingObject:traceback forKey:NSLocalizedFailureReasonErrorKey];
+                }
+
+                self.error = [NSError errorWithDomain:@"com.iterm2.call"
+                                                 code:1
+                                             userInfo:userInfo];
+            } else {
+                self->_parameters[key] = result;
+            }
+            dispatch_group_leave(group);
+        }];
+    }];
 }
 
 @end
