@@ -2981,7 +2981,6 @@ blockquote {
     padding: 0.5625rem 1.25rem 0 1.1875rem;
     border-left: 1px solid #dddddd;
 }
-
 blockquote cite {
     display: block;
     font-size: 0.8125rem;
@@ -3340,4 +3339,10 @@ div#search-results {
 
 div#search-results > h2 {
   display: none;
+}
+
+cite {
+    font-family: 'Consolas', 'Menlo', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+    background: #DDD;
+    font-style: normal!important;
 }
