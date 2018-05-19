@@ -144,6 +144,8 @@ This tells the `connection` to handle incoming messages until the passed-in
 future has its result set. The future will never have its result set, so the
 script will run until iTerm2 terminates.
 
+Continue to the next section, :doc:`rpcs`.
+
 ----
 
 --------------
@@ -155,6 +157,7 @@ Other Sections
     * :doc:`example`
     * :doc:`running`
     * Daemons
+    * :doc:`rpcs`
 
 Indices and tables
 ==================
