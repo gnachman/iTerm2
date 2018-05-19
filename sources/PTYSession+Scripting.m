@@ -1,5 +1,6 @@
 #import "PTYSession+Scripting.h"
 #import "NSColor+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "ProfilesColorsPreferencesViewController.h"
 #import "PTYTab.h"
 #import "WindowControllerInterface.h"
@@ -108,7 +109,12 @@
         [command setScriptErrorString:@"No name given"];
     }
 
-    return self.variables[name];
+    id value = self.variables[name];
+    if ([NSString castFrom:value]) {
+        return value;
+    } else {
+        return [value stringValue];
+    }
 }
 
 - (id)handleSetVariableNamedCommand:(NSScriptCommand *)command {

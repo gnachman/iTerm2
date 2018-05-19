@@ -34,6 +34,7 @@ message ClientOriginatedMessage {
     SavedArrangementRequest saved_arrangement_request = 116;
     FocusRequest focus_request = 117;
     ListProfilesRequest list_profiles_request = 118;
+    ServerOriginatedRPCResultRequest server_originated_rpc_result_request = 119;
   }
 }
 
@@ -65,10 +66,26 @@ message ServerOriginatedMessage {
     SavedArrangementResponse saved_arrangement_response = 116;
     FocusResponse focus_response = 117;
     ListProfilesResponse list_profiles_response = 118;
+    ServerOriginatedRPCResultResponse server_originated_rpc_result_response = 119;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
   }
+}
+
+// This is the result of an iTerm2-to-script RPC call.
+message ServerOriginatedRPCResultRequest {
+  optional string request_id = 1;
+  oneof result {
+    // Exceptions should be dictionaries with a key of "reason" having a string value describing
+    // what went wrong.
+    string json_exception = 2;
+    string json_value = 3;
+  }
+}
+
+// This simply acknowledges receipt of ServerOriginatedRPCResultRequest.
+message ServerOriginatedRPCResultResponse {
 }
 
 // Requests a list of all profiles.
@@ -265,6 +282,16 @@ message RegisterToolRequest {
   optional string URL = 4;
 }
 
+// Describes an RPC from iTerm2 to script. I don't want to invent my own type
+// system so this is dynamically typed, which matches Python well enough.
+message RPCSignature {
+  message RPCArgumentSignature {
+    optional string name = 1;
+  }
+  optional string name = 1;
+  repeated RPCArgumentSignature arguments = 2;
+}
+
 message RegisterToolResponse {
   enum Status {
     OK = 0;
@@ -288,6 +315,7 @@ enum NotificationType {
   NOTIFY_ON_TERMINATE_SESSION = 7;
   NOTIFY_ON_LAYOUT_CHANGE = 8;
   NOTIFY_ON_FOCUS_CHANGE = 9;
+  NOTIFY_ON_SERVER_ORIGINATED_RPC = 10;
 }
 
 message NotificationRequest {
@@ -300,6 +328,10 @@ message NotificationRequest {
 
   // When to be notified (or notification to unsubscribe from)
   optional NotificationType notification_type = 3;
+
+  oneof arguments {
+    RPCSignature rpc_signature = 4;  // For NOTIFY_ON_SERVER_ORIGINATED_RPC
+  }
 }
 
 message NotificationResponse {
@@ -309,6 +341,7 @@ message NotificationResponse {
     REQUEST_MALFORMED = 2;
     NOT_SUBSCRIBED = 3;
     ALREADY_SUBSCRIBED = 4;
+    DUPLICATE_SERVER_ORIGINATED_RPC = 5;
   }
   optional Status status = 1;
 }
@@ -323,6 +356,23 @@ message Notification {
   optional TerminateSessionNotification terminate_session_notification = 7;
   optional LayoutChangedNotification layout_changed_notification = 8;
   optional FocusChangedNotification focus_changed_notification = 9;
+  optional ServerOriginatedRPCNotification server_originated_rpc_notification = 10;
+}
+
+message ServerOriginatedRPC {
+  message RPCArgument {
+    optional string name = 1;
+    optional string json_value = 2;
+  }
+  optional string name = 2;
+  repeated RPCArgument arguments = 3;
+}
+
+// This is an iTerm2-to-script RPC call. The script must have registered for
+// an RPC matching the signature of `rpc`.
+message ServerOriginatedRPCNotification {
+  optional string request_id = 1;
+  optional ServerOriginatedRPC rpc = 2;
 }
 
 message KeystrokeNotification {

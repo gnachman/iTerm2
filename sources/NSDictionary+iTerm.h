@@ -47,6 +47,10 @@
 - (NSData *)propertyListData;
 - (NSString *)sizeInfo;
 
+// Returns a dictionary with changed values. If the block returns nil the
+// entry is omitted.
+- (NSDictionary *)mapValuesWithBlock:(id (^)(KeyType key, ObjectType object))block;
+
 @end
 
 // A handy way of describing the essential parts of a hotkey, as far as being a uniquely registered

@@ -1,9 +1,11 @@
 #import "iTermOpenQuicklyModel.h"
+
 #import "iTermController.h"
 #import "iTermLogoGenerator.h"
 #import "iTermMinimumSubsequenceMatcher.h"
 #import "iTermOpenQuicklyCommands.h"
 #import "iTermOpenQuicklyItem.h"
+#import "NSObject+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession+Scripting.h"
 #import "VT100RemoteHost.h"
@@ -396,7 +398,13 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
                             features:features
                                limit:maxScorePerFeature];
 
-    for (NSString *var in session.variables) {
+    for (id obj in session.variables) {
+        NSString *var;
+        if ([NSString castFrom:obj]) {
+            var = obj;
+        } else {
+            var = [obj stringValue];
+        }
         NSString *const kUserPrefix = @"user.";
         if ([var hasPrefix:kUserPrefix]) {
             score += [self scoreUsingMatcher:matcher

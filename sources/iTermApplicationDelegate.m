@@ -61,6 +61,7 @@
 #import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
 #import "iTermScriptConsole.h"
+#import "iTermScriptFunctionCall.h"
 #import "iTermServiceProvider.h"
 #import "iTermQuickLookController.h"
 #import "iTermRemotePreferences.h"
@@ -984,7 +985,7 @@ static BOOL hasBecomeActive = NO;
     }
 
     if ([iTermAdvancedSettingsModel enableAPIServer]) {
-        _apiHelper = [[iTermAPIHelper alloc] init];
+        _apiHelper = [iTermAPIHelper sharedInstance];
     }
 
     if ([self shouldNotifyAboutIncompatibleSoftware]) {

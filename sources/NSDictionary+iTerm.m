@@ -228,6 +228,17 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
     return result;
 }
 
+- (NSDictionary *)mapValuesWithBlock:(id (^)(id, id))block {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    [self enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        id mapped = block(key, obj);
+        if (mapped) {
+            result[key] = mapped;
+        }
+    }];
+    return result;
+}
+
 - (NSInteger)addSizeInfoToSizes:(NSMutableDictionary<NSString *, NSNumber *> *)sizes
                     counts:(NSCountedSet<NSString *> *)counts
                    keypath:(NSString *)keypath {

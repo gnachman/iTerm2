@@ -25,7 +25,7 @@ async def async_list_sessions(connection):
     request.list_sessions_request.SetInParent()
     return await _async_call(connection, request)
 
-async def async_notification_request(connection, subscribe, notification_type, session=None):
+async def async_notification_request(connection, subscribe, notification_type, session=None, rpc_signature=None):
     """
     Requests a change to a notification subscription.
 
@@ -33,12 +33,19 @@ async def async_notification_request(connection, subscribe, notification_type, s
     subscribe: True to subscribe, False to unsubscribe
     notification_type: iterm2.api_pb2.NotificationType
     session: The unique ID of the session or None.
+    rpc_signature: The RPC signature (only for registering an RPC handler) or None.
 
     Returns: iterm2.api_pb2.ServerOriginatedMessage
     """
     request = _alloc_request()
+
+    request.notification_request.SetInParent()
     if session is not None:
         request.notification_request.session = session
+    if rpc_signature is not None:
+        print(type(request.notification_request))
+        request.notification_request.rpc_signature.CopyFrom(rpc_signature)
+
     request.notification_request.subscribe = subscribe
     request.notification_request.notification_type = notification_type
     return await _async_call(connection, request)
@@ -361,6 +368,16 @@ async def async_list_profiles(connection, guids, properties):
         request.list_profiles_request.guids.extend(guids)
     if properties is not None:
         request.list_profiles_request.properties.extend(properties)
+    return await _async_call(connection, request)
+
+async def async_send_rpc_result(connection, request_id, is_exception, value):
+    """Sends an RPC response."""
+    request = _alloc_request()
+    request.server_originated_rpc_result_request.request_id = request_id
+    if is_exception:
+        request.server_originated_rpc_result_request.json_exception = json.dumps(value)
+    else:
+        request.server_originated_rpc_result_request.json_value = json.dumps(value)
     return await _async_call(connection, request)
 
 ## Private --------------------------------------------------------------------

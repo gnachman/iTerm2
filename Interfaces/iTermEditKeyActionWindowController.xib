@@ -202,7 +202,11 @@
                                             <menuItem title="Move End of Selection Back" tag="45" id="L33-q3-stz"/>
                                             <menuItem title="Move End of Selection Forward" tag="46" id="xRC-3K-RlB"/>
                                             <menuItem isSeparatorItem="YES" id="c8c-8I-caf"/>
-                                            <menuItem title="Select Menu Item..." tag="25" id="haJ-OE-peX"/>
+                                            <menuItem title="Invoke Script Function…" tag="60" id="haJ-OE-peX">
+                                                <modifierMask key="keyEquivalentModifierMask" shift="YES"/>
+                                            </menuItem>
+                                            <menuItem isSeparatorItem="YES" id="F8k-hs-TuO"/>
+                                            <menuItem title="Select Menu Item..." tag="25" id="diP-BY-3qB"/>
                                         </items>
                                     </menu>
                                 </popUpButtonCell>

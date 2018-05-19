@@ -13,6 +13,7 @@
 #import "iTermCursor.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
 #import "PreferencePanel.h"
 
 #define PROFILE_BLOCK(x) [[^id(Profile *profile) { return [self x:profile]; } copy] autorelease]
@@ -163,24 +164,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     if (!value) {
         return nil;
     }
-
-    if ([NSJSONSerialization isValidJSONObject:value]) {
-        json = [NSJSONSerialization dataWithJSONObject:value
-                                               options:0
-                                                 error:&error];
-        if (error) {
-            XLog(@"Failed to json encode value %@ for key %@: %@", value, key, error);
-        }
-    } else if ([value isKindOfClass:[NSString class]]) {
-        json = [[value jsonEncodedString] dataUsingEncoding:NSUTF8StringEncoding];
-    } else if ([value isKindOfClass:[NSNumber class]]) {
-        json = [[value stringValue] dataUsingEncoding:NSUTF8StringEncoding];
-    }
-    if (!json) {
-        return nil;
-    }
-
-    return [[[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding] autorelease];
+    return [NSJSONSerialization it_jsonStringForObject:value];
 }
 
 #pragma mark - Private

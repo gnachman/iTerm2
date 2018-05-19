@@ -19,6 +19,7 @@
 #import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "iTermController.h"
 #import "iTermCopyModeState.h"
+#import "iTermDisclosableView.h"
 #import "iTermNotificationController.h"
 #import "iTermHistogram.h"
 #import "iTermHotKeyController.h"
@@ -37,6 +38,7 @@
 #import "iTermRestorableSession.h"
 #import "iTermRule.h"
 #import "iTermSavePanel.h"
+#import "iTermScriptFunctionCall.h"
 #import "iTermSelection.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermSessionHotkeyController.h"
@@ -201,6 +203,7 @@ static NSString *const kVariableKeyTermID = @"session.termid";
 static NSString *const kVariableKeySessionCreationTimeString = @"session.creationTimeString";
 static NSString *const kVariableKeySessionPID = @"iterm2.pid";
 static NSString *const kVariableKeySessionAutoLogID = @"session.autoLogId";
+static NSString *const kVariableKeySessionID = @"session.id";
 
 // Value for SESSION_ARRANGEMENT_TMUX_TAB_COLOR that means "don't use the
 // default color from the tmux profile; this tab should have no color."
@@ -728,6 +731,12 @@ ITERM_WEAKLY_REFERENCEABLE
                [self class], self, [_screen width], [_screen height], @(self.useMetal)];
 }
 
+- (void)setGuid:(NSString *)guid {
+    [_guid autorelease];
+    _guid = [guid copy];
+    [self updateVariables];
+}
+
 - (void)setLiveSession:(PTYSession *)liveSession {
     assert(liveSession != self);
     if (liveSession) {
@@ -850,8 +859,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [_variables removeObjectForKey:kVariableKeySessionName];
     }
 
-    _variables[kVariableKeySessionColumns] = [NSString stringWithFormat:@"%d", _screen.width];
-    _variables[kVariableKeySessionRows] = [NSString stringWithFormat:@"%d", _screen.height];
+    _variables[kVariableKeySessionColumns] = @(_screen.width);
+    _variables[kVariableKeySessionRows] = @(_screen.height);
     VT100RemoteHost *remoteHost = [self currentHost];
     if (remoteHost.hostname) {
         _variables[kVariableKeySessionHostname] = remoteHost.hostname;
@@ -892,6 +901,8 @@ ITERM_WEAKLY_REFERENCEABLE
         _variables[kVariableKeySessionPID] = [@(getpid()) stringValue];
         _variables[kVariableKeySessionAutoLogID] = [@(_autoLogId) stringValue];
     }
+
+    _variables[kVariableKeySessionID] = self.guid;
 
     [_textview setBadgeLabel:[self badgeLabel]];
 }
@@ -1362,6 +1373,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (announcement) {
         [aSession queueAnnouncement:announcement identifier:@"ThisProfileNoLongerExists"];
     }
+    [aSession updateVariables];
     return aSession;
 }
 
@@ -5687,6 +5699,40 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
++ (id (^)(NSString *))functionCallSource {
+    return [^id(NSString *name) {
+        return nil;
+    } copy];
+}
+
+- (id (^)(NSString *))functionCallSource {
+    __weak __typeof(self) weakSelf = self;
+    return [^id(NSString *name) {
+        return weakSelf.variables[name];
+    } copy];
+}
+
+- (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)keyBindingText {
+    NSString *message = [NSString stringWithFormat:@"Error running “%@”:\n%@",
+                         keyBindingText, error.localizedDescription];
+    NSString *traceback = error.localizedFailureReason;
+    iTermDisclosableView *accessory = nil;
+    if (traceback) {
+        accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
+                                                         prompt:@"Traceback"
+                                                        message:traceback];
+        accessory.textView.selectable = YES;
+        accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
+    }
+    [iTermWarning showWarningWithTitle:message
+                               actions:@[ @"OK" ]
+                             accessory:accessory
+                            identifier:@"NoSyncFunctionCallError"
+                           silenceable:kiTermWarningTypeTemporarilySilenceable
+                               heading:@"Oops"];
+
+}
+
 // This is limited to the actions that don't need any existing session
 + (BOOL)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event {
     switch (keyBindingAction) {
@@ -5751,8 +5797,16 @@ ITERM_WEAKLY_REFERENCEABLE
         case KEY_ACTION_SWAP_PANE_BELOW:
         case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
             return NO;
-            break;
 
+        case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
+            [iTermScriptFunctionCall callFunction:keyBindingText
+                                           source:[self functionCallSource]
+                                       completion:^(id value, NSError *error) {
+                                           if (error) {
+                                               [self reportFunctionCallError:error forInvocation:keyBindingText];
+                                           }
+                                       }];
+            break;
         case KEY_ACTION_SELECT_MENU_ITEM:
             [PTYSession selectMenuItem:keyBindingText];
             return YES;
@@ -6037,6 +6091,15 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
         case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
             [self setXtermMouseReporting:![self xtermMouseReporting]];
+            break;
+        case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
+            [iTermScriptFunctionCall callFunction:keyBindingText
+                                           source:[self functionCallSource]
+                                       completion:^(id value, NSError *error) {
+                                           if (error) {
+                                               [self reportFunctionCallError:error forInvocation:keyBindingText];
+                                           }
+                                       }];
             break;
         default:
             XLog(@"Unknown key action %d", keyBindingAction);
@@ -7022,8 +7085,15 @@ ITERM_WEAKLY_REFERENCEABLE
     return [[iTermProfilePreferences objectForKey:KEY_BADGE_COLOR inProfile:_profile] colorValue];
 }
 
+// Returns a dictionary with only string values by converting non-strings.
 - (NSDictionary *)textViewVariables {
-    return _variables;
+    return [_variables mapValuesWithBlock:^id(id key, id object) {
+        if ([NSString castFrom:object]) {
+            return object;
+        } else {
+            return [object stringValue];
+        }
+    }];
 }
 
 - (BOOL)textViewSuppressingAllOutput {
@@ -7457,8 +7527,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)screenSizeDidChange {
     [self updateScroll];
     [_textview updateNoteViewFrames];
-    _variables[kVariableKeySessionColumns] = [NSString stringWithFormat:@"%d", _screen.width];
-    _variables[kVariableKeySessionRows] = [NSString stringWithFormat:@"%d", _screen.height];
+    _variables[kVariableKeySessionColumns] = @(_screen.width);
+    _variables[kVariableKeySessionRows] = @(_screen.height);
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
@@ -8183,7 +8253,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)setVariableNamed:(NSString *)name toValue:(NSString *)newValue {
+- (void)setVariableNamed:(NSString *)name toValue:(id)newValue {
     if (!name.length) {
         [_variables removeObjectForKey:name];
     } else {
@@ -9073,7 +9143,12 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!name) {
         return nil;
     }
-    return self.variables[name];
+    id value = self.variables[name];
+    if ([NSString castFrom:value]) {
+        return value;
+    } else {
+        return [value stringValue];
+    }
 }
 
 #pragma mark - Announcements
@@ -9763,6 +9838,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case ITMNotificationType_NotifyOnTerminateSession:
         case ITMNotificationType_NotifyOnLayoutChange:
         case ITMNotificationType_NotifyOnFocusChange:
+        case ITMNotificationType_NotifyOnServerOriginatedRpc:
             // We won't get called for this
             assert(NO);
             break;

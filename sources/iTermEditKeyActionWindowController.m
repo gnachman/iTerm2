@@ -292,6 +292,20 @@
             [self setPasteSpecialHidden:YES];
             break;
 
+        case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
+            [_parameter setHidden:NO];
+            [[_parameter cell] setPlaceholderString:@"Function Call"];
+            [_parameterLabel setHidden:YES];
+            [_profilePopup setHidden:YES];
+            [_selectionMovementUnit setHidden:YES];
+            [_profileLabel setHidden:YES];
+            [_menuToSelectPopup setHidden:YES];
+            _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
+            [self setPasteSpecialHidden:YES];
+            break;
+
         case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
         case KEY_ACTION_PASTE_SPECIAL:
             [_parameter setHidden:YES];

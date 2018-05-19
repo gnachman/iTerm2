@@ -1,7 +1,9 @@
 #import "iTermWarning.h"
 
 #import "DebugLogging.h"
+#import "iTermDisclosableView.h"
 #import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
 
 static const NSTimeInterval kTemporarySilenceTime = 600;
 static const NSTimeInterval kOneMonthTime = 30 * 24 * 60 * 60;
@@ -213,6 +215,12 @@ static BOOL gShowingWarning;
     }
 
     if (_accessory) {
+        iTermDisclosableView *disclosableView = [iTermDisclosableView castFrom:_accessory];
+        if (disclosableView) {
+            disclosableView.requestLayout = ^{
+                [alert layout];
+            };
+        }
         [alert setAccessoryView:_accessory];
     }
     if (_showHelpBlock) {

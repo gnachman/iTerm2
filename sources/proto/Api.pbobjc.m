@@ -54,7 +54,8 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
         "otifyOnPrompt\000NotifyOnLocationChange\000Not"
         "ifyOnCustomEscapeSequence\000NotifyOnNewSes"
         "sion\000NotifyOnTerminateSession\000NotifyOnLa"
-        "youtChange\000NotifyOnFocusChange\000";
+        "youtChange\000NotifyOnFocusChange\000NotifyOnS"
+        "erverOriginatedRpc\000";
     static const int32_t values[] = {
         ITMNotificationType_NotifyOnKeystroke,
         ITMNotificationType_NotifyOnScreenUpdate,
@@ -65,6 +66,7 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
         ITMNotificationType_NotifyOnTerminateSession,
         ITMNotificationType_NotifyOnLayoutChange,
         ITMNotificationType_NotifyOnFocusChange,
+        ITMNotificationType_NotifyOnServerOriginatedRpc,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMNotificationType)
@@ -90,6 +92,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
     case ITMNotificationType_NotifyOnTerminateSession:
     case ITMNotificationType_NotifyOnLayoutChange:
     case ITMNotificationType_NotifyOnFocusChange:
+    case ITMNotificationType_NotifyOnServerOriginatedRpc:
       return YES;
     default:
       return NO;
@@ -121,6 +124,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
 @dynamic savedArrangementRequest;
 @dynamic focusRequest;
 @dynamic listProfilesRequest;
+@dynamic serverOriginatedRpcResultRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -143,6 +147,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMSavedArrangementRequest *savedArrangementRequest;
   ITMFocusRequest *focusRequest;
   ITMListProfilesRequest *listProfilesRequest;
+  ITMServerOriginatedRPCResultRequest *serverOriginatedRpcResultRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -332,6 +337,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "serverOriginatedRpcResultRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMServerOriginatedRPCResultRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_ServerOriginatedRpcResultRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, serverOriginatedRpcResultRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -386,6 +400,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic savedArrangementResponse;
 @dynamic focusResponse;
 @dynamic listProfilesResponse;
+@dynamic serverOriginatedRpcResultResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -410,6 +425,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMSavedArrangementResponse *savedArrangementResponse;
   ITMFocusResponse *focusResponse;
   ITMListProfilesResponse *listProfilesResponse;
+  ITMServerOriginatedRPCResultResponse *serverOriginatedRpcResultResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -610,6 +626,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "serverOriginatedRpcResultResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMServerOriginatedRPCResultResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_ServerOriginatedRpcResultResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, serverOriginatedRpcResultResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
@@ -646,6 +671,113 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMServerOriginatedRPCResultRequest
+
+@implementation ITMServerOriginatedRPCResultRequest
+
+@dynamic resultOneOfCase;
+@dynamic hasRequestId, requestId;
+@dynamic jsonException;
+@dynamic jsonValue;
+
+typedef struct ITMServerOriginatedRPCResultRequest__storage_ {
+  uint32_t _has_storage_[2];
+  NSString *requestId;
+  NSString *jsonException;
+  NSString *jsonValue;
+} ITMServerOriginatedRPCResultRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "requestId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMServerOriginatedRPCResultRequest_FieldNumber_RequestId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedRPCResultRequest__storage_, requestId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "jsonException",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMServerOriginatedRPCResultRequest_FieldNumber_JsonException,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedRPCResultRequest__storage_, jsonException),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "jsonValue",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMServerOriginatedRPCResultRequest_FieldNumber_JsonValue,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedRPCResultRequest__storage_, jsonValue),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMServerOriginatedRPCResultRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMServerOriginatedRPCResultRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    static const char *oneofs[] = {
+      "result",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+void ITMServerOriginatedRPCResultRequest_ClearResultOneOfCase(ITMServerOriginatedRPCResultRequest *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
+#pragma mark - ITMServerOriginatedRPCResultResponse
+
+@implementation ITMServerOriginatedRPCResultResponse
+
+
+typedef struct ITMServerOriginatedRPCResultResponse__storage_ {
+  uint32_t _has_storage_[1];
+} ITMServerOriginatedRPCResultResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMServerOriginatedRPCResultResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:NULL
+                                    fieldCount:0
+                                   storageSize:sizeof(ITMServerOriginatedRPCResultResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMListProfilesRequest
 
 @implementation ITMListProfilesRequest
@@ -2075,6 +2207,104 @@ BOOL ITMRegisterToolRequest_ToolType_IsValidValue(int32_t value__) {
   }
 }
 
+#pragma mark - ITMRPCSignature
+
+@implementation ITMRPCSignature
+
+@dynamic hasName, name;
+@dynamic argumentsArray, argumentsArray_Count;
+
+typedef struct ITMRPCSignature__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *name;
+  NSMutableArray *argumentsArray;
+} ITMRPCSignature__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "name",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCSignature_FieldNumber_Name,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRPCSignature__storage_, name),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "argumentsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMRPCSignature_RPCArgumentSignature),
+        .number = ITMRPCSignature_FieldNumber_ArgumentsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMRPCSignature__storage_, argumentsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRPCSignature class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRPCSignature__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMRPCSignature_RPCArgumentSignature
+
+@implementation ITMRPCSignature_RPCArgumentSignature
+
+@dynamic hasName, name;
+
+typedef struct ITMRPCSignature_RPCArgumentSignature__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *name;
+} ITMRPCSignature_RPCArgumentSignature__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "name",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCSignature_RPCArgumentSignature_FieldNumber_Name,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRPCSignature_RPCArgumentSignature__storage_, name),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRPCSignature_RPCArgumentSignature class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRPCSignature_RPCArgumentSignature__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCSignature)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMRegisterToolResponse
 
 @implementation ITMRegisterToolResponse
@@ -2158,14 +2388,17 @@ BOOL ITMRegisterToolResponse_Status_IsValidValue(int32_t value__) {
 
 @implementation ITMNotificationRequest
 
+@dynamic argumentsOneOfCase;
 @dynamic hasSession, session;
 @dynamic hasSubscribe, subscribe;
 @dynamic hasNotificationType, notificationType;
+@dynamic rpcSignature;
 
 typedef struct ITMNotificationRequest__storage_ {
-  uint32_t _has_storage_[1];
+  uint32_t _has_storage_[2];
   ITMNotificationType notificationType;
   NSString *session;
+  ITMRPCSignature *rpcSignature;
 } ITMNotificationRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -2204,6 +2437,16 @@ typedef struct ITMNotificationRequest__storage_ {
         .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
         .core.dataType = GPBDataTypeEnum,
       },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "rpcSignature",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCSignature),
+        .core.number = ITMNotificationRequest_FieldNumber_RpcSignature,
+        .core.hasIndex = -1,
+        .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, rpcSignature),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMNotificationRequest class]
@@ -2213,6 +2456,12 @@ typedef struct ITMNotificationRequest__storage_ {
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMNotificationRequest__storage_)
                                          flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
+    static const char *oneofs[] = {
+      "arguments",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }
@@ -2221,6 +2470,11 @@ typedef struct ITMNotificationRequest__storage_ {
 
 @end
 
+void ITMNotificationRequest_ClearArgumentsOneOfCase(ITMNotificationRequest *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
 #pragma mark - ITMNotificationResponse
 
 @implementation ITMNotificationResponse
@@ -2271,13 +2525,15 @@ GPBEnumDescriptor *ITMNotificationResponse_Status_EnumDescriptor(void) {
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000RequestMalformed\000NotS"
-        "ubscribed\000AlreadySubscribed\000";
+        "ubscribed\000AlreadySubscribed\000DuplicateSer"
+        "verOriginatedRpc\000";
     static const int32_t values[] = {
         ITMNotificationResponse_Status_Ok,
         ITMNotificationResponse_Status_SessionNotFound,
         ITMNotificationResponse_Status_RequestMalformed,
         ITMNotificationResponse_Status_NotSubscribed,
         ITMNotificationResponse_Status_AlreadySubscribed,
+        ITMNotificationResponse_Status_DuplicateServerOriginatedRpc,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMNotificationResponse_Status)
@@ -2299,6 +2555,7 @@ BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value__) {
     case ITMNotificationResponse_Status_RequestMalformed:
     case ITMNotificationResponse_Status_NotSubscribed:
     case ITMNotificationResponse_Status_AlreadySubscribed:
+    case ITMNotificationResponse_Status_DuplicateServerOriginatedRpc:
       return YES;
     default:
       return NO;
@@ -2318,6 +2575,7 @@ BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value__) {
 @dynamic hasTerminateSessionNotification, terminateSessionNotification;
 @dynamic hasLayoutChangedNotification, layoutChangedNotification;
 @dynamic hasFocusChangedNotification, focusChangedNotification;
+@dynamic hasServerOriginatedRpcNotification, serverOriginatedRpcNotification;
 
 typedef struct ITMNotification__storage_ {
   uint32_t _has_storage_[1];
@@ -2330,6 +2588,7 @@ typedef struct ITMNotification__storage_ {
   ITMTerminateSessionNotification *terminateSessionNotification;
   ITMLayoutChangedNotification *layoutChangedNotification;
   ITMFocusChangedNotification *focusChangedNotification;
+  ITMServerOriginatedRPCNotification *serverOriginatedRpcNotification;
 } ITMNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -2419,6 +2678,15 @@ typedef struct ITMNotification__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "serverOriginatedRpcNotification",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMServerOriginatedRPCNotification),
+        .number = ITMNotification_FieldNumber_ServerOriginatedRpcNotification,
+        .hasIndex = 9,
+        .offset = (uint32_t)offsetof(ITMNotification__storage_, serverOriginatedRpcNotification),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMNotification class]
@@ -2427,6 +2695,169 @@ typedef struct ITMNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMNotification__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMServerOriginatedRPC
+
+@implementation ITMServerOriginatedRPC
+
+@dynamic hasName, name;
+@dynamic argumentsArray, argumentsArray_Count;
+
+typedef struct ITMServerOriginatedRPC__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *name;
+  NSMutableArray *argumentsArray;
+} ITMServerOriginatedRPC__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "name",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMServerOriginatedRPC_FieldNumber_Name,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedRPC__storage_, name),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "argumentsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMServerOriginatedRPC_RPCArgument),
+        .number = ITMServerOriginatedRPC_FieldNumber_ArgumentsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedRPC__storage_, argumentsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMServerOriginatedRPC class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMServerOriginatedRPC__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMServerOriginatedRPC_RPCArgument
+
+@implementation ITMServerOriginatedRPC_RPCArgument
+
+@dynamic hasName, name;
+@dynamic hasJsonValue, jsonValue;
+
+typedef struct ITMServerOriginatedRPC_RPCArgument__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *name;
+  NSString *jsonValue;
+} ITMServerOriginatedRPC_RPCArgument__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "name",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMServerOriginatedRPC_RPCArgument_FieldNumber_Name,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedRPC_RPCArgument__storage_, name),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "jsonValue",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMServerOriginatedRPC_RPCArgument_FieldNumber_JsonValue,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedRPC_RPCArgument__storage_, jsonValue),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMServerOriginatedRPC_RPCArgument class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMServerOriginatedRPC_RPCArgument__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMServerOriginatedRPC)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMServerOriginatedRPCNotification
+
+@implementation ITMServerOriginatedRPCNotification
+
+@dynamic hasRequestId, requestId;
+@dynamic hasRpc, rpc;
+
+typedef struct ITMServerOriginatedRPCNotification__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *requestId;
+  ITMServerOriginatedRPC *rpc;
+} ITMServerOriginatedRPCNotification__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "requestId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMServerOriginatedRPCNotification_FieldNumber_RequestId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedRPCNotification__storage_, requestId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "rpc",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMServerOriginatedRPC),
+        .number = ITMServerOriginatedRPCNotification_FieldNumber_Rpc,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedRPCNotification__storage_, rpc),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMServerOriginatedRPCNotification class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMServerOriginatedRPCNotification__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;

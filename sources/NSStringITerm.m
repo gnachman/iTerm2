@@ -31,6 +31,7 @@
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSCharacterSet+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "RegexKitLite.h"
 #import "ScreenChar.h"
 #import <apr-1/apr_base64.h>
@@ -1327,6 +1328,13 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
 // Replace substrings like \(foo) or \1...\9 with the value of vars[@"foo"] or vars[@"1"].
 - (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars {
+    NSString *(^stringify)(id) = ^NSString *(id x) {
+        if ([NSString castFrom:x]) {
+            return x;
+        } else {
+            return [x stringValue];
+        }
+    };
     unichar *chars = (unichar *)malloc(self.length * sizeof(unichar));
     [self getCharacters:chars];
     enum {
@@ -1355,7 +1363,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
                     // \1...\9 also work as subs.
                     NSString *singleCharVar = [NSString stringWithFormat:@"%C", c];
                     if (singleCharVar.integerValue > 0 && vars[singleCharVar]) {
-                        [result appendString:vars[singleCharVar]];
+                        [result appendString:stringify(vars[singleCharVar])];
                     } else {
                         [result appendFormat:@"\\%C", c];
                     }
@@ -1366,7 +1374,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
             case kInParens:
                 if (c == ')') {
                     state = kLiteral;
-                    NSString *value = vars[varName];
+                    NSString *value = stringify(vars[varName]);
                     if (value) {
                         [result appendString:value];
                     }

@@ -55,7 +55,8 @@ extern NSString *const iTermAPIServerConnectionClosed;
                handler:(void (^)(ITMFocusResponse *))response;
 - (void)apiServerListProfiles:(ITMListProfilesRequest *)request
                       handler:(void (^)(ITMListProfilesResponse *))response;
-
+- (void)apiServerServerOriginatedRPCResult:(ITMServerOriginatedRPCResultRequest *)request
+                                   handler:(void (^)(ITMServerOriginatedRPCResultResponse *))response;
 @end
 
 @interface iTermAPIServer : NSObject

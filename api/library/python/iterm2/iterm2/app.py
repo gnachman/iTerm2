@@ -10,6 +10,11 @@ import iterm2.session
 import iterm2.tab
 import iterm2.window
 
+import inspect
+import json
+import traceback
+import websockets
+
 async def async_get_app(connection):
     """Returns the app singleton, creating it if needed."""
     if App.instance is None:
@@ -354,3 +359,32 @@ class App:
             profiles.append(profile)
         return profiles
 
+    async def async_register_rpc_handler(self, name, coro):
+        async def handle_rpc(connection, notif):
+            rpc_notif = notif.server_originated_rpc_notification
+            params = {}
+            for arg in rpc_notif.rpc.arguments:
+                name = arg.name
+                if arg.HasField("json_value"):
+                    value = json.loads(arg.json_value)
+                    params[name] = value
+                else:
+                    params[name] = None
+            ok = False
+            try:
+                result = await coro(**params)
+                ok = True
+            except KeyboardInterrupt as e:
+                raise e
+            except websockets.exceptions.ConnectionClosed as e:
+                raise e
+            except Exception as e:
+                tb = traceback.format_exc()
+                exception = { "reason": repr(e), "traceback": tb }
+                await iterm2.rpc.async_send_rpc_result(connection, rpc_notif.request_id, True, exception)
+
+            if ok:
+                await iterm2.rpc.async_send_rpc_result(connection, rpc_notif.request_id, False, result)
+
+        args = inspect.signature(coro).parameters.keys()
+        await iterm2.notifications.async_subscribe_to_server_originated_rpc_notification(self.connection, handle_rpc, name, args)

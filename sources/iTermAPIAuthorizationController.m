@@ -56,7 +56,8 @@ static NSString *const kAPIAccessLocalizedName = @"app name";
 
             if ([maybePython isEqualToString:@"python"] ||
                 [maybePython isEqualToString:@"python3.6"] ||
-                [maybePython isEqualToString:@"python3"]) {
+                [maybePython isEqualToString:@"python3"] ||
+                [maybePython isEqualToString:@"Python"]) {
                 iTermPythonArgumentParser *pythonArgumentParser = [[iTermPythonArgumentParser alloc] initWithArgs:parts];
                 NSArray<NSString *> *idParts = [self pythonIdentifierArrayWithArgParser:pythonArgumentParser];
                 NSArray<NSString *> *escapedIdParts = [self pythonEscapedIdentifierArrayWithArgParser:pythonArgumentParser];
