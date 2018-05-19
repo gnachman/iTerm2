@@ -690,9 +690,12 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
         [_serverOriginatedRPCSubscriptions.allKeys mapWithBlock:^id(NSString *key) {
             return self->_serverOriginatedRPCSubscriptions[key];
         }];
+    NSMutableDictionary *empty = [NSMutableDictionary dictionary];
     NSArray<NSMutableDictionary<id, ITMNotificationRequest *> *> *dicts =
-        @[ _newSessionSubscriptions, _terminateSessionSubscriptions, _layoutChangeSubscriptions,
-           _focusChangeSubscriptions];
+    @[ _newSessionSubscriptions ?: empty,
+       _terminateSessionSubscriptions  ?: empty,
+       _layoutChangeSubscriptions ?: empty,
+       _focusChangeSubscriptions ?: empty ];
     dicts = [dicts arrayByAddingObjectsFromArray:rpcSubs];
     [dicts enumerateObjectsUsingBlock:^(NSMutableDictionary<id,ITMNotificationRequest *> * _Nonnull dict, NSUInteger idx, BOOL * _Nonnull stop) {
         [dict removeObjectForKey:connectionKey];

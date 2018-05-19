@@ -113,7 +113,10 @@ didCompleteWithError:(nullable NSError *)error {
     if (!version) {
         return NO;
     }
-
+    if ([version containsString:@".git."]) {
+        // Assume it's the top of master because there's no ordering on git commit numbers
+        return YES;
+    }
     id<SUVersionComparison> comparator = [SUStandardVersionComparator defaultComparator];
     NSComparisonResult result;
     if (minVersion) {
