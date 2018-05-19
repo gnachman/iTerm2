@@ -86,15 +86,16 @@
         NSString *bnf =
         @"0  call       ::= 'Identifier' <arglist>;"
         @"1  arglist    ::= '(' <args> ')';"
-        @"2  args       ::= <arg>;"
-        @"3  args       ::= <arg> ',' <args>;"
-        @"4  arg        ::= 'Identifier' ':' <expression>;"
-        @"5  expression ::= <path>;"
-        @"6  expression ::= <path> '?';"
-        @"7  expression ::= 'Number';"
-        @"8  expression ::= 'String';"
-        @"9  path       ::= 'Identifier';"
-        @"10 path       ::= 'Identifier' '.' <path>;";
+        @"2  arglist    ::= '(' ')';"
+        @"3  args       ::= <arg>;"
+        @"4  args       ::= <arg> ',' <args>;"
+        @"5  arg        ::= 'Identifier' ':' <expression>;"
+        @"6  expression ::= <path>;"
+        @"7  expression ::= <path> '?';"
+        @"8  expression ::= 'Number';"
+        @"9  expression ::= 'String';"
+        @"10 path       ::= 'Identifier';"
+        @"11 path       ::= 'Identifier' '.' <path>;";
         NSError *error = nil;
         CPGrammar *grammar = [CPGrammar grammarWithStart:@"call"
                                           backusNaurForm:bnf
@@ -162,15 +163,19 @@
             return children[1];
         }
 
-        case 2: {  // args ::= <arg> -> @[ argdict ]
+        case 2: {  // arglist ::= '(' ')' -> @[ argdict, ... ]
+            return @[];
+        }
+
+        case 3: {  // args ::= <arg> -> @[ argdict ]
             return @[ children[0] ];
         }
 
-        case 3: {  // args ::= <arg> ',' <args> -> @[ argdict, ... ]
+        case 4: {  // args ::= <arg> ',' <args> -> @[ argdict, ... ]
             return [@[ children[0] ] arrayByAddingObjectsFromArray:children[2]];
         }
 
-        case 4: {
+        case 5: {
             // arg ::= 'Identifier' ':' <expression> -> argdict
             //   argdict = {"name":NSString, "value":@{"literal": id}} |
             //             {"name":NSString, "error":NSString}
@@ -198,27 +203,27 @@
             }
         }
 
-        case 5: {  // expression ::= <path> -> NSString
+        case 6: {  // expression ::= <path> -> NSString
             return children[0];
         }
 
-        case 6: {  // expression ::= <path> '?' -> NSString
+        case 7: {  // expression ::= <path> '?' -> NSString
             return [children[0] stringByAppendingString:@"?"];
         }
 
-        case 7: {  // expression ::= 'Number' -> @{"literal": id}
+        case 8: {  // expression ::= 'Number' -> @{"literal": id}
             return @{ @"literal": [(CPNumberToken *)children[0] number] };
         }
 
-        case 8: {  // expression ::= 'String' -> @{"literal": id}
+        case 9: {  // expression ::= 'String' -> @{"literal": id}
             return @{ @"literal": [(CPQuotedToken *)children[0] content] };
         }
 
-        case 9: {  // path ::= 'Identifier' -> NSString
+        case 10: {  // path ::= 'Identifier' -> NSString
             return [(CPIdentifierToken *)children[0] identifier];
         }
 
-        case 10: {  // path ::= 'Identifier' '.' <path> -> NSString
+        case 11: {  // path ::= 'Identifier' '.' <path> -> NSString
             return [NSString stringWithFormat:@"%@.%@",
                     [(CPIdentifierToken *)children[0] identifier],
                     children[2]];
