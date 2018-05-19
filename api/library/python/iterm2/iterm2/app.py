@@ -360,6 +360,15 @@ class App:
         return profiles
 
     async def async_register_rpc_handler(self, name, coro):
+        """Register a script-defined RPC.
+
+        iTerm2 may be instructed to invoke a registered RPC, such as through a
+        key binding. Only registered RPCs may be called. Use this method to
+        register one.
+
+        :param name: The RPC name. Combined with its arguments, this must be unique among all registered RPCs.
+        :param coro: An async function. Its arguments are reflected upon to determine the RPC's signature. Only the names of the arguments are used. All arguments should be keyword arguments as any may be omitted at call time.
+        """
         async def handle_rpc(connection, notif):
             rpc_notif = notif.server_originated_rpc_notification
             params = {}
