@@ -157,9 +157,6 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 }
 
 + (NSString *)jsonEncodedValueForKey:(NSString *)key inProfile:(Profile *)profile {
-    NSError *error = nil;
-    NSData *json = nil;
-
     id value = [self objectForKey:key inProfile:profile];
     if (!value) {
         return nil;
