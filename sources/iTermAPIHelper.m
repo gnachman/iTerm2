@@ -50,6 +50,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 - (BOOL)it_valid {
     NSCharacterSet *ascii = [NSCharacterSet characterSetWithRange:NSMakeRange(0, 128)];
     NSMutableCharacterSet *invalidIdentifierCharacterSet = [NSMutableCharacterSet alphanumericCharacterSet];
+    [invalidIdentifierCharacterSet addCharactersInString:@"_"];
     [invalidIdentifierCharacterSet formIntersectionWithCharacterSet:ascii];
     [invalidIdentifierCharacterSet invert];
 
@@ -59,6 +60,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     if ([self.name rangeOfCharacterFromSet:invalidIdentifierCharacterSet].location != NSNotFound) {
         return NO;
     }
+    NSMutableSet<NSString *> *args = [NSMutableSet set];
     for (ITMRPCSignature_RPCArgumentSignature *arg in self.argumentsArray) {
         NSString *name = arg.name;
         if (name.length == 0) {
@@ -67,6 +69,10 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
         if ([name rangeOfCharacterFromSet:invalidIdentifierCharacterSet].location != NSNotFound) {
             return NO;
         }
+        if ([args containsObject:name]) {
+            return NO;
+        }
+        [args addObject:name];
     }
     return YES;
 }
