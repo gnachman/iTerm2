@@ -1495,7 +1495,9 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)checkForUpdatesFromMenu:(id)sender {
     [suUpdater checkForUpdates:(sender)];
+    /*
     [[iTermPythonRuntimeDownloader sharedInstance] upgradeIfPossible];
+     */
 }
 
 - (void)warnAboutChangeToDefaultPasteBehavior {
@@ -1962,7 +1964,9 @@ static BOOL hasBecomeActive = NO;
 - (iTermScriptsMenuController *)scriptsMenuController {
     if (!_scriptsMenuController) {
         _scriptsMenuController = [[iTermScriptsMenuController alloc] initWithMenu:_scriptsMenu];
+        /*
         _scriptsMenuController.installRuntimeMenuItem = _installPythonRuntime;
+         */
     }
     return _scriptsMenuController;
 }

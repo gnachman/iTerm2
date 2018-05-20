@@ -83,7 +83,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
     NSMutableArray<NSString *> *files = [NSMutableArray array];
     NSMutableDictionary<NSString *, NSMenu *> *submenus = [NSMutableDictionary dictionary];
-    NSSet<NSString *> *scriptExtensions = [NSSet setWithArray:@[ @"scpt", @"app", @"py" ]];
+    NSSet<NSString *> *scriptExtensions = [NSSet setWithArray:@[ @"scpt", @"app" /*, @"py"*/ ]];
     for (NSString *file in directoryEnumerator) {
         NSString *path = [root stringByAppendingPathComponent:file];
         BOOL isDirectory = NO;
@@ -139,17 +139,21 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)setInstallRuntimeMenuItem:(NSMenuItem *)installRuntimeMenuItem {
+    /*
     _installRuntimeMenuItem = installRuntimeMenuItem;
     if ([[iTermPythonRuntimeDownloader sharedInstance] isPythonRuntimeInstalled]) {
         [self removeInstallMenuItem];
     }
+     */
 }
 
 - (void)removeInstallMenuItem {
+    /*
     if (_installRuntimeMenuItem) {
         [_scriptsMenu removeItem:_installRuntimeMenuItem];
         _installRuntimeMenuItem = nil;
     }
+     */
 }
 
 #pragma mark - Actions
@@ -157,6 +161,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchScript:(NSMenuItem *)sender {
     NSString *fullPath = sender.identifier;
 
+    /*
     NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath checkForMain:YES];
     if (venv) {
         [iTermAPIScriptLauncher launchScript:[fullPath stringByAppendingPathComponent:@"main.py"]
@@ -168,6 +173,7 @@ NS_ASSUME_NONNULL_BEGIN
         [iTermAPIScriptLauncher launchScript:fullPath];
         return;
     }
+     */
     if ([[[sender title] pathExtension] isEqualToString:@"scpt"]) {
         NSAppleScript *script;
         NSDictionary *errorInfo = nil;
