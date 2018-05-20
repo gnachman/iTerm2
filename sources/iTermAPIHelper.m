@@ -433,6 +433,21 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     return requestID;
 }
 
+// function name -> [ arg1, arg2, ... ]
+- (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary {
+    NSMutableDictionary<NSString *, NSArray<NSString *> *> *result = [NSMutableDictionary dictionary];
+    for (NSString *stringSignature in _serverOriginatedRPCSubscriptions.allKeys) {
+        ITMNotificationRequest *req = _serverOriginatedRPCSubscriptions[stringSignature].allValues.firstObject;
+        ITMRPCSignature *sig = req.rpcSignature;
+        NSString *functionName = sig.name;
+        NSArray<NSString *> *args = [sig.argumentsArray mapWithBlock:^id(ITMRPCSignature_RPCArgumentSignature *anObject) {
+            return anObject.name;
+        }];
+        result[functionName] = args;
+    }
+    return result;
+}
+
 #pragma mark - iTermAPIServerDelegate
 
 - (BOOL)askUserToGrantAuthForController:(iTermAPIAuthorizationController *)controller

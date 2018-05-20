@@ -24,4 +24,6 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
                   arguments:(NSDictionary *)arguments
                  completion:(iTermServerOriginatedRPCCompletionBlock)completion;
 
+- (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
+
 @end

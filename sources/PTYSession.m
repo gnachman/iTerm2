@@ -49,6 +49,7 @@
 #import "iTermTextExtractor.h"
 #import "iTermThroughputEstimator.h"
 #import "iTermUpdateCadenceController.h"
+#import "iTermVariables.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
@@ -189,21 +190,6 @@ static NSString *const kProgramTypeShellLauncher = @"Shell Launcher";  // Use iT
 static NSString *const kProgramTypeCommand = @"Command";  // Use command in kProgramCommand
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
-
-// Keys into _variables.
-static NSString *const kVariableKeySessionName = @"session.name";
-static NSString *const kVariableKeySessionColumns = @"session.columns";
-static NSString *const kVariableKeySessionRows = @"session.rows";
-static NSString *const kVariableKeySessionHostname = @"session.hostname";
-static NSString *const kVariableKeySessionUsername = @"session.username";
-static NSString *const kVariableKeySessionPath = @"session.path";
-static NSString *const kVariableKeySessionLastCommand = @"session.lastCommand";
-static NSString *const kVariableKeySessionTTY = @"session.tty";
-static NSString *const kVariableKeyTermID = @"session.termid";
-static NSString *const kVariableKeySessionCreationTimeString = @"session.creationTimeString";
-static NSString *const kVariableKeySessionPID = @"iterm2.pid";
-static NSString *const kVariableKeySessionAutoLogID = @"session.autoLogId";
-static NSString *const kVariableKeySessionID = @"session.id";
 
 // Value for SESSION_ARRANGEMENT_TMUX_TAB_COLOR that means "don't use the
 // default color from the tmux profile; this tab should have no color."
@@ -854,55 +840,55 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)updateVariables {
     if (_name) {
-        _variables[kVariableKeySessionName] = [[_name copy] autorelease];
+        _variables[iTermVariableKeySessionPID] = [[_name copy] autorelease];
     } else {
-        [_variables removeObjectForKey:kVariableKeySessionName];
+        [_variables removeObjectForKey:iTermVariableKeySessionPID];
     }
 
-    _variables[kVariableKeySessionColumns] = @(_screen.width);
-    _variables[kVariableKeySessionRows] = @(_screen.height);
+    _variables[iTermVariableKeySessionColumns] = @(_screen.width);
+    _variables[iTermVariableKeySessionRows] = @(_screen.height);
     VT100RemoteHost *remoteHost = [self currentHost];
     if (remoteHost.hostname) {
-        _variables[kVariableKeySessionHostname] = remoteHost.hostname;
+        _variables[iTermVariableKeySessionHostname] = remoteHost.hostname;
     } else {
-        [_variables removeObjectForKey:kVariableKeySessionHostname];
+        [_variables removeObjectForKey:iTermVariableKeySessionHostname];
     }
     if (remoteHost.username) {
-        _variables[kVariableKeySessionUsername] = remoteHost.username;
+        _variables[iTermVariableKeySessionUsername] = remoteHost.username;
     } else {
-        [_variables removeObjectForKey:kVariableKeySessionUsername];
+        [_variables removeObjectForKey:iTermVariableKeySessionUsername];
     }
     NSString *path = [_screen workingDirectoryOnLine:_screen.numberOfScrollbackLines + _screen.cursorY - 1];
     if (path) {
-        _variables[kVariableKeySessionPath] = path;
+        _variables[iTermVariableKeySessionPath] = path;
     } else {
-        [_variables removeObjectForKey:kVariableKeySessionPath];
+        [_variables removeObjectForKey:iTermVariableKeySessionPath];
     }
     if (_lastCommand) {
-        _variables[kVariableKeySessionLastCommand] = _lastCommand;
+        _variables[iTermVariableKeySessionLastCommand] = _lastCommand;
     } else {
-        [_variables removeObjectForKey:kVariableKeySessionLastCommand];
+        [_variables removeObjectForKey:iTermVariableKeySessionLastCommand];
     }
     NSString *tty = [self tty];
     if (tty) {
-        _variables[kVariableKeySessionTTY] = tty;
+        _variables[iTermVariableKeySessionTTY] = tty;
     } else {
-        [_variables removeObjectForKey:kVariableKeySessionTTY];
+        [_variables removeObjectForKey:iTermVariableKeySessionTTY];
     }
 
-    if (_variables[kVariableKeyTermID] == nil) {
+    if (_variables[iTermVariableKeyTermID] == nil) {
         // Variables that only need to be updated once.
-        _variables[kVariableKeyTermID] = [self.sessionId stringByReplacingOccurrencesOfString:@":" withString:@"."];
+        _variables[iTermVariableKeyTermID] = [self.sessionId stringByReplacingOccurrencesOfString:@":" withString:@"."];
 
         NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
         dateFormatter.dateFormat = @"yyyyMMdd_HHmmss";
-        _variables[kVariableKeySessionCreationTimeString] = [dateFormatter stringFromDate:_creationDate];
+        _variables[iTermVariableKeySessionCreationTimeString] = [dateFormatter stringFromDate:_creationDate];
 
-        _variables[kVariableKeySessionPID] = [@(getpid()) stringValue];
-        _variables[kVariableKeySessionAutoLogID] = [@(_autoLogId) stringValue];
+        _variables[iTermVariableKeyApplicationPID] = [@(getpid()) stringValue];
+        _variables[iTermVariableKeySessionAutoLogID] = [@(_autoLogId) stringValue];
     }
 
-    _variables[kVariableKeySessionID] = self.guid;
+    _variables[iTermVariableKeySessionID] = self.guid;
 
     [_textview setBadgeLabel:[self badgeLabel]];
 }
@@ -1274,6 +1260,7 @@ ITERM_WEAKLY_REFERENCEABLE
         NSDictionary *variables = arrangement[SESSION_ARRANGEMENT_VARIABLES];
         for (id key in variables) {
             aSession.variables[key] = variables[key];
+            iTermVariablesAdd(key);
         }
         aSession.textview.badgeLabel = aSession.badgeLabel;
     }
@@ -3695,7 +3682,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                             object:[_delegate parentWindow]
                                                           userInfo:nil];
     }
-    _variables[kVariableKeySessionName] = [self name];
+    _variables[iTermVariableKeySessionPID] = [self name];
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
@@ -7528,8 +7515,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)screenSizeDidChange {
     [self updateScroll];
     [_textview updateNoteViewFrames];
-    _variables[kVariableKeySessionColumns] = @(_screen.width);
-    _variables[kVariableKeySessionRows] = @(_screen.height);
+    _variables[iTermVariableKeySessionColumns] = @(_screen.width);
+    _variables[iTermVariableKeySessionRows] = @(_screen.height);
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
@@ -8259,6 +8246,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_variables removeObjectForKey:name];
     } else {
         _variables[name] = newValue;
+        iTermVariablesAdd(name);
     }
     [_textview setBadgeLabel:[self badgeLabel]];
 }
@@ -8359,14 +8347,14 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
     const BOOL hadHost = (_currentHost != nil);
     if (host.hostname) {
-        _variables[kVariableKeySessionHostname] = host.hostname;
+        _variables[iTermVariableKeySessionHostname] = host.hostname;
     } else {
-        [_variables removeObjectForKey:kVariableKeySessionHostname];
+        [_variables removeObjectForKey:iTermVariableKeySessionHostname];
     }
     if (host.username) {
-        _variables[kVariableKeySessionUsername] = host.username;
+        _variables[iTermVariableKeySessionUsername] = host.username;
     } else {
-        [_variables removeObjectForKey:kVariableKeySessionUsername];
+        [_variables removeObjectForKey:iTermVariableKeySessionUsername];
     }
     [_textview setBadgeLabel:[self badgeLabel]];
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
@@ -8547,9 +8535,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
     if (newPath) {
-        _variables[kVariableKeySessionPath] = newPath;
+        _variables[iTermVariableKeySessionPath] = newPath;
     } else {
-        [_variables removeObjectForKey:kVariableKeySessionPath];
+        [_variables removeObjectForKey:iTermVariableKeySessionPath];
     }
 
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
