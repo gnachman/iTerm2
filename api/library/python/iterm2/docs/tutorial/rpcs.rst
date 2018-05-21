@@ -87,6 +87,22 @@ function call in the field beneath it. Like this:
 
 Then press the associated keystroke and the function will be invoked.
 
+REPL
+----
+
+To test RPCs in the REPL, you need to give the iterm2 library a chance to read
+the request from the connection to iTerm2. The simplest way is to tell it to
+watch for requests for a set period of time, like this:
+
+.. code-block:: python
+
+    await app.connection.async_dispatch_for_duration(1)
+
+The argument of `1` is how long to wait. Requests to execute registered
+functions wait in a queue until they can be handled. That means you can press a
+key in iTerm2 to call the RPC and then do `async_dispatch_for_duration(0.1)` and
+it will be handled immediately.
+
 Arguments
 ---------
 
@@ -138,8 +154,10 @@ Strings are escaped like JSON, using backslash.
 Timeouts
 --------
 
-Functions must return within five seconds. Otherwise, the user will be shown an
-error.
+By default, iTerm2 stops waiting for a function's result after five seconds.
+The function continues to run until completion. You can pass an optional
+`timeout` parameter to `app.async_register_rpc_handler` to set your own timeout
+value in seconds.
 
 Composition
 -----------

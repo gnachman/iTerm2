@@ -284,12 +284,15 @@ message RegisterToolRequest {
 
 // Describes an RPC from iTerm2 to script. I don't want to invent my own type
 // system so this is dynamically typed, which matches Python well enough.
-message RPCSignature {
+message RPCRegistrationRequest {
   message RPCArgumentSignature {
     optional string name = 1;
   }
   optional string name = 1;
   repeated RPCArgumentSignature arguments = 2;
+
+  // If not specified, iTerm2 decides based on its built-in default.
+  optional float timeout = 3;
 }
 
 message RegisterToolResponse {
@@ -330,7 +333,7 @@ message NotificationRequest {
   optional NotificationType notification_type = 3;
 
   oneof arguments {
-    RPCSignature rpc_signature = 4;  // For NOTIFY_ON_SERVER_ORIGINATED_RPC
+    RPCRegistrationRequest rpc_registration_request = 4;  // For NOTIFY_ON_SERVER_ORIGINATED_RPC
   }
 }
 

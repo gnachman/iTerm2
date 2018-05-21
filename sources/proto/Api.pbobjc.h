@@ -73,8 +73,8 @@ CF_EXTERN_C_BEGIN
 @class ITMPoint;
 @class ITMProfileProperty;
 @class ITMPromptNotification;
-@class ITMRPCSignature;
-@class ITMRPCSignature_RPCArgumentSignature;
+@class ITMRPCRegistrationRequest;
+@class ITMRPCRegistrationRequest_RPCArgumentSignature;
 @class ITMRange;
 @class ITMRegisterToolRequest;
 @class ITMRegisterToolResponse;
@@ -807,6 +807,9 @@ void ITMServerOriginatedRPCResultRequest_ClearResultOneOfCase(ITMServerOriginate
 
 #pragma mark - ITMServerOriginatedRPCResultResponse
 
+/**
+ * This simply acknowledges receipt of ServerOriginatedRPCResultRequest.
+ **/
 @interface ITMServerOriginatedRPCResultResponse : GPBMessage
 
 @end
@@ -1282,37 +1285,41 @@ typedef GPB_ENUM(ITMRegisterToolRequest_FieldNumber) {
 
 @end
 
-#pragma mark - ITMRPCSignature
+#pragma mark - ITMRPCRegistrationRequest
 
-typedef GPB_ENUM(ITMRPCSignature_FieldNumber) {
-  ITMRPCSignature_FieldNumber_Name = 1,
-  ITMRPCSignature_FieldNumber_ArgumentsArray = 2,
+typedef GPB_ENUM(ITMRPCRegistrationRequest_FieldNumber) {
+  ITMRPCRegistrationRequest_FieldNumber_Name = 1,
+  ITMRPCRegistrationRequest_FieldNumber_ArgumentsArray = 2,
+  ITMRPCRegistrationRequest_FieldNumber_Timeout = 3,
 };
 
 /**
- * Describes an RPC. It is intentionally vague because I don't want to add too much complexity
- * prematurely. I think something like json schema could work for defining arguments and return
- * type. To begin,
+ * Describes an RPC from iTerm2 to script. I don't want to invent my own type
+ * system so this is dynamically typed, which matches Python well enough.
  **/
-@interface ITMRPCSignature : GPBMessage
+@interface ITMRPCRegistrationRequest : GPBMessage
 
 @property(nonatomic, readwrite, copy, null_resettable) NSString *name;
 /** Test to see if @c name has been set. */
 @property(nonatomic, readwrite) BOOL hasName;
 
-@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMRPCSignature_RPCArgumentSignature*> *argumentsArray;
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMRPCRegistrationRequest_RPCArgumentSignature*> *argumentsArray;
 /** The number of items in @c argumentsArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger argumentsArray_Count;
 
+/** This isn't part of the unique signature. */
+@property(nonatomic, readwrite) float timeout;
+
+@property(nonatomic, readwrite) BOOL hasTimeout;
 @end
 
-#pragma mark - ITMRPCSignature_RPCArgumentSignature
+#pragma mark - ITMRPCRegistrationRequest_RPCArgumentSignature
 
-typedef GPB_ENUM(ITMRPCSignature_RPCArgumentSignature_FieldNumber) {
-  ITMRPCSignature_RPCArgumentSignature_FieldNumber_Name = 1,
+typedef GPB_ENUM(ITMRPCRegistrationRequest_RPCArgumentSignature_FieldNumber) {
+  ITMRPCRegistrationRequest_RPCArgumentSignature_FieldNumber_Name = 1,
 };
 
-@interface ITMRPCSignature_RPCArgumentSignature : GPBMessage
+@interface ITMRPCRegistrationRequest_RPCArgumentSignature : GPBMessage
 
 @property(nonatomic, readwrite, copy, null_resettable) NSString *name;
 /** Test to see if @c name has been set. */
@@ -1339,12 +1346,12 @@ typedef GPB_ENUM(ITMNotificationRequest_FieldNumber) {
   ITMNotificationRequest_FieldNumber_Session = 1,
   ITMNotificationRequest_FieldNumber_Subscribe = 2,
   ITMNotificationRequest_FieldNumber_NotificationType = 3,
-  ITMNotificationRequest_FieldNumber_RpcSignature = 4,
+  ITMNotificationRequest_FieldNumber_RpcRegistrationRequest = 4,
 };
 
 typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
   ITMNotificationRequest_Arguments_OneOfCase_GPBUnsetOneOfCase = 0,
-  ITMNotificationRequest_Arguments_OneOfCase_RpcSignature = 4,
+  ITMNotificationRequest_Arguments_OneOfCase_RpcRegistrationRequest = 4,
 };
 
 @interface ITMNotificationRequest : GPBMessage
@@ -1368,7 +1375,7 @@ typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
 @property(nonatomic, readonly) ITMNotificationRequest_Arguments_OneOfCase argumentsOneOfCase;
 
 /** For NOTIFY_ON_SERVER_ORIGINATED_RPC */
-@property(nonatomic, readwrite, strong, null_resettable) ITMRPCSignature *rpcSignature;
+@property(nonatomic, readwrite, strong, null_resettable) ITMRPCRegistrationRequest *rpcRegistrationRequest;
 
 @end
 
@@ -1495,7 +1502,8 @@ typedef GPB_ENUM(ITMServerOriginatedRPCNotification_FieldNumber) {
 };
 
 /**
- * This is an iTerm2-to-script RPC call. The script must have registered for `name`.
+ * This is an iTerm2-to-script RPC call. The script must have registered for
+ * an RPC matching the signature of `rpc`.
  **/
 @interface ITMServerOriginatedRPCNotification : GPBMessage
 

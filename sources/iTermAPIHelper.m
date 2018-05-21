@@ -40,12 +40,12 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 @property (nonatomic, strong) id connection;
 @end
 
-@interface ITMRPCSignature(Extensions)
+@interface ITMRPCRegistrationRequest(Extensions)
 @property (nonatomic, readonly) BOOL it_valid;
 @property (nonatomic, readonly) NSString *it_stringRepresentation;
 @end
 
-@implementation ITMRPCSignature(Extensions)
+@implementation ITMRPCRegistrationRequest(Extensions)
 
 - (BOOL)it_valid {
     NSCharacterSet *ascii = [NSCharacterSet characterSetWithRange:NSMakeRange(0, 128)];
@@ -61,7 +61,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
         return NO;
     }
     NSMutableSet<NSString *> *args = [NSMutableSet set];
-    for (ITMRPCSignature_RPCArgumentSignature *arg in self.argumentsArray) {
+    for (ITMRPCRegistrationRequest_RPCArgumentSignature *arg in self.argumentsArray) {
         NSString *name = arg.name;
         if (name.length == 0) {
             return NO;
@@ -78,7 +78,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 }
 
 - (NSString *)it_stringRepresentation {
-    NSArray<NSString *> *argNames = [self.argumentsArray mapWithBlock:^id(ITMRPCSignature_RPCArgumentSignature *anObject) {
+    NSArray<NSString *> *argNames = [self.argumentsArray mapWithBlock:^id(ITMRPCRegistrationRequest_RPCArgumentSignature *anObject) {
         return anObject.name;
     }];
     return iTermAPIHelperStringRepresentationOfRPC(self.name, argNames);
@@ -409,7 +409,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     [self postAPINotification:notification toConnection:connection];
 
     __weak __typeof(self) weakSelf = self;
-    static const NSTimeInterval timeoutSeconds = 5;
+    const NSTimeInterval timeoutSeconds = handler.rpcRegistrationRequest.hasTimeout ? handler.rpcRegistrationRequest.timeout : 5;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeoutSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [weakSelf checkForRPCTimeout:notification.serverOriginatedRpcNotification.requestId];
     });
@@ -438,9 +438,12 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     NSMutableDictionary<NSString *, NSArray<NSString *> *> *result = [NSMutableDictionary dictionary];
     for (NSString *stringSignature in _serverOriginatedRPCSubscriptions.allKeys) {
         ITMNotificationRequest *req = _serverOriginatedRPCSubscriptions[stringSignature].allValues.firstObject;
-        ITMRPCSignature *sig = req.rpcSignature;
+        if (!req) {
+            continue;
+        }
+        ITMRPCRegistrationRequest *sig = req.rpcRegistrationRequest;
         NSString *functionName = sig.name;
-        NSArray<NSString *> *args = [sig.argumentsArray mapWithBlock:^id(ITMRPCSignature_RPCArgumentSignature *anObject) {
+        NSArray<NSString *> *args = [sig.argumentsArray mapWithBlock:^id(ITMRPCRegistrationRequest_RPCArgumentSignature *anObject) {
             return anObject.name;
         }];
         result[functionName] = args;
@@ -584,10 +587,10 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 }
 
 - (BOOL)rpcNotificationRequestIsValid:(ITMNotificationRequest *)request {
-    if (request.argumentsOneOfCase != ITMNotificationRequest_Arguments_OneOfCase_RpcSignature) {
+    if (request.argumentsOneOfCase != ITMNotificationRequest_Arguments_OneOfCase_RpcRegistrationRequest) {
         return NO;
     }
-    return request.rpcSignature.it_valid;
+    return request.rpcRegistrationRequest.it_valid;
 }
 
 - (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request connection:(id)connection {
@@ -613,8 +616,8 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     } else if (request.notificationType == ITMNotificationType_NotifyOnFocusChange) {
         subscriptions = _focusChangeSubscriptions;
     } else if (request.notificationType == ITMNotificationType_NotifyOnServerOriginatedRpc) {
-        if (!request.rpcSignature.it_valid) {
-            XLog(@"RPC signature not valid: %@", request.rpcSignature);
+        if (!request.rpcRegistrationRequest.it_valid) {
+            XLog(@"RPC signature not valid: %@", request.rpcRegistrationRequest);
             response.status = ITMNotificationResponse_Status_RequestMalformed;
             return response;
         }
@@ -625,7 +628,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
             return response;
         }
 
-        NSString *signatureString = request.rpcSignature.it_stringRepresentation;
+        NSString *signatureString = request.rpcRegistrationRequest.it_stringRepresentation;
         subscriptions = _serverOriginatedRPCSubscriptions[signatureString];
         if (subscriptions.count > 0) {
             response.status = ITMNotificationResponse_Status_DuplicateServerOriginatedRpc;

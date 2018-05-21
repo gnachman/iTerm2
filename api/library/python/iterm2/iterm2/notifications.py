@@ -198,7 +198,7 @@ async def async_subscribe_to_focus_change_notification(connection, callback):
         callback,
         session=None)
 
-async def async_subscribe_to_server_originated_rpc_notification(connection, callback, name, arguments=[]):
+async def async_subscribe_to_server_originated_rpc_notification(connection, callback, name, arguments=[], timeout_seconds=5):
     """
     Registers a callback to be run when the server wants to invoke an RPC.
 
@@ -207,34 +207,37 @@ async def async_subscribe_to_server_originated_rpc_notification(connection, call
 
     :param connection: A connected :class:`Connection`.
     :param callback: A coroutine taking two arguments: an :class:`Connection` and iterm2.api_pb2.ServerOriginatedRPCNotification.
+    :param timeout_seconds: How long iTerm2 should wait for this function to return or `None` to use the default timeout.
 
     :returns: A token that can be passed to unsubscribe.
     """
-    rpc_signature = iterm2.api_pb2.RPCSignature()
-    rpc_signature.name = name
+    rpc_registration_request = iterm2.api_pb2.RPCRegistrationRequest()
+    rpc_registration_request.name = name
+    if timeout_seconds is not None:
+        rpc_registration_request.timeout = timeout_seconds
     args = []
     for arg_name in arguments:
-        arg = iterm2.api_pb2.RPCSignature.RPCArgumentSignature()
+        arg = iterm2.api_pb2.RPCRegistrationRequest.RPCArgumentSignature()
         arg.name = arg_name
         args.append(arg)
-    rpc_signature.arguments.extend(args)
+    rpc_registration_request.arguments.extend(args)
     return await _async_subscribe(
         connection,
         True,
         iterm2.api_pb2.NOTIFY_ON_SERVER_ORIGINATED_RPC,
         callback,
-        rpc_signature=rpc_signature)
+        rpc_registration_request=rpc_registration_request)
 
 ## Private --------------------------------------------------------------------
 
-def _string_rpc_signature(rpc):
+def _string_rpc_registration_request(rpc):
     """Converts ServerOriginatedRPC or RPCSignature to a string."""
     if rpc is None:
         return None
     args = map(lambda x: x.name, rpc.arguments)
     return rpc.name + "(" + ",".join(args) + ")"
 
-async def _async_subscribe(connection, subscribe, notification_type, callback, session=None, rpc_signature=None):
+async def _async_subscribe(connection, subscribe, notification_type, callback, session=None, rpc_registration_request=None):
     _register_helper_if_needed()
     transformed_session = session if session is not None else "all"
     response = await iterm2.rpc.async_notification_request(
@@ -242,14 +245,14 @@ async def _async_subscribe(connection, subscribe, notification_type, callback, s
         subscribe,
         notification_type,
         transformed_session,
-        rpc_signature)
+        rpc_registration_request)
     status = response.notification_response.status
     status_ok = (status == iterm2.api_pb2.NotificationResponse.Status.Value("OK"))
 
     if subscribe:
         already = (status == iterm2.api_pb2.NotificationResponse.Status.Value("ALREADY_SUBSCRIBED"))
         if status_ok or already:
-            _register_notification_handler(session, _string_rpc_signature(rpc_signature), notification_type, callback)
+            _register_notification_handler(session, _string_rpc_registration_request(rpc_registration_request), notification_type, callback)
             return ((session, notification_type), callback)
     else:
         # Unsubscribe
@@ -304,7 +307,7 @@ def _get_handler_key_from_notification(notification):
         key = (None, iterm2.api_pb2.NOTIFY_ON_FOCUS_CHANGE)
         notification = notification.focus_changed_notification
     elif notification.HasField('server_originated_rpc_notification'):
-        key = (None, iterm2.api_pb2.NOTIFY_ON_SERVER_ORIGINATED_RPC, _string_rpc_signature(notification.server_originated_rpc_notification.rpc))
+        key = (None, iterm2.api_pb2.NOTIFY_ON_SERVER_ORIGINATED_RPC, _string_rpc_registration_request(notification.server_originated_rpc_notification.rpc))
     return key, notification
 
 def _get_notification_handlers(message):
@@ -320,13 +323,13 @@ def _get_notification_handlers(message):
         return (_get_handlers()[fallback], sub_notification)
     return ([], None)
 
-def _register_notification_handler(session, rpc_signature, notification_type, coro):
+def _register_notification_handler(session, rpc_registration_request, notification_type, coro):
     assert coro is not None
 
-    if rpc_signature is None:
+    if rpc_registration_request is None:
         key = (session, notification_type)
     else:
-        key = (session, notification_type, rpc_signature)
+        key = (session, notification_type, rpc_registration_request)
 
     if key in _get_handlers():
         _get_handlers()[key].append(coro)

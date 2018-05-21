@@ -359,7 +359,7 @@ class App:
             profiles.append(profile)
         return profiles
 
-    async def async_register_rpc_handler(self, name, coro):
+    async def async_register_rpc_handler(self, name, coro, timeout=None):
         """Register a script-defined RPC.
 
         iTerm2 may be instructed to invoke a registered RPC, such as through a
@@ -368,6 +368,7 @@ class App:
 
         :param name: The RPC name. Combined with its arguments, this must be unique among all registered RPCs. It should consist of letters, numbers, and underscores and must begin with a letter.
         :param coro: An async function. Its arguments are reflected upon to determine the RPC's signature. Only the names of the arguments are used. All arguments should be keyword arguments as any may be omitted at call time.
+        :param timeout: How long iTerm2 should wait before giving up on this function's ever returning. `None` means to use the default timeout.
         """
         async def handle_rpc(connection, notif):
             rpc_notif = notif.server_originated_rpc_notification
@@ -396,4 +397,4 @@ class App:
                 await iterm2.rpc.async_send_rpc_result(connection, rpc_notif.request_id, False, result)
 
         args = inspect.signature(coro).parameters.keys()
-        await iterm2.notifications.async_subscribe_to_server_originated_rpc_notification(self.connection, handle_rpc, name, args)
+        await iterm2.notifications.async_subscribe_to_server_originated_rpc_notification(self.connection, handle_rpc, name, args, timeout)

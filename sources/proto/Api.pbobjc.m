@@ -2207,18 +2207,20 @@ BOOL ITMRegisterToolRequest_ToolType_IsValidValue(int32_t value__) {
   }
 }
 
-#pragma mark - ITMRPCSignature
+#pragma mark - ITMRPCRegistrationRequest
 
-@implementation ITMRPCSignature
+@implementation ITMRPCRegistrationRequest
 
 @dynamic hasName, name;
 @dynamic argumentsArray, argumentsArray_Count;
+@dynamic hasTimeout, timeout;
 
-typedef struct ITMRPCSignature__storage_ {
+typedef struct ITMRPCRegistrationRequest__storage_ {
   uint32_t _has_storage_[1];
+  float timeout;
   NSString *name;
   NSMutableArray *argumentsArray;
-} ITMRPCSignature__storage_;
+} ITMRPCRegistrationRequest__storage_;
 
 // This method is threadsafe because it is initially called
 // in +initialize for each subclass.
@@ -2229,29 +2231,38 @@ typedef struct ITMRPCSignature__storage_ {
       {
         .name = "name",
         .dataTypeSpecific.className = NULL,
-        .number = ITMRPCSignature_FieldNumber_Name,
+        .number = ITMRPCRegistrationRequest_FieldNumber_Name,
         .hasIndex = 0,
-        .offset = (uint32_t)offsetof(ITMRPCSignature__storage_, name),
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, name),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },
       {
         .name = "argumentsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMRPCSignature_RPCArgumentSignature),
-        .number = ITMRPCSignature_FieldNumber_ArgumentsArray,
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_RPCArgumentSignature),
+        .number = ITMRPCRegistrationRequest_FieldNumber_ArgumentsArray,
         .hasIndex = GPBNoHasBit,
-        .offset = (uint32_t)offsetof(ITMRPCSignature__storage_, argumentsArray),
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, argumentsArray),
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "timeout",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_FieldNumber_Timeout,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, timeout),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeFloat,
+      },
     };
     GPBDescriptor *localDescriptor =
-        [GPBDescriptor allocDescriptorForClass:[ITMRPCSignature class]
+        [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest class]
                                      rootClass:[ITMApiRoot class]
                                           file:ITMApiRoot_FileDescriptor()
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
-                                   storageSize:sizeof(ITMRPCSignature__storage_)
+                                   storageSize:sizeof(ITMRPCRegistrationRequest__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
@@ -2261,16 +2272,16 @@ typedef struct ITMRPCSignature__storage_ {
 
 @end
 
-#pragma mark - ITMRPCSignature_RPCArgumentSignature
+#pragma mark - ITMRPCRegistrationRequest_RPCArgumentSignature
 
-@implementation ITMRPCSignature_RPCArgumentSignature
+@implementation ITMRPCRegistrationRequest_RPCArgumentSignature
 
 @dynamic hasName, name;
 
-typedef struct ITMRPCSignature_RPCArgumentSignature__storage_ {
+typedef struct ITMRPCRegistrationRequest_RPCArgumentSignature__storage_ {
   uint32_t _has_storage_[1];
   NSString *name;
-} ITMRPCSignature_RPCArgumentSignature__storage_;
+} ITMRPCRegistrationRequest_RPCArgumentSignature__storage_;
 
 // This method is threadsafe because it is initially called
 // in +initialize for each subclass.
@@ -2281,22 +2292,22 @@ typedef struct ITMRPCSignature_RPCArgumentSignature__storage_ {
       {
         .name = "name",
         .dataTypeSpecific.className = NULL,
-        .number = ITMRPCSignature_RPCArgumentSignature_FieldNumber_Name,
+        .number = ITMRPCRegistrationRequest_RPCArgumentSignature_FieldNumber_Name,
         .hasIndex = 0,
-        .offset = (uint32_t)offsetof(ITMRPCSignature_RPCArgumentSignature__storage_, name),
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_RPCArgumentSignature__storage_, name),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },
     };
     GPBDescriptor *localDescriptor =
-        [GPBDescriptor allocDescriptorForClass:[ITMRPCSignature_RPCArgumentSignature class]
+        [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest_RPCArgumentSignature class]
                                      rootClass:[ITMApiRoot class]
                                           file:ITMApiRoot_FileDescriptor()
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
-                                   storageSize:sizeof(ITMRPCSignature_RPCArgumentSignature__storage_)
+                                   storageSize:sizeof(ITMRPCRegistrationRequest_RPCArgumentSignature__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCSignature)];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest)];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }
@@ -2392,13 +2403,13 @@ BOOL ITMRegisterToolResponse_Status_IsValidValue(int32_t value__) {
 @dynamic hasSession, session;
 @dynamic hasSubscribe, subscribe;
 @dynamic hasNotificationType, notificationType;
-@dynamic rpcSignature;
+@dynamic rpcRegistrationRequest;
 
 typedef struct ITMNotificationRequest__storage_ {
   uint32_t _has_storage_[2];
   ITMNotificationType notificationType;
   NSString *session;
-  ITMRPCSignature *rpcSignature;
+  ITMRPCRegistrationRequest *rpcRegistrationRequest;
 } ITMNotificationRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -2439,11 +2450,11 @@ typedef struct ITMNotificationRequest__storage_ {
       },
       {
         .defaultValue.valueMessage = nil,
-        .core.name = "rpcSignature",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCSignature),
-        .core.number = ITMNotificationRequest_FieldNumber_RpcSignature,
+        .core.name = "rpcRegistrationRequest",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest),
+        .core.number = ITMNotificationRequest_FieldNumber_RpcRegistrationRequest,
         .core.hasIndex = -1,
-        .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, rpcSignature),
+        .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, rpcRegistrationRequest),
         .core.flags = GPBFieldOptional,
         .core.dataType = GPBDataTypeMessage,
       },
