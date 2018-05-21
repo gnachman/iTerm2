@@ -14,6 +14,7 @@
 
 static NSString *const iTermAPIAuthorizationControllerSavedAccessSettings = @"iTermAPIAuthorizationControllerSavedAccessSettings";
 NSString *const iTermAPIServerAuthorizationKey = @"iTermAPIServerAuthorizationKey";
+NSString *const iTermAPIServerAuthorizationIsREPL = @"iTermAPIServerAuthorizationIsREPL";
 static NSString *const kAPIAccessAllowed = @"allowed";
 static NSString *const kAPIAccessDate = @"date";
 static NSString *const kAPINextConfirmationDate = @"next confirmation";
@@ -24,6 +25,7 @@ static NSString *const kAPIAccessLocalizedName = @"app name";
 @property (nonatomic, readonly) NSString *humanReadableName;
 @property (nonatomic, readonly) NSString *fullCommandOrBundleID;
 @property (nonatomic, readonly) NSString *keyForAuth;
+@property (nonatomic, readonly) BOOL isRepl;
 @property (nonatomic, readonly) NSString *reason;
 @property (nonatomic, readonly) BOOL identified;
 @property (nonatomic, readonly) id identity;
@@ -63,6 +65,7 @@ static NSString *const kAPIAccessLocalizedName = @"app name";
                 NSArray<NSString *> *escapedIdParts = [self pythonEscapedIdentifierArrayWithArgParser:pythonArgumentParser];
 
                 _keyForAuth = [escapedIdParts componentsJoinedByString:@" "];
+                _isRepl = pythonArgumentParser.repl;
                 if (idParts.count > 1) {
                     _humanReadableName = [[idParts subarrayFromIndex:1] componentsJoinedByString:@" "];
                 } else {
@@ -80,10 +83,14 @@ static NSString *const kAPIAccessLocalizedName = @"app name";
 
 - (id)identity {
     assert(_identified);
-    return @{ iTermAPIServerAuthorizationKey: _keyForAuth };
+    return @{ iTermAPIServerAuthorizationKey: _keyForAuth,
+              iTermAPIServerAuthorizationIsREPL: @(_isRepl) };
 }
 
 - (NSArray<NSString *> *)pythonIdentifierArrayWithArgParser:(iTermPythonArgumentParser *)pythonArgumentParser {
+    if (pythonArgumentParser.repl) {
+        return @[ @"iTerm2 Python REPL" ];
+    }
     NSMutableArray *idParts = [NSMutableArray array];
     [idParts addObject:pythonArgumentParser.fullPythonPath];
     if (pythonArgumentParser.module) {
@@ -145,7 +152,7 @@ static NSString *const kAPIAccessLocalizedName = @"app name";
 }
 
 - (NSString *)key {
-    return [NSString stringWithFormat:@"api_key=%@", _request.keyForAuth];
+    return [NSString stringWithFormat:@"is_repl=%@,api_key=%@", @(_request.isRepl), _request.keyForAuth];
 }
 
 - (id)identity {

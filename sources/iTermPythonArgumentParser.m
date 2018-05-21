@@ -31,8 +31,9 @@ NS_ASSUME_NONNULL_BEGIN
     if ([args[0] isEqualToString:@"aioconsole"]) {
         if (args.count == 1) {
             return YES;
-        } else if (args.count == 2 &&
-                   [args[1] isEqualToString:@"--no-readline"]) {
+        } else if (args.count == 3 &&
+                   [args[1] isEqualToString:@"--no-readline"] &&
+                   [args[2] hasPrefix:@"--banner="]) {
             return YES;
         }
     }
@@ -61,6 +62,7 @@ NS_ASSUME_NONNULL_BEGIN
                 // cannot go on.
                 if ([self argsLookLikeRepl:[_args subarrayFromIndex:i]]) {
                     // Except for when it's aioconsole with known arguments. That's just the REPL.
+                    _repl = YES;
                     return;
                 }
                 // Just glom everything after -m into the module argument because we can't

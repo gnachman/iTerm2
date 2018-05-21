@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *escapedModule;
 @property (nonatomic, readonly) NSString *escapedStatement;
 @property (nonatomic, readonly) NSString *escapedFullPythonPath;
+@property (nonatomic, readonly) BOOL repl;
 
 - (instancetype)initWithArgs:(NSArray<NSString *> *)args NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
