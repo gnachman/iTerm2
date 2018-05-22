@@ -8,6 +8,8 @@ import iterm2.profile
 import iterm2.rpc
 import iterm2.util
 
+import json
+
 class SplitPaneException(Exception):
     """Something went wrong when trying to split a pane."""
     pass
@@ -406,7 +408,7 @@ class Session:
         result = await iterm2.rpc.async_variable(
             self.connection,
             self.__session_id,
-            [(name, value)],
+            [(name, json.dumps(value))],
             [])
         status = result.variable_response.status
         if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
@@ -427,7 +429,7 @@ class Session:
         if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
         else:
-            return result.variable_response.values[0]
+            return json.loads(result.variable_response.values[0])
 
     class KeystrokeReader:
         """An asyncio context manager for reading keystrokes.

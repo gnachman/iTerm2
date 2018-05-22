@@ -13,4 +13,7 @@
 // or array. Returns nil if it's not.
 + (NSString *)it_jsonStringForObject:(id)object;
 
+// Converts a string to JSON.
++ (id)it_objectForJsonString:(NSString *)string;
+
 @end

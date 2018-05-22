@@ -146,7 +146,7 @@ message VariableRequest {
 
   message Set {
     optional string name = 1;
-    optional string value = 2;
+    optional string value = 2;  // JSON encoded
   }
   repeated Set set = 2;
   repeated string get = 3;  // Set to special value "*" to get all in newline-delimited list.
@@ -159,7 +159,7 @@ message VariableResponse {
     INVALID_NAME = 2;  // Names you set must begin with "user."
   }
   optional Status status = 1;
-  repeated string values = 2;  // 1:1 with get field in request. Empty and undefined are the same.
+  repeated string values = 2;  // 1:1 with get field in request.  JSON encoded, with null for unset variables.
 }
 
 message ActivateRequest {

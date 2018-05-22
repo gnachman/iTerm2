@@ -26,11 +26,13 @@
  */
 
 #import "DebugLogging.h"
+#import "iTermTuple.h"
 #import "NSData+iTerm.h"
 #import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSCharacterSet+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "RegexKitLite.h"
 #import "ScreenChar.h"
@@ -1304,13 +1306,13 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return [attributedString heightForWidth:maxWidth];
 }
 
-- (NSArray *)keyValuePair {
+- (iTermTuple *)keyValuePair {
     NSRange range = [self rangeOfString:@"="];
     if (range.location == NSNotFound) {
-        return @[ self, @"" ];
+        return nil;
     } else {
-        return @[ [self substringToIndex:range.location],
-                  [self substringFromIndex:range.location + 1] ];
+        return [iTermTuple tupleWithObject:[self substringToIndex:range.location]
+                                 andObject:[self substringFromIndex:range.location + 1]];
     }
 }
 
@@ -1331,8 +1333,10 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     NSString *(^stringify)(id) = ^NSString *(id x) {
         if ([NSString castFrom:x]) {
             return x;
-        } else {
+        } else if ([NSNumber castFrom:x]) {
             return [x stringValue];
+        } else {
+            return [NSJSONSerialization it_jsonStringForObject:x];
         }
     };
     unichar *chars = (unichar *)malloc(self.length * sizeof(unichar));

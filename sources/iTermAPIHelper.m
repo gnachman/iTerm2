@@ -1283,7 +1283,13 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
         }
         for (PTYSession *session in [self allSessions]) {
             [request.setArray enumerateObjectsUsingBlock:^(ITMVariableRequest_Set * _Nonnull setRequest, NSUInteger idx, BOOL * _Nonnull stop) {
-                [session setVariableNamed:setRequest.name toValue:setRequest.value];
+                id value;
+                if ([setRequest.value isEqual:@"null"]) {
+                    value = nil;
+                } else {
+                    value = [NSJSONSerialization it_objectForJsonString:setRequest.value];
+                }
+                [session setVariableNamed:setRequest.name toValue:value];
             }];
         }
         response.status = ITMVariableResponse_Status_Ok;
@@ -1299,19 +1305,21 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     }
 
     [request.setArray enumerateObjectsUsingBlock:^(ITMVariableRequest_Set * _Nonnull setRequest, NSUInteger idx, BOOL * _Nonnull stop) {
-        [session setVariableNamed:setRequest.name toValue:setRequest.value];
+        id value;
+        if ([setRequest.value isEqual:@"null"]) {
+            value = nil;
+        } else {
+            value = [NSJSONSerialization it_objectForJsonString:setRequest.value];
+        }
+        [session setVariableNamed:setRequest.name
+                          toValue:value];
     }];
     [request.getArray enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([name isEqualToString:@"*"]) {
             [response.valuesArray addObject:[session.variables.allKeys componentsJoinedByString:@"\n"]];
         } else {
-            // TODO: Change the RPC to accept json-encoded variables instead
-            // of stringifying them.
-            id obj = session.variables[name];
-            if (obj && ![NSString castFrom:obj]) {
-                obj = [obj stringValue];
-            }
-            NSString *value = obj ?: @"";
+            id obj = [NSJSONSerialization it_jsonStringForObject:session.variables[name]];
+            NSString *value = obj ?: @"null";
             [response.valuesArray addObject:value];
         }
     }];

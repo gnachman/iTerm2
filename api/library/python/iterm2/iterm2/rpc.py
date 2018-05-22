@@ -312,6 +312,8 @@ async def async_activate(connection,
 async def async_variable(connection, session_id, sets, gets):
     """
     Gets or sets session variables.
+
+    `sets` are JSON encoded. The resulting gets will be JSON encoded.
     """
     request = _alloc_request()
     request.variable_request.session_id = session_id

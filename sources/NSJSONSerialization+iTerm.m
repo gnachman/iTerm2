@@ -40,4 +40,12 @@
     return [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
 }
 
++ (id)it_objectForJsonString:(NSString *)string {
+    NSError *error;
+    NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
+    return [NSJSONSerialization JSONObjectWithData:data
+                                           options:NSJSONReadingAllowFragments
+                                             error:&error];
+}
+
 @end

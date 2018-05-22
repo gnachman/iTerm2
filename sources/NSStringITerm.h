@@ -34,6 +34,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermTuple.h"
+
 // This is the standard unicode replacement character for when input couldn't
 // be parsed properly but we need to render something there.
 #define UNICODE_REPLACEMENT_CHAR 0xfffd
@@ -174,7 +176,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // How tall is this string when rendered within a fixed width?
 - (CGFloat)heightWithAttributes:(NSDictionary *)attributes constrainedToWidth:(CGFloat)maxWidth;
 
-- (NSArray *)keyValuePair;
+- (iTermTuple *)keyValuePair;
 
 - (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars;
 - (NSString *)stringByPerformingSubstitutions:(NSDictionary *)substituions;
