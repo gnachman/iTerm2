@@ -3048,10 +3048,12 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
 
-    NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
-    NSWindowController *newKeyWindowController = [[NSApp keyWindow] windowController];
-    if (![siblings containsObject:newKeyWindowController]) {
-        [[iTermHotKeyController sharedInstance] autoHideHotKeyWindows:siblings];
+    if (![iTermApplication sharedApplication].it_characterPanelIsOpen) {
+        NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
+        NSWindowController *newKeyWindowController = [[NSApp keyWindow] windowController];
+        if (![siblings containsObject:newKeyWindowController]) {
+            [[iTermHotKeyController sharedInstance] autoHideHotKeyWindows:siblings];
+        }
     }
 
     [_contentView.tabBarControl setFlashing:NO];
@@ -3101,10 +3103,12 @@ ITERM_WEAKLY_REFERENCEABLE
 #endif
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
           __FILE__, __LINE__, aNotification);
-    NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
-    NSWindowController *newMainWindowController = [[NSApp mainWindow] windowController];
-    if (![siblings containsObject:newMainWindowController]) {
-        [[iTermHotKeyController sharedInstance] autoHideHotKeyWindows:siblings];
+    if (![iTermApplication sharedApplication].it_characterPanelIsOpen) {
+        NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
+        NSWindowController *newMainWindowController = [[NSApp mainWindow] windowController];
+        if (![siblings containsObject:newMainWindowController]) {
+            [[iTermHotKeyController sharedInstance] autoHideHotKeyWindows:siblings];
+        }
     }
 
     // update the cursor

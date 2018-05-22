@@ -221,5 +221,6 @@
 //+ (BOOL)useLowPowerGPUWhenUnplugged;
 
 + (BOOL)retinaInlineImages;
++ (double)timeToWaitForEmojiPanel;
 
 @end

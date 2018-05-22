@@ -1216,6 +1216,8 @@
 		530AB8B520B2098000D2AA08 /* iTermVariables.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8B320B2098000D2AA08 /* iTermVariables.m */; };
 		530AB8B820B3627200D2AA08 /* iTermGrammarProcessor.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8B620B3627200D2AA08 /* iTermGrammarProcessor.h */; };
 		530AB8B920B3627200D2AA08 /* iTermGrammarProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8B720B3627200D2AA08 /* iTermGrammarProcessor.m */; };
+		530AB8BC20B3D3D000D2AA08 /* iTermWindowHacks.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8BA20B3D3D000D2AA08 /* iTermWindowHacks.h */; };
+		530AB8BD20B3D3D000D2AA08 /* iTermWindowHacks.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8BB20B3D3D000D2AA08 /* iTermWindowHacks.m */; };
 		5337A315203E065300024BEA /* iTermPowerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 5337A313203E065300024BEA /* iTermPowerManager.h */; };
 		5337A316203E065300024BEA /* iTermPowerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5337A314203E065300024BEA /* iTermPowerManager.m */; };
 		534690251C94FE8000B7E4E9 /* overflowImage.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690231C94FE8000B7E4E9 /* overflowImage.png */; };
@@ -3361,6 +3363,8 @@
 		530AB8B320B2098000D2AA08 /* iTermVariables.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVariables.m; sourceTree = "<group>"; };
 		530AB8B620B3627200D2AA08 /* iTermGrammarProcessor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGrammarProcessor.h; sourceTree = "<group>"; };
 		530AB8B720B3627200D2AA08 /* iTermGrammarProcessor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGrammarProcessor.m; sourceTree = "<group>"; };
+		530AB8BA20B3D3D000D2AA08 /* iTermWindowHacks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermWindowHacks.h; sourceTree = "<group>"; };
+		530AB8BB20B3D3D000D2AA08 /* iTermWindowHacks.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermWindowHacks.m; sourceTree = "<group>"; };
 		5337A313203E065300024BEA /* iTermPowerManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPowerManager.h; sourceTree = "<group>"; };
 		5337A314203E065300024BEA /* iTermPowerManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPowerManager.m; sourceTree = "<group>"; };
 		534690231C94FE8000B7E4E9 /* overflowImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overflowImage.png; sourceTree = "<group>"; };
@@ -6567,6 +6571,8 @@
 				530AB8B320B2098000D2AA08 /* iTermVariables.m */,
 				530AB8B620B3627200D2AA08 /* iTermGrammarProcessor.h */,
 				530AB8B720B3627200D2AA08 /* iTermGrammarProcessor.m */,
+				530AB8BA20B3D3D000D2AA08 /* iTermWindowHacks.h */,
+				530AB8BB20B3D3D000D2AA08 /* iTermWindowHacks.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -7804,6 +7810,7 @@
 				A667194D1DCE36C3000CE608 /* iTermWebSocketConnection.h in Headers */,
 				A667194E1DCE36C3000CE608 /* iTermInitialDirectory.h in Headers */,
 				A68400AF1FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.h in Headers */,
+				530AB8BC20B3D3D000D2AA08 /* iTermWindowHacks.h in Headers */,
 				A667194F1DCE36C3000CE608 /* NSWindow+iTerm.h in Headers */,
 				53FF9813209247E2008688D7 /* iTermScriptTemplatePickerWindowController.h in Headers */,
 				A66719501DCE36C3000CE608 /* iTermWebViewWrapperViewController.h in Headers */,
@@ -9466,6 +9473,7 @@
 				A62A1F721E6E724B00363EE9 /* iTermMenuOpener.m in Sources */,
 				A65EC0301F31800300AC0A6B /* iTermUpdateCadenceController.m in Sources */,
 				A60C034F20881E5F00FE2F1F /* iTermAPIHelper.m in Sources */,
+				530AB8BD20B3D3D000D2AA08 /* iTermWindowHacks.m in Sources */,
 				A6DBC0462005DC2B00F1466D /* iTermTuple.m in Sources */,
 				A67960D51F81FCBB008A42BC /* iTermCursorRenderer.m in Sources */,
 				A60C0373208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.m in Sources */,

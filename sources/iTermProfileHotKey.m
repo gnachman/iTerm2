@@ -68,6 +68,14 @@ static NSString *const kArrangement = @"Arrangement";
                                                  selector:@selector(applicationDidBecomeActive:)
                                                      name:NSApplicationDidBecomeActiveNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(characterPanelWillOpen:)
+                                                     name:iTermApplicationCharacterPaletteWillOpen
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(characterPanelDidClose:)
+                                                     name:iTermApplicationCharacterPaletteDidClose
+                                                   object:nil];
     }
     return self;
 }
@@ -136,16 +144,28 @@ static NSString *const kArrangement = @"Arrangement";
         return;
     }
 
-    if (self.floats) {
-        _windowController.window.level = NSStatusWindowLevel;
-    } else {
-        _windowController.window.level = NSNormalWindowLevel;
-    }
+    [self updateWindowLevel];
     _windowController.hotkeyWindowType = [self hotkeyWindowType];
 
     [_windowController.window setAlphaValue:0];
     if (_windowController.windowType != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         [_windowController.window setCollectionBehavior:self.windowController.window.collectionBehavior & ~NSWindowCollectionBehaviorFullScreenPrimary];
+    }
+}
+
+- (void)updateWindowLevel {
+    if (self.floats) {
+        _windowController.window.level = self.floatingLevel;
+    } else {
+        _windowController.window.level = NSNormalWindowLevel;
+    }
+}
+
+- (NSWindowLevel)floatingLevel {
+    if ([iTermApplication sharedApplication].it_characterPanelIsOpen) {
+        return NSFloatingWindowLevel;
+    } else {
+        return NSStatusWindowLevel;
     }
 }
 
@@ -834,4 +854,13 @@ static NSString *const kArrangement = @"Arrangement";
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
     _activationPending = NO;
 }
+
+- (void)characterPanelWillOpen:(NSNotification *)notification {
+    [self updateWindowLevel];
+}
+
+- (void)characterPanelDidClose:(NSNotification *)notification {
+    [self updateWindowLevel];
+}
+
 @end

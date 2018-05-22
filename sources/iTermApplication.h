@@ -34,6 +34,10 @@
 // Used for keys you can press on the touch bar that have no equivalent on physical keyboards that Apple recognizes
 extern unsigned short iTermBogusVirtualKeyCode;
 
+// Notifications posted when the character panel opens/closes. A pile of hacks.
+extern NSString *const iTermApplicationCharacterPaletteWillOpen;
+extern NSString *const iTermApplicationCharacterPaletteDidClose;
+
 @class iTermApplicationDelegate;
 @class iTermScriptingWindow;
 
@@ -53,6 +57,7 @@ extern unsigned short iTermBogusVirtualKeyCode;
 @property(nonatomic, readonly) NSStatusItem *statusBarItem;
 @property(nonatomic) BOOL isUIElement;
 @property(nonatomic) BOOL localAuthenticationDialogOpen;
+@property(nonatomic) BOOL it_characterPanelIsOpen;
 
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate<iTermApplicationDelegate> *)delegate;
