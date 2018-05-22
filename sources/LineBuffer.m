@@ -697,6 +697,11 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (void)findSubstring:(FindContext*)context stopAt:(LineBufferPosition *)stopPosition {
+    // Sanity check the absolute block number since blocks can be removed from the end of the list.
+    if (context.absBlockNum - num_dropped_blocks >= blocks.count) {
+        context.absBlockNum = blocks.count + num_dropped_blocks - 1;
+    }
+
     if (context.dir > 0) {
         // Search forwards
         if (context.absBlockNum < num_dropped_blocks) {
@@ -720,11 +725,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         }
     }
 
-    NSAssert(context.absBlockNum - num_dropped_blocks >= 0, @"bounds check");
-    NSAssert(context.absBlockNum - num_dropped_blocks < [blocks count], @"bounds check");
-    LineBlock* block = [blocks objectAtIndex:context.absBlockNum - num_dropped_blocks];
+    NSInteger blockIndex = context.absBlockNum - num_dropped_blocks;
+    assert(blockIndex >= 0);
+    assert(blockIndex < blocks.count);
+    LineBlock* block = [blocks objectAtIndex:blockIndex];
 
-    if (context.absBlockNum - num_dropped_blocks == 0 &&
+    if (blockIndex == 0 &&
         context.offset != -1 &&
         context.offset < [block startOffset]) {
         if (context.dir > 0) {
