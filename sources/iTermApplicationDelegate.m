@@ -73,6 +73,7 @@
 #import "iTermToolbeltView.h"
 #import "iTermURLStore.h"
 #import "iTermWarning.h"
+#import "iTermWebSocketCookieJar.h"
 #import "MovePaneController.h"
 #import "NSApplication+iTerm.h"
 #import "NSArray+iTerm.h"
@@ -1982,8 +1983,11 @@ static BOOL hasBecomeActive = NO;
         NSString *command = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithEscapedShellCharactersIncludingNewlines:YES];
         NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
         command = [command stringByAppendingFormat:@" --banner=\"`cat %@`\"", bannerURL.path];
+        NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] newCookie];
+        NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie };
         [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
-                                                                  inject:nil];
+                                                                  inject:nil
+                                                             environment:environment];
     }];
 }
 

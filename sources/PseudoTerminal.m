@@ -1159,7 +1159,7 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     Profile* profile = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (profile) {
-        [self createTabWithProfile:profile withCommand:nil];
+        [self createTabWithProfile:profile withCommand:nil environment:nil];
     }
 }
 
@@ -7790,7 +7790,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (PTYSession *)createTabWithProfile:(Profile *)profile
-                         withCommand:(NSString *)command {
+                         withCommand:(NSString *)command
+                         environment:(NSDictionary *)environment {
     assert(profile);
 
     // Get active session's directory
@@ -7850,7 +7851,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession runCommandWithOldCwd:previousDirectory
                          forObjectType:objectType
                         forceUseOldCWD:NO
-                         substitutions:substitutions];
+                         substitutions:substitutions
+                           environment:environment];
         if ([[[self window] title] compare:@"Window"] == NSOrderedSame) {
             [self setWindowTitle];
         }

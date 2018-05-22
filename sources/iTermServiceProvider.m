@@ -51,7 +51,7 @@
         if (allowTabs && !windowController) {
             pseudoTerminal = [[term retain] autorelease];
         }
-        return [term createTabWithProfile:profile withCommand:nil];
+        return [term createTabWithProfile:profile withCommand:nil environment:nil];
     }];
     return pseudoTerminal;
 }

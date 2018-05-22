@@ -305,7 +305,8 @@ extern NSString *const iTermSelectedTabDidChange;
 // Add a new session to this window with the given addressbook entry.
 // The optional command overrides the profile's settings.
 - (PTYSession *)createTabWithProfile:(Profile *)profile
-                         withCommand:(NSString *)command;
+                         withCommand:(NSString *)command
+                         environment:(NSDictionary *)environment;
 
 - (IBAction)newTmuxWindow:(id)sender;
 - (IBAction)newTmuxTab:(id)sender;

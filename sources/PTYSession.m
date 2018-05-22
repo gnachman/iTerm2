@@ -1197,7 +1197,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 [aSession runCommandWithOldCwd:oldCWD
                                  forObjectType:objectType
                                 forceUseOldCWD:contents != nil && oldCWD.length
-                                 substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]];
+                                 substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]
+                                   environment:nil];
             }
         }
 
@@ -1506,7 +1507,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
                forObjectType:(iTermObjectType)objectType
               forceUseOldCWD:(BOOL)forceUseOldCWD
-               substitutions:(NSDictionary *)substitutions {
+               substitutions:(NSDictionary *)substitutions
+                 environment:(NSDictionary *)environment {
     NSString *pwd;
     BOOL isUTF8;
 
@@ -1539,9 +1541,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [[_delegate realParentWindow] setName:theName forSession:self];
 
+    NSMutableDictionary *realEnvironment = [[environment mutableCopy] autorelease] ?: [NSMutableDictionary dictionary];
+    realEnvironment[@"PWD"] = pwd;
+
     // Start the command
     [self startProgram:cmd
-           environment:@{ @"PWD": pwd }
+           environment:realEnvironment
                 isUTF8:isUTF8
          substitutions:substitutions];
 }
@@ -8232,17 +8237,17 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenSetUserVar:(NSString *)kvpString {
-    NSArray *kvp = [kvpString keyValuePair];
+    iTermTuple *kvp = [kvpString keyValuePair];
     if (kvp) {
-        NSString *key = [NSString stringWithFormat:@"user.%@", kvp[0]];
-        [self setVariableNamed:key toValue:[kvp[1] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding]];
+        NSString *key = [NSString stringWithFormat:@"user.%@", kvp.firstObject];
+        [self setVariableNamed:key toValue:[kvp.secondObject stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding]];
     } else {
-        [_textview setBadgeLabel:[self badgeLabel]];
+        [self setVariableNamed:[NSString stringWithFormat:@"user.%@", kvpString] toValue:nil];
     }
 }
 
 - (void)setVariableNamed:(NSString *)name toValue:(id)newValue {
-    if (!name.length) {
+    if (newValue == nil) {
         [_variables removeObjectForKey:name];
     } else {
         _variables[name] = newValue;

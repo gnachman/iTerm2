@@ -523,7 +523,7 @@ typedef enum {
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
                forObjectType:(iTermObjectType)objectType
               forceUseOldCWD:(BOOL)forceUseOldCWD
-               substitutions:(NSDictionary *)substituions;
+               substitutions:(NSDictionary *)substitutions;
 
 - (void)startProgram:(NSString *)program
          environment:(NSDictionary *)prog_env

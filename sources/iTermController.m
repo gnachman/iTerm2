@@ -1219,7 +1219,7 @@ static iTermController *gSharedInstance;
                                    forObjectType:objectType
                                 serverConnection:NULL];
     } else {
-        session = [term createTabWithProfile:aDict withCommand:command];
+        session = [term createTabWithProfile:aDict withCommand:command environment:nil];
     }
     if (!session && term.numberOfTabs == 0) {
         [[term window] close];
@@ -1499,10 +1499,12 @@ static iTermController *gSharedInstance;
 }
 
 - (void)openSingleUseWindowWithCommand:(NSString *)command {
-    [self openSingleUseWindowWithCommand:command inject:nil];
+    [self openSingleUseWindowWithCommand:command inject:nil environment:nil];
 }
 
-- (void)openSingleUseWindowWithCommand:(NSString *)command inject:(NSData *)injection {
+- (void)openSingleUseWindowWithCommand:(NSString *)command
+                                inject:(NSData *)injection
+                           environment:(NSDictionary *)environment {
     if ([command hasSuffix:@"&"] && command.length > 1) {
         command = [command substringToIndex:command.length - 1];
         system(command.UTF8String);
@@ -1527,7 +1529,7 @@ static iTermController *gSharedInstance;
                        profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];
                        profile = [profile dictionaryBySettingObject:@NO forKey:KEY_CLOSE_SESSIONS_ON_END];
                        term.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
-                       PTYSession *session = [term createTabWithProfile:profile withCommand:command];
+                       PTYSession *session = [term createTabWithProfile:profile withCommand:command environment:environment];
                        session.isSingleUseSession = YES;
                        if (injection) {
                            [session injectData:injection];
