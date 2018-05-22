@@ -55,6 +55,10 @@
         dispatch_group_t group = dispatch_group_create();
         [self resolveDependenciesWithGroup:group];
         dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+            if (self.error) {
+                completion(nil, self.error);
+                return;
+            }
             [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name
                                                        arguments:self->_parameters
                                                       completion:completion];
@@ -66,6 +70,7 @@
     [_dependencies enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermScriptFunctionCall * _Nonnull call, BOOL * _Nonnull stop) {
         if (self.error) {
             *stop = YES;
+            return;
         }
         dispatch_group_enter(group);
         [call callWithCompletion:^(id result, NSError *error) {

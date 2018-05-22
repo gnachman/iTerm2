@@ -429,6 +429,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 - (NSString *)nextServerOriginatedRPCRequestIDWithCompletion:(iTermServerOriginatedRPCCompletionBlock)completion {
     static NSInteger nextID;
     NSString *requestID = [NSString stringWithFormat:@"rpc-%@", @(nextID)];
+    nextID++;
     _serverOriginatedRPCCompletionBlocks[requestID] = [completion copy];
     return requestID;
 }
