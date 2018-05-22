@@ -2728,7 +2728,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
     [delegate_ screenTriggerableChangeDidOccur];
     if (commandStartX_ != -1) {
-        [delegate_ screenCommandDidEndWithRange:[self commandRange]];
+        [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
     }
 }
 
