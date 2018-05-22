@@ -8,44 +8,10 @@
 #import "iTermFunctionCallSuggester.h"
 
 #import "iTermFunctionCallParser.h"
+#import "iTermGrammarProcessor.h"
 #import "iTermTruncatedQuotedRecognizer.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
-
-typedef NS_ENUM(NSInteger, iTermFunctionCallSuggesterRule) {
-    iTermFunctionCallSuggesterRuleCallIsIdentifierArglist,
-
-    iTermFunctionCallSuggesterRuleArglistIsEOF,
-    iTermFunctionCallSuggesterRuleArglistIsParenArgsParen,
-    iTermFunctionCallSuggesterRuleArglistIsParenParen,
-    iTermFunctionCallSuggesterRuleArglistIsParenArgsEOF,
-    iTermFunctionCallSuggesterRuleArglistIsParenEOF,
-
-    iTermFunctionCallSuggesterRuleArgsIsArg,
-    iTermFunctionCallSuggesterRuleArgsIsArgCommaEOF,
-    iTermFunctionCallSuggesterRuleArgsIsArgCommaArgs,
-
-    iTermFunctionCallSuggesterRuleArgIsIdentifierColonExpression,
-    iTermFunctionCallSuggesterRuleArgIsIdentifierColonEOF,
-    iTermFunctionCallSuggesterRuleArgIsIdentifierEOF,
-
-    iTermFunctionCallSuggesterRuleExpressionIsPath,
-    iTermFunctionCallSuggesterRuleExpressionIsPathQuestionmark,
-    iTermFunctionCallSuggesterRuleExpressionIsNumber,
-    iTermFunctionCallSuggesterRuleExpressionIsString,
-    iTermFunctionCallSuggesterRuleExpressionIsComposedCall,
-
-    iTermFunctionCallSuggesterRulePathIsIdentifier,
-    iTermFunctionCallSuggesterRulePathIsIdentifierDotEOF,
-    iTermFunctionCallSuggesterRulePathIsIdentifierDotPath,
-
-    iTermFunctionCallSuggesterRuleComposedcallIsIdentifierComposedarglist,
-
-    iTermFunctionCallSuggesterRuleComposedarglistIsParenArgsParen,
-    iTermFunctionCallSuggesterRuleComposedarglistIsParenArgsEOF,
-    iTermFunctionCallSuggesterRuleComposedarglistIsParenEOF,
-    iTermFunctionCallSuggesterRuleComposedarglistIsParenParen
-};
 
 @interface iTermFunctionCallSuggester()<CPParserDelegate, CPTokeniserDelegate>
 @end
@@ -56,14 +22,7 @@ typedef NS_ENUM(NSInteger, iTermFunctionCallSuggesterRule) {
     NSString *_prefix;
     NSDictionary<NSString *,NSArray<NSString *> *> *_functionSignatures;
     NSArray<NSString *> *_paths;
-}
-
-NSString *iTermNumberedBNFStringForDictionary(NSDictionary<NSNumber *, NSString *> *dict) {
-    NSArray<NSNumber *> *sortedKeys = [dict.allKeys sortedArrayUsingSelector:@selector(compare:)];
-    NSArray<NSString *> *entries = [sortedKeys mapWithBlock:^id(NSNumber *key) {
-        return [NSString stringWithFormat:@"%-2d %@;", key.intValue, dict[key]];
-    }];
-    return [entries componentsJoinedByString:@"\n"];
+    iTermGrammarProcessor *_grammarProcessor;
 }
 
 - (instancetype)initWithFunctionSignatures:(NSDictionary<NSString *,NSArray<NSString *> *> *)functionSignatures
@@ -75,70 +34,133 @@ NSString *iTermNumberedBNFStringForDictionary(NSDictionary<NSNumber *, NSString 
         _tokenizer = [iTermFunctionCallParser newTokenizer];
         [_tokenizer addTokenRecogniser:[iTermFunctionCallParser stringRecognizerWithClass:[iTermTruncatedQuotedRecognizer class]]];
         _tokenizer.delegate = self;
-
-        NSDictionary *bnfDict =
-        @{
-          @(iTermFunctionCallSuggesterRuleCallIsIdentifierArglist):
-              @"call       ::= 'Identifier' <arglist>",
-          @(iTermFunctionCallSuggesterRuleArglistIsEOF):
-              @"arglist    ::= 'EOF'",
-          @(iTermFunctionCallSuggesterRuleArglistIsParenArgsParen):
-              @"arglist    ::= '(' <args> ')'",
-          @(iTermFunctionCallSuggesterRuleArglistIsParenParen):
-              @"arglist    ::= '(' ')'",
-          @(iTermFunctionCallSuggesterRuleArglistIsParenArgsEOF):
-              @"arglist    ::= '(' <args> 'EOF'",
-          @(iTermFunctionCallSuggesterRuleArglistIsParenEOF):
-              @"arglist    ::= '(' 'EOF'",
-          @(iTermFunctionCallSuggesterRuleArgsIsArg):
-              @"args       ::= <arg>",
-          @(iTermFunctionCallSuggesterRuleArgsIsArgCommaEOF):
-              @"args       ::= <arg> ',' 'EOF'",
-          @(iTermFunctionCallSuggesterRuleArgsIsArgCommaArgs):
-              @"args       ::= <arg> ',' <args>",
-          @(iTermFunctionCallSuggesterRuleArgIsIdentifierColonExpression):
-              @"arg        ::= 'Identifier' ':' <expression>",
-          @(iTermFunctionCallSuggesterRuleArgIsIdentifierColonEOF):
-              @"arg        ::= 'Identifier' ':' 'EOF'",
-          @(iTermFunctionCallSuggesterRuleArgIsIdentifierEOF):
-              @"arg        ::= 'Identifier' 'EOF'",
-          @(iTermFunctionCallSuggesterRuleExpressionIsPath):
-              @"expression ::= <path>",
-          @(iTermFunctionCallSuggesterRuleExpressionIsPathQuestionmark):
-              @"expression ::= <path> '?'",
-          @(iTermFunctionCallSuggesterRuleExpressionIsNumber):
-              @"expression ::= 'Number'",
-          @(iTermFunctionCallSuggesterRuleExpressionIsString):
-              @"expression ::= 'String'",
-          @(iTermFunctionCallSuggesterRuleExpressionIsComposedCall):
-              @"expression ::= <composed_call>",
-          @(iTermFunctionCallSuggesterRulePathIsIdentifier):
-              @"path       ::= 'Identifier'",
-          @(iTermFunctionCallSuggesterRulePathIsIdentifierDotEOF):
-              @"path       ::= 'Identifier' '.' 'EOF'",
-          @(iTermFunctionCallSuggesterRulePathIsIdentifierDotPath):
-              @"path       ::= 'Identifier' '.' <path>",
-          @(iTermFunctionCallSuggesterRuleComposedcallIsIdentifierComposedarglist):
-              @"composed_call ::= 'Identifier' <composed_arglist>",
-          @(iTermFunctionCallSuggesterRuleComposedarglistIsParenArgsParen):
-              @"composed_arglist ::= '(' <args> ')'",
-          @(iTermFunctionCallSuggesterRuleComposedarglistIsParenArgsEOF):
-              @"composed_arglist ::= '(' <args> 'EOF'",
-          @(iTermFunctionCallSuggesterRuleComposedarglistIsParenEOF):
-              @"composed_arglist ::= '(' 'EOF'",
-          @(iTermFunctionCallSuggesterRuleComposedarglistIsParenParen):
-              @"composed_arglist ::= '(' ')'"
-          };
-        NSString *bnf = iTermNumberedBNFStringForDictionary(bnfDict);
+        _grammarProcessor = [[iTermGrammarProcessor alloc] init];
+        [self loadRulesAndTransforms];
 
         NSError *error = nil;
         CPGrammar *grammar = [CPGrammar grammarWithStart:@"call"
-                                          backusNaurForm:bnf
+                                          backusNaurForm:_grammarProcessor.backusNaurForm
                                                    error:&error];
         _parser = [CPLR1Parser parserWithGrammar:grammar];
         _parser.delegate = self;
     }
     return self;
+}
+
+- (void)loadRulesAndTransforms {
+    __weak __typeof(self) weakSelf = self;
+    [_grammarProcessor addProductionRule:@"call ::= 'Identifier' <arglist>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [weakSelf callWithName:[syntaxTree.children[0] identifier]
+                                                     arglist:syntaxTree.children[1]];
+                           }];
+    [_grammarProcessor addProductionRule:@"arglist ::= 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"partial-arglist": @YES };
+                           }];
+    [_grammarProcessor addProductionRule:@"arglist ::= '(' <args> ')'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"complete-arglist": @YES };
+                           }];
+    [_grammarProcessor addProductionRule:@"arglist ::= '(' ')'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"complete-arglist": @YES };
+                           }];
+    [_grammarProcessor addProductionRule:@"arglist ::= '(' <args> 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"partial-arglist": @YES,
+                                         @"args": syntaxTree.children[1] };
+                           }];
+    [_grammarProcessor addProductionRule:@"arglist ::= '(' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"partial-arglist": @YES,
+                                         @"args": @[] };
+                           }];
+    [_grammarProcessor addProductionRule:@"args ::= <arg>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @[ syntaxTree.children[0] ];
+                           }];
+    [_grammarProcessor addProductionRule:@"args ::= <arg> ',' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @[ syntaxTree.children[0], @"," ];
+                           }];
+    [_grammarProcessor addProductionRule:@"args ::= <arg> ',' <args>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [@[ syntaxTree.children[0], @"," ] arrayByAddingObjectsFromArray:syntaxTree.children[2]];
+                           }];
+    [_grammarProcessor addProductionRule:@"arg ::= 'Identifier' ':' <expression>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"identifier": [syntaxTree.children[0] identifier],
+                                         @"colon": @YES,
+                                         @"expression": syntaxTree.children[2] };
+                           }];
+    [_grammarProcessor addProductionRule:@"arg ::= 'Identifier' ':' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"identifier": [syntaxTree.children[0] identifier],
+                                         @"colon": @YES };
+                           }];
+    [_grammarProcessor addProductionRule:@"arg ::= 'Identifier' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"identifier": [syntaxTree.children[0] identifier] };
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= <path>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"path": syntaxTree.children[0] };
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= <path> '?'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"path": syntaxTree.children[0],
+                                         @"terminated": @YES };
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= 'Number'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"literal": @YES };
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= 'String'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"literal": @YES };
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= <composed_call>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"call": syntaxTree.children[0] };
+                           }];
+    [_grammarProcessor addProductionRule:@"path ::= 'Identifier'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [syntaxTree.children[0] identifier];
+                           }];
+    [_grammarProcessor addProductionRule:@"path ::= 'Identifier' '.' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [NSString stringWithFormat:@"%@.", [syntaxTree.children[0] identifier]];
+                           }];
+    [_grammarProcessor addProductionRule:@"path ::= 'Identifier' '.' <path>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [NSString stringWithFormat:@"%@.%@",
+                                       [syntaxTree.children[0] identifier],
+                                       syntaxTree.children[1]];
+                           }];
+    [_grammarProcessor addProductionRule:@"composed_call ::= 'Identifier' <composed_arglist>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [weakSelf callWithName:[syntaxTree.children[0] identifier]
+                                                     arglist:syntaxTree.children[1]];
+                           }];
+    [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' <args> ')'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"complete-arglist": @YES };
+                           }];
+    [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' <args> 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"partial-arglist": @YES,
+                                         @"args": syntaxTree.children[1] };
+                           }];
+    [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"partial-arglist": @YES,
+                                         @"args": @[] };
+                           }];
+    [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' ')'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"complete-arglist": @YES };
+                           }];
 }
 
 - (NSArray<NSString *> *)suggestionsForString:(NSString *)prefix {
@@ -304,83 +326,7 @@ NSString *iTermNumberedBNFStringForDictionary(NSDictionary<NSNumber *, NSString 
 #pragma mark - CPParserDelegate
 
 - (id)parser:(CPParser *)parser didProduceSyntaxTree:(CPSyntaxTree *)syntaxTree {
-    NSArray *children = [syntaxTree children];
-    switch ([[syntaxTree rule] tag]) {
-        case iTermFunctionCallSuggesterRuleCallIsIdentifierArglist: {  // call ::= 'Identifier' <arglist>
-            return [self callWithName:[children[0] identifier] arglist:children[1]];
-        }
-
-        case iTermFunctionCallSuggesterRuleArglistIsEOF:  // arglist ::= 'EOF'
-            return @{ @"partial-arglist": @YES };
-
-        case iTermFunctionCallSuggesterRuleArglistIsParenArgsParen:  // arglist ::= '(' <args> ')'
-        case iTermFunctionCallSuggesterRuleArglistIsParenParen:  // arglist ::= '(' ')'
-        case iTermFunctionCallSuggesterRuleComposedarglistIsParenArgsParen:  // composed_arglist ::= '(' <args> ')'
-        case iTermFunctionCallSuggesterRuleComposedarglistIsParenParen:  // composed_arglist ::= '(' ')'
-            return @{ @"complete-arglist": @YES };
-
-        case iTermFunctionCallSuggesterRuleArglistIsParenArgsEOF:  // arglist ::= '(' <args> 'EOF'
-        case iTermFunctionCallSuggesterRuleComposedarglistIsParenArgsEOF:  // composed_arglist ::= '(' <args> 'EOF'
-            return @{ @"partial-arglist": @YES,
-                      @"args": children[1] };
-
-        case iTermFunctionCallSuggesterRuleArglistIsParenEOF:  // arglist ::= '(' 'EOF'
-        case iTermFunctionCallSuggesterRuleComposedarglistIsParenEOF:  // composed_arglist ::= '(' 'EOF'
-            return @{ @"partial-arglist": @YES,
-                      @"args": @[] };
-
-        case iTermFunctionCallSuggesterRuleArgsIsArg:  // args ::= <arg>
-            return @[ children[0] ];
-
-        case iTermFunctionCallSuggesterRuleArgsIsArgCommaEOF:  // args ::= <arg> ',' 'EOF'
-            return @[ children[0], @"," ];
-
-        case iTermFunctionCallSuggesterRuleArgsIsArgCommaArgs:  // args ::= <arg> ',' <args>
-            return [@[ children[0], @"," ] arrayByAddingObjectsFromArray:children[2]];
-
-        case iTermFunctionCallSuggesterRuleArgIsIdentifierColonExpression:  // arg ::= 'Identifier' ':' <expression>
-            return @{ @"identifier": [children[0] identifier],
-                      @"colon": @YES,
-                      @"expression": children[2] };
-
-        case iTermFunctionCallSuggesterRuleArgIsIdentifierColonEOF:  // arg ::= 'Identifier' ':' 'EOF'
-            return @{ @"identifier": [children[0] identifier],
-                      @"colon": @YES };
-
-        case iTermFunctionCallSuggesterRuleArgIsIdentifierEOF:  // arg ::= 'Identifier' 'EOF'
-            return @{ @"identifier": [children[0] identifier] };
-
-        case iTermFunctionCallSuggesterRuleExpressionIsPath:  // expression ::= <path>
-            // Note that this expression, when path lacks a ., could be the start of a composed call
-            // TODO
-            return @{ @"path": children[0] };
-
-        case iTermFunctionCallSuggesterRuleExpressionIsPathQuestionmark:  // expression ::= <path> '?'
-            return @{ @"path": children[0],
-                      @"terminated": @YES };
-
-        case iTermFunctionCallSuggesterRuleExpressionIsNumber:  // expression ::= 'Number'
-            return @{ @"literal": @YES };
-
-        case iTermFunctionCallSuggesterRuleExpressionIsString:  // expression ::= 'String'
-            return @{ @"literal": @YES };
-
-        case iTermFunctionCallSuggesterRuleExpressionIsComposedCall:  // expression ::= <composed_call>
-            return @{ @"call": children[0] };
-
-        case iTermFunctionCallSuggesterRulePathIsIdentifier:  // path ::= 'Identifier'
-            return [children[0] identifier];
-
-        case iTermFunctionCallSuggesterRulePathIsIdentifierDotEOF:  // path ::= 'Identifier' '.' 'EOF'
-            return [NSString stringWithFormat:@"%@.", [children[0] identifier]];
-
-        case iTermFunctionCallSuggesterRulePathIsIdentifierDotPath:  // path ::= 'Identifier' '.' <path>
-            return [NSString stringWithFormat:@"%@.%@", [children[0] identifier], children[1]];
-
-        case iTermFunctionCallSuggesterRuleComposedcallIsIdentifierComposedarglist:  // composed_call ::= 'Identifier' '<arglist>'
-            return [self callWithName:[children[0] identifier] arglist:children[1]];
-    }
-    return nil;
+    return [_grammarProcessor transformSyntaxTree:syntaxTree];
 }
 
 - (CPRecoveryAction *)parser:(CPParser *)parser

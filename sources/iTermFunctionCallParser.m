@@ -7,6 +7,7 @@
 
 #import "iTermFunctionCallParser.h"
 
+#import "iTermGrammarProcessor.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptFunctionCall+Private.h"
 #import "NSArray+iTerm.h"
@@ -19,6 +20,7 @@
     id (^_source)(NSString *);
     NSError *_error;
     NSString *_input;
+    iTermGrammarProcessor *_grammarProcessor;
 }
 
 + (id<CPTokenRecogniser>)stringRecognizerWithClass:(Class)theClass {
@@ -77,28 +79,124 @@
         [_tokenizer addTokenRecogniser:[iTermFunctionCallParser stringRecognizerWithClass:[CPQuotedRecogniser class]]];
         _tokenizer.delegate = self;
 
-        NSString *bnf =
-        @"0  call       ::= 'Identifier' <arglist>;"
-        @"1  arglist    ::= '(' <args> ')';"
-        @"2  arglist    ::= '(' ')';"
-        @"3  args       ::= <arg>;"
-        @"4  args       ::= <arg> ',' <args>;"
-        @"5  arg        ::= 'Identifier' ':' <expression>;"
-        @"6  expression ::= <path>;"
-        @"7  expression ::= <path> '?';"
-        @"8  expression ::= 'Number';"
-        @"9  expression ::= 'String';"
-        @"10 expression ::= <call>;"
-        @"11 path       ::= 'Identifier';"
-        @"12 path       ::= 'Identifier' '.' <path>;";
+        _grammarProcessor = [[iTermGrammarProcessor alloc] init];
+        [self loadRulesAndTransforms];
+
         NSError *error = nil;
         CPGrammar *grammar = [CPGrammar grammarWithStart:@"call"
-                                          backusNaurForm:bnf
+                                          backusNaurForm:_grammarProcessor.backusNaurForm
                                                    error:&error];
         _parser = [CPSLRParser parserWithGrammar:grammar];
+        assert(_parser);
         _parser.delegate = self;
     }
     return self;
+}
+
+- (void)loadRulesAndTransforms {
+    __weak __typeof(self) weakSelf = self;
+    [_grammarProcessor addProductionRule:@"call ::= 'Identifier' <arglist>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               iTermScriptFunctionCall *call = [[iTermScriptFunctionCall alloc] init];
+                               call.name = [(CPIdentifierToken *)syntaxTree.children[0] identifier];
+                               for (NSDictionary *arg in syntaxTree.children[1]) {
+                                   if (arg[@"value"]) {
+                                       [call addParameterWithName:arg[@"name"] value:arg[@"value"]];
+                                   } else if (arg[@"call"]) {
+                                       [call addParameterWithName:arg[@"name"] value:arg[@"call"]];
+                                   } else if (arg[@"error"]) {
+                                       call.error = [NSError errorWithDomain:@"com.iterm2.parser"
+                                                                        code:1
+                                                                    userInfo:@{ NSLocalizedDescriptionKey: arg[@"error"] }];
+                                   }
+                               }
+                               return call;
+                           }];
+    [_grammarProcessor addProductionRule:@"arglist ::= '(' <args> ')'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[1];
+                           }];
+    [_grammarProcessor addProductionRule:@"arglist ::= '(' ')'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @[];
+                           }];
+    [_grammarProcessor addProductionRule:@"args ::= <arg>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @[ syntaxTree.children[0] ];
+                           }];
+    [_grammarProcessor addProductionRule:@"args ::= <arg> ',' <args>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [@[ syntaxTree.children[0] ] arrayByAddingObjectsFromArray:syntaxTree.children[2]];
+                           }];
+    [_grammarProcessor addProductionRule:@"arg ::= 'Identifier' ':' <expression>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               iTermFunctionCallParser *strongSelf = weakSelf;
+                               if (!strongSelf) {
+                                   return nil;
+                               }
+                               //   argdict = {"name":NSString, "value":@{"literal": id}} |
+                               //             {"name":NSString, "error":NSString}
+                               NSString *argName = [(CPIdentifierToken *)syntaxTree.children[0] identifier];
+                               id expression = syntaxTree.children[2];
+                               iTermScriptFunctionCall *call = [iTermScriptFunctionCall castFrom:expression];
+                               if (call.error) {
+                                   return @{ @"name": argName,
+                                             @"error": [NSString stringWithFormat:@"Expression \"%@\" had an error: %@", expression, call.error.localizedDescription] };
+                               } else if (call) {
+                                   return @{ @"name": argName, @"value": call };
+                               }
+
+                               NSDictionary *dict = [NSDictionary castFrom:expression];
+                               NSString *str = [NSString castFrom:expression];
+                               BOOL optional = [str hasSuffix:@"?"];
+                               if (optional) {
+                                   expression = [str substringWithRange:NSMakeRange(0, str.length - 1)];
+                               }
+                               id obj = dict[@"literal"];
+                               if (!obj) {
+                                   obj = strongSelf->_source(expression);
+                               }
+                               if (!obj) {
+                                   if (optional) {
+                                       return @{ @"name": argName, @"value": [NSNull null] };
+                                   } else {
+                                       return @{ @"name": argName,
+                                                 @"error": [NSString stringWithFormat:@"Expression \"%@\" unresolvable", expression] };
+                                   }
+                               } else {
+                                   return @{ @"name": argName, @"value": obj };
+                               }
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= <path>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[0];
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= <path> '?'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [syntaxTree.children[0] stringByAppendingString:@"?"];
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= 'Number'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"literal": [(CPNumberToken *)syntaxTree.children[0] number] };
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= 'String'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"literal": [(CPQuotedToken *)syntaxTree.children[0] content] };
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= <call>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[0];
+                           }];
+    [_grammarProcessor addProductionRule:@"path ::= 'Identifier'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [(CPIdentifierToken *)syntaxTree.children[0] identifier];
+                           }];
+    [_grammarProcessor addProductionRule:@"path ::= 'Identifier' '.' <path>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [NSString stringWithFormat:@"%@.%@",
+                                       [(CPIdentifierToken *)syntaxTree.children[0] identifier],
+                                       syntaxTree.children[2]];
+                           }];
 }
 
 - (iTermScriptFunctionCall *)parse:(NSString *)invocation source:(id (^)(NSString *))source {
@@ -139,108 +237,7 @@
 #pragma mark - CPParserDelegate
 
 - (id)parser:(CPParser *)parser didProduceSyntaxTree:(CPSyntaxTree *)syntaxTree {
-    NSArray *children = [syntaxTree children];
-    switch ([[syntaxTree rule] tag]) {
-        case 0: { // <call> ::= 'Identifier' <arglist> -> iTermScriptFunctionCall*
-            iTermScriptFunctionCall *call = [[iTermScriptFunctionCall alloc] init];
-            call.name = [(CPIdentifierToken *)children[0] identifier];
-            for (NSDictionary *arg in children[1]) {
-                if (arg[@"value"]) {
-                    [call addParameterWithName:arg[@"name"] value:arg[@"value"]];
-                } else if (arg[@"call"]) {
-                    [call addParameterWithName:arg[@"name"] value:arg[@"call"]];
-                } else if (arg[@"error"]) {
-                    call.error = [NSError errorWithDomain:@"com.iterm2.parser"
-                                                     code:1
-                                                 userInfo:@{ NSLocalizedDescriptionKey: arg[@"error"] }];
-                }
-            }
-            return call;
-        }
-
-        case 1: {  // arglist ::= '(' <args> ')' -> @[ argdict, ... ]
-            return children[1];
-        }
-
-        case 2: {  // arglist ::= '(' ')' -> @[ argdict, ... ]
-            return @[];
-        }
-
-        case 3: {  // args ::= <arg> -> @[ argdict ]
-            return @[ children[0] ];
-        }
-
-        case 4: {  // args ::= <arg> ',' <args> -> @[ argdict, ... ]
-            return [@[ children[0] ] arrayByAddingObjectsFromArray:children[2]];
-        }
-
-        case 5: {
-            // arg ::= 'Identifier' ':' <expression> -> argdict
-            //   argdict = {"name":NSString, "value":@{"literal": id}} |
-            //             {"name":NSString, "error":NSString}
-            NSString *argName = [(CPIdentifierToken *)children[0] identifier];
-            id expression = children[2];
-            iTermScriptFunctionCall *call = [iTermScriptFunctionCall castFrom:expression];
-            if (call.error) {
-                return @{ @"name": argName,
-                          @"error": [NSString stringWithFormat:@"Expression \"%@\" had an error: %@", expression, call.error.localizedDescription] };
-            } else if (call) {
-                return @{ @"name": argName, @"value": call };
-            }
-
-            NSDictionary *dict = [NSDictionary castFrom:expression];
-            NSString *str = [NSString castFrom:expression];
-            BOOL optional = [str hasSuffix:@"?"];
-            if (optional) {
-                expression = [str substringWithRange:NSMakeRange(0, str.length - 1)];
-            }
-            id obj = dict[@"literal"];
-            if (!obj) {
-                obj = _source(expression);
-            }
-            if (!obj) {
-                if (optional) {
-                    return @{ @"name": argName, @"value": [NSNull null] };
-                } else {
-                    return @{ @"name": argName,
-                              @"error": [NSString stringWithFormat:@"Expression \"%@\" unresolvable", expression] };
-                }
-            } else {
-                return @{ @"name": argName, @"value": obj };
-            }
-        }
-
-        case 6: {  // expression ::= <path> -> NSString
-            return children[0];
-        }
-
-        case 7: {  // expression ::= <path> '?' -> NSString
-            return [children[0] stringByAppendingString:@"?"];
-        }
-
-        case 8: {  // expression ::= 'Number' -> @{"literal": id}
-            return @{ @"literal": [(CPNumberToken *)children[0] number] };
-        }
-
-        case 9: {  // expression ::= 'String' -> @{"literal": id}
-            return @{ @"literal": [(CPQuotedToken *)children[0] content] };
-        }
-
-        case 10: {  // expression ::= <call> -> iTermScriptFunctionCall*
-            return children[0];
-        }
-
-        case 11: {  // path ::= 'Identifier' -> NSString
-            return [(CPIdentifierToken *)children[0] identifier];
-        }
-
-        case 12: {  // path ::= 'Identifier' '.' <path> -> NSString
-            return [NSString stringWithFormat:@"%@.%@",
-                    [(CPIdentifierToken *)children[0] identifier],
-                    children[2]];
-        }
-    }
-    return nil;
+    return [_grammarProcessor transformSyntaxTree:syntaxTree];
 }
 
 - (CPRecoveryAction *)parser:(CPParser *)parser

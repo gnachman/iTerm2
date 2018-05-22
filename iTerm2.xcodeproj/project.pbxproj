@@ -1214,6 +1214,8 @@
 		530AB8B020B201AB00D2AA08 /* iTermFunctionCallSuggester.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8AE20B201AB00D2AA08 /* iTermFunctionCallSuggester.m */; };
 		530AB8B420B2098000D2AA08 /* iTermVariables.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8B220B2098000D2AA08 /* iTermVariables.h */; };
 		530AB8B520B2098000D2AA08 /* iTermVariables.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8B320B2098000D2AA08 /* iTermVariables.m */; };
+		530AB8B820B3627200D2AA08 /* iTermGrammarProcessor.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8B620B3627200D2AA08 /* iTermGrammarProcessor.h */; };
+		530AB8B920B3627200D2AA08 /* iTermGrammarProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8B720B3627200D2AA08 /* iTermGrammarProcessor.m */; };
 		5337A315203E065300024BEA /* iTermPowerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 5337A313203E065300024BEA /* iTermPowerManager.h */; };
 		5337A316203E065300024BEA /* iTermPowerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5337A314203E065300024BEA /* iTermPowerManager.m */; };
 		534690251C94FE8000B7E4E9 /* overflowImage.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690231C94FE8000B7E4E9 /* overflowImage.png */; };
@@ -3357,6 +3359,8 @@
 		530AB8B120B206DF00D2AA08 /* iTermScriptFunctionCall+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermScriptFunctionCall+Private.h"; sourceTree = "<group>"; };
 		530AB8B220B2098000D2AA08 /* iTermVariables.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVariables.h; sourceTree = "<group>"; };
 		530AB8B320B2098000D2AA08 /* iTermVariables.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVariables.m; sourceTree = "<group>"; };
+		530AB8B620B3627200D2AA08 /* iTermGrammarProcessor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGrammarProcessor.h; sourceTree = "<group>"; };
+		530AB8B720B3627200D2AA08 /* iTermGrammarProcessor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGrammarProcessor.m; sourceTree = "<group>"; };
 		5337A313203E065300024BEA /* iTermPowerManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPowerManager.h; sourceTree = "<group>"; };
 		5337A314203E065300024BEA /* iTermPowerManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPowerManager.m; sourceTree = "<group>"; };
 		534690231C94FE8000B7E4E9 /* overflowImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overflowImage.png; sourceTree = "<group>"; };
@@ -6561,6 +6565,8 @@
 				530AB8A220B12B9500D2AA08 /* iTermFunctionCallTextFieldDelegate.m */,
 				530AB8B220B2098000D2AA08 /* iTermVariables.h */,
 				530AB8B320B2098000D2AA08 /* iTermVariables.m */,
+				530AB8B620B3627200D2AA08 /* iTermGrammarProcessor.h */,
+				530AB8B720B3627200D2AA08 /* iTermGrammarProcessor.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -7745,6 +7751,7 @@
 				A667192D1DCE36C3000CE608 /* iTermBadgeLabel.h in Headers */,
 				A667192E1DCE36C3000CE608 /* PSMLightHighContrastTabStyle.h in Headers */,
 				A667192F1DCE36C3000CE608 /* iTermAPIServer.h in Headers */,
+				530AB8B820B3627200D2AA08 /* iTermGrammarProcessor.h in Headers */,
 				A66719301DCE36C3000CE608 /* SSKeychainQuery.h in Headers */,
 				A66719311DCE36C3000CE608 /* iTermHostRecordMO+Additions.h in Headers */,
 				A66719321DCE36C3000CE608 /* iTermAdditionalHotKeyObjectValue.h in Headers */,
@@ -9432,6 +9439,7 @@
 				A658882A201F06ED006F48DB /* iTermTexture.m in Sources */,
 				A6232E77202832A900EC0F98 /* iTermData.m in Sources */,
 				A66719651DCE3772000CE608 /* iTermHTTPConnection.m in Sources */,
+				530AB8B920B3627200D2AA08 /* iTermGrammarProcessor.m in Sources */,
 				A67960CE1F81FCB6008A42BC /* iTermTextureArray.m in Sources */,
 				A655E69A207153CB00DC21B9 /* NSSavePanel+iTerm.m in Sources */,
 				A67960D31F81FCBB008A42BC /* iTermBroadcastStripesRenderer.m in Sources */,
