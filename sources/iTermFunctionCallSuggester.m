@@ -41,7 +41,8 @@
         CPGrammar *grammar = [CPGrammar grammarWithStart:@"call"
                                           backusNaurForm:_grammarProcessor.backusNaurForm
                                                    error:&error];
-        _parser = [CPLR1Parser parserWithGrammar:grammar];
+        _parser = [CPSLRParser parserWithGrammar:grammar];
+        assert(_parser);
         _parser.delegate = self;
     }
     return self;
