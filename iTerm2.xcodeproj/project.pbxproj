@@ -3334,7 +3334,6 @@
 		530AB87120AE85DF00D2AA08 /* session.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = session.py; sourceTree = "<group>"; };
 		530AB87220AE85DF00D2AA08 /* __init__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __init__.py; sourceTree = "<group>"; };
 		530AB87320AE85DF00D2AA08 /* api_pb2.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = api_pb2.py; sourceTree = "<group>"; };
-		530AB88320AE85DF00D2AA08 /* hierarchy.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = hierarchy.py; sourceTree = "<group>"; };
 		530AB88420AE85DF00D2AA08 /* connection.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = connection.py; sourceTree = "<group>"; };
 		530AB88520AE85DF00D2AA08 /* rpc.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = rpc.py; sourceTree = "<group>"; };
 		530AB88620AE85DF00D2AA08 /* app.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = app.py; sourceTree = "<group>"; };
@@ -5768,7 +5767,6 @@
 				530AB87120AE85DF00D2AA08 /* session.py */,
 				530AB87220AE85DF00D2AA08 /* __init__.py */,
 				530AB87320AE85DF00D2AA08 /* api_pb2.py */,
-				530AB88320AE85DF00D2AA08 /* hierarchy.py */,
 				530AB88420AE85DF00D2AA08 /* connection.py */,
 				530AB88520AE85DF00D2AA08 /* rpc.py */,
 				530AB88620AE85DF00D2AA08 /* app.py */,
