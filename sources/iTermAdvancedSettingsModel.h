@@ -217,8 +217,9 @@
 + (BOOL)openNewWindowAtStartup;
 + (BOOL)resetSGROnPrompt;
 
-#warning Bring this back
-//+ (BOOL)useLowPowerGPUWhenUnplugged;
+#if ENABLE_LOW_POWER_GPU_DETECTION
++ (BOOL)useLowPowerGPUWhenUnplugged;
+#endif
 
 + (BOOL)retinaInlineImages;
 + (double)timeToWaitForEmojiPanel;

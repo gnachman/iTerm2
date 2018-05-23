@@ -7,6 +7,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class iTermFocusReportingTextField;
 
 @protocol iTermFocusReportingTextFieldDelegate<NSTextFieldDelegate>
@@ -18,3 +20,5 @@
 @property (nullable, weak) id<iTermFocusReportingTextFieldDelegate> delegate;
 
 @end
+
+NS_ASSUME_NONNULL_END

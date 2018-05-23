@@ -4,8 +4,7 @@
 //
 //  Created by George Nachman on 4/29/18.
 //
-#warning Bring this back
-#if 0
+#if ENABLE_LOW_POWER_GPU_DETECTION
 #import <Metal/Metal.h>
 
 NS_ASSUME_NONNULL_BEGIN

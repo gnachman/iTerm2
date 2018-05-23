@@ -146,8 +146,7 @@ static NSDate* lastResizeDate_;
         // assign the main view
         [self addSubview:_scrollview];
 
-#warning Bring this back
-#if 0
+#if ENABLE_LOW_POWER_GPU_DETECTION
         if (@available(macOS 10.11, *)) {
             [[NSNotificationCenter defaultCenter] addObserver:self
                                                      selector:@selector(preferredMetalDeviceDidChange:)
@@ -214,8 +213,9 @@ static NSDate* lastResizeDate_;
     _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                          device:MTLCreateSystemDefaultDevice()];
     // There was a spike in crashes on 5/1. I'm removing this temporarily to see if it was the cause.
-#warning Bring this back
-//                                         device:[[iTermMetalDeviceProvider sharedInstance] preferredDevice]];
+#if ENABLE_LOW_POWER_GPU_DETECTION
+                                         device:[[iTermMetalDeviceProvider sharedInstance] preferredDevice]];
+#endif
     _metalView.layer.opaque = YES;
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
