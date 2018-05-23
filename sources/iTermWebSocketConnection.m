@@ -107,7 +107,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
             authenticated = YES;
         } else {
             *reason = [NSString stringWithFormat:@"x-iterm2-cookie of %@ not recognized", cookie];
-            return nil;
+            cookie = nil;
         }
     }
 
