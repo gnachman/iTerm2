@@ -753,6 +753,10 @@ typedef enum {
 - (ITMSetProfilePropertyResponse_Status)handleSetProfilePropertyForKey:(NSString *)key value:(id)value;
 - (ITMGetProfilePropertyResponse *)handleGetProfilePropertyForKeys:(NSArray<NSString *> *)keys;
 
+// Run a script-side function. Can include composition, references to variables.
+- (void)invokeFunctionCall:(NSString *)invocation
+              extraContext:(NSDictionary *)extraContext;
+
 #pragma mark - Testing utilities
 
 - (void)synchronousReadTask:(NSString *)string;

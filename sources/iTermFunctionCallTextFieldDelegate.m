@@ -11,6 +11,7 @@
 #import "iTermFunctionCallSuggester.h"
 #import "iTermVariables.h"
 #import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
 
 @interface iTermFunctionCallTextFieldDelegate()<
     NSControlTextEditingDelegate>
@@ -23,16 +24,18 @@
 
 @implementation iTermFunctionCallTextFieldDelegate {
     iTermFunctionCallSuggester *_suggester;
+    __weak id _passthrough;
 }
 
-- (instancetype)init {
+- (instancetype)initWithPaths:(NSArray<NSString *> *)paths
+                  passthrough:(id)passthrough {
     self = [super init];
     if (self) {
         NSDictionary<NSString *,NSArray<NSString *> *> *signatures =
             [[iTermAPIHelper sharedInstance] registeredFunctionSignatureDictionary];
-        NSArray<NSString *> *paths = iTermVariablesGetAll();
         _suggester = [[iTermFunctionCallSuggester alloc] initWithFunctionSignatures:signatures
                                                                               paths:paths];
+        _passthrough = passthrough;
     }
     return self;
 }
@@ -82,6 +85,33 @@ doCommandBySelector:(SEL)commandSelector{
     }
 
     return NO;
+}
+
+- (void)focusReportingTextFieldWillBecomeFirstResponder:(iTermFocusReportingTextField *)sender {
+    NSTextView *fieldEditor = [NSTextView castFrom:[[sender window] fieldEditor:YES forObject:sender]];
+    if (self.isAutocompleting == NO  && !self.backspaceKey) {
+        self.isAutocompleting = YES;
+        self.lastEntry = [[fieldEditor string] copy];
+        [fieldEditor complete:nil];
+        self.isAutocompleting = NO;
+    }
+
+    self.backspaceKey = NO;
+    if ([_passthrough respondsToSelector:_cmd]) {
+        [_passthrough focusReportingTextFieldWillBecomeFirstResponder:sender];
+    }
+}
+
+- (void)controlTextDidBeginEditing:(NSNotification *)obj {
+    if ([_passthrough respondsToSelector:_cmd]) {
+        [_passthrough controlTextDidBeginEditing:obj];
+    }
+}
+
+- (void)controlTextDidEndEditing:(NSNotification *)obj {
+    if ([_passthrough respondsToSelector:_cmd]) {
+        [_passthrough controlTextDidEndEditing:obj];
+    }
 }
 
 @end

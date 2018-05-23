@@ -18,7 +18,9 @@
 #import "HighlightTrigger.h"
 #import "iTermSetTitleTrigger.h"
 #import "ITAddressBookMgr.h"
+#import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermNoColorAccessoryButton.h"
+#import "iTermRPCTrigger.h"
 #import "iTermShellPromptTrigger.h"
 #import "MarkTrigger.h"
 #import "NSColor+iTerm.h"
@@ -75,6 +77,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     NSArray *_triggers;
     // Gives the index of the row being edited while a textfield cell is editing.
     NSInteger _textEditingRow;
+    id _parameterDelegate;
 
     IBOutlet NSTableView *_tableView;
     IBOutlet NSTableColumn *_regexColumn;
@@ -100,6 +103,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     NSArray *allClasses = @[ [AlertTrigger class],
                              [BellTrigger class],
                              [BounceTrigger class],
+                             [iTermRPCTrigger class],
                              [CaptureTrigger class],
                              [GrowlTrigger class],
                              [iTermShellPromptTrigger class],
@@ -492,18 +496,19 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                 return popUpButton;
             } else {
                 // If not a popup button, then text by default.
-                NSTextField *textField =
-                    [[NSTextField alloc] initWithFrame:NSMakeRect(0,
-                                                                  0,
-                                                                  tableColumn.width,
-                                                                  self.tableView.rowHeight)];
+                iTermFocusReportingTextField *textField =
+                    [[iTermFocusReportingTextField alloc] initWithFrame:NSMakeRect(0,
+                                                                                   0,
+                                                                                   tableColumn.width,
+                                                                                   self.tableView.rowHeight)];
                 textField.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
                 textField.stringValue = triggerDictionary[kTriggerParameterKey] ?: @"";
                 textField.editable = YES;
                 textField.selectable = YES;
                 textField.bordered = NO;
                 textField.drawsBackground = NO;
-                textField.delegate = self;
+                _parameterDelegate = [trigger newParameterDelegateWithPassthrough:self];
+                textField.delegate = _parameterDelegate ?: self;
                 if ([textField respondsToSelector:@selector(setPlaceholderString:)]) {
                     textField.placeholderString = [trigger paramPlaceholder];
                 }

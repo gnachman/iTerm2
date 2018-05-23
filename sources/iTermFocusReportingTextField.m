@@ -1,0 +1,22 @@
+//
+//  iTermFocusReportingTextField.m
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 5/22/18.
+//
+
+#import "iTermFocusReportingTextField.h"
+
+@implementation iTermFocusReportingTextField
+
+@dynamic delegate;
+
+- (BOOL)becomeFirstResponder {
+    BOOL result = [super becomeFirstResponder];
+    if (result) {
+        [self.delegate focusReportingTextFieldWillBecomeFirstResponder:self];
+    }
+    return result;
+}
+
+@end

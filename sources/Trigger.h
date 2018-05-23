@@ -83,4 +83,6 @@ extern NSString * const kTriggerPartialLineKey;
 // Called before a trigger window opens.
 - (void)reloadData;
 
+- (id<NSTextFieldDelegate>)newParameterDelegateWithPassthrough:(id<NSTextFieldDelegate>)passthrough;
+
 @end

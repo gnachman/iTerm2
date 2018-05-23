@@ -101,6 +101,10 @@ NSString * const kTriggerPartialLineKey = @"partial";
   }
 }
 
+- (id<NSTextFieldDelegate>)newParameterDelegateWithPassthrough:(id<NSTextFieldDelegate>)passthrough {
+    return nil;
+}
+
 - (void)dealloc {
     [regex_ release];
     [action_ release];

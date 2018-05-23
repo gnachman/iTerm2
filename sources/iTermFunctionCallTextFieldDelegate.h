@@ -6,9 +6,15 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermFocusReportingTextField.h"
 
-@interface iTermFunctionCallTextFieldDelegate : NSObject<NSTextFieldDelegate>
+@interface iTermFunctionCallTextFieldDelegate : NSObject<iTermFocusReportingTextFieldDelegate>
 
 @property (nonatomic, strong) IBOutlet NSTextField *textField;
+
+// If passthrough is nonnil then controlTextDidBeginEditing and controlTextDidEndEditing get called
+// on it.
+- (instancetype)initWithPaths:(NSArray<NSString *> *)paths
+                  passthrough:(id)passthrough;
 
 @end

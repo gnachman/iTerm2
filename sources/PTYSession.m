@@ -5725,6 +5725,22 @@ ITERM_WEAKLY_REFERENCEABLE
 
 }
 
+- (void)invokeFunctionCall:(NSString *)invocation extraContext:(NSDictionary *)extraContext {
+    [iTermScriptFunctionCall callFunction:invocation
+                                   source:^id(NSString *key) {
+                                       id value = extraContext[key];
+                                       if (value) {
+                                           return value;
+                                       }
+                                       return [self functionCallSource](key);
+                                   }
+                               completion:^(id value, NSError *error) {
+                                   if (error) {
+                                       [PTYSession reportFunctionCallError:error forInvocation:invocation];
+                                   }
+                               }];
+}
+
 // This is limited to the actions that don't need any existing session
 + (BOOL)performKeyBindingAction:(int)keyBindingAction parameter:(NSString *)keyBindingText event:(NSEvent *)event {
     switch (keyBindingAction) {
@@ -6086,13 +6102,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [self setXtermMouseReporting:![self xtermMouseReporting]];
             break;
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
-            [iTermScriptFunctionCall callFunction:keyBindingText
-                                           source:[self functionCallSource]
-                                       completion:^(id value, NSError *error) {
-                                           if (error) {
-                                               [PTYSession reportFunctionCallError:error forInvocation:keyBindingText];
-                                           }
-                                       }];
+            [self invokeFunctionCall:keyBindingText extraContext:nil];
             break;
         default:
             XLog(@"Unknown key action %d", keyBindingAction);

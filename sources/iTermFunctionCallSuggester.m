@@ -55,6 +55,11 @@
                                return [weakSelf callWithName:[syntaxTree.children[0] identifier]
                                                      arglist:syntaxTree.children[1]];
                            }];
+    [_grammarProcessor addProductionRule:@"call ::= 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [weakSelf callWithName:@""
+                                                     arglist:@{ @"partial-arglist": @YES }];
+                           }];
     [_grammarProcessor addProductionRule:@"arglist ::= 'EOF'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return @{ @"partial-arglist": @YES };
@@ -198,7 +203,7 @@
 - (NSArray<NSString *> *)suggestionsForFunctionName:(NSString *)prefix {
     NSArray<NSString *> *registeredFunctions = _functionSignatures.allKeys;
     return [[registeredFunctions filteredArrayUsingBlock:^BOOL(NSString *anObject) {
-        return [anObject hasPrefix:prefix];
+        return [anObject hasPrefix:prefix] || prefix.length == 0;
     }] mapWithBlock:^id(NSString *s) {
         NSString *firstArgName  = [[self argumentNamesForFunction:s].firstObject stringByAppendingString:@":"] ?: @")";
         return [NSString stringWithFormat:@"%@(%@",
@@ -224,7 +229,7 @@
         NSDictionary *argDict = lastArg;
         if (argDict[@"colon"]) {
             NSString *nextArgumentName = [[self argumentNamesForFunction:function] objectPassingTest:^BOOL(NSString *element, NSUInteger index, BOOL *stop) {
-                return ![usedParameterNames containsObject:element];
+                return ![usedParameterNames containsObject:[element stringByAppendingString:@":"]];
             }];
             nextArgumentName = [nextArgumentName stringByAppendingString:@":"];
             NSArray *suggestions = [self suggestedExpressions:argDict[@"expression"]
