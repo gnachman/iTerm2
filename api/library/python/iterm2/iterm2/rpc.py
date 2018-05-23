@@ -382,6 +382,14 @@ async def async_send_rpc_result(connection, request_id, is_exception, value):
         request.server_originated_rpc_result_request.json_value = json.dumps(value)
     return await _async_call(connection, request)
 
+async def async_restart_session(connection, session_id, only_if_exited):
+    """Restarts a session."""
+    request = _alloc_request()
+    request.restart_session_request.SetInParent()
+    request.restart_session_request.session_id = session_id
+    request.restart_session_request.only_if_exited = only_if_exited
+    return await _async_call(connection, request)
+
 ## Private --------------------------------------------------------------------
 
 def _alloc_id():

@@ -78,6 +78,8 @@ CF_EXTERN_C_BEGIN
 @class ITMRange;
 @class ITMRegisterToolRequest;
 @class ITMRegisterToolResponse;
+@class ITMRestartSessionRequest;
+@class ITMRestartSessionResponse;
 @class ITMSavedArrangementRequest;
 @class ITMSavedArrangementResponse;
 @class ITMScreenUpdateNotification;
@@ -130,6 +132,28 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMNotificationType_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMRestartSessionResponse_Status
+
+typedef GPB_ENUM(ITMRestartSessionResponse_Status) {
+  ITMRestartSessionResponse_Status_Ok = 0,
+  ITMRestartSessionResponse_Status_SessionNotFound = 1,
+
+  /**
+   * Some sessions, such as tmux integration sessions, are not restartable.
+   * Also, when `only_if_exited` is set in the request and the session is still running then this
+   * status will be returned.
+   **/
+  ITMRestartSessionResponse_Status_SessionNotRestartable = 2,
+};
+
+GPBEnumDescriptor *ITMRestartSessionResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMRestartSessionResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMSavedArrangementRequest_Action
 
@@ -562,6 +586,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_FocusRequest = 117,
   ITMClientOriginatedMessage_FieldNumber_ListProfilesRequest = 118,
   ITMClientOriginatedMessage_FieldNumber_ServerOriginatedRpcResultRequest = 119,
+  ITMClientOriginatedMessage_FieldNumber_RestartSessionRequest = 120,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -586,6 +611,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_FocusRequest = 117,
   ITMClientOriginatedMessage_Submessage_OneOfCase_ListProfilesRequest = 118,
   ITMClientOriginatedMessage_Submessage_OneOfCase_ServerOriginatedRpcResultRequest = 119,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_RestartSessionRequest = 120,
 };
 
 /**
@@ -639,6 +665,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMServerOriginatedRPCResultRequest *serverOriginatedRpcResultRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMRestartSessionRequest *restartSessionRequest;
+
 @end
 
 /**
@@ -671,6 +699,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_FocusResponse = 117,
   ITMServerOriginatedMessage_FieldNumber_ListProfilesResponse = 118,
   ITMServerOriginatedMessage_FieldNumber_ServerOriginatedRpcResultResponse = 119,
+  ITMServerOriginatedMessage_FieldNumber_RestartSessionResponse = 120,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -697,6 +726,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_FocusResponse = 117,
   ITMServerOriginatedMessage_Submessage_OneOfCase_ListProfilesResponse = 118,
   ITMServerOriginatedMessage_Submessage_OneOfCase_ServerOriginatedRpcResultResponse = 119,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_RestartSessionResponse = 120,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -755,6 +785,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMServerOriginatedRPCResultResponse *serverOriginatedRpcResultResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMRestartSessionResponse *restartSessionResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 
@@ -764,6 +796,42 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
  * Clears whatever value was set for the oneof 'submessage'.
  **/
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
+
+#pragma mark - ITMRestartSessionRequest
+
+typedef GPB_ENUM(ITMRestartSessionRequest_FieldNumber) {
+  ITMRestartSessionRequest_FieldNumber_SessionId = 1,
+  ITMRestartSessionRequest_FieldNumber_OnlyIfExited = 2,
+};
+
+@interface ITMRestartSessionRequest : GPBMessage
+
+/** "all" not allowed. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
+/** Test to see if @c sessionId has been set. */
+@property(nonatomic, readwrite) BOOL hasSessionId;
+
+/**
+ * If set, then still-running sessions will fail to restart with SESSION_NOT_RESTARTABLE.
+ * If not set, then a still-running session gets killed and restarted.
+ **/
+@property(nonatomic, readwrite) BOOL onlyIfExited;
+
+@property(nonatomic, readwrite) BOOL hasOnlyIfExited;
+@end
+
+#pragma mark - ITMRestartSessionResponse
+
+typedef GPB_ENUM(ITMRestartSessionResponse_FieldNumber) {
+  ITMRestartSessionResponse_FieldNumber_Status = 1,
+};
+
+@interface ITMRestartSessionResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMRestartSessionResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@end
 
 #pragma mark - ITMServerOriginatedRPCResultRequest
 
@@ -975,6 +1043,7 @@ typedef GPB_ENUM(ITMVariableRequest_Set_FieldNumber) {
 /** Test to see if @c name has been set. */
 @property(nonatomic, readwrite) BOOL hasName;
 
+/** JSON encoded */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *value;
 /** Test to see if @c value has been set. */
 @property(nonatomic, readwrite) BOOL hasValue;
@@ -993,7 +1062,7 @@ typedef GPB_ENUM(ITMVariableResponse_FieldNumber) {
 @property(nonatomic, readwrite) ITMVariableResponse_Status status;
 
 @property(nonatomic, readwrite) BOOL hasStatus;
-/** 1:1 with get field in request. Empty and undefined are the same. */
+/** 1:1 with get field in request.  JSON encoded, with null for unset variables. */
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *valuesArray;
 /** The number of items in @c valuesArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger valuesArray_Count;
@@ -1307,7 +1376,7 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_FieldNumber) {
 /** The number of items in @c argumentsArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger argumentsArray_Count;
 
-/** This isn't part of the unique signature. */
+/** If not specified, iTerm2 decides based on its built-in default. */
 @property(nonatomic, readwrite) float timeout;
 
 @property(nonatomic, readwrite) BOOL hasTimeout;

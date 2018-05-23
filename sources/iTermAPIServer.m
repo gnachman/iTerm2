@@ -637,6 +637,16 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     [self finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
 }
 
+- (void)handleRestartSessionRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+    ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
+
+    __weak __typeof(self) weakSelf = self;
+    [_delegate apiServerRestartSession:request.restartSessionRequest handler:^(ITMRestartSessionResponse *restartSessionResponse) {
+        response.restartSessionResponse = restartSessionResponse;
+        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
+    }];
+}
+
 // Runs on main queue, either in or not in a transaction.
 - (void)dispatchRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     DLog(@"Got request %@", request);
@@ -733,6 +743,10 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
         case ITMClientOriginatedMessage_Submessage_OneOfCase_GPBUnsetOneOfCase:
             [self handleMalformedRequest:request connection:webSocketConnection];
+            break;
+
+        case ITMClientOriginatedMessage_Submessage_OneOfCase_RestartSessionRequest:
+            [self handleRestartSessionRequest:request connection:webSocketConnection];
             break;
     }
 }

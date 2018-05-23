@@ -125,6 +125,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
 @dynamic focusRequest;
 @dynamic listProfilesRequest;
 @dynamic serverOriginatedRpcResultRequest;
+@dynamic restartSessionRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -148,6 +149,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMFocusRequest *focusRequest;
   ITMListProfilesRequest *listProfilesRequest;
   ITMServerOriginatedRPCResultRequest *serverOriginatedRpcResultRequest;
+  ITMRestartSessionRequest *restartSessionRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -346,6 +348,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "restartSessionRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMRestartSessionRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_RestartSessionRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, restartSessionRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -401,6 +412,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic focusResponse;
 @dynamic listProfilesResponse;
 @dynamic serverOriginatedRpcResultResponse;
+@dynamic restartSessionResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -426,6 +438,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMFocusResponse *focusResponse;
   ITMListProfilesResponse *listProfilesResponse;
   ITMServerOriginatedRPCResultResponse *serverOriginatedRpcResultResponse;
+  ITMRestartSessionResponse *restartSessionResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -635,6 +648,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "restartSessionResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMRestartSessionResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_RestartSessionResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, restartSessionResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
@@ -671,6 +693,139 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMRestartSessionRequest
+
+@implementation ITMRestartSessionRequest
+
+@dynamic hasSessionId, sessionId;
+@dynamic hasOnlyIfExited, onlyIfExited;
+
+typedef struct ITMRestartSessionRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *sessionId;
+} ITMRestartSessionRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "sessionId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRestartSessionRequest_FieldNumber_SessionId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRestartSessionRequest__storage_, sessionId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "onlyIfExited",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRestartSessionRequest_FieldNumber_OnlyIfExited,
+        .hasIndex = 1,
+        .offset = 2,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRestartSessionRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRestartSessionRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMRestartSessionResponse
+
+@implementation ITMRestartSessionResponse
+
+@dynamic hasStatus, status;
+
+typedef struct ITMRestartSessionResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMRestartSessionResponse_Status status;
+} ITMRestartSessionResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMRestartSessionResponse_Status_EnumDescriptor,
+        .number = ITMRestartSessionResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRestartSessionResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRestartSessionResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRestartSessionResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMRestartSessionResponse_Status
+
+GPBEnumDescriptor *ITMRestartSessionResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000SessionNotFound\000SessionNotRestartable"
+        "\000";
+    static const int32_t values[] = {
+        ITMRestartSessionResponse_Status_Ok,
+        ITMRestartSessionResponse_Status_SessionNotFound,
+        ITMRestartSessionResponse_Status_SessionNotRestartable,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMRestartSessionResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMRestartSessionResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMRestartSessionResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMRestartSessionResponse_Status_Ok:
+    case ITMRestartSessionResponse_Status_SessionNotFound:
+    case ITMRestartSessionResponse_Status_SessionNotRestartable:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
 #pragma mark - ITMServerOriginatedRPCResultRequest
 
 @implementation ITMServerOriginatedRPCResultRequest

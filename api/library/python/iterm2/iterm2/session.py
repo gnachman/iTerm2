@@ -184,9 +184,9 @@ class Session:
 
           async with session.get_keystroke_reader() as reader:
             while condition():
-              handle_keystrokes(reader.get())
+              handle_keystrokes(reader.async_get())
 
-        .. note:: Each call to reader.get() returns an array of new keystrokes.
+        .. note:: Each call to reader.async_get() returns an array of new keystrokes.
         """
         return self.KeystrokeReader(self.connection, self.__session_id)
 
@@ -196,6 +196,12 @@ class Session:
 
         The screen is the mutable part of a session (its last lines, excluding
         scrollback history).
+
+        :Example:
+
+          async with session.get_screen_streamer() as streamer:
+            while condition():
+              handle_screen_update(streamer.async_get())
 
         :returns: A :class:`Session.ScreenStreamer`.
         """
@@ -375,6 +381,8 @@ class Session:
         Injects data as though it were program output.
 
         :param data: A byte array to inject.
+
+        :throws: :class:`RPCException` if something goes wrong.
         """
         response = await iterm2.rpc.async_inject(self.connection, data, [self.__session_id])
         status = response.inject_response.status[0]
@@ -404,6 +412,8 @@ class Session:
 
         :param name: The variable's name.
         :param value: The new value to assign.
+
+        :throws: :class:`RPCException` if something goes wrong.
         """
         result = await iterm2.rpc.async_variable(
             self.connection,
@@ -423,6 +433,8 @@ class Session:
         :param name: The variable's name.
 
         :returns: The variable's value or empty string if it is undefined.
+
+        :throws: :class:`RPCException` if something goes wrong.
         """
         result = await iterm2.rpc.async_variable(self.connection, self.__session_id, [], [name])
         status = result.variable_response.status
@@ -430,6 +442,19 @@ class Session:
             raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
         else:
             return json.loads(result.variable_response.values[0])
+
+    async def async_restart(self, only_if_exited=False):
+        """
+        Restarts a session.
+
+        :param only_if_exited: When True, this will raise an exception if the session is still running. When False, a running session will be killed and restarted.
+
+        :throws: :class:`RPCException` if something goes wrong.
+        """
+        result = await iterm2.rpc.async_restart_session(self.connection, self.__session_id, only_if_exited)
+        status = result.restart_session_response.status
+        if status != iterm2.api_pb2.RestartSessionResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.RestartSessionResponse.Status.Name(status))
 
     class KeystrokeReader:
         """An asyncio context manager for reading keystrokes.
@@ -458,7 +483,7 @@ class Session:
                 self.session_id)
             return self
 
-        async def get(self):
+        async def async_get(self):
             """
             Get the next keystroke.
 
@@ -507,7 +532,7 @@ class Session:
         async def __aexit__(self, exc_type, exc, _tb):
             await iterm2.notifications.async_unsubscribe(self.connection, self.token)
 
-        async def get(self):
+        async def async_get(self):
             """
             Gets the screen contents, waiting until they change if needed.
 

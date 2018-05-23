@@ -1526,5 +1526,31 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 
 }
 
+- (void)apiServerRestartSession:(ITMRestartSessionRequest *)request handler:(void (^)(ITMRestartSessionResponse *))handler {
+    PTYSession *session = [self sessionForAPIIdentifier:request.sessionId];
+    ITMRestartSessionResponse *response = [[ITMRestartSessionResponse alloc] init];
+    if (!session) {
+        response.status = ITMRestartSessionResponse_Status_SessionNotFound;
+        handler(response);
+        return;
+    }
+
+    if (!session.isRestartable) {
+        response.status = ITMRestartSessionResponse_Status_SessionNotRestartable;
+        handler(response);
+        return;
+    }
+
+    if (request.onlyIfExited && !session.exited) {
+        response.status = ITMRestartSessionResponse_Status_SessionNotRestartable;
+        handler(response);
+        return;
+    }
+
+    [session restartSession];
+    response.status = ITMRestartSessionResponse_Status_Ok;
+    handler(response);
+    return;
+}
 
 @end

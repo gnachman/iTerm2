@@ -35,6 +35,7 @@ message ClientOriginatedMessage {
     FocusRequest focus_request = 117;
     ListProfilesRequest list_profiles_request = 118;
     ServerOriginatedRPCResultRequest server_originated_rpc_result_request = 119;
+    RestartSessionRequest restart_session_request = 120;
   }
 }
 
@@ -67,10 +68,32 @@ message ServerOriginatedMessage {
     FocusResponse focus_response = 117;
     ListProfilesResponse list_profiles_response = 118;
     ServerOriginatedRPCResultResponse server_originated_rpc_result_response = 119;
+    RestartSessionResponse restart_session_response = 120;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
   }
+}
+
+message RestartSessionRequest {
+  optional string session_id = 1;  // "all" not allowed.
+
+  // If set, then still-running sessions will fail to restart with SESSION_NOT_RESTARTABLE.
+  // If not set, then a still-running session gets killed and restarted.
+  optional bool only_if_exited = 2;
+}
+
+message RestartSessionResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+
+    // Some sessions, such as tmux integration sessions, are not restartable.
+    // Also, when `only_if_exited` is set in the request and the session is still running then this
+    // status will be returned.
+    SESSION_NOT_RESTARTABLE = 2;
+  }
+  optional Status status = 1;
 }
 
 // This is the result of an iTerm2-to-script RPC call.
