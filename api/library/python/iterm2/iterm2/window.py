@@ -43,7 +43,6 @@ class Window:
         """Copies state from other window to this one."""
         self.__tabs = other.tabs
         self.frame = other.frame
-        self.selected_tab_id = other.selected_tab_id
 
     def update_tab(self, tab):
         """Replace references to a tab."""

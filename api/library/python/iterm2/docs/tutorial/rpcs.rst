@@ -23,7 +23,7 @@ This script shows a working example:
 
 	async def clear_all_sessions():
             code = b'\x1b' + b']1337;ClearScrollback' + b'\x07'
-	    for window in app.windows:
+	    for window in app.terminal_windows:
 		for tab in window.tabs:
 		    for session in tab.sessions:
 			await session.async_inject(code)
@@ -64,7 +64,7 @@ This is an iTerm2 `proprietary escape code <https://www.iterm2.com/documentation
 
 .. code-block:: python
 
-    for window in app.windows:
+    for window in app.terminal_windows:
 	for tab in window.tabs:
 	    for session in tab.sessions:
 		await session.async_inject(code)

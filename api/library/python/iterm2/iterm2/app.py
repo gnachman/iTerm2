@@ -58,7 +58,7 @@ class App:
     def __init__(self, connection, windows):
         """Do not call this directly. Use App.construct() instead."""
         self.connection = connection
-        self.windows = windows
+        self.__terminal_windows = windows
         self.tokens = []
 
         # None in these fields means unknown. Notifications will update them.
@@ -129,7 +129,7 @@ class App:
     def pretty_str(self):
         """Returns the hierarchy as a human-readable string"""
         session = ""
-        for window in self.windows:
+        for window in self.terminal_windows:
             if session:
                 session += "\n"
             session += window.pretty_str(indent="")
@@ -141,7 +141,7 @@ class App:
         if session_id == "all":
             return iterm2.session.Session.all_proxy(self.connection)
 
-        for window in self.windows:
+        for window in self.terminal_windows:
             for tab in window.tabs:
                 sessions = tab.sessions
                 for session in sessions:
@@ -150,14 +150,14 @@ class App:
         return None
 
     def _search_for_tab_id(self, tab_id):
-        for window in self.windows:
+        for window in self.terminal_windows:
             for tab in window.tabs:
                 if tab_id == tab.tab_id:
                     return tab
         return None
 
     def _search_for_window_id(self, window_id):
-        for window in self.windows:
+        for window in self.terminal_windows:
             if window_id == window.window_id:
                 return window
         return None
@@ -205,7 +205,7 @@ class App:
         return self._search_for_window_with_tab(tab_id)
 
     def _search_for_window_with_tab(self, tab_id):
-        for window in self.windows:
+        for window in self.terminal_windows:
             for tab in window.tabs:
                 if tab.tab_id == tab_id:
                     return window
@@ -214,13 +214,18 @@ class App:
     async def async_refresh(self, _connection=None, _sub_notif=None):
         """Reloads the hierarchy.
 
-        You shouldn't need to call this explicitly. It will update itself from notifications.
+        Note that this calls :meth:`async_refresh_focus`.
+
+        You generally don't need to call this explicitly because App keeps its state fresh by
+        receiving notifications. One exception is if you need the REPL to pick up changes to the
+        state, since it doesn't receive notifications at the Python prompt.
         """
         response = await iterm2.rpc.async_list_sessions(self.connection)
         new_windows = App._windows_from_list_sessions_response(
             self.connection,
             response.list_sessions_response)
         windows = []
+        new_ids = []
         for new_window in new_windows:
             for new_tab in new_window.tabs:
                 for new_session in new_tab.sessions:
@@ -238,14 +243,17 @@ class App:
                         old_tab.update_from(new_tab)
                         # Replace the reference in the new window to the old tab.
                         new_window.update_tab(old_tab)
-                    old_window = self.get_window_by_id(new_window.window_id)
-                    if old_window is not None:
-                        old_window.update_from(new_window)
-                        windows.append(old_window)
-                    else:
-                        windows.append(new_window)
+                    if new_window.window_id not in new_ids:
+                        new_ids.append(new_window.window_id)
+                        old_window = self.get_window_by_id(new_window.window_id)
+                        if old_window is not None:
+                            old_window.update_from(new_window)
+                            windows.append(old_window)
+                        else:
+                            windows.append(new_window)
 
-        self.windows = windows
+        self.__terminal_windows = windows
+        await self.async_refresh_focus()
 
     async def _async_focus_change(self, _connection, sub_notif):
         """Updates the record of what is in focus."""
@@ -260,7 +268,6 @@ class App:
             window = self.get_window_for_tab(sub_notif.selected_tab)
             if window is None:
                 await self.async_refresh()
-                await self.async_refresh_focus()
             else:
                 window.selected_tab_id = sub_notif.selected_tab
         elif sub_notif.HasField("session"):
@@ -268,7 +275,6 @@ class App:
             window, tab = self.get_tab_and_window_for_session(session)
             if tab is None:
                 await self.async_refresh()
-                await self.async_refresh_focus()
             else:
                 tab.active_session_id = sub_notif.session
 
@@ -283,6 +289,14 @@ class App:
         """
         return self.get_window_by_id(self.current_terminal_window_id)
 
+    @property
+    def terminal_windows(self):
+        """Returns a list of all terminal windows.
+
+        :returns: A list of :class:`Window`
+        """
+        return self.__terminal_windows
+
     def get_tab_and_window_for_session(self, session):
         """Finds the tab and window that own a session.
 
@@ -290,7 +304,7 @@ class App:
 
         :returns: A tuple of (:class:`Window`, :class:`Tab`).
         """
-        for window in self.windows:
+        for window in self.terminal_windows:
             for tab in window.tabs:
                 if session in tab.sessions:
                     return window, tab
