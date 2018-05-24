@@ -48,10 +48,10 @@ static BOOL gIntrospecting;
 static NSDictionary *gIntrospection;
 
 @implementation iTermAdvancedSettingsViewController {
-    __weak IBOutlet NSTableColumn *_settingColumn;
-    __weak IBOutlet NSTableColumn *_valueColumn;
-    __weak IBOutlet NSSearchField *_searchField;
-    __weak IBOutlet NSTableView *_tableView;
+    IBOutlet NSTableColumn *_settingColumn;
+    IBOutlet NSTableColumn *_valueColumn;
+    IBOutlet NSSearchField *_searchField;
+    IBOutlet NSTableView *_tableView;
 
     NSArray *_filteredAdvancedSettings;
 }
@@ -60,11 +60,10 @@ static NSDictionary *gIntrospection;
              defaultValue:(BOOL)defaultValue
               description:(NSString *)description {
     if (gIntrospecting) {
-        [gIntrospection autorelease];
-        gIntrospection = [@{ kAdvancedSettingIdentifier: identifier,
-                             kAdvancedSettingType: @(kiTermAdvancedSettingTypeBoolean),
-                             kAdvancedSettingDefaultValue: @(defaultValue),
-                             kAdvancedSettingDescription: description } retain];
+        gIntrospection = @{ kAdvancedSettingIdentifier: identifier,
+                            kAdvancedSettingType: @(kiTermAdvancedSettingTypeBoolean),
+                            kAdvancedSettingDefaultValue: @(defaultValue),
+                            kAdvancedSettingDescription: description };
         return defaultValue;
     }
 
@@ -92,11 +91,10 @@ static NSDictionary *gIntrospection;
                        defaultValue:(BOOL *)defaultValue
                         description:(NSString *)description {
     if (gIntrospecting) {
-        [gIntrospection autorelease];
-        gIntrospection = [@{ kAdvancedSettingIdentifier: identifier,
-                             kAdvancedSettingType: @(kiTermAdvancedSettingTypeOptionalBoolean),
-                             kAdvancedSettingDefaultValue: defaultValue ? @(*defaultValue) : [NSNull null],
-                             kAdvancedSettingDescription: description } retain];
+        gIntrospection = @{ kAdvancedSettingIdentifier: identifier,
+                            kAdvancedSettingType: @(kiTermAdvancedSettingTypeOptionalBoolean),
+                            kAdvancedSettingDefaultValue: defaultValue ? @(*defaultValue) : [NSNull null],
+                            kAdvancedSettingDescription: description };
         return defaultValue;
     }
 
@@ -116,11 +114,10 @@ static NSDictionary *gIntrospection;
            defaultValue:(int)defaultValue
             description:(NSString *)description {
     if (gIntrospecting) {
-        [gIntrospection autorelease];
-        gIntrospection = [@{ kAdvancedSettingIdentifier: identifier,
-                             kAdvancedSettingType: @(kiTermAdvancedSettingTypeInteger),
-                             kAdvancedSettingDefaultValue: @(defaultValue),
-                             kAdvancedSettingDescription: description } retain];
+        gIntrospection = @{ kAdvancedSettingIdentifier: identifier,
+                            kAdvancedSettingType: @(kiTermAdvancedSettingTypeInteger),
+                            kAdvancedSettingDefaultValue: @(defaultValue),
+                            kAdvancedSettingDescription: description };
         return defaultValue;
     }
 
@@ -136,11 +133,10 @@ static NSDictionary *gIntrospection;
                 defaultValue:(double)defaultValue
                  description:(NSString *)description {
     if (gIntrospecting) {
-        [gIntrospection autorelease];
-        gIntrospection = [@{ kAdvancedSettingIdentifier: identifier,
-                             kAdvancedSettingType: @(kiTermAdvancedSettingTypeFloat),
-                             kAdvancedSettingDefaultValue: @(defaultValue),
-                             kAdvancedSettingDescription: description } retain];
+        gIntrospection = @{ kAdvancedSettingIdentifier: identifier,
+                            kAdvancedSettingType: @(kiTermAdvancedSettingTypeFloat),
+                            kAdvancedSettingDefaultValue: @(defaultValue),
+                            kAdvancedSettingDescription: description };
         return defaultValue;
     }
 
@@ -156,11 +152,10 @@ static NSDictionary *gIntrospection;
                      defaultValue:(NSString *)defaultValue
                       description:(NSString *)description {
     if (gIntrospecting) {
-        [gIntrospection autorelease];
-        gIntrospection = [@{ kAdvancedSettingIdentifier: identifier,
-                             kAdvancedSettingType: @(kiTermAdvancedSettingTypeString),
-                             kAdvancedSettingDefaultValue: defaultValue,
-                             kAdvancedSettingDescription: description } retain];
+        gIntrospection = @{ kAdvancedSettingIdentifier: identifier,
+                            kAdvancedSettingType: @(kiTermAdvancedSettingTypeString),
+                            kAdvancedSettingDefaultValue: defaultValue,
+                            kAdvancedSettingDescription: description };
         return defaultValue;
     }
 
@@ -180,7 +175,7 @@ static NSDictionary *gIntrospection;
         for (NSDictionary *setting in [self advancedSettings]) {
             temp[setting[kAdvancedSettingIdentifier]] = setting;
         }
-        settings = [temp retain];
+        settings = temp;
     });
     return settings;
 }
@@ -191,7 +186,6 @@ static NSDictionary *gIntrospection;
     dispatch_once(&onceToken, ^{
         NSArray *advancedSettings = [self advancedSettings];
         sortedAdvancedSettings = [advancedSettings sortedArrayUsingSelector:@selector(compareAdvancedSettingDicts:)];
-        [sortedAdvancedSettings retain];
     });
    return sortedAdvancedSettings;
 }
@@ -205,10 +199,10 @@ static NSDictionary *gIntrospection;
         NSString *thisCategory = [description substringToIndex:colon];
         NSString *remainder = [description substringFromIndex:colon + 2];
         if (![thisCategory isEqualToString:previousCategory]) {
-            previousCategory = [[thisCategory copy] autorelease];
+            previousCategory = [thisCategory copy];
             [result addObject:thisCategory];
         }
-        NSMutableDictionary *temp = [[dict mutableCopy] autorelease];
+        NSMutableDictionary *temp = [dict mutableCopy];
         temp[kAdvancedSettingDescription] = remainder;
         [result addObject:temp];
     }
@@ -234,14 +228,11 @@ static NSDictionary *gIntrospection;
                 [iTermAdvancedSettingsModel performSelector:name withObject:nil];
                 assert(gIntrospection != nil);
                 [settings addObject:gIntrospection];
-                [gIntrospection release];
                 gIntrospection = nil;
             }
         }
         gIntrospecting = NO;
         free(methods);
-
-        [settings retain];
     });
 
     return settings;
@@ -249,13 +240,11 @@ static NSDictionary *gIntrospection;
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_filteredAdvancedSettings release];
     // For reasons I don't understand the tableview outlives this view by a small amount.
     // To reproduce, select a row in advanced prefs. Switch to the profiles tab. Press esc to close
     // the prefs window. Doesn't reproduce all the time.
     _tableView.delegate = nil;
     _tableView.dataSource = nil;
-    [super dealloc];
 }
 
 - (void)awakeFromNib {
@@ -277,14 +266,14 @@ static NSDictionary *gIntrospection;
                                                 selected:(BOOL)selected
                                                     bold:(BOOL)bold {
     NSDictionary *spacerAttributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:topMargin] };
-    NSAttributedString *topSpacer = [[[NSAttributedString alloc] initWithString:@"\n"
-                                                                     attributes:spacerAttributes] autorelease];
+    NSAttributedString *topSpacer = [[NSAttributedString alloc] initWithString:@"\n"
+                                                                    attributes:spacerAttributes];
     NSDictionary *attributes =
         @{ NSFontAttributeName: bold ? [NSFont boldSystemFontOfSize:size] : [NSFont systemFontOfSize:size],
            NSForegroundColorAttributeName: (selected && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor blackColor] };
-    NSAttributedString *title = [[[NSAttributedString alloc] initWithString:string
-                                                                 attributes:attributes] autorelease];
-    NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
+    NSAttributedString *title = [[NSAttributedString alloc] initWithString:string
+                                                                attributes:attributes];
+    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
     [result appendAttributedString:topSpacer];
     [result appendAttributedString:title];
     return result;
@@ -354,8 +343,8 @@ static NSDictionary *gIntrospection;
             NSDictionary *attributes = @{ NSForegroundColorAttributeName: color,
                                           NSFontAttributeName: [NSFont systemFontOfSize:11] };
             NSAttributedString *attributedSubtitle =
-                [[[NSAttributedString alloc] initWithString:subtitle
-                                                 attributes:attributes] autorelease];
+                [[NSAttributedString alloc] initWithString:subtitle
+                                                attributes:attributes];
             [attributedDescription appendAttributedString:attributedSubtitle];
         }
         return attributedDescription;
@@ -428,7 +417,7 @@ static NSDictionary *gIntrospection;
             settings = result;
         }
 
-        _filteredAdvancedSettings = [[[self class] groupedSettingsArrayFromSortedArray:settings] retain];
+        _filteredAdvancedSettings = [[self class] groupedSettingsArrayFromSortedArray:settings];
     }
 
     return _filteredAdvancedSettings;
@@ -458,7 +447,7 @@ static NSDictionary *gIntrospection;
         switch ([dict advancedSettingType]) {
             case kiTermAdvancedSettingTypeBoolean: {
                 NSPopUpButtonCell *cell =
-                        [[[NSPopUpButtonCell alloc] initTextCell:@"No" pullsDown:NO] autorelease];
+                    [[NSPopUpButtonCell alloc] initTextCell:@"No" pullsDown:NO];
                 [cell addItemWithTitle:@"No"];
                 [cell addItemWithTitle:@"Yes"];
                 [cell setBordered:NO];
@@ -466,7 +455,7 @@ static NSDictionary *gIntrospection;
             }
             case kiTermAdvancedSettingTypeOptionalBoolean: {
                 NSPopUpButtonCell *cell =
-                        [[[NSPopUpButtonCell alloc] initTextCell:@"Unspecified" pullsDown:NO] autorelease];
+                    [[NSPopUpButtonCell alloc] initTextCell:@"Unspecified" pullsDown:NO];
                 [cell addItemWithTitle:@"Unspecified"];
                 [cell addItemWithTitle:@"No"];
                 [cell addItemWithTitle:@"Yes"];
@@ -477,7 +466,7 @@ static NSDictionary *gIntrospection;
             case kiTermAdvancedSettingTypeString:
             case kiTermAdvancedSettingTypeFloat:
             case kiTermAdvancedSettingTypeInteger: {
-                NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@"scalar"] autorelease];
+                NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@"scalar"];
                 [cell setPlaceholderString:@"Value"];
                 [cell setEditable:YES];
                 [cell setTruncatesLastVisibleLine:YES];
@@ -556,7 +545,6 @@ static NSDictionary *gIntrospection;
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     if ([aNotification object] == _searchField) {
-        [_filteredAdvancedSettings release];
         _filteredAdvancedSettings = nil;
         [_tableView reloadData];
     }

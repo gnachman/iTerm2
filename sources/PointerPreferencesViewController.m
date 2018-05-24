@@ -14,30 +14,31 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
 
 @implementation PointerPreferencesViewController {
     // Cmd-click to launch url.
-    __weak IBOutlet NSButton *_cmdSelection;
+    IBOutlet NSButton *_cmdSelection;
 
     // Control-click doesn't open the context menu, is mouse-reported as right click.
-    __weak IBOutlet NSButton *_controlLeftClickActsLikeRightClick;
+    IBOutlet NSButton *_controlLeftClickActsLikeRightClick;
 
     // Opt-click moves cursor.
-    __weak IBOutlet NSButton *_optionClickMovesCursor;
+    IBOutlet NSButton *_optionClickMovesCursor;
 
     // Three finger click emulates middle button.
-    __weak IBOutlet NSButton *_threeFingerEmulatesMiddle;
+    IBOutlet NSButton *_threeFingerEmulatesMiddle;
 
     // Focus follows mouse.
-    __weak IBOutlet NSButton *_focusFollowsMouse;
+    IBOutlet NSButton *_focusFollowsMouse;
 
     // Triple click selects full, wrapped lines.
-    __weak IBOutlet NSButton *_tripleClickSelectsFullLines;
+    IBOutlet NSButton *_tripleClickSelectsFullLines;
 
     // Double click perform smart selection
-    __weak IBOutlet NSButton *_doubleClickPerformsSmartSelection;
+    IBOutlet NSButton *_doubleClickPerformsSmartSelection;
 }
 
 - (void)awakeFromNib {
     PreferenceInfo *info;
 
+    __weak __typeof(self) weakSelf = self;
     info = [self defineControl:_cmdSelection
                            key:kPreferenceKeyCmdClickOpensURLs
                           type:kPreferenceInfoTypeCheckbox];
@@ -58,7 +59,7 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
                            key:kPreferenceKeyThreeFingerEmulatesMiddle
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() {
-        [self postRefreshNotification];
+        [weakSelf postRefreshNotification];
         [[NSNotificationCenter defaultCenter] postNotificationName:kPointerPrefsChangedNotification
                                                             object:nil
                                                           userInfo:nil];

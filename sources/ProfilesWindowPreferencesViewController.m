@@ -23,34 +23,32 @@
 @end
 
 @implementation ProfilesWindowPreferencesViewController {
-    __weak IBOutlet NSSlider *_transparency;
-    __weak IBOutlet NSButton *_useBlur;
-    __weak IBOutlet NSSlider *_blurRadius;
-    __weak IBOutlet NSButton *_useBackgroundImage;
-    __weak IBOutlet iTermImageWell *_backgroundImagePreview;
-    __weak IBOutlet NSButton *_backgroundImageTiled;
-    __weak IBOutlet NSSlider *_blendAmount;
-    __weak IBOutlet NSTextField *_columnsField;
-    __weak IBOutlet NSTextField *_rowsField;
-    __weak IBOutlet NSButton *_hideAfterOpening;
-    __weak IBOutlet NSPopUpButton *_windowStyle;
-    __weak IBOutlet NSPopUpButton *_screen;
-    __weak IBOutlet NSTextField *_screenLabel;
-    __weak IBOutlet NSPopUpButton *_space;
-    __weak IBOutlet NSTextField *_columnsLabel;
-    __weak IBOutlet NSTextField *_rowsLabel;
-    __weak IBOutlet NSTextField *_windowStyleLabel;
-    __weak IBOutlet NSTextField *_spaceLabel;
-    __weak IBOutlet NSButton *_syncTitle;
-    __weak IBOutlet NSButton *_preventTab;
-    __weak IBOutlet NSButton *_transparencyAffectsOnlyDefaultBackgroundColor;
-    __weak IBOutlet NSButton *_openToolbelt;
+    IBOutlet NSSlider *_transparency;
+    IBOutlet NSButton *_useBlur;
+    IBOutlet NSSlider *_blurRadius;
+    IBOutlet NSButton *_useBackgroundImage;
+    IBOutlet iTermImageWell *_backgroundImagePreview;
+    IBOutlet NSButton *_backgroundImageTiled;
+    IBOutlet NSSlider *_blendAmount;
+    IBOutlet NSTextField *_columnsField;
+    IBOutlet NSTextField *_rowsField;
+    IBOutlet NSButton *_hideAfterOpening;
+    IBOutlet NSPopUpButton *_windowStyle;
+    IBOutlet NSPopUpButton *_screen;
+    IBOutlet NSTextField *_screenLabel;
+    IBOutlet NSPopUpButton *_space;
+    IBOutlet NSTextField *_columnsLabel;
+    IBOutlet NSTextField *_rowsLabel;
+    IBOutlet NSTextField *_windowStyleLabel;
+    IBOutlet NSTextField *_spaceLabel;
+    IBOutlet NSButton *_syncTitle;
+    IBOutlet NSButton *_preventTab;
+    IBOutlet NSButton *_transparencyAffectsOnlyDefaultBackgroundColor;
+    IBOutlet NSButton *_openToolbelt;
 }
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_backgroundImageFilename release];
-    [super dealloc];
 }
 
 - (void)awakeFromNib {
@@ -64,21 +62,32 @@
                                                  name:kUpdateLabelsNotification
                                                object:nil];
 
+    __weak __typeof(self) weakSelf = self;
     PreferenceInfo *info;
     info = [self defineControl:_transparency
                            key:KEY_TRANSPARENCY
                           type:kPreferenceInfoTypeSlider];
     info.observer = ^() {
-        BOOL haveTransparency = (_transparency.doubleValue > 0);
-        _transparencyAffectsOnlyDefaultBackgroundColor.enabled = haveTransparency;
-        _blurRadius.enabled = haveTransparency;
-        _useBlur.enabled = haveTransparency;
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        BOOL haveTransparency = (strongSelf->_transparency.doubleValue > 0);
+        strongSelf->_transparencyAffectsOnlyDefaultBackgroundColor.enabled = haveTransparency;
+        strongSelf->_blurRadius.enabled = haveTransparency;
+        strongSelf->_useBlur.enabled = haveTransparency;
     };
 
     info = [self defineControl:_useBlur
                            key:KEY_BLUR
                           type:kPreferenceInfoTypeCheckbox];
-    info.observer = ^() { _blurRadius.enabled = (_useBlur.state == NSOnState); };
+    info.observer = ^() {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        strongSelf->_blurRadius.enabled = (strongSelf->_useBlur.state == NSOnState);
+    };
 
     [self defineControl:_blurRadius
                     key:KEY_BLUR_RADIUS
@@ -114,14 +123,18 @@
                     key:KEY_SCREEN
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [self screenDidChange]; }
-                 update:^BOOL{ [self updateScreen]; return YES; }];
+                 update:^BOOL{ [weakSelf updateScreen]; return YES; }];
 
     info = [self defineControl:_space
                            key:KEY_SPACE
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() {
-        if ([_space selectedTag] > 0) {
-            [self maybeWarnAboutSpaces];
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        if ([strongSelf->_space selectedTag] > 0) {
+            [strongSelf maybeWarnAboutSpaces];
         }
     };
 
@@ -236,7 +249,7 @@
 - (void)loadBackgroundImageWithFilename:(NSString *)filename {
     NSImage *anImage = filename.length > 0 ? [[NSImage alloc] initWithContentsOfFile:filename] : nil;
     if (anImage) {
-        [_backgroundImagePreview setImage:[anImage autorelease]];
+        [_backgroundImagePreview setImage:anImage];
         [_useBackgroundImage setState:NSOnState];
         self.backgroundImageFilename = filename;
     } else {

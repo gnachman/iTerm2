@@ -34,38 +34,38 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 @implementation ProfilesGeneralPreferencesViewController {
     // Labels
-    __weak IBOutlet NSTextField *_basicsLabel;
-    __weak IBOutlet NSTextField *_shortcutLabel;
-    __weak IBOutlet NSTextField *_tagsLabel;
-    __weak IBOutlet NSTextField *_commandLabel;
-    __weak IBOutlet NSTextField *_sendTextAtStartLabel;
-    __weak IBOutlet NSTextField *_directoryLabel;
-    __weak IBOutlet NSTextField *_schemesHeaderLabel;
-    __weak IBOutlet NSTextField *_schemesLabel;
+    IBOutlet NSTextField *_basicsLabel;
+    IBOutlet NSTextField *_shortcutLabel;
+    IBOutlet NSTextField *_tagsLabel;
+    IBOutlet NSTextField *_commandLabel;
+    IBOutlet NSTextField *_sendTextAtStartLabel;
+    IBOutlet NSTextField *_directoryLabel;
+    IBOutlet NSTextField *_schemesHeaderLabel;
+    IBOutlet NSTextField *_schemesLabel;
 
     // Controls
-    __weak IBOutlet NSTextField *_profileNameField;
-    __weak IBOutlet NSTextField *_profileNameFieldForEditCurrentSession;
-    __weak IBOutlet NSPopUpButton *_profileShortcut;
-    __weak IBOutlet NSTokenField *_tagsTokenField;
-    __weak IBOutlet NSMatrix *_commandType;  // Login shell vs custom command radio buttons
-    __weak IBOutlet NSTextField *_customCommand;  // Command to use instead of login shell
-    __weak IBOutlet NSTextField *_sendTextAtStart;
-    __weak IBOutlet NSMatrix *_initialDirectoryType;  // Home/Reuse/Custom/Advanced
-    __weak IBOutlet NSTextField *_customDirectory;  // Path to custom initial directory
-    __weak IBOutlet NSButton *_editAdvancedConfigButton;  // Advanced initial directory button
-    __weak IBOutlet AdvancedWorkingDirectoryWindowController *_advancedWorkingDirWindowController;
-    __weak IBOutlet NSPopUpButton *_urlSchemes;
-    __weak IBOutlet NSTextField *_badgeText;
-    __weak IBOutlet NSTextField *_badgeTextForEditCurrentSession;
+    IBOutlet NSTextField *_profileNameField;
+    IBOutlet NSTextField *_profileNameFieldForEditCurrentSession;
+    IBOutlet NSPopUpButton *_profileShortcut;
+    IBOutlet NSTokenField *_tagsTokenField;
+    IBOutlet NSMatrix *_commandType;  // Login shell vs custom command radio buttons
+    IBOutlet NSTextField *_customCommand;  // Command to use instead of login shell
+    IBOutlet NSTextField *_sendTextAtStart;
+    IBOutlet NSMatrix *_initialDirectoryType;  // Home/Reuse/Custom/Advanced
+    IBOutlet NSTextField *_customDirectory;  // Path to custom initial directory
+    IBOutlet NSButton *_editAdvancedConfigButton;  // Advanced initial directory button
+    IBOutlet AdvancedWorkingDirectoryWindowController *_advancedWorkingDirWindowController;
+    IBOutlet NSPopUpButton *_urlSchemes;
+    IBOutlet NSTextField *_badgeText;
+    IBOutlet NSTextField *_badgeTextForEditCurrentSession;
 
     // Controls for Edit Info
-    __weak IBOutlet ProfileListView *_profiles;
-    __weak IBOutlet iTermShortcutInputView *_sessionHotkeyInputView;
+    IBOutlet ProfileListView *_profiles;
+    IBOutlet iTermShortcutInputView *_sessionHotkeyInputView;
 
-    __weak IBOutlet NSView *_editCurrentSessionView;
-    __weak IBOutlet NSButton *_copySettingsToProfile;
-    __weak IBOutlet NSButton *_copyProfleToSession;
+    IBOutlet NSView *_editCurrentSessionView;
+    IBOutlet NSButton *_copySettingsToProfile;
+    IBOutlet NSButton *_copyProfleToSession;
 
     BOOL _profileNameChangePending;
     NSTimer *_timer;
@@ -73,31 +73,51 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (void)dealloc {
     _profileNameFieldForEditCurrentSession.delegate = nil;
-    [_profileNameFieldForEditCurrentSession release];
     [_timer invalidate];
-    [super dealloc];
 }
 
 - (void)awakeFromNib {
     PreferenceInfo *info;
+    __weak __typeof(self) weakSelf = self;
 
     info = [self defineControl:_profileNameField
                            key:KEY_NAME
                           type:kPreferenceInfoTypeStringTextField];
+    __weak PreferenceInfo *weakInfo = info;
     info.customSettingChangedHandler = ^(id sender) {
-        [_profileDelegate profilesGeneralPreferencesNameWillChange];
-        [self setString:_profileNameField.stringValue forKey:info.key];
-        [_profileDelegate profilesGeneralPreferencesNameDidChange];
+        __strong __typeof(weakSelf) strongSelf = self;
+        if (!strongSelf) {
+            return;
+        }
+        [strongSelf->_profileDelegate profilesGeneralPreferencesNameWillChange];
+        assert(weakInfo);
+        [strongSelf setString:strongSelf->_profileNameField.stringValue forKey:weakInfo.key];
+        [strongSelf->_profileDelegate profilesGeneralPreferencesNameDidChange];
     };
-    info.willChange = ^() { [_profileDelegate profilesGeneralPreferencesNameWillChange]; };
+    info.willChange = ^() {
+        __strong __typeof(weakSelf) strongSelf = self;
+        if (!strongSelf) {
+            return;
+        }
+        [strongSelf->_profileDelegate profilesGeneralPreferencesNameWillChange];
+    };
 
-    [_profileNameFieldForEditCurrentSession retain];
     info = [self defineControl:_profileNameFieldForEditCurrentSession
                            key:KEY_NAME
                           type:kPreferenceInfoTypeStringTextField];
-    info.willChange = ^() { [_profileDelegate profilesGeneralPreferencesNameWillChange]; };
+    info.willChange = ^() {
+        __strong __typeof(weakSelf) strongSelf = self;
+        if (!strongSelf) {
+            return;
+        }
+        [strongSelf->_profileDelegate profilesGeneralPreferencesNameWillChange];
+    };
     info.controlTextDidEndEditing = ^(NSNotification *notification) {
-        [_profileDelegate profilesGeneralPreferencesNameDidEndEditing];
+        __strong __typeof(weakSelf) strongSelf = self;
+        if (!strongSelf) {
+            return;
+        }
+        [strongSelf->_profileDelegate profilesGeneralPreferencesNameDidEndEditing];
     };
 
     [self defineControl:_profileShortcut
@@ -120,7 +140,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                            key:KEY_COMMAND_LINE
                           type:kPreferenceInfoTypeStringTextField];
     info.shouldBeEnabled = ^BOOL {
-        return [_commandType.selectedCell tag] == kCommandTypeCustomTag;
+        __strong __typeof(weakSelf) strongSelf = self;
+        if (!strongSelf) {
+            return NO;
+        }
+        return [strongSelf->_commandType.selectedCell tag] == kCommandTypeCustomTag;
     };
 
     [self defineControl:_sendTextAtStart
@@ -262,11 +286,16 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (IBAction)showAdvancedWorkingDirConfigPanel:(id)sender {
     [_advancedWorkingDirWindowController window];  // force the window to load
     _advancedWorkingDirWindowController.profile = [self.delegate profilePreferencesCurrentProfile];
+    __weak typeof(self) weakSelf = self;
     [self.view.window beginSheet:_advancedWorkingDirWindowController.window completionHandler:^(NSModalResponse returnCode) {
-        for (NSString *key in [_advancedWorkingDirWindowController allKeys]) {
-            [self setString:_advancedWorkingDirWindowController.profile[key] forKey:key];
+        __strong __typeof(weakSelf) strongSelf = self;
+        if (!strongSelf) {
+            return;
         }
-        [_advancedWorkingDirWindowController.window close];
+        for (NSString *key in [strongSelf->_advancedWorkingDirWindowController allKeys]) {
+            [strongSelf setString:strongSelf->_advancedWorkingDirWindowController.profile[key] forKey:key];
+        }
+        [strongSelf->_advancedWorkingDirWindowController.window close];
     }];
 }
 
@@ -437,7 +466,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     NSMutableArray *result = [NSMutableArray array];
     for (NSString *aTag in allTags) {
         if ([aTag hasPrefix:substring]) {
-            [result addObject:[aTag retain]];
+            [result addObject:aTag];
         }
     }
     return result;

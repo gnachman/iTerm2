@@ -109,39 +109,44 @@ NSString *const kPreferencePanelWillCloseNotification = @"kPreferencePanelWillCl
 static PreferencePanel *gSharedPreferencePanel;
 static PreferencePanel *gSessionsPreferencePanel;
 
+@implementation iTermPrefsPanel
+
+@end
+
 @interface PreferencePanel() <NSTabViewDelegate>
 
 @end
+
 @implementation PreferencePanel {
     ProfileModel *_profileModel;
     BOOL _editCurrentSessionMode;
-    __weak IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
-    __weak IBOutlet AppearancePreferencesViewController *_appearancePreferencesViewController;
-    __weak IBOutlet KeysPreferencesViewController *_keysViewController;
-    __weak IBOutlet ProfilePreferencesViewController *_profilesViewController;
-    __weak IBOutlet PointerPreferencesViewController *_pointerViewController;
-    __weak IBOutlet iTermAdvancedSettingsViewController *_advancedViewController;
+    IBOutlet GeneralPreferencesViewController *_generalPreferencesViewController;
+    IBOutlet AppearancePreferencesViewController *_appearancePreferencesViewController;
+    IBOutlet KeysPreferencesViewController *_keysViewController;
+    IBOutlet ProfilePreferencesViewController *_profilesViewController;
+    IBOutlet PointerPreferencesViewController *_pointerViewController;
+    IBOutlet iTermAdvancedSettingsViewController *_advancedViewController;
 
-    __weak IBOutlet NSToolbar *_toolbar;
-    __weak IBOutlet NSTabView *_tabView;
-    __weak IBOutlet NSToolbarItem *_globalToolbarItem;
-    __weak IBOutlet NSTabViewItem *_globalTabViewItem;
-    __weak IBOutlet NSToolbarItem *_appearanceToolbarItem;
-    __weak IBOutlet NSTabViewItem *_appearanceTabViewItem;
-    __weak IBOutlet NSToolbarItem *_keyboardToolbarItem;
-    __weak IBOutlet NSToolbarItem *_arrangementsToolbarItem;
-    __weak IBOutlet NSTabViewItem *_keyboardTabViewItem;
-    __weak IBOutlet NSTabViewItem *_arrangementsTabViewItem;
-    __weak IBOutlet NSToolbarItem *_bookmarksToolbarItem;
-    __weak IBOutlet NSTabViewItem *_bookmarksTabViewItem;
-    __weak IBOutlet NSToolbarItem *_mouseToolbarItem;
-    __weak IBOutlet NSTabViewItem *_mouseTabViewItem;
-    __weak IBOutlet NSToolbarItem *_advancedToolbarItem;
-    __weak IBOutlet NSTabViewItem *_advancedTabViewItem;
+    IBOutlet NSToolbar *_toolbar;
+    IBOutlet NSTabView *_tabView;
+    IBOutlet NSToolbarItem *_globalToolbarItem;
+    IBOutlet NSTabViewItem *_globalTabViewItem;
+    IBOutlet NSToolbarItem *_appearanceToolbarItem;
+    IBOutlet NSTabViewItem *_appearanceTabViewItem;
+    IBOutlet NSToolbarItem *_keyboardToolbarItem;
+    IBOutlet NSToolbarItem *_arrangementsToolbarItem;
+    IBOutlet NSTabViewItem *_keyboardTabViewItem;
+    IBOutlet NSTabViewItem *_arrangementsTabViewItem;
+    IBOutlet NSToolbarItem *_bookmarksToolbarItem;
+    IBOutlet NSTabViewItem *_bookmarksTabViewItem;
+    IBOutlet NSToolbarItem *_mouseToolbarItem;
+    IBOutlet NSTabViewItem *_mouseTabViewItem;
+    IBOutlet NSToolbarItem *_advancedToolbarItem;
+    IBOutlet NSTabViewItem *_advancedTabViewItem;
 
     // This class is not well named. It is a view controller for the window
     // arrangements tab. It's also a singleton :(
-    __weak IBOutlet WindowArrangements *arrangements_;
+    IBOutlet WindowArrangements *arrangements_;
     NSSize _standardSize;
 }
 
@@ -298,18 +303,14 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 - (void)windowWillClose:(NSNotification *)aNotification {
     [self.window saveFrameUsingName:self.nameForFrame];
-
-    [[self retain] autorelease];
-
+    __typeof(self) strongSelf = self;
     if (self == gSharedPreferencePanel) {
-        [gSharedPreferencePanel autorelease];
         gSharedPreferencePanel = nil;
     } else if (self == gSessionsPreferencePanel) {
-        [gSessionsPreferencePanel autorelease];
         gSessionsPreferencePanel = nil;
     }
 
-    [self postWillCloseNotification];
+    [strongSelf postWillCloseNotification];
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
 

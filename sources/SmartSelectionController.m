@@ -27,12 +27,12 @@ NSString *const kVeryHighPrecision = @"very_high";
 static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 
 @implementation SmartSelectionController {
-    __weak IBOutlet NSTableView *tableView_;
-    __weak IBOutlet NSTableColumn *regexColumn_;
-    __weak IBOutlet NSTableColumn *notesColumn_;
-    __weak IBOutlet NSTableColumn *precisionColumn_;
-    __weak IBOutlet ContextMenuActionPrefsController *contextMenuPrefsController_;
-    __weak IBOutlet NSButton *logDebugInfo_;
+    IBOutlet NSTableView *tableView_;
+    IBOutlet NSTableColumn *regexColumn_;
+    IBOutlet NSTableColumn *notesColumn_;
+    IBOutlet NSTableColumn *precisionColumn_;
+    IBOutlet ContextMenuActionPrefsController *contextMenuPrefsController_;
+    IBOutlet NSButton *logDebugInfo_;
 }
 
 @synthesize guid = guid_;
@@ -48,10 +48,8 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 }
 
 - (void)dealloc {
-    [guid_ release];
     tableView_.delegate = nil;
     tableView_.dataSource = nil;
-    [super dealloc];
 }
 
 - (void)awakeFromNib {
@@ -65,7 +63,7 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
                                                                                ofType:@"plist"];
         NSDictionary* rulesDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
         ITCriticalError(rulesDict != nil, @"Failed to parse SmartSelectionRules: %@", [NSString stringWithContentsOfFile:plistFile encoding:NSUTF8StringEncoding error:nil]);
-        rulesArray = [[rulesDict objectForKey:@"Rules"] retain];
+        rulesArray = [rulesDict objectForKey:@"Rules"];
     }
     return rulesArray;
 }
@@ -123,7 +121,7 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 }
 
 - (void)setRule:(NSDictionary *)rule forRow:(NSInteger)rowIndex {
-    NSMutableArray *rules = [[self.rules mutableCopy] autorelease];
+    NSMutableArray *rules = [self.rules mutableCopy];
     if (rowIndex < 0) {
         assert(rule);
         [rules addObject:rule];
@@ -165,7 +163,6 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 }
 
 - (void)setGuid:(NSString *)guid {
-    [guid_ autorelease];
     guid_ = [guid copy];
     [tableView_ reloadData];
 }
@@ -217,7 +214,7 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
    forTableColumn:(NSTableColumn
                    *)aTableColumn
               row:(NSInteger)rowIndex {
-    NSMutableDictionary *rule = [[self.rules[rowIndex] mutableCopy] autorelease];
+    NSMutableDictionary *rule = [self.rules[rowIndex] mutableCopy];
 
     if (aTableColumn == regexColumn_) {
         rule[kRegexKey] = anObject;
@@ -246,7 +243,7 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
                   row:(NSInteger)row {
     if (tableColumn == precisionColumn_) {
         NSPopUpButtonCell *cell =
-            [[[NSPopUpButtonCell alloc] initTextCell:[self displayNameForPrecision:kVeryLowPrecision] pullsDown:NO] autorelease];
+            [[NSPopUpButtonCell alloc] initTextCell:[self displayNameForPrecision:kVeryLowPrecision] pullsDown:NO];
         for (NSString *precisionKey in [SmartSelectionController precisionKeys]) {
             [cell addItemWithTitle:[self displayNameForPrecision:precisionKey]];
         }
@@ -255,7 +252,7 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 
         return cell;
     } else if (tableColumn == regexColumn_) {
-        NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@"regex"] autorelease];
+        NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@"regex"];
         [cell setPlaceholderString:@"Enter Regular Expression"];
         [cell setEditable:YES];
         [cell setTruncatesLastVisibleLine:YES];
@@ -263,7 +260,7 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 
         return cell;
     } else if (tableColumn == notesColumn_) {
-        NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@"notes"] autorelease];
+        NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@"notes"];
         [cell setPlaceholderString:@"Enter Description"];
         [cell setTruncatesLastVisibleLine:YES];
         [cell setLineBreakMode:NSLineBreakByTruncatingTail];
@@ -300,8 +297,12 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
     [contextMenuPrefsController_ setActions:actions];
     [contextMenuPrefsController_ window];
     [contextMenuPrefsController_ setDelegate:self];
+    __weak __typeof(self) weakSelf = self;
     [self.window beginSheet:contextMenuPrefsController_.window completionHandler:^(NSModalResponse returnCode) {
-        [contextMenuPrefsController_.window close];
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (strongSelf) {
+            [strongSelf->contextMenuPrefsController_.window close];
+        }
     }];
 }
 
@@ -313,7 +314,7 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 
 - (void)contextMenuActionsChanged:(NSArray *)newActions {
     int rowIndex = [tableView_ selectedRow];
-    NSMutableDictionary *rule = [[[self.rules objectAtIndex:rowIndex] mutableCopy] autorelease];
+    NSMutableDictionary *rule = [[self.rules objectAtIndex:rowIndex] mutableCopy];
     [rule setObject:newActions forKey:kActionsKey];
     [self setRule:rule forRow:rowIndex];
     [contextMenuPrefsController_.window.sheetParent endSheet:contextMenuPrefsController_.window];

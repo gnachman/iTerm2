@@ -24,7 +24,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
     NSDictionary *aDict = [NSDictionary dictionaryWithContentsOfFile:filename];
     if (!aDict) {
         DLog(@"Failed to parse dictionary");
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Import Failed.";
         alert.informativeText = @"The selected file could not be read or did not contain a valid color scheme.";
         [alert addButtonWithTitle:@"OK"];
@@ -35,7 +35,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
         NSString *dup = [self nameOfPresetsEqualTo:aDict];
         if (dup) {
             DLog(@"Is a duplicate preset");
-            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Add duplicate color preset?";
             alert.informativeText = [NSString stringWithFormat:@"The color preset “%@” is the same as the preset you're trying to add. Really add it?", dup];
             [alert addButtonWithTitle:@"Cancel"];

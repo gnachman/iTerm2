@@ -13,41 +13,35 @@
 @end
 
 @implementation iTermHotkeyPreferencesWindowController {
-    __weak IBOutlet iTermShortcutInputView *_hotKey;
-    __weak IBOutlet NSButton *_ok;
-    __weak IBOutlet NSTextField *_explanation;
-    __weak IBOutlet NSTextField *_duplicateWarning;
-    __weak IBOutlet NSTextField *_duplicateWarningForModifierActivation;
+    IBOutlet iTermShortcutInputView *_hotKey;
+    IBOutlet NSButton *_ok;
+    IBOutlet NSTextField *_explanation;
+    IBOutlet NSTextField *_duplicateWarning;
+    IBOutlet NSTextField *_duplicateWarningForModifierActivation;
 
-    __weak IBOutlet NSButton *_activateWithModifier;
-    __weak IBOutlet NSPopUpButton *_modifierActivation;
+    IBOutlet NSButton *_activateWithModifier;
+    IBOutlet NSPopUpButton *_modifierActivation;
 
     // Check boxes
-    __weak IBOutlet NSButton *_pinned;
-    __weak IBOutlet NSButton *_showAutoHiddenWindowOnAppActivation;
-    __weak IBOutlet NSButton *_animate;
-    __weak IBOutlet NSButton *_floats;
+    IBOutlet NSButton *_pinned;
+    IBOutlet NSButton *_showAutoHiddenWindowOnAppActivation;
+    IBOutlet NSButton *_animate;
+    IBOutlet NSButton *_floats;
 
     // Radio buttons
-    __weak IBOutlet NSButton *_doNotShowOnDockClick;
-    __weak IBOutlet NSButton *_alwaysShowOnDockClick;
-    __weak IBOutlet NSButton *_showIfNoWindowsOpenOnDockClick;
+    IBOutlet NSButton *_doNotShowOnDockClick;
+    IBOutlet NSButton *_alwaysShowOnDockClick;
+    IBOutlet NSButton *_showIfNoWindowsOpenOnDockClick;
 
-    __weak IBOutlet NSButton *_editAdditionalButton;
-    __weak IBOutlet NSButton *_removeAdditional;
-    __weak IBOutlet NSPanel *_editAdditionalWindow;
-    __weak IBOutlet NSTableView *_tableView;
+    IBOutlet NSButton *_editAdditionalButton;
+    IBOutlet NSButton *_removeAdditional;
+    IBOutlet NSPanel *_editAdditionalWindow;
+    IBOutlet NSTableView *_tableView;
     NSMutableArray<iTermShortcut *> *_mutableShortcuts;  // Model for _tableView. Only nonnil while additional shortcuts sheet is open.
 }
 
 - (instancetype)init {
     return [super initWithWindowNibName:NSStringFromClass([self class])];
-}
-
-- (void)dealloc {
-    [_model release];
-    [_pendingExplanation release];
-    [super dealloc];
 }
 
 - (void)awakeFromNib {
@@ -61,8 +55,7 @@
 
 - (void)setModel:(iTermHotkeyPreferencesModel *)model {
     [self window];
-    [_model autorelease];
-    _model = [model retain];
+    _model = model;
     [self modelDidChange];
     [self updateViewsEnabled];
 }
@@ -163,18 +156,22 @@
 - (IBAction)editAdditionalHotKeys:(id)sender {
     _mutableShortcuts = [self.model.alternateShortcuts mutableCopy];
     [_tableView reloadData];
+    __weak __typeof(self) weakSelf = self;
     [self.window beginSheet:_editAdditionalWindow completionHandler:^(NSModalResponse returnCode) {
-        self.model.alternateShortcuts = [_mutableShortcuts filteredArrayUsingBlock:^BOOL(iTermShortcut *shortcut) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        self.model.alternateShortcuts = [strongSelf->_mutableShortcuts filteredArrayUsingBlock:^BOOL(iTermShortcut *shortcut) {
             return shortcut.charactersIgnoringModifiers.length > 0;
         }];
-        [_mutableShortcuts release];
-        _mutableShortcuts = nil;
+        strongSelf->_mutableShortcuts = nil;
     }];
     [self updateAdditionalHotKeysViews];
 }
 
 - (IBAction)addAdditionalShortcut:(id)sender {
-    [_mutableShortcuts addObject:[[[iTermShortcut alloc] init] autorelease]];
+    [_mutableShortcuts addObject:[[iTermShortcut alloc] init]];
     [_tableView reloadData];
     [self updateAdditionalHotKeysViews];
 }

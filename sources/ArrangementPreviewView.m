@@ -11,15 +11,7 @@
 
 @implementation ArrangementPreviewView
 
-- (void)dealloc
-{
-    [arrangement_ release];
-    [super dealloc];
-}
-
-- (void)setArrangement:(NSArray*)arrangement
-{
-    [arrangement_ autorelease];
+- (void)setArrangement:(NSArray*)arrangement {
     arrangement_ = [arrangement copy];
 }
 

@@ -35,80 +35,80 @@ enum {
 
 @implementation GeneralPreferencesViewController {
     // open bookmarks when iterm starts
-    __weak IBOutlet NSButton *_openBookmark;
+    IBOutlet NSButton *_openBookmark;
 
     // Open saved window arrangement at startup
-    __weak IBOutlet NSPopUpButton *_openWindowsAtStartup;
-    __weak IBOutlet NSMenuItem *_openDefaultWindowArrangementItem;
+    IBOutlet NSPopUpButton *_openWindowsAtStartup;
+    IBOutlet NSMenuItem *_openDefaultWindowArrangementItem;
 
     // Quit when all windows are closed
-    __weak IBOutlet NSButton *_quitWhenAllWindowsClosed;
+    IBOutlet NSButton *_quitWhenAllWindowsClosed;
 
     // Confirm closing multiple sessions
-    __weak IBOutlet id _confirmClosingMultipleSessions;
+    IBOutlet id _confirmClosingMultipleSessions;
 
     // Warn when quitting
-    __weak IBOutlet id _promptOnQuit;
+    IBOutlet id _promptOnQuit;
 
     // Instant replay memory usage.
-    __weak IBOutlet NSTextField *_irMemory;
+    IBOutlet NSTextField *_irMemory;
 
     // Save copy paste history
-    __weak IBOutlet NSButton *_savePasteHistory;
+    IBOutlet NSButton *_savePasteHistory;
 
     // Use GPU?
-    __weak IBOutlet NSButton *_gpuRendering;
+    IBOutlet NSButton *_gpuRendering;
 
     // Enable bonjour
-    __weak IBOutlet NSButton *_enableBonjour;
+    IBOutlet NSButton *_enableBonjour;
 
     // Check for updates automatically
-    __weak IBOutlet NSButton *_checkUpdate;
+    IBOutlet NSButton *_checkUpdate;
 
     // Prompt for test-release updates
-    __weak IBOutlet NSButton *_checkTestRelease;
+    IBOutlet NSButton *_checkTestRelease;
 
     // Load prefs from custom folder
-    __weak IBOutlet NSButton *_loadPrefsFromCustomFolder;  // Should load?
-    __weak IBOutlet iTermCustomFolderTextFieldCell *_customFolderTextFieldCell;
-    __weak IBOutlet NSTextField *_prefsCustomFolder;  // Path or URL text field
-    __weak IBOutlet NSImageView *_prefsDirWarning;  // Image shown when path is not writable
-    __weak IBOutlet NSButton *_browseCustomFolder;  // Push button to open file browser
-    __weak IBOutlet NSButton *_pushToCustomFolder;  // Push button to copy local to remote
-    __weak IBOutlet NSButton *_autoSaveOnQuit;  // Save settings to folder on quit
+    IBOutlet NSButton *_loadPrefsFromCustomFolder;  // Should load?
+    IBOutlet iTermCustomFolderTextFieldCell *_customFolderTextFieldCell;
+    IBOutlet NSTextField *_prefsCustomFolder;  // Path or URL text field
+    IBOutlet NSImageView *_prefsDirWarning;  // Image shown when path is not writable
+    IBOutlet NSButton *_browseCustomFolder;  // Push button to open file browser
+    IBOutlet NSButton *_pushToCustomFolder;  // Push button to copy local to remote
+    IBOutlet NSButton *_autoSaveOnQuit;  // Save settings to folder on quit
 
     // Copy to clipboard on selection
-    __weak IBOutlet NSButton *_selectionCopiesText;
+    IBOutlet NSButton *_selectionCopiesText;
 
     // Copy includes trailing newline
-    __weak IBOutlet NSButton *_copyLastNewline;
+    IBOutlet NSButton *_copyLastNewline;
 
     // Allow clipboard access by terminal applications
-    __weak IBOutlet NSButton *_allowClipboardAccessFromTerminal;
+    IBOutlet NSButton *_allowClipboardAccessFromTerminal;
 
     // Characters considered part of word
-    __weak IBOutlet NSTextField *_wordChars;
+    IBOutlet NSTextField *_wordChars;
 
     // Smart window placement
-    __weak IBOutlet NSButton *_smartPlacement;
+    IBOutlet NSButton *_smartPlacement;
 
     // Adjust window size when changing font size
-    __weak IBOutlet NSButton *_adjustWindowForFontSizeChange;
+    IBOutlet NSButton *_adjustWindowForFontSizeChange;
 
     // Zoom vertically only
-    __weak IBOutlet NSButton *_maxVertically;
+    IBOutlet NSButton *_maxVertically;
 
     // Lion-style fullscreen
-    __weak IBOutlet NSButton *_lionStyleFullscreen;
+    IBOutlet NSButton *_lionStyleFullscreen;
 
     // Open tmux windows in [windows, tabs]
-    __weak IBOutlet NSPopUpButton *_openTmuxWindows;
+    IBOutlet NSPopUpButton *_openTmuxWindows;
 
     // Open tmux dashboard if there are more than N windows
-    __weak IBOutlet NSTextField *_tmuxDashboardLimit;
+    IBOutlet NSTextField *_tmuxDashboardLimit;
 
     // Hide the tmux client session
-    __weak IBOutlet NSButton *_autoHideTmuxClientSession;
+    IBOutlet NSButton *_autoHideTmuxClientSession;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -126,6 +126,7 @@ enum {
 - (void)awakeFromNib {
     PreferenceInfo *info;
 
+    __weak __typeof(self) weakSelf = self;
     [self defineControl:_openBookmark
                     key:kPreferenceKeyOpenBookmark
                    type:kPreferenceInfoTypeCheckbox];
@@ -134,30 +135,38 @@ enum {
                     key:kPreferenceKeyOpenArrangementAtStartup
                    type:kPreferenceInfoTypeCheckbox
          settingChanged:^(id sender) {
-             switch ([_openWindowsAtStartup selectedTag]) {
+             __strong __typeof(weakSelf) strongSelf = weakSelf;
+             if (!strongSelf) {
+                 return;
+             }
+             switch ([strongSelf->_openWindowsAtStartup selectedTag]) {
                  case kUseSystemWindowRestorationSettingTag:
-                     [self setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
-                     [self setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                     [strongSelf setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
+                     [strongSelf setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
                      break;
 
                  case kOpenDefaultWindowArrangementTag:
-                     [self setBool:YES forKey:kPreferenceKeyOpenArrangementAtStartup];
-                     [self setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                     [strongSelf setBool:YES forKey:kPreferenceKeyOpenArrangementAtStartup];
+                     [strongSelf setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
                      break;
 
                  case kDontOpenAnyWindowsTag:
-                     [self setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
-                     [self setBool:YES forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                     [strongSelf setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
+                     [strongSelf setBool:YES forKey:kPreferenceKeyOpenNoWindowsAtStartup];
                      break;
              }
          } update:^BOOL{
-             if ([self boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
-                 [_openWindowsAtStartup selectItemWithTag:kDontOpenAnyWindowsTag];
+             __strong __typeof(weakSelf) strongSelf = weakSelf;
+             if (!strongSelf) {
+                 return NO;
+             }
+             if ([strongSelf boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+                 [strongSelf->_openWindowsAtStartup selectItemWithTag:kDontOpenAnyWindowsTag];
              } else if ([WindowArrangements count] &&
                         [self boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
-                 [_openWindowsAtStartup selectItemWithTag:kOpenDefaultWindowArrangementTag];
+                 [strongSelf->_openWindowsAtStartup selectItemWithTag:kOpenDefaultWindowArrangementTag];
              } else {
-                 [_openWindowsAtStartup selectItemWithTag:kUseSystemWindowRestorationSettingTag];
+                 [strongSelf->_openWindowsAtStartup selectItemWithTag:kUseSystemWindowRestorationSettingTag];
              }
              return YES;
          }];
@@ -219,9 +228,13 @@ enum {
                           type:kPreferenceInfoTypeCheckbox];
     // Called when user interacts with control
     info.customSettingChangedHandler = ^(id sender) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NoSyncNeverRemindPrefsChangesLostForFile"];
         NSNumber *value;
-        if ([_autoSaveOnQuit state] == NSOnState) {
+        if ([strongSelf->_autoSaveOnQuit state] == NSOnState) {
             value = @0;
         } else {
             value = @1;
@@ -233,6 +246,10 @@ enum {
     // Called on programmatic change (e.g., selecting a different profile. Returns YES to avoid
     // normal code path.
     info.onUpdate = ^BOOL () {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return NO;
+        }
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
         NSCellStateValue state;
         if ([userDefaults boolForKey:@"NoSyncNeverRemindPrefsChangesLostForFile"] &&
@@ -241,7 +258,7 @@ enum {
         } else {
             state = NSOffState;
         }
-        _autoSaveOnQuit.state = state;
+        strongSelf->_autoSaveOnQuit.state = state;
         return YES;
     };
     info.onUpdate();
@@ -296,7 +313,7 @@ enum {
                            key:kPreferenceKeyOpenTmuxWindowsIn
                           type:kPreferenceInfoTypePopup];
     // This is how it was done before the great refactoring, but I don't see why it's needed.
-    info.onChange = ^() { [self postRefreshNotification]; };
+    info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_tmuxDashboardLimit
                            key:kPreferenceKeyTmuxDashboardLimit
@@ -361,7 +378,7 @@ enum {
             if ([self choosePrefsCustomFolder]) {
                 // User didn't hit cancel; if he chose a writable directory, ask if he wants to write to it.
                 if ([[iTermRemotePreferences sharedInstance] remoteLocationIsValid]) {
-                    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+                    NSAlert *alert = [[NSAlert alloc] init];
                     alert.messageText = @"Copy local preferences to custom folder now?";
                     [alert addButtonWithTitle:@"Copy"];
                     [alert addButtonWithTitle:@"Don’t Copy"];

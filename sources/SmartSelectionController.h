@@ -40,8 +40,8 @@ extern NSString *const kVeryHighPrecision;
 @interface SmartSelectionController : NSWindowController <ContextMenuActionPrefsDelegate>
 
 @property (nonatomic, copy) NSString *guid;
-@property (nonatomic, assign) BOOL hasSelection;
-@property (nonatomic, assign) id<SmartSelectionDelegate> delegate;
+@property (nonatomic) BOOL hasSelection;
+@property (nonatomic, weak) id<SmartSelectionDelegate> delegate;
 @property (nonatomic, readonly) NSArray<NSDictionary *> *rules;
 
 + (BOOL)logDebugInfo;

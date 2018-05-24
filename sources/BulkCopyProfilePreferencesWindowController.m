@@ -25,16 +25,16 @@ typedef enum {
 
 @implementation BulkCopyProfilePreferencesWindowController {
     // Copy Profile Settings...
-    __weak IBOutlet NSTextField *_bulkCopyLabel;
-    __weak IBOutlet NSButton *_copyColors;
-    __weak IBOutlet NSButton *_copyText;
-    __weak IBOutlet NSButton *_copyTerminal;
-    __weak IBOutlet NSButton *_copyWindow;
-    __weak IBOutlet NSButton *_copyKeyboard;
-    __weak IBOutlet NSButton *_copySession;
-    __weak IBOutlet NSButton *_copyAdvanced;
-    __weak IBOutlet ProfileListView *_copyTo;
-    __weak IBOutlet NSButton *_copyButton;
+    IBOutlet NSTextField *_bulkCopyLabel;
+    IBOutlet NSButton *_copyColors;
+    IBOutlet NSButton *_copyText;
+    IBOutlet NSButton *_copyTerminal;
+    IBOutlet NSButton *_copyWindow;
+    IBOutlet NSButton *_copyKeyboard;
+    IBOutlet NSButton *_copySession;
+    IBOutlet NSButton *_copyAdvanced;
+    IBOutlet ProfileListView *_copyTo;
+    IBOutlet NSButton *_copyButton;
 }
 
 - (instancetype)init {
@@ -43,15 +43,6 @@ typedef enum {
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_sourceGuid release];
-    [_keysForColors release];
-    [_keysForText release];
-    [_keysForWindow release];
-    [_keysForTerminal release];
-    [_keysForSession release];
-    [_keysForKeyboard release];
-    [_keysForAdvanced release];
-    [super dealloc];
 }
 
 - (void)awakeFromNib {
@@ -64,7 +55,6 @@ typedef enum {
 }
 
 - (void)setSourceGuid:(NSString *)sourceGuid {
-    [_sourceGuid autorelease];
     _sourceGuid = [sourceGuid copy];
     [self updateLabel];
 }
@@ -138,7 +128,7 @@ typedef enum {
 
     Profile* dest = [profileModel bookmarkWithGuid:destGuid];
     Profile* src = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-    NSMutableDictionary* newDict = [[[NSMutableDictionary alloc] initWithDictionary:dest] autorelease];
+    NSMutableDictionary* newDict = [dest mutableCopy];
     NSArray *keys = nil;
 
     switch (attributes) {

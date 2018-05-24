@@ -63,6 +63,9 @@ extern NSString *const kReloadAllProfiles;
 
 void LoadPrefsFromCustomFolder(void);
 
+@interface iTermPrefsPanel : NSPanel
+@end
+
 @interface PreferencePanel : NSWindowController <
     ProfileListViewDelegate,
     NSTokenFieldDelegate,

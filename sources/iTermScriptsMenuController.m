@@ -146,6 +146,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
+
 - (void)removeInstallMenuItem {
     if (_installRuntimeMenuItem) {
         [_scriptsMenu removeItem:_installRuntimeMenuItem];

@@ -56,60 +56,63 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 @end
 
 @implementation ProfilePreferencesViewController {
-    __weak IBOutlet ProfileListView *_profilesListView;
+    IBOutlet ProfileListView *_profilesListView;
 
     // Other actions… under list of profiles in prefs>profiles.
-    __weak IBOutlet NSPopUpButton *_otherActionsPopup;
+    IBOutlet NSPopUpButton *_otherActionsPopup;
 
     // Tab view for profiles (general/colors/text/window/terminal/session/keys/advanced)
-    __weak IBOutlet NSTabView *_tabView;
+    IBOutlet NSTabView *_tabView;
 
     // Minus under table view to delete the selected profile.
-    __weak IBOutlet NSButton *_removeProfileButton;
+    IBOutlet NSButton *_removeProfileButton;
 
     // Plus under table view to add a new profile.
-    __weak IBOutlet NSButton *_addProfileButton;
+    IBOutlet NSButton *_addProfileButton;
 
     // < Tags button
-    __weak IBOutlet NSButton *_toggleTagsButton;
+    IBOutlet NSButton *_toggleTagsButton;
 
     // Copy current (divorced) settings to profile.
-    __weak IBOutlet NSButton *_copyToProfileButton;
+    IBOutlet NSButton *_copyToProfileButton;
 
     // General tab view controller
-    __weak IBOutlet ProfilesGeneralPreferencesViewController *_generalViewController;
+    IBOutlet ProfilesGeneralPreferencesViewController *_generalViewController;
 
-    __weak IBOutlet NSTabViewItem *_generalTab;
-    __weak IBOutlet NSTabViewItem *_colorsTab;
-    __weak IBOutlet NSTabViewItem *_textTab;
-    __weak IBOutlet NSTabViewItem *_windowTab;
-    __weak IBOutlet NSTabViewItem *_terminalTab;
-    __weak IBOutlet NSTabViewItem *_sessionTab;
-    __weak IBOutlet NSTabViewItem *_keysTab;
-    __weak IBOutlet NSTabViewItem *_advancedTab;
+    IBOutlet NSTabViewItem *_generalTab;
+    IBOutlet NSTabViewItem *_colorsTab;
+    IBOutlet NSTabViewItem *_textTab;
+    IBOutlet NSTabViewItem *_windowTab;
+    IBOutlet NSTabViewItem *_terminalTab;
+    IBOutlet NSTabViewItem *_sessionTab;
+    IBOutlet NSTabViewItem *_keysTab;
+    IBOutlet NSTabViewItem *_advancedTab;
 
     // Colors tab view controller
-    __weak IBOutlet ProfilesColorsPreferencesViewController *_colorsViewController;
+    IBOutlet ProfilesColorsPreferencesViewController *_colorsViewController;
 
     // Text tab view controller
-    __weak IBOutlet ProfilesTextPreferencesViewController *_textViewController;
+    IBOutlet ProfilesTextPreferencesViewController *_textViewController;
 
     // Window tab view controller
-    __weak IBOutlet ProfilesWindowPreferencesViewController *_windowViewController;
+    IBOutlet ProfilesWindowPreferencesViewController *_windowViewController;
 
     // Terminal tab view controller
-    __weak IBOutlet ProfilesTerminalPreferencesViewController *_terminalViewController;
+    IBOutlet ProfilesTerminalPreferencesViewController *_terminalViewController;
 
     // Sessions tab view controller
-    __weak IBOutlet ProfilesSessionPreferencesViewController *_sessionViewController;
+    IBOutlet ProfilesSessionPreferencesViewController *_sessionViewController;
 
     // Keys tab view controller
-    __weak IBOutlet ProfilesKeysPreferencesViewController *_keysViewController;
+    IBOutlet ProfilesKeysPreferencesViewController *_keysViewController;
 
     // Advanced tab view controller
-    __weak IBOutlet ProfilesAdvancedPreferencesViewController *_advancedViewController;
+    IBOutlet ProfilesAdvancedPreferencesViewController *_advancedViewController;
 
     CGFloat _minWidth;
+
+    BulkCopyProfilePreferencesWindowController *_bulkCopyController;
+    NSRect _desiredFrame;
 }
 
 - (instancetype)init {
@@ -134,7 +137,6 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     _profilesListView.delegate = nil;
-    [super dealloc];
 }
 
 #pragma mark - iTermPreferencesBaseViewController
@@ -188,17 +190,17 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
             // If the view is too tall, wrap it in a scroll view.
             NSRect theFrame = NSMakeRect(0, 0, view.frame.size.width, kMaxHeight);
             iTermSizeRememberingView *sizeRememberingView =
-            [[[iTermSizeRememberingView alloc] initWithFrame:theFrame] autorelease];
+            [[iTermSizeRememberingView alloc] initWithFrame:theFrame];
             sizeRememberingView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
             sizeRememberingView.autoresizesSubviews = YES;
-            NSScrollView *scrollView = [[[NSScrollView alloc] initWithFrame:theFrame] autorelease];
+            NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:theFrame];
             scrollView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
             scrollView.drawsBackground = NO;
             scrollView.hasVerticalScroller = YES;
             scrollView.hasHorizontalScroller = NO;
 
             iTermFlippedView *flippedView =
-                [[[iTermFlippedView alloc] initWithFrame:view.bounds] autorelease];
+                [[iTermFlippedView alloc] initWithFrame:view.bounds];
             [flippedView addSubview:view];
             [flippedView flipSubviews];
 
@@ -445,6 +447,10 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     NSRect frame = [window frameRectForContentRect:NSMakeRect(windowTopLeft.x, 0, contentSize.width, contentSize.height)];
     frame.origin.y = windowTopLeft.y - frame.size.height;
 
+    if (NSEqualRects(_desiredFrame, frame)) {
+        return;
+    }
+    _desiredFrame = frame;
     [window setFrame:frame display:YES animate:animated];
 }
 
@@ -481,7 +487,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 }
 
 - (IBAction)addProfile:(id)sender {
-    NSMutableDictionary* newDict = [[[NSMutableDictionary alloc] init] autorelease];
+    NSMutableDictionary* newDict = [[NSMutableDictionary alloc] init];
     // Copy the default profile's settings in
     Profile* prototype = [[_delegate profilePreferencesModel] defaultBookmark];
     if (!prototype) {
@@ -537,7 +543,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     Profile* destination = [[ProfileModel sharedInstance] bookmarkWithGuid:profileGuid];
     // TODO: changing color presets in cmd-i causes profileGuid=null.
     if (sourceProfile && destination) {
-        NSMutableDictionary* copyOfSource = [[sourceProfile mutableCopy] autorelease];
+        NSMutableDictionary* copyOfSource = [sourceProfile mutableCopy];
         [copyOfSource setObject:profileGuid forKey:KEY_GUID];
         [copyOfSource removeObjectForKey:KEY_ORIGINAL_GUID];
         [copyOfSource setObject:[destination objectForKey:KEY_NAME] forKey:KEY_NAME];
@@ -556,22 +562,26 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 - (IBAction)openCopyBookmarks:(id)sender
 {
     Profile *profile = [self selectedProfile];
-    BulkCopyProfilePreferencesWindowController *bulkCopyController =
+    _bulkCopyController =
         [[BulkCopyProfilePreferencesWindowController alloc] init];
-    bulkCopyController.sourceGuid = profile[KEY_GUID];
+    _bulkCopyController.sourceGuid = profile[KEY_GUID];
 
-    bulkCopyController.keysForColors = [_colorsViewController keysForBulkCopy];
-    bulkCopyController.keysForText = [_textViewController keysForBulkCopy];
-    bulkCopyController.keysForWindow = [_windowViewController keysForBulkCopy];
-    bulkCopyController.keysForTerminal = [_terminalViewController keysForBulkCopy];
-    bulkCopyController.keysForSession = [_sessionViewController keysForBulkCopy];
-    bulkCopyController.keysForKeyboard = [_keysViewController keysForBulkCopy];
-    bulkCopyController.keysForAdvanced = [_advancedViewController keysForBulkCopy];
+    _bulkCopyController.keysForColors = [_colorsViewController keysForBulkCopy];
+    _bulkCopyController.keysForText = [_textViewController keysForBulkCopy];
+    _bulkCopyController.keysForWindow = [_windowViewController keysForBulkCopy];
+    _bulkCopyController.keysForTerminal = [_terminalViewController keysForBulkCopy];
+    _bulkCopyController.keysForSession = [_sessionViewController keysForBulkCopy];
+    _bulkCopyController.keysForKeyboard = [_keysViewController keysForBulkCopy];
+    _bulkCopyController.keysForAdvanced = [_advancedViewController keysForBulkCopy];
 
-    [self.view.window beginSheet:bulkCopyController.window completionHandler:^(NSModalResponse returnCode) {
-        [bulkCopyController.window close];
-        [bulkCopyController autorelease];
-        [[_delegate profilePreferencesModel] flush];
+    __weak __typeof(self) weakSelf = self;
+    [self.view.window beginSheet:_bulkCopyController.window completionHandler:^(NSModalResponse returnCode) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        [strongSelf->_bulkCopyController.window close];
+        [[strongSelf.delegate profilePreferencesModel] flush];
     }];
 }
 
@@ -613,7 +623,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
                                                          error:error];
 
     if (jsonData) {
-        return [[[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding] autorelease];
+        return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
     } else {
         return nil;
     }
@@ -621,7 +631,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
 - (IBAction)copyAllProfilesJson:(id)sender {
     ProfileModel *model = [_delegate profilePreferencesModel];
-    NSMutableString *profiles = [[@"{\n\"Profiles\": [\n" mutableCopy] autorelease];
+    NSMutableString *profiles = [@"{\n\"Profiles\": [\n" mutableCopy];
     BOOL first = YES;
     int errors = 0;
     for (Profile *profile in [model bookmarks]) {
@@ -647,7 +657,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     [pasteboard writeObjects:@[ profiles ]];
 
     if (errors) {
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Error";
         alert.informativeText = @"An error occurred. Check Console.app for details.";
         [alert runModal];
@@ -668,7 +678,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
         [pasteboard clearContents];
         [pasteboard writeObjects:@[ string ]];
     } else {
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Error";
         alert.informativeText = [NSString stringWithFormat:@"Couldn't convert profile to JSON: %@",
                                  [error localizedDescription]];

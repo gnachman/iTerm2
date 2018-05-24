@@ -30,8 +30,8 @@ typedef NS_ENUM(NSInteger, ContextMenuActions) {
 @interface ContextMenuActionPrefsController : NSWindowController <
     NSWindowDelegate, NSTableViewDelegate, NSTableViewDataSource>
 
-@property (nonatomic, assign) id<ContextMenuActionPrefsDelegate> delegate;
-@property (nonatomic, assign) BOOL hasSelection;
+@property (nonatomic, weak) id<ContextMenuActionPrefsDelegate> delegate;
+@property (nonatomic) BOOL hasSelection;
 
 + (ContextMenuActions)actionForActionDict:(NSDictionary *)dict;
 

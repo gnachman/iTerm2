@@ -14,7 +14,7 @@
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
                                     type:(PreferenceInfoType)type
                                  control:(NSControl *)control {
-    PreferenceInfo *info = [[[self alloc] init] autorelease];
+    PreferenceInfo *info = [[self alloc] init];
     info.key = key;
     info.type = type;
     info.control = control;
@@ -37,31 +37,10 @@
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_key release];
-    [_control release];
-    [_shouldBeEnabled release];
-    [_onChange release];
-    [_customSettingChangedHandler release];
-    [_willChange release];
-    [_controlTextDidEndEditing release];
-    [_onUpdate release];
-    [_observer release];
-    [super dealloc];
 }
 
 - (void)setObserver:(void (^)(void))observer {
-    [_observer autorelease];
     _observer = [observer copy];
-}
-
-- (void)clearBlocks {
-    self.shouldBeEnabled = nil;
-    self.observer = nil;
-    self.onChange = nil;
-    self.willChange = nil;
-    self.onUpdate = nil;
-    self.customSettingChangedHandler = nil;
-    self.controlTextDidEndEditing = nil;
 }
 
 #pragma mark - Notifications

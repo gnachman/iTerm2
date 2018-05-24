@@ -23,19 +23,19 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 @end
 
 @implementation ProfilesKeysPreferencesViewController {
-    __weak IBOutlet NSMatrix *_optionKeySends;
-    __weak IBOutlet NSMatrix *_rightOptionKeySends;
-    __weak IBOutlet NSButton *_deleteSendsCtrlHButton;
-    __weak IBOutlet NSButton *_applicationKeypadAllowed;
-    __weak IBOutlet NSButton *_hasHotkey;
-    __weak IBOutlet NSButton *_configureHotKey;
-    __weak IBOutlet NSView *_hotKeyContainerView;
-    __weak IBOutlet iTermKeyMappingViewController *_keyMappingViewController;
+    IBOutlet NSMatrix *_optionKeySends;
+    IBOutlet NSMatrix *_rightOptionKeySends;
+    IBOutlet NSButton *_deleteSendsCtrlHButton;
+    IBOutlet NSButton *_applicationKeypadAllowed;
+    IBOutlet NSButton *_hasHotkey;
+    IBOutlet NSButton *_configureHotKey;
+    IBOutlet NSView *_hotKeyContainerView;
+    IBOutlet iTermKeyMappingViewController *_keyMappingViewController;
+    iTermHotkeyPreferencesWindowController *_hotkeyPanel;
 }
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [super dealloc];
 }
 
 - (void)awakeFromNib {
@@ -43,17 +43,34 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                                              selector:@selector(keyBindingDidChange)
                                                  name:kKeyBindingsChangedNotification
                                                object:nil];
+    __weak __typeof(self) weakSelf = self;
     [self defineControl:_optionKeySends
                     key:KEY_OPTION_KEY_SENDS
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self optionKeySendsDidChangeForControl:sender]; }
-                 update:^BOOL{ [self updateOptionKeySendsForControl:_optionKeySends]; return YES; }];
+                 update:^BOOL{
+                     __strong __typeof(weakSelf) strongSelf = weakSelf;
+                     if (strongSelf) {
+                         [strongSelf updateOptionKeySendsForControl:strongSelf->_optionKeySends];
+                         return YES;
+                     } else {
+                         return NO;
+                     }
+                 }];
 
     [self defineControl:_rightOptionKeySends
                     key:KEY_RIGHT_OPTION_KEY_SENDS
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self optionKeySendsDidChangeForControl:sender]; }
-                 update:^BOOL{ [self updateOptionKeySendsForControl:_rightOptionKeySends]; return YES; }];
+                 update:^BOOL{
+                     __strong __typeof(weakSelf) strongSelf = weakSelf;
+                     if (strongSelf) {
+                         [strongSelf updateOptionKeySendsForControl:strongSelf->_rightOptionKeySends];
+                         return YES;
+                     } else {
+                         return NO;
+                     }
+                 }];
 
     [self defineControl:_applicationKeypadAllowed
                     key:KEY_APPLICATION_KEYPAD_ALLOWED
@@ -70,7 +87,10 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
         }
     };
     info.observer = ^() {
-        _configureHotKey.enabled = _hasHotkey.state == NSOnState;
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (strongSelf) {
+            strongSelf->_configureHotKey.enabled = strongSelf->_hasHotkey.state == NSOnState;
+        }
     };
 
     [self updateDeleteSendsCtrlH];
@@ -101,13 +121,13 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 #pragma mark - Actions
 
 - (IBAction)openHotKeyPanel:(id)sender {
-    iTermHotkeyPreferencesModel *model = [[[iTermHotkeyPreferencesModel alloc] init] autorelease];
+    iTermHotkeyPreferencesModel *model = [[iTermHotkeyPreferencesModel alloc] init];
     model.hasModifierActivation = [self boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER];
     model.modifierActivation = [self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION];
-    model.primaryShortcut = [[[iTermShortcut alloc] initWithKeyCode:[self unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE]
-                                                          modifiers:[self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS]
-                                                         characters:[self stringForKey:KEY_HOTKEY_CHARACTERS]
-                                        charactersIgnoringModifiers:[self stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS]] autorelease];
+    model.primaryShortcut = [[iTermShortcut alloc] initWithKeyCode:[self unsignedIntegerForKey:KEY_HOTKEY_KEY_CODE]
+                                                         modifiers:[self unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_FLAGS]
+                                                        characters:[self stringForKey:KEY_HOTKEY_CHARACTERS]
+                                       charactersIgnoringModifiers:[self stringForKey:KEY_HOTKEY_CHARACTERS_IGNORING_MODIFIERS]];
     model.autoHide = [self boolForKey:KEY_HOTKEY_AUTOHIDE];
     model.showAutoHiddenWindowOnAppActivation = [self boolForKey:KEY_HOTKEY_REOPEN_ON_ACTIVATION];
     model.animate = [self boolForKey:KEY_HOTKEY_ANIMATE];
@@ -115,17 +135,22 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     model.dockPreference = [self intForKey:KEY_HOTKEY_DOCK_CLICK_ACTION];
     [model setAlternateShortcutDictionaries:(id)[self objectForKey:KEY_HOTKEY_ALTERNATE_SHORTCUTS]];
 
-    iTermHotkeyPreferencesWindowController *panel = [[iTermHotkeyPreferencesWindowController alloc] init];
-    panel.descriptorsInUseByOtherProfiles =
+    _hotkeyPanel = [[iTermHotkeyPreferencesWindowController alloc] init];
+    _hotkeyPanel.descriptorsInUseByOtherProfiles =
         [[iTermHotKeyController sharedInstance] descriptorsForProfileHotKeysExcept:self.delegate.profilePreferencesCurrentProfile];
-    panel.model = model;
+    _hotkeyPanel.model = model;
 
-    [self.view.window beginSheet:panel.window completionHandler:^(NSModalResponse returnCode) {
+    __weak __typeof(self) weakSelf = self;
+    [self.view.window beginSheet:_hotkeyPanel.window completionHandler:^(NSModalResponse returnCode) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
         if (returnCode == NSModalResponseOK) {
             [self setObjectsFromDictionary:model.dictionaryValue];
-            _hasHotkey.state = [self boolForKey:KEY_HAS_HOTKEY] ? NSOnState : NSOffState;
+            strongSelf->_hasHotkey.state = [strongSelf boolForKey:KEY_HAS_HOTKEY] ? NSOnState : NSOffState;
         }
-        _configureHotKey.enabled = [self boolForKey:KEY_HAS_HOTKEY];
+        strongSelf->_configureHotKey.enabled = [strongSelf boolForKey:KEY_HAS_HOTKEY];
     }];
 }
 
@@ -142,7 +167,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     // modifying key mappings.
     BOOL sendCtrlH = ([sender state] == NSOnState);
     NSMutableDictionary *mutableProfile =
-        [[[self.delegate profilePreferencesCurrentProfile] mutableCopy] autorelease];
+        [[self.delegate profilePreferencesCurrentProfile] mutableCopy];
     if (sendCtrlH) {
         [iTermKeyBindingMgr setMappingAtIndex:0
                                        forKey:kDeleteKeyString
@@ -240,7 +265,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
         isAddition:(BOOL)addition {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     assert(profile);
-    NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
+    NSMutableDictionary *dict = [profile mutableCopy];
 
     if (isTouchBarItem) {
         [iTermKeyBindingMgr setTouchBarItemWithKey:keyCombo toAction:action value:parameter label:label inProfile:dict];
@@ -271,7 +296,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     assert(profile);
 
-    NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
+    NSMutableDictionary *dict = [profile mutableCopy];
     if (isTouchBarItem) {
         [iTermKeyBindingMgr removeTouchBarItemWithKey:keyCombo inMutableProfile:dict];
     } else {
@@ -298,7 +323,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     assert(profile);
 
-    NSMutableDictionary *dict = [[profile mutableCopy] autorelease];
+    NSMutableDictionary *dict = [profile mutableCopy];
 
     [iTermKeyBindingMgr setKeyMappingsToPreset:presetName inBookmark:dict];
     [[self.delegate profilePreferencesCurrentModel] setBookmark:dict withGuid:profile[KEY_GUID]];
