@@ -110,7 +110,6 @@
                              type:(PreferenceInfoType)type
                    settingChanged:(void (^)(id))settingChanged
                            update:(BOOL (^)(void))update {
-    NSLog(@"%@: Defining profile pref %@ with control %@ and delegate %@", self, key, control, self.delegate);
     assert(self.delegate);
     return [super defineControl:control
                             key:key

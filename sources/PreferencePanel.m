@@ -111,18 +111,6 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 @implementation iTermPrefsPanel
 
-- (void)setFrame:(NSRect)frameRect display:(BOOL)flag {
-    NSLog(@"setframe %@ -> %@", NSStringFromRect(self.frame), NSStringFromRect(frameRect));
-    NSLog(@"%@", [NSThread callStackSymbols]);
-    [super setFrame:frameRect display:flag];
-}
-
-- (void)setFrame:(NSRect)frameRect display:(BOOL)displayFlag animate:(BOOL)animateFlag {
-    NSLog(@"setFrame:%@ -> %@ display:%@ animate:%@", NSStringFromRect(self.frame), NSStringFromRect(frameRect), @(displayFlag), @(animateFlag));
-    NSLog(@"%@", [NSThread callStackSymbols]);
-    [super setFrame:frameRect display:displayFlag animate:animateFlag];
-}
-
 @end
 
 @interface PreferencePanel() <NSTabViewDelegate>

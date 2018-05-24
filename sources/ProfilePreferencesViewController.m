@@ -451,8 +451,6 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
         return;
     }
     _desiredFrame = frame;
-//    NSLog(@"qqq the view's original size is %@", NSStringFromSize(theView.originalSize));
-    NSLog(@"qqq setframe:%@", NSStringFromRect(frame));
     [window setFrame:frame display:YES animate:animated];
 }
 
@@ -578,8 +576,12 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
     __weak __typeof(self) weakSelf = self;
     [self.view.window beginSheet:_bulkCopyController.window completionHandler:^(NSModalResponse returnCode) {
-        [_bulkCopyController.window close];
-        [[weakSelf.delegate profilePreferencesModel] flush];
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        [strongSelf->_bulkCopyController.window close];
+        [[strongSelf.delegate profilePreferencesModel] flush];
     }];
 }
 
