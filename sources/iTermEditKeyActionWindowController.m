@@ -263,7 +263,6 @@
     [self setPasteSpecialHidden:pasteSpecialHidden];
     _parameter.delegate = parameterDelegate;
     if (!parameterDelegate && _functionCallDelegate) {
-        [_functionCallDelegate release];
         _functionCallDelegate = nil;
     }
 
