@@ -219,6 +219,16 @@ namespace iTerm2 {
     _sampler->merge_from(*other->_sampler);
 }
 
+// 3.2.0beta1 had a TON of crashes in dtoa. Somehow I'm producing doubles that are so broken
+// they can't be converted to ASCII.
+static double iTermSaneDouble(const double d) {
+    if (d != d) {
+      return -666;
+    }
+    NSInteger i = d * 1000;
+    return static_cast<double>(i) / 1000.0;
+}
+
 - (NSString *)stringValue {
     std::vector<int> buckets = _sampler->get_histogram();
     if (buckets.size() == 0) {
@@ -239,10 +249,14 @@ namespace iTerm2 {
                                   bucketUpperBound:minimum + (i + 1) * binWidth]];
         [string appendString:@"\n"];
     }
+    const double mean = (double)_sum / (double)_count;
+    const double p50 = iTermSaneDouble(_sampler->value_for_percentile(0.5));
+    const double p95 = iTermSaneDouble(_sampler->value_for_percentile(0.95));
+
     [string appendFormat:@"Count=%@ Sum=%@ Mean=%0.3f p_50=%0.3f p_95=%0.3f",
-     @(_count), @(_sum), (double)_sum / (double)_count,
-     _sampler->value_for_percentile(0.5),
-     _sampler->value_for_percentile(0.95)];
+     @(_count), @(_sum), mean,
+     p50,
+     p95];
     return string;
 }
 
