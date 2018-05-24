@@ -214,11 +214,11 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
 - (void)updateNonAsciiFontViewVisibility {
     _nonAsciiFontView.hidden = ![self boolForKey:KEY_USE_NONASCII_FONT];
-    ((iTermSizeRememberingView *)self.view).originalSize = self.preferredContentSize;
+    ((iTermSizeRememberingView *)self.view).originalSize = self.myPreferredContentSize;
     [self.delegate profilePreferencesContentViewSizeDidChange:(iTermSizeRememberingView *)self.view];
 }
 
-- (NSSize)preferredContentSize {
+- (NSSize)myPreferredContentSize {
     if ([self boolForKey:KEY_USE_NONASCII_FONT]) {
         return NSMakeSize(NSWidth(self.view.frame), _heightWithNonAsciiControls);
     } else {
