@@ -28,58 +28,59 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 @end
 
 @implementation KeysPreferencesViewController {
-    __weak IBOutlet NSPopUpButton *_controlButton;
-    __weak IBOutlet NSPopUpButton *_leftOptionButton;
-    __weak IBOutlet NSPopUpButton *_rightOptionButton;
-    __weak IBOutlet NSPopUpButton *_leftCommandButton;
-    __weak IBOutlet NSPopUpButton *_rightCommandButton;
+    IBOutlet NSPopUpButton *_controlButton;
+    IBOutlet NSPopUpButton *_leftOptionButton;
+    IBOutlet NSPopUpButton *_rightOptionButton;
+    IBOutlet NSPopUpButton *_leftCommandButton;
+    IBOutlet NSPopUpButton *_rightCommandButton;
 
-    __weak IBOutlet NSPopUpButton *_switchPaneModifierButton;
-    __weak IBOutlet NSPopUpButton *_switchTabModifierButton;
-    __weak IBOutlet NSPopUpButton *_switchWindowModifierButton;
+    IBOutlet NSPopUpButton *_switchPaneModifierButton;
+    IBOutlet NSPopUpButton *_switchTabModifierButton;
+    IBOutlet NSPopUpButton *_switchWindowModifierButton;
 
     // Hotkey
-    __weak IBOutlet NSButton *_hotkeyEnabled;
-    __weak IBOutlet NSView *_horizontalLine;
-    __weak IBOutlet NSTextField *_shortcutOverloaded;
-    __weak IBOutlet NSTextField *_hotkeyField;
-    __weak IBOutlet NSTextField *_hotkeyLabel;
-    __weak IBOutlet NSButton *_configureHotKeyWindow;
+    IBOutlet NSButton *_hotkeyEnabled;
+    IBOutlet NSView *_horizontalLine;
+    IBOutlet NSTextField *_shortcutOverloaded;
+    IBOutlet NSTextField *_hotkeyField;
+    IBOutlet NSTextField *_hotkeyLabel;
+    IBOutlet NSButton *_configureHotKeyWindow;
+
+    iTermHotkeyPreferencesWindowController *_hotkeyPanel;
 }
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [super dealloc];
 }
 
 - (void)awakeFromNib {
     PreferenceInfo *info;
-
+    __weak __typeof(self) weakSelf = self;
     // Modifier remapping
     info = [self defineControl:_controlButton
                            key:kPreferenceKeyControlRemapping
                           type:kPreferenceInfoTypePopup];
-    info.onChange = ^() { [self startEventTapIfNecessary]; };
+    info.onChange = ^() { [weakSelf startEventTapIfNecessary]; };
 
     info = [self defineControl:_leftOptionButton
                            key:kPreferenceKeyLeftOptionRemapping
                           type:kPreferenceInfoTypePopup];
-    info.onChange = ^() { [self startEventTapIfNecessary]; };
+    info.onChange = ^() { [weakSelf startEventTapIfNecessary]; };
 
     info = [self defineControl:_rightOptionButton
                            key:kPreferenceKeyRightOptionRemapping
                           type:kPreferenceInfoTypePopup];
-    info.onChange = ^() { [self startEventTapIfNecessary]; };
+    info.onChange = ^() { [weakSelf startEventTapIfNecessary]; };
 
     info = [self defineControl:_leftCommandButton
                            key:kPreferenceKeyLeftCommandRemapping
                           type:kPreferenceInfoTypePopup];
-    info.onChange = ^() { [self startEventTapIfNecessary]; };
+    info.onChange = ^() { [weakSelf startEventTapIfNecessary]; };
 
     info = [self defineControl:_rightCommandButton
                            key:kPreferenceKeyRightCommandRemapping
                           type:kPreferenceInfoTypePopup];
-    info.onChange = ^() { [self startEventTapIfNecessary]; };
+    info.onChange = ^() { [weakSelf startEventTapIfNecessary]; };
 
     // ---------------------------------------------------------------------------------------------
     // Modifiers for switching tabs/windows/panes.
@@ -87,38 +88,50 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                            key:kPreferenceKeySwitchPaneModifier
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() {
-        [self ensureUniqunessOfModifierForButton:_switchPaneModifierButton
-                                       inButtons:@[ _switchTabModifierButton,
-                                                    _switchWindowModifierButton ]];
-        [self postModifierChangedNotification];
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        [weakSelf ensureUniqunessOfModifierForButton:strongSelf->_switchPaneModifierButton
+                                           inButtons:@[ strongSelf->_switchTabModifierButton,
+                                                        strongSelf->_switchWindowModifierButton ]];
+        [weakSelf postModifierChangedNotification];
     };
 
     info = [self defineControl:_switchTabModifierButton
                            key:kPreferenceKeySwitchTabModifier
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() {
-        [self ensureUniqunessOfModifierForButton:_switchTabModifierButton
-                                       inButtons:@[ _switchPaneModifierButton,
-                                                    _switchWindowModifierButton ]];
-        [self postModifierChangedNotification];
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        [weakSelf ensureUniqunessOfModifierForButton:strongSelf->_switchTabModifierButton
+                                           inButtons:@[ strongSelf->_switchPaneModifierButton,
+                                                        strongSelf->_switchWindowModifierButton ]];
+        [weakSelf postModifierChangedNotification];
     };
 
     info = [self defineControl:_switchWindowModifierButton
                            key:kPreferenceKeySwitchWindowModifier
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() {
-        [self ensureUniqunessOfModifierForButton:_switchWindowModifierButton
-                                       inButtons:@[ _switchTabModifierButton,
-                                                    _switchPaneModifierButton ]];
-        [self postModifierChangedNotification];
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        [weakSelf ensureUniqunessOfModifierForButton:strongSelf->_switchWindowModifierButton
+                                           inButtons:@[ strongSelf->_switchTabModifierButton,
+                                                        strongSelf->_switchPaneModifierButton ]];
+        [weakSelf postModifierChangedNotification];
     };
 
     // ---------------------------------------------------------------------------------------------
     info = [self defineControl:_hotkeyEnabled
                            key:kPreferenceKeyHotkeyEnabled
                           type:kPreferenceInfoTypeCheckbox];
-    info.onChange = ^() { [self hotkeyEnabledDidChange]; };
-    info.observer = ^() { [self updateHotkeyViews]; };
+    info.onChange = ^() { [weakSelf hotkeyEnabledDidChange]; };
+    info.observer = ^() { [weakSelf updateHotkeyViews]; };
     [self updateDuplicateWarning];
 }
 
@@ -190,18 +203,18 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
             [[PreferencePanel sharedInstance] configureHotkeyForProfile:[profileHotKeys.firstObject profile]];
         }
     }
-    iTermHotkeyPreferencesModel *model = [[[iTermHotkeyPreferencesModel alloc] init] autorelease];
-    iTermHotkeyPreferencesWindowController *panel = [[iTermHotkeyPreferencesWindowController alloc] init];
-    [panel setExplanation:@"This panel helps you configure a new profile that will be bound to a keystroke you assign. Pressing the hotkey (even when iTerm2 is not active) will toggle a special window."];
-    panel.descriptorsInUseByOtherProfiles = [[iTermHotKeyController sharedInstance] descriptorsForProfileHotKeysExcept:nil];
-    panel.model = model;
+    iTermHotkeyPreferencesModel *model = [[iTermHotkeyPreferencesModel alloc] init];
+    _hotkeyPanel = [[iTermHotkeyPreferencesWindowController alloc] init];
+    [_hotkeyPanel setExplanation:@"This panel helps you configure a new profile that will be bound to a keystroke you assign. Pressing the hotkey (even when iTerm2 is not active) will toggle a special window."];
+    _hotkeyPanel.descriptorsInUseByOtherProfiles = [[iTermHotKeyController sharedInstance] descriptorsForProfileHotKeysExcept:nil];
+    _hotkeyPanel.model = model;
 
-    [self.view.window beginSheet:panel.window completionHandler:^(NSModalResponse returnCode) {
+    [self.view.window beginSheet:_hotkeyPanel.window completionHandler:^(NSModalResponse returnCode) {
         if (returnCode == NSModalResponseOK) {
             if (!model.hotKeyAssigned) {
                 return;
             }
-            NSMutableDictionary *dict = [[[[ProfileModel sharedInstance] defaultBookmark] mutableCopy] autorelease];
+            NSMutableDictionary *dict = [[[ProfileModel sharedInstance] defaultBookmark] mutableCopy];
             dict[KEY_WINDOW_TYPE] = @(WINDOW_TYPE_TOP);
             dict[KEY_ROWS] = @25;
             dict[KEY_TRANSPARENCY] = @0.3;
@@ -233,7 +246,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
             [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
                                                                 object:nil
                                                               userInfo:nil];
-            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Hotkey Window Successfully Configured";
             alert.informativeText = [NSString stringWithFormat:@"A new profile called “%@” was created for you. It is tuned to work well "
                                      @"for the Hotkey Window feature and it can be customized in the Profiles tab.",

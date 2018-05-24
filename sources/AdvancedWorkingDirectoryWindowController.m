@@ -16,21 +16,16 @@ static const NSInteger kRecycleDirectoryTag = 2;
 
 @implementation AdvancedWorkingDirectoryWindowController {
     // Advanced working dir sheet
-    __weak IBOutlet NSMatrix* _windowDirectoryType;
-    __weak IBOutlet NSTextField* _windowDirectory;
-    __weak IBOutlet NSMatrix* _tabDirectoryType;
-    __weak IBOutlet NSTextField* _tabDirectory;
-    __weak IBOutlet NSMatrix* _paneDirectoryType;
-    __weak IBOutlet NSTextField* _paneDirectory;
+    IBOutlet NSMatrix* _windowDirectoryType;
+    IBOutlet NSTextField* _windowDirectory;
+    IBOutlet NSMatrix* _tabDirectoryType;
+    IBOutlet NSTextField* _tabDirectory;
+    IBOutlet NSMatrix* _paneDirectoryType;
+    IBOutlet NSTextField* _paneDirectory;
 }
 
 - (instancetype)init {
     return [super initWithWindowNibName:@"AdvancedWorkingDirectoryWindow"];
-}
-
-- (void)dealloc {
-    [_profile release];
-    [super dealloc];
 }
 
 - (NSArray<NSString *> *)allKeys {
@@ -45,7 +40,7 @@ static const NSInteger kRecycleDirectoryTag = 2;
 #pragma mark - Actions
 
 - (IBAction)ok:(id)sender {
-    NSMutableDictionary *dict = [[_profile mutableCopy] autorelease];
+    NSMutableDictionary *dict = [_profile mutableCopy];
 
     dict[KEY_AWDS_WIN_OPTION] = [self valueForTag:_windowDirectoryType.selectedTag];
     dict[KEY_AWDS_TAB_OPTION] = [self valueForTag:_tabDirectoryType.selectedTag];
@@ -91,7 +86,6 @@ static const NSInteger kRecycleDirectoryTag = 2;
 }
 
 - (void)setProfile:(NSDictionary *)profile {
-    [_profile autorelease];
     _profile = [profile copy];
     [self setAdvancedBookmarkMatrix:_windowDirectoryType
                           withValue:[_profile objectForKey:KEY_AWDS_WIN_OPTION]];

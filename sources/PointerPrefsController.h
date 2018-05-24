@@ -47,7 +47,7 @@ extern NSString *kForceTouchSingleClick;
 // This manages the tableview and associated buttons and controls for managing pointer actions.
 @interface PointerPrefsController : NSObject
 
-@property (nonatomic, assign) BOOL hasSelection;
+@property (nonatomic) BOOL hasSelection;
 
 + (NSString *)actionWithButton:(int)buttonNumber
                      numClicks:(int)numClicks

@@ -16,10 +16,10 @@ static NSString* kActionKey = @"action";
 static NSString* kParameterKey = @"parameter";
 
 @implementation ContextMenuActionPrefsController {
-    __weak IBOutlet NSTableView *_tableView;
-    __weak IBOutlet NSTableColumn *_titleColumn;
-    __weak IBOutlet NSTableColumn *_actionColumn;
-    __weak IBOutlet NSTableColumn *_parameterColumn;
+    IBOutlet NSTableView *_tableView;
+    IBOutlet NSTableColumn *_titleColumn;
+    IBOutlet NSTableColumn *_actionColumn;
+    IBOutlet NSTableColumn *_parameterColumn;
     NSMutableArray *_model;
 }
 
@@ -29,14 +29,6 @@ static NSString* kParameterKey = @"parameter";
         _model = [[NSMutableArray alloc] init];
     }
     return self;
-}
-
-- (void)dealloc
-{
-    [_model release];
-    _tableView.delegate = nil;
-    _tableView.dataSource = nil;
-    [super dealloc];
 }
 
 + (ContextMenuActions)actionForActionDict:(NSDictionary *)dict
@@ -137,7 +129,6 @@ static NSString* kParameterKey = @"parameter";
     if (!newActions) {
         newActions = [NSMutableArray array];
     }
-    [_model autorelease];
     _model = [newActions mutableCopy];
     [_tableView reloadData];
 }
@@ -173,7 +164,7 @@ static NSString* kParameterKey = @"parameter";
 {
     NSString *key = [self keyForColumn:aTableColumn];
     if (key) {
-        NSMutableDictionary *temp = [[[_model objectAtIndex:rowIndex] mutableCopy] autorelease];
+        NSMutableDictionary *temp = [[_model objectAtIndex:rowIndex] mutableCopy];
         [temp setObject:anObject forKey:key];
         [_model replaceObjectAtIndex:rowIndex withObject:temp];
         [aTableView reloadData];
@@ -200,7 +191,7 @@ static NSString* kParameterKey = @"parameter";
 
 
     if (tableColumn == _titleColumn) {
-        NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@""] autorelease];
+        NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@""];
         [cell setPlaceholderString:@"Enter Title"];
         [cell setEditable:YES];
         [cell setTruncatesLastVisibleLine:YES];
@@ -209,7 +200,7 @@ static NSString* kParameterKey = @"parameter";
         return cell;
     } else if (tableColumn == _actionColumn) {
         NSPopUpButtonCell *cell =
-            [[[NSPopUpButtonCell alloc] initTextCell:[actionNames objectAtIndex:0] pullsDown:NO] autorelease];
+        [[NSPopUpButtonCell alloc] initTextCell:[actionNames objectAtIndex:0] pullsDown:NO];
         for (int i = 0; i < actionNames.count; i++) {
             [cell addItemWithTitle:[actionNames objectAtIndex:i]];
             NSMenuItem *lastItem = [[[cell menu] itemArray] lastObject];
@@ -224,14 +215,14 @@ static NSString* kParameterKey = @"parameter";
         int actionNum = [[actionDict objectForKey:kActionKey] intValue];
         NSString *placeholder = [paramPlaceholders objectAtIndex:actionNum];
         if (placeholder.length) {
-            NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@""] autorelease];
+            NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@""];
             [cell setPlaceholderString:placeholder];
             [cell setEditable:YES];
             [cell setTruncatesLastVisibleLine:YES];
             [cell setLineBreakMode:NSLineBreakByTruncatingTail];
             return cell;
         } else {
-            NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@""] autorelease];
+            NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@""];
             [cell setEditable:NO];
             return cell;
         }

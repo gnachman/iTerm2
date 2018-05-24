@@ -22,10 +22,7 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 @property(nonatomic, readonly) NSMapTable *keyMap;
 @property(nonatomic, readonly) NSArray *keysForBulkCopy;
 
-// This is used to release preference info objects when the owning window
-// controller goes away because there is a hard-to-remove retain cycle when
-// blocks are used (e.g., for observers).
-@property(nonatomic, assign) NSWindowController *preferencePanel;
+@property(nonatomic, weak) NSWindowController *preferencePanel;
 
 #pragma mark - Core Methods
 

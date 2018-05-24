@@ -26,11 +26,6 @@
     return instance;
 }
 
-- (void)dealloc {
-    [_savedRemotePrefs release];
-    [super dealloc];
-}
-
 - (BOOL)shouldLoadRemotePrefs {
     return [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
 }
@@ -106,7 +101,7 @@
                                              returningResponse:&response
                                                          error:&error];
         if (!data || error) {
-            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Failed to load preferences from URL. Falling back to local copy.";
             alert.informativeText = [NSString stringWithFormat:@"HTTP request failed: %@",
                                      [error localizedDescription] ?: @"unknown error"];
@@ -120,7 +115,7 @@
         NSString *tempFile = [tempDir stringByAppendingPathComponent:@"temp.plist"];
         error = nil;
         if (![data writeToFile:tempFile options:0 error:&error]) {
-            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Failed to write to temp file while getting remote prefs. Falling back to local copy.";
             alert.informativeText = [NSString stringWithFormat:@"Error on file %@: %@", tempFile,
                                      [error localizedDescription]];
@@ -184,7 +179,7 @@
             @"To make it available, first quit iTerm2 and then manually "
             @"copy ~/Library/Preferences/com.googlecode.iterm2.plist to "
             @"your hosting provider.";
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Preferences cannot be copied to a URL.";
         alert.informativeText = informativeText;
         [alert runModal];
@@ -203,7 +198,7 @@
     BOOL isOk;
     isOk = [myDict writeToFile:filename atomically:YES];
     if (!isOk) {
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Failed to copy preferences to custom directory.";
         alert.informativeText = [NSString stringWithFormat:@"Tried to copy %@ to %@",
                                  [self remotePrefsLocation], filename];
@@ -243,7 +238,7 @@
         }
         return;
     } else {
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Failed to load preferences from custom directory. Falling back to local copy.";
         alert.informativeText = [NSString stringWithFormat:@"Missing or malformed file at \"%@\"",
                                  [self customFolderOrURL]];

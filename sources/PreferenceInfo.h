@@ -26,10 +26,10 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 
 @interface PreferenceInfo : NSObject
 
-@property(nonatomic, retain) NSString *key;
-@property(nonatomic, assign) PreferenceInfoType type;
-@property(nonatomic, retain) NSControl *control;
-@property(nonatomic, assign) NSRange range;  // For integer fields, the range of legal values.
+@property(nonatomic, strong) NSString *key;
+@property(nonatomic) PreferenceInfoType type;
+@property(nonatomic, strong) NSControl *control;
+@property(nonatomic) NSRange range;  // For integer fields, the range of legal values.
 
 // If set to YES, don't process changes until keyboard focus exits the control. Defaults to NO.
 // Only supported on controls of type kPreferenceInfoTypeIntegerTextField.
@@ -79,8 +79,5 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
                                     type:(PreferenceInfoType)type
                                  control:(NSControl *)control;
-
-// Set all blocks to nil to clean up cyclic references.
-- (void)clearBlocks;
 
 @end

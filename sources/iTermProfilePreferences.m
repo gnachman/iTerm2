@@ -13,7 +13,7 @@
 #import "NSDictionary+iTerm.h"
 #import "PreferencePanel.h"
 
-#define PROFILE_BLOCK(x) [[^id(Profile *profile) { return [self x:profile]; } copy] autorelease]
+#define PROFILE_BLOCK(x) [^id(Profile *profile) { return [self x:profile]; } copy]
 
 NSString *const kProfilePreferenceCommandTypeCustomValue = @"Yes";
 NSString *const kProfilePreferenceCommandTypeLoginShellValue = @"No";
@@ -334,7 +334,6 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   // README.md when adding a new value that should be
                   // API-settable.
                 };
-        [dict retain];
     }
     return dict;
 }
@@ -389,7 +388,6 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_UNICODE_NORMALIZATION: PROFILE_BLOCK(unicodeNormalizationForm),
                   KEY_UNICODE_VERSION: PROFILE_BLOCK(unicodeVersion),
                 };
-        [dict retain];
     }
     return dict;
 }

@@ -16,30 +16,28 @@
 @end
 
 @implementation ProfilesSessionPreferencesViewController {
-    __weak IBOutlet NSButton *_closeSessionsOnEnd;
-    __weak IBOutlet NSMatrix *_promptBeforeClosing;
-    __weak IBOutlet NSTableView *_jobsTable;
-    __weak IBOutlet NSButton *_removeJob;
-    __weak IBOutlet NSButton *_autoLog;
-    __weak IBOutlet NSTextField *_logDir;
-    __weak IBOutlet NSButton *_sendCodeWhenIdle;
-    __weak IBOutlet NSTextField *_idleCode;
-    __weak IBOutlet NSTextField *_idlePeriod;
+    IBOutlet NSButton *_closeSessionsOnEnd;
+    IBOutlet NSMatrix *_promptBeforeClosing;
+    IBOutlet NSTableView *_jobsTable;
+    IBOutlet NSButton *_removeJob;
+    IBOutlet NSButton *_autoLog;
+    IBOutlet NSTextField *_logDir;
+    IBOutlet NSButton *_sendCodeWhenIdle;
+    IBOutlet NSTextField *_idleCode;
+    IBOutlet NSTextField *_idlePeriod;
 
-    __weak IBOutlet NSImageView *_logDirWarning;
-    __weak IBOutlet NSButton *_changeLogDir;
+    IBOutlet NSImageView *_logDirWarning;
+    IBOutlet NSButton *_changeLogDir;
 
-    __weak IBOutlet NSTextField *_undoTimeout;
-    __weak IBOutlet NSButton *_reduceFlicker;
+    IBOutlet NSTextField *_undoTimeout;
+    IBOutlet NSButton *_reduceFlicker;
 
     BOOL _awoken;
 }
 
 - (void)dealloc {
-    [_jobsTable release];
     _jobsTable.dataSource = nil;
     _jobsTable.delegate = nil;
-    [super dealloc];
 }
 
 - (void)awakeFromNib {
@@ -47,11 +45,11 @@
         return;
     }
     _awoken = YES;
-    [_jobsTable retain];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadProfiles)
                                                  name:kReloadAllProfiles
                                                object:nil];
+    __weak __typeof(self) weakSelf = self;
     [self defineControl:_closeSessionsOnEnd
                     key:KEY_CLOSE_SESSIONS_ON_END
                    type:kPreferenceInfoTypeCheckbox];
@@ -71,20 +69,28 @@
                            key:KEY_AUTOLOG
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() {
-        _logDir.enabled = [self boolForKey:KEY_AUTOLOG];
-        _changeLogDir.enabled = [self boolForKey:KEY_AUTOLOG];
-        [self updateLogDirWarning];
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        strongSelf->_logDir.enabled = [strongSelf boolForKey:KEY_AUTOLOG];
+        strongSelf->_changeLogDir.enabled = [strongSelf boolForKey:KEY_AUTOLOG];
+        [strongSelf updateLogDirWarning];
     };
 
     info = [self defineControl:_logDir
                            key:KEY_LOGDIR
                           type:kPreferenceInfoTypeStringTextField];
-    info.observer = ^() { [self updateLogDirWarning]; };
+    info.observer = ^() { [weakSelf updateLogDirWarning]; };
 
     info = [self defineControl:_sendCodeWhenIdle
                            key:KEY_SEND_CODE_WHEN_IDLE
                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
         BOOL isOn = [sender state] == NSOnState;
         if (isOn) {
             static NSString *const kWarnAboutSendCodeWhenIdle = @"NoSyncWarnAboutSendCodeWhenIdle";
@@ -105,15 +111,19 @@
                                         identifier:kWarnAboutSendCodeWhenIdle
                                        silenceable:kiTermWarningTypePermanentlySilenceable];
             if (selection == kiTermWarningSelection0) {
-                [self setBool:YES forKey:KEY_SEND_CODE_WHEN_IDLE];
+                [strongSelf setBool:YES forKey:KEY_SEND_CODE_WHEN_IDLE];
             }
         } else {
-            [self setBool:NO forKey:KEY_SEND_CODE_WHEN_IDLE];
+            [strongSelf setBool:NO forKey:KEY_SEND_CODE_WHEN_IDLE];
         }
     };
     info.observer = ^() {
-        _idleCode.enabled = [self boolForKey:KEY_SEND_CODE_WHEN_IDLE];
-        _idlePeriod.enabled = [self boolForKey:KEY_SEND_CODE_WHEN_IDLE];
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        strongSelf->_idleCode.enabled = [self boolForKey:KEY_SEND_CODE_WHEN_IDLE];
+        strongSelf->_idlePeriod.enabled = [self boolForKey:KEY_SEND_CODE_WHEN_IDLE];
     };
 
     info = [self defineControl:_idleCode

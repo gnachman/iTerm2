@@ -57,9 +57,6 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_keyMap release];
-    [_keys release];
-    [super dealloc];
 }
 
 - (PreferenceInfo *)infoForKey:(NSString *)key {
@@ -583,15 +580,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         [self windowWillClose];
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            _preferencePanel = nil;
-            // Breaks reference cycles in settingChanged and update blocks. Done in a delayed perform
-            // because windowWillClose may cause notifications to be posted (e.g., unicode version
-            // changed) that requires access to the keymap.
-            for (NSControl *key in _keyMap) {
-                PreferenceInfo *info = [_keyMap objectForKey:key];
-                [info clearBlocks];
-            }
-            [_keyMap removeAllObjects];
+            [self->_keyMap removeAllObjects];
         });
     }
 }

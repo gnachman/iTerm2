@@ -20,52 +20,52 @@
 static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery";
 
 @implementation ProfilesColorsPreferencesViewController {
-    __weak IBOutlet CPKColorWell *_ansi0Color;
-    __weak IBOutlet CPKColorWell *_ansi1Color;
-    __weak IBOutlet CPKColorWell *_ansi2Color;
-    __weak IBOutlet CPKColorWell *_ansi3Color;
-    __weak IBOutlet CPKColorWell *_ansi4Color;
-    __weak IBOutlet CPKColorWell *_ansi5Color;
-    __weak IBOutlet CPKColorWell *_ansi6Color;
-    __weak IBOutlet CPKColorWell *_ansi7Color;
-    __weak IBOutlet CPKColorWell *_ansi8Color;
-    __weak IBOutlet CPKColorWell *_ansi9Color;
-    __weak IBOutlet CPKColorWell *_ansi10Color;
-    __weak IBOutlet CPKColorWell *_ansi11Color;
-    __weak IBOutlet CPKColorWell *_ansi12Color;
-    __weak IBOutlet CPKColorWell *_ansi13Color;
-    __weak IBOutlet CPKColorWell *_ansi14Color;
-    __weak IBOutlet CPKColorWell *_ansi15Color;
-    __weak IBOutlet CPKColorWell *_foregroundColor;
-    __weak IBOutlet CPKColorWell *_backgroundColor;
-    __weak IBOutlet CPKColorWell *_boldColor;
-    __weak IBOutlet CPKColorWell *_linkColor;
-    __weak IBOutlet CPKColorWell *_selectionColor;
-    __weak IBOutlet CPKColorWell *_selectedTextColor;
-    __weak IBOutlet CPKColorWell *_cursorColor;
-    __weak IBOutlet CPKColorWell *_cursorTextColor;
-    __weak IBOutlet CPKColorWell *_tabColor;
-    __weak IBOutlet CPKColorWell *_underlineColor;
-    __weak IBOutlet CPKColorWell *_badgeColor;
+    IBOutlet CPKColorWell *_ansi0Color;
+    IBOutlet CPKColorWell *_ansi1Color;
+    IBOutlet CPKColorWell *_ansi2Color;
+    IBOutlet CPKColorWell *_ansi3Color;
+    IBOutlet CPKColorWell *_ansi4Color;
+    IBOutlet CPKColorWell *_ansi5Color;
+    IBOutlet CPKColorWell *_ansi6Color;
+    IBOutlet CPKColorWell *_ansi7Color;
+    IBOutlet CPKColorWell *_ansi8Color;
+    IBOutlet CPKColorWell *_ansi9Color;
+    IBOutlet CPKColorWell *_ansi10Color;
+    IBOutlet CPKColorWell *_ansi11Color;
+    IBOutlet CPKColorWell *_ansi12Color;
+    IBOutlet CPKColorWell *_ansi13Color;
+    IBOutlet CPKColorWell *_ansi14Color;
+    IBOutlet CPKColorWell *_ansi15Color;
+    IBOutlet CPKColorWell *_foregroundColor;
+    IBOutlet CPKColorWell *_backgroundColor;
+    IBOutlet CPKColorWell *_boldColor;
+    IBOutlet CPKColorWell *_linkColor;
+    IBOutlet CPKColorWell *_selectionColor;
+    IBOutlet CPKColorWell *_selectedTextColor;
+    IBOutlet CPKColorWell *_cursorColor;
+    IBOutlet CPKColorWell *_cursorTextColor;
+    IBOutlet CPKColorWell *_tabColor;
+    IBOutlet CPKColorWell *_underlineColor;
+    IBOutlet CPKColorWell *_badgeColor;
 
-    __weak IBOutlet NSTextField *_cursorColorLabel;
-    __weak IBOutlet NSTextField *_cursorTextColorLabel;
+    IBOutlet NSTextField *_cursorColorLabel;
+    IBOutlet NSTextField *_cursorTextColorLabel;
 
-    __weak IBOutlet NSButton *_useTabColor;
-    __weak IBOutlet NSButton *_useUnderlineColor;
-    __weak IBOutlet NSButton *_useSmartCursorColor;
+    IBOutlet NSButton *_useTabColor;
+    IBOutlet NSButton *_useUnderlineColor;
+    IBOutlet NSButton *_useSmartCursorColor;
 
-    __weak IBOutlet NSSlider *_minimumContrast;
-    __weak IBOutlet NSSlider *_cursorBoost;
+    IBOutlet NSSlider *_minimumContrast;
+    IBOutlet NSSlider *_cursorBoost;
 
-    __weak IBOutlet NSMenu *_presetsMenu;
+    IBOutlet NSMenu *_presetsMenu;
 
-    __weak IBOutlet NSButton *_useGuide;
-    __weak IBOutlet CPKColorWell *_guideColor;
+    IBOutlet NSButton *_useGuide;
+    IBOutlet CPKColorWell *_guideColor;
 
-    __weak IBOutlet NSPopUpButton *_presetsPopupButton;
-    __weak IBOutlet NSView *_bwWarning1;
-    __weak IBOutlet NSView *_bwWarning2;
+    IBOutlet NSPopUpButton *_presetsPopupButton;
+    IBOutlet NSView *_bwWarning1;
+    IBOutlet NSView *_bwWarning2;
 }
 
 + (NSArray<NSString *> *)presetNames {
@@ -127,7 +127,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         colorWell.action = @selector(settingChanged:);
         colorWell.target = self;
         colorWell.continuous = YES;
-        NSValue *weakViewPointer = [NSValue valueWithPointer:colorWell];
+        __weak NSView *weakColorWell = colorWell;
         colorWell.willClosePopover = ^() {
             // NSSearchField remembers who was first responder before it gained
             // first responder status. That is the popover at this time. When
@@ -136,32 +136,31 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
             // smart and doesn't realize the popover has been deallocated. So
             // this changes its conception of who was the previous first
             // responder and prevents the crash.
-            NSView *unsafeView = [weakViewPointer pointerValue];
-            [unsafeView.window makeFirstResponder:nil];
+            [weakColorWell.window makeFirstResponder:nil];
         };
     }
 
     PreferenceInfo *info;
-
+    __weak __typeof(self) weakSelf = self;
     info = [self defineControl:_useTabColor
                            key:KEY_USE_TAB_COLOR
                           type:kPreferenceInfoTypeCheckbox];
-    info.observer = ^() { [self updateColorControlsEnabled]; };
+    info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
 
     info = [self defineControl:_useUnderlineColor
                            key:KEY_USE_UNDERLINE_COLOR
                           type:kPreferenceInfoTypeCheckbox];
-    info.observer = ^() { [self updateColorControlsEnabled]; };
+    info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
 
     info = [self defineControl:_useSmartCursorColor
                            key:KEY_SMART_CURSOR_COLOR
                           type:kPreferenceInfoTypeCheckbox];
-    info.observer = ^() { [self updateColorControlsEnabled]; };
+    info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
 
     info = [self defineControl:_minimumContrast
                            key:KEY_MINIMUM_CONTRAST
                           type:kPreferenceInfoTypeSlider];
-    info.observer = ^() { [self maybeWarnAboutExcessiveContrast]; };
+    info.observer = ^() { [weakSelf maybeWarnAboutExcessiveContrast]; };
 
     [self defineControl:_cursorBoost
                     key:KEY_CURSOR_BOOST
@@ -264,7 +263,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                                                      keyEquivalent:@""];
         presetItem.target = self;
         [theMenu addItem:presetItem];
-        [presetItem release];
     }
 }
 
@@ -304,7 +302,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 - (void)deleteColorPreset:(id)sender {
     iTermColorPresetDictionary *customPresets = [iTermColorPresets customColorPresets];
     if (!customPresets || [customPresets count] == 0) {
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"No deletable color presets.";
         alert.informativeText = @"You cannot erase the built-in presets and no custom presets have been imported.";
         [alert addButtonWithTitle:@"OK"];
@@ -312,11 +310,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         return;
     }
 
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"Select a preset to delete:";
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
-    NSPopUpButton *popUpButton = [[[NSPopUpButton alloc] init] autorelease];
+    NSPopUpButton *popUpButton = [[NSPopUpButton alloc] init];
     for (NSString *key in [[customPresets allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         [popUpButton addItemWithTitle:key];
     }
@@ -335,7 +333,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         theDict[key] = [[colorWellDictionary[key] color] dictionaryValue];
     }
     if (![theDict iterm_writePresetToFileWithName:filename]) {
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Save Failed.";
         alert.informativeText = [NSString stringWithFormat:@"Could not save to %@", filename];
         [alert addButtonWithTitle:@"OK"];

@@ -32,10 +32,10 @@ NSString *kSemanticHistoryCoprocessAction = @"coprocess";
 
 @implementation iTermSemanticHistoryPrefsController {
     NSString *guid_;
-    __weak IBOutlet NSPopUpButton *action_;
-    __weak IBOutlet NSTextField *text_;
-    __weak IBOutlet NSPopUpButton *editors_;
-    __weak IBOutlet NSTextField *caveat_;
+    IBOutlet NSPopUpButton *action_;
+    IBOutlet NSTextField *text_;
+    IBOutlet NSPopUpButton *editors_;
+    IBOutlet NSTextField *caveat_;
 }
 
 enum {
@@ -56,14 +56,8 @@ enum {
     return @{ kSemanticHistoryActionKey: kSemanticHistoryBestEditorAction };
 }
 
-- (void)dealloc
-{
-    [guid_ release];
-    [super dealloc];
-}
-
 + (BOOL)applicationExists:(NSString *)bundleId {
-    CFArrayRef appURLs = LSCopyApplicationURLsForBundleIdentifier((CFStringRef)bundleId, nil);
+    CFArrayRef appURLs = LSCopyApplicationURLsForBundleIdentifier((__bridge CFStringRef)bundleId, nil);
     NSInteger count = appURLs ? CFArrayGetCount(appURLs) : 0;
     if (appURLs) {
         CFRelease(appURLs);
@@ -286,7 +280,6 @@ enum {
 
 - (void)setGuid:(NSString *)guid
 {
-    [guid_ autorelease];
     guid_ = [guid copy];
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:self.guid];
     if (!bookmark) {

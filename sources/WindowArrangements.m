@@ -13,7 +13,14 @@
 static NSString* WINDOW_ARRANGEMENTS = @"Window Arrangements";
 static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
 
-@implementation WindowArrangements
+@implementation WindowArrangements {
+    IBOutlet NSTableColumn *defaultColumn_;
+    IBOutlet NSTableColumn *titleColumn_;
+    IBOutlet NSTableView *tableView_;
+    IBOutlet ArrangementPreviewView *previewView_;
+    IBOutlet NSButton *deleteButton_;
+    IBOutlet NSButton *defaultButton_;
+}
 
 + (WindowArrangements *)sharedInstance
 {
@@ -28,7 +35,6 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [super dealloc];
 }
 
 - (void)awakeFromNib
@@ -163,12 +169,12 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
 }
 
 + (NSString *)showAlertWithText:(NSString *)prompt defaultInput:(NSString *)defaultValue {
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = prompt;
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
 
-    NSTextField *input = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
+    NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
     [input setStringValue:defaultValue];
     [alert setAccessoryView:input];
     [alert layout];
@@ -192,7 +198,7 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
         return nil;
     }
     if ([WindowArrangements hasWindowArrangement:name]) {
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Replace Existing Saved Window Arrangement?";
         alert.informativeText = @"There is an existing saved window arrangement with this name. Would you like to replace it with the current arrangement?";
         [alert addButtonWithTitle:@"Yes"];

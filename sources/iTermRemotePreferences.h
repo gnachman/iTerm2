@@ -8,9 +8,9 @@
 @interface iTermRemotePreferences : NSObject
 
 // These properties are backed to user defaults.
-@property(nonatomic, assign) BOOL shouldLoadRemotePrefs;
+@property(nonatomic) BOOL shouldLoadRemotePrefs;
 @property(nonatomic, readonly) NSString *customFolderOrURL;
-@property(nonatomic, assign) BOOL customFolderChanged;  // Path has changed since startup?
+@property(nonatomic) BOOL customFolderChanged;  // Path has changed since startup?
 @property(nonatomic, readonly) BOOL remoteLocationIsURL;
 
 + (instancetype)sharedInstance;

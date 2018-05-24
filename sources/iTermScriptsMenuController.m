@@ -138,15 +138,6 @@ NS_ASSUME_NONNULL_BEGIN
     [[NSWorkspace sharedWorkspace] openFile:scriptsPath withApplication:@"Finder"];
 }
 
-- (void)setInstallRuntimeMenuItem:(NSMenuItem *)installRuntimeMenuItem {
-    /*
-    _installRuntimeMenuItem = installRuntimeMenuItem;
-    if ([[iTermPythonRuntimeDownloader sharedInstance] isPythonRuntimeInstalled]) {
-        [self removeInstallMenuItem];
-    }
-     */
-}
-
 - (void)removeInstallMenuItem {
     /*
     if (_installRuntimeMenuItem) {

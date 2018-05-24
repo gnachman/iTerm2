@@ -21,31 +21,25 @@
 @end
 
 @implementation iTermEditKeyActionWindowController {
-    __weak IBOutlet iTermShortcutInputView *_shortcutField;
-    __weak IBOutlet NSTextField *_keyboardShortcutLabel;
-    __weak IBOutlet NSTextField *_touchBarLabel;
-    __weak IBOutlet NSPopUpButton *_actionPopup;
-    __weak IBOutlet NSTextField *_parameter;
-    __weak IBOutlet NSTextField *_parameterLabel;
-    __weak IBOutlet NSPopUpButton *_profilePopup;
-    __weak IBOutlet NSPopUpButton *_selectionMovementUnit;
-    __weak IBOutlet NSPopUpButton *_menuToSelectPopup;
-    __weak IBOutlet NSTextField *_profileLabel;
-    __weak IBOutlet NSTextField *_colorPresetsLabel;
-    __weak IBOutlet NSPopUpButton *_colorPresetsPopup;
-    __weak IBOutlet NSView *_pasteSpecialViewContainer;
+    IBOutlet iTermShortcutInputView *_shortcutField;
+    IBOutlet NSTextField *_keyboardShortcutLabel;
+    IBOutlet NSTextField *_touchBarLabel;
+    IBOutlet NSPopUpButton *_actionPopup;
+    IBOutlet NSTextField *_parameter;
+    IBOutlet NSTextField *_parameterLabel;
+    IBOutlet NSPopUpButton *_profilePopup;
+    IBOutlet NSPopUpButton *_selectionMovementUnit;
+    IBOutlet NSPopUpButton *_menuToSelectPopup;
+    IBOutlet NSTextField *_profileLabel;
+    IBOutlet NSTextField *_colorPresetsLabel;
+    IBOutlet NSPopUpButton *_colorPresetsPopup;
+    IBOutlet NSView *_pasteSpecialViewContainer;
 
     iTermPasteSpecialViewController *_pasteSpecialViewController;
 }
 
 - (instancetype)init {
     return [super initWithWindowNibName:@"iTermEditKeyActionWindowController"];
-}
-
-- (void)dealloc {
-    [_pasteSpecialViewController release];
-    [_touchBarItemID release];
-    [super dealloc];
 }
 
 - (void)windowDidLoad
@@ -396,13 +390,8 @@
                                heightExcludingAccessory);
     }
     if (animated) {
-        [self retain];
-
-        [self.window retain];  // Ignore analyzer warning on this line (autorelaesed in block)
         dispatch_async(dispatch_get_main_queue(), ^{
             [self.window setFrame:rect display:YES animate:YES];
-            [self autorelease];
-            [self.window autorelease];  // Ignore analyzer warning on this line (retained before block)
         });
     } else {
         [self.window setFrame:rect display:YES animate:NO];
@@ -445,7 +434,7 @@
             [self item:item isWindowInWindowsMenu:menu]) {  // exclude windows in window menu
             continue;
         }
-        NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
+        NSMenuItem *theItem = [[NSMenuItem alloc] init];
         [theItem setTitle:[item title]];
         theItem.identifier = item.identifier;
         [theItem setIndentationLevel:depth];
