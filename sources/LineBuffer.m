@@ -698,7 +698,11 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (void)findSubstring:(FindContext*)context stopAt:(LineBufferPosition *)stopPosition {
     // Sanity check the absolute block number since blocks can be removed from the end of the list.
-    if (context.absBlockNum - num_dropped_blocks >= blocks.count) {
+    if (context.absBlockNum - num_dropped_blocks > 0 && context.absBlockNum - num_dropped_blocks >= blocks.count) {
+        // What I saw was I did a search in a session with 1,000,000 lines of scrollback. not sure
+        // if it was full but I doubt it. The search wrapped around and around and never stopped.
+        // I closed the find bar and it kept going (everything was slow). I caught it in a breakpoint
+        // here.
         context.absBlockNum = blocks.count + num_dropped_blocks - 1;
     }
 
