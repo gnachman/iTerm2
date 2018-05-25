@@ -66,6 +66,8 @@ CF_EXTERN_C_BEGIN
 @class ITMListSessionsResponse_Tab;
 @class ITMListSessionsResponse_Window;
 @class ITMLocationChangeNotification;
+@class ITMMenuItemRequest;
+@class ITMMenuItemResponse;
 @class ITMNewSessionNotification;
 @class ITMNotification;
 @class ITMNotificationRequest;
@@ -132,6 +134,22 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMNotificationType_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMMenuItemResponse_Status
+
+typedef GPB_ENUM(ITMMenuItemResponse_Status) {
+  ITMMenuItemResponse_Status_Ok = 0,
+  ITMMenuItemResponse_Status_BadIdentifier = 1,
+  ITMMenuItemResponse_Status_Disabled = 2,
+};
+
+GPBEnumDescriptor *ITMMenuItemResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMMenuItemResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMRestartSessionResponse_Status
 
@@ -587,6 +605,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_ListProfilesRequest = 118,
   ITMClientOriginatedMessage_FieldNumber_ServerOriginatedRpcResultRequest = 119,
   ITMClientOriginatedMessage_FieldNumber_RestartSessionRequest = 120,
+  ITMClientOriginatedMessage_FieldNumber_MenuItemRequest = 121,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -612,6 +631,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_ListProfilesRequest = 118,
   ITMClientOriginatedMessage_Submessage_OneOfCase_ServerOriginatedRpcResultRequest = 119,
   ITMClientOriginatedMessage_Submessage_OneOfCase_RestartSessionRequest = 120,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_MenuItemRequest = 121,
 };
 
 /**
@@ -667,6 +687,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMRestartSessionRequest *restartSessionRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMMenuItemRequest *menuItemRequest;
+
 @end
 
 /**
@@ -700,6 +722,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_ListProfilesResponse = 118,
   ITMServerOriginatedMessage_FieldNumber_ServerOriginatedRpcResultResponse = 119,
   ITMServerOriginatedMessage_FieldNumber_RestartSessionResponse = 120,
+  ITMServerOriginatedMessage_FieldNumber_MenuItemResponse = 121,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -727,6 +750,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_ListProfilesResponse = 118,
   ITMServerOriginatedMessage_Submessage_OneOfCase_ServerOriginatedRpcResultResponse = 119,
   ITMServerOriginatedMessage_Submessage_OneOfCase_RestartSessionResponse = 120,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_MenuItemResponse = 121,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -787,6 +811,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMRestartSessionResponse *restartSessionResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMMenuItemResponse *menuItemResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 
@@ -796,6 +822,50 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
  * Clears whatever value was set for the oneof 'submessage'.
  **/
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
+
+#pragma mark - ITMMenuItemRequest
+
+typedef GPB_ENUM(ITMMenuItemRequest_FieldNumber) {
+  ITMMenuItemRequest_FieldNumber_Identifier = 1,
+  ITMMenuItemRequest_FieldNumber_QueryOnly = 2,
+};
+
+/**
+ * Invoke or ask for info about a menu item
+ **/
+@interface ITMMenuItemRequest : GPBMessage
+
+/** Unique identifier of the menu item. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *identifier;
+/** Test to see if @c identifier has been set. */
+@property(nonatomic, readwrite) BOOL hasIdentifier;
+
+/** If set do not actually select it. Just return its state. */
+@property(nonatomic, readwrite) BOOL queryOnly;
+
+@property(nonatomic, readwrite) BOOL hasQueryOnly;
+@end
+
+#pragma mark - ITMMenuItemResponse
+
+typedef GPB_ENUM(ITMMenuItemResponse_FieldNumber) {
+  ITMMenuItemResponse_FieldNumber_Status = 1,
+  ITMMenuItemResponse_FieldNumber_Checked = 2,
+  ITMMenuItemResponse_FieldNumber_Enabled = 3,
+};
+
+@interface ITMMenuItemResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMMenuItemResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@property(nonatomic, readwrite) BOOL checked;
+
+@property(nonatomic, readwrite) BOOL hasChecked;
+@property(nonatomic, readwrite) BOOL enabled;
+
+@property(nonatomic, readwrite) BOOL hasEnabled;
+@end
 
 #pragma mark - ITMRestartSessionRequest
 

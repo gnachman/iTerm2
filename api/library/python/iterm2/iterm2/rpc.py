@@ -390,6 +390,14 @@ async def async_restart_session(connection, session_id, only_if_exited):
     request.restart_session_request.only_if_exited = only_if_exited
     return await _async_call(connection, request)
 
+async def async_menu_item(connection, identifier, query_only):
+    """Selects or queries a menu item."""
+    request = _alloc_request()
+    request.menu_item_request.SetInParent()
+    request.menu_item_request.identifier = identifier;
+    request.menu_item_request.query_only = query_only;
+    return await _async_call(connection, request)
+
 ## Private --------------------------------------------------------------------
 
 def _alloc_id():

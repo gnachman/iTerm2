@@ -454,6 +454,40 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 
 #pragma mark - iTermAPIServerDelegate
 
+- (NSMenuItem *)menuItemWithTitleParts:(NSArray<NSString *> *)titleParts
+                                inMenu:(NSMenu *)menu NS_DEPRECATED_MAC(10_10, 10_11, "Use menuItemWithIdentifier:") {
+    NSString *head = titleParts.firstObject;
+    NSArray<NSString *> *remainingTitleParts = [titleParts subarrayFromIndex:1];
+    for (NSMenuItem *item in [menu itemArray]) {
+        if ([item.title isEqualToString:head]) {
+            if ([item hasSubmenu]) {
+                return [self menuItemWithTitleParts:remainingTitleParts
+                                             inMenu:item.submenu];
+            } else if (remainingTitleParts.count == 0) {
+                return item;
+            }
+        }
+    }
+    return nil;
+}
+
+- (NSMenuItem *)menuItemWithIdentifier:(NSString *)identifier
+                                inMenu:(NSMenu *)menu NS_AVAILABLE_MAC(10_12) {
+    for (NSMenuItem *item in [menu itemArray]) {
+        if ([item hasSubmenu]) {
+            NSMenuItem *result = [self menuItemWithIdentifier:identifier inMenu:item.submenu];
+            if (result) {
+                return result;
+            }
+        } else if (item.identifier && [identifier isEqualToString:item.identifier]) {
+            NSLog(@"Found it");
+            return item;
+        }
+    }
+    NSLog(@"Didn't find it");
+    return nil;
+}
+
 - (BOOL)askUserToGrantAuthForController:(iTermAPIAuthorizationController *)controller
                       isReauthorization:(BOOL)reauth
                                remember:(out BOOL *)remember {
@@ -1551,6 +1585,36 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     response.status = ITMRestartSessionResponse_Status_Ok;
     handler(response);
     return;
+}
+
+- (void)apiServerMenuItem:(ITMMenuItemRequest *)request handler:(void (^)(ITMMenuItemResponse *))handler {
+    ITMMenuItemResponse *response = [[ITMMenuItemResponse alloc] init];
+    NSMenuItem *menuItem = nil;
+    if (@available(macOS 10.12, *)) {
+        menuItem = [self menuItemWithIdentifier:request.identifier inMenu:[NSApp mainMenu]];
+    } else {
+        menuItem = [self menuItemWithTitleParts:[request.identifier componentsSeparatedByString:@"."]
+                                         inMenu:[NSApp mainMenu]];
+    }
+    if (!menuItem) {
+        response.status = ITMMenuItemResponse_Status_BadIdentifier;
+        handler(response);
+        return;
+    }
+    if (!menuItem.enabled && !request.queryOnly) {
+        response.status = ITMMenuItemResponse_Status_Disabled;
+        handler(response);
+        return;
+    }
+    response.checked = menuItem.state == NSOnState;
+    response.enabled = menuItem.isEnabled;
+    if (!request.queryOnly) {
+        [NSApp sendAction:menuItem.action
+                       to:menuItem.target
+                     from:menuItem];
+    }
+    response.status = ITMMenuItemResponse_Status_Ok;
+    handler(response);
 }
 
 @end

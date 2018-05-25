@@ -36,6 +36,7 @@ message ClientOriginatedMessage {
     ListProfilesRequest list_profiles_request = 118;
     ServerOriginatedRPCResultRequest server_originated_rpc_result_request = 119;
     RestartSessionRequest restart_session_request = 120;
+    MenuItemRequest menu_item_request = 121;
   }
 }
 
@@ -69,10 +70,31 @@ message ServerOriginatedMessage {
     ListProfilesResponse list_profiles_response = 118;
     ServerOriginatedRPCResultResponse server_originated_rpc_result_response = 119;
     RestartSessionResponse restart_session_response = 120;
+    MenuItemResponse menu_item_response = 121;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
   }
+}
+
+// Invoke or ask for info about a menu item
+message MenuItemRequest {
+  // Unique identifier of the menu item.
+  optional string identifier = 1;
+
+  // If set do not actually invoke it. Just return its state.
+  optional bool query_only = 2;
+}
+
+message MenuItemResponse {
+  enum Status {
+    OK = 0;
+    BAD_IDENTIFIER = 1;
+    DISABLED = 2;
+  }
+  optional Status status = 1;
+  optional bool checked = 2;
+  optional bool enabled = 3;
 }
 
 message RestartSessionRequest {

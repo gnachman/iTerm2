@@ -126,6 +126,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
 @dynamic listProfilesRequest;
 @dynamic serverOriginatedRpcResultRequest;
 @dynamic restartSessionRequest;
+@dynamic menuItemRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -150,6 +151,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMListProfilesRequest *listProfilesRequest;
   ITMServerOriginatedRPCResultRequest *serverOriginatedRpcResultRequest;
   ITMRestartSessionRequest *restartSessionRequest;
+  ITMMenuItemRequest *menuItemRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -357,6 +359,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "menuItemRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMMenuItemRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_MenuItemRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, menuItemRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -413,6 +424,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic listProfilesResponse;
 @dynamic serverOriginatedRpcResultResponse;
 @dynamic restartSessionResponse;
+@dynamic menuItemResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -439,6 +451,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMListProfilesResponse *listProfilesResponse;
   ITMServerOriginatedRPCResultResponse *serverOriginatedRpcResultResponse;
   ITMRestartSessionResponse *restartSessionResponse;
+  ITMMenuItemResponse *menuItemResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -657,6 +670,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "menuItemResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMMenuItemResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_MenuItemResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, menuItemResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
@@ -693,6 +715,158 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMMenuItemRequest
+
+@implementation ITMMenuItemRequest
+
+@dynamic hasIdentifier, identifier;
+@dynamic hasQueryOnly, queryOnly;
+
+typedef struct ITMMenuItemRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *identifier;
+} ITMMenuItemRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "identifier",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMMenuItemRequest_FieldNumber_Identifier,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMMenuItemRequest__storage_, identifier),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "queryOnly",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMMenuItemRequest_FieldNumber_QueryOnly,
+        .hasIndex = 1,
+        .offset = 2,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMMenuItemRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMMenuItemRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMMenuItemResponse
+
+@implementation ITMMenuItemResponse
+
+@dynamic hasStatus, status;
+@dynamic hasChecked, checked;
+@dynamic hasEnabled, enabled;
+
+typedef struct ITMMenuItemResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMMenuItemResponse_Status status;
+} ITMMenuItemResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMMenuItemResponse_Status_EnumDescriptor,
+        .number = ITMMenuItemResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMMenuItemResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "checked",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMMenuItemResponse_FieldNumber_Checked,
+        .hasIndex = 1,
+        .offset = 2,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "enabled",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMMenuItemResponse_FieldNumber_Enabled,
+        .hasIndex = 3,
+        .offset = 4,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMMenuItemResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMMenuItemResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMMenuItemResponse_Status
+
+GPBEnumDescriptor *ITMMenuItemResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000BadIdentifier\000Disabled\000";
+    static const int32_t values[] = {
+        ITMMenuItemResponse_Status_Ok,
+        ITMMenuItemResponse_Status_BadIdentifier,
+        ITMMenuItemResponse_Status_Disabled,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMMenuItemResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMMenuItemResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMMenuItemResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMMenuItemResponse_Status_Ok:
+    case ITMMenuItemResponse_Status_BadIdentifier:
+    case ITMMenuItemResponse_Status_Disabled:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
 #pragma mark - ITMRestartSessionRequest
 
 @implementation ITMRestartSessionRequest

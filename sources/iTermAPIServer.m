@@ -647,6 +647,16 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     }];
 }
 
+- (void)handleMenuItemRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+    ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
+
+    __weak __typeof(self) weakSelf = self;
+    [_delegate apiServerMenuItem:request.menuItemRequest handler:^(ITMMenuItemResponse *menuItemResponse) {
+        response.menuItemResponse = menuItemResponse;
+        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
+    }];
+}
+
 // Runs on main queue, either in or not in a transaction.
 - (void)dispatchRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     DLog(@"Got request %@", request);
@@ -747,6 +757,10 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
         case ITMClientOriginatedMessage_Submessage_OneOfCase_RestartSessionRequest:
             [self handleRestartSessionRequest:request connection:webSocketConnection];
+            break;
+
+        case ITMClientOriginatedMessage_Submessage_OneOfCase_MenuItemRequest:
+            [self handleMenuItemRequest:request connection:webSocketConnection];
             break;
     }
 }
