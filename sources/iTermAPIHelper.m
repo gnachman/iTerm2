@@ -1363,7 +1363,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     }];
     [request.getArray enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([name isEqualToString:@"*"]) {
-            [response.valuesArray addObject:[session.variables.allKeys componentsJoinedByString:@"\n"]];
+            [response.valuesArray addObject:[NSJSONSerialization it_jsonStringForObject:session.variables.allKeys]];
         } else {
             id obj = [NSJSONSerialization it_jsonStringForObject:session.variables[name]];
             NSString *value = obj ?: @"null";
