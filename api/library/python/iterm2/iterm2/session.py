@@ -135,7 +135,7 @@ class Session:
         """
         return ProxySession(connection, "all")
 
-    def __init__(self, connection, link):
+    def __init__(self, connection, link, summary=None):
         """
         connection: :class:`Connection`
         link: iterm2.api_pb2.ListSessionsResponse.SplitTreeNode.SplitTreeLink
@@ -147,6 +147,11 @@ class Session:
             self.frame = link.session.frame
             self.grid_size = link.session.grid_size
             self.name = link.session.title
+            self.buried = False
+        elif summary is not None:
+            self.__session_id = summary.unique_identifier
+            self.name = summary.title
+            self.buried = True
 
     def __repr__(self):
         return "<Session name=%s id=%s>" % (self.name, self.__session_id)

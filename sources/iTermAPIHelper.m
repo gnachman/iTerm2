@@ -10,6 +10,7 @@
 #import "CVector.h"
 #import "DebugLogging.h"
 #import "iTermAPIAuthorizationController.h"
+#import "iTermBuriedSessions.h"
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
 #import "iTermLSOF.h"
@@ -163,6 +164,10 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(layoutChanged:)
                                                      name:iTermTabDidChangePositionInWindowNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutChanged:)
+                                                     name:iTermSessionBuriedStateChangeTabNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidBecomeActive:)
@@ -914,10 +919,17 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
             ITMListSessionsResponse_Tab *tabMessage = [[ITMListSessionsResponse_Tab alloc] init];
             tabMessage.tabId = [@(tab.uniqueId) stringValue];
             tabMessage.root = [tab rootSplitTreeNode];
+
             [windowMessage.tabsArray addObject:tabMessage];
         }
 
         [response.windowsArray addObject:windowMessage];
+    }
+    for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
+        ITMSessionSummary *sessionSummary = [[ITMSessionSummary alloc] init];
+        sessionSummary.uniqueIdentifier = session.guid;
+        sessionSummary.title = session.name;
+        [response.buriedSessionsArray addObject:sessionSummary];
     }
     return response;
 }

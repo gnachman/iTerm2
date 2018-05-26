@@ -915,6 +915,13 @@ message Frame {
   optional Size size = 2;
 }
 
+message SessionSummary {
+    optional string unique_identifier = 1;
+    optional Frame frame = 2;  // will not be set for buried sessions
+    optional Size grid_size = 3;  // will not be set for buried sessions
+    optional string title = 4;
+}
+
 message ListSessionsResponse {
   message Window {
     repeated Tab tabs = 1;
@@ -931,18 +938,13 @@ message ListSessionsResponse {
 
     message SplitTreeLink {
       oneof child {
-        Session session = 1;
+        SessionSummary session = 1;
         SplitTreeNode node = 2;
-      }
-      message Session {
-          optional string unique_identifier = 1;
-          optional Frame frame = 2;
-          optional Size grid_size = 3;
-          optional string title = 4;
       }
     }
   }
   repeated Window windows = 1;
+  repeated SessionSummary buried_sessions = 2;
 }
 
 message CreateTabRequest {

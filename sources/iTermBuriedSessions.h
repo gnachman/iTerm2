@@ -10,6 +10,8 @@
 
 @class PTYSession;
 
+extern NSString *const iTermSessionBuriedStateChangeTabNotification;
+
 @interface iTermBuriedSessions : NSObject
 
 + (instancetype)sharedInstance;

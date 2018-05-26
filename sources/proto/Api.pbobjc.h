@@ -62,7 +62,6 @@ CF_EXTERN_C_BEGIN
 @class ITMListSessionsResponse;
 @class ITMListSessionsResponse_SplitTreeNode;
 @class ITMListSessionsResponse_SplitTreeNode_SplitTreeLink;
-@class ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session;
 @class ITMListSessionsResponse_Tab;
 @class ITMListSessionsResponse_Window;
 @class ITMLocationChangeNotification;
@@ -92,6 +91,7 @@ CF_EXTERN_C_BEGIN
 @class ITMServerOriginatedRPCResultRequest;
 @class ITMServerOriginatedRPCResultResponse;
 @class ITMServerOriginatedRPC_RPCArgument;
+@class ITMSessionSummary;
 @class ITMSetProfilePropertyRequest;
 @class ITMSetProfilePropertyRequest_GuidList;
 @class ITMSetProfilePropertyResponse;
@@ -840,7 +840,7 @@ typedef GPB_ENUM(ITMMenuItemRequest_FieldNumber) {
 /** Test to see if @c identifier has been set. */
 @property(nonatomic, readwrite) BOOL hasIdentifier;
 
-/** If set do not actually select it. Just return its state. */
+/** If set do not actually invoke it. Just return its state. */
 @property(nonatomic, readwrite) BOOL queryOnly;
 
 @property(nonatomic, readwrite) BOOL hasQueryOnly;
@@ -2478,10 +2478,42 @@ typedef GPB_ENUM(ITMFrame_FieldNumber) {
 
 @end
 
+#pragma mark - ITMSessionSummary
+
+typedef GPB_ENUM(ITMSessionSummary_FieldNumber) {
+  ITMSessionSummary_FieldNumber_UniqueIdentifier = 1,
+  ITMSessionSummary_FieldNumber_Frame = 2,
+  ITMSessionSummary_FieldNumber_GridSize = 3,
+  ITMSessionSummary_FieldNumber_Title = 4,
+};
+
+@interface ITMSessionSummary : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *uniqueIdentifier;
+/** Test to see if @c uniqueIdentifier has been set. */
+@property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
+
+/** will not be set for buried sessions */
+@property(nonatomic, readwrite, strong, null_resettable) ITMFrame *frame;
+/** Test to see if @c frame has been set. */
+@property(nonatomic, readwrite) BOOL hasFrame;
+
+/** will not be set for buried sessions */
+@property(nonatomic, readwrite, strong, null_resettable) ITMSize *gridSize;
+/** Test to see if @c gridSize has been set. */
+@property(nonatomic, readwrite) BOOL hasGridSize;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *title;
+/** Test to see if @c title has been set. */
+@property(nonatomic, readwrite) BOOL hasTitle;
+
+@end
+
 #pragma mark - ITMListSessionsResponse
 
 typedef GPB_ENUM(ITMListSessionsResponse_FieldNumber) {
   ITMListSessionsResponse_FieldNumber_WindowsArray = 1,
+  ITMListSessionsResponse_FieldNumber_BuriedSessionsArray = 2,
 };
 
 @interface ITMListSessionsResponse : GPBMessage
@@ -2489,6 +2521,10 @@ typedef GPB_ENUM(ITMListSessionsResponse_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMListSessionsResponse_Window*> *windowsArray;
 /** The number of items in @c windowsArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger windowsArray_Count;
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMSessionSummary*> *buriedSessionsArray;
+/** The number of items in @c buriedSessionsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger buriedSessionsArray_Count;
 
 @end
 
@@ -2572,7 +2608,7 @@ typedef GPB_ENUM(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Child_OneOf
 
 @property(nonatomic, readonly) ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Child_OneOfCase childOneOfCase;
 
-@property(nonatomic, readwrite, strong, null_resettable) ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session *session;
+@property(nonatomic, readwrite, strong, null_resettable) ITMSessionSummary *session;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMListSessionsResponse_SplitTreeNode *node;
 
@@ -2582,35 +2618,6 @@ typedef GPB_ENUM(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Child_OneOf
  * Clears whatever value was set for the oneof 'child'.
  **/
 void ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_ClearChildOneOfCase(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink *message);
-
-#pragma mark - ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session
-
-typedef GPB_ENUM(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session_FieldNumber) {
-  ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session_FieldNumber_UniqueIdentifier = 1,
-  ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session_FieldNumber_Frame = 2,
-  ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session_FieldNumber_GridSize = 3,
-  ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session_FieldNumber_Title = 4,
-};
-
-@interface ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Session : GPBMessage
-
-@property(nonatomic, readwrite, copy, null_resettable) NSString *uniqueIdentifier;
-/** Test to see if @c uniqueIdentifier has been set. */
-@property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
-
-@property(nonatomic, readwrite, strong, null_resettable) ITMFrame *frame;
-/** Test to see if @c frame has been set. */
-@property(nonatomic, readwrite) BOOL hasFrame;
-
-@property(nonatomic, readwrite, strong, null_resettable) ITMSize *gridSize;
-/** Test to see if @c gridSize has been set. */
-@property(nonatomic, readwrite) BOOL hasGridSize;
-
-@property(nonatomic, readwrite, copy, null_resettable) NSString *title;
-/** Test to see if @c title has been set. */
-@property(nonatomic, readwrite) BOOL hasTitle;
-
-@end
 
 #pragma mark - ITMCreateTabRequest
 

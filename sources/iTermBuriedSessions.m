@@ -17,6 +17,8 @@
 #import "PTYSession.h"
 #import "PTYTab.h"
 
+NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBuriedStateChangeTabNotification";
+
 @implementation iTermBuriedSessions {
     NSMutableArray<iTermRestorableSession *> *_array;
 }
@@ -52,6 +54,7 @@
     [_array addObject:restorableSession];
     [[[iTermApplication sharedApplication] delegate] updateBuriedSessionsMenu];
     [NSApp invalidateRestorableState];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBuriedStateChangeTabNotification object:sessionToBury];
 }
 
 - (void)restoreSession:(PTYSession *)session {
@@ -101,6 +104,7 @@
     }
     [[[iTermApplication sharedApplication] delegate] updateBuriedSessionsMenu];
     [NSApp invalidateRestorableState];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBuriedStateChangeTabNotification object:session];
 }
 
 - (NSArray<PTYSession *> *)buriedSessions {
@@ -123,6 +127,7 @@
         }
     }
     [[[iTermApplication sharedApplication] delegate] updateBuriedSessionsMenu];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBuriedStateChangeTabNotification object:nil];
 }
 
 @end
