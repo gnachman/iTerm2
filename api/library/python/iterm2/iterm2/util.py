@@ -6,6 +6,9 @@ def frame_str(frame):
     :param frame: An api_pb2.Frame
 
     :returns: A human-readable string."""
+    if frame is None:
+        return "[Undefined]"
+
     return "[(%s, %s) %s]" % (
         frame.origin.x,
         frame.origin.y,
@@ -17,6 +20,8 @@ def size_str(size):
     :param frame: An api_pb2.Size
 
     :returns: A human-readable string."""
+    if size is None:
+        return "[Undefined]"
     return "(%s x %s)" % (
         size.width,
         size.height)
