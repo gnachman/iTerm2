@@ -152,6 +152,8 @@ class Session:
             self.__session_id = summary.unique_identifier
             self.name = summary.title
             self.buried = True
+            self.grid_size = None
+            self.frame = None
 
     def __repr__(self):
         return "<Session name=%s id=%s>" % (self.name, self.__session_id)
