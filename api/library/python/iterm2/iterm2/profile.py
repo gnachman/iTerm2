@@ -1671,7 +1671,7 @@ class Color:
         if "Alpha Component" in input_dict:
             self.alpha = float(input_dict["Alpha Component"]) * 255
         else:
-            self.alpha = 1
+            self.alpha = 255
         if "Color Space" in input_dict:
             self.color_space = input_dict["Color Space"]
         else:
