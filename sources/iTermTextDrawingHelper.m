@@ -2126,7 +2126,9 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     CGFloat preferredOffset = [self retinaRound:yOffset + _cellSize.height + underlineOffset] - 1.0 / (2 * scaleFactor);
 
     const CGFloat thickness = [self underlineThicknessForFont:font];
-    return [self retinaRound:MIN(preferredOffset, yOffset + cellHeight - thickness)];
+    const CGFloat roundedPreferredOffset = [self retinaRound:preferredOffset];
+    const CGFloat maximumOffset = [self retinaFloor:yOffset + cellHeight - thickness];
+    return MIN(roundedPreferredOffset, maximumOffset);
 }
 
 - (CGFloat)underlineThicknessForFont:(NSFont *)font {
@@ -2195,6 +2197,11 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 - (CGFloat)retinaRound:(CGFloat)value {
     CGFloat scaleFactor = self.isRetina ? 2.0 : 1.0;
     return round(scaleFactor * value) / scaleFactor;
+}
+
+- (CGFloat)retinaFloor:(CGFloat)value {
+    CGFloat scaleFactor = self.isRetina ? 2.0 : 1.0;
+    return floor(scaleFactor * value) / scaleFactor;
 }
 
 // origin is the first location onscreen
