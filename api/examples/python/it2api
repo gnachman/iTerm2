@@ -10,11 +10,15 @@ import traceback
 
 async def list_sessions(connection, args):
   a = await iterm2.async_get_app(connection)
-  for w in a.windows:
+  for w in a.terminal_windows:
     for t in w.tabs:
       sessions = t.sessions
       for s in sessions:
         print(s.pretty_str(), end='')
+  print("")
+  print("Buried sessions:")
+  for s in a.buried_sessions:
+    print(s.pretty_str(), end='')
 
 async def show_hierarchy(connection, args):
   a = await iterm2.async_get_app(connection)
@@ -30,18 +34,22 @@ async def create_tab(connection, args):
   if args.window is not None:
     window_id = args.window
     try:
-      window = next(window for window in a.windows if window.window_id == window_id)
-      await window.async_create_tab(profile=args.profile, command=args.command, index=args.index)
+      window = next(window for window in a.terminal_windows if window.window_id == window_id)
+      tab = await window.async_create_tab(profile=args.profile, command=args.command, index=args.index)
     except:
       print("bad window id {}".format(window_id))
       sys.exit(1)
   else:
-    result = await a.async_create_window(profile=args.profile, command=args.command)
+    window = await a.async_create_window(profile=args.profile, command=args.command)
+    tab = window.tabs[0]
+  session = tab.sessions[0]
+  print(session.pretty_str())
 
 async def split_pane(connection, args):
   a = await iterm2.async_get_app(connection)
   s = a.get_session_by_id(args.session)
-  await s.async_split_pane(vertical=args.vertical, before=args.before, profile=args.profile)
+  session = await s.async_split_pane(vertical=args.vertical, before=args.before, profile=args.profile)
+  print(session.pretty_str())
 
 async def get_buffer(connection, args):
   a = await iterm2.async_get_app(connection)
@@ -206,7 +214,8 @@ def encode_property_value(key, value):
     raise TypeNotSupportedException("this property's type is not supported")
   elif type == "color":
     # Accepted values look like: "(0,0,0,255 sRGB)"
-    match = re.search(r"\(([0-9]+), *([0-9]+), *([0-9]+), *([0-9]+)  *([A-Za-z]+)\)", value)
+    regex = r"\(([0-9]+), *([0-9]+), *([0-9]+), *([0-9]+)  *([A-Za-z]+)\)"
+    match = re.search(regex, value)
     assert match is not None
     return iterm2.Color(
         float(match.group(1)),
@@ -252,7 +261,8 @@ async def get_window_property(connection, args):
     print("bad window ID")
   else:
     if args.name == "frame":
-      print(await w.async_get_frame(connection))
+      frame = await w.async_get_frame()
+      print("{},{},{},{}".format(frame.origin.x,frame.origin.y,frame.size.width,frame.size.height))
     elif args.name == "fullscreen":
       print(await w.async_get_fullscreen(connection))
 
@@ -269,7 +279,7 @@ async def set_window_property(connection, args):
       frame.origin.y = int(parts[1])
       frame.size.width = int(parts[2])
       frame.size.height = int(parts[3])
-      await w.async_set_frame(connection, frame)
+      await w.async_set_frame(frame)
     elif args.name == "fullscreen":
       await w.async_set_fullscreen(connection, args.value == "true")
 
@@ -330,8 +340,7 @@ async def list_variables(connection, args):
     print("bad session ID")
     return
   value = await s.async_get_variable("*")
-  names = value.split(",")
-  for name in names:
+  for name in value:
     print(name)
 
 async def saved_arrangement(connection, args):
@@ -356,10 +365,10 @@ async def show_focus(connection, args):
   a = await iterm2.async_get_app(connection)
   if a.app_active:
     print("App is active")
-  w = a.key_window
+  w = a.current_terminal_window
   print("Key window: {}".format(w.window_id))
   print("")
-  for w in a.windows:
+  for w in a.terminal_windows:
     t = a.get_tab_by_id(w.selected_tab_id)
     print("Selected tab in {}: {}".format(w.window_id, t.tab_id))
     s = a.get_session_by_id(t.active_session_id)
