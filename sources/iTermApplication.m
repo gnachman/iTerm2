@@ -395,6 +395,7 @@ NSString *const iTermApplicationCharacterPaletteDidClose = @"iTermApplicationCha
     TransformProcessType(&psn,
                          uiElement ? kProcessTransformToUIElementApplication :
                                      kProcessTransformToForegroundApplication);
+#if 0
     if (uiElement) {
         // Gotta wait for a spin of the runloop or else it doesn't activate. That's bad news
         // when toggling the preference because all the windows disappear.
@@ -416,6 +417,7 @@ NSString *const iTermApplicationCharacterPaletteDidClose = @"iTermApplicationCha
         [[NSStatusBar systemStatusBar] removeStatusItem:_statusBarItem];
         self.statusBarItem = nil;
     }
+#endif
 }
 
 - (NSArray<NSWindow *> *)orderedWindowsPlusVisibleHotkeyPanels {
