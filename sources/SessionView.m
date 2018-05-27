@@ -58,7 +58,7 @@ static NSDate* lastResizeDate_;
 
 
 @interface SessionView () <iTermAnnouncementDelegate, NSDraggingSource, PTYScrollerDelegate>
-@property(nonatomic, retain) PTYScrollView *scrollview;
+@property(nonatomic, strong) PTYScrollView *scrollview;
 @end
 
 @implementation SessionView {
@@ -97,21 +97,19 @@ static NSDate* lastResizeDate_;
 
 + (void)initialize {
     if (self == [SessionView self]) {
-        lastResizeDate_ = [[NSDate date] retain];
+        lastResizeDate_ = [NSDate date];
     }
 }
 
 + (void)windowDidResize {
-    [lastResizeDate_ release];
-    lastResizeDate_ = [[NSDate date] retain];
+    lastResizeDate_ = [NSDate date];
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         [self registerForDraggedTypes:@[ iTermMovePaneDragType, @"com.iterm2.psm.controlitem" ]];
-        [lastResizeDate_ release];
-        lastResizeDate_ = [[NSDate date] retain];
+        lastResizeDate_ = [NSDate date];
         _announcements = [[NSMutableArray alloc] init];
 
         // Set up find view
@@ -164,20 +162,13 @@ static NSDate* lastResizeDate_;
     if (self.verticalScroller.ptyScrollerDelegate == self) {
         self.verticalScroller.ptyScrollerDelegate = nil;
     }
-    [_scrollview release];
     [_title removeFromSuperview];
     [self unregisterDraggedTypes];
     [_currentAnnouncement dismiss];
-    [_currentAnnouncement release];
-    [_announcements release];
     while (self.trackingAreas.count) {
         [self removeTrackingArea:self.trackingAreas[0]];
     }
     _metalView.delegate = nil;
-    [_metalView release];
-    [_driver release];
-    [_metalClipView release];
-    [super dealloc];
 }
 
 - (BOOL)useMetal {
@@ -210,8 +201,27 @@ static NSDate* lastResizeDate_;
 
 - (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
     // Allocate a new metal view
-    _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
-                                         device:MTLCreateSystemDefaultDevice()];
+    if ([iTermAdvancedSettingsModel preferIntegratedGPU]) {
+        NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
+
+        id<MTLDevice> gpu = nil;
+
+        for (id<MTLDevice> device in devices) {
+            if (device.isLowPower) {
+                gpu = device;
+                break;
+            }
+        }
+
+        if (!gpu) {
+            gpu = MTLCreateSystemDefaultDevice();
+        }
+        _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
+                                             device:gpu];
+    } else {
+        _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
+                                             device:MTLCreateSystemDefaultDevice()];
+    }
     // There was a spike in crashes on 5/1. I'm removing this temporarily to see if it was the cause.
 #if ENABLE_LOW_POWER_GPU_DETECTION
                                          device:[[iTermMetalDeviceProvider sharedInstance] preferredDevice]];
@@ -244,9 +254,7 @@ static NSDate* lastResizeDate_;
 - (void)removeMetalView NS_AVAILABLE_MAC(10_11) {
     _metalView.delegate = nil;
     [_metalView removeFromSuperview];
-    [_metalView autorelease];
     _metalView = nil;
-    [_driver autorelease];
     _driver = nil;
     _metalClipView.useMetal = NO;
     _metalClipView.metalView = nil;
@@ -422,10 +430,10 @@ static NSDate* lastResizeDate_;
         while (self.trackingAreas.count) {
             [self removeTrackingArea:self.trackingAreas[0]];
         }
-        NSTrackingArea *trackingArea = [[[NSTrackingArea alloc] initWithRect:self.bounds
-                                                                     options:trackingOptions
-                                                                       owner:self
-                                                                    userInfo:nil] autorelease];
+        NSTrackingArea *trackingArea = [[NSTrackingArea alloc] initWithRect:self.bounds
+                                                                    options:trackingOptions
+                                                                      owner:self
+                                                                   userInfo:nil];
         [self addTrackingArea:trackingArea];
     }
 }
@@ -520,8 +528,7 @@ static NSDate* lastResizeDate_;
 
 // This is called as part of the live resizing protocol when you let up the mouse button.
 - (void)viewDidEndLiveResize {
-    [lastResizeDate_ release];
-    lastResizeDate_ = [[NSDate date] retain];
+    lastResizeDate_ = [NSDate date];
 }
 
 - (void)saveFrameSize {
@@ -545,7 +552,6 @@ static NSDate* lastResizeDate_;
     [_splitSelectionView setFrameOrigin:NSMakePoint(0, 0)];
     [_splitSelectionView setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
     [self addSubview:_splitSelectionView];
-    [_splitSelectionView release];
 }
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move session:(id)session {
@@ -630,7 +636,6 @@ static NSDate* lastResizeDate_;
                                                                                frame.size.height)];
     _splitSelectionView.wantsLayer = [iTermPreferences boolForKey:kPreferenceKeyUseMetal];
     [self addSubview:_splitSelectionView];
-    [_splitSelectionView release];
     [[self window] orderFront:nil];
 }
 
@@ -650,8 +655,8 @@ static NSDate* lastResizeDate_;
         if (url == nil) {
             return;
         }
-        _hoverURLView = [[[iTermHoverContainerView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)] autorelease];
-        _hoverURLTextField = [[[NSTextField alloc] initWithFrame:_hoverURLView.bounds] autorelease];
+        _hoverURLView = [[iTermHoverContainerView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)];
+        _hoverURLTextField = [[NSTextField alloc] initWithFrame:_hoverURLView.bounds];
         [_hoverURLTextField setDrawsBackground:NO];
         [_hoverURLTextField setBordered:NO];
         [_hoverURLTextField setEditable:NO];
@@ -753,10 +758,10 @@ static NSDate* lastResizeDate_;
     NSRect frame = [scrollView frame];
     if (_showTitle) {
         frame.size.height -= kTitleHeight;
-        _title = [[[SessionTitleView alloc] initWithFrame:NSMakeRect(0,
-                                                                     self.frame.size.height - kTitleHeight,
-                                                                     self.frame.size.width,
-                                                                     kTitleHeight)] autorelease];
+        _title = [[SessionTitleView alloc] initWithFrame:NSMakeRect(0,
+                                                                    self.frame.size.height - kTitleHeight,
+                                                                    self.frame.size.width,
+                                                                    kTitleHeight)];
         if (adjustScrollView) {
             [_title setAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin];
         }
@@ -933,7 +938,7 @@ static NSDate* lastResizeDate_;
 - (iTermAnnouncementViewController *)nextAnnouncement {
     iTermAnnouncementViewController *possibleAnnouncement = nil;
     while (_announcements.count) {
-        possibleAnnouncement = [[_announcements[0] retain] autorelease];
+        possibleAnnouncement = _announcements[0];
         [_announcements removeObjectAtIndex:0];
         if (possibleAnnouncement.shouldBecomeVisible) {
             return possibleAnnouncement;
@@ -943,14 +948,13 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)showNextAnnouncement {
-    [_currentAnnouncement autorelease];
     _currentAnnouncement = nil;
     if (_announcements.count) {
         iTermAnnouncementViewController *possibleAnnouncement = [self nextAnnouncement];
         if (!possibleAnnouncement) {
             return;
         }
-        _currentAnnouncement = [possibleAnnouncement retain];
+        _currentAnnouncement = possibleAnnouncement;
         [self updateAnnouncementFrame];
 
         // Animate in

@@ -210,6 +210,7 @@ DEFINE_BOOL(disableCustomBoxDrawing, NO, @"Drawing: Use your typeface’s box-dr
 #if ENABLE_LOW_POWER_GPU_DETECTION
 DEFINE_BOOL(useLowPowerGPUWhenUnplugged, NO, @"Drawing: Metal renderer uses integrated GPU when not connected to power?\nFor this to be effective you must disable “Disable Metal renderer when not connected to power”.");
 #endif
+DEFINE_BOOL(preferIntegratedGPU, NO, @"Drawing: Metal renderer prefers the integrated GPU.\nRestart iTerm2 for this to take effect.");
 
 #pragma mark - Semantic History
 DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"Semantic History: Ignore hard newlines for the purposes of locating URLs and file names for Semantic History.\nIf a hard newline occurs at the end of a line then ⌘-click will not see it all unless this setting is turned on. This is useful for some interactive applications. Turning this on will remove newlines from the \\3 and \\4 substitutions.");

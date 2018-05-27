@@ -140,7 +140,7 @@
 // If a modifier+digit switches panes, this is the value of digit. Used to show in title bar.
 @property(nonatomic, assign) int ordinal;
 @property(nonatomic, readonly) iTermAnnouncementViewController *currentAnnouncement;
-@property(nonatomic, assign) id<iTermSessionViewDelegate> delegate;
+@property(nonatomic, weak) id<iTermSessionViewDelegate> delegate;
 @property(nonatomic, readonly) PTYScrollView *scrollview;
 @property(nonatomic, readonly) PTYScroller *verticalScroller;
 @property(nonatomic, readonly) iTermMetalDriver *driver NS_AVAILABLE_MAC(10_11);

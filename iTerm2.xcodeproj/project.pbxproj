@@ -1234,6 +1234,7 @@
 		53AFFC8F1DD2A04600E6CEC6 /* iTermLSOF.h in Headers */ = {isa = PBXBuildFile; fileRef = 53AFFC8A1DD2A03800E6CEC6 /* iTermLSOF.h */; };
 		53AFFC921DD38F1500E6CEC6 /* ToolWebView.h in Headers */ = {isa = PBXBuildFile; fileRef = 53AFFC901DD38F1500E6CEC6 /* ToolWebView.h */; };
 		53AFFC931DD38F1500E6CEC6 /* ToolWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = 53AFFC911DD38F1500E6CEC6 /* ToolWebView.m */; };
+		53C1669220BA38C9003B03AF /* SessionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E813012A18F7500F3D71E /* SessionView.m */; };
 		53E184F11FE32F2800DB78F3 /* iTermMetalBufferPool.h in Headers */ = {isa = PBXBuildFile; fileRef = 53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */; };
 		53E184F21FE32F2800DB78F3 /* iTermMetalBufferPool.m in Sources */ = {isa = PBXBuildFile; fileRef = 53E184F01FE32F2800DB78F3 /* iTermMetalBufferPool.m */; };
 		53FF980B20918D23008688D7 /* template_basic_simple.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template_basic_simple.py */; };
@@ -2227,7 +2228,6 @@
 		A6C762E01B45C52B00E3C992 /* PTYTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7561026DDA6303A80106 /* PTYTextView.m */; };
 		A6C762E11B45C52B00E3C992 /* PTYWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F56B230B03A1B36701A8A066 /* PTYWindow.m */; };
 		A6C762E21B45C52B00E3C992 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
-		A6C762E31B45C52B00E3C992 /* SessionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E813012A18F7500F3D71E /* SessionView.m */; };
 		A6C762E41B45C52B00E3C992 /* TaskNotifier.m in Sources */ = {isa = PBXBuildFile; fileRef = A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */; };
 		A6C762E51B45C52B00E3C992 /* TextViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D44218B1290B34500891504 /* TextViewWrapper.m */; };
 		A6C762E61B45C52B00E3C992 /* VT100Grid.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8B8A131806038F00C2DC25 /* VT100Grid.m */; };
@@ -9514,6 +9514,7 @@
 				A6DBC0462005DC2B00F1466D /* iTermTuple.m in Sources */,
 				A67960D51F81FCBB008A42BC /* iTermCursorRenderer.m in Sources */,
 				A6A4866420B676CA00493302 /* EventMonitorView.m in Sources */,
+				53C1669220BA38C9003B03AF /* SessionView.m in Sources */,
 				A6A4868020B6817900493302 /* WindowArrangements.m in Sources */,
 				A6A4867D20B67F7E00493302 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				A60C0373208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.m in Sources */,
@@ -9901,7 +9902,6 @@
 				A6C7638A1B45C52B00E3C992 /* ProfileModelWrapper.m in Sources */,
 				A6C763BB1B45C52B00E3C992 /* iTermTipController.m in Sources */,
 				A6C763BF1B45C52B00E3C992 /* VT100AnsiParser.m in Sources */,
-				A6C762E31B45C52B00E3C992 /* SessionView.m in Sources */,
 				A6C763A31B45C52B00E3C992 /* ToolCapturedOutputView.m in Sources */,
 				A6C762F21B45C52B00E3C992 /* DVREncoder.m in Sources */,
 				A6C763501B45C52B00E3C992 /* SolidColorView.m in Sources */,
