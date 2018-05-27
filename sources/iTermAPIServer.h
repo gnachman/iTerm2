@@ -61,6 +61,8 @@ extern NSString *const iTermAPIServerConnectionClosed;
                         handler:(void (^)(ITMRestartSessionResponse *))response;
 - (void)apiServerMenuItem:(ITMMenuItemRequest *)request
                   handler:(void (^)(ITMMenuItemResponse *))response;
+- (void)apiServerSetTabLayout:(ITMSetTabLayoutRequest *)request
+                      handler:(void (^)(ITMSetTabLayoutResponse *))response;
 
 @end
 

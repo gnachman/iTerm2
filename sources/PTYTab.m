@@ -2756,7 +2756,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 + (NSSize)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                                  showTitles:(BOOL)showTitles
-                                   bookmark:(Profile *)bookmark
+                                   bookmark:(Profile *)profile
                                  inTerminal:(NSWindowController<iTermWindowController> *)term {
     double splitterSize = 1;  // hack: should use -[NSSplitView dividerThickness], but don't have an instance yet.
     NSSize totalSize = NSZeroSize;
@@ -2768,7 +2768,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     switch ([[parseTree objectForKey:kLayoutDictNodeType] intValue]) {
         case kLeafLayoutNode:
             DLog(@"Leaf node. Compute size of session");
-            size = [PTYTab _sessionSizeWithCellSize:[self cellSizeForBookmark:bookmark]
+            size = [PTYTab _sessionSizeWithCellSize:[self cellSizeForBookmark:profile]
                                          dimensions:NSMakeSize([[parseTree objectForKey:kLayoutDictWidthKey] intValue],
                                                                [[parseTree objectForKey:kLayoutDictHeightKey] intValue])
                                          showTitles:showTitles
@@ -2784,7 +2784,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             for (NSMutableDictionary *node in [parseTree objectForKey:kLayoutDictChildrenKey]) {
                 size = [self _recursiveSetSizesInTmuxParseTree:node
                                                     showTitles:showTitles
-                                                      bookmark:bookmark
+                                                      bookmark:profile
                                                     inTerminal:term];
 
                 double splitter = isFirst ? 0 : splitterSize;
@@ -3263,6 +3263,57 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         NSRect aFrame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
         [sessionView setFrame:aFrame];
         [[theSession view] updateTitleFrame];
+    }
+}
+
+- (void)setSizesFromSplitTreeNode:(ITMSplitTreeNode *)node {
+    CGSize newRootSize = [self setSizesFromSplitTreeNode:node splitView:root_];
+    if (!self.realParentWindow.anyFullScreen) {
+        root_.frame = NSMakeRect(0, 0, newRootSize.width, newRootSize.height);
+    }
+    [self recursiveAdjustSubviews:root_];
+}
+
+- (CGSize)setSizesFromSplitTreeNode:(ITMSplitTreeNode *)node splitView:(NSSplitView *)splitView {
+    CGFloat x = 0;
+    CGFloat y = 0;
+    CGSize size = CGSizeMake(0, 0);
+    for (NSInteger i = 0; i < splitView.subviews.count; i++) {
+        NSView *subview = splitView.subviews[i];
+        ITMSplitTreeNode_SplitTreeLink *link = node.linksArray[i];
+        CGSize newSubviewSize;
+        NSSplitView *splitView = [NSSplitView castFrom:subview];
+        SessionView *sessionView = [SessionView castFrom:subview];
+        if (splitView) {
+            newSubviewSize = [self setSizesFromSplitTreeNode:link.node splitView:splitView];
+        } else if (sessionView) {
+            PTYSession *session = (PTYSession *)sessionView.delegate;
+            newSubviewSize = [PTYTab _sessionSizeWithCellSize:[PTYTab cellSizeForBookmark:session.profile]
+                                                   dimensions:NSMakeSize(link.session.gridSize.width,
+                                                                         link.session.gridSize.height)
+                                                   showTitles:sessionView.showTitle
+                                                   inTerminal:realParentWindow_];
+        } else {
+            assert(false);
+        }
+        subview.frame = NSMakeRect(x, y, newSubviewSize.width, newSubviewSize.height);
+        if (node.vertical) {
+            size.width += newSubviewSize.width;
+            x = size.width;
+            size.height = MAX(size.height, newSubviewSize.height);
+        } else {
+            size.width += MAX(size.width, newSubviewSize.width);
+            size.height = newSubviewSize.height;
+            y = size.height;
+        }
+    }
+    return size;
+}
+
+- (void)recursiveAdjustSubviews:(NSSplitView *)splitView {
+    [splitView adjustSubviews];
+    for (id subview in splitView.subviews) {
+        [[NSSplitView castFrom:subview] adjustSubviews];
     }
 }
 
@@ -3841,19 +3892,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [session2Tab.viewToSessionMap setObject:session1 forKey:session1.view];
 }
 
-- (void)_recursivePopulateSplitTreeNode:(ITMListSessionsResponse_SplitTreeNode *)node
+- (void)_recursivePopulateSplitTreeNode:(ITMSplitTreeNode *)node
                                    from:(NSSplitView *)splitview {
     node.vertical = splitview.isVertical;
 
     for (__kindof NSView *view in splitview.subviews) {
         if ([view isKindOfClass:[NSSplitView class]]) {
-            ITMListSessionsResponse_SplitTreeNode *child = [[[ITMListSessionsResponse_SplitTreeNode alloc] init] autorelease];
-            ITMListSessionsResponse_SplitTreeNode_SplitTreeLink *link = [[[ITMListSessionsResponse_SplitTreeNode_SplitTreeLink alloc] init] autorelease];
+            ITMSplitTreeNode *child = [[[ITMSplitTreeNode alloc] init] autorelease];
+            ITMSplitTreeNode_SplitTreeLink *link = [[[ITMSplitTreeNode_SplitTreeLink alloc] init] autorelease];
             link.node = child;
             [node.linksArray addObject:link];
             [self _recursivePopulateSplitTreeNode:child from:view];
         } else if ([view isKindOfClass:[SessionView class]]) {
-            ITMListSessionsResponse_SplitTreeNode_SplitTreeLink *link = [[[ITMListSessionsResponse_SplitTreeNode_SplitTreeLink alloc] init] autorelease];
+            ITMSplitTreeNode_SplitTreeLink *link = [[[ITMSplitTreeNode_SplitTreeLink alloc] init] autorelease];
             PTYSession *session = [self sessionForSessionView:view];
             link.session.uniqueIdentifier = session.guid;
             link.session.frame.origin.x = view.frame.origin.x;
@@ -3871,8 +3922,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
-- (ITMListSessionsResponse_SplitTreeNode *)rootSplitTreeNode {
-    ITMListSessionsResponse_SplitTreeNode *root = [[[ITMListSessionsResponse_SplitTreeNode alloc] init] autorelease];
+- (ITMSplitTreeNode *)rootSplitTreeNode {
+    ITMSplitTreeNode *root = [[[ITMSplitTreeNode alloc] init] autorelease];
     [self _recursivePopulateSplitTreeNode:root from:root_];
     return root;
 }

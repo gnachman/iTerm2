@@ -657,6 +657,16 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     }];
 }
 
+- (void)handleSetTabLayoutRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+    ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
+
+    __weak __typeof(self) weakSelf = self;
+    [_delegate apiServerSetTabLayout:request.setTabLayoutRequest handler:^(ITMSetTabLayoutResponse *theResponse) {
+        response.menuItemResponse = theResponse;
+        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
+    }];
+}
+
 // Runs on main queue, either in or not in a transaction.
 - (void)dispatchRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     DLog(@"Got request %@", request);
@@ -761,6 +771,10 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
         case ITMClientOriginatedMessage_Submessage_OneOfCase_MenuItemRequest:
             [self handleMenuItemRequest:request connection:webSocketConnection];
+            break;
+
+        case ITMClientOriginatedMessage_Submessage_OneOfCase_SetTabLayoutRequest:
+            [self handleSetTabLayoutRequest:request connection:webSocketConnection];
             break;
     }
 }

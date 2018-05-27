@@ -603,6 +603,26 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     return nil;
 }
 
+- (PTYTab *)tapWithID:(NSString *)tabID {
+    if (tabID.length == 0) {
+        return nil;
+    }
+    NSCharacterSet *nonNumericCharacterSet = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
+    if ([tabID rangeOfCharacterFromSet:nonNumericCharacterSet].location == NSNotFound) {
+        return nil;
+    }
+
+    int numericID = tabID.intValue;
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        for (PTYTab *tab in term.tabs) {
+            if (tab.uniqueId == numericID) {
+                return tab;
+            }
+        }
+    }
+    return nil;
+}
+
 - (void)apiServerGetBuffer:(ITMGetBufferRequest *)request
                    handler:(void (^)(ITMGetBufferResponse *))handler {
     PTYSession *session = [self sessionForAPIIdentifier:request.session];
@@ -1715,6 +1735,83 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     }
     response.status = ITMMenuItemResponse_Status_Ok;
     handler(response);
+}
+
+- (void)apiServerSetTabLayout:(ITMSetTabLayoutRequest *)request handler:(void (^)(ITMSetTabLayoutResponse *))handler {
+    ITMSetTabLayoutResponse *response = [[ITMSetTabLayoutResponse alloc] init];
+    PTYTab *tab = [self tapWithID:request.tabId];
+    if (!tab) {
+        response.status = ITMSetTabLayoutResponse_Status_BadTabId;
+        handler(response);
+        return;
+    }
+
+    ITMSplitTreeNode *before = [tab rootSplitTreeNode];
+    ITMSplitTreeNode *requested = request.root;
+
+    BOOL (^__weak weakCheckIsomorphic)(ITMSplitTreeNode *, ITMSplitTreeNode *);
+    BOOL (^__block checkIsomorphic)(ITMSplitTreeNode *, ITMSplitTreeNode *) = ^BOOL(ITMSplitTreeNode *node1, ITMSplitTreeNode *node2) {
+        if (node1.vertical != node2.vertical) {
+            return NO;
+        }
+        if (node1.linksArray_Count != node2.linksArray_Count) {
+            return NO;
+        }
+        for (NSInteger i = 0; i < node1.linksArray_Count; i++) {
+            ITMSplitTreeNode_SplitTreeLink *link1 = node1.linksArray[i];
+            ITMSplitTreeNode_SplitTreeLink *link2 = node2.linksArray[i];
+            if (link1.childOneOfCase == ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase_GPBUnsetOneOfCase) {
+                return NO;
+            }
+            if (link1.childOneOfCase != link2.childOneOfCase) {
+                return NO;
+            }
+            if (link1.childOneOfCase == ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase_Node) {
+                if (!weakCheckIsomorphic(link1.node, link2.node)) {
+                    return NO;
+                }
+            }
+        }
+        return YES;
+    };
+    weakCheckIsomorphic = checkIsomorphic;
+
+    if (!checkIsomorphic(before, requested)) {
+        response.status = ITMSetTabLayoutResponse_Status_WrongTree;
+        handler(response);
+        return;
+    }
+    [tab setSizesFromSplitTreeNode:requested];
+
+//    int (^sumSizeAlongDimension)(BOOL vertical, ITMSplitTreeNode *) = ^int(BOOL vertical, ITMSplitTreeNode *node) {
+//        int sum = 0;
+//        for (ITMSplitTreeNode_SplitTreeLink *link in node.linksArray) {
+//            if (link.childOneOfCase == ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase_Session) {
+//                sum += vertical ? link.session.gridSize.height : link.session.gridSize.width;
+//            } else if (link.childOneOfCase == ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase_Node) {
+//                sum += sumSizeAlongDimension(vertical, link.node);
+//            }
+//        }
+//        return sum;
+//    };
+//
+//    int (^sumWidths)(ITMSplitTreeNode *) = ^int(ITMSplitTreeNode *node) {
+//        return sumSizeAlongDimension(NO, node);
+//    };
+//
+//    int (^sumHeights)(ITMSplitTreeNode *) = ^int(ITMSplitTreeNode *node) {
+//        return sumSizeAlongDimension(YES, node);
+//    };
+//
+//    BOOL (^checkSizesMatch)(ITMSplitTreeNode *, ITMSplitTreeNode *) = ^BOOL(ITMSplitTreeNode *node1, ITMSplitTreeNode *node2) {
+//        return sumWidths(node1) == sumWidths(node2) && sumHeights(node1) == sumHeights(node2);
+//    };
+//
+//    if (!checkSizesMatch(before, requested)) {
+//        response.status = ITMSetTabLayoutResponse_Status_InvalidSize;
+//        handler(response);
+//        return;
+//    }
 }
 
 @end

@@ -37,6 +37,7 @@ message ClientOriginatedMessage {
     ServerOriginatedRPCResultRequest server_originated_rpc_result_request = 119;
     RestartSessionRequest restart_session_request = 120;
     MenuItemRequest menu_item_request = 121;
+    SetTabLayoutRequest set_tab_layout_request = 122;
   }
 }
 
@@ -71,10 +72,29 @@ message ServerOriginatedMessage {
     ServerOriginatedRPCResultResponse server_originated_rpc_result_response = 119;
     RestartSessionResponse restart_session_response = 120;
     MenuItemResponse menu_item_response = 121;
+    SetTabLayoutResponse set_tab_layout_response = 122;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
   }
+}
+
+message SetTabLayoutRequest {
+  // The tree structure must exactly match the actual tree structure, including the `vertical`
+  // setting. Only the grid_sizes may change. They must still add up to the same value in every
+  // dimension.
+  optional SplitTreeNode root = 1;
+  optional string tab_id = 2;
+}
+
+message SetTabLayoutResponse {
+  enum Status {
+    OK = 0;
+    BAD_TAB_ID = 1;
+    WRONG_TREE = 2;
+    INVALID_SIZE = 3;
+  }
+  optional Status status = 1;
 }
 
 // Invoke or ask for info about a menu item
@@ -930,6 +950,18 @@ message SessionSummary {
     optional string title = 4;
 }
 
+message SplitTreeNode {
+  optional bool vertical = 1;  // Direction of split pane divider
+  repeated SplitTreeLink links = 2;  // Links to children
+
+  message SplitTreeLink {
+    oneof child {
+      SessionSummary session = 1;
+      SplitTreeNode node = 2;
+    }
+  }
+}
+
 message ListSessionsResponse {
   message Window {
     repeated Tab tabs = 1;
@@ -939,17 +971,6 @@ message ListSessionsResponse {
   message Tab {
     optional SplitTreeNode root = 3;
     optional string tab_id = 2;
-  }
-  message SplitTreeNode {
-    optional bool vertical = 1;  // Direction of split pane divider
-    repeated SplitTreeLink links = 2;  // Links to children
-
-    message SplitTreeLink {
-      oneof child {
-        SessionSummary session = 1;
-        SplitTreeNode node = 2;
-      }
-    }
   }
   repeated Window windows = 1;
   repeated SessionSummary buried_sessions = 2;
