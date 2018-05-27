@@ -2099,12 +2099,14 @@ BOOL ITMInjectResponse_Status_IsValidValue(int32_t value__) {
 
 @dynamic identifierOneOfCase;
 @dynamic windowId;
+@dynamic sessionId;
 @dynamic hasName, name;
 
 typedef struct ITMGetPropertyRequest__storage_ {
   uint32_t _has_storage_[2];
   NSString *windowId;
   NSString *name;
+  NSString *sessionId;
 } ITMGetPropertyRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -2128,6 +2130,15 @@ typedef struct ITMGetPropertyRequest__storage_ {
         .number = ITMGetPropertyRequest_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMGetPropertyRequest__storage_, name),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "sessionId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMGetPropertyRequest_FieldNumber_SessionId,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMGetPropertyRequest__storage_, sessionId),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },
@@ -2255,6 +2266,7 @@ BOOL ITMGetPropertyResponse_Status_IsValidValue(int32_t value__) {
 
 @dynamic identifierOneOfCase;
 @dynamic windowId;
+@dynamic sessionId;
 @dynamic hasName, name;
 @dynamic hasJsonValue, jsonValue;
 
@@ -2263,6 +2275,7 @@ typedef struct ITMSetPropertyRequest__storage_ {
   NSString *windowId;
   NSString *name;
   NSString *jsonValue;
+  NSString *sessionId;
 } ITMSetPropertyRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -2295,6 +2308,15 @@ typedef struct ITMSetPropertyRequest__storage_ {
         .number = ITMSetPropertyRequest_FieldNumber_JsonValue,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMSetPropertyRequest__storage_, jsonValue),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "sessionId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSetPropertyRequest_FieldNumber_SessionId,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMSetPropertyRequest__storage_, sessionId),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },
@@ -2376,12 +2398,14 @@ GPBEnumDescriptor *ITMSetPropertyResponse_Status_EnumDescriptor(void) {
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000UnrecognizedName\000InvalidValue\000Invalid"
-        "Target\000";
+        "Target\000Deferred\000Impossible\000";
     static const int32_t values[] = {
         ITMSetPropertyResponse_Status_Ok,
         ITMSetPropertyResponse_Status_UnrecognizedName,
         ITMSetPropertyResponse_Status_InvalidValue,
         ITMSetPropertyResponse_Status_InvalidTarget,
+        ITMSetPropertyResponse_Status_Deferred,
+        ITMSetPropertyResponse_Status_Impossible,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMSetPropertyResponse_Status)
@@ -2402,6 +2426,8 @@ BOOL ITMSetPropertyResponse_Status_IsValidValue(int32_t value__) {
     case ITMSetPropertyResponse_Status_UnrecognizedName:
     case ITMSetPropertyResponse_Status_InvalidValue:
     case ITMSetPropertyResponse_Status_InvalidTarget:
+    case ITMSetPropertyResponse_Status_Deferred:
+    case ITMSetPropertyResponse_Status_Impossible:
       return YES;
     default:
       return NO;

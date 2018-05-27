@@ -4045,13 +4045,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height
-{
+- (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {
     PtyLog(@"sessionInitiatedResize");
     // ignore resize request when we are in full screen mode.
     if ([self anyFullScreen]) {
         PtyLog(@"sessionInitiatedResize - in full screen mode");
-        return;
+        return NO;
     }
 
     PTYTab *tab = [self tabForSession:session];
@@ -4062,6 +4061,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PtyLog(@"sessionInitiatedResize - calling fitTabsToWindow");
     [self fitTabsToWindow];
     [tab setLockedSession:nil];
+    return YES;
 }
 
 // Contextual menu

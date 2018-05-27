@@ -1,4 +1,17 @@
 """Provides handy functions."""
+import json
+
+class Size:
+  """Describes a 2D size.
+
+  Can be where api_pb2.Size is accepted."""
+  def __init__(self, width, height):
+    self.width = width
+    self.height = height
+
+  @property
+  def json(self):
+    return json.dumps({"width": self.width, "height": self.height})
 
 def frame_str(frame):
     """Formats an api_pb2.Frame as a human-readable string.

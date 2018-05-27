@@ -124,7 +124,7 @@ typedef enum {
 - (void)sessionDidChangeFontSize:(PTYSession *)session;
 
 // Session-initiated resize.
-- (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
+- (BOOL)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
 
 // Select the "next" session in this tab.
 - (void)nextSession;

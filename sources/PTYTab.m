@@ -553,8 +553,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [[self.realParentWindow tabView] selectTabViewItemWithIdentifier:self];
 }
 
-- (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height {
-    [parentWindow_ sessionInitiatedResize:session width:width height:height];
+- (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {
+    return [parentWindow_ sessionInitiatedResize:session width:width height:height];
 }
 
 - (void)addSession:(PTYSession *)session toRestorableSession:(iTermRestorableSession *)restorableSession {
