@@ -446,7 +446,9 @@ NSString* ScreenCharArrayToString(screen_char_t* screenChars,
     int o = 0;
     for (int i = start; i < end; ++i) {
         unichar c = screenChars[i].code;
-        if (c == DWC_RIGHT) {
+        if (c >= ITERM2_PRIVATE_BEGIN && c <= ITERM2_PRIVATE_END) {
+            // Skip private-use characters which signify things like double-width characters and
+            // tab fillers.
             ++delta;
         } else {
             const int len = ExpandScreenChar(&screenChars[i], charHaystack + o);
