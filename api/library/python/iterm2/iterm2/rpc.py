@@ -248,14 +248,17 @@ async def async_get_profile(connection, session=None, keys=None):
             request.get_profile_property_request.keys.append(key)
     return await _async_call(connection, request)
 
-async def async_set_property(connection, name, json_value, window_id=None):
+async def async_set_property(connection, name, json_value, window_id=None, session_id=None):
     """
     Sets a property of an object (currently only of a window).
     """
-    assert window_id is not None
+    assert (window_id is not None) or (session_id is not None)
     request = _alloc_request()
     request.set_property_request.SetInParent()
-    request.set_property_request.window_id = window_id
+    if window_id is not None:
+      request.set_property_request.window_id = window_id
+    elif session_id is not None:
+      request.set_property_request.session_id = session_id
     request.set_property_request.name = name
     request.set_property_request.json_value = json_value
     return await _async_call(connection, request)

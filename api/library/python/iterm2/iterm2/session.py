@@ -463,6 +463,19 @@ class Session:
         if status != iterm2.api_pb2.RestartSessionResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(iterm2.api_pb2.RestartSessionResponse.Status.Name(status))
 
+    async def async_set_grid_size(self, size):
+      """Sets the visible size of a session.
+
+      :param size: A :class:`Size`.
+
+      :throws: :class:`RPCException` if something goes wrong.
+
+      Note: This will fail on fullscreen windows."""
+      response = await iterm2.rpc.async_set_property(self.connection, "grid_size", size.json, session_id=self.session_id)
+      status = response.set_property_response.status
+      if status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.SetPropertyResponse.Status.Name(status))
+
     class KeystrokeReader:
         """An asyncio context manager for reading keystrokes.
 

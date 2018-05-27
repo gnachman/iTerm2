@@ -8,7 +8,7 @@ from iterm2.session import SplitPaneException, Splitter, Session, InvalidSession
 from iterm2.transaction import Transaction
 from iterm2.tab import Tab
 from iterm2.tool import async_register_web_view_tool
-from iterm2.util import frame_str, size_str
+from iterm2.util import frame_str, size_str, Size
 from iterm2.window import CreateTabException, SetPropertyException, GetPropertyException, SavedArrangementException, Window
 from iterm2._version import __version__
 from iterm2.connection import Connection

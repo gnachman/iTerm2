@@ -31,7 +31,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Called by VT100Screen when it wants to resize a window for a
 // session-initiated resize. It resizes the session, then the window, then all
 // sessions to fit the new window size.
-- (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
+- (BOOL)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
 
 // Is the window in traditional fullscreen mode?
 - (BOOL)fullScreen;

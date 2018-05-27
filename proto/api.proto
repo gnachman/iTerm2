@@ -255,11 +255,10 @@ message InjectResponse {
 }
 
 message GetPropertyRequest {
-  // Eventually you'll be able to request properties on other things besides
-  // window_id. The kind of ID that's set determines the kind of object you're
-  // querying.
+  // The kind of ID that's set determines the kind of object you're querying.
   oneof identifier {
     string window_id = 1;
+    string session_id = 3;  // Does not accept "all". Accepts "active".
   }
   optional string name = 2;
 }
@@ -274,21 +273,28 @@ message GetPropertyResponse {
   // -------------  ---------------
   // frame          { "origin": { "x": 0, "y": 0 }, "size": { "width": 1024, "height": 768 }}
   // fullscreen     true, false
+  //
+  // For sessions:
+  // grid_size      { "width": 80, "height": 25 }
   optional Status status = 1;
   optional string json_value = 2;
 }
 
 message SetPropertyRequest {
-  // Eventually you'll be able to set properties on other things besides
-  // window_id. The kind of ID that's set determines the kind of object you're
-  // updating.
+  // Eventually you'll be able to set properties on other things besides The kind of ID that's set
+  // determines the kind of object you're updating.
   oneof identifier {
     string window_id = 1;
+    string session_id = 5;  // Accepts "all" and "active"
   }
+  // For windows:
   // Name           Example JSON
   // -------------  ---------------
   // frame          { "origin": { "x": 0, "y": 0 }, "size": { "width": 1024, "height": 768 }}
   // fullscreen     true, false
+  //
+  // For sessions:
+  // grid_size      { "width": 80, "height": 25 }
   optional string name = 3;
   optional string json_value = 4;
 }
@@ -299,6 +305,8 @@ message SetPropertyResponse {
     UNRECOGNIZED_NAME = 1;
     INVALID_VALUE = 2;  // e.g., bad JSON value
     INVALID_TARGET = 3;  // e.g., bogus window_id
+    DEFERRED = 4;  // Operation can't be performed immediately. Will be tried later. For example, resizing a session during instant replay.
+    IMPOSSIBLE = 5;  // Can't be done. For example, resizing a session in a full-screen window.
   }
   optional Status status = 1;
 }

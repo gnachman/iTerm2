@@ -386,7 +386,12 @@ async def list_profiles(connection, args):
       v = profile.all_properties[k]
       print("{}: {}".format(k, v))
     print("")
-  
+
+async def set_grid_size_parser(connection, args):
+  a = await iterm2.async_get_app(connection)
+  s = a.get_session_by_id(args.session)
+  await s.async_set_grid_size(iterm2.Size(args.width, args.height))
+
 def make_parser():
   parser = argparse.ArgumentParser(description='iTerm2 CLI')
   subparsers = parser.add_subparsers(help='Commands')
@@ -495,6 +500,12 @@ def make_parser():
   list_profiles_parser.add_argument("guids", type=str, nargs='?', help="Comma-delimited list of profiles to list. Omit to get all of them.")
   list_profiles_parser.add_argument("properties", type=str, nargs='?', help="Comma-delimited list of properties to request. Omit to get all of them.")
   list_profiles_parser.set_defaults(func=list_profiles)
+
+  set_grid_size_parser = subparsers.add_parser("set-grid-size", help="Set size of session")
+  set_grid_size_parser.add_argument("session", type=str, help="Session ID")
+  set_grid_size_parser.add_argument("width", type=int, help="Width in columns")
+  set_grid_size_parser.add_argument("height", type=int, help="Height in rows")
+  set_grid_size_parser.set_defaults(func=set_grid_size)
 
   return parser
 

@@ -25,6 +25,7 @@
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
+#import "WindowControllerInterface.h"
 #import "VT100Parser.h"
 
 NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";
@@ -1073,6 +1074,16 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 
 - (void)apiServerSetProperty:(ITMSetPropertyRequest *)request handler:(void (^)(ITMSetPropertyResponse *))handler {
     ITMSetPropertyResponse *response = [[ITMSetPropertyResponse alloc] init];
+    NSError *error = nil;
+    id value = [NSJSONSerialization JSONObjectWithData:[request.jsonValue dataUsingEncoding:NSUTF8StringEncoding]
+                                               options:NSJSONReadingAllowFragments
+                                                 error:&error];
+    if (!value || error) {
+        XLog(@"JSON parsing error %@ for value in request %@", error, request);
+        ITMSetPropertyResponse *response = [[ITMSetPropertyResponse alloc] init];
+        response.status = ITMSetPropertyResponse_Status_InvalidValue;
+        handler(response);
+    }
     switch (request.identifierOneOfCase) {
         case ITMSetPropertyRequest_Identifier_OneOfCase_GPBUnsetOneOfCase:
             response.status = ITMSetPropertyResponse_Status_InvalidTarget;
@@ -1086,18 +1097,26 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
                 handler(response);
                 return;
             }
-            NSError *error = nil;
-            id value = [NSJSONSerialization JSONObjectWithData:[request.jsonValue dataUsingEncoding:NSUTF8StringEncoding]
-                                                       options:NSJSONReadingAllowFragments
-                                                         error:&error];
-            if (!value || error) {
-                XLog(@"JSON parsing error %@ for value in request %@", error, request);
-                ITMSetPropertyResponse *response = [[ITMSetPropertyResponse alloc] init];
-                response.status = ITMSetPropertyResponse_Status_InvalidValue;
-                handler(response);
-            }
             response.status = [self setPropertyInWindow:term name:request.name value:value];
             handler(response);
+        }
+
+        case ITMSetPropertyRequest_Identifier_OneOfCase_SessionId: {
+            if ([request.sessionId isEqualToString:@"all"]) {
+                for (PTYSession *session in [self allSessions]) {
+                    response.status = [self setPropertyInSession:session name:request.name value:value];
+                    handler(response);
+                }
+            } else {
+                PTYSession *session = [self sessionForAPIIdentifier:request.sessionId];
+                if (!session) {
+                    response.status = ITMSetPropertyResponse_Status_InvalidTarget;
+                    handler(response);
+                    return;
+                }
+                response.status = [self setPropertyInSession:session name:request.name value:value];
+                handler(response);
+            }
         }
     }
 }
@@ -1144,6 +1163,37 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     }
 }
 
+- (ITMSetPropertyResponse_Status)setPropertyInSession:(PTYSession *)session name:(NSString *)name value:(id)value {
+    typedef ITMSetPropertyResponse_Status (^SetSessionPropertyBlock)(void);
+    SetSessionPropertyBlock setGridSize = ^ITMSetPropertyResponse_Status {
+        NSDictionary *size = [NSDictionary castFrom:value];
+        NSNumber *width = size[@"width"];
+        NSNumber *height = size[@"height"];
+        if (!width || !height) {
+            return ITMSetPropertyResponse_Status_InvalidValue;
+        }
+        id<WindowControllerInterface> controller = session.delegate.parentWindow;
+        BOOL ok = [controller sessionInitiatedResize:session width:width.integerValue height:height.integerValue];
+        if (ok) {
+            if ([controller isKindOfClass:[PseudoTerminal class]]) {
+                return ITMSetPropertyResponse_Status_Ok;
+            } else {
+                return ITMSetPropertyResponse_Status_Deferred;
+            }
+        } else {
+            return ITMSetPropertyResponse_Status_Impossible;
+        }
+    };
+    NSDictionary<NSString *, SetSessionPropertyBlock> *handlers =
+        @{ @"grid_size": setGridSize };
+    SetSessionPropertyBlock block = handlers[name];
+    if (block) {
+        return block();
+    } else {
+        return ITMSetPropertyResponse_Status_UnrecognizedName;
+    }
+}
+
 - (void)apiServerGetProperty:(ITMGetPropertyRequest *)request handler:(void (^)(ITMGetPropertyResponse *))handler {
     ITMGetPropertyResponse *response = [[ITMGetPropertyResponse alloc] init];
     switch (request.identifierOneOfCase) {
@@ -1160,6 +1210,23 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
                 return;
             }
             NSString *jsonValue = [self getPropertyFromWindow:term name:request.name];
+            if (jsonValue) {
+                response.jsonValue = jsonValue;
+                response.status = ITMGetPropertyResponse_Status_Ok;
+            } else {
+                response.status = ITMGetPropertyResponse_Status_UnrecognizedName;
+            }
+            handler(response);
+        }
+
+        case ITMGetPropertyRequest_Identifier_OneOfCase_SessionId: {
+            PTYSession *session = [self sessionForAPIIdentifier:request.sessionId];
+            if (!session) {
+                response.status = ITMGetPropertyResponse_Status_InvalidTarget;
+                handler(response);
+                return;
+            }
+            NSString *jsonValue = [self getPropertyFromSession:session name:request.name];
             if (jsonValue) {
                 response.jsonValue = jsonValue;
                 response.status = ITMGetPropertyResponse_Status_Ok;
@@ -1193,6 +1260,27 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
            @"fullscreen": getFullScreen };
 
     GetWindowPropertyBlock block = handlers[name];
+    if (block) {
+        return block();
+    } else {
+        return nil;
+    }
+}
+
+- (NSString *)getPropertyFromSession:(PTYSession *)session name:(NSString *)name {
+    typedef NSString * (^GetSessionPropertyBlock)(void);
+
+    GetSessionPropertyBlock getGridSize = ^NSString * {
+        NSDictionary *dict =
+            @{ @"width": @(session.screen.width - 1),
+               @"height": @(session.screen.height - 1) };
+        return [NSJSONSerialization it_jsonStringForObject:dict];
+    };
+
+    NSDictionary<NSString *, GetSessionPropertyBlock> *handlers =
+        @{ @"grid_size": getGridSize };
+
+    GetSessionPropertyBlock block = handlers[name];
     if (block) {
         return block();
     } else {

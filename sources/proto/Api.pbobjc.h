@@ -288,6 +288,12 @@ typedef GPB_ENUM(ITMSetPropertyResponse_Status) {
 
   /** e.g., bogus window_id */
   ITMSetPropertyResponse_Status_InvalidTarget = 3,
+
+  /** Operation can't be performed immediately. Will be tried later. For example, resizing a session during instant replay. */
+  ITMSetPropertyResponse_Status_Deferred = 4,
+
+  /** Can't be done. For example, resizing a session in a full-screen window. */
+  ITMSetPropertyResponse_Status_Impossible = 5,
 };
 
 GPBEnumDescriptor *ITMSetPropertyResponse_Status_EnumDescriptor(void);
@@ -1267,23 +1273,24 @@ typedef GPB_ENUM(ITMInjectResponse_FieldNumber) {
 typedef GPB_ENUM(ITMGetPropertyRequest_FieldNumber) {
   ITMGetPropertyRequest_FieldNumber_WindowId = 1,
   ITMGetPropertyRequest_FieldNumber_Name = 2,
+  ITMGetPropertyRequest_FieldNumber_SessionId = 3,
 };
 
 typedef GPB_ENUM(ITMGetPropertyRequest_Identifier_OneOfCase) {
   ITMGetPropertyRequest_Identifier_OneOfCase_GPBUnsetOneOfCase = 0,
   ITMGetPropertyRequest_Identifier_OneOfCase_WindowId = 1,
+  ITMGetPropertyRequest_Identifier_OneOfCase_SessionId = 3,
 };
 
 @interface ITMGetPropertyRequest : GPBMessage
 
-/**
- * Eventually you'll be able to request properties on other things besides
- * window_id. The kind of ID that's set determines the kind of object you're
- * querying.
- **/
+/** The kind of ID that's set determines the kind of object you're querying. */
 @property(nonatomic, readonly) ITMGetPropertyRequest_Identifier_OneOfCase identifierOneOfCase;
 
 @property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+
+/** Does not accept "all". Accepts "active". */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
 
 @property(nonatomic, readwrite, copy, null_resettable) NSString *name;
 /** Test to see if @c name has been set. */
@@ -1310,6 +1317,9 @@ typedef GPB_ENUM(ITMGetPropertyResponse_FieldNumber) {
  * -------------  ---------------
  * frame          { "origin": { "x": 0, "y": 0 }, "size": { "width": 1024, "height": 768 }}
  * fullscreen     true, false
+ *
+ * For sessions:
+ * grid_size      { "width": 80, "height": 25 }
  **/
 @property(nonatomic, readwrite) ITMGetPropertyResponse_Status status;
 
@@ -1326,29 +1336,37 @@ typedef GPB_ENUM(ITMSetPropertyRequest_FieldNumber) {
   ITMSetPropertyRequest_FieldNumber_WindowId = 1,
   ITMSetPropertyRequest_FieldNumber_Name = 3,
   ITMSetPropertyRequest_FieldNumber_JsonValue = 4,
+  ITMSetPropertyRequest_FieldNumber_SessionId = 5,
 };
 
 typedef GPB_ENUM(ITMSetPropertyRequest_Identifier_OneOfCase) {
   ITMSetPropertyRequest_Identifier_OneOfCase_GPBUnsetOneOfCase = 0,
   ITMSetPropertyRequest_Identifier_OneOfCase_WindowId = 1,
+  ITMSetPropertyRequest_Identifier_OneOfCase_SessionId = 5,
 };
 
 @interface ITMSetPropertyRequest : GPBMessage
 
 /**
- * Eventually you'll be able to set properties on other things besides
- * window_id. The kind of ID that's set determines the kind of object you're
- * updating.
+ * Eventually you'll be able to set properties on other things besides The kind of ID that's set
+ * determines the kind of object you're updating.
  **/
 @property(nonatomic, readonly) ITMSetPropertyRequest_Identifier_OneOfCase identifierOneOfCase;
 
 @property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
 
+/** Accepts "all" and "active" */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
+
 /**
+ * For windows:
  * Name           Example JSON
  * -------------  ---------------
  * frame          { "origin": { "x": 0, "y": 0 }, "size": { "width": 1024, "height": 768 }}
  * fullscreen     true, false
+ *
+ * For sessions:
+ * grid_size      { "width": 80, "height": 25 }
  **/
 @property(nonatomic, readwrite, copy, null_resettable) NSString *name;
 /** Test to see if @c name has been set. */
