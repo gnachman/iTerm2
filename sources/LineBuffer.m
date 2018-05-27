@@ -697,11 +697,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (void)findSubstring:(FindContext*)context stopAt:(LineBufferPosition *)stopPosition {
-    // Sanity check the absolute block number since blocks can be removed from the end of the list.
-    if (context.absBlockNum - num_dropped_blocks > 0 && context.absBlockNum - num_dropped_blocks >= blocks.count) {
-        context.absBlockNum = blocks.count + num_dropped_blocks - 1;
-    }
-
+    NSInteger blockIndex = context.absBlockNum - num_dropped_blocks;
+    const NSInteger numBlocks = blocks.count;  // This avoids involving unsigned integers in comparisons
     if (context.dir > 0) {
         // Search forwards
         if (context.absBlockNum < num_dropped_blocks) {
@@ -709,25 +706,34 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             // NSLog(@"Next to search was dropped. Skip to start");
             context.absBlockNum = num_dropped_blocks;
         }
-        if (context.absBlockNum - num_dropped_blocks >= [blocks count]) {
+        if (blockIndex >= numBlocks) {
             // Got to bottom
             // NSLog(@"Got to bottom");
             context.status = NotFound;
             return;
         }
+        if (blockIndex < 0) {
+            DLog(@"Negative index %@ in forward search", @(blockIndex));
+            context.status = NotFound;
+            return;
+        }
     } else {
         // Search backwards
-        if (context.absBlockNum < num_dropped_blocks) {
+        if (blockIndex < 0) {
             // Got to top
             // NSLog(@"Got to top");
             context.status = NotFound;
             return;
         }
+        if (blockIndex >= numBlocks) {
+            DLog(@"Out of bounds index %@ (>=%@) in backward search", @(blockIndex), @(numBlocks));
+            context.status = NotFound;
+            return;
+        }
     }
 
-    NSInteger blockIndex = context.absBlockNum - num_dropped_blocks;
     assert(blockIndex >= 0);
-    assert(blockIndex < blocks.count);
+    assert(blockIndex < numBlocks);
     LineBlock* block = [blocks objectAtIndex:blockIndex];
 
     if (blockIndex == 0 &&
