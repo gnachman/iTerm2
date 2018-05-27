@@ -401,6 +401,17 @@ async def async_menu_item(connection, identifier, query_only):
     request.menu_item_request.query_only = query_only;
     return await _async_call(connection, request)
 
+async def async_set_tab_layout(connection, tab_id, tree):
+    """Adjusts the layout of split panes in a tab.
+
+    :param tree: a `iterm2.api_pb2.SplitTreeNode` forming the root of the tree.
+    """
+    request = _alloc_request()
+    request.set_tab_layout_request.SetInParent()
+    request.set_tab_layout_request.tab_id = tab_id
+    request.set_tab_layout_request.root.CopyFrom(tree)
+    return await _async_call(connection, request)
+
 ## Private --------------------------------------------------------------------
 
 def _alloc_id():

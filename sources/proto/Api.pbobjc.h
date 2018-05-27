@@ -60,8 +60,6 @@ CF_EXTERN_C_BEGIN
 @class ITMListProfilesResponse_Profile;
 @class ITMListSessionsRequest;
 @class ITMListSessionsResponse;
-@class ITMListSessionsResponse_SplitTreeNode;
-@class ITMListSessionsResponse_SplitTreeNode_SplitTreeLink;
 @class ITMListSessionsResponse_Tab;
 @class ITMListSessionsResponse_Window;
 @class ITMLocationChangeNotification;
@@ -97,9 +95,13 @@ CF_EXTERN_C_BEGIN
 @class ITMSetProfilePropertyResponse;
 @class ITMSetPropertyRequest;
 @class ITMSetPropertyResponse;
+@class ITMSetTabLayoutRequest;
+@class ITMSetTabLayoutResponse;
 @class ITMSize;
 @class ITMSplitPaneRequest;
 @class ITMSplitPaneResponse;
+@class ITMSplitTreeNode;
+@class ITMSplitTreeNode_SplitTreeLink;
 @class ITMTerminateSessionNotification;
 @class ITMTransactionRequest;
 @class ITMTransactionResponse;
@@ -134,6 +136,23 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMNotificationType_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMSetTabLayoutResponse_Status
+
+typedef GPB_ENUM(ITMSetTabLayoutResponse_Status) {
+  ITMSetTabLayoutResponse_Status_Ok = 0,
+  ITMSetTabLayoutResponse_Status_BadTabId = 1,
+  ITMSetTabLayoutResponse_Status_WrongTree = 2,
+  ITMSetTabLayoutResponse_Status_InvalidSize = 3,
+};
+
+GPBEnumDescriptor *ITMSetTabLayoutResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMSetTabLayoutResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMMenuItemResponse_Status
 
@@ -612,6 +631,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_ServerOriginatedRpcResultRequest = 119,
   ITMClientOriginatedMessage_FieldNumber_RestartSessionRequest = 120,
   ITMClientOriginatedMessage_FieldNumber_MenuItemRequest = 121,
+  ITMClientOriginatedMessage_FieldNumber_SetTabLayoutRequest = 122,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -638,6 +658,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_ServerOriginatedRpcResultRequest = 119,
   ITMClientOriginatedMessage_Submessage_OneOfCase_RestartSessionRequest = 120,
   ITMClientOriginatedMessage_Submessage_OneOfCase_MenuItemRequest = 121,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_SetTabLayoutRequest = 122,
 };
 
 /**
@@ -695,6 +716,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMMenuItemRequest *menuItemRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMSetTabLayoutRequest *setTabLayoutRequest;
+
 @end
 
 /**
@@ -729,6 +752,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_ServerOriginatedRpcResultResponse = 119,
   ITMServerOriginatedMessage_FieldNumber_RestartSessionResponse = 120,
   ITMServerOriginatedMessage_FieldNumber_MenuItemResponse = 121,
+  ITMServerOriginatedMessage_FieldNumber_SetTabLayoutResponse = 122,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -757,6 +781,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_ServerOriginatedRpcResultResponse = 119,
   ITMServerOriginatedMessage_Submessage_OneOfCase_RestartSessionResponse = 120,
   ITMServerOriginatedMessage_Submessage_OneOfCase_MenuItemResponse = 121,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_SetTabLayoutResponse = 122,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -819,6 +844,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMMenuItemResponse *menuItemResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMSetTabLayoutResponse *setTabLayoutResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 
@@ -828,6 +855,43 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
  * Clears whatever value was set for the oneof 'submessage'.
  **/
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
+
+#pragma mark - ITMSetTabLayoutRequest
+
+typedef GPB_ENUM(ITMSetTabLayoutRequest_FieldNumber) {
+  ITMSetTabLayoutRequest_FieldNumber_Root = 1,
+  ITMSetTabLayoutRequest_FieldNumber_TabId = 2,
+};
+
+@interface ITMSetTabLayoutRequest : GPBMessage
+
+/**
+ * The tree structure must exactly match the actual tree structure, including the `vertical`
+ * setting. Only the grid_sizes may change. They must still add up to the same value in every
+ * dimension.
+ **/
+@property(nonatomic, readwrite, strong, null_resettable) ITMSplitTreeNode *root;
+/** Test to see if @c root has been set. */
+@property(nonatomic, readwrite) BOOL hasRoot;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabId;
+/** Test to see if @c tabId has been set. */
+@property(nonatomic, readwrite) BOOL hasTabId;
+
+@end
+
+#pragma mark - ITMSetTabLayoutResponse
+
+typedef GPB_ENUM(ITMSetTabLayoutResponse_FieldNumber) {
+  ITMSetTabLayoutResponse_FieldNumber_Status = 1,
+};
+
+@interface ITMSetTabLayoutResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMSetTabLayoutResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@end
 
 #pragma mark - ITMMenuItemRequest
 
@@ -2527,6 +2591,54 @@ typedef GPB_ENUM(ITMSessionSummary_FieldNumber) {
 
 @end
 
+#pragma mark - ITMSplitTreeNode
+
+typedef GPB_ENUM(ITMSplitTreeNode_FieldNumber) {
+  ITMSplitTreeNode_FieldNumber_Vertical = 1,
+  ITMSplitTreeNode_FieldNumber_LinksArray = 2,
+};
+
+@interface ITMSplitTreeNode : GPBMessage
+
+/** Direction of split pane divider */
+@property(nonatomic, readwrite) BOOL vertical;
+
+@property(nonatomic, readwrite) BOOL hasVertical;
+/** Links to children */
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMSplitTreeNode_SplitTreeLink*> *linksArray;
+/** The number of items in @c linksArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger linksArray_Count;
+
+@end
+
+#pragma mark - ITMSplitTreeNode_SplitTreeLink
+
+typedef GPB_ENUM(ITMSplitTreeNode_SplitTreeLink_FieldNumber) {
+  ITMSplitTreeNode_SplitTreeLink_FieldNumber_Session = 1,
+  ITMSplitTreeNode_SplitTreeLink_FieldNumber_Node = 2,
+};
+
+typedef GPB_ENUM(ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase) {
+  ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase_Session = 1,
+  ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase_Node = 2,
+};
+
+@interface ITMSplitTreeNode_SplitTreeLink : GPBMessage
+
+@property(nonatomic, readonly) ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase childOneOfCase;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMSessionSummary *session;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMSplitTreeNode *node;
+
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'child'.
+ **/
+void ITMSplitTreeNode_SplitTreeLink_ClearChildOneOfCase(ITMSplitTreeNode_SplitTreeLink *message);
+
 #pragma mark - ITMListSessionsResponse
 
 typedef GPB_ENUM(ITMListSessionsResponse_FieldNumber) {
@@ -2579,7 +2691,7 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
 
 @interface ITMListSessionsResponse_Tab : GPBMessage
 
-@property(nonatomic, readwrite, strong, null_resettable) ITMListSessionsResponse_SplitTreeNode *root;
+@property(nonatomic, readwrite, strong, null_resettable) ITMSplitTreeNode *root;
 /** Test to see if @c root has been set. */
 @property(nonatomic, readwrite) BOOL hasRoot;
 
@@ -2588,54 +2700,6 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
 @property(nonatomic, readwrite) BOOL hasTabId;
 
 @end
-
-#pragma mark - ITMListSessionsResponse_SplitTreeNode
-
-typedef GPB_ENUM(ITMListSessionsResponse_SplitTreeNode_FieldNumber) {
-  ITMListSessionsResponse_SplitTreeNode_FieldNumber_Vertical = 1,
-  ITMListSessionsResponse_SplitTreeNode_FieldNumber_LinksArray = 2,
-};
-
-@interface ITMListSessionsResponse_SplitTreeNode : GPBMessage
-
-/** Direction of split pane divider */
-@property(nonatomic, readwrite) BOOL vertical;
-
-@property(nonatomic, readwrite) BOOL hasVertical;
-/** Links to children */
-@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMListSessionsResponse_SplitTreeNode_SplitTreeLink*> *linksArray;
-/** The number of items in @c linksArray without causing the array to be created. */
-@property(nonatomic, readonly) NSUInteger linksArray_Count;
-
-@end
-
-#pragma mark - ITMListSessionsResponse_SplitTreeNode_SplitTreeLink
-
-typedef GPB_ENUM(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_FieldNumber) {
-  ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_FieldNumber_Session = 1,
-  ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_FieldNumber_Node = 2,
-};
-
-typedef GPB_ENUM(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Child_OneOfCase) {
-  ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Child_OneOfCase_GPBUnsetOneOfCase = 0,
-  ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Child_OneOfCase_Session = 1,
-  ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Child_OneOfCase_Node = 2,
-};
-
-@interface ITMListSessionsResponse_SplitTreeNode_SplitTreeLink : GPBMessage
-
-@property(nonatomic, readonly) ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_Child_OneOfCase childOneOfCase;
-
-@property(nonatomic, readwrite, strong, null_resettable) ITMSessionSummary *session;
-
-@property(nonatomic, readwrite, strong, null_resettable) ITMListSessionsResponse_SplitTreeNode *node;
-
-@end
-
-/**
- * Clears whatever value was set for the oneof 'child'.
- **/
-void ITMListSessionsResponse_SplitTreeNode_SplitTreeLink_ClearChildOneOfCase(ITMListSessionsResponse_SplitTreeNode_SplitTreeLink *message);
 
 #pragma mark - ITMCreateTabRequest
 

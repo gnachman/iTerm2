@@ -1,6 +1,7 @@
 """Provides a class that represents an iTerm2 tab."""
 
 import iterm2.rpc
+import iterm2.api_pb2
 
 class Tab:
     """Represents a tab."""
@@ -86,3 +87,15 @@ class Tab:
             True,
             order_window_front,
             tab_id=self.__tab_id)
+
+    async def async_update_layout(self):
+        """Adjusts the layout of the sessions in this tab.
+
+        Change the `Session.preferred_size` of any sessions you wish to adjust before calling this.
+        """
+        response = await iterm2.rpc.async_set_tab_layout(self.connection, self.tab_id, self.__root.to_protobuf())
+        status = response.set_tab_layout.status
+        if status == iterm2.api_pb2.SetTabLayoutResponse.Status.Value("OK"):
+            return response.set_tab_layout
+        else:
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.SetTabLayoutResponse.Status.Name(status))

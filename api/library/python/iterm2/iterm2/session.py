@@ -1,6 +1,7 @@
 """Provides classes for interacting with iTerm2 sessions."""
 import asyncio
 
+import iterm2.api_pb2
 import iterm2.app
 import iterm2.connection
 import iterm2.notifications
@@ -34,7 +35,7 @@ class Splitter:
     def from_node(node, connection):
         """Creates a new Splitter from a node.
 
-        node: iterm2.api_pb2.ListSessionsResponse.SplitTreeNode
+        node: iterm2.api_pb2.SplitTreeNode
         connection: :class:`Connection`
 
         :returns: A new Splitter.
@@ -64,7 +65,7 @@ class Splitter:
     @property
     def children(self):
         """
-        :returns: This splitter's children. A list of :class:`Session` objects.
+        :returns: This splitter's children. A list of :class:`Session` or :class:`Splitter` objects.
         """
         return self.__children
 
@@ -111,6 +112,20 @@ class Splitter:
             i += 1
         return False
 
+    def to_protobuf(self):
+        node = iterm2.api_pb2.SplitTreeNode()
+        node.vertical = self.vertical
+        def make_link(obj):
+            link = iterm2.api_pb2.SplitTreeNode.SplitTreeLink()
+            if isinstance(obj, Session):
+                link.session.CopyFrom(obj.to_session_summary_protobuf())
+            else:
+                link.node.CopyFrom(obj.to_protobuf())
+            return link
+        links = list(map(make_link, self.children))
+        node.links.extend(links)
+        return node
+
 class Session:
     """
     Represents an iTerm2 session.
@@ -138,7 +153,7 @@ class Session:
     def __init__(self, connection, link, summary=None):
         """
         connection: :class:`Connection`
-        link: iterm2.api_pb2.ListSessionsResponse.SplitTreeNode.SplitTreeLink
+        link: iterm2.api_pb2.SplitTreeNode.SplitTreeLink
         """
         self.connection = connection
 
@@ -154,9 +169,17 @@ class Session:
             self.buried = True
             self.grid_size = None
             self.frame = None
+        self.preferred_size = self.grid_size
 
     def __repr__(self):
         return "<Session name=%s id=%s>" % (self.name, self.__session_id)
+
+    def to_session_summary_protobuf(self):
+        summary = iterm2.api_pb2.SessionSummary()
+        summary.unique_identifier = self.session_id
+        summary.grid_size.width = self.preferred_size.width
+        summary.grid_size.height = self.preferred_size.height
+        return summary
 
     def update_from(self, session):
         """Replace internal state with that of another session."""

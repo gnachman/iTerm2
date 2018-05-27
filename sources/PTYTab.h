@@ -213,6 +213,8 @@ extern NSString *const iTermSessionBecameKey;
 - (void)setTmuxWindowName:(NSString *)tmuxWindowName;
 
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11);
-- (ITMListSessionsResponse_SplitTreeNode *)rootSplitTreeNode;
+- (ITMSplitTreeNode *)rootSplitTreeNode;
+
+- (void)setSizesFromSplitTreeNode:(ITMSplitTreeNode *)node;
 
 @end

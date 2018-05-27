@@ -603,6 +603,26 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     return nil;
 }
 
+- (PTYTab *)tabWithID:(NSString *)tabID {
+    if (tabID.length == 0) {
+        return nil;
+    }
+    NSCharacterSet *nonNumericCharacterSet = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
+    if ([tabID rangeOfCharacterFromSet:nonNumericCharacterSet].location != NSNotFound) {
+        return nil;
+    }
+
+    int numericID = tabID.intValue;
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        for (PTYTab *tab in term.tabs) {
+            if (tab.uniqueId == numericID) {
+                return tab;
+            }
+        }
+    }
+    return nil;
+}
+
 - (void)apiServerGetBuffer:(ITMGetBufferRequest *)request
                    handler:(void (^)(ITMGetBufferResponse *))handler {
     PTYSession *session = [self sessionForAPIIdentifier:request.session];
@@ -1714,6 +1734,54 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
                      from:menuItem];
     }
     response.status = ITMMenuItemResponse_Status_Ok;
+    handler(response);
+}
+
+static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTreeNode *node2) {
+    if (node1.vertical != node2.vertical) {
+        return NO;
+    }
+    if (node1.linksArray_Count != node2.linksArray_Count) {
+        return NO;
+    }
+    for (NSInteger i = 0; i < node1.linksArray_Count; i++) {
+        ITMSplitTreeNode_SplitTreeLink *link1 = node1.linksArray[i];
+        ITMSplitTreeNode_SplitTreeLink *link2 = node2.linksArray[i];
+        if (link1.childOneOfCase == ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase_GPBUnsetOneOfCase) {
+            return NO;
+        }
+        if (link1.childOneOfCase != link2.childOneOfCase) {
+            return NO;
+        }
+        if (link1.childOneOfCase == ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase_Node) {
+            if (!iTermCheckSplitTreesIsomorphic(link1.node, link2.node)) {
+                return NO;
+            }
+        }
+    }
+    return YES;
+}
+
+- (void)apiServerSetTabLayout:(ITMSetTabLayoutRequest *)request handler:(void (^)(ITMSetTabLayoutResponse *))handler {
+    ITMSetTabLayoutResponse *response = [[ITMSetTabLayoutResponse alloc] init];
+    PTYTab *tab = [self tabWithID:request.tabId];
+    if (!tab) {
+        response.status = ITMSetTabLayoutResponse_Status_BadTabId;
+        handler(response);
+        return;
+    }
+
+    ITMSplitTreeNode *before = [tab rootSplitTreeNode];
+    ITMSplitTreeNode *requested = request.root;
+
+    if (!iTermCheckSplitTreesIsomorphic(before, requested)) {
+        response.status = ITMSetTabLayoutResponse_Status_WrongTree;
+        handler(response);
+        return;
+    }
+    [tab setSizesFromSplitTreeNode:requested];
+
+    response.status = ITMSetTabLayoutResponse_Status_Ok;
     handler(response);
 }
 
