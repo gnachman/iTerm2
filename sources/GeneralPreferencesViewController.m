@@ -195,7 +195,7 @@ enum {
         [[iTermShellHistoryController sharedInstance] backingStoreTypeDidChange];
     };
 
-    if (@available(macOS 10.11, *)) {
+    if (@available(macOS 10.12, *)) {
         [self defineControl:_gpuRendering
                         key:kPreferenceKeyUseMetal
                        type:kPreferenceInfoTypeCheckbox];
