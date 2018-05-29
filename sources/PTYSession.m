@@ -4792,7 +4792,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)metalAllowed {
-    if (@available(macOS 10.11, *)) {
+    // While Metal is supported on macOS 10.11, it crashes a lot. It seems to have a memory stomping
+    // bug (lots of crashes in dtoa during printf formatting) and assertions in -[MTKView initCommon].
+    // All metal code except this is available on macOS 10.11, so this is the one place that
+    // restricts it to 10.12+.
+    if (@available(macOS 10.12, *)) {
         static dispatch_once_t onceToken;
         static BOOL machineSupportsMetal;
         dispatch_once(&onceToken, ^{
