@@ -15,7 +15,7 @@ extern NSString *const iTermVariableKeySessionHostname;
 extern NSString *const iTermVariableKeySessionID;
 extern NSString *const iTermVariableKeySessionLastCommand;
 extern NSString *const iTermVariableKeySessionPath;
-extern NSString *const iTermVariableKeySessionPID;
+extern NSString *const iTermVariableKeySessionName;
 extern NSString *const iTermVariableKeySessionRows;
 extern NSString *const iTermVariableKeySessionTTY;
 extern NSString *const iTermVariableKeySessionUsername;

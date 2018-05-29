@@ -15,7 +15,7 @@ NSString *const iTermVariableKeySessionHostname = @"session.hostname";
 NSString *const iTermVariableKeySessionID = @"session.id";
 NSString *const iTermVariableKeySessionLastCommand = @"session.lastCommand";
 NSString *const iTermVariableKeySessionPath = @"session.path";
-NSString *const iTermVariableKeySessionPID = @"session.name";
+NSString *const iTermVariableKeySessionName = @"session.name";
 NSString *const iTermVariableKeySessionRows = @"session.rows";
 NSString *const iTermVariableKeySessionTTY = @"session.tty";
 NSString *const iTermVariableKeySessionUsername = @"session.username";
@@ -34,7 +34,7 @@ static NSMutableSet<NSString *> *iTermVariablesGetMutableSet() {
                iTermVariableKeySessionID,
                iTermVariableKeySessionLastCommand,
                iTermVariableKeySessionPath,
-               iTermVariableKeySessionPID,
+               iTermVariableKeySessionName,
                iTermVariableKeySessionRows,
                iTermVariableKeySessionTTY,
                iTermVariableKeySessionUsername,

@@ -840,9 +840,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)updateVariables {
     if (_name) {
-        _variables[iTermVariableKeySessionPID] = [[_name copy] autorelease];
+        _variables[iTermVariableKeySessionName] = [[_name copy] autorelease];
     } else {
-        [_variables removeObjectForKey:iTermVariableKeySessionPID];
+        [_variables removeObjectForKey:iTermVariableKeySessionName];
     }
 
     _variables[iTermVariableKeySessionColumns] = @(_screen.width);
@@ -3687,7 +3687,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                             object:[_delegate parentWindow]
                                                           userInfo:nil];
     }
-    _variables[iTermVariableKeySessionPID] = [self name];
+    _variables[iTermVariableKeySessionName] = [self name];
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
