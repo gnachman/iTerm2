@@ -358,21 +358,32 @@ class App:
                     return window, tab
         return None, None
 
-    async def async_create_window(self, profile=None, command=None):
+    async def async_create_window(self, profile=None, command=None, profile_customizations=None):
         """Creates a new window.
 
         :param profile: The name of the profile to use for the new window.
-        :param command: A command to run in lieu of the shell in the new session.
+        :param command: A command to run in lieu of the shell in the new session. Mutually exclusive with profile_customizations.
+        :param profile_customizations: LocalWriteOnlyProfile giving changes to make in profile. Mutually exclusive with command.
 
         :returns: A new :class:`Window`.
 
         :throws: CreateWindowException if something went wrong.
         """
+        if command is not None:
+            p = profile.LocalWriteOnlyProfile()
+            p.set_use_custom_command(profile.Profile.USE_CUSTOM_COMMAND_ENABLED)
+            p.set_command(command)
+            custom_dict = p.values
+        elif profile_customizations is not None:
+            custom_dict = profile_customizations.values
+        else:
+            custom_dict = None
+
         result = await iterm2.rpc.async_create_tab(
             self.connection,
             profile=profile,
             window=None,
-            command=command)
+            profile_customizations=custom_dict)
         ctr = result.create_tab_response
         if ctr.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
             session = self.get_session_by_id(ctr.session_id)

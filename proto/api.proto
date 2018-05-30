@@ -988,8 +988,11 @@ message CreateTabRequest {
   // Valid to set only if window_id is set. Gives the desired index of the new tab.
   optional uint32 tab_index = 3;
 
-  // If not set, the profile's command will be used.
-  optional string command = 4;
+  // If not set, the profile's command will be used. Use custom_profile_properties instead.
+  optional string command = 4 [deprecated=true];
+
+  // Modifies the profile to customize its behavior just for this session.
+  repeated ProfileProperty custom_profile_properties = 5;
 }
 
 message CreateTabResponse {

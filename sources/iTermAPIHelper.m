@@ -1137,8 +1137,12 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
                                                           hotkeyWindowType:iTermHotkeyWindowTypeNone
                                                                    makeKey:YES
                                                                canActivate:YES
-                                                                   command:request.hasCommand ? request.command : nil
-                                                                     block:nil];
+                                                                   command:nil
+                                                                     block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
+                                                                         profile = [self profileByCustomizing:profile withProperties:request.customProfilePropertiesArray];
+                                                                         return [term createTabWithProfile:profile withCommand:nil environment:nil];
+                                                                     }];
+
     if (!session) {
         ITMCreateTabResponse *response = [[ITMCreateTabResponse alloc] init];
         response.status = ITMCreateTabResponse_Status_MissingSubstitution;

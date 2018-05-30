@@ -89,20 +89,22 @@ async def async_split_pane(connection, session, vertical, before, profile=None, 
     request.split_pane_request.before = before
     if profile is not None:
         request.split_pane_request.profile_name = profile
-
     if profile_customizations is not None:
-        l = []
-        for key in profile_customizations:
-            value = profile_customizations[key]
-            entry = iterm2.api_pb2.ProfileProperty()
-            entry.key = key
-            entry.json_value = value
-            l.append(entry)
-        request.split_pane_request.custom_profile_properties.extend(l)
+        request.split_pane_request.custom_profile_properties.extend(_profile_properties_from_dict(profile_customizations))
 
     return await _async_call(connection, request)
 
-async def async_create_tab(connection, profile=None, window=None, index=None, command=None):
+def _profile_properties_from_dict(profile_customizations):
+    l = []
+    for key in profile_customizations:
+        value = profile_customizations[key]
+        entry = iterm2.api_pb2.ProfileProperty()
+        entry.key = key
+        entry.json_value = value
+        l.append(entry)
+    return l
+
+async def async_create_tab(connection, profile=None, window=None, index=None, command=None, profile_customizations=None):
     """
     Creates a new tab or window.
 
@@ -111,6 +113,7 @@ async def async_create_tab(connection, profile=None, window=None, index=None, co
     window: The window ID in which to add a tab, or None to create a new window.
     index: The index within the window, from 0 to (num tabs)-1
     command: The command to run in the new session, or None for its default behavior.
+    profile_customizations: None, or a dictionary of overrides.
 
     Returns: iterm2.api_pb2.ServerOriginatedMessage
     """
@@ -123,7 +126,11 @@ async def async_create_tab(connection, profile=None, window=None, index=None, co
     if index is not None:
         request.create_tab_request.tab_index = index
     if command is not None:
-        request.create_tab_request.command = command
+        profile_customizations = iterm2.LocalWriteOnlyProfile()
+        profile_customizations.set_use_custom_command("Yes")
+        profile_customizations.set_command(command)
+    if profile_customizations is not None:
+        request.create_tab_request.custom_profile_properties.extend(_profile_properties_from_dict(profile_customizations))
     return await _async_call(connection, request)
 
 async def async_get_buffer_with_screen_contents(connection, session=None):

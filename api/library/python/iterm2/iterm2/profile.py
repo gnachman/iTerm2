@@ -1487,6 +1487,9 @@ class Profile(WriteOnlyProfile):
     INITIAL_WORKING_DIRECTORY_RECYCLE = "Recycle"
     INITIAL_WORKING_DIRECTORY_ADVANCED = "Advanced"
 
+    USE_CUSTOM_COMMAND_ENABLED = "Yes"
+    USE_CUSTOM_COMMAND_DISABLED = "No"
+
     def __init__(self, session_id, connection, profile_property_list):
         props = {}
         for prop in profile_property_list:

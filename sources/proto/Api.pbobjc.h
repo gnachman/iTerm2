@@ -2713,6 +2713,7 @@ typedef GPB_ENUM(ITMCreateTabRequest_FieldNumber) {
   ITMCreateTabRequest_FieldNumber_WindowId = 2,
   ITMCreateTabRequest_FieldNumber_TabIndex = 3,
   ITMCreateTabRequest_FieldNumber_Command = 4,
+  ITMCreateTabRequest_FieldNumber_CustomProfilePropertiesArray = 5,
 };
 
 @interface ITMCreateTabRequest : GPBMessage
@@ -2731,10 +2732,15 @@ typedef GPB_ENUM(ITMCreateTabRequest_FieldNumber) {
 @property(nonatomic, readwrite) uint32_t tabIndex;
 
 @property(nonatomic, readwrite) BOOL hasTabIndex;
-/** If not set, the profile's command will be used. */
-@property(nonatomic, readwrite, copy, null_resettable) NSString *command;
+/** If not set, the profile's command will be used. Use custom_profile_properties instead. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *command DEPRECATED_ATTRIBUTE;
 /** Test to see if @c command has been set. */
-@property(nonatomic, readwrite) BOOL hasCommand;
+@property(nonatomic, readwrite) BOOL hasCommand DEPRECATED_ATTRIBUTE;
+
+/** Modifies the profile to customize its behavior just for this session. */
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMProfileProperty*> *customProfilePropertiesArray;
+/** The number of items in @c customProfilePropertiesArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger customProfilePropertiesArray_Count;
 
 @end
 
