@@ -37,7 +37,6 @@
 extern NSString *kUseBackgroundPatternIndicatorChangedNotification;
 extern NSString *const kSavedArrangementDidChangeNotification;
 extern NSString *const kNonTerminalWindowBecameKeyNotification;
-extern NSString *const iTermRemoveAPIServerSubscriptionsNotification;
 
 extern NSString *const kMarkAlertActionModalAlert;
 extern NSString *const kMarkAlertActionPostNotification;

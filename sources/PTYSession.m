@@ -440,13 +440,13 @@ static const NSUInteger kMaxHosts = 100;
     BOOL _inLiveResize;
 
     // VT100RemoteHost *_currentHost;
-
+/*
     NSMutableDictionary<id, ITMNotificationRequest *> *_keystrokeSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_updateSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_promptSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_locationChangeSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_customEscapeSequenceNotifications;
-
+*/
     // Used by auto-hide. We can't auto hide the tmux gateway session until at least one window has been opened.
     BOOL _hideAfterTmuxWindowOpens;
 
@@ -537,13 +537,13 @@ static const NSUInteger kMaxHosts = 100;
         _throughputEstimator = [[iTermThroughputEstimator alloc] initWithHistoryOfDuration:5.0 / 30.0 secondsPerBucket:1 / 30.0];
         _cadenceController = [[iTermUpdateCadenceController alloc] initWithThroughputEstimator:_throughputEstimator];
         _cadenceController.delegate = self;
-
+/*
         _keystrokeSubscriptions = [[NSMutableDictionary alloc] init];
         _updateSubscriptions = [[NSMutableDictionary alloc] init];
         _promptSubscriptions = [[NSMutableDictionary alloc] init];
         _locationChangeSubscriptions = [[NSMutableDictionary alloc] init];
         _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
-
+*/
         _statusChangedAbsLine = -1;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -572,10 +572,12 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(sessionHotkeyDidChange:)
                                                      name:kProfileSessionHotkeyDidChange
                                                    object:nil];
+/*
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(apiServerUnsubscribe:)
                                                      name:iTermRemoveAPIServerSubscriptionsNotification
                                                    object:nil];
+*/
         // Detach before windows get closed. That's why we have to use the
         // iTermApplicationWillTerminate notification instead of
         // NSApplicationWillTerminate, since this gets run before the windows
@@ -671,13 +673,13 @@ ITERM_WEAKLY_REFERENCEABLE
     [_keyLabelsStack release];
     [_missingSavedArrangementProfileGUID release];
     [_currentHost release];
-
+/*
     [_keystrokeSubscriptions release];
     [_updateSubscriptions release];
     [_promptSubscriptions release];
     [_locationChangeSubscriptions release];
     [_customEscapeSequenceNotifications release];
-
+*/
     [_copyModeState release];
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -4343,12 +4345,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)apiServerUnsubscribe:(NSNotification *)notification {
+    /*
     [_promptSubscriptions removeObjectForKey:notification.object];
     [_keystrokeSubscriptions removeObjectForKey:notification.object];
     [_updateSubscriptions removeObjectForKey:notification.object];
     [_locationChangeSubscriptions removeObjectForKey:notification.object];
     [_customEscapeSequenceNotifications removeObjectForKey:notification.object];
-}
+*/
+     }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
     // See comment where we observe this notification for why this is done.
@@ -5416,6 +5420,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_view.currentAnnouncement dismiss];
         return NO;
     } else {
+        /*
         if (_keystrokeSubscriptions.count) {
             ITMKeystrokeNotification *keystrokeNotification = [[[ITMKeystrokeNotification alloc] init] autorelease];
             keystrokeNotification.characters = event.characters;
@@ -5447,6 +5452,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
             }];
         }
+        */
         return YES;
     }
 }
@@ -6365,6 +6371,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)textViewDidFindDirtyRects {
+    /*
     if (_updateSubscriptions.count) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.screenUpdateNotification = [[[ITMScreenUpdateNotification alloc] init] autorelease];
@@ -6373,6 +6380,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
         }];
     }
+     */
 }
 
 - (void)textViewBeginDrag
@@ -7550,12 +7558,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenPromptDidEndAtLine:(int)line {
+    /*
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
         notification.promptNotification.session = self.guid;
         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
     }];
+     */
 }
 
 - (VT100ScreenMark *)screenAddMarkOnLine:(int)line {
@@ -8170,6 +8180,7 @@ return;
 
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
                                                    payload:(NSString *)payload {
+    /*
     ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
     notification.customEscapeSequenceNotification = [[[ITMCustomEscapeSequenceNotification alloc] init] autorelease];
     notification.customEscapeSequenceNotification.session = self.guid;
@@ -8178,6 +8189,7 @@ return;
     [_customEscapeSequenceNotifications enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
     }];
+     */
 }
 
 - (BOOL)screenShouldSendReport {
@@ -9094,7 +9106,7 @@ return NO;
 }
 
 #pragma mark - API
-
+/*
 - (NSString *)stringForLine:(screen_char_t *)screenChars
                      length:(int)length
                   cppsArray:(NSMutableArray<ITMCodePointsPerCell *> *)cppsArray {
@@ -9307,5 +9319,6 @@ return NO;
     response.status = ITMSetProfilePropertyResponse_Status_Ok;
     return response;
 }
+ */
 
 @end

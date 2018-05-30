@@ -66,7 +66,6 @@
 
 #import "ProcessCache.h"
 #import "iTerm.h"
-#import "iTermLSOF.h"
 #import "iTermProcessCollection.h"
 #include <libproc.h>
 #include <sys/sysctl.h>

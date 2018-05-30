@@ -1,4 +1,4 @@
-#import "PTYSession+Scripting.h"
+// #import "PTYSession+Scripting.h"
 #import "NSColor+iTerm.h"
 #import "ProfilesColorsPreferencesViewController.h"
 #import "PTYTab.h"

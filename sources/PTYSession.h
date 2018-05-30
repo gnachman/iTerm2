@@ -1,6 +1,5 @@
 // Implements the model class for a terminal session.
 
-#import "Api.pbobjc.h"
 #import "DVR.h"
 #import "FindViewController.h"
 #import "iTermFileDescriptorClient.h"
@@ -722,14 +721,14 @@ typedef enum {
 - (void)disinter;
 
 - (void)jumpToLocationWhereCurrentStatusChanged;
-
+/*
 #pragma mark - API
 
 - (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request;
 - (ITMGetPromptResponse *)handleGetPromptRequest:(ITMGetPromptRequest *)request;
 - (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request connection:(id)connection;
 - (ITMSetProfilePropertyResponse *)handleSetProfilePropertyForKey:(NSString *)key value:(id)value;
-
+*/
 #pragma mark - Testing utilities
 
 - (void)synchronousReadTask:(NSString *)string;

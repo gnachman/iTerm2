@@ -8,7 +8,7 @@
 
 #import "iTermLSOF.h"
 
-#import "iTermSocketAddress.h"
+//#import "iTermSocketAddress.h"
 #import "ProcessCache.h"
 #include <arpa/inet.h>
 #include <libproc.h>

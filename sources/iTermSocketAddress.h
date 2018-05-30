@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#include <sys/socket.h>
 
 @class iTermIPV4Address;
 

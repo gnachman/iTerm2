@@ -9,7 +9,6 @@
 #import "PTYTask.h"
 #import "TaskNotifier.h"
 #import "iTermAdvancedSettingsModel.h"
-#import "iTermLSOF.h"
 #import "iTermOrphanServerAdopter.h"
 #import <OpenDirectory/OpenDirectory.h>
 

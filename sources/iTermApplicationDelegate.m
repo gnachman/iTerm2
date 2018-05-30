@@ -31,7 +31,6 @@
 #import "ColorsMenuItemView.h"
 // #import "FileTransferManager.h"
 #import "ITAddressBookMgr.h"
-#import "iTermAPIServer.h"
 #import "iTermAboutWindowController.h"
 #import "iTermAppHotKeyProvider.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -47,7 +46,6 @@
 #import "iTermHotKeyProfileBindingController.h"
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchServices.h"
-#import "iTermLSOF.h"
 #import "iTermModifierRemapper.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
@@ -104,7 +102,6 @@ static NSString *const kMarkAlertAction = @"Mark Alert Action";
 NSString *const kMarkAlertActionModalAlert = @"Modal Alert";
 NSString *const kMarkAlertActionPostNotification = @"Post Notification";
 NSString *const kShowFullscreenTabsSettingDidChange = @"kShowFullscreenTabsSettingDidChange";
-NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";
 
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
 static NSString *const kURLStoreRestorableStateKey = @"kURLStoreRestorableStateKey";
@@ -131,7 +128,7 @@ static NSString *const kAPIAccessLocalizedName = @"app name";
 static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 
-@interface iTermApplicationDelegate () <iTermAPIServerDelegate>
+@interface iTermApplicationDelegate ()
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -188,13 +185,13 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
     BOOL _orphansAdopted;  // Have orphan servers been adopted?
 
-    iTermAPIServer *_apiServer;
-
     NSArray<NSDictionary *> *_buriedSessionsState;
+    /*
     NSMutableDictionary<id, ITMNotificationRequest *> *_newSessionSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_terminateSessionSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_layoutChangeSubscriptions;
-    BOOL _layoutChanged;
+*/
+     BOOL _layoutChanged;
 }
 
 - (instancetype)init {
@@ -284,9 +281,12 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     [_appNapStoppingActivity release];
+    /*
     [_newSessionSubscriptions release];
     [_layoutChangeSubscriptions release];
     [_terminateSessionSubscriptions release];
+
+     */
     [super dealloc];
 }
 
@@ -535,7 +535,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection {
-    [_apiServer postAPINotification:notification toConnection:connection];
+   // [_apiServer postAPINotification:notification toConnection:connection];
 }
 
 #pragma mark - Application Delegate Overrides
@@ -956,13 +956,6 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         ITERM_IGNORE_PARTIAL_END
     }
 
-#if 0
-    if ([iTermAdvancedSettingsModel enableAPIServer]) {
-        _apiServer = [[iTermAPIServer alloc] init];
-        _apiServer.delegate = self;
-    }
-#endif
-
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
     }
@@ -1137,12 +1130,14 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 - (void)sessionCreated:(NSNotification *)notification {
     PTYSession *session = notification.object;
+    /*
     [_newSessionSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.newSessionNotification = [[[ITMNewSessionNotification alloc] init] autorelease];
         notification.newSessionNotification.uniqueIdentifier = session.guid;
         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
     }];
+     */
 }
 
 - (void)layoutChanged:(NSNotification *)notification {
@@ -1150,23 +1145,27 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         _layoutChanged = YES;
         dispatch_async(dispatch_get_main_queue(), ^{
             _layoutChanged = NO;
+            /*
             [_layoutChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
                 ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
                 notification.layoutChangedNotification.listSessionsResponse = [self newListSessionsResponse];
                 [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
             }];
+             */
         });
     }
 }
 
 - (void)sessionDidTerminate:(NSNotification *)notification {
     PTYSession *session = notification.object;
+    /*
     [_terminateSessionSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.terminateSessionNotification = [[[ITMTerminateSessionNotification alloc] init] autorelease];
         notification.terminateSessionNotification.uniqueIdentifier = session.guid;
         [[[iTermApplication sharedApplication] delegate] postAPINotification:notification toConnection:key];
     }];
+     */
 }
 
 - (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
@@ -2268,8 +2267,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
 }
 
-#pragma mark - iTermAPIServerDelegate
-
+/*
 - (NSDictionary *)apiServerAuthorizeProcess:(pid_t)pid {
     NSMutableDictionary *bundles = [[[NSUserDefaults standardUserDefaults] objectForKey:kBundlesWithAPIAccessSettingKey] mutableCopy];
     if (!bundles) {
@@ -2445,7 +2443,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)apiServerRemoveSubscriptionsForConnection:(id)connection {
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermRemoveAPIServerSubscriptionsNotification object:connection];
+    // [[NSNotificationCenter defaultCenter] postNotificationName:iTermRemoveAPIServerSubscriptionsNotification object:connection];
 }
 
 - (void)apiServerRegisterTool:(ITMRegisterToolRequest *)request
@@ -2649,5 +2647,5 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
     handler(response);
 }
-
+*/
 @end
