@@ -48,3 +48,7 @@
 
 @interface iTermOpenQuicklyHelpItem : iTermOpenQuicklyItem
 @end
+
+@interface iTermOpenQuicklyScriptItem : iTermOpenQuicklyItem
+@end
+

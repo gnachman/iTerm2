@@ -1,10 +1,13 @@
 #import "iTermOpenQuicklyModel.h"
 
+#import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermLogoGenerator.h"
 #import "iTermMinimumSubsequenceMatcher.h"
 #import "iTermOpenQuicklyCommands.h"
 #import "iTermOpenQuicklyItem.h"
+#import "iTermScriptsMenuController.h"
 #import "NSObject+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession+Scripting.h"
@@ -28,6 +31,9 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
 // Multipliers for arrangement items. Arrangements rank just above profiles
 static const double kProfileNameMultiplierForArrangementItem = 0.11;
 
+// Multipliers for script items. Ranks below profiles.
+static const double kProfileNameMultiplierForScriptItem = 0.09;
+
 @implementation iTermOpenQuicklyModel
 
 #pragma mark - Commands
@@ -39,8 +45,8 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
         commands = @[ [iTermOpenQuicklyWindowArrangementCommand class],
                       [iTermOpenQuicklySearchSessionsCommand class],
                       [iTermOpenQuicklySwitchProfileCommand class],
-                      [iTermOpenQuicklyCreateTabCommand class] ];
-        [commands retain];
+                      [iTermOpenQuicklyCreateTabCommand class],
+                      [iTermOpenQuicklyScriptCommand class] ];
     });
     return commands;
 }
@@ -62,13 +68,13 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
             NSString *text = [queryString substringFromIndex:rangeOfSpace.location + 1];
             Class commandClass = [self commandTypeWithAbbreviation:command];
             if (commandClass) {
-                id<iTermOpenQuicklyCommand> theCommand= [[[commandClass alloc] init] autorelease];
+                id<iTermOpenQuicklyCommand> theCommand= [[commandClass alloc] init];
                 theCommand.text = text;
                 return theCommand;
             }
         }
     }
-    id<iTermOpenQuicklyCommand> theCommand = [[[iTermOpenQuicklyNoCommand alloc] init] autorelease];
+    id<iTermOpenQuicklyCommand> theCommand = [[iTermOpenQuicklyNoCommand alloc] init];
     theCommand.text = queryString;
     return theCommand;
 }
@@ -90,7 +96,7 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
 
 - (void)addTipsToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items {
     for (Class commandClass in self.commands) {
-        iTermOpenQuicklyHelpItem *item = [[[iTermOpenQuicklyHelpItem alloc] init] autorelease];
+        iTermOpenQuicklyHelpItem *item = [[iTermOpenQuicklyHelpItem alloc] init];
         item.score = 0;
         item.title = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
                                                                        value:[commandClass tipTitle]
@@ -107,13 +113,13 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
                     withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     for (PTYSession *session in self.sessions) {
         NSMutableArray *features = [NSMutableArray array];
-        iTermOpenQuicklySessionItem *item = [[[iTermOpenQuicklySessionItem alloc] init] autorelease];
+        iTermOpenQuicklySessionItem *item = [[iTermOpenQuicklySessionItem alloc] init];
         item.logoGenerator.textColor = session.foregroundColor;
         item.logoGenerator.backgroundColor = session.backgroundColor;
         item.logoGenerator.tabColor = session.tabColor;
         item.logoGenerator.cursorColor = session.cursorColor;
 
-        NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
+        NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
         item.score = [self scoreForSession:session
                                    matcher:matcher
                                   features:features
@@ -138,8 +144,8 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
                    withMatcher:(iTermMinimumSubsequenceMatcher *)matcher
              haveCurrentWindow:(BOOL)haveCurrentWindow {
     for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
-        iTermOpenQuicklyProfileItem *newSessionWithProfileItem = [[[iTermOpenQuicklyProfileItem alloc] init] autorelease];
-        NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
+        iTermOpenQuicklyProfileItem *newSessionWithProfileItem = [[iTermOpenQuicklyProfileItem alloc] init];
+        NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
         newSessionWithProfileItem.score = [self scoreForProfile:profile matcher:matcher attributedName:attributedName];
         if (newSessionWithProfileItem.score > 0) {
             NSString *theValue;
@@ -161,8 +167,8 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
 - (void)addChangeProfileToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                     withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
-        iTermOpenQuicklyChangeProfileItem *changeProfileItem = [[[iTermOpenQuicklyChangeProfileItem alloc] init] autorelease];
-        NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
+        iTermOpenQuicklyChangeProfileItem *changeProfileItem = [[iTermOpenQuicklyChangeProfileItem alloc] init];
+        NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
         changeProfileItem.score = [self scoreForProfile:profile matcher:matcher attributedName:attributedName];
         if (changeProfileItem.score > 0) {
             changeProfileItem.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
@@ -178,8 +184,8 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
 - (iTermOpenQuicklyArrangementItem *)arrangementItemWithName:(NSString *)arrangementName
                                                      matcher:(iTermMinimumSubsequenceMatcher *)matcher
                                                       inTabs:(BOOL)inTabs {
-    iTermOpenQuicklyArrangementItem *item = [[[iTermOpenQuicklyArrangementItem alloc] init] autorelease];
-    NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
+    iTermOpenQuicklyArrangementItem *item = [[iTermOpenQuicklyArrangementItem alloc] init];
+    NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
     item.score = [self scoreForArrangementWithName:arrangementName
                                            matcher:matcher
                                     attributedName:attributedName];
@@ -190,6 +196,25 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
                                                            highlightedIndexes:nil];
         item.title = attributedName;
         item.identifier = arrangementName;
+        return item;
+    } else {
+        return nil;
+    }
+}
+
+- (iTermOpenQuicklyScriptItem *)scriptItemWithName:(NSString *)scriptName
+                                           matcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    iTermOpenQuicklyScriptItem *item = [[iTermOpenQuicklyScriptItem alloc] init];
+    NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
+    item.score = [self scoreForScriptWithName:scriptName
+                                      matcher:matcher
+                               attributedName:attributedName];
+    if (item.score > 0) {
+        item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                        value:@"Run Script"
+                                                           highlightedIndexes:nil];
+        item.title = attributedName;
+        item.identifier = scriptName;
         return item;
     } else {
         return nil;
@@ -211,6 +236,18 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
     }
 }
 
+- (void)addScriptToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+             withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    NSArray<NSString *> *allScripts = [[[[iTermApplication sharedApplication] delegate] scriptsMenuController] allScripts];
+    for (NSString *script in allScripts) {
+        iTermOpenQuicklyScriptItem *item;
+        item = [self scriptItemWithName:script matcher:matcher];
+        if (item) {
+            [items addObject:item];
+        }
+    }
+}
+
 #pragma mark - APIs
 
 - (void)removeAllItems {
@@ -221,7 +258,7 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
     id<iTermOpenQuicklyCommand> command = [self commandForQuery:[queryString lowercaseString]];
 
     iTermMinimumSubsequenceMatcher *matcher =
-        [[[iTermMinimumSubsequenceMatcher alloc] initWithQuery:command.text] autorelease];
+        [[iTermMinimumSubsequenceMatcher alloc] initWithQuery:command.text];
 
     NSMutableArray *items = [NSMutableArray array];
 
@@ -243,6 +280,10 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
 
     if ([command supportsOpenArrangement]) {
         [self addOpenArrangementToItems:items withMatcher:matcher];
+    }
+
+    if ([command supportsScript]) {
+        [self addScriptToItems:items withMatcher:matcher];
     }
 
     // Sort from highest to lowest score.
@@ -277,6 +318,8 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
                 return session;
             }
         }
+    } else if ([item isKindOfClass:[iTermOpenQuicklyScriptItem class]]) {
+        return item;
     }
     return nil;
 }
@@ -298,6 +341,22 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
         // Make the default arrangement always be the highest-scored arrangement if it matches the query.
         score += 0.2;
     }
+    if (nameFeature.count) {
+        [attributedName appendAttributedString:nameFeature[0][0]];
+    }
+    return score;
+}
+
+- (double)scoreForScriptWithName:(NSString *)arrangementName
+                         matcher:(iTermMinimumSubsequenceMatcher *)matcher
+                  attributedName:(NSMutableAttributedString *)attributedName {
+    NSMutableArray *nameFeature = [NSMutableArray array];
+    double score = [self scoreUsingMatcher:matcher
+                                 documents:@[ arrangementName ?: @"" ]
+                                multiplier:kProfileNameMultiplierForScriptItem
+                                      name:nil
+                                  features:nameFeature
+                                     limit:2 * kProfileNameMultiplierForScriptItem];
     if (nameFeature.count) {
         [attributedName appendAttributedString:nameFeature[0][0]];
     }
@@ -487,7 +546,7 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
         if (value > highestValue) {
             highestValue = value;
             bestFeature = document;
-            bestIndexSet = [[indexSet copy] autorelease];
+            bestIndexSet = [indexSet copy];
         }
         score += value * multipler;
         if (score > limit) {

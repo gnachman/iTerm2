@@ -18,6 +18,7 @@
 - (BOOL)supportsCreateNewTab;
 - (BOOL)supportsChangeProfile;
 - (BOOL)supportsOpenArrangement;
+- (BOOL)supportsScript;
 @end
 
 @interface iTermOpenQuicklyCommand : NSObject<iTermOpenQuicklyCommand>
@@ -37,5 +38,8 @@
 @end
 
 @interface iTermOpenQuicklyNoCommand : iTermOpenQuicklyCommand
+@end
+
+@interface iTermOpenQuicklyScriptCommand : iTermOpenQuicklyCommand
 @end
 

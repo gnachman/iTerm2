@@ -75,3 +75,8 @@ typedef NSDictionary iTermHotKeyDescriptor;
 - (BOOL)isExactlyEqualToDictionary:(NSDictionary *)other;
 
 @end
+
+@interface NSMutableDictionary<KeyType, ObjectType> (iTerm)
+- (void)removeObjectsPassingTest:(BOOL (^)(KeyType key))block;
+@end
+

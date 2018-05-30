@@ -48,6 +48,11 @@
 - (BOOL)supportsOpenArrangement {
     return NO;
 }
+
+- (BOOL)supportsScript {
+    return NO;
+}
+
 @end
 
 @implementation iTermOpenQuicklyWindowArrangementCommand
@@ -114,6 +119,22 @@
 
 @end
 
+@implementation iTermOpenQuicklyScriptCommand
+
++ (NSString *)restrictionDescription {
+    return @"run script";
+}
+
++ (NSString *)command {
+    return @"s";
+}
+
+- (BOOL)supportsScript {
+    return YES;
+}
+
+@end
+
 @implementation iTermOpenQuicklyNoCommand
 
 - (BOOL)supportsSessionLocation {
@@ -129,6 +150,10 @@
 }
 
 - (BOOL)supportsOpenArrangement {
+    return YES;
+}
+
+- (BOOL)supportsScript {
     return YES;
 }
 

@@ -31,6 +31,7 @@
 #import "iTermAPIHelper.h"
 #import "iTermApplication.h"
 
+@class iTermScriptsMenuController;
 @class ITMNotification;
 @class PseudoTerminal;
 @class PTYSession;
@@ -61,6 +62,7 @@ extern NSString *const iTermApplicationWillTerminate;
 @property(nonatomic, readonly) NSMenu *downloadsMenu;
 @property(nonatomic, readonly) NSMenu *uploadsMenu;
 @property(nonatomic, readonly) iTermAPIHelper *apiHelper;
+@property(nonatomic, readonly) iTermScriptsMenuController *scriptsMenuController;
 
 - (void)updateMaximizePaneMenuItem;
 - (void)updateUseTransparencyMenuItem;

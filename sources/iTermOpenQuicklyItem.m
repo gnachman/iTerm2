@@ -66,3 +66,12 @@
 }
 
 @end
+
+@implementation iTermOpenQuicklyScriptItem
+
+- (NSImage *)icon {
+    return [NSImage imageNamed:@"ScriptIcon"];
+}
+
+@end
+

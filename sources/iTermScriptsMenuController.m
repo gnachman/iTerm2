@@ -27,11 +27,13 @@ NS_ASSUME_NONNULL_BEGIN
     NSMenu *_scriptsMenu;
     BOOL _ranAutoLaunchScript;
     SCEvents *_events;
+    NSArray<NSString *> *_allScripts;
 }
 
 - (instancetype)initWithMenu:(NSMenu *)menu {
     self = [super init];
     if (self) {
+        _allScripts = [NSMutableArray array];
         _scriptsMenu = menu;
         _events = [[SCEvents alloc] init];
         _events.delegate = self;
@@ -60,6 +62,26 @@ NS_ASSUME_NONNULL_BEGIN
     }];
 }
 
+- (NSArray<NSString *> *)allScriptsFromMenu {
+    NSInteger i = [self separatorIndex];
+    NSMutableArray<NSString *> *result = [NSMutableArray array];
+    if (i != NSNotFound) {
+        [self addMenuItemsIn:_scriptsMenu fromIndex:i + 1 toArray:result path:@""];
+    }
+    return result;
+}
+
+- (void)addMenuItemsIn:(NSMenu *)container fromIndex:(NSInteger)fromIndex toArray:(NSMutableArray<NSString *> *)result path:(NSString *)path {
+    for (NSInteger i = fromIndex; i < container.itemArray.count; i++) {
+        NSMenuItem *item = container.itemArray[i];
+        if (item.submenu) {
+            [self addMenuItemsIn:item.submenu fromIndex:0 toArray:result path:[path stringByAppendingPathComponent:item.title]];
+        } else {
+            [result addObject:[path stringByAppendingPathComponent:item.title]];
+        }
+    }
+}
+
 - (void)removeMenuItemsAfterSeparator {
     NSInteger i = [self separatorIndex];
     if (i != NSNotFound) {
@@ -76,6 +98,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
 
     [self addMenuItemsAt:scriptsPath toMenu:_scriptsMenu];
+    _allScripts = [self allScriptsFromMenu];
 }
 
 - (void)addMenuItemsAt:(NSString *)root toMenu:(NSMenu *)menu {
@@ -130,6 +153,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
+
 - (void)revealScriptsInFinder {
     NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
     [[NSFileManager defaultManager] createDirectoryAtPath:scriptsPath
@@ -158,7 +182,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)launchScript:(NSMenuItem *)sender {
     NSString *fullPath = sender.identifier;
+    [self launchScriptWithAbsolutePath:fullPath];
+}
 
+- (void)launchScriptWithRelativePath:(NSString *)path {
+    NSString *fullPath = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:path];
+    [self launchScriptWithAbsolutePath:fullPath];
+}
+
+- (void)launchScriptWithAbsolutePath:(NSString *)fullPath {
     NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath checkForMain:YES];
     if (venv) {
         [iTermAPIScriptLauncher launchScript:[fullPath stringByAppendingPathComponent:@"main.py"]
@@ -166,11 +198,11 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
 
-    if ([[[sender title] pathExtension] isEqualToString:@"py"]) {
+    if ([[fullPath pathExtension] isEqualToString:@"py"]) {
         [iTermAPIScriptLauncher launchScript:fullPath];
         return;
     }
-    if ([[[sender title] pathExtension] isEqualToString:@"scpt"]) {
+    if ([[fullPath pathExtension] isEqualToString:@"scpt"]) {
         NSAppleScript *script;
         NSDictionary *errorInfo = nil;
         NSURL *aURL = [NSURL fileURLWithPath:fullPath];
