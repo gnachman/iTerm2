@@ -5,6 +5,726 @@ import iterm2.rpc
 class BadGUIDException(Exception):
     """Raised when a profile does not have a GUID or the GUID is unknown."""
 
+class LocalWriteOnlyProfile:
+    """A profile that can be modified but not read and does not send changes on each write."""
+    def __init__(self):
+      self.__values = {}
+
+    @property
+    def values(self):
+        return self.__values
+
+    def _simple_set(self, key, value):
+        """value is a json type"""
+        if key is None:
+            self.__values[key] = None
+        else:
+            self.__values[key] = json.dumps(value)
+
+    def _color_set(self, key, value):
+        if value is None:
+            self.__values[key] = "null"
+        else:
+            self.__values[key] = json.dumps(value.get_dict())
+
+    def _guids_for_set(self):
+        if self.session_id is None:
+            assert self.__guid is not None
+            return [self.__guid]
+        else:
+            return self.session_id
+
+    def set_foreground_color(self, value):
+        """Sets the foreground color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Foreground Color", value)
+
+    def set_background_color(self, value):
+        """Sets the background color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Background Color", value)
+
+    def set_bold_color(self, value):
+        """Sets the bold text color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Bold Color", value)
+
+    def set_link_color(self, value):
+        """Sets the link color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Link Color", value)
+
+    def set_selection_color(self, value):
+        """Sets the selection background color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Selection Color", value)
+
+    def set_selected_text_color(self, value):
+        """Sets the selection text color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Selected Text Color", value)
+
+    def set_cursor_color(self, value):
+        """Sets the cursor color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Cursor Color", value)
+
+    def set_cursor_text_color(self, value):
+        """Sets the cursor text color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Cursor Text Color", value)
+
+    def set_ansi_0_color(self, value):
+        """Sets the ANSI 0 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 0 Color", value)
+
+    def set_ansi_1_color(self, value):
+        """Sets the ANSI 1 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 1 Color", value)
+
+    def set_ansi_2_color(self, value):
+        """Sets the ANSI 2 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 2 Color", value)
+
+    def set_ansi_3_color(self, value):
+        """Sets the ANSI 3 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 3 Color", value)
+
+    def set_ansi_4_color(self, value):
+        """Sets the ANSI 4 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 4 Color", value)
+
+    def set_ansi_5_color(self, value):
+        """Sets the ANSI 5 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 5 Color", value)
+
+    def set_ansi_6_color(self, value):
+        """Sets the ANSI 6 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 6 Color", value)
+
+    def set_ansi_7_color(self, value):
+        """Sets the ANSI 7 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 7 Color", value)
+
+    def set_ansi_8_color(self, value):
+        """Sets the ANSI 8 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 8 Color", value)
+
+    def set_ansi_9_color(self, value):
+        """Sets the ANSI 9 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 9 Color", value)
+
+    def set_ansi_10_color(self, value):
+        """Sets the ANSI 10 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 10 Color", value)
+
+    def set_ansi_11_color(self, value):
+        """Sets the ANSI 11 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 11 Color", value)
+
+    def set_ansi_12_color(self, value):
+        """Sets the ANSI 12 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 12 Color", value)
+
+    def set_ansi_13_color(self, value):
+        """Sets the ANSI 13 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 13 Color", value)
+
+    def set_ansi_14_color(self, value):
+        """Sets the ANSI 14 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 14 Color", value)
+
+    def set_ansi_15_color(self, value):
+        """Sets the ANSI 15 color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Ansi 15 Color", value)
+
+    def set_smart_cursor_color(self, value):
+        """Sets the smart cursor color.
+
+        :param value: A :class:`Color`"""
+        return self._simple_set("Smart Cursor Color", value)
+
+    def set_tab_color(self, value):
+        """Sets the tab color.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Tab Color", value)
+
+    def set_underline_color(self, value):
+        """Sets the underline color.
+
+        :param value: A :class:`Color` or None"""
+        return self._color_set("Underline Color", value)
+
+    def set_cursor_guide_color(self, value):
+        """Sets the cursor guide color. The alpha value is respected.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Cursor Guide Color", value)
+
+    def set_badge_color(self, value):
+        """Sets the badge color. The alpha value is respected.
+
+        :param value: A :class:`Color`"""
+        return self._color_set("Badge Color", value)
+
+    def set_name(self, value):
+        """Sets the name.
+
+        :param value: A string"""
+        return self._simple_set("Name", value)
+
+    def set_badge_text(self, value):
+        """Sets the badge text.
+
+        :param value: A :class:`Color`"""
+        return self._simple_set("Badge Text", value)
+
+    def set_answerback_string(self, value):
+        """Sets the answerback string.
+
+        :param value: A string"""
+        return self._simple_set("Answerback String", value)
+
+    def set_use_cursor_guide(self, value):
+        """Sets whether the cursor guide should be used.
+
+        :param value: A boolean"""
+        return self._simple_set("Use Cursor Guide", value)
+
+    def set_use_tab_color(self, value):
+        """Sets whether the tab color should be used.
+
+        :param value: A string"""
+        return self._simple_set("Use Tab Color", value)
+
+    def set_use_underline_color(self, value):
+        """Sets the underline color.
+
+        :param value: A :class:`Color`"""
+        return self._simple_set("Use Underline Color", value)
+
+    def set_minimum_contrast(self, value):
+        """Sets the minimum contrast.
+
+        :param value: A float in 0 to 1"""
+        return self._simple_set("Minimum Contrast", value)
+
+    def set_cursor_boost(self, value):
+        """Sets the cursor boost level.
+
+        :param value: A float in 0 to 1"""
+        return self._simple_set("Cursor Boost", value)
+
+    def set_blinking_cursor(self, value):
+        """Sets whether the cursor blinks.
+
+        :param value: A bool"""
+        return self._simple_set("Blinking Cursor", value)
+
+    def set_use_bold_font(self, value):
+        """Sets whether to use the bold variant of the font for bold text.
+
+        :param value: A bool"""
+        return self._simple_set("Use Bold Font", value)
+
+    def set_ascii_ligatures(self, value):
+        """Sets whether ligatures should be used for ASCII text.
+
+        :param value: A bool"""
+        return self._simple_set("ASCII Ligatures", value)
+
+    def set_non_ascii_ligatures(self, value):
+        """Sets whether ligatures should be used for non-ASCII text.
+
+        :param value: A bool"""
+        return self._simple_set("Non-ASCII Ligatures", value)
+
+    def set_use_bright_bold(self, value):
+        """Sets whether bright colors should be used for bold text.
+
+        :param value: A bool"""
+        return self._simple_set("Use Bright Bold", value)
+
+    def set_blink_allowed(self, value):
+        """Sets whether blinking text is allowed.
+
+        :param value: A bool"""
+        return self._simple_set("Blink Allowed", value)
+
+    def set_use_italic_font(self, value):
+        """Sets whether italic text is allowed.
+
+        :param value: A bool"""
+        return self._simple_set("Use Italic Font", value)
+
+    def set_ambiguous_double_width(self, value):
+        """Sets whether ambiguous-width text should be treated as double-width.
+
+        :param value: A bool"""
+        return self._simple_set("Ambiguous Double Width", value)
+
+    def set_horizontal_spacing(self, value):
+        """Sets the fraction of horizontal spacing.
+
+        :param value: A float at least 0"""
+        return self._simple_set("Horizontal Spacing", value)
+
+    def set_vertical_spacing(self, value):
+        """Sets the fraction of vertical spacing.
+
+        :param value: A float at least 0"""
+        return self._simple_set("Vertical Spacing", value)
+
+    def set_use_non_ascii_font(self, value):
+        """Sets whether to use a different font for non-ASCII text.
+
+        :param value: A bool"""
+        return self._simple_set("Use Non-ASCII Font", value)
+
+    def set_transparency(self, value):
+        """Sets the level of transparency.
+
+        :param value: A float between 0 and 1"""
+        return self._simple_set("Transparency", value)
+
+    def set_blur(self, value):
+        """Sets whether background blur should be enabled.
+
+        :param value: A bool"""
+        return self._simple_set("Blur", value)
+
+    def set_blur_radius(self, value):
+        """Sets the blur radius (how blurry). Requires blur to be enabled.
+
+        :param value: A float between 0 and 30"""
+        return self._simple_set("Blur Radius", value)
+
+    def set_background_image_is_tiled(self, value):
+        """Sets whether the background image is tiled (true) or stretched (false)
+
+        :param value: A bool"""
+        return self._simple_set("Background Image Is Tiled", value)
+
+    def set_blend(self, value):
+        """Sets how much the default background color gets blended with the background image.
+
+        :param value: A float in 0 to 1"""
+        return self._simple_set("Blend", value)
+
+    def set_sync_title(self, value):
+        """Sets whether the profile name stays in the tab title, even if changed by an escape
+        sequence.
+
+        :param value: A bool"""
+        return self._simple_set("Sync Title", value)
+
+    def set_disable_window_resizing(self, value):
+        """Sets whether the terminal can resize the window with an escape sequence.
+
+        :param value: A bool"""
+        return self._simple_set("Disable Window Resizing", value)
+
+    def set_only_the_default_bg_color_uses_transparency(self, value):
+        """Sets whether window transparency shows through non-default background colors.
+
+        :param value: A bool"""
+        return self._simple_set("Only The Default BG Color Uses Transparency", value)
+
+    def set_ascii_anti_aliased(self, value):
+        """Sets whether ASCII text is anti-aliased.
+
+        :param value: A bool"""
+        return self._simple_set("ASCII Anti Aliased", value)
+
+    def set_non_ascii_anti_aliased(self, value):
+        """Sets whether non-ASCII text is anti-aliased.
+
+        :param value: A bool"""
+        return self._simple_set("Non-ASCII Anti Aliased", value)
+
+    def set_scrollback_lines(self, value):
+        """Sets the number of scrollback lines.
+
+        :param value: An int at least 0"""
+        return self._simple_set("Scrollback Lines", value)
+
+    def set_unlimited_scrollback(self, value):
+        """Sets whether the scrollback buffer's length is unlimited.
+
+        :param value: A bool"""
+        return self._simple_set("Unlimited Scrollback", value)
+
+    def set_scrollback_with_status_bar(self, value):
+        """Sets whether text gets appended to scrollback when there is an app status bar
+
+        :param value: A bool"""
+        return self._simple_set("Scrollback With Status Bar", value)
+
+    def set_scrollback_in_alternate_screen(self, value):
+        """Sets whether text gets appended to scrollback in alternate screen mode
+
+        :param value: A bool"""
+        return self._simple_set("Scrollback in Alternate Screen", value)
+
+    def set_mouse_reporting(self, value):
+        """Sets whether mouse reporting is allowed
+
+        :param value: A bool"""
+        return self._simple_set("Mouse Reporting", value)
+
+    def set_mouse_reporting_allow_mouse_wheel(self, value):
+        """Sets whether mouse reporting reports the mouse wheel's movements.
+
+        :param value: A bool"""
+        return self._simple_set("Mouse Reporting allow mouse wheel", value)
+
+    def set_allow_title_reporting(self, value):
+        """Sets whether the session title can be reported
+
+        :param value: A bool"""
+        return self._simple_set("Allow Title Reporting", value)
+
+    def set_allow_title_setting(self, value):
+        """Sets whether the session title can be changed by escape sequence
+
+        :param value: A bool"""
+        return self._simple_set("Allow Title Setting", value)
+
+    def set_disable_printing(self, value):
+        """Sets whether printing by escape sequence is disabled.
+
+        :param value: A bool"""
+        return self._simple_set("Disable Printing", value)
+
+    def set_disable_smcup_rmcup(self, value):
+        """Sets whether alternate screen mode is disabled
+
+        :param value: A bool"""
+        return self._simple_set("Disable Smcup Rmcup", value)
+
+    def set_silence_bell(self, value):
+        """Sets whether the bell makes noise.
+
+        :param value: A bool"""
+        return self._simple_set("Silence Bell", value)
+
+    def set_bm_growl(self, value):
+        """Sets whether notifications should be shown.
+
+        :param value: A bool"""
+        return self._simple_set("BM Growl", value)
+
+    def set_send_bell_alert(self, value):
+        """Sets whether notifications should be shown for the bell ringing
+
+        :param value: A bool"""
+        return self._simple_set("Send Bell Alert", value)
+
+    def set_send_idle_alert(self, value):
+        """Sets whether notifications should be shown for becoming idle
+
+        :param value: A bool"""
+        return self._simple_set("Send Idle Alert", value)
+
+    def set_send_new_output_alert(self, value):
+        """Sets whether notifications should be shown for new output
+
+        :param value: A bool"""
+        return self._simple_set("Send New Output Alert", value)
+
+    def set_send_session_ended_alert(self, value):
+        """Sets whether notifications should be shown for a session ending
+
+        :param value: A bool"""
+        return self._simple_set("Send Session Ended Alert", value)
+
+    def set_send_terminal_generated_alerts(self, value):
+        """Sets whether notifications should be shown for escape-sequence originated notifications
+
+        :param value: A bool"""
+        return self._simple_set("Send Terminal Generated Alerts", value)
+
+    def set_flashing_bell(self, value):
+        """Sets whether the bell should flash the screen
+
+        :param value: A bool"""
+        return self._simple_set("Flashing Bell", value)
+
+    def set_visual_bell(self, value):
+        """Sets whether a bell should be shown when the bell rings
+
+        :param value: A bool"""
+        return self._simple_set("Visual Bell", value)
+
+    def set_close_sessions_on_end(self, value):
+        """Sets whether the session should close when it ends.
+
+        :param value: A bool"""
+        return self._simple_set("Close Sessions On End", value)
+
+    def set_prompt_before_closing(self, value):
+        """Sets whether the session should prompt before closign
+
+        :param value: A bool"""
+        return self._simple_set("Prompt Before Closing 2", value)
+
+    def set_session_close_undo_timeout(self, value):
+        """Sets amount of time you can undo closing a session
+
+        :param value: A float at least 0"""
+        return self._simple_set("Session Close Undo Timeout", value)
+
+    def set_reduce_flicker(self, value):
+        """Sets whether the flicker fixer is on.
+
+        :param value: A bool"""
+        return self._simple_set("Reduce Flicker", value)
+
+    def set_send_code_when_idle(self, value):
+        """Sets whether to send a code when idle
+
+        :param value: A bool"""
+        return self._simple_set("Send Code When Idle", value)
+
+    def set_application_keypad_allowed(self, value):
+        """Sets whether the terminal may be placed in application keypad mode
+
+        :param value: A bool"""
+        return self._simple_set("Application Keypad Allowed", value)
+
+    def set_place_prompt_at_first_column(self, value):
+        """Sets whether the prompt should always begin at the first column (requires shell
+        integration)
+
+        :param value: A bool"""
+        return self._simple_set("Place Prompt at First Column", value)
+
+    def set_show_mark_indicators(self, value):
+        """Sets whether mark indicators should be visible
+
+        :param value: A bool"""
+        return self._simple_set("Show Mark Indicators", value)
+
+    def set_idle_code(self, value):
+        """Sets the ASCII code to send on idle
+
+        :param value: An int in 0...255"""
+        return self._simple_set("Idle Code", value)
+
+    def set_idle_period(self, value):
+        """Sets how often to send a code when idle
+
+        :param value: A float at least 0"""
+        return self._simple_set("Idle Period", value)
+
+    def set_unicode_version(self, value):
+        """Sets the unicode version for wcwidth
+
+        :param value: A bool"""
+        return self._simple_set("Unicode Version", value)
+
+    def set_cursor_type(self, value):
+        """Sets the cursor type
+
+        :param value: CURSOR_TYPE_xxx"""
+        return self._simple_set("Cursor Type", value)
+
+    def set_thin_strokes(self, value):
+        """Sets whether thin strokes are used.
+
+        :param value: THIN_STROKES_SETTING_xxx"""
+        return self._simple_set("Thin Strokes", value)
+
+    def set_unicode_normalization(self, value):
+        """Sets the unicode normalization form to use
+
+        :param value: UNICODE_NORMALIZATION_xxx"""
+        return self._simple_set("Unicode Normalization", value)
+
+    def set_character_encoding(self, value):
+        """Sets the character encoding
+
+        :param value: CHARACTER_ENCODING_xxx"""
+        return self._simple_set("Character Encoding", value)
+
+    def set_left_option_key_sends(self, value):
+        """Sets the behavior of the left option key.
+
+        :param value: OPTION_KEY_xxx"""
+        return self._simple_set("Option Key Sends", value)
+
+    def set_right_option_key_sends(self, value):
+        """Sets the behavior of the right option key.
+
+        :param value: OPTION_KEY_xxx"""
+        return self._simple_set("Right Option Key Sends", value)
+
+    def set_triggers(self, value):
+        """Sets the triggers.
+
+        :param value: A list of dicts of trigger definitions."""
+        return self._simple_set("Triggers", value)
+
+    def set_smart_selection_rules(self, value):
+        """Sets the smart selection rules.
+
+        :param value: A list of dicts of smart selection rules"""
+        return self._simple_set("Smart Selection Rules", value)
+
+    def set_semantic_history(self, value):
+        """Sets the semantic history prefs.
+
+        :param value: Semantic history settings dict."""
+        return self._simple_set("Semantic History", value)
+
+    def set_automatic_profile_switching_rules(self, value):
+        """Sets the automatic profile switching rules.
+
+        :param value: A list of rules (strings)."""
+        return self._simple_set("Bound Hosts", value)
+
+    def set_advanced_working_directory_window_setting(self, value):
+        """Sets the advanced working directory window setting.
+
+        :param value: INITIAL_WORKING_DIRECTORY_xxx, excluding ADVANCED."""
+        return self._simple_set("AWDS Window Option", value)
+
+    def set_advanced_working_directory_window_directory(self, value):
+        """Sets the advanced working directory window directory.
+
+        :param value: Path."""
+        return self._simple_set("AWDS Window Directory", value)
+
+    def set_advanced_working_directory_tab_setting(self, value):
+        """Sets the advanced working directory tab setting.
+
+        :param value: INITIAL_WORKING_DIRECTORY_xxx, excluding ADVANCED."""
+        return self._simple_set("AWDS Tab Option", value)
+
+    def set_advanced_working_directory_tab_directory(self, value):
+        """Sets the advanced working directory tab directory.
+
+        :param value: Path."""
+        return self._simple_set("AWDS Tab Directory", value)
+
+    def set_advanced_working_directory_pane_setting(self, value):
+        """Sets the advanced working directory pane setting.
+
+        :param value: INITIAL_WORKING_DIRECTORY_xxx, excluding ADVANCED."""
+        return self._simple_set("AWDS Pane Option", value)
+
+    def set_advanced_working_directory_pane_directory(self, value):
+        """Sets the advanced working directory pane directory.
+
+        :param value: Path."""
+        return self._simple_set("AWDS Pane Directory", value)
+
+    def set_normal_font(self, value):
+        """Sets the normal font.
+
+        The normal font is used for either ASCII or all characters depending on
+        whether a separate font is used for non-ascii.
+
+        :param value: Font name and size as a string."""
+        return self._simple_set("Normal Font", value)
+
+    def set_normal_font(self, value):
+        """Sets the non-ASCII font.
+
+        This is used for non-ASCII characters if use_non_ascii_font is enabled.
+
+        :param value: Font name and size as a string."""
+        return self._simple_set("Non Ascii Font", value)
+
+    def set_background_image_location(self, value):
+        """Sets path to the background image.
+
+        :param value: Path."""
+        return self._simple_set("Background Image Location", value)
+
+    def set_key_mappings(self, value):
+        """Sets the keyboard shortcuts.
+
+        :param value: Dictionary mapping keystroke to action."""
+        return self._simple_set("Keyboard Map", value)
+
+    def set_touchbar_mappings(self, value):
+        """Sets the touchbar actions.
+
+        :param value: Dictionary mapping touch bar item to action."""
+        return self._simple_set("Touch Bar Map", value)
+
+    def set_use_custom_command(self, value):
+        """"Sets whether to use a custom command when the session is created.
+
+        :param value: The string "Yes" or "No".
+        """
+        return self._simple_set("Custom Command", value)
+
+    def set_command(self, value):
+        """"The command to run when the session starts.
+
+        custom_command must be set to "Yes" or this will be ignored.
+
+        :param value: A string giving the command to run.
+        """
+        return self._simple_set("Command", value)
+
+    def set_initial_directory_mode(self, value):
+        """Sets whether to use a custom (not home) initial working directory.
+
+        :param value: "Yes" to use the `custom_directory`. "No" to use the home directory. "Recycle" to reuse the current directory. "Advanced" to respect advanced working directory settings.
+        """
+        return self._simple_set("Custom Directory", value)
+
+    def set_custom_directory(self, value):
+        """Sets the initial working directory.
+
+        The initial_directory_mode must be set to "Yes" for this to take effect.
+        """
+        return self._simple_set("Working Directory", value)
+
 class WriteOnlyProfile:
     """A profile that can be modified but not read. Useful for changing many
     sessions' profiles at once without knowing what they are."""
@@ -673,7 +1393,7 @@ class WriteOnlyProfile:
 
     async def async_set_normal_font(self, value):
         """Sets the normal font.
-        
+
         The normal font is used for either ASCII or all characters depending on
         whether a separate font is used for non-ascii.
 
@@ -682,7 +1402,7 @@ class WriteOnlyProfile:
 
     async def async_set_normal_font(self, value):
         """Sets the non-ASCII font.
-        
+
         This is used for non-ASCII characters if use_non_ascii_font is enabled.
 
         :param value: Font name and size as a string."""
@@ -690,25 +1410,55 @@ class WriteOnlyProfile:
 
     async def async_set_background_image_location(self, value):
         """Sets path to the background image.
-        
+
         :param value: Path."""
         return await self._async_simple_set("Background Image Location", value)
 
     async def async_set_key_mappings(self, value):
         """Sets the keyboard shortcuts.
-        
+
         :param value: Dictionary mapping keystroke to action."""
         return await self._async_simple_set("Keyboard Map", value)
 
     async def async_set_touchbar_mappings(self, value):
         """Sets the touchbar actions.
-        
+
         :param value: Dictionary mapping touch bar item to action."""
         return await self._async_simple_set("Touch Bar Map", value)
 
+    async def async_set_use_custom_command(self, value):
+        """"Sets whether to use a custom command when the session is created.
+
+        :param value: The string "Yes" or "No".
+        """
+        return await self._async_simple_set("Custom Command", value)
+
+    async def async_set_command(self, value):
+        """"The command to run when the session starts.
+
+        custom_command must be set to "Yes" or this will be ignored.
+
+        :param value: A string giving the command to run.
+        """
+        return await self._async_simple_set("Command", value)
+
+    async def async_set_initial_directory_mode(self, value):
+        """Sets whether to use a custom (not home) initial working directory.
+
+        :param value: "Yes" to use the `custom_directory`. "No" to use the home directory. "Recycle" to reuse the current directory. "Advanced" to respect advanced working directory settings.
+        """
+        return await self._async_simple_set("Custom Directory", value)
+
+    async def async_set_custom_directory(self, value):
+        """Sets the initial working directory.
+
+        The initial_directory_mode must be set to "Yes" for this to take effect.
+        """
+        return await self._async_simple_set("Working Directory", value)
+
 class Profile(WriteOnlyProfile):
     """Represents a profile.
-    
+
     If a session_id is set then this is the profile attached to a session.
     Otherwise, it is a shared profile."""
     CURSOR_TYPE_UNDERLINE = 0
@@ -1515,7 +2265,7 @@ class Profile(WriteOnlyProfile):
     @property
     def normal_font(self):
         """The normal font.
-        
+
         The normal font is used for either ASCII or all characters depending on
         whether a separate font is used for non-ascii.
 
@@ -1525,7 +2275,7 @@ class Profile(WriteOnlyProfile):
     @property
     def non_ascii_font(self):
         """The non-ASCII font.
-        
+
         This is used for non-ASCII characters if use_non_ascii_font is enabled.
 
         :returns: Font name and size as a string."""
@@ -1534,21 +2284,21 @@ class Profile(WriteOnlyProfile):
     @property
     def background_image_location(self):
         """Gets path to the background image.
-        
+
         :returns: Path."""
         return self._simple_get("Background Image Location")
 
     @property
     def key_mappings(self):
         """The keyboard shortcuts.
-        
+
         :returns: Dictionary mapping keystroke to action."""
         return self._simple_get("Keyboard Map")
 
     @property
     def touchbar_mappings(self):
         """The touchbar actions.
-        
+
         :returns: Dictionary mapping touch bar item to action."""
         return self._simple_get("Touch Bar Map")
 
@@ -1576,6 +2326,40 @@ class Profile(WriteOnlyProfile):
 
         :returns: String file name"""
         return self._simple_get("Dynamic Profile Filename")
+
+    @property
+    def use_custom_command(self, value):
+        """"Whether to use a custom command when the session is created.
+
+        :param value: The string "Yes" or "No".
+        """
+        return self._simple_get("Custom Command", value)
+
+    @property
+    def command(self, value):
+        """"The command to run when the session starts.
+
+        custom_command must be set to "Yes" or this will be ignored.
+
+        :param value: A string giving the command to run.
+        """
+        return self._simple_get("Command", value)
+
+    @property
+    def initial_directory_mode(self, value):
+        """Whether to use a custom (not home) initial working directory.
+
+        :param value: "Yes" to use the `custom_directory`. "No" to use the home directory. "Recycle" to reuse the current directory. "Advanced" to respect advanced working directory settings.
+        """
+        return self._simple_get("Custom Directory", value)
+
+    @property
+    def custom_directory(self, value):
+        """The initial working directory.
+
+        The initial_directory_mode must be set to "Yes" for this to take effect.
+        """
+        return self._simple_get("Working Directory", value)
 
 class Color:
     """Describes a color."""
@@ -1679,7 +2463,7 @@ class Color:
 
 class PartialProfile(Profile):
     """Represents a profile that has only a subset of fields available for reading."""
-    
+
     def __init__(self, session_id, connection, profile_property_list):
         """Initializes a PartialProfile from a profile_property_list protobuf."""
         super().__init__(session_id, connection, profile_property_list)
@@ -1688,10 +2472,10 @@ class PartialProfile(Profile):
         """Requests a full profile and returns it.
 
         Raises BadGUIDException if the Guid is not set or does not match a profile.
-        
+
         :returns: A :class:`Profile`."""
         if self.guid is None:
-            raise 
+            raise
         response = await iterm2.rpc.async_list_profiles(self.connection, [self.guid], None)
         if len(response.list_profiles_response.profiles) != 1:
             raise BadGUIDException()

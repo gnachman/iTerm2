@@ -1023,6 +1023,9 @@ message SplitPaneRequest {
 
   // Leave unset to use the default profile.
   optional string profile_name = 4;
+
+  // Modifies the profile to customize its behavior just for this session.
+  repeated ProfileProperty custom_profile_properties = 5;
 }
 
 message SplitPaneResponse {
@@ -1034,6 +1037,8 @@ message SplitPaneResponse {
     // one or more cannot be split, the status will be set to CANNOT_SPLIT, even if some did succeed
     // (in which case there will be one or more session_id's).
     CANNOT_SPLIT = 3;
+    // Couldn't decode JSON
+    MALFORMED_CUSTOM_PROFILE_PROPERTY = 4;
   }
   optional Status status = 1;
 

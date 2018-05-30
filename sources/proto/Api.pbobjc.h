@@ -580,6 +580,9 @@ typedef GPB_ENUM(ITMSplitPaneResponse_Status) {
    * (in which case there will be one or more session_id's).
    **/
   ITMSplitPaneResponse_Status_CannotSplit = 3,
+
+  /** Couldn't decode JSON */
+  ITMSplitPaneResponse_Status_MalformedCustomProfileProperty = 4,
 };
 
 GPBEnumDescriptor *ITMSplitPaneResponse_Status_EnumDescriptor(void);
@@ -1384,6 +1387,7 @@ typedef GPB_ENUM(ITMGetPropertyResponse_FieldNumber) {
  *
  * For sessions:
  * grid_size      { "width": 80, "height": 25 }
+ * buried         true
  **/
 @property(nonatomic, readwrite) ITMGetPropertyResponse_Status status;
 
@@ -1431,6 +1435,7 @@ typedef GPB_ENUM(ITMSetPropertyRequest_Identifier_OneOfCase) {
  *
  * For sessions:
  * grid_size      { "width": 80, "height": 25 }
+ * buried         true
  **/
 @property(nonatomic, readwrite, copy, null_resettable) NSString *name;
 /** Test to see if @c name has been set. */
@@ -2767,6 +2772,7 @@ typedef GPB_ENUM(ITMSplitPaneRequest_FieldNumber) {
   ITMSplitPaneRequest_FieldNumber_SplitDirection = 2,
   ITMSplitPaneRequest_FieldNumber_Before = 3,
   ITMSplitPaneRequest_FieldNumber_ProfileName = 4,
+  ITMSplitPaneRequest_FieldNumber_CustomProfilePropertiesArray = 5,
 };
 
 @interface ITMSplitPaneRequest : GPBMessage
@@ -2787,6 +2793,11 @@ typedef GPB_ENUM(ITMSplitPaneRequest_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *profileName;
 /** Test to see if @c profileName has been set. */
 @property(nonatomic, readwrite) BOOL hasProfileName;
+
+/** Modifies the profile to customize its behavior just for this session. */
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMProfileProperty*> *customProfilePropertiesArray;
+/** The number of items in @c customProfilePropertiesArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger customProfilePropertiesArray_Count;
 
 @end
 

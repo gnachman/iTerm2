@@ -245,24 +245,31 @@ class Session:
         """
         await iterm2.rpc.async_send_text(self.connection, self.__session_id, text)
 
-    async def async_split_pane(self, vertical=False, before=False, profile=None):
+    async def async_split_pane(self, vertical=False, before=False, profile=None, profile_customizations=None):
         """
         Splits the pane, creating a new session.
 
         :param vertical: Bool. If true, the divider is vertical, else horizontal.
         :param before: Bool, whether the new session should be left/above the existing one.
         :param profile: The profile name to use. None for the default profile.
+        :param profile_customizations: LocalWriteOnlyProfile giving changes to make in profile.
 
         :returns: New iterm.session.Session.
 
         :throws: SplitPaneException if something goes wrong.
         """
+        if profile_customizations is None:
+            custom_dict = None
+        else:
+            custom_dict = profile_customizations.values
+
         result = await iterm2.rpc.async_split_pane(
             self.connection,
             self.__session_id,
             vertical,
             before,
-            profile)
+            profile,
+            profile_customizations=custom_dict)
         if result.split_pane_response.status == iterm2.api_pb2.SplitPaneResponse.Status.Value("OK"):
             new_session_id = result.split_pane_response.session_id[0]
             app = await iterm2.app.async_get_app(self.connection)

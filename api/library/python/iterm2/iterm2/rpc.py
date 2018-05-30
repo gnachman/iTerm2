@@ -65,7 +65,7 @@ async def async_send_text(connection, session, text):
     request.send_text_request.text = text
     return await _async_call(connection, request)
 
-async def async_split_pane(connection, session, vertical, before, profile=None):
+async def async_split_pane(connection, session, vertical, before, profile=None, profile_customizations=None):
     """
     Splits a session into two.
 
@@ -74,6 +74,7 @@ async def async_split_pane(connection, session, vertical, before, profile=None):
     vertical: Bool, whether the divider should be vertical
     before: Bool, whether the new session should be left/above the existing one.
     profile: The profile name to use. None for the default profile.
+    profile_customizations: None, or a dictionary of overrides.
 
     Returns: iterm2.api_pb2.ServerOriginatedMessage
     """
@@ -88,6 +89,17 @@ async def async_split_pane(connection, session, vertical, before, profile=None):
     request.split_pane_request.before = before
     if profile is not None:
         request.split_pane_request.profile_name = profile
+
+    if profile_customizations is not None:
+        l = []
+        for key in profile_customizations:
+            value = profile_customizations[key]
+            entry = iterm2.api_pb2.ProfileProperty()
+            entry.key = key
+            entry.json_value = value
+            l.append(entry)
+        request.split_pane_request.custom_profile_properties.extend(l)
+
     return await _async_call(connection, request)
 
 async def async_create_tab(connection, profile=None, window=None, index=None, command=None):

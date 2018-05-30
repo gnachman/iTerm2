@@ -6234,12 +6234,14 @@ BOOL ITMCreateTabResponse_Status_IsValidValue(int32_t value__) {
 @dynamic hasSplitDirection, splitDirection;
 @dynamic hasBefore, before;
 @dynamic hasProfileName, profileName;
+@dynamic customProfilePropertiesArray, customProfilePropertiesArray_Count;
 
 typedef struct ITMSplitPaneRequest__storage_ {
   uint32_t _has_storage_[1];
   ITMSplitPaneRequest_SplitDirection splitDirection;
   NSString *session;
   NSString *profileName;
+  NSMutableArray *customProfilePropertiesArray;
 } ITMSplitPaneRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -6283,6 +6285,15 @@ typedef struct ITMSplitPaneRequest__storage_ {
         .offset = (uint32_t)offsetof(ITMSplitPaneRequest__storage_, profileName),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "customProfilePropertiesArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMProfileProperty),
+        .number = ITMSplitPaneRequest_FieldNumber_CustomProfilePropertiesArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMSplitPaneRequest__storage_, customProfilePropertiesArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -6396,12 +6407,14 @@ GPBEnumDescriptor *ITMSplitPaneResponse_Status_EnumDescriptor(void) {
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000InvalidProfileName\000Ca"
-        "nnotSplit\000";
+        "nnotSplit\000MalformedCustomProfileProperty"
+        "\000";
     static const int32_t values[] = {
         ITMSplitPaneResponse_Status_Ok,
         ITMSplitPaneResponse_Status_SessionNotFound,
         ITMSplitPaneResponse_Status_InvalidProfileName,
         ITMSplitPaneResponse_Status_CannotSplit,
+        ITMSplitPaneResponse_Status_MalformedCustomProfileProperty,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMSplitPaneResponse_Status)
@@ -6422,6 +6435,7 @@ BOOL ITMSplitPaneResponse_Status_IsValidValue(int32_t value__) {
     case ITMSplitPaneResponse_Status_SessionNotFound:
     case ITMSplitPaneResponse_Status_InvalidProfileName:
     case ITMSplitPaneResponse_Status_CannotSplit:
+    case ITMSplitPaneResponse_Status_MalformedCustomProfileProperty:
       return YES;
     default:
       return NO;

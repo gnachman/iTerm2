@@ -1204,6 +1204,14 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
         }
     }
 
+    profile = [self profileByCustomizing:profile withProperties:request.customProfilePropertiesArray];
+    if (!profile) {
+        ITMSplitPaneResponse *response = [[ITMSplitPaneResponse alloc] init];
+        response.status = ITMSplitPaneResponse_Status_MalformedCustomProfileProperty;
+        handler(response);
+        return;
+    }
+
     ITMSplitPaneResponse *response = [[ITMSplitPaneResponse alloc] init];
     response.status = ITMSplitPaneResponse_Status_Ok;
     for (PTYSession *session in sessions) {
@@ -1220,6 +1228,17 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     }
 
     handler(response);
+}
+
+- (Profile *)profileByCustomizing:(Profile *)profile withProperties:(NSArray<ITMProfileProperty*> *)customProfilePropertiesArray {
+    for (ITMProfileProperty *property in customProfilePropertiesArray) {
+        id value = [NSJSONSerialization it_objectForJsonString:property.jsonValue];
+        if (!value) {
+            return nil;
+        }
+        profile = [profile dictionaryBySettingObject:value forKey:property.key];
+    }
+    return profile;
 }
 
 - (void)apiServerSetProperty:(ITMSetPropertyRequest *)request handler:(void (^)(ITMSetPropertyResponse *))handler {
