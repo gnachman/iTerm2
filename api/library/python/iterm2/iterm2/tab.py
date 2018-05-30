@@ -94,8 +94,8 @@ class Tab:
         Change the `Session.preferred_size` of any sessions you wish to adjust before calling this.
         """
         response = await iterm2.rpc.async_set_tab_layout(self.connection, self.tab_id, self.__root.to_protobuf())
-        status = response.set_tab_layout.status
+        status = response.set_tab_layout_response.status
         if status == iterm2.api_pb2.SetTabLayoutResponse.Status.Value("OK"):
-            return response.set_tab_layout
+            return response.set_tab_layout_response
         else:
             raise iterm2.rpc.RPCException(iterm2.api_pb2.SetTabLayoutResponse.Status.Name(status))
