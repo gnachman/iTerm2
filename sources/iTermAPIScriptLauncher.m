@@ -15,15 +15,16 @@
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermWebSocketCookieJar.h"
+#import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWorkspace+iTerm.h"
 #import "PTYTask.h"
 
+@import Sparkle;
+
 @implementation iTermAPIScriptLauncher
-
-
 
 + (void)launchScript:(NSString *)filename {
     [self launchScript:filename withVirtualEnv:nil];
@@ -148,17 +149,42 @@
     [alert runModal];
 }
 
-+ (NSString *)pythonVersion {
-    // The python version distributed with iTerm2
-    return @"3.6.5";
++ (NSString *)bestPythonVersionAt:(NSString *)path {
+    // TODO: This is convenient but I'm not sure it's technically correct for all possible Python
+    // versions. But it'll do for three dotted numbers, which is the norm.
+    SUStandardVersionComparator *comparator = [[SUStandardVersionComparator alloc] init];
+    NSString *best = nil;
+    NSDirectoryEnumerator *enumerator = [NSFileManager.defaultManager enumeratorAtURL:[NSURL fileURLWithPath:path]
+                                                           includingPropertiesForKeys:nil
+                                                                              options:NSDirectoryEnumerationSkipsSubdirectoryDescendants
+                                                                         errorHandler:nil];
+    for (NSURL *url in enumerator) {
+        NSString *file = url.path.lastPathComponent;
+        NSArray<NSString *> *parts = [file componentsSeparatedByString:@"."];
+        const BOOL allNumeric = [parts allWithBlock:^BOOL(NSString *anObject) {
+            return [anObject isNumeric];
+        }];
+        if (allNumeric) {
+            if (!best || [comparator compareVersion:best toVersion:file] == NSOrderedAscending) {
+                best = file;
+            }
+        }
+    }
+    return best;
 }
 
 + (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name {
-    NSArray<NSString *> *components = @[ name, @"iterm2env", @"versions", [self pythonVersion], @"bin", @"python3" ];
+    NSArray<NSString *> *components = @[ name, @"iterm2env", @"versions" ];
     NSString *path = [[NSFileManager defaultManager] scriptsPathWithoutSpaces];
     for (NSString *part in components) {
         path = [path stringByAppendingPathComponent:part];
     }
+    NSString *pythonVersion = [self bestPythonVersionAt:path] ?: @"_NO_PYTHON_VERSION_FOUND_";
+    components = @[ pythonVersion, @"bin", @"python3" ];
+    for (NSString *part in components) {
+        path = [path stringByAppendingPathComponent:part];
+    }
+
     return path;
 }
 
