@@ -705,12 +705,19 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     }
 }
 
-- (PTYSession *)sessionForAPIIdentifier:(NSString *)identifier {
+- (PTYSession *)sessionForAPIIdentifier:(NSString *)identifier includeBuriedSessions:(BOOL)includeBuriedSessions {
     if ([identifier isEqualToString:@"active"]) {
         return [[[iTermController sharedInstance] currentTerminal] currentSession];
     } else if (identifier) {
         for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
             for (PTYSession *session in term.allSessions) {
+                if ([session.guid isEqualToString:identifier]) {
+                    return session;
+                }
+            }
+        }
+        if (includeBuriedSessions) {
+            for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
                 if ([session.guid isEqualToString:identifier]) {
                     return session;
                 }
@@ -742,7 +749,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 
 - (void)apiServerGetBuffer:(ITMGetBufferRequest *)request
                    handler:(void (^)(ITMGetBufferResponse *))handler {
-    PTYSession *session = [self sessionForAPIIdentifier:request.session];
+    PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
     if (!session) {
         ITMGetBufferResponse *response = [[ITMGetBufferResponse alloc] init];
         response.status = ITMGetBufferResponse_Status_SessionNotFound;
@@ -754,7 +761,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 
 - (void)apiServerGetPrompt:(ITMGetPromptRequest *)request
                    handler:(void (^)(ITMGetPromptResponse *))handler {
-    PTYSession *session = [self sessionForAPIIdentifier:request.session];
+    PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
     if (!session) {
         ITMGetPromptResponse *response = [[ITMGetPromptResponse alloc] init];
         response.status = ITMGetPromptResponse_Status_SessionNotFound;
@@ -871,7 +878,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
         response.status = ITMNotificationResponse_Status_Ok;
         handler(response);
     } else {
-        PTYSession *session = [self sessionForAPIIdentifier:request.session];
+        PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
         if (!session) {
             ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
             response.status = ITMNotificationResponse_Status_SessionNotFound;
@@ -994,7 +1001,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
             if ([request.session isEqualToString:@"all"]) {
                 [objects addObjectsFromArray:[self allSessions]];
             } else {
-                PTYSession *session = [self sessionForAPIIdentifier:request.session];
+                PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
                 if (!session) {
                     ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
                     response.status = ITMSetProfilePropertyResponse_Status_SessionNotFound;
@@ -1032,7 +1039,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 
 - (void)apiServerGetProfileProperty:(ITMGetProfilePropertyRequest *)request
                             handler:(void (^)(ITMGetProfilePropertyResponse *))handler {
-    PTYSession *session = [self sessionForAPIIdentifier:request.session];
+    PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
     if (!session) {
         ITMGetProfilePropertyResponse *response = [[ITMGetProfilePropertyResponse alloc] init];
         response.status = ITMGetProfilePropertyResponse_Status_SessionNotFound;
@@ -1083,7 +1090,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     if ([request.session isEqualToString:@"all"]) {
         sessions = [self allSessions];
     } else {
-        PTYSession *session = [self sessionForAPIIdentifier:request.session];
+        PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
         if (!session || session.exited) {
             ITMSendTextResponse *response = [[ITMSendTextResponse alloc] init];
             response.status = ITMSendTextResponse_Status_SessionNotFound;
@@ -1166,7 +1173,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     if ([request.session isEqualToString:@"all"]) {
         sessions = [self allSessions];
     } else {
-        PTYSession *session = [self sessionForAPIIdentifier:request.session];
+        PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
         if (!session || session.exited) {
             ITMSplitPaneResponse *response = [[ITMSplitPaneResponse alloc] init];
             response.status = ITMSplitPaneResponse_Status_SessionNotFound;
@@ -1251,7 +1258,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
                     handler(response);
                 }
             } else {
-                PTYSession *session = [self sessionForAPIIdentifier:request.sessionId];
+                PTYSession *session = [self sessionForAPIIdentifier:request.sessionId includeBuriedSessions:YES];
                 if (!session) {
                     response.status = ITMSetPropertyResponse_Status_InvalidTarget;
                     handler(response);
@@ -1327,8 +1334,27 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
             return ITMSetPropertyResponse_Status_Impossible;
         }
     };
+    SetSessionPropertyBlock setBuried = ^ITMSetPropertyResponse_Status {
+        NSNumber *number = [NSNumber castFrom:value];
+        if (!number) {
+            return ITMSetPropertyResponse_Status_InvalidValue;
+        }
+        const BOOL shouldBeBuried = number.boolValue;
+        const BOOL isBuried = [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:session];
+        if (shouldBeBuried == isBuried) {
+            return ITMSetPropertyResponse_Status_Ok;
+        }
+        if (shouldBeBuried) {
+            [session bury];
+        } else {
+            [[iTermBuriedSessions sharedInstance] restoreSession:session];
+        }
+        return ITMSetPropertyResponse_Status_Ok;
+    };
     NSDictionary<NSString *, SetSessionPropertyBlock> *handlers =
-        @{ @"grid_size": setGridSize };
+        @{ @"grid_size": setGridSize,
+           @"buried": setBuried,
+         };
     SetSessionPropertyBlock block = handlers[name];
     if (block) {
         return block();
@@ -1363,7 +1389,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
         }
 
         case ITMGetPropertyRequest_Identifier_OneOfCase_SessionId: {
-            PTYSession *session = [self sessionForAPIIdentifier:request.sessionId];
+            PTYSession *session = [self sessionForAPIIdentifier:request.sessionId includeBuriedSessions:YES];
             if (!session) {
                 response.status = ITMGetPropertyResponse_Status_InvalidTarget;
                 handler(response);
@@ -1419,9 +1445,15 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
                @"height": @(session.screen.height - 1) };
         return [NSJSONSerialization it_jsonStringForObject:dict];
     };
+    GetSessionPropertyBlock getBuried = ^NSString * {
+        BOOL isBuried = [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:session];
+        return [NSJSONSerialization it_jsonStringForObject:@(isBuried)];
+    };
 
     NSDictionary<NSString *, GetSessionPropertyBlock> *handlers =
-        @{ @"grid_size": getGridSize };
+        @{ @"grid_size": getGridSize,
+           @"buried": getBuried,
+         };
 
     GetSessionPropertyBlock block = handlers[name];
     if (block) {
@@ -1440,7 +1472,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
             }
             [response.statusArray addValue:ITMInjectResponse_Status_Ok];
         } else {
-            PTYSession *session = [self sessionForAPIIdentifier:sessionID];
+            PTYSession *session = [self sessionForAPIIdentifier:sessionID includeBuriedSessions:YES];
             if (session) {
                 [self inject:request.data_p into:session];
                 [response.statusArray addValue:ITMInjectResponse_Status_Ok];
@@ -1484,11 +1516,14 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
             return;
         }
     } else if (request.identifierOneOfCase == ITMActivateRequest_Identifier_OneOfCase_SessionId) {
-        session = [self sessionForAPIIdentifier:request.sessionId];
+        session = [self sessionForAPIIdentifier:request.sessionId includeBuriedSessions:YES];
         if (!session) {
             response.status = ITMActivateResponse_Status_BadIdentifier;
             handler(response);
             return;
+        }
+        if ([[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:session]) {
+            [[iTermBuriedSessions sharedInstance] restoreSession:session];
         }
         tab = [session.delegate.realParentWindow tabForSession:session];
         if (!tab) {
@@ -1575,7 +1610,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
         return;
     }
 
-    PTYSession *session = [self sessionForAPIIdentifier:request.sessionId];
+    PTYSession *session = [self sessionForAPIIdentifier:request.sessionId includeBuriedSessions:YES];
     if (!session) {
         response.status = ITMVariableResponse_Status_SessionNotFound;
         handler(response);
@@ -1804,7 +1839,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 }
 
 - (void)apiServerRestartSession:(ITMRestartSessionRequest *)request handler:(void (^)(ITMRestartSessionResponse *))handler {
-    PTYSession *session = [self sessionForAPIIdentifier:request.sessionId];
+    PTYSession *session = [self sessionForAPIIdentifier:request.sessionId includeBuriedSessions:YES];
     ITMRestartSessionResponse *response = [[ITMRestartSessionResponse alloc] init];
     if (!session) {
         response.status = ITMRestartSessionResponse_Status_SessionNotFound;

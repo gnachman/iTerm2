@@ -296,6 +296,7 @@ message GetPropertyResponse {
   //
   // For sessions:
   // grid_size      { "width": 80, "height": 25 }
+  // buried         true
   optional Status status = 1;
   optional string json_value = 2;
 }
@@ -315,6 +316,7 @@ message SetPropertyRequest {
   //
   // For sessions:
   // grid_size      { "width": 80, "height": 25 }
+  // buried         true
   optional string name = 3;
   optional string json_value = 4;
 }
