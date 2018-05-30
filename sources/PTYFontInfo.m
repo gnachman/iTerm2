@@ -129,9 +129,17 @@
     // NSTextStorage *textStorage = [[NSTextStorage alloc] initWithAttributedString:attributedString];
     // [textStorage addLayoutManager:layoutManager];
     
-    NSUInteger glyphIndex = [layoutManager glyphIndexForCharacterAtIndex:0];
-    return [[layoutManager typesetter] baselineOffsetInLayoutManager:layoutManager
+    CGFloat res = 0.0f;
+    @try {
+        NSUInteger glyphIndex = [layoutManager glyphIndexForCharacterAtIndex:0];
+        res = [[layoutManager typesetter] baselineOffsetInLayoutManager:layoutManager
                                                           glyphIndex:glyphIndex] / -2.0;
+    }
+    @catch (NSException *e) {
+        // ignored
+    }
+
+    return res;
 }
 
 // Issue 4294 reveals that merely upconverting the weight of a font once is not sufficient because
