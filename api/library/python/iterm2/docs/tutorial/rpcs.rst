@@ -87,6 +87,10 @@ function call in the field beneath it. Like this:
 
 Then press the associated keystroke and the function will be invoked.
 
+You can also bind a trigger to invoke a function automatically:
+
+.. image:: trigger_cls.png
+
 REPL
 ----
 
