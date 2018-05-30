@@ -21,13 +21,16 @@ dist: prod
 	cd build/Deployment/ && zip -r Therm.app.zip Therm.app
 	mv build/Deployment/Therm.app.zip .
 
+config.h: config.txt
+	echo "#define THERM_VERSION \"`cat version.txt`\"" > config.h
+
 TAGS:
 	find . -name "*.[mhMH]" -exec etags -o ./TAGS -a '{}' +
 
 install: | Deployment backup-old-iterm
 	cp -R build/Deployment/Therm.app $(APPS)
 
-Development:
+Development: config.h
 	echo "Using PATH for build: $(PATH)"
 	xcodebuild -parallelizeTargets -target Therm -configuration Development && \
 	chmod -R go+rX build/Development
