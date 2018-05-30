@@ -23,6 +23,15 @@
     iTermGrammarProcessor *_grammarProcessor;
 }
 
++ (instancetype)sharedInstance {
+    static iTermFunctionCallParser *sCachedInstance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sCachedInstance = [[iTermFunctionCallParser alloc] initPrivate];
+    });
+    return sCachedInstance;
+}
+
 + (id<CPTokenRecogniser>)stringRecognizerWithClass:(Class)theClass {
     CPQuotedRecogniser *stringRecogniser = [theClass quotedRecogniserWithStartQuote:@"\""
                                                                            endQuote:@"\""
@@ -72,7 +81,7 @@
     return tokenizer;
 }
 
-- (id)init {
+- (id)initPrivate {
     self = [super init];
     if (self) {
         _tokenizer = [iTermFunctionCallParser newTokenizer];

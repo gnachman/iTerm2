@@ -42,4 +42,11 @@
               source:(id (^)(NSString *))source
           completion:(void (^)(id, NSError *))completion;
 
+// A synchronous call that blocks the main thread. Subject to the same restrictions
+// as a transaction.
++ (id)synchronousCallFunction:(NSString *)invocation
+                      timeout:(NSTimeInterval)timeout
+                        error:(out NSError **)error
+                       source:(id (^)(NSString *))source;
+
 @end

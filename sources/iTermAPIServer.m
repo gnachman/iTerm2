@@ -8,6 +8,7 @@
 
 #import "iTermAPIServer.h"
 
+#import "Api.pbobjc.h"
 #import "DebugLogging.h"
 #import "iTermHTTPConnection.h"
 #import "iTermLSOF.h"
@@ -16,7 +17,7 @@
 #import "iTermSocket.h"
 #import "iTermIPV4Address.h"
 #import "iTermSocketIPV4Address.h"
-#import "Api.pbobjc.h"
+#import "NSArray+iTerm.h"
 #import <objc/runtime.h>
 
 #import <Cocoa/Cocoa.h>
@@ -26,6 +27,18 @@ NSString *const iTermAPIServerWillSendMessage = @"iTermAPIServerWillSendMessage"
 NSString *const iTermAPIServerConnectionRejected = @"iTermAPIServerConnectionRejected";
 NSString *const iTermAPIServerConnectionAccepted = @"iTermAPIServerConnectionAccepted";
 NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClosed";
+
+// State shared between main thread and execution thread for a
+// mainthread-blocking iTerm2-to-script RPC.
+@interface iTermBlockingRPC : NSObject
+@property (atomic, strong) dispatch_group_t group;
+@property (atomic, strong) NSString *rpcID;
+@property (atomic, strong) NSError *error;
+@property (atomic, strong) ITMServerOriginatedRPCResultRequest *result;
+@end
+
+@implementation iTermBlockingRPC
+@end
 
 @interface iTermWebSocketConnection(Handle)
 @property(nonatomic, readonly) id handle;
@@ -128,6 +141,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 @interface iTermAPIServer()
 @property (atomic) iTermAPITransaction *transaction;
 @property (nonatomic, strong) dispatch_queue_t queue;
+@property (atomic, strong) iTermBlockingRPC *blockingRPC;  // _executionQueue
 @end
 
 @implementation iTermAPIServer {
@@ -190,6 +204,47 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         }
     });
 }
+
+- (ITMServerOriginatedRPCResultRequest *)sendAndWaitForSynchronousRPC:(ITMNotification *)notification
+                                                         toConnection:(id)connection
+                                                              timeout:(NSTimeInterval)timeoutSeconds
+                                                                error:(out NSError **)error {
+    assert([NSThread isMainThread]);
+
+    iTermBlockingRPC *blockingRPC = [[iTermBlockingRPC alloc] init];
+    blockingRPC.rpcID = notification.serverOriginatedRpcNotification.requestId;
+    blockingRPC.group = dispatch_group_create();
+    dispatch_group_enter(blockingRPC.group);
+    dispatch_async(_executionQueue, ^{
+        self.blockingRPC = blockingRPC;
+    });
+    [self postAPINotification:notification toConnection:connection];
+
+    // Block the main thread!
+    long timedOut = dispatch_group_wait(blockingRPC.group, dispatch_time(DISPATCH_TIME_NOW, timeoutSeconds * NSEC_PER_SEC));
+
+    dispatch_async(_executionQueue, ^{
+        self.blockingRPC = nil;
+    });
+
+    if (timedOut) {
+        *error = [NSError errorWithDomain:@"com.iterm2.api"
+                                     code:1
+                                 userInfo:@{ NSLocalizedDescriptionKey: @"Timeout" }];
+        return nil;
+    } else if (!blockingRPC.result) {
+        *error = [NSError errorWithDomain:@"com.iterm2.api"
+                                     code:3
+                                 userInfo:@{ NSLocalizedDescriptionKey: @"Unknown error" }];
+        return nil;
+    } else if (blockingRPC.error) {
+        *error = blockingRPC.error;
+        return nil;
+    } else {
+        return blockingRPC.result;
+    }
+}
+
 
 - (void)didAcceptConnectionOnFileDescriptor:(int)fd fromAddress:(iTermSocketAddress *)address {
     DLog(@"Accepted connection");
@@ -625,6 +680,27 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     }];
 }
 
+// Runs on execution queue
+- (BOOL)tryHandleResponse:(ITMClientOriginatedMessage *)request
+            toBlockingRPC:(iTermBlockingRPC *)blockingRPC
+               connection:(iTermWebSocketConnection *)webSocketConnection {
+    if (!blockingRPC) {
+        return NO;
+    }
+    if (![blockingRPC.rpcID isEqualToString:request.serverOriginatedRpcResultRequest.requestId]) {
+        return NO;
+    }
+    blockingRPC.result = request.serverOriginatedRpcResultRequest;
+    dispatch_group_leave(blockingRPC.group);
+
+    // Send a response to unblock the script
+    ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
+    response.id_p = request.id_p;
+    [self finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
+
+    return YES;
+}
+
 - (void)handleMalformedRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
     response.error = @"Invalid request. Upgrade iTerm2 to a newer version.";
@@ -796,9 +872,14 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         apiRequest.connection = webSocketConnection;
         apiRequest.request = request;
         [self addRequestToTransaction:apiRequest];
-    } else {
-        [self dispatchRequestWhileNotInTransaction:request connection:webSocketConnection];
+        return;
     }
+
+    if ([self tryHandleResponse:request toBlockingRPC:self.blockingRPC connection:webSocketConnection]) {
+        return;
+    }
+
+    [self dispatchRequestWhileNotInTransaction:request connection:webSocketConnection];
 }
 
 #pragma mark - iTermWebSocketConnectionDelegate

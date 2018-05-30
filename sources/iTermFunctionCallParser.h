@@ -14,6 +14,12 @@
 
 + (CPTokeniser *)newTokenizer;
 + (id<CPTokenRecogniser>)stringRecognizerWithClass:(Class)theClass;
+
+// Use this to get an instance. Only on the main thread.
++ (instancetype)sharedInstance;
+
+- (instancetype)init NS_UNAVAILABLE;
+
 - (iTermScriptFunctionCall *)parse:(NSString *)invocation source:(id (^)(NSString *))source;
 
 @end

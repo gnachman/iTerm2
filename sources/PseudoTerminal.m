@@ -38,6 +38,7 @@
 #import "iTermQuickLookController.h"
 #import "iTermRateLimitedUpdate.h"
 #import "iTermRootTerminalView.h"
+#import "iTermScriptFunctionCall.h"
 #import "iTermSelection.h"
 #import "iTermShellHistoryController.h"
 #import "iTermSystemVersion.h"

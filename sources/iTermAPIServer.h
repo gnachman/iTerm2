@@ -72,4 +72,9 @@ extern NSString *const iTermAPIServerConnectionClosed;
 
 - (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection;
 
+// Blocks. Call this on the main thread.
+- (id)sendAndWaitForSynchronousRPC:(ITMNotification *)notification
+                      toConnection:(id)connection
+                           timeout:(NSTimeInterval)timeoutSeconds
+                             error:(out NSError **)error;
 @end

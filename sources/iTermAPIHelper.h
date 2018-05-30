@@ -9,6 +9,7 @@
 #import "iTermAPIServer.h"
 
 extern NSString *const iTermRemoveAPIServerSubscriptionsNotification;
+extern NSString *const iTermAPIRegisteredFunctionsDidChangeNotification;
 
 typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
@@ -23,6 +24,13 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 - (void)dispatchRPCWithName:(NSString *)name
                   arguments:(NSDictionary *)arguments
                  completion:(iTermServerOriginatedRPCCompletionBlock)completion;
+
+// Invokes an RPC and waits until it returns. The RPC should execute quickly
+// and may not do anything that blocks on the main thread.
+- (id)synchronousDispatchRPCWithName:(NSString *)name
+                           arguments:(NSDictionary *)arguments
+                             timeout:(NSTimeInterval)timeout
+                               error:(out NSError **)error;
 
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
 
