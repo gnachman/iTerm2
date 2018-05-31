@@ -9,6 +9,10 @@
 
 @interface iTermScriptFunctionCall : NSObject
 
+@property (nonatomic, readonly) NSArray<NSString *> *argumentNames;
+@property (nonatomic, readonly) NSString *name;
+@property (nonatomic, readonly) NSError *error;
+
 // Invokes a function given in invocation.
 // invocation should look like:
 //
@@ -48,5 +52,7 @@
                       timeout:(NSTimeInterval)timeout
                         error:(out NSError **)error
                        source:(id (^)(NSString *))source;
+
+- (void)callWithCompletion:(void (^)(id, NSError *))completion;
 
 @end

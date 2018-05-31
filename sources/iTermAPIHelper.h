@@ -34,4 +34,15 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
 
+- (BOOL)haveRegisteredFunctionWithName:(NSString *)name
+                             arguments:(NSArray<NSString *> *)arguments;
+
+- (BOOL)canReasonablyExpectScriptRegisteringFunctionToAutoLaunch:(NSString *)name
+                                                       arguments:(NSArray<NSString *> *)arguments;
+
+- (void)performBlockWhenFunctionRegisteredWithName:(NSString *)name
+                                         arguments:(NSArray<NSString *> *)arguments
+                                           timeout:(NSTimeInterval)timeout
+                                             block:(void (^)(BOOL timedOut))block;
+
 @end

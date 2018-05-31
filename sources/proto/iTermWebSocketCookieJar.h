@@ -10,7 +10,7 @@
 @interface iTermWebSocketCookieJar : NSObject
 
 + (instancetype)sharedInstance;
-- (BOOL)consumeCookie:(NSString *)cookie;
-- (NSString *)newCookie;
+- (BOOL)consumeCookie:(NSString *)cookie pathToScript:(out NSString **)pathToScript;
+- (NSString *)newCookieForScriptAt:(NSString *)pathToScript;
 
 @end

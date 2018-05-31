@@ -8,12 +8,15 @@
 #import "iTermScriptsMenuController.h"
 
 #import "DebugLogging.h"
+#import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermAPIScriptLauncher.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermBuildingScriptWindowController.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermScriptTemplatePickerWindowController.h"
 #import "iTermWarning.h"
+#import "NSApplication+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "SCEvents.h"
@@ -145,9 +148,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)runAutoLaunchScriptsIfNeeded {
     if (self.shouldRunAutoLaunchScripts) {
+        _autoLaunchScriptsStartDate = [NSDate date];
         [self runAutoLaunchScripts];
         return YES;
     } else {
+        if (!_autoLaunchScriptsStartDate) {
+            _autoLaunchScriptsStartDate = [NSDate distantPast];
+        }
         _ranAutoLaunchScript = YES;
         return NO;
     }
@@ -418,6 +425,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)shouldRunAutoLaunchScripts {
     if (_ranAutoLaunchScript) {
+        return NO;
+    }
+    iTermApplication *app = [iTermApplication sharedApplication];
+    iTermApplicationDelegate *appDelegate = [app delegate];
+    if ([appDelegate isApplescriptTestApp] ||
+        [app isRunningUnitTests]) {
         return NO;
     }
     return ([[NSFileManager defaultManager] fileExistsAtPath:self.legacyAutolaunchScriptPath] ||

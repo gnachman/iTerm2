@@ -1237,6 +1237,11 @@
 		53C1669220BA38C9003B03AF /* SessionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E813012A18F7500F3D71E /* SessionView.m */; };
 		53C166AA20C21FBB003B03AF /* iTermMigrationHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 53C166A820C21FBB003B03AF /* iTermMigrationHelper.h */; };
 		53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 53C166A920C21FBB003B03AF /* iTermMigrationHelper.m */; };
+		53C1669920BFAEB3003B03AF /* iTermEval.h in Headers */ = {isa = PBXBuildFile; fileRef = 53C1669720BFAEB3003B03AF /* iTermEval.h */; };
+		53C1669A20BFAEB3003B03AF /* iTermEval.m in Sources */ = {isa = PBXBuildFile; fileRef = 53C1669820BFAEB3003B03AF /* iTermEval.m */; };
+		53C1669C20BFB860003B03AF /* iTermEvalPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = 53C1669B20BFB860003B03AF /* iTermEvalPanel.xib */; };
+		53C1669D20BFB860003B03AF /* iTermEvalPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = 53C1669B20BFB860003B03AF /* iTermEvalPanel.xib */; };
+		53C1669E20BFB860003B03AF /* iTermEvalPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = 53C1669B20BFB860003B03AF /* iTermEvalPanel.xib */; };
 		53E184F11FE32F2800DB78F3 /* iTermMetalBufferPool.h in Headers */ = {isa = PBXBuildFile; fileRef = 53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */; };
 		53E184F21FE32F2800DB78F3 /* iTermMetalBufferPool.m in Sources */ = {isa = PBXBuildFile; fileRef = 53E184F01FE32F2800DB78F3 /* iTermMetalBufferPool.m */; };
 		53FF980B20918D23008688D7 /* template_basic_simple.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template_basic_simple.py */; };
@@ -3396,6 +3401,9 @@
 		53AFFC911DD38F1500E6CEC6 /* ToolWebView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolWebView.m; sourceTree = "<group>"; };
 		53C166A820C21FBB003B03AF /* iTermMigrationHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMigrationHelper.h; sourceTree = "<group>"; };
 		53C166A920C21FBB003B03AF /* iTermMigrationHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMigrationHelper.m; sourceTree = "<group>"; };
+		53C1669720BFAEB3003B03AF /* iTermEval.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermEval.h; sourceTree = "<group>"; };
+		53C1669820BFAEB3003B03AF /* iTermEval.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermEval.m; sourceTree = "<group>"; };
+		53C1669B20BFB860003B03AF /* iTermEvalPanel.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = iTermEvalPanel.xib; path = Interfaces/iTermEvalPanel.xib; sourceTree = SOURCE_ROOT; };
 		53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalBufferPool.h; sourceTree = "<group>"; };
 		53E184F01FE32F2800DB78F3 /* iTermMetalBufferPool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetalBufferPool.m; sourceTree = "<group>"; };
 		53EBF29B1DCBFF7C00766613 /* iTermAPIServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAPIServer.h; sourceTree = "<group>"; };
@@ -6597,6 +6605,8 @@
 				530AB8BB20B3D3D000D2AA08 /* iTermWindowHacks.m */,
 				53C166A820C21FBB003B03AF /* iTermMigrationHelper.h */,
 				53C166A920C21FBB003B03AF /* iTermMigrationHelper.m */,
+				53C1669720BFAEB3003B03AF /* iTermEval.h */,
+				53C1669820BFAEB3003B03AF /* iTermEval.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -6670,6 +6680,7 @@
 				53FF980E209247E2008688D7 /* iTermScriptTemplatePickerWindowController.h */,
 				53FF980F209247E2008688D7 /* iTermScriptTemplatePickerWindowController.m */,
 				53FF9810209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib */,
+				53C1669B20BFB860003B03AF /* iTermEvalPanel.xib */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -7832,6 +7843,7 @@
 				A6DBC0381FF9B30000F1466D /* iTermTexturePool.h in Headers */,
 				A667194B1DCE36C3000CE608 /* iTermModifierRemapper.h in Headers */,
 				A667194C1DCE36C3000CE608 /* iTermSocket.h in Headers */,
+				53C1669920BFAEB3003B03AF /* iTermEval.h in Headers */,
 				A60C03642089897400FE2F1F /* iTermScriptConsole.h in Headers */,
 				530AB8B420B2098000D2AA08 /* iTermVariables.h in Headers */,
 				A667194D1DCE36C3000CE608 /* iTermWebSocketConnection.h in Headers */,
@@ -8286,6 +8298,7 @@
 				1D6ED9AA19AEA20D005A7799 /* IBarCursor.png in Resources */,
 				1D6ED9AC19AEA20D005A7799 /* NewOutput@2x.png in Resources */,
 				1D6ED9AD19AEA20D005A7799 /* UKCrashReporter Readme.txt in Resources */,
+				53C1669E20BFB860003B03AF /* iTermEvalPanel.xib in Resources */,
 				A623D9501F8984710011F8C3 /* key@2x.png in Resources */,
 				1D6ED9AE19AEA20D005A7799 /* UKCrashReporter.nib in Resources */,
 				1D6ED9AF19AEA20D005A7799 /* UKCrashReporter.strings in Resources */,
@@ -8424,6 +8437,7 @@
 				1D44D0451CC7F5A600BE5630 /* PTYTextViewTest-golden-testUnderlineCursorReverseVideo.png in Resources */,
 				1D44CF971CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBlinkingCursorNotHidden.png in Resources */,
 				1D44CF9F1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBrightBoldOff.png in Resources */,
+				53C1669D20BFB860003B03AF /* iTermEvalPanel.xib in Resources */,
 				A690F7021B424C55009F76D8 /* Media.xcassets in Resources */,
 				1DB40A421B1FDC7F005B83C7 /* NoColor@2x.png in Resources */,
 				A67D0D5D1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
@@ -8865,6 +8879,7 @@
 				A6B70FBB19830C37007A4284 /* dead.png in Resources */,
 				A623D94E1F8984700011F8C3 /* key@2x.png in Resources */,
 				93A6FEFA10685E9900A5F905 /* dsa_pub.pem in Resources */,
+				53C1669C20BFB860003B03AF /* iTermEvalPanel.xib in Resources */,
 				53FF9820209283BE008688D7 /* template_basic_daemon.py in Resources */,
 				1DCF3CB71222FF1400AD56F1 /* PresetKeyMappings.plist in Resources */,
 				A67D0D411A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */,
@@ -9580,6 +9595,7 @@
 				A6A4867B20B67E5D00493302 /* ProfilesTerminalPreferencesViewController.m in Sources */,
 				A66719631DCE3772000CE608 /* iTermSocketIPV4Address.m in Sources */,
 				53FF982B2093C823008688D7 /* iTermSignatureVerifier.m in Sources */,
+				53C1669A20BFAEB3003B03AF /* iTermEval.m in Sources */,
 				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */,
 				A66DABFF20867749006391A3 /* iTermTextViewAccessibilityHelper.m in Sources */,
 				53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */,
