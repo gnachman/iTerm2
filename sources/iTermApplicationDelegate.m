@@ -862,6 +862,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
         DLog(@"Application resigning active. Disabling secure input.");
         [self setSecureInput:NO];
     }
+    _savedMouseLocation = [NSEvent mouseLocation];
 }
 
 - (void)applicationWillHide:(NSNotification *)aNotification {
@@ -883,7 +884,9 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
     }
     // If focus follows mouse is on, find the window under the cursor and make it key. If a PTYTextView
     // is under the cursor make it first responder.
-    if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
+    NSPoint mouseLocation = [NSEvent mouseLocation];
+    if (!NSEqualPoints(mouseLocation, _savedMouseLocation) && 
+        [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
         NSRect mouseRect = {
             .origin = [NSEvent mouseLocation],
             .size = { 0, 0 }
