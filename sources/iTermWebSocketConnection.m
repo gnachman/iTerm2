@@ -101,9 +101,10 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     }
 
     BOOL authenticated = NO;
+    NSString *pathToScript = nil;
     NSString *cookie = headers[@"x-iterm2-cookie"];
     if (cookie) {
-        if ([[iTermWebSocketCookieJar sharedInstance] consumeCookie:cookie]) {
+        if ([[iTermWebSocketCookieJar sharedInstance] consumeCookie:cookie pathToScript:&pathToScript]) {
             authenticated = YES;
         } else {
             *reason = [NSString stringWithFormat:@"x-iterm2-cookie of %@ not recognized", cookie];
@@ -133,6 +134,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
         conn->_preauthorized = authenticated;
         NSString *key = headers[@"x-iterm2-key"] ?: [[NSUUID UUID] UUIDString];
         conn->_key = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
+        conn->_pathToScript = [pathToScript copy];
     }
     return conn;
 }

@@ -68,7 +68,7 @@
 
     task.launchPath = shell;
     task.arguments = [self argumentsToRunScript:filename withVirtualEnv:virtualenv];
-    NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] newCookie];
+    NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] newCookieForScriptAt:filename];
     task.environment = [self environmentFromEnvironment:task.environment shell:shell cookie:cookie key:key];
 
     NSPipe *pipe = [[NSPipe alloc] init];

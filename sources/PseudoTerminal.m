@@ -22,6 +22,7 @@
 #import "iTermColorPresets.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermController.h"
+#import "iTermEval.h"
 #import "iTermFindCursorView.h"
 #import "iTermFontPanel.h"
 #import "iTermNotificationController.h"
@@ -173,17 +174,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
 @implementation PseudoTerminal {
     NSPoint preferredOrigin_;
-
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Parameter Panel
-    // A bookmark may have metasyntactic variables like $$FOO$$ in the command.
-    // When opening such a bookmark, pop up a sheet and ask the user to fill in
-    // the value. These fields belong to that sheet.
-    __weak IBOutlet NSTextField *parameterName;
-    __weak IBOutlet NSPanel *parameterPanel;
-    __weak IBOutlet NSTextField *parameterValue;
-    __weak IBOutlet NSTextField *parameterPrompt;
 
     ////////////////////////////////////////////////////////////////////////////
     // Instant Replay
@@ -355,8 +345,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // Is there a pending delayed-perform of enterFullScreen:? Used to figure
     // out if it's safe to toggle Lion full screen since only one can go at a time.
     BOOL _haveDelayedEnterFullScreenMode;
-
-    BOOL _parameterPanelCanceled;
 
     // Number of tabs since last change.
     NSInteger _previousNumberOfTabs;
@@ -6218,58 +6206,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (NSString *)promptForParameter:(NSString *)name {
-    if (self.disablePromptForSubstitutions) {
-        return @"";
-    }
-    // Make the name pretty.
-    name = [name stringByReplacingOccurrencesOfString:@"$$" withString:@""];
-    name = [name stringByReplacingOccurrencesOfString:@"_" withString:@" "];
-    name = [name lowercaseString];
-    if (name.length) {
-        NSString *firstLetter = [name substringWithRange:NSMakeRange(0, 1)];
-        NSString *lastLetters = [name substringFromIndex:1];
-        name = [[firstLetter uppercaseString] stringByAppendingString:lastLetters];
-    }
-    [parameterName setStringValue:[NSString stringWithFormat:@"“%@”:", name]];
-    [parameterValue setStringValue:@""];
-
-    [self.window beginSheet:parameterPanel completionHandler:nil];
-
-    [NSApp runModalForWindow:parameterPanel];
-
-    [self.window endSheet:parameterPanel];
-
-    [parameterPanel orderOut:self];
-
-    if (_parameterPanelCanceled) {
-        return nil;
-    } else {
-        return [[parameterValue.stringValue copy] autorelease];
-    }
-}
-
-// Returns nil if the user pressed cancel, otherwise returns a dictionary that's a supeset of |substitutions|.
-- (NSDictionary *)substitutionsForCommand:(NSString *)command
-                              sessionName:(NSString *)name
-                        baseSubstitutions:(NSDictionary *)substitutions {
-    NSSet *cmdVars = [command doubleDollarVariables];
-    NSSet *nameVars = [name doubleDollarVariables];
-    NSMutableSet *allVars = [[cmdVars mutableCopy] autorelease];
-    [allVars unionSet:nameVars];
-    NSMutableDictionary *allSubstitutions = [[substitutions mutableCopy] autorelease];
-    for (NSString *var in allVars) {
-        if (!substitutions[var]) {
-            NSString *value = [self promptForParameter:var];
-            if (!value) {
-                return nil;
-            }
-            allSubstitutions[var] = value;
-        }
-    }
-    return allSubstitutions;
-}
-
 - (NSArray<PTYTab *> *)tabs {
     int n = [_contentView.tabView numberOfTabViewItems];
     NSMutableArray<PTYTab *> *tabs = [NSMutableArray arrayWithCapacity:n];
@@ -7172,11 +7108,11 @@ ITERM_WEAKLY_REFERENCEABLE
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8
            inSession:(PTYSession*)theSession
-        substitutions:(NSDictionary *)substitutions {
+                eval:(iTermEval *)eval {
     [theSession startProgram:command
                  environment:prog_env
                       isUTF8:isUTF8
-               substitutions:substitutions];
+                        eval:eval];
 
     if ([[[self window] title] isEqualToString:@"Window"]) {
         [self setWindowTitle];
@@ -7616,12 +7552,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateTouchBarIfNeeded:NO];
 }
 
-// Called when the parameter panel should close.
-- (IBAction)parameterPanelEnd:(id)sender {
-    _parameterPanelCanceled = ([sender tag] == 0);
-    [NSApp stopModal];
-}
-
 // Return the timestamp for a slider position in [0, 1] for the current session.
 - (long long)timestampForFraction:(float)f
 {
@@ -7671,18 +7601,15 @@ ITERM_WEAKLY_REFERENCEABLE
         Profile *profile = [aSession profile];
         NSString *cmd = [ITAddressBookMgr bookmarkCommand:profile
                                             forObjectType:objectType];
-        NSString *name = profile[KEY_NAME];
-
-        // Get session parameters
-        NSDictionary *substitutions = [self substitutionsForCommand:cmd
-                                                        sessionName:name
-                                                  baseSubstitutions:@{}];
-        if (!substitutions) {
+        iTermEval *eval = [[iTermEval alloc] initWithMacros:nil];
+        [eval addStringWithPossibleSubstitutions:cmd];
+        [eval addStringWithPossibleSubstitutions:profile[KEY_NAME]];
+        if (self.disablePromptForSubstitutions) {
+            [eval replaceMissingValuesWithString:@""];
+        } else if (![eval promptForMissingValuesInWindow:self.window]) {
             return NO;
         }
-        cmd = [cmd stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
-
-        name = [name stringByPerformingSubstitutions:substitutions];
+#warning TODO: I used to call [self setName:profile[KEY_NAME] forSession:aSession] here and I removed it
         NSString *pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile
                                                      forObjectType:objectType];
         if ([pwd length] == 0) {
@@ -7694,13 +7621,12 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
-        [self setName:name forSession:aSession];
         // Start the command
         [self startProgram:cmd
                environment:env
                     isUTF8:isUTF8
                  inSession:aSession
-             substitutions:substitutions];
+                      eval:eval];
         return YES;
     }
     return NO;
@@ -7815,24 +7741,27 @@ ITERM_WEAKLY_REFERENCEABLE
         commandForSubs = [ITAddressBookMgr bookmarkCommand:profile
                                              forObjectType:objectType];
     }
-    NSDictionary *substitutions = [self substitutionsForCommand:commandForSubs ?: @""
-                                                    sessionName:profile[KEY_NAME] ?: @""
-                                              baseSubstitutions:@{}];
-    if (!substitutions) {
+    iTermEval *eval = [[[iTermEval alloc] initWithMacros:nil] autorelease];
+    if (commandForSubs) {
+        [eval addStringWithPossibleSubstitutions:commandForSubs];
+    }
+    if (profile[KEY_NAME]) {
+        [eval addStringWithPossibleSubstitutions:profile[KEY_NAME]];
+    }
+    if (self.disablePromptForSubstitutions) {
+        [eval replaceMissingValuesWithString:@""];
+    } else if (![eval promptForMissingValuesInWindow:self.window]) {
         return nil;
     }
-    commandForSubs = [commandForSubs stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
     if (command) {
         // Create a modified profile to run "command".
         NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
         temp[KEY_CUSTOM_COMMAND] = @"Yes";
         temp[KEY_COMMAND_LINE] = command;
         profile = temp;
-
-    } else if (substitutions.count && profile[KEY_NAME]) {
-#warning Why isn't PTYSession initialized with this?
-        preferredName = [profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
+#warning Why isn't PTYSession initialized with this?
+    preferredName = profile[KEY_NAME];
 
     // set our preferences
     aSession.profile = profile;
@@ -7843,13 +7772,15 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession runCommandWithOldCwd:previousDirectory
                          forObjectType:objectType
                         forceUseOldCWD:NO
-                         substitutions:substitutions
+                                  eval:eval
                            environment:environment];
         if ([[[self window] title] compare:@"Window"] == NSOrderedSame) {
             [self setWindowTitle];
         }
         if (preferredName) {
-            [self setName:preferredName forSession:aSession];
+            [preferredName it_evaluateWith:eval timeout:1 source:aSession.functionCallSource completion:^(NSString * _Nonnull evaluatedString) {
+                [self setName:evaluatedString forSession:aSession];
+            }];
         }
     }
 
@@ -7959,23 +7890,24 @@ ITERM_WEAKLY_REFERENCEABLE
         NSURL *url = [NSURL URLWithString:urlString];
 
         // Grab the addressbook command
-        NSDictionary *substitutions = @{ @"$$URL$$": urlString ?: @"",
-                                         @"$$HOST$$": [url host] ?: @"",
-                                         @"$$USER$$": [url user] ?: @"",
-                                         @"$$PASSWORD$$": [url password] ?: @"",
-                                         @"$$PORT$$": [url port] ? [[url port] stringValue] : @"",
-                                         @"$$PATH$$": [url path] ?: @"",
-                                         @"$$RES$$": [url resourceSpecifier] ?: @"" };
+        NSDictionary *macros = @{ @"$$URL$$": urlString ?: @"",
+                                  @"$$HOST$$": [url host] ?: @"",
+                                  @"$$USER$$": [url user] ?: @"",
+                                  @"$$PASSWORD$$": [url password] ?: @"",
+                                  @"$$PORT$$": [url port] ? [[url port] stringValue] : @"",
+                                  @"$$PATH$$": [url path] ?: @"",
+                                  @"$$RES$$": [url resourceSpecifier] ?: @"" };
 
         // If the command or name have any $$VARS$$ not accounted for above, prompt the user for
         // substitutions.
-        substitutions = [self substitutionsForCommand:cmd
-                                          sessionName:name
-                                    baseSubstitutions:substitutions];
-        if (!substitutions) {
+        iTermEval *eval = [[[iTermEval alloc] initWithMacros:macros] autorelease];
+        [eval addStringWithPossibleSubstitutions:cmd];
+        [eval addStringWithPossibleSubstitutions:name];
+        if (self.disablePromptForSubstitutions) {
+            [eval replaceMissingValuesWithString:@""];
+        } else if (![eval promptForMissingValuesInWindow:self.window]) {
             return nil;
         }
-        cmd = [cmd stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
 
         NSString *pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile forObjectType:objectType];
         if ([pwd length] == 0) {
@@ -7984,8 +7916,9 @@ ITERM_WEAKLY_REFERENCEABLE
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         BOOL isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
-        [self setName:[name stringByPerformingSubstitutions:substitutions]
-           forSession:aSession];
+        [name it_evaluateWith:eval timeout:1 source:aSession.functionCallSource completion:^(NSString * _Nonnull evaluatedString) {
+            [self setName:evaluatedString forSession:aSession];
+        }];
 
         // Start the command
         if (serverConnection) {
@@ -7996,7 +7929,7 @@ ITERM_WEAKLY_REFERENCEABLE
                    environment:env
                         isUTF8:isUTF8
                      inSession:aSession
-                 substitutions:substitutions];
+                          eval:eval];
         }
     }
     return aSession;

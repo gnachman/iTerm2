@@ -19,6 +19,7 @@
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "ProfileModel.h"
@@ -30,6 +31,8 @@
 
 NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";
 NSString *const iTermAPIRegisteredFunctionsDidChangeNotification = @"iTermAPIRegisteredFunctionsDidChangeNotification";
+
+static NSString *const iTermAPILastRegisteredFunctionsUserDefaultsKey = @"NoSyncLastRegisteredFunctions";
 
 static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray<NSString *> *argumentNames) {
     NSString *combinedArguments = [argumentNames componentsJoinedByString:@","];
@@ -575,6 +578,12 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     return result;
 }
 
+- (BOOL)haveRegisteredFunctionWithName:(NSString *)name
+                             arguments:(NSArray<NSString *> *)arguments {
+    NSString *stringSignature = iTermAPIHelperStringRepresentationOfRPC(name, arguments);
+    return _serverOriginatedRPCSubscriptions[stringSignature].allValues.firstObject != nil;
+}
+
 #pragma mark - iTermAPIServerDelegate
 
 - (NSMenuItem *)menuItemWithTitleParts:(NSArray<NSString *> *)titleParts
@@ -821,8 +830,8 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
         } else if (!subscriptions) {
             subscriptions = [NSMutableDictionary dictionary];
             _serverOriginatedRPCSubscriptions[signatureString] = subscriptions;
-            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIRegisteredFunctionsDidChangeNotification
-                                                                object:nil];
+            [self didRegisterFunctionWithSignature:signatureString
+                                        connection:connection];
         }
     } else {
         assert(false);
@@ -843,6 +852,71 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 
     response.status = ITMNotificationResponse_Status_Ok;
     return response;
+}
+
+- (void)didRegisterFunctionWithSignature:(NSString *)signature connection:(id)connection {
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIRegisteredFunctionsDidChangeNotification
+                                                        object:nil];
+    [_apiServer pathToScriptOwningConnection:connection block:^(NSString *owner) {
+        if (!owner) {
+            return;
+        }
+
+        NSMutableDictionary<NSString *, NSArray<NSString *> *> *ownerToFuncs;
+        NSMutableArray<NSString *> *funcs;
+
+        ownerToFuncs = [[[NSUserDefaults standardUserDefaults] objectForKey:iTermAPILastRegisteredFunctionsUserDefaultsKey] ?: @{} mutableCopy];
+        funcs = [ownerToFuncs[owner] ?: @[] mutableCopy];
+        [funcs addObject:signature];
+        ownerToFuncs[owner] = funcs;
+        [[NSUserDefaults standardUserDefaults] setObject:ownerToFuncs forKey:iTermAPILastRegisteredFunctionsUserDefaultsKey];
+    }];
+}
+
+- (BOOL)canReasonablyExpectScriptRegisteringFunctionToAutoLaunch:(NSString *)name
+                                                       arguments:(NSArray<NSString *> *)arguments {
+    NSString *signature = iTermAPIHelperStringRepresentationOfRPC(name, arguments);
+    NSDictionary<NSString *, NSArray<NSString *> *> *ownerToFuncs;
+    ownerToFuncs = [[NSUserDefaults standardUserDefaults] objectForKey:iTermAPILastRegisteredFunctionsUserDefaultsKey];
+    for (NSString *owner in ownerToFuncs) {
+        if (![owner hasPrefix:[[NSFileManager defaultManager] autolaunchScriptPath]]) {
+            continue;
+        }
+        if ([ownerToFuncs[owner] containsObject:signature]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)performBlockWhenFunctionRegisteredWithName:(NSString *)name
+                                         arguments:(NSArray<NSString *> *)arguments
+                                           timeout:(NSTimeInterval)timeout
+                                             block:(void (^)(BOOL))block {
+    if ([self haveRegisteredFunctionWithName:name arguments:arguments]) {
+        block(NO);
+        return;
+    }
+
+    __block BOOL called = NO;
+    __block id observer =
+        [[NSNotificationCenter defaultCenter] addObserverForName:iTermAPIRegisteredFunctionsDidChangeNotification object:nil queue:nil usingBlock:^(NSNotification * _Nonnull notification) {
+            if (called) {
+                return;
+            }
+            if ([self haveRegisteredFunctionWithName:name arguments:arguments]) {
+                called = YES;
+                [[NSNotificationCenter defaultCenter] removeObserver:observer];
+                block(NO);
+            }
+        }];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (!called) {
+            called = YES;
+            [[NSNotificationCenter defaultCenter] removeObserver:observer];
+            block(YES);
+        }
+    });
 }
 
 - (NSArray<PTYSession *> *)allSessions {

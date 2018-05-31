@@ -35,6 +35,7 @@ extern NSString *const PTYSessionRevivedNotification;
 @class CapturedOutput;
 @class FakeWindow;
 @class iTermAnnouncementViewController;
+@class iTermEval;
 @class PTYTab;
 @class PTYTask;
 @class PTYTextView;
@@ -454,6 +455,8 @@ typedef enum {
 @property(nonatomic, readonly) BOOL canProduceMetalFramecap;
 
 #pragma mark - methods
++ (id (^)(NSString *))functionCallSource;
+- (id (^)(NSString *))functionCallSource;
 
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
              replacingProfileWithGUID:(NSString *)badGuid
@@ -515,13 +518,13 @@ typedef enum {
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
                forObjectType:(iTermObjectType)objectType
               forceUseOldCWD:(BOOL)forceUseOldCWD
-               substitutions:(NSDictionary *)substitutions
+                        eval:(iTermEval *)eval
                  environment:(NSDictionary *)environment;
 
 - (void)startProgram:(NSString *)program
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8
-       substitutions:(NSDictionary *)substitutions;
+                eval:(iTermEval *)eval;
 
 // This is an alternative to runCommandWithOldCwd and startProgram. It attaches
 // to an existing server. Use only if [iTermAdvancedSettingsModel runJobsInServers]

@@ -8,7 +8,7 @@
 #import "iTermWebSocketCookieJar.h"
 
 @implementation iTermWebSocketCookieJar {
-    NSMutableSet<NSString *> *_cookies;
+    NSMutableDictionary<NSString *, NSString *> *_cookies;
 }
 
 + (instancetype)sharedInstance {
@@ -23,21 +23,22 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _cookies = [NSMutableSet set];
+        _cookies = [NSMutableDictionary dictionary];
     }
     return self;
 }
 
-- (BOOL)consumeCookie:(NSString *)cookie {
-    if ([_cookies containsObject:cookie]) {
-        [_cookies removeObject:cookie];
+- (BOOL)consumeCookie:(NSString *)cookie pathToScript:(out NSString **)pathToScript {
+    if (cookie && _cookies[cookie]) {
+        *pathToScript = _cookies[cookie].length ? _cookies[cookie] : nil;
+        [_cookies removeObjectForKey:cookie];
         return YES;
     } else {
         return NO;
     }
 }
 
-- (NSString *)newCookie {
+- (NSString *)newCookieForScriptAt:(NSString *)pathToScript {
     FILE *fp = fopen("/dev/random", "r");
 
     if (!fp) {
@@ -56,7 +57,7 @@
     }
     fclose(fp);
 
-    [_cookies addObject:cookie];
+    _cookies[cookie] = pathToScript ?: @"";
     return cookie;
 }
 

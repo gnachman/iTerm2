@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) NSMenuItem *installRuntimeMenuItem;
 @property (nonatomic, readonly) NSArray<NSString *> *allScripts;
+@property (nullable, nonatomic, readonly) NSDate *autoLaunchScriptsStartDate;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithMenu:(NSMenu *)menu;
