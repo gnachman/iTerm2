@@ -138,6 +138,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 @implementation iTermApplicationDelegate {
 
     // Menu items
+    NSPoint _savedMouseLocation;
     IBOutlet NSMenu *bookmarkMenu;
     IBOutlet NSMenu *toolbeltMenu;
     NSMenuItem *downloadsMenu_;

@@ -21,7 +21,7 @@ dist: prod
 	cd build/Deployment/ && zip -r Therm.app.zip Therm.app
 	mv build/Deployment/Therm.app.zip .
 
-config.h: config.txt
+config.h: version.txt
 	echo "#define THERM_VERSION \"`cat version.txt`\"" > config.h
 
 TAGS:
