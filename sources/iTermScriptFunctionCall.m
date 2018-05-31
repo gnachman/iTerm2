@@ -81,7 +81,13 @@
         *error = self.error;
         return nil;
     }
-
+    if (![[iTermAPIHelper sharedInstance] haveRegisteredFunctionWithName:self.name arguments:_parameters.allKeys]) {
+        NSString *reason = [NSString stringWithFormat:@"No registered function named %@ with arguments %@",
+                            self.name, [_parameters.allKeys componentsJoinedByString:@","]];
+        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: reason };
+        *error = [NSError errorWithDomain:@"com.iterm2.api" code:2 userInfo:userInfo];
+        return nil;
+    }
     [self synchronousResolveDependenciesWithDeadline:deadline error:error];
     if (*error) {
         return nil;

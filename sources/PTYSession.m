@@ -20,6 +20,7 @@
 #import "iTermController.h"
 #import "iTermCopyModeState.h"
 #import "iTermDisclosableView.h"
+#import "iTermEval.h"
 #import "iTermNotificationController.h"
 #import "iTermHistogram.h"
 #import "iTermHotKeyController.h"
@@ -245,7 +246,7 @@ static const NSUInteger kMaxHosts = 100;
 @property(nonatomic, copy) NSString *program;
 @property(nonatomic, copy) NSDictionary *environment;
 @property(nonatomic, assign) BOOL isUTF8;
-@property(nonatomic, copy) NSDictionary *substitutions;
+@property(nonatomic, retain) iTermEval *eval;
 @property(nonatomic, copy) NSString *guid;
 @property(nonatomic, retain) iTermPasteHelper *pasteHelper;
 @property(nonatomic, copy) NSString *lastCommand;
@@ -682,7 +683,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_bellRate release];
     [_guid release];
     [_lastCommand release];
-    [_substitutions release];
+    [_eval release];
     [_jobName release];
     [_automaticProfileSwitcher release];
     [_throughputEstimator release];
@@ -1091,7 +1092,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 
     if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
-        aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
+        aSession.eval = [[[iTermEval alloc] initWithDictionaryValue:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]] autorelease];
     } else {
         haveSavedProgramData = NO;
     }
@@ -1192,12 +1193,12 @@ ITERM_WEAKLY_REFERENCEABLE
                 [aSession startProgram:aSession.program
                            environment:aSession.environment
                                 isUTF8:aSession.isUTF8
-                         substitutions:aSession.substitutions];
+                                  eval:aSession.eval];
             } else {
                 [aSession runCommandWithOldCwd:oldCWD
                                  forObjectType:objectType
                                 forceUseOldCWD:contents != nil && oldCWD.length
-                                 substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]
+                                          eval:aSession.eval
                                    environment:nil];
             }
         }
@@ -1507,7 +1508,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
                forObjectType:(iTermObjectType)objectType
               forceUseOldCWD:(BOOL)forceUseOldCWD
-               substitutions:(NSDictionary *)substitutions
+                        eval:(iTermEval *)eval
                  environment:(NSDictionary *)environment {
     NSString *pwd;
     BOOL isUTF8;
@@ -1522,7 +1523,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     NSString *cmd = [ITAddressBookMgr bookmarkCommand:profileForComputingCommand
                                         forObjectType:objectType];
-    NSString *theName = [profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
+    NSString *theName = [profile[KEY_NAME] it_stringByEvaluatingStringWith:eval];
 
     if (forceUseOldCWD) {
         pwd = oldCWD;
@@ -1548,7 +1549,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self startProgram:cmd
            environment:realEnvironment
                 isUTF8:isUTF8
-         substitutions:substitutions];
+                  eval:eval];
 }
 
 - (void)setSize:(VT100GridSize)size {
@@ -1693,13 +1694,13 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)startProgram:(NSString *)command
          environment:(NSDictionary *)environment
               isUTF8:(BOOL)isUTF8
-       substitutions:(NSDictionary *)substitutions {
+                eval:(iTermEval *)eval {
     self.program = command;
     self.environment = environment ?: @{};
     self.isUTF8 = isUTF8;
-    self.substitutions = substitutions ?: @{};
+    self.eval = eval;
 
-    NSString *program = [command stringByPerformingSubstitutions:substitutions];
+    NSString *program = [command it_stringByEvaluatingStringWith:eval];
     NSArray *components = [program componentsInShellCommand];
     NSArray *arguments;
     if (components.count > 0) {
@@ -1758,7 +1759,7 @@ ITERM_WEAKLY_REFERENCEABLE
     env[@"COLORTERM"] = @"truecolor";
 
     if (_profile[KEY_NAME]) {
-        env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
+        env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] it_stringByEvaluatingStringWith:eval];
     }
     if ([_profile[KEY_AUTOLOG] boolValue]) {
         [_shell startLoggingToFileWithPath:[self autoLogFilename]
@@ -2739,7 +2740,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self startProgram:_program
            environment:_environment
                 isUTF8:_isUTF8
-         substitutions:_substitutions];
+                  eval:_eval];
 }
 
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle {
@@ -4077,8 +4078,8 @@ ITERM_WEAKLY_REFERENCEABLE
     result[SESSION_ARRANGEMENT_BOOKMARK] = _profile;
     result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = _bookmarkName;
 
-    if (_substitutions) {
-        result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions;
+    if (_eval) {
+        result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _eval.dictionaryValue;
     }
     if ([self.program isEqualToString:[ITAddressBookMgr shellLauncherCommand]]) {
         // The shell launcher command could change from run to run (e.g., if you move iTerm2).

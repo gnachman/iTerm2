@@ -33,5 +33,7 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
                                error:(out NSError **)error;
 
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
+- (BOOL)haveRegisteredFunctionWithName:(NSString *)name
+                             arguments:(NSArray<NSString *> *)arguments;
 
 @end

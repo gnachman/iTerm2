@@ -575,6 +575,12 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     return result;
 }
 
+- (BOOL)haveRegisteredFunctionWithName:(NSString *)name
+                             arguments:(NSArray<NSString *> *)arguments {
+    NSString *stringSignature = iTermAPIHelperStringRepresentationOfRPC(name, arguments);
+    return _serverOriginatedRPCSubscriptions[stringSignature].allValues.firstObject != nil;
+}
+
 #pragma mark - iTermAPIServerDelegate
 
 - (NSMenuItem *)menuItemWithTitleParts:(NSArray<NSString *> *)titleParts
