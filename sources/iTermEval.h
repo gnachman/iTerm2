@@ -30,7 +30,9 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface NSString(iTermEval)
-- (NSString *)it_stringByEvaluatingStringWith:(iTermEval *)eval;
+- (NSString *)it_stringByEvaluatingStringWith:(iTermEval *)eval
+                                      timeout:(NSTimeInterval)timeout
+                                       source:(NSString *(^)(NSString *))source;
 @end
 
 NS_ASSUME_NONNULL_END

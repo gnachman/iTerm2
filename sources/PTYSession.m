@@ -1523,7 +1523,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     NSString *cmd = [ITAddressBookMgr bookmarkCommand:profileForComputingCommand
                                         forObjectType:objectType];
-    NSString *theName = [profile[KEY_NAME] it_stringByEvaluatingStringWith:eval];
+    NSString *theName = [profile[KEY_NAME] it_stringByEvaluatingStringWith:eval
+                                                                   timeout:1
+                                                                    source:^NSString * _Nonnull(NSString * _Nonnull key) {
+                                                                        return [self functionCallSource](key);
+                                                                    }];
 
     if (forceUseOldCWD) {
         pwd = oldCWD;
@@ -1700,7 +1704,11 @@ ITERM_WEAKLY_REFERENCEABLE
     self.isUTF8 = isUTF8;
     self.eval = eval;
 
-    NSString *program = [command it_stringByEvaluatingStringWith:eval];
+    NSString *program = [command it_stringByEvaluatingStringWith:eval
+                                                         timeout:1
+                                                          source:^NSString * _Nonnull(NSString * _Nonnull key) {
+                                                              return [self functionCallSource](key);
+                                                          }];
     NSArray *components = [program componentsInShellCommand];
     NSArray *arguments;
     if (components.count > 0) {
@@ -1759,7 +1767,11 @@ ITERM_WEAKLY_REFERENCEABLE
     env[@"COLORTERM"] = @"truecolor";
 
     if (_profile[KEY_NAME]) {
-        env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] it_stringByEvaluatingStringWith:eval];
+        env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] it_stringByEvaluatingStringWith:eval
+                                                                            timeout:1
+                                                                             source:^NSString * _Nonnull(NSString * _Nonnull key) {
+                                                                                 return [self functionCallSource](key);
+                                                                             }];
     }
     if ([_profile[KEY_AUTOLOG] boolValue]) {
         [_shell startLoggingToFileWithPath:[self autoLogFilename]

@@ -7,6 +7,8 @@
 
 #import "iTermEval.h"
 
+#import "iTermScriptFunctionCall.h"
+#import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
@@ -36,14 +38,18 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface iTermEval()
-- (NSString *)stringByPerformingSubstitutionsOnString:(NSString *)string;
+- (NSString *)stringByPerformingSubstitutionsOnString:(NSString *)string
+                                              timeout:(NSTimeInterval)timeout
+                                               source:(NSString *(^)(NSString *))source;
 @end
 
 @implementation NSString(iTermEval)
 
-- (NSString *)it_stringByEvaluatingStringWith:(iTermEval *)eval {
+- (NSString *)it_stringByEvaluatingStringWith:(iTermEval *)eval
+                                      timeout:(NSTimeInterval)timeout
+                                       source:(NSString *(^)(NSString *))source {
     if (eval) {
-        return [eval stringByPerformingSubstitutionsOnString:self];
+        return [eval stringByPerformingSubstitutionsOnString:self timeout:timeout source:source];
     } else {
         return self;
     }
@@ -112,10 +118,38 @@ static NSString *const iTermEvalDictionaryKeyMacroNames = @"macro names";
     }
 }
 
-- (NSString *)stringByPerformingSubstitutionsOnString:(NSString *)string {
-    NSString *result = string;
-    result = [result stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
-    result = [result stringByPerformingSubstitutions:_macros];
+- (NSString *)stringByPerformingSubstitutionsOnString:(NSString *)string
+                                              timeout:(NSTimeInterval)timeout
+                                               source:(NSString *(^)(NSString *))source {
+    NSString *substitutedString = string;
+    substitutedString = [substitutedString stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
+    substitutedString = [substitutedString stringByPerformingSubstitutions:_macros];
+    NSMutableString *result = [NSMutableString string];
+    [substitutedString enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+        if (isLiteral) {
+            [result appendString:substring];
+        } else {
+            NSError *error;
+            id value = [iTermScriptFunctionCall synchronousCallFunction:substring
+                                                                timeout:timeout
+                                                                  error:&error
+                                                                 source:source];
+            if (error) {
+                value = source(substring);
+            }
+#warning TODO: Tell the user about errors
+            if (value) {
+                // If it returns a string, use it. Otherwise append its json representation.
+                NSString *stringValue = [NSString castFrom:value];
+                if (!stringValue) {
+                    stringValue = [NSJSONSerialization it_jsonStringForObject:value];
+                }
+                if (stringValue) {
+                    [result appendString:stringValue];
+                }
+            }
+        }
+    }];
     return result;
 }
 

@@ -7778,7 +7778,9 @@ ITERM_WEAKLY_REFERENCEABLE
         temp[KEY_COMMAND_LINE] = command;
         profile = temp;
     } else if (profile[KEY_NAME]) {
-        preferredName = [profile[KEY_NAME] it_stringByEvaluatingStringWith:eval];
+        preferredName = [profile[KEY_NAME] it_stringByEvaluatingStringWith:eval
+                                                                   timeout:1
+                                                                    source:[aSession functionCallSource]];
     }
 
     // set our preferences

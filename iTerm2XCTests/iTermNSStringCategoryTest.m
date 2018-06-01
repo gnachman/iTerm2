@@ -1,4 +1,6 @@
 #import <XCTest/XCTest.h>
+
+#import "iTermTuple.h"
 #import "NSStringITerm.h"
 
 @interface NSStringCategoryTest : XCTestCase
@@ -453,5 +455,83 @@
     XCTAssertEqualObjects(actual, expected);
 }
 
+- (void)testEnumerateSwiftySubstrings_Literal {
+    NSString *s = @"xyz";
+    NSArray<iTermTuple<NSString *, NSNumber *> *> *expected =
+        @[ [iTermTuple tupleWithObject:@"xyz" andObject:@YES] ];
+    NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
+    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+        [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
+    }];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testEnumerateSwiftySubstrings_LiteralAndExpression {
+    NSString *s = @"abc\\(def)ghi";
+    NSArray<iTermTuple<NSString *, NSNumber *> *> *expected =
+        @[ [iTermTuple tupleWithObject:@"abc" andObject:@YES],
+           [iTermTuple tupleWithObject:@"def" andObject:@NO],
+           [iTermTuple tupleWithObject:@"ghi" andObject:@YES]];
+    NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
+    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+        [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
+    }];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testEnumerateSwiftySubstrings_LiteralWithEscapedCharacters {
+    NSString *s = @"a\\b\\\\";
+    NSArray<iTermTuple<NSString *, NSNumber *> *> *expected =
+        @[ [iTermTuple tupleWithObject:@"a\\b\\\\" andObject:@YES] ];
+    NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
+    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+        [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
+    }];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testEnumerateSwiftySubstrings_ExpressionContainingStringWithParens {
+    NSString *s = @"\\(foo(\"bar(((\"))";
+    NSArray<iTermTuple<NSString *, NSNumber *> *> *expected =
+        @[ [iTermTuple tupleWithObject:@"foo(\"bar(((\")" andObject:@NO] ];
+    NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
+    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+        [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
+    }];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testEnumerateSwiftySubstrings_ExpressionContainingNestedExpression {
+    NSString *s = @"\\(foo(\"bar\(inner(x,y))\"))";
+    NSArray<iTermTuple<NSString *, NSNumber *> *> *expected =
+        @[ [iTermTuple tupleWithObject:@"foo(\"bar\(inner(x,y))\")" andObject:@NO] ];
+    NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
+    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+        [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
+    }];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testEnumerateSwiftySubstrings_ExpressionContainingNestedExpressionWithString {
+    NSString *s = @"\\(foo(\"bar\(inner(\"innerstring\",y))\"))";
+    NSArray<iTermTuple<NSString *, NSNumber *> *> *expected =
+        @[ [iTermTuple tupleWithObject:@"foo(\"bar\(inner(\"innerstring\",y))\")" andObject:@NO] ];
+    NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
+    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+        [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
+    }];
+    XCTAssertEqualObjects(actual, expected);
+}
+
+- (void)testEnumerateSwiftySubstrings_UnclosedExpression {
+    NSString *s = @"\\(foo(\"bar\(inner(\"innerstring\",y";
+    NSArray<iTermTuple<NSString *, NSNumber *> *> *expected =
+        @[ [iTermTuple tupleWithObject:@"foo(\"bar\(inner(\"innerstring\",y" andObject:@YES] ];
+    NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
+    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+        [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
+    }];
+    XCTAssertEqualObjects(actual, expected);
+}
 
 @end
