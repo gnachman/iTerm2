@@ -1321,7 +1321,11 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] setStartingUp:YES];
 
     // Check if we have an autolaunch script to execute. Do it only once, i.e. at application launch.
-    BOOL ranAutoLaunchScripts = [self.scriptsMenuController runAutoLaunchScriptsIfNeeded];
+    BOOL ranAutoLaunchScripts = NO;
+    if (![self isApplescriptTestApp] &&
+        ![[NSApplication sharedApplication] isRunningUnitTests]) {
+        ranAutoLaunchScripts = [self.scriptsMenuController runAutoLaunchScriptsIfNeeded];
+    }
 
     if ([WindowArrangements defaultArrangementName] == nil &&
         [WindowArrangements arrangementWithName:LEGACY_DEFAULT_ARRANGEMENT_NAME] != nil) {
