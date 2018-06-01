@@ -77,4 +77,7 @@ extern NSString *const iTermAPIServerConnectionClosed;
                       toConnection:(id)connection
                            timeout:(NSTimeInterval)timeoutSeconds
                              error:(out NSError **)error;
+
+- (void)pathToScriptOwningConnection:(id)connection block:(void (^)(NSString *))block;
+
 @end

@@ -146,7 +146,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
 @implementation iTermAPIServer {
     iTermSocket *_socket;
-    NSMutableDictionary<id, iTermWebSocketConnection *> *_connections;
+    NSMutableDictionary<id, iTermWebSocketConnection *> *_connections;  // _queue
     dispatch_queue_t _executionQueue;
 }
 
@@ -371,6 +371,17 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
                                                           userInfo:@{ @"message": response }];
     });
     [webSocketConnection sendBinary:[response data] completion:nil];
+}
+
+// main thread
+- (void)pathToScriptOwningConnection:(id)connection block:(void (^)(NSString *))block {
+    dispatch_async(_queue, ^{
+        iTermWebSocketConnection *conn = self->_connections[connection];
+        NSString *pathToScript = [conn.pathToScript copy];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            block(pathToScript);
+        });
+    });
 }
 
 #pragma mark - Transactions

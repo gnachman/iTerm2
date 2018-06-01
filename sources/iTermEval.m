@@ -7,6 +7,8 @@
 
 #import "iTermEval.h"
 
+#import "iTermAPIHelper.h"
+#import "iTermFunctionCallParser.h"
 #import "iTermScriptFunctionCall.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -38,21 +40,23 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface iTermEval()
-- (NSString *)stringByPerformingSubstitutionsOnString:(NSString *)string
-                                              timeout:(NSTimeInterval)timeout
-                                               source:(NSString *(^)(NSString *))source;
+- (void)evaluateString:(NSString *)string
+               timeout:(NSTimeInterval)timeout
+                source:(NSString * _Nonnull (^)(NSString * _Nonnull))source
+            completion:(void (^)(NSString * _Nonnull))completion;
 @end
 
 @implementation NSString(iTermEval)
 
-- (NSString *)it_stringByEvaluatingStringWith:(iTermEval *)eval
-                                      timeout:(NSTimeInterval)timeout
-                                       source:(NSString *(^)(NSString *))source {
-    if (eval) {
-        return [eval stringByPerformingSubstitutionsOnString:self timeout:timeout source:source];
-    } else {
-        return self;
+- (void)it_evaluateWith:(iTermEval *)eval
+                timeout:(NSTimeInterval)timeout
+                 source:(NSString * _Nonnull (^)(NSString * _Nonnull))source
+             completion:(void (^)(NSString * _Nonnull))completion {
+    if (!eval) {
+        completion(self);
     }
+
+    [eval evaluateString:self timeout:timeout source:source completion:completion];
 }
 
 @end
@@ -118,39 +122,59 @@ static NSString *const iTermEvalDictionaryKeyMacroNames = @"macro names";
     }
 }
 
-- (NSString *)stringByPerformingSubstitutionsOnString:(NSString *)string
-                                              timeout:(NSTimeInterval)timeout
-                                               source:(NSString *(^)(NSString *))source {
+- (void)evaluateString:(NSString *)string
+               timeout:(NSTimeInterval)timeout
+                source:(NSString * _Nonnull (^)(NSString * _Nonnull))source
+            completion:(void (^)(NSString * _Nonnull))completion {
     NSString *substitutedString = string;
     substitutedString = [substitutedString stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
     substitutedString = [substitutedString stringByPerformingSubstitutions:_macros];
     NSMutableString *result = [NSMutableString string];
+    NSMutableArray<NSString *> *evaluatedSubstrings = [NSMutableArray array];
+    dispatch_group_t group = dispatch_group_create();
     [substitutedString enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
         if (isLiteral) {
-            [result appendString:substring];
+            [evaluatedSubstrings addObject:substring];
         } else {
             NSError *error;
-            id value = [iTermScriptFunctionCall synchronousCallFunction:substring
-                                                                timeout:timeout
-                                                                  error:&error
-                                                                 source:source];
-            if (error) {
-                value = source(substring);
+            iTermScriptFunctionCall *call = [[iTermFunctionCallParser sharedInstance] parse:substring
+                                                                                     source:source];
+            if (!call || call.error) {
+                [evaluatedSubstrings addObject:@""];
+#warning TODO: Handle errors better
+                return;
             }
-#warning TODO: Tell the user about errors
-            if (value) {
-                // If it returns a string, use it. Otherwise append its json representation.
-                NSString *stringValue = [NSString castFrom:value];
-                if (!stringValue) {
-                    stringValue = [NSJSONSerialization it_jsonStringForObject:value];
+
+            const NSInteger index = evaluatedSubstrings.count;
+            [evaluatedSubstrings addObject:@""];
+            iTermAPIHelper *helper = [iTermAPIHelper sharedInstance];
+            dispatch_group_enter(group);
+            [helper performBlockWhenFunctionRegisteredWithName:call.name arguments:call.argumentNames timeout:1 block:^(BOOL timedOut) {
+                if (timedOut) {
+#warning Handle timeouts
+                    dispatch_group_leave(group);
+                    return;
                 }
-                if (stringValue) {
-                    [result appendString:stringValue];
-                }
-            }
+                [call callWithCompletion:^(id output, NSError *callError) {
+                    if (callError) {
+#warning Handle errors
+                        dispatch_group_leave(group);
+                        return;
+                    }
+                    NSString *string = [NSString castFrom:output];
+                    if (string) {
+                        evaluatedSubstrings[index] = string;
+                    } else {
+                        evaluatedSubstrings[index] = [NSJSONSerialization it_jsonStringForObject:output];
+                    }
+                    dispatch_group_leave(group);
+                }];
+            }];
         }
     }];
-    return result;
+    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        completion([evaluatedSubstrings componentsJoinedByString:@""]);
+    });
 }
 
 #pragma mark - Private

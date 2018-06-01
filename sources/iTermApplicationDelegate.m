@@ -1321,11 +1321,7 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] setStartingUp:YES];
 
     // Check if we have an autolaunch script to execute. Do it only once, i.e. at application launch.
-    BOOL ranAutoLaunchScripts = NO;
-    if (![self isApplescriptTestApp] &&
-        ![[NSApplication sharedApplication] isRunningUnitTests]) {
-        ranAutoLaunchScripts = [self.scriptsMenuController runAutoLaunchScriptsIfNeeded];
-    }
+    BOOL ranAutoLaunchScripts = [self.scriptsMenuController runAutoLaunchScriptsIfNeeded];
 
     if ([WindowArrangements defaultArrangementName] == nil &&
         [WindowArrangements arrangementWithName:LEGACY_DEFAULT_ARRANGEMENT_NAME] != nil) {
@@ -1987,7 +1983,7 @@ static BOOL hasBecomeActive = NO;
         NSString *command = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithEscapedShellCharactersIncludingNewlines:YES];
         NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
         command = [command stringByAppendingFormat:@" --banner=\"`cat %@`\"", bannerURL.path];
-        NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] newCookie];
+        NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] newCookieForScriptAt:nil];
         NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie };
         [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
                                                                   inject:nil

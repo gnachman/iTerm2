@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermScriptsMenuController : NSObject
 
 @property (nonatomic, strong) NSMenuItem *installRuntimeMenuItem;
+@property (nullable, nonatomic, readonly) NSDate *autoLaunchScriptsStartDate;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithMenu:(NSMenu *)menu;

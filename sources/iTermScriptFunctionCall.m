@@ -46,8 +46,13 @@
                        source:(id (^)(NSString *))source {
     iTermScriptFunctionCall *call = [[iTermFunctionCallParser sharedInstance] parse:invocation
                                                                              source:source];
+
     return [call synchronousCallWithDeadline:[NSDate dateWithTimeIntervalSinceNow:timeout]
                                        error:error];
+}
+
+- (NSArray<NSString *> *)argumentNames {
+    return _parameters.allKeys;
 }
 
 - (void)addParameterWithName:(NSString *)name value:(id)value {
@@ -81,7 +86,14 @@
         *error = self.error;
         return nil;
     }
-    if (![[iTermAPIHelper sharedInstance] haveRegisteredFunctionWithName:self.name arguments:_parameters.allKeys]) {
+    iTermAPIHelper *apiHelper = [iTermAPIHelper sharedInstance];
+    if (![apiHelper haveRegisteredFunctionWithName:self.name arguments:_parameters.allKeys]) {
+        const BOOL shouldWait =
+            [apiHelper canReasonablyExpectScriptRegisteringFunctionToAutoLaunch:self.name
+                                                                      arguments:_parameters.allKeys];
+        if (shouldWait) {
+#warning TODO: Call performBlockWhenFunctionRegisteredWithName:...
+        }
         NSString *reason = [NSString stringWithFormat:@"No registered function named %@ with arguments %@",
                             self.name, [_parameters.allKeys componentsJoinedByString:@","]];
         NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: reason };
@@ -93,10 +105,10 @@
         return nil;
     }
 
-    return [[iTermAPIHelper sharedInstance] synchronousDispatchRPCWithName:self.name
-                                                                 arguments:self->_parameters
-                                                                   timeout:deadline.timeIntervalSinceNow
-                                                                     error:error];
+    return [apiHelper synchronousDispatchRPCWithName:self.name
+                                           arguments:self->_parameters
+                                             timeout:deadline.timeIntervalSinceNow
+                                               error:error];
 }
 
 - (NSError *)errorForDependentCall:(iTermScriptFunctionCall *)call thatFailedWithError:(NSError *)error {
