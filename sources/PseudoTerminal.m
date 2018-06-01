@@ -7619,17 +7619,15 @@ ITERM_WEAKLY_REFERENCEABLE
         Profile *profile = [aSession profile];
         NSString *cmd = [ITAddressBookMgr bookmarkCommand:profile
                                             forObjectType:objectType];
-        NSString *name = profile[KEY_NAME];
-
         iTermEval *eval = [[iTermEval alloc] initWithMacros:nil];
         [eval addStringWithPossibleSubstitutions:cmd];
-        [eval addStringWithPossibleSubstitutions:name];
+        [eval addStringWithPossibleSubstitutions:profile[KEY_NAME]];
         if (self.disablePromptForSubstitutions) {
             [eval replaceMissingValuesWithString:@""];
         } else if (![eval promptForMissingValuesInWindow:self.window]) {
             return NO;
         }
-        name = [name it_stringByEvaluatingStringWith:eval];
+#warning TODO: I used to call [self setName:profile[KEY_NAME] forSession:aSession] here and I removed it
         NSString *pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile
                                                      forObjectType:objectType];
         if ([pwd length] == 0) {
@@ -7641,7 +7639,6 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
-        [self setName:name forSession:aSession];
         // Start the command
         [self startProgram:cmd
                environment:env
@@ -7778,9 +7775,7 @@ ITERM_WEAKLY_REFERENCEABLE
         temp[KEY_COMMAND_LINE] = command;
         profile = temp;
     } else if (profile[KEY_NAME]) {
-        preferredName = [profile[KEY_NAME] it_stringByEvaluatingStringWith:eval
-                                                                   timeout:1
-                                                                    source:[aSession functionCallSource]];
+        preferredName = profile[KEY_NAME];
     }
 
     // set our preferences
@@ -7797,7 +7792,9 @@ ITERM_WEAKLY_REFERENCEABLE
             [self setWindowTitle];
         }
         if (preferredName) {
-            [self setName:preferredName forSession:aSession];
+            [preferredName it_evaluateWith:eval timeout:1 source:aSession.functionCallSource completion:^(NSString * _Nonnull evaluatedString) {
+                [self setName:evaluatedString forSession:aSession];
+            }];
         }
     }
 
@@ -7931,8 +7928,9 @@ ITERM_WEAKLY_REFERENCEABLE
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         BOOL isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
-        [self setName:[name it_stringByEvaluatingStringWith:eval]
-           forSession:aSession];
+        [name it_evaluateWith:eval timeout:1 source:aSession.functionCallSource completion:^(NSString * _Nonnull evaluatedString) {
+            [self setName:evaluatedString forSession:aSession];
+        }];
 
         // Start the command
         if (serverConnection) {

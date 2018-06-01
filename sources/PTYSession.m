@@ -472,6 +472,9 @@ static const NSUInteger kMaxHosts = 100;
     int _nextMetalDisabledToken;
     NSMutableSet *_metalDisabledTokens;
     BOOL _metalDeviceChanging;
+
+    // Name requires an async function call to resolve.
+    BOOL _nameIsProvisional;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -1523,11 +1526,16 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     NSString *cmd = [ITAddressBookMgr bookmarkCommand:profileForComputingCommand
                                         forObjectType:objectType];
-    NSString *theName = [profile[KEY_NAME] it_stringByEvaluatingStringWith:eval
-                                                                   timeout:1
-                                                                    source:^NSString * _Nonnull(NSString * _Nonnull key) {
-                                                                        return [self functionCallSource](key);
-                                                                    }];
+    __block BOOL sync = YES;
+    __block NSString *syncName = nil;
+    [profile[KEY_NAME] it_evaluateWith:eval timeout:1 source:[self functionCallSource] completion:^(NSString * _Nonnull evaluatedString) {
+        if (sync) {
+            syncName = evaluatedString;
+        } else if (self->_nameIsProvisional) {
+            [[_delegate realParentWindow] setName:syncName forSession:self];
+        }
+    }];
+    sync = NO;
 
     if (forceUseOldCWD) {
         pwd = oldCWD;
@@ -1544,7 +1552,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
-    [[_delegate realParentWindow] setName:theName forSession:self];
+    if (syncName) {
+        [[_delegate realParentWindow] setName:syncName forSession:self];
+    } else {
+#warning TODO: Unset this when the name changes
+        _nameIsProvisional = YES;
+    }
 
     NSMutableDictionary *realEnvironment = [[environment mutableCopy] autorelease] ?: [NSMutableDictionary dictionary];
     realEnvironment[@"PWD"] = pwd;
@@ -1704,11 +1717,35 @@ ITERM_WEAKLY_REFERENCEABLE
     self.isUTF8 = isUTF8;
     self.eval = eval;
 
-    NSString *program = [command it_stringByEvaluatingStringWith:eval
-                                                         timeout:1
-                                                          source:^NSString * _Nonnull(NSString * _Nonnull key) {
-                                                              return [self functionCallSource](key);
-                                                          }];
+    __block NSString *evaluatedCommand = command;
+    __block NSString *evaluatedName = _profile[KEY_NAME];
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    [command it_evaluateWith:eval timeout:1 source:self.functionCallSource completion:^(NSString * _Nonnull evaluatedString) {
+        evaluatedCommand = [evaluatedString retain];
+        dispatch_group_leave(group);
+    }];
+    if (evaluatedName) {
+        dispatch_group_enter(group);
+        [evaluatedName it_evaluateWith:eval timeout:1 source:self.functionCallSource completion:^(NSString * _Nonnull evaluatedString) {
+            evaluatedName = [evaluatedString retain];
+            dispatch_group_leave(group);
+        }];
+    }
+    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        [self finishStartingProgram:[evaluatedCommand autorelease]
+                               name:[evaluatedName autorelease]
+                        environment:environment
+                             isUTF8:isUTF8
+                               eval:eval];
+    });
+}
+
+- (void)finishStartingProgram:(NSString *)program
+                         name:(NSString *)name
+                  environment:(NSDictionary *)environment
+                       isUTF8:(BOOL)isUTF8
+                         eval:(iTermEval *)eval {
     NSArray *components = [program componentsInShellCommand];
     NSArray *arguments;
     if (components.count > 0) {
@@ -1726,6 +1763,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (env[COLORFGBG_ENVNAME] == nil && _colorFgBgVariable != nil) {
         env[COLORFGBG_ENVNAME] = _colorFgBgVariable;
     }
+    env[@"ITERM_PROFILE"] = name;
 
     DLog(@"Begin locale logic");
     if (!_profile[KEY_SET_LOCALE_VARS] ||
@@ -1766,13 +1804,6 @@ ITERM_WEAKLY_REFERENCEABLE
     env[@"TERM_PROGRAM"] = @"iTerm.app";
     env[@"COLORTERM"] = @"truecolor";
 
-    if (_profile[KEY_NAME]) {
-        env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] it_stringByEvaluatingStringWith:eval
-                                                                            timeout:1
-                                                                             source:^NSString * _Nonnull(NSString * _Nonnull key) {
-                                                                                 return [self functionCallSource](key);
-                                                                             }];
-    }
     if ([_profile[KEY_AUTOLOG] boolValue]) {
         [_shell startLoggingToFileWithPath:[self autoLogFilename]
                               shouldAppend:NO];
@@ -2749,6 +2780,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _shell = [[PTYTask alloc] init];
     [_shell setDelegate:self];
     [_shell setSize:_screen.size];
+#warning Isn't _program the output of a previous evaluation?
     [self startProgram:_program
            environment:_environment
                 isUTF8:_isUTF8
