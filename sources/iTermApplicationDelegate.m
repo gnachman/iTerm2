@@ -965,9 +965,6 @@ static BOOL hasBecomeActive = NO;
     // Start tracking windows entering/exiting full screen.
     [iTermFullScreenWindowManager sharedInstance];
 
-    // Users used to be opted into the beta by default. Make sure the user is cool with that.
-    [self promptAboutRemainingInBetaIfNeeded];
-
     [self complainIfNightlyBuildIsTooOld];
 
     // Set the Appcast URL and when it changes update it.
@@ -1264,49 +1261,6 @@ static BOOL hasBecomeActive = NO;
             [[SUUpdater sharedUpdater] checkForUpdates:nil];
         }
     }
-}
-
-- (void)promptAboutRemainingInBetaIfNeeded {
-    // For a long time—too long—users were opted into the beta program. There are too many of them
-    // and they don't know it and some of them feel bad feelings. So we'll help them get out. I
-    // don't like spamming you with crap so let's just do this for a few weeks and that'll fix
-    // almost all of the problem.
-    if ([NSDate timeIntervalSinceReferenceDate] > 489542400) {  // Midnight GMT July 7 2016
-        return;
-    }
-    static NSString *kHaveAskedAboutBetaKey = @"NoSyncConfirmBeta";
-    const BOOL haveAsked = [[NSUserDefaults standardUserDefaults] boolForKey:kHaveAskedAboutBetaKey];
-    if (haveAsked) {
-        return;
-    }
-    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveAskedAboutBetaKey];
-
-    if ([NSBundle it_isNightlyBuild]) {
-        return;
-    }
-
-    const BOOL inBeta = [iTermPreferences boolForKey:kPreferenceKeyCheckForTestReleases];
-    if (!inBeta) {
-        return;
-    }
-
-    const BOOL isEarlyAdopter = [NSBundle it_isEarlyAdopter];
-    if (isEarlyAdopter) {
-        // Early adopters who are already beta testers won't get prompted.
-        // They are the new "real" beta testers.
-        return;
-    }
-
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = @"Beta Test Program";
-    alert.informativeText = @"Would you like to beta test versions of iTerm2 when it updates?";
-    [alert addButtonWithTitle:@"Yes, I Want Beta Test Versions"];
-    [alert addButtonWithTitle:@"No, Release Versions Only"];
-    const NSModalResponse response = [alert runModal];
-
-    const BOOL wantBeta = (response == NSAlertFirstButtonReturn);
-    [[NSUserDefaults standardUserDefaults] setBool:wantBeta
-                                            forKey:kPreferenceKeyCheckForTestReleases];
 }
 
 // This performs startup activities as long as they haven't been run before.
