@@ -10,7 +10,6 @@
 #import "NSMutableAttributedString+iTerm.h"
 
 @implementation iTermDisclosableView {
-    NSTextView *_textView;
     NSButton *_disclosureButton;
     NSRect _originalWindowFrame;
     NSTextField *_labelField;
