@@ -978,9 +978,9 @@ static BOOL hasBecomeActive = NO;
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     [self warnAboutChangeToDefaultPasteBehavior];
     if (IsTouchBarAvailable()) {
-        ITERM_IGNORE_PARTIAL_BEGIN
-        NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
-        ITERM_IGNORE_PARTIAL_END
+        if (@available(macOS 10.12.2, *)) {
+            NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
+        }
     }
 
     if ([iTermAdvancedSettingsModel enableAPIServer]) {
@@ -1004,7 +1004,7 @@ static BOOL hasBecomeActive = NO;
     [self createVersionFile];
 
     // Prevent the input manager from swallowing control-q. See explanation here:
-    // http://b4winckler.wordpress.com/2009/07/19/coercing-the-cocoa-text-system/
+    // https://web.archive.org/web/20111102073237/https://b4winckler.wordpress.com/2009/07/19/coercing-the-cocoa-text-system
     CFPreferencesSetAppValue(CFSTR("NSQuotedKeystrokeBinding"),
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
