@@ -73,7 +73,9 @@
 }
 
 - (NSSize)intrinsicContentSize {
-    return NSMakeSize(_disclosureButton.state == NSOnState ? NSMaxX(_textView.frame) : NSMaxX(_labelField.frame),
+    const CGFloat bodyWidth = NSMaxX(_textView.frame);
+    const CGFloat headerWidth = NSMaxX(_labelField.frame);
+    return NSMakeSize(_disclosureButton.state == NSOnState ? MAX(headerWidth, bodyWidth) : headerWidth,
                       _disclosureButton.state == NSOnState ? NSMaxY(_textView.frame) : NSMaxY(_disclosureButton.frame));
 }
 
