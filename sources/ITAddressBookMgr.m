@@ -33,6 +33,7 @@
 #import "iTermKeyBindingMgr.h"
 #import "iTermHotKeyMigrationHelper.h"
 #import "iTermHotKeyProfileBindingController.h"
+#import "iTermMigrationHelper.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "PreferencePanel.h"
@@ -78,7 +79,7 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
             ![prefs objectForKey:KEY_NEW_BOOKMARKS]) {
             // Have only old-style bookmarks. Load them and convert them to new-style
             // bookmarks.
-            [self recursiveMigrateBookmarks:[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] path:@[]];
+            [iTermMigrationHelper recursiveMigrateBookmarks:[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] path:@[]];
             [prefs removeObjectForKey:KEY_DEPRECATED_BOOKMARKS];
             [prefs setObject:[[ProfileModel sharedInstance] rawData] forKey:KEY_NEW_BOOKMARKS];
             [[ProfileModel sharedInstance] removeAllBookmarks];
@@ -219,86 +220,6 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
 
 + (NSColor *)decodeColor:(NSDictionary*)plist {
     return [plist colorValue];
-}
-
-- (void)copyProfileToBookmark:(NSMutableDictionary *)dict
-{
-    NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"MigrationMap"
-                                                                           ofType:@"plist"];
-    NSDictionary* fileDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];
-    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
-    NSDictionary* keybindingProfiles = [prefs objectForKey: @"KeyBindings"];
-    NSDictionary* displayProfiles =  [prefs objectForKey: @"Displays"];
-    NSDictionary* terminalProfiles = [prefs objectForKey: @"Terminals"];
-    NSArray* xforms = [fileDict objectForKey:@"Migration Map"];
-    for (int i = 0; i < [xforms count]; ++i) {
-        NSDictionary* xform = [xforms objectAtIndex:i];
-        NSString* destination = [xform objectForKey:@"Destination"];
-        if ([dict objectForKey:destination]) {
-            continue;
-        }
-        NSString* prefix = [xform objectForKey:@"Prefix"];
-        NSString* suffix = [xform objectForKey:@"Suffix"];
-        id defaultValue = [xform objectForKey:@"Default"];
-
-        NSDictionary* parent = nil;
-        if ([prefix isEqualToString:@"Terminal"]) {
-            parent = [terminalProfiles objectForKey:[dict objectForKey:KEY_TERMINAL_PROFILE]];
-        } else if ([prefix isEqualToString:@"Displays"]) {
-            parent = [displayProfiles objectForKey:[dict objectForKey:KEY_DISPLAY_PROFILE]];
-        } else if ([prefix isEqualToString:@"KeyBindings"]) {
-            parent = [keybindingProfiles objectForKey:[dict objectForKey:KEY_KEYBOARD_PROFILE]];
-        } else {
-            NSAssert(0, @"Bad prefix");
-        }
-        id value = nil;
-        if (parent) {
-            value = [parent objectForKey:suffix];
-        }
-        if (!value) {
-            value = defaultValue;
-        }
-        [dict setObject:value forKey:destination];
-    }
-}
-
-- (void)recursiveMigrateBookmarks:(NSDictionary*)node path:(NSArray*)path
-{
-    NSDictionary* data = [node objectForKey:@"Data"];
-
-    if ([data objectForKey:KEY_COMMAND_LINE]) {
-        // Not just a folder if it has a command.
-        NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:data];
-        [self copyProfileToBookmark:temp];
-        [temp setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-        [temp setObject:path forKey:KEY_TAGS];
-        [temp setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
-        NSString* dir = [data objectForKey:KEY_WORKING_DIRECTORY];
-        if (dir && [dir length] > 0) {
-            [temp setObject:kProfilePreferenceInitialDirectoryCustomValue
-                     forKey:KEY_CUSTOM_DIRECTORY];
-        } else if (dir && [dir length] == 0) {
-            [temp setObject:kProfilePreferenceInitialDirectoryRecycleValue
-                     forKey:KEY_CUSTOM_DIRECTORY];
-        } else {
-            [temp setObject:kProfilePreferenceInitialDirectoryHomeValue
-                     forKey:KEY_CUSTOM_DIRECTORY];
-        }
-        [[ProfileModel sharedInstance] addBookmark:temp];
-    }
-
-    NSArray* entries = [node objectForKey:@"Entries"];
-    for (int i = 0; i < [entries count]; ++i) {
-        NSMutableArray* childPath = [NSMutableArray arrayWithArray:path];
-        NSDictionary* dataDict = [node objectForKey:@"Data"];
-        if (dataDict) {
-            NSString* name = [dataDict objectForKey:@"Name"];
-            if (name) {
-                [childPath addObject:name];
-            }
-        }
-        [self recursiveMigrateBookmarks:[entries objectAtIndex:i] path:childPath];
-    }
 }
 
 + (NSFont *)fontWithDesc:(NSString *)fontDesc {
