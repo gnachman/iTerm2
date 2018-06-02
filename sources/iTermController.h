@@ -171,7 +171,6 @@ void OnHotKeyEvent(void);
 
 - (void)openSingleUseWindowWithCommand:(NSString *)command;
 - (void)openSingleUseWindowWithCommand:(NSString *)command inject:(NSData *)injection;
-- (void)migrateApplicationSupportDirectoryIfNeeded;
 
 @end
 

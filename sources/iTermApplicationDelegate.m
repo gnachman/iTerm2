@@ -47,6 +47,7 @@
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchServices.h"
 #import "iTermLSOF.h"
+#import "iTermMigrationHelper.h"
 #import "iTermModifierRemapper.h"
 #import "iTermPreferences.h"
 #import "iTermPythonRuntimeDownloader.h"
@@ -944,7 +945,7 @@ static BOOL hasBecomeActive = NO;
         DLog(@"applicationWillFinishLaunching:");
     }
 
-    [[iTermController sharedInstance] migrateApplicationSupportDirectoryIfNeeded];
+    [iTermMigrationHelper migrateApplicationSupportDirectoryIfNeeded];
     [self buildScriptMenu:nil];
 
     // Fix up various user defaults settings.
