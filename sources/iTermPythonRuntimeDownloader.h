@@ -16,8 +16,7 @@ extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
 // Returns the path of the standard python binary.
 @property (nonatomic, readonly) NSString *pathToStandardPyenvPython;
 
-// Returns the path of the standard pyenv folder.
-@property (nonatomic, readonly) NSString *pathToStandardPyenv;
+- (NSString *)pathToStandardPyenvCreatingSymlinkIfNeeded:(BOOL)createSymlink;
 
 + (instancetype)sharedInstance;
 

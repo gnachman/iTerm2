@@ -29,7 +29,9 @@
 - (NSString *)applicationSupportDirectory;
 
 // Gives a symlink called ApplicationSupport because shebangs can't handle spaces and this breaks pyenv.
+// Creates the symlink if it doesn't already exist
 - (NSString *)applicationSupportDirectoryWithoutSpaces;
+- (NSString *)applicationSupportDirectoryWithoutSpacesWithoutCreatingSymlink;
 
 - (NSString *)temporaryDirectory;
 

@@ -440,7 +440,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)runAutoLaunchScript:(NSString *)path {
-    [iTermAPIScriptLauncher launchScript:path];
+    [self launchScriptWithAbsolutePath:path];
 }
 
 - (void)runLegacyAutoLaunchScripts {

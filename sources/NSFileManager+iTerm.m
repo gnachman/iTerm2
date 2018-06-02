@@ -116,6 +116,19 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return result;
 }
 
+- (NSString *)applicationSupportDirectoryWithoutSpacesWithoutCreatingSymlink {
+    NSError *error;
+    NSString *realAppSupport = [self findOrCreateDirectory:NSApplicationSupportDirectory
+                                                  inDomain:NSUserDomainMask
+                                       appendPathComponent:nil
+                                                     error:&error];
+    NSString *nospaces = [realAppSupport stringByReplacingOccurrencesOfString:@"Application Support" withString:@"ApplicationSupport"];
+    NSString *executableName =
+        [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
+    return [nospaces stringByAppendingPathComponent:executableName];
+    return nospaces;
+}
+
 - (NSString *)applicationSupportDirectoryWithoutSpaces {
     NSError *error;
     NSString *realAppSupport = [self findOrCreateDirectory:NSApplicationSupportDirectory

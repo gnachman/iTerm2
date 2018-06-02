@@ -45,15 +45,21 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 }
 
 - (NSString *)pathToStandardPyenvPython {
-    return [self pyenvAt:[self pathToStandardPyenv]];
+    return [self pyenvAt:[self pathToStandardPyenvCreatingSymlinkIfNeeded:NO]];
 }
 
-- (NSString *)pathToStandardPyenv {
-    return [[[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpaces] stringByAppendingPathComponent:@"iterm2env"];
+- (NSString *)pathToStandardPyenvCreatingSymlinkIfNeeded:(BOOL)createSymlink {
+    NSString *appsupport;
+    if (createSymlink) {
+        appsupport = [[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpaces];
+    } else {
+        appsupport = [[NSFileManager defaultManager] applicationSupportDirectoryWithoutSpacesWithoutCreatingSymlink];
+    }
+    return [appsupport stringByAppendingPathComponent:@"iterm2env"];
 }
 
 - (NSURL *)pathToMetadata {
-    NSString *path = [self pathToStandardPyenv];
+    NSString *path = [self pathToStandardPyenvCreatingSymlinkIfNeeded:NO];
     path = [path stringByAppendingPathComponent:@"iterm2env-metadata.json"];
     return [NSURL fileURLWithPath:path];
 }
@@ -63,8 +69,8 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 }
 
 // Parent directory of standard pyenv folder
-- (NSURL *)urlOfStandardEnvironmentContainer {
-    NSString *path = [self pathToStandardPyenv];
+- (NSURL *)urlOfStandardEnvironmentContainerCreatingSymlink {
+    NSString *path = [self pathToStandardPyenvCreatingSymlinkIfNeeded:YES];
     path = [path stringByDeletingLastPathComponent];
     return [NSURL fileURLWithPath:path];
 }
@@ -224,7 +230,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         NSString *zip = [self pathToZIP];
         [[NSFileManager defaultManager] removeItemAtPath:zip error:nil];
         [[NSFileManager defaultManager] moveItemAtPath:tempfile toPath:zip error:nil];
-        NSURL *container = [self urlOfStandardEnvironmentContainer];
+        NSURL *container = [self urlOfStandardEnvironmentContainerCreatingSymlink];
         [self installPythonEnvironmentTo:container completion:^(BOOL ok) {
             if (ok) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermPythonRuntimeDownloaderDidInstallRuntimeNotification object:nil];
