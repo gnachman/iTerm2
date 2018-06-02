@@ -1159,7 +1159,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
 - (NSString *)controlCharacter {
     unichar c = [[self lowercaseString] characterAtIndex:0];
-    if (c < 'a' || c >= 'z') {
+    if (c < 'a' || c > 'z') {
         return @"";
     }
     c -= 'a' - 1;
