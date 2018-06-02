@@ -206,6 +206,17 @@ NSString*    gCrashLogString = nil;
     [super dealloc];
 }
 
+- (BOOL)europeanLocale {
+    if (@available(macOS 10.12, *)) {
+        NSString *cc = [[NSLocale currentLocale] countryCode];
+        NSArray *europeanCountryCodes = @[ @"BE", @"BG", @"CZ", @"DK", @"DE", @"EE", @"IE", @"EL", @"ES", @"FR",
+                                           @"HR", @"IT", @"CY", @"LV", @"LT", @"LU", @"HU", @"MT", @"NL", @"AT",
+                                           @"PL", @"PT", @"RO", @"SI", @"SK", @"FI", @"SE", @"UK" ];
+        return !cc || [europeanCountryCodes containsObject:cc];
+    } else {
+        return YES;
+    }
+}
 
 -(void)    awakeFromNib
 {
@@ -226,9 +237,17 @@ NSString*    gCrashLogString = nil;
         userMessage = [[[informationField string] mutableCopy] autorelease];
     else
         userMessage = [[NSLocalizedStringFromTable(@"FEEDBACK_MESSAGE_TEXT",@"UKCrashReporter",@"") mutableCopy] autorelease];
+
+    NSString *userName = NSFullUserName();
+    NSString *emailAddr = NSLocalizedStringFromTable(@"MISSING_EMAIL_ADDRESS",@"UKCrashReporter",@"");
+
+    if ([self europeanLocale]) {
+        userName = @"<Your Name Here>";
+        emailAddr = NSLocalizedStringFromTable(@"MISSING_EMAIL_ADDRESS",@"UKCrashReporter",@"");
+    }
+
     [userMessage replaceOccurrencesOfString: @"%%LONGUSERNAME" withString: NSFullUserName()
                 options: 0 range: NSMakeRange(0, [userMessage length])];
-    NSString*        emailAddr = NSLocalizedStringFromTable(@"MISSING_EMAIL_ADDRESS",@"UKCrashReporter",@"");
     [userMessage replaceOccurrencesOfString: @"%%EMAILADDRESS" withString: emailAddr
                 options: 0 range: NSMakeRange(0, [userMessage length])];
     [informationField setString: userMessage];
