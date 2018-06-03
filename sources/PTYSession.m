@@ -41,6 +41,7 @@
 #import "iTermScriptFunctionCall.h"
 #import "iTermSelection.h"
 #import "iTermSemanticHistoryController.h"
+#import "iTermSessionFactory.h"
 #import "iTermSessionHotkeyController.h"
 #import "iTermShellHistoryController.h"
 #import "iTermShortcut.h"
@@ -1194,11 +1195,18 @@ ITERM_WEAKLY_REFERENCEABLE
                                 isUTF8:aSession.isUTF8
                          substitutions:aSession.substitutions];
             } else {
-                [aSession runCommandWithOldCwd:oldCWD
-                                 forObjectType:objectType
-                                forceUseOldCWD:contents != nil && oldCWD.length
-                                 substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]
-                                   environment:nil];
+                iTermSessionFactory *factory = [[[iTermSessionFactory alloc] init] autorelease];
+                [factory attachOrLaunchCommandInSession:aSession
+                                              canPrompt:NO
+                                             objectType:objectType
+                                       serverConnection:nil
+                                              urlString:nil
+                                           allowURLSubs:NO
+                                            environment:@{}
+                                                 oldCWD:oldCWD
+                                         forceUseOldCWD:contents != nil && oldCWD.length
+                                          substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]
+                                       windowController:(PseudoTerminal *)aSession.delegate.realParentWindow];
             }
         }
 
@@ -1502,53 +1510,6 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         DLog(@"Can't attach to a server when runJobsInServers is off.");
     }
-}
-
-- (void)runCommandWithOldCwd:(NSString*)oldCWD
-               forObjectType:(iTermObjectType)objectType
-              forceUseOldCWD:(BOOL)forceUseOldCWD
-               substitutions:(NSDictionary *)substitutions
-                 environment:(NSDictionary *)environment {
-    NSString *pwd;
-    BOOL isUTF8;
-
-    // Grab the addressbook command
-    Profile* profile = [self profile];
-    Profile *profileForComputingCommand = profile;
-    if (forceUseOldCWD) {
-        NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
-        temp[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
-        profileForComputingCommand = temp;
-    }
-    NSString *cmd = [ITAddressBookMgr bookmarkCommand:profileForComputingCommand
-                                        forObjectType:objectType];
-    NSString *theName = [profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
-
-    if (forceUseOldCWD) {
-        pwd = oldCWD;
-    } else {
-        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile
-                                           forObjectType:objectType];
-    }
-    if ([pwd length] == 0) {
-        if (oldCWD) {
-            pwd = oldCWD;
-        } else {
-            pwd = NSHomeDirectory();
-        }
-    }
-    isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
-
-    [[_delegate realParentWindow] setName:theName forSession:self];
-
-    NSMutableDictionary *realEnvironment = [[environment mutableCopy] autorelease] ?: [NSMutableDictionary dictionary];
-    realEnvironment[@"PWD"] = pwd;
-
-    // Start the command
-    [self startProgram:cmd
-           environment:realEnvironment
-                isUTF8:isUTF8
-         substitutions:substitutions];
 }
 
 - (void)setSize:(VT100GridSize)size {

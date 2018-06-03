@@ -5852,7 +5852,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                             serverConnection:nil
                                                    urlString:nil
                                                 allowURLSubs:NO
+                                                 environment:@{}
                                                       oldCWD:oldCWD
+                                              forceUseOldCWD:NO
+                                               substitutions:nil
                                             windowController:self]) {
         [newSession terminate];
         [[self tabForSession:newSession] removeSession:newSession];
@@ -7724,14 +7727,17 @@ ITERM_WEAKLY_REFERENCEABLE
     // Add this session to our term and make it current
     [self addSessionInNewTab:aSession];
     if ([aSession screen]) {
-        [aSession runCommandWithOldCwd:previousDirectory
-                         forObjectType:objectType
-                        forceUseOldCWD:NO
-                         substitutions:substitutions
-                           environment:environment];
-        if ([[[self window] title] compare:@"Window"] == NSOrderedSame) {
-            [self setWindowTitle];
-        }
+        [self.sessionFactory attachOrLaunchCommandInSession:aSession
+                                                  canPrompt:YES
+                                                 objectType:objectType
+                                           serverConnection:nil
+                                                  urlString:nil
+                                               allowURLSubs:NO
+                                                environment:environment
+                                                     oldCWD:previousDirectory
+                                             forceUseOldCWD:NO
+                                              substitutions:substitutions
+                                           windowController:self];
         if (preferredName) {
             [self setName:preferredName forSession:aSession];
         }

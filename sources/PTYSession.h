@@ -520,12 +520,6 @@ typedef enum {
 // Set rows, columns from arrangement.
 - (void)resizeFromArrangement:(NSDictionary *)arrangement;
 
-- (void)runCommandWithOldCwd:(NSString*)oldCWD
-               forObjectType:(iTermObjectType)objectType
-              forceUseOldCWD:(BOOL)forceUseOldCWD
-               substitutions:(NSDictionary *)substitutions
-                 environment:(NSDictionary *)environment;
-
 - (void)startProgram:(NSString *)program
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8

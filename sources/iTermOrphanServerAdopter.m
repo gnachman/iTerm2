@@ -111,13 +111,16 @@
                                                        PTYSession *session = [term.sessionFactory newSessionWithProfile:defaultProfile];
                                                        [term addSessionInNewTab:session];
                                                        const BOOL ok = [term.sessionFactory attachOrLaunchCommandInSession:session
-                                                                                                  canPrompt:NO
-                                                                                                 objectType:iTermWindowObject
-                                                                                           serverConnection:&theServerConnection
-                                                                                                  urlString:nil
-                                                                                               allowURLSubs:NO
-                                                                                                     oldCWD:nil
-                                                                                           windowController:term];
+                                                                                                                 canPrompt:NO
+                                                                                                                objectType:iTermWindowObject
+                                                                                                          serverConnection:&theServerConnection
+                                                                                                                 urlString:nil
+                                                                                                              allowURLSubs:NO
+                                                                                                               environment:@{}
+                                                                                                                    oldCWD:nil
+                                                                                                            forceUseOldCWD:NO
+                                                                                                             substitutions:nil
+                                                                                                          windowController:term];
                                                        return ok ? session : nil;
                                                    }];
     NSLog(@"restored an orphan");

@@ -1170,7 +1170,10 @@ static iTermController *gSharedInstance;
                                                            serverConnection:nil
                                                                   urlString:url
                                                                allowURLSubs:YES
+                                                                environment:@{}
                                                                      oldCWD:nil
+                                                             forceUseOldCWD:NO
+                                                              substitutions:nil
                                                            windowController:term];
         if (!ok) {
             session = nil;

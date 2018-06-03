@@ -11,6 +11,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermProfilePreferences.h"
 #import "iTermParameterPanelWindowController.h"
+#import "NSDictionary+iTerm.h"
 #import "PTYSession.h"
 #import "PseudoTerminal.h"
 
@@ -58,7 +59,10 @@ NS_ASSUME_NONNULL_BEGIN
                                         serverConnection:serverConnection
                                                urlString:urlString
                                             allowURLSubs:YES
+                                             environment:@{}
                                                   oldCWD:nil
+                                          forceUseOldCWD:NO
+                                           substitutions:nil
                                         windowController:windowController];
     if (!ok) {
         return nil;
@@ -98,27 +102,48 @@ NS_ASSUME_NONNULL_BEGIN
                       serverConnection:(iTermFileDescriptorServerConnection * _Nullable)serverConnection
                              urlString:(nullable NSString *)urlString
                           allowURLSubs:(BOOL)allowURLSubs
+                           environment:(NSDictionary *)environment
                                 oldCWD:(nullable NSString *)oldCWD
+                        forceUseOldCWD:(BOOL)forceUseOldCWD
+                         substitutions:(nullable NSDictionary *)providedSubs
                       windowController:(PseudoTerminal * _Nonnull)windowController {
     Profile *profile = [aSession profile];
-    NSString *cmd = [ITAddressBookMgr bookmarkCommand:profile
+    Profile *profileForComputingCommand;
+
+    if (forceUseOldCWD) {
+        profileForComputingCommand = [profile dictionaryBySettingObject:kProfilePreferenceInitialDirectoryCustomValue forKey:KEY_CUSTOM_DIRECTORY];
+    } else {
+        profileForComputingCommand = profile;
+    }
+
+    NSString *cmd = [ITAddressBookMgr bookmarkCommand:profileForComputingCommand
                                         forObjectType:objectType];
     NSString *name = profile[KEY_NAME];
 
     // If the command or name have any $$VARS$$ not accounted for above, prompt the user for
     // substitutions.
-    NSDictionary *substitutions = [self substitutionsForCommand:cmd
-                                                    sessionName:name
-                                              baseSubstitutions:allowURLSubs ? [self substitutionsForURL:urlString] : @{}
-                                                      canPrompt:canPrompt
-                                                         window:windowController.window];
+    NSDictionary *substitutions;
+    if (providedSubs) {
+        substitutions = providedSubs;
+    } else {
+        substitutions = [self substitutionsForCommand:cmd
+                                          sessionName:name
+                                    baseSubstitutions:allowURLSubs ? [self substitutionsForURL:urlString] : @{}
+                                            canPrompt:canPrompt
+                                               window:windowController.window];
+    }
     if (!substitutions) {
         return NO;
     }
     cmd = [cmd stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
 
     name = [name stringByPerformingSubstitutions:substitutions];
-    NSString *pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile forObjectType:objectType];
+    NSString *pwd;
+    if (forceUseOldCWD) {
+        pwd = oldCWD;
+    } else {
+        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile forObjectType:objectType];
+    }
     if ([pwd length] == 0) {
         if (oldCWD) {
             pwd = oldCWD;
@@ -126,7 +151,7 @@ NS_ASSUME_NONNULL_BEGIN
             pwd = NSHomeDirectory();
         }
     }
-    NSDictionary *env = @{ @"PWD": pwd };
+    environment = [environment dictionaryBySettingObject:pwd forKey:@"PWD"];
     BOOL isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
     [windowController setName:name forSession:aSession];
@@ -137,7 +162,7 @@ NS_ASSUME_NONNULL_BEGIN
         [aSession attachToServer:*serverConnection];
     } else {
         [self startProgram:cmd
-               environment:env
+               environment:environment
                     isUTF8:isUTF8
                  inSession:aSession
              substitutions:substitutions
