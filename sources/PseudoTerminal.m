@@ -7682,15 +7682,6 @@ ITERM_WEAKLY_REFERENCEABLE
         previousDirectory = [currentSession currentLocalWorkingDirectory];
     }
 
-    // Initialize a new session
-    PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
-    [[aSession screen] setUnlimitedScrollback:[[profile objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
-    [[aSession screen] setMaxScrollbackLines:[[profile objectForKey:KEY_SCROLLBACK_LINES] intValue]];
-
-    // If a command was provided, create a temporary copy of the profile dictionary that runs
-    // the user-supplied command in lieu of the profile's command.
-    NSString *preferredName = nil;
-
     iTermObjectType objectType;
     if ([_contentView.tabView numberOfTabViewItems] == 0) {
         objectType = iTermWindowObject;
@@ -7702,46 +7693,30 @@ ITERM_WEAKLY_REFERENCEABLE
         commandForSubs = [ITAddressBookMgr bookmarkCommand:profile
                                              forObjectType:objectType];
     }
-    NSDictionary *substitutions = [self.sessionFactory substitutionsForCommand:commandForSubs ?: @""
-                                                                   sessionName:profile[KEY_NAME] ?: @""
-                                                             baseSubstitutions:@{}
-                                                                     canPrompt:YES
-                                                                        window:self.window];
-    if (!substitutions) {
-        return nil;
-    }
-    commandForSubs = [commandForSubs stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
     if (command) {
-        // Create a modified profile to run "command".
-        NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
-        temp[KEY_CUSTOM_COMMAND] = @"Yes";
-        temp[KEY_COMMAND_LINE] = command;
-        profile = temp;
+        profile = [[profile
+                    dictionaryBySettingObject:@"Yes" forKey:KEY_CUSTOM_COMMAND]
+                    dictionaryBySettingObject:command forKey:KEY_COMMAND_LINE];
 
-    } else if (substitutions.count && profile[KEY_NAME]) {
-        preferredName = [profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
 
-    // set our preferences
-    [aSession setProfile:profile];
+    // Initialize a new session
+    PTYSession *aSession = [self.sessionFactory newSessionWithProfile:profile];
+
     // Add this session to our term and make it current
     [self addSessionInNewTab:aSession];
-    if ([aSession screen]) {
-        [self.sessionFactory attachOrLaunchCommandInSession:aSession
-                                                  canPrompt:YES
-                                                 objectType:objectType
-                                           serverConnection:nil
-                                                  urlString:nil
-                                               allowURLSubs:NO
-                                                environment:environment
-                                                     oldCWD:previousDirectory
-                                             forceUseOldCWD:NO
-                                              substitutions:substitutions
-                                           windowController:self];
-        if (preferredName) {
-            [self setName:preferredName forSession:aSession];
-        }
-    }
+
+    [self.sessionFactory attachOrLaunchCommandInSession:aSession
+                                              canPrompt:YES
+                                             objectType:objectType
+                                       serverConnection:nil
+                                              urlString:nil
+                                           allowURLSubs:NO
+                                            environment:environment
+                                                 oldCWD:previousDirectory
+                                         forceUseOldCWD:NO
+                                          substitutions:nil
+                                       windowController:self];
 
     // On Lion, a window that can join all spaces can't go fullscreen.
     if ([self numberOfTabs] == 1 &&
