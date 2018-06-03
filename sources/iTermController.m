@@ -34,6 +34,7 @@
 #import "iTermApplication.h"
 #import "iTermBuriedSessions.h"
 #import "iTermHotKeyController.h"
+#import "iTermSessionFactory.h"
 #import "iTermWebSocketCookieJar.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -1161,10 +1162,12 @@ static iTermController *gSharedInstance;
         session = block(aDict, term);
     } else if (url) {
         DLog(@"Creating a new session");
-        session = [term createSessionWithProfile:aDict
-                                         withURL:url
-                                   forObjectType:objectType
-                                serverConnection:NULL];
+        session = [term.sessionFactory createSessionWithProfile:aDict
+                                                        withURL:url
+                                                  forObjectType:objectType
+                                               serverConnection:NULL
+                                                      canPrompt:YES
+                                               windowController:term];
     } else {
         session = [term createTabWithProfile:aDict withCommand:command environment:nil];
     }

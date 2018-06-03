@@ -12,6 +12,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermFileDescriptorSocketPath.h"
+#import "iTermSessionFactory.h"
 #import "NSApplication+iTerm.h"
 #import "PseudoTerminal.h"
 
@@ -107,11 +108,12 @@
                                                  command:nil
                                                    block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
                                                        iTermFileDescriptorServerConnection theServerConnection = serverConnection;
-                                                       term.disablePromptForSubstitutions = YES;
-                                                       return [term createSessionWithProfile:defaultProfile
-                                                                                     withURL:nil
-                                                                               forObjectType:iTermWindowObject
-                                                                            serverConnection:&theServerConnection];
+                                                       return [term.sessionFactory createSessionWithProfile:defaultProfile
+                                                                                                    withURL:nil
+                                                                                              forObjectType:iTermWindowObject
+                                                                                           serverConnection:&theServerConnection
+                                                                                                  canPrompt:NO
+                                                                                           windowController:term];
                                                    }];
     NSLog(@"restored an orphan");
     [aSession showOrphanAnnouncement];

@@ -18,6 +18,7 @@
 @class PTYSession;
 @class PSMTabBarControl;
 @class iTermPromptOnCloseReason;
+@class iTermSessionFactory;
 @class iTermToolbeltView;
 @class iTermController;
 @class TmuxController;
@@ -69,10 +70,6 @@ extern NSString *const iTermSelectedTabDidChange;
 // Indicates if the window is fully initialized.
 @property(nonatomic, readonly) BOOL windowInitialized;
 
-// If set, all substitutions whose values are unknown will be taken to be empty string.
-// This is useful when attaching to an orphaned server.
-@property(nonatomic, assign) BOOL disablePromptForSubstitutions;
-
 // If the window is "anchored" to a screen, this returns that screen. Otherwise, it returns the
 // current screen. If the window doesn't have a current screen, it returns the
 // preferred screen from the profile. If headless, this returns nil. Consider
@@ -91,6 +88,8 @@ extern NSString *const iTermSelectedTabDidChange;
 @property(nonatomic, readonly) BOOL openInCurrentSpace;
 
 @property(nonatomic, readonly) BOOL hasBeenKeySinceActivation;
+
+@property(nonatomic, readonly) iTermSessionFactory *sessionFactory;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
@@ -297,11 +296,6 @@ extern NSString *const iTermSelectedTabDidChange;
 // Return all sessions in all tabs.
 - (NSArray*)allSessions;
 
-- (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry
-                                 withURL:(NSString *)url
-                           forObjectType:(iTermObjectType)objectType
-                        serverConnection:(iTermFileDescriptorServerConnection *)serverConnection;
-
 // Add a new session to this window with the given addressbook entry.
 // The optional command overrides the profile's settings.
 - (PTYSession *)createTabWithProfile:(Profile *)profile
@@ -352,7 +346,7 @@ extern NSString *const iTermSelectedTabDidChange;
 // Returns a restorable session that will restore the split pane, tab, or window, as needed.
 - (iTermRestorableSession *)restorableSessionForSession:(PTYSession *)session;
 
-- (PTYSession*)newSessionWithBookmark:(Profile*)bookmark;
+- (void)addSessionInNewTab:(PTYSession *)object;
 
 @end
 
