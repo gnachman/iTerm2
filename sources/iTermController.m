@@ -1162,12 +1162,19 @@ static iTermController *gSharedInstance;
         session = block(aDict, term);
     } else if (url) {
         DLog(@"Creating a new session");
-        session = [term.sessionFactory createSessionWithProfile:aDict
-                                                        withURL:url
-                                                  forObjectType:objectType
-                                               serverConnection:NULL
-                                                      canPrompt:YES
-                                               windowController:term];
+        session = [term.sessionFactory newSessionWithProfile:aDict];
+        [term addSessionInNewTab:session];
+        const BOOL ok = [term.sessionFactory attachOrLaunchCommandInSession:session
+                                                                  canPrompt:YES
+                                                                 objectType:objectType
+                                                           serverConnection:nil
+                                                                  urlString:url
+                                                               allowURLSubs:YES
+                                                                     oldCWD:nil
+                                                           windowController:term];
+        if (!ok) {
+            session = nil;
+        }
     } else {
         session = [term createTabWithProfile:aDict withCommand:command environment:nil];
     }

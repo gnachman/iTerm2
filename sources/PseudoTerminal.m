@@ -5846,10 +5846,14 @@ ITERM_WEAKLY_REFERENCEABLE
             targetSession:targetSession
              performSetup:YES];
 
-    if (![self.sessionFactory runCommandInSession:newSession
-                                            inCwd:oldCWD
-                                    forObjectType:iTermPaneObject
-                                 windowController:self]) {
+    if (![self.sessionFactory attachOrLaunchCommandInSession:newSession
+                                                   canPrompt:YES
+                                                  objectType:iTermPaneObject
+                                            serverConnection:nil
+                                                   urlString:nil
+                                                allowURLSubs:NO
+                                                      oldCWD:oldCWD
+                                            windowController:self]) {
         [newSession terminate];
         [[self tabForSession:newSession] removeSession:newSession];
     }

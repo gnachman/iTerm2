@@ -21,12 +21,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL promptingDisabled;
 
 - (PTYSession *)newSessionWithProfile:(Profile *)profile;
-- (PTYSession *)createSessionWithProfile:(NSDictionary *)profile
-                                 withURL:(nullable NSString *)urlString
-                           forObjectType:(iTermObjectType)objectType
-                        serverConnection:(nullable iTermFileDescriptorServerConnection *)serverConnection
-                               canPrompt:(BOOL)canPrompt
-                        windowController:(PseudoTerminal *)windowController;
 
 // pass self.disablePromptForSubstitutions for promptingDisabled
 - (NSDictionary *)substitutionsForCommand:(NSString *)command
@@ -35,12 +29,14 @@ NS_ASSUME_NONNULL_BEGIN
                                 canPrompt:(BOOL)canPrompt
                                    window:(NSWindow *)window;
 
-- (BOOL)runCommandInSession:(PTYSession *)aSession
-                      inCwd:(NSString *)oldCWD
-              forObjectType:(iTermObjectType)objectType
-           windowController:(PseudoTerminal *)windowController;
-
-
+- (BOOL)attachOrLaunchCommandInSession:(PTYSession *)aSession
+                             canPrompt:(BOOL)canPrompt
+                            objectType:(iTermObjectType)objectType
+                      serverConnection:(iTermFileDescriptorServerConnection * _Nullable)serverConnection
+                             urlString:(nullable NSString *)urlString
+                          allowURLSubs:(BOOL)allowURLSubs
+                                oldCWD:(nullable NSString *)oldCWD
+                      windowController:(PseudoTerminal * _Nonnull)windowController;
 @end
 
 NS_ASSUME_NONNULL_END
