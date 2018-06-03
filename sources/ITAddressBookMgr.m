@@ -489,26 +489,26 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
             [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharactersIncludingNewlines:YES]];
 }
 
-+ (NSString*)loginShellCommandForBookmark:(Profile*)bookmark
++ (NSString*)loginShellCommandForBookmark:(Profile*)profile
                             forObjectType:(iTermObjectType)objectType {
     NSString *customDirectoryString;
-    if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryAdvancedValue]) {
+    if ([profile[KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryAdvancedValue]) {
         switch (objectType) {
             case iTermWindowObject:
-                customDirectoryString = [bookmark objectForKey:KEY_AWDS_WIN_OPTION];
+                customDirectoryString = profile[KEY_AWDS_WIN_OPTION];
                 break;
             case iTermTabObject:
-                customDirectoryString = [bookmark objectForKey:KEY_AWDS_TAB_OPTION];
+                customDirectoryString = profile[KEY_AWDS_TAB_OPTION];
                 break;
             case iTermPaneObject:
-                customDirectoryString = [bookmark objectForKey:KEY_AWDS_PANE_OPTION];
+                customDirectoryString = profile[KEY_AWDS_PANE_OPTION];
                 break;
             default:
                 NSLog(@"Bogus object type %d", (int)objectType);
                 customDirectoryString = kProfilePreferenceInitialDirectoryHomeValue;
         }
     } else {
-        customDirectoryString = [bookmark objectForKey:KEY_CUSTOM_DIRECTORY];
+        customDirectoryString = profile[KEY_CUSTOM_DIRECTORY];
     }
 
     if ([customDirectoryString isEqualToString:kProfilePreferenceInitialDirectoryHomeValue]) {
@@ -535,9 +535,9 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
 
 + (NSString*)bookmarkCommand:(Profile*)bookmark
                forObjectType:(iTermObjectType)objectType {
-    BOOL custom = [[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"];
+    BOOL custom = [bookmark[KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"];
     if (custom) {
-        NSString *command = [bookmark objectForKey:KEY_COMMAND_LINE];
+        NSString *command = bookmark[KEY_COMMAND_LINE];
         if ([[command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] ] length] > 0) {
             return command;
         }
