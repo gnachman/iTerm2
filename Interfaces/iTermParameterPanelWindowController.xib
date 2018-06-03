@@ -9,7 +9,6 @@
         <customObject id="-2" userLabel="File's Owner" customClass="iTermParameterPanelWindowController">
             <connections>
                 <outlet property="parameterName" destination="lDk-dc-bHI" id="Vy0-Hj-3cG"/>
-                <outlet property="parameterPanel" destination="n1r-T9-CaM" id="1Xe-WB-wrJ"/>
                 <outlet property="parameterPrompt" destination="DwN-zm-nmN" id="2b2-jV-Cof"/>
                 <outlet property="parameterValue" destination="Hgc-jG-WCw" id="SsO-v6-crJ"/>
                 <outlet property="window" destination="n1r-T9-CaM" id="6ba-Rp-inT"/>
