@@ -49,64 +49,22 @@ NS_ASSUME_NONNULL_BEGIN
     PTYSession *aSession;
 
     // Initialize a new session
-    aSession = [[PTYSession alloc] initSynthetic:NO];
-    [[aSession screen] setUnlimitedScrollback:[profile[KEY_UNLIMITED_SCROLLBACK] boolValue]];
-    [[aSession screen] setMaxScrollbackLines:[profile[KEY_SCROLLBACK_LINES] intValue]];
-    // set our preferences
-    [aSession setProfile:profile];
+    aSession = [self newSessionWithProfile:profile];
     // Add this session to our term and make it current
     [windowController addSessionInNewTab:aSession];
-    if ([aSession screen]) {
-        // We process the cmd to insert URL parts
-        NSString *cmd = [ITAddressBookMgr bookmarkCommand:profile
-                                            forObjectType:objectType];
-        NSString *name = profile[KEY_NAME];
-        NSURL *url = [NSURL URLWithString:urlString];
 
-        // Grab the addressbook command
-        NSDictionary *substitutions = @{ @"$$URL$$": urlString ?: @"",
-                                         @"$$HOST$$": [url host] ?: @"",
-                                         @"$$USER$$": [url user] ?: @"",
-                                         @"$$PASSWORD$$": [url password] ?: @"",
-                                         @"$$PORT$$": [url port] ? [[url port] stringValue] : @"",
-                                         @"$$PATH$$": [url path] ?: @"",
-                                         @"$$RES$$": [url resourceSpecifier] ?: @"" };
-
-        // If the command or name have any $$VARS$$ not accounted for above, prompt the user for
-        // substitutions.
-        substitutions = [self substitutionsForCommand:cmd
-                                          sessionName:name
-                                    baseSubstitutions:substitutions
-                                            canPrompt:canPrompt
-                                               window:windowController.window];
-        if (!substitutions) {
-            return nil;
-        }
-        cmd = [cmd stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
-
-        NSString *pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile forObjectType:objectType];
-        if ([pwd length] == 0) {
-            pwd = NSHomeDirectory();
-        }
-        NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
-        BOOL isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
-
-        [windowController setName:[name stringByPerformingSubstitutions:substitutions]
-                       forSession:aSession];
-
-        // Start the command
-        if (serverConnection) {
-            assert([iTermAdvancedSettingsModel runJobsInServers]);
-            [aSession attachToServer:*serverConnection];
-        } else {
-            [self startProgram:cmd
-                   environment:env
-                        isUTF8:isUTF8
-                     inSession:aSession
-                 substitutions:substitutions
-              windowController:windowController];
-        }
+    // We process the cmd to insert URL parts
+    const BOOL ok = [self attachOrLaunchCommandInSession:aSession
+                                               canPrompt:canPrompt
+                                              objectType:objectType
+                                                 profile:profile
+                                        serverConnection:serverConnection
+                                               urlString:urlString
+                                        windowController:windowController];
+    if (!ok) {
+        return nil;
     }
+
     return aSession;
 }
 
@@ -184,6 +142,64 @@ NS_ASSUME_NONNULL_BEGIN
         return YES;
     }
     return NO;
+}
+
+- (BOOL)attachOrLaunchCommandInSession:(PTYSession *)aSession
+                             canPrompt:(BOOL)canPrompt
+                            objectType:(iTermObjectType)objectType
+                               profile:(NSDictionary * _Nonnull)profile
+                      serverConnection:(iTermFileDescriptorServerConnection * _Nullable)serverConnection
+                             urlString:(NSString * _Nullable)urlString
+                      windowController:(PseudoTerminal * _Nonnull)windowController {
+    NSString *cmd = [ITAddressBookMgr bookmarkCommand:profile
+                                        forObjectType:objectType];
+    NSString *name = profile[KEY_NAME];
+    NSURL *url = [NSURL URLWithString:urlString];
+
+    // Grab the addressbook command
+    NSDictionary *substitutions = @{ @"$$URL$$": urlString ?: @"",
+                                     @"$$HOST$$": [url host] ?: @"",
+                                     @"$$USER$$": [url user] ?: @"",
+                                     @"$$PASSWORD$$": [url password] ?: @"",
+                                     @"$$PORT$$": [url port] ? [[url port] stringValue] : @"",
+                                     @"$$PATH$$": [url path] ?: @"",
+                                     @"$$RES$$": [url resourceSpecifier] ?: @"" };
+
+    // If the command or name have any $$VARS$$ not accounted for above, prompt the user for
+    // substitutions.
+    substitutions = [self substitutionsForCommand:cmd
+                                      sessionName:name
+                                baseSubstitutions:substitutions
+                                        canPrompt:canPrompt
+                                           window:windowController.window];
+    if (!substitutions) {
+        return NO;
+    }
+    cmd = [cmd stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
+
+    NSString *pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile forObjectType:objectType];
+    if ([pwd length] == 0) {
+        pwd = NSHomeDirectory();
+    }
+    NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
+    BOOL isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
+
+    [windowController setName:[name stringByPerformingSubstitutions:substitutions]
+                   forSession:aSession];
+
+    // Start the command
+    if (serverConnection) {
+        assert([iTermAdvancedSettingsModel runJobsInServers]);
+        [aSession attachToServer:*serverConnection];
+    } else {
+        [self startProgram:cmd
+               environment:env
+                    isUTF8:isUTF8
+                 inSession:aSession
+             substitutions:substitutions
+          windowController:windowController];
+    }
+    return YES;
 }
 
 // Execute the given program and set the window title if it is uninitialized.
