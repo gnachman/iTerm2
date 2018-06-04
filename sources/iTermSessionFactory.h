@@ -22,13 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (PTYSession *)newSessionWithProfile:(Profile *)profile;
 
-// pass self.disablePromptForSubstitutions for promptingDisabled
-- (NSDictionary *)substitutionsForCommand:(NSString *)command
-                              sessionName:(NSString *)name
-                        baseSubstitutions:(NSDictionary *)substitutions
-                                canPrompt:(BOOL)canPrompt
-                                   window:(NSWindow *)window;
-
 - (BOOL)attachOrLaunchCommandInSession:(PTYSession *)aSession
                              canPrompt:(BOOL)canPrompt
                             objectType:(iTermObjectType)objectType
