@@ -507,9 +507,9 @@ static int MyForkPty(int *amaster,
     [alert runModal];
 }
 
-- (void)forkToRunJobInServerWithForkState:(iTermForkState *)forkState
-                                 ttyState:(iTermTTYState *)ttyState
-                                 tempPath:(NSString *)tempPath {
+static int iTermForkToRunJobInServer(iTermForkState *forkState,
+                                     iTermTTYState *ttyState,
+                                     NSString *tempPath) {
     int serverSocketFd = iTermFileDescriptorServerSocketBindListen(tempPath.UTF8String);
 
     // Get ready to run the server in a thread.
@@ -554,8 +554,10 @@ static int MyForkPty(int *amaster,
 
     // This closes serverConnectionFd and deadMansPipe[1] in the parent process but not the child.
     iTermFileDescriptorServerLog("Calling MyForkPty");
-    forkState->pid = _serverPid = MyForkPty(&fd, ttyState, serverConnectionFd, forkState->deadMansPipe[1]);
     forkState->numFileDescriptorsToPreserve = kNumFileDescriptorsToDup;
+    int fd;
+    forkState->pid = MyForkPty(&fd, ttyState, serverConnectionFd, forkState->deadMansPipe[1]);
+    return fd;
 }
 
 - (void)forkToRunJobDirectlyWithForkState:(iTermForkState *)forkState
@@ -603,17 +605,12 @@ static void iTermDidForkChild(const char *argpath,
     fprintf(stdout, "argpath=%s error=%s\n", argpath, strerror(errno));
 
     sleep(1);
-    _exit(-1);
 }
 
-static void iTermFailedToForkChild(char **newEnviron, NSString *progpath) {
+- (void)failedToForkWithEnvironment:(char **)newEnviron program:(NSString *)progpath {
     DLog(@"Unable to fork %@: %s", progpath, strerror(errno));
     [[iTermNotificationController sharedInstance] notify:@"Unable to fork!" withDescription:@"You may have too many processes already running."];
-
-    for (int j = 0; newEnviron[j]; j++) {
-        free(newEnviron[j]);
-    }
-    free(newEnviron);
+    [self freeEnvironment:newEnviron];
 }
 
 - (void)freeEnvironment:(char **)newEnviron {
@@ -655,6 +652,34 @@ static void iTermFailedToForkChild(char **newEnviron, NSString *progpath) {
     self.tty = [NSString stringWithUTF8String:ttyState->tty];
     fcntl(fd, F_SETFL, O_NONBLOCK);
     [[TaskNotifier sharedInstance] registerTask:self];
+}
+
+- (void)didForkParent:(const iTermForkState *)forkState newEnviron:(char **)newEnviron ttyState:(iTermTTYState *)ttyState {
+    [self freeEnvironment:newEnviron];
+
+    // Make sure the master side of the pty is closed on future exec() calls.
+    fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
+
+    if (forkState->connectionFd > 0) {
+        // Jobs run in servers. The client and server connected to each other
+        // before forking. The server will send us the child pid now. We don't
+        // really need the rest of the stuff in serverConnection since we already know
+        // it, but that's ok.
+        [self finishHandshakeWithJobInServer:forkState ttyState:ttyState];
+    } else {
+        // Jobs are direct children of iTerm2
+        [self finishLaunchingDirectChild:ttyState];
+    }
+}
+
+- (NSString *)pathToNewUnixDomainSocket {
+    // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
+    NSString *tempPath = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2-temp-socket."
+                                                                             suffix:@""];
+    if (tempPath == nil) {
+        [self showFailedToCreateTempSocketError];
+    }
+    return tempPath;
 }
 
 - (void)reallyLaunchWithPath:(NSString *)progpath
@@ -711,10 +736,8 @@ static void iTermFailedToForkChild(char **newEnviron, NSString *progpath) {
     BOOL closeFileDescriptors = !runJobsInServers;
     if (runJobsInServers) {
         // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
-        NSString *tempPath = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2-temp-socket."
-                                                                                 suffix:@""];
+        NSString *tempPath = [self pathToNewUnixDomainSocket];
         if (tempPath == nil) {
-            [self showFailedToCreateTempSocketError];
             if (completion != nil) {
                 completion();
             }
@@ -722,9 +745,8 @@ static void iTermFailedToForkChild(char **newEnviron, NSString *progpath) {
         }
 
         // Begin listening on that path as a unix domain socket.
-        [self forkToRunJobInServerWithForkState:&forkState
-                                       ttyState:&ttyState
-                                       tempPath:tempPath];
+        fd = iTermForkToRunJobInServer(&forkState, &ttyState, tempPath);
+        _serverPid = forkState.pid;
     } else {
         [self forkToRunJobDirectlyWithForkState:&forkState ttyState:&ttyState];
     }
@@ -732,26 +754,19 @@ static void iTermFailedToForkChild(char **newEnviron, NSString *progpath) {
         // Child
         // Do not start the new process with a signal handler.
         iTermDidForkChild(argpath, argv, closeFileDescriptors, &forkState, initialPwd, newEnviron);
+        _exit(-1);
     } else if (forkState.pid < (pid_t)0) {
         // Error
-        iTermFailedToForkChild(newEnviron, progpath);
+        [self failedToForkWithEnvironment:newEnviron program:progpath];
+        if (completion != nil) {
+            completion();
+        }
         return;
     }
     // Parent
-    [self freeEnvironment:newEnviron];
-
-    // Make sure the master side of the pty is closed on future exec() calls.
-    fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
-
-    if (forkState.connectionFd > 0) {
-        // Jobs run in servers. The client and server connected to each other
-        // before forking. The server will send us the child pid now. We don't
-        // really need the rest of the stuff in serverConnection since we already know
-        // it, but that's ok.
-        [self finishHandshakeWithJobInServer:&forkState ttyState:&ttyState];
-    } else {
-        // Jobs are direct children of iTerm2
-        [self finishLaunchingDirectChild:&ttyState];
+    [self didForkParent:&forkState newEnviron:newEnviron ttyState:&ttyState];
+    if (completion != nil) {
+        completion();
     }
 }
 
