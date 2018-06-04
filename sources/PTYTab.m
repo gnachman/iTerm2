@@ -4849,7 +4849,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                           powerOK &&
                           allSessionsAllowMetal &&
                           !allSessionsIdle &&
-                          numberOfSplitPanesIsReasonable);
+                          numberOfSplitPanesIsReasonable &&
+                          [_delegate tabCanUseMetal:self]);
     const BOOL ONLY_KEY_WINDOWS_USE_METAL = NO;
     const BOOL isKey = [[[self realParentWindow] window] isKeyWindow];
     const BOOL satisfiesKeyRequirement = (isKey || !ONLY_KEY_WINDOWS_USE_METAL);
