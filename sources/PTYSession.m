@@ -242,7 +242,7 @@ static const NSUInteger kMaxHosts = 100;
 @property(nonatomic, copy) NSString *jobName;
 
 // Info about what happens when the program is run so it can be restarted after
-// a broken pipe if the user so chooses.
+// a broken pipe if the user so chooses. Contains $$MACROS$$ pre-substitution.
 @property(nonatomic, copy) NSString *program;
 @property(nonatomic, copy) NSDictionary *environment;
 @property(nonatomic, assign) BOOL isUTF8;
@@ -1651,27 +1651,8 @@ ITERM_WEAKLY_REFERENCEABLE
             self.guid];
 }
 
-- (void)startProgram:(NSString *)command
-         environment:(NSDictionary *)environment
-              isUTF8:(BOOL)isUTF8
-       substitutions:(NSDictionary *)substitutions {
-    self.program = command;
-    self.environment = environment ?: @{};
-    self.isUTF8 = isUTF8;
-    self.substitutions = substitutions ?: @{};
-
-    NSString *program = [command stringByPerformingSubstitutions:substitutions];
-    NSArray *components = [program componentsInShellCommand];
-    NSArray *arguments;
-    if (components.count > 0) {
-        program = components[0];
-        arguments = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
-    } else {
-        arguments = @[];
-    }
-
-    NSMutableDictionary *env = [NSMutableDictionary dictionaryWithDictionary:environment];
-
+- (NSDictionary *)environmentForNewJobFromEnvironment:(NSDictionary *)environment substitutions:(NSDictionary *)substitutions {
+    NSMutableDictionary *env = [[environment mutableCopy] autorelease];
     if (env[TERM_ENVNAME] == nil) {
         env[TERM_ENVNAME] = _termVariable;
     }
@@ -1721,19 +1702,53 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_profile[KEY_NAME]) {
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
-    if ([_profile[KEY_AUTOLOG] boolValue]) {
-        [_shell startLoggingToFileWithPath:[self autoLogFilename]
-                              shouldAppend:NO];
+    return env;
+}
+
+- (NSArray<NSString *> *)argvForCommand:(NSString *)command substitutions:(NSDictionary *)substitutions {
+    NSString *program = [command stringByPerformingSubstitutions:substitutions];
+    NSArray *components = [program componentsInShellCommand];
+    NSArray *arguments;
+    if (components.count > 0) {
+        program = components[0];
+        arguments = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
+    } else {
+        arguments = @[];
     }
+    return [@[ program ] arrayByAddingObjectsFromArray:arguments ];
+}
+
+- (NSString *)autoLogFilenameIfEnabled {
+    if ([_profile[KEY_AUTOLOG] boolValue]) {
+        return [self autoLogFilename];
+    } else {
+        return nil;
+    }
+}
+
+- (void)startProgram:(NSString *)command
+         environment:(NSDictionary *)environment
+              isUTF8:(BOOL)isUTF8
+       substitutions:(NSDictionary *)substitutions {
+    self.program = command;
+    self.environment = environment ?: @{};
+    self.isUTF8 = isUTF8;
+    self.substitutions = substitutions ?: @{};
+
+    NSArray *argv = [self argvForCommand:command substitutions:substitutions];
+    NSDictionary *env = [self environmentForNewJobFromEnvironment:environment ?: @{}
+                                                    substitutions:substitutions];
+
     @synchronized(self) {
         _registered = YES;
     }
-    [_shell launchWithPath:program
-                 arguments:arguments
+    [_shell launchWithPath:argv[0]
+                 arguments:[argv subarrayFromIndex:1]
                environment:env
                      width:[_screen width]
                     height:[_screen height]
-                    isUTF8:isUTF8];
+                    isUTF8:isUTF8
+               autologPath:[self autoLogFilenameIfEnabled]];
     NSString *initialText = _profile[KEY_INITIAL_TEXT];
     if ([initialText length]) {
         [self writeTaskNoBroadcast:initialText];

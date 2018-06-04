@@ -439,7 +439,11 @@ static int MyForkPty(int *amaster,
            environment:(NSDictionary *)env
                  width:(int)width
                 height:(int)height
-                isUTF8:(BOOL)isUTF8 {
+                isUTF8:(BOOL)isUTF8
+           autologPath:(NSString *)autologPath {
+    if (autologPath) {
+        [self startLoggingToFileWithPath:autologPath shouldAppend:NO];
+    }
     struct termios term;
     struct winsize win;
     char theTtyname[PATH_MAX];
