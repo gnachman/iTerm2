@@ -1193,7 +1193,10 @@ ITERM_WEAKLY_REFERENCEABLE
                 [aSession startProgram:aSession.program
                            environment:aSession.environment
                                 isUTF8:aSession.isUTF8
-                         substitutions:aSession.substitutions];
+                         substitutions:aSession.substitutions
+                            completion:^{
+#warning TODO
+                            }];
             } else {
                 iTermSessionFactory *factory = [[[iTermSessionFactory alloc] init] autorelease];
                 [factory attachOrLaunchCommandInSession:aSession
@@ -1705,7 +1708,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return env;
 }
 
-- (NSArray<NSString *> *)argvForCommand:(NSString *)command substitutions:(NSDictionary *)substitutions {
+- (NSArray<NSString *> *)argvForCommand:(NSString *)command
+                          substitutions:(NSDictionary *)substitutions {
     NSString *program = [command stringByPerformingSubstitutions:substitutions];
     NSArray *components = [program componentsInShellCommand];
     NSArray *arguments;
@@ -1729,7 +1733,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)startProgram:(NSString *)command
          environment:(NSDictionary *)environment
               isUTF8:(BOOL)isUTF8
-       substitutions:(NSDictionary *)substitutions {
+       substitutions:(NSDictionary *)substitutions
+          completion:(void (^)(void))completion {
     self.program = command;
     self.environment = environment ?: @{};
     self.isUTF8 = isUTF8;
@@ -1748,7 +1753,17 @@ ITERM_WEAKLY_REFERENCEABLE
                      width:[_screen width]
                     height:[_screen height]
                     isUTF8:isUTF8
-               autologPath:[self autoLogFilenameIfEnabled]];
+               autologPath:[self autoLogFilenameIfEnabled]
+               synchronous:(completion == nil)
+                completion:^{
+                    [self sendInitialText];
+                    if (completion) {
+                        completion();
+                    }
+                }];
+}
+
+- (void)sendInitialText {
     NSString *initialText = _profile[KEY_INITIAL_TEXT];
     if ([initialText length]) {
         [self writeTaskNoBroadcast:initialText];
@@ -2715,7 +2730,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [self startProgram:_program
            environment:_environment
                 isUTF8:_isUTF8
-         substitutions:_substitutions];
+         substitutions:_substitutions
+            completion:nil];
 }
 
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle {

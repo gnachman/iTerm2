@@ -523,7 +523,8 @@ typedef enum {
 - (void)startProgram:(NSString *)program
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8
-       substitutions:(NSDictionary *)substitutions;
+       substitutions:(NSDictionary *)substitutions
+          completion:(void (^)(void))completion;
 
 // This is an alternative to runCommandWithOldCwd and startProgram. It attaches
 // to an existing server. Use only if [iTermAdvancedSettingsModel runJobsInServers]

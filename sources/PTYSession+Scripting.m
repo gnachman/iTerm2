@@ -35,7 +35,8 @@
     [self startProgram:args[@"command"]
            environment:@{}
                 isUTF8:[args[@"isUTF8"] boolValue]
-         substitutions:nil];
+         substitutions:nil
+            completion:nil];
 
     return;
 }

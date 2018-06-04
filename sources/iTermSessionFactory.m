@@ -192,8 +192,10 @@ NS_ASSUME_NONNULL_BEGIN
     [theSession startProgram:command
                  environment:prog_env
                       isUTF8:isUTF8
-               substitutions:substitutions];
-
+               substitutions:substitutions
+                  completion:^{
+                      [term setWindowTitle];
+                  }];
     if ([[[term window] title] isEqualToString:@"Window"]) {
         [term setWindowTitle];
     }

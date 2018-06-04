@@ -68,7 +68,9 @@ extern NSString *kCoprocessStatusChangeNotification;
                  width:(int)width
                 height:(int)height
                 isUTF8:(BOOL)isUTF8
-           autologPath:(NSString *)autologPath;
+           autologPath:(NSString *)autologPath
+           synchronous:(BOOL)synchronous
+            completion:(void (^)(void))completion;
 
 - (NSString*)currentJob:(BOOL)forceRefresh;
 
