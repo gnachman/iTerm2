@@ -1683,7 +1683,26 @@ ITERM_WEAKLY_REFERENCEABLE
             self.guid];
 }
 
-- (NSDictionary *)environmentForNewJobFromEnvironment:(NSDictionary *)environment substitutions:(NSDictionary *)substitutions {
+- (void)computeArgvForCommand:(NSString *)command
+                substitutions:(NSDictionary *)substitutions
+                  synchronous:(BOOL)synchronous
+                   completion:(void (^)(NSArray<NSString *> *))completion {
+    NSString *program = [command stringByPerformingSubstitutions:substitutions];
+    NSArray *components = [program componentsInShellCommand];
+    NSArray *arguments;
+    if (components.count > 0) {
+        program = components[0];
+        arguments = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
+    } else {
+        arguments = @[];
+    }
+    completion([@[ program ] arrayByAddingObjectsFromArray:arguments ]);
+}
+
+- (void)computeEnvironmentForNewJobFromEnvironment:(NSDictionary *)environment
+                                     substitutions:(NSDictionary *)substitutions
+                                       synchronous:(BOOL)synchronous
+                                        completion:(void (^)(NSDictionary *env))completion {
     NSMutableDictionary *env = [[environment mutableCopy] autorelease];
     if (env[TERM_ENVNAME] == nil) {
         env[TERM_ENVNAME] = _termVariable;
@@ -1734,21 +1753,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_profile[KEY_NAME]) {
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
-    return env;
-}
-
-- (NSArray<NSString *> *)argvForCommand:(NSString *)command
-                          substitutions:(NSDictionary *)substitutions {
-    NSString *program = [command stringByPerformingSubstitutions:substitutions];
-    NSArray *components = [program componentsInShellCommand];
-    NSArray *arguments;
-    if (components.count > 0) {
-        program = components[0];
-        arguments = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
-    } else {
-        arguments = @[];
-    }
-    return [@[ program ] arrayByAddingObjectsFromArray:arguments ];
+    completion(env);
 }
 
 - (NSString *)autoLogFilenameIfEnabled {
@@ -1769,27 +1774,27 @@ ITERM_WEAKLY_REFERENCEABLE
     self.isUTF8 = isUTF8;
     self.substitutions = substitutions ?: @{};
 
-    NSArray *argv = [self argvForCommand:command substitutions:substitutions];
-    NSDictionary *env = [self environmentForNewJobFromEnvironment:environment ?: @{}
-                                                    substitutions:substitutions];
-
-    @synchronized(self) {
-        _registered = YES;
-    }
-    [_shell launchWithPath:argv[0]
-                 arguments:[argv subarrayFromIndex:1]
-               environment:env
-                     width:[_screen width]
-                    height:[_screen height]
-                    isUTF8:isUTF8
-               autologPath:[self autoLogFilenameIfEnabled]
-               synchronous:(completion == nil)
-                completion:^{
-                    [self sendInitialText];
-                    if (completion) {
-                        completion();
-                    }
-                }];
+    [self computeArgvForCommand:command substitutions:substitutions synchronous:(completion == nil) completion:^(NSArray<NSString *> *argv) {
+        [self computeEnvironmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions synchronous:(completion == nil) completion:^(NSDictionary *env) {
+            @synchronized(self) {
+                _registered = YES;
+            }
+            [_shell launchWithPath:argv[0]
+                         arguments:[argv subarrayFromIndex:1]
+                       environment:env
+                             width:[_screen width]
+                            height:[_screen height]
+                            isUTF8:isUTF8
+                       autologPath:[self autoLogFilenameIfEnabled]
+                       synchronous:(completion == nil)
+                        completion:^{
+                            [self sendInitialText];
+                            if (completion) {
+                                completion();
+                            }
+                        }];
+        }];
+    }];
 }
 
 - (void)sendInitialText {
