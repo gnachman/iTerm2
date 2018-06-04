@@ -40,37 +40,6 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 
-- (PTYSession *)createSessionWithProfile:(NSDictionary *)profile
-                                 withURL:(nullable NSString *)urlString
-                           forObjectType:(iTermObjectType)objectType
-                        serverConnection:(nullable iTermFileDescriptorServerConnection *)serverConnection
-                               canPrompt:(BOOL)canPrompt
-                        windowController:(PseudoTerminal *)windowController {
-    DLog(@"-createSessionWithProfile:withURL:forObjectType:");
-    PTYSession *aSession = [self newSessionWithProfile:profile];
-    if (objectType == iTermTabObject) {
-        [windowController addSessionInNewTab:aSession];
-    }
-
-    // We process the cmd to insert URL parts
-    const BOOL ok = [self attachOrLaunchCommandInSession:aSession
-                                               canPrompt:canPrompt
-                                              objectType:objectType
-                                        serverConnection:serverConnection
-                                               urlString:urlString
-                                            allowURLSubs:YES
-                                             environment:@{}
-                                                  oldCWD:nil
-                                          forceUseOldCWD:NO
-                                           substitutions:nil
-                                        windowController:windowController];
-    if (!ok) {
-        return nil;
-    }
-
-    return aSession;
-}
-
 #pragma mark - Private
 
 // Returns nil if the user pressed cancel, otherwise returns a dictionary that's a supeset of |substitutions|.
@@ -106,7 +75,8 @@ NS_ASSUME_NONNULL_BEGIN
                                 oldCWD:(nullable NSString *)oldCWD
                         forceUseOldCWD:(BOOL)forceUseOldCWD
                          substitutions:(nullable NSDictionary *)providedSubs
-                      windowController:(PseudoTerminal * _Nonnull)windowController {
+                      windowController:(PseudoTerminal * _Nonnull)windowController
+                            completion:(void (^ _Nullable)(BOOL))completion {
     Profile *profile = [aSession profile];
     Profile *profileForComputingCommand;
 
@@ -133,6 +103,9 @@ NS_ASSUME_NONNULL_BEGIN
                                                window:windowController.window];
     }
     if (!substitutions) {
+        if (completion) {
+            completion(NO);
+        }
         return NO;
     }
     cmd = [cmd stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
@@ -160,13 +133,17 @@ NS_ASSUME_NONNULL_BEGIN
     if (serverConnection) {
         assert([iTermAdvancedSettingsModel runJobsInServers]);
         [aSession attachToServer:*serverConnection];
+        if (completion) {
+            completion(YES);
+        }
     } else {
         [self startProgram:cmd
                environment:environment
                     isUTF8:isUTF8
                  inSession:aSession
              substitutions:substitutions
-          windowController:windowController];
+          windowController:windowController
+                completion:completion];
     }
     return YES;
 }
@@ -188,13 +165,17 @@ NS_ASSUME_NONNULL_BEGIN
               isUTF8:(BOOL)isUTF8
            inSession:(PTYSession*)theSession
         substitutions:(NSDictionary *)substitutions
-    windowController:(PseudoTerminal *)term {
+    windowController:(PseudoTerminal *)term
+          completion:(void (^ _Nullable)(BOOL))completion {
     [theSession startProgram:command
                  environment:prog_env
                       isUTF8:isUTF8
                substitutions:substitutions
                   completion:^{
                       [term setWindowTitle];
+                      if (completion) {
+                          completion(YES);
+                      }
                   }];
     if ([[[term window] title] isEqualToString:@"Window"]) {
         [term setWindowTitle];

@@ -1174,7 +1174,8 @@ static iTermController *gSharedInstance;
                                                                      oldCWD:nil
                                                              forceUseOldCWD:NO
                                                               substitutions:nil
-                                                           windowController:term];
+                                                           windowController:term
+                                                                 completion:nil];
         if (!ok) {
             session = nil;
         }

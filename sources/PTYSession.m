@@ -971,6 +971,160 @@ ITERM_WEAKLY_REFERENCEABLE
     return announcement;
 }
 
++ (void)finishInitializingArrangementOriginatedSession:(PTYSession *)aSession
+                                          announcement:(iTermAnnouncementViewController *)announcement
+                                           arrangement:(NSDictionary *)arrangement
+                                      attachedToServer:(BOOL)attachedToServer
+                                              delegate:(id<PTYSessionDelegate>)delegate
+                                    didRestoreContents:(BOOL)didRestoreContents
+                                           needDivorce:(BOOL)needDivorce
+                                            objectType:(iTermObjectType)objectType
+                                           sessionView:(SessionView *)sessionView
+                                   shouldEnterTmuxMode:(BOOL)shouldEnterTmuxMode
+                                                 state:(NSDictionary *)state
+                                     tmuxDCSIdentifier:(NSString *)tmuxDCSIdentifier
+                                        tmuxPaneNumber:(NSNumber *)tmuxPaneNumber {
+    if (needDivorce) {
+        [aSession divorceAddressBookEntryFromPreferences];
+        [aSession sessionProfileDidChange];
+    }
+
+    // This is done after divorce out of paranoia, since it will modify the profile.
+    NSDictionary *shortcutDictionary = arrangement[SESSION_ARRANGEMENT_HOTKEY];
+    if (shortcutDictionary) {
+        [[iTermSessionHotkeyController sharedInstance] setShortcut:[iTermShortcut shortcutWithDictionary:shortcutDictionary]
+                                                        forSession:aSession];
+        [aSession setSessionSpecificProfileValues:@{ KEY_SESSION_HOTKEY: shortcutDictionary }];
+    }
+
+
+    if (tmuxPaneNumber) {
+        [aSession setTmuxPane:[tmuxPaneNumber intValue]];
+    }
+    NSArray *history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
+    if (history) {
+        [[aSession screen] setHistory:history];
+    }
+    history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_ALT_HISTORY];
+    if (history) {
+        [[aSession screen] setAltScreen:history];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_NAME]) {
+        [aSession setName:arrangement[SESSION_ARRANGEMENT_NAME]];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_DEFAULT_NAME]) {
+        [aSession setDefaultName:arrangement[SESSION_ARRANGEMENT_DEFAULT_NAME]];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_WINDOW_TITLE]) {
+        [aSession setWindowTitle:arrangement[SESSION_ARRANGEMENT_WINDOW_TITLE]];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_VARIABLES]) {
+        NSDictionary *variables = arrangement[SESSION_ARRANGEMENT_VARIABLES];
+        for (id key in variables) {
+            aSession.variables[key] = variables[key];
+            iTermVariablesAdd(key);
+        }
+        aSession.textview.badgeLabel = aSession.badgeLabel;
+    }
+    if (arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED]) {
+        aSession->_shellIntegrationEverUsed = [arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] boolValue];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_COMMANDS]) {
+        [aSession.commands addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_COMMANDS]];
+        [aSession trimCommandsIfNeeded];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_DIRECTORIES]) {
+        [aSession.directories addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_DIRECTORIES]];
+        [aSession trimDirectoriesIfNeeded];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_HOSTS]) {
+        for (NSDictionary *host in arrangement[SESSION_ARRANGEMENT_HOSTS]) {
+            VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] initWithDictionary:host] autorelease];
+            if (remoteHost) {
+                [aSession.hosts addObject:remoteHost];
+                [aSession trimHostsIfNeeded];
+            }
+        }
+    }
+
+    if (arrangement[SESSION_ARRANGEMENT_SELECTION]) {
+        [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_APS]) {
+        aSession.automaticProfileSwitcher =
+        [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:aSession
+                                                     savedState:arrangement[SESSION_ARRANGEMENT_APS]];
+    }
+    if (didRestoreContents && attachedToServer) {
+        Interval *interval = aSession.screen.lastPromptMark.entry.interval;
+        if (interval) {
+            VT100GridRange gridRange = [aSession.screen lineNumberRangeOfInterval:interval];
+            aSession->_lastPromptLine = gridRange.location + aSession.screen.totalScrollbackOverflow;
+        }
+
+        if (arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE]) {
+            aSession->_commandRange = [arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE] gridCoordRange];
+        }
+        if (arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK]) {
+            aSession->_alertOnNextMark = [arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] boolValue];
+        }
+        if (arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE]) {
+            aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
+        }
+        aSession->_lastMark = [aSession.screen.lastMark retain];
+        aSession.lastRemoteHost = [aSession.screen.lastRemoteHost retain];
+        if (arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY]) {
+            [aSession->_lastDirectory autorelease];
+            aSession->_lastDirectory = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] copy];
+            aSession->_lastDirectoryIsUnsuitableForOldPWD = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD] boolValue];
+        }
+    }
+
+    if (state) {
+        [[aSession screen] setTmuxState:state];
+        NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
+        if (pendingOutput && [pendingOutput length]) {
+            [aSession.terminal.parser putStreamData:pendingOutput.bytes
+                                             length:pendingOutput.length];
+        }
+        [[aSession terminal] setInsertMode:[[state objectForKey:kStateDictInsertMode] boolValue]];
+        [[aSession terminal] setCursorMode:[[state objectForKey:kStateDictKCursorMode] boolValue]];
+        [[aSession terminal] setKeypadMode:[[state objectForKey:kStateDictKKeypadMode] boolValue]];
+        if ([[state objectForKey:kStateDictMouseStandardMode] boolValue]) {
+            [[aSession terminal] setMouseMode:MOUSE_REPORTING_NORMAL];
+        } else if ([[state objectForKey:kStateDictMouseButtonMode] boolValue]) {
+            [[aSession terminal] setMouseMode:MOUSE_REPORTING_BUTTON_MOTION];
+        } else if ([[state objectForKey:kStateDictMouseAnyMode] boolValue]) {
+            [[aSession terminal] setMouseMode:MOUSE_REPORTING_ALL_MOTION];
+        } else {
+            [[aSession terminal] setMouseMode:MOUSE_REPORTING_NONE];
+        }
+        [[aSession terminal] setMouseFormat:[[state objectForKey:kStateDictMouseUTF8Mode] boolValue] ? MOUSE_FORMAT_XTERM_EXT : MOUSE_FORMAT_XTERM];
+    }
+    NSDictionary *liveArrangement = arrangement[SESSION_ARRANGEMENT_LIVE_SESSION];
+    if (liveArrangement) {
+        SessionView *liveView = [[[SessionView alloc] initWithFrame:sessionView.frame] autorelease];
+        if (@available(macOS 10.11, *)) {
+            liveView.driver.dataSource = aSession->_metalGlue;
+        }
+        [delegate addHiddenLiveView:liveView];
+        aSession.liveSession = [self sessionFromArrangement:liveArrangement
+                                                     inView:liveView
+                                               withDelegate:delegate
+                                              forObjectType:objectType];
+    }
+    if (shouldEnterTmuxMode) {
+        // Restored a tmux gateway session.
+        [aSession startTmuxMode:tmuxDCSIdentifier];
+        [aSession.tmuxController sessionChangedTo:arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME]
+                                        sessionId:[arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] intValue]];
+    }
+    if (announcement) {
+        [aSession queueAnnouncement:announcement identifier:@"ThisProfileNoLongerExists"];
+    }
+    [aSession updateVariables];
+}
+
 + (PTYSession *)sessionFromArrangement:(NSDictionary *)arrangement
                                 inView:(SessionView *)sessionView
                           withDelegate:(id<PTYSessionDelegate>)delegate
@@ -1107,12 +1261,13 @@ ITERM_WEAKLY_REFERENCEABLE
     NSNumber *tmuxPaneNumber = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     NSString *tmuxDCSIdentifier = nil;
     BOOL shouldEnterTmuxMode = NO;
-    BOOL didRestoreContents = NO;
+    NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
+    BOOL restoreContents = !tmuxPaneNumber && contents && [iTermAdvancedSettingsModel restoreWindowContents];
     BOOL attachedToServer = NO;
+
     if (!tmuxPaneNumber) {
         DLog(@"No tmux pane ID during session restoration");
         // |contents| will be non-nil when using system window restoration.
-        NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
         BOOL runCommand = YES;
         if ([iTermAdvancedSettingsModel runJobsInServers]) {
             DLog(@"Configured to run jobs in servers");
@@ -1167,6 +1322,15 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
 
+        DLog(@"Have contents=%@", @(contents != nil));
+        DLog(@"Restore window contents=%@", @([iTermAdvancedSettingsModel restoreWindowContents]));
+        if (restoreContents) {
+            DLog(@"Loading content from line buffer dictionary");
+            [aSession setContentsFromLineBufferDictionary:contents
+                                 includeRestorationBanner:runCommand
+                                               reattached:attachedToServer];
+        }
+
         if (runCommand) {
             // This path is NOT taken when attaching to a running server.
             //
@@ -1194,9 +1358,7 @@ ITERM_WEAKLY_REFERENCEABLE
                            environment:aSession.environment
                                 isUTF8:aSession.isUTF8
                          substitutions:aSession.substitutions
-                            completion:^{
-#warning TODO
-                            }];
+                            completion:nil];
             } else {
                 iTermSessionFactory *factory = [[[iTermSessionFactory alloc] init] autorelease];
                 [factory attachOrLaunchCommandInSession:aSession
@@ -1209,18 +1371,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  oldCWD:oldCWD
                                          forceUseOldCWD:contents != nil && oldCWD.length
                                           substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]
-                                       windowController:(PseudoTerminal *)aSession.delegate.realParentWindow];
+                                       windowController:(PseudoTerminal *)aSession.delegate.realParentWindow
+                                             completion:nil];
             }
-        }
-
-        DLog(@"Have contents=%@", @(contents != nil));
-        DLog(@"Restore window contents=%@", @([iTermAdvancedSettingsModel restoreWindowContents]));
-        if (contents && [iTermAdvancedSettingsModel restoreWindowContents]) {
-            DLog(@"Loading content from line buffer dictionary");
-            [aSession setContentsFromLineBufferDictionary:contents
-                                 includeRestorationBanner:runCommand
-                                               reattached:attachedToServer];
-            didRestoreContents = YES;
+            return aSession;
         }
     } else {
         // Is a tmux pane
@@ -1234,145 +1388,20 @@ ITERM_WEAKLY_REFERENCEABLE
                                           shouldAppend:NO];
         }
     }
-    if (needDivorce) {
-        [aSession divorceAddressBookEntryFromPreferences];
-        [aSession sessionProfileDidChange];
-    }
+    [self finishInitializingArrangementOriginatedSession:aSession
+                                            announcement:announcement
+                                             arrangement:arrangement
+                                        attachedToServer:attachedToServer
+                                                delegate:delegate
+                                      didRestoreContents:restoreContents
+                                             needDivorce:needDivorce
+                                              objectType:objectType
+                                             sessionView:sessionView
+                                     shouldEnterTmuxMode:shouldEnterTmuxMode
+                                                   state:state
+                                       tmuxDCSIdentifier:tmuxDCSIdentifier
+                                          tmuxPaneNumber:tmuxPaneNumber];
 
-    // This is done after divorce out of paranoia, since it will modify the profile.
-    NSDictionary *shortcutDictionary = arrangement[SESSION_ARRANGEMENT_HOTKEY];
-    if (shortcutDictionary) {
-        [[iTermSessionHotkeyController sharedInstance] setShortcut:[iTermShortcut shortcutWithDictionary:shortcutDictionary]
-                                                        forSession:aSession];
-        [aSession setSessionSpecificProfileValues:@{ KEY_SESSION_HOTKEY: shortcutDictionary }];
-    }
-
-
-    if (tmuxPaneNumber) {
-        [aSession setTmuxPane:[tmuxPaneNumber intValue]];
-    }
-    NSArray *history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
-    if (history) {
-        [[aSession screen] setHistory:history];
-    }
-    history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_ALT_HISTORY];
-    if (history) {
-        [[aSession screen] setAltScreen:history];
-    }
-    if (arrangement[SESSION_ARRANGEMENT_NAME]) {
-        [aSession setName:arrangement[SESSION_ARRANGEMENT_NAME]];
-    }
-    if (arrangement[SESSION_ARRANGEMENT_DEFAULT_NAME]) {
-        [aSession setDefaultName:arrangement[SESSION_ARRANGEMENT_DEFAULT_NAME]];
-    }
-    if (arrangement[SESSION_ARRANGEMENT_WINDOW_TITLE]) {
-        [aSession setWindowTitle:arrangement[SESSION_ARRANGEMENT_WINDOW_TITLE]];
-    }
-    if (arrangement[SESSION_ARRANGEMENT_VARIABLES]) {
-        NSDictionary *variables = arrangement[SESSION_ARRANGEMENT_VARIABLES];
-        for (id key in variables) {
-            aSession.variables[key] = variables[key];
-            iTermVariablesAdd(key);
-        }
-        aSession.textview.badgeLabel = aSession.badgeLabel;
-    }
-    if (arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED]) {
-        aSession->_shellIntegrationEverUsed = [arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] boolValue];
-    }
-    if (arrangement[SESSION_ARRANGEMENT_COMMANDS]) {
-        [aSession.commands addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_COMMANDS]];
-        [aSession trimCommandsIfNeeded];
-    }
-    if (arrangement[SESSION_ARRANGEMENT_DIRECTORIES]) {
-        [aSession.directories addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_DIRECTORIES]];
-        [aSession trimDirectoriesIfNeeded];
-    }
-    if (arrangement[SESSION_ARRANGEMENT_HOSTS]) {
-        for (NSDictionary *host in arrangement[SESSION_ARRANGEMENT_HOSTS]) {
-            VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] initWithDictionary:host] autorelease];
-            if (remoteHost) {
-                [aSession.hosts addObject:remoteHost];
-                [aSession trimHostsIfNeeded];
-            }
-        }
-    }
-
-    if (arrangement[SESSION_ARRANGEMENT_SELECTION]) {
-        [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]];
-    }
-    if (arrangement[SESSION_ARRANGEMENT_APS]) {
-        aSession.automaticProfileSwitcher =
-            [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:aSession
-                                                         savedState:arrangement[SESSION_ARRANGEMENT_APS]];
-    }
-    if (didRestoreContents && attachedToServer) {
-        Interval *interval = aSession.screen.lastPromptMark.entry.interval;
-        if (interval) {
-            VT100GridRange gridRange = [aSession.screen lineNumberRangeOfInterval:interval];
-            aSession->_lastPromptLine = gridRange.location + aSession.screen.totalScrollbackOverflow;
-        }
-
-        if (arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE]) {
-            aSession->_commandRange = [arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE] gridCoordRange];
-        }
-        if (arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK]) {
-            aSession->_alertOnNextMark = [arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] boolValue];
-        }
-        if (arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE]) {
-            aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
-        }
-        aSession->_lastMark = [aSession.screen.lastMark retain];
-        aSession.lastRemoteHost = [aSession.screen.lastRemoteHost retain];
-        if (arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY]) {
-            [aSession->_lastDirectory autorelease];
-            aSession->_lastDirectory = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] copy];
-            aSession->_lastDirectoryIsUnsuitableForOldPWD = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_UNSUITABLE_FOR_OLD_PWD] boolValue];
-        }
-    }
-
-    if (state) {
-        [[aSession screen] setTmuxState:state];
-        NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
-        if (pendingOutput && [pendingOutput length]) {
-            [aSession.terminal.parser putStreamData:pendingOutput.bytes
-                                             length:pendingOutput.length];
-        }
-        [[aSession terminal] setInsertMode:[[state objectForKey:kStateDictInsertMode] boolValue]];
-        [[aSession terminal] setCursorMode:[[state objectForKey:kStateDictKCursorMode] boolValue]];
-        [[aSession terminal] setKeypadMode:[[state objectForKey:kStateDictKKeypadMode] boolValue]];
-        if ([[state objectForKey:kStateDictMouseStandardMode] boolValue]) {
-            [[aSession terminal] setMouseMode:MOUSE_REPORTING_NORMAL];
-        } else if ([[state objectForKey:kStateDictMouseButtonMode] boolValue]) {
-            [[aSession terminal] setMouseMode:MOUSE_REPORTING_BUTTON_MOTION];
-        } else if ([[state objectForKey:kStateDictMouseAnyMode] boolValue]) {
-            [[aSession terminal] setMouseMode:MOUSE_REPORTING_ALL_MOTION];
-        } else {
-            [[aSession terminal] setMouseMode:MOUSE_REPORTING_NONE];
-        }
-        [[aSession terminal] setMouseFormat:[[state objectForKey:kStateDictMouseUTF8Mode] boolValue] ? MOUSE_FORMAT_XTERM_EXT : MOUSE_FORMAT_XTERM];
-    }
-    NSDictionary *liveArrangement = arrangement[SESSION_ARRANGEMENT_LIVE_SESSION];
-    if (liveArrangement) {
-        SessionView *liveView = [[[SessionView alloc] initWithFrame:sessionView.frame] autorelease];
-        if (@available(macOS 10.11, *)) {
-            liveView.driver.dataSource = aSession->_metalGlue;
-        }
-        [delegate addHiddenLiveView:liveView];
-        aSession.liveSession = [self sessionFromArrangement:liveArrangement
-                                                     inView:liveView
-                                               withDelegate:delegate
-                                              forObjectType:objectType];
-    }
-    if (shouldEnterTmuxMode) {
-        // Restored a tmux gateway session.
-        [aSession startTmuxMode:tmuxDCSIdentifier];
-        [aSession.tmuxController sessionChangedTo:arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME]
-                                        sessionId:[arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] intValue]];
-    }
-    if (announcement) {
-        [aSession queueAnnouncement:announcement identifier:@"ThisProfileNoLongerExists"];
-    }
-    [aSession updateVariables];
     return aSession;
 }
 

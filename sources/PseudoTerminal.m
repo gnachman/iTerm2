@@ -5856,7 +5856,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                       oldCWD:oldCWD
                                               forceUseOldCWD:NO
                                                substitutions:nil
-                                            windowController:self]) {
+                                            windowController:self
+                                                  completion:nil]) {
         [newSession terminate];
         [[self tabForSession:newSession] removeSession:newSession];
     }
@@ -7716,7 +7717,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  oldCWD:previousDirectory
                                          forceUseOldCWD:NO
                                           substitutions:nil
-                                       windowController:self];
+                                       windowController:self
+                                             completion:nil];
 
     // On Lion, a window that can join all spaces can't go fullscreen.
     if ([self numberOfTabs] == 1 &&

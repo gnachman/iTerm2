@@ -120,7 +120,8 @@
                                                                                                                     oldCWD:nil
                                                                                                             forceUseOldCWD:NO
                                                                                                              substitutions:nil
-                                                                                                          windowController:term];
+                                                                                                          windowController:term
+                                                                                                                completion:nil];
                                                        return ok ? session : nil;
                                                    }];
     NSLog(@"restored an orphan");

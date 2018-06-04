@@ -32,7 +32,8 @@ NS_ASSUME_NONNULL_BEGIN
                                 oldCWD:(nullable NSString *)oldCWD
                         forceUseOldCWD:(BOOL)forceUseOldCWD  // Change custom directory setting to make it use the passed-in oLDCWD
                          substitutions:(nullable NSDictionary *)substitutions
-                      windowController:(PseudoTerminal * _Nonnull)windowController;
+                      windowController:(PseudoTerminal * _Nonnull)windowController
+                            completion:(void (^ _Nullable)(BOOL))completion;  // If nonnil this may be async
 @end
 
 NS_ASSUME_NONNULL_END
