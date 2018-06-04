@@ -7785,12 +7785,14 @@ ITERM_WEAKLY_REFERENCEABLE
     _contentView.tabBarControl.alphaValue = 0;
     _contentView.tabBarControl.hidden = NO;
     [self repositionWidgets];
+    [self updateUseMetalInAllTabs];
 }
 
 - (void)iTermTabBarDidFinishFlash {
     _contentView.tabBarControl.alphaValue = 1;
     _contentView.tabBarControl.hidden = YES;
     [self repositionWidgets];
+    [self updateUseMetalInAllTabs];
 }
 
 - (PTYSession *)createTabWithProfile:(Profile *)profile
@@ -8165,6 +8167,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tab:(PTYTab *)tab didSetMetalEnabled:(BOOL)useMetal {
     _contentView.useMetal = useMetal;
+}
+
+- (BOOL)tabCanUseMetal:(PTYTab *)tab {
+    return !_contentView.tabBarControl.flashing;
 }
 
 - (void)currentSessionWordAtCursorDidBecome:(NSString *)word {
