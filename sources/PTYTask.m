@@ -566,6 +566,35 @@ static int iTermForkToRunJobInServer(iTermForkState *forkState,
     forkState->numFileDescriptorsToPreserve = 3;
 }
 
+static void iTermSignalSafeWrite(int fd, const char *message) {
+    int len = 0;
+    for (int i = 0; message[i]; i++) {
+        len++;
+    }
+    int rc;
+    do {
+        rc = write(fd, message, len);
+    } while (rc < 0 && (errno == EAGAIN || errno == EINTR));
+}
+
+static void iTermSignalSafeWriteInt(int fd, int n) {
+    if (n == INT_MIN) {
+        iTermSignalSafeWrite(fd, "int_min");
+        return;
+    }
+    if (n < 0) {
+        iTermSignalSafeWrite(fd, "-");
+        n = -n;
+    }
+    if (n < 10) {
+        char str[2] = { n + '0', 0 };
+        iTermSignalSafeWrite(fd, str);
+        return;
+    }
+    iTermSignalSafeWriteInt(fd, n / 10);
+    iTermSignalSafeWriteInt(fd, n % 10);
+}
+
 static void iTermDidForkChild(const char *argpath,
                               const char **argv,
                               BOOL closeFileDescriptors,
@@ -599,10 +628,15 @@ static void iTermDidForkChild(const char *argpath,
     environ = newEnviron;
     execvp(argpath, (char* const*)argv);
 
+    // NOTE: This won't be visible when jobs run in servers :(
     // exec error
-#warning TODO: Don't use fprintf, it isn't safe.
-    fprintf(stdout, "## exec failed ##\n");
-    fprintf(stdout, "argpath=%s error=%s\n", argpath, strerror(errno));
+    int e = errno;
+    iTermSignalSafeWrite(1, "## exec failed ##\n");
+    iTermSignalSafeWrite(1, "Program: ");
+    iTermSignalSafeWrite(1, argpath);
+    iTermSignalSafeWrite(1, "\nErrno: ");
+    iTermSignalSafeWriteInt(1, e);
+    iTermSignalSafeWrite(1, "\n");
 
     sleep(1);
 }
