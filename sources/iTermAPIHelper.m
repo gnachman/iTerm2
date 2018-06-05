@@ -19,6 +19,7 @@
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "ProfileModel.h"
@@ -575,6 +576,12 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     return result;
 }
 
+- (BOOL)haveRegisteredFunctionWithName:(NSString *)name
+                             arguments:(NSArray<NSString *> *)arguments {
+    NSString *stringSignature = iTermAPIHelperStringRepresentationOfRPC(name, arguments);
+    return _serverOriginatedRPCSubscriptions[stringSignature].allValues.firstObject != nil;
+}
+
 #pragma mark - iTermAPIServerDelegate
 
 - (NSMenuItem *)menuItemWithTitleParts:(NSArray<NSString *> *)titleParts
@@ -791,6 +798,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
         _focusChangeSubscriptions = [[NSMutableDictionary alloc] init];
         _serverOriginatedRPCSubscriptions = [[NSMutableDictionary alloc] init];
     }
+    BOOL didRegisterRPC = NO;
     NSMutableDictionary<id, ITMNotificationRequest *> *subscriptions;
     if (request.notificationType == ITMNotificationType_NotifyOnNewSession) {
         subscriptions = _newSessionSubscriptions;
@@ -815,14 +823,16 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 
         NSString *signatureString = request.rpcRegistrationRequest.it_stringRepresentation;
         subscriptions = _serverOriginatedRPCSubscriptions[signatureString];
-        if (subscriptions.count > 0) {
-            response.status = ITMNotificationResponse_Status_DuplicateServerOriginatedRpc;
-            return response;
-        } else if (!subscriptions) {
-            subscriptions = [NSMutableDictionary dictionary];
-            _serverOriginatedRPCSubscriptions[signatureString] = subscriptions;
-            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIRegisteredFunctionsDidChangeNotification
-                                                                object:nil];
+        if (request.subscribe) {
+            if (subscriptions.count > 0) {
+                response.status = ITMNotificationResponse_Status_DuplicateServerOriginatedRpc;
+                return response;
+            }
+            if (!subscriptions) {
+                subscriptions = [NSMutableDictionary dictionary];
+                _serverOriginatedRPCSubscriptions[signatureString] = subscriptions;
+            }
+            didRegisterRPC = YES;
         }
     } else {
         assert(false);
@@ -833,6 +843,10 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
             return response;
         }
         subscriptions[connection] = request;
+        if (didRegisterRPC) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIRegisteredFunctionsDidChangeNotification
+                                                                object:nil];
+        }
     } else {
         if (!subscriptions[connection]) {
             response.status = ITMNotificationResponse_Status_NotSubscribed;
@@ -844,6 +858,37 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     response.status = ITMNotificationResponse_Status_Ok;
     return response;
 }
+
+- (void)performBlockWhenFunctionRegisteredWithName:(NSString *)name
+                                         arguments:(NSArray<NSString *> *)arguments
+                                           timeout:(NSTimeInterval)timeout
+                                             block:(void (^)(BOOL))block {
+    if ([self haveRegisteredFunctionWithName:name arguments:arguments]) {
+        block(NO);
+        return;
+    }
+
+    __block BOOL called = NO;
+    __block id observer =
+        [[NSNotificationCenter defaultCenter] addObserverForName:iTermAPIRegisteredFunctionsDidChangeNotification object:nil queue:nil usingBlock:^(NSNotification * _Nonnull notification) {
+            if (called) {
+                return;
+            }
+            if ([self haveRegisteredFunctionWithName:name arguments:arguments]) {
+                called = YES;
+                [[NSNotificationCenter defaultCenter] removeObserver:observer];
+                block(NO);
+            }
+        }];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (!called) {
+            called = YES;
+            [[NSNotificationCenter defaultCenter] removeObserver:observer];
+            block(YES);
+        }
+    });
+}
+
 
 - (NSArray<PTYSession *> *)allSessions {
     return [[[iTermController sharedInstance] terminals] flatMapWithBlock:^id(PseudoTerminal *windowController) {

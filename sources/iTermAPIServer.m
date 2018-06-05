@@ -146,7 +146,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
 @implementation iTermAPIServer {
     iTermSocket *_socket;
-    NSMutableDictionary<id, iTermWebSocketConnection *> *_connections;
+    NSMutableDictionary<id, iTermWebSocketConnection *> *_connections;  // _queue
     dispatch_queue_t _executionQueue;
 }
 
