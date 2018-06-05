@@ -1328,6 +1328,91 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return temp;
 }
 
+// NOTE: This supports nested inline expressions.
+- (void)enumerateSwiftySubstrings:(void (^)(NSString *substring, BOOL isLiteral))block {
+    typedef enum {
+        SWIFTY_STATE_LITERAL,
+        SWIFTY_STATE_LITERAL_ESC,
+        SWIFTY_STATE_EXPR,
+        SWIFTY_STATE_EXPR_STR,
+        SWIFTY_STATE_EXPR_STR_ESC
+    } SWIFTY_STATE;
+    SWIFTY_STATE state = SWIFTY_STATE_LITERAL;
+
+    int parens = 0;
+    NSInteger start = 0;
+    NSMutableArray<NSNumber *> *parensStack = [NSMutableArray array];
+    for (NSInteger i = 0; i < self.length; i++) {
+        unichar c = [self characterAtIndex:i];
+        switch (state) {
+            case SWIFTY_STATE_LITERAL:
+                if (c == '\\') {
+                    state = SWIFTY_STATE_LITERAL_ESC;
+                }
+                break;
+
+            case SWIFTY_STATE_LITERAL_ESC:
+                if (c == '(') {
+                    // Output range up to but not including \(
+                    if (i - 1 - start > 0) {
+                        block([self substringWithRange:NSMakeRange(start, i - 1 - start)], YES);
+                    }
+                    start = i + 1;
+                    parens = 1;
+                    state = SWIFTY_STATE_EXPR;
+                }
+                break;
+
+            case SWIFTY_STATE_EXPR:
+                if (c == '(') {
+                    parens++;
+                } else if (c == ')') {
+                    parens--;
+                    if (parens == 0) {
+                        if (parensStack.count == 0) {
+                            // Output range up to but not including )
+                            if (i - start > 0) {
+                                block([self substringWithRange:NSMakeRange(start, i - start)], NO);
+                            }
+                            // Next output begins after )
+                            start = i + 1;
+                            state = SWIFTY_STATE_LITERAL;
+                            break;  // do not output this paren. The opening \( was also not output.
+                        } else {
+                            // Ended a nested expression
+                            parens = parensStack.lastObject.intValue;
+                            [parensStack removeLastObject];
+                            state = SWIFTY_STATE_EXPR_STR;
+                        }
+                    }
+                } else if (c == '"') {
+                    state = SWIFTY_STATE_EXPR_STR;
+                }
+                break;
+
+            case SWIFTY_STATE_EXPR_STR:
+                if (c == '\\') {
+                    state = SWIFTY_STATE_EXPR_STR_ESC;
+                } else if (c == '"') {
+                    state = SWIFTY_STATE_EXPR;
+                }
+                break;
+
+            case SWIFTY_STATE_EXPR_STR_ESC:
+                if (c == '(') {
+                    [parensStack addObject:@(parens)];
+                    parens = 1;  // catch but don't output ) in expr state.
+                    state = SWIFTY_STATE_EXPR;
+                }
+                break;
+        }
+    }
+
+    if (self.length > start) {
+        block([self substringWithRange:NSMakeRange(start, self.length - start)], YES);
+    }
+}
+
 // Replace substrings like \(foo) or \1...\9 with the value of vars[@"foo"] or vars[@"1"].
 - (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars {
     NSString *(^stringify)(id) = ^NSString *(id x) {
