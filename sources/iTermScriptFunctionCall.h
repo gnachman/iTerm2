@@ -9,11 +9,15 @@
 
 @interface iTermScriptFunctionCall : NSObject
 
-// Invokes a function given in invocation.
-// invocation should look like:
+// Evaluates an expression given in invocation.
+// invocation should look like one of:
 //
-// function_name(argname: argvalue [, argname: argvalue ...])
+// 1. function_name(argname: argvalue [, argname: argvalue ...])
+// 2. variable
+// 3. variable?
 //
+// If it is a function:
+// --------------------
 // function_name and argname are identifiers containing ASCII alphanumerics and
 // starting with a letter.
 //
@@ -36,17 +40,28 @@
 // Functions can return any object encodable in JSON (arrays, dictionaries,
 // strings, numbers, null.
 //
-// Functions will timeout after a short period of no response. This is an
+// Functions will timeout after a specified period of no response. This is an
 // error condition.
+//
+// If it is a variable:
+// --------------------
+// The value will be returned, or an error if undefined. Optional variables ending
+// with a ? will return empty string if undefined.
++ (void)evaluateExpression:(NSString *)invocation
+                   timeout:(NSTimeInterval)timeout
+                    source:(id (^)(NSString *))source
+                completion:(void (^)(id, NSError *))completion;
+
+// Like evaluateExpression but only accepts function calls.
 + (void)callFunction:(NSString *)invocation
+             timeout:(NSTimeInterval)timeout
               source:(id (^)(NSString *))source
           completion:(void (^)(id, NSError *))completion;
 
-// A synchronous call that blocks the main thread. Subject to the same restrictions
-// as a transaction.
-+ (id)synchronousCallFunction:(NSString *)invocation
-                      timeout:(NSTimeInterval)timeout
-                        error:(out NSError **)error
-                       source:(id (^)(NSString *))source;
+// Evaluate a string with embedded function calls like a swift string with \(expression)s in it.
++ (void)evaluateString:(NSString *)string
+               timeout:(NSTimeInterval)timeout
+                source:(id (^)(NSString *))source
+            completion:(void (^)(NSString *result, NSError *error))completion;
 
 @end

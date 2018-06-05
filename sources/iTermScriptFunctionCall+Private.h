@@ -10,7 +10,6 @@
 @interface iTermScriptFunctionCall()
 
 @property (nonatomic, copy) NSString *name;
-@property (nonatomic, strong, readwrite) NSError *error;
 
 - (void)addParameterWithName:(NSString *)name value:(id)value;
 

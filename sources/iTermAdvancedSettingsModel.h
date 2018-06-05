@@ -224,5 +224,7 @@
 + (BOOL)retinaInlineImages;
 + (double)timeToWaitForEmojiPanel;
 + (BOOL)preferIntegratedGPU;
++ (double)timeoutForStringEvaluation;
++ (BOOL)evaluateSwiftyStrings;
 
 @end

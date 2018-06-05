@@ -465,6 +465,8 @@ typedef enum {
 
 #pragma mark - methods
 
++ (id (^)(NSString *))functionCallSource;
+- (id (^)(NSString *))functionCallSource;
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
              replacingProfileWithGUID:(NSString *)badGuid
                           withProfile:(Profile *)goodProfile;

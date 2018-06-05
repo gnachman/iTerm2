@@ -5758,6 +5758,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)invokeFunctionCall:(NSString *)invocation extraContext:(NSDictionary *)extraContext {
     [iTermScriptFunctionCall callFunction:invocation
+                                  timeout:[[NSDate distantFuture] timeIntervalSinceNow]
                                    source:^id(NSString *key) {
                                        id value = extraContext[key];
                                        if (value) {
@@ -5839,6 +5840,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
             [iTermScriptFunctionCall callFunction:keyBindingText
+                                          timeout:[[NSDate distantFuture] timeIntervalSinceNow]
                                            source:[self functionCallSource]
                                        completion:^(id value, NSError *error) {
                                            if (error) {
