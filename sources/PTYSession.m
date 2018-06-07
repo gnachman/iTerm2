@@ -1264,6 +1264,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
     BOOL restoreContents = !tmuxPaneNumber && contents && [iTermAdvancedSettingsModel restoreWindowContents];
     BOOL attachedToServer = NO;
+    void (^runCommandBlock)(void (^)(BOOL)) = ^(void (^completion)(BOOL)) { completion(YES); };
 
     if (!tmuxPaneNumber) {
         DLog(@"No tmux pane ID during session restoration");
@@ -1354,27 +1355,30 @@ ITERM_WEAKLY_REFERENCEABLE
                         aSession.program = [ITAddressBookMgr shellLauncherCommand];
                     }
                 }
-                [aSession startProgram:aSession.program
-                           environment:aSession.environment
-                                isUTF8:aSession.isUTF8
-                         substitutions:aSession.substitutions
-                            completion:nil];
+                runCommandBlock = ^(void (^completion)(BOOL)) {
+                    [aSession startProgram:aSession.program
+                               environment:aSession.environment
+                                    isUTF8:aSession.isUTF8
+                             substitutions:aSession.substitutions
+                                completion:completion];
+                };
             } else {
-                iTermSessionFactory *factory = [[[iTermSessionFactory alloc] init] autorelease];
-                [factory attachOrLaunchCommandInSession:aSession
-                                              canPrompt:NO
-                                             objectType:objectType
-                                       serverConnection:nil
-                                              urlString:nil
-                                           allowURLSubs:NO
-                                            environment:@{}
-                                                 oldCWD:oldCWD
-                                         forceUseOldCWD:contents != nil && oldCWD.length
-                                          substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]
-                                       windowController:(PseudoTerminal *)aSession.delegate.realParentWindow
-                                             completion:nil];
+                runCommandBlock = ^(void (^completion)(BOOL)) {
+                    iTermSessionFactory *factory = [[[iTermSessionFactory alloc] init] autorelease];
+                    [factory attachOrLaunchCommandInSession:aSession
+                                                  canPrompt:NO
+                                                 objectType:objectType
+                                           serverConnection:nil
+                                                  urlString:nil
+                                               allowURLSubs:NO
+                                                environment:@{}
+                                                     oldCWD:oldCWD
+                                             forceUseOldCWD:contents != nil && oldCWD.length
+                                              substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]
+                                           windowController:(PseudoTerminal *)aSession.delegate.realParentWindow
+                                                 completion:completion];
+                };
             }
-            return aSession;
         }
     } else {
         // Is a tmux pane
@@ -1388,19 +1392,25 @@ ITERM_WEAKLY_REFERENCEABLE
                                           shouldAppend:NO];
         }
     }
-    [self finishInitializingArrangementOriginatedSession:aSession
-                                            announcement:announcement
-                                             arrangement:arrangement
-                                        attachedToServer:attachedToServer
-                                                delegate:delegate
-                                      didRestoreContents:restoreContents
-                                             needDivorce:needDivorce
-                                              objectType:objectType
-                                             sessionView:sessionView
-                                     shouldEnterTmuxMode:shouldEnterTmuxMode
-                                                   state:state
-                                       tmuxDCSIdentifier:tmuxDCSIdentifier
-                                          tmuxPaneNumber:tmuxPaneNumber];
+    void (^finish)(BOOL) = ^(BOOL ok){
+        if (!ok) {
+            return;
+        }
+        [self finishInitializingArrangementOriginatedSession:aSession
+                                                announcement:announcement
+                                                 arrangement:arrangement
+                                            attachedToServer:attachedToServer
+                                                    delegate:delegate
+                                          didRestoreContents:restoreContents
+                                                 needDivorce:needDivorce
+                                                  objectType:objectType
+                                                 sessionView:sessionView
+                                         shouldEnterTmuxMode:shouldEnterTmuxMode
+                                                       state:state
+                                           tmuxDCSIdentifier:tmuxDCSIdentifier
+                                              tmuxPaneNumber:tmuxPaneNumber];
+    };
+    runCommandBlock(finish);
 
     return aSession;
 }
@@ -1768,7 +1778,7 @@ ITERM_WEAKLY_REFERENCEABLE
          environment:(NSDictionary *)environment
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions
-          completion:(void (^)(void))completion {
+          completion:(void (^)(BOOL))completion {
     self.program = command;
     self.environment = environment ?: @{};
     self.isUTF8 = isUTF8;
@@ -1790,7 +1800,7 @@ ITERM_WEAKLY_REFERENCEABLE
                         completion:^{
                             [self sendInitialText];
                             if (completion) {
-                                completion();
+                                completion(YES);
                             }
                         }];
         }];

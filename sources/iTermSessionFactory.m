@@ -201,10 +201,10 @@ NS_ASSUME_NONNULL_BEGIN
                  environment:prog_env
                       isUTF8:isUTF8
                substitutions:substitutions
-                  completion:^{
+                  completion:^(BOOL ok) {
                       [term setWindowTitle];
                       if (completion) {
-                          completion(YES);
+                          completion(ok);
                       }
                   }];
     if ([[[term window] title] isEqualToString:@"Window"]) {
