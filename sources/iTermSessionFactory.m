@@ -30,7 +30,9 @@ NS_ASSUME_NONNULL_BEGIN
     PTYSession *aSession;
 
     // Initialize a new session
-    aSession = [[PTYSession alloc] initSynthetic:NO];
+    aSession = [[PTYSession alloc] initSynthetic:NO
+                                            name:profile[KEY_NAME]
+                                     titleFormat:[iTermSessionNameController titleFormatForProfile:profile]];
 
     [[aSession screen] setUnlimitedScrollback:[profile[KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession screen] setMaxScrollbackLines:[profile[KEY_SCROLLBACK_LINES] intValue]];

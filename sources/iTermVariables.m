@@ -20,6 +20,11 @@ NSString *const iTermVariableKeySessionRows = @"session.rows";
 NSString *const iTermVariableKeySessionTTY = @"session.tty";
 NSString *const iTermVariableKeySessionUsername = @"session.username";
 NSString *const iTermVariableKeyTermID = @"session.termid";
+#warning TODO document these and verify they get updated
+NSString *const iTermVariableKeySessionProfileName = @"session.profileName";
+NSString *const iTermVariableKeySessionIconName = @"session.terminalIconName";
+NSString *const iTermVariableKeySessionWindowName = @"session.terminalWindowName";
+NSString *const iTermVariableKeySessionJob = @"session.job.name";
 
 static NSMutableSet<NSString *> *iTermVariablesGetMutableSet() {
     static NSMutableSet<NSString *> *userDefined;
