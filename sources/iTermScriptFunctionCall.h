@@ -47,6 +47,10 @@
 // --------------------
 // The value will be returned, or an error if undefined. Optional variables ending
 // with a ? will return empty string if undefined.
+//
+// NOTE ON TIMEOUT:
+// If timeout is 0, then this guarantees to complete synchronously. All non-builtin
+// functions will evaluate to empty string.
 + (void)evaluateExpression:(NSString *)invocation
                    timeout:(NSTimeInterval)timeout
                     source:(id (^)(NSString *))source

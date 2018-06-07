@@ -615,7 +615,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
         profile[key] = profileOverrides[key];
     }
 
-    PTYSession *session = [[[PTYSession alloc] initSynthetic:NO name:profile[KEY_NAME]] autorelease];
+    PTYSession *session = [[[PTYSession alloc] initSynthetic:NO name:profile[KEY_NAME] titleFormat:@"TODO"] autorelease];
     [session setProfile:profile];
 
     XCTAssert([session setScreenSize:NSMakeRect(0, 0, 200, 200) parent:nil]);
@@ -627,8 +627,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                  size.height * session.textview.lineHeight + [iTermAdvancedSettingsModel terminalVMargin] * 2);
     session.view.frame = theFrame;
     [session loadInitialColorTable];
-    [session.nameController setSessionName:profile[KEY_NAME]];
-    [session.nameController setOriginalName:profile[KEY_NAME]];
+//    [session.nameController setSessionName:profile[KEY_NAME]];
+//    [session.nameController setOriginalName:profile[KEY_NAME]];
     return session;
 }
 

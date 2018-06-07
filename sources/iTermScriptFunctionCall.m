@@ -88,6 +88,10 @@
              fromInvocation:(NSString *)invocation
                     timeout:(NSTimeInterval)timeout
                  completion:(void (^)(id, NSError *))completion {
+    if (timeout <= 0) {
+        completion(@"", nil);
+        return;
+    }
     __block NSTimer *timer;
     timer = [NSTimer it_scheduledTimerWithTimeInterval:timeout repeats:NO block:^(NSTimer * _Nonnull theTimer) {
         if (timer == nil) {
@@ -126,12 +130,10 @@
         } else {
             dispatch_group_enter(group);
             NSInteger i = parts.count;
-            [parts addObject:[NSNull null]];
+            [parts addObject:@""];
             [self evaluateExpression:substring timeout:timeout source:source completion:^(id output, NSError *error) {
                 if (output) {
                     parts[i] = output;
-                } else {
-                    parts[i] = @"";
                 }
                 if (error) {
                     firstError = error;
@@ -140,10 +142,15 @@
             }];
         }
     }];
-    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+    if (timeout == 0) {
         completion([parts componentsJoinedByString:@""],
                    firstError);
-    });
+    } else {
+        dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+            completion([parts componentsJoinedByString:@""],
+                       firstError);
+        });
+    }
 }
 
 - (void)addParameterWithName:(NSString *)name value:(id)value {

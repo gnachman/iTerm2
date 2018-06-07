@@ -14,8 +14,6 @@
 @property (nonatomic, copy) NSString *tmuxClientName;
 @property (nonatomic) BOOL haveTmuxController;
 @property (nonatomic, copy) NSString *tmuxWindowName;
-@property (nonatomic) BOOL shouldShowJobName;
-@property (nonatomic) BOOL shouldShowProfileName;
 @property (nonatomic, copy) NSString *jobName;
 @end
 
@@ -25,6 +23,7 @@
 - (void)sessionNameControllerPresentationNameDidChangeTo:(NSString *)newName;
 - (void)sessionNameControllerDidChangeWindowTitle;
 - (iTermSessionFormattingDescriptor *)sessionNameControllerFormattingDescriptor;
+- (id (^)(NSString *))sessionNameControllerVariableSource;
 
 @end
 
@@ -32,23 +31,21 @@
 
 @property (nonatomic, weak) id<iTermSessionNameControllerDelegate> delegate;
 
-// The first value assigned to sessionName. Used to decide if the profile name should be shown.
-// It is removed when equal to the current name.
+// The first value assigned to sessionName.
 @property (nonatomic, readonly) NSString *firstSessionName;
 
-// Session name; can be changed via escape code.
+// Session name; can be changed via escape code or trigger.
 @property (nonatomic, readonly) NSString *sessionName;
 
 // Name with extra formatting, ready to be shown in a title bar.
 @property (nonatomic, readonly) NSString *presentationName;
 
+// Window title; can be changed by escape code or trigger. Is initialized to session name.
 @property (nonatomic, readonly) NSString *windowTitle;
+
+// Window title with extra formatting, ready to be shown in a title bar.
 @property (nonatomic, readonly) NSString *presentationWindowTitle;
 
-// The original name cannot be changed by escape sequence. It is the name of the session or the
-// user-assigned name.
-@property (nonatomic, readonly) NSString *originalName;
-@property (nonatomic, readonly) NSString *presentationOriginalName;
 @property (nonatomic, readonly) NSString *terminalWindowName;
 @property (nonatomic, readonly) NSString *terminalIconName;
 
@@ -69,7 +66,6 @@
 - (void)restoreNameFromStateDictionary:(NSDictionary *)state
                      legacyProfileName:(NSString *)legacyProfileName
                      legacySessionName:(NSString *)legacyName
-                    legacyOriginalName:(NSString *)legacyOriginalName
                      legacyWindowTitle:(NSString *)legacyWindowTitle;
 - (NSDictionary *)stateDictionary;
 

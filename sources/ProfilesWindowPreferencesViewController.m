@@ -57,11 +57,6 @@
                                                  name:kReloadAllProfiles
                                                object:nil];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(updateLabels:)
-                                                 name:kUpdateLabelsNotification
-                                               object:nil];
-
     __weak __typeof(self) weakSelf = self;
     PreferenceInfo *info;
     info = [self defineControl:_transparency
@@ -138,11 +133,6 @@
         }
     };
 
-    info = [self defineControl:_syncTitle
-                           key:KEY_SYNC_TITLE
-                          type:kPreferenceInfoTypeCheckbox];
-    [self updateSyncTitleEnabled];
-
     [self defineControl:_preventTab
                     key:KEY_PREVENT_TAB
                    type:kPreferenceInfoTypeCheckbox];
@@ -183,20 +173,12 @@
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 
-- (void)updateSyncTitleEnabled {
-    _syncTitle.enabled = [iTermPreferences boolForKey:kPreferenceKeyShowProfileName];
-}
-
 #pragma mark - Notifications
 
 // This is also a superclass method.
 - (void)reloadProfile {
     [super reloadProfile];
     [self loadBackgroundImageWithFilename:[self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
-}
-
-- (void)updateLabels:(NSNotification *)notification {
-    [self updateSyncTitleEnabled];
 }
 
 #pragma mark - Actions
