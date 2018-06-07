@@ -111,7 +111,7 @@
         [self loadRulesAndTransforms];
 
         NSError *error = nil;
-        CPGrammar *grammar = [CPGrammar grammarWithStart:@"call"
+        CPGrammar *grammar = [CPGrammar grammarWithStart:@"expression"
                                           backusNaurForm:_grammarProcessor.backusNaurForm
                                                    error:&error];
         _parser = [CPSLRParser parserWithGrammar:grammar];

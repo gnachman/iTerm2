@@ -31,9 +31,6 @@
 // Called when the screen and terminal's attributes are reset
 - (void)screenDidReset;
 
-// Returns if the profile name should be included in the window title.
-- (BOOL)screenShouldSyncTitle;
-
 // Terminal can change title
 - (BOOL)screenAllowTitleSetting;
 
@@ -55,17 +52,14 @@
 // Returns if terminal-initiated printing is permitted.
 - (BOOL)screenShouldBeginPrinting;
 
-// Returns the session's name, excluding the current job.
-- (NSString *)screenNameExcludingJob;
-
 // Sets the window title.
 - (void)screenSetWindowTitle:(NSString *)title;
 
 // Returns the current window title.
 - (NSString *)screenWindowTitle;
 
-// Returns the session's name as it would be displayed in the window.
-- (NSString *)screenDefaultName;
+// Returns the session's "icon title", which is just its name.
+- (NSString *)screenIconTitle;
 
 // Sets the session's name.
 - (void)screenSetName:(NSString *)name;

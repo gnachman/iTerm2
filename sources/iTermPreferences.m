@@ -68,7 +68,7 @@ NSString *const kPreferenceKeyUIElement = @"HideFromDockAndAppSwitcher";
 NSString *const kPreferenceKeyFlashTabBarInFullscreen = @"FlashTabBarInFullscreen";
 NSString *const kPreferenceKeyShowWindowNumber = @"WindowNumber";
 NSString *const kPreferenceKeyShowJobName = @"JobName";
-NSString *const kPreferenceKeyShowProfileName = @"ShowBookmarkName";  // The key predates bookmarks being renamed to profiles
+NSString *const kPreferenceKeyShowProfileName_Deprecated = @"ShowBookmarkName";  // The key predates bookmarks being renamed to profiles
 NSString *const kPreferenceKeyDimOnlyText = @"DimOnlyText";
 NSString *const kPreferenceKeyDimmingAmount = @"SplitPaneDimmingAmount";
 NSString *const kPreferenceKeyDimInactiveSplitPanes = @"DimInactiveSplitPanes";
@@ -240,7 +240,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyFlashTabBarInFullscreen:@YES,
                   kPreferenceKeyShowWindowNumber: @YES,
                   kPreferenceKeyShowJobName: @YES,
-                  kPreferenceKeyShowProfileName: @NO,
+                  kPreferenceKeyShowProfileName_Deprecated: @NO,
                   kPreferenceKeyDimOnlyText: @NO,
                   kPreferenceKeyDimmingAmount: @0.4,
                   kPreferenceKeyDimInactiveSplitPanes: @YES,

@@ -59,7 +59,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     BOOL canResize_;
     BOOL isFullscreen_;
     VT100GridSize newSize_;
-    BOOL syncTitle_;
     NSString *windowTitle_;
     NSString *name_;
     NSMutableArray *dirlog_;
@@ -87,7 +86,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     canResize_ = YES;
     isFullscreen_ = NO;
     newSize_ = VT100GridSizeMake(0, 0);
-    syncTitle_ = YES;
     windowTitle_ = nil;
     name_ = nil;
     dirlog_ = [NSMutableArray array];
@@ -573,10 +571,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     name_ = [[name copy] autorelease];
 }
 
-- (NSString *)screenNameExcludingJob {
-    return @"joblessName";
-}
-
 - (NSString *)screenProfileName {
     return @"Default";
 }
@@ -615,10 +609,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
 - (BOOL)screenShouldBeginPrinting {
     return printingAllowed_;
-}
-
-- (BOOL)screenShouldSyncTitle {
-    return syncTitle_;
 }
 
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string {
@@ -687,7 +677,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return windowTitle_;
 }
 
-- (NSString *)screenDefaultName {
+- (NSString *)screenIconTitle {
     return @"Default name";
 }
 
@@ -3410,13 +3400,13 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [screen setMaxScrollbackLines:20];
 
-    // Should come back as joblessName test
-    syncTitle_ = YES;
+//    // Should come back as joblessName test
+//    syncTitle_ = YES;
     [screen terminalSetWindowTitle:@"test"];
     XCTAssert([windowTitle_ isEqualToString:@"joblessName: test"]);
 
-    // Should come back as just test2
-    syncTitle_ = NO;
+//    // Should come back as just test2
+//    syncTitle_ = NO;
     [screen terminalSetWindowTitle:@"test2"];
     XCTAssert([windowTitle_ isEqualToString:@"test2"]);
 
@@ -3452,12 +3442,12 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert([entry[0] intValue] == 29);  // 20 lines of scrollback + 10th line of display
     XCTAssert([entry[1] isKindOfClass:[NSNull class]]);
 
-    // Test icon title, which is the same, but does not log the pwd.
-    syncTitle_ = YES;
+//    // Test icon title, which is the same, but does not log the pwd.
+//    syncTitle_ = YES;
     [screen terminalSetIconTitle:@"test3"];
     XCTAssert([name_ isEqualToString:@"joblessName: test3"]);
 
-    syncTitle_ = NO;
+//    syncTitle_ = NO;
     [screen terminalSetIconTitle:@"test4"];
     XCTAssert([name_ isEqualToString:@"test4"]);
 }

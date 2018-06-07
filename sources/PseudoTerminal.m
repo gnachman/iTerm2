@@ -7119,8 +7119,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)currentSessionName {
-    PTYSession* session = [self currentSession];
-    return [session windowTitle] ? [session windowTitle] : session.nameController.presentationOriginalName;
+    return self.currentSession.nameController.presentationWindowTitle ?: @"Untitled";
 }
 
 - (void)setName:(NSString *)theSessionName forSession:(PTYSession *)aSession {

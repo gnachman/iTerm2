@@ -2883,11 +2883,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalSetWindowTitle:(NSString *)title {
     if ([delegate_ screenAllowTitleSetting]) {
-        NSString *newTitle = [[title copy] autorelease];
-        if ([delegate_ screenShouldSyncTitle]) {
-            newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
-        }
-        [delegate_ screenSetWindowTitle:newTitle];
+        [delegate_ screenSetWindowTitle:title];
     }
 
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
@@ -2904,11 +2900,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalSetIconTitle:(NSString *)title {
     if ([delegate_ screenAllowTitleSetting]) {
-        NSString *newTitle = [[title copy] autorelease];
-        if ([delegate_ screenShouldSyncTitle]) {
-            newTitle = [NSString stringWithFormat:@"%@: %@", [delegate_ screenNameExcludingJob], newTitle];
-        }
-        [delegate_ screenSetName:newTitle];
+        [delegate_ screenSetName:title];
     }
 }
 
@@ -3099,9 +3091,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (NSString *)terminalIconTitle {
     if (allowTitleReporting_ && [self terminalIsTrusted]) {
-        // TODO: Should be something like screenRawName (which doesn't exist yet but would return
-        // [self rawName]), not screenWindowTitle, right?
-        return [delegate_ screenWindowTitle] ? [delegate_ screenWindowTitle] : [delegate_ screenDefaultName];
+        return [delegate_ screenIconTitle];
     } else {
         return @"";
     }

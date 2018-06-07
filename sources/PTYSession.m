@@ -1007,7 +1007,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [aSession.nameController restoreNameFromStateDictionary:arrangement[SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE]
                                           legacyProfileName:aSession.profile[KEY_NAME]
                                           legacySessionName:arrangement[DEPRECATED_SESSION_ARRANGEMENT_NAME]
-                                         legacyOriginalName:arrangement[DEPRECATED_SESSION_ARRANGEMENT_DEFAULT_NAME]
                                           legacyWindowTitle:arrangement[DEPRECATED_SESSION_ARRANGEMENT_WINDOW_TITLE]];
     if (arrangement[SESSION_ARRANGEMENT_VARIABLES]) {
         NSDictionary *variables = arrangement[SESSION_ARRANGEMENT_VARIABLES];
@@ -7406,13 +7405,6 @@ ITERM_WEAKLY_REFERENCEABLE
     _screen.trackCursorLineMovement = NO;
 }
 
-- (BOOL)screenShouldSyncTitle {
-    if (![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
-        return NO;
-    }
-    return [[[self profile] objectForKey:KEY_SYNC_TITLE] boolValue];
-}
-
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string {
     [self appendStringToTriggerLine:string];
 }
@@ -7454,10 +7446,6 @@ ITERM_WEAKLY_REFERENCEABLE
     return ![[[self profile] objectForKey:KEY_DISABLE_PRINTING] boolValue];
 }
 
-- (NSString *)screenNameExcludingJob {
-    return _nameController.originalName;
-}
-
 - (void)screenSetWindowTitle:(NSString *)title {
     [_nameController terminalDidSetWindowTitle:title];
 }
@@ -7466,8 +7454,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self windowTitle];
 }
 
-- (NSString *)screenDefaultName {
-    return _nameController.originalName;
+- (NSString *)screenIconTitle {
+    return _nameController.sessionName;
 }
 
 - (void)screenSetName:(NSString *)theName {
@@ -9787,10 +9775,12 @@ ITERM_WEAKLY_REFERENCEABLE
     descriptor.tmuxClientName = _tmuxController.clientName;
     descriptor.haveTmuxController = (self.tmuxController != nil);
     descriptor.tmuxWindowName = [_delegate tmuxWindowName];
-    descriptor.shouldShowJobName = [iTermPreferences boolForKey:kPreferenceKeyShowJobName];
-    descriptor.shouldShowProfileName = [iTermPreferences boolForKey:kPreferenceKeyShowProfileName];
     descriptor.jobName = self.jobName;
     return descriptor;
+}
+
+- (id (^)(NSString *))sessionNameControllerVariableSource {
+    return [self functionCallSource];
 }
 
 @end
