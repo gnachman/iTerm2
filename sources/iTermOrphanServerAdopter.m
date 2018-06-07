@@ -106,24 +106,27 @@
                                                  makeKey:NO
                                              canActivate:NO
                                                  command:nil
-                                                   block:^PTYSession *(Profile *profile, PseudoTerminal *term) {
-                                                       iTermFileDescriptorServerConnection theServerConnection = serverConnection;
-                                                       PTYSession *session = [term.sessionFactory newSessionWithProfile:defaultProfile];
-                                                       [term addSessionInNewTab:session];
-                                                       const BOOL ok = [term.sessionFactory attachOrLaunchCommandInSession:session
-                                                                                                                 canPrompt:NO
-                                                                                                                objectType:iTermWindowObject
-                                                                                                          serverConnection:&theServerConnection
-                                                                                                                 urlString:nil
-                                                                                                              allowURLSubs:NO
-                                                                                                               environment:@{}
-                                                                                                                    oldCWD:nil
-                                                                                                            forceUseOldCWD:NO
-                                                                                                             substitutions:nil
-                                                                                                          windowController:term
-                                                                                                                completion:nil];
-                                                       return ok ? session : nil;
-                                                   }];
+                                                   block:
+         ^PTYSession *(Profile *profile, PseudoTerminal *term) {
+             iTermFileDescriptorServerConnection theServerConnection = serverConnection;
+             PTYSession *session = [term.sessionFactory newSessionWithProfile:defaultProfile];
+             [term addSessionInNewTab:session];
+             const BOOL ok = [term.sessionFactory attachOrLaunchCommandInSession:session
+                                                                       canPrompt:NO
+                                                                      objectType:iTermWindowObject
+                                                                serverConnection:&theServerConnection
+                                                                       urlString:nil
+                                                                    allowURLSubs:NO
+                                                                     environment:@{}
+                                                                          oldCWD:nil
+                                                                  forceUseOldCWD:NO
+                                                                         command:nil
+                                                                          isUTF8:nil
+                                                                   substitutions:nil
+                                                                windowController:term
+                                                                      completion:nil];
+             return ok ? session : nil;
+         }];
     NSLog(@"restored an orphan");
     [aSession showOrphanAnnouncement];
     return aSession;

@@ -101,6 +101,8 @@ NS_ASSUME_NONNULL_BEGIN
                            environment:(NSDictionary *)environment
                                 oldCWD:(nullable NSString *)oldCWD
                         forceUseOldCWD:(BOOL)forceUseOldCWD
+                               command:(nullable NSString *)command
+                                isUTF8:(nullable NSNumber *)isUTF8Number
                          substitutions:(nullable NSDictionary *)providedSubs
                       windowController:(PseudoTerminal * _Nonnull)windowController
                             completion:(void (^ _Nullable)(BOOL))completion {
@@ -113,8 +115,8 @@ NS_ASSUME_NONNULL_BEGIN
         profileForComputingCommand = profile;
     }
 
-    NSString *cmd = [ITAddressBookMgr bookmarkCommand:profileForComputingCommand
-                                        forObjectType:objectType];
+    NSString *cmd = command ?: [ITAddressBookMgr bookmarkCommand:profileForComputingCommand
+                                                   forObjectType:objectType];
     NSString *name = profile[KEY_NAME];
 
     // If the command or name have any $$VARS$$ not accounted for above, prompt the user for
@@ -152,7 +154,12 @@ NS_ASSUME_NONNULL_BEGIN
         }
     }
     environment = [environment dictionaryBySettingObject:pwd forKey:@"PWD"];
-    BOOL isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
+    BOOL isUTF8;
+    if (isUTF8Number) {
+        isUTF8 = isUTF8Number.boolValue;
+    } else {
+        isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
+    }
 
     void (^block)(NSString *) = ^(NSString *result) {
         [windowController setName:result ?: @"" forSession:aSession];

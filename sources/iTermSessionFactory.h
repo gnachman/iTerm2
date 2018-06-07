@@ -31,6 +31,8 @@ NS_ASSUME_NONNULL_BEGIN
                            environment:(NSDictionary *)environment
                                 oldCWD:(nullable NSString *)oldCWD
                         forceUseOldCWD:(BOOL)forceUseOldCWD  // Change custom directory setting to make it use the passed-in oLDCWD
+                               command:(nullable NSString *)command   // Overrides profile's command if nonnil
+                                isUTF8:(nullable NSNumber *)isUTF8Number // Overrides profile's iSUTF8 if nonnil
                          substitutions:(nullable NSDictionary *)substitutions
                       windowController:(PseudoTerminal * _Nonnull)windowController
                             completion:(void (^ _Nullable)(BOOL))completion;  // If nonnil this may be async

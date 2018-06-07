@@ -5855,6 +5855,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  environment:@{}
                                                       oldCWD:oldCWD
                                               forceUseOldCWD:NO
+                                                     command:nil
+                                                      isUTF8:nil
                                                substitutions:nil
                                             windowController:self
                                                   completion:nil]) {
@@ -7718,6 +7720,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                             environment:environment
                                                  oldCWD:previousDirectory
                                          forceUseOldCWD:NO
+                                                command:nil
+                                                 isUTF8:nil
                                           substitutions:nil
                                        windowController:self
                                              completion:nil];
