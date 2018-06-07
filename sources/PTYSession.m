@@ -1340,45 +1340,42 @@ ITERM_WEAKLY_REFERENCEABLE
             // profile.
             NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
             DLog(@"Running command...");
-            if (haveSavedProgramData) {
-                if (oldCWD) {
-                    // Replace PWD with the working directory at the time the arrangement was saved
-                    // so it will be properly restored.
-                    NSMutableDictionary *temp = [[aSession.environment mutableCopy] autorelease];
-                    temp[PWD_ENVNAME] = oldCWD;
-                    aSession.environment = temp;
 
-                    if ([aSession.program isEqualToString:[ITAddressBookMgr standardLoginCommand]]) {
-                        // Create a login session that drops you in the old directory instead of
-                        // using login -fp "$USER". This lets saved arrangements properly restore
-                        // the working directory when the profile specifies the home directory.
-                        aSession.program = [ITAddressBookMgr shellLauncherCommand];
-                    }
+            NSDictionary *environmentArg = @{};
+            NSString *commandArg = nil;
+            NSNumber *isUTF8Arg = nil;
+            NSDictionary *substitutionsArg = nil;
+            if (haveSavedProgramData) {
+                // This is the normal case; the else clause is for legacy saved arrangements.
+                environmentArg = aSession.environment ?: @{};
+                commandArg = aSession.program;
+                if (oldCWD &&
+                    [aSession.program isEqualToString:[ITAddressBookMgr standardLoginCommand]]) {
+                    // Create a login session that drops you in the old directory instead of
+                    // using login -fp "$USER". This lets saved arrangements properly restore
+                    // the working directory when the profile specifies the home directory.
+                    commandArg = [ITAddressBookMgr shellLauncherCommand];
                 }
-                runCommandBlock = ^(void (^completion)(BOOL)) {
-                    [aSession startProgram:aSession.program
-                               environment:aSession.environment
-                                    isUTF8:aSession.isUTF8
-                             substitutions:aSession.substitutions
-                                completion:completion];
-                };
-            } else {
-                runCommandBlock = ^(void (^completion)(BOOL)) {
-                    iTermSessionFactory *factory = [[[iTermSessionFactory alloc] init] autorelease];
-                    [factory attachOrLaunchCommandInSession:aSession
-                                                  canPrompt:NO
-                                                 objectType:objectType
-                                           serverConnection:nil
-                                                  urlString:nil
-                                               allowURLSubs:NO
-                                                environment:@{}
-                                                     oldCWD:oldCWD
-                                             forceUseOldCWD:contents != nil && oldCWD.length
-                                              substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]
-                                           windowController:(PseudoTerminal *)aSession.delegate.realParentWindow
-                                                 completion:completion];
-                };
+                isUTF8Arg = @(aSession.isUTF8);
+                substitutionsArg = aSession.substitutions;
             }
+            runCommandBlock = ^(void (^completion)(BOOL)) {
+                iTermSessionFactory *factory = [[[iTermSessionFactory alloc] init] autorelease];
+                [factory attachOrLaunchCommandInSession:aSession
+                                              canPrompt:NO
+                                             objectType:objectType
+                                       serverConnection:nil
+                                              urlString:nil
+                                           allowURLSubs:NO
+                                            environment:environmentArg
+                                                 oldCWD:oldCWD
+                                         forceUseOldCWD:contents != nil && oldCWD.length
+                                                command:commandArg
+                                                 isUTF8:@(aSession.isUTF8)
+                                          substitutions:substitutionsArg
+                                       windowController:(PseudoTerminal *)aSession.delegate.realParentWindow
+                                             completion:completion];
+            };
         }
     } else {
         // Is a tmux pane

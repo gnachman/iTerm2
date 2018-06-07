@@ -1173,6 +1173,8 @@ static iTermController *gSharedInstance;
                                                                 environment:@{}
                                                                      oldCWD:nil
                                                              forceUseOldCWD:NO
+                                                                    command:nil
+                                                                     isUTF8:nil
                                                               substitutions:nil
                                                            windowController:term
                                                                  completion:nil];
