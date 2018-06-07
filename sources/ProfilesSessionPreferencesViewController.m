@@ -17,7 +17,6 @@
 
 @implementation ProfilesSessionPreferencesViewController {
     IBOutlet NSButton *_closeSessionsOnEnd;
-    IBOutlet NSMatrix *_promptBeforeClosing;
     IBOutlet NSTableView *_jobsTable;
     IBOutlet NSButton *_removeJob;
     IBOutlet NSButton *_autoLog;
@@ -32,6 +31,11 @@
     IBOutlet NSTextField *_undoTimeout;
     IBOutlet NSButton *_reduceFlicker;
 
+    IBOutlet NSView *_warnContainer;
+    IBOutlet NSButton *_alwaysWarn;
+    IBOutlet NSButton *_neverWarn;
+    IBOutlet NSButton *_warnIfJobsBesides;
+    
     BOOL _awoken;
 }
 
@@ -54,9 +58,21 @@
                     key:KEY_CLOSE_SESSIONS_ON_END
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_promptBeforeClosing
+    [self defineControl:_alwaysWarn
                     key:KEY_PROMPT_CLOSE
-                   type:kPreferenceInfoTypeMatrix
+                   type:kPreferenceInfoTypeRadioButton
+         settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
+                 update:^BOOL { [self updatePromptBeforeClosing]; return YES; }];
+
+    [self defineControl:_neverWarn
+                    key:KEY_PROMPT_CLOSE
+                   type:kPreferenceInfoTypeRadioButton
+         settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
+                 update:^BOOL { [self updatePromptBeforeClosing]; return YES; }];
+
+    [self defineControl:_warnIfJobsBesides
+                    key:KEY_PROMPT_CLOSE
+                   type:kPreferenceInfoTypeRadioButton
          settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
                  update:^BOOL { [self updatePromptBeforeClosing]; return YES; }];
 
@@ -177,11 +193,25 @@
 #pragma mark - Prompt before closing
 
 - (void)promptBeforeClosingDidChange {
-    [self setInt:[_promptBeforeClosing selectedTag] forKey:KEY_PROMPT_CLOSE];
+    int tag = 0;
+    for (NSButton *button in @[_alwaysWarn, _neverWarn, _warnIfJobsBesides]) {
+        if (button.state == NSOnState) {
+            tag = button.tag;
+            break;
+        }
+    }
+    [self setInt:tag forKey:KEY_PROMPT_CLOSE];
 }
 
 - (void)updatePromptBeforeClosing {
-    [_promptBeforeClosing selectCellWithTag:[self intForKey:KEY_PROMPT_CLOSE]];
+    int tag = [self intForKey:KEY_PROMPT_CLOSE];
+    for (NSButton *button in @[_alwaysWarn, _neverWarn, _warnIfJobsBesides]) {
+        if (button.tag == tag) {
+            button.state = NSOnState;
+        } else {
+            button.state = NSOffState;
+        }
+    }
 }
 
 #pragma mark - Jobs
