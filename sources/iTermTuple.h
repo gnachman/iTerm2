@@ -15,3 +15,12 @@
 + (instancetype)tupleWithObject:(T1)firstObject andObject:(T2)secondObject;
 
 @end
+
+@interface iTermTriple<T1, T2, T3> : iTermTuple<NSCoding, NSCopying>
+
+@property (nonatomic, strong) T3 thirdObject;
+
++ (instancetype)tupleWithObject:(T1)firstObject andObject:(T2)secondObject NS_UNAVAILABLE;
++ (instancetype)tripleWithObject:(T1)firstObject andObject:(T2)secondObject object:(T3)thirdObject;
+
+@end

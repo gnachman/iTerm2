@@ -115,6 +115,22 @@
                         pixels:changePx];
 }
 
+- (void)didAddSubview:(NSView *)subview {
+    [super didAddSubview:subview];
+    [self.delegate splitViewDidChangeSubviews:self];
+}
+
+- (void)willRemoveSubview:(NSView *)subview {
+    [super willRemoveSubview:subview];
+#warning TODO: Make sure this works
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ([[weakSelf retain] autorelease]) {
+            [weakSelf.delegate splitViewDidChangeSubviews:self];
+        }
+    });
+}
+
 @end
 
 

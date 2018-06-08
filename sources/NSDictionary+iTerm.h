@@ -50,6 +50,7 @@
 // Returns a dictionary with changed values. If the block returns nil the
 // entry is omitted.
 - (NSDictionary *)mapValuesWithBlock:(id (^)(KeyType key, ObjectType object))block;
+- (NSDictionary *)mapKeysWithBlock:(KeyType (^)(KeyType key, ObjectType object))block;
 
 @end
 
@@ -78,5 +79,7 @@ typedef NSDictionary iTermHotKeyDescriptor;
 
 @interface NSMutableDictionary<KeyType, ObjectType> (iTerm)
 - (void)removeObjectsPassingTest:(BOOL (^)(KeyType key))block;
+- (void)it_mergeFrom:(NSDictionary<KeyType, ObjectType> *)other;
+
 @end
 

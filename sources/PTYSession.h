@@ -8,6 +8,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermPopupWindowController.h"
 #import "iTermSessionNameController.h"
+
 #import "LineBuffer.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
@@ -35,6 +36,7 @@ extern NSString *const PTYSessionRevivedNotification;
 @class CapturedOutput;
 @class FakeWindow;
 @class iTermAnnouncementViewController;
+@class iTermVariables;
 @class PTYTab;
 @class PTYTask;
 @class PTYTextView;
@@ -403,9 +405,8 @@ typedef enum {
 @property(nonatomic, readonly) NSMutableArray<NSString *> *directories;  // of NSString
 @property(nonatomic, readonly) NSMutableArray<VT100RemoteHost *> *hosts;  // of VT100RemoteHost
 
-// Session-defined and user-defined variables. Session-defined vars start with "session." and
-// user-defined variables start with "user.".
-@property(nonatomic, readonly) NSMutableDictionary *variables;
+// Has two children: session and user
+@property (nonatomic, readonly) iTermVariables *variables;
 
 @property(atomic, readonly) PTYSessionTmuxMode tmuxMode;
 
@@ -734,6 +735,10 @@ typedef enum {
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length;
 - (void)setVariableNamed:(NSString *)name toValue:(id)newValue;
 - (void)injectData:(NSData *)data;
+
+// Call this when a session moves to a different tab or window to update the session ID.
+- (void)didMoveSession;
+
 
 #pragma mark - API
 

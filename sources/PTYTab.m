@@ -786,6 +786,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self updateFlexibleViewColors];
     for (PTYSession *session in self.sessions) {
         [session useTransparencyDidChange];
+        [session didMoveSession];
     }
 }
 
@@ -3895,9 +3896,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [session1Tab.viewToSessionMap removeObjectForKey:session1.view];
     [session2Tab.viewToSessionMap removeObjectForKey:session2.view];
 
-
     [session1Tab.viewToSessionMap setObject:session2 forKey:session2.view];
     [session2Tab.viewToSessionMap setObject:session1 forKey:session1.view];
+
+    [session1 didMoveSession];
+    [session2 didMoveSession];
 }
 
 - (void)_recursivePopulateSplitTreeNode:(ITMSplitTreeNode *)node
@@ -3937,6 +3940,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 #pragma mark NSSplitView delegate methods
+
+- (void)splitViewDidChangeSubviews:(PTYSplitView *)splitView {
+    for (PTYSession *session in self.sessions) {
+        // Pane number may have changed for all sessions by adding or removing a split pane anywhere.
+        [session didMoveSession];
+    }
+}
 
 - (void)splitView:(PTYSplitView *)splitView draggingWillBeginOfSplit:(int)splitterIndex {
     if (![self isTmuxTab]) {

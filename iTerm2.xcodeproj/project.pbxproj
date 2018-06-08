@@ -1229,6 +1229,7 @@
 		5346902C1C94FF1900B7E4E9 /* overflowImage@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5346902B1C94FF1900B7E4E9 /* overflowImage@2x.png */; };
 		5370F2EA1C7895F800874C0F /* QLPreviewPanel+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */; };
 		5370F2EB1C7895FD00874C0F /* QLPreviewPanel+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */; };
+		538BE55620C9E69A00AD15B0 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
 		539325F31DD66EFA00CABCEF /* iTermPreciseTimer.m in Sources */ = {isa = PBXBuildFile; fileRef = 539325EF1DD66EF100CABCEF /* iTermPreciseTimer.m */; };
 		53AFFC8E1DD2A04100E6CEC6 /* iTermLSOF.m in Sources */ = {isa = PBXBuildFile; fileRef = 53AFFC8B1DD2A03800E6CEC6 /* iTermLSOF.m */; };
 		53AFFC8F1DD2A04600E6CEC6 /* iTermLSOF.h in Headers */ = {isa = PBXBuildFile; fileRef = 53AFFC8A1DD2A03800E6CEC6 /* iTermLSOF.h */; };
@@ -2199,7 +2200,6 @@
 		A6C762B01B45C52B00E3C992 /* NSColor+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */; };
 		A6C762B11B45C52B00E3C992 /* NSData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FA01A2A8A5A009B1CB6 /* NSData+iTerm.m */; };
 		A6C762B21B45C52B00E3C992 /* NSDateFormatterExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */; };
-		A6C762B31B45C52B00E3C992 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
 		A6C762B41B45C52B00E3C992 /* NSDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */; };
 		A6C762B51B45C52B00E3C992 /* NSEvent+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F8E1A2449EF009B1CB6 /* NSEvent+iTerm.m */; };
 		A6C762B61B45C52B00E3C992 /* NSFileManager+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67ABAA14285D6000D5DA4E /* NSFileManager+iTerm.m */; };
@@ -9557,6 +9557,7 @@
 				A65429B020C492F000CE71B1 /* iTermParameterPanelWindowController.m in Sources */,
 				A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */,
 				A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */,
+				538BE55620C9E69A00AD15B0 /* NSDictionary+iTerm.m in Sources */,
 				530AB8A820B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
 				A6FE8D04209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m in Sources */,
@@ -9747,7 +9748,6 @@
 				A6C7635E1B45C52B00E3C992 /* PasteboardHistory.m in Sources */,
 				A6C7630E1B45C52B00E3C992 /* iTermBackgroundColorRun.m in Sources */,
 				A6C762D21B45C52B00E3C992 /* iTermTextExtractor.m in Sources */,
-				A6C762B31B45C52B00E3C992 /* NSDictionary+iTerm.m in Sources */,
 				A6C762C01B45C52B00E3C992 /* NSStringITerm.m in Sources */,
 				A6C762E41B45C52B00E3C992 /* TaskNotifier.m in Sources */,
 				A6C762B91B45C52B00E3C992 /* NSMutableAttributedString+iTerm.m in Sources */,

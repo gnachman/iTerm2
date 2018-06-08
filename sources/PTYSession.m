@@ -223,7 +223,8 @@ static const NSUInteger kMaxHosts = 100;
     iTermPasteHelperDelegate,
     iTermSessionNameControllerDelegate,
     iTermSessionViewDelegate,
-    iTermUpdateCadenceControllerDelegate>
+    iTermUpdateCadenceControllerDelegate,
+    iTermVariablesDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, retain) TerminalFileUpload *upload;
@@ -240,7 +241,6 @@ static const NSUInteger kMaxHosts = 100;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
 @property(nonatomic, copy) NSString *badgeFormat;
-@property(nonatomic, retain) NSMutableDictionary *variables;
 // The name of the foreground job at the moment as best we can tell.
 @property(nonatomic, copy) NSString *jobName;
 
@@ -461,6 +461,9 @@ static const NSUInteger kMaxHosts = 100;
     int _nextMetalDisabledToken;
     NSMutableSet *_metalDisabledTokens;
     BOOL _metalDeviceChanging;
+
+    iTermVariables *_sessionVariables;
+    iTermVariables *_userVariables;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -523,7 +526,24 @@ static const NSUInteger kMaxHosts = 100;
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
 
         _overriddenFields = [[NSMutableSet alloc] init];
+        // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
+        _guid = [[NSString uuid] retain];
+
+        _variables = [[iTermVariables alloc] init];
+        _sessionVariables = [[iTermVariables alloc] init];
+        [_variables setValue:_sessionVariables forVariableNamed:@"session"];
+        _userVariables = [[iTermVariables alloc] init];
+        [_variables setValue:_userVariables forVariableNamed:@"user"];
+
         _creationDate = [[NSDate date] retain];
+        NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+        dateFormatter.dateFormat = @"yyyyMMdd_HHmmss";
+        [_variables setValue:[dateFormatter stringFromDate:_creationDate]
+            forVariableNamed:iTermVariableKeySessionCreationTimeString];
+        [_variables setValue:[@(_autoLogId) stringValue] forVariableNamed:iTermVariableKeySessionAutoLogID];
+        [_variables setValue:_guid forVariableNamed:iTermVariableKeySessionID];
+        _variables.delegate = self;
+
         _tmuxSecureLogging = NO;
         _tailFindContext = [[FindContext alloc] init];
         _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
@@ -531,13 +551,10 @@ static const NSUInteger kMaxHosts = 100;
         _activityCounter = [@0 retain];
         _announcements = [[NSMutableDictionary alloc] init];
         _queuedTokens = [[NSMutableArray alloc] init];
-        _variables = [[NSMutableDictionary alloc] init];
         _commands = [[NSMutableArray alloc] init];
         _directories = [[NSMutableArray alloc] init];
         _hosts = [[NSMutableArray alloc] init];
         _automaticProfileSwitcher = [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:self];
-        // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
-        _guid = [[NSString uuid] retain];
         _throughputEstimator = [[iTermThroughputEstimator alloc] initWithHistoryOfDuration:5.0 / 30.0 secondsPerBucket:1 / 30.0];
         _cadenceController = [[iTermUpdateCadenceController alloc] initWithThroughputEstimator:_throughputEstimator];
         _cadenceController.delegate = self;
@@ -664,6 +681,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_queuedTokens release];
     [_badgeFormat release];
     [_variables release];
+    [_sessionVariables release];
+    [_userVariables release];
     [_program release];
     [_environment release];
     [_commands release];
@@ -710,7 +729,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setGuid:(NSString *)guid {
     [_guid autorelease];
     _guid = [guid copy];
-    [self updateVariables];
+    [_variables setValue:_guid forVariableNamed:iTermVariableKeySessionID];
 }
 
 - (void)setLiveSession:(PTYSession *)liveSession {
@@ -829,64 +848,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateVariables {
-    if (_nameController.sessionName) {
-        _variables[iTermVariableKeySessionName] = [[_nameController.sessionName copy] autorelease];
-    } else {
-        [_variables removeObjectForKey:iTermVariableKeySessionName];
-    }
-
-    _variables[iTermVariableKeySessionColumns] = @(_screen.width);
-    _variables[iTermVariableKeySessionRows] = @(_screen.height);
-    VT100RemoteHost *remoteHost = [self currentHost];
-    if (remoteHost.hostname) {
-        _variables[iTermVariableKeySessionHostname] = remoteHost.hostname;
-    } else {
-        [_variables removeObjectForKey:iTermVariableKeySessionHostname];
-    }
-    if (remoteHost.username) {
-        _variables[iTermVariableKeySessionUsername] = remoteHost.username;
-    } else {
-        [_variables removeObjectForKey:iTermVariableKeySessionUsername];
-    }
-    NSString *path = [_screen workingDirectoryOnLine:_screen.numberOfScrollbackLines + _screen.cursorY - 1];
-    if (path) {
-        _variables[iTermVariableKeySessionPath] = path;
-    } else {
-        [_variables removeObjectForKey:iTermVariableKeySessionPath];
-    }
-    if (_lastCommand) {
-        _variables[iTermVariableKeySessionLastCommand] = _lastCommand;
-    } else {
-        [_variables removeObjectForKey:iTermVariableKeySessionLastCommand];
-    }
-    NSString *tty = [self tty];
-    if (tty) {
-        _variables[iTermVariableKeySessionTTY] = tty;
-    } else {
-        [_variables removeObjectForKey:iTermVariableKeySessionTTY];
-    }
-
-    _variables[iTermVariableKeySessionProfileName] = self.profile[KEY_NAME] ?: @"";
-    _variables[iTermVariableKeySessionIconName] = self.nameController.terminalIconName;
-    _variables[iTermVariableKeySessionWindowName] = self.nameController.terminalWindowName;
-#warning TODO: Call updateVariables when job name changes
-    _variables[iTermVariableKeySessionJob] = self.jobName;
-
-    if (_variables[iTermVariableKeyTermID] == nil) {
-        // Variables that only need to be updated once.
-        _variables[iTermVariableKeyTermID] = [self.sessionId stringByReplacingOccurrencesOfString:@":" withString:@"."];
-
-        NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
-        dateFormatter.dateFormat = @"yyyyMMdd_HHmmss";
-        _variables[iTermVariableKeySessionCreationTimeString] = [dateFormatter stringFromDate:_creationDate];
-
-        _variables[iTermVariableKeyApplicationPID] = [@(getpid()) stringValue];
-        _variables[iTermVariableKeySessionAutoLogID] = [@(_autoLogId) stringValue];
-    }
-
-    _variables[iTermVariableKeySessionID] = self.guid;
-
-    [_textview setBadgeLabel:[self badgeLabel]];
+    [self.variables setValue:[self.sessionId stringByReplacingOccurrencesOfString:@":" withString:@"."]
+            forVariableNamed:iTermVariableKeyTermID];
 }
 
 - (void)coprocessChanged
@@ -1011,8 +974,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (arrangement[SESSION_ARRANGEMENT_VARIABLES]) {
         NSDictionary *variables = arrangement[SESSION_ARRANGEMENT_VARIABLES];
         for (id key in variables) {
-            aSession.variables[key] = variables[key];
-            iTermVariablesAdd(key);
+            [aSession.variables setValue:variables[key] forVariableNamed:key];
         }
         aSession.textview.badgeLabel = aSession.badgeLabel;
     }
@@ -1113,7 +1075,9 @@ ITERM_WEAKLY_REFERENCEABLE
         iTermAnnouncementViewController *announcement = [aSession announcementForMissingProfileInArrangement:arrangement];
         [aSession queueAnnouncement:announcement identifier:@"ThisProfileNoLongerExists"];
     }
-    [aSession updateVariables];
+
+    NSString *path = [aSession.screen workingDirectoryOnLine:aSession.screen.numberOfScrollbackLines + aSession.screen.cursorY - 1];
+    [aSession.variables setValue:path forVariableNamed:iTermVariableKeySessionPath];
 }
 
 + (PTYSession *)sessionFromArrangement:(NSDictionary *)arrangement
@@ -1411,6 +1375,8 @@ ITERM_WEAKLY_REFERENCEABLE
           includeRestorationBanner:includeRestorationBanner
                      knownTriggers:_triggers
                         reattached:reattached];
+    // Do this to force the hostname variable to be updated.
+    [self currentHost];
 }
 
 - (void)showOrphanAnnouncement {
@@ -1473,6 +1439,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // assign terminal and task objects
     _terminal.delegate = _screen;
     [_shell setDelegate:self];
+    [self.variables setValue:_shell.tty forVariableNamed:iTermVariableKeySessionTTY];
 
     // initialize the screen
     // TODO: Shouldn't this take the scrollbar into account?
@@ -1661,10 +1628,9 @@ ITERM_WEAKLY_REFERENCEABLE
     NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
     dateFormatter.dateFormat = @"yyyyMMdd_HHmmss";
     NSString *format = [iTermAdvancedSettingsModel autoLogFormat];
-    [self updateVariables];
-    NSString *name = [[format stringByReplacingVariableReferencesWithVariables:self.variables] stringByReplacingOccurrencesOfString:@"/" withString:@"__"];
+    NSString *name = [[format stringByReplacingVariableReferencesWithVariables:self.variables.legacyDictionary] stringByReplacingOccurrencesOfString:@"/" withString:@"__"];
     NSString *filename = [[iTermProfilePreferences stringForKey:KEY_LOGDIR inProfile:_profile] stringByAppendingPathComponent:name];
-    DLog(@"Using autolog filename %@ from format %@ and variables %@", filename, format, self.variables);
+    DLog(@"Using autolog filename %@ from format %@ and variables %@", filename, format, self.variables.legacyDictionary);
     return filename;
 }
 
@@ -1678,6 +1644,10 @@ ITERM_WEAKLY_REFERENCEABLE
             _delegate.tabNumberForItermSessionId,
             [_delegate sessionPaneNumber:self],
             self.guid];
+}
+
+- (void)didMoveSession {
+    [self.variables setValue:self.sessionId forVariableNamed:iTermVariableKeyTermID];
 }
 
 - (void)computeArgvForCommand:(NSString *)command
@@ -2683,6 +2653,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self performSelector:@selector(brokenPipe) withObject:nil afterDelay:0];
 }
 
+- (void)taskDidChangeTTY:(PTYTask *)task {
+    [self.variables setValue:task.tty forVariableNamed:iTermVariableKeySessionTTY];
+}
+
 - (void)brokenPipe {
     if (_exited) {
         return;
@@ -3373,7 +3347,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    _textview.badgeLabel = [self badgeLabel];
+    [self.variables setValue:self.profile[KEY_NAME] ?: @"" forVariableNamed:iTermVariableKeySessionProfileName];
     [self sanityCheck];
     return didChange;
 }
@@ -3557,12 +3531,13 @@ ITERM_WEAKLY_REFERENCEABLE
                                  forWindowPane:_tmuxPane];
     }
     [self.delegate sessionUpdateMetalAllowed];
+    [self.variables setValue:self.profile[KEY_NAME] ?: @"" forVariableNamed:iTermVariableKeySessionProfileName];
 }
 
 - (NSString *)badgeLabel {
     DLog(@"Raw badge format is %@", _badgeFormat);
-    DLog(@"Variables are:\n%@", _variables);
-    NSString *p = [_badgeFormat stringByReplacingVariableReferencesWithVariables:_variables];
+    DLog(@"Variables are:\n%@", _variables.legacyDictionary);
+    NSString *p = [_badgeFormat stringByReplacingVariableReferencesWithVariables:_variables.legacyDictionary];
     p = [p stringByReplacingEscapedChar:'n' withString:@"\n"];
     p = [p stringByReplacingEscapedHexValuesWithChars];
     DLog(@"Expanded badge label is: %@", p);
@@ -3920,6 +3895,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [_profile release];
     _profile = [mutableProfile retain];
+    [self.variables setValue:self.profile[KEY_NAME] ?: @"" forVariableNamed:iTermVariableKeySessionProfileName];
     [[_delegate realParentWindow] invalidateRestorableState];
     [[_delegate realParentWindow] updateTabColors];
 }
@@ -3960,7 +3936,7 @@ ITERM_WEAKLY_REFERENCEABLE
         result[SESSION_ARRANGEMENT_CONTENTS] = contentsDictionary;
         int numberOfLinesDropped =
             [contentsDictionary[kScreenStateKey][kScreenStateNumberOfLinesDroppedKey] intValue];
-        result[SESSION_ARRANGEMENT_VARIABLES] = _variables;
+        result[SESSION_ARRANGEMENT_VARIABLES] = _variables.legacyDictionary;
         VT100GridCoordRange range = _commandRange;
         range.start.y -= numberOfLinesDropped;
         range.end.y -= numberOfLinesDropped;
@@ -4129,6 +4105,12 @@ ITERM_WEAKLY_REFERENCEABLE
         // Revert to the permanent tab title.
         [[_delegate parentWindow] setWindowTitle];
     }
+}
+
+- (void)setJobName:(NSString *)jobName {
+    [_jobName autorelease];
+    _jobName = [jobName copy];
+    [self.variables setValue:jobName forVariableNamed:iTermVariableKeySessionJob];
 }
 
 - (void)refresh {
@@ -5226,6 +5208,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setCurrentHost:(VT100RemoteHost *)remoteHost {
     [_currentHost autorelease];
     _currentHost = [remoteHost retain];
+    [self.variables setValue:remoteHost.hostname forVariableNamed:iTermVariableKeySessionHostname];
+    [self.variables setValue:remoteHost.username forVariableNamed:iTermVariableKeySessionUsername];
     [_delegate sessionCurrentHostDidChange:self];
 }
 
@@ -5235,6 +5219,8 @@ ITERM_WEAKLY_REFERENCEABLE
         // perhaps other edge cases I haven't found--it used to be done every time before the
         // _currentHost ivar existed).
         _currentHost = [[_screen remoteHostOnLine:[_screen numberOfLines]] retain];
+        [self.variables setValue:_currentHost.hostname forVariableNamed:iTermVariableKeySessionHostname];
+        [self.variables setValue:_currentHost.username forVariableNamed:iTermVariableKeySessionUsername];
     }
     return _currentHost;
 }
@@ -5553,10 +5539,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (id (^)(NSString *))functionCallSource {
-    __weak __typeof(self) weakSelf = self;
-    return [^id(NSString *name) {
-        return weakSelf.variables[name];
-    } copy];
+    return self.variables.functionCallSource;
 }
 
 + (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)keyBindingText {
@@ -6947,11 +6930,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 // Returns a dictionary with only string values by converting non-strings.
 - (NSDictionary *)textViewVariables {
-    return [_variables mapValuesWithBlock:^id(id key, id object) {
+    return [_variables.legacyDictionary mapValuesWithBlock:^id(id key, id object) {
         if ([NSString castFrom:object]) {
             return object;
-        } else {
+        } else if ([object respondsToSelector:@selector(stringValue)]) {
             return [object stringValue];
+        } else {
+            return nil;
         }
     }];
 }
@@ -7387,8 +7372,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)screenSizeDidChange {
     [self updateScroll];
     [_textview updateNoteViewFrames];
-    _variables[iTermVariableKeySessionColumns] = @(_screen.width);
-    _variables[iTermVariableKeySessionRows] = @(_screen.height);
+    [self.variables setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(_screen.width),
+                                               iTermVariableKeySessionRows: @(_screen.height) }];
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
@@ -7447,6 +7432,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenSetWindowTitle:(NSString *)title {
+    [self.variables setValue:title forVariableNamed:iTermVariableKeySessionWindowName];
     [_nameController terminalDidSetWindowTitle:title];
 }
 
@@ -7459,6 +7445,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenSetName:(NSString *)theName {
+    [self.variables setValue:theName forVariableNamed:iTermVariableKeySessionIconName];
     [_nameController terminalDidSetIconTitle:theName];
 }
 
@@ -8099,12 +8086,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setVariableNamed:(NSString *)name toValue:(id)newValue {
-    if (newValue == nil) {
-        [_variables removeObjectForKey:name];
-    } else {
-        _variables[name] = newValue;
-        iTermVariablesAdd(name);
-    }
+    [_variables setValue:newValue forVariableNamed:name];
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
@@ -8203,16 +8185,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
     const BOOL hadHost = (_currentHost != nil);
-    if (host.hostname) {
-        _variables[iTermVariableKeySessionHostname] = host.hostname;
-    } else {
-        [_variables removeObjectForKey:iTermVariableKeySessionHostname];
-    }
-    if (host.username) {
-        _variables[iTermVariableKeySessionUsername] = host.username;
-    } else {
-        [_variables removeObjectForKey:iTermVariableKeySessionUsername];
-    }
+
+    NSNull *null = [NSNull null];
+    NSDictionary *variablesUpdate = @{ iTermVariableKeySessionHostname: host.hostname ?: null,
+                                       iTermVariableKeySessionUsername: host.username ?: null };
+    [_variables setValuesFromDictionary:variablesUpdate];
+
     [_textview setBadgeLabel:[self badgeLabel]];
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
 
@@ -8391,18 +8369,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
-    if (newPath) {
-        _variables[iTermVariableKeySessionPath] = newPath;
-    } else {
-        [_variables removeObjectForKey:iTermVariableKeySessionPath];
-    }
+    [_variables setValue:newPath forVariableNamed:iTermVariableKeySessionPath];
 
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
     VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
     [self tryAutoProfileSwitchWithHostname:remoteHost.hostname
                                   username:remoteHost.username
                                       path:newPath];
-    [_textview setBadgeLabel:[self badgeLabel]];
+    [self.variables setValue:newPath forVariableNamed:iTermVariableKeySessionPath];
 
     ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
     notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
@@ -8563,7 +8537,8 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     self.lastCommand = command;
-    [self updateVariables];
+    [self.variables setValue:command forVariableNamed:iTermVariableKeySessionLastCommand];
+
     // `_commandRange` is from the beginning of command, to the cursor, not necessarily the end of the command.
     // `range` here includes the entire command and a new line.
     _lastOrCurrentlyRunningCommandAbsRange = VT100GridAbsCoordRangeFromCoordRange(range, _screen.totalScrollbackOverflow);
@@ -8989,11 +8964,13 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!name) {
         return nil;
     }
-    id value = self.variables[name];
+    id value = [_variables valueForVariableName:name];
     if ([NSString castFrom:value]) {
         return value;
-    } else {
+    } else if ([value respondsToSelector:@selector(stringValue)]) {
         return [value stringValue];
+    } else {
+        return nil;
     }
 }
 
@@ -9747,6 +9724,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)sessionNameControllerNameWillChangeTo:(NSString *)newName {
     [_view setTitle:newName];
+    [self.variables setValue:newName forVariableNamed:iTermVariableKeySessionName];
+
 }
 
 - (void)sessionNameControllerPresentationNameDidChangeTo:(NSString *)presentationName {
@@ -9759,7 +9738,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                             object:[_delegate parentWindow]
                                                           userInfo:nil];
     }
-    _variables[iTermVariableKeySessionName] = [self name];
+    [_variables setValue:self.name forVariableNamed:iTermVariableKeySessionName];
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
@@ -9781,6 +9760,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (id (^)(NSString *))sessionNameControllerVariableSource {
     return [self functionCallSource];
+}
+
+#pragma mark - iTermVariablesDelegate
+
+- (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames group:(dispatch_group_t)group {
+    [_textview setBadgeLabel:[self badgeLabel]];
 }
 
 @end

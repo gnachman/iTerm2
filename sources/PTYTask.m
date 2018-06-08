@@ -324,6 +324,12 @@ static void HandleSigChld(int n) {
     UnblockTaskNotifier();
 }
 
+@interface PTYTaskLock : NSObject
+@end
+
+@implementation PTYTaskLock
+@end
+
 @interface PTYTask ()
 @property(atomic, assign) BOOL hasMuteCoprocess;
 @property(atomic, assign) BOOL coprocessOnlyTaskIsDead;
@@ -332,6 +338,7 @@ static void HandleSigChld(int n) {
 @end
 
 @implementation PTYTask {
+    NSString *_tty;
     pid_t _serverPid;  // -1 when servers are not in use.
     pid_t _serverChildPid;  // -1 when servers are not in use.
     pid_t _childPid;  // -1 when servers are in use; otherwise is pid of child.
@@ -1043,6 +1050,31 @@ static void HandleSigChld(int n) {
         close(fd);
         NSLog(@"Server died immediately!");
         [_delegate taskDiedImmediately];
+    }
+}
+
+- (NSString *)tty {
+    @synchronized([PTYTaskLock class]) {
+        return [[_tty retain] autorelease];
+    }
+}
+
+- (void)setTty:(NSString *)tty {
+    @synchronized([PTYTaskLock class]) {
+        [_tty autorelease];
+        _tty = [tty copy];
+    }
+    if ([NSThread isMainThread]) {
+        [self.delegate taskDidChangeTTY:self];
+    } else {
+        __weak id<PTYTaskDelegate> delegate = self.delegate;
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if ([weakSelf retain]) {
+                [delegate taskDidChangeTTY:weakSelf];
+            }
+            [weakSelf release];
+        });
     }
 }
 

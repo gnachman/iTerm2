@@ -196,13 +196,13 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
 }
 
 - (NSDictionary *)dictionaryBySettingObject:(id)object forKey:(id)key {
-    NSMutableDictionary *temp = [[self mutableCopy] autorelease];
+    NSMutableDictionary *temp = [self mutableCopy];
     temp[key] = object;
     return temp;
 }
 
 - (NSDictionary *)dictionaryByRemovingObjectForKey:(id)key {
-    NSMutableDictionary *temp = [[self mutableCopy] autorelease];
+    NSMutableDictionary *temp = [self mutableCopy];
     [temp removeObjectForKey:key];
     return temp;
 }
@@ -217,7 +217,7 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
 
 - (NSString *)sizeInfo {
     NSMutableDictionary<NSString *, NSNumber *> *sizes = [NSMutableDictionary dictionary];
-    NSCountedSet<NSString *> *counts = [[[NSCountedSet alloc] init] autorelease];
+    NSCountedSet<NSString *> *counts = [[NSCountedSet alloc] init];
     sizes[@""] = @([self addSizeInfoToSizes:sizes counts:counts keypath:@""]);
     [counts addObject:@""];
 
@@ -234,6 +234,17 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
         id mapped = block(key, obj);
         if (mapped) {
             result[key] = mapped;
+        }
+    }];
+    return result;
+}
+
+- (NSDictionary *)mapKeysWithBlock:(id (^)(id, id))block {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    [self enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        id mappedKey = block(key, obj);
+        if (mappedKey) {
+            result[mappedKey] = obj;
         }
     }];
     return result;
@@ -309,7 +320,7 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
 }
 
 - (NSDictionary *)dictionaryByMergingDictionary:(NSDictionary *)other {
-    NSMutableDictionary *temp = [[self mutableCopy] autorelease];
+    NSMutableDictionary *temp = [self mutableCopy];
     [other enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         temp[key] = obj;
     }];
@@ -342,6 +353,14 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
         }
     }];
     [self removeObjectsForKeys:keys.allObjects];
+}
+
+- (void)it_mergeFrom:(NSDictionary *)other {
+    assert(self != other);
+    
+    [other enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        self[key] = obj;
+    }];
 }
 
 @end

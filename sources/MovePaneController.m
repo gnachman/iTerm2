@@ -111,6 +111,7 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
     [[term currentTab] numberOfSessionsDidChange];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidChangeTabNotification object:movingSession];
+    [movingSession didMoveSession];
 }
 
 - (void)clearSession

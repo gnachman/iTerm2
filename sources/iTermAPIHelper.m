@@ -16,6 +16,7 @@
 #import "iTermLSOF.h"
 #import "iTermProfilePreferences.h"
 #import "iTermPythonArgumentParser.h"
+#import "iTermVariables.h"
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -1697,9 +1698,9 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     }];
     [request.getArray enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([name isEqualToString:@"*"]) {
-            [response.valuesArray addObject:[NSJSONSerialization it_jsonStringForObject:session.variables.allKeys]];
+            [response.valuesArray addObject:[NSJSONSerialization it_jsonStringForObject:session.variables.legacyDictionaryExcludingGlobals]];
         } else {
-            id obj = [NSJSONSerialization it_jsonStringForObject:session.variables[name]];
+            id obj = [NSJSONSerialization it_jsonStringForObject:[session.variables valueForVariableName:name]];
             NSString *value = obj ?: @"null";
             [response.valuesArray addObject:value];
         }

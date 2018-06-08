@@ -73,6 +73,7 @@
 #import "iTermTipWindowController.h"
 #import "iTermToolbeltView.h"
 #import "iTermURLStore.h"
+#import "iTermVariables.h"
 #import "iTermWarning.h"
 #import "iTermWebSocketCookieJar.h"
 #import "MovePaneController.h"
@@ -946,6 +947,8 @@ static BOOL hasBecomeActive = NO;
         TurnOnDebugLoggingSilently();
         DLog(@"applicationWillFinishLaunching:");
     }
+
+    [[iTermVariables globalInstance] setValue:@(getpid()) forVariableNamed:iTermVariableKeyApplicationPID];
 
     [iTermMigrationHelper migrateApplicationSupportDirectoryIfNeeded];
     [self buildScriptMenu:nil];
