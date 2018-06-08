@@ -8,6 +8,7 @@
 #import "iTermOpenQuicklyCommands.h"
 #import "iTermOpenQuicklyItem.h"
 #import "iTermScriptsMenuController.h"
+#import "iTermVariables.h"
 #import "NSObject+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession+Scripting.h"
@@ -457,17 +458,20 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                             features:features
                                limit:maxScorePerFeature];
 
-    for (id obj in session.variables) {
+    NSDictionary<NSString *, id> *legacyVariablesDictionary = session.variables.legacyDictionaryExcludingGlobals;
+    for (id obj in legacyVariablesDictionary) {
         NSString *var;
         if ([NSString castFrom:obj]) {
             var = obj;
-        } else {
+        } else if ([var respondsToSelector:@selector(stringValue)]) {
             var = [obj stringValue];
+        } else{
+            continue;
         }
         NSString *const kUserPrefix = @"user.";
         if ([var hasPrefix:kUserPrefix]) {
             score += [self scoreUsingMatcher:matcher
-                                   documents:@[ session.variables[var] ]
+                                   documents:@[ legacyVariablesDictionary[var] ]
                                   multiplier:kUserDefinedVariableMultiplier
                                         name:[var substringFromIndex:[kUserPrefix length]]
                                     features:features

@@ -17,6 +17,7 @@
                     pixels:(NSSize)changePx;
 
 - (void)splitView:(PTYSplitView *)splitView draggingWillBeginOfSplit:(int)splitterIndex;
+- (void)splitViewDidChangeSubviews:(PTYSplitView *)splitView;
 
 @end
 

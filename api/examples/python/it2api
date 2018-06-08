@@ -387,7 +387,7 @@ async def list_profiles(connection, args):
       print("{}: {}".format(k, v))
     print("")
 
-async def set_grid_size_parser(connection, args):
+async def set_grid_size(connection, args):
   a = await iterm2.async_get_app(connection)
   s = a.get_session_by_id(args.session)
   await s.async_set_grid_size(iterm2.Size(args.width, args.height))

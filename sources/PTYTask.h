@@ -8,6 +8,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 
 @class Coprocess;
 @class PTYTab;
+@class PTYTask;
 
 @protocol PTYTaskDelegate <NSObject>
 // Runs in a background thread. Should do as much work as possible in this
@@ -22,6 +23,9 @@ extern NSString *kCoprocessStatusChangeNotification;
 
 // Called on main thread from within launchWithPath:arguments:environment:width:height:isUTF8:.
 - (void)taskDiedImmediately;
+
+// Main thread
+- (void)taskDidChangeTTY:(PTYTask *)task;
 @end
 
 @interface PTYTask : NSObject

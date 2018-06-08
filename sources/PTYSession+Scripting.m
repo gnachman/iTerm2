@@ -1,4 +1,6 @@
 #import "PTYSession+Scripting.h"
+
+#import "iTermVariables.h"
 #import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "ProfilesColorsPreferencesViewController.h"
@@ -110,11 +112,13 @@
         [command setScriptErrorString:@"No name given"];
     }
 
-    id value = self.variables[name];
+    id value = [self.variables valueForVariableName:name];
     if ([NSString castFrom:value]) {
         return value;
-    } else {
+    } else if ([value respondsToSelector:@selector(stringValue)]) {
         return [value stringValue];
+    } else {
+        return nil;
     }
 }
 
@@ -137,8 +141,7 @@
         [command setScriptErrorString:@"Only user variables may be set. Name must start with “user.”."];
         return nil;
     }
-    self.variables[name] = value;
-    [self.textview setBadgeLabel:[self badgeLabel]];
+    [self.variables setValue:value forKey:name];
     return value;
 }
 
