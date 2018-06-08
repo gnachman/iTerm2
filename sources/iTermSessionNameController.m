@@ -38,8 +38,12 @@
 + (NSString *)titleFormatForProfile:(Profile *)profile {
     NSUInteger titleComponents = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
                                                                       inProfile:profile];
+    NSString *(^evalExpr)(NSString *) = ^NSString *(NSString *expression) {
+        return [NSString stringWithFormat:@"\\(%@)", expression];
+    };
+
     if (titleComponents & iTermTitleComponentsLegacy) {
-        return @"\(iterm2.private.legacy_title(session.id))";
+        return evalExpr(@"iterm2.private.legacy_title(session.id)");
     }
     if (titleComponents & iTermTitleComponentsCustom) {
         return [iTermProfilePreferences stringForKey:KEY_CUSTOM_TITLE
@@ -48,16 +52,16 @@
 
     NSMutableArray<NSString *> *components = [NSMutableArray array];
     if (titleComponents & iTermTitleComponentsProfileName) {
-        [components addObject:@"\\(session.name)"];
+        [components addObject:evalExpr(iTermVariableKeySessionName)];
     }
     if (titleComponents & iTermTitleComponentsJob) {
-        [components addObject:@"\\(session.jobName)"];
+        [components addObject:evalExpr(iTermVariableKeySessionJob)];
     }
     if (titleComponents & iTermTitleComponentsWorkingDirectory) {
-        [components addObject:@"\\(session.path)"];
+        [components addObject:evalExpr(iTermVariableKeySessionPath)];
     }
     if (titleComponents & iTermTitleComponentsTTY) {
-        [components addObject:@"\\(session.tty)"];
+        [components addObject:evalExpr(iTermVariableKeySessionTTY)];
     }
 
     return [components componentsJoinedByString:@" — "];
