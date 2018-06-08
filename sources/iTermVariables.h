@@ -17,16 +17,19 @@ extern NSString *const iTermVariableKeySessionHostname;
 extern NSString *const iTermVariableKeySessionID;
 extern NSString *const iTermVariableKeySessionLastCommand;
 extern NSString *const iTermVariableKeySessionPath;
-extern NSString *const iTermVariableKeySessionName;
+extern NSString *const iTermVariableKeySessionName;  // initialized to profile name, changed manually or by trigger
 extern NSString *const iTermVariableKeySessionRows;
 extern NSString *const iTermVariableKeySessionTTY;
 extern NSString *const iTermVariableKeySessionUsername;
 extern NSString *const iTermVariableKeyTermID;
 
-extern NSString *const iTermVariableKeySessionProfileName;
-extern NSString *const iTermVariableKeySessionIconName;
-extern NSString *const iTermVariableKeySessionWindowName;
+extern NSString *const iTermVariableKeySessionBackingProfileName;
+extern NSString *const iTermVariableKeySessionProfileName;  // current profile name
+extern NSString *const iTermVariableKeySessionIconName;  // set by esc code
+extern NSString *const iTermVariableKeySessionWindowName;  // set by esc code
 extern NSString *const iTermVariableKeySessionJob;
+extern NSString *const iTermVariableKeySessionPresentationName;  // What's shown in the session title view
+extern NSString *const iTermVariableKeySessionTmuxWindowTitle;  // All tmux window panes share the same window title
 
 // Returns an array of all known variables.
 NSArray<NSString *> *iTermVariablesGetAll(void);

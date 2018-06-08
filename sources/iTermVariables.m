@@ -33,10 +33,13 @@ NSString *const iTermVariableKeySessionTTY = @"session.tty";
 NSString *const iTermVariableKeySessionUsername = @"session.username";
 NSString *const iTermVariableKeyTermID = @"session.termid";
 #warning TODO document these and verify they get updated
+NSString *const iTermVariableKeySessionBackingProfileName = @"session.backingProfileName";
 NSString *const iTermVariableKeySessionProfileName = @"session.profileName";
 NSString *const iTermVariableKeySessionIconName = @"session.terminalIconName";
 NSString *const iTermVariableKeySessionWindowName = @"session.terminalWindowName";
-NSString *const iTermVariableKeySessionJob = @"session.job.name";
+NSString *const iTermVariableKeySessionJob = @"session.jobName";
+NSString *const iTermVariableKeySessionPresentationName = @"session.presentationName";
+NSString *const iTermVariableKeySessionTmuxWindowTitle = @"session.tmuxWindowTitle";
 
 static NSMutableSet<NSString *> *iTermVariablesGetMutableSet() {
     static NSMutableSet<NSString *> *userDefined;

@@ -476,7 +476,6 @@ typedef enum {
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initSynthetic:(BOOL)synthetic
-                         name:(NSString *)name
                   titleFormat:(NSString *)titleFormat NS_DESIGNATED_INITIALIZER;
 
 // Jump to a particular point in time.
@@ -738,7 +737,11 @@ typedef enum {
 
 // Call this when a session moves to a different tab or window to update the session ID.
 - (void)didMoveSession;
-
+- (void)triggerDidChangeNameTo:(NSString *)newName;
+- (void)setTmuxWindowTitle:(NSString *)newName;
+- (void)didInitializeSessionWithName:(NSString *)name;
+- (void)profileNameDidChangeTo:(NSString *)name;
+- (void)profileDidChangeToProfileWithName:(NSString *)name;
 
 #pragma mark - API
 

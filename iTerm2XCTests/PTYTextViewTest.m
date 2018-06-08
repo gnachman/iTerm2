@@ -615,7 +615,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
         profile[key] = profileOverrides[key];
     }
 
-    PTYSession *session = [[[PTYSession alloc] initSynthetic:NO name:profile[KEY_NAME] titleFormat:@"TODO"] autorelease];
+#warning TODO
+    PTYSession *session = [[[PTYSession alloc] initSynthetic:NO titleFormat:@"TODO"] autorelease];
     [session setProfile:profile];
 
     XCTAssert([session setScreenSize:NSMakeRect(0, 0, 200, 200) parent:nil]);
