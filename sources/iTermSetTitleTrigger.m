@@ -37,7 +37,7 @@
                                     stop:(BOOL *)stop {
     NSString *newName = [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                                                   count:captureCount];
-    [aSession.nameController triggerDidChangeNameTo:newName];
+    [aSession triggerDidChangeNameTo:newName];
     return YES;
 }
 

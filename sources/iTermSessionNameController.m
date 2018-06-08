@@ -10,6 +10,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermProfilePreferences.h"
 #import "iTermScriptFunctionCall.h"
+#import "iTermVariables.h"
 #import "NSObject+iTerm.h"
 
 @interface iTermSessionNameController()
@@ -25,12 +26,13 @@
     // The icon title stack
     NSMutableArray *_iconTitleStack;
 
-    NSString *_profileName;
     NSString *_titleFormat;
 
-    NSString *_cachedEvaluatedTitleFormat;
-#warning TODO: Set this when a variable we use changes
-    BOOL _cachedEvaluatedTitleFormatInvalid;
+    NSString *_cachedEvaluatedSessionTitleFormat;
+    BOOL _cachedEvaluatedSessionTitleNeedsUpdate;
+    NSInteger _count;
+    NSInteger _appliedCount;
+    NSSet<NSString *> *_dependencies;
 }
 
 + (NSString *)titleFormatForProfile:(Profile *)profile {
@@ -49,7 +51,7 @@
         [components addObject:@"\\(session.name)"];
     }
     if (titleComponents & iTermTitleComponentsJob) {
-        [components addObject:@"\\(session.job.name)"];
+        [components addObject:@"\\(session.jobName)"];
     }
     if (titleComponents & iTermTitleComponentsWorkingDirectory) {
         [components addObject:@"\\(session.path)"];
@@ -61,16 +63,18 @@
     return [components componentsJoinedByString:@" — "];
 }
 
-- (instancetype)initWithProfileName:(NSString *)profileName
-                        titleFormat:(NSString *)titleFormat {
+- (instancetype)initWithTitleFormat:(NSString *)titleFormat {
     self = [super init];
     if (self) {
-        _firstSessionName = [profileName copy];
-        _sessionName = [profileName copy];
-        _profileName = [profileName copy];
-        _titleFormat = [titleFormat copy];
+        [self setTitleFormat:titleFormat];
     }
     return self;
+}
+
+- (void)setTitleFormat:(NSString *)titleFormat {
+    _titleFormat = [titleFormat copy];
+    _cachedEvaluatedSessionTitleFormat = nil;  // This forces a synchronous & async update.
+    [self updateCachedEvaluatedTitleFormatIfNeeded];
 }
 
 - (NSDictionary *)stateDictionary {
@@ -78,150 +82,69 @@
     return @{};
 }
 
-- (void)restoreNameFromStateDictionary:(NSDictionary *)state
-                     legacyProfileName:(NSString *)legacyProfileName
-                     legacySessionName:(NSString *)legacyName
-                     legacyWindowTitle:(NSString *)legacyWindowTitle {
+- (void)restoreNameFromStateDictionary:(NSDictionary *)state {
     if (state) {
 #warning TODO
-    } else {
-        _profileName = [legacyProfileName copy];
-        if (legacyName) {
-            [self setSessionName:legacyName];
-        }
-        if (legacyWindowTitle) {
-            [self setWindowTitle:legacyWindowTitle];
-        }
+        [self.delegate sessionNameControllerDidChangeWindowTitle];
     }
-    [self.delegate sessionNameControllerDidChangeWindowTitle];
 }
 
-- (void)didInitializeSessionWithName:(NSString *)newName {
-    [self setSessionName:newName];
-}
-
-- (void)profileDidChangeToProfileWithName:(NSString *)newName {
-    if ([self.sessionName isEqualToString:_profileName]) {
-        [self setSessionName:newName.copy];
+- (void)variablesDidChange:(NSSet<NSString *> *)names {
+    if ([names intersectsSet:_dependencies]) {
+        [self setNeedsUpdate];
     }
-    _profileName = [newName copy];
 }
 
-- (void)profileNameDidChangeTo:(NSString *)newName {
-    // Set name, which overrides any session-set icon name.
-    [self setSessionName:newName.copy];
-    // set default name, which will appear as a prefix if the session changes the name.
-    _profileName = newName.copy;
-}
-
-- (void)terminalDidSetWindowTitle:(NSString *)newName {
-    _terminalWindowName = [newName copy];
-    self.windowTitle = newName;
-}
-
-- (void)terminalDidSetIconTitle:(NSString *)newName {
-    _terminalIconName = [newName copy];
-    self.sessionName = newName;
-}
-
-- (void)triggerDidChangeNameTo:(NSString *)newName {
-    self.sessionName = newName;
-}
-
-- (void)setTmuxTitle:(NSString *)tmuxTitle {
-    self.sessionName = tmuxTitle;
-    self.windowTitle = tmuxTitle;
-}
-
-- (void)didSynthesizeFrom:(iTermSessionNameController *)real {
-    self.sessionName = real.sessionName;
-}
-
-- (void)setSessionName:(NSString *)theName {
-    [self.delegate sessionNameControllerNameWillChangeTo:theName];
-    if (!_firstSessionName) {
-        _firstSessionName = theName;
-    }
-    if ([_sessionName isEqualToString:theName]) {
-        return;
-    }
-
-    if (_sessionName) {
-        // clear the window title if it is not different
-        if ([_sessionName isEqualToString:_windowTitle]) {
-            _windowTitle = nil;
-        }
-        _sessionName = nil;
-    }
-    if (!theName) {
-        theName = @"Untitled";
-    }
-
-    _sessionName = [theName copy];
-    // sync the window title if it is not set to something else
-    if (_windowTitle == nil) {
-        [self setWindowTitle:theName];
-    }
-
+// Synchronous evaluation updates _dependencies with all paths occurring in the title format.
+- (void)evaluateTitleFormatSynchronously:(BOOL)sync
+                              completion:(void (^)(NSString *presentationName))completion {
     __weak __typeof(self) weakSelf = self;
-    [self evaluatePresentationNameSynchronously:NO completion:^(NSString *presentationName) {
-        [weakSelf.delegate sessionNameControllerPresentationNameDidChangeTo:presentationName];
-    }];
-}
-
-- (void)evaluatePresentationNameSynchronously:(BOOL)sync
-                                   completion:(void (^)(NSString *presentationName))completion {
-    __weak __typeof(self) weakSelf = self;
+    id (^source)(NSString *) = self.delegate.sessionNameControllerVariableSource;
+    NSMutableSet *dependencies = [NSMutableSet set];
     [iTermScriptFunctionCall evaluateString:_titleFormat
                                     timeout:sync ? 0 : 30
-                                     source:self.delegate.sessionNameControllerVariableSource
+                                     source:^id(NSString *path) {
+                                         [dependencies addObject:path];
+                                         if (source) {
+                                             return source(path);
+                                         } else {
+                                             return @"";
+                                         }
+                                     }
                                  completion:^(NSString *result, NSError *error) {
                                      if (!sync) {
                                          [weakSelf didEvaluateTitleFormat:result error:error];
                                      }
                                      completion(result);
                                  }];
+    _dependencies = dependencies;
 }
 
-- (void)didEvaluateTitleFormat:(NSString *)formattedTitle error:(NSError *)error {
+- (void)didEvaluateTitleFormat:(NSString *)evaluatedTitleFormat error:(NSError *)error {
     if (!error) {
-        _cachedEvaluatedTitleFormat = [self formattedName:_cachedEvaluatedTitleFormat];
-        [_delegate sessionNameControllerPresentationNameDidChangeTo:_cachedEvaluatedTitleFormat];
+        _cachedEvaluatedSessionTitleFormat = [evaluatedTitleFormat copy];
+        [_delegate sessionNameControllerPresentationNameDidChangeTo:self.presentationSessionTitle];
     }
 }
 
 - (NSString *)presentationWindowTitle {
-    if (!_windowTitle) {
-        return nil;
-    }
-    return [self formattedName:_windowTitle];
-}
-
-- (void)setWindowTitle:(NSString *)windowTitle {
-    if ([windowTitle isEqualToString:_windowTitle]) {
-        return;
-    }
-
-    if (windowTitle != nil && [windowTitle length] > 0) {
-        _windowTitle = [windowTitle copy];
-    } else {
-        _windowTitle = nil;
-    }
-
-    [self.delegate sessionNameControllerDidChangeWindowTitle];
-}
-
-- (NSString *)presentationName {
     [self updateCachedEvaluatedTitleFormatIfNeeded];
-    return [self formattedName:_cachedEvaluatedTitleFormat];
+    return [self formattedName:self.windowNameFromVariable ?: _cachedEvaluatedSessionTitleFormat];
 }
+
+- (NSString *)presentationSessionTitle {
+    [self updateCachedEvaluatedTitleFormatIfNeeded];
+    return [self formattedName:_cachedEvaluatedSessionTitleFormat];
+}
+
+#pragma mark - Stacks
 
 - (void)pushWindowTitle {
     if (!_windowTitleStack) {
         // initialize lazily
         _windowTitleStack = [[NSMutableArray alloc] init];
     }
-    NSString *title = self.windowTitle;
+    NSString *title = self.windowNameFromVariable;
     if (!title) {
         // if current title is nil, treat it as an empty string.
         title = @"";
@@ -230,13 +153,16 @@
     [_windowTitleStack addObject:title];
 }
 
-- (void)popWindowTitle {
+- (NSString *)popWindowTitle {
     // Ignore if title stack is nil or stack count == 0
     NSUInteger count = [_windowTitleStack count];
     if (count > 0) {
         // pop window title
-        [self setWindowTitle:[_windowTitleStack objectAtIndex:count - 1]];
+        NSString *result = [_windowTitleStack objectAtIndex:count - 1];
         [_windowTitleStack removeObjectAtIndex:count - 1];
+        return result;
+    } else {
+        return nil;
     }
 }
 
@@ -245,7 +171,7 @@
         // initialize lazily
         _iconTitleStack = [[NSMutableArray alloc] init];
     }
-    NSString *title = self.sessionName;
+    NSString *title = [self.delegate sessionNameControllerVariableSource](iTermVariableKeySessionIconName);
     if (!title) {
         // if current icon title is nil, treat it as an empty string.
         title = @"";
@@ -254,17 +180,24 @@
     [_iconTitleStack addObject:title];
 }
 
-- (void)popIconTitle {
+- (NSString *)popIconTitle {
     // Ignore if icon title stack is nil or stack count == 0.
     NSUInteger count = [_iconTitleStack count];
     if (count > 0) {
         // pop icon title
-        [self setSessionName:[_iconTitleStack objectAtIndex:count - 1]];
+        NSString *result = [_iconTitleStack objectAtIndex:count - 1];
         [_iconTitleStack removeObjectAtIndex:count - 1];
+        return result;
+    } else {
+        return nil;
     }
 }
 
 #pragma mark - Private
+
+- (NSString *)windowNameFromVariable {
+    return [self.delegate sessionNameControllerVariableSource](iTermVariableKeySessionWindowName);;
+}
 
 - (NSString *)formattedName:(NSString *)base {
     iTermSessionFormattingDescriptor *descriptor = [self.delegate sessionNameControllerFormattingDescriptor];
@@ -281,11 +214,24 @@
     return base;
 }
 
+- (void)setNeedsUpdate {
+    _cachedEvaluatedSessionTitleNeedsUpdate = YES;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self->_cachedEvaluatedSessionTitleNeedsUpdate) {
+            [self updateCachedEvaluatedTitleFormatIfNeeded];
+        }
+    });
+}
+
 - (void)updateCachedEvaluatedTitleFormatIfNeeded {
-    if (_cachedEvaluatedTitleFormat && !_cachedEvaluatedTitleFormatInvalid) {
+    if (!_cachedEvaluatedSessionTitleFormat) {
+        _cachedEvaluatedSessionTitleNeedsUpdate = YES;
+    }
+    if (!_cachedEvaluatedSessionTitleNeedsUpdate) {
         return;
     }
-    if (!_cachedEvaluatedTitleFormat) {
+    _cachedEvaluatedSessionTitleNeedsUpdate = NO;
+    if (!_cachedEvaluatedSessionTitleFormat) {
         [self updateCachedEvaluatedTitleFormatSynchronously:YES];
     }
     [self updateCachedEvaluatedTitleFormatSynchronously:NO];
@@ -293,13 +239,22 @@
 
 - (void)updateCachedEvaluatedTitleFormatSynchronously:(BOOL)synchronous {
     __weak __typeof(self) weakSelf = self;
-    [self evaluatePresentationNameSynchronously:synchronous completion:^(NSString *presentationName) {
+    NSInteger count = ++_count;
+    [self evaluateTitleFormatSynchronously:synchronous completion:^(NSString *presentationName) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (strongSelf) {
-            if ([NSObject object:strongSelf->_cachedEvaluatedTitleFormat isEqualToObject:presentationName]) {
+            if (strongSelf->_appliedCount > count) {
+                // A later async evaluation has already completed. Don't overwrite it.
                 return;
             }
-            strongSelf->_cachedEvaluatedTitleFormat = [presentationName copy];
+            strongSelf->_appliedCount = count;
+            if (!presentationName) {
+                presentationName = @"Untitled";
+            }
+            if ([NSObject object:strongSelf->_cachedEvaluatedSessionTitleFormat isEqualToObject:presentationName]) {
+                return;
+            }
+            strongSelf->_cachedEvaluatedSessionTitleFormat = [presentationName copy];
             if (!synchronous) {
                 [strongSelf.delegate sessionNameControllerPresentationNameDidChangeTo:presentationName];
             }

@@ -31,7 +31,6 @@ NS_ASSUME_NONNULL_BEGIN
 
     // Initialize a new session
     aSession = [[PTYSession alloc] initSynthetic:NO
-                                            name:profile[KEY_NAME]
                                      titleFormat:[iTermSessionNameController titleFormatForProfile:profile]];
 
     [[aSession screen] setUnlimitedScrollback:[profile[KEY_UNLIMITED_SCROLLBACK] boolValue]];

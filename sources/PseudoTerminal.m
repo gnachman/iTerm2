@@ -5198,7 +5198,6 @@ ITERM_WEAKLY_REFERENCEABLE
     Profile *profile = [self profileForNewSessionPreferringProfile:oldSession.profile];
     NSString *titleFormat = [iTermSessionNameController titleFormatForProfile:profile];
     newSession = [[[PTYSession alloc] initSynthetic:YES
-                                               name:profile[KEY_NAME]
                                         titleFormat:titleFormat] autorelease];
     // NSLog(@"New session for IR view is at %p", newSession);
 
@@ -7126,7 +7125,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setName:(NSString *)theSessionName forSession:(PTYSession *)aSession {
-    [aSession.nameController didInitializeSessionWithName:theSessionName];
+    [aSession didInitializeSessionWithName:theSessionName];
 }
 
 // Assign a value to the 'uniqueNumber_' member variable which is used for storing
@@ -7543,7 +7542,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [[self tabForSession:session] recheckBlur];
             NSDictionary *profile = [session profile];
             if (![[profile objectForKey:KEY_NAME] isEqualToString:oldName]) {
-                [session.nameController profileNameDidChangeTo:profile[KEY_NAME]];
+                [session profileNameDidChangeTo:profile[KEY_NAME]];
             }
             if ([session isDivorced] &&
                 [[[PreferencePanel sessionsInstance] currentProfileGuid] isEqualToString:guid] &&

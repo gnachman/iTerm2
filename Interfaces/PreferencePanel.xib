@@ -1975,6 +1975,10 @@ DQ
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
+                    <connections>
+                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="mOY-1O-tMb"/>
+                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="8Tz-Wi-of3"/>
+                    </connections>
                 </textField>
                 <button horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" id="kFr-1J-iPo">
                     <rect key="frame" x="516" y="299" width="25" height="25"/>
