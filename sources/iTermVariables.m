@@ -211,6 +211,7 @@ static void iTermVariablesAdd(NSString *variable) {
     iTermVariables *child = [iTermVariables castFrom:value];
     if (child) {
         child->_parentName = [name copy];
+        child->_parent = self;
     }
     if (value && ![NSNull castFrom:value]) {
         if ([value isKindOfClass:[iTermVariables class]]) {

@@ -4982,6 +4982,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [controller setPartialWindowIdOrder:windowIds];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermTabDidChangePositionInWindowNotification object:nil];
+    for (PTYSession *session in self.allSessions) {
+        [session didMoveSession];
+    }
 }
 
 - (PTYTabView *)tabView
