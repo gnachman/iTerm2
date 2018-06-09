@@ -398,7 +398,7 @@ enum {
     [panel setCanChooseDirectories:YES];
     [panel setAllowsMultipleSelection:NO];
 
-    if ([panel runModal] == NSModalResponseOK) {
+    if ([panel runModal] == NSModalResponseOK && panel.directoryURL.path) {
         [_prefsCustomFolder setStringValue:panel.directoryURL.path];
         [self settingChanged:_prefsCustomFolder];
         return YES;
