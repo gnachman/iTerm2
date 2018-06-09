@@ -9501,7 +9501,12 @@ ITERM_WEAKLY_REFERENCEABLE
     state.active = _active;
     state.idle = self.isIdle;
     state.visible = [_delegate sessionBelongsToVisibleTab];
-    state.useAdaptiveFrameRate = _useAdaptiveFrameRate && !self.useMetal;
+    if ([iTermAdvancedSettingsModel disableAdaptiveFrameRateInInteractiveApps] &&
+        _terminal.softAlternateScreenMode) {
+        state.useAdaptiveFrameRate = NO;
+    } else {
+        state.useAdaptiveFrameRate = _useAdaptiveFrameRate && !self.useMetal;
+    }
     state.adaptiveFrameRateThroughputThreshold = _adaptiveFrameRateThroughputThreshold;
     state.slowFrameRate = _slowFrameRate;
     state.liveResizing = _inLiveResize;

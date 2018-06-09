@@ -226,5 +226,6 @@
 + (BOOL)preferIntegratedGPU;
 + (double)timeoutForStringEvaluation;
 + (BOOL)evaluateSwiftyStrings;
++ (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 
 @end
