@@ -222,5 +222,6 @@
 
 + (BOOL)retinaInlineImages;
 + (double)timeToWaitForEmojiPanel;
++ (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 
 @end

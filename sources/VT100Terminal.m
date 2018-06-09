@@ -83,9 +83,6 @@ NSString *const kTerminalStateURLParams = @"URL Params";
 @property(nonatomic, retain) NSURL *url;
 @property(nonatomic, retain) NSString *urlParams;
 
-// Records whether the remote side thinks we're in alternate screen mode.
-@property(nonatomic, readonly) BOOL softAlternateScreenMode;
-
 // A write-only property, at the moment. TODO: What should this do?
 @property(nonatomic, assign) BOOL strictAnsiMode;
 
