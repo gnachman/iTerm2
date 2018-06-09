@@ -906,8 +906,10 @@ const CGFloat kDefaultTagsWidth = 80;
      }
 }
 
-- (void)selectRowIndex:(int)theRow
-{
+- (void)selectRowIndex:(int)theRow {
+    if (theRow >= (int)tableView_.numberOfRows) {
+        return;
+    }
     NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:theRow];
     // Make sure the rowview exists so its background style can be known when
     // the NSTableCellView is created.
