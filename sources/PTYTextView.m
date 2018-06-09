@@ -6852,6 +6852,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ((event.type == NSLeftMouseDown || event.type == NSLeftMouseUp) && _mouseDownWasFirstMouse) {
         return NO;
     }
+    if ((event.type == NSLeftMouseDown || event.type == NSLeftMouseUp) && self.window.firstResponder != self) {
+        return NO;
+    }
     if (event.type == NSScrollWheel) {
         return ([self xtermMouseReporting] && [self xtermMouseReportingAllowMouseWheel]);
     } else {
