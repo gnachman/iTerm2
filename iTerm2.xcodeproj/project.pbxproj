@@ -1210,7 +1210,6 @@
 		53AFFC8F1DD2A04600E6CEC6 /* iTermLSOF.h in Headers */ = {isa = PBXBuildFile; fileRef = 53AFFC8A1DD2A03800E6CEC6 /* iTermLSOF.h */; };
 		53AFFC921DD38F1500E6CEC6 /* ToolWebView.h in Headers */ = {isa = PBXBuildFile; fileRef = 53AFFC901DD38F1500E6CEC6 /* ToolWebView.h */; };
 		53AFFC931DD38F1500E6CEC6 /* ToolWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = 53AFFC911DD38F1500E6CEC6 /* ToolWebView.m */; };
-		53C1669220BA38C9003B03AF /* SessionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E813012A18F7500F3D71E /* SessionView.m */; };
 		53C166AA20C21FBB003B03AF /* iTermMigrationHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 53C166A820C21FBB003B03AF /* iTermMigrationHelper.h */; };
 		53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 53C166A920C21FBB003B03AF /* iTermMigrationHelper.m */; };
 		53E184F11FE32F2800DB78F3 /* iTermMetalBufferPool.h in Headers */ = {isa = PBXBuildFile; fileRef = 53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */; };
@@ -7892,7 +7891,8 @@
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
 					874206460564169600CFC3F1 = {
-						ProvisioningStyle = Manual;
+						DevelopmentTeam = H7V7XYVQ7D;
+						ProvisioningStyle = Automatic;
 					};
 					A66717851DCE36C3000CE608 = {
 						DevelopmentTeam = H7V7XYVQ7D;
@@ -9293,8 +9293,6 @@
 				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */,
 				A66DABFF20867749006391A3 /* iTermTextViewAccessibilityHelper.m in Sources */,
 				53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */,
-				530AB8C520B5284A00D2AA08 /* iTermFocusReportingTextField.m in Sources */,
-				530AB8AC20B2013000D2AA08 /* iTermFunctionCallParser.m in Sources */,
 				A66719611DCE3772000CE608 /* iTermIPV4Address.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -9840,11 +9838,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -10489,11 +10487,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -11528,12 +11526,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -11605,11 +11603,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
