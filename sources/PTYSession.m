@@ -143,7 +143,6 @@ static NSString *PWD_ENVVALUE = @"~";
 static NSString *const SESSION_ARRANGEMENT_COLUMNS = @"Columns";
 static NSString *const SESSION_ARRANGEMENT_ROWS = @"Rows";
 static NSString *const SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
-#warning TODO: Migrate legacy arrangements
 static NSString *const __attribute__((unused)) SESSION_ARRANGEMENT_BOOKMARK_NAME_DEPRECATED = @"Bookmark Name";
 static NSString *const SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 static NSString *const SESSION_ARRANGEMENT_CONTENTS = @"Contents";
@@ -1125,7 +1124,6 @@ ITERM_WEAKLY_REFERENCEABLE
     if (history) {
         [[aSession screen] setAltScreen:history];
     }
-#warning TODO: Figure out a migration story so titles aren't lost coming from a legacy arrangement.
     [aSession.nameController restoreNameFromStateDictionary:arrangement[SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE]];
     if (arrangement[SESSION_ARRANGEMENT_VARIABLES]) {
         NSDictionary *variables = arrangement[SESSION_ARRANGEMENT_VARIABLES];
