@@ -224,5 +224,6 @@
 + (BOOL)retinaInlineImages;
 + (double)timeToWaitForEmojiPanel;
 + (BOOL)preferIntegratedGPU;
++ (double)fractionOfCharacterSelectingNextNeighbor;
 
 @end

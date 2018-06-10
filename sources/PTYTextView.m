@@ -83,19 +83,6 @@
 
 static const int kMaxSelectedTextLengthForCustomActions = 400;
 
-// This defines the fraction of a character's width on its right side that is used to
-// select the NEXT character.
-//        |   A rightward drag beginning left of the bar selects G.
-//        <-> kCharWidthFractionOffset * charWidth
-//  <-------> Character width
-//   .-----.  .      :
-//  ;         :      :
-//  :         :      :
-//  :    ---- :------:
-//  '       : :      :
-//   `-----'  :      :
-static const double kCharWidthFractionOffset = 0.35;
-
 static const NSUInteger kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
 static const NSUInteger kRectangularSelectionModifiers = (NSCommandKeyMask | NSAlternateKeyMask);
 static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelectionModifiers | NSControlKeyMask);
@@ -1933,7 +1920,7 @@ static const int kDragThreshold = 3;
     int x, y;
     int width = [_dataSource width];
 
-    x = (locationInTextView.x - [iTermAdvancedSettingsModel terminalMargin] + _charWidth * kCharWidthFractionOffset) / _charWidth;
+    x = (locationInTextView.x - [iTermAdvancedSettingsModel terminalMargin] + _charWidth * [iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor]) / _charWidth;
     if (x < 0) {
         x = 0;
     }
