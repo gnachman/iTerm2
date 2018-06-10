@@ -363,6 +363,14 @@
     return dict;
 }
 
+- (id)uncheckedObjectAtIndex:(NSInteger)index {
+    if (index < 0 || index >= self.count) {
+        return nil;
+    } else {
+        return [self objectAtIndex:index];
+    }
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)
