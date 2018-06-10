@@ -172,12 +172,15 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                     key:KEY_BADGE_FORMAT
                    type:kPreferenceInfoTypeStringTextField];
 
-    [self updateTitleSettingsMenu];
     [self defineControl:_titleSettings
                     key:KEY_TITLE_COMPONENTS
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [self toggleSelectedTitleComponent]; }
-                 update:^BOOL { [self updateSelectedTitleComponents]; return YES; }];
+                 update:^BOOL {
+                     [self updateTitleSettingsMenu];
+                     [self updateSelectedTitleComponents];
+                     return YES;
+                 }];
     [self updateSelectedTitleComponents];
 
     [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
