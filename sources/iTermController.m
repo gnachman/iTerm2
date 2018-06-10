@@ -1448,6 +1448,17 @@ static iTermController *gSharedInstance;
     [self updateWindowTitles];
 }
 
+- (PTYSession *)sessionWithGUID:(NSString *)identifier {
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        for (PTYSession *session in term.allSessions) {
+            if ([session.guid isEqualToString:identifier]) {
+                return session;
+            }
+        }
+    }
+    return nil;
+}
+
 - (void)workspaceWillPowerOff:(NSNotification *)notification {
     _willPowerOff = YES;
     if ([iTermAdvancedSettingsModel killSessionsOnLogout] && [iTermAdvancedSettingsModel runJobsInServers]) {

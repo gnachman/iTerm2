@@ -62,7 +62,6 @@
 #define KEY_DEFAULT_BOOKMARK            @"Default Bookmark"  // deprecated
 #define KEY_ASK_ABOUT_OUTDATED_KEYMAPS  @"Ask About Outdated Keymaps"
 #define KEY_TITLE_COMPONENTS            @"Title Components"
-#define KEY_CUSTOM_TITLE                @"Custom Title"
 
 // Advanced working directory settings
 #define KEY_AWDS_WIN_OPTION             @"AWDS Window Option"
@@ -304,13 +303,13 @@ typedef NS_ENUM(NSUInteger, iTermUnicodeNormalization) {
 };
 
 typedef NS_OPTIONS(NSUInteger, iTermTitleComponents) {
-    iTermTitleComponentsProfileName = 1 << 0,
+    iTermTitleComponentsSessionName = 1 << 0,
+    iTermTitleComponentsProfileName = 1 << 5,
+    iTermTitleComponentsProfileAndSessionName = 1 << 6,
     iTermTitleComponentsJob = 1 << 1,
     iTermTitleComponentsWorkingDirectory = 1 << 2,
     iTermTitleComponentsTTY = 1 << 3,
     iTermTitleComponentsCustom = 1 << 4,  // Mutually exclusive with all other options.
-#warning Add migration path to set this for existing users
-    iTermTitleComponentsLegacy = 1ULL << 63  // Not in the UI.
 };
 
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>

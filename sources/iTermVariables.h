@@ -17,7 +17,7 @@ extern NSString *const iTermVariableKeySessionHostname;
 extern NSString *const iTermVariableKeySessionID;
 extern NSString *const iTermVariableKeySessionLastCommand;
 extern NSString *const iTermVariableKeySessionPath;
-extern NSString *const iTermVariableKeySessionName;  // initialized to profile name, changed manually or by trigger
+extern NSString *const iTermVariableKeySessionName;  // Registers the computed title
 extern NSString *const iTermVariableKeySessionRows;
 extern NSString *const iTermVariableKeySessionTTY;
 extern NSString *const iTermVariableKeySessionUsername;
@@ -25,7 +25,9 @@ extern NSString *const iTermVariableKeyTermID;
 
 extern NSString *const iTermVariableKeySessionBackingProfileName;
 extern NSString *const iTermVariableKeySessionProfileName;  // current profile name
+extern NSString *const iTermVariableKeySessionAutoName;  // Defaults to profile name. Then, most recent of manually set or icon name.
 extern NSString *const iTermVariableKeySessionIconName;  // set by esc code
+extern NSString *const iTermVariableKeySessionTriggerName;
 extern NSString *const iTermVariableKeySessionWindowName;  // set by esc code
 extern NSString *const iTermVariableKeySessionJob;
 extern NSString *const iTermVariableKeySessionPresentationName;  // What's shown in the session title view
@@ -61,6 +63,10 @@ NSArray<NSString *> *iTermVariablesGetAll(void);
 // Values of NSNull get unset
 - (BOOL)setValuesFromDictionary:(NSDictionary<NSString *, id> *)dict;
 - (id)valueForVariableName:(NSString *)name;
+
+// Freaking KVO crap keeps autocompleting and causing havoc
+- (void)setValue:(nullable id)value forKey:(NSString *)key NS_UNAVAILABLE;
+- (void)setValuesForKeysWithDictionary:(NSDictionary<NSString *, id> *)keyedValues NS_UNAVAILABLE;
 
 @end
 

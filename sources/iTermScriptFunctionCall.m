@@ -9,6 +9,7 @@
 #import "iTermScriptFunctionCall+Private.h"
 
 #import "iTermAPIHelper.h"
+#import "iTermBuiltInFunctions.h"
 #import "iTermFunctionCallParser.h"
 #import "iTermTruncatedQuotedRecognizer.h"
 #import "NSArray+iTerm.h"
@@ -54,6 +55,7 @@
 
     [self performFunctionCall:expression.functionCall
                fromInvocation:invocation
+                       source:source
                       timeout:timeout
                    completion:completion];
 }
@@ -80,39 +82,46 @@
 
     [self performFunctionCall:expression.functionCall
                fromInvocation:invocation
+                       source:source
                       timeout:timeout
                    completion:completion];
 }
 
 + (void)performFunctionCall:(iTermScriptFunctionCall *)functionCall
              fromInvocation:(NSString *)invocation
+                     source:(id (^)(NSString *))source
                     timeout:(NSTimeInterval)timeout
                  completion:(void (^)(id, NSError *))completion {
-    if (timeout <= 0) {
+    if (timeout <= 0 && !functionCall.isBuiltinFunction) {
         completion(@"", nil);
         return;
     }
-    __block NSTimer *timer;
-    timer = [NSTimer it_scheduledTimerWithTimeInterval:timeout repeats:NO block:^(NSTimer * _Nonnull theTimer) {
-        if (timer == nil) {
-            // Shouldn't happen
-            return;
+    __block NSTimer *timer = nil;
+    if (timeout > 0) {
+        timer = [NSTimer it_scheduledTimerWithTimeInterval:timeout repeats:NO block:^(NSTimer * _Nonnull theTimer) {
+            if (timer == nil) {
+                // Shouldn't happen
+                return;
+            }
+            timer = nil;
+            NSString *reason = [NSString stringWithFormat:@"Timeout (%@ sec) waiting for %@", @(timeout), invocation];
+            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: reason };
+            NSError *error = [NSError errorWithDomain:@"com.iterm2.call"
+                                                 code:2
+                                             userInfo:userInfo];
+            completion(nil, error);
+        }];
+    }
+    [functionCall callWithSource:source synchronous:(timeout == 0) completion:^(id output, NSError *error) {
+        if (timeout > 0) {
+            // Not synchronous
+            if (timer == nil) {
+                // Already timed out
+                return;
+            }
+            [timer invalidate];
+            timer = nil;
         }
-        timer = nil;
-        NSString *reason = [NSString stringWithFormat:@"Timeout (%@ sec) waiting for %@", @(timeout), invocation];
-        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: reason };
-        NSError *error = [NSError errorWithDomain:@"com.iterm2.call"
-                                             code:2
-                                         userInfo:userInfo];
-        completion(nil, error);
-    }];
-    [functionCall callWithCompletion:^(id output, NSError *error) {
-        if (timer == nil) {
-            // Already timed out
-            return;
-        }
-        [timer invalidate];
-        timer = nil;
         completion(output, error);
     }];
 }
@@ -161,22 +170,49 @@
     }
 }
 
-- (void)callWithCompletion:(void (^)(id, NSError *))completion {
+- (void)callWithSource:(id (^)(NSString *))source
+           synchronous:(BOOL)synchronous
+            completion:(void (^)(id, NSError *))completion {
     if (_depError) {
         completion(nil, self->_depError);
     } else {
         dispatch_group_t group = dispatch_group_create();
-        [self resolveDependenciesWithGroup:group];
-        dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        [self resolveDependenciesWithSource:source
+                                synchronous:synchronous
+                                      group:group];
+        void (^onResolved)(void) = ^{
             if (self->_depError) {
                 completion(nil, self->_depError);
+                return;
+            }
+            if (self.isBuiltinFunction) {
+                [self callBuiltinFunctionWithSource:source completion:completion];
                 return;
             }
             [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name
                                                        arguments:self->_parameters
                                                       completion:completion];
-        });
+        };
+        if (synchronous) {
+            onResolved();
+        } else {
+            dispatch_group_notify(group, dispatch_get_main_queue(), onResolved);
+        }
     }
+}
+
+- (BOOL)isBuiltinFunction {
+    return [[iTermBuiltInFunctions sharedInstance] haveFunctionWithName:_name
+                                                              arguments:_parameters.allKeys];
+}
+
+- (void)callBuiltinFunctionWithSource:(id (^)(NSString *))source
+                           completion:(void (^)(id, NSError *))completion {
+    iTermBuiltInFunctions *bif = [iTermBuiltInFunctions sharedInstance];
+    [bif callFunctionWithName:_name
+                   parameters:_parameters
+                       source:source
+                   completion:completion];
 }
 
 - (NSError *)errorForDependentCall:(iTermScriptFunctionCall *)call thatFailedWithError:(NSError *)error {
@@ -193,14 +229,16 @@
                            userInfo:userInfo];
 }
 
-- (void)resolveDependenciesWithGroup:(dispatch_group_t)group {
+- (void)resolveDependenciesWithSource:(id (^)(NSString *))source
+                          synchronous:(BOOL)synchronous
+                                group:(dispatch_group_t)group {
     [_dependencies enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermScriptFunctionCall * _Nonnull call, BOOL * _Nonnull stop) {
         if (self->_depError) {
             *stop = YES;
             return;
         }
         dispatch_group_enter(group);
-        [call callWithCompletion:^(id result, NSError *error) {
+        [call callWithSource:source synchronous:synchronous completion:^(id result, NSError *error) {
             if (error) {
                 self->_depError = [self errorForDependentCall:call thatFailedWithError:error];
             } else {
