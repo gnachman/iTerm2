@@ -14,6 +14,11 @@
 #import "iTermVariables.h"
 #import "NSObject+iTerm.h"
 
+static NSString *iTermSessionNameControllerStateKeyWindowTitleStack = @"window title stack";
+static NSString *iTermSessionNameControllerStateKeyIconTitleStack = @"icon title stack";
+static NSString *iTermSessionNameControllerStateKeyTitleFormat = @"title format";
+static NSString *iTermSessionNameControllerLegacyTitleFormat = @"iterm2.private.session_title(session: session.id)";
+
 @interface iTermSessionNameController()
 @end
 
@@ -38,7 +43,7 @@
 
 + (NSString *)titleFormatForProfile:(Profile *)profile {
     // TODO: When custom functions are supported this will return an appropriate invocation.
-    return @"iterm2.private.session_title(session: session.id)";
+    return iTermSessionNameControllerLegacyTitleFormat;
 }
 
 - (instancetype)initWithTitleFormat:(NSString *)titleFormat {
@@ -66,13 +71,17 @@
 }
 
 - (NSDictionary *)stateDictionary {
-#warning TODO
-    return @{};
+    return @{ iTermSessionNameControllerStateKeyWindowTitleStack: _windowTitleStack ?: @[],
+              iTermSessionNameControllerStateKeyIconTitleStack: _iconTitleStack ?: @[],
+              iTermSessionNameControllerStateKeyTitleFormat: _titleFormat ?: iTermSessionNameControllerLegacyTitleFormat };
+
 }
 
 - (void)restoreNameFromStateDictionary:(NSDictionary *)state {
     if (state) {
-#warning TODO
+        _windowTitleStack = state[iTermSessionNameControllerStateKeyWindowTitleStack];
+        _iconTitleStack = state[iTermSessionNameControllerStateKeyIconTitleStack];
+        _titleFormat = state[iTermSessionNameControllerStateKeyTitleFormat] ?: iTermSessionNameControllerLegacyTitleFormat;
         [self.delegate sessionNameControllerDidChangeWindowTitle];
     }
 }
