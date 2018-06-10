@@ -5205,7 +5205,7 @@ ITERM_WEAKLY_REFERENCEABLE
     newSession.profile = profile;
 
     [[newSession screen] setMaxScrollbackLines:0];
-    [self setupSession:newSession title:nil withSize:nil];
+    [self setupSession:newSession withSize:nil];
     [[newSession view] setViewId:[[oldSession view] viewId]];
     [[newSession view] setShowTitle:[[oldSession view] showTitle] adjustScrollView:YES];
 
@@ -5747,7 +5747,7 @@ ITERM_WEAKLY_REFERENCEABLE
     scrollView = sessionView.scrollview;
     NSSize size = [sessionView frame].size;
     if (performSetup) {
-        [self setupSession:newSession title:nil withSize:&size];
+        [self setupSession:newSession withSize:&size];
         scrollView = [[[newSession view] subviews] objectAtIndex:0];
     } else {
         [newSession setScrollViewDocumentView];
@@ -6916,7 +6916,6 @@ ITERM_WEAKLY_REFERENCEABLE
 // a view of that size; otherwise the size is derived from the existing window if there is already
 // an open tab, or its bookmark's preference if it's the first session in the window.
 - (void)setupSession:(PTYSession *)aSession
-               title:(NSString *)title
             withSize:(NSSize*)size {
     NSDictionary *profile;
     NSParameterAssert(aSession != nil);
@@ -6973,13 +6972,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession setPreferencesFromAddressBookEntry:profile];
         [aSession loadInitialColorTable];
         [aSession.screen resetTimestamps];
-
-        if (title) {
-#warning TODO: Figure out what to do with the title
-            //[aSession setName:title];
-            //[aSession setDefaultName:title];
-            [self setWindowTitle];
-        }
     }
 }
 
@@ -7542,7 +7534,6 @@ ITERM_WEAKLY_REFERENCEABLE
             [[self tabForSession:session] recheckBlur];
             NSDictionary *profile = [session profile];
             if (![[profile objectForKey:KEY_NAME] isEqualToString:oldName]) {
-#warning TODO: I'm not convinced this will do the right thing for Auto Name when the underlying profile's name changed.
                 [session profileNameDidChangeTo:profile[KEY_NAME]];
             }
             if ([session isDivorced] &&
@@ -7586,8 +7577,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     return result;
 }
-
-#warning anywhere a PTYSession is allocated it needs a title format like [iTermSessionNameController titleFormatForProfile:profile]
 
 - (void)_loadFindStringFromSharedPasteboard
 {
@@ -7802,7 +7791,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Increment tabViewItemsBeingAdded so that the maximum content size will
     // be calculated with the tab bar if it's about to open.
     ++tabViewItemsBeingAdded;
-    [self setupSession:object title:nil withSize:nil];
+    [self setupSession:object withSize:nil];
     tabViewItemsBeingAdded--;
     if ([object screen]) {  // screen initialized ok
         if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {

@@ -552,7 +552,6 @@ static NSString *const iTermSessionTitleSession = @"session";
     return [self initSynthetic:NO titleFormat:@""];
 }
 
-#warning TODO: I don't need name any more
 - (instancetype)initSynthetic:(BOOL)synthetic titleFormat:(NSString *)titleFormat {
     self = [super init];
     if (self) {
