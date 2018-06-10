@@ -87,8 +87,8 @@ extern NSString *const kPreferenceKeyUIElement;
 extern NSString *const kPreferenceKeyFlashTabBarInFullscreen;
 extern NSString *const kPreferenceKeyStretchTabsToFillBar;
 extern NSString *const kPreferenceKeyShowWindowNumber;
-extern NSString *const kPreferenceKeyShowJobName;
-extern NSString *const kPreferenceKeyShowProfileName_Deprecated;
+extern NSString *const kPreferenceKeyShowJobName_Deprecated;  // DEPRECATED
+extern NSString *const kPreferenceKeyShowProfileName_Deprecated;  // DEPRECATED
 extern NSString *const kPreferenceKeyDimOnlyText;
 extern NSString *const kPreferenceKeyDimmingAmount;
 extern NSString *const kPreferenceKeyDimInactiveSplitPanes;

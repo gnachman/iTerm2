@@ -33,7 +33,9 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     if (self) {
         [self setTabsHaveCloseButtons:![iTermAdvancedSettingsModel eliminateCloseButtons]];
         self.minimumTabDragDistance = [iTermAdvancedSettingsModel minimumTabDragDistance];
-        self.ignoreTrailingParentheticalsForSmartTruncation = [iTermPreferences boolForKey:kPreferenceKeyShowJobName];
+        // This used to depend on job but it's too difficult to do now that different sessions might
+        // have different title formats.
+        self.ignoreTrailingParentheticalsForSmartTruncation = YES;
     }
     return self;
 }
