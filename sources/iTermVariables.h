@@ -23,7 +23,6 @@ extern NSString *const iTermVariableKeySessionTTY;
 extern NSString *const iTermVariableKeySessionUsername;
 extern NSString *const iTermVariableKeyTermID;
 
-extern NSString *const iTermVariableKeySessionBackingProfileName;
 extern NSString *const iTermVariableKeySessionProfileName;  // current profile name
 extern NSString *const iTermVariableKeySessionAutoName;  // Defaults to profile name. Then, most recent of manually set or icon name.
 extern NSString *const iTermVariableKeySessionIconName;  // set by esc code

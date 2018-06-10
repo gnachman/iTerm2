@@ -33,7 +33,6 @@ NSString *const iTermVariableKeySessionTTY = @"session.tty";
 NSString *const iTermVariableKeySessionUsername = @"session.username";
 NSString *const iTermVariableKeyTermID = @"session.termid";
 #warning TODO document these and verify they get updated
-NSString *const iTermVariableKeySessionBackingProfileName = @"session.backingProfileName";
 NSString *const iTermVariableKeySessionProfileName = @"session.profileName";
 NSString *const iTermVariableKeySessionIconName = @"session.terminalIconName";
 NSString *const iTermVariableKeySessionTriggerName = @"session.triggerName";
