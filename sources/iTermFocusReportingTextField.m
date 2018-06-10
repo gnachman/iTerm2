@@ -13,7 +13,8 @@
 
 - (BOOL)becomeFirstResponder {
     BOOL result = [super becomeFirstResponder];
-    if (result) {
+    if (result &&
+        [self.delegate respondsToSelector:@selector(focusReportingTextFieldWillBecomeFirstResponder:)]) {
         [self.delegate focusReportingTextFieldWillBecomeFirstResponder:self];
     }
     return result;

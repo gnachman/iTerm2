@@ -949,7 +949,8 @@ static BOOL hasBecomeActive = NO;
     }
 
     [[iTermVariables globalInstance] setValue:@(getpid()) forVariableNamed:iTermVariableKeyApplicationPID];
-
+    [PTYSession registerBuiltInFunctions];
+    
     [iTermMigrationHelper migrateApplicationSupportDirectoryIfNeeded];
     [self buildScriptMenu:nil];
 

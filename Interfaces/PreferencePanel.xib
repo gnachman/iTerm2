@@ -1391,7 +1391,6 @@ DQ
                 <outlet property="_copySettingsToProfile" destination="15140" id="MAh-yd-Y1Z"/>
                 <outlet property="_customCommand" destination="2131" id="uHM-Rp-s80"/>
                 <outlet property="_customDirectory" destination="2189" id="msb-Cg-HLN"/>
-                <outlet property="_customTitle" destination="PO7-bA-9HL" id="yyo-4D-pno"/>
                 <outlet property="_customTitleHelp" destination="kFr-1J-iPo" id="o1l-5V-ffb"/>
                 <outlet property="_directoryLabel" destination="2129" id="e8L-eh-dsw"/>
                 <outlet property="_editAdvancedConfigButton" destination="5975" id="Xww-uf-BMr"/>
@@ -1942,21 +1941,24 @@ DQ
                 <popUpButton verticalHuggingPriority="750" misplaced="YES" id="2VF-JO-c2O" userLabel="Title Components Popup">
                     <rect key="frame" x="143" y="298" width="186" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Components" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="Xgh-er-la0" userLabel="Title Popup Button Cell">
+                    <popUpButtonCell key="cell" type="push" title="Components" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" autoenablesItems="NO" id="Xgh-er-la0" userLabel="Title Popup Button Cell">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
-                        <menu key="menu" id="Odx-9x-W67">
+                        <menu key="menu" autoenablesItems="NO" id="Odx-9x-W67">
                             <items>
                                 <menuItem title="Components" hidden="YES" id="JWB-xg-ElI">
                                     <connections>
                                         <outlet property="delegate" destination="dVg-Ac-SiZ" id="XF7-46-vLp"/>
                                     </connections>
                                 </menuItem>
-                                <menuItem title="Name" tag="1" id="2Po-6U-Apz"/>
+                                <menuItem title="Name" enabled="NO" id="2Po-6U-Apz"/>
+                                <menuItem title="Session Name" tag="1" indentationLevel="1" id="lG4-94-9cF"/>
+                                <menuItem title="Profile Name" tag="32" indentationLevel="1" id="RQC-te-ZZE"/>
+                                <menuItem title="Profile &amp; Session Name" tag="64" indentationLevel="1" id="6na-wb-F2g"/>
+                                <menuItem isSeparatorItem="YES" id="Hts-WQ-j82"/>
                                 <menuItem title="Job" tag="2" id="YEF-Tv-Hqs"/>
                                 <menuItem title="PWD" tag="4" id="xPf-Vv-eGl"/>
                                 <menuItem title="TTY" tag="8" id="xEH-Wz-NWS"/>
-                                <menuItem title="Custom…" tag="16" id="cgQ-cc-yDu"/>
                             </items>
                             <connections>
                                 <outlet property="delegate" destination="dVg-Ac-SiZ" id="SIN-HQ-Rw9"/>
@@ -1967,19 +1969,6 @@ DQ
                         <action selector="settingChanged:" target="dVg-Ac-SiZ" id="fYT-yW-O0V"/>
                     </connections>
                 </popUpButton>
-                <textField verticalHuggingPriority="750" misplaced="YES" id="PO7-bA-9HL">
-                    <rect key="frame" x="334" y="301" width="176" height="22"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="Example: \(session.name)" drawsBackground="YES" id="9R3-76-gl5">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                    <connections>
-                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="mOY-1O-tMb"/>
-                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="8Tz-Wi-of3"/>
-                    </connections>
-                </textField>
                 <button horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" id="kFr-1J-iPo">
                     <rect key="frame" x="516" y="299" width="25" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>

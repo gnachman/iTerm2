@@ -123,11 +123,12 @@
 
 - (void)loadRulesAndTransforms {
     __weak __typeof(self) weakSelf = self;
-    [_grammarProcessor addProductionRule:@"call ::= 'Identifier' <arglist>"
+#warning TODO: Update suggester to accept paths for function names
+    [_grammarProcessor addProductionRule:@"call ::= <path> <arglist>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
                                iTermScriptFunctionCall *call = [[iTermScriptFunctionCall alloc] init];
-                               call.name = [(CPIdentifierToken *)syntaxTree.children[0] identifier];
+                               call.name = (NSString *)syntaxTree.children[0];
                                NSArray<iTermFunctionArgument *> *argsArray = syntaxTree.children[1];
                                for (iTermFunctionArgument *arg in argsArray) {
                                    if (arg.expression.string) {

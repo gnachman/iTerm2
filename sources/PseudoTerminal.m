@@ -7542,6 +7542,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [[self tabForSession:session] recheckBlur];
             NSDictionary *profile = [session profile];
             if (![[profile objectForKey:KEY_NAME] isEqualToString:oldName]) {
+#warning TODO: I'm not convinced this will do the right thing for Auto Name when the underlying profile's name changed.
                 [session profileNameDidChangeTo:profile[KEY_NAME]];
             }
             if ([session isDivorced] &&

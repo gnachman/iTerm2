@@ -8,6 +8,7 @@
 #import "iTermSessionNameController.h"
 
 #import "ITAddressBookMgr.h"
+#import "iTermBuiltInFunctions.h"
 #import "iTermProfilePreferences.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermVariables.h"
@@ -36,41 +37,15 @@
 }
 
 + (NSString *)titleFormatForProfile:(Profile *)profile {
-    NSUInteger titleComponents = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
-                                                                      inProfile:profile];
-    NSString *(^evalExpr)(NSString *) = ^NSString *(NSString *expression) {
-        return [NSString stringWithFormat:@"\\(%@)", expression];
-    };
-
-    if (titleComponents & iTermTitleComponentsLegacy) {
-        return evalExpr(@"iterm2.private.legacy_title(session.id)");
-    }
-    if (titleComponents & iTermTitleComponentsCustom) {
-        return [iTermProfilePreferences stringForKey:KEY_CUSTOM_TITLE
-                                           inProfile:profile];
-    }
-
-    NSMutableArray<NSString *> *components = [NSMutableArray array];
-    if (titleComponents & iTermTitleComponentsProfileName) {
-        [components addObject:evalExpr(iTermVariableKeySessionName)];
-    }
-    if (titleComponents & iTermTitleComponentsJob) {
-        [components addObject:evalExpr(iTermVariableKeySessionJob)];
-    }
-    if (titleComponents & iTermTitleComponentsWorkingDirectory) {
-        [components addObject:evalExpr(iTermVariableKeySessionPath)];
-    }
-    if (titleComponents & iTermTitleComponentsTTY) {
-        [components addObject:evalExpr(iTermVariableKeySessionTTY)];
-    }
-
-    return [components componentsJoinedByString:@" — "];
+    // TODO: When custom functions are supported this will return an appropriate invocation.
+#warning TODO: Change this not to use swifty strings, but just function calls.
+    return @"\\(iterm2.private.session_title(session: session.id))";
 }
 
 - (instancetype)initWithTitleFormat:(NSString *)titleFormat {
     self = [super init];
     if (self) {
-        [self setTitleFormat:titleFormat];
+        _titleFormat = [titleFormat copy];
     }
     return self;
 }
@@ -78,7 +53,17 @@
 - (void)setTitleFormat:(NSString *)titleFormat {
     _titleFormat = [titleFormat copy];
     _cachedEvaluatedSessionTitleFormat = nil;  // This forces a synchronous & async update.
-    [self updateCachedEvaluatedTitleFormatIfNeeded];
+    if (self.delegate) {
+        [self updateIfNeeded];
+    }
+}
+
+- (void)setDelegate:(id<iTermSessionNameControllerDelegate>)delegate {
+    _delegate = delegate;
+    if (delegate) {
+        [self setNeedsUpdate];
+        [self updateIfNeeded];
+    }
 }
 
 - (NSDictionary *)stateDictionary {
@@ -95,7 +80,7 @@
 
 - (void)variablesDidChange:(NSSet<NSString *> *)names {
     if ([names intersectsSet:_dependencies]) {
-        [self setNeedsUpdate];
+        [self setNeedsReevaluation];
     }
 }
 
@@ -115,29 +100,31 @@
                                              return @"";
                                          }
                                      }
-                                 completion:^(NSString *result, NSError *error) {
+                                 completion:^(NSString *possiblyEmptyResult, NSError *error) {
+                                     NSString *result = [possiblyEmptyResult stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+                                     if (error || result.length == 0) {
+                                         result = @"🖥";
+                                     }
                                      if (!sync) {
-                                         [weakSelf didEvaluateTitleFormat:result error:error];
+                                         [weakSelf didEvaluateTitleFormat:result];
                                      }
                                      completion(result);
                                  }];
     _dependencies = dependencies;
 }
 
-- (void)didEvaluateTitleFormat:(NSString *)evaluatedTitleFormat error:(NSError *)error {
-    if (!error) {
-        _cachedEvaluatedSessionTitleFormat = [evaluatedTitleFormat copy];
-        [_delegate sessionNameControllerPresentationNameDidChangeTo:self.presentationSessionTitle];
-    }
+- (void)didEvaluateTitleFormat:(NSString *)evaluatedTitleFormat {
+    _cachedEvaluatedSessionTitleFormat = [evaluatedTitleFormat copy];
+    [_delegate sessionNameControllerPresentationNameDidChangeTo:self.presentationSessionTitle];
 }
 
 - (NSString *)presentationWindowTitle {
-    [self updateCachedEvaluatedTitleFormatIfNeeded];
+    [self updateIfNeeded];
     return [self formattedName:self.windowNameFromVariable ?: _cachedEvaluatedSessionTitleFormat];
 }
 
 - (NSString *)presentationSessionTitle {
-    [self updateCachedEvaluatedTitleFormatIfNeeded];
+    [self updateIfNeeded];
     return [self formattedName:_cachedEvaluatedSessionTitleFormat];
 }
 
@@ -200,7 +187,7 @@
 #pragma mark - Private
 
 - (NSString *)windowNameFromVariable {
-    return [self.delegate sessionNameControllerVariableSource](iTermVariableKeySessionWindowName);;
+    return [self.delegate sessionNameControllerVariableSource](iTermVariableKeySessionWindowName);
 }
 
 - (NSString *)formattedName:(NSString *)base {
@@ -219,15 +206,25 @@
 }
 
 - (void)setNeedsUpdate {
-    _cachedEvaluatedSessionTitleNeedsUpdate = YES;
+    _cachedEvaluatedSessionTitleFormat = nil;
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self->_cachedEvaluatedSessionTitleNeedsUpdate) {
-            [self updateCachedEvaluatedTitleFormatIfNeeded];
+            [self updateIfNeeded];
         }
     });
 }
 
-- (void)updateCachedEvaluatedTitleFormatIfNeeded {
+// Forces an async evaluation
+- (void)setNeedsReevaluation {
+    _cachedEvaluatedSessionTitleNeedsUpdate = YES;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self->_cachedEvaluatedSessionTitleNeedsUpdate) {
+            [self updateIfNeeded];
+        }
+    });
+}
+
+- (void)updateIfNeeded {
     if (!_cachedEvaluatedSessionTitleFormat) {
         _cachedEvaluatedSessionTitleNeedsUpdate = YES;
     }

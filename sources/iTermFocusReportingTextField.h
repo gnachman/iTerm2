@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermFocusReportingTextField;
 
 @protocol iTermFocusReportingTextFieldDelegate<NSTextFieldDelegate>
+@optional
 - (void)focusReportingTextFieldWillBecomeFirstResponder:(iTermFocusReportingTextField *)sender;
 @end
 

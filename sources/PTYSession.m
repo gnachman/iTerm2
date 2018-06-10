@@ -13,6 +13,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermAutomaticProfileSwitcher.h"
 #import "iTermBuriedSessions.h"
+#import "iTermBuiltInFunctions.h"
 #import "iTermCarbonHotKeyController.h"
 #import "iTermColorMap.h"
 #import "iTermColorPresets.h"
@@ -214,6 +215,14 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 static const NSUInteger kMaxDirectories = 100;
 static const NSUInteger kMaxCommands = 100;
 static const NSUInteger kMaxHosts = 100;
+
+// Arguments to title BIF
+static NSString *const iTermSessionTitleArgName = @"name";
+static NSString *const iTermSessionTitleArgProfile = @"profile";
+static NSString *const iTermSessionTitleArgJob = @"job";
+static NSString *const iTermSessionTitleArgPath = @"path";
+static NSString *const iTermSessionTitleArgTTY = @"tty";
+static NSString *const iTermSessionTitleSession = @"session";
 
 @interface PTYSession () <
     iTermAutomaticProfileSwitcherDelegate,
@@ -466,6 +475,60 @@ static const NSUInteger kMaxHosts = 100;
     iTermVariables *_userVariables;
 }
 
++ (NSMapTable<NSString *, PTYSession *> *)sessionMap {
+    static NSMapTable *map;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSPointerFunctionsOptions weakWeak = (NSPointerFunctionsWeakMemory | NSPointerFunctionsObjectPersonality);
+        map = [[NSMapTable alloc] initWithKeyOptions:weakWeak
+                                        valueOptions:weakWeak
+                                            capacity:1];
+    });
+    return map;
+}
+
++ (void)registerBuiltInFunctions {
+    NSDictionary<NSString *, NSString *> *defaults = @{ iTermSessionTitleArgName: iTermVariableKeySessionAutoName,
+                                                        iTermSessionTitleArgProfile: iTermVariableKeySessionProfileName,
+                                                        iTermSessionTitleArgJob: iTermVariableKeySessionJob,
+                                                        iTermSessionTitleArgPath: iTermVariableKeySessionPath,
+                                                        iTermSessionTitleArgTTY: iTermVariableKeySessionTTY };
+    // This would be a cyclic reference since the session.name is the result of this function.
+    assert(![defaults.allValues containsObject:iTermVariableKeySessionName]);
+
+    NSString *(^trim)(NSString *) = ^NSString *(NSString *value) {
+        NSString *trimmed = [value stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        if (trimmed.length) {
+            return trimmed;
+        } else {
+            return nil;
+        }
+    };
+    iTermBuiltInFunction *func =
+        [[iTermBuiltInFunction alloc] initWithName:@"session_title"
+                                         arguments:@{ iTermSessionTitleSession: [NSString class] }
+                                     defaultValues:defaults
+                                             block:
+         ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
+             NSString *sessionID = parameters[iTermSessionTitleSession];
+             PTYSession *session = [[PTYSession sessionMap] objectForKey:sessionID];
+             NSString *name = trim(parameters[iTermSessionTitleArgName]);
+             NSString *profile = trim(parameters[iTermSessionTitleArgProfile]);
+             NSString *job = trim(parameters[iTermSessionTitleArgJob]);
+             NSString *pwd = trim(parameters[iTermSessionTitleArgPath]);
+             NSString *tty = trim(parameters[iTermSessionTitleArgTTY]);
+
+             NSString *result = [session titleForSessionName:name
+                                                 profileName:profile
+                                                         job:job
+                                                         pwd:pwd
+                                                         tty:tty];
+             completion(result, nil);
+         }];
+    [[iTermBuiltInFunctions sharedInstance] registerFunction:[func autorelease]
+                                                   namespace:@"iterm2.private"];
+}
+
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -526,6 +589,7 @@ static const NSUInteger kMaxHosts = 100;
         _overriddenFields = [[NSMutableSet alloc] init];
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
+        [[PTYSession sessionMap] setObject:self forKey:_guid];
 
         _variables = [[iTermVariables alloc] init];
         _sessionVariables = [[iTermVariables alloc] init];
@@ -727,9 +791,107 @@ ITERM_WEAKLY_REFERENCEABLE
                [self class], self, [_screen width], [_screen height], @(self.useMetal)];
 }
 
+// Historical note: 3.2 and earlier had three flags that controlled behavior: job, profile, and sticky.
+// SessionName is the name inherited from the profile or set by icon title, manual edit, or trigger.
+// Job Profile Sticky      Name unchanged    Name changed
+// no  no      no          "Shell"           SessionName
+
+// no  no      yes         "Shell"           SessionName
+// yes no      no          job               SessionName (job)
+// yes no      yes         job               SessionName (job)
+//
+// no  yes     no          ProfileName       SessionName
+// yes yes     no          ProfileName (job) SessionName (job)
+//
+// no  yes     yes         ProfileName       ProfileName: IconTitle -or- SessionName
+// yes yes     yes         ProfileName (job) ProfileName: IconTitle -or- SessionName (job)
+- (NSString *)titleForSessionName:(NSString *)sessionName
+                      profileName:(NSString *)profileName
+                              job:(NSString *)jobVariable
+                              pwd:(NSString *)pwdVariable
+                              tty:(NSString *)ttyVariable {
+    iTermTitleComponents titleComponents = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
+                                                                                inProfile:self.profile];
+    NSString *name = nil;
+    NSMutableString *result = [NSMutableString string];
+
+    ITCriticalError(titleComponents != iTermTitleComponentsCustom,
+                    @"titleForSession called with custom title components set");
+    if (titleComponents == iTermTitleComponentsCustom) {
+        return [NSString stringWithFormat:@"🐞 %@", sessionName ?: profileName];
+    }
+
+    if (titleComponents & iTermTitleComponentsSessionName) {
+        name = sessionName;
+    } else if (titleComponents & iTermTitleComponentsProfileName) {
+        name = profileName;
+    } else if (titleComponents & iTermTitleComponentsProfileAndSessionName) {
+        if (sessionName && profileName) {
+            if ([sessionName isEqualToString:profileName]) {
+                name = sessionName;
+            } else {
+                name = [NSString stringWithFormat:@"%@: %@", profileName, sessionName];
+            }
+        } else {
+            name = sessionName ?: profileName;
+        }
+    }
+    if (name) {
+        [result appendString:name];
+    }
+
+    NSString *job = nil;
+    if (titleComponents & iTermTitleComponentsJob) {
+        job = jobVariable;
+    }
+    if (job) {
+        if (result.length) {
+            [result appendFormat:@" (%@)", job];
+        } else {
+            [result appendString:job];
+        }
+    }
+
+    NSString *pwd = nil;
+    if (titleComponents & iTermTitleComponentsWorkingDirectory) {
+        pwd = pwdVariable;
+    }
+    if (pwd) {
+        if (result.length) {
+            [result appendFormat:@" — %@", pwd];
+        } else {
+            [result appendString:pwd];
+        }
+    }
+
+    NSString *tty = nil;
+    if (titleComponents & iTermTitleComponentsTTY) {
+        tty = ttyVariable;
+    }
+    if (tty) {
+        if (result.length) {
+            [result appendFormat:@" — %@", tty];
+        } else {
+            [result appendString:tty];
+        }
+    }
+
+    if (!result) {
+        [result appendString:@"🖥"];
+    }
+    return result;
+}
+
 - (void)setGuid:(NSString *)guid {
+    if ([NSObject object:guid isEqualToObject:_guid]) {
+        return;
+    }
+    if (_guid) {
+        [[PTYSession sessionMap] removeObjectForKey:_guid];
+    }
     [_guid autorelease];
     _guid = [guid copy];
+    [[PTYSession sessionMap] setObject:self forKey:_guid];
     [_variables setValue:_guid forVariableNamed:iTermVariableKeySessionID];
 }
 
@@ -1071,6 +1233,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
     NSString *path = [aSession.screen workingDirectoryOnLine:aSession.screen.numberOfScrollbackLines + aSession.screen.cursorY - 1];
     [aSession.variables setValue:path forVariableNamed:iTermVariableKeySessionPath];
+
+    [aSession.nameController setNeedsUpdate];
+    [aSession.nameController updateIfNeeded];
 }
 
 + (PTYSession *)sessionFromArrangement:(NSDictionary *)arrangement
@@ -1636,7 +1801,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)triggerDidChangeNameTo:(NSString *)newName {
-    [self.variables setValue:newName forVariableNamed:iTermVariableKeySessionName];
+    [self.variables setValuesFromDictionary:@{ iTermVariableKeySessionTriggerName: newName,
+                                               iTermVariableKeySessionAutoName: newName }];
 }
 
 - (void)setTmuxWindowTitle:(NSString *)newName {
@@ -1644,15 +1810,36 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)didInitializeSessionWithName:(NSString *)name {
-    [self.variables setValue:name forVariableNamed:iTermVariableKeySessionName];
+    [self.variables setValue:name forVariableNamed:iTermVariableKeySessionAutoName];
 }
 
 - (void)profileNameDidChangeTo:(NSString *)name {
-    [self.variables setValue:name forVariableNamed:iTermVariableKeySessionProfileName];
+    NSString *autoName = [_variables valueForVariableName:iTermVariableKeySessionAutoName] ?: name;
+    const BOOL isChangeToLocalName = (self.isDivorced &&
+                                      [_overriddenFields containsObject:KEY_NAME]);
+    const BOOL haveAutoNameOverride = ([_variables valueForVariableName:iTermVariableKeySessionIconName] != nil ||
+                                       [_variables valueForVariableName:iTermVariableKeySessionTriggerName] != nil);
+    if (isChangeToLocalName || !haveAutoNameOverride) {
+        // Profile name changed, local name not overridden, and no icon/trigger name to take precedence.
+        autoName = name;
+    }
+
+    NSString *profileName = nil;
+    if (![_overriddenFields containsObject:KEY_NAME]) {
+        profileName = _originalProfile[KEY_NAME];
+    } else {
+        profileName = [[ProfileModel sharedInstance] bookmarkWithGuid:_profile[KEY_ORIGINAL_GUID]][KEY_NAME];
+        if (!profileName) {
+            // Not sure how this would happen
+            profileName = [_variables valueForVariableName:iTermVariableKeySessionProfileName];
+        }
+    }
+    [self.variables setValuesFromDictionary:@{ iTermVariableKeySessionAutoName: autoName ?: [NSNull null],
+                                               iTermVariableKeySessionProfileName: profileName ?: [NSNull null] }];
 }
 
 - (void)profileDidChangeToProfileWithName:(NSString *)name {
-    [self.variables setValue:name forVariableNamed:iTermVariableKeySessionProfileName];
+    [self profileNameDidChangeTo:name];
 }
 
 - (void)computeArgvForCommand:(NSString *)command
@@ -3352,7 +3539,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    [self.variables setValue:self.profile[KEY_NAME] ?: @"" forVariableNamed:iTermVariableKeySessionProfileName];
+    [self profileNameDidChangeTo:self.profile[KEY_NAME]];
     [self sanityCheck];
     return didChange;
 }
@@ -3536,7 +3723,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                  forWindowPane:_tmuxPane];
     }
     [self.delegate sessionUpdateMetalAllowed];
-    [self.variables setValue:self.profile[KEY_NAME] ?: @"" forVariableNamed:iTermVariableKeySessionProfileName];
+    [self profileNameDidChangeTo:self.profile[KEY_NAME]];
     _nameController.titleFormat = [iTermSessionNameController titleFormatForProfile:aDict];
 }
 
@@ -3584,7 +3771,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)name {
-#warning TODO: Maybe icon title should interact with this somehow?
     return [_variables valueForVariableName:iTermVariableKeySessionName] ?: [_variables valueForVariableName:iTermVariableKeySessionProfileName] ?: @"Untitled";
 }
 
@@ -3904,13 +4090,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [_profile release];
     _profile = [mutableProfile retain];
-    if (self.isDivorced && [_overriddenFields containsObject:KEY_NAME]) {
-        // When you're divorced, local changes to the name modify the session name. The profile name
-        // remains unchanged.
-        [self.variables setValue:self.profile[KEY_NAME] ?: @"" forVariableNamed:iTermVariableKeySessionName];
-    } else {
-        [self.variables setValue:self.profile[KEY_NAME] ?: @"" forVariableNamed:iTermVariableKeySessionProfileName];
-    }
+    [self profileNameDidChangeTo:self.profile[KEY_NAME]];
     [[_delegate realParentWindow] invalidateRestorableState];
     [[_delegate realParentWindow] updateTabColors];
 }
@@ -7458,7 +7638,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenSetName:(NSString *)theName {
-    [self.variables setValue:theName forVariableNamed:iTermVariableKeySessionIconName];
+    [self.variables setValuesFromDictionary:@{ iTermVariableKeySessionAutoName: theName ?: [NSNull null],
+                                               iTermVariableKeySessionIconName: theName ?: [NSNull null] }];
 }
 
 - (BOOL)screenWindowIsFullscreen {

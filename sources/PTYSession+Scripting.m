@@ -141,7 +141,7 @@
         [command setScriptErrorString:@"Only user variables may be set. Name must start with “user.”."];
         return nil;
     }
-    [self.variables setValue:value forKey:name];
+    [self.variables setValue:value forVariableNamed:name];
     return value;
 }
 

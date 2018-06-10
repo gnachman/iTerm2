@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "iTermAPIAuthorizationController.h"
 #import "iTermBuriedSessions.h"
+#import "iTermBuiltInFunctions.h"
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
 #import "iTermLSOF.h"
@@ -32,13 +33,6 @@
 
 NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";
 NSString *const iTermAPIRegisteredFunctionsDidChangeNotification = @"iTermAPIRegisteredFunctionsDidChangeNotification";
-
-static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray<NSString *> *argumentNames) {
-    NSString *combinedArguments = [argumentNames componentsJoinedByString:@","];
-    return [NSString stringWithFormat:@"%@(%@)",
-            name,
-            combinedArguments];
-}
 
 @interface iTermAllSessionsSubscription : NSObject
 @property (nonatomic, strong) ITMNotificationRequest *request;
@@ -86,7 +80,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     NSArray<NSString *> *argNames = [self.argumentsArray mapWithBlock:^id(ITMRPCRegistrationRequest_RPCArgumentSignature *anObject) {
         return anObject.name;
     }];
-    return iTermAPIHelperStringRepresentationOfRPC(self.name, argNames);
+    return iTermFunctionSignatureFromNameAndArguments(self.name, argNames);
 }
 
 @end
@@ -101,7 +95,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
     NSArray<NSString *> *argNames = [self.argumentsArray mapWithBlock:^id(ITMServerOriginatedRPC_RPCArgument *anObject) {
         return anObject.name;
     }];
-    return iTermAPIHelperStringRepresentationOfRPC(self.name, argNames);
+    return iTermFunctionSignatureFromNameAndArguments(self.name, argNames);
 }
 
 @end
@@ -579,7 +573,7 @@ static NSString *iTermAPIHelperStringRepresentationOfRPC(NSString *name, NSArray
 
 - (BOOL)haveRegisteredFunctionWithName:(NSString *)name
                              arguments:(NSArray<NSString *> *)arguments {
-    NSString *stringSignature = iTermAPIHelperStringRepresentationOfRPC(name, arguments);
+    NSString *stringSignature = iTermFunctionSignatureFromNameAndArguments(name, arguments);
     return _serverOriginatedRPCSubscriptions[stringSignature].allValues.firstObject != nil;
 }
 

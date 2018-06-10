@@ -53,5 +53,10 @@
 
 - (void)variablesDidChange:(NSSet<NSString *> *)names;
 
+// Forces a synchronous eval followed by an async.
+- (void)setNeedsUpdate;
+
+- (void)updateIfNeeded;
+
 @end
 
