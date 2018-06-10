@@ -7,9 +7,11 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermAPIServer.h"
+#import "iTermTuple.h"
 
 extern NSString *const iTermRemoveAPIServerSubscriptionsNotification;
 extern NSString *const iTermAPIRegisteredFunctionsDidChangeNotification;
+extern NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification;
 
 typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
@@ -33,6 +35,9 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
                                error:(out NSError **)error;
 
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
+
+// Tuple is (display name, invocation).
+- (NSArray<iTermTuple<NSString *, NSString *> *> *)sessionTitleFunctions;
 
 // Performs block either when the function becomes registered, immediately if it's already
 // registered, or after timeout (with an argument of YES) if it does not become registered

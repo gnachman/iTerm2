@@ -19,6 +19,7 @@
 @property (nonatomic, readwrite) NSError *error;
 @property (nonatomic, readwrite) NSString *string;
 @property (nonatomic, readwrite) NSNumber *number;
+@property (nonatomic, readwrite) BOOL optional;
 @end
 
 @interface iTermFunctionArgument : NSObject
@@ -138,6 +139,8 @@
                                        [call addParameterWithName:arg.name value:arg.expression.functionCall];
                                    } else if (arg.expression.error) {
                                        return arg.expression;
+                                   } else if (arg.expression.optional) {
+                                       [call addParameterWithName:arg.name value:[NSNull null]];
                                    } else {
                                        assert(false);
                                    }
@@ -198,6 +201,7 @@
                                id value = strongSelf->_source(path);
                                expression.string = [NSString castFrom:value];
                                expression.number = [NSNumber castFrom:value];
+                               expression.optional = YES;
                                return expression;
                            }];
     [_grammarProcessor addProductionRule:@"expression ::= 'Number'"

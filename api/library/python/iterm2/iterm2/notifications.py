@@ -8,6 +8,9 @@ import iterm2.api_pb2
 import iterm2.connection
 import iterm2.rpc
 
+RPC_ROLE_GENERIC = iterm2.api_pb2.RPCRegistrationRequest.Role.Value("GENERIC")
+RPC_ROLE_SESSION_TITLE = iterm2.api_pb2.RPCRegistrationRequest.Role.Value("SESSION_TITLE")
+
 def _get_handlers():
     """Returns the registered notification handlers.
 
@@ -198,7 +201,7 @@ async def async_subscribe_to_focus_change_notification(connection, callback):
         callback,
         session=None)
 
-async def async_subscribe_to_server_originated_rpc_notification(connection, callback, name, arguments=[], timeout_seconds=5):
+async def async_subscribe_to_server_originated_rpc_notification(connection, callback, name, arguments=[], timeout_seconds=5, defaults={}, role=RPC_ROLE_GENERIC, display_name=None):
     """
     Registers a callback to be run when the server wants to invoke an RPC.
 
@@ -208,6 +211,9 @@ async def async_subscribe_to_server_originated_rpc_notification(connection, call
     :param connection: A connected :class:`Connection`.
     :param callback: A coroutine taking two arguments: an :class:`Connection` and iterm2.api_pb2.ServerOriginatedRPCNotification.
     :param timeout_seconds: How long iTerm2 should wait for this function to return or `None` to use the default timeout.
+    :param defaults: Gives default values. Names correspond to argument names in `arguments`. Values are in-scope variables at the callsite.
+    :param role: Defines the special purpose of this RPC. If none, use `RPC_ROLE_GENERIC`.
+    :param display_name: Used by the `RPC_ROLE_SESSION_TITLE` role to give the name of the function to show in preferences.
 
     :returns: A token that can be passed to unsubscribe.
     """
@@ -221,6 +227,23 @@ async def async_subscribe_to_server_originated_rpc_notification(connection, call
         arg.name = arg_name
         args.append(arg)
     rpc_registration_request.arguments.extend(args)
+    rpc_registration_request.role = role
+
+    if len(defaults) > 0:
+        d = []
+        for name in defaults:
+            assert name in arguments, "Name for default '{}' not in arguments {}".format(name, arguments)
+            path = defaults[name]
+            argd = iterm2.api_pb2.RPCRegistrationRequest.RPCArgument()
+            argd.name = name
+            argd.path = path
+            d.append(argd)
+
+        rpc_registration_request.defaults.extend(d)
+
+    if display_name is not None:
+        rpc_registration_request.display_name = display_name
+
     return await _async_subscribe(
         connection,
         True,

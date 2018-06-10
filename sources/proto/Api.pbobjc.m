@@ -2725,13 +2725,19 @@ BOOL ITMRegisterToolRequest_ToolType_IsValidValue(int32_t value__) {
 
 @dynamic hasName, name;
 @dynamic argumentsArray, argumentsArray_Count;
+@dynamic defaultsArray, defaultsArray_Count;
 @dynamic hasTimeout, timeout;
+@dynamic hasRole, role;
+@dynamic hasDisplayName, displayName;
 
 typedef struct ITMRPCRegistrationRequest__storage_ {
   uint32_t _has_storage_[1];
   float timeout;
+  ITMRPCRegistrationRequest_Role role;
   NSString *name;
   NSMutableArray *argumentsArray;
+  NSMutableArray *defaultsArray;
+  NSString *displayName;
 } ITMRPCRegistrationRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -2739,33 +2745,66 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
 + (GPBDescriptor *)descriptor {
   static GPBDescriptor *descriptor = nil;
   if (!descriptor) {
-    static GPBMessageFieldDescription fields[] = {
+    static GPBMessageFieldDescriptionWithDefault fields[] = {
       {
-        .name = "name",
-        .dataTypeSpecific.className = NULL,
-        .number = ITMRPCRegistrationRequest_FieldNumber_Name,
-        .hasIndex = 0,
-        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, name),
-        .flags = GPBFieldOptional,
-        .dataType = GPBDataTypeString,
+        .defaultValue.valueString = nil,
+        .core.name = "name",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMRPCRegistrationRequest_FieldNumber_Name,
+        .core.hasIndex = 0,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, name),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
       },
       {
-        .name = "argumentsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_RPCArgumentSignature),
-        .number = ITMRPCRegistrationRequest_FieldNumber_ArgumentsArray,
-        .hasIndex = GPBNoHasBit,
-        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, argumentsArray),
-        .flags = GPBFieldRepeated,
-        .dataType = GPBDataTypeMessage,
+        .defaultValue.valueMessage = nil,
+        .core.name = "argumentsArray",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_RPCArgumentSignature),
+        .core.number = ITMRPCRegistrationRequest_FieldNumber_ArgumentsArray,
+        .core.hasIndex = GPBNoHasBit,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, argumentsArray),
+        .core.flags = GPBFieldRepeated,
+        .core.dataType = GPBDataTypeMessage,
       },
       {
-        .name = "timeout",
-        .dataTypeSpecific.className = NULL,
-        .number = ITMRPCRegistrationRequest_FieldNumber_Timeout,
-        .hasIndex = 1,
-        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, timeout),
-        .flags = GPBFieldOptional,
-        .dataType = GPBDataTypeFloat,
+        .defaultValue.valueFloat = 0,
+        .core.name = "timeout",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMRPCRegistrationRequest_FieldNumber_Timeout,
+        .core.hasIndex = 1,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, timeout),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeFloat,
+      },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "defaultsArray",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_RPCArgument),
+        .core.number = ITMRPCRegistrationRequest_FieldNumber_DefaultsArray,
+        .core.hasIndex = GPBNoHasBit,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, defaultsArray),
+        .core.flags = GPBFieldRepeated,
+        .core.dataType = GPBDataTypeMessage,
+      },
+      {
+        .defaultValue.valueEnum = ITMRPCRegistrationRequest_Role_Generic,
+        .core.name = "role",
+        .core.dataTypeSpecific.enumDescFunc = ITMRPCRegistrationRequest_Role_EnumDescriptor,
+        .core.number = ITMRPCRegistrationRequest_FieldNumber_Role,
+        .core.hasIndex = 2,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, role),
+        .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue | GPBFieldHasEnumDescriptor),
+        .core.dataType = GPBDataTypeEnum,
+      },
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "displayName",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMRPCRegistrationRequest_FieldNumber_DisplayName,
+        .core.hasIndex = 3,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, displayName),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -2773,9 +2812,9 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
                                      rootClass:[ITMApiRoot class]
                                           file:ITMApiRoot_FileDescriptor()
                                         fields:fields
-                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMRPCRegistrationRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }
@@ -2783,6 +2822,40 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
 }
 
 @end
+
+#pragma mark - Enum ITMRPCRegistrationRequest_Role
+
+GPBEnumDescriptor *ITMRPCRegistrationRequest_Role_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Generic\000SessionTitle\000";
+    static const int32_t values[] = {
+        ITMRPCRegistrationRequest_Role_Generic,
+        ITMRPCRegistrationRequest_Role_SessionTitle,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMRPCRegistrationRequest_Role)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMRPCRegistrationRequest_Role_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMRPCRegistrationRequest_Role_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMRPCRegistrationRequest_Role_Generic:
+    case ITMRPCRegistrationRequest_Role_SessionTitle:
+      return YES;
+    default:
+      return NO;
+  }
+}
 
 #pragma mark - ITMRPCRegistrationRequest_RPCArgumentSignature
 
@@ -2818,6 +2891,61 @@ typedef struct ITMRPCRegistrationRequest_RPCArgumentSignature__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMRPCRegistrationRequest_RPCArgumentSignature__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_RPCArgument
+
+@implementation ITMRPCRegistrationRequest_RPCArgument
+
+@dynamic hasName, name;
+@dynamic hasPath, path;
+
+typedef struct ITMRPCRegistrationRequest_RPCArgument__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *name;
+  NSString *path;
+} ITMRPCRegistrationRequest_RPCArgument__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "name",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_RPCArgument_FieldNumber_Name,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_RPCArgument__storage_, name),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "path",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_RPCArgument_FieldNumber_Path,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_RPCArgument__storage_, path),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest_RPCArgument class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRPCRegistrationRequest_RPCArgument__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest)];
     NSAssert(descriptor == nil, @"Startup recursed!");

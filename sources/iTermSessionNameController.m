@@ -8,6 +8,7 @@
 #import "iTermSessionNameController.h"
 
 #import "ITAddressBookMgr.h"
+#import "iTermAPIHelper.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermProfilePreferences.h"
 #import "iTermScriptFunctionCall.h"
@@ -42,7 +43,15 @@ static NSString *const iTermSessionNameControllerStandardTitleFormat = @"iterm2.
 }
 
 + (NSString *)titleFormatForProfile:(Profile *)profile {
-    // TODO: When custom functions are supported this will return an appropriate invocation.
+    const iTermTitleComponents titleComponents =
+        [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
+                                             inProfile:profile];
+    if (titleComponents == iTermTitleComponentsCustom) {
+        NSString *signature = [iTermProfilePreferences stringForKey:KEY_TITLE_FUNC inProfile:profile];
+        if (signature) {
+            return signature;
+        }
+    }
     return iTermSessionNameControllerStandardTitleFormat;
 }
 
@@ -50,8 +59,16 @@ static NSString *const iTermSessionNameControllerStandardTitleFormat = @"iterm2.
     self = [super init];
     if (self) {
         _titleFormat = [titleFormat copy];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(didRegisterSessionTitleFunc:)
+                                                     name:iTermAPIDidRegisterSessionTitleFunctionNotification
+                                                   object:nil];
     }
     return self;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (void)setTitleFormat:(NSString *)titleFormat {
@@ -267,6 +284,12 @@ static NSString *const iTermSessionNameControllerStandardTitleFormat = @"iterm2.
             }
         }
     }];
+}
+
+#pragma mark - Notifications
+
+- (void)didRegisterSessionTitleFunc:(NSNotification *)notification {
+    [self setNeedsReevaluation];
 }
 
 @end
