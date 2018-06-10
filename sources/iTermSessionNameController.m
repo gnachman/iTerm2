@@ -38,8 +38,7 @@
 
 + (NSString *)titleFormatForProfile:(Profile *)profile {
     // TODO: When custom functions are supported this will return an appropriate invocation.
-#warning TODO: Change this not to use swifty strings, but just function calls.
-    return @"\\(iterm2.private.session_title(session: session.id))";
+    return @"iterm2.private.session_title(session: session.id)";
 }
 
 - (instancetype)initWithTitleFormat:(NSString *)titleFormat {
@@ -90,26 +89,26 @@
     __weak __typeof(self) weakSelf = self;
     id (^source)(NSString *) = self.delegate.sessionNameControllerVariableSource;
     NSMutableSet *dependencies = [NSMutableSet set];
-    [iTermScriptFunctionCall evaluateString:_titleFormat
-                                    timeout:sync ? 0 : 30
-                                     source:^id(NSString *path) {
-                                         [dependencies addObject:path];
-                                         if (source) {
-                                             return source(path);
-                                         } else {
-                                             return @"";
-                                         }
-                                     }
-                                 completion:^(NSString *possiblyEmptyResult, NSError *error) {
-                                     NSString *result = [possiblyEmptyResult stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-                                     if (error || result.length == 0) {
-                                         result = @"🖥";
-                                     }
-                                     if (!sync) {
-                                         [weakSelf didEvaluateTitleFormat:result];
-                                     }
-                                     completion(result);
-                                 }];
+    [iTermScriptFunctionCall callFunction:_titleFormat
+                                  timeout:sync ? 0 : 30
+                                   source:^id(NSString *path) {
+                                       [dependencies addObject:path];
+                                       if (source) {
+                                           return source(path);
+                                       } else {
+                                           return @"";
+                                       }
+                                   }
+                               completion:^(NSString *possiblyEmptyResult, NSError *error) {
+                                   NSString *result = [possiblyEmptyResult stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+                                   if (error || result.length == 0) {
+                                       result = @"🖥";
+                                   }
+                                   if (!sync) {
+                                       [weakSelf didEvaluateTitleFormat:result];
+                                   }
+                                   completion(result);
+                               }];
     _dependencies = dependencies;
 }
 
