@@ -8007,7 +8007,6 @@ ITERM_WEAKLY_REFERENCEABLE
     if (preserveName) {
         [dict setObject:theName forKey:KEY_NAME];
     }
-    [self.variables setValue:theName forVariableNamed:iTermVariableKeySessionBackingProfileName];
 
     [self setProfile:dict];
     [self setPreferencesFromAddressBookEntry:dict];
