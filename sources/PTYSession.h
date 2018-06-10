@@ -203,6 +203,8 @@ typedef enum {
 // Scrollback buffer cleared.
 - (void)sessionDidClearScrollbackBuffer:(PTYSession *)session;
 
+- (iTermVariables *)sessionTabVariables;
+
 @end
 
 @class SessionView;

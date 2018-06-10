@@ -3952,6 +3952,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return root;
 }
 
+- (void)setTitleOverride:(NSString *)titleOverride {
+    [_variables setValue:titleOverride forVariableNamed:PTYTabVariableTitleOverride];
+}
+
+- (NSString *)titleOverride {
+    return [_variables valueForVariableName:PTYTabVariableTitleOverride];
+}
+
 #pragma mark NSSplitView delegate methods
 
 - (void)splitViewDidChangeSubviews:(PTYSplitView *)splitView {
@@ -5012,12 +5020,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [realParentWindow_ tabDidClearScrollbackBufferInSession:session];
 }
 
-- (void)setTitleOverride:(NSString *)titleOverride {
-    [_variables setValue:titleOverride forVariableNamed:PTYTabVariableTitleOverride];
-}
-
-- (NSString *)titleOverride {
-    return [_variables valueForVariableName:PTYTabVariableTitleOverride];
+- (iTermVariables *)sessionTabVariables {
+    return _variables;
 }
 
 #pragma mark - iTermVariablesDelegate

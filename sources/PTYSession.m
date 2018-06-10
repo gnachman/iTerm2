@@ -3764,6 +3764,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Fit layout to window on session delegate change");
     [_tmuxController fitLayoutToWindows];
     [self useTransparencyDidChange];
+    [_variables setValue:delegate.sessionTabVariables forVariableNamed:@"tab"];
 }
 
 - (NSString *)name {
