@@ -224,5 +224,6 @@
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (int)minimumWeightDifferenceForBoldFont;
 + (double)metalSlowFrameRate;
++ (double)fractionOfCharacterSelectingNextNeighbor;
 
 @end

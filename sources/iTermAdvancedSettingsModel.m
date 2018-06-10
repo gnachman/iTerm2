@@ -130,6 +130,19 @@ DEFINE_BOOL(cmdClickWhenInactiveInvokesSemanticHistory, NO, @"Mouse: ⌘-click i
 DEFINE_BOOL(enableUnderlineSemanticHistoryOnCmdHover, YES, @"Mouse: Underline Semantic History-selectable items under the cursor while holding ⌘?");
 DEFINE_BOOL(sensitiveScrollWheel, NO, @"Mouse: Scroll on any scroll wheel movement, no matter how small?");
 
+// This defines the fraction of a character's width on its right side that is used to
+// select the NEXT character.
+//        |   A rightward drag beginning left of the bar selects G.
+//        <-> [iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor] * charWidth
+//  <-------> Character width
+//   .-----.  .      :
+//  ;         :      :
+//  :         :      :
+//  :    ---- :------:
+//  '       : :      :
+//   `-----'  :      :
+DEFINE_FLOAT(fractionOfCharacterSelectingNextNeighbor, 0.35, @"Mouse: Fraction of character’s width on its right side that can be used to select the character to its right.");
+
 #pragma mark Terminal
 DEFINE_BOOL(traditionalVisualBell, NO, @"Terminal: Visual bell flashes the whole screen, not just a bell icon.");
 DEFINE_FLOAT(timeBetweenBlinks, 0.5, @"Terminal: Cursor blink speed (seconds).");
