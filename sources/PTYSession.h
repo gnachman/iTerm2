@@ -476,8 +476,7 @@ typedef enum {
 + (void)removeAllRegisteredSessions;
 
 - (instancetype)init NS_UNAVAILABLE;
-- (instancetype)initSynthetic:(BOOL)synthetic
-                  titleFormat:(NSString *)titleFormat NS_DESIGNATED_INITIALIZER;
+- (instancetype)initSynthetic:(BOOL)synthetic NS_DESIGNATED_INITIALIZER;
 
 // Jump to a particular point in time.
 - (long long)irSeekToAtLeast:(long long)timestamp;

@@ -92,10 +92,6 @@
                      source:(id (^)(NSString *))source
                     timeout:(NSTimeInterval)timeout
                  completion:(void (^)(id, NSError *))completion {
-    if (timeout <= 0 && !functionCall.isBuiltinFunction) {
-        completion(@"", nil);
-        return;
-    }
     __block NSTimer *timer = nil;
     if (timeout > 0) {
         timer = [NSTimer it_scheduledTimerWithTimeInterval:timeout repeats:NO block:^(NSTimer * _Nonnull theTimer) {
@@ -187,6 +183,13 @@
             }
             if (self.isBuiltinFunction) {
                 [self callBuiltinFunctionWithSource:source completion:completion];
+                return;
+            }
+            if (synchronous) {
+                // This is useful because it causes source to be called for all depended-upon
+                // variables even if the function can't be executed. This makes it possible for
+                // the session name controller to build up its set of dependencies.
+                completion(nil, nil);
                 return;
             }
             [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name

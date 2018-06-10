@@ -239,10 +239,28 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         separator.identifier = @"";
         [self->_titleSettings.menu addItem:separator];
     }
+    NSString *func = [self titleFunctionInvocation];
+    NSString *funcName = [self titleFunctionDisplayName];
     for (iTermTuple<NSString *, NSString *> *tuple in funcs) {
         NSMenuItem *item = [[NSMenuItem alloc] init];
+        if (!tuple.firstObject || !tuple.secondObject) {
+            assert(false);
+            continue;
+        }
         item.title = tuple.firstObject;
         item.identifier = tuple.secondObject;
+        if (func && [func isEqualToString:tuple.secondObject]) {
+            func = nil;
+        }
+        item.tag = -1;
+        [_titleSettings.menu addItem:item];
+    }
+    if (func) {
+        // Did not find the currently selected func. Maybe the script hasn't started, crashed, etc.
+        NSMenuItem *item = [[NSMenuItem alloc] init];
+        item.title = funcName;
+        item.identifier = func;
+        item.enabled = NO;
         item.tag = -1;
         [_titleSettings.menu addItem:item];
     }
@@ -278,20 +296,6 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     if (menuItem.menu == _urlSchemes.menu) {
         menuItem.state = [self profileHandlesScheme:menuItem.title] ? NSOnState : NSOffState;
-    } else if (menuItem.menu == _titleSettings.menu) {
-        if (menuItem.tag == 0) {
-            menuItem.enabled = NO;
-        } else {
-            menuItem.enabled = YES;
-        }
-        iTermTitleComponents components = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
-        BOOL selected;
-        if (components & iTermTitleComponentsCustom) {
-            selected = [NSObject object:menuItem.identifier isEqualToObject:[self objectForKey:KEY_TITLE_FUNC]];
-        } else {
-            selected = menuItem.tag > 0 && components;
-        }
-        menuItem.state = selected ? NSOnState : NSOffState;
     }
     return YES;
 }
@@ -508,6 +512,19 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 #pragma mark - Title Components
 
 - (void)toggleSelectedTitleComponent {
+    NSMenuItem *menuItem = [NSMenuItem castFrom:[_titleSettings selectedItem]];
+    if (menuItem.tag == -1) {
+        // Selected a registered title function.
+        NSString *invocation = menuItem.identifier;
+        NSString *displayName = menuItem.title;
+        iTermTuple<NSString *, NSString *> *tuple = [iTermTuple tupleWithObject:displayName andObject:invocation];
+        [self setTuple:tuple forKey:KEY_TITLE_FUNC];
+
+        [self setUnsignedInteger:iTermTitleComponentsCustom forKey:KEY_TITLE_COMPONENTS];
+        [self updateSelectedTitleComponents];
+        return;
+    }
+
     const iTermTitleComponents originalValue = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
     const iTermTitleComponents selectedTag = (iTermTitleComponents)_titleSettings.selectedItem.tag;
     NSUInteger newValue = originalValue;
@@ -542,13 +559,30 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [self updateSelectedTitleComponents];
 }
 
+- (iTermTuple<NSString *, NSString *> *)stringTupleForKey:(NSString *)key {
+    return [iTermTuple fromPlistValue:[self objectForKey:key]];
+}
+
+- (void)setTuple:(iTermTuple<NSString *, NSString *> *)tuple forKey:(NSString *)key {
+    [self setObject:tuple.plistValue forKey:key];
+}
+
+- (NSString *)titleFunctionDisplayName {
+    return [[self stringTupleForKey:KEY_TITLE_FUNC] firstObject];
+}
+
+- (NSString *)titleFunctionInvocation {
+    return [[self stringTupleForKey:KEY_TITLE_FUNC] secondObject];
+}
+
 - (void)updateSelectedTitleComponents {
     const iTermTitleComponents value = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS] ?: iTermTitleComponentsProfileName;
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    NSString *currentInvocation = self.titleFunctionInvocation;
     for (NSMenuItem *item in _titleSettings.menu.itemArray) {
         BOOL selected = !!(item.tag & value);
         if (value & iTermTitleComponentsCustom) {
-            selected = [NSObject object:item.identifier isEqualToObject:[self objectForKey:KEY_TITLE_FUNC]];
+            selected = [NSObject object:item.identifier isEqualToObject:currentInvocation];
         } else if (item.tag == -1) {
             selected = NO;
         }
@@ -559,17 +593,6 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     }
     _titleSettings.title = [parts componentsJoinedByString:@" + "];
     [_titleSettings sizeToFit];
-}
-
-- (void)settingChanged:(id)sender {
-    if (sender == _titleSettings) {
-        if ([[sender selectedItem] tag] == -1) {
-            [self setInt:iTermTitleComponentsCustom forKey:KEY_TITLE_COMPONENTS];
-            [self setObject:[[sender selectedItem] identifier] forKey:KEY_TITLE_FUNC];
-            return;
-        }
-    }
-    [super settingChanged:sender];
 }
 
 #pragma mark - NSTokenField delegate

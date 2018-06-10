@@ -24,24 +24,18 @@
 - (void)sessionNameControllerDidChangeWindowTitle;
 - (iTermSessionFormattingDescriptor *)sessionNameControllerFormattingDescriptor;
 - (id (^)(NSString *))sessionNameControllerVariableSource;
+- (NSString *)sessionNameControllerInvocation;
 
 @end
 
 @interface iTermSessionNameController : NSObject
 
 @property (nonatomic, weak) id<iTermSessionNameControllerDelegate> delegate;
-@property (nonatomic, copy) NSString *titleFormat;
-
 // Window title with extra formatting, ready to be shown in a title bar.
 @property (nonatomic, readonly) NSString *presentationWindowTitle;
 
 // Name with extra formatting, ready to be shown in a title bar.
 @property (nonatomic, readonly) NSString *presentationSessionTitle;
-
-+ (NSString *)titleFormatForProfile:(Profile *)profile;
-
-- (instancetype)initWithTitleFormat:(NSString *)titleFormat NS_DESIGNATED_INITIALIZER;
-- (instancetype)init NS_UNAVAILABLE;
 
 - (void)restoreNameFromStateDictionary:(NSDictionary *)state;
 - (NSDictionary *)stateDictionary;

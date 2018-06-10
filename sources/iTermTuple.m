@@ -7,6 +7,11 @@
 
 #import "iTermTuple.h"
 
+#import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
+
+static NSString *const iTermTupleValueKey = @"value";
+
 // https://www.mikeash.com/pyblog/friday-qa-2010-06-18-implementing-equality-and-hashing.html
 // NOTE: This does not compose well. Use iTermCombineHash if you need to chain hashes.
 static NSUInteger iTermMikeAshHash(NSUInteger hash1, NSUInteger hash2) {
@@ -42,6 +47,14 @@ static NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
     return tuple;
 }
 
++ (instancetype)fromPlistValue:(id)plistValue {
+    NSArray *array = [NSArray castFrom:plistValue];
+    NSDictionary *firstDict = [array uncheckedObjectAtIndex:0] ?: @{};
+    NSDictionary *secondDict = [array uncheckedObjectAtIndex:1] ?: @{};
+    return [iTermTuple tupleWithObject:firstDict[iTermTupleValueKey]
+                             andObject:secondDict[iTermTupleValueKey]];
+}
+
 - (instancetype)initWithCoder:(NSCoder *)aDecoder {
     self = [super init];
     if (self) {
@@ -54,6 +67,12 @@ static NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 - (void)encodeWithCoder:(NSCoder *)aCoder {
     [aCoder encodeObject:_firstObject forKey:@"firstObject"];
     [aCoder encodeObject:_secondObject forKey:@"secondObject"];
+}
+
+- (id)plistValue {
+    NSDictionary *first = self.firstObject ? @{ iTermTupleValueKey: self.firstObject } : @{};
+    NSDictionary *second = self.secondObject ? @{ iTermTupleValueKey: self.secondObject } : @{};
+    return @[ first, second ];
 }
 
 - (NSString *)description {
@@ -92,6 +111,17 @@ static NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
     return triple;
 }
 
++ (instancetype)fromPlistValue:(id)plistValue {
+    NSArray *array = [NSArray castFrom:plistValue];
+    NSDictionary *firstDict = [array uncheckedObjectAtIndex:0] ?: @{};
+    NSDictionary *secondDict = [array uncheckedObjectAtIndex:1] ?: @{};
+    NSDictionary *thirdDict = [array uncheckedObjectAtIndex:2] ?: @{};
+    return [iTermTriple tripleWithObject:firstDict[iTermTupleValueKey]
+                               andObject:secondDict[iTermTupleValueKey]
+                                  object:thirdDict[iTermTupleValueKey]];
+}
+
+
 - (instancetype)initWithCoder:(NSCoder *)aDecoder {
     self = [super initWithCoder:aDecoder];
     if (self) {
@@ -111,6 +141,13 @@ static NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
             self.firstObject,
             self.secondObject,
             _thirdObject];
+}
+
+- (id)plistValue {
+    NSDictionary *first = self.firstObject ? @{ iTermTupleValueKey: self.firstObject } : @{};
+    NSDictionary *second = self.secondObject ? @{ iTermTupleValueKey: self.secondObject } : @{};
+    NSDictionary *third = self.thirdObject ? @{ iTermTupleValueKey: self.thirdObject } : @{};
+    return @[ first, second, third ];
 }
 
 - (BOOL)isEqual:(id)object {
