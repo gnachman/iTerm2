@@ -123,7 +123,6 @@
 
 - (void)loadRulesAndTransforms {
     __weak __typeof(self) weakSelf = self;
-#warning TODO: Update suggester to accept paths for function names
     [_grammarProcessor addProductionRule:@"call ::= <path> <arglist>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
