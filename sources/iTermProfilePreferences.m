@@ -353,7 +353,6 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_SESSION_HOTKEY: @{},
                   KEY_TITLE_COMPONENTS : @(iTermTitleComponentsProfileName),
                   KEY_TITLE_FUNC: [NSNull null]
-#warning TODO: Add API support for title components
                   // Remember to update valueIsLegal:forKey: and the websocket
                   // README.md when adding a new value that should be
                   // API-settable.
