@@ -87,6 +87,7 @@
 
 - (NSArray<iTermTuple *> *)tuplesWithFirstObjectEqualTo:(id)firstObject;
 - (NSDictionary<id, NSArray<ObjectType> *> *)classifyWithBlock:(id (^)(ObjectType))block;
+- (ObjectType)uncheckedObjectAtIndex:(NSInteger)index;
 
 @end
 
