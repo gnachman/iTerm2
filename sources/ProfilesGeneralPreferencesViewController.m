@@ -1,3 +1,4 @@
+#warning TODO: If the registered func doesn't exist show something sensible in the menu
 //
 //  ProfilesGeneralPreferencesViewController.m
 //  iTerm
@@ -9,9 +10,11 @@
 #import "ProfilesGeneralPreferencesViewController.h"
 #import "AdvancedWorkingDirectoryWindowController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAPIHelper.h"
 #import "iTermLaunchServices.h"
 #import "iTermProfilePreferences.h"
 #import "iTermShortcutInputView.h"
+#import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "ProfileListView.h"
 #import "ProfileModel.h"
@@ -170,6 +173,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                     key:KEY_BADGE_FORMAT
                    type:kPreferenceInfoTypeStringTextField];
 
+    [self updateTitleSettingsMenu];
     [self defineControl:_titleSettings
                     key:KEY_TITLE_COMPONENTS
                    type:kPreferenceInfoTypePopup
@@ -220,6 +224,30 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     return [_profiles selectedGuid];
 }
 
+- (void)updateTitleSettingsMenu {
+    // First remove any programatically added items
+    NSIndexSet *indexSet = [_titleSettings.menu.itemArray indexesOfObjectsPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return obj.tag == -1;
+    }];
+    [indexSet enumerateIndexesWithOptions:NSEnumerationReverse usingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
+        [self->_titleSettings.menu removeItemAtIndex:idx];
+    }];
+
+    NSArray<iTermTuple<NSString *, NSString *> *> *funcs = [[iTermAPIHelper sharedInstance] sessionTitleFunctions];
+    if (funcs.count) {
+        NSMenuItem *separator = [NSMenuItem separatorItem];
+        separator.identifier = @"";
+        [self->_titleSettings.menu addItem:separator];
+    }
+    for (iTermTuple<NSString *, NSString *> *tuple in funcs) {
+        NSMenuItem *item = [[NSMenuItem alloc] init];
+        item.title = tuple.firstObject;
+        item.identifier = tuple.secondObject;
+        item.tag = -1;
+        [_titleSettings.menu addItem:item];
+    }
+}
+
 #pragma mark - Copy current session to Profile
 
 // Replace a Profile in the sessions profile with a new dictionary that preserves the original
@@ -256,7 +284,13 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         } else {
             menuItem.enabled = YES;
         }
-        const BOOL selected = !!([self unsignedIntegerForKey:KEY_TITLE_COMPONENTS] & menuItem.tag);
+        iTermTitleComponents components = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
+        BOOL selected;
+        if (components & iTermTitleComponentsCustom) {
+            selected = [NSObject object:menuItem.identifier isEqualToObject:[self objectForKey:KEY_TITLE_FUNC]];
+        } else {
+            selected = menuItem.tag > 0 && components;
+        }
         menuItem.state = selected ? NSOnState : NSOffState;
     }
     return YES;
@@ -512,7 +546,12 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     const iTermTitleComponents value = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS] ?: iTermTitleComponentsProfileName;
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
     for (NSMenuItem *item in _titleSettings.menu.itemArray) {
-        const BOOL selected = !!(item.tag & value);
+        BOOL selected = !!(item.tag & value);
+        if (value & iTermTitleComponentsCustom) {
+            selected = [NSObject object:item.identifier isEqualToObject:[self objectForKey:KEY_TITLE_FUNC]];
+        } else if (item.tag == -1) {
+            selected = NO;
+        }
         item.state = selected ? NSOnState : NSOffState;
         if (selected) {
             [parts addObject:item.title];
@@ -520,6 +559,17 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     }
     _titleSettings.title = [parts componentsJoinedByString:@" + "];
     [_titleSettings sizeToFit];
+}
+
+- (void)settingChanged:(id)sender {
+    if (sender == _titleSettings) {
+        if ([[sender selectedItem] tag] == -1) {
+            [self setInt:iTermTitleComponentsCustom forKey:KEY_TITLE_COMPONENTS];
+            [self setObject:[[sender selectedItem] identifier] forKey:KEY_TITLE_FUNC];
+            return;
+        }
+    }
+    [super settingChanged:sender];
 }
 
 #pragma mark - NSTokenField delegate

@@ -33,6 +33,7 @@
 
 NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";
 NSString *const iTermAPIRegisteredFunctionsDidChangeNotification = @"iTermAPIRegisteredFunctionsDidChangeNotification";
+NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPIDidRegisterSessionTitleFunctionNotification";
 
 @interface iTermAllSessionsSubscription : NSObject
 @property (nonatomic, strong) ITMNotificationRequest *request;
@@ -73,6 +74,7 @@ NSString *const iTermAPIRegisteredFunctionsDidChangeNotification = @"iTermAPIReg
         }
         [args addObject:name];
     }
+
     return YES;
 }
 
@@ -571,6 +573,28 @@ NSString *const iTermAPIRegisteredFunctionsDidChangeNotification = @"iTermAPIReg
     return result;
 }
 
+- (NSString *)invocationOfRegistrationRequest:(ITMRPCRegistrationRequest *)req {
+    NSArray<NSString *> *defaults = [req.defaultsArray mapWithBlock:^id(ITMRPCRegistrationRequest_RPCArgument *def) {
+        return [NSString stringWithFormat:@"%@:%@", def.name, def.path];
+    }];
+    defaults = [defaults sortedArrayUsingSelector:@selector(compare:)];
+    return [NSString stringWithFormat:@"%@(%@)", req.name, [defaults componentsJoinedByString:@","]];
+}
+
+- (NSArray<iTermTuple<NSString *,NSString *> *> *)sessionTitleFunctions {
+    return [_serverOriginatedRPCSubscriptions.allKeys mapWithBlock:^id(NSString *signature) {
+        ITMNotificationRequest *req = self->_serverOriginatedRPCSubscriptions[signature].allValues.firstObject;
+        if (!req) {
+            return nil;
+        }
+        if (req.rpcRegistrationRequest.role != ITMRPCRegistrationRequest_Role_SessionTitle) {
+            return nil;
+        }
+        NSString *invocation = [self invocationOfRegistrationRequest:req.rpcRegistrationRequest];
+        return [iTermTuple tupleWithObject:req.rpcRegistrationRequest.displayName andObject:invocation];
+    }];
+}
+
 - (BOOL)haveRegisteredFunctionWithName:(NSString *)name
                              arguments:(NSArray<NSString *> *)arguments {
     NSString *stringSignature = iTermFunctionSignatureFromNameAndArguments(name, arguments);
@@ -841,6 +865,10 @@ NSString *const iTermAPIRegisteredFunctionsDidChangeNotification = @"iTermAPIReg
         if (didRegisterRPC) {
             [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIRegisteredFunctionsDidChangeNotification
                                                                 object:nil];
+            if (request.rpcRegistrationRequest.role == ITMRPCRegistrationRequest_Role_SessionTitle) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIDidRegisterSessionTitleFunctionNotification
+                                                                    object:request.rpcRegistrationRequest.name];
+            }
         }
     } else {
         if (!subscriptions[connection]) {

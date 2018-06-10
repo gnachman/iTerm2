@@ -432,7 +432,7 @@ class App:
             profiles.append(profile)
         return profiles
 
-    async def async_register_rpc_handler(self, name, coro, timeout=None):
+    async def async_register_rpc_handler(self, name, coro, timeout=None, defaults={}, role=iterm2.notifications.RPC_ROLE_GENERIC, display_name=None):
         """Register a script-defined RPC.
 
         iTerm2 may be instructed to invoke a registered RPC, such as through a
@@ -442,6 +442,13 @@ class App:
         :param name: The RPC name. Combined with its arguments, this must be unique among all registered RPCs. It should consist of letters, numbers, and underscores and must begin with a letter.
         :param coro: An async function. Its arguments are reflected upon to determine the RPC's signature. Only the names of the arguments are used. All arguments should be keyword arguments as any may be omitted at call time.
         :param timeout: How long iTerm2 should wait before giving up on this function's ever returning. `None` means to use the default timeout.
+        :param defaults: Gives default values. Names correspond to argument names in `arguments`. Values are in-scope variables at the callsite.
+        :param role: Defines the special purpose of this RPC.
+        :param display_name: Used by the `RPC_ROLE_SESSION_TITLE` role to give the name of the function to show in preferences.
+        The following roles are recognized:
+
+        `RPC_ROLE_GENERIC`: Has no special purpose. Can be invoked in key bindings or triggers.
+        `RPC_ROLE_SESSION_TITLE`: Shows as an option to provide session titles in Preferences.
         """
         async def handle_rpc(connection, notif):
             rpc_notif = notif.server_originated_rpc_notification
@@ -470,7 +477,7 @@ class App:
                 await iterm2.rpc.async_send_rpc_result(connection, rpc_notif.request_id, False, result)
 
         args = inspect.signature(coro).parameters.keys()
-        await iterm2.notifications.async_subscribe_to_server_originated_rpc_notification(self.connection, handle_rpc, name, args, timeout)
+        await iterm2.notifications.async_subscribe_to_server_originated_rpc_notification(self.connection, handle_rpc, name, args, timeout, defaults, role, display_name)
 
     async def async_select_menu_item(self, identifier):
         """Selects a menu item.

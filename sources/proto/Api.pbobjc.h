@@ -73,6 +73,7 @@ CF_EXTERN_C_BEGIN
 @class ITMProfileProperty;
 @class ITMPromptNotification;
 @class ITMRPCRegistrationRequest;
+@class ITMRPCRegistrationRequest_RPCArgument;
 @class ITMRPCRegistrationRequest_RPCArgumentSignature;
 @class ITMRange;
 @class ITMRegisterToolRequest;
@@ -336,6 +337,21 @@ GPBEnumDescriptor *ITMRegisterToolRequest_ToolType_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMRegisterToolRequest_ToolType_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMRPCRegistrationRequest_Role
+
+typedef GPB_ENUM(ITMRPCRegistrationRequest_Role) {
+  ITMRPCRegistrationRequest_Role_Generic = 1,
+  ITMRPCRegistrationRequest_Role_SessionTitle = 2,
+};
+
+GPBEnumDescriptor *ITMRPCRegistrationRequest_Role_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMRPCRegistrationRequest_Role_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMRegisterToolResponse_Status
 
@@ -1517,6 +1533,9 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_FieldNumber) {
   ITMRPCRegistrationRequest_FieldNumber_Name = 1,
   ITMRPCRegistrationRequest_FieldNumber_ArgumentsArray = 2,
   ITMRPCRegistrationRequest_FieldNumber_Timeout = 3,
+  ITMRPCRegistrationRequest_FieldNumber_DefaultsArray = 4,
+  ITMRPCRegistrationRequest_FieldNumber_Role = 5,
+  ITMRPCRegistrationRequest_FieldNumber_DisplayName = 6,
 };
 
 /**
@@ -1533,10 +1552,22 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_FieldNumber) {
 /** The number of items in @c argumentsArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger argumentsArray_Count;
 
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMRPCRegistrationRequest_RPCArgument*> *defaultsArray;
+/** The number of items in @c defaultsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger defaultsArray_Count;
+
 /** If not specified, iTerm2 decides based on its built-in default. */
 @property(nonatomic, readwrite) float timeout;
 
 @property(nonatomic, readwrite) BOOL hasTimeout;
+@property(nonatomic, readwrite) ITMRPCRegistrationRequest_Role role;
+
+@property(nonatomic, readwrite) BOOL hasRole;
+/** Used by SESSION_TITLE to control name in Preferences menu */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *displayName;
+/** Test to see if @c displayName has been set. */
+@property(nonatomic, readwrite) BOOL hasDisplayName;
+
 @end
 
 #pragma mark - ITMRPCRegistrationRequest_RPCArgumentSignature
@@ -1550,6 +1581,25 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_RPCArgumentSignature_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *name;
 /** Test to see if @c name has been set. */
 @property(nonatomic, readwrite) BOOL hasName;
+
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_RPCArgument
+
+typedef GPB_ENUM(ITMRPCRegistrationRequest_RPCArgument_FieldNumber) {
+  ITMRPCRegistrationRequest_RPCArgument_FieldNumber_Name = 1,
+  ITMRPCRegistrationRequest_RPCArgument_FieldNumber_Path = 2,
+};
+
+@interface ITMRPCRegistrationRequest_RPCArgument : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+/** Test to see if @c name has been set. */
+@property(nonatomic, readwrite) BOOL hasName;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *path;
+/** Test to see if @c path has been set. */
+@property(nonatomic, readwrite) BOOL hasPath;
 
 @end
 

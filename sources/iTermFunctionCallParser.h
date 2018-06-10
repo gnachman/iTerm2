@@ -17,6 +17,7 @@
 @property (nonatomic, strong, readonly) NSString *string;
 @property (nonatomic, strong, readonly) NSNumber *number;
 @property (nonatomic, strong, readonly) NSError *error;
+@property (nonatomic, readonly) BOOL optional;
 @end
 
 @interface iTermFunctionCallParser : NSObject <CPParserDelegate, CPTokeniserDelegate>

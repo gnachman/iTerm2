@@ -366,8 +366,23 @@ message RPCRegistrationRequest {
   optional string name = 1;
   repeated RPCArgumentSignature arguments = 2;
 
+  message RPCArgument {
+    optional string name = 1;
+    optional string path = 2;
+  }
+  repeated RPCArgument defaults = 4;
+
   // If not specified, iTerm2 decides based on its built-in default.
   optional float timeout = 3;
+
+  enum Role {
+    GENERIC = 1;
+    SESSION_TITLE = 2;
+  }
+  optional Role role = 5 [default=GENERIC];
+
+  // Used by SESSION_TITLE to control name in Preferences menu
+  optional string display_name = 6;
 }
 
 message RegisterToolResponse {

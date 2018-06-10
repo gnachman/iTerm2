@@ -62,6 +62,7 @@
 #define KEY_DEFAULT_BOOKMARK            @"Default Bookmark"  // deprecated
 #define KEY_ASK_ABOUT_OUTDATED_KEYMAPS  @"Ask About Outdated Keymaps"
 #define KEY_TITLE_COMPONENTS            @"Title Components"
+#define KEY_TITLE_FUNC                  @"Title Function"
 
 // Advanced working directory settings
 #define KEY_AWDS_WIN_OPTION             @"AWDS Window Option"
