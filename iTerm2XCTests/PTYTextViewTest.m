@@ -616,7 +616,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     }
 
 #warning TODO
-    PTYSession *session = [[[PTYSession alloc] initSynthetic:NO titleFormat:@"TODO"] autorelease];
+    PTYSession *session = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     [session setProfile:profile];
 
     XCTAssert([session setScreenSize:NSMakeRect(0, 0, 200, 200) parent:nil]);

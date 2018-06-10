@@ -1172,7 +1172,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [hiddenLiveViews_ addObject:oldView];
     [parentSplit replaceSubview:oldView with:newView];
 
-    newSession.nameController.titleFormat = oldSession.nameController.titleFormat;
+    [newSession.nameController setNeedsUpdate];
 
     newSession.liveSession = oldSession;
     activeSession_ = newSession;

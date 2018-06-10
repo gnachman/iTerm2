@@ -5196,9 +5196,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // Initialize a new session
     Profile *profile = [self profileForNewSessionPreferringProfile:oldSession.profile];
-    NSString *titleFormat = [iTermSessionNameController titleFormatForProfile:profile];
-    newSession = [[[PTYSession alloc] initSynthetic:YES
-                                        titleFormat:titleFormat] autorelease];
+    newSession = [[[PTYSession alloc] initSynthetic:YES] autorelease];
     // NSLog(@"New session for IR view is at %p", newSession);
 
     // set our preferences

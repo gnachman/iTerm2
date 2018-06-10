@@ -1917,6 +1917,9 @@ NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPI
         block(nil, [self rpcDispatchError:exception[@"reason"]
                                    detail:exception[@"traceback"]]);
     } else {
+        if ([NSNull castFrom:value]) {
+            value = nil;
+        }
         block(value, nil);
     }
 }

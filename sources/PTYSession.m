@@ -549,10 +549,10 @@ static NSString *const iTermSessionTitleSession = @"session";
 
 - (instancetype)initWithCoder:(NSCoder *)coder {
     assert(NO);
-    return [self initSynthetic:NO titleFormat:@""];
+    return [self initSynthetic:NO];
 }
 
-- (instancetype)initSynthetic:(BOOL)synthetic titleFormat:(NSString *)titleFormat {
+- (instancetype)initSynthetic:(BOOL)synthetic {
     self = [super init];
     if (self) {
         _autoLogId = arc4random();
@@ -627,7 +627,7 @@ static NSString *const iTermSessionTitleSession = @"session";
         _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
         _metalDisabledTokens = [[NSMutableSet alloc] init];
         _statusChangedAbsLine = -1;
-        _nameController = [[iTermSessionNameController alloc] initWithTitleFormat:titleFormat];
+        _nameController = [[iTermSessionNameController alloc] init];
         _nameController.delegate = self;
         if (@available(macOS 10.11, *)) {
             _metalGlue = [[iTermMetalGlue alloc] init];
@@ -1257,9 +1257,7 @@ ITERM_WEAKLY_REFERENCEABLE
         needDivorce = YES;
     }
 
-    NSString *titleFormat = [iTermSessionNameController titleFormatForProfile:arrangement[SESSION_ARRANGEMENT_BOOKMARK]];
-    PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO
-                                                  titleFormat:titleFormat] autorelease];
+    PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     aSession.view = sessionView;
 
     [[sessionView findViewController] setDelegate:aSession];
@@ -3723,7 +3721,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self.delegate sessionUpdateMetalAllowed];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
-    _nameController.titleFormat = [iTermSessionNameController titleFormatForProfile:aDict];
+    [_nameController setNeedsUpdate];
 }
 
 - (NSString *)badgeLabel {
@@ -9914,6 +9912,20 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 #pragma mark - iTermSessionNameControllerDelegate
+
+- (NSString *)sessionNameControllerInvocation {
+    iTermTitleComponents components = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS inProfile:_profile];
+    if (components != iTermTitleComponentsCustom) {
+        return @"iterm2.private.session_title(session: session.id)";
+    }
+    
+    iTermTuple<NSString *, NSString *> *tuple = [iTermTuple fromPlistValue:[iTermProfilePreferences stringForKey:KEY_TITLE_FUNC inProfile:_profile]];
+    if (tuple.firstObject && tuple.secondObject) {
+        return tuple.secondObject;
+    } else {
+        return nil;
+    }
+}
 
 - (void)sessionNameControllerNameWillChangeTo:(NSString *)newName {
     [_view setTitle:newName];
