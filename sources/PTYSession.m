@@ -815,10 +815,9 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *name = nil;
     NSMutableString *result = [NSMutableString string];
 
-    ITCriticalError(titleComponents != iTermTitleComponentsCustom,
-                    @"titleForSession called with custom title components set");
     if (titleComponents == iTermTitleComponentsCustom) {
-        return [NSString stringWithFormat:@"🐞 %@", sessionName ?: profileName];
+        // This can happen when the session is synthesized
+        return @"";
     }
 
     if (titleComponents & iTermTitleComponentsSessionName) {
