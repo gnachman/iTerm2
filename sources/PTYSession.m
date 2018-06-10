@@ -9948,7 +9948,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                             object:[_delegate parentWindow]
                                                           userInfo:nil];
     }
-    [_variables setValue:self.name forVariableNamed:iTermVariableKeySessionPresentationName];
+    [_variables setValue:presentationName forVariableNamed:iTermVariableKeySessionPresentationName];
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
