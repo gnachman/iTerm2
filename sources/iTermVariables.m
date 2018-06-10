@@ -69,7 +69,6 @@ NSArray<NSString *> *iTermVariablesGetAll(void) {
     return [iTermVariablesGetMutableSet() allObjects];
 }
 
-#warning TODO: remove this hack and use the variables in scope for suggestions
 static void iTermVariablesAdd(NSString *variable) {
     [iTermVariablesGetMutableSet() addObject:variable];
 }
