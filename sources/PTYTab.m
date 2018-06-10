@@ -10,6 +10,7 @@
 #import "iTermPreferences.h"
 #import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
+#import "iTermVariables.h"
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
@@ -31,6 +32,8 @@
 #import "WindowControllerInterface.h"
 
 #define PtyLog DLog
+
+static NSString *const PTYTabVariableTitleOverride = @"titleOverride";
 
 NSString *const iTermTabDidChangeWindowNotification = @"iTermTabDidChangeWindowNotification";
 NSString *const iTermSessionBecameKey = @"iTermSessionBecameKey";
@@ -62,6 +65,7 @@ static NSString* TAB_ARRANGEMENT_ID = @"ID";  // only for maximize/unmaximize
 static NSString* TAB_ARRANGEMENT_IS_MAXIMIZED = @"Maximized";
 static NSString* TAB_ARRANGEMENT_TMUX_WINDOW_PANE = @"tmux window pane";
 static NSString* TAB_ARRANGEMENT_COLOR = @"Tab color";  // DEPRECATED - Each PTYSession has its own tab color now
+static NSString* TAB_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
@@ -106,7 +110,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     SetWithGrainDim(!isVertical, dest, value);
 }
 
-@interface PTYTab()
+@interface PTYTab()<iTermVariablesDelegate>
 @property(nonatomic, retain) NSMapTable<SessionView *, PTYSession *> *viewToSessionMap;
 @end
 
@@ -350,6 +354,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _tabNumberForItermSessionId = -1;
     hiddenLiveViews_ = [[NSMutableArray alloc] init];
     tmuxWindow_ = -1;
+    _variables = [[iTermVariables alloc] init];
+    _variables.delegate = self;
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
                                                  name:kUpdateLabelsNotification
@@ -391,6 +397,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [parseTree_ release];
     [hiddenLiveViews_ release];
     [_viewToSessionMap release];
+    [_variables release];
     [super dealloc];
 }
 
@@ -534,11 +541,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     tabViewItem_.label = self.activeSession.name;
 }
 
-- (void)nameOfSession:(PTYSession*)session didChangeTo:(NSString*)newName {
+- (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString*)newName {
     if ([self activeSession] == session) {
-        [tabViewItem_ setLabel:newName];  // PSM uses bindings to bind the label to its title
-        [self.realParentWindow tabTitleDidChange:self];
+        [self updateTabTitleForCurrentSessionName:newName];
     }
+}
+
+- (void)updateTabTitleForCurrentSessionName:(NSString *)newName {
+    [tabViewItem_ setLabel:self.titleOverride ?: newName];  // PSM uses bindings to bind the label to its title
+    [self.realParentWindow tabTitleDidChange:self];
 }
 
 - (BOOL)isForegroundTab {
@@ -2568,6 +2579,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                         atNode:theTab->root_
                                                          inTab:theTab
                                                  forObjectType:objectType]];
+    theTab.titleOverride = [arrangement[TAB_ARRANGEMENT_TITLE_OVERRIDE] nilIfNull];
     return theTab;
 }
 
@@ -2698,7 +2710,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                       contents:contents];
     }
 
-    return @{ TAB_ARRANGEMENT_ROOT: rootNode };
+    return @{ TAB_ARRANGEMENT_ROOT: rootNode,
+              TAB_ARRANGEMENT_TITLE_OVERRIDE: self.titleOverride ?: [NSNull null] };
 }
 
 - (NSDictionary*)arrangement {
@@ -4997,6 +5010,21 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)sessionDidClearScrollbackBuffer:(PTYSession *)session {
     [realParentWindow_ tabDidClearScrollbackBufferInSession:session];
+}
+
+- (void)setTitleOverride:(NSString *)titleOverride {
+    [_variables setValue:titleOverride forVariableNamed:PTYTabVariableTitleOverride];
+}
+
+- (NSString *)titleOverride {
+    return [_variables valueForVariableName:PTYTabVariableTitleOverride];
+}
+
+#pragma mark - iTermVariablesDelegate
+
+- (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames
+            group:(dispatch_group_t)group {
+    [self updateTabTitleForCurrentSessionName:[self.activeSession.variables valueForVariableName:iTermVariableKeySessionPresentationName]];
 }
 
 @end

@@ -10,6 +10,9 @@
 NS_ASSUME_NONNULL_BEGIN
 
 extern NSString *const iTermVariableKeyApplicationPID;
+
+extern NSString *const iTermVariableKeyTabTitleOverride;
+
 extern NSString *const iTermVariableKeySessionAutoLogID;
 extern NSString *const iTermVariableKeySessionColumns;
 extern NSString *const iTermVariableKeySessionCreationTimeString;
@@ -22,7 +25,6 @@ extern NSString *const iTermVariableKeySessionRows;
 extern NSString *const iTermVariableKeySessionTTY;
 extern NSString *const iTermVariableKeySessionUsername;
 extern NSString *const iTermVariableKeyTermID;
-
 extern NSString *const iTermVariableKeySessionProfileName;  // current profile name
 extern NSString *const iTermVariableKeySessionAutoName;  // Defaults to profile name. Then, most recent of manually set or icon name.
 extern NSString *const iTermVariableKeySessionIconName;  // set by esc code

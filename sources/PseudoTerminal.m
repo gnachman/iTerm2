@@ -4909,10 +4909,25 @@ ITERM_WEAKLY_REFERENCEABLE
             [session.shell originalCommand] ?: @"None"];
 }
 
-- (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem
-{
+- (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem {
     [tabView selectTabViewItem:tabViewItem];
-    [self editCurrentSession:self];
+    PTYTab *tab = tabViewItem.identifier;
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = @"Set Tab Title";
+    alert.informativeText = @"If this is empty, the tab takes the active session’s title.";
+    NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
+    titleTextField.editable = YES;
+    titleTextField.selectable = YES;
+    titleTextField.stringValue = tab.titleOverride ?: @"";
+    alert.accessoryView = titleTextField;
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [titleTextField.window makeFirstResponder:titleTextField];
+    });
+    if ([alert runModal] == NSAlertFirstButtonReturn) {
+        tab.titleOverride = titleTextField.stringValue.length ? titleTextField.stringValue : nil;
+    }
 }
 
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView {

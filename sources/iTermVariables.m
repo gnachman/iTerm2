@@ -20,6 +20,9 @@ typedef iTermTriple<NSNumber *, iTermVariables *, NSString *> iTermVariablesDept
 static NSString *const iTermVariablesGlobalScopePrefix = @"iterm2.";
 
 NSString *const iTermVariableKeyApplicationPID = @"iterm2.pid";
+
+NSString *const iTermVariableKeyTabTitleOverride = @"tab.titleOverride";
+
 NSString *const iTermVariableKeySessionAutoLogID = @"session.autoLogId";
 NSString *const iTermVariableKeySessionColumns = @"session.columns";
 NSString *const iTermVariableKeySessionCreationTimeString = @"session.creationTimeString";
