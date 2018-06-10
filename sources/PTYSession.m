@@ -809,9 +809,10 @@ ITERM_WEAKLY_REFERENCEABLE
                       profileName:(NSString *)profileName
                               job:(NSString *)jobVariable
                               pwd:(NSString *)pwdVariable
-                              tty:(NSString *)ttyVariable {
-    iTermTitleComponents titleComponents = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
-                                                                                inProfile:self.profile];
+                              tty:(NSString *)ttyVariable  {
+    iTermTitleComponents titleComponents;
+    titleComponents = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
+                                                           inProfile:self.profile];
     NSString *name = nil;
     NSMutableString *result = [NSMutableString string];
 
