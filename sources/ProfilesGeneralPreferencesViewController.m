@@ -1,4 +1,3 @@
-#warning TODO: If the registered func doesn't exist show something sensible in the menu
 //
 //  ProfilesGeneralPreferencesViewController.m
 //  iTerm
