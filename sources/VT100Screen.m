@@ -3100,7 +3100,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (NSString *)terminalIconTitle {
     if (allowTitleReporting_ && [self terminalIsTrusted]) {
         // TODO: Should be something like screenRawName (which doesn't exist yet but would return
-        // [self name]), not screenWindowTitle, right?
+        // [self rawName]), not screenWindowTitle, right?
         return [delegate_ screenWindowTitle] ? [delegate_ screenWindowTitle] : [delegate_ screenDefaultName];
     } else {
         return @"";

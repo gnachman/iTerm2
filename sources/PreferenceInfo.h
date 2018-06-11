@@ -21,8 +21,6 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
     kPreferenceInfoTypeTokenField,
     kPreferenceInfoTypeMatrix,
     kPreferenceInfoTypeColorWell,
-    // a view whose children that are buttons are all radio buttons with distinct tags controlling the same preference
-    kPreferenceInfoTypeRadioButton
 };
 
 

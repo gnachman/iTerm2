@@ -536,7 +536,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)nameOfSession:(PTYSession*)session didChangeTo:(NSString*)newName {
     if ([self activeSession] == session) {
-        [tabViewItem_ setLabel:newName];  // PSM uses bindings to bind the label to its title
+        [tabViewItem_ setLabel:newName];
         [self.realParentWindow tabTitleDidChange:self];
     }
 }
@@ -1171,7 +1171,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [hiddenLiveViews_ addObject:oldView];
     [parentSplit replaceSubview:oldView with:newView];
 
-    [newSession.nameController didSynthesizeFrom:oldSession.nameController];
+    [newSession setName:[oldSession name]];
+    [newSession setDefaultName:[oldSession defaultName]];
 
     newSession.liveSession = oldSession;
     activeSession_ = newSession;

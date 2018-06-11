@@ -214,7 +214,6 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                 break;
 
             case kPreferenceInfoTypeMatrix:
-            case kPreferenceInfoTypeRadioButton:
                 assert(false);  // Must use a custom setting changed handler
 
             case kPreferenceInfoTypePopup:
@@ -274,8 +273,8 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     if (!settingChanged || !update) {
         assert([self defaultValueForKey:key isCompatibleWithType:type]);
         assert(type != kPreferenceInfoTypeMatrix);  // Matrix type requires both.
-        assert(type != kPreferenceInfoTypeRadioButton);  // This is just a modernized matrix
     }
+
     PreferenceInfo *info = [PreferenceInfo infoForPreferenceWithKey:key
                                                                type:type
                                                             control:control];
@@ -372,7 +371,6 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         }
 
         case kPreferenceInfoTypeMatrix:
-        case kPreferenceInfoTypeRadioButton:
             assert(false);  // Must use onChange() only.
 
         case kPreferenceInfoTypeColorWell: {
@@ -449,7 +447,6 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                 case kPreferenceInfoTypeTokenField:
                 case kPreferenceInfoTypeMatrix:
                 case kPreferenceInfoTypeColorWell:
-                case kPreferenceInfoTypeRadioButton:
                     break;
             }
         }
@@ -537,7 +534,6 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
             case kPreferenceInfoTypeColorWell:
             case kPreferenceInfoTypeInvertedCheckbox:
             case kPreferenceInfoTypeMatrix:
-            case kPreferenceInfoTypeRadioButton:
             case kPreferenceInfoTypePopup:
             case kPreferenceInfoTypeSlider:
             case kPreferenceInfoTypeStringTextField:
