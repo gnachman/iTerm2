@@ -366,6 +366,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL _windowWasJustCreated;
 
     iTermSessionFactory *_sessionFactory;
+    BOOL _openingPopupWindow;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -3028,6 +3029,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowDidResignKey:(NSNotification *)aNotification {
+    PtyLog(@"PseudoTerminal windowDidResignKey");
+    if (_openingPopupWindow) {
+        DLog(@"Ignoring it because we're opening a popup window now");
+        return;
+    }
+
     for (PTYSession *aSession in [self allSessions]) {
         if ([[aSession textview] isFindingCursor]) {
             [[aSession textview] endFindCursor];
@@ -3035,7 +3042,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [[aSession textview] removeUnderline];
     }
 
-    PtyLog(@"PseudoTerminal windowDidResignKey");
     if (togglingFullScreen_) {
         PtyLog(@"windowDidResignKey returning because togglingFullScreen.");
         return;
@@ -5066,6 +5072,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [sheet release];
 }
 
+- (void)openPopupWindow:(iTermPopupWindowController *)popupWindowController {
+    _openingPopupWindow = YES;
+    [popupWindowController popWithDelegate:[self currentSession]];
+    _openingPopupWindow = NO;
+}
+
 #pragma mark - iTermInstantReplayDelegate
 
 - (long long)instantReplayCurrentTimestamp {
@@ -5403,7 +5415,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!pbHistoryView) {
         pbHistoryView = [[PasteboardHistoryWindowController alloc] init];
     }
-    [pbHistoryView popWithDelegate:[self currentSession]];
+    [self openPopupWindow:pbHistoryView];
 }
 
 - (IBAction)openCommandHistory:(id)sender
@@ -5412,7 +5424,7 @@ ITERM_WEAKLY_REFERENCEABLE
         commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
     }
     if ([[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
-        [commandHistoryPopup popWithDelegate:[self currentSession]];
+        [self openPopupWindow:commandHistoryPopup];
         [commandHistoryPopup loadCommands:[commandHistoryPopup commandsForHost:[[self currentSession] currentHost]
                                                                 partialCommand:[[self currentSession] currentCommand]
                                                                         expand:YES]
@@ -5427,7 +5439,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _directoriesPopupWindowController = [[DirectoriesPopupWindowController alloc] init];
     }
     if ([[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
-        [_directoriesPopupWindowController popWithDelegate:[self currentSession]];
+        [self openPopupWindow:_directoriesPopupWindowController];
         [_directoriesPopupWindowController loadDirectoriesForHost:[[self currentSession] currentHost]];
     } else {
         [iTermShellHistoryController showInformationalMessage];
@@ -5529,7 +5541,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([[autocompleteView window] isVisible]) {
         [autocompleteView more];
     } else {
-        [autocompleteView popWithDelegate:[self currentSession]];
+        [self openPopupWindow:autocompleteView];
         NSString *currentCommand = [[self currentSession] currentCommand];
         [autocompleteView addCommandEntries:[[self currentSession] autocompleteSuggestionsForCurrentCommand]
                                     context:currentCommand];
