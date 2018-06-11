@@ -522,7 +522,10 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Open a semantic history path.
 - (BOOL)openSemanticHistoryPath:(NSString *)path
+                  orRawFilename:(NSString *)rawFileName
                workingDirectory:(NSString *)workingDirectory
+                     lineNumber:(NSString *)lineNumber
+                   columnNumber:(NSString *)columnNumber
                          prefix:(NSString *)prefix
                          suffix:(NSString *)suffix;
 

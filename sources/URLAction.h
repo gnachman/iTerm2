@@ -41,6 +41,9 @@ typedef NS_ENUM(NSInteger, URLActionType) {
 
 // For kURLActionOpenExistingFile, the full path the the file.
 @property(nonatomic, copy) NSString *fullPath;
+@property(nonatomic, copy) NSString *rawFilename;  // Before removing nearby punctuation. Might start with a/ or b/ so we keep it around.
+@property(nonatomic, copy) NSString *lineNumber;
+@property(nonatomic, copy) NSString *columnNumber;
 
 // For kURLActionOpenExistingFile, the working directory of the file.
 @property(nonatomic, copy) NSString *workingDirectory;
@@ -50,7 +53,7 @@ typedef NS_ENUM(NSInteger, URLActionType) {
 
 // For kURLActionSmartSelectionAction. Generally, a string parameter to a smart
 // selection action.
-@property(nonatomic, retain) id representedObject;
+@property(nonatomic, strong) id representedObject;
 
 // For kURLActionSmartSelectionAction, the selector to invoke. This URLAction
 // will be passed as the argument.

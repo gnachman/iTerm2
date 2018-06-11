@@ -2549,8 +2549,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                     continuationChars:nil
                                                   convertNullsToSpace:YES
                                                                coords:nil];
-                if (![self openSemanticHistoryPath:action.string
+                if (![self openSemanticHistoryPath:action.fullPath
+                                     orRawFilename:action.rawFilename
                                   workingDirectory:action.workingDirectory
+                                        lineNumber:action.lineNumber
+                                      columnNumber:action.columnNumber
                                             prefix:extendedPrefix
                                             suffix:extendedSuffix]) {
                     [self findUrlInString:action.string andOpenInBackground:openInBackground];
@@ -2598,7 +2601,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (BOOL)openSemanticHistoryPath:(NSString *)path
+                  orRawFilename:(NSString *)rawFileName
                workingDirectory:(NSString *)workingDirectory
+                     lineNumber:(NSString *)lineNumber
+                   columnNumber:(NSString *)columnNumber
                          prefix:(NSString *)prefix
                          suffix:(NSString *)suffix {
     NSDictionary *subs = [self semanticHistorySubstitutionsWithPrefix:prefix
@@ -2606,8 +2612,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                  path:path
                                                      workingDirectory:workingDirectory];
     return [self.semanticHistoryController openPath:path
-                                   workingDirectory:workingDirectory
-                                      substitutions:subs];
+                                      orRawFilename:rawFileName
+                                      substitutions:subs
+                                         lineNumber:lineNumber
+                                       columnNumber:columnNumber];
 }
 
 - (NSDictionary *)semanticHistorySubstitutionsWithPrefix:(NSString *)prefix

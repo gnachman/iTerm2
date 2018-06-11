@@ -45,10 +45,10 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 // Given a possibly relative |path| and |workingDirectory|, returns the absolute path. If |path|
 // includes a line number then *lineNumber will be filled in with it. Files on network shares are
 // rejected.
-- (NSString *)getFullPath:(NSString *)path
-         workingDirectory:(NSString *)workingDirectory
-               lineNumber:(NSString **)lineNumber
-             columnNumber:(NSString **)columnNumber;
+- (NSString *)cleanedUpPathFromPath:(NSString *)path
+                   workingDirectory:(NSString *)workingDirectory
+                extractedLineNumber:(NSString **)lineNumber
+                       columnNumber:(NSString **)columnNumber;
 
 // Opens the file at the relative |path| (which may include :lineNumber) in |workingDirectory|.
 // The |substitutions| dictionary is used to expand \references in the command to run (gotten from
@@ -63,8 +63,10 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 //
 // Returns YES if the file was opened, NO if it could not be opened.
 - (BOOL)openPath:(NSString *)path
-        workingDirectory:(NSString *)workingDirectory
-           substitutions:(NSDictionary *)substitutions;
+   orRawFilename:(NSString *)rawFileName
+           substitutions:(NSDictionary *)substitutions
+              lineNumber:(NSString *)lineNumber
+            columnNumber:(NSString *)columnNumber;
 
 // Do a brute force search by putting together suffixes of beforeString with prefixes of afterString
 // to find an existing file in |workingDirectory|. |charsSTakenFromPrefixPtr| will be filled in with

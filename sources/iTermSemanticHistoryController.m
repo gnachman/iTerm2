@@ -53,25 +53,50 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                              additionalNetworkPaths:[[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","]];
 }
 
-- (NSString *)getFullPath:(NSString *)path
-         workingDirectory:(NSString *)workingDirectory
-               lineNumber:(NSString **)lineNumber
-             columnNumber:(NSString **)columnNumber {
-    DLog(@"Check if %@ is a valid path in %@", path, workingDirectory);
-    NSString *origPath = path;
-    // TODO(chendo): Move regex, define capture semantics in config file/prefs
+- (NSString *)cleanedUpPathFromPath:(NSString *)path
+                   workingDirectory:(NSString *)workingDirectory
+                extractedLineNumber:(NSString **)lineNumber
+                       columnNumber:(NSString **)columnNumber {
+    NSString *result = [self reallyComputeCleanedUpPathFromPath:path
+                                               workingDirectory:workingDirectory
+                                            extractedLineNumber:lineNumber
+                                                   columnNumber:columnNumber];
+    if (!result) {
+        // If path doesn't exist and it starts with "a/" or "b/" (from `diff`).
+        if ([path isMatchedByRegex:@"^[ab]/"]) {
+            DLog(@"  Treating as diff path");
+            // strip the prefix off ...
+            path = [path stringByReplacingOccurrencesOfRegex:@"^[ab]/"
+                                                  withString:@""];
+
+            // ... and calculate the full path again
+            result = [self reallyComputeCleanedUpPathFromPath:path
+                                             workingDirectory:workingDirectory
+                                          extractedLineNumber:lineNumber
+                                                 columnNumber:columnNumber];
+        }
+    }
+    return result;
+}
+
+- (NSString *)reallyComputeCleanedUpPathFromPath:(NSString *)path
+                                workingDirectory:(NSString *)workingDirectory
+                             extractedLineNumber:(NSString **)lineNumber
+                                    columnNumber:(NSString **)columnNumber {
+    NSString *pathExLineNumberAndColumn = [self pathByStrippingEnclosingPunctuationFromPath:path
+                                                                        extractedLineNumber:lineNumber
+                                                                               columnNumber:columnNumber];
+    NSString *fullPath = [self getFullPath:pathExLineNumberAndColumn workingDirectory:workingDirectory];
+    return fullPath;
+}
+
+- (NSString *)pathByStrippingEnclosingPunctuationFromPath:(NSString *)path
+                                      extractedLineNumber:(NSString **)lineNumber
+                                             columnNumber:(NSString **)columnNumber {
     if (!path || [path length] == 0) {
         DLog(@"  no: it is empty");
         return nil;
     }
-
-    // If it's in any form of bracketed delimiters, strip them
-    path = [path stringByRemovingEnclosingBrackets];
-
-    // strip various trailing characters that are unlikely to be part of the file name.
-    path = [path stringByReplacingOccurrencesOfRegex:@"[.),:]$"
-                                          withString:@""];
-    DLog(@" Strip trailing chars, leaving %@", path);
 
     if (lineNumber != nil) {
         NSString *value = [path stringByMatching:@":(\\d+)" capture:1];
@@ -87,6 +112,15 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         }
         *columnNumber = value;
     }
+
+    // If it's in any form of bracketed delimiters, strip them
+    path = [path stringByRemovingEnclosingBrackets];
+
+    // strip various trailing characters that are unlikely to be part of the file name.
+    path = [path stringByReplacingOccurrencesOfRegex:@"[.),:]$"
+                                          withString:@""];
+    DLog(@" Strip trailing chars, leaving %@", path);
+
     NSString *pathExLineNumberAndColumn = nil;
     if ([path stringByMatching:@"\\[(\\d+), (\\d+)]"]) {
         pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@"\\[\\d+, \\d+](?::.*)?$"
@@ -95,7 +129,20 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@":\\d*(?::.*)?$"
                                                                    withString:@""];
     }
-    path = [pathExLineNumberAndColumn stringByExpandingTildeInPath];
+
+    return pathExLineNumberAndColumn;
+}
+
+- (NSString *)getFullPath:(NSString *)pathExLineNumberAndColumn
+         workingDirectory:(NSString *)workingDirectory {
+    DLog(@"Check if %@ is a valid path in %@", pathExLineNumberAndColumn, workingDirectory);
+    // TODO(chendo): Move regex, define capture semantics in config file/prefs
+    if (!pathExLineNumberAndColumn || [pathExLineNumberAndColumn length] == 0) {
+        DLog(@"  no: it is empty");
+        return nil;
+    }
+
+    NSString *path = [pathExLineNumberAndColumn stringByExpandingTildeInPath];
     DLog(@"  Strip line number suffix leaving %@", path);
     if ([path length] == 0) {
         // Everything was stripped out, meaning we'd try to open the working directory.
@@ -132,20 +179,6 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         }
         return path;
     }
-    // If path doesn't exist and it starts with "a/" or "b/" (from `diff`).
-    if ([origPath isMatchedByRegex:@"^[ab]/"]) {
-        DLog(@"  Treating as diff path");
-        // strip the prefix off ...
-        origPath = [origPath stringByReplacingOccurrencesOfRegex:@"^[ab]/"
-                                                 withString:@""];
-
-        // ... and calculate the full path again
-        return [self getFullPath:origPath
-                workingDirectory:workingDirectory
-                      lineNumber:lineNumber
-                    columnNumber:columnNumber];
-    }
-
     DLog(@"     NO: no valid path found");
     return nil;
 }
@@ -334,19 +367,24 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     return [self openURL:url editorIdentifier:nil];
 }
 
-- (BOOL)openPath:(NSString *)path
-    workingDirectory:(NSString *)workingDirectory
-       substitutions:(NSDictionary *)substitutions {
-    DLog(@"openPath:%@ workingDirectory:%@ substitutions:%@", path, workingDirectory, substitutions);
+- (BOOL)openPath:(NSString *)cleanedUpPath
+   orRawFilename:(NSString *)rawFileName
+       substitutions:(NSDictionary *)substitutions
+      lineNumber:(NSString *)lineNumber
+    columnNumber:(NSString *)columnNumber {
+    DLog(@"openPath:%@ rawFileName:%@ substitutions:%@ lineNumber:%@ columnNumber:%@",
+         cleanedUpPath, rawFileName, substitutions, lineNumber, columnNumber);
     BOOL isDirectory;
-    NSString *lineNumber = @"";
-    NSString *columnNumber = @"";
 
+    NSString *path;
     BOOL isRawAction = [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
-    if (!isRawAction) {
-        path = [self getFullPath:path workingDirectory:workingDirectory
-                      lineNumber:&lineNumber
-                    columnNumber:&columnNumber];
+    if (isRawAction) {
+        path = rawFileName;
+        lineNumber = @"";
+        columnNumber = @"";
+        DLog(@"Is a raw action. Use path %@", rawFileName);
+    } else {
+        path = cleanedUpPath;
         DLog(@"Not a raw action. New path is %@, line number is %@", path, lineNumber);
     }
 
@@ -522,10 +560,10 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             for (NSString *modifiedPossiblePath in [self pathsFromPath:trimmedPath byRemovingBadSuffixes:questionableSuffixes]) {
                 BOOL exists = NO;
                 if (workingDirectoryIsOk || [modifiedPossiblePath hasPrefix:@"/"]) {
-                    exists = ([self getFullPath:modifiedPossiblePath
-                               workingDirectory:workingDirectory
-                                     lineNumber:NULL
-                                   columnNumber:NULL] != nil);
+                    exists = ([self cleanedUpPathFromPath:modifiedPossiblePath
+                                         workingDirectory:workingDirectory
+                                      extractedLineNumber:nil
+                                             columnNumber:nil] != nil);
                 }
                 if (exists) {
                     if (charsTakenFromPrefixPtr) {

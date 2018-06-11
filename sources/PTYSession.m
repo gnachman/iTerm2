@@ -3282,17 +3282,26 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
 
-    NSString *filename =
+    NSString *rawFilename =
         [semanticHistoryController pathOfExistingFileFoundWithPrefix:selection
                                                               suffix:@""
                                                     workingDirectory:workingDirectory
                                                 charsTakenFromPrefix:nil
                                                 charsTakenFromSuffix:nil
                                                       trimWhitespace:YES];
-    if (filename &&
-        ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
-        if ([_textview openSemanticHistoryPath:filename
+    if (rawFilename &&
+        ![[rawFilename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
+        NSString *lineNumber = nil;
+        NSString *columnNumber = nil;
+        NSString *cleanedup = [semanticHistoryController cleanedUpPathFromPath:rawFilename
+                                                              workingDirectory:workingDirectory
+                                                           extractedLineNumber:&lineNumber
+                                                                  columnNumber:&columnNumber];
+        if ([_textview openSemanticHistoryPath:cleanedup
+                                 orRawFilename:rawFilename
                               workingDirectory:workingDirectory
+                                    lineNumber:lineNumber
+                                  columnNumber:columnNumber
                                         prefix:selection
                                         suffix:@""]) {
             return;

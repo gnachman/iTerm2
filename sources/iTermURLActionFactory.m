@@ -196,10 +196,15 @@
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
 
-        action.fullPath = [semanticHistoryController getFullPath:filename
-                                                workingDirectory:workingDirectory
-                                                      lineNumber:NULL
-                                                    columnNumber:NULL];
+        NSString *lineNumber = nil;
+        NSString *columnNumber = nil;
+        action.rawFilename = filename;
+        action.fullPath = [semanticHistoryController cleanedUpPathFromPath:filename
+                                                          workingDirectory:workingDirectory
+                                                       extractedLineNumber:&lineNumber
+                                                              columnNumber:&columnNumber];
+        action.lineNumber = lineNumber;
+        action.columnNumber = columnNumber;
         action.workingDirectory = workingDirectory;
         return action;
     }
