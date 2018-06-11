@@ -1208,7 +1208,6 @@
 		530AB8A720B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8A520B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.h */; };
 		530AB8A820B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8A620B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.m */; };
 		530AB8AB20B2013000D2AA08 /* iTermFunctionCallParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8A920B2013000D2AA08 /* iTermFunctionCallParser.h */; };
-		530AB8AC20B2013000D2AA08 /* iTermFunctionCallParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8AA20B2013000D2AA08 /* iTermFunctionCallParser.m */; };
 		530AB8AF20B201AB00D2AA08 /* iTermFunctionCallSuggester.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8AD20B201AB00D2AA08 /* iTermFunctionCallSuggester.h */; };
 		530AB8B020B201AB00D2AA08 /* iTermFunctionCallSuggester.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8AE20B201AB00D2AA08 /* iTermFunctionCallSuggester.m */; };
 		530AB8B420B2098000D2AA08 /* iTermVariables.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8B220B2098000D2AA08 /* iTermVariables.h */; };
@@ -1220,7 +1219,6 @@
 		530AB8C020B4E1DE00D2AA08 /* iTermRPCTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8BE20B4E1DD00D2AA08 /* iTermRPCTrigger.h */; };
 		530AB8C120B4E1DE00D2AA08 /* iTermRPCTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8BF20B4E1DE00D2AA08 /* iTermRPCTrigger.m */; };
 		530AB8C420B5284A00D2AA08 /* iTermFocusReportingTextField.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8C220B5284A00D2AA08 /* iTermFocusReportingTextField.h */; };
-		530AB8C520B5284A00D2AA08 /* iTermFocusReportingTextField.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8C320B5284A00D2AA08 /* iTermFocusReportingTextField.m */; };
 		5312269A20CB1D3A004831C6 /* iTermBuiltInFunctions.h in Headers */ = {isa = PBXBuildFile; fileRef = 5312269820CB1D3A004831C6 /* iTermBuiltInFunctions.h */; };
 		5312269B20CB1D3A004831C6 /* iTermBuiltInFunctions.m in Sources */ = {isa = PBXBuildFile; fileRef = 5312269920CB1D3A004831C6 /* iTermBuiltInFunctions.m */; };
 		5337A315203E065300024BEA /* iTermPowerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 5337A313203E065300024BEA /* iTermPowerManager.h */; };
@@ -1468,6 +1466,9 @@
 		A65429B220C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65429B120C4931100CE71B1 /* iTermParameterPanelWindowController.xib */; };
 		A65429B320C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65429B120C4931100CE71B1 /* iTermParameterPanelWindowController.xib */; };
 		A65429B420C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65429B120C4931100CE71B1 /* iTermParameterPanelWindowController.xib */; };
+		A65429B920CE3C8A00CE71B1 /* SessionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E813012A18F7500F3D71E /* SessionView.m */; };
+		A65429BA20CE3C9400CE71B1 /* iTermFocusReportingTextField.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8C320B5284A00D2AA08 /* iTermFocusReportingTextField.m */; };
+		A65429BB20CE3C9F00CE71B1 /* iTermFunctionCallParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 530AB8AA20B2013000D2AA08 /* iTermFunctionCallParser.m */; };
 		A6556EA91FCB42E0000CC89C /* iTermCharacterSource.h in Headers */ = {isa = PBXBuildFile; fileRef = A6556EA71FCB42E0000CC89C /* iTermCharacterSource.h */; };
 		A6556EAA1FCB42E0000CC89C /* iTermCharacterSource.m in Sources */ = {isa = PBXBuildFile; fileRef = A6556EA81FCB42E0000CC89C /* iTermCharacterSource.m */; };
 		A6556EAD1FD37ED6000CC89C /* iTermASCIITexture.h in Headers */ = {isa = PBXBuildFile; fileRef = A6556EAB1FD37ED6000CC89C /* iTermASCIITexture.h */; };
@@ -9494,6 +9495,7 @@
 				530AB7B520A615D900D2AA08 /* iTermPythonArgumentParser.m in Sources */,
 				A68400BD1FF98101008D3EE2 /* iTermTimestampsRenderer.m in Sources */,
 				A60C034B20881D6000FE2F1F /* iTermWebSocketCookieJar.m in Sources */,
+				A65429BA20CE3C9400CE71B1 /* iTermFocusReportingTextField.m in Sources */,
 				530AB8B020B201AB00D2AA08 /* iTermFunctionCallSuggester.m in Sources */,
 				A6A4866820B6785400493302 /* iTermAdvancedSettingsViewController.m in Sources */,
 				A6A4867C20B67EFB00493302 /* ProfilesTextPreferencesViewController.m in Sources */,
@@ -9547,6 +9549,7 @@
 				A6E5D2101FA3C57900EDD002 /* iTermMetalFrameData.m in Sources */,
 				530AB7BA20A638A600D2AA08 /* iTermDisclosableView.m in Sources */,
 				A65429AC20C4880300CE71B1 /* iTermSessionFactory.m in Sources */,
+				A65429B920CE3C8A00CE71B1 /* SessionView.m in Sources */,
 				A66719681DCE3772000CE608 /* iTermWebSocketConnection.m in Sources */,
 				A6A4867120B67A6D00493302 /* KeysPreferencesViewController.m in Sources */,
 				A623D9551F8B04890011F8C3 /* iTermMetalGlue.m in Sources */,
@@ -9556,6 +9559,7 @@
 				A66F3CF81FED741E00AA2021 /* iTermTextRendererTransientState.mm in Sources */,
 				A67960E41F8201A1008A42BC /* iTermMetalDriver.m in Sources */,
 				A614F2671FE4B16400EEE919 /* iTermCharacterParts.m in Sources */,
+				A65429BB20CE3C9F00CE71B1 /* iTermFunctionCallParser.m in Sources */,
 				A66719641DCE3772000CE608 /* iTermSocket.m in Sources */,
 				A6FE8D13209528F400B5C648 /* iTermPythonRuntimeDownloader.m in Sources */,
 				A6A4866720B6780C00493302 /* iTermAdvancedSettingsModel.m in Sources */,
@@ -9576,7 +9580,6 @@
 				A6DBC0462005DC2B00F1466D /* iTermTuple.m in Sources */,
 				A67960D51F81FCBB008A42BC /* iTermCursorRenderer.m in Sources */,
 				A6A4866420B676CA00493302 /* EventMonitorView.m in Sources */,
-				53C1669220BA38C9003B03AF /* SessionView.m in Sources */,
 				A6A4868020B6817900493302 /* WindowArrangements.m in Sources */,
 				A6A4867D20B67F7E00493302 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				A60C0373208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.m in Sources */,
