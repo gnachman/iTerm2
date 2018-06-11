@@ -3294,6 +3294,7 @@ ITERM_WEAKLY_REFERENCEABLE
         NSString *lineNumber = nil;
         NSString *columnNumber = nil;
         NSString *cleanedup = [semanticHistoryController cleanedUpPathFromPath:rawFilename
+                                                                        suffix:nil
                                                               workingDirectory:workingDirectory
                                                            extractedLineNumber:&lineNumber
                                                                   columnNumber:&columnNumber];

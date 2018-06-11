@@ -54,10 +54,12 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 }
 
 - (NSString *)cleanedUpPathFromPath:(NSString *)path
+                             suffix:(NSString *)suffix
                    workingDirectory:(NSString *)workingDirectory
                 extractedLineNumber:(NSString **)lineNumber
                        columnNumber:(NSString **)columnNumber {
     NSString *result = [self reallyComputeCleanedUpPathFromPath:path
+                                                         suffix:suffix
                                                workingDirectory:workingDirectory
                                             extractedLineNumber:lineNumber
                                                    columnNumber:columnNumber];
@@ -71,6 +73,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
             // ... and calculate the full path again
             result = [self reallyComputeCleanedUpPathFromPath:path
+                                                       suffix:suffix
                                              workingDirectory:workingDirectory
                                           extractedLineNumber:lineNumber
                                                  columnNumber:columnNumber];
@@ -80,10 +83,12 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 }
 
 - (NSString *)reallyComputeCleanedUpPathFromPath:(NSString *)path
+                                          suffix:(NSString *)suffix
                                 workingDirectory:(NSString *)workingDirectory
                              extractedLineNumber:(NSString **)lineNumber
                                     columnNumber:(NSString **)columnNumber {
     NSString *pathExLineNumberAndColumn = [self pathByStrippingEnclosingPunctuationFromPath:path
+                                                                                     suffix:suffix
                                                                         extractedLineNumber:lineNumber
                                                                                columnNumber:columnNumber];
     NSString *fullPath = [self getFullPath:pathExLineNumberAndColumn workingDirectory:workingDirectory];
@@ -91,6 +96,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 }
 
 - (NSString *)pathByStrippingEnclosingPunctuationFromPath:(NSString *)path
+                                                   suffix:(NSString *)suffix
                                       extractedLineNumber:(NSString **)lineNumber
                                              columnNumber:(NSString **)columnNumber {
     if (!path || [path length] == 0) {
@@ -103,12 +109,18 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         if (!value) {
             value = [path stringByMatching:@"\\[(\\d+), \\d+]" capture:1];
         }
+        if (!value) {
+            value = [suffix stringByMatching:@"\", line (\\d+), column (\\d+)" capture:1];
+        }
         *lineNumber = value;
     }
     if (columnNumber != nil) {
         NSString *value = [path stringByMatching:@":(\\d+):(\\d+)" capture:2];
         if (!value) {
             value = [path stringByMatching:@"\\[(\\d+), (\\d+)]" capture:2];
+        }
+        if (!value) {
+            value = [suffix stringByMatching:@"\", line (\\d+), column (\\d+)" capture:2];
         }
         *columnNumber = value;
     }
@@ -561,6 +573,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                 BOOL exists = NO;
                 if (workingDirectoryIsOk || [modifiedPossiblePath hasPrefix:@"/"]) {
                     exists = ([self cleanedUpPathFromPath:modifiedPossiblePath
+                                                   suffix:nil
                                          workingDirectory:workingDirectory
                                       extractedLineNumber:nil
                                              columnNumber:nil] != nil);

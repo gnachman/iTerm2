@@ -200,6 +200,7 @@
         NSString *columnNumber = nil;
         action.rawFilename = filename;
         action.fullPath = [semanticHistoryController cleanedUpPathFromPath:filename
+                                                                    suffix:[suffix substringFromIndex:suffixChars]
                                                           workingDirectory:workingDirectory
                                                        extractedLineNumber:&lineNumber
                                                               columnNumber:&columnNumber];

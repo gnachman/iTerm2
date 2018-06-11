@@ -170,6 +170,7 @@
 
 - (void)testGetFullPathFailsOnNil {
     XCTAssert([_semanticHistoryController cleanedUpPathFromPath:nil
+                                                         suffix:nil
                                                workingDirectory:@"/"
                                             extractedLineNumber:NULL
                                                    columnNumber:NULL] == nil);
@@ -177,6 +178,7 @@
 
 - (void)testGetFullPathFailsOnEmpty {
     XCTAssert([_semanticHistoryController cleanedUpPathFromPath:@""
+                                                         suffix:nil
                                                workingDirectory:@"/"
                                             extractedLineNumber:NULL
                                                    columnNumber:NULL] == nil);
@@ -189,6 +191,7 @@
     static NSString *const kWorkingDirectory = @"/working/directory";
     [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
     NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilename
+                                                                  suffix:nil
                                                         workingDirectory:kWorkingDirectory
                                                      extractedLineNumber:&lineNumber
                                                             columnNumber:&columnNumber];
@@ -206,6 +209,7 @@
         [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
     NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kRelativeFilename
+                                                                  suffix:nil
                                                         workingDirectory:kWorkingDirectory
                                                      extractedLineNumber:&lineNumber
                                                             columnNumber:&columnNumber];
@@ -223,6 +227,7 @@
         static NSString *const kWorkingDirectory = @"/working/directory";
         [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
         NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilenameWithParens
+                                                                      suffix:nil
                                                             workingDirectory:kWorkingDirectory
                                                          extractedLineNumber:&lineNumber
                                                                 columnNumber:&columnNumber];
@@ -241,6 +246,7 @@
         static NSString *const kWorkingDirectory = @"/working/directory";
         [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
         NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilenameWithParens
+                                                                      suffix:nil
                                                             workingDirectory:kWorkingDirectory
                                                          extractedLineNumber:&lineNumber
                                                                 columnNumber:&columnNumber];
@@ -258,6 +264,7 @@
     NSString *kFilenameWithLineNumber = [kFilename stringByAppendingString:@":123"];
     [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
     NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilenameWithLineNumber
+                                                                  suffix:nil
                                                         workingDirectory:kWorkingDirectory
                                                      extractedLineNumber:&lineNumber
                                                             columnNumber:&columnNumber];
@@ -274,6 +281,7 @@
     NSString *kFilenameWithLineNumber = [kFilename stringByAppendingString:@":123:456"];
     [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
     NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilenameWithLineNumber
+                                                                  suffix:nil
                                                         workingDirectory:kWorkingDirectory
                                                      extractedLineNumber:&lineNumber
                                                             columnNumber:&columnNumber];
@@ -290,6 +298,24 @@
     NSString *kFilenameWithLineNumber = [kFilename stringByAppendingString:@"[123, 456]"];
     [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
     NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilenameWithLineNumber
+                                                                  suffix:nil
+                                                        workingDirectory:kWorkingDirectory
+                                                     extractedLineNumber:&lineNumber
+                                                            columnNumber:&columnNumber];
+    NSString *expected = kFilename;
+    XCTAssert([expected isEqualToString:actual]);
+    XCTAssert(lineNumber.integerValue == 123);
+    XCTAssert(columnNumber.integerValue == 456);
+}
+
+- (void)testGetFullPathExtractsVeryVerboseLineNumberAndColumnSyntax {
+    NSString *lineNumber = nil;
+    NSString *columnNumber = nil;
+    static NSString *const kFilename = @"/path/to/file";
+    static NSString *const kWorkingDirectory = @"/working/directory";
+    [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+    NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilename
+                                                                  suffix:@"\", line 123, column 456"
                                                         workingDirectory:kWorkingDirectory
                                                      extractedLineNumber:&lineNumber
                                                             columnNumber:&columnNumber];
@@ -307,6 +333,7 @@
     NSString *kFilenameWithLineNumber = [NSString stringWithFormat:@"(%@:123.)", kFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
     NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilenameWithLineNumber
+                                                                  suffix:nil
                                                         workingDirectory:kWorkingDirectory
                                                      extractedLineNumber:&lineNumber
                                                             columnNumber:&columnNumber];
@@ -321,6 +348,7 @@
     static NSString *const kWorkingDirectory = @"/working/directory";
     static NSString *const kFilename = @"(:123.)";
     NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilename
+                                                                  suffix:nil
                                                         workingDirectory:kWorkingDirectory
                                                      extractedLineNumber:&lineNumber
                                                             columnNumber:&columnNumber];
@@ -336,6 +364,7 @@
     [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:@"/working/directory/./path/to/file"];
     NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kRelativeFilename
+                                                                  suffix:nil
                                                         workingDirectory:kWorkingDirectory
                                                      extractedLineNumber:&lineNumber
                                                             columnNumber:&columnNumber];
@@ -353,6 +382,7 @@
     [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:@"/working/directory/blah/../path/to/file"];
     NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kRelativeFilename
+                                                                  suffix:nil
                                                         workingDirectory:kWorkingDirectory
                                                      extractedLineNumber:&lineNumber
                                                             columnNumber:&columnNumber];
@@ -370,6 +400,7 @@
         [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
     NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:[@"a/" stringByAppendingString:kRelativeFilename]
+                                                                  suffix:nil
                                                         workingDirectory:kWorkingDirectory
                                                      extractedLineNumber:&lineNumber
                                                             columnNumber:&columnNumber];
@@ -387,6 +418,7 @@
         [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
     NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:[@"b/" stringByAppendingString:kRelativeFilename]
+                                                                  suffix:nil
                                                         workingDirectory:kWorkingDirectory
                                                      extractedLineNumber:&lineNumber
                                                             columnNumber:&columnNumber];
@@ -404,6 +436,7 @@
         [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
     [_semanticHistoryController.fakeFileManager.files addObject:kAbsoluteFilename];
     NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kRelativeFilename
+                                                                  suffix:nil
                                                         workingDirectory:kWorkingDirectory
                                                      extractedLineNumber:&lineNumber
                                                             columnNumber:&columnNumber];
@@ -412,6 +445,7 @@
 
     [_semanticHistoryController.fakeFileManager.networkMountPoints addObject:@"/working"];
     actual = [_semanticHistoryController cleanedUpPathFromPath:kRelativeFilename
+                                                        suffix:nil
                                               workingDirectory:kWorkingDirectory
                                            extractedLineNumber:&lineNumber
                                                   columnNumber:&columnNumber];
@@ -428,6 +462,7 @@
     NSString *kStringThatIsNotAPath = @"Prefix X Suffix:1";
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kStringThatIsNotAPath
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -450,6 +485,7 @@
     NSString *kStringThatIsNotAPath = @"Prefix X Suffix:1";
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kStringThatIsNotAPath
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -471,6 +507,7 @@
     [_semanticHistoryController.fakeFileManager.files addObject:kExistingFileAbsolutePath];
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kExistingFileAbsolutePath
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -493,6 +530,7 @@
     [_semanticHistoryController.fakeFileManager.files addObject:kExistingFileAbsolutePath];
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kExistingFileAbsolutePath
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -515,6 +553,7 @@
     [_semanticHistoryController.fakeFileManager.directories addObject:kDirectory];
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kDirectory
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -537,6 +576,7 @@
     [_semanticHistoryController.fakeFileManager.files addObject:@"/The Path"];
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kStringThatIsNotAPath
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -564,6 +604,7 @@
     _semanticHistoryController.defaultAppIsEditor = YES;
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kExistingFileAbsolutePath
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -592,6 +633,7 @@
 
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:fileWithLineNumber
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -618,6 +660,7 @@
     _semanticHistoryController.defaultAppIsEditor = YES;
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:fileWithLineNumber
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -644,6 +687,7 @@
     _semanticHistoryController.defaultAppIsEditor = NO;
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kExistingFileAbsolutePathWithLineNumber
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -669,6 +713,7 @@
     _semanticHistoryController.bundleIdForDefaultApp = kAtomIdentifier;  // Act like Atom is the default app for this file
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kExistingFileAbsolutePathWithLineNumber
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -693,6 +738,7 @@
     _semanticHistoryController.defaultAppIsEditor = NO;
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kExistingFileAbsolutePathWithLineNumber
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -718,6 +764,7 @@
     _semanticHistoryController.bundleIdForDefaultApp = kVSCodeIdentifier;  // Act like VSCode is the default app for this file
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kExistingFileAbsolutePathWithLineNumber
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -742,6 +789,7 @@
     _semanticHistoryController.defaultAppIsEditor = NO;
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kExistingFileAbsolutePathWithLineNumber
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -766,6 +814,7 @@
     _semanticHistoryController.defaultAppIsEditor = NO;
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kExistingFileAbsolutePathWithLineNumber
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -793,6 +842,7 @@
     _semanticHistoryController.defaultAppIsEditor = NO;
     NSString *lineNumber, *columnNumber;
     BOOL opened = [_semanticHistoryController openPath:[_semanticHistoryController cleanedUpPathFromPath:kExistingFileAbsolutePathWithLineNumber
+                                                                                                  suffix:nil
                                                                                         workingDirectory:@"/"
                                                                                      extractedLineNumber:&lineNumber
                                                                                             columnNumber:&columnNumber]
@@ -980,6 +1030,7 @@
     XCTAssert(numCharsFromPrefix == [@"five\\ six\\ " length]);
     XCTAssert(numCharsFromSuffix == [@"seven\\ eight" length]);
 }
+
 
 #warning This test fails, but fixing it would change how raw actions work in edge cases where there is punctuation or brackets. I'll delay that until 3.1.
 #if 0

@@ -46,6 +46,7 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 // includes a line number then *lineNumber will be filled in with it. Files on network shares are
 // rejected.
 - (NSString *)cleanedUpPathFromPath:(NSString *)path
+                             suffix:(NSString *)suffix
                    workingDirectory:(NSString *)workingDirectory
                 extractedLineNumber:(NSString **)lineNumber
                        columnNumber:(NSString **)columnNumber;
