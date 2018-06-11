@@ -228,5 +228,6 @@
 + (double)timeoutForStringEvaluation;
 + (BOOL)evaluateSwiftyStrings;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
++ (int)minimumWeightDifferenceForBoldFont;
 
 @end
