@@ -606,7 +606,6 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 
 - (PTYSession *)sessionWithProfileOverrides:(NSDictionary *)profileOverrides
                                        size:(VT100GridSize)size {
-    PTYSession *session = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     NSString* plistFile = [[NSBundle bundleForClass:[self class]]
                            pathForResource:@"DefaultBookmark"
                            ofType:@"plist"];
@@ -616,6 +615,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
         profile[key] = profileOverrides[key];
     }
 
+    PTYSession *session = [[[PTYSession alloc] initSynthetic:NO name:profile[KEY_NAME]] autorelease];
     [session setProfile:profile];
 
     XCTAssert([session setScreenSize:NSMakeRect(0, 0, 200, 200) parent:nil]);
@@ -627,9 +627,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                  size.height * session.textview.lineHeight + [iTermAdvancedSettingsModel terminalVMargin] * 2);
     session.view.frame = theFrame;
     [session loadInitialColorTable];
-    [session setBookmarkName:profile[KEY_NAME]];
-    [session setName:profile[KEY_NAME]];
-    [session setDefaultName:profile[KEY_NAME]];
+    [session.nameController setSessionName:profile[KEY_NAME]];
+    [session.nameController setOriginalName:profile[KEY_NAME]];
     return session;
 }
 

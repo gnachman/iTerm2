@@ -9,6 +9,8 @@
 #import "iTermDisclosableView.h"
 #import "NSMutableAttributedString+iTerm.h"
 
+static const CGFloat iTermDisclosableViewTextViewWidth = 300;
+
 @implementation iTermDisclosableView {
     NSButton *_disclosureButton;
     NSRect _originalWindowFrame;
@@ -55,9 +57,9 @@
         [style setLineBreakMode:NSLineBreakByWordWrapping];
         [storage addAttribute:NSParagraphStyleAttributeName value:style range:NSMakeRange(0, [storage length])];
 
-        CGFloat height = [_textView.attributedString heightForWidth:300];
+        CGFloat height = [_textView.attributedString heightForWidth:iTermDisclosableViewTextViewWidth];
         NSRect frame = _textView.frame;
-        frame.size.width = 300;
+        frame.size.width = iTermDisclosableViewTextViewWidth;
         frame.size.height = height;
         _textView.frame = frame;
 
@@ -73,9 +75,8 @@
 }
 
 - (NSSize)intrinsicContentSize {
-    const CGFloat bodyWidth = NSMaxX(_textView.frame);
     const CGFloat headerWidth = NSMaxX(_labelField.frame);
-    return NSMakeSize(_disclosureButton.state == NSOnState ? MAX(headerWidth, bodyWidth) : headerWidth,
+    return NSMakeSize(_disclosureButton.state == NSOnState ? MAX(headerWidth, iTermDisclosableViewTextViewWidth) : headerWidth,
                       _disclosureButton.state == NSOnState ? NSMaxY(_textView.frame) : NSMaxY(_disclosureButton.frame));
 }
 

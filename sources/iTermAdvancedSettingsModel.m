@@ -207,11 +207,13 @@ DEFINE_BOOL(disableGrowl, YES_IF_BETA_ELSE_NO, @"General: Disable Growl notifica
 DEFINE_BOOL(openUntitledFile, YES, @"General: Open a new window when you click the dock icon and no windows are already open?");
 DEFINE_BOOL(openNewWindowAtStartup, YES, @"General: Open a window at startup?\nThis is useful if you wish to use the system window restoration settings but not create a new window if none would be restored.");
 DEFINE_FLOAT(timeToWaitForEmojiPanel, 1, @"General: How long to wait for the emoji panel to open in seconds?\nFloating hotkey windows adjust their level when the emoji panel is open. If it’s really slow you might need to increase this value to prevent it from appearing beneath a floating hotkey window.");
+DEFINE_FLOAT(timeoutForStringEvaluation, 10, @"General: Timeout (seconds) for evaluating RPCs.\nThis applies to invoking functions registered by scripts when using the Swift syntax for inline expressions.");
 
 #pragma mark - Drawing
 DEFINE_BOOL(zippyTextDrawing, YES, @"Drawing: Use zippy text drawing algorithm?\nThis draws non-ASCII text more quickly but with lower fidelity. This setting is ignored if ligatures are enabled in Prefs > Profiles > Text.");
 DEFINE_BOOL(lowFiCombiningMarks, NO, @"Drawing: Prefer speed to accuracy for characters with combining marks?");
 DEFINE_BOOL(useAdaptiveFrameRate, YES, @"Drawing: Use adaptive framerate.\nWhen throughput is low, the screen will update at 60 frames per second. When throughput is higher, it will drop to a configurable rate (15 fps by default). Does not apply to Metal renderer.");
+DEFINE_BOOL(disableAdaptiveFrameRateInInteractiveApps, YES_IF_BETA_ELSE_NO, @"Drawing: Disable adaptive framerate in interactive apps.\nTurn off adaptive frame rate while in alternate screen mode for more consistent refresh rate. This works even if alternate screen mode is disabled.");
 DEFINE_FLOAT(slowFrameRate, 15.0, @"Drawing: When adaptive framerate is enabled, refresh at this rate during high throughput conditions (FPS).");
 DEFINE_FLOAT(activeUpdateCadence, 60.0, @"Drawing: Maximum frame rate (FPS) when adaptive framerate is disabled or GPU renderer is enabled.\nModifications to this setting will not affect existing sessions.");
 DEFINE_INT(adaptiveFrameRateThroughputThreshold, 10000, @"Drawing: Throughput threshold for adaptive frame rate.\nIf more than this many bytes per second are received, use the lower frame rate of 30 fps.");
@@ -347,5 +349,6 @@ DEFINE_BOOL(proportionalScrollWheelReporting, YES_IF_BETA_ELSE_NO, @"Experimenta
 DEFINE_BOOL(useModernScrollWheelAccumulator, NO, @"Experimental Features: Use modern scroll wheel accumulator.\nThis should support wheel mice better and feel more natural.");
 DEFINE_BOOL(resetSGROnPrompt, YES_IF_BETA_ELSE_NO, @"Experimental Features: Reset colors at shell prompt?\nUses shell integration to detect a shell prompt and, if enabled, resets colors to their defaults.");
 DEFINE_BOOL(retinaInlineImages, YES_IF_BETA_ELSE_NO, @"Experimental Features: Show inline images at Retina resolution.");
+DEFINE_BOOL(evaluateSwiftyStrings, NO, @"Experimental Features: Evaluate certain strings with inline expressions using a Swift-like syntax?\nThis applies to session names and will eventually apply in other places.");
 
 @end

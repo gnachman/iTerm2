@@ -225,5 +225,8 @@
 + (double)timeToWaitForEmojiPanel;
 + (BOOL)preferIntegratedGPU;
 + (double)fractionOfCharacterSelectingNextNeighbor;
++ (double)timeoutForStringEvaluation;
++ (BOOL)evaluateSwiftyStrings;
++ (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 
 @end

@@ -1577,8 +1577,10 @@ const NSInteger kPSMStartResizeAnimation = 0;
 }
 
 - (void)tabClick:(id)sender {
-    [_tabView selectTabViewItem:[sender representedObject]];
-    [self update];
+    if ([sender representedObject]) {
+        [_tabView selectTabViewItem:[sender representedObject]];
+        [self update];
+    }
 }
 
 - (void)tabDoubleClick:(id)sender {

@@ -13,6 +13,25 @@
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
+@interface iTermParsedExpression()
+@property (nonatomic, readwrite) NSString *sourceCode;
+@property (nonatomic, readwrite) iTermScriptFunctionCall *functionCall;
+@property (nonatomic, readwrite) NSError *error;
+@property (nonatomic, readwrite) NSString *string;
+@property (nonatomic, readwrite) NSNumber *number;
+@end
+
+@interface iTermFunctionArgument : NSObject
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic, strong) iTermParsedExpression *expression;
+@end
+
+@implementation iTermParsedExpression
+@end
+
+@implementation iTermFunctionArgument
+@end
+
 @implementation iTermFunctionCallParser {
     @protected
     CPTokeniser *_tokenizer;
@@ -106,20 +125,25 @@
     __weak __typeof(self) weakSelf = self;
     [_grammarProcessor addProductionRule:@"call ::= 'Identifier' <arglist>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
                                iTermScriptFunctionCall *call = [[iTermScriptFunctionCall alloc] init];
                                call.name = [(CPIdentifierToken *)syntaxTree.children[0] identifier];
-                               for (NSDictionary *arg in syntaxTree.children[1]) {
-                                   if (arg[@"value"]) {
-                                       [call addParameterWithName:arg[@"name"] value:arg[@"value"]];
-                                   } else if (arg[@"call"]) {
-                                       [call addParameterWithName:arg[@"name"] value:arg[@"call"]];
-                                   } else if (arg[@"error"]) {
-                                       call.error = [NSError errorWithDomain:@"com.iterm2.parser"
-                                                                        code:1
-                                                                    userInfo:@{ NSLocalizedDescriptionKey: arg[@"error"] }];
+                               NSArray<iTermFunctionArgument *> *argsArray = syntaxTree.children[1];
+                               for (iTermFunctionArgument *arg in argsArray) {
+                                   if (arg.expression.string) {
+                                       [call addParameterWithName:arg.name value:arg.expression.string];
+                                   } else if (arg.expression.number) {
+                                       [call addParameterWithName:arg.name value:arg.expression.number];
+                                   } else if (arg.expression.functionCall) {
+                                       [call addParameterWithName:arg.name value:arg.expression.functionCall];
+                                   } else if (arg.expression.error) {
+                                       return arg.expression;
+                                   } else {
+                                       assert(false);
                                    }
                                }
-                               return call;
+                               expression.functionCall = call;
+                               return expression;
                            }];
     [_grammarProcessor addProductionRule:@"arglist ::= '(' <args> ')'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
@@ -139,58 +163,54 @@
                            }];
     [_grammarProcessor addProductionRule:@"arg ::= 'Identifier' ':' <expression>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               iTermFunctionArgument *arg = [[iTermFunctionArgument alloc] init];
+                               arg.name = [(CPIdentifierToken *)syntaxTree.children[0] identifier];
+                               arg.expression = syntaxTree.children[2];
+                               return arg;
+                           }];
+    [_grammarProcessor addProductionRule:@"expression ::= <path>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                iTermFunctionCallParser *strongSelf = weakSelf;
                                if (!strongSelf) {
                                    return nil;
                                }
-                               //   argdict = {"name":NSString, "value":@{"literal": id}} |
-                               //             {"name":NSString, "error":NSString}
-                               NSString *argName = [(CPIdentifierToken *)syntaxTree.children[0] identifier];
-                               id expression = syntaxTree.children[2];
-                               iTermScriptFunctionCall *call = [iTermScriptFunctionCall castFrom:expression];
-                               if (call.error) {
-                                   return @{ @"name": argName,
-                                             @"error": [NSString stringWithFormat:@"Expression \"%@\" had an error: %@", expression, call.error.localizedDescription] };
-                               } else if (call) {
-                                   return @{ @"name": argName, @"value": call };
+                               iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
+                               NSString *path = syntaxTree.children[0];
+                               id value = strongSelf->_source(path);
+                               expression.string = [NSString castFrom:value];
+                               expression.number = [NSNumber castFrom:value];
+                               if (!expression.string && !expression.number) {
+                                   NSString *reason = [NSString stringWithFormat:@"Reference to undefined variable %@", path];
+                                   expression.error = [NSError errorWithDomain:@"com.iterm2.parser"
+                                                                          code:1
+                                                                      userInfo:@{ NSLocalizedDescriptionKey: reason }];
                                }
-
-                               NSDictionary *dict = [NSDictionary castFrom:expression];
-                               NSString *str = [NSString castFrom:expression];
-                               BOOL optional = [str hasSuffix:@"?"];
-                               if (optional) {
-                                   expression = [str substringWithRange:NSMakeRange(0, str.length - 1)];
-                               }
-                               id obj = dict[@"literal"];
-                               if (!obj) {
-                                   obj = strongSelf->_source(expression);
-                               }
-                               if (!obj) {
-                                   if (optional) {
-                                       return @{ @"name": argName, @"value": [NSNull null] };
-                                   } else {
-                                       return @{ @"name": argName,
-                                                 @"error": [NSString stringWithFormat:@"Expression \"%@\" unresolvable", expression] };
-                                   }
-                               } else {
-                                   return @{ @"name": argName, @"value": obj };
-                               }
-                           }];
-    [_grammarProcessor addProductionRule:@"expression ::= <path>"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return syntaxTree.children[0];
+                               return expression;
                            }];
     [_grammarProcessor addProductionRule:@"expression ::= <path> '?'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [syntaxTree.children[0] stringByAppendingString:@"?"];
+                               iTermFunctionCallParser *strongSelf = weakSelf;
+                               if (!strongSelf) {
+                                   return nil;
+                               }
+                               iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
+                               NSString *path = syntaxTree.children[0];
+                               id value = strongSelf->_source(path);
+                               expression.string = [NSString castFrom:value];
+                               expression.number = [NSNumber castFrom:value];
+                               return expression;
                            }];
     [_grammarProcessor addProductionRule:@"expression ::= 'Number'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @{ @"literal": [(CPNumberToken *)syntaxTree.children[0] number] };
+                               iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
+                               expression.number = [(CPNumberToken *)syntaxTree.children[0] number];
+                               return expression;
                            }];
     [_grammarProcessor addProductionRule:@"expression ::= 'String'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @{ @"literal": [(CPQuotedToken *)syntaxTree.children[0] content] };
+                               iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
+                               expression.string = [(CPQuotedToken *)syntaxTree.children[0] content];
+                               return expression;
                            }];
     [_grammarProcessor addProductionRule:@"expression ::= <call>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
@@ -208,25 +228,25 @@
                            }];
 }
 
-- (iTermScriptFunctionCall *)parse:(NSString *)invocation source:(id (^)(NSString *))source {
+- (iTermParsedExpression *)parse:(NSString *)invocation source:(id (^)(NSString *))source {
     _input = [invocation copy];
     _source = [source copy];
     CPTokenStream *tokenStream = [_tokenizer tokenise:invocation];
-    iTermScriptFunctionCall *call = (iTermScriptFunctionCall *)[_parser parse:tokenStream];
-    if (call) {
-        return call;
+    iTermParsedExpression *expression = (iTermParsedExpression *)[_parser parse:tokenStream];
+    if (expression) {
+        return expression;
     }
 
-    call = [[iTermScriptFunctionCall alloc] init];
+    expression = [[iTermParsedExpression alloc] init];
     if (_error) {
-        call.error = _error;
+        expression.error = _error;
     } else {
-        call.error = [NSError errorWithDomain:@"com.iterm2.parser"
-                                         code:2
-                                     userInfo:@{ NSLocalizedDescriptionKey: @"Syntax error" }];
+        expression.error = [NSError errorWithDomain:@"com.iterm2.parser"
+                                               code:2
+                                           userInfo:@{ NSLocalizedDescriptionKey: @"Syntax error" }];
     }
 
-    return call;
+    return expression;
 }
 
 #pragma mark - CPTokeniserDelegate

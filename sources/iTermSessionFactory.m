@@ -11,6 +11,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermProfilePreferences.h"
 #import "iTermParameterPanelWindowController.h"
+#import "iTermScriptFunctionCall.h"
 #import "NSDictionary+iTerm.h"
 #import "PTYSession.h"
 #import "PseudoTerminal.h"
@@ -63,6 +64,32 @@ NS_ASSUME_NONNULL_BEGIN
         }
     }
     return allSubstitutions;
+}
+
+- (void)finishAttachingOrLaunchingSession:(PTYSession * _Nonnull)aSession
+                                      cmd:(NSString *)cmd
+                               completion:(void (^ _Nullable)(BOOL))completion
+                              environment:(NSDictionary * _Nonnull)environment
+                                   isUTF8:(BOOL)isUTF8
+                         serverConnection:(iTermFileDescriptorServerConnection * _Nullable)serverConnection
+                            substitutions:(NSDictionary *)substitutions
+                         windowController:(PseudoTerminal * _Nonnull)windowController {
+    // Start the command
+    if (serverConnection) {
+        assert([iTermAdvancedSettingsModel runJobsInServers]);
+        [aSession attachToServer:*serverConnection];
+        if (completion) {
+            completion(YES);
+        }
+    } else {
+        [self startProgram:cmd
+               environment:environment
+                    isUTF8:isUTF8
+                 inSession:aSession
+             substitutions:substitutions
+          windowController:windowController
+                completion:completion];
+    }
 }
 
 - (BOOL)attachOrLaunchCommandInSession:(PTYSession *)aSession
@@ -127,23 +154,26 @@ NS_ASSUME_NONNULL_BEGIN
     environment = [environment dictionaryBySettingObject:pwd forKey:@"PWD"];
     BOOL isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
-    [windowController setName:name forSession:aSession];
-
-    // Start the command
-    if (serverConnection) {
-        assert([iTermAdvancedSettingsModel runJobsInServers]);
-        [aSession attachToServer:*serverConnection];
-        if (completion) {
-            completion(YES);
-        }
+    void (^block)(NSString *) = ^(NSString *result) {
+        [windowController setName:result ?: @"" forSession:aSession];
+        [self finishAttachingOrLaunchingSession:aSession
+                                            cmd:cmd
+                                     completion:completion
+                                    environment:environment
+                                         isUTF8:isUTF8
+                               serverConnection:serverConnection
+                                  substitutions:substitutions
+                               windowController:windowController];
+    };
+    if ([iTermAdvancedSettingsModel evaluateSwiftyStrings]) {
+        [iTermScriptFunctionCall evaluateString:name
+                                        timeout:[iTermAdvancedSettingsModel timeoutForStringEvaluation]
+                                         source:aSession.functionCallSource
+                                     completion:^(NSString *result, NSError *error) {
+                                         block(result ?: @"");
+                                     }];
     } else {
-        [self startProgram:cmd
-               environment:environment
-                    isUTF8:isUTF8
-                 inSession:aSession
-             substitutions:substitutions
-          windowController:windowController
-                completion:completion];
+        block(name);
     }
     return YES;
 }

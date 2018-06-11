@@ -51,7 +51,7 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
 }
 
 - (void)setUp {
-    _session = [[PTYSession alloc] initSynthetic:NO];
+    _session = [[PTYSession alloc] initSynthetic:NO name:@"Default"];
     _fakePasteHelper = [[[FakePasteHelper alloc] init] autorelease];
     [_session setPasteHelper:_fakePasteHelper];
     _warningIdentifiers = [[NSMutableSet alloc] init];

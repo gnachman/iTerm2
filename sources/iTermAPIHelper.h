@@ -34,4 +34,12 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
 
+// Performs block either when the function becomes registered, immediately if it's already
+// registered, or after timeout (with an argument of YES) if it does not become registered
+// soon enough.
+- (void)performBlockWhenFunctionRegisteredWithName:(NSString *)name
+                                         arguments:(NSArray<NSString *> *)arguments
+                                           timeout:(NSTimeInterval)timeout
+                                             block:(void (^)(BOOL timedOut))block;
+
 @end

@@ -324,7 +324,6 @@ extern NSString *const iTermSelectedTabDidChange;
 - (IBAction)toggleToolbeltVisibility:(id)sender;
 
 - (void)setupSession:(PTYSession *)aSession
-               title:(NSString *)title
             withSize:(NSSize *)size;
 
 - (NSColor *)accessoryTextColor;

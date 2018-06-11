@@ -218,6 +218,11 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     [self infoForControl:_unicodeVersion9].onUpdate();
 }
 
+- (void)windowWillClose {
+    [super windowWillClose];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 - (void)reloadProfile {
     [super reloadProfile];
     [self updateFontsDescriptions];

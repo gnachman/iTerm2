@@ -34,7 +34,8 @@
         NSDictionary<NSString *,NSArray<NSString *> *> *signatures =
             [[iTermAPIHelper sharedInstance] registeredFunctionSignatureDictionary];
         _suggester = [[iTermFunctionCallSuggester alloc] initWithFunctionSignatures:signatures
-                                                                              paths:paths];
+                                                                              paths:paths
+                                                                 matchFunctionsOnly:YES];
         _passthrough = passthrough;
     }
     return self;

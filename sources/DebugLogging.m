@@ -209,6 +209,7 @@ void LogForNextCrash(const char *file, int line, const char *function, NSString*
                         (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function, value];
     @synchronized (object) {
         [handleToUse writeData:[string dataUsingEncoding:NSUTF8StringEncoding]];
+        [handleToUse synchronizeFile];
     }
 
     AppendPinnedDebugLogMessage(@"CrashLogMessage", string);

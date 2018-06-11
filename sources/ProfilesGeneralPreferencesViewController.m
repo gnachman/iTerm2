@@ -66,6 +66,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSView *_editCurrentSessionView;
     IBOutlet NSButton *_copySettingsToProfile;
     IBOutlet NSButton *_copyProfleToSession;
+    IBOutlet NSPopUpButton *_titleSettings;
+    IBOutlet NSTextField *_customTitle;
+    IBOutlet NSButton *_customTitleHelp;
 
     BOOL _profileNameChangePending;
     NSTimer *_timer;
@@ -167,6 +170,17 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self defineControl:_badgeTextForEditCurrentSession
                     key:KEY_BADGE_FORMAT
+                   type:kPreferenceInfoTypeStringTextField];
+
+    [self defineControl:_titleSettings
+                    key:KEY_TITLE_COMPONENTS
+                   type:kPreferenceInfoTypePopup
+         settingChanged:^(id sender) { [self toggleSelectedTitleComponent]; }
+                 update:^BOOL { [self updateSelectedTitleComponents]; return YES; }];
+    [self updateSelectedTitleComponents];
+
+    [self defineControl:_customTitle
+                    key:KEY_CUSTOM_TITLE
                    type:kPreferenceInfoTypeStringTextField];
 
     [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
@@ -453,6 +467,52 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     NSString *theString = [self stringForKey:KEY_SHORTCUT];
     [_profileShortcut selectItemWithTag:[self shortcutTagForKey:theString]];
     [_profileShortcut sizeToFit];
+}
+
+#pragma mark - Title Components
+
+- (void)toggleSelectedTitleComponent {
+    const iTermTitleComponents originalValue = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
+    const iTermTitleComponents selectedTag = (iTermTitleComponents)_titleSettings.selectedItem.tag;
+    NSUInteger newValue = originalValue;
+    if (selectedTag == iTermTitleComponentsCustom &&
+        originalValue != iTermTitleComponentsCustom) {
+        newValue = iTermTitleComponentsCustom;
+    } else {
+        newValue &= ~iTermTitleComponentsCustom;
+        newValue ^= selectedTag;
+    }
+    if (newValue == 0 && originalValue != 0) {
+        newValue = originalValue;
+    } else if (newValue == 0) {
+        // Shouldn't happen
+        newValue = iTermTitleComponentsProfileName;
+    }
+    [self setUnsignedInteger:newValue forKey:KEY_TITLE_COMPONENTS];
+    [self updateSelectedTitleComponents];
+}
+
+- (void)updateSelectedTitleComponents {
+    const iTermTitleComponents value = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS] ?: iTermTitleComponentsProfileName;
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    for (NSMenuItem *item in _titleSettings.menu.itemArray) {
+        const BOOL selected = !!(item.tag & value);
+        item.state = selected ? NSOnState : NSOffState;
+        if (selected) {
+            [parts addObject:item.title];
+        }
+    }
+    _titleSettings.title = [parts componentsJoinedByString:@" + "];
+    [_titleSettings sizeToFit];
+
+    const CGFloat x = NSMaxX(_titleSettings.frame) + 5;
+    _customTitle.frame = NSMakeRect(x,
+                                    NSMinY(_customTitle.frame),
+                                    NSMinX(_customTitleHelp.frame) - 6 - x,
+                                    NSHeight(_customTitle.frame));
+    const BOOL shouldHideCustom = (value != iTermTitleComponentsCustom);
+    _customTitle.hidden = shouldHideCustom;
+    _customTitleHelp.hidden = shouldHideCustom;
 }
 
 #pragma mark - NSTokenField delegate

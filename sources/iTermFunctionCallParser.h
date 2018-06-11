@@ -10,6 +10,15 @@
 
 @class iTermScriptFunctionCall;
 
+@interface iTermParsedExpression : NSObject
+@property (nonatomic, strong, readonly) NSString *sourceCode;
+// Only one property will be set.
+@property (nonatomic, strong, readonly) iTermScriptFunctionCall *functionCall;
+@property (nonatomic, strong, readonly) NSString *string;
+@property (nonatomic, strong, readonly) NSNumber *number;
+@property (nonatomic, strong, readonly) NSError *error;
+@end
+
 @interface iTermFunctionCallParser : NSObject <CPParserDelegate, CPTokeniserDelegate>
 
 + (CPTokeniser *)newTokenizer;
@@ -20,6 +29,6 @@
 
 - (instancetype)init NS_UNAVAILABLE;
 
-- (iTermScriptFunctionCall *)parse:(NSString *)invocation source:(id (^)(NSString *))source;
+- (iTermParsedExpression *)parse:(NSString *)invocation source:(id (^)(NSString *))source;
 
 @end

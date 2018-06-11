@@ -364,7 +364,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 
 // Create a new split with the specified bookmark. The passed-in session is
 // inserted either before (left/above) or after (right/below) the target
-// session. If performSetup is set, then setupSession:title:withSize: is
+// session. If performSetup is set, then setupSession:withSize: is
 // called.
 - (void)splitVertically:(BOOL)isVertical
                  before:(BOOL)before

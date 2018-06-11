@@ -269,6 +269,14 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (BOOL)startsWithEmoji;
 + (NSString *)it_formatBytes:(double)bytes;
 
+// For a string like
+// lll\(eee(eee,eee,"eee","\\"","ee\(EE())"))ll
+// Invoke block for each literal and expression. In the above example there would be three calls:
+// lll                                      YES
+// eee(eee,eee,"eee","\\"","ee\(EE())")     NO
+// ll                                       YES
+- (void)enumerateSwiftySubstrings:(void (^)(NSString *substring, BOOL isLiteral))block;
+
 @end
 
 @interface NSMutableString (iTerm)

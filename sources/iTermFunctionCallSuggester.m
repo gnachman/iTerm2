@@ -23,12 +23,15 @@
     NSDictionary<NSString *,NSArray<NSString *> *> *_functionSignatures;
     NSArray<NSString *> *_paths;
     iTermGrammarProcessor *_grammarProcessor;
+    BOOL _functionsOnly;
 }
 
 - (instancetype)initWithFunctionSignatures:(NSDictionary<NSString *,NSArray<NSString *> *> *)functionSignatures
-                                     paths:(NSArray<NSString *> *)paths {
+                                     paths:(NSArray<NSString *> *)paths
+                        matchFunctionsOnly:(BOOL)functionsOnly {
     self = [super init];
     if (self) {
+        _functionsOnly = functionsOnly;
         _functionSignatures = [functionSignatures copy];
         _paths = [paths copy];
         _tokenizer = [iTermFunctionCallParser newTokenizer];
@@ -38,7 +41,7 @@
         [self loadRulesAndTransforms];
 
         NSError *error = nil;
-        CPGrammar *grammar = [CPGrammar grammarWithStart:@"call"
+        CPGrammar *grammar = [CPGrammar grammarWithStart:_functionsOnly ? @"call" : @"expression"
                                           backusNaurForm:_grammarProcessor.backusNaurForm
                                                    error:&error];
         _parser = [CPSLRParser parserWithGrammar:grammar];
@@ -50,20 +53,22 @@
 
 - (void)loadRulesAndTransforms {
     __weak __typeof(self) weakSelf = self;
-    [_grammarProcessor addProductionRule:@"call ::= 'Identifier' <arglist>"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [weakSelf callWithName:[syntaxTree.children[0] identifier]
-                                                     arglist:syntaxTree.children[1]];
-                           }];
-    [_grammarProcessor addProductionRule:@"call ::= 'EOF'"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [weakSelf callWithName:@""
-                                                     arglist:@{ @"partial-arglist": @YES }];
-                           }];
-    [_grammarProcessor addProductionRule:@"arglist ::= 'EOF'"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @{ @"partial-arglist": @YES };
-                           }];
+    if (_functionsOnly) {
+        [_grammarProcessor addProductionRule:@"call ::= 'Identifier' <arglist>"
+                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                                   return [weakSelf callWithName:[syntaxTree.children[0] identifier]
+                                                         arglist:syntaxTree.children[1]];
+                               }];
+        [_grammarProcessor addProductionRule:@"call ::= 'EOF'"
+                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                                   return [weakSelf callWithName:@""
+                                                         arglist:@{ @"partial-arglist": @YES }];
+                               }];
+        [_grammarProcessor addProductionRule:@"arglist ::= 'EOF'"
+                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                                   return @{ @"partial-arglist": @YES };
+                               }];
+    }
     [_grammarProcessor addProductionRule:@"arglist ::= '(' <args> ')'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return @{ @"complete-arglist": @YES };
@@ -126,10 +131,17 @@
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return @{ @"literal": @YES };
                            }];
-    [_grammarProcessor addProductionRule:@"expression ::= <composed_call>"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @{ @"call": syntaxTree.children[0] };
-                           }];
+    if (_functionsOnly) {
+        [_grammarProcessor addProductionRule:@"expression ::= <composed_call>"
+                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                                   return @{ @"call": syntaxTree.children[0] };
+                               }];
+    } else {
+        [_grammarProcessor addProductionRule:@"expression ::= <call>"
+                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                                   return @{ @"call": syntaxTree.children[0] };
+                               }];
+    }
     [_grammarProcessor addProductionRule:@"path ::= 'Identifier'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return [syntaxTree.children[0] identifier];
@@ -144,29 +156,37 @@
                                        [syntaxTree.children[0] identifier],
                                        syntaxTree.children[1]];
                            }];
-    [_grammarProcessor addProductionRule:@"composed_call ::= 'Identifier' <composed_arglist>"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [weakSelf callWithName:[syntaxTree.children[0] identifier]
-                                                     arglist:syntaxTree.children[1]];
-                           }];
-    [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' <args> ')'"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @{ @"complete-arglist": @YES };
-                           }];
-    [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' <args> 'EOF'"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @{ @"partial-arglist": @YES,
-                                         @"args": syntaxTree.children[1] };
-                           }];
-    [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' 'EOF'"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @{ @"partial-arglist": @YES,
-                                         @"args": @[] };
-                           }];
-    [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' ')'"
-                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @{ @"complete-arglist": @YES };
-                           }];
+    if (_functionsOnly) {
+        [_grammarProcessor addProductionRule:@"composed_call ::= 'Identifier' <composed_arglist>"
+                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                                   return [weakSelf callWithName:[syntaxTree.children[0] identifier]
+                                                         arglist:syntaxTree.children[1]];
+                               }];
+        [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' <args> ')'"
+                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                                   return @{ @"complete-arglist": @YES };
+                               }];
+        [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' <args> 'EOF'"
+                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                                   return @{ @"partial-arglist": @YES,
+                                             @"args": syntaxTree.children[1] };
+                               }];
+        [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' 'EOF'"
+                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                                   return @{ @"partial-arglist": @YES,
+                                             @"args": @[] };
+                               }];
+        [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' ')'"
+                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                                   return @{ @"complete-arglist": @YES };
+                               }];
+    } else {
+        [_grammarProcessor addProductionRule:@"call ::= 'Identifier' <arglist>"
+                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                                   return [weakSelf callWithName:[syntaxTree.children[0] identifier]
+                                                         arglist:syntaxTree.children[1]];
+                               }];
+    }
 }
 
 - (NSArray<NSString *> *)suggestionsForString:(NSString *)prefix {
@@ -175,10 +195,16 @@
     }
     _prefix = prefix;
     CPTokenStream *tokenStream = [_tokenizer tokenise:prefix];
-    NSArray<NSString *> *result = [_parser parse:tokenStream];
-    return [result mapWithBlock:^id(NSString *s) {
-        return [prefix stringByAppendingString:s];
-    }];
+    NSArray *result = [_parser parse:tokenStream];
+    if (_functionsOnly) {
+        return [result mapWithBlock:^id(NSString *s) {
+            return [prefix stringByAppendingString:s];
+        }];
+    } else {
+        return [result flatMapWithBlock:^id(NSDictionary *dict) {
+            return [self suggestedExpressions:dict nextArgumentName:nil];
+        }];
+    }
 }
 
 #pragma mark - Private
