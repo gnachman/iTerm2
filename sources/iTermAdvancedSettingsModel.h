@@ -223,5 +223,6 @@
 + (BOOL)retinaInlineImages;
 + (double)timeToWaitForEmojiPanel;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
++ (int)minimumWeightDifferenceForBoldFont;
 
 @end

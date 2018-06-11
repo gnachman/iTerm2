@@ -191,7 +191,7 @@
 - (NSFont *)boldVersionOfFont:(NSFont *)font {
     NSFontManager *fontManager = [NSFontManager sharedFontManager];
     NSInteger weight = [fontManager weightOfFont:font];
-    NSInteger minimumAcceptableWeight = weight + 4;
+    NSInteger minimumAcceptableWeight = weight + [iTermAdvancedSettingsModel minimumWeightDifferenceForBoldFont];
     DLog(@"Looking for a bold version of %@, whose weight is %@", font, @(weight));
     NSFont *lastFont = font;
 
