@@ -426,7 +426,9 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
 - (void)buttonPressed:(id)sender {
     iTermTipCardActionButton *button = sender;
     if (button.block) {
+        _currentlySelectedButton = button;
         button.block(self);
+        _currentlySelectedButton = nil;
     }
 }
 

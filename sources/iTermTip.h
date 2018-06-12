@@ -6,7 +6,7 @@
 //
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 // Dictionary keys
 extern NSString *const kTipTitleKey;
@@ -20,6 +20,7 @@ extern NSString *const kTipUrlKey;
 @property(nonatomic, readonly) NSString *title;
 @property(nonatomic, readonly) NSString *body;
 @property(nonatomic, readonly) NSString *url;
+@property(nonatomic, readonly) NSAttributedString *attributedString;
 
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary identifier:(NSString *)identifier;
 
