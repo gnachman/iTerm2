@@ -49,4 +49,6 @@ typedef NS_ENUM(NSInteger, iTermTipCardActionButtonAnimationState) {
 // Rotate icon 90 degrees? Animates on change.
 - (void)setIconFlipped:(BOOL)isFlipped;
 
++ (NSColor *)blueColor;
+
 @end

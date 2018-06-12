@@ -22,6 +22,8 @@
 // View that contains all subviews.
 @property(nonatomic, readonly) NSView *containerView;
 
+@property (nonatomic, readonly) iTermTipCardActionButton *currentlySelectedButton;
+
 // Update the card title.
 - (void)setTitleString:(NSString *)titleString;
 

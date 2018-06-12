@@ -30,6 +30,7 @@ static NSString *const kShowNextTipTitle = @"Show Next Tip";
 static NSString *const kShowPreviousTipTitle = @"Show Previous Tip";
 static NSString *const kShowTipsWeeklyTitle = @"Show Tips Weekly";
 static NSString *const kShowTipsDailyTitle = @"Show Tips Daily";
+static NSString *const kShareTitle = @"Share";
 
 static const CGFloat kWindowWidth = 400;
 
@@ -142,6 +143,28 @@ static const CGFloat kWindowWidth = 400;
         [button setCollapsed:YES];
     }
 
+
+    NSImage *shareTemplate = [NSImage imageNamed:NSImageNameShareTemplate];
+    shareTemplate.template = YES;
+    NSImage *shareImage = [[shareTemplate copy] autorelease];
+    CGFloat aspectRatio = shareImage.size.width / shareImage.size.height;
+    const CGFloat standardHeight = 22;
+    [shareImage setSize:NSMakeSize(aspectRatio * standardHeight, standardHeight)];
+    [shareImage lockFocus];
+    [[iTermTipCardActionButton blueColor] set];
+    NSRectFillUsingOperation(NSMakeRect(0, 0, shareImage.size.width, shareImage.size.height),
+                             NSCompositeSourceAtop);
+    [shareImage unlockFocus];
+    shareImage.template = NO;
+
+    button =
+        [card addActionWithTitle:kShareTitle icon:shareImage block:^(id card) {
+            [self shareThis:card];
+        }];
+    if (!expanded) {
+        [button setCollapsed:YES];
+    }
+
     NSString *frequencyTitle;
     if ([_delegate tipFrequencyIsHigh]) {
         frequencyTitle = kShowTipsWeeklyTitle;
@@ -231,6 +254,7 @@ static const CGFloat kWindowWidth = 400;
 // Action button titles that are collapsable. These must appear adjacently and last.
 - (NSArray *)collapsingTitles {
     return @[ kShowThisLaterTitle,
+              kShareTitle,
               kDisableTipsTitle,
               kEnableTipsTitle,
               kShowTipsDailyTitle,
@@ -362,6 +386,32 @@ static const CGFloat kWindowWidth = 400;
     [self dismiss];
 }
 
+// NOTE: the NSSharingServicePicker has a few problems, so I don't use it.
+// 1) It complains if you use it on mouseUp
+// 2) It does not work (when you tell it to performWithItems it just gets slow but does nothing).
+//    I'm sure this can be fixed but I don't have the time today.
+// It has a nice link to Settings for "more" but I can live without it.
+- (void)shareThis:(iTermTipCardViewController *)card {
+    NSAttributedString *item = [self.tip attributedString];
+    NSArray<NSSharingService *> *services = [NSSharingService sharingServicesForItems:@[ item ]];
+    
+    NSMenu *menu = [[[NSMenu alloc] initWithTitle:@"Sharing Services"] autorelease];
+    for (NSSharingService *service in services) {
+        NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:service.title
+                                                       action:@selector(shareWithService:)
+                                                keyEquivalent:@""] autorelease];
+        item.image = service.image;
+        item.representedObject = service;
+        [menu addItem:item];
+    }
+    [NSMenu popUpContextMenu:menu withEvent:[NSApp currentEvent] forView:self.window.contentView];
+}
+
+- (void)shareWithService:(NSMenuItem *)menuItem {
+    NSSharingService *service = menuItem.representedObject;
+    [service performWithItems:@[ self.tip.attributedString ]];
+}
+
 - (void)toggleOptionsInCard:(iTermTipCardViewController *)card {
     iTermTipCardActionButton *action = [card actionWithTitle:kMoreOptionsTitle];
     if (action) {
@@ -369,6 +419,7 @@ static const CGFloat kWindowWidth = 400;
         [action setIconFlipped:YES];
         [action setTitle:kFewerOptionsTitle];
         [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kShareTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kEnableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kShowTipsWeeklyTitle] setAnimationState:kTipCardButtonAnimatingIn];
@@ -381,6 +432,7 @@ static const CGFloat kWindowWidth = 400;
         [action setIconFlipped:NO];
         [action setTitle:kMoreOptionsTitle];
         [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kShareTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kEnableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kShowTipsWeeklyTitle] setAnimationState:kTipCardButtonAnimatingOut];
