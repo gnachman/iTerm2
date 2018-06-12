@@ -12,6 +12,7 @@
 #include <sys/un.h>
 #include <syslog.h>
 #include <unistd.h>
+#import "move_to_user_namespace.h"
 
 static const int kMaxConnections = 1;
 static int gRunningServer;
@@ -237,6 +238,7 @@ static void MainLoop(char *path) {
 }
 
 int iTermFileDescriptorServerRun(char *path, pid_t childPid, int connectionFd) {
+    move_to_user_namespace();
     gRunningServer = 1;
     // syslog raises sigpipe when the parent job dies on 10.12.
     signal(SIGPIPE, SIG_IGN);
