@@ -4842,8 +4842,12 @@ ITERM_WEAKLY_REFERENCEABLE
         // renderer).
         //
         // Perhaps some day transparency and ligatures will be supported.
+        const BOOL nativeFullScreen = !!(self.view.window.styleMask & NSWindowStyleMaskFullScreen);
+        const BOOL untitled = self.view.window && !(self.view.window.styleMask & NSWindowStyleMaskTitled);
+        const BOOL hasSquareCorners = untitled || nativeFullScreen;
+        const BOOL marginsOk = [iTermAdvancedSettingsModel terminalVMargin] >= 2;  // Smaller margins break rounded window corners
         return ([iTermPreferences boolForKey:kPreferenceKeyUseMetal] &&
-                [iTermAdvancedSettingsModel terminalVMargin] >= 2 &&  // Smaller margins break rounded window corners
+                (hasSquareCorners || marginsOk) &&
                 [_textview verticalSpacing] >= 1 &&  // Metal cuts off the tops of letters when line height reduced
                 machineSupportsMetal &&
                 _textview.transparencyAlpha == 1 &&
