@@ -83,6 +83,7 @@ typedef NS_ENUM(int, iTermMetalFrameDataStat) {
     iTermMetalFrameDataStatPqEnqueueDrawCornerCutout,
 
     iTermMetalFrameDataStatPqEnqueueDrawCreateThirdRenderEncoder,
+    iTermMetalFrameDataStatPqBlockOnSynchronousGetDrawable,
     iTermMetalFrameDataStatPqEnqueueCopyToDrawable,
     iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable,
     iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit,
@@ -131,8 +132,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) iTermCellRenderConfiguration *cellConfiguration;
 @property (nonatomic, strong) id<MTLCommandBuffer> commandBuffer;
 @property (nonatomic, strong) id<MTLRenderCommandEncoder> renderEncoder;
-@property (nonatomic, strong) dispatch_group_t group;
+@property (nonatomic, strong) dispatch_group_t group;  // nonnil implies synchronous
 @property (nonatomic) BOOL hasManyColorCombos;
+@property (nonatomic) BOOL deferCurrentDrawable;
 
 // When drawing to an intermediate texture there may be two passes (i.e., two render encoders)
 @property (nonatomic) int currentPass;

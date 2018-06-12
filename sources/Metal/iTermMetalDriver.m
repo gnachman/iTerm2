@@ -80,6 +80,7 @@ typedef struct {
 // This indicates if a draw call was made while busy. When we stop being busy
 // and this is set, then we must schedule another draw.
 @property (atomic) BOOL needsDraw;
+@property (atomic) BOOL waitingOnSynchronousDraw;
 @property (nonatomic, readonly) iTermMetalDriverMainThreadState *mainThreadState;
 @end
 
@@ -301,7 +302,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
     DLog(@"Start synchronous draw");
     iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view];
+    self.waitingOnSynchronousDraw = YES;
     dispatch_group_wait(context.group, DISPATCH_TIME_FOREVER);
+    self.waitingOnSynchronousDraw = NO;
     DLog(@"Synchronous draw completed.");
     return !context.aborted;
 }
@@ -378,10 +381,12 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 #if ENABLE_PRIVATE_QUEUE
     [self acquireScarceResources:frameData view:view];
-    if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
-        DLog(@"  abort: failed to get drawable or RPD");
-        self.needsDraw = YES;
-        return NO;
+    if (!frameData.deferCurrentDrawable) {
+        if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
+            DLog(@"  abort: failed to get drawable or RPD");
+            self.needsDraw = YES;
+            return NO;
+        }
     }
 #endif
 
@@ -483,11 +488,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 #if !ENABLE_PRIVATE_QUEUE
     [self acquireScarceResources:frameData view:view];
-    if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
-        DLog(@"  abort: failed to get drawable or RPD");
-        self.needsDraw = YES;
-        [self complete:frameData];
-        return;
+    if (!frameData.deferCurrentDrawable) {
+        if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
+            DLog(@"  abort: failed to get drawable or RPD");
+            self.needsDraw = YES;
+            [self complete:frameData];
+            return;
+        }
     }
 #endif
 
@@ -671,13 +678,22 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             frameData.destinationTexture = frameData.renderPassDescriptor.colorAttachments[0].texture;
         }];
     } else {
-        [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
-            frameData.destinationDrawable = view.currentDrawable;
-            frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
-        }];
+        const BOOL synchronousDraw = (_context.group != nil);
+        frameData.deferCurrentDrawable = ([iTermAdvancedSettingsModel metalDeferCurrentDrawable] &&
+                                          !synchronousDraw);
+        if (!frameData.deferCurrentDrawable) {
+            [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
+                frameData.destinationDrawable = view.currentDrawable;
+                frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
+            }];
+        }
 
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
-            frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
+            if (frameData.deferCurrentDrawable) {
+                frameData.renderPassDescriptor = [frameData newRenderPassDescriptorWithLabel:@"RPD for deferred draw" fast:YES];
+            } else {
+                frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
+            }
         }];
     }
 }
@@ -735,16 +751,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self drawCellRenderer:_highlightRowRenderer
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawHighlightRow];
-
-#if ENABLE_USE_TEMPORARY_TEXTURE
-    // Copy to the drawable
-    frameData.currentPass = 2;
-    [frameData.renderEncoder endEncoding];
-    [self updateRenderEncoderForCurrentPass:frameData label:@"Copy to drawable"];
-    [self drawRenderer:_copyToDrawableRenderer
-             frameData:frameData
-                  stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
-#endif
 
     [self finishDrawingWithCommandBuffer:commandBuffer
                                frameData:frameData];
@@ -1154,13 +1160,14 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     return buffer;
 }
 
-// frameData's renderEncoder must have just had -endEncoding called on it at this point.
-// It will be left in the same staate.
-- (void)copyOffscreenTextureToDrawableInFrameData:(iTermMetalFrameData *)frameData {
+- (void)copyToDrawableFromTexture:(id<MTLTexture>)sourceTexture
+         withRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
+                            label:(NSString *)label
+                        frameData:(iTermMetalFrameData *)frameData {
     // Copy from texture to drawable
-    [frameData updateRenderEncoderWithRenderPassDescriptor:frameData.debugRealRenderPassDescriptor
+    [frameData updateRenderEncoderWithRenderPassDescriptor:renderPassDescriptor
                                                       stat:iTermMetalFrameDataStatNA
-                                                     label:@"copy offscreen to drawable"];
+                                                     label:label];
     if (!_copyOffscreenRenderer) {
         _copyOffscreenRenderer = [[iTermCopyOffscreenRenderer alloc] initWithDevice:frameData.device];
         _copyOffscreenRenderer.enabled = YES;
@@ -1169,10 +1176,19 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     iTermCopyOffscreenRendererTransientState *tState =
         [_copyOffscreenRenderer createTransientStateForConfiguration:frameData.cellConfiguration
                                                        commandBuffer:frameData.commandBuffer];
-    tState.sourceTexture = frameData.destinationTexture;
+    tState.sourceTexture = sourceTexture;
     tState.debugInfo = frameData.debugInfo;
     [_copyOffscreenRenderer drawWithFrameData:frameData transientState:tState];
     [frameData.renderEncoder endEncoding];
+}
+
+// frameData's renderEncoder must have just had -endEncoding called on it at this point.
+// It will be left in the same staate.
+- (void)copyOffscreenTextureToDrawableInFrameData:(iTermMetalFrameData *)frameData {
+    [self copyToDrawableFromTexture:frameData.destinationTexture
+           withRenderPassDescriptor:frameData.debugRealRenderPassDescriptor
+                              label:@"copy offscreen to drawable"
+                          frameData:frameData];
 }
 
 - (void)drawRenderer:(id<iTermMetalRenderer>)renderer
@@ -1410,9 +1426,78 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (void)finishDrawingWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
                              frameData:(iTermMetalFrameData *)frameData {
+    __block BOOL shouldCopyToDrawable = NO;
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    shouldCopyToDrawable = YES;
+#endif
+    if (frameData.deferCurrentDrawable) {
+        [frameData measureTimeForStat:iTermMetalFrameDataStatPqBlockOnSynchronousGetDrawable ofBlock:^{
+            // Get a drawable and then copy to it.
+            if (!self.waitingOnSynchronousDraw) {
+                dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+                __block BOOL timedOut = NO;
+                __block id<CAMetalDrawable> drawable = nil;
+                __block id<MTLTexture> texture = nil;
+                __block MTLRenderPassDescriptor *renderPassDescriptor = nil;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    dispatch_semaphore_signal(sema);
+                    @synchronized(self) {
+                        if (timedOut) {
+                            NSLog(@"** TIMED OUT **");
+                            return;
+                        }
+                        [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
+                            drawable = frameData.view.currentDrawable;
+                            texture = drawable.texture;
+                            renderPassDescriptor = frameData.view.currentRenderPassDescriptor;
+                        }];
+                    }
+                });
+#warning TODO: This could avoid false positives by polling every millisecond to see if waitingOnSynchronousDraw has become true.
+                const BOOL semaphoreTimeout =
+                    (dispatch_semaphore_wait(sema,
+                                             dispatch_time(DISPATCH_TIME_NOW,
+                                                           (int64_t)(0.1 * NSEC_PER_SEC))) != 0);
+                @synchronized(self) {
+                    if (semaphoreTimeout) {
+                        // This is usually because the main thread is wedged
+                        // waiting for a synchronous draw.
+                        NSLog(@"** SEMAPHORE EXPIRED **");
+                        timedOut = YES;
+                    }
+                    frameData.destinationDrawable = drawable;
+                    frameData.destinationTexture = texture;
+                    frameData.destinationTexture.label = @"Drawable destination";
+                    frameData.renderPassDescriptor = renderPassDescriptor;
+                }
+            }
+            if (frameData.destinationTexture == nil) {
+                DLog(@"  abort: failed to get drawable or RPD");
+                self.needsDraw = YES;
+                [frameData.renderEncoder endEncoding];
+                [commandBuffer commit];
+                [self didComplete:NO withFrameData:frameData];
+            } else {
+                shouldCopyToDrawable = YES;
+            }
+        }];
+        if (frameData.destinationTexture == nil) {
+            return;
+        }
+    }
+    if (shouldCopyToDrawable) {
+        // Copy to the drawable
+        frameData.currentPass = 2;
+        [frameData.renderEncoder endEncoding];
+        [self updateRenderEncoderForCurrentPass:frameData label:@"Copy to drawable"];
+        [self drawRenderer:_copyToDrawableRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
+    }
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable ofBlock:^{
         [frameData.renderEncoder endEncoding];
     }];
+
     if (frameData.debugInfo) {
         [self copyOffscreenTextureToDrawableInFrameData:frameData];
     }

@@ -86,6 +86,7 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "DrawFlash<<<<",
         "DrawCorners<<<<",
         "Create3rdRE<<<<",
+        "SyncGetDrawable<<<<",
         "enqueueCopyToDr<<<<",
         "EndEncDrawable<<<<",
         "PresentCommit<<<<",
