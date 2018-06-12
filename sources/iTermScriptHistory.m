@@ -25,6 +25,15 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
     NSMutableArray<NSString *> *_callEntries;
 }
 
++ (instancetype)globalEntry {
+    static id instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] initWithName:@"iTerm2 App" identifier:@"iTerm2"];
+    });
+    return instance;
+}
+
 - (instancetype)initWithName:(NSString *)name identifier:(NSString *)identifier {
     self = [super init];
     if (self) {
@@ -161,6 +170,7 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
     self = [super init];
     if (self) {
         _entries = [NSMutableArray array];
+        [_entries addObject:[iTermScriptHistoryEntry globalEntry]];
     }
     return self;
 }

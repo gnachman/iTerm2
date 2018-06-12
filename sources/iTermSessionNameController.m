@@ -12,6 +12,7 @@
 #import "iTermBuiltInFunctions.h"
 #import "iTermProfilePreferences.h"
 #import "iTermScriptFunctionCall.h"
+#import "iTermScriptHistory.h"
 #import "iTermVariables.h"
 #import "NSObject+iTerm.h"
 
@@ -100,16 +101,25 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
                                            return @"";
                                        }
                                    }
-                               completion:^(NSString *possiblyEmptyResult, NSError *error) {
-                                   NSString *result = [possiblyEmptyResult stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-                                   if (error || result.length == 0) {
-                                       result = @"🖥";
-                                   }
-                                   if (!sync) {
-                                       [weakSelf didEvaluateInvocationWithResult:result];
-                                   }
-                                   completion(result);
-                               }];
+                               completion:
+     ^(NSString *possiblyEmptyResult, NSError *error) {
+         if (error) {
+             NSString *message =
+                [NSString stringWithFormat:@"Invoked “%@” to compute name for session. Failed with error:\n%@\n",
+                 invocation,
+                 [error localizedDescription]];
+             [[iTermScriptHistoryEntry globalEntry] addOutput:message];
+         }
+
+         NSString *result = [possiblyEmptyResult stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+         if (error || result.length == 0) {
+             result = @"🖥";
+         }
+         if (!sync) {
+             [weakSelf didEvaluateInvocationWithResult:result];
+         }
+         completion(result);
+     }];
     _dependencies = dependencies;
 }
 
