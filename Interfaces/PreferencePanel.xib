@@ -1957,6 +1957,8 @@ DQ
                                 <menuItem title="Profile &amp; Session Name" tag="64" indentationLevel="1" id="6na-wb-F2g"/>
                                 <menuItem isSeparatorItem="YES" id="Hts-WQ-j82"/>
                                 <menuItem title="Job" tag="2" id="YEF-Tv-Hqs"/>
+                                <menuItem title="User" tag="128" id="ZT3-m8-pr9"/>
+                                <menuItem title="Host" tag="256" id="w6i-sK-DQu"/>
                                 <menuItem title="PWD" tag="4" id="xPf-Vv-eGl"/>
                                 <menuItem title="TTY" tag="8" id="xEH-Wz-NWS"/>
                             </items>
@@ -3498,7 +3500,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>

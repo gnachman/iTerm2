@@ -18,6 +18,7 @@
 #import "ProfileListView.h"
 #import "ProfileModel.h"
 #import "PreferencePanel.h"
+#import "PTYSession.h"
 
 // Tags for _commandType matrix selectedCell.
 static const NSInteger kCommandTypeCustomTag = 0;
@@ -69,6 +70,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSButton *_copySettingsToProfile;
     IBOutlet NSButton *_copyProfleToSession;
     IBOutlet NSPopUpButton *_titleSettings;
+    IBOutlet NSButton *_customTitleHelp;
 
     BOOL _profileNameChangePending;
     NSTimer *_timer;
@@ -593,8 +595,21 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             [parts addObject:item.title];
         }
     }
-    _titleSettings.title = [parts componentsJoinedByString:@" + "];
+
+    _titleSettings.title = [PTYSession titleForSessionName:@"Name"
+                                               profileName:@"Profile"
+                                                       job:@"Job"
+                                                       pwd:@"PWD"
+                                                       tty:@"TTY"
+                                                      user:@"User"
+                                                      host:@"Host"
+                                                components:value];
+
+    const CGFloat maxWidth = NSMinX(_customTitleHelp.frame) - NSMinX(_titleSettings.frame) - 5;
     [_titleSettings sizeToFit];
+    NSRect frame = _titleSettings.frame;
+    frame.size.width = MIN(maxWidth, frame.size.width);
+    _titleSettings.frame = frame;
 }
 
 #pragma mark - NSTokenField delegate

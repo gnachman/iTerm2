@@ -222,6 +222,9 @@ static NSString *const iTermSessionTitleArgProfile = @"profile";
 static NSString *const iTermSessionTitleArgJob = @"job";
 static NSString *const iTermSessionTitleArgPath = @"path";
 static NSString *const iTermSessionTitleArgTTY = @"tty";
+static NSString *const iTermSessionTitleArgUser = @"username";
+static NSString *const iTermSessionTitleArgHost = @"hostname";
+
 static NSString *const iTermSessionTitleSession = @"session";
 
 @interface PTYSession () <
@@ -488,11 +491,14 @@ static NSString *const iTermSessionTitleSession = @"session";
 }
 
 + (void)registerBuiltInFunctions {
-    NSDictionary<NSString *, NSString *> *defaults = @{ iTermSessionTitleArgName: iTermVariableKeySessionAutoName,
-                                                        iTermSessionTitleArgProfile: iTermVariableKeySessionProfileName,
-                                                        iTermSessionTitleArgJob: iTermVariableKeySessionJob,
-                                                        iTermSessionTitleArgPath: iTermVariableKeySessionPath,
-                                                        iTermSessionTitleArgTTY: iTermVariableKeySessionTTY };
+    NSDictionary<NSString *, NSString *> *defaults =
+        @{ iTermSessionTitleArgName: iTermVariableKeySessionAutoName,
+           iTermSessionTitleArgProfile: iTermVariableKeySessionProfileName,
+           iTermSessionTitleArgJob: iTermVariableKeySessionJob,
+           iTermSessionTitleArgPath: iTermVariableKeySessionPath,
+           iTermSessionTitleArgTTY: iTermVariableKeySessionTTY,
+           iTermSessionTitleArgUser: iTermVariableKeySessionUsername,
+           iTermSessionTitleArgHost: iTermVariableKeySessionHostname };
     // This would be a cyclic reference since the session.name is the result of this function.
     assert(![defaults.allValues containsObject:iTermVariableKeySessionName]);
 
@@ -517,12 +523,20 @@ static NSString *const iTermSessionTitleSession = @"session";
              NSString *job = trim(parameters[iTermSessionTitleArgJob]);
              NSString *pwd = trim(parameters[iTermSessionTitleArgPath]);
              NSString *tty = trim(parameters[iTermSessionTitleArgTTY]);
+             NSString *user = trim(parameters[iTermSessionTitleArgUser]);
+             NSString *host = trim(parameters[iTermSessionTitleArgHost]);
+             iTermTitleComponents titleComponents;
+             titleComponents = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
+                                                                    inProfile:session.profile];
 
-             NSString *result = [session titleForSessionName:name
-                                                 profileName:profile
-                                                         job:job
-                                                         pwd:pwd
-                                                         tty:tty];
+             NSString *result = [PTYSession titleForSessionName:name
+                                                    profileName:profile
+                                                            job:job
+                                                            pwd:pwd
+                                                            tty:tty
+                                                           user:user
+                                                           host:host
+                                                     components:titleComponents];
              completion(result, nil);
          }];
     [[iTermBuiltInFunctions sharedInstance] registerFunction:[func autorelease]
@@ -804,14 +818,14 @@ ITERM_WEAKLY_REFERENCEABLE
 //
 // no  yes     yes         ProfileName       ProfileName: IconTitle -or- SessionName
 // yes yes     yes         ProfileName (job) ProfileName: IconTitle -or- SessionName (job)
-- (NSString *)titleForSessionName:(NSString *)sessionName
++ (NSString *)titleForSessionName:(NSString *)sessionName
                       profileName:(NSString *)profileName
                               job:(NSString *)jobVariable
                               pwd:(NSString *)pwdVariable
-                              tty:(NSString *)ttyVariable  {
-    iTermTitleComponents titleComponents;
-    titleComponents = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
-                                                           inProfile:self.profile];
+                              tty:(NSString *)ttyVariable
+                             user:(NSString *)userVariable
+                             host:(NSString *)hostVariable
+                       components:(iTermTitleComponents)titleComponents {
     NSString *name = nil;
     NSMutableString *result = [NSMutableString string];
 
@@ -851,15 +865,39 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    NSString *pwd = nil;
-    if (titleComponents & iTermTitleComponentsWorkingDirectory) {
-        pwd = pwdVariable;
-    }
-    if (pwd) {
+    const BOOL showUser = userVariable.length && (titleComponents & iTermTitleComponentsUser);
+    const BOOL showHost = hostVariable.length && (titleComponents & iTermTitleComponentsHost);
+    const BOOL showPWD = pwdVariable.length && (titleComponents & iTermTitleComponentsWorkingDirectory);
+
+    //                                               User Host PWD
+    NSArray<NSString *> *formats = @[ @"",        //
+                                      @"U",       // X
+                                      @"H",       //      X
+                                      @"U@H",     // X    X
+                                      @"P",       //           X
+                                      @"U:P",     // X         X
+                                      @"H:P",     //      X    X
+                                      @"U@H:P" ]; // X    X    X
+    int formatIndex = (showUser ? 1 : 0) | (showHost ? 2 : 0) | (showPWD ? 4 : 0);
+    if (formatIndex) {
+        NSString *format = formats[formatIndex];
+        NSMutableString *userHostPWD = [NSMutableString string];
+        for (NSInteger i = 0; i < format.length; i++) {
+            unichar c = [format characterAtIndex:i];
+            if (c == 'U') {
+                [userHostPWD appendString:userVariable ?: @""];
+            } else if (c == 'H') {
+                [userHostPWD appendString:hostVariable ?: @""];
+            } else if (c == 'P') {
+                [userHostPWD appendString:pwdVariable ?: @""];
+            } else {
+                [userHostPWD appendCharacter:c];
+            }
+        }
         if (result.length) {
-            [result appendFormat:@" — %@", pwd];
+            [result appendFormat:@" — %@", userHostPWD];
         } else {
-            [result appendString:pwd];
+            [result appendString:userHostPWD];
         }
     }
 
@@ -875,7 +913,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    if (!result) {
+    if (!result.length) {
         [result appendString:@"🖥"];
     }
     return result;

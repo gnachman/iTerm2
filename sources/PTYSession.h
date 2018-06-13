@@ -464,6 +464,15 @@ typedef enum {
              replacingProfileWithGUID:(NSString *)badGuid
                           withProfile:(Profile *)goodProfile;
 
++ (NSString *)titleForSessionName:(NSString *)sessionName
+                      profileName:(NSString *)profileName
+                              job:(NSString *)jobVariable
+                              pwd:(NSString *)pwdVariable
+                              tty:(NSString *)ttyVariable
+                             user:(NSString *)userVariable
+                             host:(NSString *)hostVariable
+                       components:(iTermTitleComponents)titleComponents;
+
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
 + (void)selectMenuItem:(NSString*)theName;
 + (void)registerBuiltInFunctions;

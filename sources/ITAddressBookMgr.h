@@ -305,12 +305,14 @@ typedef NS_ENUM(NSUInteger, iTermUnicodeNormalization) {
 
 typedef NS_OPTIONS(NSUInteger, iTermTitleComponents) {
     iTermTitleComponentsSessionName = 1 << 0,
-    iTermTitleComponentsProfileName = 1 << 5,
-    iTermTitleComponentsProfileAndSessionName = 1 << 6,
     iTermTitleComponentsJob = 1 << 1,
     iTermTitleComponentsWorkingDirectory = 1 << 2,
     iTermTitleComponentsTTY = 1 << 3,
     iTermTitleComponentsCustom = 1 << 4,  // Mutually exclusive with all other options.
+    iTermTitleComponentsProfileName = 1 << 5,
+    iTermTitleComponentsProfileAndSessionName = 1 << 6,
+    iTermTitleComponentsUser = 1 << 7,
+    iTermTitleComponentsHost = 1 << 8
 };
 
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>
