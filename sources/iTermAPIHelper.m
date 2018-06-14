@@ -345,7 +345,7 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
 
     ITMServerOriginatedRPC *rpc = [[ITMServerOriginatedRPC alloc] init];
     rpc.name = name;
-    for (NSString *argumentName in arguments) {
+    for (NSString *argumentName in [arguments.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
         id argumentValue = arguments[argumentName];
         NSString *jsonValue;
         if ([NSNull castFrom:argumentValue]) {

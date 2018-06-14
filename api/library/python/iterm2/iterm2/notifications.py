@@ -257,7 +257,7 @@ def _string_rpc_registration_request(rpc):
     """Converts ServerOriginatedRPC or RPCSignature to a string."""
     if rpc is None:
         return None
-    args = map(lambda x: x.name, rpc.arguments)
+    args = sorted(map(lambda x: x.name, rpc.arguments))
     return rpc.name + "(" + ",".join(args) + ")"
 
 async def _async_subscribe(connection, subscribe, notification_type, callback, session=None, rpc_registration_request=None):
@@ -294,6 +294,13 @@ async def _async_dispatch_helper(connection, message):
     for handler in handlers:
         assert handler is not None
         await handler(connection, sub_notification)
+
+    if not handlers and message.notification.HasField('server_originated_rpc_notification'):
+        # If we get an RPC we haven't registered for handle the error because
+        # otherwise it has to time out. If you get here there is probably a bug.
+        exception = { "reason": "No such function: {}".format(_string_rpc_registration_request(message.notification.server_originated_rpc_notification.rpc)) }
+        await iterm2.rpc.async_send_rpc_result(connection, rpc_notif.request_id, True, exception)
+
     return bool(handlers)
 
 def _get_handler_key_from_notification(notification):
