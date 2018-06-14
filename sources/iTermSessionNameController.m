@@ -104,11 +104,15 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
                                completion:
      ^(NSString *possiblyEmptyResult, NSError *error, NSSet<NSString *> *missing) {
          if (error) {
-                 NSString *message =
-                    [NSString stringWithFormat:@"Invoked “%@” to compute name for session. Failed with error:\n%@\n",
-                     invocation,
-                     [error localizedDescription]];
-                 [[iTermScriptHistoryEntry globalEntry] addOutput:message];
+             NSString *message =
+             [NSString stringWithFormat:@"Invoked “%@” to compute name for session. Failed with error:\n%@\n",
+              invocation,
+              [error localizedDescription]];
+             NSString *detail = error.localizedFailureReason;
+             if (detail) {
+                 message = [message stringByAppendingFormat@"%@\n", detail];
+             }
+             [[iTermScriptHistoryEntry globalEntry] addOutput:message];
          }
 
          NSString *result = [possiblyEmptyResult stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
