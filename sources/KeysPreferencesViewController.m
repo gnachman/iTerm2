@@ -284,6 +284,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 - (void)setHotKeyChar:(unsigned short)keyChar
                  code:(unsigned int)keyCode
                  mods:(unsigned int)keyMods {
+return;
     [iTermPreferences setInt:keyChar forKey:kPreferenceKeyHotkeyCharacter];
     [iTermPreferences setInt:keyCode forKey:kPreferenceKeyHotKeyCode];
     [iTermPreferences setInt:keyMods forKey:kPreferenceKeyHotkeyModifiers];
