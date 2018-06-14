@@ -4,8 +4,13 @@ Daemons
 A daemon in the Unix tradition is a computer program that runs as a background
 process, rather than being under the direct control of an interactive user.
 
-An iTerm2 daemon would ordinarily be an autolaunch script that provides some
-service, such as listening for notifications and reacting to them.
+An iTerm2 daemon would ordinarily be an AutoLaunch script that provides some
+service, such as listening for notifications and reacting to them. Autolaunch
+scripts should be placed in `~/Library/Application Support/iTerm2/Scripts/AutoLaunch`.
+
+AutoLaunch scripts are launched at startup. When you create a new one it does
+not get launched until iTerm2 is restarted, but you can always run it by
+selecting it from the **Scripts** menu.
 
 When you create a new script and choose to make it a "Long-Running Daemon" (as
 opposed to a "Simple" script), iTerm2 will provide a sample program to help you
@@ -158,6 +163,7 @@ Other Sections
     * :doc:`running`
     * Daemons
     * :doc:`rpcs`
+    * :doc:`hooks`
 
 Indices and tables
 ==================

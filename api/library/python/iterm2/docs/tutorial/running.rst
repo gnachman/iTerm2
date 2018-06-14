@@ -101,6 +101,7 @@ Other Sections
     * Running a Script
     * :doc:`daemons`
     * :doc:`rpcs`
+    * :doc:`hooks`
 
 Indices and tables
 ==================

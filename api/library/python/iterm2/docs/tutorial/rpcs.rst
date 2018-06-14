@@ -199,6 +199,8 @@ RPC will not be made until all its dependencies have completed without errors.
 
 Errors are propagated up the call chain and shown in an alert with a traceback.
 
+Continue to the next section, :doc:`hooks`.
+
 ----
 
 --------------
@@ -211,6 +213,7 @@ Other Sections
     * :doc:`running`
     * :doc:`daemons`
     * RPCs
+    * :doc:`hooks`
 
 Indices and tables
 ==================

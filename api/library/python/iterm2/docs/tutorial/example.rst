@@ -146,6 +146,7 @@ Other Sections
     * :doc:`running`
     * :doc:`daemons`
     * :doc:`rpcs`
+    * :doc:`hooks`
 
 Indices and tables
 ==================
