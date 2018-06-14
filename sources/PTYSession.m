@@ -5784,9 +5784,9 @@ ITERM_WEAKLY_REFERENCEABLE
     return self.variables.functionCallSource;
 }
 
-+ (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)keyBindingText {
++ (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)invocation origin:(NSString *)origin {
     NSString *message = [NSString stringWithFormat:@"Error running “%@”:\n%@",
-                         keyBindingText, error.localizedDescription];
+                         invocation, error.localizedDescription];
     NSString *traceback = error.localizedFailureReason;
     iTermDisclosableView *accessory = nil;
     if (traceback) {
@@ -5801,11 +5801,13 @@ ITERM_WEAKLY_REFERENCEABLE
                              accessory:accessory
                             identifier:@"NoSyncFunctionCallError"
                            silenceable:kiTermWarningTypeTemporarilySilenceable
-                               heading:@"Oops"];
+                               heading:[NSString stringWithFormat:@"%@ Function Call Failed", origin]];
 
 }
 
-- (void)invokeFunctionCall:(NSString *)invocation extraContext:(NSDictionary *)extraContext {
+- (void)invokeFunctionCall:(NSString *)invocation
+              extraContext:(NSDictionary *)extraContext
+                    origin:(NSString *)origin {
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:[[NSDate distantFuture] timeIntervalSinceNow]
                                    source:^id(NSString *key) {
@@ -5817,7 +5819,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                    }
                                completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
                                    if (error) {
-                                       [PTYSession reportFunctionCallError:error forInvocation:invocation];
+                                       [PTYSession reportFunctionCallError:error
+                                                             forInvocation:invocation
+                                                                    origin:origin];
                                    }
                                }];
 }
@@ -5893,7 +5897,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                            source:[self functionCallSource]
                                        completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
                                            if (error) {
-                                               [PTYSession reportFunctionCallError:error forInvocation:keyBindingText];
+                                               [PTYSession reportFunctionCallError:error
+                                                                     forInvocation:keyBindingText
+                                                                            origin:@"Key Binding"];
                                            }
                                        }];
             return YES;
@@ -6184,7 +6190,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [self setXtermMouseReporting:![self xtermMouseReporting]];
             break;
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
-            [self invokeFunctionCall:keyBindingText extraContext:nil];
+            [self invokeFunctionCall:keyBindingText extraContext:nil origin:@"Key Binding"];
             break;
         default:
             XLog(@"Unknown key action %d", keyBindingAction);

@@ -110,7 +110,7 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
               [error localizedDescription]];
              NSString *detail = error.localizedFailureReason;
              if (detail) {
-                 message = [message stringByAppendingFormat@"%@\n", detail];
+                 message = [message stringByAppendingFormat:@"%@\n", detail];
              }
              [[iTermScriptHistoryEntry globalEntry] addOutput:message];
          }

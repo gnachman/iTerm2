@@ -60,7 +60,7 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
                                iTermRPCTriggerPathInput: stringLine.stringValue ?: @"",
                                iTermRPCTriggerPathLineNumber: @(lineNumber) };
 
-    [aSession invokeFunctionCall:invocation extraContext:context];
+    [aSession invokeFunctionCall:invocation extraContext:context origin:@"Trigger"];
 
     return YES;
 }

@@ -763,8 +763,10 @@ typedef enum {
 - (ITMGetProfilePropertyResponse *)handleGetProfilePropertyForKeys:(NSArray<NSString *> *)keys;
 
 // Run a script-side function. Can include composition, references to variables.
+// origin is used to show why the function was called and goes in the error's title. e.g., "Trigger".
 - (void)invokeFunctionCall:(NSString *)invocation
-              extraContext:(NSDictionary *)extraContext;
+              extraContext:(NSDictionary *)extraContext
+                    origin:(NSString *)origin;
 
 #pragma mark - Testing utilities
 
