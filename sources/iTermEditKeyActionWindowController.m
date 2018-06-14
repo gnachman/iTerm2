@@ -230,7 +230,8 @@
             [[_parameter cell] setPlaceholderString:@"Function Call"];
             if (!_functionCallDelegate) {
                 _functionCallDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:iTermVariablesGetAll()
-                                                                                      passthrough:nil];
+                                                                                      passthrough:nil
+                                                                                    functionsOnly:YES];
             }
             parameterDelegate = _functionCallDelegate;
             break;

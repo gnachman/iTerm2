@@ -35,6 +35,9 @@ NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPI
 NSString *const iTermAPIRegisteredFunctionsDidChangeNotification = @"iTermAPIRegisteredFunctionsDidChangeNotification";
 NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPIDidRegisterSessionTitleFunctionNotification";
 
+const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode = 100;
+const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
+
 @interface iTermAllSessionsSubscription : NSObject
 @property (nonatomic, strong) ITMNotificationRequest *request;
 @property (nonatomic, strong) id connection;
@@ -413,14 +416,16 @@ NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPI
         }
         if (error) {
             *error = [self rpcDispatchError:exception[@"reason"]
-                                     detail:exception[@"traceback"]];
+                                     detail:exception[@"traceback"]
+                               unregistered:NO];
         }
         return nil;
     }
     if (result.jsonValue.length == 0) {
         if (error) {
             *error = [self rpcDispatchError:@"Malformed response missing json value"
-                                     detail:[result debugDescription]];
+                                     detail:[result debugDescription]
+                               unregistered:NO];
         }
         return nil;
     }
@@ -447,7 +452,7 @@ NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPI
     id connectionKey = subs.allKeys.firstObject;
     if (!connectionKey) {
         NSString *reason = [NSString stringWithFormat:@"No function registered for invocation “%@”", signature];
-        completion(nil, [self rpcDispatchError:reason detail:nil]);
+        completion(nil, [self rpcDispatchError:reason detail:nil unregistered:YES]);
         return;
     }
 
@@ -464,7 +469,7 @@ NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPI
     id connectionKey = subs.allKeys.firstObject;
     if (!connectionKey) {
         NSString *reason = [NSString stringWithFormat:@"No function registered for invocation “%@”", signature];
-        *error = [self rpcDispatchError:reason detail:nil];
+        *error = [self rpcDispatchError:reason detail:nil unregistered:YES];
         return nil;
     }
 
@@ -477,7 +482,7 @@ NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPI
 }
 
 // Constructs an error with an optional traceback in `detail`.
-- (NSError *)rpcDispatchError:(NSString *)reason detail:(NSString *)detail {
+- (NSError *)rpcDispatchError:(NSString *)reason detail:(NSString *)detail unregistered:(BOOL)unregistered {
     if (reason == nil) {
         reason = @"Unknown reason";
     }
@@ -486,7 +491,7 @@ NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPI
         userInfo = [userInfo dictionaryBySettingObject:detail forKey:NSLocalizedFailureReasonErrorKey];
     }
     return [NSError errorWithDomain:@"com.iterm2.api"
-                               code:1
+                               code:unregistered ? iTermAPIHelperFunctionCallUnregisteredErrorCode : iTermAPIHelperFunctionCallOtherErrorCode
                            userInfo:userInfo];
 }
 
@@ -542,7 +547,7 @@ NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPI
     }
 
     [_serverOriginatedRPCCompletionBlocks removeObjectForKey:requestID];
-    completion(nil, [self rpcDispatchError:@"Timeout" detail:nil]);
+    completion(nil, [self rpcDispatchError:@"Timeout" detail:nil unregistered:NO]);
 }
 
 - (NSString *)nextServerOriginatedRPCRequestIDWithCompletion:(iTermServerOriginatedRPCCompletionBlock)completion {
@@ -555,7 +560,6 @@ NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPI
     return requestID;
 }
 
-// function name -> [ arg1, arg2, ... ]
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary {
     NSMutableDictionary<NSString *, NSArray<NSString *> *> *result = [NSMutableDictionary dictionary];
     for (NSString *stringSignature in _serverOriginatedRPCSubscriptions.allKeys) {
@@ -598,6 +602,10 @@ NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPI
 - (BOOL)haveRegisteredFunctionWithName:(NSString *)name
                              arguments:(NSArray<NSString *> *)arguments {
     NSString *stringSignature = iTermFunctionSignatureFromNameAndArguments(name, arguments);
+    return [self haveRegisteredFunctionWithSignature:stringSignature];
+}
+
+- (BOOL)haveRegisteredFunctionWithSignature:(NSString *)stringSignature {
     return _serverOriginatedRPCSubscriptions[stringSignature].allValues.firstObject != nil;
 }
 
@@ -994,7 +1002,8 @@ NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPI
         if (completion) {
             [_serverOriginatedRPCCompletionBlocks removeObjectForKey:requestID];
             completion(nil, [self rpcDispatchError:@"Script terminated during function call"
-                                            detail:nil]);
+                                            detail:nil
+                                      unregistered:YES]);
         }
     }
 
@@ -1915,7 +1924,8 @@ NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPI
 
     if (exception) {
         block(nil, [self rpcDispatchError:exception[@"reason"]
-                                   detail:exception[@"traceback"]]);
+                                   detail:exception[@"traceback"]
+                             unregistered:NO]);
     } else {
         if ([NSNull castFrom:value]) {
             value = nil;

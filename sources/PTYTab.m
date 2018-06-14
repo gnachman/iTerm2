@@ -10,6 +10,7 @@
 #import "iTermPreferences.h"
 #import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
+#import "iTermSwiftyString.h"
 #import "iTermVariables.h"
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
@@ -33,7 +34,8 @@
 
 #define PtyLog DLog
 
-static NSString *const PTYTabVariableTitleOverride = @"titleOverride";
+NSString *const PTYTabVariableTitleOverride = @"titleOverride";
+static NSString *const PTYTabVariableTitleCurrentSession = @"currentSession";
 
 NSString *const iTermTabDidChangeWindowNotification = @"iTermTabDidChangeWindowNotification";
 NSString *const iTermSessionBecameKey = @"iTermSessionBecameKey";
@@ -194,6 +196,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     BOOL _isDraggingSplitInTmuxTab;
 
     BOOL _resizingSplit;
+    iTermSwiftyString *_tabTitleOverrideSwiftyString;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -398,6 +401,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [hiddenLiveViews_ release];
     [_viewToSessionMap release];
     [_variables release];
+    [_tabTitleOverrideSwiftyString release];
     [super dealloc];
 }
 
@@ -548,7 +552,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateTabTitleForCurrentSessionName:(NSString *)newName {
-    [tabViewItem_ setLabel:self.titleOverride ?: newName];  // PSM uses bindings to bind the label to its title
+    [tabViewItem_ setLabel:self.evaluatedTitleOverride ?: newName];  // PSM uses bindings to bind the label to its title
     [self.realParentWindow tabTitleDidChange:self];
 }
 
@@ -595,6 +599,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     activeSession_ = session;
     if (activeSession_ == nil) {
         [self recheckBlur];
+        [_variables setValue:nil forVariableNamed:PTYTabVariableTitleCurrentSession];
         return;
     }
     if (changed) {
@@ -615,6 +620,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [[aSession textview] setNeedsDisplay:YES];
     }
     [self updateLabelAttributes];
+    [_variables setValue:activeSession_.variables forVariableNamed:PTYTabVariableTitleCurrentSession];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
                                                         object:activeSession_
                                                       userInfo:@{ @"changed": @(changed) }];
@@ -3952,11 +3958,43 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return root;
 }
 
+- (void)updateTabTitle {
+    NSString *sessionName = [self.activeSession.variables valueForVariableName:iTermVariableKeySessionPresentationName];
+    [self updateTabTitleForCurrentSessionName:sessionName];
+}
+
+- (id)valueForVariable:(NSString *)name {
+    return [_variables valueForVariableName:name];
+}
+
 - (void)setTitleOverride:(NSString *)titleOverride {
-    [_variables setValue:titleOverride forVariableNamed:PTYTabVariableTitleOverride];
+    [_tabTitleOverrideSwiftyString invalidate];
+    if (!titleOverride) {
+        [_tabTitleOverrideSwiftyString autorelease];
+        _tabTitleOverrideSwiftyString = nil;
+        [_variables setValue:nil forVariableNamed:PTYTabVariableTitleOverride];
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    _tabTitleOverrideSwiftyString =
+        [[iTermSwiftyString alloc] initWithString:titleOverride
+                                           source:
+         ^id _Nonnull(NSString * _Nonnull name) {
+             return [weakSelf valueForVariable:name];
+         }
+                                          mutates:[NSSet setWithObject:PTYTabVariableTitleOverride]
+                                         observer:
+         ^(NSString * _Nonnull newValue) {
+             [weakSelf.variables setValue:newValue forVariableNamed:PTYTabVariableTitleOverride];
+             [weakSelf updateTabTitle];
+         }];
 }
 
 - (NSString *)titleOverride {
+    return _tabTitleOverrideSwiftyString.swiftyString;
+}
+
+- (NSString *)evaluatedTitleOverride {
     return [_variables valueForVariableName:PTYTabVariableTitleOverride];
 }
 
@@ -5028,7 +5066,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames
             group:(dispatch_group_t)group {
-    [self updateTabTitleForCurrentSessionName:[self.activeSession.variables valueForVariableName:iTermVariableKeySessionPresentationName]];
+    [_tabTitleOverrideSwiftyString variablesDidChange:changedNames];
 }
 
 @end

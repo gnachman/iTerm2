@@ -5815,7 +5815,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                        }
                                        return [self functionCallSource](key);
                                    }
-                               completion:^(id value, NSError *error) {
+                               completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
                                    if (error) {
                                        [PTYSession reportFunctionCallError:error forInvocation:invocation];
                                    }
@@ -5891,7 +5891,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [iTermScriptFunctionCall callFunction:keyBindingText
                                           timeout:[[NSDate distantFuture] timeIntervalSinceNow]
                                            source:[self functionCallSource]
-                                       completion:^(id value, NSError *error) {
+                                       completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
                                            if (error) {
                                                [PTYSession reportFunctionCallError:error forInvocation:keyBindingText];
                                            }

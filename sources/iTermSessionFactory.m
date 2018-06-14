@@ -176,7 +176,7 @@ NS_ASSUME_NONNULL_BEGIN
         [iTermScriptFunctionCall evaluateString:name
                                         timeout:[iTermAdvancedSettingsModel timeoutForStringEvaluation]
                                          source:aSession.functionCallSource
-                                     completion:^(NSString *result, NSError *error) {
+                                     completion:^(NSString *result, NSError *error, NSSet<NSString *> *missing) {
                                          block(result ?: @"");
                                      }];
     } else {

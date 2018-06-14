@@ -460,7 +460,7 @@
     NSArray<iTermTuple<NSString *, NSNumber *> *> *expected =
         @[ [iTermTuple tupleWithObject:@"xyz" andObject:@YES] ];
     NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
-    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+    [s enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
         [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
     }];
     XCTAssertEqualObjects(actual, expected);
@@ -473,7 +473,7 @@
            [iTermTuple tupleWithObject:@"def" andObject:@NO],
            [iTermTuple tupleWithObject:@"ghi" andObject:@YES]];
     NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
-    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+    [s enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
         [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
     }];
     XCTAssertEqualObjects(actual, expected);
@@ -484,7 +484,7 @@
     NSArray<iTermTuple<NSString *, NSNumber *> *> *expected =
         @[ [iTermTuple tupleWithObject:@"a\\b\\\\" andObject:@YES] ];
     NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
-    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+    [s enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
         [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
     }];
     XCTAssertEqualObjects(actual, expected);
@@ -495,7 +495,7 @@
     NSArray<iTermTuple<NSString *, NSNumber *> *> *expected =
         @[ [iTermTuple tupleWithObject:@"foo(\"bar(((\")" andObject:@NO] ];
     NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
-    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+    [s enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
         [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
     }];
     XCTAssertEqualObjects(actual, expected);
@@ -506,7 +506,7 @@
     NSArray<iTermTuple<NSString *, NSNumber *> *> *expected =
         @[ [iTermTuple tupleWithObject:@"foo(\"bar\(inner(x,y))\")" andObject:@NO] ];
     NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
-    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+    [s enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
         [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
     }];
     XCTAssertEqualObjects(actual, expected);
@@ -517,7 +517,7 @@
     NSArray<iTermTuple<NSString *, NSNumber *> *> *expected =
         @[ [iTermTuple tupleWithObject:@"foo(\"bar\(inner(\"innerstring\",y))\")" andObject:@NO] ];
     NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
-    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+    [s enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
         [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
     }];
     XCTAssertEqualObjects(actual, expected);
@@ -528,7 +528,7 @@
     NSArray<iTermTuple<NSString *, NSNumber *> *> *expected =
         @[ [iTermTuple tupleWithObject:@"foo(\"bar\(inner(\"innerstring\",y" andObject:@YES] ];
     NSMutableArray<iTermTuple<NSString *, NSNumber *> *> *actual = [NSMutableArray array];
-    [s enumerateSwiftySubstrings:^(NSString *substring, BOOL isLiteral) {
+    [s enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
         [actual addObject:[iTermTuple tupleWithObject:substring andObject:@(isLiteral)]];
     }];
     XCTAssertEqualObjects(actual, expected);

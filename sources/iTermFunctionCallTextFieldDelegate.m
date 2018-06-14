@@ -28,14 +28,15 @@
 }
 
 - (instancetype)initWithPaths:(NSArray<NSString *> *)paths
-                  passthrough:(id)passthrough {
+                  passthrough:(id)passthrough
+                functionsOnly:(BOOL)functionsOnly {
     self = [super init];
     if (self) {
         NSDictionary<NSString *,NSArray<NSString *> *> *signatures =
             [[iTermAPIHelper sharedInstance] registeredFunctionSignatureDictionary];
-        _suggester = [[iTermFunctionCallSuggester alloc] initWithFunctionSignatures:signatures
-                                                                              paths:paths
-                                                                 matchFunctionsOnly:YES];
+        Class suggesterClass = functionsOnly ? [iTermFunctionCallSuggester class] : [iTermSwiftyStringSuggester class];
+        _suggester = [[suggesterClass alloc] initWithFunctionSignatures:signatures
+                                                                  paths:paths];
         _passthrough = passthrough;
     }
     return self;

@@ -275,7 +275,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // lll                                      YES
 // eee(eee,eee,"eee","\\"","ee\(EE())")     NO
 // ll                                       YES
-- (void)enumerateSwiftySubstrings:(void (^)(NSString *substring, BOOL isLiteral))block;
+- (void)enumerateSwiftySubstrings:(void (^)(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop))block;
 
 @end
 

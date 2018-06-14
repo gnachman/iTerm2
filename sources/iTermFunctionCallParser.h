@@ -11,22 +11,24 @@
 @class iTermScriptFunctionCall;
 
 @interface iTermParsedExpression : NSObject
-@property (nonatomic, strong, readonly) NSString *sourceCode;
 // Only one property will be set.
 @property (nonatomic, strong, readonly) iTermScriptFunctionCall *functionCall;
 @property (nonatomic, strong, readonly) NSString *string;
 @property (nonatomic, strong, readonly) NSNumber *number;
 @property (nonatomic, strong, readonly) NSError *error;
 @property (nonatomic, readonly) BOOL optional;
+@property (nonatomic, strong, readonly) NSArray *interpolatedStringParts;
 @end
 
 @interface iTermFunctionCallParser : NSObject <CPParserDelegate, CPTokeniserDelegate>
 
 + (CPTokeniser *)newTokenizer;
 + (id<CPTokenRecogniser>)stringRecognizerWithClass:(Class)theClass;
++ (void)setEscapeReplacerInStringRecognizer:(id)stringRecogniser;
 
 // Use this to get an instance. Only on the main thread.
-+ (instancetype)sharedInstance;
++ (instancetype)callParser;
++ (instancetype)expressionParser;
 
 - (instancetype)init NS_UNAVAILABLE;
 

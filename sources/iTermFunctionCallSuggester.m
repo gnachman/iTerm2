@@ -9,6 +9,8 @@
 
 #import "iTermFunctionCallParser.h"
 #import "iTermGrammarProcessor.h"
+#import "iTermSwiftyStringParser.h"
+#import "iTermSwiftyStringRecognizer.h"
 #import "iTermTruncatedQuotedRecognizer.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -17,31 +19,29 @@
 @end
 
 @implementation iTermFunctionCallSuggester {
-    CPTokeniser *_tokenizer;
+@protected
     CPLR1Parser *_parser;
-    NSString *_prefix;
     NSDictionary<NSString *,NSArray<NSString *> *> *_functionSignatures;
     NSArray<NSString *> *_paths;
+    NSString *_prefix;
+    CPTokeniser *_tokenizer;
     iTermGrammarProcessor *_grammarProcessor;
-    BOOL _functionsOnly;
 }
 
 - (instancetype)initWithFunctionSignatures:(NSDictionary<NSString *,NSArray<NSString *> *> *)functionSignatures
-                                     paths:(NSArray<NSString *> *)paths
-                        matchFunctionsOnly:(BOOL)functionsOnly {
+                                     paths:(NSArray<NSString *> *)paths {
     self = [super init];
     if (self) {
-        _functionsOnly = functionsOnly;
         _functionSignatures = [functionSignatures copy];
         _paths = [paths copy];
         _tokenizer = [iTermFunctionCallParser newTokenizer];
-        [_tokenizer addTokenRecogniser:[iTermFunctionCallParser stringRecognizerWithClass:[iTermTruncatedQuotedRecognizer class]]];
+        [self addTokenRecognizersToTokenizer:_tokenizer];
         _tokenizer.delegate = self;
         _grammarProcessor = [[iTermGrammarProcessor alloc] init];
         [self loadRulesAndTransforms];
 
         NSError *error = nil;
-        CPGrammar *grammar = [CPGrammar grammarWithStart:_functionsOnly ? @"call" : @"expression"
+        CPGrammar *grammar = [CPGrammar grammarWithStart:self.grammarStart
                                           backusNaurForm:_grammarProcessor.backusNaurForm
                                                    error:&error];
         _parser = [CPSLRParser parserWithGrammar:grammar];
@@ -51,24 +51,60 @@
     return self;
 }
 
+- (void)addTokenRecognizersToTokenizer:(CPTokeniser *)tokenizer {
+    [tokenizer addTokenRecogniser:[self stringRecognizer]];
+    iTermSwiftyStringRecognizer *swiftyRecognizer =
+    [[iTermSwiftyStringRecognizer alloc] initWithStartQuote:@"\""
+                                                   endQuote:@"\""
+                                             escapeSequence:@"\\"
+                                              maximumLength:NSNotFound
+                                                       name:@"SwiftyString"
+                                         tolerateTruncation:YES];
+
+    [iTermFunctionCallParser setEscapeReplacerInStringRecognizer:swiftyRecognizer];
+    [_tokenizer addTokenRecogniser:swiftyRecognizer];
+}
+
+- (CPQuotedRecogniser *)stringRecognizer {
+    return [iTermFunctionCallParser stringRecognizerWithClass:[iTermTruncatedQuotedRecognizer class]];
+}
+
+- (NSString *)grammarStart {
+    return @"call";
+}
+
+- (void)addStringRules {
+    [_grammarProcessor addProductionRule:@"expression ::= <string>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               iTermSwiftyStringToken *token = [iTermSwiftyStringToken castFrom:syntaxTree.children[0]];
+                               if (token.truncated && !token.endsWithLiteral) {
+                                   return @{ @"truncated_interpolation": token.truncatedPart };
+                               } else {
+                                   return @{ @"literal": @YES };
+                               }
+                           }];
+    [_grammarProcessor addProductionRule:@"string ::= 'SwiftyString'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return syntaxTree.children[0];
+                           }];
+}
+
 - (void)loadRulesAndTransforms {
     __weak __typeof(self) weakSelf = self;
-    if (_functionsOnly) {
-        [_grammarProcessor addProductionRule:@"call ::= 'Identifier' <arglist>"
-                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                                   return [weakSelf callWithName:[syntaxTree.children[0] identifier]
-                                                         arglist:syntaxTree.children[1]];
-                               }];
-        [_grammarProcessor addProductionRule:@"call ::= 'EOF'"
-                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                                   return [weakSelf callWithName:@""
-                                                         arglist:@{ @"partial-arglist": @YES }];
-                               }];
-        [_grammarProcessor addProductionRule:@"arglist ::= 'EOF'"
-                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                                   return @{ @"partial-arglist": @YES };
-                               }];
-    }
+    [_grammarProcessor addProductionRule:@"call ::= 'Identifier' <arglist>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [weakSelf callWithName:[syntaxTree.children[0] identifier]
+                                                     arglist:syntaxTree.children[1]];
+                           }];
+    [_grammarProcessor addProductionRule:@"call ::= 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [weakSelf callWithName:@""
+                                                     arglist:@{ @"partial-arglist": @YES }];
+                           }];
+    [_grammarProcessor addProductionRule:@"arglist ::= 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"partial-arglist": @YES };
+                           }];
     [_grammarProcessor addProductionRule:@"arglist ::= '(' <args> ')'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return @{ @"complete-arglist": @YES };
@@ -127,21 +163,11 @@
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return @{ @"literal": @YES };
                            }];
-    [_grammarProcessor addProductionRule:@"expression ::= 'String'"
+    [self addStringRules];
+    [_grammarProcessor addProductionRule:@"expression ::= <composed_call>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @{ @"literal": @YES };
+                               return @{ @"call": syntaxTree.children[0] };
                            }];
-    if (_functionsOnly) {
-        [_grammarProcessor addProductionRule:@"expression ::= <composed_call>"
-                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                                   return @{ @"call": syntaxTree.children[0] };
-                               }];
-    } else {
-        [_grammarProcessor addProductionRule:@"expression ::= <call>"
-                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                                   return @{ @"call": syntaxTree.children[0] };
-                               }];
-    }
     [_grammarProcessor addProductionRule:@"path ::= 'Identifier'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return [syntaxTree.children[0] identifier];
@@ -154,39 +180,31 @@
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return [NSString stringWithFormat:@"%@.%@",
                                        [syntaxTree.children[0] identifier],
-                                       syntaxTree.children[1]];
+                                       syntaxTree.children[2]];
                            }];
-    if (_functionsOnly) {
-        [_grammarProcessor addProductionRule:@"composed_call ::= 'Identifier' <composed_arglist>"
-                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                                   return [weakSelf callWithName:[syntaxTree.children[0] identifier]
-                                                         arglist:syntaxTree.children[1]];
-                               }];
-        [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' <args> ')'"
-                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                                   return @{ @"complete-arglist": @YES };
-                               }];
-        [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' <args> 'EOF'"
-                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                                   return @{ @"partial-arglist": @YES,
-                                             @"args": syntaxTree.children[1] };
-                               }];
-        [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' 'EOF'"
-                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                                   return @{ @"partial-arglist": @YES,
-                                             @"args": @[] };
-                               }];
-        [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' ')'"
-                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                                   return @{ @"complete-arglist": @YES };
-                               }];
-    } else {
-        [_grammarProcessor addProductionRule:@"call ::= 'Identifier' <arglist>"
-                               treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                                   return [weakSelf callWithName:[syntaxTree.children[0] identifier]
-                                                         arglist:syntaxTree.children[1]];
-                               }];
-    }
+    [_grammarProcessor addProductionRule:@"composed_call ::= 'Identifier' <composed_arglist>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return [weakSelf callWithName:[syntaxTree.children[0] identifier]
+                                                     arglist:syntaxTree.children[1]];
+                           }];
+    [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' <args> ')'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"complete-arglist": @YES };
+                           }];
+    [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' <args> 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"partial-arglist": @YES,
+                                         @"args": syntaxTree.children[1] };
+                           }];
+    [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' 'EOF'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"partial-arglist": @YES,
+                                         @"args": @[] };
+                           }];
+    [_grammarProcessor addProductionRule:@"composed_arglist ::= '(' ')'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+                               return @{ @"complete-arglist": @YES };
+                           }];
 }
 
 - (NSArray<NSString *> *)suggestionsForString:(NSString *)prefix {
@@ -195,16 +213,14 @@
     }
     _prefix = prefix;
     CPTokenStream *tokenStream = [_tokenizer tokenise:prefix];
-    NSArray *result = [_parser parse:tokenStream];
-    if (_functionsOnly) {
-        return [result mapWithBlock:^id(NSString *s) {
-            return [prefix stringByAppendingString:s];
-        }];
-    } else {
-        return [result flatMapWithBlock:^id(NSDictionary *dict) {
-            return [self suggestedExpressions:dict nextArgumentName:nil];
-        }];
-    }
+    id result = [_parser parse:tokenStream];
+    return [self parsedResult:result forString:prefix];
+}
+
+- (NSArray<NSString *> *)parsedResult:(id)result forString:(NSString *)prefix {
+    return [[NSArray castFrom:result] mapWithBlock:^id(NSString *s) {
+        return [prefix stringByAppendingString:s];
+    }];
 }
 
 #pragma mark - Private
@@ -259,7 +275,8 @@
             }];
             nextArgumentName = [nextArgumentName stringByAppendingString:@":"];
             NSArray *suggestions = [self suggestedExpressions:argDict[@"expression"]
-                                             nextArgumentName:nextArgumentName];
+                                             nextArgumentName:nextArgumentName
+                                             valuesMustBeArgs:YES];
             return suggestions;
         }
         prefix = argDict[@"identifier"] ?: @"";
@@ -279,25 +296,40 @@
 // @{ @"path": @"partial path" }
 // @{ @"path": @"complete path", @"terminated": @YES }
 // @{ @"literal": @YES }
+// @{ @"truncated_interpolation": @"truncated expression" }
 // @{ @"call": @[ suggestions ] };
 - (NSArray<NSString *> *)suggestedExpressions:(NSDictionary *)expression
-                             nextArgumentName:(NSString *)nextArgumentName {
-    if (expression[@"literal"] || expression[@"terminated"]) {
+                             nextArgumentName:(NSString *)nextArgumentName
+                             valuesMustBeArgs:(BOOL)valuesMustBeArgs {
+    if (expression == nil || expression[@"literal"] || expression[@"terminated"]) {
         return @[];
     } else if (expression[@"call"]) {
         return expression[@"call"];
+    } else if (expression[@"truncated_interpolation"]) {
+        // Some half-written expression inside an interpolated string. For example:
+        //    Foo\(bar(
+        // The truncated_interpolation's value would be bar(
+        //
+        // It could be something nutty like
+        //    Foo\(bar("baz\(blatz(
+        // The truncated_interpolation's value would be bar("baz\(blatz(
+        // A few recursions later you should get suggestions for blatz's arguments.
+        iTermFunctionCallSuggester *inner = [[iTermFunctionCallSuggester alloc] initWithFunctionSignatures:_functionSignatures
+                                                                                                     paths:_paths];
+        return [inner suggestionsForString:expression[@"truncated_interpolation"]];
     } else {
         NSArray<NSString *> *legalPaths = _paths;
-        if (nextArgumentName == nil) {
-            legalPaths = [legalPaths mapWithBlock:^id(NSString *anObject) {
-                return [anObject stringByAppendingString:@")"];
-            }];
-        } else {
-            legalPaths = [legalPaths mapWithBlock:^id(NSString *anObject) {
-                return [anObject stringByAppendingFormat:@", %@:", nextArgumentName];
-            }];
+        if (valuesMustBeArgs) {
+            if (nextArgumentName == nil) {
+                legalPaths = [legalPaths mapWithBlock:^id(NSString *anObject) {
+                    return [anObject stringByAppendingString:@")"];
+                }];
+            } else {
+                legalPaths = [legalPaths mapWithBlock:^id(NSString *anObject) {
+                    return [anObject stringByAppendingFormat:@", %@:", nextArgumentName];
+                }];
+            }
         }
-
         NSArray<NSString *> *functionNames = _functionSignatures.allKeys;
         functionNames = [functionNames mapWithBlock:^id(NSString *anObject) {
             NSString *firstArgName  = [self argumentNamesForFunction:anObject].firstObject ?: @")";
@@ -368,6 +400,42 @@
         return [CPRecoveryAction recoveryActionWithAdditionalToken:[CPEOFToken eof]];
     }
     return [CPRecoveryAction recoveryActionStop];
+}
+
+@end
+
+@implementation iTermSwiftyStringSuggester
+
+- (NSString *)grammarStart {
+    return @"expression";
+}
+
+- (NSArray<NSString *> *)suggestionsForString:(NSString *)prefix {
+    if ([prefix hasSuffix:@" "]) {
+        return @[];
+    }
+    _prefix = prefix;
+
+    iTermSwiftyStringParser *parser = [[iTermSwiftyStringParser alloc] initWithString:prefix];
+    parser.tolerateTruncation = YES;
+    NSInteger index = [parser enumerateSwiftySubstringsWithBlock:nil];
+    if (index >= prefix.length ||
+        index == NSNotFound ||
+        !parser.wasTruncated ||
+        parser.wasTruncatedInLiteral) {
+        return @[];
+    }
+    NSString *truncatedExpression = [prefix substringFromIndex:index];
+    return [[super suggestionsForString:truncatedExpression] mapWithBlock:^id(NSString *tail) {
+        return [prefix stringByAppendingString:tail];
+    }];
+}
+
+- (NSArray<NSString *> *)parsedResult:(id)result forString:(NSString *)prefix {
+    NSArray<NSString *> *suggestions = [self suggestedExpressions:[NSDictionary castFrom:result]
+                                                 nextArgumentName:nil
+                                                 valuesMustBeArgs:NO];
+    return suggestions;
 }
 
 @end

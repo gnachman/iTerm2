@@ -24,6 +24,7 @@
 #import "iTermController.h"
 #import "iTermFindCursorView.h"
 #import "iTermFontPanel.h"
+#import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermNotificationController.h"
 #import "iTermHotKeyController.h"
 #import "iTermHotKeyMigrationHelper.h"
@@ -46,6 +47,7 @@
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
 #import "iTermTouchBarButton.h"
+#import "iTermVariables.h"
 #import "iTermWarning.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "MovePaneController.h"
@@ -4914,8 +4916,14 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYTab *tab = tabViewItem.identifier;
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"Set Tab Title";
-    alert.informativeText = @"If this is empty, the tab takes the active session’s title.";
-    NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
+    alert.informativeText = @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will replaced with their evalution.";
+    NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 400, 24 * 3)] autorelease];
+    iTermFunctionCallTextFieldDelegate *delegate;
+    NSArray *paths = [tab.variables.legacyDictionary.allKeys arrayByRemovingObject:PTYTabVariableTitleOverride];
+    delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:paths
+                                                              passthrough:nil
+                                                            functionsOnly:NO] autorelease];
+    titleTextField.delegate = delegate;
     titleTextField.editable = YES;
     titleTextField.selectable = YES;
     titleTextField.stringValue = tab.titleOverride ?: @"";

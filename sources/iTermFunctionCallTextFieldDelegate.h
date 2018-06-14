@@ -14,7 +14,13 @@
 
 // If passthrough is nonnil then controlTextDidBeginEditing and controlTextDidEndEditing get called
 // on it.
+// If functionsOnly is NO, any legal expression is accepted (strings, ints,
+// variable references, function calls). Otherwise, only suggestions for
+// a top-level function call will be made. It may, of course, have expressions
+// for argument values.
 - (instancetype)initWithPaths:(NSArray<NSString *> *)paths
-                  passthrough:(id)passthrough;
+                  passthrough:(id)passthrough
+                functionsOnly:(BOOL)functionsOnly NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
 
 @end

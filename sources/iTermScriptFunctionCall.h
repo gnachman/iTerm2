@@ -9,6 +9,8 @@
 
 @interface iTermScriptFunctionCall : NSObject
 
+@property (nonatomic, readonly) NSString *signature;
+
 // Evaluates an expression given in invocation.
 // invocation should look like one of:
 //
@@ -54,18 +56,22 @@
 + (void)evaluateExpression:(NSString *)invocation
                    timeout:(NSTimeInterval)timeout
                     source:(id (^)(NSString *))source
-                completion:(void (^)(id, NSError *))completion;
+                completion:(void (^)(id, NSError *, NSSet<NSString *> *missingFunctionSignatures))completion;
 
-// Like evaluateExpression but only accepts function calls.
+// Like evaluateExpression but only accepts a function call at the top level.
 + (void)callFunction:(NSString *)invocation
              timeout:(NSTimeInterval)timeout
               source:(id (^)(NSString *))source
-          completion:(void (^)(id, NSError *))completion;
+          completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
 
 // Evaluate a string with embedded function calls like a swift string with \(expression)s in it.
+// If you need a string that changes dynamically as its dependencies (i.e., variables) change,
+// use iTermSwiftyString instead.
 + (void)evaluateString:(NSString *)string
                timeout:(NSTimeInterval)timeout
                 source:(id (^)(NSString *))source
-            completion:(void (^)(NSString *result, NSError *error))completion;
+            completion:(void (^)(NSString *result,
+                                 NSError *error,
+                                 NSSet<NSString *> *missingFunctionSignatures))completion;
 
 @end

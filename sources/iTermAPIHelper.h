@@ -13,6 +13,9 @@ extern NSString *const iTermRemoveAPIServerSubscriptionsNotification;
 extern NSString *const iTermAPIRegisteredFunctionsDidChangeNotification;
 extern NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification;
 
+extern const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode;
+extern const NSInteger iTermAPIHelperFunctionCallOtherErrorCode;
+
 typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
 @interface iTermAPIHelper : NSObject<iTermAPIServerDelegate>
@@ -34,6 +37,7 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
                              timeout:(NSTimeInterval)timeout
                                error:(out NSError **)error;
 
+// function name -> [ arg1, arg2, ... ]
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
 
 // Tuple is (display name, invocation).
@@ -46,5 +50,8 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
                                          arguments:(NSArray<NSString *> *)arguments
                                            timeout:(NSTimeInterval)timeout
                                              block:(void (^)(BOOL timedOut))block;
+
+// stringSignature is like func(arg1,arg2). Use iTermFunctionSignatureFromNameAndArguments to construct it safely.
+- (BOOL)haveRegisteredFunctionWithSignature:(NSString *)stringSignature;
 
 @end

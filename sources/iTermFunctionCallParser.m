@@ -8,19 +8,14 @@
 #import "iTermFunctionCallParser.h"
 
 #import "iTermGrammarProcessor.h"
-#import "iTermScriptFunctionCall.h"
+#import "iTermParsedExpression+Tests.h"
 #import "iTermScriptFunctionCall+Private.h"
+#import "iTermScriptFunctionCall.h"
+#import "iTermSwiftyStringParser.h"
+#import "iTermSwiftyStringRecognizer.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
-
-@interface iTermParsedExpression()
-@property (nonatomic, readwrite) NSString *sourceCode;
-@property (nonatomic, readwrite) iTermScriptFunctionCall *functionCall;
-@property (nonatomic, readwrite) NSError *error;
-@property (nonatomic, readwrite) NSString *string;
-@property (nonatomic, readwrite) NSNumber *number;
-@property (nonatomic, readwrite) BOOL optional;
-@end
+#import "NSStringITerm.h"
 
 @interface iTermFunctionArgument : NSObject
 @property (nonatomic, copy) NSString *name;
@@ -28,6 +23,47 @@
 @end
 
 @implementation iTermParsedExpression
+
+- (NSString *)description {
+    NSString *value = nil;
+    if (self.functionCall) {
+        value = self.functionCall.description;
+    } else if (self.error) {
+        value = self.error.description;
+    } else if (self.string) {
+        value = self.string;
+    } else if (self.interpolatedStringParts) {
+        value = [[self.interpolatedStringParts mapWithBlock:^id(id anObject) {
+            return [anObject description];
+        }] componentsJoinedByString:@""];
+    } else if (self.number) {
+        value = [self.number stringValue];
+    }
+    if (self.optional) {
+        value = [value stringByAppendingString:@"?"];
+    }
+    return [NSString stringWithFormat:@"<Expr %@>", value];
+}
+
+- (BOOL)isEqual:(id)object {
+    iTermParsedExpression *other = [iTermParsedExpression castFrom:object];
+    if (!other) {
+        return NO;
+    }
+    return ([NSObject object:self.functionCall isEqualToObject:other.functionCall] &&
+            [NSObject object:self.error isEqualToObject:other.error] &&
+            [NSObject object:self.string isEqualToObject:other.string] &&
+            [NSObject object:self.number isEqualToObject:other.number] &&
+            [NSObject object:self.interpolatedStringParts isEqualToObject:other.interpolatedStringParts] &&
+            self.optional == other.optional);
+}
+
++ (instancetype)parsedString:(NSString *)string {
+    iTermParsedExpression *expr = [[self alloc] init];
+    expr.string = string;
+    return expr;
+}
+
 @end
 
 @implementation iTermFunctionArgument
@@ -43,20 +79,25 @@
     iTermGrammarProcessor *_grammarProcessor;
 }
 
-+ (instancetype)sharedInstance {
++ (instancetype)expressionParser {
     static iTermFunctionCallParser *sCachedInstance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        sCachedInstance = [[iTermFunctionCallParser alloc] initPrivate];
+        sCachedInstance = [[iTermFunctionCallParser alloc] initWithStart:@"expression"];
     });
     return sCachedInstance;
 }
 
-+ (id<CPTokenRecogniser>)stringRecognizerWithClass:(Class)theClass {
-    CPQuotedRecogniser *stringRecogniser = [theClass quotedRecogniserWithStartQuote:@"\""
-                                                                           endQuote:@"\""
-                                                                     escapeSequence:@"\\"
-                                                                               name:@"String"];
++ (instancetype)callParser {
+    static iTermFunctionCallParser *sCachedInstance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sCachedInstance = [[iTermFunctionCallParser alloc] initWithStart:@"call"];
+    });
+    return sCachedInstance;
+}
+
++ (void)setEscapeReplacerInStringRecognizer:(id)stringRecogniser {
     [stringRecogniser setEscapeReplacer:^ NSString * (NSString *str, NSUInteger *loc) {
         if (str.length > *loc) {
             switch ([str characterAtIndex:*loc]) {
@@ -81,6 +122,14 @@
         }
         return nil;
     }];
+}
+
++ (id<CPTokenRecogniser>)stringRecognizerWithClass:(Class)theClass {
+    CPQuotedRecogniser *stringRecogniser = [theClass quotedRecogniserWithStartQuote:@"\""
+                                                                           endQuote:@"\""
+                                                                     escapeSequence:@"\\"
+                                                                               name:@"String"];
+    [self setEscapeReplacerInStringRecognizer:stringRecogniser];
     return stringRecogniser;
 }
 
@@ -101,18 +150,18 @@
     return tokenizer;
 }
 
-- (id)initPrivate {
+- (id)initWithStart:(NSString *)start {
     self = [super init];
     if (self) {
         _tokenizer = [iTermFunctionCallParser newTokenizer];
-        [_tokenizer addTokenRecogniser:[iTermFunctionCallParser stringRecognizerWithClass:[CPQuotedRecogniser class]]];
+        [self addSwiftyStringRecognizers];
         _tokenizer.delegate = self;
 
         _grammarProcessor = [[iTermGrammarProcessor alloc] init];
         [self loadRulesAndTransforms];
 
         NSError *error = nil;
-        CPGrammar *grammar = [CPGrammar grammarWithStart:@"expression"
+        CPGrammar *grammar = [CPGrammar grammarWithStart:start
                                           backusNaurForm:_grammarProcessor.backusNaurForm
                                                    error:&error];
         _parser = [CPSLRParser parserWithGrammar:grammar];
@@ -120,6 +169,19 @@
         _parser.delegate = self;
     }
     return self;
+}
+
+- (void)addSwiftyStringRecognizers {
+    iTermSwiftyStringRecognizer *left =
+        [[iTermSwiftyStringRecognizer alloc] initWithStartQuote:@"\""
+                                                       endQuote:@"\""
+                                                 escapeSequence:@"\\"
+                                                  maximumLength:NSNotFound
+                                                           name:@"SwiftyString"
+                                             tolerateTruncation:NO];
+
+    [self.class setEscapeReplacerInStringRecognizer:left];
+    [_tokenizer addTokenRecogniser:left];
 }
 
 - (void)loadRulesAndTransforms {
@@ -141,6 +203,8 @@
                                        return arg.expression;
                                    } else if (arg.expression.optional) {
                                        [call addParameterWithName:arg.name value:[NSNull null]];
+                                   } else if (arg.expression.interpolatedStringParts) {
+                                       [call addParameterWithName:arg.name value:arg.expression];
                                    } else {
                                        assert(false);
                                    }
@@ -210,12 +274,33 @@
                                expression.number = [(CPNumberToken *)syntaxTree.children[0] number];
                                return expression;
                            }];
-    [_grammarProcessor addProductionRule:@"expression ::= 'String'"
+    [_grammarProcessor addProductionRule:@"expression ::= 'SwiftyString'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
-                               expression.string = [(CPQuotedToken *)syntaxTree.children[0] content];
-                               return expression;
+                               iTermFunctionCallParser *strongSelf = weakSelf;
+                               if (!strongSelf) {
+                                   return nil;
+                               }
+                               NSString *swifty = [(CPQuotedToken *)syntaxTree.children[0] content];
+                               NSMutableArray *interpolatedParts = [NSMutableArray array];
+                               [swifty enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
+                                   if (isLiteral) {
+                                       [interpolatedParts addObject:substring];
+                                       return;
+                                   }
+
+                                   iTermFunctionCallParser *parser = [[iTermFunctionCallParser alloc] initWithStart:@"expression"];
+                                   iTermParsedExpression *expression = [parser parse:substring
+                                                                              source:strongSelf->_source];
+                                   [interpolatedParts addObject:expression];
+                                   if (expression.error) {
+                                       *stop = YES;
+                                       return;
+                                   }
+                               }];
+
+                               return [strongSelf expressionWithCoalescedInterpolatedStringParts:interpolatedParts];
                            }];
+
     [_grammarProcessor addProductionRule:@"expression ::= <call>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
                                return syntaxTree.children[0];
@@ -230,6 +315,58 @@
                                        [(CPIdentifierToken *)syntaxTree.children[0] identifier],
                                        syntaxTree.children[2]];
                            }];
+}
+
+- (iTermParsedExpression *)expressionWithCoalescedInterpolatedStringParts:(NSArray *)interpolatedParts {
+    NSMutableArray *coalesced = [NSMutableArray array];
+    NSMutableArray *parts = [interpolatedParts mutableCopy];
+    NSError *error = nil;
+    while (parts.count) {
+        id previous = coalesced.lastObject;
+        id object = parts.firstObject;
+        [parts removeObjectAtIndex:0];
+
+        id value = object;
+        iTermParsedExpression *inner = [iTermParsedExpression castFrom:object];
+        if (inner.string) {
+            value = inner.string;
+        } else if (inner.number) {
+            value = inner.number.stringValue;
+        } else if (inner.error) {
+            error = inner.error;
+            break;
+        } else if (inner.interpolatedStringParts) {
+            NSArray *innerParts = inner.interpolatedStringParts;
+            for (NSInteger i = 0; i < innerParts.count; i++) {
+                [parts insertObject:innerParts[i] atIndex:i];
+            }
+            value = nil;
+        }
+        if ([value isKindOfClass:[NSString class]] &&
+            [previous isKindOfClass:[NSString class]]) {
+            [coalesced removeLastObject];
+            [coalesced addObject:[previous stringByAppendingString:value]];
+        } else if (value) {
+            [coalesced addObject:value];
+        }
+    }
+
+    iTermParsedExpression *result = [[iTermParsedExpression alloc] init];
+    if (error) {
+        result.error = error;
+        return result;
+    }
+    if (coalesced.count == 1) {
+        if ([coalesced.firstObject isKindOfClass:[NSString class]]) {
+            result.string = coalesced.firstObject;
+            return result;
+        } else {
+            assert([coalesced.firstObject isKindOfClass:[iTermParsedExpression class]]);
+            return coalesced.firstObject;
+        }
+    }
+    result.interpolatedStringParts = coalesced;
+    return result;
 }
 
 - (iTermParsedExpression *)parse:(NSString *)invocation source:(id (^)(NSString *))source {
@@ -280,8 +417,10 @@
         return [NSString stringWithFormat:@"“%@”", anObject];
     }];
     NSString *expectedString = [quotedExpected componentsJoinedByString:@", "];
-    NSString *reason = [NSString stringWithFormat:@"Syntax error at index %@ of “%@”. Expected one of: %@",
-                        @(inputStream.peekToken.characterNumber), _input, expectedString];
+    NSString *reason = [NSString stringWithFormat:@"Syntax error at index %@ of “%@”. Expected%@: %@",
+                        @(inputStream.peekToken.characterNumber), _input,
+                        quotedExpected.count > 1 ? @" one of" : @"",
+                        expectedString];
     _error = [NSError errorWithDomain:@"com.iterm2.parser"
                                  code:3
                              userInfo:@{ NSLocalizedDescriptionKey: reason }];

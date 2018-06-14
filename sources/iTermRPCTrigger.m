@@ -68,7 +68,8 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
 - (id<NSTextFieldDelegate>)newParameterDelegateWithPassthrough:(id<NSTextFieldDelegate>)passthrough {
     NSArray<NSString *> *paths = [[self allPaths] arrayByAddingObjectsFromArray:iTermVariablesGetAll()];
     return [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:paths
-                                                         passthrough:passthrough];
+                                                         passthrough:passthrough
+                                                       functionsOnly:YES];
 }
 
 @end

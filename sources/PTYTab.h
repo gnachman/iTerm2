@@ -20,6 +20,7 @@
 
 extern NSString *const iTermTabDidChangeWindowNotification;
 extern NSString *const iTermSessionBecameKey;
+extern NSString *const PTYTabVariableTitleOverride;
 
 // This implements NSSplitViewDelegate but it was an informal protocol in 10.5. If 10.5 support
 // is eventually dropped, change this to make it official.
@@ -67,8 +68,12 @@ extern NSString *const iTermSessionBecameKey;
 @property(nonatomic, assign) __unsafe_unretained PTYSession *lockedSession;
 
 // A string that overrides the default behavior of using the active session's title.
-// Set to nil to use the default behavior.
+// Set to nil to use the default behavior. This is a swifty string.
 @property (nonatomic, copy) NSString *titleOverride;
+
+// titleOverride with inline expressions evaluated.
+// This value is in the variable PTYTabVariableTitleOverride.
+@property (nonatomic, readonly) NSString *evaluatedTitleOverride;
 
 // Save the contents of all sessions. Used during window restoration so that if
 // the sessions are later restored from a saved arrangement during startup
