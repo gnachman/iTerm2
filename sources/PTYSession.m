@@ -482,6 +482,11 @@ static const NSUInteger kMaxHosts = 100;
     int _nextMetalDisabledToken;
     NSMutableSet *_metalDisabledTokens;
     BOOL _metalDeviceChanging;
+
+#if BETA
+#warning TODO: Remove this after the sanity check failures are figured out
+    BOOL _realIsDivorced;
+#endif
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -2834,7 +2839,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                    inBookmark:temp];
 
     ProfileModel* model;
-    if (_isDivorced) {
+    if (self.isDivorced) {
         model = [ProfileModel sessionsInstance];
     } else {
         model = [ProfileModel sharedInstance];
@@ -2849,7 +2854,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)_setKeepOutdatedKeyMapping
 {
     ProfileModel* model;
-    if (_isDivorced) {
+    if (self.isDivorced) {
         model = [ProfileModel sessionsInstance];
     } else {
         model = [ProfileModel sharedInstance];
@@ -3216,7 +3221,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!updatedProfile) {
         return;
     }
-    if (!_isDivorced) {
+    if (!self.isDivorced) {
         [self setPreferencesFromAddressBookEntry:updatedProfile];
         [self setProfile:updatedProfile];
         return;
@@ -3264,7 +3269,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)sanityCheck {
-    if (_isDivorced) {
+    if (self.isDivorced) {
         NSDictionary *sessionsProfile =
             [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
         NSArray *trimCallStack = [NSThread trimCallStackSymbols];
@@ -3274,7 +3279,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                         _profile[KEY_GUID],
                                         _profile[KEY_ORIGINAL_GUID],
                                         [trimCallStack componentsJoinedByString:@"\n"]]];
-        } else {
+        } else { // !sessionProfile && _profile
+            // this is bad because you're divorced and you don't have a sessionsProfile.  That might
+            // be excusable if you didn't have a profile at all, but you have one. So the GUID of
+            // your supposedly divorced profile does not refer to an extant sessions profile!
             [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: NOT OK with guid %@, original guid %@ at\n%@",
                                         self,
                                         _profile[KEY_GUID],
@@ -3294,7 +3302,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)sessionProfileDidChange
 {
-    if (!_isDivorced) {
+    if (!self.isDivorced) {
         return;
     }
     NSDictionary *updatedProfile =
@@ -3337,7 +3345,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _originalProfile = [sharedProfile copy];
     }
 
-    if (_isDivorced) {
+    if (self.isDivorced) {
         NSDictionary *sessionProfile = [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
         if (![sessionProfile isEqual:_profile]) {
             DLog(@"Session profile changed");
@@ -4430,7 +4438,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)savedArrangementWasRepaired:(NSNotification *)notification {
     if ([notification.object isEqual:_missingSavedArrangementProfileGUID]) {
         Profile *newProfile = notification.userInfo[@"new profile"];
-        _isDivorced = NO;
+        self.isDivorced = NO;
         [_overriddenFields removeAllObjects];
         [_originalProfile release];
         _originalProfile = nil;
@@ -4528,7 +4536,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self setFont:font nonAsciiFont:nonAsciiFont horizontalSpacing:hs verticalSpacing:vs];
 
-    if (dir || _isDivorced) {
+    if (dir || self.isDivorced) {
         // Move this bookmark into the sessions model.
         NSString* guid = [self divorceAddressBookEntryFromPreferences];
 
@@ -4548,7 +4556,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues {
     [self sanityCheck];
-    if (!_isDivorced) {
+    if (!self.isDivorced) {
         [self divorceAddressBookEntryFromPreferences];
     }
     NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
@@ -4573,18 +4581,18 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)remarry
 {
-    _isDivorced = NO;
+    self.isDivorced = NO;
 }
 
 - (NSString*)divorceAddressBookEntryFromPreferences
 {
     Profile* bookmark = [self profile];
     NSString* guid = [bookmark objectForKey:KEY_GUID];
-    if (_isDivorced) {
+    if (self.isDivorced) {
         assert([[ProfileModel sessionsInstance] bookmarkWithGuid:guid]);
         return guid;
     }
-    _isDivorced = YES;
+    self.isDivorced = YES;
     DLog(@"Remove profile with guid %@ from sessions instance", guid);
     [[ProfileModel sessionsInstance] removeProfileWithGuid:guid];
     DLog(@"Set profile %@ divorced, add to sessions instance", bookmark[KEY_GUID]);
@@ -5135,7 +5143,7 @@ ITERM_WEAKLY_REFERENCEABLE
     self.tmuxMode = TMUX_GATEWAY;
     _tmuxGateway = [[TmuxGateway alloc] initWithDelegate:self dcsID:dcsID];
     ProfileModel *model;
-    if (_isDivorced) {
+    if (self.isDivorced) {
         model = [ProfileModel sessionsInstance];
     } else {
         model = [ProfileModel sharedInstance];
@@ -5940,7 +5948,7 @@ ITERM_WEAKLY_REFERENCEABLE
             // profile may not exist so this could do nothing.
             ProfileModel *model = [ProfileModel sharedInstance];
             Profile *profile;
-            if (_isDivorced) {
+            if (self.isDivorced) {
                 profile = [[ProfileModel sharedInstance] bookmarkWithGuid:_profile[KEY_ORIGINAL_GUID]];
             } else {
                 profile = self.profile;
@@ -7930,6 +7938,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!preserveName && nameMatchesProfileName) {
         [self setName:newProfile[KEY_NAME]];
     }
+    [self sanityCheck];
 }
 
 - (void)screenSetPasteboard:(NSString *)value {
@@ -9235,7 +9244,7 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermSavedProfile *savedProfile = [[[iTermSavedProfile alloc] init] autorelease];
     savedProfile.profile = _profile;
     savedProfile.originalProfile = _originalProfile;
-    savedProfile.isDivorced = _isDivorced;
+    savedProfile.isDivorced = self.isDivorced;
     savedProfile.overriddenFields = _overriddenFields;
     return savedProfile;
 }
@@ -9850,5 +9859,23 @@ ITERM_WEAKLY_REFERENCEABLE
     response.status = ITMSetProfilePropertyResponse_Status_Ok;
     return response;
 }
+
+#if BETA
+
+- (BOOL)isDivorced {
+    return _realIsDivorced;
+}
+
+- (void)setIsDivorced:(BOOL)isDivorced {
+    if (isDivorced != _realIsDivorced) {
+        NSArray *trimCallStack = [NSThread trimCallStackSymbols];
+        [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: set isDivorced to %@ from\n%@",
+                                                self,
+                                                @(isDivorced),
+                                                [trimCallStack componentsJoinedByString:@"\n"]]];
+    }
+    _realIsDivorced = isDivorced;
+}
+#endif
 
 @end

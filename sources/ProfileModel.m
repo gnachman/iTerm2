@@ -660,6 +660,13 @@ int gMigrated;
 }
 
 - (Profile*)setObject:(id)object forKey:(NSString*)key inBookmark:(Profile*)bookmark {
+    if ([key isEqualToString:KEY_GUID]) {
+        [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: Change GUID from %@ to %@\n%@",
+                                                self,
+                                                bookmark[KEY_GUID],
+                                                object,
+                                                [NSThread trimCallStackSymbols]]];
+    }
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
     if (object == nil) {
         [newDict removeObjectForKey:key];
