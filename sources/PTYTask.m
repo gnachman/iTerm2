@@ -632,8 +632,12 @@ static int MyForkPty(int *amaster,
         iTermSignalSafeWrite(1, "## exec failed ##\n");
         iTermSignalSafeWrite(1, "Program: ");
         iTermSignalSafeWrite(1, argpath);
-        iTermSignalSafeWrite(1, "\nErrno: ");
-        iTermSignalSafeWriteInt(1, e);
+        if (e == ENOENT) {
+            iTermSignalSafeWrite(1, "\nNo such file or directory");
+        } else {
+            iTermSignalSafeWrite(1, "\nErrno: ");
+            iTermSignalSafeWriteInt(1, e);
+        }
         iTermSignalSafeWrite(1, "\n");
 
         sleep(1);
