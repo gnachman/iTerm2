@@ -526,37 +526,44 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
 - (IBAction)copyToProfile:(id)sender {
     Profile *sourceProfile = [self selectedProfile];
+    if (!sourceProfile) {
+        return;
+    }
+
+    NSString* sourceGuid = sourceProfile[KEY_GUID];
+    if (!sourceGuid) {
+        return;
+    }
+
+    NSString* profileGuid = [_generalViewController selectedGuid];
+    Profile* destination = [[ProfileModel sharedInstance] bookmarkWithGuid:profileGuid];
+    if (!destination) {
+        return;
+    }
+
     NSString *title =
         [NSString stringWithFormat:@"Replace profile “%@” with the current session's settings?",
-            [iTermProfilePreferences stringForKey:KEY_NAME inProfile:sourceProfile]];
+            [iTermProfilePreferences stringForKey:KEY_NAME inProfile:destination]];
     if ([iTermWarning showWarningWithTitle:title
                                    actions:@[ @"Replace", @"Cancel" ]
                                  identifier:@"NoSyncReplaceProfileWarning"
                                silenceable:kiTermWarningTypePermanentlySilenceable] == kiTermWarningSelection1) {
         return;
     }
-    NSString* sourceGuid = sourceProfile[KEY_GUID];
-    if (!sourceGuid) {
-        return;
-    }
-    NSString* profileGuid = [_generalViewController selectedGuid];
-    Profile* destination = [[ProfileModel sharedInstance] bookmarkWithGuid:profileGuid];
-    // TODO: changing color presets in cmd-i causes profileGuid=null.
-    if (sourceProfile && destination) {
-        NSMutableDictionary* copyOfSource = [sourceProfile mutableCopy];
-        [copyOfSource setObject:profileGuid forKey:KEY_GUID];
-        [copyOfSource removeObjectForKey:KEY_ORIGINAL_GUID];
-        [copyOfSource setObject:[destination objectForKey:KEY_NAME] forKey:KEY_NAME];
-        [[ProfileModel sharedInstance] setBookmark:copyOfSource withGuid:profileGuid];
 
-        [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
-                                                            object:nil
-                                                          userInfo:nil];
+    NSMutableDictionary* copyOfSource = [sourceProfile mutableCopy];
+    [copyOfSource setObject:profileGuid forKey:KEY_GUID];
+    [copyOfSource removeObjectForKey:KEY_ORIGINAL_GUID];
+    [copyOfSource setObject:[destination objectForKey:KEY_NAME] forKey:KEY_NAME];
+    [[ProfileModel sharedInstance] setBookmark:copyOfSource withGuid:profileGuid];
 
-        // Update user defaults
-        [[NSUserDefaults standardUserDefaults] setObject:[[ProfileModel sharedInstance] rawData]
-                                                  forKey: @"New Bookmarks"];
-    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
+                                                        object:nil
+                                                      userInfo:nil];
+
+    // Update user defaults
+    [[NSUserDefaults standardUserDefaults] setObject:[[ProfileModel sharedInstance] rawData]
+                                              forKey: @"New Bookmarks"];
 }
 
 - (IBAction)openCopyBookmarks:(id)sender
