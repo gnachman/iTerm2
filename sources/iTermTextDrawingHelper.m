@@ -623,7 +623,7 @@ typedef struct iTermTextColorContext {
 }
 
 - (void)drawMarginsAndMarkForLine:(int)line y:(CGFloat)y {
-    NSRect leftMargin = NSMakeRect(0, y, [iTermAdvancedSettingsModel terminalMargin], _cellSize.height);
+    NSRect leftMargin = NSMakeRect(0, y, MAX(1, [iTermAdvancedSettingsModel terminalMargin]), _cellSize.height);
     NSRect rightMargin;
     NSRect visibleRect = _visibleRect;
     rightMargin.origin.x = _cellSize.width * _gridSize.width + [iTermAdvancedSettingsModel terminalMargin];
@@ -768,23 +768,31 @@ typedef struct iTermTextColorContext {
         [path setLineWidth:1.0];
         [path stroke];
 
+        NSColor *color = nil;
         if (mark.code == 0) {
             // Success
-            [[iTermTextDrawingHelper successMarkColor] set];
+            color = [iTermTextDrawingHelper successMarkColor];
         } else if ([iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal] &&
                    mark.code >= 128 && mark.code <= 128 + 32) {
             // Stopped by a signal (or an error, but we can't tell which)
-            [[iTermTextDrawingHelper otherMarkColor] set];
+            color = [iTermTextDrawingHelper otherMarkColor];
         } else {
             // Failure
-            [[iTermTextDrawingHelper errorMarkColor] set];
+            color = [iTermTextDrawingHelper errorMarkColor];
         }
 
-        [path moveToPoint:top];
-        [path lineToPoint:right];
-        [path lineToPoint:bottom];
-        [path lineToPoint:top];
-        [path fill];
+        if (leftMargin.size.width == 1) {
+            NSRect rect = NSInsetRect(leftMargin, 0, leftMargin.size.height * 0.25);
+            [[color colorWithAlphaComponent:0.75] set];
+            NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+        } else {
+            [color set];
+            [path moveToPoint:top];
+            [path lineToPoint:right];
+            [path lineToPoint:bottom];
+            [path lineToPoint:top];
+            [path fill];
+        }
     }
 }
 
