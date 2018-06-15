@@ -114,7 +114,7 @@
     NSMutableSet<NSString *> *missingFunctionSignatures = [NSMutableSet set];
     [string enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
         if (isLiteral) {
-            [parts addObject:substring];
+            [parts addObject:[substring it_stringByExpandingBackslashEscapedCharacters]];
         } else {
             dispatch_group_enter(group);
             NSInteger i = parts.count;

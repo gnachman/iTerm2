@@ -158,6 +158,33 @@
                                                                               @'r': @"\r" } ];
 }
 
+- (NSString *)it_stringByExpandingBackslashEscapedCharacters {
+    NSDictionary *escapes = @{ @'n': @('\n'),
+                               @'a': @('\x07'),
+                               @'t': @('\t'),
+                               @'r': @('\r'),
+                               @'\\': @('\\') };
+    NSMutableString *result = [NSMutableString string];
+    NSInteger start = 0;
+    BOOL escape = NO;
+    for (NSInteger i = 0; i < self.length; i++) {
+        unichar c = [self characterAtIndex:i];
+        if (escape) {
+            NSNumber *replacement = escapes[@(c)] ?: @(c);
+            [result appendString:[self substringWithRange:NSMakeRange(start, i - start - 1)]];
+            [result appendCharacter:replacement.shortValue];
+            start = i + 1;
+            escape = NO;
+        } else if (c == '\\') {
+            escape = YES;
+        }
+    }
+    if (self.length > start) {
+        [result appendString:[self substringWithRange:NSMakeRange(start, self.length - start)]];
+    }
+    return result;
+}
+
 - (NSArray *)componentsBySplittingStringWithQuotesAndBackslashEscaping:(NSDictionary *)escapes {
     NSMutableArray *result = [NSMutableArray array];
 

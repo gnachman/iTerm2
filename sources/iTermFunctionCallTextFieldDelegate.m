@@ -53,6 +53,9 @@
     }
 
     self.backspaceKey = NO;
+    if ([_passthrough respondsToSelector:_cmd]) {
+        [_passthrough controlTextDidChange:obj];
+    }
 }
 
 - (NSArray *)control:(NSControl *)control

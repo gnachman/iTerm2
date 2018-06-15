@@ -48,6 +48,7 @@
 #import "iTermShellHistoryController.h"
 #import "iTermShortcut.h"
 #import "iTermShortcutInputView.h"
+#import "iTermSwiftyString.h"
 #import "iTermSystemVersion.h"
 #import "iTermTextExtractor.h"
 #import "iTermThroughputEstimator.h"
@@ -476,6 +477,7 @@ static NSString *const iTermSessionTitleSession = @"session";
 
     iTermVariables *_sessionVariables;
     iTermVariables *_userVariables;
+    iTermSwiftyString *_badgeSwiftyString;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -787,6 +789,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [_copyModeState release];
     [_metalDisabledTokens release];
+    [_badgeSwiftyString release];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -3743,7 +3746,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _screen.appendToScrollbackWithStatusBar = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_WITH_STATUS_BAR
                                                                         inProfile:aDict];
     self.badgeFormat = [iTermProfilePreferences stringForKey:KEY_BADGE_FORMAT inProfile:aDict];
-    _textview.badgeLabel = [self badgeLabel];
+    [self updateBadgeLabel];
     [self setFont:[ITAddressBookMgr fontWithDesc:aDict[KEY_NORMAL_FONT]]
         nonAsciiFont:[ITAddressBookMgr fontWithDesc:aDict[KEY_NON_ASCII_FONT]]
         horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING inProfile:aDict]
@@ -3771,14 +3774,30 @@ ITERM_WEAKLY_REFERENCEABLE
     [_nameController setNeedsUpdate];
 }
 
+- (void)setBadgeFormat:(NSString *)badgeFormat {
+    if ([badgeFormat isEqualToString:_badgeSwiftyString.swiftyString]) {
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    _badgeSwiftyString = [[iTermSwiftyString alloc] initWithString:badgeFormat
+                                                            source:[self functionCallSource]
+                                                           mutates:[NSSet set]
+                                                          observer:^(NSString * _Nonnull newValue) {
+                                                              [weakSelf updateBadgeLabel:newValue];
+                                                          }];
+
+}
+
+- (void)updateBadgeLabel {
+    [self updateBadgeLabel:[self badgeLabel]];
+}
+
+- (void)updateBadgeLabel:(NSString *)newValue {
+    _textview.badgeLabel = newValue;
+}
+
 - (NSString *)badgeLabel {
-    DLog(@"Raw badge format is %@", _badgeFormat);
-    DLog(@"Variables are:\n%@", _variables.legacyDictionary);
-    NSString *p = [_badgeFormat stringByReplacingVariableReferencesWithVariables:_variables.legacyDictionary];
-    p = [p stringByReplacingEscapedChar:'n' withString:@"\n"];
-    p = [p stringByReplacingEscapedHexValuesWithChars];
-    DLog(@"Expanded badge label is: %@", p);
-    return p;
+    return _badgeSwiftyString.evaluatedString;
 }
 
 - (BOOL)isAtShellPrompt {

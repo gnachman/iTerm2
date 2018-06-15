@@ -10,9 +10,11 @@
 #import "AdvancedWorkingDirectoryWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAPIHelper.h"
+#import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermLaunchServices.h"
 #import "iTermProfilePreferences.h"
 #import "iTermShortcutInputView.h"
+#import "iTermVariables.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "ProfileListView.h"
@@ -61,6 +63,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSPopUpButton *_urlSchemes;
     IBOutlet NSTextField *_badgeText;
     IBOutlet NSTextField *_badgeTextForEditCurrentSession;
+    iTermFunctionCallTextFieldDelegate *_badgeTextFieldDelegate;
+    iTermFunctionCallTextFieldDelegate *_badgeTextForEditCurrentSessionFieldDelegate;
 
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
@@ -169,10 +173,20 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [self defineControl:_badgeText
                     key:KEY_BADGE_FORMAT
                    type:kPreferenceInfoTypeStringTextField];
+    _badgeTextFieldDelegate =
+        [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:iTermVariablesGetAll()
+                                                      passthrough:_badgeText.delegate
+                                                    functionsOnly:NO];
+    _badgeText.delegate = _badgeTextFieldDelegate;
 
     [self defineControl:_badgeTextForEditCurrentSession
                     key:KEY_BADGE_FORMAT
                    type:kPreferenceInfoTypeStringTextField];
+    _badgeTextForEditCurrentSessionFieldDelegate =
+        [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:iTermVariablesGetAll()
+                                                      passthrough:_badgeTextForEditCurrentSession.delegate
+                                                    functionsOnly:NO];
+    _badgeTextForEditCurrentSession.delegate = _badgeTextForEditCurrentSessionFieldDelegate;
 
     [self defineControl:_titleSettings
                     key:KEY_TITLE_COMPONENTS

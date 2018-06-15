@@ -67,6 +67,8 @@ typedef enum {
                     start = i + 1;
                     parens = 1;
                     _state = SWIFTY_STATE_EXPR;
+                } else {
+                    _state = SWIFTY_STATE_LITERAL;
                 }
                 break;
 
@@ -117,6 +119,8 @@ typedef enum {
                     [parensStack addObject:@(parens)];
                     parens = 1;  // catch but don't output ) in expr state.
                     _state = SWIFTY_STATE_EXPR;
+                } else {
+                    _state = SWIFTY_STATE_EXPR_STR;
                 }
                 break;
         }

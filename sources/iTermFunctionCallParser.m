@@ -107,6 +107,9 @@
                 case 'f':
                     *loc = *loc + 1;
                     return @"\f";
+                case 'a':
+                    *loc = *loc + 1;
+                    return @"\x07";
                 case 'n':
                     *loc = *loc + 1;
                     return @"\n";
@@ -284,7 +287,7 @@
                                NSMutableArray *interpolatedParts = [NSMutableArray array];
                                [swifty enumerateSwiftySubstrings:^(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop) {
                                    if (isLiteral) {
-                                       [interpolatedParts addObject:substring];
+                                       [interpolatedParts addObject:[substring it_stringByExpandingBackslashEscapedCharacters]];
                                        return;
                                    }
 
