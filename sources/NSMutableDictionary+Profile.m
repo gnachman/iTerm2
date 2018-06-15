@@ -9,6 +9,7 @@
 #import "NSMutableDictionary+Profile.h"
 #import "ITAddressBookMgr.h"
 #import "NSDictionary+Profile.h"
+#import "NSObject+iTerm.h"
 
 @implementation NSMutableDictionary (Profile)
 
@@ -16,7 +17,7 @@
     if (self.profileIsDynamic) {
         return;
     }
-    NSArray *tags = self[KEY_TAGS];
+    NSArray *tags = [NSArray castFrom:self[KEY_TAGS]];
     if (!tags) {
         self[KEY_TAGS] = @[ kProfileDynamicTag ];
     } else if (!self.profileIsDynamic) {
