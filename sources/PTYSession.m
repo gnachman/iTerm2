@@ -5011,6 +5011,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)drawMetalFrameSychronouslyAndShowMetalView NS_AVAILABLE_MAC(10_11) {
+    if (!_useMetal) {
+        DLog(@"Giving up on ever doing a synchronous draw of %@ because useMetal is NO", self);
+        return;
+    }
     DLog(@"Begin synchronous draw for %@", self);
     [_view setNeedsDisplay:YES];
     BOOL ok = [_view drawFrameSynchronously];
