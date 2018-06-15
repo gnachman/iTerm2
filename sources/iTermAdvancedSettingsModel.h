@@ -224,5 +224,6 @@
 + (double)timeToWaitForEmojiPanel;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (int)minimumWeightDifferenceForBoldFont;
++ (double)metalSlowFrameRate;
 
 @end
