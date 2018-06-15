@@ -55,15 +55,17 @@ NS_ASSUME_NONNULL_BEGIN
     iTermBadgeRendererTransientState *tState = transientState;
     const CGSize size = tState.destinationRect.size;
     const CGFloat scale = tState.configuration.scale;
-    CGRect textureFrame = CGRectMake(0, 0, 1, 1);
     const CGFloat MARGIN_HEIGHT = [iTermAdvancedSettingsModel terminalVMargin] * scale;
-
     CGRect quad = CGRectMake(scale * tState.destinationRect.origin.x,
                              tState.configuration.viewportSize.y - scale * CGRectGetMaxY(tState.destinationRect) - MARGIN_HEIGHT,
                              scale * size.width,
                              scale * size.height);
+    // The destinationRect is clipped to the visible area.
+    const CGFloat textureHeight = tState.texture.height;
+    const CGFloat fractionVisible = quad.size.height / textureHeight;
+    CGRect textureFrame = CGRectMake(0, 1 - fractionVisible, 1, fractionVisible);
     const iTermVertex vertices[] = {
-        // Pixel Positions             Texture Coordinates
+        // Pixel Positions                              Texture Coordinates
         { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMinY(textureFrame) } },
         { { CGRectGetMinX(quad), CGRectGetMinY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMinY(textureFrame) } },
         { { CGRectGetMinX(quad), CGRectGetMaxY(quad) }, { CGRectGetMinX(textureFrame), CGRectGetMaxY(textureFrame) } },
