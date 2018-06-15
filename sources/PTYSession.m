@@ -456,7 +456,6 @@ static NSString *const iTermSessionTitleSession = @"session";
 
     BOOL _useAdaptiveFrameRate;
     NSInteger _adaptiveFrameRateThroughputThreshold;
-    double _slowFrameRate;
 
     uint32_t _autoLogId;
 
@@ -574,7 +573,6 @@ static NSString *const iTermSessionTitleSession = @"session";
         _autoLogId = arc4random();
         _useAdaptiveFrameRate = [iTermAdvancedSettingsModel useAdaptiveFrameRate];
         _adaptiveFrameRateThroughputThreshold = [iTermAdvancedSettingsModel adaptiveFrameRateThroughputThreshold];
-        _slowFrameRate = [iTermAdvancedSettingsModel slowFrameRate];
         _idleTime = [iTermAdvancedSettingsModel idleTimeSeconds];
         _triggerLineNumber = -1;
         _fakePromptDetectedAbsLine = -1;
@@ -9746,10 +9744,10 @@ ITERM_WEAKLY_REFERENCEABLE
         _terminal.softAlternateScreenMode) {
         state.useAdaptiveFrameRate = NO;
     } else {
-        state.useAdaptiveFrameRate = _useAdaptiveFrameRate && !self.useMetal;
+        state.useAdaptiveFrameRate = _useAdaptiveFrameRate;
     }
     state.adaptiveFrameRateThroughputThreshold = _adaptiveFrameRateThroughputThreshold;
-    state.slowFrameRate = _slowFrameRate;
+    state.slowFrameRate = self.useMetal ? [iTermAdvancedSettingsModel metalSlowFrameRate] : [iTermAdvancedSettingsModel slowFrameRate];
     state.liveResizing = _inLiveResize;
     return state;
 }
