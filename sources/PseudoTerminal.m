@@ -2399,6 +2399,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return YES;
     }];
 
+    DLog(@"Of tabs %@ these are ok to save: %@", self.tabs, tabs);
     return [self arrangementWithTabs:tabs includingContents:includeContents];
 }
 
@@ -2447,6 +2448,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // Save tabs.
     if ([tabs count] == 0) {
+        DLog(@"Not building arrangement bc it has no tabs");
         return nil;
     }
     result[TERMINAL_ARRANGEMENT_TABS] = [tabs mapWithBlock:^id(PTYTab *theTab) {
@@ -2462,6 +2464,7 @@ ITERM_WEAKLY_REFERENCEABLE
         result[TERMINAL_ARRANGEMENT_PROFILE_GUID] = profileGuid;
     }
 
+    DLog(@"Built an arrangement for %@", self);
     return result;
 }
 

@@ -377,9 +377,12 @@ static iTermController *gSharedInstance;
             NSDictionary *arrangement = [terminal arrangement];
             if (arrangement) {
                 [terminalArrangements addObject:arrangement];
+            } else {
+                DLog(@"Failed to get an arrangement for %@", terminal);
             }
         }
         if (terminalArrangements.count) {
+            DLog(@"Set arrangement for %@ to %@", name, terminalArrangements);
             [WindowArrangements setArrangement:terminalArrangements withName:name];
         }
     } else {
