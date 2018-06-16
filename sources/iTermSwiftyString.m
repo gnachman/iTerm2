@@ -103,10 +103,18 @@
          [strongSelf->_missingFunctions unionSet:missing];
          if (error) {
              NSString *message =
-             [NSString stringWithFormat:@"Invoked “%@” to compute name for session. Failed with error:\n%@\n",
+             [NSString stringWithFormat:@"Invocation of “%@” failed with error:\n%@\n",
               strongSelf.swiftyString,
               [error localizedDescription]];
-             [[iTermScriptHistoryEntry globalEntry] addOutput:message];
+
+             NSString *connectionKey =
+                 error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
+             iTermScriptHistoryEntry *entry =
+                [[iTermScriptHistory sharedInstance] entryWithIdentifier:connectionKey];
+             if (!entry) {
+                 entry = [iTermScriptHistoryEntry globalEntry];
+             }
+             [entry addOutput:message];
 
          }
          completion(result);

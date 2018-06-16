@@ -24,6 +24,7 @@
 @property(nonatomic, copy) NSString *displayName;
 @property(nonatomic, readonly) BOOL preauthorized;
 @property(nonatomic, readonly) id key;
+@property(nonatomic, readonly) NSString *guid;
 
 + (instancetype)newWebSocketConnectionForRequest:(NSURLRequest *)request
                                       connection:(iTermHTTPConnection *)connection

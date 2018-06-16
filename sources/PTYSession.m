@@ -5831,7 +5831,8 @@ ITERM_WEAKLY_REFERENCEABLE
             notification.keystrokeNotification = keystrokeNotification;
 
             [_keystrokeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-                [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification toConnection:key];
+                [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification
+                                                                                 toConnectionKey:key];
             }];
         }
         return YES;
@@ -6835,7 +6836,8 @@ ITERM_WEAKLY_REFERENCEABLE
         notification.screenUpdateNotification = [[[ITMScreenUpdateNotification alloc] init] autorelease];
         notification.screenUpdateNotification.session = self.guid;
         [_updateSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-            [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification toConnection:key];
+            [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification
+                                                                             toConnectionKey:key];
         }];
     }
 }
@@ -8078,7 +8080,8 @@ ITERM_WEAKLY_REFERENCEABLE
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
         notification.promptNotification.session = self.guid;
-        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification toConnection:key];
+        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification
+                                                                         toConnectionKey:key];
     }];
 }
 
@@ -8523,7 +8526,8 @@ ITERM_WEAKLY_REFERENCEABLE
     notification.locationChangeNotification.userName = host.username;
     notification.locationChangeNotification.session = self.guid;
     [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification toConnection:key];
+        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification
+                                                                         toConnectionKey:key];
     }];
 }
 
@@ -8695,7 +8699,8 @@ ITERM_WEAKLY_REFERENCEABLE
     notification.locationChangeNotification.session = self.guid;
     notification.locationChangeNotification.directory = newPath;
     [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification toConnection:key];
+        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification
+                                                                         toConnectionKey:key];
     }];
 }
 
@@ -8707,7 +8712,8 @@ ITERM_WEAKLY_REFERENCEABLE
     notification.customEscapeSequenceNotification.senderIdentity = parameters[@"id"];
     notification.customEscapeSequenceNotification.payload = payload;
     [_customEscapeSequenceNotifications enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification toConnection:key];
+        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification
+                                                                         toConnectionKey:key];
     }];
 }
 
@@ -9949,7 +9955,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return response;
 }
 
-- (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request connection:(id)connection {
+- (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
+                                            connectionKey:(NSString *)connectionKey {
     ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
     if (!request.hasSubscribe) {
         response.status = ITMNotificationResponse_Status_RequestMalformed;
@@ -9988,17 +9995,17 @@ ITERM_WEAKLY_REFERENCEABLE
         return response;
     }
     if (request.subscribe) {
-        if (subscriptions[connection]) {
+        if (subscriptions[connectionKey]) {
             response.status = ITMNotificationResponse_Status_AlreadySubscribed;
             return response;
         }
-        subscriptions[connection] = request;
+        subscriptions[connectionKey] = request;
     } else {
-        if (!subscriptions[connection]) {
+        if (!subscriptions[connectionKey]) {
             response.status = ITMNotificationResponse_Status_NotSubscribed;
             return response;
         }
-        [subscriptions removeObjectForKey:connection];
+        [subscriptions removeObjectForKey:connectionKey];
     }
 
     response.status = ITMNotificationResponse_Status_Ok;

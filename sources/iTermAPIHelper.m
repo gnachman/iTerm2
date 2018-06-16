@@ -38,9 +38,11 @@ NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPI
 const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode = 100;
 const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
 
+NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAPIHelperFunctionCallErrorUserInfoKeyConnection";;
+
 @interface iTermAllSessionsSubscription : NSObject
 @property (nonatomic, strong) ITMNotificationRequest *request;
-@property (nonatomic, strong) id connection;
+@property (nonatomic, copy) NSString *connectionKey;
 @end
 
 @interface ITMRPCRegistrationRequest(Extensions)
@@ -112,19 +114,19 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
     iTermAPIServer *_apiServer;
     BOOL _layoutChanged;
 
-    // When adding a new dictionary of subscriptions update removeAllSubscriptionsForConnection:.
+    // When adding a new dictionary of subscriptions update removeAllSubscriptionsForConnectionKey:.
     NSMutableDictionary<id, ITMNotificationRequest *> *_newSessionSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_terminateSessionSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_layoutChangeSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_focusChangeSubscriptions;
-    // signature -> { connection -> request }
-    NSMutableDictionary<NSString *, NSMutableDictionary<id, ITMNotificationRequest *> *> *_serverOriginatedRPCSubscriptions;
+    // signature -> ( connection, request )
+    NSMutableDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *_serverOriginatedRPCSubscriptions;
     NSMutableArray<iTermAllSessionsSubscription *> *_allSessionsSubscriptions;
     NSMutableDictionary<NSString *, iTermServerOriginatedRPCCompletionBlock> *_serverOriginatedRPCCompletionBlocks;
-    // connection -> RPC ID (RPC ID is key in _serverOriginatedRPCCompletionBlocks)
+    // connectionKey -> RPC ID (RPC ID is key in _serverOriginatedRPCCompletionBlocks)
     // WARNING: These can exist after the block has been removed from
     // _serverOriginatedRPCCompletionBlocks if it times out.
-    NSMutableDictionary<id, NSMutableSet<NSString *> *> *_outstandingRPCs;
+    NSMutableDictionary<NSString *, NSMutableSet<NSString *> *> *_outstandingRPCs;
 }
 
 + (instancetype)sharedInstance {
@@ -204,13 +206,13 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-- (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection {
-    [_apiServer postAPINotification:notification toConnection:connection];
+- (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey {
+    [_apiServer postAPINotification:notification toConnectionKey:connectionKey];
 }
 
 - (void)sessionCreated:(NSNotification *)notification {
     for (iTermAllSessionsSubscription *sub in _allSessionsSubscriptions) {
-        [self handleAPINotificationRequest:sub.request connection:sub.connection];
+        [self handleAPINotificationRequest:sub.request connectionKey:sub.connectionKey];
     }
 
     PTYSession *session = notification.object;
@@ -218,7 +220,7 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
         ITMNotification *notification = [[ITMNotification alloc] init];
         notification.newSessionNotification = [[ITMNewSessionNotification alloc] init];
         notification.newSessionNotification.uniqueIdentifier = session.guid;
-        [self postAPINotification:notification toConnection:key];
+        [self postAPINotification:notification toConnectionKey:key];
     }];
 }
 
@@ -228,7 +230,7 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
         ITMNotification *notification = [[ITMNotification alloc] init];
         notification.terminateSessionNotification = [[ITMTerminateSessionNotification alloc] init];
         notification.terminateSessionNotification.uniqueIdentifier = session.guid;
-        [self postAPINotification:notification toConnection:key];
+        [self postAPINotification:notification toConnectionKey:key];
     }];
 }
 
@@ -247,7 +249,7 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
     [_layoutChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[ITMNotification alloc] init];
         notification.layoutChangedNotification.listSessionsResponse = [self newListSessionsResponse];
-        [self postAPINotification:notification toConnection:key];
+        [self postAPINotification:notification toConnectionKey:key];
     }];
 }
 
@@ -335,8 +337,12 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
     [_focusChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[ITMNotification alloc] init];
         notification.focusChangedNotification = notif;
-        [self postAPINotification:notification toConnection:key];
+        [self postAPINotification:notification toConnectionKey:key];
     }];
+}
+
+- (NSString *)connectionKeyForRPCWithSignature:(NSString *)signature {
+    return _serverOriginatedRPCSubscriptions[signature].firstObject;
 }
 
 - (ITMServerOriginatedRPC *)serverOriginatedRPCWithName:(NSString *)name
@@ -354,9 +360,19 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
             jsonValue = [NSJSONSerialization it_jsonStringForObject:argumentValue];
             if (!jsonValue) {
                 NSString *reason = [NSString stringWithFormat:@"Could not JSON encode value “%@”", arguments[argumentName]];
+                NSString *signature = iTermFunctionSignatureFromNameAndArguments(name,
+                                                                                 arguments.allKeys);
+                NSString *connectionKey = [self connectionKeyForRPCWithSignature:signature];
+                NSDictionary *userinfo = @{ NSLocalizedDescriptionKey: reason };
+                if (connectionKey) {
+                    userinfo =
+                        [userinfo dictionaryBySettingObject:connectionKey
+                                                     forKey:iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
+                }
                 *error = [NSError errorWithDomain:@"com.iterm2.api"
                                              code:2
-                                         userInfo:@{ NSLocalizedDescriptionKey: reason }];
+                                         userInfo:userinfo];
+
                 return nil;
             }
         }
@@ -383,112 +399,38 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
     [self dispatchServerOriginatedRPC:rpc completion:completion];
 }
 
-- (id)synchronousDispatchRPCWithName:(NSString *)name
-                           arguments:(NSDictionary *)arguments
-                             timeout:(NSTimeInterval)timeout
-                               error:(out NSError **)error {
-    NSError *innerError = nil;
-    ITMServerOriginatedRPC *rpc = [self serverOriginatedRPCWithName:name arguments:arguments error:&innerError];
-    if (innerError) {
-        if (error) {
-            *error = innerError;
-        }
-        return nil;
-    }
-    ITMServerOriginatedRPCResultRequest *result = [self synchronousDispatchServerOriginatedRPC:rpc
-                                                                                       timeout:timeout
-                                                                                         error:&innerError];
-    if (innerError) {
-        if (error) {
-            *error = innerError;
-        }
-        return nil;
-    }
-    if (result.jsonException.length > 0) {
-        NSError *internalError;
-        id exception = [NSJSONSerialization JSONObjectWithData:[result.jsonException dataUsingEncoding:NSUTF8StringEncoding]
-                                                    options:NSJSONReadingAllowFragments
-                                                      error:&internalError];
-        if (internalError) {
-            exception = @{ @"reason": [NSString stringWithFormat:@"Undecodable exception: %@", internalError.localizedDescription] };
-        } else {
-            exception = [NSDictionary castFrom:exception] ?: @{ @"reason": @"Malformed exception" };
-        }
-        if (error) {
-            *error = [self rpcDispatchError:exception[@"reason"]
-                                     detail:exception[@"traceback"]
-                               unregistered:NO];
-        }
-        return nil;
-    }
-    if (result.jsonValue.length == 0) {
-        if (error) {
-            *error = [self rpcDispatchError:@"Malformed response missing json value"
-                                     detail:[result debugDescription]
-                               unregistered:NO];
-        }
-        return nil;
-    }
-    NSError *internalError;
-    NSData *data = [result.jsonValue dataUsingEncoding:NSUTF8StringEncoding];
-    id returnedObject = [NSJSONSerialization JSONObjectWithData:data
-                                                        options:NSJSONReadingAllowFragments
-                                                          error:&internalError];
-    if (internalError) {
-        if (error) {
-            *error = internalError;
-        }
-        return nil;
-    }
-    return returnedObject;
-}
-
 // Dispatches a well-formed proto buffer or gives an error if not connected.
 - (void)dispatchServerOriginatedRPC:(ITMServerOriginatedRPC *)rpc
                          completion:(iTermServerOriginatedRPCCompletionBlock)completion {
     NSString *signature = rpc.it_stringRepresentation;
-    NSDictionary<id, ITMNotificationRequest *> *subs = _serverOriginatedRPCSubscriptions[signature];
+    iTermTuple<id, ITMNotificationRequest *> *sub = _serverOriginatedRPCSubscriptions[signature];
 
-    id connectionKey = subs.allKeys.firstObject;
+    id connectionKey = sub.firstObject;
     if (!connectionKey) {
         NSString *reason = [NSString stringWithFormat:@"No function registered for invocation “%@”", signature];
-        completion(nil, [self rpcDispatchError:reason detail:nil unregistered:YES]);
+        completion(nil, [self rpcDispatchError:reason detail:nil unregistered:YES connectionKey:nil]);
         return;
     }
 
-    ITMNotificationRequest *notificationRequest = subs[connectionKey];
-    [self dispatchRPC:rpc toHandler:notificationRequest connection:connectionKey completion:completion];
-}
-
-- (ITMServerOriginatedRPCResultRequest *)synchronousDispatchServerOriginatedRPC:(ITMServerOriginatedRPC *)rpc
-                                                                        timeout:(NSTimeInterval)timeout
-                                                                          error:(out NSError **)error {
-    NSString *signature = rpc.it_stringRepresentation;
-    NSDictionary<id, ITMNotificationRequest *> *subs = _serverOriginatedRPCSubscriptions[signature];
-
-    id connectionKey = subs.allKeys.firstObject;
-    if (!connectionKey) {
-        NSString *reason = [NSString stringWithFormat:@"No function registered for invocation “%@”", signature];
-        *error = [self rpcDispatchError:reason detail:nil unregistered:YES];
-        return nil;
-    }
-
-    ITMNotificationRequest *notificationRequest = subs[connectionKey];
-    return [self synchronousDispatchRPC:rpc
-                              toHandler:notificationRequest
-                             connection:connectionKey
-                                timeout:timeout
-                                  error:error];
+    ITMNotificationRequest *notificationRequest = sub.secondObject;
+    [self dispatchRPC:rpc toHandler:notificationRequest connectionKey:connectionKey completion:completion];
 }
 
 // Constructs an error with an optional traceback in `detail`.
-- (NSError *)rpcDispatchError:(NSString *)reason detail:(NSString *)detail unregistered:(BOOL)unregistered {
+- (NSError *)rpcDispatchError:(NSString *)reason
+                       detail:(NSString *)detail
+                 unregistered:(BOOL)unregistered
+                connectionKey:(NSString *)connectionKey {
     if (reason == nil) {
         reason = @"Unknown reason";
     }
     NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: reason };
     if (detail) {
         userInfo = [userInfo dictionaryBySettingObject:detail forKey:NSLocalizedFailureReasonErrorKey];
+    }
+    if (connectionKey) {
+        userInfo = [userInfo dictionaryBySettingObject:connectionKey
+                                                forKey:iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
     }
     return [NSError errorWithDomain:@"com.iterm2.api"
                                code:unregistered ? iTermAPIHelperFunctionCallUnregisteredErrorCode : iTermAPIHelperFunctionCallOtherErrorCode
@@ -498,56 +440,40 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
 // Dispatches an RPC, assuming connected. Registers a timeout.
 - (void)dispatchRPC:(ITMServerOriginatedRPC *)rpc
           toHandler:(ITMNotificationRequest * _Nonnull)handler
-         connection:(id)connection
+      connectionKey:(NSString *)connectionKey
          completion:(iTermServerOriginatedRPCCompletionBlock)completion {
     ITMNotification *notification = [[ITMNotification alloc] init];
     notification.serverOriginatedRpcNotification.requestId = [self nextServerOriginatedRPCRequestIDWithCompletion:completion];
-    NSMutableSet *outstanding = _outstandingRPCs[connection];
+    NSMutableSet *outstanding = _outstandingRPCs[connectionKey];
     if (!outstanding) {
         outstanding = [NSMutableSet set];
-        _outstandingRPCs[connection] = outstanding;
+        _outstandingRPCs[connectionKey] = outstanding;
     }
     [outstanding addObject:notification.serverOriginatedRpcNotification.requestId];
     notification.serverOriginatedRpcNotification.rpc = rpc;
-    [self postAPINotification:notification toConnection:connection];
+    [self postAPINotification:notification toConnectionKey:connectionKey];
 
     __weak __typeof(self) weakSelf = self;
     const NSTimeInterval timeoutSeconds = handler.rpcRegistrationRequest.hasTimeout ? handler.rpcRegistrationRequest.timeout : 5;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeoutSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [weakSelf checkForRPCTimeout:notification.serverOriginatedRpcNotification.requestId];
+        [weakSelf checkForRPCTimeout:notification.serverOriginatedRpcNotification.requestId
+                       connectionKey:connectionKey];
     });
 }
 
-- (ITMServerOriginatedRPCResultRequest *)synchronousDispatchRPC:(ITMServerOriginatedRPC *)rpc
-                                                      toHandler:(ITMNotificationRequest * _Nonnull)handler
-                                                     connection:(id)connection
-                                                        timeout:(NSTimeInterval)callerTimeout
-                                                          error:(out NSError **)error {
-    ITMNotification *notification = [[ITMNotification alloc] init];
-    notification.serverOriginatedRpcNotification.requestId = [self nextServerOriginatedRPCRequestIDWithCompletion:nil];
-    NSMutableSet *outstanding = _outstandingRPCs[connection];
-    if (!outstanding) {
-        outstanding = [NSMutableSet set];
-        _outstandingRPCs[connection] = outstanding;
-    }
-    [outstanding addObject:notification.serverOriginatedRpcNotification.requestId];
-    notification.serverOriginatedRpcNotification.rpc = rpc;
-    const NSTimeInterval timeoutSeconds = handler.rpcRegistrationRequest.hasTimeout ? handler.rpcRegistrationRequest.timeout : 5;
-    return [_apiServer sendAndWaitForSynchronousRPC:notification
-                                       toConnection:connection
-                                            timeout:MIN(callerTimeout, timeoutSeconds)
-                                              error:error];
-}
-
 // Calls the completion block if RPC timed out.
-- (void)checkForRPCTimeout:(NSString *)requestID {
+- (void)checkForRPCTimeout:(NSString *)requestID
+             connectionKey:(NSString *)connectionKey {
     iTermServerOriginatedRPCCompletionBlock completion = _serverOriginatedRPCCompletionBlocks[requestID];
     if (!completion) {
         return;
     }
 
     [_serverOriginatedRPCCompletionBlocks removeObjectForKey:requestID];
-    completion(nil, [self rpcDispatchError:@"Timeout" detail:nil unregistered:NO]);
+    completion(nil, [self rpcDispatchError:@"Timeout"
+                                    detail:nil
+                              unregistered:NO
+                             connectionKey:connectionKey]);
 }
 
 - (NSString *)nextServerOriginatedRPCRequestIDWithCompletion:(iTermServerOriginatedRPCCompletionBlock)completion {
@@ -563,7 +489,7 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary {
     NSMutableDictionary<NSString *, NSArray<NSString *> *> *result = [NSMutableDictionary dictionary];
     for (NSString *stringSignature in _serverOriginatedRPCSubscriptions.allKeys) {
-        ITMNotificationRequest *req = _serverOriginatedRPCSubscriptions[stringSignature].allValues.firstObject;
+        ITMNotificationRequest *req = _serverOriginatedRPCSubscriptions[stringSignature].secondObject;
         if (!req) {
             continue;
         }
@@ -587,7 +513,7 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
 
 - (NSArray<iTermTuple<NSString *,NSString *> *> *)sessionTitleFunctions {
     return [_serverOriginatedRPCSubscriptions.allKeys mapWithBlock:^id(NSString *signature) {
-        ITMNotificationRequest *req = self->_serverOriginatedRPCSubscriptions[signature].allValues.firstObject;
+        ITMNotificationRequest *req = self->_serverOriginatedRPCSubscriptions[signature].secondObject;
         if (!req) {
             return nil;
         }
@@ -606,7 +532,7 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
 }
 
 - (BOOL)haveRegisteredFunctionWithSignature:(NSString *)stringSignature {
-    return _serverOriginatedRPCSubscriptions[stringSignature].allValues.firstObject != nil;
+    return _serverOriginatedRPCSubscriptions[stringSignature].secondObject != nil;
 }
 
 #pragma mark - iTermAPIServerDelegate
@@ -812,7 +738,8 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
     return request.rpcRegistrationRequest.it_valid;
 }
 
-- (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request connection:(id)connection {
+- (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
+                                            connectionKey:(NSString *)connectionKey {
     ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
     if (!request.hasSubscribe) {
         response.status = ITMNotificationResponse_Status_RequestMalformed;
@@ -849,27 +776,33 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
         }
 
         NSString *signatureString = request.rpcRegistrationRequest.it_stringRepresentation;
-        subscriptions = _serverOriginatedRPCSubscriptions[signatureString];
         if (request.subscribe) {
-            if (subscriptions.count > 0) {
+            if (_serverOriginatedRPCSubscriptions[signatureString]) {
                 response.status = ITMNotificationResponse_Status_DuplicateServerOriginatedRpc;
                 return response;
             }
-            if (!subscriptions) {
-                subscriptions = [NSMutableDictionary dictionary];
-                _serverOriginatedRPCSubscriptions[signatureString] = subscriptions;
-            }
+            _serverOriginatedRPCSubscriptions[signatureString] = [iTermTuple tupleWithObject:connectionKey
+                                                                                   andObject:request];
             didRegisterRPC = YES;
+        } else {
+            if (!_serverOriginatedRPCSubscriptions[signatureString] ||
+                _serverOriginatedRPCSubscriptions[signatureString].firstObject != connectionKey) {
+                response.status = ITMNotificationResponse_Status_NotSubscribed;
+                return response;
+            }
+            [_serverOriginatedRPCSubscriptions removeObjectForKey:signatureString];
         }
+        response.status = ITMNotificationResponse_Status_Ok;
+        return response;
     } else {
         assert(false);
     }
     if (request.subscribe) {
-        if (subscriptions[connection]) {
+        if (subscriptions[connectionKey]) {
             response.status = ITMNotificationResponse_Status_AlreadySubscribed;
             return response;
         }
-        subscriptions[connection] = request;
+        subscriptions[connectionKey] = request;
         if (didRegisterRPC) {
             [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIRegisteredFunctionsDidChangeNotification
                                                                 object:nil];
@@ -879,11 +812,11 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
             }
         }
     } else {
-        if (!subscriptions[connection]) {
+        if (!subscriptions[connectionKey]) {
             response.status = ITMNotificationResponse_Status_NotSubscribed;
             return response;
         }
-        [subscriptions removeObjectForKey:connection];
+        [subscriptions removeObjectForKey:connectionKey];
     }
 
     response.status = ITMNotificationResponse_Status_Ok;
@@ -928,21 +861,23 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
 }
 
 - (void)apiServerNotification:(ITMNotificationRequest *)request
-                   connection:(id)connection
+                connectionKey:(NSString *)connectionKey
                       handler:(void (^)(ITMNotificationResponse *))handler {
     if (request.notificationType == ITMNotificationType_NotifyOnNewSession ||
         request.notificationType == ITMNotificationType_NotifyOnTerminateSession ||
         request.notificationType == ITMNotificationType_NotifyOnLayoutChange ||
         request.notificationType == ITMNotificationType_NotifyOnFocusChange ||
         request.notificationType == ITMNotificationType_NotifyOnServerOriginatedRpc) {
-        handler([self handleAPINotificationRequest:request connection:connection]);
+        handler([self handleAPINotificationRequest:request
+                                     connectionKey:connectionKey]);
     } else if ([request.session isEqualToString:@"all"]) {
         iTermAllSessionsSubscription *sub = [[iTermAllSessionsSubscription alloc] init];
         sub.request = [request copy];
-        sub.connection = connection;
+        sub.connectionKey = connectionKey;
 
         for (PTYSession *session in [self allSessions]) {
-            ITMNotificationResponse *response = [session handleAPINotificationRequest:request connection:connection];
+            ITMNotificationResponse *response = [session handleAPINotificationRequest:request
+                                                                        connectionKey:connectionKey];
             if (response.status != ITMNotificationResponse_Status_AlreadySubscribed &&
                 response.status != ITMNotificationResponse_Status_NotSubscribed &&
                 response.status != ITMNotificationResponse_Status_Ok) {
@@ -960,42 +895,46 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
             response.status = ITMNotificationResponse_Status_SessionNotFound;
             handler(response);
         } else {
-            handler([session handleAPINotificationRequest:request connection:connection]);
+            handler([session handleAPINotificationRequest:request
+                                            connectionKey:connectionKey]);
         }
     }
 }
 
-- (void)removeAllSubscriptionsForConnection:(id)connectionKey {
+- (void)removeAllSubscriptionsForConnectionKey:(id)connectionKey {
     // Remove all notification subscriptions.
-    NSArray<NSMutableDictionary<id, ITMNotificationRequest *> *> *rpcSubs =
-        [_serverOriginatedRPCSubscriptions.allKeys mapWithBlock:^id(NSString *key) {
-            return self->_serverOriginatedRPCSubscriptions[key];
-        }];
+    // RPCs are special.
+    NSInteger rpcsRemoved = [_serverOriginatedRPCSubscriptions removeObjectsPassingTest:
+         ^BOOL(NSString *signature,
+               iTermTuple<id, ITMNotificationRequest *> *tuple) {
+             return [tuple.firstObject isEqual:connectionKey];
+         }];
     NSMutableDictionary *empty = [NSMutableDictionary dictionary];
     NSArray<NSMutableDictionary<id, ITMNotificationRequest *> *> *dicts =
     @[ _newSessionSubscriptions ?: empty,
        _terminateSessionSubscriptions  ?: empty,
        _layoutChangeSubscriptions ?: empty,
        _focusChangeSubscriptions ?: empty ];
-    dicts = [dicts arrayByAddingObjectsFromArray:rpcSubs];
-    [dicts enumerateObjectsUsingBlock:^(NSMutableDictionary<id,ITMNotificationRequest *> * _Nonnull dict, NSUInteger idx, BOOL * _Nonnull stop) {
+    [dicts enumerateObjectsUsingBlock:^(NSMutableDictionary<id,ITMNotificationRequest *> * _Nonnull dict,
+                                        NSUInteger idx,
+                                        BOOL * _Nonnull stop) {
         [dict removeObjectForKey:connectionKey];
     }];
     [_allSessionsSubscriptions removeObjectsPassingTest:^BOOL(iTermAllSessionsSubscription *sub) {
-        return [sub.connection isEqual:connectionKey];
+        return [sub.connectionKey isEqual:connectionKey];
     }];
-    if (rpcSubs.count) {
+    if (rpcsRemoved) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIRegisteredFunctionsDidChangeNotification
                                                             object:nil];
     }
 }
 
-- (void)apiServerDidCloseConnection:(id)connection {
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermRemoveAPIServerSubscriptionsNotification object:connection];
+- (void)apiServerDidCloseConnectionWithKey:(id)connectionKey {
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermRemoveAPIServerSubscriptionsNotification object:connectionKey];
 
     // Clean up outstanding iterm2->script RPCs.
-    NSSet<NSString *> *requestIDs = _outstandingRPCs[connection];
-    [_outstandingRPCs removeObjectForKey:connection];
+    NSSet<NSString *> *requestIDs = _outstandingRPCs[connectionKey];
+    [_outstandingRPCs removeObjectForKey:connectionKey];
     for (NSString *requestID in requestIDs) {
         iTermServerOriginatedRPCCompletionBlock completion = _serverOriginatedRPCCompletionBlocks[requestID];
         // completion will be nil if it already timed out
@@ -1003,11 +942,12 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
             [_serverOriginatedRPCCompletionBlocks removeObjectForKey:requestID];
             completion(nil, [self rpcDispatchError:@"Script terminated during function call"
                                             detail:nil
-                                      unregistered:YES]);
+                                      unregistered:YES
+                                     connectionKey:connectionKey]);
         }
     }
 
-    [self removeAllSubscriptionsForConnection:connection];
+    [self removeAllSubscriptionsForConnectionKey:connectionKey];
 }
 
 - (void)apiServerRegisterTool:(ITMRegisterToolRequest *)request
@@ -1876,7 +1816,8 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
     handler(response);
 }
 
-- (void)handleServerOriginatedRPCResult:(ITMServerOriginatedRPCResultRequest *)result {
+- (void)handleServerOriginatedRPCResult:(ITMServerOriginatedRPCResultRequest *)result
+                          connectionKey:(NSString *)connectionKey {
     NSString *key = result.requestId;
     if (!key) {
         DLog(@"Bogus key %@", key);
@@ -1925,7 +1866,8 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
     if (exception) {
         block(nil, [self rpcDispatchError:exception[@"reason"]
                                    detail:exception[@"traceback"]
-                             unregistered:NO]);
+                             unregistered:NO
+                            connectionKey:connectionKey]);
     } else {
         if ([NSNull castFrom:value]) {
             value = nil;
@@ -1935,8 +1877,9 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
 }
 
 - (void)apiServerServerOriginatedRPCResult:(ITMServerOriginatedRPCResultRequest *)request
+                             connectionKey:(NSString *)connectionKey
                                    handler:(void (^)(ITMServerOriginatedRPCResultResponse *))handler {
-    [self handleServerOriginatedRPCResult:request];
+    [self handleServerOriginatedRPCResult:request connectionKey:connectionKey];
     ITMServerOriginatedRPCResultResponse *response = [[ITMServerOriginatedRPCResultResponse alloc] init];
     handler(response);
 

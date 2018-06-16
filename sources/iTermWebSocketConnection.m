@@ -142,6 +142,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     if (self) {
         _connection = connection;
         _queue = dispatch_queue_create("com.iterm2.websocket", NULL);
+        _guid = [[NSUUID UUID] UUIDString];
     }
     return self;
 }

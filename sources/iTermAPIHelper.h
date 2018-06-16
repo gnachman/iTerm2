@@ -15,6 +15,7 @@ extern NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification;
 
 extern const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode;
 extern const NSInteger iTermAPIHelperFunctionCallOtherErrorCode;
+extern NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection;
 
 typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
@@ -24,18 +25,11 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection;
+- (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
 
 - (void)dispatchRPCWithName:(NSString *)name
                   arguments:(NSDictionary *)arguments
                  completion:(iTermServerOriginatedRPCCompletionBlock)completion;
-
-// Invokes an RPC and waits until it returns. The RPC should execute quickly
-// and may not do anything that blocks on the main thread.
-- (id)synchronousDispatchRPCWithName:(NSString *)name
-                           arguments:(NSDictionary *)arguments
-                             timeout:(NSTimeInterval)timeout
-                               error:(out NSError **)error;
 
 // function name -> [ arg1, arg2, ... ]
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
@@ -53,5 +47,6 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
 // stringSignature is like func(arg1,arg2). Use iTermFunctionSignatureFromNameAndArguments to construct it safely.
 - (BOOL)haveRegisteredFunctionWithSignature:(NSString *)stringSignature;
+- (NSString *)connectionKeyForRPCWithSignature:(NSString *)signature;
 
 @end

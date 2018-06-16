@@ -18,6 +18,7 @@
 #import "iTermIPV4Address.h"
 #import "iTermSocketIPV4Address.h"
 #import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
 #import <objc/runtime.h>
 
 #import <Cocoa/Cocoa.h>
@@ -38,27 +39,6 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 @end
 
 @implementation iTermBlockingRPC
-@end
-
-@interface iTermWebSocketConnection(Handle)
-@property(nonatomic, readonly) id handle;
-@end
-
-@implementation iTermWebSocketConnection(Handle)
-
-const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectionHandleAssociatedObjectKey";
-
-- (id)handle {
-    @synchronized (self) {
-        id handle = objc_getAssociatedObject(self, kWebSocketConnectionHandleAssociatedObjectKey);
-        if (!handle) {
-            handle = [NSUUID UUID];
-            objc_setAssociatedObject(self, kWebSocketConnectionHandleAssociatedObjectKey, handle, OBJC_ASSOCIATION_RETAIN);
-        }
-        return handle;
-    }
-}
-
 @end
 
 @interface iTermAPIServer()<iTermWebSocketConnectionDelegate>
@@ -192,9 +172,9 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     return self;
 }
 
-- (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection {
+- (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey {
     dispatch_async(_queue, ^{
-        iTermWebSocketConnection *webSocketConnection = self->_connections[connection];
+        iTermWebSocketConnection *webSocketConnection = self->_connections[connectionKey];
         if (webSocketConnection) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.notification = notification;
@@ -204,47 +184,6 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         }
     });
 }
-
-- (ITMServerOriginatedRPCResultRequest *)sendAndWaitForSynchronousRPC:(ITMNotification *)notification
-                                                         toConnection:(id)connection
-                                                              timeout:(NSTimeInterval)timeoutSeconds
-                                                                error:(out NSError **)error {
-    assert([NSThread isMainThread]);
-
-    iTermBlockingRPC *blockingRPC = [[iTermBlockingRPC alloc] init];
-    blockingRPC.rpcID = notification.serverOriginatedRpcNotification.requestId;
-    blockingRPC.group = dispatch_group_create();
-    dispatch_group_enter(blockingRPC.group);
-    dispatch_async(_executionQueue, ^{
-        self.blockingRPC = blockingRPC;
-    });
-    [self postAPINotification:notification toConnection:connection];
-
-    // Block the main thread!
-    long timedOut = dispatch_group_wait(blockingRPC.group, dispatch_time(DISPATCH_TIME_NOW, timeoutSeconds * NSEC_PER_SEC));
-
-    dispatch_async(_executionQueue, ^{
-        self.blockingRPC = nil;
-    });
-
-    if (timedOut) {
-        *error = [NSError errorWithDomain:@"com.iterm2.api"
-                                     code:1
-                                 userInfo:@{ NSLocalizedDescriptionKey: @"Timeout" }];
-        return nil;
-    } else if (!blockingRPC.result) {
-        *error = [NSError errorWithDomain:@"com.iterm2.api"
-                                     code:3
-                                 userInfo:@{ NSLocalizedDescriptionKey: @"Unknown error" }];
-        return nil;
-    } else if (blockingRPC.error) {
-        *error = blockingRPC.error;
-        return nil;
-    } else {
-        return blockingRPC.result;
-    }
-}
-
 
 - (void)didAcceptConnectionOnFileDescriptor:(int)fd fromAddress:(iTermSocketAddress *)address {
     DLog(@"Accepted connection");
@@ -327,7 +266,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
                     webSocketConnection.peerIdentity = identity;
                     webSocketConnection.delegate = self;
                     webSocketConnection.delegateQueue = self->_queue;
-                    self->_connections[webSocketConnection.handle] = webSocketConnection;
+                    self->_connections[webSocketConnection.guid] = webSocketConnection;
                     [webSocketConnection handleRequest:request completion:^{
                         dispatch_async(self->_queue, ^{
                             completion(YES, nil);
@@ -508,7 +447,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerNotification:request.notificationRequest
-                          connection:webSocketConnection.handle
+                       connectionKey:webSocketConnection.guid
                              handler:^(ITMNotificationResponse *notificationResponse) {
                                  response.notificationResponse = notificationResponse;
                                  [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
@@ -674,7 +613,9 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __weak __typeof(self) weakSelf = self;
-    [_delegate apiServerServerOriginatedRPCResult:request.serverOriginatedRpcResultRequest handler:^(ITMServerOriginatedRPCResultResponse *listProfilesResponse) {
+    [_delegate apiServerServerOriginatedRPCResult:request.serverOriginatedRpcResultRequest
+                                    connectionKey:webSocketConnection.key
+                                          handler:^(ITMServerOriginatedRPCResultResponse *listProfilesResponse) {
         response.serverOriginatedRpcResultResponse = listProfilesResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -887,7 +828,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
 // _queue
 - (void)webSocketConnectionDidTerminate:(iTermWebSocketConnection *)webSocketConnection {
     DLog(@"Connection terminated");
-    [self->_connections removeObjectForKey:webSocketConnection.handle];
+    [self->_connections removeObjectForKey:webSocketConnection.guid];
     dispatch_async(self->_executionQueue, ^{
         if (self.transaction.connection == webSocketConnection) {
             iTermAPITransaction *transaction = self.transaction;
@@ -896,7 +837,7 @@ const char *kWebSocketConnectionHandleAssociatedObjectKey = "kWebSocketConnectio
         }
     });
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self->_delegate apiServerDidCloseConnection:webSocketConnection.handle];
+        [self->_delegate apiServerDidCloseConnectionWithKey:webSocketConnection.guid];
         dispatch_async(dispatch_get_main_queue(), ^{
             [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionClosed
                                                                 object:webSocketConnection.key];

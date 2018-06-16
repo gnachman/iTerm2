@@ -115,7 +115,14 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
              if (detail) {
                  message = [message stringByAppendingFormat:@"%@\n", detail];
              }
-             [[iTermScriptHistoryEntry globalEntry] addOutput:message];
+             NSString *connectionKey =
+                 error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
+             iTermScriptHistoryEntry *entry =
+                [[iTermScriptHistory sharedInstance] entryWithIdentifier:connectionKey];
+             if (!entry) {
+                 entry = [iTermScriptHistoryEntry globalEntry];
+             }
+             [entry addOutput:message];
          }
 
          NSString *result = [possiblyEmptyResult stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];

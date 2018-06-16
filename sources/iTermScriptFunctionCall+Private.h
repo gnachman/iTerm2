@@ -10,6 +10,7 @@
 @interface iTermScriptFunctionCall()
 
 @property (nonatomic, copy) NSString *name;
+@property (nonatomic, readonly) NSString *connectionKey;
 
 - (void)addParameterWithName:(NSString *)name value:(id)value;
 

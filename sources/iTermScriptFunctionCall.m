@@ -270,6 +270,10 @@
             timer = nil;
             NSString *reason = [NSString stringWithFormat:@"Timeout (%@ sec) waiting for %@", @(timeout), invocation];
             NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: reason };
+            if (functionCall.connectionKey) {
+                userInfo = [userInfo dictionaryBySettingObject:functionCall.connectionKey
+                                                        forKey:iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
+            }
             NSError *error = [NSError errorWithDomain:@"com.iterm2.call"
                                                  code:2
                                              userInfo:userInfo];
@@ -328,6 +332,9 @@
                 completion(nil, nil);
                 return;
             }
+            NSString *signature = iTermFunctionSignatureFromNameAndArguments(self.name,
+                                                                             self->_parameters.allKeys);
+            self->_connectionKey = [[[iTermAPIHelper sharedInstance] connectionKeyForRPCWithSignature:signature] copy];
             [[iTermAPIHelper sharedInstance] dispatchRPCWithName:self.name
                                                        arguments:self->_parameters
                                                       completion:completion];
@@ -357,7 +364,13 @@
 - (NSError *)errorForDependentCall:(iTermScriptFunctionCall *)call thatFailedWithError:(NSError *)error {
     NSString *reason = [NSString stringWithFormat:@"In call to %@: %@", call.name, error.localizedDescription];
     NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: reason };
-
+    if (error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection]) {
+        userInfo = [userInfo dictionaryBySettingObject:error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection]
+                                                forKey:iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
+    } else if (_connectionKey) {
+        userInfo = [userInfo dictionaryBySettingObject:_connectionKey
+                                                forKey:iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
+    }
     NSString *traceback = error.localizedFailureReason;
     if (traceback) {
         userInfo = [userInfo dictionaryBySettingObject:traceback forKey:NSLocalizedFailureReasonErrorKey];

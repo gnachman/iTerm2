@@ -21,9 +21,9 @@ extern NSString *const iTermAPIServerConnectionClosed;
 - (void)apiServerGetBuffer:(ITMGetBufferRequest *)request handler:(void (^)(ITMGetBufferResponse *))handler;
 - (void)apiServerGetPrompt:(ITMGetPromptRequest *)request handler:(void (^)(ITMGetPromptResponse *))handler;
 - (void)apiServerNotification:(ITMNotificationRequest *)request
-                   connection:(id)connection
+                connectionKey:(NSString *)connectionKey
                       handler:(void (^)(ITMNotificationResponse *))handler;
-- (void)apiServerDidCloseConnection:(id)connection;
+- (void)apiServerDidCloseConnectionWithKey:(NSString *)connectionKey;
 - (void)apiServerRegisterTool:(ITMRegisterToolRequest *)request
                  peerIdentity:(NSDictionary *)peerIdentity
                       handler:(void (^)(ITMRegisterToolResponse *))handler;
@@ -56,6 +56,7 @@ extern NSString *const iTermAPIServerConnectionClosed;
 - (void)apiServerListProfiles:(ITMListProfilesRequest *)request
                       handler:(void (^)(ITMListProfilesResponse *))response;
 - (void)apiServerServerOriginatedRPCResult:(ITMServerOriginatedRPCResultRequest *)request
+                             connectionKey:(NSString *)connectionKey
                                    handler:(void (^)(ITMServerOriginatedRPCResultResponse *))response;
 - (void)apiServerRestartSession:(ITMRestartSessionRequest *)request
                         handler:(void (^)(ITMRestartSessionResponse *))response;
@@ -70,11 +71,6 @@ extern NSString *const iTermAPIServerConnectionClosed;
 
 @property (nonatomic, weak) id<iTermAPIServerDelegate> delegate;
 
-- (void)postAPINotification:(ITMNotification *)notification toConnection:(id)connection;
+- (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
 
-// Blocks. Call this on the main thread.
-- (id)sendAndWaitForSynchronousRPC:(ITMNotification *)notification
-                      toConnection:(id)connection
-                           timeout:(NSTimeInterval)timeoutSeconds
-                             error:(out NSError **)error;
 @end
