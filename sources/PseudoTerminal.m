@@ -3896,6 +3896,8 @@ return NO;
     PtyLog(@"windowWillShowInitial");
     iTermTerminalWindow* window = [self ptyWindow];
     // If it's a full or top-of-screen window with a screen number preference, always honor that.
+        [window setHasShadow:YES];
+
     if (_isAnchoredToScreen) {
         PtyLog(@"have screen preference is set");
         NSRect frame = [window frame];
@@ -4818,13 +4820,17 @@ return NO;
         }
     }
 #endif
-                backgroundColor = [PSMDarkTabStyle tabBarColor];
+    // backgroundColor = [PSMDarkTabStyle tabBarColor];
+// TODO: use background color instead of black
+    self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+
+    backgroundColor = [NSColor windowBackgroundColor]; //colorWithCalibratedWhite:0 alpha:1.00];
+    PTYTextView *textView = [[self currentSession] textview];
+    iTermColorMap *_colorMap = textView.colorMap;
+    float alpha = 1.0 - [[self currentSession] transparency];
+    backgroundColor = [[_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapBackground]] colorWithAlphaComponent:alpha];
+    self.window.titlebarAppearsTransparent = YES;
     [self.window setBackgroundColor:backgroundColor];
-    if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
-        self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
-    } else {
-        self.window.appearance = nil;
-    }
 }
 
 
