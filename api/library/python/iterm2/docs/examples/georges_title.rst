@@ -53,7 +53,7 @@ Next, install this script in `~/Library/Application Support/iTerm2/Scripts/AutoL
 	    return ""
 	short_hostname = shortened_hostname(hostname)
 	if short_hostname and short_hostname != localhost:
-	    return "➥ " + hostname
+	    return "➥ " + short_hostname
 	return ""
 
     def make_pwd(user_home, localhome, pwd):
