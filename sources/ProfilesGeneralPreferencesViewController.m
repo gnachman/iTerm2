@@ -597,10 +597,12 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     const iTermTitleComponents value = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS] ?: iTermTitleComponentsProfileName;
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
     NSString *currentInvocation = self.titleFunctionInvocation;
+    NSString *customName = nil;
     for (NSMenuItem *item in _titleSettings.menu.itemArray) {
         BOOL selected = !!(item.tag & value);
         if (value & iTermTitleComponentsCustom) {
             selected = [NSObject object:item.identifier isEqualToObject:currentInvocation];
+            customName = [self titleFunctionDisplayName];
         } else if (item.tag == -1) {
             selected = NO;
         }
@@ -610,15 +612,15 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         }
     }
 
-    _titleSettings.title = [PTYSession titleForSessionName:@"Name"
-                                               profileName:@"Profile"
-                                                       job:@"Job"
-                                                       pwd:@"PWD"
-                                                       tty:@"TTY"
-                                                      user:@"User"
-                                                      host:@"Host"
-                                                      tmux:@"Tmux"
-                                                components:value];
+    _titleSettings.title = customName ?: [PTYSession titleForSessionName:@"Name"
+                                                             profileName:@"Profile"
+                                                                     job:@"Job"
+                                                                     pwd:@"PWD"
+                                                                     tty:@"TTY"
+                                                                    user:@"User"
+                                                                    host:@"Host"
+                                                                    tmux:@"Tmux"
+                                                              components:value];
 
     const CGFloat maxWidth = NSMinX(_customTitleHelp.frame) - NSMinX(_titleSettings.frame) - 5;
     [_titleSettings sizeToFit];
