@@ -84,7 +84,10 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
                              completion:(void (^)(NSString *presentationName))completion {
     __weak __typeof(self) weakSelf = self;
     id (^source)(NSString *) = self.delegate.sessionNameControllerVariableSource;
-    NSMutableSet *dependencies = [NSMutableSet set];
+    NSMutableSet *dependencies;
+    if (sync) {
+        dependencies = [NSMutableSet set];
+    }
     NSString *invocation = self.delegate.sessionNameControllerInvocation;
     if (!invocation) {
         [self didEvaluateInvocationWithResult:@""];
@@ -116,7 +119,9 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
          }
 
          NSString *result = [possiblyEmptyResult stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-         if (error || result.length == 0) {
+         if (error) {
+             result = @"🐞";
+         } else if (result.length == 0) {
              result = @"🖥";
          }
          if (!sync) {
@@ -124,7 +129,12 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
          }
          completion(result);
      }];
-    _dependencies = dependencies;
+    if (sync) {
+        // Add tmux variables we use for adding formatting.
+        _dependencies = [dependencies setByAddingObjectsFromArray:@[ iTermVariableKeySessionTmuxClientName,
+                                                                     iTermVariableKeySessionTmuxRole,
+                                                                     iTermVariableKeySessionTmuxWindowTitle ]];
+    }
 }
 
 - (void)didEvaluateInvocationWithResult:(NSString *)result {

@@ -225,6 +225,9 @@ static NSString *const iTermSessionTitleArgPath = @"path";
 static NSString *const iTermSessionTitleArgTTY = @"tty";
 static NSString *const iTermSessionTitleArgUser = @"username";
 static NSString *const iTermSessionTitleArgHost = @"hostname";
+static NSString *const iTermSessionTitleArgTmux = @"tmux";
+static NSString *const iTermSessionTitleArgTmuxRole = @"tmuxRole";
+static NSString *const iTermSessionTitleArgTmuxClientName = @"tmuxClientName";
 
 static NSString *const iTermSessionTitleSession = @"session";
 
@@ -343,6 +346,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     // The tmux rename-window command is only sent when the name field resigns first responder.
     // This tracks if a tmux client's name has changed but the tmux server has not been informed yet.
     BOOL _tmuxTitleOutOfSync;
+    PTYSessionTmuxMode _tmuxMode;
 
     NSInteger _requestAttentionId;  // Last request-attention identifier
     iTermMark *_lastMark;
@@ -499,7 +503,10 @@ static NSString *const iTermSessionTitleSession = @"session";
            iTermSessionTitleArgPath: iTermVariableKeySessionPath,
            iTermSessionTitleArgTTY: iTermVariableKeySessionTTY,
            iTermSessionTitleArgUser: iTermVariableKeySessionUsername,
-           iTermSessionTitleArgHost: iTermVariableKeySessionHostname };
+           iTermSessionTitleArgHost: iTermVariableKeySessionHostname,
+           iTermSessionTitleArgTmux: iTermVariableKeySessionTmuxWindowTitle,
+           iTermSessionTitleArgTmuxRole: iTermVariableKeySessionTmuxRole,
+           iTermSessionTitleArgTmuxClientName: iTermVariableKeySessionTmuxClientName };
     // This would be a cyclic reference since the session.name is the result of this function.
     assert(![defaults.allValues containsObject:iTermVariableKeySessionName]);
 
@@ -526,6 +533,7 @@ static NSString *const iTermSessionTitleSession = @"session";
              NSString *tty = trim(parameters[iTermSessionTitleArgTTY]);
              NSString *user = trim(parameters[iTermSessionTitleArgUser]);
              NSString *host = trim(parameters[iTermSessionTitleArgHost]);
+             NSString *tmux = trim(parameters[iTermVariableKeySessionTmuxWindowTitle]);
              iTermTitleComponents titleComponents;
              titleComponents = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
                                                                     inProfile:session.profile];
@@ -537,6 +545,7 @@ static NSString *const iTermSessionTitleSession = @"session";
                                                             tty:tty
                                                            user:user
                                                            host:host
+                                                           tmux:tmux
                                                      components:titleComponents];
              completion(result, nil);
          }];
@@ -826,6 +835,7 @@ ITERM_WEAKLY_REFERENCEABLE
                               tty:(NSString *)ttyVariable
                              user:(NSString *)userVariable
                              host:(NSString *)hostVariable
+                             tmux:(NSString *)tmuxVariable
                        components:(iTermTitleComponents)titleComponents {
     NSString *name = nil;
     NSMutableString *result = [NSMutableString string];
@@ -835,19 +845,21 @@ ITERM_WEAKLY_REFERENCEABLE
         return @"";
     }
 
+    NSString *effectiveSessionName = tmuxVariable ?: sessionName;
+
     if (titleComponents & iTermTitleComponentsSessionName) {
-        name = sessionName;
+        name = effectiveSessionName;
     } else if (titleComponents & iTermTitleComponentsProfileName) {
         name = profileName;
     } else if (titleComponents & iTermTitleComponentsProfileAndSessionName) {
-        if (sessionName && profileName) {
-            if ([sessionName isEqualToString:profileName]) {
-                name = sessionName;
+        if (effectiveSessionName && profileName) {
+            if ([effectiveSessionName isEqualToString:profileName]) {
+                name = effectiveSessionName;
             } else {
-                name = [NSString stringWithFormat:@"%@: %@", profileName, sessionName];
+                name = [NSString stringWithFormat:@"%@: %@", profileName, effectiveSessionName];
             }
         } else {
-            name = sessionName ?: profileName;
+            name = effectiveSessionName ?: profileName;
         }
     }
     if (name) {
@@ -2127,6 +2139,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tmuxController release];
     _hideAfterTmuxWindowOpens = NO;
     _tmuxController = nil;
+    [self.variables setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
+    [self.variables setValue:nil forVariableNamed:iTermVariableKeySessionTmuxWindowTitle];
 
     // The source pane may have just exited. Dogs and cats living together!
     // Mass hysteria!
@@ -5223,6 +5237,33 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)setTmuxMode:(PTYSessionTmuxMode)tmuxMode {
+    @synchronized ([TmuxGateway class]) {
+        _tmuxMode = tmuxMode;
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *name;
+        switch (tmuxMode) {
+            case TMUX_NONE:
+                name = nil;
+                break;
+            case TMUX_GATEWAY:
+                name = @"gateway";
+                break;
+            case TMUX_CLIENT:
+                name = @"client";
+                break;
+        }
+        [self.variables setValue:name forVariableNamed:iTermVariableKeySessionTmuxRole];
+    });
+}
+
+- (PTYSessionTmuxMode)tmuxMode {
+    @synchronized ([TmuxGateway class]) {
+        return _tmuxMode;
+    }
+}
+
 - (void)startTmuxMode:(NSString *)dcsID {
     if (self.tmuxMode != TMUX_NONE) {
         return;
@@ -5239,6 +5280,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                    clientName:[self preferredTmuxClientName]
                                                       profile:[iTermAdvancedSettingsModel tmuxUsesDedicatedProfile] ? [[ProfileModel sharedInstance] tmuxProfile] : self.profile
                                                  profileModel:model];
+    [self.variables setValue:_tmuxController.clientName forVariableNamed:iTermVariableKeySessionTmuxClientName];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
     _tmuxController.unicodeVersion = _unicodeVersion;
 
@@ -5577,7 +5619,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [dcsID release];
     });
     self.tmuxMode = TMUX_NONE;
-
+    [self.variables setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
+    [self.variables setValue:nil forVariableNamed:iTermVariableKeySessionTmuxWindowTitle];
     if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
         [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
         [[iTermBuriedSessions sharedInstance] restoreSession:self];

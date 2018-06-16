@@ -552,7 +552,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateTabTitleForCurrentSessionName:(NSString *)newName {
-    [tabViewItem_ setLabel:self.evaluatedTitleOverride ?: newName];  // PSM uses bindings to bind the label to its title
+    NSString *value = (self.evaluatedTitleOverride ?: newName) ?: @"🖥";
+    [tabViewItem_ setLabel:value];  // PSM uses bindings to bind the label to its title
     [self.realParentWindow tabTitleDidChange:self];
 }
 
@@ -645,7 +646,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (!session.exited) {
         [self setState:0 reset:kPTYTabDeadState];
     }
-
+    [self updateTabTitle];
 }
 
 // Do a depth-first search for a leaf with viewId==requestedId. Returns nil if not found under 'node'.
@@ -2925,7 +2926,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [tmuxWindowName_ autorelease];
     tmuxWindowName_ = [tmuxWindowName copy];
     [[self realParentWindow] setWindowTitle];
-    [self nameOfSession:self.activeSession didChangeTo:self.activeSession.name];
+    for (PTYSession *session in self.sessions) {
+        [session.variables setValue:tmuxWindowName forVariableNamed:iTermVariableKeySessionTmuxWindowTitle];
+    }
+    [self updateTabTitle];
 }
 
 - (void)setTmuxFont:(NSFont *)font

@@ -91,6 +91,7 @@
     environment[@"ITERM2_KEY"] = key;
     environment[@"HOME"] = NSHomeDirectory();
     environment[@"SHELL"] = shell;
+    environment[@"PYTHONIOENCODING"] = @"utf-8";
     return environment;
 }
 

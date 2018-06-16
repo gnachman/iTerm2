@@ -471,6 +471,7 @@ typedef enum {
                               tty:(NSString *)ttyVariable
                              user:(NSString *)userVariable
                              host:(NSString *)hostVariable
+                             tmux:(NSString *)tmuxVariable
                        components:(iTermTitleComponents)titleComponents;
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;

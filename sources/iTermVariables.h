@@ -33,6 +33,8 @@ extern NSString *const iTermVariableKeySessionWindowName;  // set by esc code
 extern NSString *const iTermVariableKeySessionJob;
 extern NSString *const iTermVariableKeySessionPresentationName;  // What's shown in the session title view
 extern NSString *const iTermVariableKeySessionTmuxWindowTitle;  // All tmux window panes share the same window title
+extern NSString *const iTermVariableKeySessionTmuxRole;  // Unset (normal session), "gateway" (where you ran tmux -CC), or "client".
+extern NSString *const iTermVariableKeySessionTmuxClientName;  // Set on tmux gateways. Gives a name for the tmux session.
 
 // Returns an array of all known variables.
 NSArray<NSString *> *iTermVariablesGetAll(void);
