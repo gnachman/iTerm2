@@ -36,10 +36,11 @@
 
 // This used to be absurdly fast (.075) for reasons neither I nor revision
 // history can recall. This looks nicer to my eyes.
-static const float kAnimationDuration = 0.2;
+static const float kAnimationDuration = 0; //0.2;
 static iTermFindMode gFindMode;
 static NSString *gSearchString;
 static NSSize kFocusRingInset = { 2, 3 };
+BOOL unfocused = YES;
 
 const CGFloat kEdgeWidth = 1;
 
@@ -387,7 +388,7 @@ const CGFloat kEdgeWidth = 1;
 
     [NSAnimationContext endGrouping];
 
-    DLog(@"Grab focus for find view %@", self.view);
+    // DLog(@"Grab focus for find view %@", self.view);
     [[[self view] window] makeFirstResponder:findBarTextField_];
 }
 
