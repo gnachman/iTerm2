@@ -149,7 +149,7 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 
 - (IBAction)addTouchBarItem:(id)sender {
     iTermEditKeyActionWindowController *editActionWindowController;
-    editActionWindowController = [[iTermEditKeyActionWindowController alloc] init];
+    editActionWindowController = [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession | iTermVariablesSuggestionContextApp];
     editActionWindowController.isNewMapping = YES;
     editActionWindowController.isTouchBarItem = YES;
     editActionWindowController.touchBarItemID = [iTermTouchBarIDPrefix stringByAppendingString:[NSString uuid]];
@@ -159,7 +159,7 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 
 - (IBAction)addNewMapping:(id)sender {
     iTermEditKeyActionWindowController *editActionWindowController;
-    editActionWindowController = [[iTermEditKeyActionWindowController alloc] init];
+    editActionWindowController = [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession | iTermVariablesSuggestionContextApp];
     editActionWindowController.isNewMapping = YES;
     editActionWindowController.action = KEY_ACTION_IGNORE;
     [self presentEditActionSheet:editActionWindowController];
@@ -203,7 +203,7 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
         selectedKey = sortedKeys[rowIndex];
         dict = [_delegate keyMappingTouchBarItems];
     }
-    _editActionWindowController = [[iTermEditKeyActionWindowController alloc] init];
+    _editActionWindowController = [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession | iTermVariablesSuggestionContextApp];
     _editActionWindowController.isTouchBarItem = isTouchBarItem;
     if (isTouchBarItem) {
         _editActionWindowController.label = [iTermKeyBindingMgr touchBarLabelForBinding:dict[selectedKey]];

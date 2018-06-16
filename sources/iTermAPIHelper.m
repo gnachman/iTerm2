@@ -1665,9 +1665,10 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
     }];
     [request.getArray enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([name isEqualToString:@"*"]) {
-            [response.valuesArray addObject:[NSJSONSerialization it_jsonStringForObject:session.variables.legacyDictionaryExcludingGlobals]];
+            NSDictionary *dict = session.variablesScope.dictionaryWithStringValues;
+            [response.valuesArray addObject:[NSJSONSerialization it_jsonStringForObject:dict]];
         } else {
-            id obj = [NSJSONSerialization it_jsonStringForObject:[session.variables valueForVariableName:name]];
+            id obj = [NSJSONSerialization it_jsonStringForObject:[session.variablesScope valueForVariableName:name]];
             NSString *value = obj ?: @"null";
             [response.valuesArray addObject:value];
         }

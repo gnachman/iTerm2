@@ -7,8 +7,12 @@
 //
 
 #import <Cocoa/Cocoa.h>
+
 #import "ITAddressBookMgr.h"
+#import "iTermTuple.h"
 #import "VT100GridTypes.h"
+
+@class iTermTuple;
 
 @interface NSDictionary<__covariant KeyType, __covariant ObjectType> (iTerm)
 
@@ -51,6 +55,9 @@
 // entry is omitted.
 - (NSDictionary *)mapValuesWithBlock:(id (^)(KeyType key, ObjectType object))block;
 - (NSDictionary *)mapKeysWithBlock:(KeyType (^)(KeyType key, ObjectType object))block;
+// tuple is iTermTuple<KeyType, ObjectType>. Compiler won't let me write this.
+- (NSDictionary *)mapWithBlock:(iTermTuple * (^)(KeyType key, ObjectType object))block;
+- (NSDictionary<id, NSDictionary<KeyType, ObjectType> *> *)classifyWithBlock:(id (^NS_NOESCAPE)(KeyType key, ObjectType object))block;
 
 @end
 

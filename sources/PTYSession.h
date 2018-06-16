@@ -37,6 +37,7 @@ extern NSString *const PTYSessionRevivedNotification;
 @class FakeWindow;
 @class iTermAnnouncementViewController;
 @class iTermVariables;
+@class iTermVariableScope;
 @class PTYTab;
 @class PTYTask;
 @class PTYTextView;
@@ -409,6 +410,7 @@ typedef enum {
 
 // Has two children: session and user
 @property (nonatomic, readonly) iTermVariables *variables;
+@property (nonatomic, readonly) iTermVariableScope *variablesScope;
 
 @property(atomic, readonly) PTYSessionTmuxMode tmuxMode;
 
@@ -460,6 +462,7 @@ typedef enum {
 
 + (id (^)(NSString *))functionCallSource;
 - (id (^)(NSString *))functionCallSource;
+
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
              replacingProfileWithGUID:(NSString *)badGuid
                           withProfile:(Profile *)goodProfile;

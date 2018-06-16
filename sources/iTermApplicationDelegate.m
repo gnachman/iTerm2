@@ -948,7 +948,7 @@ static BOOL hasBecomeActive = NO;
         DLog(@"applicationWillFinishLaunching:");
     }
 
-    [[iTermVariables globalInstance] setValue:@(getpid()) forVariableNamed:iTermVariableKeyApplicationPID];
+    [[iTermVariableScope globalsScope] setValue:@(getpid()) forVariableNamed:iTermVariableKeyApplicationPID];
     [PTYSession registerBuiltInFunctions];
     
     [iTermMigrationHelper migrateApplicationSupportDirectoryIfNeeded];

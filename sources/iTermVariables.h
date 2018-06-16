@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 extern NSString *const iTermVariableKeyApplicationPID;
 
 extern NSString *const iTermVariableKeyTabTitleOverride;
+extern NSString *const iTermVariableKeyTabCurrentSession;
 
 extern NSString *const iTermVariableKeySessionAutoLogID;
 extern NSString *const iTermVariableKeySessionColumns;
@@ -24,7 +25,7 @@ extern NSString *const iTermVariableKeySessionName;  // Registers the computed t
 extern NSString *const iTermVariableKeySessionRows;
 extern NSString *const iTermVariableKeySessionTTY;
 extern NSString *const iTermVariableKeySessionUsername;
-extern NSString *const iTermVariableKeyTermID;
+extern NSString *const iTermVariableKeySessionTermID;
 extern NSString *const iTermVariableKeySessionProfileName;  // current profile name
 extern NSString *const iTermVariableKeySessionAutoName;  // Defaults to profile name. Then, most recent of manually set or icon name.
 extern NSString *const iTermVariableKeySessionIconName;  // set by esc code
@@ -36,36 +37,63 @@ extern NSString *const iTermVariableKeySessionTmuxWindowTitle;  // All tmux wind
 extern NSString *const iTermVariableKeySessionTmuxRole;  // Unset (normal session), "gateway" (where you ran tmux -CC), or "client".
 extern NSString *const iTermVariableKeySessionTmuxClientName;  // Set on tmux gateways. Gives a name for the tmux session.
 
-// Returns an array of all known variables.
-NSArray<NSString *> *iTermVariablesGetAll(void);
-
 @class iTermVariables;
+@class iTermVariableScope;
+
+typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
+    iTermVariablesSuggestionContextNone = 0,
+    iTermVariablesSuggestionContextSession = (1 << 0),
+    iTermVariablesSuggestionContextTab = (1 << 1),
+    iTermVariablesSuggestionContextApp = (1 << 2),
+};
 
 @protocol iTermVariablesDelegate<NSObject>
 - (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames group:(dispatch_group_t)group;
 @end
 
 // Usage:
-// iTermVariables *child = [[iTermVariables alloc] init];
+// iTermVariables *child = [[iTermVariables alloc] initWithContext:(iTermVariablesSuggestionContext)context];
 // [child setValuesFromDictionary:dict];
 // child.delegate = self;
 // [parent setValue:child forVariableNamed:@"child name"];
 @interface iTermVariables : NSObject
 
 @property (nonatomic, weak) id<iTermVariablesDelegate> delegate;
-// TODO: Deprecate this and update the callsites to use evaluation properly
-@property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *legacyDictionary;
-@property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *legacyDictionaryExcludingGlobals;
-@property (nonatomic, readonly) id (^functionCallSource)(NSString *);
+@property (nonatomic, readonly) NSDictionary *dictionaryValue;
+@property (nonatomic, readonly) NSDictionary<NSString *,NSString *> *stringValuedDictionary;
 
 + (instancetype)globalInstance;
 
-// nil or NSNull value means unset it.
-- (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name;
++ (void)recordUseOfVariableNamed:(NSString *)name
+                       inContext:(iTermVariablesSuggestionContext)context;
++ (NSSet<NSString *> *)recordedVariableNamesInContext:(iTermVariablesSuggestionContext)context;
 
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithContext:(iTermVariablesSuggestionContext)context NS_DESIGNATED_INITIALIZER;
+
+// WARNING: You almost never want to use this. It is useful if you need to get a known child out, as
+// open quickly does to find the names of all user variables.
+- (id)discouragedValueForVariableName:(NSString *)name;
+
+@end
+
+// Represents the variables that are visible from a particular callsite. Each
+// set of variables except one (that of the most local scope) must have a name.
+// Variables are searched for one matching the name.
+@interface iTermVariableScope : NSObject
+@property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *dictionaryWithStringValues;
+@property (nonatomic, readonly) id (^functionCallSource)(NSString *);
+
++ (instancetype)globalsScope;
+
+- (void)addVariables:(iTermVariables *)variables toScopeNamed:(nullable NSString *)scopeName;
+- (id)valueForVariableName:(NSString *)name;
+- (NSString *)stringValueForVariableName:(NSString *)name;
 // Values of NSNull get unset
 - (BOOL)setValuesFromDictionary:(NSDictionary<NSString *, id> *)dict;
-- (id)valueForVariableName:(NSString *)name;
+
+// nil or NSNull value means unset it.
+- (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name;
 
 // Freaking KVO crap keeps autocompleting and causing havoc
 - (void)setValue:(nullable id)value forKey:(NSString *)key NS_UNAVAILABLE;

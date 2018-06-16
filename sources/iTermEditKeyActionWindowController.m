@@ -7,6 +7,7 @@
 //
 
 #import "iTermEditKeyActionWindowController.h"
+
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPreferences.h"
@@ -42,8 +43,12 @@
     iTermFunctionCallTextFieldDelegate *_functionCallDelegate;
 }
 
-- (instancetype)init {
-    return [super initWithWindowNibName:@"iTermEditKeyActionWindowController"];
+- (instancetype)initWithContext:(iTermVariablesSuggestionContext)context {
+    self = [super initWithWindowNibName:@"iTermEditKeyActionWindowController"];
+    if (self) {
+        _suggestContext = context;
+    }
+    return self;
 }
 
 - (void)windowDidLoad
@@ -229,7 +234,7 @@
             parameterHidden = NO;
             [[_parameter cell] setPlaceholderString:@"Function Call"];
             if (!_functionCallDelegate) {
-                _functionCallDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:iTermVariablesGetAll()
+                _functionCallDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:[iTermVariables recordedVariableNamesInContext:_suggestContext]
                                                                                       passthrough:nil
                                                                                     functionsOnly:YES];
             }

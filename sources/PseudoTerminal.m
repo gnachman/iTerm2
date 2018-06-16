@@ -4919,8 +4919,7 @@ ITERM_WEAKLY_REFERENCEABLE
     alert.informativeText = @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will replaced with their evalution.";
     NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 400, 24 * 3)] autorelease];
     iTermFunctionCallTextFieldDelegate *delegate;
-    NSArray *paths = [tab.variables.legacyDictionary.allKeys arrayByRemovingObject:PTYTabVariableTitleOverride];
-    delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:paths
+    delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:[iTermVariables recordedVariableNamesInContext:iTermVariablesSuggestionContextTab]
                                                               passthrough:nil
                                                             functionsOnly:NO] autorelease];
     titleTextField.delegate = delegate;

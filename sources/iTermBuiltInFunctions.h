@@ -7,6 +7,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "iTermVariables.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSString *> *argumentNames);
@@ -23,6 +25,7 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 - (instancetype)initWithName:(NSString *)name
                    arguments:(NSDictionary<NSString *, Class> *)argumentsAndTypes
                defaultValues:(NSDictionary<NSString *, NSString *> *)defaultValues
+                     context:(iTermVariablesSuggestionContext)context
                        block:(iTermBuiltInFunctionsExecutionBlock)block NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 

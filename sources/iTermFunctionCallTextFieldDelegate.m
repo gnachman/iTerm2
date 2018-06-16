@@ -27,7 +27,7 @@
     __weak id _passthrough;
 }
 
-- (instancetype)initWithPaths:(NSArray<NSString *> *)paths
+- (instancetype)initWithPaths:(NSSet<NSString *> *)paths
                   passthrough:(id)passthrough
                 functionsOnly:(BOOL)functionsOnly {
     self = [super init];

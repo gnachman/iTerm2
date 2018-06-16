@@ -7,9 +7,11 @@
 
 #import "iTermVariables.h"
 
+#import "DebugLogging.h"
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
@@ -17,11 +19,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef iTermTriple<NSNumber *, iTermVariables *, NSString *> iTermVariablesDepthOwnerNamesTriple;
 
-static NSString *const iTermVariablesGlobalScopePrefix = @"iterm2.";
+NSString *const iTermVariableKeyApplicationPID = @"pid";
 
-NSString *const iTermVariableKeyApplicationPID = @"iterm2.pid";
-
-NSString *const iTermVariableKeyTabTitleOverride = @"tab.titleOverride";
+NSString *const iTermVariableKeyTabTitleOverride = @"titleOverride";
+NSString *const iTermVariableKeyTabCurrentSession = @"currentSession";
 
 NSString *const iTermVariableKeySessionAutoLogID = @"session.autoLogId";
 NSString *const iTermVariableKeySessionColumns = @"session.columns";
@@ -34,7 +35,7 @@ NSString *const iTermVariableKeySessionName = @"session.name";
 NSString *const iTermVariableKeySessionRows = @"session.rows";
 NSString *const iTermVariableKeySessionTTY = @"session.tty";
 NSString *const iTermVariableKeySessionUsername = @"session.username";
-NSString *const iTermVariableKeyTermID = @"session.termid";
+NSString *const iTermVariableKeySessionTermID = @"session.termid";
 NSString *const iTermVariableKeySessionProfileName = @"session.profileName";
 NSString *const iTermVariableKeySessionIconName = @"session.terminalIconName";
 NSString *const iTermVariableKeySessionTriggerName = @"session.triggerName";
@@ -45,56 +46,144 @@ NSString *const iTermVariableKeySessionTmuxWindowTitle = @"session.tmuxWindowTit
 NSString *const iTermVariableKeySessionTmuxRole = @"session.tmuxRole";
 NSString *const iTermVariableKeySessionTmuxClientName = @"session.tmuxClientName";
 NSString *const iTermVariableKeySessionAutoName = @"session.autoName";
-
-static NSMutableSet<NSString *> *iTermVariablesGetMutableSet() {
-    static NSMutableSet<NSString *> *userDefined;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSArray<NSString *> *systemDefined =
-            @[ iTermVariableKeyApplicationPID,
-               iTermVariableKeySessionAutoLogID,
-               iTermVariableKeySessionColumns,
-               iTermVariableKeySessionCreationTimeString,
-               iTermVariableKeySessionHostname,
-               iTermVariableKeySessionID,
-               iTermVariableKeySessionLastCommand,
-               iTermVariableKeySessionPath,
-               iTermVariableKeySessionName,
-               iTermVariableKeySessionRows,
-               iTermVariableKeySessionTTY,
-               iTermVariableKeySessionUsername,
-               iTermVariableKeyTermID ];
-        userDefined = [NSMutableSet setWithArray:systemDefined];
-    });
-    return userDefined;
-}
-
-NSArray<NSString *> *iTermVariablesGetAll(void) {
-    return [iTermVariablesGetMutableSet() allObjects];
-}
-
-static void iTermVariablesAdd(NSString *variable) {
-    [iTermVariablesGetMutableSet() addObject:variable];
-}
+// NOTE: If you add here, also update +recordBuiltInVariables
 
 @implementation iTermVariables {
     NSMutableDictionary<NSString *, id> *_values;
     __weak iTermVariables *_parent;
     NSString *_parentName;
+    iTermVariablesSuggestionContext _context;
+
 }
 
 + (instancetype)globalInstance {
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] init];
+        instance = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextApp];
     });
     return instance;
 }
 
-- (instancetype)init {
++ (void)recordBuiltInVariables {
+    // Session context
+    NSArray<NSString *> *names = @[ iTermVariableKeySessionAutoLogID,
+                                    iTermVariableKeySessionColumns,
+                                    iTermVariableKeySessionCreationTimeString,
+                                    iTermVariableKeySessionHostname,
+                                    iTermVariableKeySessionID,
+                                    iTermVariableKeySessionLastCommand,
+                                    iTermVariableKeySessionPath,
+                                    iTermVariableKeySessionName,
+                                    iTermVariableKeySessionRows,
+                                    iTermVariableKeySessionTTY,
+                                    iTermVariableKeySessionUsername,
+                                    iTermVariableKeySessionTermID,
+                                    iTermVariableKeySessionProfileName,
+                                    iTermVariableKeySessionIconName,
+                                    iTermVariableKeySessionTriggerName,
+                                    iTermVariableKeySessionWindowName,
+                                    iTermVariableKeySessionJob,
+                                    iTermVariableKeySessionPresentationName,
+                                    iTermVariableKeySessionTmuxWindowTitle,
+                                    iTermVariableKeySessionTmuxRole,
+                                    iTermVariableKeySessionTmuxClientName,
+                                    iTermVariableKeySessionAutoName ];
+    [names enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self recordUseOfVariableNamed:obj inContext:iTermVariablesSuggestionContextSession];
+    }];
+
+    // Tab context
+    [self recordUseOfVariableNamed:iTermVariableKeyTabTitleOverride inContext:iTermVariablesSuggestionContextTab];
+    [self recordUseOfVariableNamed:iTermVariableKeyTabCurrentSession inContext:iTermVariablesSuggestionContextTab];
+
+    // App cnotext
+    [self recordUseOfVariableNamed:iTermVariableKeyApplicationPID inContext:iTermVariablesSuggestionContextApp];
+}
+
++ (NSMutableDictionary<NSNumber *, NSMutableSet<NSString *> *> *)mutableRecordedNames {
+    static NSMutableDictionary<NSNumber *, NSMutableSet<NSString *> *> *records;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSDictionary *dict = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"NoSyncRecordedVariableNames"] ?: @{};
+        records = [NSMutableDictionary dictionary];
+        for (id key in dict) {
+            NSString *stringContext = [NSString castFrom:key];
+            if (!stringContext) {
+                continue;
+            }
+            NSNumber *context = @([stringContext integerValue]);
+            NSArray<NSString *> *names = [NSArray castFrom:dict[key]];
+            if (!names) {
+                continue;
+            }
+            records[context] = [NSMutableSet setWithArray:names];
+        }
+    });
+    return records;
+}
+
++ (void)synchronizeRecordedNames {
+    NSDictionary *plist = [[self mutableRecordedNames] mapValuesWithBlock:^id(NSNumber *key, NSMutableSet<NSString *> *object) {
+        return object.allObjects;
+    }];
+    plist = [plist mapKeysWithBlock:^id(id key, id object) {
+        return [key stringValue];
+    }];
+    [[NSUserDefaults standardUserDefaults] setObject:plist forKey:@"NoSyncRecordedVariableNames"];
+}
+
++ (NSMutableSet<NSString *> *)mutableRecordedVariableNamesInContext:(iTermVariablesSuggestionContext)context {
+    NSMutableSet<NSString *> *set = self.mutableRecordedNames[@(context)];
+    if (!set) {
+        set = [NSMutableSet set];
+        self.mutableRecordedNames[@(context)] = set;
+    }
+    return set;
+}
+
++ (NSSet<NSString *> *)recordedVariableNamesInContext:(iTermVariablesSuggestionContext)context {
+    NSSet<NSString *> *result = [NSSet set];
+    for (int bit = 0; bit < 64; bit++) {
+        NSUInteger mask = 1 << bit;
+        if (mask & context) {
+            result = [result setByAddingObjectsFromSet:self.mutableRecordedNames[@(mask)] ?: [NSSet set]];
+        }
+    }
+    return result;
+}
+
++ (NSString *)stringForContext:(iTermVariablesSuggestionContext)context {
+    NSArray<NSString *> *parts = @[];
+    if (context & iTermVariablesSuggestionContextSession) {
+        parts = [parts arrayByAddingObject:@"Session"];
+    }
+    if (context & iTermVariablesSuggestionContextTab) {
+        parts = [parts arrayByAddingObject:@"Tab"];
+    }
+    if (context & iTermVariablesSuggestionContextApp) {
+        parts = [parts arrayByAddingObject:@"App"];
+    }
+    if (context == iTermVariablesSuggestionContextNone) {
+        parts = [parts arrayByAddingObject:@"None"];
+    }
+    return [parts componentsJoinedByString:@"|"];
+}
+
++ (void)recordUseOfVariableNamed:(NSString *)name
+                       inContext:(iTermVariablesSuggestionContext)context {
+    NSMutableSet<NSString *> *names = [self mutableRecordedVariableNamesInContext:context];
+    if (![names containsObject:name]) {
+        DLog(@"Record %@ in context %@", name, [self stringForContext:context]);
+        [names addObject:name];
+        [self synchronizeRecordedNames];
+    }
+}
+
+- (instancetype)initWithContext:(iTermVariablesSuggestionContext)context {
     self = [super init];
     if (self) {
+        _context = context;
         _values = [NSMutableDictionary dictionary];
     }
     return self;
@@ -102,36 +191,7 @@ static void iTermVariablesAdd(NSString *variable) {
 
 #pragma mark - APIs
 
-- (NSDictionary<NSString *,NSString *> *)legacyDictionary {
-    if (self == [iTermVariables globalInstance]) {
-        return self.legacyDictionaryExcludingGlobals;
-    }
-
-    iTermVariables *globals = [iTermVariables globalInstance];
-    NSDictionary<NSString *, NSString *> *globalsDict = [globals legacyDictionaryExcludingGlobalsAnd:self];
-    globalsDict = [globalsDict mapKeysWithBlock:^NSString *(NSString *key, NSString *object) {
-        return [iTermVariablesGlobalScopePrefix stringByAppendingString:key];
-    }];
-    return [self.legacyDictionaryExcludingGlobals dictionaryByMergingDictionary:globalsDict];
-}
-
-- (NSDictionary<NSString *,NSString *> *)legacyDictionaryExcludingGlobals {
-    return [self legacyDictionaryExcludingGlobalsAnd:nil];
-}
-
-- (id (^)(NSString *))functionCallSource {
-    return ^id (NSString *name) {
-        return [self valueForVariableName:name];
-    };
-}
-
 - (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name {
-    NSString *globalName = [self nameByRemovingGlobalPrefix:name];
-    if (globalName) {
-        return [[iTermVariables globalInstance] setValue:value
-                                        forVariableNamed:globalName];
-    }
-
     iTermVariables *owner = [self setValue:value forVariableNamed:name withSideEffects:YES];
     return owner != nil;
 }
@@ -141,20 +201,9 @@ static void iTermVariablesAdd(NSString *variable) {
     for (NSString *name in dict) {
         id value = dict[name];
         iTermVariables *owner = nil;
-        NSString *globalName = [self nameByRemovingGlobalPrefix:name];
-        NSInteger depth = 0;
-        if (globalName) {
-            owner = [[iTermVariables globalInstance] setValue:value
-                                             forVariableNamed:globalName
-                                              withSideEffects:NO];
-            depth = -1;
-        } else {
-            owner = [self setValue:value forVariableNamed:name withSideEffects:NO];
-            if (owner) {
-                depth = [[name componentsSeparatedByString:@"."] count];
-            }
-        }
+        owner = [self setValue:value forVariableNamed:name withSideEffects:NO];
         if (owner) {
+            NSInteger depth = [[name componentsSeparatedByString:@"."] count];
             [mutations addObject:[iTermTriple tripleWithObject:@(depth) andObject:owner object:name]];
         }
     }
@@ -166,12 +215,11 @@ static void iTermVariablesAdd(NSString *variable) {
     return YES;
 }
 
-- (id)valueForVariableName:(NSString *)name {
-    NSString *globalName = [self nameByRemovingGlobalPrefix:name];
-    if (globalName) {
-        return [[iTermVariables globalInstance] valueForVariableName:globalName];
-    }
+- (id)discouragedValueForVariableName:(NSString *)name {
+    return [self valueForVariableName:name];
+}
 
+- (id)valueForVariableName:(NSString *)name {
     if (_values[name]) {
         return _values[name];
     }
@@ -186,15 +234,22 @@ static void iTermVariablesAdd(NSString *variable) {
     return [child valueForVariableName:[[parts subarrayFromIndex:1] componentsJoinedByString:@"."]];
 }
 
-#pragma mark - Private
-
-- (NSString *)nameByRemovingGlobalPrefix:(NSString *)name {
-    if ([name hasPrefix:iTermVariablesGlobalScopePrefix]) {
-        return [name substringFromIndex:[iTermVariablesGlobalScopePrefix length]];
-    } else {
-        return nil;
+- (NSString *)stringValueForVariableName:(NSString *)name {
+    id obj = [self valueForVariableName:name];
+    if (!obj) {
+        return @"";
     }
+    if ([obj isKindOfClass:[NSString class]]) {
+        return obj;
+    }
+    NSNumber *number = [NSNumber castFrom:obj];
+    if (number) {
+        return [number stringValue];
+    }
+    return [NSJSONSerialization it_jsonStringForObject:obj] ?: @"";
 }
+
+#pragma mark - Private
 
 - (iTermVariables *)setValue:(id)value forVariableNamed:(NSString *)name withSideEffects:(BOOL)sideEffects {
     assert(name.length > 0);
@@ -226,7 +281,6 @@ static void iTermVariablesAdd(NSString *variable) {
         } else {
             _values[name] = [value copy];
         }
-        iTermVariablesAdd(name);
     } else {
         [_values removeObjectForKey:name];
     }
@@ -288,6 +342,14 @@ static void iTermVariablesAdd(NSString *variable) {
 
 - (void)notifyDelegateChainOfChangedNames:(NSSet<NSString *> *)names
                                     group:(dispatch_group_t)group {
+    if (_context != iTermVariablesSuggestionContextNone) {
+        [names enumerateObjectsUsingBlock:^(NSString * _Nonnull name, BOOL * _Nonnull stop) {
+            if (![self->_values[name] isKindOfClass:[iTermVariables class]]) {
+                [iTermVariables recordUseOfVariableNamed:name inContext:self->_context];
+            }
+        }];
+    }
+
     [self.delegate variables:self didChangeValuesForNames:names group:group];
     if (_parent && _parentName) {
         [_parent notifyDelegateChainOfChangedNames:[self namesByPrependingParentName:names] group:group];
@@ -301,24 +363,175 @@ static void iTermVariablesAdd(NSString *variable) {
     }]];;
 }
 
-- (NSDictionary<NSString *,NSString *> *)legacyDictionaryExcludingGlobalsAnd:(nullable iTermVariables *)exclusion {
-    iTermVariables *globals = [iTermVariables globalInstance];
+- (NSDictionary<NSString *,NSString *> *)stringValuedDictionary {
+    return [self stringValuedDictionaryInScope:nil];
+}
+
+- (NSDictionary<NSString *,NSString *> *)stringValuedDictionaryInScope:(nullable NSString *)scopeName {
     NSMutableDictionary<NSString *, NSString *> *result = [NSMutableDictionary dictionary];
     for (NSString *name in _values) {
         id value = _values[name];
         iTermVariables *child = [iTermVariables castFrom:value];
         if (child) {
-            if (child == globals || child == exclusion) {
-                continue;
-            }
-            [result it_mergeFrom:[child.legacyDictionaryExcludingGlobals mapKeysWithBlock:^id(NSString *key, NSString *object) {
-                return [NSString stringWithFormat:@"%@.%@", name, key];
+            [result it_mergeFrom:[child.stringValuedDictionary mapKeysWithBlock:^id(NSString *key, NSString *object) {
+                if (scopeName) {
+                    return [NSString stringWithFormat:@"%@.%@.%@", scopeName, name, key];
+                } else {
+                    return [NSString stringWithFormat:@"%@.%@", name, key];
+                }
             }]];
         } else {
-            result[name] = value;
+            NSString *scopedName = name;
+            if (scopeName) {
+                scopedName = [NSString stringWithFormat:@"%@.%@", scopeName, name];
+            }
+            result[scopedName] = [self stringValueForVariableName:name];
         }
     }
     return result;
+}
+
+- (NSDictionary<NSString *, id> *)dictionaryInScope:(nullable NSString *)scopeName {
+    NSMutableDictionary<NSString *, NSString *> *result = [NSMutableDictionary dictionary];
+    for (NSString *name in _values) {
+        id value = _values[name];
+        iTermVariables *child = [iTermVariables castFrom:value];
+        if (child) {
+            [result it_mergeFrom:[[child dictionaryInScope:nil] mapKeysWithBlock:^id(NSString *key, id object) {
+                if (scopeName) {
+                    return [NSString stringWithFormat:@"%@.%@.%@", scopeName, name, key];
+                } else {
+                    return [NSString stringWithFormat:@"%@.%@", name, key];
+                }
+            }]];
+        } else {
+            NSString *scopedName = name;
+            if (scopeName) {
+                scopedName = [NSString stringWithFormat:@"%@.%@", scopeName, name];
+            }
+            result[scopedName] = value;
+        }
+    }
+    return result;
+}
+
+- (NSDictionary *)dictionaryValue {
+    return [self dictionaryInScope:nil];
+}
+
+@end
+
+@implementation iTermVariableScope {
+    NSMutableArray<iTermTuple<NSString *, iTermVariables *> *> *_frames;
+}
+
++ (instancetype)globalsScope {
+    iTermVariableScope *scope = [[iTermVariableScope alloc] init];
+    [scope addVariables:[iTermVariables globalInstance] toScopeNamed:nil];
+    return scope;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _frames = [NSMutableArray array];
+    }
+    return self;
+}
+
+- (id (^)(NSString *))functionCallSource {
+    return ^id (NSString *name) {
+        return [self valueForVariableName:name];
+    };
+}
+
+- (void)addVariables:(iTermVariables *)variables toScopeNamed:(nullable NSString *)scopeName {
+    [_frames addObject:[iTermTuple tupleWithObject:scopeName andObject:variables]];
+}
+
+- (void)enumerateVariables:(void (^)(NSString * _Nonnull, iTermVariables * _Nonnull))block {
+    [_frames enumerateObjectsUsingBlock:^(iTermTuple<NSString *,iTermVariables *> * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        block(obj.firstObject, obj.secondObject);
+    }];
+}
+
+- (NSDictionary<NSString *, NSString *> *)dictionaryWithStringValues {
+    NSMutableDictionary<NSString *, NSString *> *result = [NSMutableDictionary dictionary];
+    [self enumerateVariables:^(NSString * _Nonnull scopeName, iTermVariables * _Nonnull variables) {
+        [result it_mergeFrom:[variables stringValuedDictionaryInScope:scopeName]];
+    }];
+    return result;
+}
+
+- (id)valueForVariableName:(NSString *)name {
+    NSString *stripped = nil;
+    iTermVariables *owner = [self ownerForKey:name stripped:&stripped];
+    return [owner valueForVariableName:stripped];
+}
+
+- (NSString *)stringValueForVariableName:(NSString *)name {
+    NSString *stripped = nil;
+    iTermVariables *owner = [self ownerForKey:name stripped:&stripped];
+    return [owner stringValueForVariableName:name] ?: @"";
+}
+
+- (iTermVariables *)ownerForKey:(NSString *)key stripped:(out NSString **)stripped {
+    NSArray<NSString *> *parts = [key componentsSeparatedByString:@"."];
+    if (parts.count == 0) {
+        return nil;
+    }
+    if (parts.count == 1) {
+        *stripped = key;
+        return [_frames objectPassingTest:^BOOL(iTermTuple<NSString *,iTermVariables *> *element, NSUInteger index, BOOL *stop) {
+            return element.firstObject == nil;
+        }].secondObject;
+    }
+    __block NSString *strippedOut = nil;
+    iTermVariables *owner = [_frames objectPassingTest:^BOOL(iTermTuple<NSString *,iTermVariables *> *element, NSUInteger index, BOOL *stop) {
+        if (element.firstObject == nil && [element.secondObject valueForVariableName:parts[0]]) {
+            strippedOut = key;
+            return YES;
+        } else {
+            strippedOut = [[parts subarrayFromIndex:1] componentsJoinedByString:@"."];
+            return [element.firstObject isEqualToString:parts[0]];
+        }
+    }].secondObject;
+    *stripped = strippedOut;
+    return owner;
+}
+
+- (BOOL)setValuesFromDictionary:(NSDictionary<NSString *, id> *)dict {
+    // Transform dict from {name: object} to {owner: {stripped_name: object}}
+    NSMutableDictionary<NSValue *, NSMutableDictionary<NSString *, id> *> *valuesByOwner = [NSMutableDictionary dictionary];
+    for (NSString *key in dict) {
+        id object = dict[key];
+        NSString *stripped = nil;
+        iTermVariables *owner = [self ownerForKey:key stripped:&stripped];
+        NSValue *value = [NSValue valueWithNonretainedObject:owner];
+        NSMutableDictionary *inner = valuesByOwner[value];
+        if (!inner) {
+            inner = [NSMutableDictionary dictionary];
+            valuesByOwner[value] = inner;
+        }
+        inner[stripped] = object;
+    }
+    __block BOOL changed = NO;
+    [valuesByOwner enumerateKeysAndObjectsUsingBlock:^(NSValue * _Nonnull ownerValue, NSDictionary<NSString *,id> * _Nonnull setDict, BOOL * _Nonnull stop) {
+        iTermVariables *owner = [ownerValue nonretainedObjectValue];
+        if ([owner setValuesFromDictionary:setDict]) {
+            changed = YES;
+        }
+    }];
+    return changed;
+}
+
+- (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name {
+    NSString *stripped = nil;
+    iTermVariables *owner = [self ownerForKey:name stripped:&stripped];
+    if (!owner) {
+        return NO;
+    }
+    return [owner setValue:value forVariableNamed:stripped];
 }
 
 @end

@@ -112,7 +112,7 @@
         [command setScriptErrorString:@"No name given"];
     }
 
-    id value = [self.variables valueForVariableName:name];
+    id value = [self.variablesScope valueForVariableName:name];
     if ([NSString castFrom:value]) {
         return value;
     } else if ([value respondsToSelector:@selector(stringValue)]) {
@@ -141,7 +141,7 @@
         [command setScriptErrorString:@"Only user variables may be set. Name must start with “user.”."];
         return nil;
     }
-    [self.variables setValue:value forVariableNamed:name];
+    [self.variablesScope setValue:value forVariableNamed:name];
     return value;
 }
 

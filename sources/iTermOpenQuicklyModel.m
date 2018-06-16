@@ -458,25 +458,14 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                             features:features
                                limit:maxScorePerFeature];
 
-    NSDictionary<NSString *, id> *legacyVariablesDictionary = session.variables.legacyDictionaryExcludingGlobals;
-    for (id obj in legacyVariablesDictionary) {
-        NSString *var;
-        if ([NSString castFrom:obj]) {
-            var = obj;
-        } else if ([var respondsToSelector:@selector(stringValue)]) {
-            var = [obj stringValue];
-        } else{
-            continue;
-        }
-        NSString *const kUserPrefix = @"user.";
-        if ([var hasPrefix:kUserPrefix]) {
-            score += [self scoreUsingMatcher:matcher
-                                   documents:@[ legacyVariablesDictionary[var] ]
-                                  multiplier:kUserDefinedVariableMultiplier
-                                        name:[var substringFromIndex:[kUserPrefix length]]
-                                    features:features
-                                       limit:maxScorePerFeature];
-        }
+    NSDictionary<NSString *, NSString *> *userVariablesDict = [[session.variables discouragedValueForVariableName:@"user"] stringValuedDictionary];
+    for (NSString *name in userVariablesDict) {
+        score += [self scoreUsingMatcher:matcher
+                               documents:@[ userVariablesDict[name] ]
+                              multiplier:kUserDefinedVariableMultiplier
+                                    name:name
+                                features:features
+                                   limit:maxScorePerFeature];
     }
 
     // TODO: add a bonus for:

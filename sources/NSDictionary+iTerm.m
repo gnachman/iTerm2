@@ -7,6 +7,8 @@
 //
 
 #import "NSDictionary+iTerm.h"
+
+#import "iTermTuple.h"
 #import "NSColor+iTerm.h"
 #import "NSWorkspace+iTerm.h"
 
@@ -245,6 +247,33 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
         id mappedKey = block(key, obj);
         if (mappedKey) {
             result[mappedKey] = obj;
+        }
+    }];
+    return result;
+}
+
+- (NSDictionary *)mapWithBlock:(iTermTuple *(^)(id, id))block {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    [self enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        iTermTuple *tuple = block(key, obj);
+        if (tuple) {
+            result[tuple.firstObject] = tuple.secondObject;
+        }
+    }];
+    return result;
+}
+
+- (NSDictionary<id, NSDictionary *> *)classifyWithBlock:(id (^NS_NOESCAPE)(id key, id object))block {
+    NSMutableDictionary<id, NSMutableDictionary *> *result = [NSMutableDictionary dictionary];
+    [self enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        id class = block(key, obj);
+        if (class) {
+            NSMutableDictionary *subdict = result[class];
+            if (!subdict) {
+                subdict = [NSMutableDictionary dictionary];
+                result[class] = subdict;
+            }
+            subdict[key] = obj;
         }
     }];
     return result;

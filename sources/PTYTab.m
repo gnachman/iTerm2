@@ -34,9 +34,6 @@
 
 #define PtyLog DLog
 
-NSString *const PTYTabVariableTitleOverride = @"titleOverride";
-static NSString *const PTYTabVariableTitleCurrentSession = @"currentSession";
-
 NSString *const iTermTabDidChangeWindowNotification = @"iTermTabDidChangeWindowNotification";
 NSString *const iTermSessionBecameKey = @"iTermSessionBecameKey";
 
@@ -357,7 +354,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _tabNumberForItermSessionId = -1;
     hiddenLiveViews_ = [[NSMutableArray alloc] init];
     tmuxWindow_ = -1;
-    _variables = [[iTermVariables alloc] init];
+    _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab];
     _variables.delegate = self;
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
@@ -600,7 +597,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     activeSession_ = session;
     if (activeSession_ == nil) {
         [self recheckBlur];
-        [_variables setValue:nil forVariableNamed:PTYTabVariableTitleCurrentSession];
+        [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeyTabCurrentSession];
         return;
     }
     if (changed) {
@@ -621,7 +618,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [[aSession textview] setNeedsDisplay:YES];
     }
     [self updateLabelAttributes];
-    [_variables setValue:activeSession_.variables forVariableNamed:PTYTabVariableTitleCurrentSession];
+    [self.variablesScope setValue:activeSession_.variables forVariableNamed:iTermVariableKeyTabCurrentSession];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
                                                         object:activeSession_
                                                       userInfo:@{ @"changed": @(changed) }];
@@ -2927,7 +2924,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     tmuxWindowName_ = [tmuxWindowName copy];
     [[self realParentWindow] setWindowTitle];
     for (PTYSession *session in self.sessions) {
-        [session.variables setValue:tmuxWindowName forVariableNamed:iTermVariableKeySessionTmuxWindowTitle];
+        [session.variablesScope setValue:tmuxWindowName forVariableNamed:iTermVariableKeySessionTmuxWindowTitle];
     }
     [self updateTabTitle];
 }
@@ -3963,12 +3960,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateTabTitle {
-    NSString *sessionName = [self.activeSession.variables valueForVariableName:iTermVariableKeySessionPresentationName];
+    NSString *sessionName = [self.activeSession.variablesScope valueForVariableName:iTermVariableKeySessionPresentationName];
     [self updateTabTitleForCurrentSessionName:sessionName];
 }
 
+- (iTermVariableScope *)variablesScope {
+    iTermVariableScope *scope = [[[iTermVariableScope alloc] init] autorelease];
+    [scope addVariables:_variables toScopeNamed:nil];
+    [scope addVariables:[iTermVariables globalInstance] toScopeNamed:@"iterm2"];
+    return scope;
+}
+
 - (id)valueForVariable:(NSString *)name {
-    return [_variables valueForVariableName:name];
+    return [self.variablesScope valueForVariableName:name];
 }
 
 - (void)setTitleOverride:(NSString *)titleOverride {
@@ -3976,7 +3980,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (!titleOverride) {
         [_tabTitleOverrideSwiftyString autorelease];
         _tabTitleOverrideSwiftyString = nil;
-        [_variables setValue:nil forVariableNamed:PTYTabVariableTitleOverride];
+        [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeyTabTitleOverride];
         return;
     }
     __weak __typeof(self) weakSelf = self;
@@ -3986,10 +3990,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
          ^id _Nonnull(NSString * _Nonnull name) {
              return [weakSelf valueForVariable:name];
          }
-                                          mutates:[NSSet setWithObject:PTYTabVariableTitleOverride]
+                                          mutates:[NSSet setWithObject:iTermVariableKeyTabTitleOverride]
                                          observer:
          ^(NSString * _Nonnull newValue) {
-             [weakSelf.variables setValue:newValue forVariableNamed:PTYTabVariableTitleOverride];
+             [weakSelf.variablesScope setValue:newValue forVariableNamed:iTermVariableKeyTabTitleOverride];
              [weakSelf updateTabTitle];
          }];
 }
@@ -3999,7 +4003,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (NSString *)evaluatedTitleOverride {
-    return [_variables valueForVariableName:PTYTabVariableTitleOverride];
+    return [self.variablesScope valueForVariableName:iTermVariableKeyTabTitleOverride];
 }
 
 #pragma mark NSSplitView delegate methods

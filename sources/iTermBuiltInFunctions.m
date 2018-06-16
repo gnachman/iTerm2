@@ -25,6 +25,7 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
 - (instancetype)initWithName:(NSString *)name
                    arguments:(NSDictionary<NSString *,Class> *)argumentsAndTypes
                defaultValues:(NSDictionary<NSString *,NSString *> *)defaultValues
+                     context:(iTermVariablesSuggestionContext)context
                        block:(iTermBuiltInFunctionsExecutionBlock)block {
     self = [super init];
     if (self) {
@@ -32,6 +33,9 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
         _argumentsAndTypes = [argumentsAndTypes copy];
         _defaultValues = [defaultValues copy];
         _block = [block copy];
+        [defaultValues enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
+            [iTermVariables recordUseOfVariableNamed:obj inContext:context];
+        }];
     }
     return self;
 }

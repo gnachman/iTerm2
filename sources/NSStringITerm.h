@@ -36,6 +36,8 @@
 
 #import "iTermTuple.h"
 
+@class iTermVariableScope;
+
 // This is the standard unicode replacement character for when input couldn't
 // be parsed properly but we need to render something there.
 #define UNICODE_REPLACEMENT_CHAR 0xfffd
@@ -277,6 +279,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // ll                                       YES
 - (void)enumerateSwiftySubstrings:(void (^)(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop))block;
 - (NSString *)it_stringByExpandingBackslashEscapedCharacters;
+- (NSString *)stringByReplacingVariableReferencesWithVariablesFromScope:(iTermVariableScope *)scope
+                                                nonVariableReplacements:(NSDictionary *)nonvars;
 
 @end
 

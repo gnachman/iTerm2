@@ -31,6 +31,8 @@
 + (instancetype)expressionParser;
 
 - (instancetype)init NS_UNAVAILABLE;
+// Start gives root grammar rule name.
+- (id)initWithStart:(NSString *)start NS_DESIGNATED_INITIALIZER;
 
 - (iTermParsedExpression *)parse:(NSString *)invocation source:(id (^)(NSString *))source;
 

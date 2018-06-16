@@ -22,14 +22,14 @@
 @protected
     CPLR1Parser *_parser;
     NSDictionary<NSString *,NSArray<NSString *> *> *_functionSignatures;
-    NSArray<NSString *> *_paths;
+    NSSet<NSString *> *_paths;
     NSString *_prefix;
     CPTokeniser *_tokenizer;
     iTermGrammarProcessor *_grammarProcessor;
 }
 
 - (instancetype)initWithFunctionSignatures:(NSDictionary<NSString *,NSArray<NSString *> *> *)functionSignatures
-                                     paths:(NSArray<NSString *> *)paths {
+                                     paths:(NSSet<NSString *> *)paths {
     self = [super init];
     if (self) {
         _functionSignatures = [functionSignatures copy];
@@ -273,7 +273,6 @@
             NSString *nextArgumentName = [[self argumentNamesForFunction:function] objectPassingTest:^BOOL(NSString *element, NSUInteger index, BOOL *stop) {
                 return ![usedParameterNames containsObject:[element stringByAppendingString:@":"]];
             }];
-            nextArgumentName = [nextArgumentName stringByAppendingString:@":"];
             NSArray *suggestions = [self suggestedExpressions:argDict[@"expression"]
                                              nextArgumentName:nextArgumentName
                                              valuesMustBeArgs:YES];
@@ -318,7 +317,7 @@
                                                                                                      paths:_paths];
         return [inner suggestionsForString:expression[@"truncated_interpolation"]];
     } else {
-        NSArray<NSString *> *legalPaths = _paths;
+        NSArray<NSString *> *legalPaths = _paths.allObjects;
         if (valuesMustBeArgs) {
             if (nextArgumentName == nil) {
                 legalPaths = [legalPaths mapWithBlock:^id(NSString *anObject) {

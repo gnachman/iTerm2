@@ -174,7 +174,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                     key:KEY_BADGE_FORMAT
                    type:kPreferenceInfoTypeStringTextField];
     _badgeTextFieldDelegate =
-        [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:iTermVariablesGetAll()
+        [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:[iTermVariables recordedVariableNamesInContext:iTermVariablesSuggestionContextSession]
                                                       passthrough:_badgeText.delegate
                                                     functionsOnly:NO];
     _badgeText.delegate = _badgeTextFieldDelegate;
@@ -183,7 +183,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                     key:KEY_BADGE_FORMAT
                    type:kPreferenceInfoTypeStringTextField];
     _badgeTextForEditCurrentSessionFieldDelegate =
-        [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:iTermVariablesGetAll()
+        [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:[iTermVariables recordedVariableNamesInContext:iTermVariablesSuggestionContextSession]
                                                       passthrough:_badgeTextForEditCurrentSession.delegate
                                                     functionsOnly:NO];
     _badgeTextForEditCurrentSession.delegate = _badgeTextForEditCurrentSessionFieldDelegate;
