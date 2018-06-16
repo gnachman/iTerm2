@@ -752,7 +752,6 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
         _focusChangeSubscriptions = [[NSMutableDictionary alloc] init];
         _serverOriginatedRPCSubscriptions = [[NSMutableDictionary alloc] init];
     }
-    BOOL didRegisterRPC = NO;
     NSMutableDictionary<id, ITMNotificationRequest *> *subscriptions;
     if (request.notificationType == ITMNotificationType_NotifyOnNewSession) {
         subscriptions = _newSessionSubscriptions;
@@ -783,7 +782,12 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
             }
             _serverOriginatedRPCSubscriptions[signatureString] = [iTermTuple tupleWithObject:connectionKey
                                                                                    andObject:request];
-            didRegisterRPC = YES;
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIRegisteredFunctionsDidChangeNotification
+                                                                object:nil];
+            if (request.rpcRegistrationRequest.role == ITMRPCRegistrationRequest_Role_SessionTitle) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIDidRegisterSessionTitleFunctionNotification
+                                                                    object:request.rpcRegistrationRequest.name];
+            }
         } else {
             if (!_serverOriginatedRPCSubscriptions[signatureString] ||
                 _serverOriginatedRPCSubscriptions[signatureString].firstObject != connectionKey) {
@@ -803,14 +807,6 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
             return response;
         }
         subscriptions[connectionKey] = request;
-        if (didRegisterRPC) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIRegisteredFunctionsDidChangeNotification
-                                                                object:nil];
-            if (request.rpcRegistrationRequest.role == ITMRPCRegistrationRequest_Role_SessionTitle) {
-                [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIDidRegisterSessionTitleFunctionNotification
-                                                                    object:request.rpcRegistrationRequest.name];
-            }
-        }
     } else {
         if (!subscriptions[connectionKey]) {
             response.status = ITMNotificationResponse_Status_NotSubscribed;

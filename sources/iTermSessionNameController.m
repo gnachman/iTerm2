@@ -127,7 +127,13 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
 
          NSString *result = [possiblyEmptyResult stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
          if (error) {
-             result = @"🐞";
+             if (error.code == iTermAPIHelperFunctionCallUnregisteredErrorCode &&
+                 [error.domain isEqual:@"com.iterm2.api"]) {
+                 // Waiting for the function to be registered
+                 result = @"…";
+             } else {
+                 result = @"🐞";
+             }
          } else if (result.length == 0) {
              result = @"🖥";
          }
