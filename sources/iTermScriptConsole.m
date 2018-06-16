@@ -9,6 +9,7 @@
 
 #import "iTermAPIServer.h"
 #import "iTermScriptHistory.h"
+#import "iTermAPIScriptLauncher.h"
 #import "iTermWebSocketConnection.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -39,6 +40,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     NSDateFormatter *_dateFormatter;
     __weak IBOutlet NSTextField *_filter;
     __weak IBOutlet NSButton *_terminateButton;
+    __weak IBOutlet NSButton *_startButton;
 
     id _token;
 }
@@ -151,6 +153,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 - (IBAction)scriptFilterDidChange:(id)sender {
     [_tableView reloadData];
     _terminateButton.enabled = NO;
+    _startButton.enabled = NO;
 }
 
 - (NSString *)stringForRow:(NSInteger)row column:(NSTableColumn *)column {
@@ -174,14 +177,30 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     }
 }
 
+- (iTermScriptHistoryEntry *)terminateScriptOnRow:(NSInteger)row {
+    iTermScriptHistoryEntry *entry = [[self filteredEntries] objectAtIndex:row];
+    if (entry.isRunning && entry.pid) {
+        [entry addOutput:@"\n*Terminate button pressed*\n"];
+        entry.terminatedByUser = YES;
+        kill(entry.pid, 1);
+        [entry.websocketConnection abortWithCompletion:nil];
+    }
+    return entry;
+}
+
 - (IBAction)terminate:(id)sender {
     NSInteger row = _tableView.selectedRow;
     if (row >= 0 && row < self.filteredEntries.count) {
-        iTermScriptHistoryEntry *entry = [[self filteredEntries] objectAtIndex:row];
-        if (entry.isRunning && entry.pid) {
-            [entry addOutput:@"\n*Terminate button pressed*\n"];
-            kill(entry.pid, 1);
-            [entry.websocketConnection abortWithCompletion:nil];
+        [self terminateScriptOnRow:row];
+    }
+}
+
+- (IBAction)startOrRestart:(id)sender {
+    NSInteger row = _tableView.selectedRow;
+    if (row >= 0 && row < self.filteredEntries.count) {
+        iTermScriptHistoryEntry *entry = [self terminateScriptOnRow:row];
+        if (entry.relaunch) {
+            entry.relaunch();
         }
     }
 }
@@ -236,12 +255,15 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         _logsView.string = @"";
         _callsView.string = @"";
         _terminateButton.enabled = NO;
+        _startButton.title = @"Start";
+        _startButton.enabled = NO;
     } else {
         [self scrollLogsToBottomIfNeeded];
         [self scrollCallsToBottomIfNeeded];
         NSInteger row = _tableView.selectedRow;
         iTermScriptHistoryEntry *entry = [[self filteredEntries] objectAtIndex:row];
         _terminateButton.enabled = entry.isRunning && (entry.pid != 0);
+        _startButton.enabled = entry.relaunch != nil;
         _logsView.font = [NSFont fontWithName:@"Menlo" size:12];
         _callsView.font = [NSFont fontWithName:@"Menlo" size:12];
 
@@ -348,12 +370,14 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 - (void)numberOfScriptHistoryEntriesDidChange:(NSNotification *)notification {
     [_tableView reloadData];
     _terminateButton.enabled = NO;
+    _startButton.enabled = NO;
 }
 
 - (void)historyEntryDidChange:(NSNotification *)notification {
     if (!notification.userInfo) {
         [_tableView reloadData];
         _terminateButton.enabled = NO;
+        _startButton.enabled = NO;
     }
 }
 
@@ -375,7 +399,8 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
             name = @"Unknown";
         }
         entry = [[iTermScriptHistoryEntry alloc] initWithName:name
-                                                   identifier:key];
+                                                   identifier:key
+                                                     relaunch:nil];
     }
     entry.pid = [notification.userInfo[@"pid"] intValue];
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
@@ -401,7 +426,8 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
             name = @"Unknown";
         }
         entry = [[iTermScriptHistoryEntry alloc] initWithName:name
-                                                   identifier:key];
+                                                   identifier:key
+                                                     relaunch:nil];
         entry.pid = [notification.userInfo[@"pid"] intValue];
         [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
     }

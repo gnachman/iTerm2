@@ -45,7 +45,11 @@
     }
     NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
     iTermScriptHistoryEntry *entry = [[iTermScriptHistoryEntry alloc] initWithName:name
-                                                                        identifier:identifier];
+                                                                        identifier:identifier
+                                                                          relaunch:
+                                      ^{
+                                          [iTermAPIScriptLauncher reallyLaunchScript:filename withVirtualEnv:virtualenv];
+                                      }];
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
 
     @try {
@@ -132,8 +136,10 @@
                 } else {
                     [entry addOutput:[NSString stringWithFormat:@"\n** Script exited with status %@ **", @(task.terminationStatus)]];
                 }
-                NSString *message = [NSString stringWithFormat:@"Script “%@” failed.", entry.name];
-                [[iTermNotificationController sharedInstance] notify:message];
+                if (!entry.terminatedByUser) {
+                    NSString *message = [NSString stringWithFormat:@"Script “%@” failed.", entry.name];
+                    [[iTermNotificationController sharedInstance] notify:message];
+                }
             }
             [entry stopRunning];
         });

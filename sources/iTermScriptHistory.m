@@ -29,16 +29,21 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] initWithName:@"iTerm2 App" identifier:@"iTerm2"];
+        instance = [[self alloc] initWithName:@"iTerm2 App"
+                                   identifier:@"iTerm2"
+                                     relaunch:nil];
     });
     return instance;
 }
 
-- (instancetype)initWithName:(NSString *)name identifier:(NSString *)identifier {
+- (instancetype)initWithName:(NSString *)name
+                  identifier:(NSString *)identifier
+                    relaunch:(void (^ _Nullable)(void))relaunch {
     self = [super init];
     if (self) {
         _name = [name copy];
         _identifier = [identifier copy];
+        _relaunch = [relaunch copy];
         _startDate = [NSDate date];
         _isRunning = YES;
         _dateFormatter = [[NSDateFormatter alloc] init];

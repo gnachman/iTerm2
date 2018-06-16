@@ -15,6 +15,7 @@
                 <outlet property="_nameColumn" destination="lw1-Nm-bBu" id="OUx-7s-ZBs"/>
                 <outlet property="_scriptFilterControl" destination="fNr-Eh-eoa" id="IoC-dk-zTZ"/>
                 <outlet property="_scrollToBottomOnUpdate" destination="eAd-so-iCB" id="3KV-ug-tG9"/>
+                <outlet property="_startButton" destination="pZW-pd-tlH" id="Rb8-ha-fK5"/>
                 <outlet property="_tabView" destination="NGE-SW-gz3" id="u8H-dH-N78"/>
                 <outlet property="_tableView" destination="F7K-vF-JTv" id="h5y-pr-tEo"/>
                 <outlet property="_terminateButton" destination="Wrf-hV-O7i" id="PQp-Bn-yDD"/>
@@ -191,8 +192,19 @@
                             <font key="font" metaFont="system"/>
                         </buttonCell>
                     </button>
+                    <button verticalHuggingPriority="750" misplaced="YES" id="pZW-pd-tlH">
+                        <rect key="frame" x="200" y="13" width="84" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="push" title="Restart" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="gCN-kS-Kv7">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="startOrRestart:" target="-2" id="qdA-0F-e2N"/>
+                        </connections>
+                    </button>
                     <button verticalHuggingPriority="750" misplaced="YES" id="Wrf-hV-O7i">
-                        <rect key="frame" x="14" y="13" width="101" height="32"/>
+                        <rect key="frame" x="99" y="13" width="101" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="push" title="Terminate" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="OSV-Yd-P1d">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
