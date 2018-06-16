@@ -453,15 +453,16 @@ class App:
         async def handle_rpc(connection, notif):
             rpc_notif = notif.server_originated_rpc_notification
             params = {}
-            for arg in rpc_notif.rpc.arguments:
-                name = arg.name
-                if arg.HasField("json_value"):
-                    value = json.loads(arg.json_value)
-                    params[name] = value
-                else:
-                    params[name] = None
             ok = False
             try:
+                for arg in rpc_notif.rpc.arguments:
+                    name = arg.name
+                    if arg.HasField("json_value"):
+                        # NOTE: This can throw an exception if there are control characters or other nasties.
+                        value = json.loads(arg.json_value)
+                        params[name] = value
+                    else:
+                        params[name] = None
                 result = await coro(**params)
                 ok = True
             except KeyboardInterrupt as e:
