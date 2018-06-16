@@ -9,7 +9,7 @@
 #import "FindContext.h"
 
 // Default max time per iteration of search.
-static const NSTimeInterval kDefaultMaxTime = 0.1;
+static const NSTimeInterval kDefaultMaxTime = 0.3;
 
 @implementation FindContext {
     int absBlockNum_;
