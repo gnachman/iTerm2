@@ -10055,6 +10055,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames group:(dispatch_group_t)group {
     [_nameController variablesDidChange:changedNames];
+    [_badgeSwiftyString variablesDidChange:changedNames];
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
