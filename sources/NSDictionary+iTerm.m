@@ -345,14 +345,15 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
 
 @implementation NSMutableDictionary (iTerm)
 
-- (void)removeObjectsPassingTest:(BOOL (^)(id))block {
+- (NSInteger)removeObjectsPassingTest:(BOOL (^)(id, id))block {
     NSMutableSet *keys = [NSMutableSet set];
     [self enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-        if (block(key)) {
+        if (block(key, obj)) {
             [keys addObject:key];
         }
     }];
     [self removeObjectsForKeys:keys.allObjects];
+    return keys.count;
 }
 
 - (void)it_mergeFrom:(NSDictionary *)other {

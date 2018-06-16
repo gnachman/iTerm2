@@ -78,7 +78,7 @@ typedef NSDictionary iTermHotKeyDescriptor;
 @end
 
 @interface NSMutableDictionary<KeyType, ObjectType> (iTerm)
-- (void)removeObjectsPassingTest:(BOOL (^)(KeyType key))block;
+- (NSInteger)removeObjectsPassingTest:(BOOL (^)(KeyType key, ObjectType obj))block;
 - (void)it_mergeFrom:(NSDictionary<KeyType, ObjectType> *)other;
 
 @end
