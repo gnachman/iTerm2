@@ -221,12 +221,8 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
 
 // Forces sync followed by async eval. Use this when the invocation changes.
 - (void)setNeedsUpdate {
-    _cachedEvaluation = nil;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (self->_needsUpdate) {
-            [self updateIfNeeded];
-        }
-    });
+    [self evaluateInvocationSynchronously:YES];
+    [self setNeedsReevaluation];
 }
 
 // Forces only an async eval. Use this when inputs to the invocation change.
