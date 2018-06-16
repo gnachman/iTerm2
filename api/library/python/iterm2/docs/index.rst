@@ -18,8 +18,6 @@ script and describes the architecture of iTerm2's scripting system.
 
 Visit the :ref:`examples <examples-index>` for a collection of working examples.
 
-**Class Reference**
-
 .. toctree::
    :maxdepth: 1
    :caption: Class reference:
