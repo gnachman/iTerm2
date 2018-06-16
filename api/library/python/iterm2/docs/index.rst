@@ -12,7 +12,7 @@ control iTerm2 and extend its behavior.
 **Getting Started**
 
 Start by following the :ref:`tutorial <tutorial-index>`, which gives a step-by-step guide to writing a
-script and descripts the architecture of iTerm2's scripting system.
+script and describes the architecture of iTerm2's scripting system.
 
 **Example Code**
 
