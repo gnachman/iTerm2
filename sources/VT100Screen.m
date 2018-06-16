@@ -4594,6 +4594,8 @@ static void SwapInt(int *a, int *b) {
     return [linebuffer_ absPositionOfFindContext:findContext_];
 }
 
+extern BOOL unfocused;
+
 - (BOOL)continueFindResultsInContext:(FindContext*)context
                              toArray:(NSMutableArray*)results
 {
@@ -4617,6 +4619,10 @@ static void SwapInt(int *a, int *b) {
     int ms_diff = 0;
     do {
         if (context.status == Searching) {
+            if (unfocused) {
+                // input text is not focused, therefor dont search more!!!
+                break;
+            }
             [linebuffer_ findSubstring:context stopAt:stopAt];
         }
 

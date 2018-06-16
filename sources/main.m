@@ -18,7 +18,9 @@ int main(int argc, const char *argv[]){
     if (argc > 1 && !strcmp(argv[1], "--launch_shell")) {
         // Run the user's shell.
         return launch_shell();
-    } else if (argc > 1 && !strcmp(argv[1], "--server")) {
+    }
+    
+    if (argc > 1 && !strcmp(argv[1], "--server")) {
         // Run a server that spawns a job.
         return iterm2_server(argc - 2, (char *const *)argv + 2);
     }

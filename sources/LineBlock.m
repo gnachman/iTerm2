@@ -1264,6 +1264,7 @@ static int Search(NSString* needle,
              atOffset:(int)offset
               results:(NSMutableArray *)results
       multipleResults:(BOOL)multipleResults {
+
     if (offset == -1) {
         offset = [self rawSpaceUsed] - 1;
     }

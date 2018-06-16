@@ -118,9 +118,11 @@ const CGFloat kEdgeWidth = 1;
     if (focused) {
         xInset = 2.5;
         yInset = 1.5;
+        unfocused = NO;
     } else {
         xInset = 0.5;
         yInset = 0.5;
+        unfocused = YES;
     }
     cellFrame = NSInsetRect(cellFrame, xInset, yInset);
     NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:cellFrame
@@ -130,6 +132,7 @@ const CGFloat kEdgeWidth = 1;
 
     [self drawProgressBarInFrame:originalFrame path:path];
 
+#if 0
     if (!focused) {
         [[NSColor colorWithCalibratedWhite:0.5 alpha:1] set];
         [path setLineWidth:0.25];
@@ -143,6 +146,7 @@ const CGFloat kEdgeWidth = 1;
         [[NSColor colorWithCalibratedWhite:0.7 alpha:1] set];
         [path stroke];
     }
+#endif
 
     [self drawInteriorWithFrame:originalFrame inView:controlView];
 }
@@ -722,6 +726,9 @@ const CGFloat kEdgeWidth = 1;
                                                             object:nil];
     }
     // Search.
+if (unfocused) {
+return;
+}
     [self _setSearchDefaults];
     [self findSubString:theString
        forwardDirection:NO
