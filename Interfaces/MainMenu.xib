@@ -620,12 +620,14 @@ DQ
                                     <action selector="toggleForeground:" target="201" id="12323"/>
                                 </connections>
                             </menuItem>
+<!--
                             <menuItem title="Exposé all Tabs" keyEquivalent="e" identifier="Exposé all Tabs" id="1231">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="exposeForTabs:" target="201" id="1232"/>
                                 </connections>
                             </menuItem>
+-->
                             <menuItem isSeparatorItem="YES" id="849">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>

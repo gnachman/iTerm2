@@ -1933,7 +1933,7 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (IBAction)exposeForTabs:(id)sender {
-    [iTermExpose toggle];
+    // [iTermExpose toggle];
 }
 
 - (IBAction)toggleForeground:(id)sender {
