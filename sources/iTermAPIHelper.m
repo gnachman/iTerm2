@@ -145,6 +145,7 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
         _apiServer.delegate = self;
         _serverOriginatedRPCCompletionBlocks = [NSMutableDictionary dictionary];
         _outstandingRPCs = [NSMutableDictionary dictionary];
+        _allSessionsSubscriptions = [NSMutableArray array];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(sessionDidTerminate:)
@@ -211,11 +212,12 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
 }
 
 - (void)sessionCreated:(NSNotification *)notification {
+    PTYSession *session = notification.object;
     for (iTermAllSessionsSubscription *sub in _allSessionsSubscriptions) {
-        [self handleAPINotificationRequest:sub.request connectionKey:sub.connectionKey];
+        [session handleAPINotificationRequest:sub.request
+                                connectionKey:sub.connectionKey];
     }
 
-    PTYSession *session = notification.object;
     [_newSessionSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[ITMNotification alloc] init];
         notification.newSessionNotification = [[ITMNewSessionNotification alloc] init];
@@ -867,10 +869,6 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
         handler([self handleAPINotificationRequest:request
                                      connectionKey:connectionKey]);
     } else if ([request.session isEqualToString:@"all"]) {
-        iTermAllSessionsSubscription *sub = [[iTermAllSessionsSubscription alloc] init];
-        sub.request = [request copy];
-        sub.connectionKey = connectionKey;
-
         for (PTYSession *session in [self allSessions]) {
             ITMNotificationResponse *response = [session handleAPINotificationRequest:request
                                                                         connectionKey:connectionKey];
@@ -881,6 +879,11 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
                 return;
             }
         }
+        iTermAllSessionsSubscription *sub = [[iTermAllSessionsSubscription alloc] init];
+        sub.request = [request copy];
+        sub.connectionKey = connectionKey;
+        [_allSessionsSubscriptions addObject:sub];
+
         ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
         response.status = ITMNotificationResponse_Status_Ok;
         handler(response);
