@@ -6028,6 +6028,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case KEY_ACTION_SWAP_PANE_ABOVE:
         case KEY_ACTION_SWAP_PANE_BELOW:
         case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
+        case KEY_ACTION_DUPLICATE_TAB:
             return NO;
 
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
@@ -6330,6 +6331,9 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
             [self invokeFunctionCall:keyBindingText extraContext:nil origin:@"Key Binding"];
+            break;
+        case KEY_ACTION_DUPLICATE_TAB:
+            [self.delegate sessionDuplicateTab];
             break;
         default:
             XLog(@"Unknown key action %d", keyBindingAction);

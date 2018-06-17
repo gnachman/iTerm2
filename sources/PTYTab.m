@@ -5070,6 +5070,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return _variables;
 }
 
+- (void)sessionDuplicateTab {
+    [parentWindow_ createDuplicateOfTab:self];
+}
+
 #pragma mark - iTermVariablesDelegate
 
 - (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames

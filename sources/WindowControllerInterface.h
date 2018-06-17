@@ -50,6 +50,9 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Select the tab to the left of the foreground tab.
 - (void)previousTab:(id)sender;
 
+// Add a tab with the same panes and profiles.
+- (void)createDuplicateOfTab:(PTYTab *)theTab;
+
 // Set background color for tab chrome.
 - (void)updateTabColors;
 

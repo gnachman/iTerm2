@@ -205,7 +205,7 @@ typedef enum {
 - (void)sessionDidClearScrollbackBuffer:(PTYSession *)session;
 
 - (iTermVariables *)sessionTabVariables;
-
+- (void)sessionDuplicateTab;
 @end
 
 @class SessionView;

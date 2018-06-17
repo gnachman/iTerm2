@@ -7415,7 +7415,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (IBAction)duplicateTab:(id)sender {
-    PTYTab *theTab = (PTYTab *)[[sender representedObject] identifier];
+    [self createDuplicateOfTab:(PTYTab *)[[sender representedObject] identifier]];
+}
+
+- (void)createDuplicateOfTab:(PTYTab *)theTab {
     if (!theTab) {
         theTab = [self currentTab];
     }
