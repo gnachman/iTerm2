@@ -7,9 +7,11 @@
 
 #import "iTermScriptHistory.h"
 
-#import "NSArray+iTerm.h"
-#import "NSStringITerm.h"
 #import "iTermAPIServer.h"
+#import "iTermWebSocketConnection.h"
+#import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -118,6 +120,13 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
                                                                   iTermScriptHistoryEntryFieldKey: iTermScriptHistoryEntryFieldRPCValue }];
 }
 
+- (void)kill {
+    [self addOutput:@"\n*Terminate button pressed*\n"];
+    self.terminatedByUser = YES;
+    kill(self.pid, 1);
+    [self.websocketConnection abortWithCompletion:nil];
+}
+
 - (void)stopRunning {
     _isRunning = NO;
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
@@ -195,6 +204,12 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
 - (iTermScriptHistoryEntry *)entryWithIdentifier:(NSString *)identifier {
     return [_entries objectPassingTest:^BOOL(iTermScriptHistoryEntry *element, NSUInteger index, BOOL *stop) {
         return [element.identifier isEqualToString:identifier];
+    }];
+}
+
+- (iTermScriptHistoryEntry *)runningEntryWithPath:(NSString *)path {
+    return [self.runningEntries objectPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger index, BOOL *stop) {
+        return [NSObject object:entry.path isEqualToObject:path];
     }];
 }
 

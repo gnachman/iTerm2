@@ -30,6 +30,7 @@ extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
 @property (nonatomic, readonly) BOOL lastLogLineContinues;
 @property (nonatomic, nullable, readonly) void (^relaunch)(void);
 @property (nonatomic) BOOL terminatedByUser;
+@property (nonatomic, copy) NSString *path;
 
 + (instancetype)globalEntry;
 - (instancetype)initWithName:(NSString *)name
@@ -41,6 +42,7 @@ extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
 - (void)addClientOriginatedRPC:(NSString *)rpc;
 - (void)addServerOriginatedRPC:(NSString *)rpc;
 - (void)stopRunning;
+- (void)kill;
 
 @end
 
@@ -54,6 +56,7 @@ extern NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification;
 + (instancetype)sharedInstance;
 - (void)addHistoryEntry:(iTermScriptHistoryEntry *)entry;
 - (iTermScriptHistoryEntry *)entryWithIdentifier:(NSString *)identifier;
+- (iTermScriptHistoryEntry *)runningEntryWithPath:(NSString *)path;
 
 @end
 

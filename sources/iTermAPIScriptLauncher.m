@@ -50,6 +50,7 @@
                                       ^{
                                           [iTermAPIScriptLauncher reallyLaunchScript:filename withVirtualEnv:virtualenv];
                                       }];
+    entry.path = filename;
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
 
     @try {

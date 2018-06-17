@@ -180,10 +180,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 - (iTermScriptHistoryEntry *)terminateScriptOnRow:(NSInteger)row {
     iTermScriptHistoryEntry *entry = [[self filteredEntries] objectAtIndex:row];
     if (entry.isRunning && entry.pid) {
-        [entry addOutput:@"\n*Terminate button pressed*\n"];
-        entry.terminatedByUser = YES;
-        kill(entry.pid, 1);
-        [entry.websocketConnection abortWithCompletion:nil];
+        [entry kill];
     }
     return entry;
 }

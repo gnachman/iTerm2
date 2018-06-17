@@ -12,6 +12,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermBuildingScriptWindowController.h"
 #import "iTermPythonRuntimeDownloader.h"
+#import "iTermScriptHistory.h"
 #import "iTermScriptTemplatePickerWindowController.h"
 #import "iTermWarning.h"
 #import "NSFileManager+iTerm.h"
@@ -50,6 +51,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    NSString *path = menuItem.identifier;
+    const BOOL isRunning = path && !![[iTermScriptHistory sharedInstance] runningEntryWithPath:path];
+    menuItem.state = isRunning ? NSOnState : NSOffState;
+    return YES;
 }
 
 - (void)didInstallPythonRuntime:(NSNotification *)notification {
@@ -180,9 +188,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Actions
 
-- (void)launchScript:(NSMenuItem *)sender {
+- (void)launchOrTerminateScript:(NSMenuItem *)sender {
     NSString *fullPath = sender.identifier;
-    [self launchScriptWithAbsolutePath:fullPath];
+    iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] runningEntryWithPath:fullPath];
+    if (entry) {
+        [entry kill];
+    } else {
+        [self launchScriptWithAbsolutePath:fullPath];
+    }
 }
 
 - (void)launchScriptWithRelativePath:(NSString *)path {
@@ -386,7 +399,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)addFile:(NSString *)file withFullPath:(NSString *)path toScriptMenu:(NSMenu *)scriptMenu {
     NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle:file
-                                                        action:@selector(launchScript:)
+                                                        action:@selector(launchOrTerminateScript:)
                                                  keyEquivalent:@""];
 
     [scriptItem setTarget:self];
