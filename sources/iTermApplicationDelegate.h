@@ -28,7 +28,6 @@
 #import <Cocoa/Cocoa.h>
 #import <Carbon/Carbon.h>
 #import "DebugLogging.h"
-#import "iTermAPIHelper.h"
 #import "iTermApplication.h"
 
 @class iTermScriptsMenuController;
@@ -61,7 +60,6 @@ extern NSString *const iTermApplicationWillTerminate;
 @property(nonatomic, readonly) BOOL warnBeforeMultiLinePaste;
 @property(nonatomic, readonly) NSMenu *downloadsMenu;
 @property(nonatomic, readonly) NSMenu *uploadsMenu;
-@property(nonatomic, readonly) iTermAPIHelper *apiHelper;
 @property(nonatomic, readonly) iTermScriptsMenuController *scriptsMenuController;
 
 - (void)updateMaximizePaneMenuItem;

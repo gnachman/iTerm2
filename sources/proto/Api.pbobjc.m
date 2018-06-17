@@ -99,6 +99,49 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
   }
 }
 
+#pragma mark - Enum ITMModifiers
+
+GPBEnumDescriptor *ITMModifiers_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Control\000Option\000Command\000Shift\000Function\000Nu"
+        "mpad\000";
+    static const int32_t values[] = {
+        ITMModifiers_Control,
+        ITMModifiers_Option,
+        ITMModifiers_Command,
+        ITMModifiers_Shift,
+        ITMModifiers_Function,
+        ITMModifiers_Numpad,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMModifiers)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMModifiers_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMModifiers_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMModifiers_Control:
+    case ITMModifiers_Option:
+    case ITMModifiers_Command:
+    case ITMModifiers_Shift:
+    case ITMModifiers_Function:
+    case ITMModifiers_Numpad:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
 #pragma mark - ITMClientOriginatedMessage
 
 @implementation ITMClientOriginatedMessage
@@ -3035,6 +3078,136 @@ BOOL ITMRegisterToolResponse_Status_IsValidValue(int32_t value__) {
   }
 }
 
+#pragma mark - ITMKeystrokePattern
+
+@implementation ITMKeystrokePattern
+
+@dynamic requiredModifiersArray, requiredModifiersArray_Count;
+@dynamic forbiddenModifiersArray, forbiddenModifiersArray_Count;
+@dynamic keycodesArray, keycodesArray_Count;
+@dynamic charactersArray, charactersArray_Count;
+@dynamic charactersIgnoringModifiersArray, charactersIgnoringModifiersArray_Count;
+
+typedef struct ITMKeystrokePattern__storage_ {
+  uint32_t _has_storage_[1];
+  GPBEnumArray *requiredModifiersArray;
+  GPBEnumArray *forbiddenModifiersArray;
+  GPBInt32Array *keycodesArray;
+  NSMutableArray *charactersArray;
+  NSMutableArray *charactersIgnoringModifiersArray;
+} ITMKeystrokePattern__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "requiredModifiersArray",
+        .dataTypeSpecific.enumDescFunc = ITMModifiers_EnumDescriptor,
+        .number = ITMKeystrokePattern_FieldNumber_RequiredModifiersArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMKeystrokePattern__storage_, requiredModifiersArray),
+        .flags = (GPBFieldFlags)(GPBFieldRepeated | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "forbiddenModifiersArray",
+        .dataTypeSpecific.enumDescFunc = ITMModifiers_EnumDescriptor,
+        .number = ITMKeystrokePattern_FieldNumber_ForbiddenModifiersArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMKeystrokePattern__storage_, forbiddenModifiersArray),
+        .flags = (GPBFieldFlags)(GPBFieldRepeated | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "keycodesArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMKeystrokePattern_FieldNumber_KeycodesArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMKeystrokePattern__storage_, keycodesArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeInt32,
+      },
+      {
+        .name = "charactersArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMKeystrokePattern_FieldNumber_CharactersArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMKeystrokePattern__storage_, charactersArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "charactersIgnoringModifiersArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMKeystrokePattern_FieldNumber_CharactersIgnoringModifiersArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMKeystrokePattern__storage_, charactersIgnoringModifiersArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMKeystrokePattern class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMKeystrokePattern__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMKeystrokeMonitorRequest
+
+@implementation ITMKeystrokeMonitorRequest
+
+@dynamic patternsToIgnoreArray, patternsToIgnoreArray_Count;
+
+typedef struct ITMKeystrokeMonitorRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *patternsToIgnoreArray;
+} ITMKeystrokeMonitorRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "patternsToIgnoreArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMKeystrokePattern),
+        .number = ITMKeystrokeMonitorRequest_FieldNumber_PatternsToIgnoreArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMKeystrokeMonitorRequest__storage_, patternsToIgnoreArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMKeystrokeMonitorRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMKeystrokeMonitorRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMNotificationRequest
 
 @implementation ITMNotificationRequest
@@ -3044,12 +3217,14 @@ BOOL ITMRegisterToolResponse_Status_IsValidValue(int32_t value__) {
 @dynamic hasSubscribe, subscribe;
 @dynamic hasNotificationType, notificationType;
 @dynamic rpcRegistrationRequest;
+@dynamic keystrokeMonitorRequest;
 
 typedef struct ITMNotificationRequest__storage_ {
   uint32_t _has_storage_[2];
   ITMNotificationType notificationType;
   NSString *session;
   ITMRPCRegistrationRequest *rpcRegistrationRequest;
+  ITMKeystrokeMonitorRequest *keystrokeMonitorRequest;
 } ITMNotificationRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -3095,6 +3270,16 @@ typedef struct ITMNotificationRequest__storage_ {
         .core.number = ITMNotificationRequest_FieldNumber_RpcRegistrationRequest,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, rpcRegistrationRequest),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeMessage,
+      },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "keystrokeMonitorRequest",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMKeystrokeMonitorRequest),
+        .core.number = ITMNotificationRequest_FieldNumber_KeystrokeMonitorRequest,
+        .core.hasIndex = -1,
+        .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, keystrokeMonitorRequest),
         .core.flags = GPBFieldOptional,
         .core.dataType = GPBDataTypeMessage,
       },
@@ -3563,7 +3748,7 @@ typedef struct ITMKeystrokeNotification__storage_ {
       },
       {
         .name = "modifiersArray",
-        .dataTypeSpecific.enumDescFunc = ITMKeystrokeNotification_Modifiers_EnumDescriptor,
+        .dataTypeSpecific.enumDescFunc = ITMModifiers_EnumDescriptor,
         .number = ITMKeystrokeNotification_FieldNumber_ModifiersArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMKeystrokeNotification__storage_, modifiersArray),
@@ -3609,49 +3794,6 @@ typedef struct ITMKeystrokeNotification__storage_ {
 }
 
 @end
-
-#pragma mark - Enum ITMKeystrokeNotification_Modifiers
-
-GPBEnumDescriptor *ITMKeystrokeNotification_Modifiers_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
-  if (!descriptor) {
-    static const char *valueNames =
-        "Control\000Option\000Command\000Shift\000Function\000Nu"
-        "mpad\000";
-    static const int32_t values[] = {
-        ITMKeystrokeNotification_Modifiers_Control,
-        ITMKeystrokeNotification_Modifiers_Option,
-        ITMKeystrokeNotification_Modifiers_Command,
-        ITMKeystrokeNotification_Modifiers_Shift,
-        ITMKeystrokeNotification_Modifiers_Function,
-        ITMKeystrokeNotification_Modifiers_Numpad,
-    };
-    GPBEnumDescriptor *worker =
-        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMKeystrokeNotification_Modifiers)
-                                       valueNames:valueNames
-                                           values:values
-                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
-                                     enumVerifier:ITMKeystrokeNotification_Modifiers_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
-      [worker release];
-    }
-  }
-  return descriptor;
-}
-
-BOOL ITMKeystrokeNotification_Modifiers_IsValidValue(int32_t value__) {
-  switch (value__) {
-    case ITMKeystrokeNotification_Modifiers_Control:
-    case ITMKeystrokeNotification_Modifiers_Option:
-    case ITMKeystrokeNotification_Modifiers_Command:
-    case ITMKeystrokeNotification_Modifiers_Shift:
-    case ITMKeystrokeNotification_Modifiers_Function:
-    case ITMKeystrokeNotification_Modifiers_Numpad:
-      return YES;
-    default:
-      return NO;
-  }
-}
 
 #pragma mark - ITMScreenUpdateNotification
 

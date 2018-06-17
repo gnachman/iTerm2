@@ -5787,62 +5787,132 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pasteHelper enqueueEvent:event];
 }
 
+- (BOOL)event:(NSEvent *)event matchesPattern:(ITMKeystrokePattern *)pattern {
+    if (event.type != NSEventTypeKeyDown) {
+        return NO;
+    }
+    NSMutableArray *actualModifiers = [NSMutableArray array];
+    if (event.modifierFlags & NSEventModifierFlagControl) {
+        [actualModifiers addObject:@(ITMModifiers_Control)];
+    }
+    if (event.modifierFlags & NSEventModifierFlagOption) {
+        [actualModifiers addObject:@(ITMModifiers_Option)];
+    }
+    if (event.modifierFlags & NSEventModifierFlagCommand) {
+        [actualModifiers addObject:@(ITMModifiers_Command)];
+    }
+    if (event.modifierFlags & NSEventModifierFlagShift) {
+        [actualModifiers addObject:@(ITMModifiers_Shift)];
+    }
+    if (event.modifierFlags & NSEventModifierFlagFunction) {
+        [actualModifiers addObject:@(ITMModifiers_Function)];
+    }
+    if (event.modifierFlags & NSEventModifierFlagNumericPad) {
+        [actualModifiers addObject:@(ITMModifiers_Numpad)];
+    }
+    for (NSInteger i = 0; i < pattern.requiredModifiersArray_Count; i++) {
+        ITMModifiers modifier = [pattern.requiredModifiersArray valueAtIndex:i];
+        if (![actualModifiers containsObject:@(modifier)]) {
+            return NO;
+        }
+    }
+    for (NSInteger i = 0; i < pattern.forbiddenModifiersArray_Count; i++) {
+        ITMModifiers modifier = [pattern.forbiddenModifiersArray valueAtIndex:i];
+        if ([actualModifiers containsObject:@(modifier)]) {
+            return NO;
+        }
+    }
+
+    // All necessary conditions are statisifed. Now find one that is sufficient.
+    for (NSInteger i = 0; i < pattern.keycodesArray_Count; i++) {
+        if (event.keyCode == [pattern.keycodesArray valueAtIndex:i]) {
+            return YES;
+        }
+    }
+    for (NSString *characters in pattern.charactersArray) {
+        if ([event.characters isEqualToString:characters]) {
+            return YES;
+        }
+    }
+    for (NSString *charactersIgnoringModifiers in pattern.charactersIgnoringModifiersArray) {
+        if ([event.charactersIgnoringModifiers isEqualToString:charactersIgnoringModifiers]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)keystrokeIsFilteredByMonitor:(NSEvent *)event {
+    for (NSString *identifier in _keystrokeSubscriptions) {
+        ITMNotificationRequest *request = _keystrokeSubscriptions[identifier];
+        for (ITMKeystrokePattern *pattern in request.keystrokeMonitorRequest.patternsToIgnoreArray) {
+            if ([self event:event matchesPattern:pattern]) {
+                return YES;
+            }
+        }
+    }
+    return NO;
+}
+
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event {
-    if (_copyMode) {
-        [self handleKeyPressInCopyMode:event];
-        return NO;
-    }
-    if (event.keyCode == kVK_Return && _fakePromptDetectedAbsLine >= 0) {
-        [self didInferEndOfCommand];
-    }
+    const BOOL accept = ![self keystrokeIsFilteredByMonitor:event];
 
-    if ((event.modifierFlags & NSControlKeyMask) && [event.charactersIgnoringModifiers isEqualToString:@"c"]) {
-        if (self.terminal.receivingFile) {
-            // Offer to abort download if you press ^c while downloading an inline file
-            [self askAboutAbortingDownload];
-        } else if (self.upload) {
-            [self askAboutAbortingUpload];
+    if (accept) {
+        if (_copyMode) {
+            [self handleKeyPressInCopyMode:event];
+            return NO;
+        }
+        if (event.keyCode == kVK_Return && _fakePromptDetectedAbsLine >= 0) {
+            [self didInferEndOfCommand];
+        }
+
+        if ((event.modifierFlags & NSControlKeyMask) && [event.charactersIgnoringModifiers isEqualToString:@"c"]) {
+            if (self.terminal.receivingFile) {
+                // Offer to abort download if you press ^c while downloading an inline file
+                [self askAboutAbortingDownload];
+            } else if (self.upload) {
+                [self askAboutAbortingUpload];
+            }
+        }
+        _lastInput = [NSDate timeIntervalSinceReferenceDate];
+        if (_view.currentAnnouncement.dismissOnKeyDown) {
+            [_view.currentAnnouncement dismiss];
+            return NO;
         }
     }
-    _lastInput = [NSDate timeIntervalSinceReferenceDate];
-    if (_view.currentAnnouncement.dismissOnKeyDown) {
-        [_view.currentAnnouncement dismiss];
-        return NO;
-    } else {
-        if (_keystrokeSubscriptions.count) {
-            ITMKeystrokeNotification *keystrokeNotification = [[[ITMKeystrokeNotification alloc] init] autorelease];
-            keystrokeNotification.characters = event.characters;
-            keystrokeNotification.charactersIgnoringModifiers = event.charactersIgnoringModifiers;
-            if (event.modifierFlags & NSControlKeyMask) {
-                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Control];
-            }
-            if (event.modifierFlags & NSAlternateKeyMask) {
-                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Option];
-            }
-            if (event.modifierFlags & NSCommandKeyMask) {
-                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Command];
-            }
-            if (event.modifierFlags & NSShiftKeyMask) {
-                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Shift];
-            }
-            if (event.modifierFlags & NSNumericPadKeyMask) {
-                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Numpad];
-            }
-            if (event.modifierFlags & NSFunctionKeyMask) {
-                [keystrokeNotification.modifiersArray addValue:ITMKeystrokeNotification_Modifiers_Function];
-            }
-            keystrokeNotification.keyCode = event.keyCode;
-            keystrokeNotification.session = self.guid;
-            ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
-            notification.keystrokeNotification = keystrokeNotification;
-
-            [_keystrokeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-                [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification
-                                                                                 toConnectionKey:key];
-            }];
+    if (_keystrokeSubscriptions.count) {
+        ITMKeystrokeNotification *keystrokeNotification = [[[ITMKeystrokeNotification alloc] init] autorelease];
+        keystrokeNotification.characters = event.characters;
+        keystrokeNotification.charactersIgnoringModifiers = event.charactersIgnoringModifiers;
+        if (event.modifierFlags & NSControlKeyMask) {
+            [keystrokeNotification.modifiersArray addValue:ITMModifiers_Control];
         }
-        return YES;
+        if (event.modifierFlags & NSAlternateKeyMask) {
+            [keystrokeNotification.modifiersArray addValue:ITMModifiers_Option];
+        }
+        if (event.modifierFlags & NSCommandKeyMask) {
+            [keystrokeNotification.modifiersArray addValue:ITMModifiers_Command];
+        }
+        if (event.modifierFlags & NSShiftKeyMask) {
+            [keystrokeNotification.modifiersArray addValue:ITMModifiers_Shift];
+        }
+        if (event.modifierFlags & NSNumericPadKeyMask) {
+            [keystrokeNotification.modifiersArray addValue:ITMModifiers_Numpad];
+        }
+        if (event.modifierFlags & NSFunctionKeyMask) {
+            [keystrokeNotification.modifiersArray addValue:ITMModifiers_Function];
+        }
+        keystrokeNotification.keyCode = event.keyCode;
+        keystrokeNotification.session = self.guid;
+        ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
+        notification.keystrokeNotification = keystrokeNotification;
+
+        [_keystrokeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+            [[iTermAPIHelper sharedInstance] postAPINotification:notification
+                                                 toConnectionKey:key];
+        }];
     }
+    return accept;
 }
 
 + (id (^)(NSString *))functionCallSource {
@@ -6840,8 +6910,8 @@ ITERM_WEAKLY_REFERENCEABLE
         notification.screenUpdateNotification = [[[ITMScreenUpdateNotification alloc] init] autorelease];
         notification.screenUpdateNotification.session = self.guid;
         [_updateSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-            [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification
-                                                                             toConnectionKey:key];
+            [[iTermAPIHelper sharedInstance] postAPINotification:notification
+                                                 toConnectionKey:key];
         }];
     }
 }
@@ -8083,8 +8153,8 @@ ITERM_WEAKLY_REFERENCEABLE
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
         notification.promptNotification.session = self.guid;
-        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification
-                                                                         toConnectionKey:key];
+        [[iTermAPIHelper sharedInstance] postAPINotification:notification
+                                             toConnectionKey:key];
     }];
 }
 
@@ -8529,8 +8599,8 @@ ITERM_WEAKLY_REFERENCEABLE
     notification.locationChangeNotification.userName = host.username;
     notification.locationChangeNotification.session = self.guid;
     [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification
-                                                                         toConnectionKey:key];
+        [[iTermAPIHelper sharedInstance] postAPINotification:notification
+                                             toConnectionKey:key];
     }];
 }
 
@@ -8702,8 +8772,8 @@ ITERM_WEAKLY_REFERENCEABLE
     notification.locationChangeNotification.session = self.guid;
     notification.locationChangeNotification.directory = newPath;
     [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification
-                                                                         toConnectionKey:key];
+        [[iTermAPIHelper sharedInstance] postAPINotification:notification
+                                             toConnectionKey:key];
     }];
 }
 
@@ -8715,8 +8785,8 @@ ITERM_WEAKLY_REFERENCEABLE
     notification.customEscapeSequenceNotification.senderIdentity = parameters[@"id"];
     notification.customEscapeSequenceNotification.payload = payload;
     [_customEscapeSequenceNotifications enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        [[[[iTermApplication sharedApplication] delegate] apiHelper] postAPINotification:notification
-                                                                         toConnectionKey:key];
+        [[iTermAPIHelper sharedInstance] postAPINotification:notification
+                                             toConnectionKey:key];
     }];
 }
 

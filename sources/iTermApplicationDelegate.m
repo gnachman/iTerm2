@@ -987,10 +987,6 @@ static BOOL hasBecomeActive = NO;
         }
     }
 
-    if ([iTermAdvancedSettingsModel enableAPIServer]) {
-        _apiHelper = [iTermAPIHelper sharedInstance];
-    }
-
     if ([self shouldNotifyAboutIncompatibleSoftware]) {
         [self notifyAboutIncompatibleSoftware];
     }

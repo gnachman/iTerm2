@@ -411,6 +411,37 @@ enum NotificationType {
   NOTIFY_ON_SERVER_ORIGINATED_RPC = 10;
 }
 
+enum Modifiers {
+  CONTROL = 1;
+  OPTION = 2;
+  COMMAND = 3;
+  SHIFT = 4;
+  FUNCTION = 5;
+  NUMPAD = 6;
+}
+
+message KeystrokePattern {
+  // The keystroke matches the pattern if it has all the required and none of the forbidden modifiers.
+  repeated Modifiers required_modifiers = 1;
+  repeated Modifiers forbidden_modifiers = 2;
+
+  // The pattern matches if the keystroke has any of these keycodes:
+  repeated int32 keycodes = 3;
+
+  // The pattern matches if the keystroke equals of any of these characters:
+  repeated string characters = 4;
+
+  // The pattern matches if the keystroke equals any of these characters ignoring modifiers.
+  // This is Apple parlance for "ignoring the shift key plus various other undocumented things"
+  repeated string characters_ignoring_modifiers = 5;
+}
+
+message KeystrokeMonitorRequest {
+  // If a keystroke matches any of these patterns then they will not be handled by the application.
+  // A notification will be posted and the script can handle it as it pleases.
+  repeated KeystrokePattern patterns_to_ignore = 1;
+}
+
 message NotificationRequest {
   // See documentation on session IDs. NOTIFY_ON_NEW_SESSION, NOTIFY_ON_TERMINATE_SESSION, and
   // NOTIFY_ON_LAYOUT_CHANGE do not use the session ID and are posted on all such events.
@@ -424,6 +455,7 @@ message NotificationRequest {
 
   oneof arguments {
     RPCRegistrationRequest rpc_registration_request = 4;  // For NOTIFY_ON_SERVER_ORIGINATED_RPC
+    KeystrokeMonitorRequest keystroke_monitor_request = 5;
   }
 }
 
@@ -471,14 +503,6 @@ message ServerOriginatedRPCNotification {
 message KeystrokeNotification {
   optional string characters = 1;
   optional string charactersIgnoringModifiers = 2;
-  enum Modifiers {
-    CONTROL = 1;
-    OPTION = 2;
-    COMMAND = 3;
-    SHIFT = 4;
-    FUNCTION = 5;
-    NUMPAD = 6;
-  }
   repeated Modifiers modifiers = 3;
   optional int32 keyCode = 4;
   optional string session = 5;

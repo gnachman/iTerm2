@@ -51,7 +51,9 @@ CF_EXTERN_C_BEGIN
 @class ITMGetPropertyResponse;
 @class ITMInjectRequest;
 @class ITMInjectResponse;
+@class ITMKeystrokeMonitorRequest;
 @class ITMKeystrokeNotification;
+@class ITMKeystrokePattern;
 @class ITMLayoutChangedNotification;
 @class ITMLineContents;
 @class ITMLineRange;
@@ -137,6 +139,25 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMNotificationType_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMModifiers
+
+typedef GPB_ENUM(ITMModifiers) {
+  ITMModifiers_Control = 1,
+  ITMModifiers_Option = 2,
+  ITMModifiers_Command = 3,
+  ITMModifiers_Shift = 4,
+  ITMModifiers_Function = 5,
+  ITMModifiers_Numpad = 6,
+};
+
+GPBEnumDescriptor *ITMModifiers_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMModifiers_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMSetTabLayoutResponse_Status
 
@@ -387,25 +408,6 @@ GPBEnumDescriptor *ITMNotificationResponse_Status_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value);
-
-#pragma mark - Enum ITMKeystrokeNotification_Modifiers
-
-typedef GPB_ENUM(ITMKeystrokeNotification_Modifiers) {
-  ITMKeystrokeNotification_Modifiers_Control = 1,
-  ITMKeystrokeNotification_Modifiers_Option = 2,
-  ITMKeystrokeNotification_Modifiers_Command = 3,
-  ITMKeystrokeNotification_Modifiers_Shift = 4,
-  ITMKeystrokeNotification_Modifiers_Function = 5,
-  ITMKeystrokeNotification_Modifiers_Numpad = 6,
-};
-
-GPBEnumDescriptor *ITMKeystrokeNotification_Modifiers_EnumDescriptor(void);
-
-/**
- * Checks to see if the given value is defined by the enum or was not known at
- * the time this source was generated.
- **/
-BOOL ITMKeystrokeNotification_Modifiers_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMFocusChangedNotification_Window_WindowStatus
 
@@ -1616,6 +1618,67 @@ typedef GPB_ENUM(ITMRegisterToolResponse_FieldNumber) {
 @property(nonatomic, readwrite) BOOL hasStatus;
 @end
 
+#pragma mark - ITMKeystrokePattern
+
+typedef GPB_ENUM(ITMKeystrokePattern_FieldNumber) {
+  ITMKeystrokePattern_FieldNumber_RequiredModifiersArray = 1,
+  ITMKeystrokePattern_FieldNumber_ForbiddenModifiersArray = 2,
+  ITMKeystrokePattern_FieldNumber_KeycodesArray = 3,
+  ITMKeystrokePattern_FieldNumber_CharactersArray = 4,
+  ITMKeystrokePattern_FieldNumber_CharactersIgnoringModifiersArray = 5,
+};
+
+@interface ITMKeystrokePattern : GPBMessage
+
+/** The keystroke matches the pattern if it has all the required and none of the forbidden modifiers. */
+// |requiredModifiersArray| contains |ITMModifiers|
+@property(nonatomic, readwrite, strong, null_resettable) GPBEnumArray *requiredModifiersArray;
+/** The number of items in @c requiredModifiersArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger requiredModifiersArray_Count;
+
+// |forbiddenModifiersArray| contains |ITMModifiers|
+@property(nonatomic, readwrite, strong, null_resettable) GPBEnumArray *forbiddenModifiersArray;
+/** The number of items in @c forbiddenModifiersArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger forbiddenModifiersArray_Count;
+
+/** The pattern matches if the keystroke has any of these keycodes: */
+@property(nonatomic, readwrite, strong, null_resettable) GPBInt32Array *keycodesArray;
+/** The number of items in @c keycodesArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger keycodesArray_Count;
+
+/** The pattern matches if the keystroke equals of any of these characters: */
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *charactersArray;
+/** The number of items in @c charactersArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger charactersArray_Count;
+
+/**
+ * The pattern matches if the keystroke equals any of these characters ignoring modifiers.
+ * This is Apple parlance for "ignoring the shift key plus various other undocumented things"
+ **/
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *charactersIgnoringModifiersArray;
+/** The number of items in @c charactersIgnoringModifiersArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger charactersIgnoringModifiersArray_Count;
+
+@end
+
+#pragma mark - ITMKeystrokeMonitorRequest
+
+typedef GPB_ENUM(ITMKeystrokeMonitorRequest_FieldNumber) {
+  ITMKeystrokeMonitorRequest_FieldNumber_PatternsToIgnoreArray = 1,
+};
+
+@interface ITMKeystrokeMonitorRequest : GPBMessage
+
+/**
+ * If a keystroke matches any of these patterns then they will not be handled by the application.
+ * A notification will be posted and the script can handle it as it pleases.
+ **/
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMKeystrokePattern*> *patternsToIgnoreArray;
+/** The number of items in @c patternsToIgnoreArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger patternsToIgnoreArray_Count;
+
+@end
+
 #pragma mark - ITMNotificationRequest
 
 typedef GPB_ENUM(ITMNotificationRequest_FieldNumber) {
@@ -1623,11 +1686,13 @@ typedef GPB_ENUM(ITMNotificationRequest_FieldNumber) {
   ITMNotificationRequest_FieldNumber_Subscribe = 2,
   ITMNotificationRequest_FieldNumber_NotificationType = 3,
   ITMNotificationRequest_FieldNumber_RpcRegistrationRequest = 4,
+  ITMNotificationRequest_FieldNumber_KeystrokeMonitorRequest = 5,
 };
 
 typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
   ITMNotificationRequest_Arguments_OneOfCase_GPBUnsetOneOfCase = 0,
   ITMNotificationRequest_Arguments_OneOfCase_RpcRegistrationRequest = 4,
+  ITMNotificationRequest_Arguments_OneOfCase_KeystrokeMonitorRequest = 5,
 };
 
 @interface ITMNotificationRequest : GPBMessage
@@ -1652,6 +1717,8 @@ typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
 
 /** For NOTIFY_ON_SERVER_ORIGINATED_RPC */
 @property(nonatomic, readwrite, strong, null_resettable) ITMRPCRegistrationRequest *rpcRegistrationRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMKeystrokeMonitorRequest *keystrokeMonitorRequest;
 
 @end
 
@@ -1813,7 +1880,7 @@ typedef GPB_ENUM(ITMKeystrokeNotification_FieldNumber) {
 /** Test to see if @c charactersIgnoringModifiers has been set. */
 @property(nonatomic, readwrite) BOOL hasCharactersIgnoringModifiers;
 
-// |modifiersArray| contains |ITMKeystrokeNotification_Modifiers|
+// |modifiersArray| contains |ITMModifiers|
 @property(nonatomic, readwrite, strong, null_resettable) GPBEnumArray *modifiersArray;
 /** The number of items in @c modifiersArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger modifiersArray_Count;
