@@ -185,12 +185,12 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
         NSView *view = tuple[1];
 
         // Maximum allowed height for a tab view item. Taller ones get a scroll view.
-        static const CGFloat kMaxHeight = 438;
+        static const CGFloat kMaxHeight = 462;
         if (view.frame.size.height > kMaxHeight) {
             // If the view is too tall, wrap it in a scroll view.
             NSRect theFrame = NSMakeRect(0, 0, view.frame.size.width, kMaxHeight);
             iTermSizeRememberingView *sizeRememberingView =
-            [[iTermSizeRememberingView alloc] initWithFrame:theFrame];
+                [[iTermSizeRememberingView alloc] initWithFrame:theFrame];
             sizeRememberingView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
             sizeRememberingView.autoresizesSubviews = YES;
             NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:theFrame];
@@ -451,7 +451,14 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
         return;
     }
     _desiredFrame = frame;
-    [window setFrame:frame display:YES animate:animated];
+    NSTimeInterval duration = [window animationResizeTime:frame];
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
+        context.duration = duration;
+        [window.animator setFrame:frame display:YES];
+    } completionHandler:^{
+        self->_desiredFrame = NSZeroRect;
+    }];
+
 }
 
 #pragma mark - Actions
