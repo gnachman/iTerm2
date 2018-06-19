@@ -161,8 +161,7 @@ enum {
     for (NSString *identifier in [[self class] editorsInPreferenceOrder]) {
         NSMenuItem *item = items[names[identifier]];
         if (!item) {
-            [editors_ addItemWithTitle:names[identifier]];
-            item = (NSMenuItem *)[[[editors_ menu] itemArray] lastObject];
+            item = [[NSMenuItem alloc] initWithTitle:names[identifier] action:nil keyEquivalent:@""];
             int tag = [tags[identifier] integerValue];
             [item setTag:tag];
             [item setEnabled:NO];
@@ -171,6 +170,11 @@ enum {
         if ([iTermSemanticHistoryPrefsController applicationExists:identifier]) {
             [item setEnabled:YES];
         }
+    }
+    NSArray *sortedNames = [items.allKeys sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+    for (NSString *name in sortedNames) {
+        NSMenuItem *item = items[name];
+        [editors_.menu addItem:item];
     }
 
     [self actionChanged:nil];
