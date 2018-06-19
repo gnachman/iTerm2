@@ -9,9 +9,15 @@
 #import "DebugLogging.h"
 #import "iTermPreferences.h"
 
-@implementation PTYSplitView
+@implementation PTYSplitView {
+    BOOL _dead;  // inside superclass's dealloc?
+}
 
 @dynamic delegate;
+
+- (void)dealloc {
+    _dead = YES;
+}
 
 - (NSColor *)dividerColor {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
@@ -121,13 +127,20 @@
 }
 
 - (void)willRemoveSubview:(NSView *)subview {
-    [super willRemoveSubview:subview];
+    if (_dead) {
+        // Was called from within superclass's -dealloc, and trying to construct a weak reference
+        // will crash.
+        return;
+    }
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        if ([[weakSelf retain] autorelease]) {
-            [weakSelf.delegate splitViewDidChangeSubviews:self];
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
         }
+        [strongSelf.delegate splitViewDidChangeSubviews:self];
     });
+    [super willRemoveSubview:subview];
 }
 
 @end
