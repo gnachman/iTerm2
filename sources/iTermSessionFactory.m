@@ -153,7 +153,7 @@ NS_ASSUME_NONNULL_BEGIN
             pwd = NSHomeDirectory();
         }
     }
-    environment = [environment dictionaryBySettingObject:pwd forKey:@"PWD"];
+    environment = [environment ?: @{} dictionaryBySettingObject:pwd forKey:@"PWD"];
     BOOL isUTF8;
     if (isUTF8Number) {
         isUTF8 = isUTF8Number.boolValue;
