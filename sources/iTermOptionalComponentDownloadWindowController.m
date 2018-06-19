@@ -56,8 +56,16 @@ const int iTermMinimumPythonEnvironmentVersion = 18;
 }
 
 - (void)cancel {
+    const BOOL wasDownloading = self.downloading;
     self.downloading = NO;
     [_task cancel];
+    _urlSession = nil;
+    _task = nil;
+    if (wasDownloading) {
+        // -999 is the magic number meaning canceled
+        _error = [NSError errorWithDomain:@"com.iterm2" code:-999 userInfo:nil];
+        [self.delegate optionalComponentDownloadPhaseDidComplete:self];
+    }
 }
 
 #pragma mark - NSURLSessionDownloadDelegate
@@ -68,14 +76,16 @@ const int iTermMinimumPythonEnvironmentVersion = 18;
  totalBytesWritten:(int64_t)totalBytesWritten
 totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.delegate optionalComponentDownloadPhase:self didProgressToBytes:totalBytesWritten ofTotal:downloadTask.countOfBytesExpectedToReceive];
+        if (self.downloading) {
+            // Was not canceled
+            [self.delegate optionalComponentDownloadPhase:self didProgressToBytes:totalBytesWritten ofTotal:downloadTask.countOfBytesExpectedToReceive];
+        }
     });
 }
 
 - (void)URLSession:(NSURLSession *)session
       downloadTask:(NSURLSessionDownloadTask *)downloadTask
 didFinishDownloadingToURL:(NSURL *)location {
-    self.downloading = NO;
     _stream = [NSInputStream inputStreamWithURL:location];
     [_stream open];
 }
@@ -83,9 +93,6 @@ didFinishDownloadingToURL:(NSURL *)location {
 - (void)URLSession:(NSURLSession *)session
               task:(NSURLSessionTask *)task
 didCompleteWithError:(nullable NSError *)error {
-    self.downloading = NO;
-    _urlSession = nil;
-    _task = nil;
     if (!error) {
         int statusCode = [[NSHTTPURLResponse castFrom:task.response] statusCode];
         if (statusCode != 200) {
@@ -93,6 +100,13 @@ didCompleteWithError:(nullable NSError *)error {
         }
     }
     dispatch_async(dispatch_get_main_queue(), ^{
+        if (!self.downloading) {
+            // Was canceled
+            return;
+        }
+        self.downloading = NO;
+        self->_urlSession = nil;
+        self->_task = nil;
         self->_error = error;
         [self.delegate optionalComponentDownloadPhaseDidComplete:self];
     });
