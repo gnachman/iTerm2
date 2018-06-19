@@ -8,6 +8,8 @@ Here are a collection of working scripts for you to crib from.
 
 * :doc:`georges_title`
 * :doc:`function_key_tabs`
+* :doc:`cls`
+* :doc:`create_window`
 * More TBD
 
 ----

@@ -208,7 +208,7 @@ class Session:
         """
         Provides a nice interface for observing a sequence of keystrokes.
 
-        :returns: a keystroke reader, a :class:`Session.KeystrokeReader`.
+        :returns: A :class:`Session.KeystrokeReader`.
 
         :Example:
 
@@ -252,11 +252,11 @@ class Session:
         :param vertical: Bool. If true, the divider is vertical, else horizontal.
         :param before: Bool, whether the new session should be left/above the existing one.
         :param profile: The profile name to use. None for the default profile.
-        :param profile_customizations: LocalWriteOnlyProfile giving changes to make in profile.
+        :param profile_customizations: A :class:`LocalWriteOnlyProfile` giving changes to make in profile.
 
-        :returns: New iterm.session.Session.
+        :returns: New :class:`Session`.
 
-        :throws: SplitPaneException if something goes wrong.
+        :throws: :class:`SplitPaneException` if something goes wrong.
         """
         if profile_customizations is None:
             custom_dict = None
@@ -465,7 +465,7 @@ class Session:
         """
         Fetches a session variable.
 
-        See Badges documentation for more information on user-defined variables.
+        See Badges documentation for more information on variables.
 
         :param name: The variable's name.
 
@@ -506,7 +506,7 @@ class Session:
     async def async_set_buried(self, buried):
         """Buries or disinters a session.
 
-        :param buried: If `True`, bury the session. If `False, disinter it.
+        :param buried: If `True`, bury the session. If `False`, disinter it.
 
         :throws: :class:`RPCException` if something goes wrong.
         """
@@ -555,7 +555,7 @@ class Session:
             """
             Get the next keystroke.
 
-            :returns: An iterm2.api_pb2.KeystrokeNotification.
+            :returns: A list of iterm2.api_pb2.KeystrokeNotification objects.
             """
             self.future = asyncio.Future()
             await self.connection.async_dispatch_until_future(self.future)
