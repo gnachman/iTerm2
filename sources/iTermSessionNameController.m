@@ -152,6 +152,7 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
 
 - (void)didEvaluateInvocationWithResult:(NSString *)result {
     _cachedEvaluation = [result copy];
+    [_delegate sessionNameControllerNameWillChangeTo:_cachedEvaluation];
     [_delegate sessionNameControllerPresentationNameDidChangeTo:self.presentationSessionTitle];
 }
 

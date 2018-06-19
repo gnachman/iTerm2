@@ -10139,9 +10139,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)sessionNameControllerNameWillChangeTo:(NSString *)newName {
-    [_view setTitle:newName];
     [self.variablesScope setValue:newName forVariableNamed:iTermVariableKeySessionName];
-
 }
 
 - (void)sessionNameControllerPresentationNameDidChangeTo:(NSString *)presentationName {
