@@ -26,6 +26,8 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #import "iTermSearchField.h"
+
+#import "DebugLogging.h"
 #import "NSTextField+iTerm.h"
 
 @implementation iTermSearchField
@@ -62,6 +64,11 @@
         handled = [super performKeyEquivalent:theEvent];
     }
     return handled;
+}
+
+- (void)textDidEndEditing:(NSNotification *)notification {
+    DLog(@"iTermSearchField: textDidEndEditing: %@", notification.object);
+    [super textDidEndEditing:notification];
 }
 
 @end

@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10117" systemVersion="15G31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14109" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="10117"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14109"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermProfilesWindowController">
@@ -26,7 +27,7 @@
             <rect key="contentRect" x="252" y="573" width="735" height="360"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1600" height="1002"/>
             <value key="minSize" type="size" width="735" height="360"/>
-            <view key="contentView" id="6">
+            <view key="contentView" id="6" customClass="iTermProfileWindowContentView">
                 <rect key="frame" x="0.0" y="0.0" width="735" height="360"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
@@ -49,7 +50,7 @@
                             <outlet property="nextKeyView" destination="339" id="360"/>
                         </connections>
                     </button>
-                    <button verticalHuggingPriority="750" id="327">
+                    <button verticalHuggingPriority="750" id="327" customClass="iTermOpenProfileInTabButton">
                         <rect key="frame" x="505" y="12" width="96" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="push" title="New Tab" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="328">

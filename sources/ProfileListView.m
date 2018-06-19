@@ -262,6 +262,13 @@ const CGFloat kDefaultTagsWidth = 80;
     [super dealloc];
 }
 
+- (BOOL)performKeyEquivalent:(NSEvent *)event {
+    DLog(@"ProfileListView: performKeyEquivalent: %@", event);
+    BOOL result = [super performKeyEquivalent:event];
+    DLog(@"ProfileListView: performKeyEquivalent: returns %@", @(result));
+    return result;
+}
+
 - (void)focusSearchField
 {
     [[self window] makeFirstResponder:searchField_];
