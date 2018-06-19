@@ -204,7 +204,6 @@
 + (BOOL)showMetalFPSmeter;
 + (BOOL)tabsWrapAround;
 + (BOOL)middleClickClosesTab;
-+ (BOOL)disableMetalWhenUnplugged;
 + (BOOL)disableMetalWhenIdle;
 + (BOOL)disableGrowl;
 + (BOOL)proportionalScrollWheelReporting;

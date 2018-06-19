@@ -1090,7 +1090,7 @@ DQ
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="229" width="575" height="295"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1418"/>
             <value key="minSize" type="size" width="575" height="100"/>
             <view key="contentView" id="6275">
                 <rect key="frame" x="0.0" y="0.0" width="575" height="295"/>
@@ -1260,6 +1260,8 @@ DQ
         <customObject id="9Se-ld-UJa" customClass="GeneralPreferencesViewController">
             <connections>
                 <outlet property="_adjustWindowForFontSizeChange" destination="6377" id="8Ci-Ia-xoQ"/>
+                <outlet property="_advancedGPU" destination="2nT-Ny-kwd" id="0Md-l7-fQI"/>
+                <outlet property="_advancedGPUViewController" destination="gT3-ix-A54" id="NX1-p6-76u"/>
                 <outlet property="_allowClipboardAccessFromTerminal" destination="6383" id="u1Z-Xo-qFM"/>
                 <outlet property="_autoHideTmuxClientSession" destination="6366" id="V9B-um-JRL"/>
                 <outlet property="_autoSaveOnQuit" destination="tYA-B3-SU5" id="9Yr-NX-xsX"/>
@@ -4679,6 +4681,17 @@ DQ
                         <action selector="pushToCustomFolder:" target="9Se-ld-UJa" id="XU1-4a-fHX"/>
                     </connections>
                 </button>
+                <button verticalHuggingPriority="750" misplaced="YES" id="2nT-Ny-kwd">
+                    <rect key="frame" x="128" y="190" width="173" height="28"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="push" title="Advanced GPU Settings…" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="tof-yo-OcS">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="smallSystem"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="advancedGPU:" target="9Se-ld-UJa" id="q48-sD-aZR"/>
+                    </connections>
+                </button>
             </subviews>
             <point key="canvasLocation" x="2057" y="-50"/>
         </customView>
@@ -5967,7 +5980,7 @@ DQ
                     </connections>
                 </customView>
             </subviews>
-            <point key="canvasLocation" x="1231" y="237"/>
+            <point key="canvasLocation" x="1514" y="818"/>
         </customView>
         <window title="Filter Alerts" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" oneShot="NO" releasedWhenClosed="NO" showsToolbarButton="NO" visibleAtLaunch="NO" animationBehavior="default" id="u39-OD-7hu" customClass="NSPanel">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
@@ -6051,6 +6064,7 @@ DQ
                 </subviews>
             </view>
         </window>
+        <viewController id="gT3-ix-A54" userLabel="Advanced GPU Settings View Controller" customClass="iTermAdvancedGPUSettingsViewController"/>
     </objects>
     <resources>
         <image name="NSActionTemplate" width="14" height="14"/>

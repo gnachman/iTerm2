@@ -8,6 +8,7 @@
 
 #import "GeneralPreferencesViewController.h"
 
+#import "iTermAdvancedGPUSettingsViewController.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermRemotePreferences.h"
 #import "iTermShellHistoryController.h"
@@ -58,6 +59,8 @@ enum {
 
     // Use GPU?
     IBOutlet NSButton *_gpuRendering;
+    IBOutlet NSButton *_advancedGPU;
+    IBOutlet iTermAdvancedGPUSettingsViewController *_advancedGPUViewController;
 
     // Enable bonjour
     IBOutlet NSButton *_enableBonjour;
@@ -196,14 +199,48 @@ enum {
     };
 
     if (@available(macOS 10.12, *)) {
-        [self defineControl:_gpuRendering
-                        key:kPreferenceKeyUseMetal
-                       type:kPreferenceInfoTypeCheckbox];
+        info = [self defineControl:_gpuRendering
+                               key:kPreferenceKeyUseMetal
+                              type:kPreferenceInfoTypeCheckbox];
+        info.observer = ^{
+            [weakSelf updateAdvancedGPUEnabled];
+        };
     } else {
         _gpuRendering.enabled = NO;
         _gpuRendering.state = NSOffState;
+        [self updateAdvancedGPUEnabled];
     }
-    
+
+    [_advancedGPUViewController view];
+    _advancedGPUViewController.disableWhenDisconnected.target = self;
+    _advancedGPUViewController.disableWhenDisconnected.action = @selector(settingChanged:);
+    info = [self defineControl:_advancedGPUViewController.disableWhenDisconnected
+                           key:kPreferenceKeyDisableMetalWhenUnplugged
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
+    };
+
+    _advancedGPUViewController.preferIntegratedGPU.target = self;
+    _advancedGPUViewController.preferIntegratedGPU.action = @selector(settingChanged:);
+    info = [self defineControl:_advancedGPUViewController.preferIntegratedGPU
+                           key:kPreferenceKeyPreferIntegratedGPU
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
+    };
+
+
+    _advancedGPUViewController.maximizeThroughput.target = self;
+    _advancedGPUViewController.maximizeThroughput.action = @selector(settingChanged:);
+#warning TODO: This should also defer currentDrawable, but that feature is only on the master branch.
+    info = [self defineControl:_advancedGPUViewController.maximizeThroughput
+                           key:kPreferenceKeyMetalMaximizeThroughput
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
+    };
+
     [self defineControl:_enableBonjour
                     key:kPreferenceKeyAddBonjourHostsToProfiles
                             type:kPreferenceInfoTypeCheckbox];
@@ -325,12 +362,36 @@ enum {
                    type:kPreferenceInfoTypeCheckbox];
 }
 
+- (void)updateAdvancedGPUEnabled {
+    if (@available(macOS 10.12, *)) {
+        _advancedGPU.enabled = [self boolForKey:kPreferenceKeyUseMetal];
+    } else {
+        _advancedGPU.enabled = NO;
+    }
+}
+
+#pragma mark - Actions
+
 - (IBAction)browseCustomFolder:(id)sender {
     [self choosePrefsCustomFolder];
 }
 
 - (IBAction)pushToCustomFolder:(id)sender {
     [[iTermRemotePreferences sharedInstance] saveLocalUserDefaultsToRemotePrefs];
+}
+
+- (IBAction)advancedGPU:(NSView *)sender {
+    // Create popover
+    NSPopover *popover = [[NSPopover alloc] init];
+    [popover setContentSize:_advancedGPUViewController.view.frame.size];
+    [popover setBehavior:NSPopoverBehaviorTransient];
+    [popover setAnimates:YES];
+    [popover setContentViewController:_advancedGPUViewController];
+
+    // Show popover
+    [popover showRelativeToRect:sender.bounds
+                              ofView:sender
+                       preferredEdge:NSMaxYEdge];
 }
 
 #pragma mark - Notifications
