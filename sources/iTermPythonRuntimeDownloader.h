@@ -23,6 +23,9 @@ extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
 // This downloads if any version is already installed and there's a newer version available.
 - (void)upgradeIfPossible;
 
+// Like upgradeIfPossible but shows the window immediately.
+- (void)userRequestedCheckForUpdate;
+
 // This downloads only if the minimum version is not installed.
 - (void)downloadOptionalComponentsIfNeededWithConfirmation:(BOOL)confirm withCompletion:(void (^)(BOOL))completion;
 

@@ -113,6 +113,10 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     [self checkForNewerVersionThan:installedVersion silently:YES confirm:YES requiredToContinue:NO];
 }
 
+- (void)userRequestedCheckForUpdate {
+    [self checkForNewerVersionThan:self.installedVersion silently:NO confirm:YES requiredToContinue:NO];
+}
+
 - (void)downloadOptionalComponentsIfNeededWithConfirmation:(BOOL)confirm withCompletion:(void (^)(BOOL))completion {
     if (![self shouldDownloadEnvironment]) {
         completion(YES);

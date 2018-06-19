@@ -61,7 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)didInstallPythonRuntime:(NSNotification *)notification {
-    [self removeInstallMenuItem];
+    [self changeInstallToUpdate];
 }
 
 - (NSInteger)separatorIndex {
@@ -174,16 +174,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setInstallRuntimeMenuItem:(NSMenuItem *)installRuntimeMenuItem {
     _installRuntimeMenuItem = installRuntimeMenuItem;
     if ([[iTermPythonRuntimeDownloader sharedInstance] isPythonRuntimeInstalled]) {
-        [self removeInstallMenuItem];
+        [self changeInstallToUpdate];
     }
 }
 
 
-- (void)removeInstallMenuItem {
-    if (_installRuntimeMenuItem) {
-        [_scriptsMenu removeItem:_installRuntimeMenuItem];
-        _installRuntimeMenuItem = nil;
-    }
+- (void)changeInstallToUpdate {
+    _installRuntimeMenuItem.title = @"Check for Updated Runtime";
+    _installRuntimeMenuItem.action = @selector(userRequestedCheckForUpdate);
+    _installRuntimeMenuItem.target = [iTermPythonRuntimeDownloader sharedInstance];
 }
 
 #pragma mark - Actions
