@@ -24,6 +24,7 @@
 #import "iTermMarkRenderer.h"
 #import "iTermMetalRowData.h"
 #import "iTermPreciseTimer.h"
+#import "iTermPreferences.h"
 #import "iTermTextRendererTransientState.h"
 #import "iTermTexture.h"
 #import "iTermTimestampsRenderer.h"
@@ -679,7 +680,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }];
     } else {
         const BOOL synchronousDraw = (_context.group != nil);
-        frameData.deferCurrentDrawable = ([iTermAdvancedSettingsModel metalDeferCurrentDrawable] &&
+        frameData.deferCurrentDrawable = ([iTermPreferences boolForKey:kPreferenceKeyMetalMaximizeThroughput] &&
                                           !synchronousDraw);
         if (!frameData.deferCurrentDrawable) {
             [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{

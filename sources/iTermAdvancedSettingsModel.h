@@ -228,7 +228,6 @@
 + (BOOL)evaluateSwiftyStrings;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (int)minimumWeightDifferenceForBoldFont;
-+ (BOOL)metalDeferCurrentDrawable;
 + (double)metalSlowFrameRate;
 
 @end
