@@ -1948,11 +1948,7 @@ DQ
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" autoenablesItems="NO" id="Odx-9x-W67">
                             <items>
-                                <menuItem title="Components" hidden="YES" id="JWB-xg-ElI">
-                                    <connections>
-                                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="XF7-46-vLp"/>
-                                    </connections>
-                                </menuItem>
+                                <menuItem title="Components" hidden="YES" id="JWB-xg-ElI"/>
                                 <menuItem title="Name" enabled="NO" id="2Po-6U-Apz"/>
                                 <menuItem title="Session Name" tag="1" indentationLevel="1" id="lG4-94-9cF"/>
                                 <menuItem title="Profile Name" tag="32" indentationLevel="1" id="RQC-te-ZZE"/>
