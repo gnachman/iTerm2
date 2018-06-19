@@ -211,8 +211,33 @@ static NSDate* lastResizeDate_;
 
 - (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
     // Allocate a new metal view
-    _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
-                                         device:MTLCreateSystemDefaultDevice()];
+    if ([iTermAdvancedSettingsModel preferIntegratedGPU]) {
+        NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
+
+        id<MTLDevice> gpu = nil;
+
+        for (id<MTLDevice> device in devices) {
+            if (device.isLowPower) {
+                gpu = device;
+                break;
+            }
+        }
+
+        if (!gpu) {
+            gpu = MTLCreateSystemDefaultDevice();
+        }
+        _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
+                                             device:gpu];
+        if (devices) {
+            CFRelease(devices);
+        }
+        if (gpu) {
+            CFRelease(gpu);
+        }
+    } else {
+          _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
+                                               device:MTLCreateSystemDefaultDevice()];
+      }
     // There was a spike in crashes on 5/1. I'm removing this temporarily to see if it was the cause.
 #warning Bring this back
 //                                         device:[[iTermMetalDeviceProvider sharedInstance] preferredDevice]];

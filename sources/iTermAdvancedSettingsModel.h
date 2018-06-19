@@ -225,5 +225,6 @@
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (int)minimumWeightDifferenceForBoldFont;
 + (double)metalSlowFrameRate;
++ (BOOL)preferIntegratedGPU;
 
 @end
