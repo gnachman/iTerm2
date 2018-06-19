@@ -367,11 +367,14 @@ static NSInteger gNextFrameDataNumber;
 }
 
 - (void)mergeHistogram:(iTermHistogram *)histogramToMerge name:(NSString *)name {
+    if (!name) {
+        return;
+    }
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sHistograms = [[NSMutableDictionary alloc] init];
+    });
     @synchronized(sHistograms) {
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            sHistograms = [[NSMutableDictionary alloc] init];
-        });
         iTermHistogram *hist = sHistograms[name];
         if (!hist) {
             hist = [[iTermHistogram alloc] init];
