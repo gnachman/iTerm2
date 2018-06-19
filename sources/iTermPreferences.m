@@ -40,6 +40,9 @@ NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection = @"No
 // YES = apply preference from above key, NO = ask on exit if changes exist
 NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection = @"NoSyncNeverRemindPrefsChangesLostForFile";
 
+NSString *const iTermMetalSettingsDidChangeNotification = @"iTermMetalSettingsDidChangeNotification";
+
+
 NSString *const kPreferenceKeyCustomFolder = @"PrefsCustomFolder";
 NSString *const kPreferenceKeySelectionCopiesText = @"CopySelection";
 NSString *const kPreferenceKeyCopyLastNewline = @"CopyLastNewline";
@@ -53,6 +56,9 @@ NSString *const kPreferenceKeyOpenTmuxWindowsIn = @"OpenTmuxWindowsIn";
 NSString *const kPreferenceKeyTmuxDashboardLimit = @"TmuxDashboardLimit";
 NSString *const kPreferenceKeyAutoHideTmuxClientSession = @"AutoHideTmuxClientSession";
 NSString *const kPreferenceKeyUseMetal = @"UseMetal";
+NSString *const kPreferenceKeyDisableMetalWhenUnplugged = @"disableMetalWhenUnplugged";
+NSString *const kPreferenceKeyPreferIntegratedGPU = @"preferIntegratedGPU";
+NSString *const kPreferenceKeyMetalMaximizeThroughput = @"metalMaximizeThroughput";
 
 NSString *const kPreferenceKeyTabStyle = @"TabStyle";
 NSString *const kPreferenceKeyTabPosition = @"TabViewType";
@@ -224,6 +230,9 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyTmuxDashboardLimit: @10,
                   kPreferenceKeyAutoHideTmuxClientSession: @NO,
                   kPreferenceKeyUseMetal: @YES,
+                  kPreferenceKeyDisableMetalWhenUnplugged: @YES,
+                  kPreferenceKeyPreferIntegratedGPU: @NO,
+                  kPreferenceKeyMetalMaximizeThroughput: @YES,
 
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabPosition: @(TAB_POSITION_TOP),

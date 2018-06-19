@@ -358,6 +358,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                              selector:@selector(updateUseMetal)
                                                  name:iTermPowerManagerStateDidChange
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(bounceMetal:)
+                                                 name:iTermMetalSettingsDidChangeNotification
+                                               object:nil];
 }
 
 - (void)dealloc {
@@ -4769,7 +4773,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11) {
     const BOOL resizing = self.realParentWindow.windowIsResizing;
     const BOOL connectedToPower = [[iTermPowerManager sharedInstance] connectedToPower];
-    const BOOL connectionToPowerRequired = [iTermAdvancedSettingsModel disableMetalWhenUnplugged];
+    const BOOL connectionToPowerRequired = [iTermPreferences boolForKey:kPreferenceKeyDisableMetalWhenUnplugged];
     const BOOL powerOK = (!connectionToPowerRequired || connectedToPower);
     const BOOL allSessionsAllowMetal = [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
         return anObject.metalAllowed;
@@ -4800,6 +4804,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         obj.useMetal = useMetal;
     }];
     [_delegate tab:self didSetMetalEnabled:useMetal];
+}
+
+- (void)bounceMetal:(NSNotification *)notification {
+    if (@available(macOS 10.11, *)) {
+        for (PTYSession *session in self.sessions) {
+            session.useMetal = NO;
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self updateUseMetal];
+        });
+    }
 }
 
 #pragma mark - PTYSessionDelegate

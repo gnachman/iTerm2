@@ -9593,11 +9593,21 @@ ITERM_WEAKLY_REFERENCEABLE
     state.active = _active;
     state.idle = self.isIdle;
     state.visible = [_delegate sessionBelongsToVisibleTab];
-    if ([iTermAdvancedSettingsModel disableAdaptiveFrameRateInInteractiveApps] &&
-        _terminal.softAlternateScreenMode) {
-        state.useAdaptiveFrameRate = NO;
+
+    if (self.useMetal) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyMetalMaximizeThroughput] &&
+            !_terminal.softAlternateScreenMode) {
+            state.useAdaptiveFrameRate = YES;
+        } else {
+            state.useAdaptiveFrameRate = NO;
+        }
     } else {
-        state.useAdaptiveFrameRate = _useAdaptiveFrameRate;
+        if ([iTermAdvancedSettingsModel disableAdaptiveFrameRateInInteractiveApps] &&
+            _terminal.softAlternateScreenMode) {
+            state.useAdaptiveFrameRate = NO;
+        } else {
+            state.useAdaptiveFrameRate = _useAdaptiveFrameRate;
+        }
     }
     state.adaptiveFrameRateThroughputThreshold = _adaptiveFrameRateThroughputThreshold;
     state.slowFrameRate = self.useMetal ? [iTermAdvancedSettingsModel metalSlowFrameRate] : [iTermAdvancedSettingsModel slowFrameRate];

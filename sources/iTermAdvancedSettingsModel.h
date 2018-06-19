@@ -204,7 +204,6 @@
 + (BOOL)showMetalFPSmeter;
 + (BOOL)tabsWrapAround;
 + (BOOL)middleClickClosesTab;
-+ (BOOL)disableMetalWhenUnplugged;
 + (BOOL)disableMetalWhenIdle;
 + (BOOL)disableGrowl;
 + (BOOL)proportionalScrollWheelReporting;
@@ -225,6 +224,5 @@
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (int)minimumWeightDifferenceForBoldFont;
 + (double)metalSlowFrameRate;
-+ (BOOL)preferIntegratedGPU;
 
 @end

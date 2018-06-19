@@ -1912,6 +1912,11 @@
 		A697101318DFA7D5007E901D /* closebutton.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101118DFA7D5007E901D /* closebutton.png */; };
 		A697101418DFA7F9007E901D /* closebutton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101018DFA7D5007E901D /* closebutton@2x.png */; };
 		A697101518DFA7FC007E901D /* closebutton.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101118DFA7D5007E901D /* closebutton.png */; };
+		A6971F3320D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6971F3020D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.h */; };
+		A6971F3420D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6971F3120D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.m */; };
+		A6971F3520D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.xib */; };
+		A6971F3620D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.xib */; };
+		A6971F3720D8D3CE0075CFD4 /* iTermAdvancedGPUSettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.xib */; };
 		A697E27B1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A697E27C1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A699BAE618C8394700D425A7 /* CVector.h in Headers */ = {isa = PBXBuildFile; fileRef = A699BAE418C8394700D425A7 /* CVector.h */; };
@@ -4011,6 +4016,9 @@
 		A697100A18D94CDA007E901D /* iTermAdvancedSettingsModel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAdvancedSettingsModel.m; sourceTree = "<group>"; tabWidth = 4; };
 		A697101018DFA7D5007E901D /* closebutton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "closebutton@2x.png"; path = "images/closebutton@2x.png"; sourceTree = "<group>"; };
 		A697101118DFA7D5007E901D /* closebutton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = closebutton.png; path = images/closebutton.png; sourceTree = "<group>"; };
+		A6971F3020D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAdvancedGPUSettingsViewController.h; sourceTree = "<group>"; };
+		A6971F3120D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermAdvancedGPUSettingsViewController.m; sourceTree = "<group>"; };
+		A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermAdvancedGPUSettingsViewController.xib; sourceTree = "<group>"; };
 		A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMinimumSubsequenceMatcher.h; sourceTree = "<group>"; };
 		A697E27A1B42501000E175DA /* iTermMinimumSubsequenceMatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMinimumSubsequenceMatcher.m; sourceTree = "<group>"; };
 		A699BAE418C8394700D425A7 /* CVector.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = CVector.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -5238,6 +5246,9 @@
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
 				1D027C0F1CD1867000B0FBFF /* iTermColorPresets.h */,
 				1D027C101CD1867000B0FBFF /* iTermColorPresets.m */,
+				A6971F3020D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.h */,
+				A6971F3120D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.m */,
+				A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.xib */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -7532,6 +7543,7 @@
 				A66F3CF01FEA3D9E00AA2021 /* iTermHistogram.h in Headers */,
 				A667193C1DCE36C3000CE608 /* iTermThroughputEstimator.h in Headers */,
 				A667193D1DCE36C3000CE608 /* iTermHotkeyPreferencesModel.h in Headers */,
+				A6971F3320D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.h in Headers */,
 				A667193E1DCE36C3000CE608 /* NSLocale+iTerm.h in Headers */,
 				A667193F1DCE36C3000CE608 /* iTermDirectoryTree.h in Headers */,
 				A63819D01FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.h in Headers */,
@@ -8099,6 +8111,7 @@
 				1D6ED9E719AEA20D005A7799 /* PrefsKeyboard@2x.png in Resources */,
 				A67D0D8E1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
 				1D6ED9E819AEA20D005A7799 /* PrefsMouse.png in Resources */,
+				A6971F3720D8D3CE0075CFD4 /* iTermAdvancedGPUSettingsViewController.xib in Resources */,
 				1D6ED9EA19AEA20D005A7799 /* PrefsMouse@2x.png in Resources */,
 				1D8BBA7D1B30FD230005A852 /* Later@2x.png in Resources */,
 				1D6ED9EB19AEA20D005A7799 /* PrefsArrangements.png in Resources */,
@@ -8366,6 +8379,7 @@
 				1D44D05F1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBoxDrawing.png in Resources */,
 				1D44D0691CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testCursorGuide.png in Resources */,
 				1D44CFB31CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testFaintText.png in Resources */,
+				A6971F3620D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsViewController.xib in Resources */,
 				1D44D05A1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBlinkingTextHidden.png in Resources */,
 				1D44D0541CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBadge.png in Resources */,
 				1D44D00F1CC7F5A600BE5630 /* PTYTextViewTest-golden-testDimmingTextAndCursorBoostAndMinimumContrast.png in Resources */,
@@ -8675,6 +8689,7 @@
 				1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */,
 				A6FE8D0A209382C000B5C648 /* download.png in Resources */,
 				A67D0D4D1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */,
+				A6971F3520D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsViewController.xib in Resources */,
 				1DBBA5E11B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
 				A68E333B1DE78D08003F1D8E /* Man Page Touch Bar Icon.png in Resources */,
 				A6339DD71D232CEE000BAD78 /* StatusItem.png in Resources */,
@@ -9255,6 +9270,7 @@
 				A6A4867D20B67F7E00493302 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				A60C0373208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.m in Sources */,
 				A6556EAE1FD37ED6000CC89C /* iTermASCIITexture.m in Sources */,
+				A6971F3420D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.m in Sources */,
 				A66719661DCE3772000CE608 /* iTermWebSocketFrame.m in Sources */,
 				A63819D11FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.m in Sources */,
 				A65EC0341F3181E700AC0A6B /* NSTimer+iTerm.m in Sources */,

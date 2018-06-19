@@ -10,6 +10,8 @@
 #import "PreferenceInfo.h"
 #import "PSMTabBarControl.h"
 
+extern NSString *const iTermMetalSettingsDidChangeNotification;
+
 // Values for kPreferenceKeyOpenTmuxWindowsIn (corresponds to tags in control).
 typedef NS_ENUM(NSInteger, iTermOpenTmuxWindowsMode) {
     kOpenTmuxWindowsAsNativeWindows = 0,
@@ -72,6 +74,9 @@ extern NSString *const kPreferenceKeyOpenTmuxWindowsIn;
 extern NSString *const kPreferenceKeyTmuxDashboardLimit;
 extern NSString *const kPreferenceKeyAutoHideTmuxClientSession;
 extern NSString *const kPreferenceKeyUseMetal;
+extern NSString *const kPreferenceKeyDisableMetalWhenUnplugged;
+extern NSString *const kPreferenceKeyPreferIntegratedGPU;
+extern NSString *const kPreferenceKeyMetalMaximizeThroughput;
 
 // Appearance
 extern NSString *const kPreferenceKeyTabStyle;
