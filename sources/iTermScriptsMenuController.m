@@ -198,6 +198,13 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
+- (void)revealScript:(NSMenuItem *)sender {
+    NSString *identifier = sender.identifier;
+    NSString *prefix = @"/Reveal/";
+    NSString *fullPath = [identifier substringFromIndex:prefix.length];
+    [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:fullPath] ]];
+}
+
 - (void)launchScriptWithRelativePath:(NSString *)path {
     NSString *fullPath = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:path];
     [self launchScriptWithAbsolutePath:fullPath];
@@ -405,6 +412,16 @@ NS_ASSUME_NONNULL_BEGIN
     [scriptItem setTarget:self];
     scriptItem.identifier = path;
     [scriptMenu addItem:scriptItem];
+
+    NSMenuItem *altItem = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"Reveal %@", file]
+                                                        action:@selector(revealScript:)
+                                                 keyEquivalent:@""];
+
+    [altItem setKeyEquivalentModifierMask:NSEventModifierFlagOption];
+    [altItem setTarget:self];
+    altItem.alternate = YES;
+    altItem.identifier = [NSString stringWithFormat:@"/Reveal/%@", path];
+    [scriptMenu addItem:altItem];
 }
 
 - (void)showAlertForScript:(NSString *)fullPath error:(NSDictionary *)errorInfo {
