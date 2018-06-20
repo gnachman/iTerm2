@@ -432,6 +432,12 @@ async def async_set_tab_layout(connection, tab_id, tree):
     request.set_tab_layout_request.root.CopyFrom(tree)
     return await _async_call(connection, request)
 
+async def async_get_broadcast_domains(connection):
+    """Fetches the current broadcast domains."""
+    request = _alloc_request()
+    request.get_broadcast_domains_request.SetInParent()
+    return await _async_call(connection, request)
+
 ## Private --------------------------------------------------------------------
 
 def _alloc_id():

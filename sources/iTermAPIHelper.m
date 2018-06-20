@@ -114,11 +114,15 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
     iTermAPIServer *_apiServer;
     BOOL _layoutChanged;
 
+    // Saves the last one to avoid sending changed notifications when nothing changed.
+    ITMBroadcastDomainsChangedNotification *_lastBroadcastChangeNotification;
+
     // When adding a new dictionary of subscriptions update removeAllSubscriptionsForConnectionKey:.
     NSMutableDictionary<id, ITMNotificationRequest *> *_newSessionSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_terminateSessionSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_layoutChangeSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_focusChangeSubscriptions;
+    NSMutableDictionary<id, ITMNotificationRequest *> *_broadcastDomainChangeSubscriptions;
     // signature -> ( connection, request )
     NSMutableDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *_serverOriginatedRPCSubscriptions;
     NSMutableArray<iTermAllSessionsSubscription *> *_allSessionsSubscriptions;
@@ -198,6 +202,10 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(activeSessionDidChange:)
                                                      name:iTermSessionBecameKey
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(broadcastDomainsDidChange:)
+                                                     name:iTermBroadcastDomainsDidChangeNotification
                                                    object:nil];
     }
     return self;
@@ -335,10 +343,34 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
     [self handleFocusChange:focusChange];
 }
 
+- (void)broadcastDomainsDidChange:(NSNotification *)notification {
+    [self handleBroadcastChange];
+}
+
 - (void)handleFocusChange:(ITMFocusChangedNotification *)notif {
     [_focusChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[ITMNotification alloc] init];
         notification.focusChangedNotification = notif;
+        [self postAPINotification:notification toConnectionKey:key];
+    }];
+}
+
+- (void)handleBroadcastChange {
+    ITMBroadcastDomainsChangedNotification *broadcastSubNotification = [[ITMBroadcastDomainsChangedNotification alloc] init];
+    [self enumerateBroadcastDomains:^(NSArray<PTYSession *> *sessions) {
+        ITMBroadcastDomain *domain = [[ITMBroadcastDomain alloc] init];
+        for (PTYSession *session in sessions) {
+            [domain.sessionIdArray addObject:session.guid];
+        }
+        [broadcastSubNotification.broadcastDomainsArray addObject:domain];
+    }];
+    ITMNotification *notification = [[ITMNotification alloc] init];
+    notification.broadcastDomainsChanged = broadcastSubNotification;
+    if ([NSObject object:broadcastSubNotification isEqualToObject:_lastBroadcastChangeNotification]) {
+        return;
+    }
+    _lastBroadcastChangeNotification = broadcastSubNotification;
+    [_broadcastDomainChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         [self postAPINotification:notification toConnectionKey:key];
     }];
 }
@@ -535,6 +567,32 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
 
 - (BOOL)haveRegisteredFunctionWithSignature:(NSString *)stringSignature {
     return _serverOriginatedRPCSubscriptions[stringSignature].secondObject != nil;
+}
+
+- (void)enumerateBroadcastDomains:(void (^)(NSArray<PTYSession *> *))addDomain {
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        switch (term.broadcastMode) {
+            case BROADCAST_OFF:
+                for (PTYTab *tab in term.tabs) {
+                    if (tab.broadcasting) {
+                        addDomain(tab.sessions);
+                    }
+                }
+                break;
+
+            case BROADCAST_CUSTOM:
+                addDomain(term.broadcastSessions);
+                break;
+
+            case BROADCAST_TO_ALL_TABS:
+                addDomain(term.allSessions);
+                break;
+
+            case BROADCAST_TO_ALL_PANES:
+                addDomain(term.currentTab.sessions);
+                break;
+        }
+    }
 }
 
 #pragma mark - iTermAPIServerDelegate
@@ -753,6 +811,7 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
         _layoutChangeSubscriptions = [[NSMutableDictionary alloc] init];
         _focusChangeSubscriptions = [[NSMutableDictionary alloc] init];
         _serverOriginatedRPCSubscriptions = [[NSMutableDictionary alloc] init];
+        _broadcastDomainChangeSubscriptions = [[NSMutableDictionary alloc] init];
     }
     NSMutableDictionary<id, ITMNotificationRequest *> *subscriptions;
     if (request.notificationType == ITMNotificationType_NotifyOnNewSession) {
@@ -763,6 +822,8 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
         subscriptions = _layoutChangeSubscriptions;
     } else if (request.notificationType == ITMNotificationType_NotifyOnFocusChange) {
         subscriptions = _focusChangeSubscriptions;
+    } else if (request.notificationType == ITMNotificationType_NotifyOnBroadcastChange) {
+        subscriptions = _broadcastDomainChangeSubscriptions;
     } else if (request.notificationType == ITMNotificationType_NotifyOnServerOriginatedRpc) {
         if (!request.rpcRegistrationRequest.it_valid) {
             XLog(@"RPC signature not valid: %@", request.rpcRegistrationRequest);
@@ -865,7 +926,8 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
         request.notificationType == ITMNotificationType_NotifyOnTerminateSession ||
         request.notificationType == ITMNotificationType_NotifyOnLayoutChange ||
         request.notificationType == ITMNotificationType_NotifyOnFocusChange ||
-        request.notificationType == ITMNotificationType_NotifyOnServerOriginatedRpc) {
+        request.notificationType == ITMNotificationType_NotifyOnServerOriginatedRpc ||
+        request.notificationType == ITMNotificationType_NotifyOnBroadcastChange) {
         handler([self handleAPINotificationRequest:request
                                      connectionKey:connectionKey]);
     } else if ([request.session isEqualToString:@"all"]) {
@@ -913,7 +975,8 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
     @[ _newSessionSubscriptions ?: empty,
        _terminateSessionSubscriptions  ?: empty,
        _layoutChangeSubscriptions ?: empty,
-       _focusChangeSubscriptions ?: empty ];
+       _focusChangeSubscriptions ?: empty,
+       _broadcastDomainChangeSubscriptions ?: empty ];
     [dicts enumerateObjectsUsingBlock:^(NSMutableDictionary<id,ITMNotificationRequest *> * _Nonnull dict,
                                         NSUInteger idx,
                                         BOOL * _Nonnull stop) {
@@ -1987,6 +2050,18 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     [tab setSizesFromSplitTreeNode:requested];
 
     response.status = ITMSetTabLayoutResponse_Status_Ok;
+    handler(response);
+}
+
+- (void)apiServerGetBroadcastDomains:(ITMGetBroadcastDomainsRequest *)request handler:(void (^)(ITMGetBroadcastDomainsResponse *))handler {
+    ITMGetBroadcastDomainsResponse *response = [[ITMGetBroadcastDomainsResponse alloc] init];
+    [self enumerateBroadcastDomains:^(NSArray<PTYSession *> *sessions) {
+        ITMBroadcastDomain *domain = [[ITMBroadcastDomain alloc] init];
+        for (PTYSession *session in sessions) {
+            [domain.sessionIdArray addObject:session.guid];
+        }
+        [response.broadcastDomainsArray addObject:domain];
+    }];
     handler(response);
 }
 

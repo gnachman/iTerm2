@@ -471,6 +471,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [(SessionView *)[[orderedSessions lastObject] view] setOrdinal:9];
     }
     [realParentWindow_ invalidateRestorableState];
+    if (self.isBroadcasting) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
+    }
 }
 
 + (void)_recursiveSetDelegateIn:(NSSplitView *)node to:(id)delegate {

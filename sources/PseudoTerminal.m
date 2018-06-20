@@ -102,6 +102,7 @@ NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWin
 NSString *const iTermDidDecodeWindowRestorableStateNotification = @"iTermDidDecodeWindowRestorableStateNotification";
 NSString *const iTermTabDidChangePositionInWindowNotification = @"iTermTabDidChangePositionInWindowNotification";
 NSString *const iTermSelectedTabDidChange = @"iTermSelectedTabDidChange";
+NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDomainsDidChangeNotification";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 
@@ -6281,10 +6282,10 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BroadcastMode)broadcastMode
 {
     if ([[self currentTab] isBroadcasting]) {
-                    return BROADCAST_TO_ALL_PANES;
-        } else {
-                    return broadcastMode_;
-        }
+        return BROADCAST_TO_ALL_PANES;
+    } else {
+        return broadcastMode_;
+    }
 }
 
 - (void)setBroadcastMode:(BroadcastMode)mode
@@ -6371,6 +6372,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self refreshTerminal:nil];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateBroadcastMenuState];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
 }
 
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session move:(BOOL)move {
@@ -7356,6 +7358,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         object:self
                                                       userInfo:nil];
     [self setWindowTitle];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
 }
 
 - (IBAction)disableBroadcasting:(id)sender
@@ -7367,6 +7370,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         object:self
                                                       userInfo:nil];
     [self setWindowTitle];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
 }
 
 // Turn on/off sending of input to all sessions. This causes a bunch of UI
@@ -7380,6 +7384,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         object:self
                                                       userInfo:nil];
     [self setWindowTitle];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
 }
 
 // Push size changes to all sessions so they are all as large as possible while

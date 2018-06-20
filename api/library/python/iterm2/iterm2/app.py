@@ -33,6 +33,26 @@ class MenuItemException(Exception):
     """A problem was encountered while selecting a menu item."""
     pass
 
+class BroadcastDomain:
+    """Broadcast domains describe how keyboard input is broadcast.
+
+    A user typing in a session belonging to one broadcast domain will result in
+    those keystrokes being sent to all sessions in that domain.
+
+    Broadcast domains are disjoint.
+    """
+    def __init__(self, app):
+      self.__app = app
+      self.__session_ids = []
+
+    def add_session_id(self, session):
+      self.__session_ids.append(session)
+
+    @property
+    def sessions(self):
+      """Returns the list of sessions belonging to a broadcast domain."""
+      return list(map(lambda sid: self.__app.get_session_by_id(sid), self.__session_ids))
+
 class App:
     """Represents the application.
 
@@ -58,6 +78,7 @@ class App:
         app = App(connection, windows, buried_sessions)
         await app._async_listen()
         await app.async_refresh_focus()
+        await app.async_refresh_broadcast_domains()
         return app
 
     def __init__(self, connection, windows, buried_sessions):
@@ -66,6 +87,7 @@ class App:
         self.__terminal_windows = windows
         self.__buried_sessions = buried_sessions
         self.tokens = []
+        self.__broadcast_domains = []
 
         # None in these fields means unknown. Notifications will update them.
         self.app_active = None
@@ -179,6 +201,10 @@ class App:
         focus_info = await iterm2.rpc.async_get_focus_info(self.connection)
         for notif in focus_info.focus_response.notifications:
             await self._async_focus_change(self.connection, notif)
+
+    async def async_refresh_broadcast_domains(self):
+        response = await iterm2.rpc.async_get_broadcast_domains(self.connection)
+        self._set_broadcast_domains(response.get_broadcast_domains_response.broadcast_domains)
 
     def get_session_by_id(self, session_id):
         """Finds a session exactly matching the passed-in id.
@@ -318,6 +344,27 @@ class App:
             else:
                 tab.active_session_id = sub_notif.session
 
+    async def _async_broadcast_domains_change(self, _connection, sub_notif):
+        """Updates the current set of broadcast domains."""
+        self._set_broadcast_domains(sub_notif.broadcast_domains_changed.broadcast_domains)
+
+    def _set_broadcast_domains(self, broadcast_domains):
+        self.__broadcast_domains = self.parse_broadcast_domains(broadcast_domains)
+
+    def parse_broadcast_domains(self, list_of_broadcast_domain_protos):
+        """Converts a list of broadcast domain protobufs into a list of :class:`BroadcastDomain`s.
+
+        :param list_of_broadcast_domain_protos: A `iterm2.api_pb2.BroadcastDomain` protos.
+        :returns: A list of :class:`BroadcastDomain`s.
+        """
+        domain_list = []
+        for broadcast_domain_proto in list_of_broadcast_domain_protos:
+            domain = BroadcastDomain(self)
+            for sid in broadcast_domain_proto.session_id:
+                domain.add_session_id(sid)
+            domain_list.append(domain)
+        return domain_list
+
     @property
     def current_terminal_window(self):
         """Gets the topmost terminal window.
@@ -344,6 +391,14 @@ class App:
         :returns: A list of buried :class:`Session`s.
         """
         return self.__buried_sessions
+
+    @property
+    def broadcast_domains(self):
+        """Returns the current broadcast domains.
+
+        :returns: A list of :class:`BroadcastDomain`s.
+        """
+        return self.__broadcast_domains
 
     def get_tab_and_window_for_session(self, session):
         """Finds the tab and window that own a session.
@@ -413,6 +468,10 @@ class App:
             await iterm2.notifications.async_subscribe_to_focus_change_notification(
                 connection,
                 self._async_focus_change))
+        self.tokens.append(
+            await iterm2.notifications.async_subscribe_to_broadcast_domains_change_notification(
+                connection,
+                self._async_broadcast_domains_change))
 
     async def async_list_profiles(self, guids=None, properties=["Guid", "Name"]):
         """Fetches a list of profiles.

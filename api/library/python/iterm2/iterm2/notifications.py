@@ -214,6 +214,23 @@ async def async_subscribe_to_focus_change_notification(connection, callback):
         callback,
         session=None)
 
+async def async_subscribe_to_broadcast_domains_change_notification(connection, callback):
+    """
+    Registers a callback to be run when the current broadcast domains change.
+
+    See also: :meth:`iTerm2.App.parse_broadcast_domains`. Pass it `notification.broadcast_domains`.
+
+    :param connection: A connected :class:`Connection`.
+    :param callback: A coroutine taking two arguments: an :class:`Connection` and
+      iterm2.api_pb2.BroadcastDomainsChangedNotification.
+    """
+    return await _async_subscribe(
+        connection,
+        True,
+        iterm2.api_pb2.NOTIFY_ON_BROADCAST_CHANGE,
+        callback,
+        session=None)
+
 async def async_subscribe_to_server_originated_rpc_notification(connection, callback, name, arguments=[], timeout_seconds=5, defaults={}, role=RPC_ROLE_GENERIC, display_name=None):
     """
     Registers a callback to be run when the server wants to invoke an RPC.
@@ -352,6 +369,8 @@ def _get_handler_key_from_notification(notification):
         notification = notification.focus_changed_notification
     elif notification.HasField('server_originated_rpc_notification'):
         key = (None, iterm2.api_pb2.NOTIFY_ON_SERVER_ORIGINATED_RPC, _string_rpc_registration_request(notification.server_originated_rpc_notification.rpc))
+    elif notification.HasField('broadcast_domains_changed'):
+        key = (None, iterm2.api_pb2.NOTIFY_ON_BROADCAST_CHANGE)
     return key, notification
 
 def _get_notification_handlers(message):

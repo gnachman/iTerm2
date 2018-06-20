@@ -55,7 +55,8 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
         "ifyOnCustomEscapeSequence\000NotifyOnNewSes"
         "sion\000NotifyOnTerminateSession\000NotifyOnLa"
         "youtChange\000NotifyOnFocusChange\000NotifyOnS"
-        "erverOriginatedRpc\000";
+        "erverOriginatedRpc\000NotifyOnBroadcastChan"
+        "ge\000";
     static const int32_t values[] = {
         ITMNotificationType_NotifyOnKeystroke,
         ITMNotificationType_NotifyOnScreenUpdate,
@@ -67,6 +68,7 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
         ITMNotificationType_NotifyOnLayoutChange,
         ITMNotificationType_NotifyOnFocusChange,
         ITMNotificationType_NotifyOnServerOriginatedRpc,
+        ITMNotificationType_NotifyOnBroadcastChange,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMNotificationType)
@@ -93,6 +95,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
     case ITMNotificationType_NotifyOnLayoutChange:
     case ITMNotificationType_NotifyOnFocusChange:
     case ITMNotificationType_NotifyOnServerOriginatedRpc:
+    case ITMNotificationType_NotifyOnBroadcastChange:
       return YES;
     default:
       return NO;
@@ -171,6 +174,7 @@ BOOL ITMModifiers_IsValidValue(int32_t value__) {
 @dynamic restartSessionRequest;
 @dynamic menuItemRequest;
 @dynamic setTabLayoutRequest;
+@dynamic getBroadcastDomainsRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -197,6 +201,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMRestartSessionRequest *restartSessionRequest;
   ITMMenuItemRequest *menuItemRequest;
   ITMSetTabLayoutRequest *setTabLayoutRequest;
+  ITMGetBroadcastDomainsRequest *getBroadcastDomainsRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -422,6 +427,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "getBroadcastDomainsRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetBroadcastDomainsRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_GetBroadcastDomainsRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, getBroadcastDomainsRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -480,6 +494,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic restartSessionResponse;
 @dynamic menuItemResponse;
 @dynamic setTabLayoutResponse;
+@dynamic getBroadcastDomainsResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -508,6 +523,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMRestartSessionResponse *restartSessionResponse;
   ITMMenuItemResponse *menuItemResponse;
   ITMSetTabLayoutResponse *setTabLayoutResponse;
+  ITMGetBroadcastDomainsResponse *getBroadcastDomainsResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -744,6 +760,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "getBroadcastDomainsResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetBroadcastDomainsResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_GetBroadcastDomainsResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, getBroadcastDomainsResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
@@ -780,6 +805,122 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMGetBroadcastDomainsRequest
+
+@implementation ITMGetBroadcastDomainsRequest
+
+
+typedef struct ITMGetBroadcastDomainsRequest__storage_ {
+  uint32_t _has_storage_[1];
+} ITMGetBroadcastDomainsRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMGetBroadcastDomainsRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:NULL
+                                    fieldCount:0
+                                   storageSize:sizeof(ITMGetBroadcastDomainsRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMBroadcastDomain
+
+@implementation ITMBroadcastDomain
+
+@dynamic sessionIdArray, sessionIdArray_Count;
+
+typedef struct ITMBroadcastDomain__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *sessionIdArray;
+} ITMBroadcastDomain__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "sessionIdArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMBroadcastDomain_FieldNumber_SessionIdArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMBroadcastDomain__storage_, sessionIdArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMBroadcastDomain class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMBroadcastDomain__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMGetBroadcastDomainsResponse
+
+@implementation ITMGetBroadcastDomainsResponse
+
+@dynamic broadcastDomainsArray, broadcastDomainsArray_Count;
+
+typedef struct ITMGetBroadcastDomainsResponse__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *broadcastDomainsArray;
+} ITMGetBroadcastDomainsResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "broadcastDomainsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMBroadcastDomain),
+        .number = ITMGetBroadcastDomainsResponse_FieldNumber_BroadcastDomainsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMGetBroadcastDomainsResponse__storage_, broadcastDomainsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMGetBroadcastDomainsResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMGetBroadcastDomainsResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMSetTabLayoutRequest
 
 @implementation ITMSetTabLayoutRequest
@@ -3412,6 +3553,7 @@ BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value__) {
 @dynamic hasLayoutChangedNotification, layoutChangedNotification;
 @dynamic hasFocusChangedNotification, focusChangedNotification;
 @dynamic hasServerOriginatedRpcNotification, serverOriginatedRpcNotification;
+@dynamic hasBroadcastDomainsChanged, broadcastDomainsChanged;
 
 typedef struct ITMNotification__storage_ {
   uint32_t _has_storage_[1];
@@ -3425,6 +3567,7 @@ typedef struct ITMNotification__storage_ {
   ITMLayoutChangedNotification *layoutChangedNotification;
   ITMFocusChangedNotification *focusChangedNotification;
   ITMServerOriginatedRPCNotification *serverOriginatedRpcNotification;
+  ITMBroadcastDomainsChangedNotification *broadcastDomainsChanged;
 } ITMNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -3523,6 +3666,15 @@ typedef struct ITMNotification__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "broadcastDomainsChanged",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMBroadcastDomainsChangedNotification),
+        .number = ITMNotification_FieldNumber_BroadcastDomainsChanged,
+        .hasIndex = 10,
+        .offset = (uint32_t)offsetof(ITMNotification__storage_, broadcastDomainsChanged),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMNotification class]
@@ -3531,6 +3683,49 @@ typedef struct ITMNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMNotification__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMBroadcastDomainsChangedNotification
+
+@implementation ITMBroadcastDomainsChangedNotification
+
+@dynamic broadcastDomainsArray, broadcastDomainsArray_Count;
+
+typedef struct ITMBroadcastDomainsChangedNotification__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *broadcastDomainsArray;
+} ITMBroadcastDomainsChangedNotification__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "broadcastDomainsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMBroadcastDomain),
+        .number = ITMBroadcastDomainsChangedNotification_FieldNumber_BroadcastDomainsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMBroadcastDomainsChangedNotification__storage_, broadcastDomainsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMBroadcastDomainsChangedNotification class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMBroadcastDomainsChangedNotification__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;

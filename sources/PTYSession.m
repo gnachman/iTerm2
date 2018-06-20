@@ -10074,6 +10074,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case ITMNotificationType_NotifyOnLayoutChange:
         case ITMNotificationType_NotifyOnFocusChange:
         case ITMNotificationType_NotifyOnServerOriginatedRpc:
+        case ITMNotificationType_NotifyOnBroadcastChange:
             // We won't get called for this
             assert(NO);
             break;

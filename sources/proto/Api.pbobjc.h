@@ -30,6 +30,8 @@ CF_EXTERN_C_BEGIN
 @class ITMActivateRequest;
 @class ITMActivateRequest_App;
 @class ITMActivateResponse;
+@class ITMBroadcastDomain;
+@class ITMBroadcastDomainsChangedNotification;
 @class ITMCodePointsPerCell;
 @class ITMCoord;
 @class ITMCoordRange;
@@ -41,6 +43,8 @@ CF_EXTERN_C_BEGIN
 @class ITMFocusRequest;
 @class ITMFocusResponse;
 @class ITMFrame;
+@class ITMGetBroadcastDomainsRequest;
+@class ITMGetBroadcastDomainsResponse;
 @class ITMGetBufferRequest;
 @class ITMGetBufferResponse;
 @class ITMGetProfilePropertyRequest;
@@ -130,6 +134,7 @@ typedef GPB_ENUM(ITMNotificationType) {
   ITMNotificationType_NotifyOnLayoutChange = 8,
   ITMNotificationType_NotifyOnFocusChange = 9,
   ITMNotificationType_NotifyOnServerOriginatedRpc = 10,
+  ITMNotificationType_NotifyOnBroadcastChange = 11,
 };
 
 GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
@@ -653,6 +658,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_RestartSessionRequest = 120,
   ITMClientOriginatedMessage_FieldNumber_MenuItemRequest = 121,
   ITMClientOriginatedMessage_FieldNumber_SetTabLayoutRequest = 122,
+  ITMClientOriginatedMessage_FieldNumber_GetBroadcastDomainsRequest = 123,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -680,6 +686,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_RestartSessionRequest = 120,
   ITMClientOriginatedMessage_Submessage_OneOfCase_MenuItemRequest = 121,
   ITMClientOriginatedMessage_Submessage_OneOfCase_SetTabLayoutRequest = 122,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_GetBroadcastDomainsRequest = 123,
 };
 
 /**
@@ -739,6 +746,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSetTabLayoutRequest *setTabLayoutRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMGetBroadcastDomainsRequest *getBroadcastDomainsRequest;
+
 @end
 
 /**
@@ -774,6 +783,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_RestartSessionResponse = 120,
   ITMServerOriginatedMessage_FieldNumber_MenuItemResponse = 121,
   ITMServerOriginatedMessage_FieldNumber_SetTabLayoutResponse = 122,
+  ITMServerOriginatedMessage_FieldNumber_GetBroadcastDomainsResponse = 123,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -803,6 +813,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_RestartSessionResponse = 120,
   ITMServerOriginatedMessage_Submessage_OneOfCase_MenuItemResponse = 121,
   ITMServerOriginatedMessage_Submessage_OneOfCase_SetTabLayoutResponse = 122,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_GetBroadcastDomainsResponse = 123,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -867,6 +878,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSetTabLayoutResponse *setTabLayoutResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMGetBroadcastDomainsResponse *getBroadcastDomainsResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 
@@ -876,6 +889,40 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
  * Clears whatever value was set for the oneof 'submessage'.
  **/
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
+
+#pragma mark - ITMGetBroadcastDomainsRequest
+
+@interface ITMGetBroadcastDomainsRequest : GPBMessage
+
+@end
+
+#pragma mark - ITMBroadcastDomain
+
+typedef GPB_ENUM(ITMBroadcastDomain_FieldNumber) {
+  ITMBroadcastDomain_FieldNumber_SessionIdArray = 1,
+};
+
+@interface ITMBroadcastDomain : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *sessionIdArray;
+/** The number of items in @c sessionIdArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger sessionIdArray_Count;
+
+@end
+
+#pragma mark - ITMGetBroadcastDomainsResponse
+
+typedef GPB_ENUM(ITMGetBroadcastDomainsResponse_FieldNumber) {
+  ITMGetBroadcastDomainsResponse_FieldNumber_BroadcastDomainsArray = 1,
+};
+
+@interface ITMGetBroadcastDomainsResponse : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMBroadcastDomain*> *broadcastDomainsArray;
+/** The number of items in @c broadcastDomainsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger broadcastDomainsArray_Count;
+
+@end
 
 #pragma mark - ITMSetTabLayoutRequest
 
@@ -1753,6 +1800,7 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
   ITMNotification_FieldNumber_LayoutChangedNotification = 8,
   ITMNotification_FieldNumber_FocusChangedNotification = 9,
   ITMNotification_FieldNumber_ServerOriginatedRpcNotification = 10,
+  ITMNotification_FieldNumber_BroadcastDomainsChanged = 11,
 };
 
 @interface ITMNotification : GPBMessage
@@ -1796,6 +1844,24 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMServerOriginatedRPCNotification *serverOriginatedRpcNotification;
 /** Test to see if @c serverOriginatedRpcNotification has been set. */
 @property(nonatomic, readwrite) BOOL hasServerOriginatedRpcNotification;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMBroadcastDomainsChangedNotification *broadcastDomainsChanged;
+/** Test to see if @c broadcastDomainsChanged has been set. */
+@property(nonatomic, readwrite) BOOL hasBroadcastDomainsChanged;
+
+@end
+
+#pragma mark - ITMBroadcastDomainsChangedNotification
+
+typedef GPB_ENUM(ITMBroadcastDomainsChangedNotification_FieldNumber) {
+  ITMBroadcastDomainsChangedNotification_FieldNumber_BroadcastDomainsArray = 1,
+};
+
+@interface ITMBroadcastDomainsChangedNotification : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMBroadcastDomain*> *broadcastDomainsArray;
+/** The number of items in @c broadcastDomainsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger broadcastDomainsArray_Count;
 
 @end
 
