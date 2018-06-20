@@ -78,6 +78,23 @@ class Connection:
     def __init__(self):
         self.__deferred = None
         self.websocket = None
+        # It is possible for multiple calls to async_recv_message() to be made.
+        # For example, if you have an asyncio webserver you might want to call
+        # an API in a handler while the event loop is awaiting in
+        # async_recv_message. If there are two concurrent calls to
+        # websocket.recv() I don't know exactly what happens but I can tell you
+        # it isn't good (it looks like the second one hangs indefinitely).
+        # To avoid this misfortune, this is a list of "receivers" from earliest to
+        # latest. A receiver is a tuple of (matchFunc, future). The matchFunc,
+        # if not None, is a function that takes a message as input and returns
+        # True if it is the one and only handler for it (i.e., because it's waiting
+        # for the response to an API call). When the first async_recv_message gets
+        # a message from the websocket it searches __receivers for a receiver that
+        # wants to handle the just-received message. If one is found, the
+        # mesasge is placed in its future. Otherwise, it dispatches it itself.
+        # Notifications always get dispatched by the "first" receiver, while
+        # subsequent receivers should only dispatch API responses.
+        self.__receivers = []
 
     def run(self, coro, *args):
         """
@@ -106,18 +123,51 @@ class Connection:
         """
         await self.websocket.send(message.SerializeToString())
 
-    async def async_recv_message(self):
+    def _receiver_index(self, message):
+        """Searches __receivers for the receiver that should handle message and returns its index."""
+        for i in range(len(self.__receivers)):
+            matchFunc = self.__receivers[i][0]
+            if matchFunc and matchFunc(message):
+                return i
+        # This says that the first receiver always gets the message if no other receiver can handle it.
+        # That means that async_dispatch_for_duration or async_dispatch_until_future won't work if
+        # async_recv_message is already running.
+        return 0
+
+    def _get_receiver_future(self, message):
+        """Removes the receiver for message and returns its future."""
+        i = self._receiver_index(message)
+        matchFunc, future = self.__receivers[i]
+        del self.__receivers[i]
+        return future
+
+    async def async_recv_message(self, matchFunc=None):
         """
         Asynchronously receives a message.
 
         This is a low-level operation that is not generally called by user code.
 
+        :param matchFunc: A function taking one argument (a message) that returns True if it must be handled by the caller.
+
         Returns: a protocol buffer message of type iterm2.api_pb2.ServerOriginatedMessage.
         """
-        data = await self.websocket.recv()
-        message = iterm2.api_pb2.ServerOriginatedMessage()
-        message.ParseFromString(data)
-        return message
+        my_future = asyncio.Future()
+        my_receiver = (matchFunc, my_future)
+        self.__receivers.append(my_receiver)
+
+        if len(self.__receivers) == 1:
+            while not my_future.done():
+                data = await self.websocket.recv()
+                message = iterm2.api_pb2.ServerOriginatedMessage()
+                message.ParseFromString(data)
+
+                future = self._get_receiver_future(message)
+                future.set_result(message)
+            return future.result()
+        else:
+            while not my_future.done():
+                message = await my_future
+                return message
 
     async def async_connect(self, coro, *args):
         """
@@ -159,7 +209,7 @@ class Connection:
         """
         owns_deferred = self._begin_deferring()
         while True:
-            message = await self.async_recv_message()
+            message = await self.async_recv_message(lambda m: m.id == reqid)
             if message.id == reqid:
                 if owns_deferred:
                     for deferred_message in self._iterate_deferred():
@@ -176,15 +226,9 @@ class Connection:
 
         :param duration: The minimum time to run while waiting for incoming messages.
         """
-        try:
-            now = time.time()
-            end = now + duration
-            while now < end:
-                message = await asyncio.wait_for(self.async_recv_message(), end - now)
-                await self._async_dispatch(message)
-                now = time.time()
-        except concurrent.futures._base.TimeoutError:
-            return
+        async def sleep():
+            await asyncio.sleep(duration)
+        await self.async_dispatch_until_future(asyncio.Task(sleep()))
 
     async def async_dispatch_until_future(self, future):
         """
@@ -195,9 +239,20 @@ class Connection:
 
         :param future: An asyncio.Future that will get a result.
         """
-        while not future.done():
+        async def async_recv_dispatch():
             message = await self.async_recv_message()
             await self._async_dispatch(message)
+
+        message_future = async_recv_dispatch()
+        while not future.done():
+            done, pending = await asyncio.wait([future, message_future], return_when=asyncio.FIRST_COMPLETED)
+            # asyncio.wait is a truly bad API. AFAICT there's no way to find
+            # your Future in done because it is transmogrified into a Task.
+            # Its absence in pending appears to imply its presence in done.
+            if future not in pending:
+                break
+            if message_future not in pending:
+                message_future = async_recv_dispatch()
 
 
     def _begin_deferring(self):
