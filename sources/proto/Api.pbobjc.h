@@ -899,14 +899,14 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
 #pragma mark - ITMBroadcastDomain
 
 typedef GPB_ENUM(ITMBroadcastDomain_FieldNumber) {
-  ITMBroadcastDomain_FieldNumber_SessionIdArray = 1,
+  ITMBroadcastDomain_FieldNumber_SessionIdsArray = 1,
 };
 
 @interface ITMBroadcastDomain : GPBMessage
 
-@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *sessionIdArray;
-/** The number of items in @c sessionIdArray without causing the array to be created. */
-@property(nonatomic, readonly) NSUInteger sessionIdArray_Count;
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *sessionIdsArray;
+/** The number of items in @c sessionIdsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger sessionIdsArray_Count;
 
 @end
 
@@ -2663,6 +2663,7 @@ typedef GPB_ENUM(ITMCodePointsPerCell_FieldNumber) {
 typedef GPB_ENUM(ITMSendTextRequest_FieldNumber) {
   ITMSendTextRequest_FieldNumber_Session = 1,
   ITMSendTextRequest_FieldNumber_Text = 2,
+  ITMSendTextRequest_FieldNumber_SuppressBroadcast = 3,
 };
 
 @interface ITMSendTextRequest : GPBMessage
@@ -2680,6 +2681,10 @@ typedef GPB_ENUM(ITMSendTextRequest_FieldNumber) {
 /** Test to see if @c text has been set. */
 @property(nonatomic, readwrite) BOOL hasText;
 
+/** If set, input will not be broadcast when broadcasting is on. */
+@property(nonatomic, readwrite) BOOL suppressBroadcast;
+
+@property(nonatomic, readwrite) BOOL hasSuppressBroadcast;
 @end
 
 #pragma mark - ITMSendTextResponse

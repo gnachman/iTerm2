@@ -977,6 +977,9 @@ message SendTextRequest {
   // The text to send. As usual for proto buffers, this should be UTF-8
   // encoded. It will be converted to the session's encoding before being sent.
   optional string text = 2;
+
+  // If set, input will not be broadcast when broadcasting is on.
+  optional bool suppress_broadcast = 3;
 }
 
 message SendTextResponse {

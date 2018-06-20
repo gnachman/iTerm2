@@ -372,7 +372,7 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
     [self enumerateBroadcastDomains:^(NSArray<PTYSession *> *sessions) {
         ITMBroadcastDomain *domain = [[ITMBroadcastDomain alloc] init];
         for (PTYSession *session in sessions) {
-            [domain.sessionIdArray addObject:session.guid];
+            [domain.sessionIdsArray addObject:session.guid];
         }
         [broadcastSubNotification.broadcastDomainsArray addObject:domain];
     }];
@@ -1192,7 +1192,11 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
     }
 
     for (PTYSession *session in sessions) {
-        [session writeTask:request.text];
+        if (request.suppressBroadcast) {
+            [session writeTaskNoBroadcast:request.text];
+        } else {
+            [session writeTask:request.text];
+        }
     }
     ITMSendTextResponse *response = [[ITMSendTextResponse alloc] init];
     response.status = ITMSendTextResponse_Status_Ok;
@@ -2070,7 +2074,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     [self enumerateBroadcastDomains:^(NSArray<PTYSession *> *sessions) {
         ITMBroadcastDomain *domain = [[ITMBroadcastDomain alloc] init];
         for (PTYSession *session in sessions) {
-            [domain.sessionIdArray addObject:session.guid];
+            [domain.sessionIdsArray addObject:session.guid];
         }
         [response.broadcastDomainsArray addObject:domain];
     }];

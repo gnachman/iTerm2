@@ -17,6 +17,8 @@ extern NSString *const kPasteHistoryToolName;
 extern NSString *const kProfilesToolName;
 extern NSString *const kDynamicToolsDidChange;
 
+extern NSString *const iTermToolbeltDidRegisterDynamicToolNotification;
+
 // Notification posted when all windows should hide their toolbelts.
 extern NSString *const kToolbeltShouldHide;
 

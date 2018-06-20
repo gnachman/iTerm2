@@ -839,11 +839,11 @@ typedef struct ITMGetBroadcastDomainsRequest__storage_ {
 
 @implementation ITMBroadcastDomain
 
-@dynamic sessionIdArray, sessionIdArray_Count;
+@dynamic sessionIdsArray, sessionIdsArray_Count;
 
 typedef struct ITMBroadcastDomain__storage_ {
   uint32_t _has_storage_[1];
-  NSMutableArray *sessionIdArray;
+  NSMutableArray *sessionIdsArray;
 } ITMBroadcastDomain__storage_;
 
 // This method is threadsafe because it is initially called
@@ -853,11 +853,11 @@ typedef struct ITMBroadcastDomain__storage_ {
   if (!descriptor) {
     static GPBMessageFieldDescription fields[] = {
       {
-        .name = "sessionIdArray",
+        .name = "sessionIdsArray",
         .dataTypeSpecific.className = NULL,
-        .number = ITMBroadcastDomain_FieldNumber_SessionIdArray,
+        .number = ITMBroadcastDomain_FieldNumber_SessionIdsArray,
         .hasIndex = GPBNoHasBit,
-        .offset = (uint32_t)offsetof(ITMBroadcastDomain__storage_, sessionIdArray),
+        .offset = (uint32_t)offsetof(ITMBroadcastDomain__storage_, sessionIdsArray),
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeString,
       },
@@ -5840,6 +5840,7 @@ typedef struct ITMListSessionsRequest__storage_ {
 
 @dynamic hasSession, session;
 @dynamic hasText, text;
+@dynamic hasSuppressBroadcast, suppressBroadcast;
 
 typedef struct ITMSendTextRequest__storage_ {
   uint32_t _has_storage_[1];
@@ -5870,6 +5871,15 @@ typedef struct ITMSendTextRequest__storage_ {
         .offset = (uint32_t)offsetof(ITMSendTextRequest__storage_, text),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "suppressBroadcast",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMSendTextRequest_FieldNumber_SuppressBroadcast,
+        .hasIndex = 2,
+        .offset = 3,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
       },
     };
     GPBDescriptor *localDescriptor =

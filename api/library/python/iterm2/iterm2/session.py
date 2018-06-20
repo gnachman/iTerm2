@@ -237,13 +237,14 @@ class Session:
         """
         return self.ScreenStreamer(self.connection, self.__session_id, want_contents=want_contents)
 
-    async def async_send_text(self, text):
+    async def async_send_text(self, text, suppress_broadcast=False):
         """
         Send text as though the user had typed it.
 
         :param text: The text to send.
+        :param suppress_broadcast: If True, input goes only to the specified session even if broadcasting is on.
         """
-        await iterm2.rpc.async_send_text(self.connection, self.__session_id, text)
+        await iterm2.rpc.async_send_text(self.connection, self.__session_id, text, suppress_broadcast)
 
     async def async_split_pane(self, vertical=False, before=False, profile=None, profile_customizations=None):
         """

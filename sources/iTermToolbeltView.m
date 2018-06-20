@@ -30,6 +30,7 @@ NSString *const kProfilesToolName = @"Profiles";
 NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
 
 NSString *const kDynamicToolsDidChange = @"kDynamicToolsDidChange";
+NSString *const iTermToolbeltDidRegisterDynamicToolNotification = @"iTermToolbeltDidRegisterDynamicToolNotification";
 
 @interface iTermToolbeltView () <iTermDragHandleViewDelegate>
 @end
@@ -92,6 +93,7 @@ static NSString *const kDynamicToolURL = @"URL";
                 [self toggleShouldShowTool:name];
             }
         }
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermToolbeltDidRegisterDynamicToolNotification object:identifier];
         return;
     }
     NSMutableDictionary *mutableRegistry = [[registry mutableCopy] autorelease] ?: [NSMutableDictionary dictionary];
@@ -395,19 +397,16 @@ static NSString *const kDynamicToolURL = @"URL";
                                   0,
                                   wrapper.container.frame.size.width,
                                   wrapper.container.frame.size.height);
-        if ([c instancesRespondToSelector:@selector(initWithFrame:URL:)]) {
+        if ([c instancesRespondToSelector:@selector(initWithFrame:URL:identifier:)]) {
             NSDictionary *registry = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
-            NSDictionary *attrs = [registry.allKeys mapWithBlock:^id(NSString *key) {
+            NSString *identifier = [registry.allKeys objectPassingTest:^BOOL(NSString *key, NSUInteger index, BOOL *stop) {
                 NSDictionary *dict = registry[key];
-                if ([dict[kDynamicToolName] isEqualToString:toolName]) {
-                    return dict;
-                } else {
-                    return nil;
-                }
-            }].firstObject;
+                return [dict[kDynamicToolName] isEqualToString:toolName];
+            }];
+            NSDictionary *attrs = registry[identifier];
             NSURL *url = [NSURL URLWithString:(attrs[kDynamicToolURL] ?: @"")];
-            if (url) {
-                theTool = [[[c alloc] initWithFrame:frame URL:url] autorelease];
+            if (url && identifier) {
+                theTool = [[[c alloc] initWithFrame:frame URL:url identifier:identifier] autorelease];
             }
         } else {
             theTool = [[[c alloc] initWithFrame:frame] autorelease];

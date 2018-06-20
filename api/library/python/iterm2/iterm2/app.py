@@ -360,7 +360,7 @@ class App:
         domain_list = []
         for broadcast_domain_proto in list_of_broadcast_domain_protos:
             domain = BroadcastDomain(self)
-            for sid in broadcast_domain_proto.session_id:
+            for sid in broadcast_domain_proto.session_ids:
                 domain.add_session_id(sid)
             domain_list.append(domain)
         return domain_list

@@ -10,7 +10,7 @@ Here are a collection of working scripts for you to crib from.
 * :doc:`function_key_tabs`
 * :doc:`cls`
 * :doc:`create_window`
-* More TBD
+* :doc:`targeted_input`
 
 ----
 

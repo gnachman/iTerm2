@@ -51,19 +51,21 @@ async def async_notification_request(connection, subscribe, notification_type, s
     request.notification_request.notification_type = notification_type
     return await _async_call(connection, request)
 
-async def async_send_text(connection, session, text):
+async def async_send_text(connection, session, text, suppress_broadcast):
     """
     Sends text to a session, as though it had been typed.
 
     connection: A connected iterm2.Connection.
     session: A session ID.
     text: String to send although it had been typed by the user.
+    suppress_broadcast: If True, input goes only to the specified session even if broadcasting is on.
 
     Returns: iterm2.api_pb2.ServerOriginatedMessage
     """
     request = _alloc_request()
     request.send_text_request.session = session
     request.send_text_request.text = text
+    request.send_text_request.suppress_broadcast = suppress_broadcast
     return await _async_call(connection, request)
 
 async def async_split_pane(connection, session, vertical, before, profile=None, profile_customizations=None):
