@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAPIConnectionIdentifierController.h"
+#import "iTermAPIHelper.h"
 #import "iTermNotificationController.h"
 #import "iTermOptionalComponentDownloadWindowController.h"
 #import "iTermPythonRuntimeDownloader.h"
@@ -39,6 +40,10 @@
 }
 
 + (void)reallyLaunchScript:(NSString *)filename withVirtualEnv:(NSString *)virtualenv {
+    if (![iTermAPIHelper sharedInstance]) {
+        return;
+    }
+
     NSString *key = [[NSUUID UUID] UUIDString];
     NSString *name = [[filename lastPathComponent] stringByDeletingPathExtension];
     if (virtualenv) {

@@ -30,6 +30,7 @@
 #import "AppearancePreferencesViewController.h"
 #import "ColorsMenuItemView.h"
 #import "FileTransferManager.h"
+#import "iTermAPIHelper.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAboutWindowController.h"
 #import "iTermAppHotKeyProvider.h"
@@ -1086,6 +1087,9 @@ static BOOL hasBecomeActive = NO;
         }];
     } else {
         [self restoreBuriedSessionsState];
+    }
+    if ([iTermAdvancedSettingsModel enableAPIServer]) {
+        [iTermAPIHelper sharedInstance];  // starts the server. Won't ask the user since it's enabled.
     }
 }
 

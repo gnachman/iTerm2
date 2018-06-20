@@ -9,6 +9,7 @@
 
 #import "CVector.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermAPIAuthorizationController.h"
 #import "iTermBuriedSessions.h"
 #import "iTermBuiltInFunctions.h"
@@ -18,6 +19,7 @@
 #import "iTermProfilePreferences.h"
 #import "iTermPythonArgumentParser.h"
 #import "iTermVariables.h"
+#import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -145,6 +147,16 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
 - (instancetype)initPrivate {
     self = [super init];
     if (self) {
+        iTermWarning *warning = [[iTermWarning alloc] init];
+        warning.heading = @"Enable Python API?";
+        warning.actionLabels = @[ @"OK", @"Cancel" ];
+        warning.identifier = @"EnableAPIServer";
+        warning.warningType = kiTermWarningTypePermanentlySilenceable;
+        warning.title = @"The Python API allows scripts you run to control iTerm2 and access all its data.";
+        if ([warning runModal] == kiTermWarningSelection1) {
+            return nil;
+        }
+
         _apiServer = [[iTermAPIServer alloc] init];
         _apiServer.delegate = self;
         _serverOriginatedRPCCompletionBlocks = [NSMutableDictionary dictionary];
