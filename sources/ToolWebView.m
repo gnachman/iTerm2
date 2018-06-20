@@ -46,10 +46,11 @@
             ITERM_IGNORE_PARTIAL_END
             WKWebView *webView = [[[WKWebView alloc] initWithFrame:self.bounds
                                                                  configuration:configuration] autorelease];
-            NSURLRequest *request = [[[NSURLRequest alloc] initWithURL:url] autorelease];
-            [webView loadRequest:request];
             [self addSubview:webView];
             _webView = [webView retain];
+
+            NSURLRequest *request = [[[NSURLRequest alloc] initWithURL:url] autorelease];
+            [webView loadRequest:request];
         }
     }
     return self;
@@ -65,6 +66,11 @@
 }
 
 - (void)relayout {
+    _webView.frame = self.bounds;
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
     _webView.frame = self.bounds;
 }
 
