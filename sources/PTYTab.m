@@ -4911,9 +4911,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 // Note this is a notification handler
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11) {
     const BOOL resizing = self.realParentWindow.windowIsResizing;
-    const BOOL connectedToPower = [[iTermPowerManager sharedInstance] connectedToPower];
-    const BOOL connectionToPowerRequired = [iTermPreferences boolForKey:kPreferenceKeyDisableMetalWhenUnplugged];
-    const BOOL powerOK = (!connectionToPowerRequired || connectedToPower);
+    const BOOL powerOK = [[iTermPowerManager sharedInstance] metalAllowed];
     const BOOL allSessionsAllowMetal = [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
         return anObject.metalAllowed;
     }];

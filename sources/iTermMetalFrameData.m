@@ -279,6 +279,7 @@ static NSInteger gNextFrameDataNumber;
                      samplesPerPixel:4
                           forTexture:colorAttachment.texture];
         colorAttachment.texture.label = label;
+        [[self sharedTexturePool] stampTextureWithGeneration:colorAttachment.texture];
     }
 
     assert(renderPassDescriptor.colorAttachments[0].texture != nil);

@@ -51,4 +51,7 @@
 // Returns nil if this object is an instance of NSNull, otherwise returns self.
 - (instancetype)nilIfNull;
 
+- (void)it_setAssociatedObject:(id)associatedObject forKey:(void *)key;
+- (id)it_associatedObjectForKey:(void *)key;
+
 @end
