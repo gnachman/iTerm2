@@ -24,7 +24,7 @@ extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
 - (void)upgradeIfPossible;
 
 // This downloads only if the minimum version is not installed.
-- (void)downloadOptionalComponentsIfNeededWithCompletion:(void (^)(void))completion;
+- (void)downloadOptionalComponentsIfNeededWithConfirmation:(BOOL)confirm withCompletion:(void (^)(BOOL))completion;
 
 // Returns the path of the python binary given a root directory having a pyenv.
 - (NSString *)pyenvAt:(NSString *)root;

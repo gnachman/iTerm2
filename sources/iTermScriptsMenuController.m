@@ -267,6 +267,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSURL *url = [self runSavePanelForNewScriptWithPicker:picker];
     if (url) {
         if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
+#warning Looks like a bug that it won't download the runtime if your first script has a pivate environment
             NSURL *folder = [NSURL fileURLWithPath:[self folderForFullEnvironmentSavePanelURL:url]];
             NSURL *existingEnv = [folder URLByAppendingPathComponent:@"iterm2env"];
             [[NSFileManager defaultManager] removeItemAtURL:existingEnv error:nil];
@@ -297,7 +298,10 @@ NS_ASSUME_NONNULL_BEGIN
                 }
             }];
         } else {
-            [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithCompletion:^{
+            [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES withCompletion:^(BOOL ok) {
+                if (!ok) {
+                    return;
+                }
                 [self finishInstallingNewPythonScriptForPicker:picker url:url];
             }];
         }

@@ -20,6 +20,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 @implementation iTermPythonRuntimeDownloader {
     iTermOptionalComponentDownloadWindowController *_downloadController;
     dispatch_group_t _downloadGroup;
+    BOOL _didDownload;  // Set when _downloadGroup notified.
 }
 
 + (instancetype)sharedInstance {
@@ -109,19 +110,18 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         return;
     }
 
-    [self createDownloadControllerIfNeededRequestingVersionGreaterThan:installedVersion];
+    [self checkForNewerVersionThan:installedVersion silently:YES confirm:YES requiredToContinue:NO];
 }
 
-- (void)downloadOptionalComponentsIfNeededWithCompletion:(void (^)(void))completion {
+- (void)downloadOptionalComponentsIfNeededWithConfirmation:(BOOL)confirm withCompletion:(void (^)(BOOL))completion {
     if (![self shouldDownloadEnvironment]) {
-        completion();
+        completion(YES);
         return;
     }
 
-    [self createDownloadControllerIfNeededRequestingVersionGreaterThan:0];
-
-    dispatch_group_notify(_downloadGroup, dispatch_get_main_queue(), ^{
-        completion();
+    [self checkForNewerVersionThan:self.installedVersion silently:YES confirm:confirm requiredToContinue:YES];
+    dispatch_group_notify(self->_downloadGroup, dispatch_get_main_queue(), ^{
+        completion(self->_didDownload);
     });
 }
 
@@ -156,7 +156,10 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     });
 }
 
-- (void)createDownloadControllerIfNeededRequestingVersionGreaterThan:(int)installedVersion {
+- (void)checkForNewerVersionThan:(int)installedVersion
+                        silently:(BOOL)silent
+                         confirm:(BOOL)confirm
+              requiredToContinue:(BOOL)requiredToContinue {
     BOOL shouldBeginDownload = NO;
     if (!_downloadController) {
         _downloadGroup = dispatch_group_create();
@@ -168,17 +171,41 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     }
 
     if (shouldBeginDownload) {
+        __block BOOL raiseOnCompletion = (!silent || !confirm);
         NSURL *url = [NSURL URLWithString:@"https://iterm2.com/downloads/pyenv/manifest.json"];
+        __weak __typeof(self) weakSelf = self;
+        __block BOOL stillNeedsConfirmation = confirm;
         iTermManifestDownloadPhase *manifestPhase = [[iTermManifestDownloadPhase alloc] initWithURL:url nextPhaseFactory:^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *currentPhase) {
-            iTermManifestDownloadPhase *mphase = [iTermManifestDownloadPhase castFrom:currentPhase];
-            if (mphase.version > installedVersion) {
-                return [[iTermPayloadDownloadPhase alloc] initWithURL:mphase.nextURL
-                                                    expectedSignature:mphase.signature];
-            } else {
+            iTermPythonRuntimeDownloader *strongSelf = weakSelf;
+            if (!strongSelf) {
                 return nil;
             }
+            iTermManifestDownloadPhase *mphase = [iTermManifestDownloadPhase castFrom:currentPhase];
+            if (mphase.version <= installedVersion) {
+                return nil;
+            }
+            if (stillNeedsConfirmation) {
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = @"Download Python Runtime?";
+                if (requiredToContinue) {
+                    alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. It must be downloaded to complete the requested action. The download is about 27mb. OK to download it now?";
+                } else {
+                    alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. The download is about 27mb. OK to download it now?";
+                }
+                [alert addButtonWithTitle:@"OK"];
+                [alert addButtonWithTitle:@"Cancel"];
+                if ([alert runModal] == NSAlertSecondButtonReturn) {
+                    return nil;
+                }
+                stillNeedsConfirmation = NO;
+            }
+            if (silent) {
+                [strongSelf->_downloadController.window makeKeyAndOrderFront:nil];
+                raiseOnCompletion = YES;
+            }
+            return [[iTermPayloadDownloadPhase alloc] initWithURL:mphase.nextURL
+                                                expectedSignature:mphase.signature];
         }];
-        __weak __typeof(self) weakSelf = self;
         _downloadController.completion = ^(iTermOptionalComponentDownloadPhase *lastPhase) {
             if (lastPhase.error) {
                 return;
@@ -187,14 +214,18 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                 iTermPythonRuntimeDownloader *strongSelf = weakSelf;
                 if (strongSelf) {
                     [strongSelf->_downloadController showMessage:@"✅ The Python runtime is up to date."];
+                    if (raiseOnCompletion) {
+                        [strongSelf->_downloadController.window makeKeyAndOrderFront:nil];
+                    }
                 }
             } else {
                 [weakSelf downloadDidCompleteWithFinalPhase:lastPhase];
             }
         };
-        [_downloadController.window makeKeyAndOrderFront:nil];
+        if (!silent) {
+            [_downloadController.window makeKeyAndOrderFront:nil];
+        }
         [_downloadController beginPhase:manifestPhase];
-        [[iTermNotificationController sharedInstance] notify:@"Downloading Python runtime…"];
     } else if (_downloadController.isWindowLoaded && !_downloadController.window.visible) {
         // Already existed and had a current phase.
         [[_downloadController window] makeKeyAndOrderFront:nil];
@@ -237,6 +268,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                 [[iTermNotificationController sharedInstance] notify:@"Download finished!"];
                 [self->_downloadController.window close];
                 self->_downloadController = nil;
+                self->_didDownload = ok;
                 dispatch_group_leave(self->_downloadGroup);
             } else {
                 NSAlert *alert = [[NSAlert alloc] init];

@@ -31,8 +31,10 @@
 }
 
 + (void)launchScript:(NSString *)filename withVirtualEnv:(NSString *)virtualenv {
-    [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithCompletion:^{
-        [self reallyLaunchScript:filename withVirtualEnv:virtualenv];
+    [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES withCompletion:^(BOOL ok) {
+        if (ok) {
+            [self reallyLaunchScript:filename withVirtualEnv:virtualenv];
+        }
     }];
 }
 
