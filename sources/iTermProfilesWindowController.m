@@ -23,6 +23,8 @@
 */
 
 #import "iTermProfilesWindowController.h"
+
+#import "DebugLogging.h"
 #import "ProfileModel.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
@@ -32,6 +34,31 @@
 #import "PTYTab.h"
 
 static NSString *const kCloseBookmarksWindowAfterOpeningKey = @"CloseBookmarksWindowAfterOpening";
+
+@interface iTermProfileWindowContentView : NSView
+@property (nonatomic, weak) iTermProfilesWindowController *windowController;
+@end
+
+@implementation iTermProfileWindowContentView
+
+// In issue 6770 some people saw the key equivalent stop working. My guess is that view-based
+// table views are responsible. This function cuts the gordian knot.
+- (BOOL)performKeyEquivalent:(NSEvent *)event {
+    DLog(@"iTermProfileWindowContentView: Perform key equivalent: %@", event);
+    if ([event.characters isEqualToString:@"\r"]) {
+        if (event.modifierFlags & NSEventModifierFlagShift) {
+            [self.windowController openBookmarkInWindow:nil];
+        } else {
+            [self.windowController openBookmarkInTab:nil];
+        }
+        return YES;
+    }
+    BOOL result = [super performKeyEquivalent:event];
+    DLog(@"iTermProfileWindowContentView: Perform key equivalent returns %@", @(result));
+    return result;
+}
+
+@end
 
 typedef enum {
     HORIZONTAL_PANE,
@@ -54,17 +81,30 @@ typedef enum {
 
 @end
 
+@interface iTermOpenProfileInTabButton : NSButton
+@end
+
+@implementation iTermOpenProfileInTabButton
+
+- (BOOL)performKeyEquivalent:(NSEvent *)event {
+    DLog(@"iTermOpenProfileInTabButton: performKeyEquivalent: %@", event);
+    BOOL result = [super performKeyEquivalent:event];
+    DLog(@"iTermOpenProfileInTabButton: performKeyEquivalent result is %@", @(result));
+    return result;
+}
+
+@end
 
 @implementation iTermProfilesWindowController {
-    __weak IBOutlet ProfileListView* tableView_;
-    __weak IBOutlet NSSegmentedControl* actions_;
-    __weak IBOutlet NSButton* horizontalPaneButton_;
-    __weak IBOutlet NSButton* verticalPaneButton_;
-    __weak IBOutlet NSButton* tabButton_;
-    __weak IBOutlet NSButton* windowButton_;
-    __weak IBOutlet NSButton* closeAfterOpeningBookmark_;
-    __weak IBOutlet NSButton* newTabsInNewWindowButton_;
-    __weak IBOutlet NSButton* toggleTagsButton_;
+    IBOutlet ProfileListView* tableView_;
+    IBOutlet NSSegmentedControl* actions_;
+    IBOutlet NSButton* horizontalPaneButton_;
+    IBOutlet NSButton* verticalPaneButton_;
+    IBOutlet NSButton* tabButton_;
+    IBOutlet NSButton* windowButton_;
+    IBOutlet NSButton* closeAfterOpeningBookmark_;
+    IBOutlet NSButton* newTabsInNewWindowButton_;
+    IBOutlet NSButton* toggleTagsButton_;
 }
 
 + (iTermProfilesWindowController*)sharedInstance {
@@ -104,6 +144,10 @@ typedef enum {
         [[self window] setRestorationClass:[iTermProfilesWindowRestorer class]];
     }
     return self;
+}
+
+- (void)windowDidLoad {
+    ((iTermProfileWindowContentView *)self.window.contentView).windowController = self;
 }
 
 - (IBAction)closeCurrentSession:(id)sender
@@ -273,9 +317,8 @@ typedef enum {
     }
 }
 
-- (NSMenu*)profileTable:(id)profileTable menuForEvent:(NSEvent*)theEvent
-{
-    NSMenu* menu =[[[NSMenu alloc] initWithTitle:@"Contextual Menu"] autorelease];
+- (NSMenu *)profileTable:(id)profileTable menuForEvent:(NSEvent *)theEvent {
+    NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
 
     int count = [[profileTable selectedGuids] count];
     if (count == 1) {

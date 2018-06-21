@@ -623,7 +623,7 @@ typedef struct iTermTextColorContext {
 }
 
 - (void)drawMarginsAndMarkForLine:(int)line y:(CGFloat)y {
-    NSRect leftMargin = NSMakeRect(0, y, MAX(1, [iTermAdvancedSettingsModel terminalMargin]), _cellSize.height);
+    NSRect leftMargin = NSMakeRect(0, y, MAX(0, [iTermAdvancedSettingsModel terminalMargin]), _cellSize.height);
     NSRect rightMargin;
     NSRect visibleRect = _visibleRect;
     rightMargin.origin.x = _cellSize.width * _gridSize.width + [iTermAdvancedSettingsModel terminalMargin];

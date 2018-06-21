@@ -17,7 +17,7 @@
 @end
 
 @implementation iTermHelpMessageViewController {
-    __weak IBOutlet NSTextField *_textField;
+    IBOutlet NSTextField *_textField;
 }
 
 - (void)setMessage:(NSString *)message {

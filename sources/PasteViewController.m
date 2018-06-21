@@ -15,8 +15,8 @@
 static float kAnimationDuration = 0.25;
 
 @implementation PasteViewController {
-    __weak IBOutlet NSTextField *_label;
-    __weak IBOutlet NSProgressIndicator *progressIndicator_;
+    IBOutlet NSTextField *_label;
+    IBOutlet NSProgressIndicator *progressIndicator_;
     int totalLength_;
     PasteContext *pasteContext_;
 }

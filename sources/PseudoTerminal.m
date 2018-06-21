@@ -179,10 +179,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // A bookmark may have metasyntactic variables like $$FOO$$ in the command.
     // When opening such a bookmark, pop up a sheet and ask the user to fill in
     // the value. These fields belong to that sheet.
-    __weak IBOutlet NSTextField *parameterName;
-    __weak IBOutlet NSPanel *parameterPanel;
-    __weak IBOutlet NSTextField *parameterValue;
-    __weak IBOutlet NSTextField *parameterPrompt;
+    IBOutlet NSTextField *parameterName;
+    IBOutlet NSPanel *parameterPanel;
+    IBOutlet NSTextField *parameterValue;
+    IBOutlet NSTextField *parameterPrompt;
 
     ////////////////////////////////////////////////////////////////////////////
     // Instant Replay
@@ -286,10 +286,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // In 10.7 style full screen mode
     BOOL lionFullScreen_;
 
-    __weak IBOutlet NSPanel *coprocesssPanel_;
-    __weak IBOutlet NSButton *coprocessOkButton_;
-    __weak IBOutlet NSComboBox *coprocessCommand_;
-    __weak IBOutlet NSButton *coprocessIgnoreErrors_;
+    IBOutlet NSPanel *coprocesssPanel_;
+    IBOutlet NSButton *coprocessOkButton_;
+    IBOutlet NSComboBox *coprocessCommand_;
+    IBOutlet NSButton *coprocessIgnoreErrors_;
 
     NSDictionary *lastArrangement_;
 
@@ -2335,7 +2335,11 @@ ITERM_WEAKLY_REFERENCEABLE
         [[self window] setFrame:rect display:YES];
     }
 
-    if (![self restoreTabsFromArrangement:arrangement sessions:sessions]) {
+    const BOOL savedRestoringWindow = _restoringWindow;
+    _restoringWindow = YES;
+    const BOOL restoreTabsOK = [self restoreTabsFromArrangement:arrangement sessions:sessions];
+    _restoringWindow = savedRestoringWindow;
+    if (!restoreTabsOK) {
         return NO;
     }
     _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];

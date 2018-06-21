@@ -1204,6 +1204,7 @@
 		5346902A1C94FF0000B7E4E9 /* overflowImagePressed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 534690281C94FF0000B7E4E9 /* overflowImagePressed@2x.png */; };
 		5346902C1C94FF1900B7E4E9 /* overflowImage@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5346902B1C94FF1900B7E4E9 /* overflowImage@2x.png */; };
 		535EA4E720D04C2A00FC81E0 /* iTermTip.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA901B33529E0005A852 /* iTermTip.m */; };
+		535EA51420D8C1EB00FC81E0 /* iTermProfilesWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5EBE7122B892900C736B0 /* iTermProfilesWindowController.m */; };
 		5370F2EA1C7895F800874C0F /* QLPreviewPanel+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */; };
 		5370F2EB1C7895FD00874C0F /* QLPreviewPanel+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */; };
 		539325F31DD66EFA00CABCEF /* iTermPreciseTimer.m in Sources */ = {isa = PBXBuildFile; fileRef = 539325EF1DD66EF100CABCEF /* iTermPreciseTimer.m */; };
@@ -2333,7 +2334,6 @@
 		A6C763611B45C52B00E3C992 /* PopupModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3118186E2F54007F550F /* PopupModel.m */; };
 		A6C763621B45C52B00E3C992 /* PopupWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3113186E2F14007F550F /* PopupWindow.m */; };
 		A6C763861B45C52B00E3C992 /* iTermProfilesPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B72771B2BF2D200F947A7 /* iTermProfilesPanel.m */; };
-		A6C763871B45C52B00E3C992 /* iTermProfilesWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5EBE7122B892900C736B0 /* iTermProfilesWindowController.m */; };
 		A6C763881B45C52B00E3C992 /* ProfileListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6C50A61226EEFB00E0AA3E /* ProfileListView.m */; };
 		A6C763891B45C52B00E3C992 /* ProfileModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DCF3E8D122419D200AD56F1 /* ProfileModel.m */; };
 		A6C7638A1B45C52B00E3C992 /* ProfileModelWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06E7D614BC04E20097C0ED /* ProfileModelWrapper.m */; };
@@ -7903,7 +7903,7 @@
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
 					874206460564169600CFC3F1 = {
-						ProvisioningStyle = Manual;
+						DevelopmentTeam = H7V7XYVQ7D;
 					};
 					A66717851DCE36C3000CE608 = {
 						DevelopmentTeam = H7V7XYVQ7D;
@@ -9206,6 +9206,7 @@
 				A6A4866A20B6793E00493302 /* iTermKeyMappingViewController.m in Sources */,
 				A6A4868120B681A300493302 /* iTermColorPresets.m in Sources */,
 				A6AC5D241E9036D70097C0A7 /* iTermURLMark.m in Sources */,
+				535EA51420D8C1EB00FC81E0 /* iTermProfilesWindowController.m in Sources */,
 				A6A4866F20B67A1600493302 /* iTermSemanticHistoryPrefsController.m in Sources */,
 				A66719621DCE3772000CE608 /* iTermSocketAddress.m in Sources */,
 				A6A4867E20B67FD100493302 /* SmartSelectionController.m in Sources */,
@@ -9470,7 +9471,6 @@
 				A6FEA2751CF2C9D400376F28 /* iTermAppHotKey.m in Sources */,
 				A62C3B3B1BD40D2400B5629D /* iTermMark.m in Sources */,
 				A6C7630D1B45C52B00E3C992 /* iTermAnimatedImageInfo.m in Sources */,
-				A6C763871B45C52B00E3C992 /* iTermProfilesWindowController.m in Sources */,
 				A6FCB60F1C6714C70019184E /* iTermWeakReference.m in Sources */,
 				A6CEC07D1DCE80C9009F4FD2 /* Struct.pbobjc.m in Sources */,
 				A6C763151B45C52B00E3C992 /* iTermLogoGenerator.m in Sources */,
@@ -9857,7 +9857,7 @@
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -10506,7 +10506,7 @@
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -11546,7 +11546,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -11622,7 +11622,7 @@
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",

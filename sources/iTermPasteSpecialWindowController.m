@@ -82,11 +82,11 @@
     NSStringEncoding _encoding;
 
     // Outlets
-    __weak IBOutlet NSTextField *_statsLabel;
-    __weak IBOutlet NSPopUpButton *_itemList;
+    IBOutlet NSTextField *_statsLabel;
+    IBOutlet NSPopUpButton *_itemList;
     IBOutlet NSTextView *_preview;
-    __weak IBOutlet NSTextField *_estimatedDuration;
-    __weak IBOutlet NSView *_pasteSpecialViewContainer;
+    IBOutlet NSTextField *_estimatedDuration;
+    IBOutlet NSView *_pasteSpecialViewContainer;
 
     iTermPasteSpecialViewController *_pasteSpecialViewController;
 

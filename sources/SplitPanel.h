@@ -12,10 +12,10 @@
 
 @interface SplitPanel : NSWindowController {
     NSWindowController *parent_;
-    __weak IBOutlet NSTextField *label_;
-    __weak IBOutlet NSButton *splitButton_;
+    IBOutlet NSTextField *label_;
+    IBOutlet NSButton *splitButton_;
     BOOL isVertical_;
-    __weak IBOutlet ProfileListView *bookmarks_;
+    IBOutlet ProfileListView *bookmarks_;
     NSString *guid_;
 }
 
