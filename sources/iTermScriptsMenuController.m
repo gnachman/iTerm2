@@ -263,13 +263,14 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
 
-    NSURL *url = [self runSavePanelForNewScriptWithPicker:picker];
+    NSArray<NSString *> *dependencies = nil;
+    NSURL *url = [self runSavePanelForNewScriptWithPicker:picker dependencies:&dependencies];
     if (url) {
         [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES withCompletion:^(BOOL ok) {
             if (!ok) {
                 return;
             }
-            [self reallyCreateNewPythonScriptAtURL:url picker:picker];
+            [self reallyCreateNewPythonScriptAtURL:url picker:picker dependencies:dependencies];
         }];
     }
 }
@@ -292,13 +293,21 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)reallyCreateNewPythonScriptAtURL:(NSURL *)url
-                                  picker:(iTermScriptTemplatePickerWindowController *)picker {
+                                  picker:(iTermScriptTemplatePickerWindowController *)picker
+                            dependencies:(NSArray<NSString *> *)dependencies {
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
         NSURL *folder = [NSURL fileURLWithPath:[self folderForFullEnvironmentSavePanelURL:url]];
         NSURL *existingEnv = [folder URLByAppendingPathComponent:@"iterm2env"];
         [[NSFileManager defaultManager] removeItemAtURL:existingEnv error:nil];
         iTermBuildingScriptWindowController *pleaseWait = [self newPleaseWaitWindowController];
-        [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder completion:^(BOOL ok) {
+        id token = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidBecomeActiveNotification
+                                                                     object:nil
+                                                                      queue:nil
+                                                                 usingBlock:^(NSNotification * _Nonnull note) {
+                                                                     [pleaseWait.window makeKeyAndOrderFront:nil];
+                                                                 }];
+        [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder dependencies:dependencies completion:^(BOOL ok) {
+            [[NSNotificationCenter defaultCenter] removeObserver:token];
             [pleaseWait.window close];
             if (!ok) {
                 NSAlert *alert = [[NSAlert alloc] init];
@@ -315,14 +324,13 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)finishInstallingNewPythonScriptForPicker:(iTermScriptTemplatePickerWindowController *)picker
-                                             url:(NSURL *)url {
+                                             url:(NSURL *)url  {
     NSString *destinationTemplatePath = [self destinationTemplatePathForPicker:picker url:url];
     NSString *template = [self templateForPicker:picker url:url];
     [template writeToURL:[NSURL fileURLWithPath:destinationTemplatePath]
               atomically:NO
                 encoding:NSUTF8StringEncoding
                    error:nil];
-
     NSString *app;
     NSString *type;
     BOOL ok = [[NSWorkspace sharedWorkspace] getInfoForFile:destinationTemplatePath application:&app type:&type];
@@ -339,20 +347,52 @@ NS_ASSUME_NONNULL_BEGIN
     [[NSWorkspace sharedWorkspace] selectFile:destinationTemplatePath inFileViewerRootedAtPath:@""];
 }
 
-- (NSURL *)runSavePanelForNewScriptWithPicker:(iTermScriptTemplatePickerWindowController *)picker {
+- (NSTokenField *)newTokenFieldForDependencies {
+    NSTokenField *tokenField = [[NSTokenField alloc] initWithFrame:NSMakeRect(0, 0, 100, 22)];
+    tokenField.tokenizingCharacterSet = [NSCharacterSet whitespaceCharacterSet];
+    tokenField.placeholderString = @"Package names separated by spaces";
+    return tokenField;
+}
+
+- (NSView *)newAccessoryViewForSavePanelWithTokenField:(NSTokenField *)tokenField {
+    NSTextField *label = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 5, 60, 22)];
+    [label setEditable:NO];
+    [label setStringValue:@"PyPI Dependencies:"];
+    [label setBordered:NO];
+    [label setBezeled:NO];
+    [label setDrawsBackground:NO];
+    [label sizeToFit];
+
+    const CGFloat tokenFieldWidth = 300;
+    const CGFloat margin = 5;
+    NSView  *accessoryView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, NSMaxX(tokenField.frame) + margin + tokenFieldWidth, 32)];
+    [accessoryView addSubview:label];
+    [accessoryView addSubview:tokenField];
+    tokenField.frame = NSMakeRect(NSMaxX(label.frame) + margin, 5, tokenFieldWidth, 22);
+
+    return accessoryView;
+}
+
+- (NSURL *)runSavePanelForNewScriptWithPicker:(iTermScriptTemplatePickerWindowController *)picker
+                                 dependencies:(out NSArray<NSString *> **)dependencies {
     NSSavePanel *savePanel = [NSSavePanel savePanel];
     savePanel.delegate = self;
+    NSTokenField *tokenField = nil;
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
         savePanel.allowedFileTypes = @[ @"" ];
+        tokenField = [self newTokenFieldForDependencies];
+        savePanel.accessoryView = [self newAccessoryViewForSavePanelWithTokenField:tokenField];
     } else {
         savePanel.allowedFileTypes = @[ @"py" ];
     }
     savePanel.directoryURL = [NSURL fileURLWithPath:[[NSFileManager defaultManager] scriptsPath]];
+
     if ([savePanel runModal] == NSFileHandlingPanelOKButton) {
         NSURL *url = savePanel.URL;
         NSString *filename = [url lastPathComponent];
         NSString *safeFilename = [filename stringByReplacingOccurrencesOfString:@" " withString:@"_"];
         if ([filename isEqualToString:safeFilename]) {
+            *dependencies = tokenField.objectValue;
             return url;
         } else {
             NSAlert *alert = [[NSAlert alloc] init];
@@ -363,7 +403,7 @@ NS_ASSUME_NONNULL_BEGIN
             if ([alert runModal] == NSAlertFirstButtonReturn) {
                 return [[url URLByDeletingLastPathComponent] URLByAppendingPathComponent:safeFilename];
             } else {
-                return [self runSavePanelForNewScriptWithPicker:picker];
+                return [self runSavePanelForNewScriptWithPicker:picker dependencies:dependencies];
             }
         }
     } else {

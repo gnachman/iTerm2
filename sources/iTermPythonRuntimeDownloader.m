@@ -7,9 +7,11 @@
 
 #import "iTermPythonRuntimeDownloader.h"
 
+#import "iTermDisclosableView.h"
 #import "iTermNotificationController.h"
 #import "iTermOptionalComponentDownloadWindowController.h"
 #import "iTermSignatureVerifier.h"
+#import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSMutableData+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -32,17 +34,25 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     return instance;
 }
 
-- (NSString *)pyenvAt:(NSString *)root {
+- (NSString *)executableNamed:(NSString *)name atPyenvRoot:(NSString *)root {
     NSString *path = [root stringByAppendingPathComponent:@"versions"];
     for (NSString *version in [[NSFileManager defaultManager] enumeratorAtPath:path]) {
         if ([version hasPrefix:@"3."]) {
             path = [path stringByAppendingPathComponent:version];
             path = [path stringByAppendingPathComponent:@"bin"];
-            path = [path stringByAppendingPathComponent:@"python3"];
+            path = [path stringByAppendingPathComponent:name];
             return path;
         }
     }
     return nil;
+}
+
+- (NSString *)pip3At:(NSString *)root {
+    return [self executableNamed:@"pip3" atPyenvRoot:root];
+}
+
+- (NSString *)pyenvAt:(NSString *)root {
+    return [self executableNamed:@"python3" atPyenvRoot:root];
 }
 
 - (NSString *)pathToStandardPyenvPython {
@@ -129,35 +139,58 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     });
 }
 
-- (void)unzip:(NSURL *)zipFileURL to:(NSURL *)destination completion:(void (^)(BOOL))completion {
+- (void)runCommand:(NSString *)command
+     withArguments:(NSArray<NSString *> *)arguments
+              path:(NSString *)currentDirectoryPath
+            output:(void (^ _Nullable)(NSData *inData))outputHandler
+        completion:(void (^)(int terminationStatus))completion {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        [[NSFileManager defaultManager] createDirectoryAtPath:destination.path
-                                  withIntermediateDirectories:NO
-                                                   attributes:nil
-                                                        error:NULL];
-
-
         NSTask *unzipTask = [[NSTask alloc] init];
         NSPipe *pipe = [[NSPipe alloc] init];
         [unzipTask setStandardOutput:pipe];
         [unzipTask setStandardError:pipe];
-        unzipTask.launchPath = @"/usr/bin/unzip";
-        unzipTask.currentDirectoryPath = destination.path;
-        unzipTask.arguments = @[ @"-x", @"-o", @"-q", zipFileURL.path ];
+        unzipTask.launchPath = command;
+        unzipTask.currentDirectoryPath = currentDirectoryPath;
+        unzipTask.arguments = arguments;
+        NSLog(@"runCommand: Launching %@", unzipTask);
         [unzipTask launch];
 
         NSFileHandle *readHandle = [pipe fileHandleForReading];
+        NSLog(@"runCommand: Reading");
         NSData *inData = [readHandle availableData];
         while (inData.length) {
-            NSLog(@"unzip: %@", [[NSString alloc] initWithData:inData encoding:NSUTF8StringEncoding]);
+            NSLog(@"runCommand: Read %@", inData);
+            if (outputHandler) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    outputHandler(inData);
+                });
+            }
+            NSLog(@"runCommand: Reading");
             inData = [readHandle availableData];
         }
 
+        NSLog(@"runCommand: Done reading. Wait");
         [unzipTask waitUntilExit];
         dispatch_async(dispatch_get_main_queue(), ^{
-            completion(unzipTask.terminationStatus == 0);
+            completion(unzipTask.terminationStatus);
         });
     });
+}
+
+- (void)unzip:(NSURL *)zipFileURL to:(NSURL *)destination completion:(void (^)(BOOL))completion {
+    [[NSFileManager defaultManager] createDirectoryAtPath:destination.path
+                              withIntermediateDirectories:NO
+                                               attributes:nil
+                                                    error:NULL];
+    [self runCommand:@"/usr/bin/unzip"
+       withArguments:@[ @"-x", @"-o", @"-q", zipFileURL.path ]
+                path:destination.path
+              output:^(NSData *inData) {
+                  NSLog(@"unzip: %@", [[NSString alloc] initWithData:inData encoding:NSUTF8StringEncoding]);
+              }
+          completion:^(int terminationStatus) {
+              completion(terminationStatus == 0);
+          }];
 }
 
 - (void)checkForNewerVersionThan:(int)installedVersion
@@ -266,7 +299,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         [[NSFileManager defaultManager] removeItemAtPath:zip error:nil];
         [[NSFileManager defaultManager] moveItemAtPath:tempfile toPath:zip error:nil];
         NSURL *container = [self urlOfStandardEnvironmentContainerCreatingSymlink];
-        [self installPythonEnvironmentTo:container completion:^(BOOL ok) {
+        [self installPythonEnvironmentTo:container dependencies:nil completion:^(BOOL ok) {
             if (ok) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermPythonRuntimeDownloaderDidInstallRuntimeNotification object:nil];
                 [[iTermNotificationController sharedInstance] notify:@"Download finished!"];
@@ -284,7 +317,23 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     }
 }
 
-- (void)installPythonEnvironmentTo:(NSURL *)container completion:(void (^)(BOOL))completion {
+- (void)writeSetupPyToFile:(NSString *)file name:(NSString *)name dependencies:(NSArray<NSString *> *)dependencies {
+    NSArray<NSString *> *quotedDependencies = [dependencies mapWithBlock:^id(NSString *anObject) {
+        return [NSString stringWithFormat:@"'%@'", anObject];
+    }];
+    NSString *contents = [NSString stringWithFormat:
+                          @"from distutils.core import setup\n"
+                          @"setup(name='%@',\n"
+                          @"      version='1.0',\n"
+                          @"      scripts=['main.py'],\n"
+                          @"      install_requires=[%@]\n"
+                          @"      )",
+                          name,
+                          [quotedDependencies componentsJoinedByString:@", "]];
+    [contents writeToFile:file atomically:NO encoding:NSUTF8StringEncoding error:nil];
+}
+
+- (void)installPythonEnvironmentTo:(NSURL *)container dependencies:(NSArray<NSString *> *)dependencies completion:(void (^)(BOOL))completion {
     NSString *zip = [self pathToZIP];
     [self unzip:[NSURL fileURLWithPath:zip] to:container completion:^(BOOL unzipOk) {
         if (unzipOk) {
@@ -292,13 +341,83 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             NSDictionary<NSString *, NSString *> *subs = @{ @"__ITERM2_ENV__": pyenv.path,
                                                             @"__ITERM2_PYENV__": [pyenv.path stringByAppendingPathComponent:@"pyenv"] };
             [self performSubstitutions:subs inFilesUnderFolder:pyenv];
-            completion(YES);
+            [self installDependencies:dependencies to:container completion:^(NSArray<NSString *> *failures, NSArray<NSData *> *outputs) {
+                if (failures.count) {
+                    NSAlert *alert = [[NSAlert alloc] init];
+                    alert.messageText = @"Dependency Installation Failed";
+                    NSString *failureList = [[failures sortedArrayUsingSelector:@selector(compare:)] componentsJoinedByString:@", "];
+                    alert.informativeText = [NSString stringWithFormat:@"The following dependencies failed to install: %@", failureList];
+
+                    NSMutableArray<NSString *> *messages = [NSMutableArray array];
+                    for (NSInteger i = 0; i < failures.count; i++) {
+                        NSData *output = outputs[i];
+                        NSString *stringOutput = [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding];
+                        if (!stringOutput) {
+                            stringOutput = [[NSString alloc] initWithData:output encoding:NSISOLatin1StringEncoding];
+                        }
+                        [messages addObject:[NSString stringWithFormat:@"%@\n%@", failures[i], stringOutput]];
+                    }
+                    iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
+                                                                                           prompt:@"Output"
+                                                                                          message:[messages componentsJoinedByString:@"\n\n"]];
+                    accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
+                    accessory.textView.selectable = YES;
+                    accessory.requestLayout = ^{
+                        [alert layout];
+                    };
+                    alert.accessoryView = accessory;
+
+                    [alert runModal];
+                }
+                [self writeSetupPyToFile:[container.path stringByAppendingPathComponent:@"setup.py"]
+                                    name:container.path.lastPathComponent
+                            dependencies:dependencies];
+                completion(YES);
+            }];
         } else {
             completion(NO);
         }
     }];
 }
 
+- (void)installDependencies:(NSArray<NSString *> *)dependencies
+                         to:(NSURL *)container
+                 completion:(void (^)(NSArray<NSString *> *failures,
+                                      NSArray<NSData *> *outputs))completion {
+    if (dependencies.count == 0) {
+        completion(@[], @[]);
+        return;
+    }
+    [self runPip3InContainer:container
+               withArguments:@[ @"install", dependencies.firstObject ]
+                  completion:^(BOOL thisOK, NSData *output) {
+                      [self installDependencies:[dependencies subarrayFromIndex:1]
+                                             to:container
+                                     completion:^(NSArray<NSString *> *failures,
+                                                  NSArray<NSData *> *outputs) {
+                                         if (!thisOK) {
+                                             completion([failures arrayByAddingObject:dependencies.firstObject],
+                                                        [outputs arrayByAddingObject:output]);
+                                         } else {
+                                             completion(failures, outputs);
+                                         }
+                                     }];
+                  }];
+}
+
+- (void)runPip3InContainer:(NSURL *)container withArguments:(NSArray<NSString *> *)arguments completion:(void (^)(BOOL ok, NSData *output))completion {
+    NSString *pip3 = [self pip3At:[container.path stringByAppendingPathComponent:@"iterm2env"]];
+    NSMutableData *output = [NSMutableData data];
+    [self runCommand:pip3
+       withArguments:arguments
+                path:container.path
+              output:^(NSData *inData) {
+                  [output appendData:inData];
+              }
+          completion:^(int terminationStatus) {
+              completion(terminationStatus == 0, output);
+          }];
+}
 
 - (BOOL)writeInputStream:(NSInputStream *)inputStream toFile:(NSString *)destination {
     NSOutputStream *outputStream = [NSOutputStream outputStreamToFileAtPath:destination append:NO];

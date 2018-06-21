@@ -33,6 +33,6 @@ extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
 - (NSString *)pyenvAt:(NSString *)root;
 
 // Install a copy of the current environment somewhere.
-- (void)installPythonEnvironmentTo:(NSURL *)container completion:(void (^)(BOOL))completion;
+- (void)installPythonEnvironmentTo:(NSURL *)container dependencies:(NSArray<NSString *> *)dependencies completion:(void (^)(BOOL))completion;
 
 @end
