@@ -8,6 +8,8 @@
 
 #import "NSObject+iTerm.h"
 
+#import <objc/runtime.h>
+
 @implementation iTermDelayedPerform
 @end
 
@@ -53,7 +55,6 @@
 }
 
 - (iTermDelayedPerform *)performBlock:(void (^)(void))block afterDelay:(NSTimeInterval)delay {
-    [self retain];
     iTermDelayedPerform *delayedPerform = [[iTermDelayedPerform alloc] init];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
@@ -61,8 +62,6 @@
                            delayedPerform.completed = YES;
                            block();
                        }
-                       [self release];
-                       [delayedPerform release];
                    });
     return delayedPerform;
 }
@@ -73,6 +72,17 @@
     } else {
         return self;
     }
+}
+
+- (void)it_setAssociatedObject:(id)associatedObject forKey:(void *)key {
+    objc_setAssociatedObject(self,
+                             key,
+                             associatedObject,
+                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (id)it_associatedObjectForKey:(void *)key {
+    return objc_getAssociatedObject(self, key);
 }
 
 @end

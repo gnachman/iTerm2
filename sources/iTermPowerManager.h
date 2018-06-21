@@ -9,10 +9,12 @@
 
 // Posted when charging status changes
 extern NSString *const iTermPowerManagerStateDidChange;
+extern NSString *const iTermPowerManagerMetalAllowedDidChangeNotification;
 
 @interface iTermPowerManager : NSObject
 
 @property (nonatomic, readonly) BOOL connectedToPower;
+@property (nonatomic, readonly) BOOL metalAllowed;
 
 + (instancetype)sharedInstance;
 - (instancetype)init NS_UNAVAILABLE;

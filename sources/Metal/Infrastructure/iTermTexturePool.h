@@ -16,6 +16,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTexturePool : NSObject
 - (nullable id<MTLTexture>)requestTextureOfSize:(vector_uint2)size;
 - (void)returnTexture:(id<MTLTexture>)texture;
+- (void)stampTextureWithGeneration:(id<MTLTexture>)texture;
 @end
 
 // Store this wrapper object in your renderer's transient state. It returns its texture to the

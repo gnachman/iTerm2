@@ -6,14 +6,17 @@
 //
 
 #import "iTermPowerManager.h"
+#import "iTermPreferences.h"
 #import "NSTimer+iTerm.h"
 #import <IOKit/ps/IOPowerSources.h>
 
 NSString *const iTermPowerManagerStateDidChange = @"iTermPowerManagerStateDidChange";
+NSString *const iTermPowerManagerMetalAllowedDidChangeNotification = @"iTermPowerManagerMetalAllowedDidChangeNotification";
 
 @implementation iTermPowerManager {
     CFRunLoopRef _runLoop;
     CFRunLoopSourceRef _runLoopSource;
+    BOOL _metalAllowed;
 }
 
 static BOOL iTermPowerManagerIsConnectedToPower(void) {
@@ -45,6 +48,7 @@ static void iTermPowerManagerSourceDidChange(void *context) {
         if (_runLoop && _runLoopSource){
             CFRunLoopAddSource(_runLoop, _runLoopSource, kCFRunLoopDefaultMode);
         }
+        [self metalAllowed];
     }
     return self;
 }
@@ -52,8 +56,20 @@ static void iTermPowerManagerSourceDidChange(void *context) {
 - (void)setConnected:(BOOL)connected {
     if (_connectedToPower != connected) {
         _connectedToPower = connected;
+        const BOOL metalWasAllowed = _metalAllowed;
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermPowerManagerStateDidChange object:nil];
+        if (metalWasAllowed && !self.metalAllowed) {
+            // metal allowed just became false
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermPowerManagerMetalAllowedDidChangeNotification object:@(_metalAllowed)];
+        }
     }
+}
+
+- (BOOL)metalAllowed {
+    const BOOL connectedToPower = [self connectedToPower];
+    const BOOL connectionToPowerRequired = [iTermPreferences boolForKey:kPreferenceKeyDisableMetalWhenUnplugged];
+    _metalAllowed = (!connectionToPowerRequired || connectedToPower);
+    return _metalAllowed;
 }
 
 @end
