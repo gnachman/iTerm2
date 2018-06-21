@@ -229,5 +229,7 @@
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (int)minimumWeightDifferenceForBoldFont;
 + (double)metalSlowFrameRate;
++ (NSString *)pathToFTP;
++ (NSString *)pathToTelnet;
 
 @end
