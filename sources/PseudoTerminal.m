@@ -2335,7 +2335,11 @@ ITERM_WEAKLY_REFERENCEABLE
         [[self window] setFrame:rect display:YES];
     }
 
-    if (![self restoreTabsFromArrangement:arrangement sessions:sessions]) {
+    const BOOL savedRestoringWindow = _restoringWindow;
+    _restoringWindow = YES;
+    const BOOL restoreTabsOK = [self restoreTabsFromArrangement:arrangement sessions:sessions];
+    _restoringWindow = savedRestoringWindow;
+    if (!restoreTabsOK) {
         return NO;
     }
     _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
