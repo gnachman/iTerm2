@@ -298,7 +298,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
 int NumberOfFullLines(screen_char_t* buffer, int length, int width,
                       BOOL mayHaveDoubleWidthCharacter)
 {
-    if (mayHaveDoubleWidthCharacter) {
+    if (width > 1 && mayHaveDoubleWidthCharacter) {
         // TODO: Use memoization here
         int fullLines = 0;
         for (int i = width; i < length; i += width) {
@@ -439,6 +439,9 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
     metadata->double_width_characters = [[NSMutableIndexSet alloc] init];
     metadata->width_for_double_width_characters_cache = width;
 
+    if (width < 2) {
+        return;
+    }
     int lines = 0;
     int i = 0;
     while (i + width < length) {
@@ -491,7 +494,7 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
 
 // TODO: Reduce use of this function in favor of the optimized method once I am confident it is correct.
 int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL mayHaveDwc) {
-    if (mayHaveDwc) {
+    if (width > 1 && mayHaveDwc) {
         int lines = 0;
         int i = 0;
         while (lines < n) {
@@ -618,7 +621,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             *lineLength = length - offset;  // the length of the suffix of the raw line, beginning at the wrapped line we want
             if (*lineLength > width) {
                 // return an infix of the full line
-                if (buffer_start[prev + offset + width].code == DWC_RIGHT) {
+                if (width > 1 && buffer_start[prev + offset + width].code == DWC_RIGHT) {
                     // Result would end with the first half of a double-width character
                     *lineLength = width - 1;
                     *includesEndOfLine = EOL_DWC;
@@ -1362,7 +1365,7 @@ static int Search(NSString* needle,
             if (bytes_to_consume_in_this_line < line_length &&
                 prev + bytes_to_consume_in_this_line + 1 < eol) {
                 assert(prev + bytes_to_consume_in_this_line + 1 < buffer_size);
-                if (raw_buffer[prev + bytes_to_consume_in_this_line + 1].code == DWC_RIGHT) {
+                if (width > 1 && raw_buffer[prev + bytes_to_consume_in_this_line + 1].code == DWC_RIGHT) {
                     ++dwc_peek;
                 }
             }
