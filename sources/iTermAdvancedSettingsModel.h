@@ -231,5 +231,6 @@
 + (double)metalSlowFrameRate;
 + (NSString *)pathToFTP;
 + (NSString *)pathToTelnet;
++ (BOOL)sshURLsSupportPath;
 
 @end

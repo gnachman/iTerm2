@@ -1027,6 +1027,7 @@ static iTermController *gSharedInstance;
 - (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toSshTo:(NSURL *)url {
     NSMutableString *tempString = [NSMutableString stringWithString:@"ssh "];
     NSString *username = url.user;
+    BOOL cd = ([iTermAdvancedSettingsModel sshURLsSupportPath] && url.path.length > 1);
     if (username) {
         NSString *part = [self validatedAndShellEscapedUsername:username];
         if (!part) {
@@ -1037,6 +1038,10 @@ static iTermController *gSharedInstance;
     if (url.port) {
         [tempString appendFormat:@"-p %@ ", url.port];
     }
+    if (cd) {
+        // Force a TTY since we're providing a command
+        [tempString appendString:@"-t "];
+    }
     NSString *hostname = url.host;
     if (hostname) {
         NSString *part = [self validatedAndShellEscapedHostname:hostname];
@@ -1044,6 +1049,9 @@ static iTermController *gSharedInstance;
             return nil;
         }
         [tempString appendString:part];
+    }
+    if (cd) {
+        [tempString appendFormat:@" \"cd %@; exec \\$SHELL -l\"", [url.path stringWithEscapedShellCharactersIncludingNewlines:YES]];
     }
     return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
                                                        KEY_CUSTOM_COMMAND: @"Yes" }];

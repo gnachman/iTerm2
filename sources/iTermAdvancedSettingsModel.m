@@ -353,5 +353,7 @@ DEFINE_BOOL(useModernScrollWheelAccumulator, NO, @"Experimental Features: Use mo
 DEFINE_BOOL(resetSGROnPrompt, YES_IF_BETA_ELSE_NO, @"Experimental Features: Reset colors at shell prompt?\nUses shell integration to detect a shell prompt and, if enabled, resets colors to their defaults.");
 DEFINE_BOOL(retinaInlineImages, YES_IF_BETA_ELSE_NO, @"Experimental Features: Show inline images at Retina resolution.");
 DEFINE_BOOL(evaluateSwiftyStrings, NO, @"Experimental Features: Evaluate certain strings with inline expressions using a Swift-like syntax?\nThis applies to session names and will eventually apply in other places.");
+DEFINE_BOOL(metalDeferCurrentDrawable, NO, @"Experimental Features: Defer invoking currentDrawable.\nThis may improve overall performance at the cost of a lower frame rate.");
+DEFINE_BOOL(sshURLsSupportPath, YES_IF_BETA_ELSE_NO, @"Experimental Features: SSH URLs respect the path.\nThey run the command: ssh -t \"cd $$PATH$$; exec \\$SHELL -l\"");
 
 @end
