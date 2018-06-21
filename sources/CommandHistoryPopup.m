@@ -24,7 +24,7 @@
 @end
 
 @implementation CommandHistoryPopupWindowController {
-    __weak IBOutlet NSTableView *_tableView;
+    IBOutlet NSTableView *_tableView;
     int _partialCommandLength;
 }
 

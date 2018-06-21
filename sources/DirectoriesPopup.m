@@ -23,8 +23,8 @@
 @end
 
 @implementation DirectoriesPopupWindowController {
-    __weak IBOutlet NSTableView *_tableView;
-    __weak IBOutlet NSTableColumn *_mainColumn;
+    IBOutlet NSTableView *_tableView;
+    IBOutlet NSTableColumn *_mainColumn;
 }
 
 - (instancetype)init {
