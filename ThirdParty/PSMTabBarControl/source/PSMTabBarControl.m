@@ -60,7 +60,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
     int _currentStep;
     BOOL _isHidden;
     BOOL _hideIndicators;
-    __weak IBOutlet id partnerView; // gets resized when hide/show
+    IBOutlet id partnerView; // gets resized when hide/show
     BOOL _awakenedFromNib;
     int _tabBarWidth;
 

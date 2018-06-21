@@ -280,10 +280,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // In 10.7 style full screen mode
     BOOL lionFullScreen_;
 
-    __weak IBOutlet NSPanel *coprocesssPanel_;
-    __weak IBOutlet NSButton *coprocessOkButton_;
-    __weak IBOutlet NSComboBox *coprocessCommand_;
-    __weak IBOutlet NSButton *coprocessIgnoreErrors_;
+    IBOutlet NSPanel *coprocesssPanel_;
+    IBOutlet NSButton *coprocessOkButton_;
+    IBOutlet NSComboBox *coprocessCommand_;
+    IBOutlet NSButton *coprocessIgnoreErrors_;
 
     NSDictionary *lastArrangement_;
 

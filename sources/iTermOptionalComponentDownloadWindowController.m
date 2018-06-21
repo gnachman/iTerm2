@@ -228,10 +228,10 @@ didCompleteWithError:(nullable NSError *)error {
 @end
 
 @implementation iTermOptionalComponentDownloadWindowController {
-    __weak IBOutlet NSTextField *_titleLabel;
-    __weak IBOutlet NSTextField *_progressLabel;
-    __weak IBOutlet NSProgressIndicator *_progressIndicator;
-    __weak IBOutlet NSButton *_button;
+    IBOutlet NSTextField *_titleLabel;
+    IBOutlet NSTextField *_progressLabel;
+    IBOutlet NSProgressIndicator *_progressIndicator;
+    IBOutlet NSButton *_button;
     iTermOptionalComponentDownloadPhase *_firstPhase;
     BOOL _showingMessage;
 }

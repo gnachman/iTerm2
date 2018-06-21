@@ -12,7 +12,7 @@
 @end
 
 @implementation iTermBuildingScriptWindowController {
-    __weak IBOutlet NSProgressIndicator *_progressIndicator;
+    IBOutlet NSProgressIndicator *_progressIndicator;
 }
 
 - (void)windowDidLoad {

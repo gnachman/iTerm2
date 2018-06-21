@@ -51,25 +51,25 @@ static NSString *const kRegularExpression = @"Regex";
 static NSString *const kSubstitution = @"Substitution";
 
 @implementation iTermPasteSpecialViewController {
-    __weak IBOutlet NSTextField *_spacesPerTab;
-    __weak IBOutlet NSButton *_escapeShellCharsWithBackslash;
-    __weak IBOutlet NSButton *_removeControlCodes;
-    __weak IBOutlet NSButton *_bracketedPasteMode;
-    __weak IBOutlet NSMatrix *_tabTransform;
-    __weak IBOutlet NSButton *_convertNewlines;
-    __weak IBOutlet NSButton *_removeNewlines;
-    __weak IBOutlet NSButton *_base64Encode;
-    __weak IBOutlet NSButton *_useRegexSubstitution;
-    __weak IBOutlet NSTextField *_regex;
-    __weak IBOutlet NSTextField *_substitution;
-    __weak IBOutlet NSButton *_waitForPrompts;
-    __weak IBOutlet NSButton *_convertUnicodePunctuation;
-    __weak IBOutlet NSSlider *_chunkSizeSlider;
-    __weak IBOutlet NSSlider *_delayBetweenChunksSlider;
-    __weak IBOutlet NSTextField *_chunkSizeLabel;
-    __weak IBOutlet NSTextField *_delayBetweenChunksLabel;
-    __weak IBOutlet NSStepper *_stepper;
-    __weak IBOutlet NSTextField *_icuRegexHelpLabel;  // Warning: this gets removed from superview in awakeFromNib.
+    IBOutlet NSTextField *_spacesPerTab;
+    IBOutlet NSButton *_escapeShellCharsWithBackslash;
+    IBOutlet NSButton *_removeControlCodes;
+    IBOutlet NSButton *_bracketedPasteMode;
+    IBOutlet NSMatrix *_tabTransform;
+    IBOutlet NSButton *_convertNewlines;
+    IBOutlet NSButton *_removeNewlines;
+    IBOutlet NSButton *_base64Encode;
+    IBOutlet NSButton *_useRegexSubstitution;
+    IBOutlet NSTextField *_regex;
+    IBOutlet NSTextField *_substitution;
+    IBOutlet NSButton *_waitForPrompts;
+    IBOutlet NSButton *_convertUnicodePunctuation;
+    IBOutlet NSSlider *_chunkSizeSlider;
+    IBOutlet NSSlider *_delayBetweenChunksSlider;
+    IBOutlet NSTextField *_chunkSizeLabel;
+    IBOutlet NSTextField *_delayBetweenChunksLabel;
+    IBOutlet NSStepper *_stepper;
+    IBOutlet NSTextField *_icuRegexHelpLabel;  // Warning: this gets removed from superview in awakeFromNib.
 }
 
 - (instancetype)init {

@@ -32,14 +32,14 @@
 
 @implementation iTermOpenQuicklyWindowController {
     // Text field where quries are entered
-    __weak IBOutlet iTermOpenQuicklyTextField *_textField;
+    IBOutlet iTermOpenQuicklyTextField *_textField;
 
     // Table that shows search results
-    __weak IBOutlet NSTableView *_table;
+    IBOutlet NSTableView *_table;
 
-    __weak IBOutlet NSScrollView *_scrollView;
+    IBOutlet NSScrollView *_scrollView;
 
-    __weak IBOutlet SolidColorView *_divider;
+    IBOutlet SolidColorView *_divider;
 }
 
 + (instancetype)sharedInstance {

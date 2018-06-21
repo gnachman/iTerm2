@@ -15,13 +15,13 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     NSMutableArray *model_;
     NSMutableArray *filteredModel_;
 
-    __weak IBOutlet NSTableView *tableView_;
-    __weak IBOutlet NSButton *addWindowButton_;
-    __weak IBOutlet NSButton *removeWindowButton_;
-    __weak IBOutlet NSButton *openInTabsButton_;
-    __weak IBOutlet NSButton *openInWindowsButton_;
-    __weak IBOutlet NSButton *hideWindowButton_;
-    __weak IBOutlet NSSearchField *searchField_;
+    IBOutlet NSTableView *tableView_;
+    IBOutlet NSButton *addWindowButton_;
+    IBOutlet NSButton *removeWindowButton_;
+    IBOutlet NSButton *openInTabsButton_;
+    IBOutlet NSButton *openInWindowsButton_;
+    IBOutlet NSButton *hideWindowButton_;
+    IBOutlet NSSearchField *searchField_;
 }
 
 @synthesize delegate = delegate_;

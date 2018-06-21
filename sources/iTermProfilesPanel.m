@@ -14,8 +14,8 @@ static NSString *kTagsOpen = @"Tags Open";
 static NSString *kCloseAfterOpening = @"Close After Opening";
 
 @implementation iTermProfilesPanel {
-    __weak IBOutlet ProfileListView *_profileListView;
-    __weak IBOutlet NSButton *_closeAfterOpening;
+    IBOutlet ProfileListView *_profileListView;
+    IBOutlet NSButton *_closeAfterOpening;
 }
 
 - (void)encodeRestorableStateWithCoder:(NSCoder *)coder {
