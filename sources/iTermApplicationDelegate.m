@@ -197,11 +197,18 @@ static BOOL hasBecomeActive = NO;
     // Location of mouse when the app became inactive.
     NSPoint _savedMouseLocation;
     iTermScriptsMenuController *_scriptsMenuController;
+    enum {
+        iTermUntitledFileOpenUnsafe,
+        iTermUntitledFileOpenPending,
+        iTermUntitledFileOpenAllowed,
+        iTermUntitledFileOpenComplete
+    } _untitledFileOpenStatus;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _untitledFileOpenStatus = iTermUntitledFileOpenUnsafe;
         // Add ourselves as an observer for notifications.
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(reloadMenus:)
@@ -744,10 +751,48 @@ static BOOL hasBecomeActive = NO;
     if (![iTermAdvancedSettingsModel openUntitledFile]) {
         return NO;
     }
-    if (![[NSApplication sharedApplication] isRunningUnitTests]) {
-        [self newWindow:nil];
-    }
+    [self maybeOpenUntitledFile];
     return YES;
+}
+
+- (void)openUntitledFileBecameSafe {
+    if ([[NSApplication sharedApplication] isRunningUnitTests]) {
+        _untitledFileOpenStatus = iTermUntitledFileOpenUnsafe;
+        return;
+    }
+    switch (_untitledFileOpenStatus) {
+        case iTermUntitledFileOpenUnsafe:
+            _untitledFileOpenStatus = iTermUntitledFileOpenAllowed;
+            break;
+        case iTermUntitledFileOpenAllowed:
+            // Shouldn't happen
+            break;
+        case iTermUntitledFileOpenPending:
+            _untitledFileOpenStatus = iTermUntitledFileOpenAllowed;
+            [self maybeOpenUntitledFile];
+            break;
+
+        case iTermUntitledFileOpenComplete:
+            // Shouldn't happen
+            break;
+    }
+}
+
+- (void)maybeOpenUntitledFile {
+    if (![[NSApplication sharedApplication] isRunningUnitTests]) {
+        switch (_untitledFileOpenStatus) {
+            case iTermUntitledFileOpenUnsafe:
+                _untitledFileOpenStatus = iTermUntitledFileOpenPending;
+                break;
+            case iTermUntitledFileOpenAllowed:
+                _untitledFileOpenStatus = iTermUntitledFileOpenComplete;
+                [self newWindow:nil];
+                break;
+            case iTermUntitledFileOpenPending:
+            case iTermUntitledFileOpenComplete:
+                break;
+        }
+    }
 }
 
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender {
@@ -974,6 +1019,7 @@ static BOOL hasBecomeActive = NO;
                                   block:^(id before, id after) {
                                       [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
                                   }];
+    [self openUntitledFileBecameSafe];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
