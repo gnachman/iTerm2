@@ -1450,7 +1450,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                     }
                     [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
                         drawable = frameData.view.currentDrawable;
-                        D(@"%p DEFERRED PATH: got drawable %@ for frame %@", self, drawable, @(frameData.frameNumber));
+                        DLog(@"%p DEFERRED PATH: got drawable %@ for frame %@", self, drawable, @(frameData.frameNumber));
                         texture = drawable.texture;
                         renderPassDescriptor = frameData.view.currentRenderPassDescriptor;
                     }];
