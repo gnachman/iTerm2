@@ -861,13 +861,13 @@ static void HandleSigChld(int n) {
     // TODO: This server code is super scary so I'm NSLog'ing it to make it easier to recover
     // logs. These should eventually become DLog's and the log statements in the server should
     // become LOG_DEBUG level.
-    NSLog(@"tryToAttachToServerWithProcessId: Attempt to connect to server for pid %d", (int)thePid);
+    DLog(@"tryToAttachToServerWithProcessId: Attempt to connect to server for pid %d", (int)thePid);
     iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRun(thePid);
     if (!serverConnection.ok) {
         NSLog(@"Failed with error %s", serverConnection.error);
         return NO;
     } else {
-        NSLog(@"Succeeded.");
+        DLog(@"Succeeded.");
         [self attachToServer:serverConnection];
 
         // Prevent any future attempt to connect to this server as an orphan.
