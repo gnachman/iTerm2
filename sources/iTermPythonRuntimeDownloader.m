@@ -326,7 +326,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                           @"setup(name='%@',\n"
                           @"      version='1.0',\n"
                           @"      scripts=['%@/%@.py'],\n"
-                          @"      install_requires=[%@]\n"
+                          @"      install_requires=['iterm2',%@]\n"
                           @"      )",
                           name,
                           name,
