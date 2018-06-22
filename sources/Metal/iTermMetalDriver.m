@@ -1584,8 +1584,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [weakSelf dispatchAsyncToMainQueue:^{
             if (!self->_imageRenderer.rendererDisabled) {
                 iTermImageRendererTransientState *tState = [frameData transientStateForRenderer:self->_imageRenderer];
-                [weakSelf.dataSource metalDidFindImages:tState.missingImageUniqueIdentifiers
-                                          missingImages:tState.foundImageUniqueIdentifiers
+                [weakSelf.dataSource metalDidFindImages:tState.foundImageUniqueIdentifiers
+                                          missingImages:tState.missingImageUniqueIdentifiers
                                           animatedLines:tState.animatedLines];
             }
             [weakSelf.dataSource metalDriverDidDrawFrame:frameData.perFrameState];
