@@ -107,8 +107,10 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
             if (!_animatedImage) {
                 _image = [image retain];
             }
-            DLog(@"Loaded %@", self.uniqueIdentifier);
-            [[NSNotificationCenter defaultCenter] postNotificationName:iTermImageDidLoad object:self];
+            if (_image || _animatedImage) {
+                DLog(@"Loaded %@");
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermImageDidLoad object:self];
+            }
         });
     };
     _queuedBlock = [block copy];
@@ -244,6 +246,7 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
 }
 - (NSImage *)imageWithCellSize:(CGSize)cellSize timestamp:(NSTimeInterval)timestamp {
     if (!self.ready) {
+        DLog(@"%@ not ready", self.uniqueIdentifier);
         return nil;
     }
     if (!_embeddedImages) {
