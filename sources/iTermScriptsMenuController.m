@@ -212,7 +212,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchScriptWithAbsolutePath:(NSString *)fullPath {
     NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath checkForMain:YES];
     if (venv) {
-        [iTermAPIScriptLauncher launchScript:[fullPath stringByAppendingPathComponent:@"main.py"]
+        NSString *name = fullPath.lastPathComponent;
+        NSString *mainPyPath = [[[fullPath stringByAppendingPathComponent:name] stringByAppendingPathComponent:name] stringByAppendingPathExtension:@"py"];
+        [iTermAPIScriptLauncher launchScript:mainPyPath
                               withVirtualEnv:venv];
         return;
     }
@@ -325,8 +327,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)finishInstallingNewPythonScriptForPicker:(iTermScriptTemplatePickerWindowController *)picker
                                              url:(NSURL *)url  {
+    // destinationTemplatePath is a full path to the main.py file, e.g. foo/bar/bar/bar.py
     NSString *destinationTemplatePath = [self destinationTemplatePathForPicker:picker url:url];
     NSString *template = [self templateForPicker:picker url:url];
+    if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
+        [[NSFileManager defaultManager] createDirectoryAtPath:[url.path stringByAppendingPathComponent:url.path.lastPathComponent]
+                                  withIntermediateDirectories:YES
+                                                   attributes:nil
+                                                        error:nil];
+    }
     [template writeToURL:[NSURL fileURLWithPath:destinationTemplatePath]
               atomically:NO
                 encoding:NSUTF8StringEncoding
@@ -486,7 +495,14 @@ NS_ASSUME_NONNULL_BEGIN
                                            url:(NSURL *)url {
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
         NSString *folder = [self folderForFullEnvironmentSavePanelURL:url];
-        return [folder stringByAppendingPathComponent:@"main.py"];
+        NSString *name = url.path.lastPathComponent;
+        // For a path like foo/bar this returns foo/bar/bar/bar.py
+        // So the hierarchy looks like
+        // ~/Library/ApplicationSupport/iTerm2/Scripts/foo/bar/setup.py
+        // ~/Library/ApplicationSupport/iTerm2/Scripts/foo/bar/iterm2env
+        // ~/Library/ApplicationSupport/iTerm2/Scripts/foo/bar/bar/
+        // ~/Library/ApplicationSupport/iTerm2/Scripts/foo/bar/bar/bar.py
+        return [[folder stringByAppendingPathComponent:name] stringByAppendingPathComponent:[url.path.lastPathComponent stringByAppendingPathExtension:@"py"]];
     } else {
         return url.path;
     }
