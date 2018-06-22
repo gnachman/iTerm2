@@ -29,6 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _ranAutoLaunchScript;
     SCEvents *_events;
     NSArray<NSString *> *_allScripts;
+    NSInteger _disablePathWatcher;
 }
 
 - (instancetype)initWithMenu:(NSMenu *)menu {
@@ -308,6 +309,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                  usingBlock:^(NSNotification * _Nonnull note) {
                                                                      [pleaseWait.window makeKeyAndOrderFront:nil];
                                                                  }];
+        _disablePathWatcher++;
         [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder dependencies:dependencies completion:^(BOOL ok) {
             [[NSNotificationCenter defaultCenter] removeObserver:token];
             [pleaseWait.window close];
@@ -319,6 +321,8 @@ NS_ASSUME_NONNULL_BEGIN
                 return;
             }
             [self finishInstallingNewPythonScriptForPicker:picker url:url];
+            self->_disablePathWatcher--;
+            [self build];
         }];
     } else {
         [self finishInstallingNewPythonScriptForPicker:picker url:url];
@@ -605,6 +609,9 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - SCEventListenerProtocol
 
 - (void)pathWatcher:(SCEvents *)pathWatcher eventOccurred:(SCEvent *)event {
+    if (_disablePathWatcher) {
+        return;
+    }
     DLog(@"Path watcher noticed a change to scripts directory");
     [self build];
 }
