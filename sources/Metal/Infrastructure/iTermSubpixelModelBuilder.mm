@@ -241,7 +241,7 @@ static NSString *const iTermSubpixelModelString = @"O";
                                                                                 backgroundColor:backgroundComponent];
         [self interpolateValuesInMap:&map toByteArrayInData:subpixelModel.mutableTable offset:0 stride:1];
         if (backgroundComponent == 0) {
-            NSLog(@"Generated model for %f/%f", foregroundComponent, backgroundComponent);
+            DLog(@"Generated model for %f/%f", foregroundComponent, backgroundComponent);
         }
         //NSLog(@"Generated model for %f/%f\n%@", foregroundComponent, backgroundComponent, subpixelModel.table);
         _models[@(key)] = subpixelModel;

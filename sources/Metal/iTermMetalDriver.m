@@ -667,6 +667,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
+// Main thread
 - (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
     if (frameData.debugInfo) {
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
@@ -679,9 +680,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             frameData.destinationTexture = frameData.renderPassDescriptor.colorAttachments[0].texture;
         }];
     } else {
+#if ENABLE_DEFER_CURRENT_DRAWABLE
         const BOOL synchronousDraw = (_context.group != nil);
         frameData.deferCurrentDrawable = ([iTermPreferences boolForKey:kPreferenceKeyMetalMaximizeThroughput] &&
                                           !synchronousDraw);
+#else
+        frameData.deferCurrentDrawable = NO;
+#endif
         if (!frameData.deferCurrentDrawable) {
             [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
                 frameData.destinationDrawable = view.currentDrawable;
@@ -1425,67 +1430,82 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
+- (BOOL)deferredRequestCurrentDrawableWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                                              frameData:(iTermMetalFrameData *)frameData {
+    __block BOOL shouldCopyToDrawable = NO;
+    [frameData measureTimeForStat:iTermMetalFrameDataStatPqBlockOnSynchronousGetDrawable ofBlock:^{
+        // Get a drawable and then copy to it.
+        if (!self.waitingOnSynchronousDraw) {
+            dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+            __block BOOL timedOut = NO;
+            __block id<CAMetalDrawable> drawable = nil;
+            __block id<MTLTexture> texture = nil;
+            __block MTLRenderPassDescriptor *renderPassDescriptor = nil;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                dispatch_semaphore_signal(sema);
+                @synchronized(self) {
+                    if (timedOut) {
+                        DLog(@"** TIMED OUT %@ **", frameData);
+                        return;
+                    }
+                    [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
+                        drawable = frameData.view.currentDrawable;
+                        D(@"%p DEFERRED PATH: got drawable %@ for frame %@", self, drawable, @(frameData.frameNumber));
+                        texture = drawable.texture;
+                        renderPassDescriptor = frameData.view.currentRenderPassDescriptor;
+                    }];
+                }
+            });
+            // TODO: This could avoid false positives by polling every millisecond to see if
+            // waitingOnSynchronousDraw has become true.
+            const BOOL semaphoreTimeout =
+            (dispatch_semaphore_wait(sema,
+                                     dispatch_time(DISPATCH_TIME_NOW,
+                                                   (int64_t)(0.1 * NSEC_PER_SEC))) != 0);
+            @synchronized(self) {
+                if (semaphoreTimeout) {
+                    // This is usually because the main thread is wedged
+                    // waiting for a synchronous draw.
+                    DLog(@"** SEMAPHORE EXPIRED %@ **", frameData);
+                    timedOut = YES;
+                }
+                frameData.destinationDrawable = drawable;
+                frameData.destinationTexture = texture;
+                frameData.destinationTexture.label = @"Drawable destination";
+                frameData.renderPassDescriptor = renderPassDescriptor;
+            }
+        }
+        if (frameData.destinationTexture == nil) {
+            DLog(@"  abort: failed to get drawable or RPD %@", frameData);
+            self.needsDraw = YES;
+            [frameData.renderEncoder endEncoding];
+            [commandBuffer commit];
+            [self didComplete:NO withFrameData:frameData];
+        } else {
+            DLog(@"Continuing on %@", frameData);
+            shouldCopyToDrawable = YES;
+        }
+    }];
+    return shouldCopyToDrawable;
+}
+
 - (void)finishDrawingWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
                              frameData:(iTermMetalFrameData *)frameData {
-    __block BOOL shouldCopyToDrawable = NO;
+    BOOL shouldCopyToDrawable = NO;
 #if ENABLE_USE_TEMPORARY_TEXTURE
     shouldCopyToDrawable = YES;
 #endif
+#if ENABLE_DEFER_CURRENT_DRAWABLE
     if (frameData.deferCurrentDrawable) {
-        [frameData measureTimeForStat:iTermMetalFrameDataStatPqBlockOnSynchronousGetDrawable ofBlock:^{
-            // Get a drawable and then copy to it.
-            if (!self.waitingOnSynchronousDraw) {
-                dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-                __block BOOL timedOut = NO;
-                __block id<CAMetalDrawable> drawable = nil;
-                __block id<MTLTexture> texture = nil;
-                __block MTLRenderPassDescriptor *renderPassDescriptor = nil;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    dispatch_semaphore_signal(sema);
-                    @synchronized(self) {
-                        if (timedOut) {
-                            NSLog(@"** TIMED OUT **");
-                            return;
-                        }
-                        [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
-                            drawable = frameData.view.currentDrawable;
-                            texture = drawable.texture;
-                            renderPassDescriptor = frameData.view.currentRenderPassDescriptor;
-                        }];
-                    }
-                });
-#warning TODO: This could avoid false positives by polling every millisecond to see if waitingOnSynchronousDraw has become true.
-                const BOOL semaphoreTimeout =
-                    (dispatch_semaphore_wait(sema,
-                                             dispatch_time(DISPATCH_TIME_NOW,
-                                                           (int64_t)(0.1 * NSEC_PER_SEC))) != 0);
-                @synchronized(self) {
-                    if (semaphoreTimeout) {
-                        // This is usually because the main thread is wedged
-                        // waiting for a synchronous draw.
-                        NSLog(@"** SEMAPHORE EXPIRED **");
-                        timedOut = YES;
-                    }
-                    frameData.destinationDrawable = drawable;
-                    frameData.destinationTexture = texture;
-                    frameData.destinationTexture.label = @"Drawable destination";
-                    frameData.renderPassDescriptor = renderPassDescriptor;
-                }
-            }
-            if (frameData.destinationTexture == nil) {
-                DLog(@"  abort: failed to get drawable or RPD");
-                self.needsDraw = YES;
-                [frameData.renderEncoder endEncoding];
-                [commandBuffer commit];
-                [self didComplete:NO withFrameData:frameData];
-            } else {
-                shouldCopyToDrawable = YES;
-            }
-        }];
+        if ([self deferredRequestCurrentDrawableWithCommandBuffer:commandBuffer frameData:frameData]) {
+            shouldCopyToDrawable = YES;
+        }
         if (frameData.destinationTexture == nil) {
+            DLog(@"nil texture %@", frameData);
             return;
         }
     }
+#endif
     if (shouldCopyToDrawable) {
         // Copy to the drawable
         frameData.currentPass = 2;

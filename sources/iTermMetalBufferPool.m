@@ -7,6 +7,7 @@
 
 #import "iTermMetalBufferPool.h"
 
+#import "DebugLogging.h"
 #import "iTermHistogram.h"
 #import "NSArray+iTerm.h"
 #import <Metal/Metal.h>
@@ -172,7 +173,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
             memcpy(buffer.contents, bytes, size);
         } else {
             // size was larger than the largest item
-            NSLog(@"%@ allocating a new buffer of size %d (%d outstanding)", _name, (int)size, (int)_numberOutstanding);
+            DLog(@"%@ allocating a new buffer of size %d (%d outstanding)", _name, (int)size, (int)_numberOutstanding);
             buffer = [_device newBufferWithBytes:bytes length:size options:MTLResourceStorageModeShared];
         }
         [context addBuffer:buffer pool:self];
