@@ -575,7 +575,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
        markedRangeOnLine:(NSRange)markedRangeOnLine
                  context:(iTermMetalBufferPoolContext *)context
                 creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
-    DLog(@"BEGIN setGlyphKeysData for %@", self);
+    //DLog(@"BEGIN setGlyphKeysData for %@", self);
     ITDebugAssert(row == _backgroundColorRLEDataArray.count);
     [_backgroundColorRLEDataArray addObject:backgroundColorRLEData];
     const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.mutableBytes;
@@ -685,7 +685,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             }
         }
     }
-    DLog(@"END setGlyphKeysData for %@", self);
+    //DLog(@"END setGlyphKeysData for %@", self);
 }
 
 static vector_int3 SlowGetColorModelIndexForPIU(iTermTextRendererTransientState *self, iTermTextPIU *piu) {
