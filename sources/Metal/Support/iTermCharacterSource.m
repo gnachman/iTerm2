@@ -19,7 +19,7 @@ extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
 extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
 static const CGFloat iTermFakeItalicSkew = 0.4;
-static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 0.5;
+static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
 
 @implementation iTermCharacterSource {
     NSString *_string;
