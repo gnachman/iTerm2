@@ -322,12 +322,13 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         return [NSString stringWithFormat:@"'%@'", anObject];
     }];
     NSString *contents = [NSString stringWithFormat:
-                          @"from distutils.core import setup\n"
+                          @"from setuptools import setup\n"
                           @"setup(name='%@',\n"
                           @"      version='1.0',\n"
-                          @"      scripts=['%@.py'],\n"
+                          @"      scripts=['%@/%@.py'],\n"
                           @"      install_requires=[%@]\n"
                           @"      )",
+                          name,
                           name,
                           name,
                           [quotedDependencies componentsJoinedByString:@", "]];
