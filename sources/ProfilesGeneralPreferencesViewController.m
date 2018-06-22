@@ -251,7 +251,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [self->_titleSettings.menu removeItemAtIndex:idx];
     }];
 
-    NSArray<iTermTuple<NSString *, NSString *> *> *funcs = [[iTermAPIHelper sharedInstance] sessionTitleFunctions];
+    NSArray<iTermTuple<NSString *, NSString *> *> *funcs = [iTermAPIHelper sessionTitleFunctions];
     if (funcs.count) {
         NSMenuItem *separator = [NSMenuItem separatorItem];
         separator.identifier = @"";

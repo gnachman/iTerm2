@@ -42,6 +42,8 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
 
 NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAPIHelperFunctionCallErrorUserInfoKeyConnection";;
 
+static id sAPIHelperInstance;
+
 @interface iTermAllSessionsSubscription : NSObject
 @property (nonatomic, strong) ITMNotificationRequest *request;
 @property (nonatomic, copy) NSString *connectionKey;
@@ -136,12 +138,19 @@ NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAP
 }
 
 + (instancetype)sharedInstance {
-    static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] initPrivate];
+        sAPIHelperInstance = [[self alloc] initPrivate];
     });
-    return instance;
+    return sAPIHelperInstance;
+}
+
++ (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary {
+    return [sAPIHelperInstance registeredFunctionSignatureDictionary] ?: @{};
+}
+
++ (NSArray<iTermTuple<NSString *, NSString *> *> *)sessionTitleFunctions {
+    return [sAPIHelperInstance sessionTitleFunctions] ?: @[];
 }
 
 - (instancetype)initPrivate {

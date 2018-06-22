@@ -33,7 +33,7 @@
     self = [super init];
     if (self) {
         NSDictionary<NSString *,NSArray<NSString *> *> *signatures =
-            [[iTermAPIHelper sharedInstance] registeredFunctionSignatureDictionary];
+            [iTermAPIHelper registeredFunctionSignatureDictionary];
         Class suggesterClass = functionsOnly ? [iTermFunctionCallSuggester class] : [iTermSwiftyStringSuggester class];
         _suggester = [[suggesterClass alloc] initWithFunctionSignatures:signatures
                                                                   paths:paths];

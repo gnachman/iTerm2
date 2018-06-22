@@ -32,10 +32,10 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
                  completion:(iTermServerOriginatedRPCCompletionBlock)completion;
 
 // function name -> [ arg1, arg2, ... ]
-- (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
++ (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
 
 // Tuple is (display name, invocation).
-- (NSArray<iTermTuple<NSString *, NSString *> *> *)sessionTitleFunctions;
++ (NSArray<iTermTuple<NSString *, NSString *> *> *)sessionTitleFunctions;
 
 // Performs block either when the function becomes registered, immediately if it's already
 // registered, or after timeout (with an argument of YES) if it does not become registered
