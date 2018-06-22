@@ -108,7 +108,7 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
                 _image = [image retain];
             }
             if (_image || _animatedImage) {
-                DLog(@"Loaded %@");
+                DLog(@"Loaded %@", self.uniqueIdentifier);
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermImageDidLoad object:self];
             }
         });
