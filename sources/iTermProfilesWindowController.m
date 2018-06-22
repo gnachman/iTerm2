@@ -35,6 +35,11 @@
 
 static NSString *const kCloseBookmarksWindowAfterOpeningKey = @"CloseBookmarksWindowAfterOpening";
 
+@interface iTermProfilesWindowController()
+@property (nonatomic, strong) IBOutlet NSButton* tabButton;
+@property (nonatomic, strong) IBOutlet NSButton* windowButton;
+@end
+
 @interface iTermProfileWindowContentView : NSView
 @property (nonatomic, weak) iTermProfilesWindowController *windowController;
 @end
@@ -47,11 +52,16 @@ static NSString *const kCloseBookmarksWindowAfterOpeningKey = @"CloseBookmarksWi
     DLog(@"iTermProfileWindowContentView: Perform key equivalent: %@", event);
     if ([event.characters isEqualToString:@"\r"]) {
         if (event.modifierFlags & NSEventModifierFlagShift) {
-            [self.windowController openBookmarkInWindow:nil];
+            if (self.windowController.windowButton.isEnabled) {
+                [self.windowController openBookmarkInWindow:nil];
+                return YES;
+            }
         } else {
-            [self.windowController openBookmarkInTab:nil];
+            if (self.windowController.tabButton.isEnabled) {
+                [self.windowController openBookmarkInTab:nil];
+                return YES;
+            }
         }
-        return YES;
     }
     BOOL result = [super performKeyEquivalent:event];
     DLog(@"iTermProfileWindowContentView: Perform key equivalent returns %@", @(result));
@@ -100,12 +110,13 @@ typedef enum {
     IBOutlet NSSegmentedControl* actions_;
     IBOutlet NSButton* horizontalPaneButton_;
     IBOutlet NSButton* verticalPaneButton_;
-    IBOutlet NSButton* tabButton_;
-    IBOutlet NSButton* windowButton_;
     IBOutlet NSButton* closeAfterOpeningBookmark_;
     IBOutlet NSButton* newTabsInNewWindowButton_;
     IBOutlet NSButton* toggleTagsButton_;
 }
+
+@synthesize tabButton = tabButton_;
+@synthesize windowButton = windowButton_;
 
 + (iTermProfilesWindowController*)sharedInstance {
     static iTermProfilesWindowController* instance;
