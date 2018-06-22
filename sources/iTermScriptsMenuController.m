@@ -351,6 +351,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSTokenField *tokenField = [[NSTokenField alloc] initWithFrame:NSMakeRect(0, 0, 100, 22)];
     tokenField.tokenizingCharacterSet = [NSCharacterSet whitespaceCharacterSet];
     tokenField.placeholderString = @"Package names separated by spaces";
+    tokenField.font = [NSFont systemFontOfSize:13];
     return tokenField;
 }
 
@@ -358,17 +359,67 @@ NS_ASSUME_NONNULL_BEGIN
     NSTextField *label = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 5, 60, 22)];
     [label setEditable:NO];
     [label setStringValue:@"PyPI Dependencies:"];
+    label.font = [NSFont systemFontOfSize:13];
     [label setBordered:NO];
     [label setBezeled:NO];
     [label setDrawsBackground:NO];
     [label sizeToFit];
 
     const CGFloat tokenFieldWidth = 300;
-    const CGFloat margin = 5;
+    const CGFloat margin = 9;
     NSView  *accessoryView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, NSMaxX(tokenField.frame) + margin + tokenFieldWidth, 32)];
     [accessoryView addSubview:label];
     [accessoryView addSubview:tokenField];
     tokenField.frame = NSMakeRect(NSMaxX(label.frame) + margin, 5, tokenFieldWidth, 22);
+
+    accessoryView.translatesAutoresizingMaskIntoConstraints = NO;
+    label.translatesAutoresizingMaskIntoConstraints = NO;
+    tokenField.translatesAutoresizingMaskIntoConstraints = NO;
+
+    const CGFloat sideMargin = 9;
+    const CGFloat verticalMargin = 5;
+    [accessoryView addConstraint:[NSLayoutConstraint constraintWithItem:label
+                                                              attribute:NSLayoutAttributeLeading
+                                                              relatedBy:NSLayoutRelationEqual
+                                                                 toItem:accessoryView
+                                                              attribute:NSLayoutAttributeLeading
+                                                             multiplier:1
+                                                               constant:sideMargin]];
+    [accessoryView addConstraint:[NSLayoutConstraint constraintWithItem:tokenField
+                                                              attribute:NSLayoutAttributeLeading
+                                                              relatedBy:NSLayoutRelationEqual
+                                                                 toItem:label
+                                                              attribute:NSLayoutAttributeTrailing
+                                                             multiplier:1
+                                                               constant:5]];
+    [accessoryView addConstraint:[NSLayoutConstraint constraintWithItem:tokenField
+                                                              attribute:NSLayoutAttributeTrailing
+                                                              relatedBy:NSLayoutRelationEqual
+                                                                 toItem:accessoryView
+                                                              attribute:NSLayoutAttributeTrailing
+                                                             multiplier:1
+                                                               constant:-sideMargin]];
+    [accessoryView addConstraint:[NSLayoutConstraint constraintWithItem:tokenField
+                                                              attribute:NSLayoutAttributeBottom
+                                                              relatedBy:NSLayoutRelationEqual
+                                                                 toItem:accessoryView
+                                                              attribute:NSLayoutAttributeBottom
+                                                             multiplier:1
+                                                               constant:-verticalMargin]];
+    [accessoryView addConstraint:[NSLayoutConstraint constraintWithItem:tokenField
+                                                              attribute:NSLayoutAttributeBaseline
+                                                              relatedBy:NSLayoutRelationEqual
+                                                                 toItem:label
+                                                              attribute:NSLayoutAttributeBaseline
+                                                             multiplier:1
+                                                               constant:0]];
+    [accessoryView addConstraint:[NSLayoutConstraint constraintWithItem:tokenField
+                                                              attribute:NSLayoutAttributeTop
+                                                              relatedBy:NSLayoutRelationEqual
+                                                                 toItem:accessoryView
+                                                              attribute:NSLayoutAttributeTop
+                                                             multiplier:1
+                                                               constant:verticalMargin]];
 
     return accessoryView;
 }
