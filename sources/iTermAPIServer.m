@@ -694,6 +694,16 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
+- (void)handleTmuxRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+    ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
+
+    __weak __typeof(self) weakSelf = self;
+    [_delegate apiServerTmuxRequest:request.tmuxRequest handler:^(ITMTmuxResponse *theResponse) {
+        response.tmuxResponse = theResponse;
+        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
+    }];
+}
+
 // Runs on main queue, either in or not in a transaction.
 - (void)dispatchRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     DLog(@"Got request %@", request);
@@ -806,6 +816,10 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
         case ITMClientOriginatedMessage_Submessage_OneOfCase_GetBroadcastDomainsRequest:
             [self handleGetBroadcastDomainsRequest:request connection:webSocketConnection];
+            break;
+
+        case ITMClientOriginatedMessage_Submessage_OneOfCase_TmuxRequest:
+            [self handleTmuxRequest:request connection:webSocketConnection];
             break;
     }
 }

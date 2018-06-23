@@ -175,6 +175,7 @@ BOOL ITMModifiers_IsValidValue(int32_t value__) {
 @dynamic menuItemRequest;
 @dynamic setTabLayoutRequest;
 @dynamic getBroadcastDomainsRequest;
+@dynamic tmuxRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -202,6 +203,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMMenuItemRequest *menuItemRequest;
   ITMSetTabLayoutRequest *setTabLayoutRequest;
   ITMGetBroadcastDomainsRequest *getBroadcastDomainsRequest;
+  ITMTmuxRequest *tmuxRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -436,6 +438,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "tmuxRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_TmuxRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, tmuxRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -495,6 +506,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic menuItemResponse;
 @dynamic setTabLayoutResponse;
 @dynamic getBroadcastDomainsResponse;
+@dynamic tmuxResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -524,6 +536,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMMenuItemResponse *menuItemResponse;
   ITMSetTabLayoutResponse *setTabLayoutResponse;
   ITMGetBroadcastDomainsResponse *getBroadcastDomainsResponse;
+  ITMTmuxResponse *tmuxResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -769,6 +782,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "tmuxResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_TmuxResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, tmuxResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
@@ -805,6 +827,535 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMTmuxRequest
+
+@implementation ITMTmuxRequest
+
+@dynamic payloadOneOfCase;
+@dynamic listConnections;
+@dynamic sendCommand;
+@dynamic setWindowVisible;
+
+typedef struct ITMTmuxRequest__storage_ {
+  uint32_t _has_storage_[2];
+  ITMTmuxRequest_ListConnections *listConnections;
+  ITMTmuxRequest_SendCommand *sendCommand;
+  ITMTmuxRequest_SetWindowVisible *setWindowVisible;
+} ITMTmuxRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "listConnections",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxRequest_ListConnections),
+        .number = ITMTmuxRequest_FieldNumber_ListConnections,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTmuxRequest__storage_, listConnections),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "sendCommand",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxRequest_SendCommand),
+        .number = ITMTmuxRequest_FieldNumber_SendCommand,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTmuxRequest__storage_, sendCommand),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "setWindowVisible",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxRequest_SetWindowVisible),
+        .number = ITMTmuxRequest_FieldNumber_SetWindowVisible,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTmuxRequest__storage_, setWindowVisible),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTmuxRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTmuxRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    static const char *oneofs[] = {
+      "payload",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+void ITMTmuxRequest_ClearPayloadOneOfCase(ITMTmuxRequest *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
+#pragma mark - ITMTmuxRequest_ListConnections
+
+@implementation ITMTmuxRequest_ListConnections
+
+
+typedef struct ITMTmuxRequest_ListConnections__storage_ {
+  uint32_t _has_storage_[1];
+} ITMTmuxRequest_ListConnections__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTmuxRequest_ListConnections class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:NULL
+                                    fieldCount:0
+                                   storageSize:sizeof(ITMTmuxRequest_ListConnections__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTmuxRequest_SendCommand
+
+@implementation ITMTmuxRequest_SendCommand
+
+@dynamic hasConnectionId, connectionId;
+@dynamic hasCommand, command;
+
+typedef struct ITMTmuxRequest_SendCommand__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *connectionId;
+  NSString *command;
+} ITMTmuxRequest_SendCommand__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "connectionId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMTmuxRequest_SendCommand_FieldNumber_ConnectionId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTmuxRequest_SendCommand__storage_, connectionId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "command",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMTmuxRequest_SendCommand_FieldNumber_Command,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMTmuxRequest_SendCommand__storage_, command),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTmuxRequest_SendCommand class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTmuxRequest_SendCommand__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTmuxRequest_SetWindowVisible
+
+@implementation ITMTmuxRequest_SetWindowVisible
+
+@dynamic hasConnectionId, connectionId;
+@dynamic hasWindowId, windowId;
+@dynamic hasVisible, visible;
+
+typedef struct ITMTmuxRequest_SetWindowVisible__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *connectionId;
+  NSString *windowId;
+} ITMTmuxRequest_SetWindowVisible__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "connectionId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMTmuxRequest_SetWindowVisible_FieldNumber_ConnectionId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTmuxRequest_SetWindowVisible__storage_, connectionId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "windowId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMTmuxRequest_SetWindowVisible_FieldNumber_WindowId,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMTmuxRequest_SetWindowVisible__storage_, windowId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "visible",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMTmuxRequest_SetWindowVisible_FieldNumber_Visible,
+        .hasIndex = 2,
+        .offset = 3,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTmuxRequest_SetWindowVisible class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTmuxRequest_SetWindowVisible__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTmuxResponse
+
+@implementation ITMTmuxResponse
+
+@dynamic payloadOneOfCase;
+@dynamic listConnections;
+@dynamic sendCommand;
+@dynamic setWindowVisible;
+@dynamic hasStatus, status;
+
+typedef struct ITMTmuxResponse__storage_ {
+  uint32_t _has_storage_[2];
+  ITMTmuxResponse_Status status;
+  ITMTmuxResponse_ListConnections *listConnections;
+  ITMTmuxResponse_SendCommand *sendCommand;
+  ITMTmuxResponse_SetWindowVisible *setWindowVisible;
+} ITMTmuxResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "listConnections",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxResponse_ListConnections),
+        .number = ITMTmuxResponse_FieldNumber_ListConnections,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTmuxResponse__storage_, listConnections),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "sendCommand",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxResponse_SendCommand),
+        .number = ITMTmuxResponse_FieldNumber_SendCommand,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTmuxResponse__storage_, sendCommand),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "setWindowVisible",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxResponse_SetWindowVisible),
+        .number = ITMTmuxResponse_FieldNumber_SetWindowVisible,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTmuxResponse__storage_, setWindowVisible),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMTmuxResponse_Status_EnumDescriptor,
+        .number = ITMTmuxResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTmuxResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTmuxResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTmuxResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    static const char *oneofs[] = {
+      "payload",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+void ITMTmuxResponse_ClearPayloadOneOfCase(ITMTmuxResponse *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
+#pragma mark - Enum ITMTmuxResponse_Status
+
+GPBEnumDescriptor *ITMTmuxResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000InvalidRequest\000InvalidConnectionId\000In"
+        "validWindowId\000";
+    static const int32_t values[] = {
+        ITMTmuxResponse_Status_Ok,
+        ITMTmuxResponse_Status_InvalidRequest,
+        ITMTmuxResponse_Status_InvalidConnectionId,
+        ITMTmuxResponse_Status_InvalidWindowId,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMTmuxResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMTmuxResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMTmuxResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMTmuxResponse_Status_Ok:
+    case ITMTmuxResponse_Status_InvalidRequest:
+    case ITMTmuxResponse_Status_InvalidConnectionId:
+    case ITMTmuxResponse_Status_InvalidWindowId:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - ITMTmuxResponse_ListConnections
+
+@implementation ITMTmuxResponse_ListConnections
+
+@dynamic connectionsArray, connectionsArray_Count;
+
+typedef struct ITMTmuxResponse_ListConnections__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *connectionsArray;
+} ITMTmuxResponse_ListConnections__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "connectionsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxResponse_ListConnections_Connection),
+        .number = ITMTmuxResponse_ListConnections_FieldNumber_ConnectionsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMTmuxResponse_ListConnections__storage_, connectionsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTmuxResponse_ListConnections class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTmuxResponse_ListConnections__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxResponse)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTmuxResponse_ListConnections_Connection
+
+@implementation ITMTmuxResponse_ListConnections_Connection
+
+@dynamic hasConnectionId, connectionId;
+@dynamic hasOwningSessionId, owningSessionId;
+
+typedef struct ITMTmuxResponse_ListConnections_Connection__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *connectionId;
+  NSString *owningSessionId;
+} ITMTmuxResponse_ListConnections_Connection__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "connectionId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMTmuxResponse_ListConnections_Connection_FieldNumber_ConnectionId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTmuxResponse_ListConnections_Connection__storage_, connectionId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "owningSessionId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMTmuxResponse_ListConnections_Connection_FieldNumber_OwningSessionId,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMTmuxResponse_ListConnections_Connection__storage_, owningSessionId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTmuxResponse_ListConnections_Connection class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTmuxResponse_ListConnections_Connection__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxResponse_ListConnections)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTmuxResponse_SendCommand
+
+@implementation ITMTmuxResponse_SendCommand
+
+@dynamic hasOutput, output;
+
+typedef struct ITMTmuxResponse_SendCommand__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *output;
+} ITMTmuxResponse_SendCommand__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "output",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMTmuxResponse_SendCommand_FieldNumber_Output,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTmuxResponse_SendCommand__storage_, output),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTmuxResponse_SendCommand class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTmuxResponse_SendCommand__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxResponse)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTmuxResponse_SetWindowVisible
+
+@implementation ITMTmuxResponse_SetWindowVisible
+
+
+typedef struct ITMTmuxResponse_SetWindowVisible__storage_ {
+  uint32_t _has_storage_[1];
+} ITMTmuxResponse_SetWindowVisible__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTmuxResponse_SetWindowVisible class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:NULL
+                                    fieldCount:0
+                                   storageSize:sizeof(ITMTmuxResponse_SetWindowVisible__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxResponse)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMGetBroadcastDomainsRequest
 
 @implementation ITMGetBroadcastDomainsRequest
@@ -6459,11 +7010,13 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
 
 @dynamic hasRoot, root;
 @dynamic hasTabId, tabId;
+@dynamic hasTmuxWindowId, tmuxWindowId;
 
 typedef struct ITMListSessionsResponse_Tab__storage_ {
   uint32_t _has_storage_[1];
   NSString *tabId;
   ITMSplitTreeNode *root;
+  NSString *tmuxWindowId;
 } ITMListSessionsResponse_Tab__storage_;
 
 // This method is threadsafe because it is initially called
@@ -6489,6 +7042,15 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, root),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "tmuxWindowId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMListSessionsResponse_Tab_FieldNumber_TmuxWindowId,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, tmuxWindowId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
       },
     };
     GPBDescriptor *localDescriptor =

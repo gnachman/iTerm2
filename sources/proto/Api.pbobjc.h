@@ -110,6 +110,15 @@ CF_EXTERN_C_BEGIN
 @class ITMSplitTreeNode;
 @class ITMSplitTreeNode_SplitTreeLink;
 @class ITMTerminateSessionNotification;
+@class ITMTmuxRequest;
+@class ITMTmuxRequest_ListConnections;
+@class ITMTmuxRequest_SendCommand;
+@class ITMTmuxRequest_SetWindowVisible;
+@class ITMTmuxResponse;
+@class ITMTmuxResponse_ListConnections;
+@class ITMTmuxResponse_ListConnections_Connection;
+@class ITMTmuxResponse_SendCommand;
+@class ITMTmuxResponse_SetWindowVisible;
 @class ITMTransactionRequest;
 @class ITMTransactionResponse;
 @class ITMVariableRequest;
@@ -163,6 +172,23 @@ GPBEnumDescriptor *ITMModifiers_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMModifiers_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMTmuxResponse_Status
+
+typedef GPB_ENUM(ITMTmuxResponse_Status) {
+  ITMTmuxResponse_Status_Ok = 0,
+  ITMTmuxResponse_Status_InvalidRequest = 1,
+  ITMTmuxResponse_Status_InvalidConnectionId = 2,
+  ITMTmuxResponse_Status_InvalidWindowId = 3,
+};
+
+GPBEnumDescriptor *ITMTmuxResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMTmuxResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMSetTabLayoutResponse_Status
 
@@ -659,6 +685,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_MenuItemRequest = 121,
   ITMClientOriginatedMessage_FieldNumber_SetTabLayoutRequest = 122,
   ITMClientOriginatedMessage_FieldNumber_GetBroadcastDomainsRequest = 123,
+  ITMClientOriginatedMessage_FieldNumber_TmuxRequest = 124,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -687,6 +714,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_MenuItemRequest = 121,
   ITMClientOriginatedMessage_Submessage_OneOfCase_SetTabLayoutRequest = 122,
   ITMClientOriginatedMessage_Submessage_OneOfCase_GetBroadcastDomainsRequest = 123,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_TmuxRequest = 124,
 };
 
 /**
@@ -748,6 +776,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetBroadcastDomainsRequest *getBroadcastDomainsRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMTmuxRequest *tmuxRequest;
+
 @end
 
 /**
@@ -784,6 +814,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_MenuItemResponse = 121,
   ITMServerOriginatedMessage_FieldNumber_SetTabLayoutResponse = 122,
   ITMServerOriginatedMessage_FieldNumber_GetBroadcastDomainsResponse = 123,
+  ITMServerOriginatedMessage_FieldNumber_TmuxResponse = 124,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -814,6 +845,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_MenuItemResponse = 121,
   ITMServerOriginatedMessage_Submessage_OneOfCase_SetTabLayoutResponse = 122,
   ITMServerOriginatedMessage_Submessage_OneOfCase_GetBroadcastDomainsResponse = 123,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_TmuxResponse = 124,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -880,6 +912,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMGetBroadcastDomainsResponse *getBroadcastDomainsResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMTmuxResponse *tmuxResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 
@@ -889,6 +923,176 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
  * Clears whatever value was set for the oneof 'submessage'.
  **/
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
+
+#pragma mark - ITMTmuxRequest
+
+typedef GPB_ENUM(ITMTmuxRequest_FieldNumber) {
+  ITMTmuxRequest_FieldNumber_ListConnections = 1,
+  ITMTmuxRequest_FieldNumber_SendCommand = 2,
+  ITMTmuxRequest_FieldNumber_SetWindowVisible = 3,
+};
+
+typedef GPB_ENUM(ITMTmuxRequest_Payload_OneOfCase) {
+  ITMTmuxRequest_Payload_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMTmuxRequest_Payload_OneOfCase_ListConnections = 1,
+  ITMTmuxRequest_Payload_OneOfCase_SendCommand = 2,
+  ITMTmuxRequest_Payload_OneOfCase_SetWindowVisible = 3,
+};
+
+@interface ITMTmuxRequest : GPBMessage
+
+@property(nonatomic, readonly) ITMTmuxRequest_Payload_OneOfCase payloadOneOfCase;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTmuxRequest_ListConnections *listConnections;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTmuxRequest_SendCommand *sendCommand;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTmuxRequest_SetWindowVisible *setWindowVisible;
+
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'payload'.
+ **/
+void ITMTmuxRequest_ClearPayloadOneOfCase(ITMTmuxRequest *message);
+
+#pragma mark - ITMTmuxRequest_ListConnections
+
+@interface ITMTmuxRequest_ListConnections : GPBMessage
+
+@end
+
+#pragma mark - ITMTmuxRequest_SendCommand
+
+typedef GPB_ENUM(ITMTmuxRequest_SendCommand_FieldNumber) {
+  ITMTmuxRequest_SendCommand_FieldNumber_ConnectionId = 1,
+  ITMTmuxRequest_SendCommand_FieldNumber_Command = 2,
+};
+
+@interface ITMTmuxRequest_SendCommand : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *connectionId;
+/** Test to see if @c connectionId has been set. */
+@property(nonatomic, readwrite) BOOL hasConnectionId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *command;
+/** Test to see if @c command has been set. */
+@property(nonatomic, readwrite) BOOL hasCommand;
+
+@end
+
+#pragma mark - ITMTmuxRequest_SetWindowVisible
+
+typedef GPB_ENUM(ITMTmuxRequest_SetWindowVisible_FieldNumber) {
+  ITMTmuxRequest_SetWindowVisible_FieldNumber_ConnectionId = 1,
+  ITMTmuxRequest_SetWindowVisible_FieldNumber_WindowId = 2,
+  ITMTmuxRequest_SetWindowVisible_FieldNumber_Visible = 3,
+};
+
+@interface ITMTmuxRequest_SetWindowVisible : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *connectionId;
+/** Test to see if @c connectionId has been set. */
+@property(nonatomic, readwrite) BOOL hasConnectionId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+/** Test to see if @c windowId has been set. */
+@property(nonatomic, readwrite) BOOL hasWindowId;
+
+@property(nonatomic, readwrite) BOOL visible;
+
+@property(nonatomic, readwrite) BOOL hasVisible;
+@end
+
+#pragma mark - ITMTmuxResponse
+
+typedef GPB_ENUM(ITMTmuxResponse_FieldNumber) {
+  ITMTmuxResponse_FieldNumber_ListConnections = 1,
+  ITMTmuxResponse_FieldNumber_SendCommand = 2,
+  ITMTmuxResponse_FieldNumber_SetWindowVisible = 3,
+  ITMTmuxResponse_FieldNumber_Status = 4,
+};
+
+typedef GPB_ENUM(ITMTmuxResponse_Payload_OneOfCase) {
+  ITMTmuxResponse_Payload_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMTmuxResponse_Payload_OneOfCase_ListConnections = 1,
+  ITMTmuxResponse_Payload_OneOfCase_SendCommand = 2,
+  ITMTmuxResponse_Payload_OneOfCase_SetWindowVisible = 3,
+};
+
+@interface ITMTmuxResponse : GPBMessage
+
+@property(nonatomic, readonly) ITMTmuxResponse_Payload_OneOfCase payloadOneOfCase;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTmuxResponse_ListConnections *listConnections;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTmuxResponse_SendCommand *sendCommand;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTmuxResponse_SetWindowVisible *setWindowVisible;
+
+@property(nonatomic, readwrite) ITMTmuxResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'payload'.
+ **/
+void ITMTmuxResponse_ClearPayloadOneOfCase(ITMTmuxResponse *message);
+
+#pragma mark - ITMTmuxResponse_ListConnections
+
+typedef GPB_ENUM(ITMTmuxResponse_ListConnections_FieldNumber) {
+  ITMTmuxResponse_ListConnections_FieldNumber_ConnectionsArray = 1,
+};
+
+@interface ITMTmuxResponse_ListConnections : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMTmuxResponse_ListConnections_Connection*> *connectionsArray;
+/** The number of items in @c connectionsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger connectionsArray_Count;
+
+@end
+
+#pragma mark - ITMTmuxResponse_ListConnections_Connection
+
+typedef GPB_ENUM(ITMTmuxResponse_ListConnections_Connection_FieldNumber) {
+  ITMTmuxResponse_ListConnections_Connection_FieldNumber_ConnectionId = 1,
+  ITMTmuxResponse_ListConnections_Connection_FieldNumber_OwningSessionId = 2,
+};
+
+@interface ITMTmuxResponse_ListConnections_Connection : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *connectionId;
+/** Test to see if @c connectionId has been set. */
+@property(nonatomic, readwrite) BOOL hasConnectionId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *owningSessionId;
+/** Test to see if @c owningSessionId has been set. */
+@property(nonatomic, readwrite) BOOL hasOwningSessionId;
+
+@end
+
+#pragma mark - ITMTmuxResponse_SendCommand
+
+typedef GPB_ENUM(ITMTmuxResponse_SendCommand_FieldNumber) {
+  ITMTmuxResponse_SendCommand_FieldNumber_Output = 1,
+};
+
+@interface ITMTmuxResponse_SendCommand : GPBMessage
+
+/** If not set, an error occurred. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *output;
+/** Test to see if @c output has been set. */
+@property(nonatomic, readwrite) BOOL hasOutput;
+
+@end
+
+#pragma mark - ITMTmuxResponse_SetWindowVisible
+
+@interface ITMTmuxResponse_SetWindowVisible : GPBMessage
+
+@end
 
 #pragma mark - ITMGetBroadcastDomainsRequest
 
@@ -1222,7 +1426,7 @@ typedef GPB_ENUM(ITMVariableRequest_FieldNumber) {
 
 @interface ITMVariableRequest : GPBMessage
 
-/** "all" is allowed only if no gets (only sets allowed) */
+/** TODO: Add a scope so you can get variables from a tab or app */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
 /** Test to see if @c sessionId has been set. */
 @property(nonatomic, readwrite) BOOL hasSessionId;
@@ -2880,6 +3084,7 @@ typedef GPB_ENUM(ITMListSessionsResponse_Window_FieldNumber) {
 typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
   ITMListSessionsResponse_Tab_FieldNumber_TabId = 2,
   ITMListSessionsResponse_Tab_FieldNumber_Root = 3,
+  ITMListSessionsResponse_Tab_FieldNumber_TmuxWindowId = 4,
 };
 
 @interface ITMListSessionsResponse_Tab : GPBMessage
@@ -2891,6 +3096,10 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *tabId;
 /** Test to see if @c tabId has been set. */
 @property(nonatomic, readwrite) BOOL hasTabId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tmuxWindowId;
+/** Test to see if @c tmuxWindowId has been set. */
+@property(nonatomic, readwrite) BOOL hasTmuxWindowId;
 
 @end
 

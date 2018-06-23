@@ -392,6 +392,31 @@ async def set_grid_size(connection, args):
   s = a.get_session_by_id(args.session)
   await s.async_set_grid_size(iterm2.Size(args.width, args.height))
 
+async def list_tmux_connections(connection, args):
+  connections = await iterm2.async_get_tmux_connections(connection)
+  for connection in connections:
+    print("Connection ID: {}\nOwning session: {}".format(connection.connection_id, connection.owning_session))
+
+async def send_tmux_command(connection, args):
+  connections = await iterm2.async_get_tmux_connections(connection)
+  ids = []
+  for connection in connections:
+    if connection.connection_id == args.connection_id:
+      print(await connection.async_send_command(args.command))
+      return;
+    ids.append(connection.connection_id)
+  print("No connection with id {} found. Have: {}".format(args.connection_id, ", ".join(ids)))
+
+async def set_tmux_window_visible(connection, args):
+  connections = await iterm2.async_get_tmux_connections(connection)
+  ids = []
+  for connection in connections:
+    if connection.connection_id == args.connection_id:
+      await connection.async_set_tmux_window_visible(args.window_id, args.visible)
+      return;
+    ids.append(connection.connection_id)
+  print("No connection with id {} found. Have: {}".format(args.connection_id, ", ".join(ids)))
+
 def make_parser():
   parser = argparse.ArgumentParser(description='iTerm2 CLI')
   subparsers = parser.add_subparsers(help='Commands')
@@ -506,6 +531,22 @@ def make_parser():
   set_grid_size_parser.add_argument("width", type=int, help="Width in columns")
   set_grid_size_parser.add_argument("height", type=int, help="Height in rows")
   set_grid_size_parser.set_defaults(func=set_grid_size)
+
+  list_tmux_connections_parser = subparsers.add_parser("list-tmux-connections", help="List tmux integration connections")
+  list_tmux_connections_parser.set_defaults(func=list_tmux_connections)
+
+  send_tmux_command_parser = subparsers.add_parser("send-tmux-command", help="Send a tmux command to a tmux integration connection")
+  send_tmux_command_parser.add_argument("connection_id", type=str, help="tmux connection ID")
+  send_tmux_command_parser.add_argument("command", type=str, help="Command to send")
+  send_tmux_command_parser.set_defaults(func=send_tmux_command)
+
+  set_tmux_window_visible_parser = subparsers.add_parser("set-tmux-window-visible", help="Show or hide a tmux integration window (represented as a tab in iTerm2)")
+  set_tmux_window_visible_parser.add_argument("connection_id", type=str, help="tmux connection ID")
+  set_tmux_window_visible_parser.add_argument("window_id", type=str, help="tmux window ID (number)")
+  set_tmux_window_visible_parser.add_argument('--visible', dest='visible', action='store_true')
+  set_tmux_window_visible_parser.add_argument('--no-visible', dest='visible', action='store_false')
+  set_tmux_window_visible_parser.set_defaults(visible=True)
+  set_tmux_window_visible_parser.set_defaults(func=set_tmux_window_visible)
 
   return parser
 

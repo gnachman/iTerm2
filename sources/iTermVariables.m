@@ -23,6 +23,7 @@ NSString *const iTermVariableKeyApplicationPID = @"pid";
 
 NSString *const iTermVariableKeyTabTitleOverride = @"titleOverride";
 NSString *const iTermVariableKeyTabCurrentSession = @"currentSession";
+NSString *const iTermVariableKeyTabTmuxWindow = @"tmuxWindow";
 
 NSString *const iTermVariableKeySessionAutoLogID = @"session.autoLogId";
 NSString *const iTermVariableKeySessionColumns = @"session.columns";
@@ -46,6 +47,7 @@ NSString *const iTermVariableKeySessionTmuxWindowTitle = @"session.tmuxWindowTit
 NSString *const iTermVariableKeySessionTmuxRole = @"session.tmuxRole";
 NSString *const iTermVariableKeySessionTmuxClientName = @"session.tmuxClientName";
 NSString *const iTermVariableKeySessionAutoName = @"session.autoName";
+NSString *const iTermVariableKeySessionTmuxWindowPane = @"session.tmuxWindowPane";
 // NOTE: If you add here, also update +recordBuiltInVariables
 
 @implementation iTermVariables {
@@ -88,7 +90,8 @@ NSString *const iTermVariableKeySessionAutoName = @"session.autoName";
                                     iTermVariableKeySessionTmuxWindowTitle,
                                     iTermVariableKeySessionTmuxRole,
                                     iTermVariableKeySessionTmuxClientName,
-                                    iTermVariableKeySessionAutoName ];
+                                    iTermVariableKeySessionAutoName,
+                                    iTermVariableKeySessionTmuxWindowPane, ];
     [names enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [self recordUseOfVariableNamed:obj inContext:iTermVariablesSuggestionContextSession];
     }];
@@ -96,8 +99,9 @@ NSString *const iTermVariableKeySessionAutoName = @"session.autoName";
     // Tab context
     [self recordUseOfVariableNamed:iTermVariableKeyTabTitleOverride inContext:iTermVariablesSuggestionContextTab];
     [self recordUseOfVariableNamed:iTermVariableKeyTabCurrentSession inContext:iTermVariablesSuggestionContextTab];
+    [self recordUseOfVariableNamed:iTermVariableKeyTabTmuxWindow inContext:iTermVariablesSuggestionContextTab];
 
-    // App cnotext
+    // App context
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationPID inContext:iTermVariablesSuggestionContextApp];
 }
 

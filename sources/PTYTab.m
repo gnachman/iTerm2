@@ -167,10 +167,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // If true, report that the tab's ideal size is its currentSize.
     BOOL reportIdeal_;
 
-    // If this window is a tmux client, this is the window number defined by
-    // the tmux server. -1 if not a tmux client.
-    int tmuxWindow_;
-
     // If positive, then a tmux-originated resize is in progress and splitter
     // delegates won't interfere.
     int tmuxOriginatedResizeInProgress_;
@@ -318,10 +314,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self setRoot:[[[PTYSplitView alloc] init] autorelease]];
         PTYTab *oldTab = (PTYTab *)[session delegate];
         if (oldTab && [oldTab tmuxWindow] >= 0) {
-            tmuxWindow_ = [oldTab tmuxWindow];
+            self.tmuxWindow = [oldTab tmuxWindow];
             tmuxController_ = [[oldTab tmuxController] retain];
             parseTree_ = [oldTab->parseTree_ retain];
-            [tmuxController_ changeWindow:tmuxWindow_ tabTo:self];
+            [tmuxController_ changeWindow:self.tmuxWindow tabTo:self];
         }
         session.delegate = self;
         [root_ addSubview:[session view]];
@@ -353,9 +349,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                            capacity:1] autorelease];
     _tabNumberForItermSessionId = -1;
     hiddenLiveViews_ = [[NSMutableArray alloc] init];
-    tmuxWindow_ = -1;
     _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab];
     _variables.delegate = self;
+    self.tmuxWindow = -1;
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
                                                  name:kUpdateLabelsNotification
@@ -2919,7 +2915,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (int)tmuxWindow {
-    return tmuxWindow_;
+    return [[[self variablesScope] valueForVariableName:iTermVariableKeyTabTmuxWindow] intValue];
+}
+
+- (void)setTmuxWindow:(int)window {
+    assert(self.variables);
+    assert([self variablesScope]);
+    [[self variablesScope] setValue:@(window) forVariableNamed:iTermVariableKeyTabTmuxWindow];
 }
 
 - (NSString *)tmuxWindowName {
@@ -3020,7 +3022,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 
 
-    theTab->tmuxWindow_ = tmuxWindow;
+    theTab.tmuxWindow = tmuxWindow;
     theTab->parseTree_ = [parseTree retain];
 
     if ([parseTree[kLayoutDictTabOpenedManually] boolValue]) {
@@ -3459,7 +3461,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             // This is a new pane so register it.
             [tmuxController_ registerSession:aSession
                                     withPane:[aSession tmuxPane]
-                                    inWindow:tmuxWindow_];
+                                    inWindow:self.tmuxWindow];
             [aSession setTmuxController:tmuxController_];
         }
         [aSession.view setShowTitle:showTitles adjustScrollView:NO];

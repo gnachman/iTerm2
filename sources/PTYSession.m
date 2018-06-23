@@ -341,7 +341,6 @@ static NSString *const iTermSessionTitleSession = @"session";
     NSTimer *_tailFindTimer;
 
     TmuxGateway *_tmuxGateway;
-    int _tmuxPane;
     BOOL _tmuxSecureLogging;
     // The tmux rename-window command is only sent when the name field resigns first responder.
     // This tracks if a tmux client's name has changed but the tmux server has not been informed yet.
@@ -2115,7 +2114,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.tmuxMode == TMUX_CLIENT) {
         assert([_delegate tmuxWindow] >= 0);
         [_tmuxController deregisterWindow:[_delegate tmuxWindow]
-                               windowPane:_tmuxPane
+                               windowPane:self.tmuxPane
                                   session:self];
         // This call to fitLayoutToWindows is necessary to handle the case where
         // a small window closes and leaves behind a larger (e.g., fullscreen)
@@ -2326,7 +2325,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // tmux doesn't allow us to abuse the encoding, so this can cause the wrong thing to be
         // sent (e.g., in mouse reporting).
         [[_tmuxController gateway] sendKeys:string
-                               toWindowPane:_tmuxPane];
+                               toWindowPane:self.tmuxPane];
         return;
     }
     [self writeTaskImpl:string encoding:encoding forceEncoding:forceEncoding canBroadcast:NO];
@@ -2554,7 +2553,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                    forceEncoding:forceEncoding];
         } else {
             [[_tmuxController gateway] sendKeys:string
-                                   toWindowPane:_tmuxPane];
+                                   toWindowPane:self.tmuxPane];
         }
         PTYScroller* ptys = (PTYScroller*)[_view.scrollview verticalScroller];
         [ptys setUserScroll:NO];
@@ -3785,7 +3784,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         NSColor *tabColor = [ITAddressBookMgr decodeColor:tabColorDict];
         [self.tmuxController setTabColorString:tabColor ? [tabColor hexString] : iTermTmuxTabColorNone
-                                 forWindowPane:_tmuxPane];
+                                 forWindowPane:self.tmuxPane];
     }
     [self.delegate sessionUpdateMetalAllowed];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
@@ -3837,13 +3836,13 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setDelegate:(id<PTYSessionDelegate>)delegate {
     if ([self isTmuxClient]) {
         [_tmuxController deregisterWindow:[_delegate tmuxWindow]
-                               windowPane:_tmuxPane
+                               windowPane:self.tmuxPane
                                   session:self];
     }
     _delegate = delegate;
     if ([self isTmuxClient]) {
         [_tmuxController registerSession:self
-                                withPane:_tmuxPane
+                                withPane:self.tmuxPane
                                 inWindow:[_delegate tmuxWindow]];
     }
     DLog(@"Fit layout to window on session delegate change");
@@ -4520,7 +4519,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [theGuid isEqualToString:_profile[KEY_GUID]]) {
         Profile *profile = [[ProfileModel sessionsInstance] bookmarkWithGuid:theGuid];
         NSDictionary *dict = [iTermProfilePreferences objectForKey:KEY_SESSION_HOTKEY inProfile:profile];
-        [_tmuxController setHotkeyForWindowPane:_tmuxPane to:dict];
+        [_tmuxController setHotkeyForWindowPane:self.tmuxPane to:dict];
     }
     [self sanityCheck];
 }
@@ -5216,7 +5215,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [self writeLatin1EncodedData:[_terminal.output reportFocusGained:focused] broadcastAllowed:NO];
         }
         if (focused && [self isTmuxClient]) {
-            [_tmuxController selectPane:_tmuxPane];
+            [_tmuxController selectPane:self.tmuxPane];
         }
     }
 }
@@ -5350,9 +5349,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setTmuxPane:(int)windowPane {
-    _tmuxPane = windowPane;
+    [self.variablesScope setValue:@(windowPane) forVariableNamed:iTermVariableKeySessionTmuxWindowPane];
     self.tmuxMode = TMUX_CLIENT;
     [_shell registerAsCoprocessOnlyTask];
+}
+
+- (int)tmuxPane {
+    return [[self.variablesScope valueForVariableName:iTermVariableKeySessionTmuxWindowPane] intValue];
 }
 
 - (PTYSession *)tmuxGatewaySession {
@@ -5539,6 +5542,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 #pragma mark tmux gateway delegate methods
 // TODO (also, capture and throw away keyboard input)
+
+- (NSString *)tmuxOwningSessionGUID {
+    return self.guid;
+}
 
 - (void)tmuxDidOpenInitialWindows {
     if (_hideAfterTmuxWindowOpens) {

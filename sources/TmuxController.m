@@ -1106,6 +1106,10 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
+- (BOOL)windowIsHidden:(int)windowId {
+    return [hiddenWindows_ containsObject:@(windowId)];
+}
+
 - (void)hideWindow:(int)windowId
 {
     NSLog(@"hideWindow: Add these window IDS to hidden: %d", windowId);

@@ -440,6 +440,32 @@ async def async_get_broadcast_domains(connection):
     request.get_broadcast_domains_request.SetInParent()
     return await _async_call(connection, request)
 
+async def async_rpc_list_tmux_connections(connection):
+    """Requests a list of tmux connections."""
+    request = _alloc_request()
+    request.tmux_request.SetInParent()
+    request.tmux_request.list_connections.SetInParent()
+    return await _async_call(connection, request)
+
+async def async_rpc_send_tmux_command(connection, tmux_connection_id, command):
+    """Sends a command to the tmux server."""
+    request = _alloc_request()
+    request.tmux_request.SetInParent()
+    request.tmux_request.send_command.SetInParent()
+    request.tmux_request.send_command.connection_id = tmux_connection_id;
+    request.tmux_request.send_command.command = command
+    return await _async_call(connection, request)
+
+async def async_rpc_set_tmux_window_visible(connection, tmux_connection_id, window_id, visible):
+    """Hides/shows a tmux window (which is an iTerm2 tab)"""
+    request = _alloc_request()
+    request.tmux_request.SetInParent()
+    request.tmux_request.set_window_visible.SetInParent()
+    request.tmux_request.set_window_visible.connection_id = tmux_connection_id
+    request.tmux_request.set_window_visible.window_id = window_id
+    request.tmux_request.set_window_visible.visible = visible
+    return await _async_call(connection, request)
+
 ## Private --------------------------------------------------------------------
 
 def _alloc_id():

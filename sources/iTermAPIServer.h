@@ -66,7 +66,8 @@ extern NSString *const iTermAPIServerConnectionClosed;
                       handler:(void (^)(ITMSetTabLayoutResponse *))response;
 - (void)apiServerGetBroadcastDomains:(ITMGetBroadcastDomainsRequest *)request
                              handler:(void (^)(ITMGetBroadcastDomainsResponse *))response;
-
+- (void)apiServerTmuxRequest:(ITMTmuxRequest *)request
+                     handler:(void (^)(ITMTmuxResponse *))handler;
 @end
 
 @interface iTermAPIServer : NSObject

@@ -69,6 +69,7 @@
             return nil;
         }
         if (level > bestLevel || bestProcessInfo == nil) {
+#warning I think this is a bug. If a shell is the foreground job and it has a suspended child, then the shell should be the deepest foreground job, not the nil candidateg
             bestLevel = level;
             bestProcessInfo = candidate;
         }

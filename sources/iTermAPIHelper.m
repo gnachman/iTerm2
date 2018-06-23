@@ -26,10 +26,14 @@
 #import "NSFileManager+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 #import "ProfileModel.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
+#import "TmuxController.h"
+#import "TmuxControllerRegistry.h"
+#import "TmuxGateway.h"
 #import "WindowControllerInterface.h"
 #import "VT100Parser.h"
 
@@ -112,6 +116,52 @@ static id sAPIHelperInstance;
 @end
 
 @implementation iTermAllSessionsSubscription
+@end
+
+@interface iTermBlockTargetActionForwarder : NSObject
+- (instancetype)initWithBlock:(void (^)(id))block NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+- (void)attachToOwner:(NSObject *)owner failure:(void (^)(void))failure;
+- (void)selector:(id)object;
+@end
+
+@implementation iTermBlockTargetActionForwarder {
+    void (^_block)(id);
+    void (^_failure)(void);
+    void *_associatedObjectKey;
+}
+
+- (instancetype)initWithBlock:(void (^)(id))block {
+    self = [super init];
+    if (self) {
+        _block = [block copy];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    if (_failure && _block) {
+        _failure();
+    }
+    free(_associatedObjectKey);
+}
+
+- (void)selector:(id)object {
+    if (_block) {
+        _failure = nil;
+        void (^block)(id) = _block;
+        _block = nil;
+        block(object);
+    }
+}
+
+- (void)attachToOwner:(NSObject *)owner failure:(void (^)(void))failure {
+    assert(!_associatedObjectKey);
+    _associatedObjectKey = malloc(1);
+    [owner it_setAssociatedObject:self forKey:_associatedObjectKey];
+    _failure = [failure copy];
+}
+
 @end
 
 @implementation iTermAPIHelper {
@@ -1170,7 +1220,7 @@ static id sAPIHelperInstance;
             ITMListSessionsResponse_Tab *tabMessage = [[ITMListSessionsResponse_Tab alloc] init];
             tabMessage.tabId = [@(tab.uniqueId) stringValue];
             tabMessage.root = [tab rootSplitTreeNode];
-
+            tabMessage.tmuxWindowId = [@(tab.tmuxWindow) stringValue];
             [windowMessage.tabsArray addObject:tabMessage];
         }
 
@@ -2087,6 +2137,96 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         }
         [response.broadcastDomainsArray addObject:domain];
     }];
+    handler(response);
+}
+
+- (void)handleTmuxSendCommand:(ITMTmuxRequest_SendCommand *)request handler:(void (^)(ITMTmuxResponse *))handler {
+    ITMTmuxResponse *response = [[ITMTmuxResponse alloc] init];
+    TmuxController *controller = [[TmuxControllerRegistry sharedInstance] controllerForClient:request.connectionId];
+    if (!controller) {
+        response.status = ITMTmuxResponse_Status_InvalidConnectionId;
+        handler(response);
+        return;
+    }
+
+    iTermBlockTargetActionForwarder *forwarder = [[iTermBlockTargetActionForwarder alloc] initWithBlock:^(NSString *result) {
+        response.sendCommand.output = result;
+        handler(response);
+    }];
+    [controller.gateway sendCommand:request.command responseTarget:forwarder responseSelector:@selector(selector:)];
+    [forwarder attachToOwner:controller.gateway failure:^{
+        handler(response);
+    }];
+}
+
+- (void)handleTmuxListConnections:(ITMTmuxRequest_ListConnections *)request handler:(void (^)(ITMTmuxResponse *))handler {
+    ITMTmuxResponse *response = [[ITMTmuxResponse alloc] init];
+    for (NSString *clientName in [[TmuxControllerRegistry sharedInstance] clientNames]) {
+        ITMTmuxResponse_ListConnections_Connection *connection = [[ITMTmuxResponse_ListConnections_Connection alloc] init];
+        connection.connectionId = clientName;
+        TmuxController *controller = [[TmuxControllerRegistry sharedInstance] controllerForClient:clientName];
+        connection.owningSessionId = [controller.gateway.delegate tmuxOwningSessionGUID];
+        [response.listConnections.connectionsArray addObject:connection];
+    }
+    response.status = ITMTmuxResponse_Status_Ok;
+    handler(response);
+}
+
+- (void)handleTmuxSetWindowVisible:(ITMTmuxRequest_SetWindowVisible *)request handler:(void (^)(ITMTmuxResponse *))handler {
+    ITMTmuxResponse *response = [[ITMTmuxResponse alloc] init];
+    TmuxController *controller = [[TmuxControllerRegistry sharedInstance] controllerForClient:request.connectionId];
+    if (!controller) {
+        response.status = ITMTmuxResponse_Status_InvalidConnectionId;
+        handler(response);
+        return;
+    }
+
+    if (!request.windowId.isNumeric) {
+        response.status = ITMTmuxResponse_Status_InvalidWindowId;
+        handler(response);
+    }
+
+    if (request.visible) {
+        // Show the window
+        if (![controller windowIsHidden:[request.windowId intValue]]) {
+            response.status = ITMTmuxResponse_Status_InvalidWindowId;
+            handler(response);
+            return;
+        }
+
+        [controller openWindowWithId:[[request windowId] intValue] intentional:YES];
+        response.status = ITMTmuxResponse_Status_Ok;
+        handler(response);
+    } else {
+        // Hide the window
+        if ([controller windowIsHidden:[request.windowId intValue]]) {
+            response.status = ITMTmuxResponse_Status_InvalidWindowId;
+            handler(response);
+            return;
+        }
+
+        [controller hideWindow:request.windowId.intValue];
+        response.status = ITMTmuxResponse_Status_Ok;
+        handler(response);
+    }
+}
+
+- (void)apiServerTmuxRequest:(ITMTmuxRequest *)request handler:(void (^)(ITMTmuxResponse *))handler {
+    switch (request.payloadOneOfCase) {
+        case ITMTmuxRequest_Payload_OneOfCase_SendCommand:
+            [self handleTmuxSendCommand:request.sendCommand handler:handler];
+            return;
+        case ITMTmuxRequest_Payload_OneOfCase_ListConnections:
+            [self handleTmuxListConnections:request.listConnections handler:handler];
+            return;
+        case ITMTmuxRequest_Payload_OneOfCase_SetWindowVisible:
+            [self handleTmuxSetWindowVisible:request.setWindowVisible handler:handler];
+            return;
+        case ITMTmuxRequest_Payload_OneOfCase_GPBUnsetOneOfCase:
+            break;
+    }
+    ITMTmuxResponse *response = [[ITMTmuxResponse alloc] init];
+    response.status = ITMTmuxResponse_Status_InvalidRequest;
     handler(response);
 }
 

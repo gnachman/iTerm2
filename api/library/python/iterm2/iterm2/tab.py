@@ -5,11 +5,12 @@ import iterm2.api_pb2
 
 class Tab:
     """Represents a tab."""
-    def __init__(self, connection, tab_id, root):
+    def __init__(self, connection, tab_id, root, tmux_window_id=None):
         self.connection = connection
         self.__tab_id = tab_id
         self.__root = root
         self.active_session_id = None
+        self.__tmux_window_id = tmux_window_id
 
     def __repr__(self):
         return "<Tab id=%s sessions=%s>" % (self.__tab_id, self.sessions)
@@ -99,3 +100,11 @@ class Tab:
             return response.set_tab_layout_response
         else:
             raise iterm2.rpc.RPCException(iterm2.api_pb2.SetTabLayoutResponse.Status.Name(status))
+
+    @property
+    def tmux_window_id(self):
+        """Returns this tab's tmux window id or None.
+
+        :returns: A tmux window id (a string) or None if this is not a tmux integration window.
+        """
+        return self.__tmux_window_id

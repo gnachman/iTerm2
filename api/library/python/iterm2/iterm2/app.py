@@ -150,7 +150,11 @@ class App:
             tabs = []
             for tab in window.tabs:
                 root = iterm2.session.Splitter.from_node(tab.root, connection)
-                tabs.append(iterm2.tab.Tab(connection, tab.tab_id, root))
+                if tab.HasField("tmux_window_id"):
+                    tmux_window_id = tab.tmux_window_id
+                else:
+                    tmux_window_id = None
+                tabs.append(iterm2.tab.Tab(connection, tab.tab_id, root, tmux_window_id))
             windows.append(iterm2.window.Window(connection, window.window_id, tabs, window.frame))
         return windows
 

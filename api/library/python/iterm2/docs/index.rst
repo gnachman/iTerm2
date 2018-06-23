@@ -28,6 +28,7 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    profile
    session
    tab
+   tmux
    tool
    transaction
    util
