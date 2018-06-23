@@ -52,14 +52,17 @@
         [visited addObject:@(self.processID)];
     }
 
+    NSInteger bestLevel = *levelInOut;
+    iTermProcessInfo *bestProcessInfo = nil;
+
     if (_children.count == 0 && _isForegroundJob) {
         _haveDeepestForegroundJob = YES;
         _deepestForegroundJob = self;
         return self;
+    } else if (_isForegroundJob) {
+        bestProcessInfo = self;
     }
 
-    NSInteger bestLevel = *levelInOut;
-    iTermProcessInfo *bestProcessInfo = nil;
     for (iTermProcessInfo *child in _children) {
         NSInteger level = *levelInOut + 1;
         iTermProcessInfo *candidate = [child deepestForegroundJob:&level visited:visited cycle:cycle];
@@ -68,10 +71,11 @@
             _deepestForegroundJob = nil;
             return nil;
         }
-        if (level > bestLevel || bestProcessInfo == nil) {
-#warning I think this is a bug. If a shell is the foreground job and it has a suspended child, then the shell should be the deepest foreground job, not the nil candidateg
-            bestLevel = level;
-            bestProcessInfo = candidate;
+        if (candidate) {
+            if (level > bestLevel || bestProcessInfo == nil) {
+                bestLevel = level;
+                bestProcessInfo = candidate;
+            }
         }
     }
     _haveDeepestForegroundJob = YES;
