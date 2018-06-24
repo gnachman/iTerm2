@@ -55,9 +55,10 @@ NSString *const iTermScriptSetupPyName = @"setup.py";
     NSString *topLevelItem = topLevelItems.firstObject;
     const BOOL topLevelItemIsDirectory = [fileManager itemIsDirectory:topLevelItem];
     if ([[topLevelItem pathExtension] isEqualToString:@"py"] &&
-        !topLevelItemIsDirectory) {
-        // Basic sceript
-        return [iTermScriptArchive archiveForScriptIn:container named:topLevelItems[0] fullEnvironment:NO];
+        !topLevelItemIsDirectory &&
+        [topLevelItem isEqualToString:[container stringByAppendingPathComponent:topLevelItem.lastPathComponent]]) {
+        // Basic script
+        return [iTermScriptArchive archiveForScriptIn:container named:topLevelItems[0].lastPathComponent fullEnvironment:NO];
     }
     if (!topLevelItemIsDirectory) {
         // File not ending in .py

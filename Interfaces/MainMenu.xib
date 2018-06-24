@@ -838,49 +838,57 @@ DQ
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="Scripts" id="CZD-7u-bch">
                         <items>
-                            <menuItem title="Install Python Runtime" identifier="Install Python Runtime" id="wHh-8e-oU2">
+                            <menuItem title="Manage" id="Koa-MY-5QA">
                                 <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="installPythonRuntime:" target="201" id="r4H-5W-hCN"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="New Python Script" identifier="New Python Script" id="ds5-gY-cX0">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="newPythonScript:" target="201" id="v2b-iE-k7t"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Reveal Scripts in Finder" identifier="Reveal in Finder" id="eeH-ly-45H">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="revealScriptsInFinder:" target="201" id="2jN-7I-BfW"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="4hk-FZ-gFt"/>
-                            <menuItem title="Import Script" identifier="Import Script" id="hZE-iO-QIR">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="importScript:" target="201" id="eOl-HZ-58e"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Export Script" identifier="Export Script" id="dlj-rW-u7D">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="exportScript:" target="201" id="foG-lG-KnC"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="Rsa-x0-U18"/>
-                            <menuItem title="Open Python REPL" identifier="Open Interactive Window" id="jXH-0I-Wtc">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="openREPL:" target="201" id="1Pl-tK-Km1"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Script Console" keyEquivalent="j" identifier="Script Console" id="YqT-f8-W2j">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="openScriptConsole:" target="201" id="DYl-Yt-fdf"/>
-                                </connections>
+                                <menu key="submenu" title="Manage" id="PGw-xl-7oF">
+                                    <items>
+                                        <menuItem title="New Python Script" identifier="New Python Script" id="ds5-gY-cX0">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="newPythonScript:" target="201" id="v2b-iE-k7t"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Open Python REPL" identifier="Open Interactive Window" id="jXH-0I-Wtc">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="openREPL:" target="201" id="1Pl-tK-Km1"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="iQa-T4-8Bh"/>
+                                        <menuItem title="Install Python Runtime" identifier="Install Python Runtime" id="wHh-8e-oU2">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="installPythonRuntime:" target="201" id="r4H-5W-hCN"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Reveal Scripts in Finder" identifier="Reveal in Finder" id="eeH-ly-45H">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="revealScriptsInFinder:" target="201" id="2jN-7I-BfW"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="4hk-FZ-gFt"/>
+                                        <menuItem title="Import" identifier="Import Script" id="hZE-iO-QIR">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="importScript:" target="201" id="eOl-HZ-58e"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Export" identifier="Export Script" id="dlj-rW-u7D">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="exportScript:" target="201" id="foG-lG-KnC"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="Rsa-x0-U18"/>
+                                        <menuItem title="Console" keyEquivalent="j" identifier="Script Console" id="YqT-f8-W2j">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="openScriptConsole:" target="201" id="DYl-Yt-fdf"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" identifier="Separator" id="fcT-12-G86"/>
                         </items>
