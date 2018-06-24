@@ -164,7 +164,7 @@ didCompleteWithError:(nullable NSError *)error {
             if (dict[@"url"] && dict[@"signature"] && dict[@"version"]) {
                 int version = [dict[@"version"] intValue];
                 if (version > bestVersion) {
-                    NSString *minimumTermVersion = dict[@"mininum_iterm_version"];
+                    NSString *minimumTermVersion = dict[@"minimum_iterm_version"];
                     NSString *maximumTermVersion = dict[@"maximum_iterm_version"];
                     if ([self iTermVersionAtLeast:minimumTermVersion atMost:maximumTermVersion]) {
                         bestVersion = version;
