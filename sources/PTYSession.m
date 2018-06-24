@@ -4040,6 +4040,15 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setProfile:(Profile *)newProfile {
     assert(newProfile);
     DLog(@"Set profile to one with guid %@", newProfile[KEY_GUID]);
+    NSArray *trimCallStack = [NSThread trimCallStackSymbols];
+    if (![NSObject object:_profile[KEY_GUID] isEqualToObject:newProfile[KEY_GUID]]) {
+        [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: Set profile to one with guid %@. My last guid was %@ from\n%@",
+                                                self,
+                                                newProfile[KEY_GUID],
+                                                _profile[KEY_GUID],
+                                                [trimCallStack componentsJoinedByString:@"\n"]]];
+    }
+
     NSMutableDictionary *mutableProfile = [[newProfile mutableCopy] autorelease];
     // This is the most practical way to migrate the bopy of a
     // profile that's stored in a saved window arrangement. It doesn't get
