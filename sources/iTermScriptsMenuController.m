@@ -11,10 +11,15 @@
 #import "iTermAPIScriptLauncher.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermBuildingScriptWindowController.h"
+#import "iTermCommandRunner.h"
 #import "iTermPythonRuntimeDownloader.h"
+#import "iTermScriptChooser.h"
+#import "iTermScriptExporter.h"
 #import "iTermScriptHistory.h"
+#import "iTermScriptImporter.h"
 #import "iTermScriptTemplatePickerWindowController.h"
 #import "iTermWarning.h"
+#import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "SCEvents.h"
@@ -179,12 +184,50 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
-
 - (void)changeInstallToUpdate {
     _installRuntimeMenuItem.title = @"Check for Updated Runtime";
     _installRuntimeMenuItem.action = @selector(userRequestedCheckForUpdate);
     _installRuntimeMenuItem.target = [iTermPythonRuntimeDownloader sharedInstance];
 }
+
+- (void)chooseAndExportScript {
+    [iTermScriptChooser chooseWithValidator:^BOOL(NSURL *url) {
+        return [iTermScriptExporter urlIsScript:url];
+    } completion:^(NSURL *url) {
+        [iTermScriptExporter exportScriptAtURL:url completion:^(NSString *errorMessage, NSURL *zipURL) {
+            if (errorMessage || !zipURL) {
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = @"Export Failed";
+                alert.informativeText = errorMessage ?: @"Failed to create archive";
+                [alert runModal];
+                return;
+            }
+
+            [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ zipURL ]];
+        }];
+    }];
+}
+
+- (void)chooseAndImportScript {
+    NSOpenPanel *panel = [[NSOpenPanel alloc] init];
+    panel.allowedFileTypes = @[ @"zip" ];
+    if ([panel runModal] == NSModalResponseOK) {
+        [iTermScriptImporter importScriptFromURL:panel.URL
+                                      completion:^(NSString * _Nullable errorMessage) {
+                                          if (errorMessage) {
+                                              NSAlert *alert = [[NSAlert alloc] init];
+                                              alert.messageText = @"Could Not Install Script";
+                                              alert.informativeText = errorMessage;
+                                              [alert runModal];
+                                          } else {
+                                              NSAlert *alert = [[NSAlert alloc] init];
+                                              alert.messageText = @"Script Imported Successfully";
+                                              [alert runModal];
+                                          }
+                                      }];
+    }
+}
+
 
 #pragma mark - Actions
 
@@ -278,23 +321,6 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
-- (iTermBuildingScriptWindowController *)newPleaseWaitWindowController {
-    iTermBuildingScriptWindowController *pleaseWait = [[iTermBuildingScriptWindowController alloc] initWithWindowNibName:@"iTermBuildingScriptWindowController"];
-    pleaseWait.window.alphaValue = 0;
-    NSScreen *screen = pleaseWait.window.screen;
-    NSRect screenFrame = screen.frame;
-    NSSize windowSize = pleaseWait.window.frame.size;
-    NSPoint screenCenter = NSMakePoint(NSMinX(screenFrame) + NSWidth(screenFrame) / 2,
-                                       NSMinY(screenFrame) + NSHeight(screenFrame) / 2);
-    NSPoint windowOrigin = NSMakePoint(screenCenter.x - windowSize.width / 2,
-                                       screenCenter.y - windowSize.height / 2);
-    [pleaseWait.window setFrameOrigin:windowOrigin];
-    pleaseWait.window.alphaValue = 1;
-
-    [pleaseWait.window makeKeyAndOrderFront:nil];
-    return pleaseWait;
-}
-
 - (void)reallyCreateNewPythonScriptAtURL:(NSURL *)url
                                   picker:(iTermScriptTemplatePickerWindowController *)picker
                             dependencies:(NSArray<NSString *> *)dependencies {
@@ -302,7 +328,7 @@ NS_ASSUME_NONNULL_BEGIN
         NSURL *folder = [NSURL fileURLWithPath:[self folderForFullEnvironmentSavePanelURL:url]];
         NSURL *existingEnv = [folder URLByAppendingPathComponent:@"iterm2env"];
         [[NSFileManager defaultManager] removeItemAtURL:existingEnv error:nil];
-        iTermBuildingScriptWindowController *pleaseWait = [self newPleaseWaitWindowController];
+        iTermBuildingScriptWindowController *pleaseWait = [iTermBuildingScriptWindowController newPleaseWaitWindowController];
         id token = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidBecomeActiveNotification
                                                                      object:nil
                                                                       queue:nil

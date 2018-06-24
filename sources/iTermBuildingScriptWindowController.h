@@ -9,4 +9,6 @@
 
 @interface iTermBuildingScriptWindowController : NSWindowController
 
++ (instancetype)newPleaseWaitWindowController;
+
 @end

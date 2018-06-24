@@ -21,6 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)revealScriptsInFinder;
 - (void)newPythonScript;
 - (void)launchScriptWithRelativePath:(NSString *)path;
+- (void)chooseAndExportScript;
+- (void)chooseAndImportScript;
 
 @end
 

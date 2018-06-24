@@ -292,5 +292,15 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return YES;
 }
 
+- (NSArray<NSString *> *)it_itemsInDirectory:(NSString *)path {
+    NSMutableArray<NSString *> *results = [NSMutableArray array];
+    NSDirectoryEnumerator<NSString *> *enumerator = [self enumeratorAtPath:path];
+    for (NSString *name in enumerator) {
+        [results addObject:name];
+        [enumerator skipDescendants];
+    }
+    return results;
+}
+
 @end
 

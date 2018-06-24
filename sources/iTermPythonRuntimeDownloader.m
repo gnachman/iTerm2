@@ -7,6 +7,7 @@
 
 #import "iTermPythonRuntimeDownloader.h"
 
+#import "iTermCommandRunner.h"
 #import "iTermDisclosableView.h"
 #import "iTermNotificationController.h"
 #import "iTermOptionalComponentDownloadWindowController.h"
@@ -23,6 +24,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     iTermOptionalComponentDownloadWindowController *_downloadController;
     dispatch_group_t _downloadGroup;
     BOOL _didDownload;  // Set when _downloadGroup notified.
+    dispatch_queue_t _queue;  // Used to serialize installs
 }
 
 + (instancetype)sharedInstance {
@@ -32,6 +34,14 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         instance = [[self alloc] init];
     });
     return instance;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _queue = dispatch_queue_create("com.iterm2.python-runtime", DISPATCH_QUEUE_SERIAL);
+    }
+    return self;
 }
 
 - (NSString *)executableNamed:(NSString *)name atPyenvRoot:(NSString *)root {
@@ -139,58 +149,20 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     });
 }
 
-- (void)runCommand:(NSString *)command
-     withArguments:(NSArray<NSString *> *)arguments
-              path:(NSString *)currentDirectoryPath
-            output:(void (^ _Nullable)(NSData *inData))outputHandler
-        completion:(void (^)(int terminationStatus))completion {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSTask *unzipTask = [[NSTask alloc] init];
-        NSPipe *pipe = [[NSPipe alloc] init];
-        [unzipTask setStandardOutput:pipe];
-        [unzipTask setStandardError:pipe];
-        unzipTask.launchPath = command;
-        unzipTask.currentDirectoryPath = currentDirectoryPath;
-        unzipTask.arguments = arguments;
-        NSLog(@"runCommand: Launching %@", unzipTask);
-        [unzipTask launch];
-
-        NSFileHandle *readHandle = [pipe fileHandleForReading];
-        NSLog(@"runCommand: Reading");
-        NSData *inData = [readHandle availableData];
-        while (inData.length) {
-            NSLog(@"runCommand: Read %@", inData);
-            if (outputHandler) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    outputHandler(inData);
-                });
-            }
-            NSLog(@"runCommand: Reading");
-            inData = [readHandle availableData];
-        }
-
-        NSLog(@"runCommand: Done reading. Wait");
-        [unzipTask waitUntilExit];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion(unzipTask.terminationStatus);
-        });
-    });
-}
-
 - (void)unzip:(NSURL *)zipFileURL to:(NSURL *)destination completion:(void (^)(BOOL))completion {
-    [[NSFileManager defaultManager] createDirectoryAtPath:destination.path
-                              withIntermediateDirectories:NO
-                                               attributes:nil
-                                                    error:NULL];
-    [self runCommand:@"/usr/bin/unzip"
-       withArguments:@[ @"-x", @"-o", @"-q", zipFileURL.path ]
-                path:destination.path
-              output:^(NSData *inData) {
-                  NSLog(@"unzip: %@", [[NSString alloc] initWithData:inData encoding:NSUTF8StringEncoding]);
-              }
-          completion:^(int terminationStatus) {
-              completion(terminationStatus == 0);
-          }];
+    // This serializes unzips so only one can happen at a time.
+    dispatch_async(_queue, ^{
+        [[NSFileManager defaultManager] createDirectoryAtPath:destination.path
+                                  withIntermediateDirectories:NO
+                                                   attributes:nil
+                                                        error:NULL];
+        [iTermCommandRunner unzipURL:zipFileURL
+                       withArguments:@[ @"-o", @"-q" ]
+                         destination:destination.path
+                          completion:^(BOOL ok) {
+            completion(ok);
+        }];
+    });
 }
 
 - (void)checkForNewerVersionThan:(int)installedVersion
@@ -323,6 +295,9 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     }];
     NSString *contents = [NSString stringWithFormat:
                           @"from setuptools import setup\n"
+                          @"# WARNING: install_requires must be on one line and contain only quoted strings.\n"
+                          @"#          This protects the security of users installing the script.\n"
+                          @"#          The script import feature will fail if you try to get fancy.\n"
                           @"setup(name='%@',\n"
                           @"      version='1.0',\n"
                           @"      scripts=['%@/%@.py'],\n"
@@ -410,15 +385,16 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 - (void)runPip3InContainer:(NSURL *)container withArguments:(NSArray<NSString *> *)arguments completion:(void (^)(BOOL ok, NSData *output))completion {
     NSString *pip3 = [self pip3At:[container.path stringByAppendingPathComponent:@"iterm2env"]];
     NSMutableData *output = [NSMutableData data];
-    [self runCommand:pip3
-       withArguments:arguments
-                path:container.path
-              output:^(NSData *inData) {
-                  [output appendData:inData];
-              }
-          completion:^(int terminationStatus) {
-              completion(terminationStatus == 0, output);
-          }];
+    iTermCommandRunner *runner = [[iTermCommandRunner alloc] initWithCommand:pip3
+                                                               withArguments:arguments
+                                                                        path:container.path];
+    runner.outputHandler = ^(NSData *data) {
+        [output appendData:data];
+    };
+    runner.completion = ^(int status) {
+        completion(status == 0, output);
+    };
+    [runner run];
 }
 
 - (BOOL)writeInputStream:(NSInputStream *)inputStream toFile:(NSString *)destination {

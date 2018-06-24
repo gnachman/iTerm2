@@ -67,5 +67,6 @@
 - (BOOL)directoryEmpty:(NSString *)path;
 - (BOOL)itemIsSymlink:(NSString *)path;
 - (BOOL)itemIsDirectory:(NSString *)path;
+- (NSArray<NSString *> *)it_itemsInDirectory:(NSString *)path;
 
 @end

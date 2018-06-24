@@ -2011,6 +2011,14 @@ static BOOL hasBecomeActive = NO;
     [_scriptsMenuController revealScriptsInFinder];
 }
 
+- (IBAction)exportScript:(id)sender {
+    [_scriptsMenuController chooseAndExportScript];
+}
+
+- (IBAction)importScript:(id)sender {
+    [_scriptsMenuController chooseAndImportScript];
+}
+
 - (IBAction)newPythonScript:(id)sender {
     [_scriptsMenuController newPythonScript];
 }
