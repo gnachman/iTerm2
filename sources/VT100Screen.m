@@ -4095,7 +4095,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return result;
 }
 
-- (NSSize)terminalCellSizeInPoints {
+- (NSSize)terminalCellSizeInPoints:(double *)scaleOut {
+    *scaleOut = [delegate_ screenBackingScaleFactor];
     return [delegate_ screenCellSize];
 }
 

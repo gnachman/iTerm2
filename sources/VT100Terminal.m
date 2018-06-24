@@ -2306,11 +2306,13 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalSetUserVar:value];
     } else if ([key isEqualToString:@"ReportCellSize"]) {
         if ([delegate_ terminalShouldSendReport]) {
-            NSSize size = [delegate_ terminalCellSizeInPoints];
+            double floatScale;
+            NSSize size = [delegate_ terminalCellSizeInPoints:&floatScale];
             NSString *width = [[NSString stringWithFormat:@"%0.2f", size.width] stringByCompactingFloatingPointString];
             NSString *height = [[NSString stringWithFormat:@"%0.2f", size.height] stringByCompactingFloatingPointString];
-            NSString *s = [NSString stringWithFormat:@"\033]1337;ReportCellSize=%@;%@\033\\",
-                           height, width];
+            NSString *scale = [[NSString stringWithFormat:@"%0.2f", floatScale] stringByCompactingFloatingPointString];
+            NSString *s = [NSString stringWithFormat:@"\033]1337;ReportCellSize=%@;%@;%@\033\\",
+                           height, width, scale];
             [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
         }
     } else if ([key isEqualToString:@"UnicodeVersion"]) {

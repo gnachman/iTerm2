@@ -35,10 +35,20 @@ read_decimal()
   done
 }
 
+is_bel()
+{
+  c="$1"
+  n=$(printf "%d" "'$c'")
+  printf "%s" $(( $n == 7 ))
+}
+
 # Ignores part after the decimal point
 read_float()
 {
   c=$(read_bytes 1)
+  if [ $(is_bel "$c") -eq 1 ]; then
+    return
+  fi
   while [ $(is_decimal_digit "$c") -eq 1 ]; do
     printf "%s" "$c"
     c=$(read_bytes 1)
@@ -82,11 +92,18 @@ echo -n ']1337;ReportCellSize'
 spam=$(read_bytes 22)
 cell_height=$(read_float)
 cell_width=$(read_float)
-spam=$(read_bytes 1)
+scale=$(read_float)
+if [ ! -z "$scale" ]; then
+  spam=$(read_bytes 1)
+fi
 
 echo Window pixel size: $pixel_width x $pixel_height
 echo Session size: $char_width x $char_height
-echo Cell size: $cell_width x $cell_height
+if [ ! -z "$scale" ]; then
+  echo Cell size: $cell_width x $cell_height at scale "$scale"x
+else
+  echo Cell size: $cell_width x $cell_height with unknown scale
+fi
 
 echo ""
 echo Fullscreen window stats:
