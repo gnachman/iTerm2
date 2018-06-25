@@ -580,3 +580,40 @@ class App:
             raise MenuItemException(iterm2.api_pb2.MenuItemResponse.Status.Name(status))
         return iterm2.App.MenuItemState(response.menu_item_response.checked,
                                         response.menu_item_response.enabled)
+
+    async def async_set_variable(self, name, value):
+        """
+        Sets a user-defined variable in the application.
+
+        See Badges documentation for more information on user-defined variables.
+
+        :param name: The variable's name.
+        :param value: The new value to assign.
+
+        :throws: :class:`RPCException` if something goes wrong.
+        """
+        result = await iterm2.rpc.async_variable(
+            self.connection,
+            sets=[(name, json.dumps(value))])
+        status = result.variable_response.status
+        if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
+
+    async def async_get_variable(self, name):
+        """
+        Fetches an application variable.
+
+        See Badges documentation for more information on variables.
+
+        :param name: The variable's name.
+
+        :returns: The variable's value or empty string if it is undefined.
+
+        :throws: :class:`RPCException` if something goes wrong.
+        """
+        result = await iterm2.rpc.async_variable(self.connection, gets=[name])
+        status = result.variable_response.status
+        if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
+        else:
+            return json.loads(result.variable_response.values[0])

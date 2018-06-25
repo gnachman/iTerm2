@@ -292,6 +292,11 @@ typedef GPB_ENUM(ITMVariableResponse_Status) {
 
   /** Names you set must begin with "user." */
   ITMVariableResponse_Status_InvalidName = 2,
+
+  /** None of the scope oneof fields was set */
+  ITMVariableResponse_Status_MissingScope = 3,
+  ITMVariableResponse_Status_TabNotFound = 4,
+  ITMVariableResponse_Status_MultiGetDisallowed = 5,
 };
 
 GPBEnumDescriptor *ITMVariableResponse_Status_EnumDescriptor(void);
@@ -1422,14 +1427,28 @@ typedef GPB_ENUM(ITMVariableRequest_FieldNumber) {
   ITMVariableRequest_FieldNumber_SessionId = 1,
   ITMVariableRequest_FieldNumber_SetArray = 2,
   ITMVariableRequest_FieldNumber_GetArray = 3,
+  ITMVariableRequest_FieldNumber_TabId = 4,
+  ITMVariableRequest_FieldNumber_App = 5,
+};
+
+typedef GPB_ENUM(ITMVariableRequest_Scope_OneOfCase) {
+  ITMVariableRequest_Scope_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMVariableRequest_Scope_OneOfCase_SessionId = 1,
+  ITMVariableRequest_Scope_OneOfCase_TabId = 4,
+  ITMVariableRequest_Scope_OneOfCase_App = 5,
 };
 
 @interface ITMVariableRequest : GPBMessage
 
 /** TODO: Add a scope so you can get variables from a tab or app */
+@property(nonatomic, readonly) ITMVariableRequest_Scope_OneOfCase scopeOneOfCase;
+
+/** "all" is allowed only if no gets (only sets allowed) */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
-/** Test to see if @c sessionId has been set. */
-@property(nonatomic, readwrite) BOOL hasSessionId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabId;
+
+@property(nonatomic, readwrite) BOOL app;
 
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMVariableRequest_Set*> *setArray;
 /** The number of items in @c setArray without causing the array to be created. */
@@ -1441,6 +1460,11 @@ typedef GPB_ENUM(ITMVariableRequest_FieldNumber) {
 @property(nonatomic, readonly) NSUInteger getArray_Count;
 
 @end
+
+/**
+ * Clears whatever value was set for the oneof 'scope'.
+ **/
+void ITMVariableRequest_ClearScopeOneOfCase(ITMVariableRequest *message);
 
 #pragma mark - ITMVariableRequest_Set
 

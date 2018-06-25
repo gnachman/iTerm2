@@ -2398,15 +2398,19 @@ BOOL ITMSavedArrangementResponse_Status_IsValidValue(int32_t value__) {
 
 @implementation ITMVariableRequest
 
-@dynamic hasSessionId, sessionId;
+@dynamic scopeOneOfCase;
+@dynamic sessionId;
+@dynamic tabId;
+@dynamic app;
 @dynamic setArray, setArray_Count;
 @dynamic getArray, getArray_Count;
 
 typedef struct ITMVariableRequest__storage_ {
-  uint32_t _has_storage_[1];
+  uint32_t _has_storage_[2];
   NSString *sessionId;
   NSMutableArray *setArray;
   NSMutableArray *getArray;
+  NSString *tabId;
 } ITMVariableRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -2419,7 +2423,7 @@ typedef struct ITMVariableRequest__storage_ {
         .name = "sessionId",
         .dataTypeSpecific.className = NULL,
         .number = ITMVariableRequest_FieldNumber_SessionId,
-        .hasIndex = 0,
+        .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMVariableRequest__storage_, sessionId),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
@@ -2442,6 +2446,24 @@ typedef struct ITMVariableRequest__storage_ {
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeString,
       },
+      {
+        .name = "tabId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMVariableRequest_FieldNumber_TabId,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMVariableRequest__storage_, tabId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "app",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMVariableRequest_FieldNumber_App,
+        .hasIndex = -1,
+        .offset = 0,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMVariableRequest class]
@@ -2451,6 +2473,12 @@ typedef struct ITMVariableRequest__storage_ {
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMVariableRequest__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
+    static const char *oneofs[] = {
+      "scope",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }
@@ -2459,6 +2487,11 @@ typedef struct ITMVariableRequest__storage_ {
 
 @end
 
+void ITMVariableRequest_ClearScopeOneOfCase(ITMVariableRequest *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
 #pragma mark - ITMVariableRequest_Set
 
 @implementation ITMVariableRequest_Set
@@ -2574,11 +2607,15 @@ GPBEnumDescriptor *ITMVariableResponse_Status_EnumDescriptor(void) {
   static GPBEnumDescriptor *descriptor = NULL;
   if (!descriptor) {
     static const char *valueNames =
-        "Ok\000SessionNotFound\000InvalidName\000";
+        "Ok\000SessionNotFound\000InvalidName\000MissingSc"
+        "ope\000TabNotFound\000MultiGetDisallowed\000";
     static const int32_t values[] = {
         ITMVariableResponse_Status_Ok,
         ITMVariableResponse_Status_SessionNotFound,
         ITMVariableResponse_Status_InvalidName,
+        ITMVariableResponse_Status_MissingScope,
+        ITMVariableResponse_Status_TabNotFound,
+        ITMVariableResponse_Status_MultiGetDisallowed,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMVariableResponse_Status)
@@ -2598,6 +2635,9 @@ BOOL ITMVariableResponse_Status_IsValidValue(int32_t value__) {
     case ITMVariableResponse_Status_Ok:
     case ITMVariableResponse_Status_SessionNotFound:
     case ITMVariableResponse_Status_InvalidName:
+    case ITMVariableResponse_Status_MissingScope:
+    case ITMVariableResponse_Status_TabNotFound:
+    case ITMVariableResponse_Status_MultiGetDisallowed:
       return YES;
     default:
       return NO;

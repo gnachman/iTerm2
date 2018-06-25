@@ -334,20 +334,26 @@ async def async_activate(connection,
     request.activate_request.select_session = select_session
     return await _async_call(connection, request)
 
-async def async_variable(connection, session_id, sets, gets):
+async def async_variable(connection, session_id=None, sets=[], gets=[], tab_id=None):
     """
     Gets or sets session variables.
 
     `sets` are JSON encoded. The resulting gets will be JSON encoded.
     """
     request = _alloc_request()
-    request.variable_request.session_id = session_id
+    if session_id:
+        request.variable_request.session_id = session_id
+    elif tab_id:
+        request.variable_request.tab_id = tab_id
+    else:
+        request.variable_request.app = True
+
     request.variable_request.get.extend(gets)
     for (name, value) in sets:
-        session = iterm2.api_pb2.VariableRequest.Set()
-        session.name = name
-        session.value = value
-        request.variable_request.set.extend([session])
+        kvp = iterm2.api_pb2.VariableRequest.Set()
+        kvp.name = name
+        kvp.value = value
+        request.variable_request.set.extend([kvp])
     return await _async_call(connection, request)
 
 async def async_save_arrangement(connection, name, window_id=None):

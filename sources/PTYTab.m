@@ -350,7 +350,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _tabNumberForItermSessionId = -1;
     hiddenLiveViews_ = [[NSMutableArray alloc] init];
     _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab];
+    _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab];
+    [self.variablesScope setValue:_userVariables forVariableNamed:@"user"];
     _variables.delegate = self;
+
     self.tmuxWindow = -1;
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
@@ -399,6 +402,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [_viewToSessionMap release];
     [_variables release];
     [_tabTitleOverrideSwiftyString release];
+    [_userVariables release];
+
     [super dealloc];
 }
 

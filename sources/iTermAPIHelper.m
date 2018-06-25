@@ -990,6 +990,12 @@ static id sAPIHelperInstance;
     }];
 }
 
+- (NSArray<PTYTab *> *)allTabs {
+    return [[[iTermController sharedInstance] terminals] flatMapWithBlock:^id(PseudoTerminal *windowController) {
+        return windowController.tabs;
+    }];
+}
+
 - (void)apiServerNotification:(ITMNotificationRequest *)request
                 connectionKey:(NSString *)connectionKey
                       handler:(void (^)(ITMNotificationResponse *))handler {
@@ -1756,37 +1762,81 @@ static id sAPIHelperInstance;
 }
 
 - (void)apiServerVariable:(ITMVariableRequest *)request handler:(void (^)(ITMVariableResponse *))handler {
-    ITMVariableResponse *response = [[ITMVariableResponse alloc] init];
     const BOOL allSetNamesLegal = [request.setArray allWithBlock:^BOOL(ITMVariableRequest_Set *setRequest) {
         return [setRequest.name hasPrefix:@"user."];
     }];
     if (!allSetNamesLegal) {
+        ITMVariableResponse *response = [[ITMVariableResponse alloc] init];
         response.status = ITMVariableResponse_Status_InvalidName;
         handler(response);
         return;
     }
-    if ([request.sessionId isEqualToString:@"all"]) {
-        if (request.getArray_Count > 0) {
-            response.status = ITMVariableResponse_Status_SessionNotFound;
-            handler(response);
+    switch (request.scopeOneOfCase) {
+        case ITMVariableRequest_Scope_OneOfCase_App:
+            [self handleAppScopeVariableRequest:request handler:handler];
             return;
-        }
-        for (PTYSession *session in [self allSessions]) {
-            [request.setArray enumerateObjectsUsingBlock:^(ITMVariableRequest_Set * _Nonnull setRequest, NSUInteger idx, BOOL * _Nonnull stop) {
-                id value;
-                if ([setRequest.value isEqual:@"null"]) {
-                    value = nil;
-                } else {
-                    value = [NSJSONSerialization it_objectForJsonString:setRequest.value];
-                }
-                [session setVariableNamed:setRequest.name toValue:value];
-            }];
-        }
-        response.status = ITMVariableResponse_Status_Ok;
+
+        case ITMVariableRequest_Scope_OneOfCase_TabId:
+            [self handleTabScopeVariableRequest:request handler:handler];
+            return;
+
+        case ITMVariableRequest_Scope_OneOfCase_SessionId:
+            [self handleSessionScopeVariableRequest:request handler:handler];
+            return;
+
+        case ITMVariableRequest_Scope_OneOfCase_GPBUnsetOneOfCase:
+            break;
+    }
+    ITMVariableResponse *response = [[ITMVariableResponse alloc] init];
+    response.status = ITMVariableResponse_Status_MissingScope;
+    handler(response);
+}
+
+- (void)handleAppScopeVariableRequest:(ITMVariableRequest *)request
+                              handler:(void (^)(ITMVariableResponse *))handler {
+    ITMVariableResponse *response = [[ITMVariableResponse alloc] init];
+    [self handleVariableSetsInRequest:request scope:[iTermVariableScope globalsScope]];
+    [self handleVariableGetsInRequest:request response:response scope:[iTermVariableScope globalsScope]];
+    response.status = ITMVariableResponse_Status_Ok;
+    handler(response);
+}
+
+- (void)handleTabScopeVariableRequest:(ITMVariableRequest *)request
+                              handler:(void (^)(ITMVariableResponse *))handler {
+    if ([request.tabId isEqualToString:@"all"]) {
+        NSArray<iTermVariableScope *> *scopes = [self.allTabs mapWithBlock:^id(PTYTab *anObject) {
+            return anObject.variablesScope;
+        }];
+        handler([self handleVariableMultiSetRequest:request scopes:scopes]);
+        return;
+    }
+
+    ITMVariableResponse *response = [[ITMVariableResponse alloc] init];
+    PTYTab *tab = [self tabWithID:request.tabId];
+    if (!tab) {
+        response.status = ITMVariableResponse_Status_TabNotFound;
         handler(response);
         return;
     }
 
+    [self handleVariableSetsInRequest:request scope:tab.variablesScope];
+    [self handleVariableGetsInRequest:request response:response scope:tab.variablesScope];
+
+    handler(response);
+}
+
+
+- (void)handleSessionScopeVariableRequest:(ITMVariableRequest *)request
+                                  handler:(void (^)(ITMVariableResponse *))handler {
+    if ([request.sessionId isEqualToString:@"all"]) {
+        NSArray<iTermVariableScope *> *scopes = [self.allSessions mapWithBlock:^id(PTYSession *anObject) {
+            return anObject.variablesScope;
+        }];
+        handler([self handleVariableMultiSetRequest:request scopes:scopes]);
+        return;
+    }
+
+    ITMVariableResponse *response = [[ITMVariableResponse alloc] init];
     PTYSession *session = [self sessionForAPIIdentifier:request.sessionId includeBuriedSessions:YES];
     if (!session) {
         response.status = ITMVariableResponse_Status_SessionNotFound;
@@ -1794,6 +1844,13 @@ static id sAPIHelperInstance;
         return;
     }
 
+    [self handleVariableSetsInRequest:request scope:session.variablesScope];
+    [self handleVariableGetsInRequest:request response:response scope:session.variablesScope];
+
+    handler(response);
+}
+
+- (void)handleVariableSetsInRequest:(ITMVariableRequest *)request scope:(iTermVariableScope *)scope {
     [request.setArray enumerateObjectsUsingBlock:^(ITMVariableRequest_Set * _Nonnull setRequest, NSUInteger idx, BOOL * _Nonnull stop) {
         id value;
         if ([setRequest.value isEqual:@"null"]) {
@@ -1801,20 +1858,35 @@ static id sAPIHelperInstance;
         } else {
             value = [NSJSONSerialization it_objectForJsonString:setRequest.value];
         }
-        [session setVariableNamed:setRequest.name
-                          toValue:value];
+        [scope setValue:value forVariableNamed:setRequest.name];
     }];
+}
+
+- (void)handleVariableGetsInRequest:(ITMVariableRequest *)request response:(ITMVariableResponse *)response scope:(iTermVariableScope *)scope {
     [request.getArray enumerateObjectsUsingBlock:^(NSString * _Nonnull name, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([name isEqualToString:@"*"]) {
-            NSDictionary *dict = session.variablesScope.dictionaryWithStringValues;
+            NSDictionary *dict = scope.dictionaryWithStringValues;
             [response.valuesArray addObject:[NSJSONSerialization it_jsonStringForObject:dict]];
         } else {
-            id obj = [NSJSONSerialization it_jsonStringForObject:[session.variablesScope valueForVariableName:name]];
+            id obj = [NSJSONSerialization it_jsonStringForObject:[scope valueForVariableName:name]];
             NSString *value = obj ?: @"null";
             [response.valuesArray addObject:value];
         }
     }];
-    handler(response);
+}
+
+- (ITMVariableResponse *)handleVariableMultiSetRequest:(ITMVariableRequest *)request
+                                                scopes:(NSArray<iTermVariableScope *> *)scopes {
+    ITMVariableResponse *response = [[ITMVariableResponse alloc] init];
+    if (request.getArray_Count > 0) {
+        response.status = ITMVariableResponse_Status_MultiGetDisallowed;
+        return response;
+    }
+    for (iTermVariableScope *scope in scopes) {
+        [self handleVariableSetsInRequest:request scope:scope];
+    }
+    response.status = ITMVariableResponse_Status_Ok;
+    return response;
 }
 
 - (void)apiServerSavedArrangement:(ITMSavedArrangementRequest *)request handler:(void (^)(ITMSavedArrangementResponse *))handler {

@@ -2,6 +2,7 @@
 
 import iterm2.rpc
 import iterm2.api_pb2
+import json
 
 class Tab:
     """Represents a tab."""
@@ -108,3 +109,41 @@ class Tab:
         :returns: A tmux window id (a string) or None if this is not a tmux integration window.
         """
         return self.__tmux_window_id
+
+    async def async_set_variable(self, name, value):
+        """
+        Sets a user-defined variable in the tab.
+
+        See Badges documentation for more information on user-defined variables.
+
+        :param name: The variable's name.
+        :param value: The new value to assign.
+
+        :throws: :class:`RPCException` if something goes wrong.
+        """
+        result = await iterm2.rpc.async_variable(
+            self.connection,
+            sets=[(name, json.dumps(value))],
+            tab_id=self.__tab_id)
+        status = result.variable_response.status
+        if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
+
+    async def async_get_variable(self, name):
+        """
+        Fetches a tab variable.
+
+        See Badges documentation for more information on variables.
+
+        :param name: The variable's name.
+
+        :returns: The variable's value or empty string if it is undefined.
+
+        :throws: :class:`RPCException` if something goes wrong.
+        """
+        result = await iterm2.rpc.async_variable(self.connection, gets=[name], tab_id=self.__tab_id)
+        status = result.variable_response.status
+        if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
+        else:
+            return json.loads(result.variable_response.values[0])

@@ -12,6 +12,7 @@
 
 @class FakeWindow;
 @class iTermVariables;
+@class iTermVariableScope;
 @class PTYSession;
 @class PTYTab;
 @class SessionView;
@@ -60,6 +61,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 @property (readonly, getter=isTmuxTab) BOOL tmuxTab;
 @property (nonatomic, readonly) PTYTabState state;
 @property (nonatomic, readonly) iTermVariables *variables;
+@property (nonatomic, readonly) iTermVariables *userVariables;
 
 // If non-nil, this session may not change size. This is useful when you want
 // to change a session's size. You can resize it, lock it, and then
@@ -74,6 +76,8 @@ extern NSString *const PTYTabVariableTitleOverride;
 // titleOverride with inline expressions evaluated.
 // This value is in the variable PTYTabVariableTitleOverride.
 @property (nonatomic, readonly) NSString *evaluatedTitleOverride;
+
+@property (nonatomic, readonly) iTermVariableScope *variablesScope;
 
 // Save the contents of all sessions. Used during window restoration so that if
 // the sessions are later restored from a saved arrangement during startup

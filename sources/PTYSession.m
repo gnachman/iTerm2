@@ -8479,15 +8479,15 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermTuple *kvp = [kvpString keyValuePair];
     if (kvp) {
         NSString *key = [NSString stringWithFormat:@"user.%@", kvp.firstObject];
-        [self setVariableNamed:key toValue:[kvp.secondObject stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding]];
+        [self.variablesScope setValue:[kvp.secondObject stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding]
+                     forVariableNamed:key];
     } else {
-        [self setVariableNamed:[NSString stringWithFormat:@"user.%@", kvpString] toValue:nil];
+        [self.variablesScope setValue:nil forVariableNamed:[NSString stringWithFormat:@"user.%@", kvpString]];
     }
 }
 
 - (void)setVariableNamed:(NSString *)name toValue:(id)newValue {
     [self.variablesScope setValue:newValue forVariableNamed:name];
-    [_textview setBadgeLabel:[self badgeLabel]];
 }
 
 - (void)injectData:(NSData *)data {

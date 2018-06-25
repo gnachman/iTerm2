@@ -270,15 +270,18 @@ message SavedArrangementResponse {
 }
 
 message VariableRequest {
-// TODO: Add a scope so you can get variables from a tab or app
-  optional string session_id = 1;  // "all" is allowed only if no gets (only sets allowed)
+  oneof scope {
+    string session_id = 1;  // "all" is allowed only if no gets (only sets allowed)
+    string tab_id = 4;  // "all" is allowed only if no gets (only sets allowed)
+    bool app = 5;
+  }
 
   message Set {
     optional string name = 1;
     optional string value = 2;  // JSON encoded
   }
   repeated Set set = 2;
-  repeated string get = 3;  // Set to special value "*" to get all in newline-delimited list.
+  repeated string get = 3;  // Set to special value "*" to get all in a JSON dictionary
 }
 
 message VariableResponse {
@@ -286,6 +289,9 @@ message VariableResponse {
     OK = 0;
     SESSION_NOT_FOUND = 1;
     INVALID_NAME = 2;  // Names you set must begin with "user."
+    MISSING_SCOPE = 3;  // None of the scope oneof fields was set
+    TAB_NOT_FOUND = 4;
+    MULTI_GET_DISALLOWED = 5;
   }
   optional Status status = 1;
   repeated string values = 2;  // 1:1 with get field in request.  JSON encoded, with null for unset variables.

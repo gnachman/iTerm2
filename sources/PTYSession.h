@@ -747,7 +747,6 @@ typedef enum {
 - (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token NS_AVAILABLE_MAC(10_11);
 
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length;
-- (void)setVariableNamed:(NSString *)name toValue:(id)newValue;
 - (void)injectData:(NSData *)data;
 
 // Call this when a session moves to a different tab or window to update the session ID.

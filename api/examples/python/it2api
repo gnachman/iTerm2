@@ -318,30 +318,63 @@ async def activate_app(connection, args):
 
 async def set_variable(connection, args):
   a = await iterm2.async_get_app(connection)
-  s = a.get_session_by_id(args.session)
-  if s is None:
-    print("bad session ID")
-    return
-  await s.async_set_variable(args.name, args.value)
+  if args.session:
+    s = a.get_session_by_id(args.session)
+    if s is None:
+      print("bad session ID")
+      return
+    await s.async_set_variable(args.name, args.value)
+  elif args.tab:
+    t = a.get_tab_by_id(args.tab)
+    if t is None:
+      print("bad tab ID")
+      return
+    await t.async_set_variable(args.name, args.value)
+  else:
+    await a.async_set_variable(args.name, args.value)
 
 async def get_variable(connection, args):
   a = await iterm2.async_get_app(connection)
-  s = a.get_session_by_id(args.session)
-  if s is None:
-    print("bad session ID")
-    return
-  value = await s.async_get_variable(args.name)
-  print(value)
+  if args.session:
+    s = a.get_session_by_id(args.session)
+    if s is None:
+      print("bad session ID")
+      return
+    value = await s.async_get_variable(args.name)
+    print(value)
+  elif args.tab:
+    t = a.get_tab_by_id(args.tab)
+    if t is None:
+      print("bad tab ID")
+      return
+    value = await t.async_get_variable(args.name)
+    print(value)
+  else:
+    value = await a.async_get_variable(args.name)
+    print(value)
 
 async def list_variables(connection, args):
   a = await iterm2.async_get_app(connection)
-  s = a.get_session_by_id(args.session)
-  if s is None:
-    print("bad session ID")
-    return
-  value = await s.async_get_variable("*")
-  for name in value:
-    print(name)
+  if args.session:
+    s = a.get_session_by_id(args.session)
+    if s is None:
+      print("bad session ID")
+      return
+    value = await s.async_get_variable("*")
+    for name in value:
+      print(name)
+  elif args.tab:
+    t = a.get_tab_by_id(args.tab)
+    if t is None:
+      print("bad tab ID")
+      return
+    value = await t.async_get_variable("*")
+    for name in value:
+      print(name)
+  else:
+    value = await a.async_get_variable("*")
+    for name in value:
+      print(name)
 
 async def saved_arrangement(connection, args):
   if args.window is not None:
@@ -498,18 +531,21 @@ def make_parser():
   activate_app_parser.set_defaults(func=activate_app)
 
   set_variable_parser = subparsers.add_parser("set-variable", help="Set a user-defined variable in a session. See Badges documentation for details.")
-  set_variable_parser.add_argument("session", type=str, help="Session ID")
+  set_variable_parser.add_argument("--session", type=str, nargs='?', help="Session ID")
+  set_variable_parser.add_argument("--tab", type=str, nargs='?', help="Tab ID")
   set_variable_parser.add_argument("name", type=str, help="Variable name. Starts with \"user.\"")
   set_variable_parser.add_argument("value", type=str, help="New value")
   set_variable_parser.set_defaults(func=set_variable)
 
   get_variable_parser = subparsers.add_parser("get-variable", help="Get a variable in a session. See Badges documentation for details.")
-  get_variable_parser.add_argument("session", type=str, help="Session ID")
+  set_variable_parser.add_argument("--session", type=str, nargs='?', help="Session ID")
+  set_variable_parser.add_argument("--tab", type=str, nargs='?', help="Tab ID")
   get_variable_parser.add_argument("name", type=str, help="Variable name. Starts with \"user.\"")
   get_variable_parser.set_defaults(func=get_variable)
 
   list_variables_parser = subparsers.add_parser("list-variables", help="Lists variable names available in a session.")
-  list_variables_parser.add_argument("session", type=str, help="Session ID")
+  set_variable_parser.add_argument("--session", type=str, nargs='?', help="Session ID")
+  set_variable_parser.add_argument("--tab", type=str, nargs='?', help="Tab ID")
   list_variables_parser.set_defaults(func=list_variables)
 
   saved_arrangement_parser = subparsers.add_parser("saved-arrangement", help="Saves and restores window arrangements")
