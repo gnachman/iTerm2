@@ -58,6 +58,9 @@
     }];
     [_fragmentTextures enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<MTLTexture>  _Nonnull obj, BOOL * _Nonnull stop) {
         [self->_formatter writeFragmentTexture:obj index:key.integerValue toFolder:folder];
+        NSString *description = [obj debugDescription];
+        NSString *file = [NSString stringWithFormat:@"texture-description.%@.txt", key];
+        [description writeToURL:[folder URLByAppendingPathComponent:file] atomically:NO encoding:NSUTF8StringEncoding error:nil];
     }];
     NSString *description = [NSString stringWithFormat:@"vertex count: %@\ninstance count: %@\nrenderPipelineState: %@\n",
                              @(_vertexCount),
