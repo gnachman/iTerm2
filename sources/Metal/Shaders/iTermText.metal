@@ -342,6 +342,7 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
 
     half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
     half underlineWeight = 0;
+    return bwColor;
 
     if (!in.recolor) {
         // Emoji code path
@@ -363,7 +364,6 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
                        in.underlineColor,
                        underlineWeight);
         } else {
-            return bwColor;
         }
     } else if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
         // Underlined. Not emoji.
@@ -422,6 +422,8 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
     const float4 backgroundColor = static_cast<float4>(drawable.sample(textureSampler, in.backgroundTextureCoordinate));
     half underlineWeight = 0;
 
+    return bwColor;
+
     if (!in.recolor) {
         // Emoji code path
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
@@ -442,7 +444,6 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
                        in.underlineColor,
                        underlineWeight);
         } else {
-            return bwColor;
         }
     } else if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
         // Underlined. Not emoji.
