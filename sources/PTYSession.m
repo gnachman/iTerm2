@@ -4929,6 +4929,24 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Giving up on ever doing a synchronous draw of %@ because useMetal is NO", self);
         return;
     }
+    if (_view.metalView.bounds.size.width == 0 || _view.metalView.bounds.size.height == 0) {
+        DLog(@"Giving up on ever doing a synchronous draw of %@ because the view's size is %@", self, NSStringFromSize(_view.metalView.bounds.size));
+        return;
+    }
+    if (_textview == nil) {
+        DLog(@"Giving up on ever doing a synchronous draw of %@ because the textview is nil", self);
+        return;
+    }
+    if (_textview.dataSource == nil) {
+        DLog(@"Giving up on ever doing a synchronous draw of %@ because the textview's datasource is nil", self);
+        return;
+    }
+    if (_screen.width == 0 || _screen.height == 0) {
+        DLog(@"Giving up on ever doing a synchronous draw of %@ because the screen's size is %@x%@. Screen is %@",
+             self, _textview.dataSource, @(_screen.width), @(_screen.height));
+        return;
+    }
+
     DLog(@"Begin synchronous draw for %@", self);
     [_view setNeedsDisplay:YES];
     BOOL ok = [_view drawFrameSynchronously];
