@@ -796,7 +796,9 @@ static BOOL hasBecomeActive = NO;
                 [self newWindow:nil];
                 break;
             case iTermUntitledFileOpenPending:
+                break;
             case iTermUntitledFileOpenComplete:
+                [self newWindow:nil];
                 break;
         }
     }
