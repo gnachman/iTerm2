@@ -1051,7 +1051,11 @@ static iTermController *gSharedInstance;
         [tempString appendString:part];
     }
     if (cd) {
-        [tempString appendFormat:@" \"cd %@; exec \\$SHELL -l\"", [url.path stringWithEscapedShellCharactersIncludingNewlines:YES]];
+        NSString *path = url.path;
+        if ([path hasPrefix:@"/~"]) {
+            path = [path substringFromIndex:1];
+        }
+        [tempString appendFormat:@" \"cd %@; exec \\$SHELL -l\"", [path stringWithEscapedShellCharactersIncludingNewlines:YES]];
     }
     return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
                                                        KEY_CUSTOM_COMMAND: @"Yes" }];
