@@ -4,9 +4,9 @@ VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")-adhoc
 make clean
 make Development
-rm -rf build/Deployment/iTerm.app
-mv build/Deployment/iTerm2.app build/Deployment/iTerm.app
-pushd build/Deployment
+rm -rf build/Development/iTerm.app
+mv build/Development/iTerm2.app build/Development/iTerm.app
+pushd build/Development
 zip -ry iTerm2-${NAME}.zip iTerm.app
 chmod a+r iTerm2-${NAME}.zip
 scp iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/adhocbuilds/ || \
