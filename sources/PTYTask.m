@@ -844,8 +844,13 @@ static void HandleSigChld(int n) {
 - (void)logData:(const char *)buffer length:(int)length {
     @synchronized(self) {
         if ([self logging]) {
-            [_logHandle writeData:[NSData dataWithBytes:buffer
-                                                 length:length]];
+            @try {
+                [_logHandle writeData:[NSData dataWithBytes:buffer
+                                                     length:length]];
+            } @catch (NSException *exception) {
+                DLog(@"Exception while logging %@ bytes of data: %@", @(length), exception);
+                [self stopLogging];
+            }
         }
     }
 }
