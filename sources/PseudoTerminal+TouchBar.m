@@ -555,7 +555,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
     if (index != NSNotFound) {
         NSString *command = [anItem candidates][index];
         NSString *prefix = self.currentSession.currentCommand;
-        if ([command hasPrefix:prefix] || prefix.length == 0) {
+        if (prefix.length == 0 || [command hasPrefix:prefix]) {
             [self.currentSession insertText:[command substringFromIndex:prefix.length]];
         }
     }
