@@ -15,6 +15,7 @@
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
@@ -2722,8 +2723,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                       contents:contents];
     }
 
-    return @{ TAB_ARRANGEMENT_ROOT: rootNode,
-              TAB_ARRANGEMENT_TITLE_OVERRIDE: self.titleOverride ?: [NSNull null] };
+    return [@{ TAB_ARRANGEMENT_ROOT: rootNode,
+               TAB_ARRANGEMENT_TITLE_OVERRIDE: self.titleOverride ?: [NSNull null] } dictionaryByRemovingNullValues];
 }
 
 - (NSDictionary*)arrangement {
