@@ -3,7 +3,7 @@ COMPACTDATE=$(date +"%Y%m%d_%H%M%S")
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")-adhoc
 make clean
-make release
+make Development
 rm -rf build/Deployment/iTerm.app
 mv build/Deployment/iTerm2.app build/Deployment/iTerm.app
 pushd build/Deployment
