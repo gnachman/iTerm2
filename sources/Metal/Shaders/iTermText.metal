@@ -342,68 +342,22 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
 
     half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
     half underlineWeight = 0;
-    return bwColor;
 
     if (!in.recolor) {
         // Emoji code path
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            underlineWeight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
-                                                               in.clipSpacePosition.xy,
-                                                               in.viewportSize,
-                                                               in.cellOffset,
-                                                               dimensions->underlineOffset,
-                                                               dimensions->underlineThickness,
-                                                               dimensions->textureSize,
-                                                               in.textureOffset,
-                                                               in.textureCoordinate,
-                                                               dimensions->cellSize,
-                                                               texture,
-                                                               textureSampler,
-                                                               dimensions->scale);
-            return mix(bwColor,
-                       in.underlineColor,
-                       underlineWeight);
+            return half4(1, 0, 0, 1);
         } else {
+            return bwColor;
         }
     } else if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-        // Underlined. Not emoji.
-        underlineWeight = ComputeWeightOfUnderline(in.underlineStyle,
-                                                   in.clipSpacePosition.xy,
-                                                   in.viewportSize,
-                                                   in.cellOffset,
-                                                   dimensions->underlineOffset,
-                                                   dimensions->underlineThickness,
-                                                   dimensions->textureSize,
-                                                   in.textureOffset,
-                                                   in.textureCoordinate,
-                                                   dimensions->cellSize,
-                                                   texture,
-                                                   textureSampler,
-                                                   dimensions->scale);
+        return half4(1, 1, 0, 1);
     }
     if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
     }
 
-    half4 textColor;
-    if (dimensions->disableExactColorModels) {
-        textColor = RemapColor(in.textColor * 17.0,
-                               in.backgroundColor,
-                               static_cast<float4>(bwColor),
-                               colorModelsTexture);
-    } else {
-        const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
-        // Base index for this color model
-        const int3 i = in.colorModelIndex * 256;
-        // Find RGB values to map colors in the black-on-white glyph to
-        const uchar4 rgba = uchar4(exactColorModels[i.x + bwIntIndices.x],
-                                   exactColorModels[i.y + bwIntIndices.y],
-                                   exactColorModels[i.z + bwIntIndices.z],
-                                   255);
-        textColor = static_cast<half4>(rgba) / 255;
-    }
-
-    return mix(textColor, in.underlineColor, underlineWeight);
+    return half4(1, 1, 1, 1);
 }
 
 // This path is slow but can deal with any combination of foreground/background
@@ -422,50 +376,20 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
     const float4 backgroundColor = static_cast<float4>(drawable.sample(textureSampler, in.backgroundTextureCoordinate));
     half underlineWeight = 0;
 
-    return bwColor;
 
     if (!in.recolor) {
         // Emoji code path
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            underlineWeight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
-                                                               in.clipSpacePosition.xy,
-                                                               in.viewportSize,
-                                                               in.cellOffset,
-                                                               dimensions->underlineOffset,
-                                                               dimensions->underlineThickness,
-                                                               dimensions->textureSize,
-                                                               in.textureOffset,
-                                                               in.textureCoordinate,
-                                                               dimensions->cellSize,
-                                                               texture,
-                                                               textureSampler,
-                                                               dimensions->scale);
-            return mix(bwColor,
-                       in.underlineColor,
-                       underlineWeight);
+            return half4(0.5, 0, 0, 1);
         } else {
+            return bwColor;
         }
     } else if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-        // Underlined. Not emoji.
-        underlineWeight = ComputeWeightOfUnderline(in.underlineStyle,
-                                                   in.clipSpacePosition.xy,
-                                                   in.viewportSize,
-                                                   in.cellOffset,
-                                                   dimensions->underlineOffset,
-                                                   dimensions->underlineThickness,
-                                                   dimensions->textureSize,
-                                                   in.textureOffset,
-                                                   in.textureCoordinate,
-                                                   dimensions->cellSize,
-                                                   texture,
-                                                   textureSampler,
-                                                   dimensions->scale);
+        return half4(0.5, 0.5, 0, 1);
     }
     if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
     }
-
-    half4 textColor = RemapColor(in.textColor * 17.0, backgroundColor, static_cast<float4>(bwColor), colorModels);
-    return mix(textColor, in.underlineColor, underlineWeight);
+    return half4(0.5, 0.5, 0.5, 1);
 }
 
