@@ -212,7 +212,8 @@ enum {
                               @(kTextmate2Tag): kTextmate2Identifier,
                                  @(kBBEditTag): kBBEditIdentifier,
                                    @(kAtomTag): kAtomIdentifier,
-                                 @(kVSCodeTag): kVSCodeIdentifier };
+                                 @(kVSCodeTag): kVSCodeIdentifier,
+                         @(kVSCodeInsidersTag): kVSCodeInsidersIdentifier };
     return map[@([[editors_ selectedItem] tag])];
 }
 
