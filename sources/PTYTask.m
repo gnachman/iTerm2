@@ -614,6 +614,9 @@ static void HandleSigChld(int n) {
            autologPath:(NSString *)autologPath
            synchronous:(BOOL)synchronous
             completion:(void (^)(void))completion {
+    DLog(@"launchWithPath:%@ args:%@ env:%@ width:%@ height:%@ isUTF8:%@ autologPath:%@ synchronous:%@",
+         progpath, args, env, @(width), @(height), @(isUTF8), autologPath, @(synchronous));
+
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         // We want to run
         //   iTerm2 --server progpath args
@@ -1131,6 +1134,8 @@ static void HandleSigChld(int n) {
                  autologPath:(NSString *)autologPath
                  synchronous:(BOOL)synchronous
                   completion:(void (^)(void))completion {
+    DLog(@"reallyLaunchWithPath:%@ args:%@ env:%@ width:%@ height:%@ isUTF8:%@ autologPath:%@ synchronous:%@",
+         progpath, args, env, @(width), @(height), @(isUTF8), autologPath, @(synchronous));
     if (autologPath) {
         [self startLoggingToFileWithPath:autologPath shouldAppend:NO];
     }
@@ -1140,6 +1145,7 @@ static void HandleSigChld(int n) {
 
     [self setCommand:progpath];
     env = [self environmentBySettingShell:env];
+    DLog(@"After setting shell environment is %@", env);
     path = [progpath copy];
     NSString *commandToExec = [progpath stringByStandardizingPath];
     const char *argpath = [commandToExec UTF8String];
@@ -1166,7 +1172,7 @@ static void HandleSigChld(int n) {
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
-
+    DLog(@"initialPwd=%s", initialPwd);
     iTermForkState forkState = {
         .connectionFd = -1,
         .deadMansPipe = { 0, 0 },

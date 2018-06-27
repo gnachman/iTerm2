@@ -74,6 +74,9 @@ NS_ASSUME_NONNULL_BEGIN
                          serverConnection:(iTermFileDescriptorServerConnection * _Nullable)serverConnection
                             substitutions:(NSDictionary *)substitutions
                          windowController:(PseudoTerminal * _Nonnull)windowController {
+    DLog(@"finishAttachingOrLaunchingSession:%@ cmd:%@ environment:%@ isUTF8:%@ substitutions:%@ windowController:%@",
+         aSession, cmd, environment, @(isUTF8), substitutions, windowController);
+
     // Start the command
     if (serverConnection) {
         assert([iTermAdvancedSettingsModel runJobsInServers]);
@@ -106,6 +109,10 @@ NS_ASSUME_NONNULL_BEGIN
                          substitutions:(nullable NSDictionary *)providedSubs
                       windowController:(PseudoTerminal * _Nonnull)windowController
                             completion:(void (^ _Nullable)(BOOL))completion {
+    DLog(@"attachOrLaunchCommandInSession:%@ canPrompt:%@ objectType:%@ urlString:%@ allowURLSubs:%@ environment:%@ oldCWD:%@ forceUseOldCWD:%@ command:%@ isUTF8:%@ substitutions:%@ windowController:%@",
+         aSession, @(canPrompt), @(objectType), urlString, @(allowURLSubs), environment, oldCWD,
+         @(forceUseOldCWD), command, isUTF8Number, providedSubs, windowController);
+
     Profile *profile = [aSession profile];
     Profile *profileForComputingCommand;
 
@@ -143,14 +150,18 @@ NS_ASSUME_NONNULL_BEGIN
     NSString *pwd;
     if (forceUseOldCWD) {
         pwd = oldCWD;
+        DLog(@"Using oldcwd (forced). pwd is %@", pwd);
     } else {
         pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile forObjectType:objectType];
+        DLog(@"pwd for profile+object type is %@", pwd);
     }
     if ([pwd length] == 0) {
         if (oldCWD) {
             pwd = oldCWD;
+            DLog(@"pwd was empty. Use oldCWD of %@", pwd);
         } else {
             pwd = NSHomeDirectory();
+            DLog(@"pwd was empty. Use home directory of %@", pwd);
         }
     }
     environment = [environment ?: @{} dictionaryBySettingObject:pwd forKey:@"PWD"];

@@ -1914,6 +1914,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                      substitutions:(NSDictionary *)substitutions
                                        synchronous:(BOOL)synchronous
                                         completion:(void (^)(NSDictionary *env))completion {
+    DLog(@"computeEnvironmentForNewJobFromEnvironment:%@ substitutions:%@ synchronous:%@",
+         environment, substitutions, @(synchronous));
     NSMutableDictionary *env = [[environment mutableCopy] autorelease];
     if (env[TERM_ENVNAME] == nil) {
         env[TERM_ENVNAME] = _termVariable;
@@ -1945,13 +1947,16 @@ ITERM_WEAKLY_REFERENCEABLE
     if (env[PWD_ENVNAME] == nil) {
         // Set "PWD"
         env[PWD_ENVNAME] = [PWD_ENVVALUE stringByExpandingTildeInPath];
+        DLog(@"env[%@] was nil. Set it to home directory: %@", PWD_ENVNAME, env[PWD_ENVNAME]);
     }
 
     // Remove trailing slashes, unless the path is just "/"
     NSString *trimmed = [env[PWD_ENVNAME] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
+    DLog(@"Trimmed pwd %@ is %@", env[PWD_ENVNAME], trimmed);
     if (trimmed.length == 0) {
         trimmed = @"/";
     }
+    DLog(@"Set env[PWD] to trimmed value %@", trimmed);
     env[PWD_ENVNAME] = trimmed;
 
     NSString *itermId = [self sessionId];
@@ -1980,12 +1985,16 @@ ITERM_WEAKLY_REFERENCEABLE
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions
           completion:(void (^)(BOOL))completion {
+    DLog(@"startProgram:%@ environment:%@ isUTF8:%@ substitutions:%@",
+         command, environment, @(isUTF8), substitutions);
+
     self.program = command;
     self.environment = environment ?: @{};
     self.isUTF8 = isUTF8;
     self.substitutions = substitutions ?: @{};
 
     [self computeArgvForCommand:command substitutions:substitutions synchronous:(completion == nil) completion:^(NSArray<NSString *> *argv) {
+        DLog(@"argv=%@", argv);
         [self computeEnvironmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions synchronous:(completion == nil) completion:^(NSDictionary *env) {
             @synchronized(self) {
                 _registered = YES;
