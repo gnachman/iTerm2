@@ -68,8 +68,8 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
 }
 
 - (void)restoreNameFromStateDictionary:(NSDictionary *)state {
-    _windowTitleStack = state[iTermSessionNameControllerStateKeyWindowTitleStack];
-    _iconTitleStack = state[iTermSessionNameControllerStateKeyIconTitleStack];
+    _windowTitleStack = [state[iTermSessionNameControllerStateKeyWindowTitleStack] mutableCopy];
+    _iconTitleStack = [state[iTermSessionNameControllerStateKeyIconTitleStack] mutableCopy];
     [self.delegate sessionNameControllerDidChangeWindowTitle];
 }
 
