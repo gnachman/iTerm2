@@ -99,6 +99,15 @@
         DLog(@"Pasteboard has a string.");
         info = [board stringForType:NSStringPboardType];
     }
+    if (!info) {
+        DLog(@"Using fallback technique of iterating pasteboard items %@", [[NSPasteboard generalPasteboard] pasteboardItems]);
+        for (NSPasteboardItem *item in [[NSPasteboard generalPasteboard] pasteboardItems]) {
+            info = [item stringForType:(NSString *)kUTTypeUTF8PlainText];
+            if (info) {
+                return info;
+            }
+        }
+    }
     return info;
 }
 

@@ -37,6 +37,7 @@
 #import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
+#import "NSArray+iTerm.h"
 #import "NSCharacterSet+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
@@ -3677,7 +3678,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([item action] == @selector(paste:)) {
         NSPasteboard *pboard = [NSPasteboard generalPasteboard];
         // Check if there is a string type on the pasteboard
-        return ([pboard stringForType:NSStringPboardType] != nil);
+        if ([pboard stringForType:NSStringPboardType] != nil) {
+            return YES;
+        }
+        return [[[NSPasteboard generalPasteboard] pasteboardItems] anyWithBlock:^BOOL(NSPasteboardItem *item) {
+            return [item stringForType:(NSString *)kUTTypeUTF8PlainText] != nil;
+        }];
     }
 
     if ([item action] == @selector(pasteOptions:)) {
