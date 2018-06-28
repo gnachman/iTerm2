@@ -1591,6 +1591,46 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     PtyLog(@"<<<<<<<< end dump");
 }
 
+- (void)arrangeSplitPanesEvenly {
+    [self arrangeSplitPanesEventlyInSplitView:root_];
+}
+
+- (void)arrangeSplitPanesEventlyInSplitView:(NSSplitView *)splitView {
+    if (self.isTmuxTab) {
+        [self arrangeTmuxSplitPanesEvenly];
+        return;
+    }
+    CGFloat size;
+    if (splitView.vertical) {
+        size = splitView.frame.size.width - splitView.subviews.count * splitView.dividerThickness;
+    } else {
+        size = splitView.frame.size.height - splitView.subviews.count * splitView.dividerThickness;
+    }
+    size /= splitView.subviews.count;
+    CGFloat offset = 0;
+    for (NSView *view in splitView.subviews) {
+        NSRect frame = view.frame;
+        if (splitView.vertical) {
+            frame.origin.x = offset;
+            frame.size.width = size;
+        } else {
+            frame.origin.y = offset;
+            frame.size.height = size;
+        }
+        view.frame = frame;
+        NSSplitView *child = [NSSplitView castFrom:view];
+        if (child) {
+            [self arrangeSplitPanesEventlyInSplitView:child];
+        }
+        offset += size;
+        offset += splitView.dividerThickness;
+    }
+}
+
+- (void)arrangeTmuxSplitPanesEvenly {
+    [tmuxController_ setLayoutInWindowPane:self.tmuxWindow toLayoutNamed:@"tiled"];
+}
+
 - (void)splitVertically:(BOOL)isVertical
              newSession:(PTYSession *)newSession
                  before:(BOOL)before

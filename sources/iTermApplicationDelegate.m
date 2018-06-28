@@ -366,6 +366,9 @@ static BOOL hasBecomeActive = NO;
     } else if (menuItem.action == @selector(debugLogging:)) {
         menuItem.state = gDebugLogging ? NSOnState : NSOffState;
         return YES;
+    } else if (menuItem.action == @selector(arrangeSplitPanesEvenly:)) {
+        PTYTab *tab = [[[iTermController sharedInstance] currentTerminal] currentTab];
+        return (tab.sessions.count > 0 && !tab.isMaximized);
     } else {
         return YES;
     }
@@ -1737,6 +1740,10 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)arrangeHorizontally:(id)sender
 {
     [[iTermController sharedInstance] arrangeHorizontally];
+}
+
+- (IBAction)arrangeSplitPanesEvenly:(id)sender {
+    [[[[iTermController sharedInstance] currentTerminal] currentTab] arrangeSplitPanesEvenly];
 }
 
 - (IBAction)showPrefWindow:(id)sender {

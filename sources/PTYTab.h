@@ -231,5 +231,6 @@ extern NSString *const PTYTabVariableTitleOverride;
 - (ITMSplitTreeNode *)rootSplitTreeNode;
 
 - (void)setSizesFromSplitTreeNode:(ITMSplitTreeNode *)node;
+- (void)arrangeSplitPanesEvenly;
 
 @end
