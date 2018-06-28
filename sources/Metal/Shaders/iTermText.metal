@@ -356,11 +356,7 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
     }
 
     half4 textColor;
-    if (dimensions->disableExactColorModels) {
-        textColor = half4(1, 0, 0, 1);
-    } else {
-        textColor = half4(1, 1, 1, 1);
-    }
+    textColor = half4(1, 1, 1, 1);
 
     return mix(textColor, in.underlineColor, underlineWeight);
 }
