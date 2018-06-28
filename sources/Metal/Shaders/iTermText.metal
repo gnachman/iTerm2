@@ -344,12 +344,7 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
     half underlineWeight = 0;
 
     if (!in.recolor) {
-        // Emoji code path
-        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            return half4(1, 1, 0, 1);
-        } else {
-            return bwColor;
-        }
+        return bwColor;
     }
 
     return half4(1, 1, 1, 1);
@@ -372,12 +367,7 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
     half underlineWeight = 0;
 
     if (!in.recolor) {
-        // Emoji code path
-        if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            return half4(1, 1, 0, 1);
-        } else {
-            return bwColor;
-        }
+        return bwColor;
     }
 
     return half4(1, 0, 0, 1);
