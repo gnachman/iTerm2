@@ -346,19 +346,7 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
     if (!in.recolor) {
         // Emoji code path
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            underlineWeight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
-                                                               in.clipSpacePosition.xy,
-                                                               in.viewportSize,
-                                                               in.cellOffset,
-                                                               dimensions->underlineOffset,
-                                                               dimensions->underlineThickness,
-                                                               dimensions->textureSize,
-                                                               in.textureOffset,
-                                                               in.textureCoordinate,
-                                                               dimensions->cellSize,
-                                                               texture,
-                                                               textureSampler,
-                                                               dimensions->scale);
+            underlineWeight = 0.5;
             return mix(bwColor,
                        in.underlineColor,
                        underlineWeight);
@@ -367,19 +355,7 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
         }
     } else if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
         // Underlined. Not emoji.
-        underlineWeight = ComputeWeightOfUnderline(in.underlineStyle,
-                                                   in.clipSpacePosition.xy,
-                                                   in.viewportSize,
-                                                   in.cellOffset,
-                                                   dimensions->underlineOffset,
-                                                   dimensions->underlineThickness,
-                                                   dimensions->textureSize,
-                                                   in.textureOffset,
-                                                   in.textureCoordinate,
-                                                   dimensions->cellSize,
-                                                   texture,
-                                                   textureSampler,
-                                                   dimensions->scale);
+        underlineWeight = 0.5;
     }
     if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
@@ -425,19 +401,7 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
     if (!in.recolor) {
         // Emoji code path
         if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-            underlineWeight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
-                                                               in.clipSpacePosition.xy,
-                                                               in.viewportSize,
-                                                               in.cellOffset,
-                                                               dimensions->underlineOffset,
-                                                               dimensions->underlineThickness,
-                                                               dimensions->textureSize,
-                                                               in.textureOffset,
-                                                               in.textureCoordinate,
-                                                               dimensions->cellSize,
-                                                               texture,
-                                                               textureSampler,
-                                                               dimensions->scale);
+            underlineWeight = 0.5;
             return mix(bwColor,
                        in.underlineColor,
                        underlineWeight);
@@ -446,19 +410,7 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
         }
     } else if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
         // Underlined. Not emoji.
-        underlineWeight = ComputeWeightOfUnderline(in.underlineStyle,
-                                                   in.clipSpacePosition.xy,
-                                                   in.viewportSize,
-                                                   in.cellOffset,
-                                                   dimensions->underlineOffset,
-                                                   dimensions->underlineThickness,
-                                                   dimensions->textureSize,
-                                                   in.textureOffset,
-                                                   in.textureCoordinate,
-                                                   dimensions->cellSize,
-                                                   texture,
-                                                   textureSampler,
-                                                   dimensions->scale);
+        underlineWeight = 0.5;
     }
     if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
