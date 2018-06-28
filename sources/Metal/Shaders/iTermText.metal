@@ -363,10 +363,7 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
 
     half4 textColor;
     if (dimensions->disableExactColorModels) {
-        textColor = RemapColor(in.textColor * 17.0,
-                               in.backgroundColor,
-                               static_cast<float4>(bwColor),
-                               colorModelsTexture);
+        textColor = half4(1, 0, 0, 1);
     } else {
         const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
         // Base index for this color model
@@ -416,7 +413,7 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
         discard_fragment();
     }
 
-    half4 textColor = RemapColor(in.textColor * 17.0, backgroundColor, static_cast<float4>(bwColor), colorModels);
+    half4 textColor = half4(1, 0, 0, 1);
     return mix(textColor, in.underlineColor, underlineWeight);
 }
 
