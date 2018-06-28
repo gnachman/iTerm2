@@ -7127,12 +7127,14 @@ ITERM_WEAKLY_REFERENCEABLE
         [_contentView.tabView insertTabViewItem:aTabViewItem atIndex:anIndex];
         [aTabViewItem release];
         [_contentView.tabView selectTabViewItemAtIndex:anIndex];
-        if (self.windowInitialized && !_fullScreen && !_restoringWindow) {
+        if (self.windowInitialized && !_fullScreen && !_restoringWindow && self.window.alphaValue > 0) {
             [[self window] makeKeyAndOrderFront:self];
         } else {
             PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
         }
-        [[iTermController sharedInstance] setCurrentTerminal:self];
+        if (self.window.alphaValue > 0) {
+            [[iTermController sharedInstance] setCurrentTerminal:self];
+        }
     }
 }
 
