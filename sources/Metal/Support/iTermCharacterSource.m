@@ -19,7 +19,9 @@ extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
 extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
 static const CGFloat iTermFakeItalicSkew = 0.4;
-static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
+static const CGFloat iTermCharacterSourceAntialiasedRetinaFakeBoldShiftPoints = 0.5;
+static const CGFloat iTermCharacterSourceAntialiasedNonretinaFakeBoldShiftPoints = 0;
+static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 @implementation iTermCharacterSource {
     NSString *_string;
@@ -210,6 +212,18 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
     }
 }
 
+- (CGFloat)fakeBoldShift {
+    if (_antialiased) {
+        if (_scale > 1) {
+            return iTermCharacterSourceAntialiasedRetinaFakeBoldShiftPoints;
+        } else {
+            return iTermCharacterSourceAntialiasedNonretinaFakeBoldShiftPoints;
+        }
+    } else {
+        return iTermCharacterSourceAliasedFakeBoldShiftPoints;
+    }
+}
+
 - (CGRect)frame {
     if (_string.length == 0) {
         return CGRectZero;
@@ -235,7 +249,7 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
         }
     }
     if (_fakeBold) {
-        frame.size.width += iTermCharacterSourceFakeBoldShiftPoints * _scale;
+        frame.size.width += self.fakeBoldShift;
     }
 
     frame.origin.x += radius * _partSize.width;
@@ -270,7 +284,7 @@ static const CGFloat iTermCharacterSourceFakeBoldShiftPoints = 1;
 
     [self drawRuns:runs atOffset:CGPointMake(offset.x, ty) skew:skew];
     if (_fakeBold) {
-        [self drawRuns:runs atOffset:CGPointMake(offset.x + iTermCharacterSourceFakeBoldShiftPoints * _scale, ty) skew:skew];
+        [self drawRuns:runs atOffset:CGPointMake(offset.x + self.fakeBoldShift * _scale, ty) skew:skew];
     }
     _haveDrawn = YES;
 }
