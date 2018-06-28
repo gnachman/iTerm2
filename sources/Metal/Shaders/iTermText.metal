@@ -362,15 +362,7 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
     if (dimensions->disableExactColorModels) {
         textColor = half4(1, 0, 0, 1);
     } else {
-        const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
-        // Base index for this color model
-        const int3 i = in.colorModelIndex * 256;
-        // Find RGB values to map colors in the black-on-white glyph to
-        const uchar4 rgba = uchar4(exactColorModels[i.x + bwIntIndices.x],
-                                   exactColorModels[i.y + bwIntIndices.y],
-                                   exactColorModels[i.z + bwIntIndices.z],
-                                   255);
-        textColor = static_cast<half4>(rgba) / 255;
+        textColor = half4(1, 1, 1, 1);
     }
 
     return mix(textColor, in.underlineColor, underlineWeight);
