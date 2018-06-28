@@ -350,9 +350,6 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
         } else {
             return bwColor;
         }
-    } else if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-        // Underlined. Not emoji.
-        underlineWeight = 0.5;
     }
     if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
@@ -391,9 +388,6 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
         } else {
             return bwColor;
         }
-    } else if (in.underlineStyle != iTermMetalGlyphAttributesUnderlineNone) {
-        // Underlined. Not emoji.
-        underlineWeight = 0.5;
     }
     if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
