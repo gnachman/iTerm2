@@ -355,10 +355,7 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
         discard_fragment();
     }
 
-    half4 textColor;
-    textColor = half4(1, 1, 1, 1);
-
-    return mix(textColor, in.underlineColor, underlineWeight);
+    return half4(1, 1, 1, 1);
 }
 
 // This path is slow but can deal with any combination of foreground/background
@@ -389,7 +386,6 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
         discard_fragment();
     }
 
-    half4 textColor = half4(1, 0, 0, 1);
-    return mix(textColor, in.underlineColor, underlineWeight);
+    return half4(1, 0, 0, 1);
 }
 
