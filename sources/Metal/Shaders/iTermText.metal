@@ -351,9 +351,6 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
             return bwColor;
         }
     }
-    if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
-        discard_fragment();
-    }
 
     return half4(1, 1, 1, 1);
 }
@@ -381,9 +378,6 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
         } else {
             return bwColor;
         }
-    }
-    if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
-        discard_fragment();
     }
 
     return half4(1, 0, 0, 1);
