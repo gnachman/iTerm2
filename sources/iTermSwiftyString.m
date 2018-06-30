@@ -21,7 +21,6 @@
 @end
 
 @implementation iTermSwiftyString {
-    NSSet<NSString *> *_dependencies;
     NSSet<NSString *> *_mutations;
     NSMutableSet<NSString *> *_missingFunctions;
 }
