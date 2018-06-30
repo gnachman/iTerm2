@@ -25,6 +25,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, copy) void (^observer)(NSString *);
 @property (nonatomic, readonly) NSString *evaluatedString;
 
+// Variables the string depends on
+@property (nonatomic, readonly) NSSet<NSString *> *dependencies;
+
 - (instancetype)initWithString:(NSString *)swiftyString
                         source:(id (^)(NSString *name))source
                        mutates:(NSSet<NSString *> *)mutates

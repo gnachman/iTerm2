@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14113" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
+        <capability name="box content view" minToolsVersion="7.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="iTermStatusBarSetupCollectionViewItem">
+            <connections>
+                <outlet property="_box" destination="vOr-3g-4Df" id="Xsj-aa-KWF"/>
+                <outlet property="_boxContent" destination="J9t-1g-aG1" id="cez-Z0-asx"/>
+                <outlet property="_description" destination="gEy-sx-fqK" id="OmV-Ue-IFP"/>
+                <outlet property="textField" destination="Pyb-il-04Q" id="fjU-pe-s77"/>
+                <outlet property="view" destination="VuE-al-3yA" id="2uK-EP-Ftl"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customView misplaced="YES" id="VuE-al-3yA">
+            <rect key="frame" x="0.0" y="0.0" width="280" height="50"/>
+            <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
+            <subviews>
+                <box misplaced="YES" boxType="custom" borderType="line" cornerRadius="4" title="Box" titlePosition="noTitle" id="vOr-3g-4Df">
+                    <rect key="frame" x="0.0" y="24" width="280" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
+                    <view key="contentView" id="J9t-1g-aG1">
+                        <rect key="frame" x="1" y="1" width="278" height="24"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="1000" misplaced="YES" id="Pyb-il-04Q">
+                                <rect key="frame" x="6" y="4" width="266" height="17"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Label" id="rKc-pE-bfW">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                        </subviews>
+                    </view>
+                    <color key="fillColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                </box>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" id="gEy-sx-fqK">
+                    <rect key="frame" x="-2" y="4" width="284" height="14"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title="Label" id="RTX-9d-D3x">
+                        <font key="font" metaFont="smallSystem"/>
+                        <color key="textColor" name="headerColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+            </subviews>
+            <point key="canvasLocation" x="500" y="375"/>
+        </customView>
+    </objects>
+</document>
