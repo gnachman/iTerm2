@@ -31,7 +31,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)awakeFromNib {
     NSArray<Class> *classes = @[ [iTermStatusBarSwiftyStringComponent class],
-                                 [iTermStatusBarFixedSpacerComponent class] ];
+                                 [iTermStatusBarFixedSpacerComponent class],
+                                 [iTermStatusBarSpringComponent class] ];
     _elements = [classes mapWithBlock:^id(Class theClass) {
         return [[iTermStatusBarSetupElement alloc] initWithComponentClass:theClass];
     }];

@@ -37,4 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermStatusBarFixedSpacerComponent : iTermStatusBarBaseComponent
 @end
 
+@interface iTermStatusBarSpringComponent : iTermStatusBarBaseComponent
+@end
+
 NS_ASSUME_NONNULL_END

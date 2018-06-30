@@ -110,6 +110,10 @@
     _scope = scope;
 }
 
+- (CGFloat)statusBarComponentSpringConstant {
+    return 1;
+}
+
 #pragma mark - NSSecureCoding
 
 + (BOOL)supportsSecureCoding {
@@ -180,6 +184,36 @@
 
 - (CGFloat)statusBarComponentMinimumWidth {
     return 10;
+}
+
+@end
+
+@implementation iTermStatusBarSpringComponent {
+    NSView *_view;
+}
+
+
++ (id)statusBarComponentExemplar {
+    return @"║┄┄║";
+}
+
++ (NSString *)statusBarComponentShortDescription {
+    return @"Spring";
+}
+
++ (NSString *)statusBarComponentDetailedDescription {
+    return @"Pushes items apart. Use one spring to right-align status bar elements that follow it. Use two to center those inbetween.";
+}
+
+- (NSView *)statusBarComponentCreateView {
+    if (!_view) {
+        _view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, self.statusBarComponentMinimumWidth, 0)];
+    }
+    return _view;
+}
+
+- (CGFloat)statusBarComponentMinimumWidth {
+    return 0;
 }
 
 @end
