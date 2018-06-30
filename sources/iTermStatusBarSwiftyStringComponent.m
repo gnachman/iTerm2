@@ -19,7 +19,7 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
 }
 
 + (id)statusBarComponentExemplar {
-    return @"\\(user.gitBranch)";
+    return @"\\(expression)";
 }
 
 + (NSString *)statusBarComponentShortDescription {

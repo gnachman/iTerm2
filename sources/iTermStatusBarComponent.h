@@ -46,7 +46,13 @@ extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurat
 - (CGFloat)statusBarComponentMinimumWidth;
 
 // If this returns YES the component's width may exceed its minimum width.
+// The spring constant determines how multiple stretching components compete
+// for space.
 - (BOOL)statusBarComponentCanStretch;
+
+// How hard it pushes against its neighbors. Only applies to components that
+// can stretch.
+- (CGFloat)statusBarComponentSpringConstant;
 
 // Comparison
 - (BOOL)isEqualToComponent:(id<iTermStatusBarComponent>)component;
