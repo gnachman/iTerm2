@@ -47,39 +47,4 @@ NSString *const iTermStatusBarComponentKnobMinimumWidthKey = @"_minimumWidth";
 
 @end
 
-@implementation iTermStatusBarComponentKnobText {
-    NSTextField *_view;
-}
-
-- (NSView *)inputView {
-    if (!_view) {
-        _view = [[NSTextField alloc] initWithFrame:NSZeroRect];
-        _view.drawsBackground = NO;
-        _view.bordered = NO;
-        _view.editable = NO;
-        _view.selectable = NO;
-        _view.placeholderString = self.placeholder;
-        _view.stringValue = self.stringValue;
-        _view.alignment = NSLeftTextAlignment;
-        _view.textColor = [NSColor textColor];
-        [_view sizeToFit];
-    }
-    return _view;
-}
-
-@end
-
-@implementation iTermStatusBarComponentKnobMinimumWidth
-
-- (NSView *)inputView {
-    NSView *view = [[iTermDragHandleView alloc] initWithFrame:NSMakeRect(0, 0, 22, 4)];
-    view.wantsLayer = YES;
-    view.layer.backgroundColor = [[NSColor grayColor] CGColor];
-    view.layer.borderWidth = 1.0;
-    view.layer.borderColor = [[NSColor blackColor] CGColor];
-    return view;
-}
-
-@end
-
 NS_ASSUME_NONNULL_END

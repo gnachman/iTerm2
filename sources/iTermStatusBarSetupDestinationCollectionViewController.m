@@ -6,13 +6,17 @@
 //
 
 #import "iTermStatusBarSetupDestinationCollectionViewController.h"
+
 #import "iTermStatusBarSetupCollectionViewItem.h"
+#import "iTermStatusBarSetupKnobsViewController.h"
+#import "iTermStatusBarTextComponent.h"
 
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
 
 @interface iTermStatusBarSetupDestinationCollectionViewController ()<
+    iTermStatusBarSetupElementDelegate,
     NSCollectionViewDataSource,
     NSCollectionViewDelegateFlowLayout>
 
@@ -187,6 +191,7 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     NSData *data = [draggingInfo.draggingPasteboard dataForType:iTermStatusBarElementPasteboardType];
     @try {
         iTermStatusBarSetupElement *element = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+        element.delegate = self;
         [collectionView.animator performBatchUpdates:^{
             if (draggingInfo.draggingSource == collectionView) {
                 const NSInteger fromIndex = [self->_draggingIndexPath indexAtPosition:1];
@@ -253,9 +258,49 @@ viewForSupplementaryElementOfKind:(NSCollectionViewSupplementaryElementKind)kind
 }
 
 - (void)collectionView:(NSCollectionView *)collectionView didSelectItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths {
+    NSIndexPath *indexPath = indexPaths.anyObject;
+    if (!indexPath) {
+        return;
+    }
+
+    const NSInteger index = [indexPath indexAtPosition:1];
+    iTermStatusBarSetupElement *element = _elements[index];
+    id<iTermStatusBarComponent> component = element.component;
+    NSCollectionViewItem *collectionViewItem = [collectionView itemAtIndexPath:indexPath];
+    iTermStatusBarSetupKnobsViewController *viewController =
+        [[iTermStatusBarSetupKnobsViewController alloc] initWithComponent:component];
+    [self showPopoverWithViewController:viewController
+                         attachedToView:collectionViewItem.view
+                                  frame:collectionViewItem.view.bounds];
+}
+
+- (void)showPopoverWithViewController:(NSViewController *)viewController
+                       attachedToView:(NSView *)view
+                                frame:(NSRect)frame {
+    // Show popover
+    [self presentViewController:viewController
+        asPopoverRelativeToRect:frame
+                         ofView:view
+                  preferredEdge:NSMaxYEdge
+                       behavior:NSPopoverBehaviorTransient];
 }
 
 - (void)collectionView:(NSCollectionView *)collectionView didDeselectItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths {
+}
+
+#pragma mark - iTermStatusBarSetupElementDelegate
+
+- (void)itermStatusBarSetupElementDidChange:(iTermStatusBarSetupElement *)element {
+    NSInteger index = [_elements indexOfObject:element];
+    if (index == NSNotFound) {
+        return;
+    }
+
+    [self.collectionView.animator performBatchUpdates:
+     ^{
+         NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
+         [self.collectionView reloadItemsAtIndexPaths:[NSSet setWithObject:indexPath]];
+     } completionHandler:^(BOOL finished) {}];
 }
 
 @end

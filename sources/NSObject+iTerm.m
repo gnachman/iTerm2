@@ -85,4 +85,10 @@
     return objc_getAssociatedObject(self, key);
 }
 
+- (void)it_performNonObjectReturningSelector:(SEL)selector withObject:(id)object {
+    IMP imp = [self methodForSelector:selector];
+    void (*func)(id, SEL, id) = (void *)imp;
+    func(self, selector, object);
+}
+
 @end
