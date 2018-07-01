@@ -37,7 +37,6 @@
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                     <connections>
-                        <action selector="textFieldChanged:" target="-2" id="68Z-Fl-juc"/>
                         <outlet property="delegate" destination="-2" id="dgv-2R-otT"/>
                     </connections>
                 </textField>

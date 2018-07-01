@@ -30,7 +30,8 @@ extern NSString *const iTermStatusBarElementPasteboardType;
 @property (nonatomic, readonly) id<iTermStatusBarComponent> component;
 @property (nonatomic, weak) id<iTermStatusBarSetupElementDelegate> delegate;
 
-- (instancetype)initWithComponentClass:(Class)componentClass NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithComponentClass:(Class)componentClass;
+- (instancetype)initWithComponent:(id<iTermStatusBarComponent>)component NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 @end

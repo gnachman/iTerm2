@@ -11,6 +11,7 @@
 @interface iTermStatusBarSetupDestinationCollectionViewController : NSViewController
 
 @property (nonatomic, copy) NSArray<iTermStatusBarSetupElement *> *elements;
+@property (nonatomic, copy) NSDictionary *layoutDictionary;
 
 - (void)deleteSelected;
 

@@ -9,6 +9,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermStatusBarSpringComponentSpringConstantKey";
+
 @implementation iTermStatusBarSpringComponent {
     NSView *_view;
 }
@@ -34,6 +36,30 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (CGFloat)statusBarComponentMinimumWidth {
     return 0;
+}
+
++ (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+    iTermStatusBarComponentKnob *expressionKnob =
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Spring Constant:"
+                                                          type:iTermStatusBarComponentKnobTypeDouble
+                                                   placeholder:@""
+                                                  defaultValue:@1
+                                                           key:iTermStatusBarSpringComponentSpringConstantKey];
+    return @[ expressionKnob ];
+}
+
+- (CGFloat)statusBarComponentSpringConstant {
+    NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    NSNumber *number = knobValues[iTermStatusBarSpringComponentSpringConstantKey];
+    return number ? number.doubleValue : 1;
+}
+
+- (BOOL)statusBarComponentCanStretch {
+    return YES;
+}
+
+- (CGFloat)statusBarComponentPreferredWidth {
+    return INFINITY;
 }
 
 @end

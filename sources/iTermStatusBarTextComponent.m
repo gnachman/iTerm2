@@ -15,25 +15,55 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermStatusBarTextComponent {
     NSTextField *_textField;
+    NSTextField *_measuringField;
+}
+
+- (NSTextField *)newTextField {
+    NSTextField *textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    textField.drawsBackground = NO;
+    textField.bordered = NO;
+    textField.editable = NO;
+    textField.selectable = NO;
+    [self setValueInField:textField];
+    return textField;
+}
+
+- (void)setValueInField:(NSTextField *)textField {
+    if (self.attributedStringValue) {
+        textField.attributedStringValue = self.attributedStringValue;
+    } else if (self.stringValue) {
+        textField.stringValue = self.stringValue;
+        textField.alignment = NSLeftTextAlignment;
+        textField.textColor = [NSColor textColor];
+    }
+    [textField sizeToFit];
 }
 
 - (NSTextField *)textField {
     if (!_textField) {
-        _textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
-        _textField.drawsBackground = NO;
-        _textField.bordered = NO;
-        _textField.editable = NO;
-        _textField.selectable = NO;
-        if (self.attributedStringValue) {
-            _textField.attributedStringValue = self.attributedStringValue;
-        } else if (self.stringValue) {
-            _textField.stringValue = self.stringValue;
-            _textField.alignment = NSLeftTextAlignment;
-            _textField.textColor = [NSColor textColor];
-        }
-        [_textField sizeToFit];
+        _textField = [self newTextField];
     }
     return _textField;
+}
+
+- (void)setStringValue:(NSString *)stringValue {
+    _stringValue = stringValue;
+    [self setValueInField:_textField];
+    [self.delegate statusBarComponentPreferredSizeDidChange:self];
+}
+
+- (CGFloat)statusBarComponentPreferredWidth {
+    if (!_measuringField) {
+        _measuringField = [self newTextField];
+    } else {
+        [self setValueInField:_measuringField];
+    }
+    return [_measuringField frame].size.width;
+}
+
+- (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width {
+    [[NSTextField castFrom:view] sizeToFit];
+    view.frame = NSMakeRect(0, 0, width, view.frame.size.height);
 }
 
 #pragma mark - iTermStatusBarComponent

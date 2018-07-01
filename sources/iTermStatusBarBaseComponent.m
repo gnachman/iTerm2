@@ -43,6 +43,14 @@ NS_ASSUME_NONNULL_BEGIN
     return self.statusBarComponentCreateView.frame.size.width;
 }
 
+- (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width {
+    view.frame = NSMakeRect(0, 0, width, view.frame.size.height);
+}
+
+- (CGFloat)statusBarComponentPreferredWidth {
+    return [self statusBarComponentMinimumWidth];
+}
+
 - (BOOL)statusBarComponentCanStretch {
     return NO;
 }
@@ -95,14 +103,6 @@ NS_ASSUME_NONNULL_BEGIN
         return number.doubleValue;
     }
     return iTermStatusBarComponentPriorityMedium;
-}
-
-- (iTermStatusBarComponentJustification)statusBarComponentJustification {
-    NSNumber *number = _configuration[iTermStatusBarComponentConfigurationKeyJustification];
-    if (number) {
-        return number.unsignedIntegerValue;
-    }
-    return iTermStatusBarComponentJustificationLeft;
 }
 
 - (NSSet<NSString *> *)statusBarComponentVariableDependencies {

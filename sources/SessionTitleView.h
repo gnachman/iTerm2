@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class iTermStatusBarViewController;
+
 @protocol SessionTitleViewDelegate <NSObject>
 
 - (NSColor *)tabColor;
@@ -20,12 +22,12 @@
 
 @end
 
-
 @interface SessionTitleView : NSView
 
 @property(nonatomic, copy) NSString *title;
-@property(nonatomic, assign) id<SessionTitleViewDelegate> delegate;
+@property(nonatomic, weak) id<SessionTitleViewDelegate> delegate;
 @property(nonatomic, assign) double dimmingAmount;
 @property(nonatomic, assign) int ordinal;
+@property(nonatomic, strong) iTermStatusBarViewController *statusBarViewController;
 
 @end

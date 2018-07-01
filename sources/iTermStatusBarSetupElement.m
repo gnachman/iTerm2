@@ -19,14 +19,20 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     id<iTermStatusBarComponent> _component;
 }
 
-- (instancetype)initWithComponentClass:(Class)componentClass {
+- (instancetype)initWithComponent:(id<iTermStatusBarComponent>)component {
     self = [super init];
     if (self) {
-        _shortDescription = [componentClass statusBarComponentShortDescription];
-        _detailedDescription = [componentClass statusBarComponentDetailedDescription];
-        _componentClass = componentClass;
+        _shortDescription = [component.class statusBarComponentShortDescription];
+        _detailedDescription = [component.class statusBarComponentDetailedDescription];
+        _componentClass = component.class;
+        _component = component;
+        _component.delegate = self;
     }
     return self;
+}
+
+- (instancetype)initWithComponentClass:(Class)componentClass {
+    return [self initWithComponent:[[componentClass alloc] initWithConfiguration:@{}]];
 }
 
 - (NSString *)description {
@@ -37,12 +43,8 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     return self.component.statusBarComponentExemplar;
 }
 
-- (id<iTermStatusBarComponent>)component {
-    if (!_component) {
-        _component = [[_componentClass alloc] initWithConfiguration:@{}];
-        _component.delegate = self;
-    }
-    return _component;
+- (void)setComponentClass:(Class _Nonnull)componentClass {
+    _componentClass = componentClass;
 }
 
 #pragma mark - NSCopying
@@ -103,6 +105,8 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     return YES;
 }
 
+- (void)statusBarComponentPreferredSizeDidChange:(id<iTermStatusBarComponent>)component {
+}
 
 @end
 

@@ -7,6 +7,8 @@
 
 #import "iTermStatusBarKnobNumericViewController.h"
 
+#import "NSObject+iTerm.h"
+
 @interface iTermStatusBarKnobNumericViewController ()
 
 @end
@@ -60,6 +62,20 @@
 
 - (CGFloat)controlOffset {
     return NSMinX(_textField.frame);
+}
+
+- (BOOL)control:(NSControl *)control textView:(NSTextView *)fieldEditor doCommandBySelector:(SEL)commandSelector {
+    if ([self respondsToSelector:commandSelector]) {
+        [self it_performNonObjectReturningSelector:commandSelector withObject:control];
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+- (void)insertNewline:(id)sender {
+    NSViewController *parent = self.parentViewController;
+    [parent dismissViewController:parent];
 }
 
 @end

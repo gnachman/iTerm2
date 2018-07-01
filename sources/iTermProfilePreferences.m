@@ -202,17 +202,20 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                          KEY_SEND_NEW_OUTPUT_ALERT, KEY_SEND_SESSION_ENDED_ALERT,
                          KEY_SEND_TERMINAL_GENERATED_ALERT, KEY_FLASHING_BELL, KEY_VISUAL_BELL,
                          KEY_CLOSE_SESSIONS_ON_END, KEY_PROMPT_CLOSE,
-                         KEY_UNDO_TIMEOUT, KEY_REDUCE_FLICKER, KEY_SEND_CODE_WHEN_IDLE,
+                         KEY_UNDO_TIMEOUT, KEY_REDUCE_FLICKER, KEY_SHOW_STATUS_BAR, KEY_SEND_CODE_WHEN_IDLE,
                          KEY_IDLE_CODE, KEY_IDLE_PERIOD, KEY_OPTION_KEY_SENDS,
                          KEY_RIGHT_OPTION_KEY_SENDS, KEY_APPLICATION_KEYPAD_ALLOWED,
                          KEY_PLACE_PROMPT_AT_FIRST_COLUMN, KEY_SHOW_MARK_INDICATORS,
                        ];
+    NSArray *dict = @[ KEY_STATUS_BAR_LAYOUT ];
     if ([string containsObject:key]) {
         return [value isKindOfClass:[NSString class]];
     } else if ([color containsObject:key]) {
         return [value isKindOfClass:[NSDictionary class]] && [(NSDictionary *)value isColorValue];
     } else if ([number containsObject:key]) {
         return [value isKindOfClass:[NSNumber class]];
+    } else if ([dict containsObject:key]) {
+        return [value isKindOfClass:[NSDictionary class]];
     } else {
         return NO;
     }
@@ -352,7 +355,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_HOTKEY_ALTERNATE_SHORTCUTS: @[],
                   KEY_SESSION_HOTKEY: @{},
                   KEY_TITLE_COMPONENTS : @(iTermTitleComponentsProfileName),
-                  KEY_TITLE_FUNC: [NSNull null]
+                  KEY_TITLE_FUNC: [NSNull null],
+                  KEY_SHOW_STATUS_BAR: @NO,
+                  KEY_STATUS_BAR_LAYOUT: @{},
                   // Remember to update valueIsLegal:forKey: and the websocket
                   // README.md when adding a new value that should be
                   // API-settable.

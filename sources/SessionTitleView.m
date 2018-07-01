@@ -8,6 +8,7 @@
 
 #import "SessionTitleView.h"
 #import "iTermPreferences.h"
+#import "iTermStatusBarViewController.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 #import "PSMTabBarControl.h"
@@ -45,10 +46,10 @@ static const CGFloat kButtonSize = 17;
         double x = kMargin;
 
         NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
-        closeButton_ = [[[NoFirstResponderButton alloc] initWithFrame:NSMakeRect(x,
-                                                                                 (frame.size.height - kButtonSize) / 2,
-                                                                                 kButtonSize,
-                                                                                 kButtonSize)] autorelease];
+        closeButton_ = [[NoFirstResponderButton alloc] initWithFrame:NSMakeRect(x,
+                                                                                (frame.size.height - kButtonSize) / 2,
+                                                                                kButtonSize,
+                                                                                kButtonSize)];
         [closeButton_ setButtonType:NSMomentaryPushInButton];
         [closeButton_ setImage:closeImage];
         [closeButton_ setTarget:self];
@@ -81,7 +82,7 @@ static const CGFloat kButtonSize = 17;
         [menuButton_ setAutoresizingMask:NSViewMinXMargin];
         [self addSubview:menuButton_];
 
-        label_ = [[[NSTextField alloc] initWithFrame:NSMakeRect(x, 0, menuButton_.frame.origin.x - x - kMargin, frame.size.height)] autorelease];
+        label_ = [[NSTextField alloc] initWithFrame:NSMakeRect(x, 0, menuButton_.frame.origin.x - x - kMargin, frame.size.height)];
         [label_ setStringValue:@""];
         [label_ setBezeled:NO];
         [label_ setDrawsBackground:NO];
@@ -106,9 +107,25 @@ static const CGFloat kButtonSize = 17;
 }
 
 - (void)dealloc {
-    [title_ release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [super dealloc];
+}
+
+- (void)setStatusBarViewController:(iTermStatusBarViewController *)statusBarViewController {
+    [_statusBarViewController.view removeFromSuperview];
+    _statusBarViewController = statusBarViewController;
+    if (statusBarViewController) {
+        [self addSubview:statusBarViewController.view];
+        const CGFloat margin = 5;
+        const CGFloat minX = NSMaxX(closeButton_.frame) + margin;
+        statusBarViewController.view.frame = NSMakeRect(minX,
+                                                        0,
+                                                        NSMinX(menuButton_.frame) - margin - minX,
+                                                        self.frame.size.height);
+        label_.hidden = YES;
+    } else {
+        // You can have either a label or a status bar but not both.
+        label_.hidden = NO;
+    }
 }
 
 - (void)openMenu:(id)sender {
@@ -235,7 +252,6 @@ static const CGFloat kButtonSize = 17;
     if ([title isEqualToString:title_]) {
         return;
     }
-    [title_ autorelease];
     title_ = [title copy];
     [self updateTitle];
     [self setNeedsDisplay:YES];

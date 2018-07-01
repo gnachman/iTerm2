@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarViewController.h"
 
+#import "DebugLogging.h"
 #import "iTermStatusBarContainerView.h"
 #import "iTermStatusBarLayout.h"
 #import "iTermStatusBarView.h"
@@ -17,10 +18,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 static const CGFloat iTermStatusBarViewControllerMargin = 5;
 static const CGFloat iTermStatusBarViewControllerTopMargin = 2;
-static const CGFloat iTermStatusBarViewControllerBottomMargin = 2;
 static const CGFloat iTermStatusBarViewControllerContainerHeight = 22;
 
-@interface iTermStatusBarViewController ()<iTermStatusBarLayoutDelegate>
+@interface iTermStatusBarViewController ()<
+    iTermStatusBarComponentDelegate,
+    iTermStatusBarLayoutDelegate>
 
 @end
 
@@ -29,21 +31,17 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 22;
     NSArray<iTermStatusBarContainerView *> *_visibleContainerViews;
 }
 
-- (instancetype)initWithLayout:(iTermStatusBarLayout *)layout {
+- (instancetype)initWithLayout:(iTermStatusBarLayout *)layout
+                         scope:(nonnull iTermVariableScope *)scope {
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
+        _scope = scope;
         _layout = layout;
+        for (id<iTermStatusBarComponent> component in layout.components) {
+            [component statusBarComponentSetVariableScope:scope];
+        }
     }
     return self;
-}
-
-- (nullable instancetype)initWithCoder:(NSCoder *)coder {
-    iTermStatusBarLayout *layout = [coder decodeObjectOfClass:[iTermStatusBarLayout class]
-                                                       forKey:@"layout"];
-    if (!layout) {
-        return nil;
-    }
-    return [self initWithLayout:layout];
 }
 
 - (void)loadView {
@@ -56,105 +54,110 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 22;
 }
 
 - (void)viewWillLayout {
-    NSArray<iTermStatusBarContainerView *> *previouslyVisibleViews = _visibleContainerViews;
+    NSArray<iTermStatusBarContainerView *> *previouslyVisible = _visibleContainerViews.copy;
     _visibleContainerViews = [self visibleContainerViews];
     [self updateDesiredWidths];
     [self updateDesiredOrigins];
 
-    NSArray<iTermStatusBarContainerView *> *moving = [previouslyVisibleViews filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *containerView) {
-        return [self->_visibleContainerViews containsObject:containerView];
-    }];
-    NSArray<iTermStatusBarContainerView *> *removing = [previouslyVisibleViews filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *containerView) {
-        return ![self->_visibleContainerViews containsObject:containerView];
-    }];
-    NSArray<iTermStatusBarContainerView *> *inserting = [_visibleContainerViews filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *containerView) {
-        return ![previouslyVisibleViews containsObject:containerView];
-    }];
-
-    [NSView animateWithDuration:0.25
-                     animations:
-     ^{
-         [moving enumerateObjectsUsingBlock:
-          ^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
-              view.animator.frame = NSMakeRect(view.desiredOrigin,
-                                               iTermStatusBarViewControllerTopMargin,
-                                               view.desiredWidth,
-                                               iTermStatusBarViewControllerContainerHeight);
-          }];
-         [removing enumerateObjectsUsingBlock:
-          ^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
-              view.animator.frame = NSMakeRect(view.frame.origin.x,
-                                               iTermStatusBarViewControllerTopMargin,
-                                               0,
-                                               iTermStatusBarViewControllerContainerHeight);
-          }];
-         [inserting enumerateObjectsUsingBlock:
-          ^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
-              [self.view addSubview:view];
-              view.frame = NSMakeRect(view.desiredOrigin + view.desiredWidth / 2,
-                                      iTermStatusBarViewControllerTopMargin,
-                                      0,
-                                      iTermStatusBarViewControllerContainerHeight);
-              view.animator.frame = NSMakeRect(view.desiredOrigin,
-                                               iTermStatusBarViewControllerTopMargin,
-                                               view.desiredWidth,
-                                               iTermStatusBarViewControllerContainerHeight);
-          }];
-     }
-                     completion:
-     ^(BOOL finished) {
-         [removing enumerateObjectsUsingBlock:
-          ^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
-              [view removeFromSuperview];
-          }];
+    [_visibleContainerViews enumerateObjectsUsingBlock:
+     ^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
+         view.frame = NSMakeRect(view.desiredOrigin,
+                                 iTermStatusBarViewControllerTopMargin,
+                                 view.desiredWidth,
+                                 iTermStatusBarViewControllerContainerHeight);
      }];
+    // Remove defunct views
+    for (iTermStatusBarContainerView *view in previouslyVisible) {
+        if (![_visibleContainerViews containsObject:view]) {
+            [view removeFromSuperview];
+        }
+    }
+    // Add new views
+    for (iTermStatusBarContainerView *view in _visibleContainerViews) {
+        if (view.superview != self.view) {
+            [self.view addSubview:view];
+        }
+    }
+}
+
+- (void)variablesDidChange:(NSSet<NSString *> *)names {
+    [_layout.components enumerateObjectsUsingBlock:^(id<iTermStatusBarComponent> _Nonnull component, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSSet<NSString *> *dependencies = [component statusBarComponentVariableDependencies];
+        if ([dependencies intersectsSet:names]) {
+            [component statusBarComponentVariablesDidChange:names];
+        }
+    }];
 }
 
 #pragma mark - Private
 
 - (void)updateDesiredWidths {
     const CGFloat totalMarginWidth = (_containerViews.count + 2) * iTermStatusBarViewControllerMargin;
-    const CGFloat availableWidth = self.view.frame.size.width - totalMarginWidth;
-    const CGFloat minimumWidth = [self minimumWidthOfContainerViews:_containerViews];
-    const CGFloat minimumWidthExcludingMargins = minimumWidth - totalMarginWidth;
-    const CGFloat surplusWidth = (availableWidth - minimumWidth);
-    [_containerViews enumerateObjectsUsingBlock:^(iTermStatusBarContainerView * _Nonnull containerView, NSUInteger idx, BOOL * _Nonnull stop) {
-        const CGFloat minimumForComponent = containerView.component.statusBarComponentMinimumWidth;
-        if (containerView.component.statusBarComponentCanStretch) {
-            const CGFloat weight = minimumForComponent / minimumWidthExcludingMargins;
-            containerView.desiredWidth = floor(minimumForComponent + surplusWidth * weight);
-        } else {
-            containerView.desiredWidth = minimumForComponent;
-        }
+    __block CGFloat availableWidth = self.view.frame.size.width - totalMarginWidth;
+
+    DLog(@"updateDesiredWidths available=%@", @(availableWidth));
+    // Allocate minimum widths
+    [_containerViews enumerateObjectsUsingBlock:^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
+        view.desiredWidth = view.component.statusBarComponentMinimumWidth;
+        availableWidth -= view.desiredWidth;
     }];
+    DLog(@"updateDesiredWidths after assigning minimums: available=%@", @(availableWidth));
+
+    if (availableWidth < 1) {
+        return;
+    }
+
+    // Find views that can grow
+    NSArray<iTermStatusBarContainerView *> *views = [_containerViews filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *view) {
+        return (view.component.statusBarComponentCanStretch &&
+                view.component.statusBarComponentPreferredWidth > view.desiredWidth);
+    }];
+
+
+    while (1) {
+        double sumOfSpringConstants = [[views reduceWithFirstValue:@0 block:^NSNumber *(NSNumber *sum, iTermStatusBarContainerView *containerView) {
+            if (!containerView.component.statusBarComponentCanStretch) {
+                return sum;
+            }
+            return @(sum.doubleValue + containerView.component.statusBarComponentSpringConstant);
+        }] doubleValue];
+
+        DLog(@"updateDesiredWidths have %@ views that can grow: available=%@",
+              @(views.count), @(availableWidth));
+
+        __block double growth = 0;
+        // Divvy up space proportionate to spring constants.
+        [views enumerateObjectsUsingBlock:^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
+            const double weight = view.component.statusBarComponentSpringConstant / sumOfSpringConstants;
+            double delta = availableWidth * weight;
+            const double maximum = view.component.statusBarComponentPreferredWidth;
+            const double proposed = view.desiredWidth + delta;
+            const double overage = MAX(0, proposed - maximum);
+            delta -= overage;
+            view.desiredWidth += delta;
+            growth += delta;
+            DLog(@"  grow %@ by %@ to %@", view, @(delta), @(view.desiredWidth));
+        }];
+        availableWidth -= growth;
+        NSLog(@"updateDesiredWidths after divvying: available = %@", @(availableWidth));
+
+        if (availableWidth < 1) {
+            return;
+        }
+
+        // Remove satisifed views.
+        views = [views filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *view) {
+            return view.component.statusBarComponentPreferredWidth > view.desiredWidth;
+        }];
+    }
 }
 
 - (void)updateDesiredOrigins {
-    NSDictionary<NSNumber *, NSArray<iTermStatusBarContainerView *> *> *classified;
-    classified = [_containerViews classifyWithBlock:^id(iTermStatusBarContainerView *view) {
-        return @(view.component.statusBarComponentJustification);
-    }];
-    CGFloat left = iTermStatusBarViewControllerMargin;
-    for (iTermStatusBarContainerView *view in classified[@(iTermStatusBarComponentJustificationLeft)]) {
-        view.desiredOrigin = left;
-        left += view.desiredWidth + iTermStatusBarViewControllerMargin;
-    }
-    CGFloat right = self.view.frame.size.width - iTermStatusBarViewControllerMargin;
-    for (iTermStatusBarContainerView *view in classified[@(iTermStatusBarComponentJustificationRight)].reverseObjectEnumerator) {
-        view.desiredOrigin = right - view.desiredWidth;
-        right -= (view.desiredWidth + iTermStatusBarViewControllerMargin);
-    }
-
-    NSArray<iTermStatusBarContainerView *> *centeredViews = classified[@(iTermStatusBarComponentJustificationCenter)];
-    CGFloat sumOfCenteredViewsWidths = [[centeredViews reduceWithFirstValue:@0 block:^NSNumber *(NSNumber *sum, iTermStatusBarContainerView *view) {
-        return @(sum.doubleValue + view.desiredWidth);
-    }] doubleValue];
-
-    CGFloat inset = floor(((right - left) - sumOfCenteredViewsWidths) / 2);
-    left += inset;
-    for (iTermStatusBarContainerView *view in centeredViews) {
-        view.desiredOrigin = left;
-        left += view.desiredWidth + iTermStatusBarViewControllerMargin;
+    CGFloat x = iTermStatusBarViewControllerMargin;
+    for (iTermStatusBarContainerView *container in _containerViews) {
+        container.desiredOrigin = x;
+        x += container.desiredWidth;
+        x += iTermStatusBarViewControllerMargin;
     }
 }
 
@@ -209,27 +212,31 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 22;
         } else {
             view = [[iTermStatusBarContainerView alloc] initWithComponent:component];
         }
+        component.delegate = self;
         [updatedContainerViews addObject:view];
     }
     _containerViews = updatedContainerViews;
     [self.view setNeedsLayout:YES];
 }
 
-#pragma mark - NSSecureCoding
-
-+ (BOOL)supportsSecureCoding {
-    return YES;
-}
-
-- (void)encodeWithCoder:(NSCoder *)aCoder {
-    [super encodeWithCoder:aCoder];
-    [aCoder encodeObject:_layout forKey:@"layout"];
-}
-
 #pragma mark - iTermStatusBarLayoutDelegate
 
 - (void)statusBarLayoutDidChange:(iTermStatusBarLayout *)layout {
     [self updateViews];
+}
+
+#pragma mark - iTermStatusBarComponentDelegate
+
+- (BOOL)statusBarComponentIsInSetupUI:(id<iTermStatusBarComponent>)component {
+    return NO;
+}
+
+- (void)statusBarComponentKnobsDidChange:(id<iTermStatusBarComponent>)component {
+    // Shouldn't happen since this is not the setup UI
+}
+
+- (void)statusBarComponentPreferredSizeDidChange:(id<iTermStatusBarComponent>)component {
+    [self.view setNeedsLayout:YES];
 }
 
 @end
