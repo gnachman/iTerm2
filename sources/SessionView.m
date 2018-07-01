@@ -762,6 +762,7 @@ static NSDate* lastResizeDate_;
                                                                     self.frame.size.height - kTitleHeight,
                                                                     self.frame.size.width,
                                                                     kTitleHeight)];
+        [self invalidateStatusBar];
         if (adjustScrollView) {
             [_title setAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin];
         }
@@ -781,6 +782,13 @@ static NSDate* lastResizeDate_;
     [self setTitle:[_delegate sessionViewTitle]];
     [self updateScrollViewFrame];
     return YES;
+}
+
+- (void)invalidateStatusBar {
+    iTermStatusBarViewController *newVC = [self.delegate sessionViewStatusBarViewController];
+    if (newVC != _title.statusBarViewController) {
+        _title.statusBarViewController = newVC;
+    }
 }
 
 - (void)setOrdinal:(int)ordinal {

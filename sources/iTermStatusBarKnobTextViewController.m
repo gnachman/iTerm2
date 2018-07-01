@@ -13,7 +13,9 @@
 
 @end
 
-@implementation iTermStatusBarKnobTextViewController
+@implementation iTermStatusBarKnobTextViewController {
+    NSString *_value;
+}
 
 - (void)viewDidLoad {
     self.view.autoresizesSubviews = NO;
@@ -28,7 +30,7 @@
 }
 
 - (NSString *)value {
-    return _textField.stringValue;
+    return _value ?: _textField.stringValue;
 }
 
 - (void)setDescription:(NSString *)description placeholder:(nonnull NSString *)placeholder {
@@ -68,6 +70,8 @@
 }
 
 - (void)insertNewline:(id)sender {
+    // Mysteriously, calling parentViewController nukes the text field's value.
+    _value = self.textField.stringValue;
     NSViewController *parent = self.parentViewController;
     [parent dismissViewController:parent];
 }

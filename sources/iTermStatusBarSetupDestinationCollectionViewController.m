@@ -9,6 +9,7 @@
 
 #import "iTermStatusBarSetupCollectionViewItem.h"
 #import "iTermStatusBarSetupKnobsViewController.h"
+#import "iTermStatusBarLayout.h"
 #import "iTermStatusBarTextComponent.h"
 
 #import "NSArray+iTerm.h"
@@ -66,6 +67,25 @@
 - (void)setElements:(NSArray<iTermStatusBarSetupElement *> *)elements {
     _elements = [elements mutableCopy];
     [self.collectionView reloadData];
+}
+
+- (void)setLayoutDictionary:(NSDictionary *)layoutDictionary {
+    iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithDictionary:layoutDictionary];
+    [layout.components enumerateObjectsUsingBlock:^(id<iTermStatusBarComponent>  _Nonnull component, NSUInteger idx, BOOL * _Nonnull stop) {
+        [component statusBarComponentSetVariableScope:nil];
+        iTermStatusBarSetupElement *element = [[iTermStatusBarSetupElement alloc] initWithComponent:component];
+        element.delegate = self;
+        [self->_elements addObject:element];
+    }];
+    [self.collectionView reloadData];
+}
+
+- (NSDictionary *)layoutDictionary {
+    NSArray<id<iTermStatusBarComponent>> *components = [_elements mapWithBlock:^id(iTermStatusBarSetupElement *element) {
+        return element.component;
+    }];
+    iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithComponents:components];
+    return layout.dictionaryValue;
 }
 
 #pragma mark - NSCollectionViewDataSource

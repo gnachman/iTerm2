@@ -1142,21 +1142,6 @@ static BOOL hasBecomeActive = NO;
     if ([iTermAdvancedSettingsModel enableAPIServer]) {
         [iTermAPIHelper sharedInstance];  // starts the server. Won't ask the user since it's enabled.
     }
-
-#warning DNS
-    if (@available(macOS 10.11, *)) {
-        static iTermStatusBarSetupViewController *setup;
-        setup =
-            [[iTermStatusBarSetupViewController alloc] initWithNibName:@"iTermStatusBarSetupViewController"
-                                                                bundle:nil];
-        static NSWindow *window;
-            window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 480, 479)
-                                                 styleMask:NSWindowStyleMaskTitled
-                                                   backing:NSBackingStoreBuffered
-                                                     defer:NO];
-        window.contentView = setup.view;
-        [window makeKeyAndOrderFront:nil];
-    }
 }
 
 - (NSMenu *)statusBarMenu {

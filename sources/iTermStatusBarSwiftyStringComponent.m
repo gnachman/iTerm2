@@ -45,6 +45,10 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
     }
 }
 
+- (BOOL)statusBarComponentCanStretch {
+    return YES;
+}
+
 - (nullable NSString *)stringValue {
     return _swiftyString.evaluatedString;
 }
@@ -67,6 +71,7 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
     __weak __typeof(self) weakSelf = self;
     if ([self.delegate statusBarComponentIsInSetupUI:self]) {
         _swiftyString = [[iTermSwiftyStringPlaceholder alloc] initWithString:expression];
+        self.stringValue = expression;
     } else {
         _swiftyString = [[iTermSwiftyString alloc] initWithString:expression
                                                            source:^id _Nonnull(NSString * _Nonnull name) {
@@ -74,8 +79,9 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
                                                            }
                                                           mutates:[NSSet set]
                                                          observer:^(NSString * _Nonnull newValue) {
-                                                             weakSelf.textField.stringValue = newValue;
+                                                             [weakSelf setStringValue:newValue];
                                                          }];
+        self.stringValue = _swiftyString.evaluatedString;
     }
 }
 

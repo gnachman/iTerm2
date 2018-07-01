@@ -194,6 +194,8 @@
 #define KEY_PROMPT_CLOSE                      @"Prompt Before Closing 2"
 #define KEY_JOBS                              @"Jobs to Ignore"
 #define KEY_REDUCE_FLICKER                    @"Reduce Flicker"
+#define KEY_SHOW_STATUS_BAR                   @"Show Status Bar"
+#define KEY_STATUS_BAR_LAYOUT                 @"Status Bar Layout"
 
 // Keyboard
 #define KEY_KEYBOARD_MAP                      @"Keyboard Map"

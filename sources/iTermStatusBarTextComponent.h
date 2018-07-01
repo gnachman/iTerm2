@@ -20,6 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, nullable) NSAttributedString *attributedStringValue;
 @property (nonatomic, readonly) NSTextField *textField;
 
+- (void)setStringValue:(NSString *)stringValue;
+
 @end
 
 NS_ASSUME_NONNULL_END

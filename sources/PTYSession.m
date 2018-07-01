@@ -48,6 +48,8 @@
 #import "iTermShellHistoryController.h"
 #import "iTermShortcut.h"
 #import "iTermShortcutInputView.h"
+#import "iTermStatusBarLayout.h"
+#import "iTermStatusBarViewController.h"
 #import "iTermSwiftyString.h"
 #import "iTermSystemVersion.h"
 #import "iTermTextExtractor.h"
@@ -480,6 +482,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     iTermVariables *_sessionVariables;
     iTermVariables *_userVariables;
     iTermSwiftyString *_badgeSwiftyString;
+    iTermStatusBarViewController *_statusBarViewController;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -797,6 +800,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_copyModeState release];
     [_metalDisabledTokens release];
     [_badgeSwiftyString release];
+    [_statusBarViewController release];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -3768,7 +3772,22 @@ ITERM_WEAKLY_REFERENCEABLE
                                                               inProfile:aDict]];
     [_screen setMaxScrollbackLines:[iTermProfilePreferences intForKey:KEY_SCROLLBACK_LINES
                                                             inProfile:aDict]];
-
+    if ([iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:aDict]) {
+        NSDictionary *layout = [iTermProfilePreferences objectForKey:KEY_STATUS_BAR_LAYOUT inProfile:aDict];
+        NSDictionary *existing = _statusBarViewController.layout.dictionaryValue;
+        if (![NSObject object:existing isEqualToObject:layout]) {
+            iTermStatusBarLayout *newLayout = [[[iTermStatusBarLayout alloc] initWithDictionary:layout] autorelease];
+            [_statusBarViewController release];
+            if (newLayout) {
+                _statusBarViewController =
+                    [[iTermStatusBarViewController alloc] initWithLayout:newLayout
+                                                                   scope:self.variablesScope];
+            } else {
+                _statusBarViewController = nil;
+            }
+            [_view invalidateStatusBar];
+        }
+    }
     _screen.appendToScrollbackWithStatusBar = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_WITH_STATUS_BAR
                                                                         inProfile:aDict];
     self.badgeFormat = [iTermProfilePreferences stringForKey:KEY_BADGE_FORMAT inProfile:aDict];
@@ -9715,6 +9734,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (iTermStatusBarViewController *)sessionViewStatusBarViewController {
+    return _statusBarViewController;
+}
+
 #pragma mark - iTermHotkeyNavigableSession
 
 - (void)sessionHotkeyDidNavigateToSession:(iTermShortcut *)shortcut {
@@ -10228,6 +10251,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_nameController variablesDidChange:changedNames];
     [_badgeSwiftyString variablesDidChange:changedNames];
     [_textview setBadgeLabel:[self badgeLabel]];
+    [_statusBarViewController variablesDidChange:changedNames];
 }
 
 @end

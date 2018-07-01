@@ -8,8 +8,10 @@
 
 #import "ProfilesSessionPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermStatusBarSetupViewController.h"
 #import "iTermWarning.h"
 #import "NSFileManager+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "PreferencePanel.h"
 
 @interface ProfilesSessionPreferencesViewController () <NSTableViewDelegate, NSTableViewDataSource>
@@ -35,7 +37,11 @@
     IBOutlet NSButton *_alwaysWarn;
     IBOutlet NSButton *_neverWarn;
     IBOutlet NSButton *_warnIfJobsBesides;
-    
+
+    IBOutlet NSButton *_statusBarEnabled;
+    IBOutlet NSButton *_configureStatusBar;
+    iTermStatusBarSetupViewController *_statusBarSetupViewController;
+    NSWindow *_statusBarSetupWindow;
     BOOL _awoken;
 }
 
@@ -157,6 +163,21 @@
                     key:KEY_REDUCE_FLICKER
                    type:kPreferenceInfoTypeCheckbox];
 
+    if (@available(macOS 10.11, *)) {
+        info = [self defineControl:_statusBarEnabled
+                               key:KEY_SHOW_STATUS_BAR
+                              type:kPreferenceInfoTypeCheckbox];
+        info.observer = ^{
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            strongSelf->_configureStatusBar.enabled = [strongSelf boolForKey:KEY_SHOW_STATUS_BAR];
+        };
+    } else {
+        _statusBarEnabled.enabled = NO;
+        _configureStatusBar.enabled = NO;
+    }
 }
 
 // Ensure the anti-idle period's value is constrained to the legal range.
@@ -188,6 +209,33 @@
 - (NSArray *)keysForBulkCopy {
     NSArray *keys = @[ KEY_JOBS ];
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
+}
+
+- (IBAction)configureStatusBar:(id)sender {
+    if (@available(macOS 10.11, *)) {
+        NSDictionary *layoutDictionary = [NSDictionary castFrom:[self objectForKey:KEY_STATUS_BAR_LAYOUT]] ?: @{};
+        _statusBarSetupViewController =
+            [[iTermStatusBarSetupViewController alloc] initWithLayoutDictionary:layoutDictionary];
+
+        _statusBarSetupWindow =
+            [[NSPanel alloc] initWithContentRect:_statusBarSetupViewController.view.frame
+                                       styleMask:NSWindowStyleMaskResizable
+                                         backing:NSBackingStoreBuffered
+                                           defer:NO];
+        _statusBarSetupWindow.contentView = _statusBarSetupViewController.view;
+        __weak __typeof(self) weakSelf = self;
+        [self.view.window beginSheet:_statusBarSetupWindow completionHandler:^(NSModalResponse returnCode) {
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (strongSelf) {
+                if (strongSelf->_statusBarSetupViewController.ok) {
+                    [strongSelf setObject:strongSelf->_statusBarSetupViewController.layoutDictionary
+                                   forKey:KEY_STATUS_BAR_LAYOUT];
+                }
+                strongSelf->_statusBarSetupWindow = nil;
+                strongSelf->_statusBarSetupViewController = nil;
+            }
+        }];
+    }
 }
 
 #pragma mark - Prompt before closing

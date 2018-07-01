@@ -29,6 +29,15 @@ NS_ASSUME_NONNULL_BEGIN
     IBOutlet NSCollectionView *_collectionView;
     IBOutlet iTermStatusBarSetupDestinationCollectionViewController *_destinationViewController;
     NSArray<iTermStatusBarSetupElement *> *_elements;
+    NSDictionary *_initialLayout;
+}
+
+- (instancetype)initWithLayoutDictionary:(NSDictionary *)layoutDictionary {
+    self = [super initWithNibName:@"iTermStatusBarSetupViewController" bundle:nil];
+    if (self) {
+        _initialLayout = [layoutDictionary copy];
+    }
+    return self;
 }
 
 - (void)awakeFromNib {
@@ -41,6 +50,8 @@ NS_ASSUME_NONNULL_BEGIN
     [_collectionView registerForDraggedTypes: @[iTermStatusBarElementPasteboardType]];
     [_collectionView setDraggingSourceOperationMask:NSDragOperationCopy forLocal:YES];
     _collectionView.selectable = YES;
+
+    [_destinationViewController setLayoutDictionary:_initialLayout];
     [super awakeFromNib];
 }
 
@@ -52,6 +63,24 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)deleteBackward:(nullable id)sender {
     [_destinationViewController deleteSelected];
+}
+
+- (NSDictionary *)layoutDictionary {
+    return _destinationViewController.layoutDictionary;
+}
+
+- (IBAction)ok:(id)sender {
+    _ok = YES;
+    [self endSheet];
+}
+
+- (IBAction)cancel:(id)sender {
+    [self endSheet];
+}
+
+- (void)endSheet {
+    NSWindow *window = self.view.window;
+    [window.sheetParent endSheet:window];
 }
 
 #pragma mark - NSCollectionViewDataSource

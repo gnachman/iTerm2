@@ -131,6 +131,8 @@
 // Please stop using metal and then start again.
 - (void)sessionViewRecreateMetalView;
 
+- (iTermStatusBarViewController *)sessionViewStatusBarViewController;
+
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>
@@ -195,5 +197,6 @@
 - (BOOL)hasHoverURL;
 - (BOOL)drawFrameSynchronously;
 - (void)reallyUpdateMetalViewFrame;
+- (void)invalidateStatusBar;
 
 @end

@@ -9,12 +9,6 @@
 
 #import "iTermStatusBarComponentKnob.h"
 
-typedef NS_ENUM(NSUInteger, iTermStatusBarComponentJustification) {
-    iTermStatusBarComponentJustificationLeft,
-    iTermStatusBarComponentJustificationCenter,
-    iTermStatusBarComponentJustificationRight
-};
-
 static double iTermStatusBarComponentPriorityLow = 0.25;
 static double iTermStatusBarComponentPriorityMedium = 0.5;
 static double iTermStatusBarComponentPriorityHigh = 0.75;
@@ -22,7 +16,6 @@ static double iTermStatusBarComponentPriorityMaximum = 1;
 
 typedef NSString *iTermStatusBarComponentConfigurationKey NS_EXTENSIBLE_STRING_ENUM;
 extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyPriority;  // NSNumber
-extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyJustification;  // NSNumber with iTermStatusBarComponentJustification
 extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyMinimumWidth;  // NSNumber
 extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyKnobValues;  // NSDictionary
 
@@ -32,6 +25,7 @@ extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurat
 @protocol iTermStatusBarComponentDelegate<NSObject>
 - (void)statusBarComponentKnobsDidChange:(id<iTermStatusBarComponent>)component;
 - (BOOL)statusBarComponentIsInSetupUI:(id<iTermStatusBarComponent>)component;
+- (void)statusBarComponentPreferredSizeDidChange:(id<iTermStatusBarComponent>)component;
 @end
 
 // The model for a object in a status bar.
@@ -54,8 +48,14 @@ extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurat
 // Returns a newly created view showing this component's content.
 - (NSView *)statusBarComponentCreateView;
 
+// Update the view's size.
+- (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width;
+
 // Returns the minimum width in points of this component.
 - (CGFloat)statusBarComponentMinimumWidth;
+
+// Returns the largest useful width of this component.
+- (CGFloat)statusBarComponentPreferredWidth;
 
 // If this returns YES the component's width may exceed its minimum width.
 // The spring constant determines how multiple stretching components compete
@@ -71,9 +71,6 @@ extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurat
 
 // Decides which components are removed first when space lacks.
 - (double)statusBarComponentPriority;
-
-// Where to arrange this component left-to-right.
-- (iTermStatusBarComponentJustification)statusBarComponentJustification;
 
 // Which variables (in the session context) this component's contents depend on.
 - (NSSet<NSString *> *)statusBarComponentVariableDependencies;

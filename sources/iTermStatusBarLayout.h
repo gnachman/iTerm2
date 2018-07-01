@@ -9,6 +9,8 @@
 
 #import "iTermStatusBarComponent.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class iTermStatusBarLayout;
 
 @protocol iTermStatusBarLayoutDelegate<NSObject>
@@ -20,10 +22,13 @@
 @interface iTermStatusBarLayout : NSObject<NSSecureCoding>
 
 @property (nonatomic, weak) id<iTermStatusBarLayoutDelegate> delegate;
-@property (nonatomic, readonly) NSArray<id<iTermStatusBarComponent>> *components;
+@property (nonatomic, strong) NSArray<id<iTermStatusBarComponent>> *components;
 
-- (void)addComponent:(id<iTermStatusBarComponent>)component;
-- (void)removeComponent:(id<iTermStatusBarComponent>)component;
-- (void)insertComponent:(id<iTermStatusBarComponent>)component atIndex:(NSInteger)index;
+- (instancetype)initWithComponents:(NSArray<id<iTermStatusBarComponent>> *)components NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithDictionary:(NSDictionary *)layout;
+
+- (NSDictionary *)dictionaryValue;
 
 @end
+
+NS_ASSUME_NONNULL_END

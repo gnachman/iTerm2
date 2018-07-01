@@ -103,7 +103,7 @@ static NSViewController<iTermStatusBarKnobViewController> *iTermNewViewControlle
 
 - (NSDictionary *)knobValues {
     NSArray *keys = [_knobs mapWithBlock:^id(iTermStatusBarComponentKnob *anObject) {
-        return anObject.key;
+        return anObject.value ? anObject.key : nil;
     }];
     NSArray *values = [_knobs mapWithBlock:^id(iTermStatusBarComponentKnob *anObject) {
         return anObject.value;

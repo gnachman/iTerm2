@@ -70,7 +70,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
-    _view.frame = NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height);
+    [self.component statusBarComponentSizeView:_view toFitWidth:self.frame.size.width];
+    const CGFloat viewHeight = _view.frame.size.height;
+    const CGFloat myHeight = self.frame.size.height;
+    const CGFloat myWidth = self.frame.size.width;
+    const CGFloat viewWidth = _view.frame.size.width;
+    _view.frame = NSMakeRect((myWidth - viewWidth) / 2,
+                             (myHeight - viewHeight) / 2,
+                             viewWidth,
+                             viewHeight);
 }
 
 @end
