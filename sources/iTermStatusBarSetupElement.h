@@ -6,17 +6,29 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermStatusBarComponent.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermStatusBarSetupElement;
+
+@protocol iTermStatusBarSetupElementDelegate<NSObject>
+
+- (void)itermStatusBarSetupElementDidChange:(iTermStatusBarSetupElement *)element;
+
+@end
+
 extern NSString *const iTermStatusBarElementPasteboardType;
 
+// Model for an item in the status bar collection view.
 @interface iTermStatusBarSetupElement : NSObject<NSCopying, NSPasteboardWriting, NSPasteboardReading, NSCoding>
 
 @property (nonatomic, readonly) id exemplar;
 @property (nonatomic, readonly) NSString *shortDescription;
 @property (nonatomic, readonly) NSString *detailedDescription;
 @property (nonatomic, readonly) Class componentClass;
+@property (nonatomic, readonly) id<iTermStatusBarComponent> component;
+@property (nonatomic, weak) id<iTermStatusBarSetupElementDelegate> delegate;
 
 - (instancetype)initWithComponentClass:(Class)componentClass NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

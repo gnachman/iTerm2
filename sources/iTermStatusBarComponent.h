@@ -26,18 +26,30 @@ extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurat
 extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyMinimumWidth;  // NSNumber
 extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyKnobValues;  // NSDictionary
 
+@protocol iTermStatusBarComponent;
 @class iTermVariableScope;
 
+@protocol iTermStatusBarComponentDelegate<NSObject>
+- (void)statusBarComponentKnobsDidChange:(id<iTermStatusBarComponent>)component;
+- (BOOL)statusBarComponentIsInSetupUI:(id<iTermStatusBarComponent>)component;
+@end
+
+// The model for a object in a status bar.
 @protocol iTermStatusBarComponent<NSSecureCoding, NSObject>
+
+@property (nonatomic, readonly) NSDictionary<iTermStatusBarComponentConfigurationKey, id> *configuration;
+@property (nonatomic, weak) id<iTermStatusBarComponentDelegate> delegate;
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration;
 
 + (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs;
 
 // NSString or NSAttributedString
-+ (id)statusBarComponentExemplar;
 + (NSString *)statusBarComponentShortDescription;
 + (NSString *)statusBarComponentDetailedDescription;
+
+// Value to show in setup UI
+- (id)statusBarComponentExemplar;
 
 // Returns a newly created view showing this component's content.
 - (NSView *)statusBarComponentCreateView;
@@ -77,5 +89,8 @@ extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurat
 
 // Sets the scope for variable evaluations.
 - (void)statusBarComponentSetVariableScope:(iTermVariableScope *)scope;
+
+// Updates knob values
+- (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues;
 
 @end

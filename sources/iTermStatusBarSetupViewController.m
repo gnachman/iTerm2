@@ -8,6 +8,8 @@
 #import "iTermStatusBarSetupViewController.h"
 
 #import "iTermStatusBarComponent.h"
+#import "iTermStatusBarFixedSpacerComponent.h"
+#import "iTermStatusBarSpringComponent.h"
 #import "iTermStatusBarSetupCollectionViewItem.h"
 #import "iTermStatusBarSetupDestinationCollectionViewController.h"
 #import "iTermStatusBarSetupElement.h"

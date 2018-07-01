@@ -38,4 +38,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+// Just stores the swifty string and does nothing else. Evaluated string will always be empty.
+// Is free of side effects.
+@interface iTermSwiftyStringPlaceholder : iTermSwiftyString
+
+- (instancetype)initWithString:(NSString *)swiftyString NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithString:(NSString *)swiftyString
+                        source:(id (^)(NSString *name))source
+                       mutates:(NSSet<NSString *> *)mutates
+                      observer:(void (^)(NSString *newValue))observer NS_UNAVAILABLE;
+
+@end
+
 NS_ASSUME_NONNULL_END

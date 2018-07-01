@@ -18,10 +18,6 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
     iTermSwiftyString *_swiftyString;
 }
 
-+ (id)statusBarComponentExemplar {
-    return @"\\(expression)";
-}
-
 + (NSString *)statusBarComponentShortDescription {
     return @"Interpolated String";
 }
@@ -33,17 +29,20 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
 
 + (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *expressionKnob =
-        [[iTermStatusBarComponentKnobText alloc] initWithLabelText:@"Expression"
-                                                              type:iTermStatusBarComponentKnobTypeText
-                                                       placeholder:@"String with \\(expressions)"
-                                                      defaultValue:nil
-                                                               key:iTermStatusBarSwiftyStringComponentExpressionKey];
-    iTermStatusBarComponentKnobMinimumWidth *widthKnob =
-        [[iTermStatusBarComponentKnobMinimumWidth alloc] initWithLabelText:nil
-                                                                      type:iTermStatusBarComponentKnobTypeDouble placeholder:nil
-                                                              defaultValue:@200
-                                                                       key:iTermStatusBarComponentKnobMinimumWidthKey];
-    return @[ expressionKnob, widthKnob ];
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Expression:"
+                                                          type:iTermStatusBarComponentKnobTypeText
+                                                   placeholder:@"String with \\(expressions)"
+                                                  defaultValue:@""
+                                                           key:iTermStatusBarSwiftyStringComponentExpressionKey];
+    return @[ expressionKnob ];
+}
+
+- (id)statusBarComponentExemplar {
+    if (!_swiftyString.swiftyString.length) {
+        return @"\\(expression)";
+    } else {
+        return _swiftyString.swiftyString;
+    }
 }
 
 - (nullable NSString *)stringValue {
@@ -60,17 +59,29 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
 
 - (void)statusBarComponentSetVariableScope:(iTermVariableScope *)scope {
     [super statusBarComponentSetVariableScope:scope];
-    NSDictionary<NSString *, id> *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    [self updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
+}
+
+- (void)updateWithKnobValues:(NSDictionary<NSString *, id> *)knobValues {
     NSString *expression = knobValues[iTermStatusBarSwiftyStringComponentExpressionKey] ?: @"";
     __weak __typeof(self) weakSelf = self;
-    _swiftyString = [[iTermSwiftyString alloc] initWithString:expression
-                                                       source:^id _Nonnull(NSString * _Nonnull name) {
-                                                           return [weakSelf.scope valueForVariableName:name] ?: @"";
-                                                       }
-                                                      mutates:[NSSet set]
-                                                     observer:^(NSString * _Nonnull newValue) {
-                                                         weakSelf.textField.stringValue = newValue;
-                                                     }];
+    if ([self.delegate statusBarComponentIsInSetupUI:self]) {
+        _swiftyString = [[iTermSwiftyStringPlaceholder alloc] initWithString:expression];
+    } else {
+        _swiftyString = [[iTermSwiftyString alloc] initWithString:expression
+                                                           source:^id _Nonnull(NSString * _Nonnull name) {
+                                                               return [weakSelf.scope valueForVariableName:name] ?: @"";
+                                                           }
+                                                          mutates:[NSSet set]
+                                                         observer:^(NSString * _Nonnull newValue) {
+                                                             weakSelf.textField.stringValue = newValue;
+                                                         }];
+    }
+}
+
+- (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues {
+    [self updateWithKnobValues:knobValues];
+    [super statusBarComponentSetKnobValues:knobValues];
 }
 
 @end

@@ -9,11 +9,20 @@
 
 // Do not reorder or delete
 typedef NS_ENUM(NSUInteger, iTermStatusBarComponentKnobType) {
+    iTermStatusBarComponentKnobTypeCheckbox,
     iTermStatusBarComponentKnobTypeText,
     iTermStatusBarComponentKnobTypeDouble,
 };
 
 NS_ASSUME_NONNULL_BEGIN
+
+@protocol iTermStatusBarKnobViewController<NSObject>
+- (id)value;
+- (void)setValue:(id)value;
+- (void)setDescription:(NSString *)description placeholder:(NSString *)placeholder;
+- (CGFloat)controlOffset;
+- (void)sizeToFit;
+@end
 
 // Describes a configurable property of a status bar component.
 @interface iTermStatusBarComponentKnob : NSObject
@@ -21,11 +30,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, nullable) NSString *labelText;
 @property (nonatomic, readonly) iTermStatusBarComponentKnobType type;
 @property (nonatomic, readonly, nullable) NSString *placeholder;
-@property (nonatomic, readonly, nullable) id value;
 @property (nonatomic, readonly, nullable) NSString *stringValue;  // aliases `value`
 @property (nonatomic, readonly, nullable) NSNumber *numberValue;  // aliases `value`
-@property (nonatomic, readonly) NSView *inputView;
 @property (nonatomic, readonly) NSString *key;
+@property (nonatomic, strong, nullable) id value;
 
 - (instancetype)initWithLabelText:(nullable NSString *)labelText
                              type:(iTermStatusBarComponentKnobType)type
@@ -35,16 +43,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)init NS_UNAVAILABLE;
 
-@end
-
-// Gives a text field
-@interface iTermStatusBarComponentKnobText : iTermStatusBarComponentKnob
-@end
-
-extern NSString *const iTermStatusBarComponentKnobMinimumWidthKey;
-
-// Gives a draggable width-setting control.
-@interface iTermStatusBarComponentKnobMinimumWidth : iTermStatusBarComponentKnob
 @end
 
 NS_ASSUME_NONNULL_END

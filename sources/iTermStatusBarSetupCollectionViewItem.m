@@ -90,7 +90,6 @@
 }
 
 - (void)setHighlightState:(NSCollectionViewItemHighlightState)highlightState {
-    NSLog(@"Set highlight state of %@ to %@", self, @(highlightState));
     [super setHighlightState:highlightState];
     [self updateFillColor];
 }
