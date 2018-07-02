@@ -24,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
     textField.bordered = NO;
     textField.editable = NO;
     textField.selectable = NO;
+    textField.lineBreakMode = NSLineBreakByTruncatingTail;  
     [self setValueInField:textField];
     return textField;
 }
