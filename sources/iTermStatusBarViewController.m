@@ -12,6 +12,7 @@
 #import "iTermStatusBarLayout.h"
 #import "iTermStatusBarView.h"
 #import "NSArray+iTerm.h"
+#import "NSTimer+iTerm.h"
 #import "NSView+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -114,7 +115,7 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 22;
     }];
 
 
-    while (1) {
+    while (views.count) {
         double sumOfSpringConstants = [[views reduceWithFirstValue:@0 block:^NSNumber *(NSNumber *sum, iTermStatusBarContainerView *containerView) {
             if (!containerView.component.statusBarComponentCanStretch) {
                 return sum;

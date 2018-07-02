@@ -15,6 +15,7 @@
 #import "iTermStatusBarSetupDestinationCollectionViewController.h"
 #import "iTermStatusBarSetupElement.h"
 #import "iTermStatusBarSwiftyStringComponent.h"
+#import "iTermStatusBarVariableBaseComponent.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
@@ -45,7 +46,10 @@ NS_ASSUME_NONNULL_BEGIN
     NSArray<Class> *classes = @[ [iTermStatusBarSwiftyStringComponent class],
                                  [iTermStatusBarFixedSpacerComponent class],
                                  [iTermStatusBarSpringComponent class],
-                                 [iTermStatusBarClockComponent class] ];
+                                 [iTermStatusBarClockComponent class],
+                                 [iTermStatusBarHostnameComponent class],
+                                 [iTermStatusBarUsernameComponent class],
+                                 [iTermStatusBarWorkingDirectoryComponent class] ];
     _elements = [classes mapWithBlock:^id(Class theClass) {
         return [[iTermStatusBarSetupElement alloc] initWithComponentClass:theClass];
     }];
