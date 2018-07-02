@@ -8,6 +8,7 @@
 #import "iTermStatusBarSetupViewController.h"
 
 #import "iTermStatusBarComponent.h"
+#import "iTermStatusBarClockComponent.h"
 #import "iTermStatusBarFixedSpacerComponent.h"
 #import "iTermStatusBarSpringComponent.h"
 #import "iTermStatusBarSetupCollectionViewItem.h"
@@ -43,7 +44,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)awakeFromNib {
     NSArray<Class> *classes = @[ [iTermStatusBarSwiftyStringComponent class],
                                  [iTermStatusBarFixedSpacerComponent class],
-                                 [iTermStatusBarSpringComponent class] ];
+                                 [iTermStatusBarSpringComponent class],
+                                 [iTermStatusBarClockComponent class] ];
     _elements = [classes mapWithBlock:^id(Class theClass) {
         return [[iTermStatusBarSetupElement alloc] initWithComponentClass:theClass];
     }];

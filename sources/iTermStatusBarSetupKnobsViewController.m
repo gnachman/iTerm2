@@ -48,7 +48,7 @@ static NSViewController<iTermStatusBarKnobViewController> *iTermNewViewControlle
         _knobs = [component.class statusBarComponentKnobs];
         NSDictionary *knobValues = component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
         [_knobs enumerateObjectsUsingBlock:^(iTermStatusBarComponentKnob * _Nonnull knob, NSUInteger idx, BOOL * _Nonnull stop) {
-            knob.value = knobValues[knob.key];
+            knob.value = knobValues[knob.key] ?: knob.value;
         }];
         _viewControllers = [_knobs mapWithBlock:^id(iTermStatusBarComponentKnob *knob) {
             NSViewController<iTermStatusBarKnobViewController> *vc = iTermNewViewControllerForKnob(knob);
