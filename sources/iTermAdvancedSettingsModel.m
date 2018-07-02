@@ -203,7 +203,7 @@ DEFINE_BOOL(hideStuckTooltips, YES, @"General: Hide stuck tooltips.\nWhen you hi
 DEFINE_BOOL(openFileOverridesSendText, YES, @"General: Should opening a script with iTerm2 disable the default profile's “Send Text at Start” setting?\nIf you use “open iTerm2 file.command” or drag a script onto iTerm2's icon and this setting is enabled then the script will be executed in lieu of the profile's “Send Text at Start” setting. If this setting is off then both will be executed.");
 DEFINE_BOOL(statusBarIcon, YES, @"General: Add status bar icon when excluded from dock?\nWhen you turn on “Exclude from Dock and ⌘-Tab Application Switcher” a status bar icon is added to the menu bar so you can switch the setting back off. Disable this to remove the status bar icon. Doing so makes it very hard to get to Preferences. You must restart iTerm2 after changing this setting.");
 DEFINE_BOOL(wrapFocus, YES, @"General: Should the directional focus hotkeys wrap");
-DEFINE_BOOL(disableGrowl, YES_IF_BETA_ELSE_NO, @"General: Disable Growl notifications.\nSend notifications directly to Notification Center instead of relying on Growl to deliver them. Enables sound alerts on notifications.");
+DEFINE_BOOL(disableGrowl, YES, @"General: Disable Growl notifications.\nSend notifications directly to Notification Center instead of relying on Growl to deliver them. Enables sound alerts on notifications.");
 DEFINE_BOOL(openUntitledFile, YES, @"General: Open a new window when you click the dock icon and no windows are already open?");
 DEFINE_BOOL(openNewWindowAtStartup, YES, @"General: Open a window at startup?\nThis is useful if you wish to use the system window restoration settings but not create a new window if none would be restored.");
 DEFINE_FLOAT(timeToWaitForEmojiPanel, 1, @"General: How long to wait for the emoji panel to open in seconds?\nFloating hotkey windows adjust their level when the emoji panel is open. If it’s really slow you might need to increase this value to prevent it from appearing beneath a floating hotkey window.");
@@ -334,7 +334,7 @@ DEFINE_BOOL(killSessionsOnLogout, NO, @"Experimental Features: Kill sessions on 
 DEFINE_BOOL(experimentalKeyHandling, NO, @"General: Improved support for input method editors like AquaSKK.");
 
 DEFINE_BOOL(useExperimentalFontMetrics, NO, @"Experimental Features: Use a more theoretically correct technique to measure line height.\nYou must restart iTerm2 or adjust a session's font size for this change to take effect.");
-DEFINE_BOOL(supportREPCode, YES_IF_BETA_ELSE_NO, @"Experimental Features: Enable support for REP (Repeat previous character) escape sequence?");
+DEFINE_BOOL(supportREPCode, YES, @"Experimental Features: Enable support for REP (Repeat previous character) escape sequence?");
 
 DEFINE_BOOL(showBlockBoundaries, NO, @"Debugging: Show line buffer block boundaries (issue 6207)");
 DEFINE_BOOL(showMetalFPSmeter, NO, @"Experimental Features: Show FPS meter\nRequires Metal renderer");
@@ -343,9 +343,9 @@ DEFINE_BOOL(showMetalFPSmeter, NO, @"Experimental Features: Show FPS meter\nRequ
 // The number of crashes fell off a cliff starting with the 3/18 build (usually 0, never more than 2/day, while it had been at 47 on the 3/15 build). I'm switching the default back to YES for the 4/18 build to see if the number climbs.
 DEFINE_BOOL(disableMetalWhenIdle, NO, @"Experimental Features: Disable metal renderer when idle to save CPU utilization?\nRequires Metal renderer");
 
-DEFINE_BOOL(proportionalScrollWheelReporting, YES_IF_BETA_ELSE_NO, @"Experimental Features: Report multiple mouse scroll events when scrolling quickly?");
+DEFINE_BOOL(proportionalScrollWheelReporting, YES, @"Experimental Features: Report multiple mouse scroll events when scrolling quickly?");
 DEFINE_BOOL(useModernScrollWheelAccumulator, NO, @"Experimental Features: Use modern scroll wheel accumulator.\nThis should support wheel mice better and feel more natural.");
-DEFINE_BOOL(resetSGROnPrompt, YES_IF_BETA_ELSE_NO, @"Experimental Features: Reset colors at shell prompt?\nUses shell integration to detect a shell prompt and, if enabled, resets colors to their defaults.");
-DEFINE_BOOL(retinaInlineImages, YES_IF_BETA_ELSE_NO, @"Experimental Features: Show inline images at Retina resolution.");
+DEFINE_BOOL(resetSGROnPrompt, YES, @"Experimental Features: Reset colors at shell prompt?\nUses shell integration to detect a shell prompt and, if enabled, resets colors to their defaults.");
+DEFINE_BOOL(retinaInlineImages, YES, @"Experimental Features: Show inline images at Retina resolution.");
 
 @end
