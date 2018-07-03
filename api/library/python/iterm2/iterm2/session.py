@@ -204,9 +204,11 @@ class Session:
         """
         return self.__session_id
 
-    def get_keystroke_reader(self):
+    def get_keystroke_reader(self, patterns_to_ignore=[]):
         """
         Provides a nice interface for observing a sequence of keystrokes.
+
+        :param patterns_to_ignore: A list of :class`KeystrokePattern` objects giving keystrokes that should not be handled normally by iTerm2 and only sent to the keystroke reader for processing in the script.
 
         :returns: A :class:`Session.KeystrokeReader`.
 
@@ -218,7 +220,7 @@ class Session:
 
         .. note:: Each call to reader.async_get() returns an array of new keystrokes.
         """
-        return self.KeystrokeReader(self.connection, self.__session_id)
+        return self.KeystrokeReader(self.connection, self.__session_id, patterns_to_ignore)
 
     def get_screen_streamer(self, want_contents=True):
         """
@@ -530,9 +532,10 @@ class Session:
 
         Don't create this yourself. Use Session.get_keystroke_reader() instead. See
         its docstring for more info."""
-        def __init__(self, connection, session_id):
+        def __init__(self, connection, session_id, patterns_to_ignore):
             self.connection = connection
             self.session_id = session_id
+            self.patterns_to_ignore = []
             self.buffer = []
             self.token = None
             self.future = None
@@ -549,7 +552,8 @@ class Session:
             self.token = await iterm2.notifications.async_subscribe_to_keystroke_notification(
                 self.connection,
                 async_on_keystroke,
-                self.session_id)
+                self.session_id,
+                self.patterns_to_ignore)
             return self
 
         async def async_get(self):
