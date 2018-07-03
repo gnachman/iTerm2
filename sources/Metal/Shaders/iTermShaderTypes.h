@@ -58,9 +58,6 @@ typedef struct iTermTextPIU {
     vector_float4 backgroundColor;
     vector_float4 textColor;
 
-    // This is true for text and false for emoji.
-    bool remapColors;
-
     // Passed through to the solid background color fragment shader.
     vector_int3 colorModelIndex;
 

@@ -1,25 +1,4 @@
-#include <metal_stdlib>
-#include <simd/simd.h>
-
-using namespace metal;
-
-#import "iTermShaderTypes.h"
-
-typedef struct {
-    float4 clipSpacePosition [[position]];  // In vector function is normalized. In fragment function is in pixels, with a half pixel offset since it refers to the center of the pixel.
-    float2 textureCoordinate;
-    float2 backgroundTextureCoordinate;
-    float4 textColor;
-    float4 backgroundColor;
-    half4 underlineColor;
-    bool recolor;
-    int3 colorModelIndex;
-    float2 textureOffset;  // Normalized offset in texture.
-    float2 cellOffset;  // Coordinate of bottom left of cell in pixel coordinates. 0,0 is the bottom left of the screen.
-    int underlineStyle;  // should draw an underline? For some stupid reason the compiler won't let me set the type as iTermMetalGlyphAttributesUnderline
-    float2 viewportSize;  // size of viewport in pixels. TODO: see if I can avoid passing this to fragment function.
-    float scale;  // 2 for retina, 1 for non-retina
-} iTermTextVertexFunctionOutput;
+#import "iTermTextShaderCommon.h"
 
 vertex iTermTextVertexFunctionOutput
 iTermTextVertexShader(uint vertexID [[ vertex_id ]],
@@ -43,7 +22,6 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.textureCoordinate = vertexArray[vertexID].textureCoordinate + perInstanceUniforms[iid].textureOffset;
     out.textColor = perInstanceUniforms[iid].textColor;
     out.backgroundColor = perInstanceUniforms[iid].backgroundColor;
-    out.recolor = perInstanceUniforms[iid].remapColors;
     out.colorModelIndex = perInstanceUniforms[iid].colorModelIndex;
     out.viewportSize = viewportSize;
 
@@ -213,9 +191,6 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
     return weight;
 }
 
-// Returns the weight in [0, 1] of underline for a pixel at `clipSpacePosition`.
-// This ignores the alpha channel of the texture and assumes white pixels are
-// background.
 float ComputeWeightOfUnderline(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
                                float2 clipSpacePosition,
                                float2 viewportSize,
@@ -259,8 +234,6 @@ float ComputeWeightOfUnderline(int underlineStyle,  // iTermMetalGlyphAttributes
     }
 }
 
-// Returns the weight in [0, 1] of underline for a pixel at `clipSpacePosition`
-// when drawing underlined emoji. This respects the alpha channel of the texture.
 float ComputeWeightOfUnderlineForEmoji(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
                                        float2 clipSpacePosition,
                                        float2 viewportSize,
@@ -330,45 +303,21 @@ static inline half4 RemapColor(float4 scaledTextColor,  // scaledTextColor is th
 // The underlining fragment shaders are separate from the non-underlining ones
 // because of an apparent compiler bug. See issue 6779.
 
-// Used when there is no intermediate pass and we know text will always be
-// rendered over a solid background color. This is much faster because the
-// shader is quite simple. It uses 256 bytes of buffer for each combination of
-// foreground/background color component.
+// "Blending" is slower but can deal with any combination of foreground/background
+// color components. It's used when there's a background image, a badge,
+// broadcast image stripes, or anything else nontrivial behind the text.
 fragment half4
-iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_in]],
-                                       texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
-                                       constant unsigned char *exactColorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
-                                       constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]],
-                                       texture2d<half> colorModelsTexture [[ texture(iTermTextureIndexSubpixelModels) ]]) {
+iTermTextFragmentShaderWithBlendingEmoji(iTermTextVertexFunctionOutput in [[stage_in]],
+                                         texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
+                                         texture2d<half> drawable [[ texture(iTermTextureIndexBackground) ]],
+                                         texture2d<half> colorModels [[ texture(iTermTextureIndexSubpixelModels) ]],
+                                         constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
-    half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
-
-    if (!in.recolor) {
-        // Emoji, not underlined
-        return bwColor;
-    }
-    if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
-        discard_fragment();
-    }
-
-    // Not emoji, not underlined
-
-    const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
-    // Base index for this color model
-    const int3 i = in.colorModelIndex * 256;
-    // Find RGB values to map colors in the black-on-white glyph to
-    const uchar4 rgba = uchar4(exactColorModels[i.x + bwIntIndices.x],
-                               exactColorModels[i.y + bwIntIndices.y],
-                               exactColorModels[i.z + bwIntIndices.z],
-                               255);
-    return static_cast<half4>(rgba) / 255;
+    return texture.sample(textureSampler, in.textureCoordinate);
 }
 
-// This path is slow but can deal with any combination of foreground/background
-// color components. It's used when there's a background image, a badge,
-// broadcast image stripes, or anything else nontrivial behind the text.
 fragment half4
 iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]],
                                     texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
@@ -381,11 +330,6 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
     half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
     const float4 backgroundColor = static_cast<float4>(drawable.sample(textureSampler, in.backgroundTextureCoordinate));
 
-    if (!in.recolor) {
-        // Emoji, not underlined
-        return bwColor;
-    }
-
     // Not emoji, not underlined.
     if (bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
@@ -395,65 +339,33 @@ iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]
 }
 
 fragment half4
-iTermTextFragmentShaderSolidBackgroundUnderlined(iTermTextVertexFunctionOutput in [[stage_in]],
-                                                 texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
-                                                 constant unsigned char *exactColorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
-                                                 constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]],
-                                                 texture2d<half> colorModelsTexture [[ texture(iTermTextureIndexSubpixelModels) ]]) {
+iTermTextFragmentShaderWithBlendingUnderlinedEmoji(iTermTextVertexFunctionOutput in [[stage_in]],
+                                                   texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
+                                                   texture2d<half> drawable [[ texture(iTermTextureIndexBackground) ]],
+                                                   texture2d<half> colorModels [[ texture(iTermTextureIndexSubpixelModels) ]],
+                                                   constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
     half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
-    half underlineWeight = 0;
 
-    if (!in.recolor) {
-        // Emoji, underlined
-        underlineWeight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
-                                                           in.clipSpacePosition.xy,
-                                                           in.viewportSize,
-                                                           in.cellOffset,
-                                                           dimensions->underlineOffset,
-                                                           dimensions->underlineThickness,
-                                                           dimensions->textureSize,
-                                                           in.textureOffset,
-                                                           in.textureCoordinate,
-                                                           dimensions->cellSize,
-                                                           texture,
-                                                           textureSampler,
-                                                           dimensions->scale);
-        return mix(bwColor,
-                   in.underlineColor,
-                   underlineWeight);
-    }
-    // Not emoji, underlined
-    underlineWeight = ComputeWeightOfUnderline(in.underlineStyle,
-                                               in.clipSpacePosition.xy,
-                                               in.viewportSize,
-                                               in.cellOffset,
-                                               dimensions->underlineOffset,
-                                               dimensions->underlineThickness,
-                                               dimensions->textureSize,
-                                               in.textureOffset,
-                                               in.textureCoordinate,
-                                               dimensions->cellSize,
-                                               texture,
-                                               textureSampler,
-                                               dimensions->scale);
-    if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
-        discard_fragment();
-    }
-
-    const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
-    // Base index for this color model
-    const int3 i = in.colorModelIndex * 256;
-    // Find RGB values to map colors in the black-on-white glyph to
-    const uchar4 rgba = uchar4(exactColorModels[i.x + bwIntIndices.x],
-                               exactColorModels[i.y + bwIntIndices.y],
-                               exactColorModels[i.z + bwIntIndices.z],
-                               255);
-    half4 textColor = static_cast<half4>(rgba) / 255;
-
-    return mix(textColor, in.underlineColor, underlineWeight);
+    // Underlined emoji code path
+    const half underlineWeight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
+                                                                  in.clipSpacePosition.xy,
+                                                                  in.viewportSize,
+                                                                  in.cellOffset,
+                                                                  dimensions->underlineOffset,
+                                                                  dimensions->underlineThickness,
+                                                                  dimensions->textureSize,
+                                                                  in.textureOffset,
+                                                                  in.textureCoordinate,
+                                                                  dimensions->cellSize,
+                                                                  texture,
+                                                                  textureSampler,
+                                                                  dimensions->scale);
+    return mix(bwColor,
+               in.underlineColor,
+               underlineWeight);
 }
 
 fragment half4
@@ -467,41 +379,21 @@ iTermTextFragmentShaderWithBlendingUnderlined(iTermTextVertexFunctionOutput in [
 
     half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
     const float4 backgroundColor = static_cast<float4>(drawable.sample(textureSampler, in.backgroundTextureCoordinate));
-    half underlineWeight = 0;
 
-    if (!in.recolor) {
-        // Underlined emoji code path
-        underlineWeight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
-                                                           in.clipSpacePosition.xy,
-                                                           in.viewportSize,
-                                                           in.cellOffset,
-                                                           dimensions->underlineOffset,
-                                                           dimensions->underlineThickness,
-                                                           dimensions->textureSize,
-                                                           in.textureOffset,
-                                                           in.textureCoordinate,
-                                                           dimensions->cellSize,
-                                                           texture,
-                                                           textureSampler,
-                                                           dimensions->scale);
-        return mix(bwColor,
-                   in.underlineColor,
-                   underlineWeight);
-    }
     // Underlined not emoji.
-    underlineWeight = ComputeWeightOfUnderline(in.underlineStyle,
-                                               in.clipSpacePosition.xy,
-                                               in.viewportSize,
-                                               in.cellOffset,
-                                               dimensions->underlineOffset,
-                                               dimensions->underlineThickness,
-                                               dimensions->textureSize,
-                                               in.textureOffset,
-                                               in.textureCoordinate,
-                                               dimensions->cellSize,
-                                               texture,
-                                               textureSampler,
-                                               dimensions->scale);
+    const half underlineWeight = ComputeWeightOfUnderline(in.underlineStyle,
+                                                          in.clipSpacePosition.xy,
+                                                          in.viewportSize,
+                                                          in.cellOffset,
+                                                          dimensions->underlineOffset,
+                                                          dimensions->underlineThickness,
+                                                          dimensions->textureSize,
+                                                          in.textureOffset,
+                                                          in.textureCoordinate,
+                                                          dimensions->cellSize,
+                                                          texture,
+                                                          textureSampler,
+                                                          dimensions->scale);
     if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
     }

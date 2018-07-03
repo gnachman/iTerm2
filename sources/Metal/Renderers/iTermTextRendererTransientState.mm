@@ -26,7 +26,7 @@ typedef struct {
     size_t piu_index;
     int x;
     int y;
-    int underlinedIndex;
+    int outerPIUIndex;
 } iTermTextFixup;
 
 // text color component, background color component
@@ -37,8 +37,12 @@ static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
 }
 
 static const size_t iTermPIUArrayIndexNotUnderlined = 0;
-static const size_t iTermPIUArrayIndexUnderlined = 1;
-static const size_t iTermPIUArraySize = 2;
+static const size_t iTermPIUArrayIndexUnderlined = 1;  // This can be used as the Underlined bit in this bitmask
+static const size_t iTermPIUArrayIndexNotUnderlinedEmoji = 2;  // This can be used as the Emoji bit in this bitmask
+static const size_t iTermPIUArrayIndexUnderlinedEmoji = 3;
+static const size_t iTermPIUArraySize = 4;
+
+static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
 
 @implementation iTermTextRendererTransientState {
     // Data's bytes contains a C array of iTermMetalBackgroundColorRLE with background colors.
@@ -57,8 +61,8 @@ static const size_t iTermPIUArraySize = 2;
     // Only used when there's no intermediate texture.
     std::map<iTermColorComponentPair, int> *_colorModelIndexes;
 
-    iTerm2::PIUArray<iTermTextPIU> _asciiPIUArrays[iTermPIUArraySize][iTermASCIITextureAttributesMax * 2];
-    iTerm2::PIUArray<iTermTextPIU> _asciiOverflowArrays[iTermPIUArraySize][iTermASCIITextureAttributesMax * 2];
+    iTerm2::PIUArray<iTermTextPIU> _asciiPIUArrays[iTermPIUArraySize][iTermNumberOfPIUArrays];
+    iTerm2::PIUArray<iTermTextPIU> _asciiOverflowArrays[iTermPIUArraySize][iTermNumberOfPIUArrays];
 
     // Array of PIUs for each texture page.
     std::map<iTerm2::TexturePage *, iTerm2::PIUArray<iTermTextPIU> *> _pius[iTermPIUArraySize];
@@ -124,7 +128,6 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
             @"textureOffset=(%@, %@) "
             @"backgroundColor=(%@, %@, %@, %@) "
             @"textColor=(%@, %@, %@, %@) "
-            @"remapColors=%@ "
             @"colorModelIndex=(%@, %@, %@) "
             @"underlineStyle=%@ "
             @"underlineColor=(%@, %@, %@, %@)\n",
@@ -140,7 +143,6 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
             @(a.textColor.y),
             @(a.textColor.z),
             @(a.textColor.w),
-            a.remapColors ? @"YES" : @"NO",
             @(a.colorModelIndex.x),
             @(a.colorModelIndex.y),
             @(a.colorModelIndex.z),
@@ -213,8 +215,13 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                 if (i & iTermASCIITextureAttributesThinStrokes) {
                     [name appendString:@"T"];
                 }
-                if (k == iTermPIUArrayIndexUnderlined) {
+                if (k == iTermPIUArrayIndexUnderlined ||
+                    k == iTermPIUArrayIndexUnderlinedEmoji) {
                     [name appendString:@"U"];
+                }
+                if (k == iTermPIUArrayIndexNotUnderlinedEmoji ||
+                    k == iTermPIUArrayIndexUnderlinedEmoji) {
+                    [name appendString:@"E"];
                 }
                 [name appendString:@".txt"];
                 [s writeToURL:[folder URLByAppendingPathComponent:name] atomically:NO encoding:NSUTF8StringEncoding error:nil];
@@ -262,8 +269,11 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                 }
             }
             NSString *name = @"non-ascii-pius.txt";
-            if (k == iTermPIUArrayIndexUnderlined) {
+            if (k & iTermPIUArrayIndexUnderlined) {
                 name = [@"underlined-" stringByAppendingString:name];
+            }
+            if (k & iTermPIUArrayIndexNotUnderlinedEmoji) {
+                name = [@"emoji-" stringByAppendingString:name];
             }
             [s writeToURL:[folder URLByAppendingPathComponent:name] atomically:NO encoding:NSUTF8StringEncoding error:nil];
         }
@@ -311,7 +321,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
 
 - (BOOL)haveAsciiOverflow {
     for (int k = 0; k < iTermPIUArraySize; k++) {
-        for (int i = 0; i < iTermASCIITextureAttributesMax * 2; i++) {
+        for (int i = 0; i < iTermNumberOfPIUArrays; i++) {
             const int n = _asciiOverflowArrays[k][i].get_number_of_segments();
             if (n > 0) {
                 for (int j = 0; j < n; j++) {
@@ -327,8 +337,16 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
 
 - (void)enumerateASCIIDrawsFromArrays:(iTerm2::PIUArray<iTermTextPIU> *)piuArrays
                            underlined:(BOOL)underlined
-                                block:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor, BOOL underlined))block {
-    for (int i = 0; i < iTermASCIITextureAttributesMax * 2; i++) {
+                                emoji:(BOOL)emoji
+                                block:(void (^)(const iTermTextPIU *,
+                                                NSInteger,
+                                                id<MTLTexture>,
+                                                vector_uint2,
+                                                vector_uint2,
+                                                iTermMetalUnderlineDescriptor,
+                                                BOOL underlined,
+                                                BOOL emoji))block {
+    for (int i = 0; i < iTermNumberOfPIUArrays; i++) {
         const int n = piuArrays[i].get_number_of_segments();
         iTermASCIITexture *asciiTexture = [_asciiTextureGroup asciiTextureForAttributes:(iTermASCIITextureAttributes)i];
         ITBetaAssert(asciiTexture, @"nil ascii texture for attributes %d", i);
@@ -340,13 +358,21 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                       CGSizeToVectorUInt2(asciiTexture.textureArray.atlasSize),
                       CGSizeToVectorUInt2(_asciiTextureGroup.cellSize),
                       _asciiUnderlineDescriptor,
-                      underlined);
+                      underlined,
+                      emoji);
             }
         }
     }
 }
 
-- (size_t)enumerateNonASCIIDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor, BOOL underlined))block {
+- (size_t)enumerateNonASCIIDraws:(void (^)(const iTermTextPIU *,
+                                           NSInteger,
+                                           id<MTLTexture>,
+                                           vector_uint2,
+                                           vector_uint2,
+                                           iTermMetalUnderlineDescriptor,
+                                           BOOL underlined,
+                                           BOOL emoji))block {
     size_t sum = 0;
     for (size_t k = 0; k < iTermPIUArraySize; k++) {
         for (auto const &mapPair : _pius[k]) {
@@ -363,7 +389,8 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                           texturePage->get_atlas_size(),
                           texturePage->get_cell_size(),
                           _nonAsciiUnderlineDescriptor,
-                          k == iTermPIUArrayIndexUnderlined);
+                          !!(k & iTermPIUArrayIndexUnderlined),
+                          !!(k & iTermPIUArrayIndexNotUnderlinedEmoji));
                 }
             }
         }
@@ -371,23 +398,40 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
     return sum;
 }
 
-- (void)enumerateDraws:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor, BOOL underlined))block
+- (void)enumerateASCIIDrawsFromArrays:(iTerm2::PIUArray<iTermTextPIU>[iTermPIUArraySize][iTermNumberOfPIUArrays])piuArrays
+                                block:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor, BOOL, BOOL))block {
+    [self enumerateASCIIDrawsFromArrays:piuArrays[iTermPIUArrayIndexUnderlined]
+                             underlined:true
+                                  emoji:false
+                                  block:block];
+    [self enumerateASCIIDrawsFromArrays:piuArrays[iTermPIUArrayIndexUnderlinedEmoji]
+                             underlined:true
+                                  emoji:true
+                                  block:block];
+    [self enumerateASCIIDrawsFromArrays:piuArrays[iTermPIUArrayIndexNotUnderlined]
+                             underlined:false
+                                  emoji:false
+                                  block:block];
+    [self enumerateASCIIDrawsFromArrays:piuArrays[iTermPIUArrayIndexNotUnderlinedEmoji]
+                             underlined:false
+                                  emoji:true
+                                  block:block];
+}
+
+- (void)enumerateDraws:(void (^)(const iTermTextPIU *,
+                                 NSInteger,
+                                 id<MTLTexture>,
+                                 vector_uint2,
+                                 vector_uint2,
+                                 iTermMetalUnderlineDescriptor,
+                                 BOOL underlined,
+                                 BOOL emoji))block
              copyBlock:(void (^)(void))copyBlock {
     [self enumerateNonASCIIDraws:block];
-    [self enumerateASCIIDrawsFromArrays:_asciiPIUArrays[iTermPIUArrayIndexUnderlined]
-                             underlined:true
-                                  block:block];
-    [self enumerateASCIIDrawsFromArrays:_asciiPIUArrays[iTermPIUArrayIndexNotUnderlined]
-                             underlined:false
-                                  block:block];
+    [self enumerateASCIIDrawsFromArrays:_asciiPIUArrays block:block];
     if ([self haveAsciiOverflow]) {
         copyBlock();
-        [self enumerateASCIIDrawsFromArrays:_asciiOverflowArrays[iTermPIUArrayIndexUnderlined]
-                                 underlined:true
-                                      block:block];
-        [self enumerateASCIIDrawsFromArrays:_asciiOverflowArrays[iTermPIUArrayIndexNotUnderlined]
-                                 underlined:false
-                                      block:block];
+        [self enumerateASCIIDrawsFromArrays:_asciiOverflowArrays block:block];
     }
 }
 
@@ -401,7 +445,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
         iTerm2::TexturePage *page = pair.first;
         std::vector<iTermTextFixup> *fixups = pair.second;
         for (auto fixup : *fixups) {
-            iTerm2::PIUArray<iTermTextPIU> &piuArray = *_pius[fixup.underlinedIndex][page];
+            iTerm2::PIUArray<iTermTextPIU> &piuArray = *_pius[fixup.outerPIUIndex][page];
             iTermTextPIU &piu = piuArray.get(fixup.piu_index);
 
             // Set fields in piu
@@ -463,18 +507,15 @@ NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU
     piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
     piu->textColor = textColor;
     piu->backgroundColor = backgroundColor;
-    piu->remapColors = YES;
     piu->underlineStyle = underlineStyle;
     piu->underlineColor = underlineColor;
     return piu;
 }
 
-static inline int UnderlinedIndex(const bool &annotation, const bool &underlined) {
-    if (annotation || underlined) {
-        return iTermPIUArrayIndexUnderlined;
-    } else {
-        return iTermPIUArrayIndexNotUnderlined;
-    }
+static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underlined, const bool &emoji) {
+    const int underlineBit = (annotation || underlined) ? iTermPIUArrayIndexUnderlined : 0;
+    const int emojiBit = emoji ? iTermPIUArrayIndexNotUnderlinedEmoji : 0;
+    return underlineBit | emojiBit;
 }
 
 - (void)addASCIICellToPIUsForCode:(char)code
@@ -496,7 +537,7 @@ static inline int UnderlinedIndex(const bool &annotation, const bool &underlined
 
     const bool &hasAnnotation = attributes[x].annotation;
     const bool hasUnderline = attributes[x].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
-    const int underlinedIndex = UnderlinedIndex(hasAnnotation, hasUnderline);
+    const int outerPIUIndex = iTermOuterPIUIndex(hasAnnotation, hasUnderline, false);
     if (hasAnnotation) {
         underlineColor = iTermAnnotationUnderlineColor;
     } else if (hasUnderline) {
@@ -517,7 +558,7 @@ static inline int UnderlinedIndex(const bool &annotation, const bool &underlined
     if (parts & iTermASCIITexturePartsLeft) {
         if (x > 0) {
             // Normal case
-            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[underlinedIndex][asciiAttrs].get_next(),
+            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
                                                               code,
                                                               w,
                                                               h,
@@ -532,7 +573,7 @@ static inline int UnderlinedIndex(const bool &annotation, const bool &underlined
                                                               underlineColor);
         } else {
             // Intrusion into left margin
-            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[underlinedIndex][asciiAttrs].get_next(),
+            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
                                                               code,
                                                               w,
                                                               h,
@@ -552,7 +593,7 @@ static inline int UnderlinedIndex(const bool &annotation, const bool &underlined
     }
 
     // Add PIU for center part, which is always present
-    piu = iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[underlinedIndex][asciiAttrs].get_next(),
+    piu = iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[outerPIUIndex][asciiAttrs].get_next(),
                                                       code,
                                                       w,
                                                       h,
@@ -574,7 +615,7 @@ static inline int UnderlinedIndex(const bool &annotation, const bool &underlined
         const int lastColumn = self.cellConfiguration.gridSize.width - 1;
         if (x < lastColumn) {
             // Normal case
-            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[underlinedIndex][asciiAttrs].get_next(),
+            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
                                                               code,
                                                               w,
                                                               h,
@@ -589,7 +630,7 @@ static inline int UnderlinedIndex(const bool &annotation, const bool &underlined
                                                               underlineColor);
         } else {
             // Intrusion into right margin
-            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[underlinedIndex][asciiAttrs].get_next(),
+            piu = iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
                                                               code,
                                                               w,
                                                               h,
@@ -672,15 +713,18 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                 if (!entries) {
                     continue;
                 }
+            } else if (entries->empty()) {
+                continue;
             }
             const bool &hasAnnotation = attributes[x].annotation;
             const bool hasUnderline = attributes[x].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
-            const int underlinedIndex = UnderlinedIndex(hasAnnotation, hasUnderline);
+            const iTerm2::GlyphEntry *firstGlyphEntry = (*entries)[0];
+            const int outerPIUIndex = iTermOuterPIUIndex(hasAnnotation, hasUnderline, firstGlyphEntry->_is_emoji);
             for (auto entry : *entries) {
-                auto it = _pius[underlinedIndex].find(entry->_page);
+                auto it = _pius[outerPIUIndex].find(entry->_page);
                 iTerm2::PIUArray<iTermTextPIU> *array;
-                if (it == _pius[underlinedIndex].end()) {
-                    array = _pius[underlinedIndex][entry->_page] = new iTerm2::PIUArray<iTermTextPIU>(_numberOfCells);
+                if (it == _pius[outerPIUIndex].end()) {
+                    array = _pius[outerPIUIndex][entry->_page] = new iTerm2::PIUArray<iTermTextPIU>(_numberOfCells);
                 } else {
                     array = it->second;
                 }
@@ -696,7 +740,6 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                 piu->textureOffset = simd_make_float2(origin.x * reciprocal_atlas_size.x,
                                                       origin.y * reciprocal_atlas_size.y);
                 piu->textColor = attributes[x].foregroundColor;
-                piu->remapColors = !entry->_is_emoji;
                 if (attributes[x].annotation) {
                     piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
                     piu->underlineColor = iTermAnnotationUnderlineColor;
@@ -726,7 +769,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                         .piu_index = array->size() - 1,
                         .x = x + dx,
                         .y = row + dy,
-                        .underlinedIndex = underlinedIndex
+                        .outerPIUIndex = outerPIUIndex
                     };
                     std::vector<iTermTextFixup> *fixups = _fixups[entry->_page];
                     if (fixups == nullptr) {
