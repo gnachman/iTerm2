@@ -456,7 +456,8 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
         return accountName;
     } else {
         NSString *password = nil;
-        if (_passwordBeingShown && [aTableView selectedRow] == rowIndex) {
+        if (_passwordBeingShown && [aTableView selectedRow] == rowIndex && rowIndex == _rowForPasswordBeingShown) {
+            NSLog(@"Returning plaintext password because selected row %@ equals queried index %@", @(aTableView.selectedRow), @(rowIndex));
             password = _passwordBeingShown;
         }
         return password ?: @"••••••••";
