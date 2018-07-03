@@ -215,10 +215,14 @@ class Session:
         :Example:
 
           async with session.get_keystroke_reader() as reader:
-            while condition():
-              handle_keystrokes(reader.async_get())
+            done = False
+            while not done:
+              for keystroke in await reader.async_get():
+                done = my_function(keystroke)  # Returns True to finish the keystroke reading loop
+                if done:
+                  break
 
-        .. note:: Each call to reader.async_get() returns an array of new keystrokes.
+        .. note:: The `async with` statement will not finish until the while loop exits.
         """
         return self.KeystrokeReader(self.connection, self.__session_id, patterns_to_ignore)
 
