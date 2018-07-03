@@ -50,6 +50,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) NSUInteger sequenceNumber;
 
 // You don't generally need to assign to this unless you plan to make more than one draw call.
+// You can get a pipeline state from the iTermMetal[Cell]Renderer. See its comments for details.
 @property (nonatomic, strong) id<MTLRenderPipelineState> pipelineState;
 @property (nonatomic, readonly) BOOL skipRenderer;
 
@@ -103,6 +104,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (instancetype)init NS_UNAVAILABLE;
 
+// Returns the pipeline state based on the current value of `fragmentFunctionName`, which you can
+// change whenever you please.
 - (id<MTLRenderPipelineState>)pipelineState;
 
 #pragma mark - For subclasses

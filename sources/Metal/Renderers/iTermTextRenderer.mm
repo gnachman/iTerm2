@@ -334,12 +334,30 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     return piuBuffer;
 }
 
+static NSString *const FragmentFunctionName(BOOL underlined, BOOL blending) {
+    if (underlined) {
+        if (blending) {
+            return @"iTermTextFragmentShaderWithBlendingUnderlined";
+        } else {
+            return @"iTermTextFragmentShaderSolidBackgroundUnderlined";
+        }
+    } else {
+        if (blending) {
+            return @"iTermTextFragmentShaderWithBlending";
+        } else {
+            return @"iTermTextFragmentShaderSolidBackground";
+        }
+
+    }
+}
+
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermTextRendererTransientState *tState = transientState;
     tState.vertexBuffer.label = @"Text vertex buffer";
     tState.offsetBuffer.label = @"Offset";
     const float scale = tState.cellConfiguration.scale;
+    const bool blending = tState.cellConfiguration.usingIntermediatePass;
 
     // The vertex buffer's texture coordinates depend on the texture map's atlas size so it must
     // be initialized after the texture map.
@@ -352,7 +370,13 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         subpixelModelsBuffer = [self subpixelModelsForState:tState];
     }];
 
-    [tState enumerateDraws:^(const iTermTextPIU *pius, NSInteger instances, id<MTLTexture> texture, vector_uint2 textureSize, vector_uint2 cellSize, iTermMetalUnderlineDescriptor underlineDescriptor) {
+    [tState enumerateDraws:^(const iTermTextPIU *pius,
+                             NSInteger instances,
+                             id<MTLTexture> texture,
+                             vector_uint2 textureSize,
+                             vector_uint2 cellSize,
+                             iTermMetalUnderlineDescriptor underlineDescriptor,
+                             BOOL underlined) {
         totalInstances += instances;
         __block id<MTLBuffer> vertexBuffer;
         [tState measureTimeForStat:iTermTextRendererStatNewQuad ofBlock:^{
@@ -402,6 +426,9 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
         }];
 
         [tState measureTimeForStat:iTermTextRendererStatDraw ofBlock:^{
+            // Change the pipeline state just before drawing so we get the right underlined/not underlined state.
+            self->_cellRenderer.fragmentFunctionName = FragmentFunctionName(underlined, blending);
+            tState.pipelineState = [self->_cellRenderer pipelineState];
             [self->_cellRenderer drawWithTransientState:tState
                                           renderEncoder:frameData.renderEncoder
                                        numberOfVertices:6
