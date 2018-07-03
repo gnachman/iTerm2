@@ -1,5 +1,7 @@
 #import "iTermTextShaderCommon.h"
 
+// Slow path: taken for all underlined code paths and all solid background code paths (because they aren't used
+// and I don't want to spend time testing dead code right now).
 vertex iTermTextVertexFunctionOutput
 iTermTextVertexShader(uint vertexID [[ vertex_id ]],
                       constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
@@ -32,6 +34,53 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     return out;
 }
 
+vertex iTermTextVertexFunctionOutputEmoji
+iTermTextVertexShaderEmoji(uint vertexID [[ vertex_id ]],
+                           constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
+                           constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
+                           constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
+                           device iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
+                           unsigned int iid [[instance_id]]) {
+    iTermTextVertexFunctionOutputEmoji out;
+
+    // pixelSpacePosition is in pixels
+    float2 pixelSpacePosition = vertexArray[vertexID].position.xy + perInstanceUniforms[iid].offset.xy + offset[0];
+    float2 viewportSize = float2(*viewportSizePointer);
+
+    out.clipSpacePosition.xy = pixelSpacePosition / viewportSize;
+    out.clipSpacePosition.z = 0.0;
+    out.clipSpacePosition.w = 1;
+
+    out.textureCoordinate = vertexArray[vertexID].textureCoordinate + perInstanceUniforms[iid].textureOffset;
+
+    return out;
+}
+
+vertex iTermTextVertexFunctionOutputBlending
+iTermTextVertexShaderBlending(uint vertexID [[ vertex_id ]],
+                              constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
+                              constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
+                              constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
+                              device iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
+                              unsigned int iid [[instance_id]]) {
+    iTermTextVertexFunctionOutputBlending out;
+
+    // pixelSpacePosition is in pixels
+    float2 pixelSpacePosition = vertexArray[vertexID].position.xy + perInstanceUniforms[iid].offset.xy + offset[0];
+    float2 viewportSize = float2(*viewportSizePointer);
+
+    out.clipSpacePosition.xy = pixelSpacePosition / viewportSize;
+    out.clipSpacePosition.z = 0.0;
+    out.clipSpacePosition.w = 1;
+
+    out.textureCoordinate = vertexArray[vertexID].textureCoordinate + perInstanceUniforms[iid].textureOffset;
+    out.backgroundTextureCoordinate = pixelSpacePosition / viewportSize;
+    out.backgroundTextureCoordinate.y = 1 - out.backgroundTextureCoordinate.y;
+    out.textColor = perInstanceUniforms[iid].textColor;
+
+    return out;
+}
+
 // The underlining fragment shaders are separate from the non-underlining ones
 // because of an apparent compiler bug. See issue 6779.
 
@@ -39,7 +88,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
 // color components. It's used when there's a background image, a badge,
 // broadcast image stripes, or anything else nontrivial behind the text.
 fragment half4
-iTermTextFragmentShaderWithBlendingEmoji(iTermTextVertexFunctionOutput in [[stage_in]],
+iTermTextFragmentShaderWithBlendingEmoji(iTermTextVertexFunctionOutputEmoji in [[stage_in]],
                                          texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
                                          texture2d<half> drawable [[ texture(iTermTextureIndexBackground) ]],
                                          texture2d<half> colorModels [[ texture(iTermTextureIndexSubpixelModels) ]],
@@ -51,7 +100,7 @@ iTermTextFragmentShaderWithBlendingEmoji(iTermTextVertexFunctionOutput in [[stag
 }
 
 fragment half4
-iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutput in [[stage_in]],
+iTermTextFragmentShaderWithBlending(iTermTextVertexFunctionOutputBlending in [[stage_in]],
                                     texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
                                     texture2d<half> drawable [[ texture(iTermTextureIndexBackground) ]],
                                     texture2d<half> colorModels [[ texture(iTermTextureIndexSubpixelModels) ]],

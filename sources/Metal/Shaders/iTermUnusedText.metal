@@ -15,7 +15,7 @@
 // pass though, and I don't want this code to get stale, so I'm keeping it around for now.
 
 fragment half4
-iTermTextFragmentShaderSolidBackgroundEmoji(iTermTextVertexFunctionOutput in [[stage_in]],
+iTermTextFragmentShaderSolidBackgroundEmoji(iTermTextVertexFunctionOutputEmoji in [[stage_in]],
                                             texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
                                             constant unsigned char *exactColorModels [[ buffer(iTermFragmentBufferIndexColorModels) ]],
                                             constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]],

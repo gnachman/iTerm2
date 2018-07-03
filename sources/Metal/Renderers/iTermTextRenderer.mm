@@ -350,6 +350,21 @@ static NSString *const FragmentFunctionName(const BOOL &underlined,
     return names[index];
 }
 
+static NSString *const VertexFunctionName(const BOOL &underlined,
+                                          const BOOL &blending,
+                                          const BOOL &emoji) {
+    static NSArray<NSString *> *names = @[ @"iTermTextVertexShader",
+                                           @"iTermTextVertexShader",
+                                           @"iTermTextVertexShaderBlending",
+                                           @"iTermTextVertexShaderEmoji",
+                                           @"iTermTextVertexShader",
+                                           @"iTermTextVertexShader",
+                                           @"iTermTextVertexShader",
+                                           @"iTermTextVertexShader" ];
+    int index = (underlined ? 4 : 0) | (blending ? 2 : 0) | (emoji ? 1 : 0);
+    return names[index];
+}
+
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermTextRendererTransientState *tState = transientState;
@@ -427,6 +442,7 @@ static NSString *const FragmentFunctionName(const BOOL &underlined,
         [tState measureTimeForStat:iTermTextRendererStatDraw ofBlock:^{
             // Change the pipeline state just before drawing so we get the right underlined/not underlined state.
             self->_cellRenderer.fragmentFunctionName = FragmentFunctionName(underlined, blending, emoji);
+            self->_cellRenderer.vertexFunctionName = VertexFunctionName(underlined, blending, emoji);
             tState.pipelineState = [self->_cellRenderer pipelineState];
             [self->_cellRenderer drawWithTransientState:tState
                                           renderEncoder:frameData.renderEncoder
