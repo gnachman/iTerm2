@@ -1922,9 +1922,9 @@
 		A697101518DFA7FC007E901D /* closebutton.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101118DFA7D5007E901D /* closebutton.png */; };
 		A6971F3320D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6971F3020D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.h */; };
 		A6971F3420D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6971F3120D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.m */; };
-		A6971F3520D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.xib */; };
-		A6971F3620D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.xib */; };
-		A6971F3720D8D3CE0075CFD4 /* iTermAdvancedGPUSettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.xib */; };
+		A6971F3520D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib */; };
+		A6971F3620D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib */; };
+		A6971F3720D8D3CE0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib */; };
 		A697E27B1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A697E27C1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A699BAE618C8394700D425A7 /* CVector.h in Headers */ = {isa = PBXBuildFile; fileRef = A699BAE418C8394700D425A7 /* CVector.h */; };
@@ -4029,7 +4029,7 @@
 		A697101118DFA7D5007E901D /* closebutton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = closebutton.png; path = images/closebutton.png; sourceTree = "<group>"; };
 		A6971F3020D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAdvancedGPUSettingsViewController.h; sourceTree = "<group>"; };
 		A6971F3120D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermAdvancedGPUSettingsViewController.m; sourceTree = "<group>"; };
-		A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermAdvancedGPUSettingsViewController.xib; sourceTree = "<group>"; };
+		A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermAdvancedGPUSettingsWindowController.xib; sourceTree = "<group>"; };
 		A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMinimumSubsequenceMatcher.h; sourceTree = "<group>"; };
 		A697E27A1B42501000E175DA /* iTermMinimumSubsequenceMatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMinimumSubsequenceMatcher.m; sourceTree = "<group>"; };
 		A699BAE418C8394700D425A7 /* CVector.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = CVector.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -5261,7 +5261,7 @@
 				1D027C101CD1867000B0FBFF /* iTermColorPresets.m */,
 				A6971F3020D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.h */,
 				A6971F3120D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.m */,
-				A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.xib */,
+				A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -7922,7 +7922,8 @@
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
 					874206460564169600CFC3F1 = {
-						ProvisioningStyle = Manual;
+						DevelopmentTeam = H7V7XYVQ7D;
+						ProvisioningStyle = Automatic;
 					};
 					A66717851DCE36C3000CE608 = {
 						DevelopmentTeam = H7V7XYVQ7D;
@@ -8130,7 +8131,7 @@
 				1D6ED9E719AEA20D005A7799 /* PrefsKeyboard@2x.png in Resources */,
 				A67D0D8E1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
 				1D6ED9E819AEA20D005A7799 /* PrefsMouse.png in Resources */,
-				A6971F3720D8D3CE0075CFD4 /* iTermAdvancedGPUSettingsViewController.xib in Resources */,
+				A6971F3720D8D3CE0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
 				1D6ED9EA19AEA20D005A7799 /* PrefsMouse@2x.png in Resources */,
 				1D8BBA7D1B30FD230005A852 /* Later@2x.png in Resources */,
 				1D6ED9EB19AEA20D005A7799 /* PrefsArrangements.png in Resources */,
@@ -8398,7 +8399,7 @@
 				1D44D05F1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBoxDrawing.png in Resources */,
 				1D44D0691CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testCursorGuide.png in Resources */,
 				1D44CFB31CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testFaintText.png in Resources */,
-				A6971F3620D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsViewController.xib in Resources */,
+				A6971F3620D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
 				1D44D05A1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBlinkingTextHidden.png in Resources */,
 				1D44D0541CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBadge.png in Resources */,
 				1D44D00F1CC7F5A600BE5630 /* PTYTextViewTest-golden-testDimmingTextAndCursorBoostAndMinimumContrast.png in Resources */,
@@ -8708,7 +8709,7 @@
 				1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */,
 				A6FE8D0A209382C000B5C648 /* download.png in Resources */,
 				A67D0D4D1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */,
-				A6971F3520D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsViewController.xib in Resources */,
+				A6971F3520D8D3CB0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
 				1DBBA5E11B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
 				A68E333B1DE78D08003F1D8E /* Man Page Touch Bar Icon.png in Resources */,
 				A6339DD71D232CEE000BAD78 /* StatusItem.png in Resources */,
@@ -9879,11 +9880,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -10528,11 +10529,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -11567,12 +11568,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -11644,11 +11645,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",

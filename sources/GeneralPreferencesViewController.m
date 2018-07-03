@@ -61,7 +61,7 @@ enum {
     // Use GPU?
     IBOutlet NSButton *_gpuRendering;
     IBOutlet NSButton *_advancedGPU;
-    IBOutlet iTermAdvancedGPUSettingsViewController *_advancedGPUViewController;
+    iTermAdvancedGPUSettingsWindowController *_advancedGPUWindowController;
 
     // Enable bonjour
     IBOutlet NSButton *_enableBonjour;
@@ -212,19 +212,20 @@ enum {
         [self updateAdvancedGPUEnabled];
     }
 
-    [_advancedGPUViewController view];
-    _advancedGPUViewController.disableWhenDisconnected.target = self;
-    _advancedGPUViewController.disableWhenDisconnected.action = @selector(settingChanged:);
-    info = [self defineControl:_advancedGPUViewController.disableWhenDisconnected
+    _advancedGPUWindowController = [[iTermAdvancedGPUSettingsWindowController alloc] initWithWindowNibName:@"iTermAdvancedGPUSettingsWindowController"];
+    [_advancedGPUWindowController window];
+    _advancedGPUWindowController.viewController.disableWhenDisconnected.target = self;
+    _advancedGPUWindowController.viewController.disableWhenDisconnected.action = @selector(settingChanged:);
+    info = [self defineControl:_advancedGPUWindowController.viewController.disableWhenDisconnected
                            key:kPreferenceKeyDisableMetalWhenUnplugged
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
     };
 
-    _advancedGPUViewController.preferIntegratedGPU.target = self;
-    _advancedGPUViewController.preferIntegratedGPU.action = @selector(settingChanged:);
-    info = [self defineControl:_advancedGPUViewController.preferIntegratedGPU
+    _advancedGPUWindowController.viewController.preferIntegratedGPU.target = self;
+    _advancedGPUWindowController.viewController.preferIntegratedGPU.action = @selector(settingChanged:);
+    info = [self defineControl:_advancedGPUWindowController.viewController.preferIntegratedGPU
                            key:kPreferenceKeyPreferIntegratedGPU
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{
@@ -238,10 +239,10 @@ enum {
     };
 
 
-    _advancedGPUViewController.maximizeThroughput.target = self;
-    _advancedGPUViewController.maximizeThroughput.action = @selector(settingChanged:);
+    _advancedGPUWindowController.viewController.maximizeThroughput.target = self;
+    _advancedGPUWindowController.viewController.maximizeThroughput.action = @selector(settingChanged:);
 #warning TODO: This should also defer currentDrawable, but that feature is only on the master branch.
-    info = [self defineControl:_advancedGPUViewController.maximizeThroughput
+    info = [self defineControl:_advancedGPUWindowController.viewController.maximizeThroughput
                            key:kPreferenceKeyMetalMaximizeThroughput
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{
@@ -388,17 +389,8 @@ enum {
 }
 
 - (IBAction)advancedGPU:(NSView *)sender {
-    // Create popover
-    NSPopover *popover = [[NSPopover alloc] init];
-    [popover setContentSize:_advancedGPUViewController.view.frame.size];
-    [popover setBehavior:NSPopoverBehaviorTransient];
-    [popover setAnimates:YES];
-    [popover setContentViewController:_advancedGPUViewController];
-
-    // Show popover
-    [popover showRelativeToRect:sender.bounds
-                              ofView:sender
-                       preferredEdge:NSMaxYEdge];
+    [self.view.window beginSheet:_advancedGPUWindowController.window completionHandler:^(NSModalResponse returnCode) {
+    }];
 }
 
 #pragma mark - Notifications
