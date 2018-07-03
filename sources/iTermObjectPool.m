@@ -67,7 +67,7 @@ typedef struct {
     ObjectCollection **_collections;
     int _objectsPerCollection;
     int _numCollections;
-    int _counter;
+    _Atomic int _counter;
     Class _class;
 }
 
@@ -113,8 +113,7 @@ typedef struct {
 }
 
 - (iTermPooledObject *)pooledObject {
-    int startIndex = atomic_fetch_add_explicit(memory_order_relaxed)
-    int startIndex = OSAtomicIncrement32(&_counter) % _numCollections;
+    int startIndex = atomic_fetch_add_explicit(&_counter, 1, memory_order_relaxed) % _numCollections;
 
     for (int j = startIndex; j < startIndex + _numCollections; j++) {
         int collectionIndex = j % _numCollections;
