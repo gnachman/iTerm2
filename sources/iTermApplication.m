@@ -106,12 +106,13 @@ NSString *const iTermApplicationCharacterPaletteDidClose = @"iTermApplicationCha
 
 - (BOOL)routeEventToShortcutInputView:(NSEvent *)event {
     NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
-    if (event.keyCode == iTermBogusVirtualKeyCode) {
-        return YES;
-    }
     if ([firstResponder isKindOfClass:[iTermShortcutInputView class]]) {
         iTermShortcutInputView *shortcutView = (iTermShortcutInputView *)firstResponder;
         if (shortcutView) {
+            if (event.keyCode == iTermBogusVirtualKeyCode) {
+                // You can't register a carbon hotkey for these so just ignore them when listining for a shortcut.
+                return YES;
+            }
             [shortcutView handleShortcutEvent:event];
             return YES;
         }
