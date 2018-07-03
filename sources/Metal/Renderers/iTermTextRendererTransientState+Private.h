@@ -26,7 +26,8 @@
                                  vector_uint2,
                                  vector_uint2,
                                  iTermMetalUnderlineDescriptor,
-                                 BOOL underlined))block
+                                 BOOL underlined,
+                                 BOOL emoji))block
              copyBlock:(void (^)(void))copyBlock;
 
 @end

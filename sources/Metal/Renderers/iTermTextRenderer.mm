@@ -244,6 +244,7 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     // NOTE: Any time a glyph overflows its bounds into a neighboring cell it's possible the strokes will intersect.
     // I haven't thought of a way to make that look good yet without having to do one draw pass per overflow glyph that
     // blends using the output of the preceding passes.
+#warning TODO: Remove this
     _cellRenderer.fragmentFunctionName = configuration.usingIntermediatePass ? @"iTermTextFragmentShaderWithBlending" : @"iTermTextFragmentShaderSolidBackground";
     __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =
         [_cellRenderer createTransientStateForCellConfiguration:configuration
@@ -334,21 +335,19 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     return piuBuffer;
 }
 
-static NSString *const FragmentFunctionName(BOOL underlined, BOOL blending) {
-    if (underlined) {
-        if (blending) {
-            return @"iTermTextFragmentShaderWithBlendingUnderlined";
-        } else {
-            return @"iTermTextFragmentShaderSolidBackgroundUnderlined";
-        }
-    } else {
-        if (blending) {
-            return @"iTermTextFragmentShaderWithBlending";
-        } else {
-            return @"iTermTextFragmentShaderSolidBackground";
-        }
-
-    }
+static NSString *const FragmentFunctionName(const BOOL &underlined,
+                                            const BOOL &blending,
+                                            const BOOL &emoji) {
+    static NSArray<NSString *> *names = @[ @"iTermTextFragmentShaderSolidBackground",
+                                           @"iTermTextFragmentShaderSolidBackgroundEmoji",
+                                           @"iTermTextFragmentShaderWithBlending",
+                                           @"iTermTextFragmentShaderWithBlendingEmoji",
+                                           @"iTermTextFragmentShaderSolidBackgroundUnderlined",
+                                           @"iTermTextFragmentShaderSolidBackgroundUnderlinedEmoji",
+                                           @"iTermTextFragmentShaderWithBlendingUnderlined",
+                                           @"iTermTextFragmentShaderWithBlendingUnderlinedEmoji" ];
+    int index = (underlined ? 4 : 0) | (blending ? 2 : 0) | (emoji ? 1 : 0);
+    return names[index];
 }
 
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
@@ -376,7 +375,8 @@ static NSString *const FragmentFunctionName(BOOL underlined, BOOL blending) {
                              vector_uint2 textureSize,
                              vector_uint2 cellSize,
                              iTermMetalUnderlineDescriptor underlineDescriptor,
-                             BOOL underlined) {
+                             BOOL underlined,
+                             BOOL emoji) {
         totalInstances += instances;
         __block id<MTLBuffer> vertexBuffer;
         [tState measureTimeForStat:iTermTextRendererStatNewQuad ofBlock:^{
@@ -426,7 +426,7 @@ static NSString *const FragmentFunctionName(BOOL underlined, BOOL blending) {
 
         [tState measureTimeForStat:iTermTextRendererStatDraw ofBlock:^{
             // Change the pipeline state just before drawing so we get the right underlined/not underlined state.
-            self->_cellRenderer.fragmentFunctionName = FragmentFunctionName(underlined, blending);
+            self->_cellRenderer.fragmentFunctionName = FragmentFunctionName(underlined, blending, emoji);
             tState.pipelineState = [self->_cellRenderer pipelineState];
             [self->_cellRenderer drawWithTransientState:tState
                                           renderEncoder:frameData.renderEncoder
