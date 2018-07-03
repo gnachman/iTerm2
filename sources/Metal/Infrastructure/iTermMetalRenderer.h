@@ -88,6 +88,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @property (nonatomic, readonly) id<MTLDevice> device;
 @property (nonatomic, readonly) Class transientStateClass;
+@property (nonatomic, copy) NSString *vertexFunctionName;
 @property (nonatomic, copy) NSString *fragmentFunctionName;
 @property (nonatomic, weak) id<iTermMetalDebugInfoFormatter> formatterDelegate;
 

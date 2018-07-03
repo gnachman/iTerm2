@@ -163,9 +163,9 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 }
 
 - (NSDictionary *)keyForPipelineState {
-    // At the time of writing only the fragment function is mutable. If other inputs to the pipeline
-    // state descriptor become mutable, add them here.
-    return @{ @"fragment function": _fragmentFunctionName ?: @"" };
+    // This must contain all inputs to picking the pipeline state. These can be changed at runtime.
+    return @{ @"fragment function": _fragmentFunctionName ?: @"",
+              @"vertex function": _vertexFunctionName ?: @"" };
 }
 
 - (id<MTLRenderPipelineState>)pipelineState {

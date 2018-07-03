@@ -30,17 +30,14 @@ typedef struct {
 typedef struct {
     float4 clipSpacePosition [[position]];  // In vector function is normalized. In fragment function is in pixels, with a half pixel offset since it refers to the center of the pixel.
     float2 textureCoordinate;
+} iTermTextVertexFunctionOutputEmoji;
+
+typedef struct {
+    float4 clipSpacePosition [[position]];  // In vector function is normalized. In fragment function is in pixels, with a half pixel offset since it refers to the center of the pixel.
+    float2 textureCoordinate;
     float2 backgroundTextureCoordinate;
     float4 textColor;
-    float4 backgroundColor;
-    half4 underlineColor;
-    int3 colorModelIndex;
-    float2 textureOffset;  // Normalized offset in texture.
-    float2 cellOffset;  // Coordinate of bottom left of cell in pixel coordinates. 0,0 is the bottom left of the screen.
-    int underlineStyle;  // should draw an underline? For some stupid reason the compiler won't let me set the type as iTermMetalGlyphAttributesUnderline
-    float2 viewportSize;  // size of viewport in pixels. TODO: see if I can avoid passing this to fragment function.
-    float scale;  // 2 for retina, 1 for non-retina
-} iTermTextVertexFunctionOutputUnderlined;
+} iTermTextVertexFunctionOutputBlending;
 
 // Returns the weight in [0, 1] of underline for a pixel at `clipSpacePosition`.
 // This ignores the alpha channel of the texture and assumes white pixels are
