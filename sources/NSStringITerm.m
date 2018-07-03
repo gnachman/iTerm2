@@ -140,15 +140,18 @@
     return [self stringByReplacingOccurrencesOfString:@"\t" withString:replacement];
 }
 
-- (NSString*)stringWithPercentEscape
+- (NSString *)stringWithPercentEscape
 {
     // From
     // http://stackoverflow.com/questions/705448/iphone-sdk-problem-with-ampersand-in-the-url-string
-    return [(NSString *)CFURLCreateStringByAddingPercentEscapes(NULL,
-                                                                (CFStringRef)[[self mutableCopy] autorelease],
-                                                                NULL,
-                                                                CFSTR("￼=,!$&'()*+;@?\n\"<>#\t :/"),
-                                                                kCFStringEncodingUTF8) autorelease];
+    static NSMutableCharacterSet *allowedCharacters;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        allowedCharacters = [[NSCharacterSet URLHostAllowedCharacterSet] mutableCopy];
+        [allowedCharacters removeCharactersInString:@"￼=,!$&'()*+;@?\n\"<>#\t :/"];
+    });
+
+    return [self stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
 }
 
 - (NSString*)stringWithLinefeedNewlines
@@ -759,13 +762,14 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSString *)stringByEscapingForURL {
-    NSString *theString =
-        (NSString *) CFURLCreateStringByAddingPercentEscapes(NULL,
-                                                             (CFStringRef)self,
-                                                             (CFStringRef)@"!*'();:@&=+$,/?%#[]",
-                                                             NULL,
-                                                             kCFStringEncodingUTF8);
-    return [theString autorelease];
+    static NSMutableCharacterSet *allowedCharacters;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        allowedCharacters = [[NSCharacterSet URLHostAllowedCharacterSet] mutableCopy];
+        [allowedCharacters addCharactersInString:@"!*'();:@&=+$,/?%#[]"];
+    });
+
+    return [self stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
 }
 
 - (NSString *)stringByCapitalizingFirstLetter {
