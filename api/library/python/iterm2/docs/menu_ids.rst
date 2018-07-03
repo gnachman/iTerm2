@@ -131,11 +131,13 @@ Session > Reset Character Set                                                   
 Session > Log > Start                                                                   `Log.Start`                                                                   
 Session > Log > Stop                                                                    `Log.Stop`                                                                    
 Session > Bury Session                                                                  `Bury Session`                                                                
-Scripts > Install Python Runtime                                                        `Install Python Runtime`                                                      
-Scripts > New Python Script                                                             `New Python Script`                                                           
-Scripts > Reveal Scripts in Finder                                                      `Reveal in Finder`                                                            
-Scripts > Open Python REPL                                                              `Open Interactive Window`                                                     
-Scripts > Script Console                                                                `Script Console`                                                              
+Scripts > Manage > New Python Script                                                    `New Python Script`                                                           
+Scripts > Manage > Open Python REPL                                                     `Open Interactive Window`                                                     
+Scripts > Manage > Install Python Runtime                                               `Install Python Runtime`                                                      
+Scripts > Manage > Reveal Scripts in Finder                                             `Reveal in Finder`                                                            
+Scripts > Manage > Import                                                               `Import Script`                                                               
+Scripts > Manage > Export                                                               `Export Script`                                                               
+Scripts > Manage > Console                                                              `Script Console`                                                              
 Profiles > Open Profiles…                                                               `Open Profiles…`                                                              
 Profiles > Press Option for New Window                                                  `Press Option for New Window`                                                 
 Profiles > Open In New Window                                                           `Open In New Window`                                                          
@@ -144,6 +146,7 @@ Toolbelt > Set Default Width                                                    
 Window > Minimize                                                                       `Minimize`                                                                    
 Window > Zoom                                                                           `Zoom`                                                                        
 Window > Arrange Windows Horizontally                                                   `Arrange Windows Horizontally`                                                
+Window > Arrange Split Panes Evenly                                                     `Arrange Windows Horizontally`                                                
 Window > Exposé all Tabs                                                                `Exposé all Tabs`                                                             
 Window > Save Window Arrangement                                                        `Save Window Arrangement`                                                     
 Window > Save Current Window as Arrangement                                             `Save Current Window as Arrangement`                                          
@@ -296,11 +299,13 @@ Session > Reset Character Set                                                   
 Session > Log > Start                                                                   `Session.Log.Start`                                                                
 Session > Log > Stop                                                                    `Session.Log.Stop`                                                                 
 Session > Bury Session                                                                  `Session.Bury Session`                                                             
-Scripts > Install Python Runtime                                                        `Scripts.Install Python Runtime`                                                   
-Scripts > New Python Script                                                             `Scripts.New Python Script`                                                        
-Scripts > Reveal Scripts in Finder                                                      `Scripts.Reveal Scripts in Finder`                                                 
-Scripts > Open Python REPL                                                              `Scripts.Open Python REPL`                                                         
-Scripts > Script Console                                                                `Scripts.Script Console`                                                           
+Scripts > Manage > New Python Script                                                    `Scripts.Manage.New Python Script`                                                 
+Scripts > Manage > Open Python REPL                                                     `Scripts.Manage.Open Python REPL`                                                  
+Scripts > Manage > Install Python Runtime                                               `Scripts.Manage.Install Python Runtime`                                            
+Scripts > Manage > Reveal Scripts in Finder                                             `Scripts.Manage.Reveal Scripts in Finder`                                          
+Scripts > Manage > Import                                                               `Scripts.Manage.Import`                                                            
+Scripts > Manage > Export                                                               `Scripts.Manage.Export`                                                            
+Scripts > Manage > Console                                                              `Scripts.Manage.Console`                                                           
 Profiles > Open Profiles…                                                               `Profiles.Open Profiles…`                                                          
 Profiles > Press Option for New Window                                                  `Profiles.Press Option for New Window`                                             
 Profiles > Open In New Window                                                           `Profiles.Open In New Window`                                                      
@@ -309,6 +314,7 @@ Toolbelt > Set Default Width                                                    
 Window > Minimize                                                                       `Window.Minimize`                                                                  
 Window > Zoom                                                                           `Window.Zoom`                                                                      
 Window > Arrange Windows Horizontally                                                   `Window.Arrange Windows Horizontally`                                              
+Window > Arrange Split Panes Evenly                                                     `Window.Arrange Split Panes Evenly`                                                
 Window > Exposé all Tabs                                                                `Window.Exposé all Tabs`                                                           
 Window > Save Window Arrangement                                                        `Window.Save Window Arrangement`                                                   
 Window > Save Current Window as Arrangement                                             `Window.Save Current Window as Arrangement`                                        

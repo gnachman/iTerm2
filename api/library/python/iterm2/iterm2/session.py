@@ -214,6 +214,8 @@ class Session:
 
         :Example:
 
+        .. code-block:: python
+
           async with session.get_keystroke_reader() as reader:
             done = False
             while not done:
