@@ -5766,8 +5766,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSRect screenFrame = [self cursorScreenFrame];
     [_findCursorWindow setFrame:screenFrame display:YES];
     _findCursorWindow.backgroundColor = [NSColor clearColor];
-    [_findCursorWindow setAlphaValue:0];
-    [[_findCursorWindow animator] setAlphaValue:1];
     _findCursorWindow.opaque = NO;
     [_findCursorWindow makeKeyAndOrderFront:nil];
 
