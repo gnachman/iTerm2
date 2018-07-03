@@ -1505,16 +1505,16 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
 + (NSString *)stringForModifiersWithMask:(NSUInteger)keyMods {
     NSMutableString *theKeyString = [NSMutableString string];
-    if (keyMods & NSControlKeyMask) {
+    if (keyMods & NSEventModifierFlagControl) {
         [theKeyString appendString:@"^"];
     }
-    if (keyMods & NSAlternateKeyMask) {
+    if (keyMods & NSEventModifierFlagOption) {
         [theKeyString appendString:@"⌥"];
     }
-    if (keyMods & NSShiftKeyMask) {
+    if (keyMods & NSEventModifierFlagShift) {
         [theKeyString appendString:@"⇧"];
     }
-    if (keyMods & NSCommandKeyMask) {
+    if (keyMods & NSEventModifierFlagCommand) {
         [theKeyString appendString:@"⌘"];
     }
     return theKeyString;

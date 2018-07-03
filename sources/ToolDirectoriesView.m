@@ -247,12 +247,12 @@ static const CGFloat kHelpMargin = 5;
     iTermToolWrapper *wrapper = self.toolWrapper;
     NSString *text;
     NSString *escapedPath = [entry.path stringWithEscapedShellCharactersIncludingNewlines:YES];
-    if ([NSEvent modifierFlags] & NSAlternateKeyMask) {
+    if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
         text = [@"cd " stringByAppendingString:escapedPath];
     } else {
         text = escapedPath;
     }
-    if (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask)) {
+    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift)) {
         text = [text stringByAppendingString:@"\n"];
     }
     [wrapper.delegate.delegate toolbeltInsertText:text];

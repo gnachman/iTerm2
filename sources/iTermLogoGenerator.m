@@ -57,7 +57,7 @@ static NSMutableDictionary *gLogoCache;
     [frame drawInRect:NSMakeRect(0, 0, width, height)];
     if (self.tabColor) {
         [[self.tabColor colorWithAlphaComponent:0.5] set];
-        NSRectFillUsingOperation(NSMakeRect(0, 0, width, height), NSCompositeSourceIn);
+        NSRectFillUsingOperation(NSMakeRect(0, 0, width, height), NSCompositingOperationSourceIn);
     }
 
     [shadow drawInRect:NSMakeRect(0, 0, width, height)];

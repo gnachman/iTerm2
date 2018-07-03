@@ -107,7 +107,7 @@
     static const NSTimeInterval kAnimationDuration = 0.15;
     self.window.alphaValue = 0;
     if (delegate.popupWindowIsInFloatingHotkeyWindow) {
-        self.window.styleMask = NSNonactivatingPanelMask;
+        self.window.styleMask = NSWindowStyleMaskNonactivatingPanel;
         self.window.collectionBehavior = (NSWindowCollectionBehaviorCanJoinAllSpaces |
                                           NSWindowCollectionBehaviorIgnoresCycle |
                                           NSWindowCollectionBehaviorFullScreenAuxiliary);

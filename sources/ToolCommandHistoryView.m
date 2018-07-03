@@ -290,14 +290,14 @@ static const CGFloat kHelpMargin = 5;
     iTermCommandHistoryCommandUseMO *commandUse = filteredEntries_[selectedIndex];
     iTermToolWrapper *wrapper = self.toolWrapper;
     NSString *text = commandUse.command;
-    if (([[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask)) {
+    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagOption)) {
         if (commandUse.directory) {
             text = [@"cd " stringByAppendingString:commandUse.directory];
         } else {
             return;
         }
     }
-    if (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask)) {
+    if (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift)) {
         text = [text stringByAppendingString:@"\n"];
     }
     [wrapper.delegate.delegate toolbeltInsertText:text];

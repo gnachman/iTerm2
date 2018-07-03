@@ -98,7 +98,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
                                                                             point.y,
                                                                             image.size.width,
                                                                             image.size.height)
-                                                       styleMask:NSBorderlessWindowMask
+                                                       styleMask:NSWindowStyleMaskBorderless
                                                          backing:NSBackingStoreBuffered
                                                            defer:NO];
         NSImageView  *imageView =

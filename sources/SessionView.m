@@ -662,7 +662,7 @@ static NSDate* lastResizeDate_;
         [_hoverURLTextField setEditable:NO];
         [_hoverURLTextField setSelectable:NO];
         [_hoverURLTextField setStringValue:url];
-        [_hoverURLTextField setAlignment:NSLeftTextAlignment];
+        [_hoverURLTextField setAlignment:NSTextAlignmentLeft];
         [_hoverURLTextField setAutoresizingMask:NSViewWidthSizable];
         [_hoverURLTextField setTextColor:[NSColor headerTextColor]];
         _hoverURLTextField.autoresizingMask = NSViewNotSizable;
@@ -803,7 +803,7 @@ static NSDate* lastResizeDate_;
                        horizontalScrollerClass:nil
                          verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
                                     borderType:NSNoBorder
-                                   controlSize:NSRegularControlSize
+                                   controlSize:NSControlSizeRegular
                                  scrollerStyle:[[self scrollview] scrollerStyle]];
 
     if (_showTitle) {
@@ -830,7 +830,7 @@ static NSDate* lastResizeDate_;
                           horizontalScrollerClass:nil
                             verticalScrollerClass:verticalScrollerClass
                                        borderType:[[self scrollview] borderType]
-                                      controlSize:NSRegularControlSize
+                                      controlSize:NSControlSizeRegular
                                     scrollerStyle:[[[self scrollview] verticalScroller] scrollerStyle]];
     return contentSize;
 }

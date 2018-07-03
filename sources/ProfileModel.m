@@ -922,7 +922,7 @@ int gMigrated;
                                                         action:params->alternateOpenAllSelector
                                                  keyEquivalent:@""];
     [altOpenAll setTarget:params->target];
-    [altOpenAll setKeyEquivalentModifierMask:NSAlternateKeyMask];
+    [altOpenAll setKeyEquivalentModifierMask:NSEventModifierFlagOption];
     [altOpenAll setAlternate:YES];
     [altOpenAll setRepresentedObject:gAltOpenAllRepresentedObject];
     [menu addItem:altOpenAll];
@@ -1005,9 +1005,9 @@ int gMigrated;
     NSString* shortcut = [b objectForKey:KEY_SHORTCUT];
     if ([shortcut length]) {
         [item setKeyEquivalent:[shortcut lowercaseString]];
-        [item setKeyEquivalentModifierMask:NSCommandKeyMask | NSControlKeyMask | (isAlternate ? NSAlternateKeyMask : 0)];
+        [item setKeyEquivalentModifierMask:NSEventModifierFlagCommand | NSEventModifierFlagControl | (isAlternate ? NSEventModifierFlagOption : 0)];
     } else if (isAlternate) {
-        [item setKeyEquivalentModifierMask:NSAlternateKeyMask];
+        [item setKeyEquivalentModifierMask:NSEventModifierFlagOption];
     }
     [item setAlternate:isAlternate];
     [item setTarget:params->target];

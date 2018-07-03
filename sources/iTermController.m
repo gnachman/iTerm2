@@ -664,7 +664,7 @@ static iTermController *gSharedInstance;
         }
     }
 
-    unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
+    unsigned int modifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;
     [aMenuItem setKeyEquivalentModifierMask:modifierMask];
     [aMenuItem setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
     [aMenuItem setTarget:aTarget];
@@ -683,11 +683,11 @@ static iTermController *gSharedInstance;
             }
         }
 
-        modifierMask = NSCommandKeyMask | NSControlKeyMask;
+        modifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;
         [aMenuItem setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
         [aMenuItem setTarget:self];
 
-        [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
+        [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSEventModifierFlagOption];
         [aMenuItem setAlternate:YES];
         [aMenu addItem:aMenuItem];
         [aMenuItem release];
@@ -744,7 +744,7 @@ static iTermController *gSharedInstance;
         aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All"
                                                action:openAllSelector
                                         keyEquivalent:@""];
-        unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
+        unsigned int modifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;
         [aMenuItem setKeyEquivalentModifierMask:modifierMask];
         [aMenuItem setRepresentedObject:subMenu];
         if ([self respondsToSelector:openAllSelector]) {
@@ -760,9 +760,9 @@ static iTermController *gSharedInstance;
         aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All in New Window"
                                                action:openAllSelector
                                         keyEquivalent:@""];
-        modifierMask = NSCommandKeyMask | NSControlKeyMask;
+        modifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;
         [aMenuItem setAlternate:YES];
-        [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
+        [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSEventModifierFlagOption];
         [aMenuItem setRepresentedObject:subMenu];
         if ([self respondsToSelector:openAllSelector]) {
             [aMenuItem setTarget:self];

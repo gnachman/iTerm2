@@ -57,7 +57,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         _tabView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
         _tabView.autoresizesSubviews = YES;
         _tabView.allowsTruncatedLabels = NO;
-        _tabView.controlSize = NSSmallControlSize;
+        _tabView.controlSize = NSControlSizeSmall;
         _tabView.tabViewType = NSNoTabsNoBorder;
         [self addSubview:_tabView];
 

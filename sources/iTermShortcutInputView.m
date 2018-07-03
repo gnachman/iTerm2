@@ -54,7 +54,7 @@
 
 - (void)drawRect:(NSRect)dirtyRect {
     [[NSColor clearColor] set];
-    NSRectFillUsingOperation(self.bounds, NSCompositeSourceOver);
+    NSRectFillUsingOperation(self.bounds, NSCompositingOperationSourceOver);
 
     BOOL isFirstResponder = ([self.window firstResponder] == self);
 
@@ -133,7 +133,7 @@
     frame.origin.y += 0.5;
     frame.size.width -= 0.5;
     frame.size.height -= 0.5;
-    NSRectFillUsingOperation(frame, NSCompositeSourceOver);
+    NSRectFillUsingOperation(frame, NSCompositingOperationSourceOver);
     [[NSGraphicsContext currentContext] setShouldAntialias:YES];
 
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
@@ -220,12 +220,12 @@
 }
 
 - (void)handleShortcutEvent:(NSEvent *)event {
-    if (event.type == NSKeyDown) {
+    if (event.type == NSEventTypeKeyDown) {
         self.hotkeyBeingRecorded = nil;
         self.shortcut = [iTermShortcut shortcutWithEvent:event];
         [_shortcutDelegate shortcutInputView:self didReceiveKeyPressEvent:event];
         [[self window] makeFirstResponder:[self window]];
-    } else if (event.type == NSFlagsChanged) {
+    } else if (event.type == NSEventTypeFlagsChanged) {
         self.hotkeyBeingRecorded = [NSString stringForModifiersWithMask:event.modifierFlags];
     }
     [self setNeedsDisplay:YES];

@@ -153,7 +153,7 @@ static const CGFloat kWindowWidth = 400;
     [shareImage lockFocus];
     [[iTermTipCardActionButton blueColor] set];
     NSRectFillUsingOperation(NSMakeRect(0, 0, shareImage.size.width, shareImage.size.height),
-                             NSCompositeSourceAtop);
+                             NSCompositingOperationSourceAtop);
     [shareImage unlockFocus];
     shareImage.template = NO;
 

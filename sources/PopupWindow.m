@@ -18,7 +18,7 @@
                             backing:(NSBackingStoreType)bufferingType
                               defer:(BOOL)flag {
     self = [super initWithContentRect:contentRect
-                            styleMask:NSBorderlessWindowMask
+                            styleMask:NSWindowStyleMaskBorderless
                               backing:bufferingType
                                 defer:flag];
     if (self) {

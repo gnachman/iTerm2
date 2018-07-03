@@ -52,7 +52,7 @@ static const CGFloat kCloseButtonLeftMargin = 5;
         [_title bind:@"value" toObject:self withKeyPath:@"name" options:nil];
         _title.backgroundColor = [NSColor clearColor];
         [_title setAutoresizingMask:NSViewWidthSizable | NSViewMaxYMargin];
-        [_title setAlignment:NSCenterTextAlignment];
+        [_title setAlignment:NSTextAlignmentCenter];
         [_title setBezeled:NO];
         [self addSubview:_title];
         [_title release];

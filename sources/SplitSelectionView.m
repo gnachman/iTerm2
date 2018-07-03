@@ -80,7 +80,7 @@
     [[NSColor whiteColor] set];
     NSMutableParagraphStyle *pStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     [pStyle setParagraphStyle:[NSParagraphStyle defaultParagraphStyle]];
-    [pStyle setAlignment:NSCenterTextAlignment];
+    [pStyle setAlignment:NSTextAlignmentCenter];
 
     CGFloat fontSize = 25;
     NSMutableAttributedString* attributedString;

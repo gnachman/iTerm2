@@ -139,7 +139,7 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
            NSParagraphStyleAttributeName: bigTextParagraphStyle };
 
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
-    [paragraphStyle setAlignment:NSRightTextAlignment];
+    [paragraphStyle setAlignment:NSTextAlignmentRight];
     NSDictionary *signatureAttributes =
         @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light Italic" size:12],
            NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.3 alpha:1],

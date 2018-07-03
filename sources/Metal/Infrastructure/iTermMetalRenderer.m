@@ -16,7 +16,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
 + (instancetype)compositeSourceOver {
     iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
-    // I tried to make this the same as NSCompositeSourceOver. It's not quite right but I have
+    // I tried to make this the same as NSCompositingOperationSourceOver. It's not quite right but I have
     // no idea why.
     blending.rgbBlendOperation = MTLBlendOperationAdd;
     blending.sourceRGBBlendFactor = MTLBlendFactorOne;  // because it's premultiplied

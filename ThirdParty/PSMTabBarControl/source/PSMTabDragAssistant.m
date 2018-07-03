@@ -155,7 +155,7 @@
 
     _dragTabWindow = [[PSMTabDragWindow dragWindowWithTabBarCell:cell
                                                            image:dragImage
-                                                       styleMask:NSBorderlessWindowMask] retain];
+                                                       styleMask:NSWindowStyleMaskBorderless] retain];
     [_dragTabWindow setAlphaValue:kPSMTabDragWindowAlpha];
     [_dragTabWindow orderFront:nil];
 
@@ -226,7 +226,7 @@
         // create a new floating drag window
         if (!_dragViewWindow) {
             NSImage *viewImage = nil;
-            unsigned int styleMask = NSBorderlessWindowMask;
+            unsigned int styleMask = NSWindowStyleMaskBorderless;
 
             if ([control delegate] &&
                 [[control delegate] respondsToSelector:@selector(tabView:imageForTabViewItem:offset:styleMask:)]) {
@@ -255,7 +255,7 @@
 
                 [tabImage drawAtPoint:drawPoint
                              fromRect:NSZeroRect
-                            operation:NSCompositeSourceOver
+                            operation:NSCompositingOperationSourceOver
                              fraction:1];
 
                 [viewImage unlockFocus];
@@ -270,7 +270,7 @@
 
             if (self.sourceTabBar.tabLocation == PSMTab_LeftTab) {
                 _dragWindowOffset.height += kPSMTabBarControlHeight;
-            } else if (!(styleMask & NSTitledWindowMask)) {
+            } else if (!(styleMask & NSWindowStyleMaskTitled)) {
                 _dragWindowOffset.height += 22;
             }
 

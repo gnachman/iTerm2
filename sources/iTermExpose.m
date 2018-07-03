@@ -452,7 +452,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     screenFrame.origin = NSZeroPoint;
     // Create the window and its view.
     window_ = [[iTermExposeWindow alloc] initWithContentRect:screenFrame
-                                                   styleMask:NSBorderlessWindowMask
+                                                   styleMask:NSWindowStyleMaskBorderless
                                                      backing:NSBackingStoreBuffered
                                                        defer:YES
                                                       screen:theScreen];

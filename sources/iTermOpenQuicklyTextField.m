@@ -13,7 +13,7 @@
         return NO;
     }
 
-    const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
+    const int mask = NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand;
     // TODO(georgen): Not getting normal keycodes here, but 125 and 126 are up and down arrows.
     // This is a pretty ugly hack. Also, calling keyDown from here is probably not cool.
     BOOL handled = NO;

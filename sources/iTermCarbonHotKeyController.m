@@ -14,11 +14,11 @@
 + (UInt32)carbonModifiersForCocoaModifiers:(NSEventModifierFlags)cocoa {
     __block UInt32 carbon = 0;
     NSDictionary<NSNumber *, NSNumber *> *map =
-        @{ @(NSAlphaShiftKeyMask): @(alphaLock),
-           @(NSAlternateKeyMask): @(optionKey),
-           @(NSCommandKeyMask): @(cmdKey),
-           @(NSControlKeyMask): @(controlKey),
-           @(NSShiftKeyMask): @(shiftKey),
+        @{ @(NSEventModifierFlagCapsLock): @(alphaLock),
+           @(NSEventModifierFlagOption): @(optionKey),
+           @(NSEventModifierFlagCommand): @(cmdKey),
+           @(NSEventModifierFlagControl): @(controlKey),
+           @(NSEventModifierFlagShift): @(shiftKey),
          };
     [map enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
         if (cocoa & [key integerValue]) {
@@ -31,11 +31,11 @@
 + (NSEventModifierFlags)cocoaModifiersForCarbonModifiers:(UInt32)carbonModifiers {
     __block UInt32 x = 0;
     NSDictionary<NSNumber *, NSNumber *> *map =
-    @{ @(alphaLock): @(NSAlphaShiftKeyMask),
-       @(optionKey): @(NSAlternateKeyMask),
-       @(cmdKey): @(NSCommandKeyMask),
-       @(controlKey): @(NSControlKeyMask),
-       @(shiftKey): @(NSShiftKeyMask),
+    @{ @(alphaLock): @(NSEventModifierFlagCapsLock),
+       @(optionKey): @(NSEventModifierFlagOption),
+       @(cmdKey): @(NSEventModifierFlagCommand),
+       @(controlKey): @(NSEventModifierFlagControl),
+       @(shiftKey): @(NSEventModifierFlagShift),
        };
     [map enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
         if (carbonModifiers & [key integerValue]) {
@@ -252,7 +252,7 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
         if (!hotKey) {
             return NO;
         }
-        NSEvent *fakeEvent = [NSEvent keyEventWithType:NSKeyDown
+        NSEvent *fakeEvent = [NSEvent keyEventWithType:NSEventTypeKeyDown
                                               location:[NSEvent mouseLocation]
                                          modifierFlags:hotKey.shortcut.modifiers
                                              timestamp:0

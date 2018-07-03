@@ -496,20 +496,20 @@ static NSString *sPreviousVersion;
 + (NSUInteger)maskForModifierTag:(iTermPreferencesModifierTag)tag {
     switch (tag) {
         case kPreferencesModifierTagEitherCommand:
-            return NSCommandKeyMask;
+            return NSEventModifierFlagCommand;
 
         case kPreferencesModifierTagCommandAndOption:
-            return NSCommandKeyMask | NSAlternateKeyMask;
+            return NSEventModifierFlagCommand | NSEventModifierFlagOption;
 
         case kPreferencesModifierTagEitherOption:
-            return NSAlternateKeyMask;
+            return NSEventModifierFlagOption;
 
         case kPreferenceModifierTagNone:
             return NSUIntegerMax;
 
         default:
             NSLog(@"Unexpected value for maskForModifierTag: %d", tag);
-            return NSCommandKeyMask | NSAlternateKeyMask;
+            return NSEventModifierFlagCommand | NSEventModifierFlagOption;
     }
 }
 

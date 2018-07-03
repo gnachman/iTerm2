@@ -32,7 +32,7 @@ typedef NS_ENUM(NSInteger, iTermAltScreenMouseScrollInfererState) {
 }
 
 - (unichar)arrowKeyInEvent:(NSEvent *)theEvent {
-    if ([theEvent modifierFlags] & NSNumericPadKeyMask) {
+    if ([theEvent modifierFlags] & NSEventModifierFlagNumericPad) {
         NSString *theArrow = [theEvent charactersIgnoringModifiers];
         if ([theArrow length] == 1) {
             return [theArrow characterAtIndex:0];

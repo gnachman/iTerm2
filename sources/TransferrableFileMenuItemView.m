@@ -83,12 +83,12 @@ const CGFloat rightMargin = 5;
 
     NSMutableParagraphStyle *leftAlignStyle =
         [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
-    [leftAlignStyle setAlignment:NSLeftTextAlignment];
+    [leftAlignStyle setAlignment:NSTextAlignmentLeft];
     [leftAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
 
     NSMutableParagraphStyle *rightAlignStyle =
         [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
-    [rightAlignStyle setAlignment:NSRightTextAlignment];
+    [rightAlignStyle setAlignment:NSTextAlignmentRight];
     [rightAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
 
     const CGFloat leftMargin = 5;

@@ -25,7 +25,7 @@
     if (self) {
         _paragraphStyle = [[NSMutableParagraphStyle alloc] init];
         _paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
-        _paragraphStyle.alignment = NSRightTextAlignment;
+        _paragraphStyle.alignment = NSTextAlignmentRight;
     }
     return self;
 }
@@ -130,7 +130,7 @@
     [reducedAlphaImage lockFocus];
     [image drawInRect:NSMakeRect(0, 0, image.size.width, image.size.height)
              fromRect:NSZeroRect
-            operation:NSCompositeSourceOver
+            operation:NSCompositingOperationSourceOver
              fraction:_fillColor.alphaComponent];
     [reducedAlphaImage unlockFocus];
 

@@ -334,7 +334,7 @@ exit:
     NSString *charactersAsString = [self stringForKeyCode:virtualKeyCode character:keyCode isArrow:&isArrow];
 
     NSMutableString *result = [[[NSString stringForModifiersWithMask:keyMods] mutableCopy] autorelease];
-    if ((keyMods & NSNumericPadKeyMask) && !isArrow) {
+    if ((keyMods & NSEventModifierFlagNumericPad) && !isArrow) {
         [result appendString: @"num-"];
     }
     [result appendString:charactersAsString];
@@ -602,11 +602,11 @@ exit:
 }
 
 + (NSEventModifierFlags)modifiersForKeyCode:(int)keyCode modifiers:(NSEventModifierFlags)keyMods {
-    NSEventModifierFlags theModifiers = keyMods & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask | NSNumericPadKeyMask);
+    NSEventModifierFlags theModifiers = keyMods & (NSEventModifierFlagOption | NSEventModifierFlagControl | NSEventModifierFlagShift | NSEventModifierFlagCommand | NSEventModifierFlagNumericPad);
 
-    // on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
+    // on some keyboards, arrow keys have NSEventModifierFlagNumericPad bit set; manually set it for keyboards that don't
     if (keyCode >= NSUpArrowFunctionKey && keyCode <= NSRightArrowFunctionKey) {
-        theModifiers |= NSNumericPadKeyMask;
+        theModifiers |= NSEventModifierFlagNumericPad;
     }
     return theModifiers;
 }

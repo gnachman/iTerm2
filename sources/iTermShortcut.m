@@ -26,11 +26,11 @@ CGFloat kShortcutPreferredHeight = 22;
 
 // The numeric keypad mask is here so we can disambiguate between keys that
 // exist in both the numeric keypad and outside of it.
-const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
-                                                  NSAlternateKeyMask |
-                                                  NSShiftKeyMask |
-                                                  NSControlKeyMask |
-                                                  NSNumericPadKeyMask);
+const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
+                                                  NSEventModifierFlagOption |
+                                                  NSEventModifierFlagShift |
+                                                  NSEventModifierFlagControl |
+                                                  NSEventModifierFlagNumericPad);
 
 @implementation iTermShortcut {
     NSEventModifierFlags _modifiers;
@@ -208,9 +208,9 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
 }
 
 - (NSEventModifierFlags)modifiers {
-    // On some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't.
+    // On some keyboards, arrow keys have NSEventModifierFlagNumericPad bit set; manually set it for keyboards that don't.
     if (self.keyCode >= NSUpArrowFunctionKey && self.keyCode <= NSRightArrowFunctionKey) {
-        return _modifiers | NSNumericPadKeyMask;
+        return _modifiers | NSEventModifierFlagNumericPad;
     } else {
         return _modifiers;
     }
@@ -226,7 +226,7 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSCommandKeyMask |
 }
 
 - (BOOL)eventIsShortcutPress:(NSEvent *)event {
-    if (event.type != NSKeyDown) {
+    if (event.type != NSEventTypeKeyDown) {
         return NO;
     }
     return (([event modifierFlags] & kHotKeyModifierMask) == (_modifiers & kHotKeyModifierMask) &&

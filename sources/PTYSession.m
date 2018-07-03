@@ -1648,7 +1648,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                         horizontalScrollerClass:nil
                                           verticalScrollerClass:parent.scrollbarShouldBeVisible ? [[_view.scrollview verticalScroller] class] : nil
                                                      borderType:_view.scrollview.borderType
-                                                    controlSize:NSRegularControlSize
+                                                    controlSize:NSControlSizeRegular
                                                   scrollerStyle:_view.scrollview.scrollerStyle];
 
     int width = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / [_textview charWidth];
@@ -2345,9 +2345,9 @@ ITERM_WEAKLY_REFERENCEABLE
     BOOL wasSelecting = _copyModeState.selecting;
     NSString *string = event.charactersIgnoringModifiers;
     unichar code = [string length] > 0 ? [string characterAtIndex:0] : 0;
-    NSUInteger mask = (NSAlternateKeyMask | NSControlKeyMask | NSCommandKeyMask);
+    NSUInteger mask = (NSEventModifierFlagOption | NSEventModifierFlagControl | NSEventModifierFlagCommand);
     BOOL moved = NO;
-    if ((event.modifierFlags & mask) == NSControlKeyMask) {
+    if ((event.modifierFlags & mask) == NSEventModifierFlagControl) {
         switch (code) {
             case 2:  // ^B
                 moved = [_copyModeState pageUp];
@@ -2374,7 +2374,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 _copyModeState.mode = kiTermSelectionModeBox;
                 break;
         }
-    } else if ((event.modifierFlags & mask) == NSAlternateKeyMask) {
+    } else if ((event.modifierFlags & mask) == NSEventModifierFlagOption) {
         switch (code) {
             case 'b':
             case NSLeftArrowFunctionKey:
@@ -2398,7 +2398,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 moved = [_copyModeState pageDown];
                 break;
             case '\t':
-                if (event.modifierFlags & NSShiftKeyMask) {
+                if (event.modifierFlags & NSEventModifierFlagShift) {
                     moved = [_copyModeState moveBackwardWord];
                 } else {
                     moved = [_copyModeState moveForwardWord];
@@ -3003,7 +3003,7 @@ ITERM_WEAKLY_REFERENCEABLE
                        horizontalScrollerClass:nil
                          verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
                                     borderType:NSNoBorder
-                                   controlSize:NSRegularControlSize
+                                   controlSize:NSControlSizeRegular
                                  scrollerStyle:scrollerStyle];
     return outerSize;
 }
@@ -3083,10 +3083,10 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
     [iTermKeyBindingMgr removeMappingWithCode:NSLeftArrowFunctionKey
-                                    modifiers:NSCommandKeyMask | NSAlternateKeyMask | NSNumericPadKeyMask
+                                    modifiers:NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagNumericPad
                                    inBookmark:temp];
     [iTermKeyBindingMgr removeMappingWithCode:NSRightArrowFunctionKey
-                                    modifiers:NSCommandKeyMask | NSAlternateKeyMask | NSNumericPadKeyMask
+                                    modifiers:NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagNumericPad
                                    inBookmark:temp];
 
     ProfileModel* model;
@@ -4129,7 +4129,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask
 {
     if ([self optionKey] == OPT_ESC) {
-        if ((modmask == NSAlternateKeyMask) ||
+        if ((modmask == NSEventModifierFlagOption) ||
             (modmask & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask) {
             return YES;
         }
@@ -5181,7 +5181,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [dragImage lockFocus];
     [image drawAtPoint:NSZeroPoint
               fromRect:NSZeroRect
-             operation:NSCompositeSourceOver
+             operation:NSCompositingOperationSourceOver
               fraction:0.5];
     [dragImage unlockFocus];
     return dragImage;
@@ -6419,7 +6419,7 @@ ITERM_WEAKLY_REFERENCEABLE
         } else if (unmodunicode == NSLeftArrowFunctionKey) {
             // Left arrow moves to prev frame
             int n = 1;
-            if (modflag & NSShiftKeyMask) {
+            if (modflag & NSEventModifierFlagShift) {
                 n = 15;
             }
             for (int i = 0; i < n; i++) {
@@ -6428,7 +6428,7 @@ ITERM_WEAKLY_REFERENCEABLE
         } else if (unmodunicode == NSRightArrowFunctionKey) {
             // Right arrow moves to next frame
             int n = 1;
-            if (modflag & NSShiftKeyMask) {
+            if (modflag & NSEventModifierFlagShift) {
                 n = 15;
             }
             for (int i = 0; i < n; i++) {
@@ -6443,7 +6443,7 @@ ITERM_WEAKLY_REFERENCEABLE
     unsigned short keycode = [event keyCode];
     DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%lu>",
          event, modflag, keycode, keystr, unmodkeystr, unicode, unicode,
-         (modflag & NSNumericPadKeyMask));
+         (modflag & NSEventModifierFlagNumericPad));
 
     // Check if we have a custom key mapping for this event
     keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
@@ -6463,9 +6463,9 @@ ITERM_WEAKLY_REFERENCEABLE
             (keyBindingAction == KEY_ACTION_NEXT_SESSION ||
              keyBindingAction == KEY_ACTION_PREVIOUS_SESSION)) {
             // Warn users about outdated default key bindings.
-            int tempMods = modflag & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask);
+            int tempMods = modflag & (NSEventModifierFlagOption | NSEventModifierFlagControl | NSEventModifierFlagShift | NSEventModifierFlagCommand);
             int tempKeyCode = unmodunicode;
-            if (tempMods == (NSCommandKeyMask | NSAlternateKeyMask) &&
+            if (tempMods == (NSEventModifierFlagCommand | NSEventModifierFlagOption) &&
                 (tempKeyCode == 0xf702 || tempKeyCode == 0xf703) &&
                 [[_delegate sessions] count] > 1) {
                 if ([self _askAboutOutdatedKeyMappings]) {
@@ -6509,10 +6509,10 @@ ITERM_WEAKLY_REFERENCEABLE
         }
 
         BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
-        BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
+        BOOL leftAltPressed = (modflag & NSEventModifierFlagOption) == NSEventModifierFlagOption && !rightAltPressed;
 
         // No special binding for this key combination.
-        if (modflag & NSFunctionKeyMask) {
+        if (modflag & NSEventModifierFlagFunction) {
             DLog(@"PTYSession keyDown is a function key");
             // Handle all "special" keys (arrows, etc.)
             NSData *data = nil;
@@ -6579,7 +6579,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 mode = [self rightOptionKey];
             }
 
-            NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0) ?
+            NSData *keydat = ((modflag & NSEventModifierFlagControl) && unicode > 0) ?
                 [keystr dataUsingEncoding:_terminal.encoding]:
                 [unmodkeystr dataUsingEncoding:_terminal.encoding];
             if (keydat != nil) {
@@ -6611,7 +6611,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
             // Enter key is on numeric keypad, but not marked as such
             if (unicode == NSEnterCharacter && unmodunicode == NSEnterCharacter) {
-                modflag |= NSNumericPadKeyMask;
+                modflag |= NSEventModifierFlagNumericPad;
                 DLog(@"PTYSession keyDown enter key");
                 keystr = @"\015";  // Enter key -> 0x0d
             }
@@ -6636,17 +6636,17 @@ ITERM_WEAKLY_REFERENCEABLE
                 keycode == kVK_ANSI_Keypad8 ||
                 keycode == kVK_ANSI_Keypad9) {
                 DLog(@"Key code 0x%x forced to have numeric keypad mask set", (int)keycode);
-                modflag |= NSNumericPadKeyMask;
+                modflag |= NSEventModifierFlagNumericPad;
             }
 
             // Check if we are in keypad mode
-            if (modflag & NSNumericPadKeyMask) {
+            if (modflag & NSEventModifierFlagNumericPad) {
                 DLog(@"PTYSession keyDown numeric keypad");
                 data = [_terminal.output keypadData:unicode keystr:keystr];
             }
 
-            int indMask = modflag & NSDeviceIndependentModifierFlagsMask;
-            if ((indMask & NSCommandKeyMask) &&   // pressing cmd
+            int indMask = modflag & NSEventModifierFlagDeviceIndependentFlagsMask;
+            if ((indMask & NSEventModifierFlagCommand) &&   // pressing cmd
                 ([keystr isEqualToString:@"0"] ||  // pressed 0 key
                  ([keystr intValue] > 0 && [keystr intValue] <= 9) || // or any other digit key
                  [keystr isEqualToString:@"\r"])) {   // or enter
@@ -6664,29 +6664,29 @@ ITERM_WEAKLY_REFERENCEABLE
                      modflag, send_strlen, send_str[0], send_str[0]);
             }
 
-            if ((modflag & NSControlKeyMask) &&
+            if ((modflag & NSEventModifierFlagControl) &&
                 send_strlen == 1 &&
                 send_str[0] == '|') {
                 DLog(@"PTYSession keyDown c-|");
                 // Control-| is sent as Control-backslash
                 send_str = (unsigned char*)"\034";
                 send_strlen = 1;
-            } else if ((modflag & NSControlKeyMask) &&
-                       (modflag & NSShiftKeyMask) &&
+            } else if ((modflag & NSEventModifierFlagControl) &&
+                       (modflag & NSEventModifierFlagShift) &&
                        send_strlen == 1 &&
                        send_str[0] == '/') {
                 DLog(@"PTYSession keyDown c-?");
                 // Control-shift-/ is sent as Control-?
                 send_str = (unsigned char*)"\177";
                 send_strlen = 1;
-            } else if ((modflag & NSControlKeyMask) &&
+            } else if ((modflag & NSEventModifierFlagControl) &&
                        send_strlen == 1 &&
                        send_str[0] == '/') {
                 DLog(@"PTYSession keyDown c-/");
                 // Control-/ is sent as Control-/, but needs some help to do so.
                 send_str = (unsigned char*)"\037"; // control-/
                 send_strlen = 1;
-            } else if ((modflag & NSShiftKeyMask) &&
+            } else if ((modflag & NSEventModifierFlagShift) &&
                        send_strlen == 1 &&
                        send_str[0] == '\031') {
                 DLog(@"PTYSession keyDown shift-tab -> esc[Z");
@@ -6904,7 +6904,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                        localRect.size.height * dy);
         [image drawInRect:rect
                  fromRect:sourceRect
-                operation:NSCompositeCopy
+                operation:NSCompositingOperationCopy
                  fraction:alpha
            respectFlipped:YES
                     hints:nil];
@@ -6912,12 +6912,12 @@ ITERM_WEAKLY_REFERENCEABLE
         if (blendDefaultBackground) {
             // Blend default background color over background image.
             [[[self processedBackgroundColor] colorWithAlphaComponent:1 - _textview.blend] set];
-            NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+            NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
         }
     } else if (blendDefaultBackground) {
         // No image, so just draw background color.
         [[[self processedBackgroundColor] colorWithAlphaComponent:alpha] set];
-        NSRectFillUsingOperation(rect, NSCompositeCopy);
+        NSRectFillUsingOperation(rect, NSCompositingOperationCopy);
     }
 }
 
@@ -7141,8 +7141,8 @@ ITERM_WEAKLY_REFERENCEABLE
          VT100GridCoordDescription(coord));
 
     switch (eventType) {
-        case NSLeftMouseDown:
-        case NSRightMouseDown:
+        case NSEventTypeLeftMouseDown:
+        case NSEventTypeRightMouseDown:
         case NSOtherMouseDown:
             switch ([_terminal mouseMode]) {
                 case MOUSE_REPORTING_NORMAL:
@@ -7162,8 +7162,8 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             break;
 
-        case NSLeftMouseUp:
-        case NSRightMouseUp:
+        case NSEventTypeLeftMouseUp:
+        case NSEventTypeRightMouseUp:
         case NSOtherMouseUp:
             if (_reportingMouseDown) {
                 _reportingMouseDown = NO;
@@ -7188,7 +7188,7 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
 
 
-        case NSMouseMoved:
+        case NSEventTypeMouseMoved:
             if ([_terminal mouseMode] == MOUSE_REPORTING_ALL_MOTION &&
                 !VT100GridCoordEquals(coord, _lastReportedCoord)) {
                 _lastReportedCoord = coord;
@@ -7200,8 +7200,8 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             break;
 
-        case NSLeftMouseDragged:
-        case NSRightMouseDragged:
+        case NSEventTypeLeftMouseDragged:
+        case NSEventTypeRightMouseDragged:
         case NSOtherMouseDragged:
             if (_reportingMouseDown &&
                 !VT100GridCoordEquals(coord, _lastReportedCoord)) {
@@ -9485,7 +9485,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     if (selector == @selector(deleteBackward:)) {
-        [_textview keyDown:[NSEvent keyEventWithType:NSKeyDown
+        [_textview keyDown:[NSEvent keyEventWithType:NSEventTypeKeyDown
                                             location:NSZeroPoint
                                        modifierFlags:[NSEvent modifierFlags]
                                            timestamp:0

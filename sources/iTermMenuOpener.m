@@ -87,7 +87,7 @@
 - (void)showMessage:(NSString *)message byFrame:(NSRect)frame menuItem:(NSMenuItem *)item {
     DLog(@"Opening window and popover at %@", NSStringFromRect(frame));
     NSWindow *window = [[NSWindow alloc] initWithContentRect:NSZeroRect
-                                                   styleMask:NSBorderlessWindowMask
+                                                   styleMask:NSWindowStyleMaskBorderless
                                                      backing:NSBackingStoreBuffered
                                                        defer:YES];
     NSView *view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)];

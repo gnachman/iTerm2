@@ -12,7 +12,7 @@
 @implementation NSWindow(iTerm)
 
 - (BOOL)isFullScreen {
-    return ((self.styleMask & NSFullScreenWindowMask) == NSFullScreenWindowMask);
+    return ((self.styleMask & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen);
 }
 
 - (BOOL)isTerminalWindow {

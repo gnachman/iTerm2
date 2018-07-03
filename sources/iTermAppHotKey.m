@@ -51,7 +51,7 @@
         NSWindow *keyWindow = [[NSApplication sharedApplication] keyWindow];
         if (prefsWindow != keyWindow ||
             prefsWindowController.window.firstResponder != prefsWindowController.hotkeyField) {
-            if (_previousState && (keyWindow.styleMask & NSFullScreenWindowMask)) {
+            if (_previousState && (keyWindow.styleMask & NSWindowStyleMaskFullScreen)) {
                 [_previousState restorePreviouslyActiveApp];
             } else {
                 [NSApp hide:nil];

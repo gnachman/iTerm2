@@ -173,7 +173,7 @@
 }
 
 - (int)boundActionForEvent:(NSEvent *)cocoaEvent {
-    if (cocoaEvent.type == NSFlagsChanged) {
+    if (cocoaEvent.type == NSEventTypeFlagsChanged) {
         return -1;
     }
     NSString* unmodkeystr = [cocoaEvent charactersIgnoringModifiers];

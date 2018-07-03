@@ -346,7 +346,7 @@ typedef struct iTermTextColorContext {
       boundingRect:(NSRect)boundingRect
       visibleLines:(NSRange)visibleLines {
     // Configure graphics
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
+    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositingOperationCopy];
 
     iTermTextExtractor *extractor = [self.delegate drawingHelperTextExtractor];
     _blinkingFound = NO;
@@ -508,7 +508,7 @@ typedef struct iTermTextColorContext {
 
         [box.backgroundColor set];
         NSRectFillUsingOperation(rect,
-                                 _hasBackgroundImage ? NSCompositeSourceOver : NSCompositeCopy);
+                                 _hasBackgroundImage ? NSCompositingOperationSourceOver : NSCompositingOperationCopy);
 
         if (_debug) {
             [[NSColor yellowColor] set];
@@ -649,7 +649,7 @@ typedef struct iTermTextColorContext {
 
     [NSGraphicsContext saveGraphicsState];
     [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint(0, 0)];
-    NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
     [NSGraphicsContext restoreGraphicsState];
 }
 
@@ -687,13 +687,13 @@ typedef struct iTermTextColorContext {
                              textOrigin.y,
                              range.length * _cellSize.width,
                              _cellSize.height);
-    NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 
     rect.size.height = 1;
-    NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 
     rect.origin.y += _cellSize.height - 1;
-    NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 }
 
 + (NSRect)frameForMarkContainedInRect:(NSRect)container
@@ -784,7 +784,7 @@ typedef struct iTermTextColorContext {
         if (leftMargin.size.width == 1) {
             NSRect rect = NSInsetRect(leftMargin, 0, leftMargin.size.height * 0.25);
             [[color colorWithAlphaComponent:0.75] set];
-            NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+            NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
         } else {
             [color set];
             [path moveToPoint:top];
@@ -887,7 +887,7 @@ typedef struct iTermTextColorContext {
     }
     [_badgeImage drawInRect:intersection
                    fromRect:source
-                  operation:NSCompositeSourceOver
+                  operation:NSCompositingOperationSourceOver
                    fraction:1
              respectFlipped:YES
                       hints:nil];
@@ -934,7 +934,7 @@ typedef struct iTermTextColorContext {
         } else {
             [scrimColor set];
         }
-        NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+        NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 
         [borderColor set];
         NSFrameRect(rect);
@@ -1371,7 +1371,7 @@ typedef struct iTermTextColorContext {
     BOOL antiAlias = !smear && [attributes[iTermAntiAliasAttribute] boolValue];
 
     [ctx saveGraphicsState];
-    [ctx setCompositingOperation:NSCompositeSourceOver];
+    [ctx setCompositingOperation:NSCompositingOperationSourceOver];
 
     // We used to use -[NSAttributedString drawWithRect:options] but
     // it does a lousy job rendering multiple combining marks. This is close
@@ -2254,7 +2254,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                                  image.size.height - _cellSize.height - chunkSize.height * originInImage.y,
                                  chunkSize.width * length,
                                  chunkSize.height)
-            operation:NSCompositeSourceOver
+            operation:NSCompositingOperationSourceOver
              fraction:1];
     [NSGraphicsContext restoreGraphicsState];
 }
@@ -2459,7 +2459,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 
                 [image drawInRect:imageRect
                          fromRect:NSZeroRect
-                        operation:NSCompositeSourceOver
+                        operation:NSCompositingOperationSourceOver
                          fraction:1
                    respectFlipped:YES
                             hints:nil];
@@ -2503,7 +2503,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         CGPoint point = rect.origin;
         [keyImage drawInRect:NSMakeRect(point.x, point.y, _cellSize.width, _cellSize.height)
                     fromRect:NSZeroRect
-                   operation:NSCompositeSourceOver
+                   operation:NSCompositingOperationSourceOver
                     fraction:1
               respectFlipped:YES
                        hints:nil];

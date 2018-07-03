@@ -35,11 +35,11 @@ static struct {
     unichar c;
     NSUInteger mask;
 } gModifiers[] = {
-    { '^', NSControlKeyMask },
-    { '~', NSAlternateKeyMask },
-    { '$', NSShiftKeyMask },
-    { '#', NSNumericPadKeyMask },
-    { '@', NSCommandKeyMask }
+    { '^', NSEventModifierFlagControl },
+    { '~', NSEventModifierFlagOption },
+    { '$', NSEventModifierFlagShift },
+    { '#', NSEventModifierFlagNumericPad },
+    { '@', NSEventModifierFlagCommand }
 };
 
 @implementation iTermNSKeyBindingEmulator {
@@ -202,7 +202,7 @@ static struct {
             // parser as a capital A. This is probably not quite right (what about non-ascii
             // characters?).
             characters = [characters lowercaseString];
-            flags |= NSShiftKeyMask;
+            flags |= NSEventModifierFlagShift;
         }
         NSObject *value = input[key];
         NSString *normalizedKey = [self dictionaryKeyForCharacters:characters
@@ -409,13 +409,13 @@ static struct {
 
     NSString *charactersIgnoringAllModifiers = [self charactersIgnoringAllModifiersInEvent:event];
     if (charactersIgnoringAllModifiers &&
-        (flags & NSShiftKeyMask) &&
+        (flags & NSEventModifierFlagShift) &&
         [charactersIgnoringAllModifiers isEqualToString:charactersIgnoringAllModifiers]) {
         // The shifted version differs from the unshifted version (e.g., A vs a) so add
         // "A" since we already have "$A" ("A" is a lower priority than "$A").
         theKey =
             [self.class dictionaryKeyForCharacters:charactersIgnoringModifiersExceptShift
-                                          andFlags:(flags & ~NSShiftKeyMask)];
+                                          andFlags:(flags & ~NSEventModifierFlagShift)];
         if (theKey) {
             [result addObject:theKey];
         }

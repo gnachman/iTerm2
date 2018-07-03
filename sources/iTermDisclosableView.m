@@ -35,7 +35,7 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
         [_labelField setEditable:NO];
         [_labelField setSelectable:NO];
         [_labelField setStringValue:prompt];
-        [_labelField setAlignment:NSLeftTextAlignment];
+        [_labelField setAlignment:NSTextAlignmentLeft];
         [_labelField setAutoresizingMask:NSViewWidthSizable];
         [_labelField setTextColor:[NSColor headerTextColor]];
         [_labelField sizeToFit];

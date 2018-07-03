@@ -532,9 +532,9 @@ ITERM_IGNORE_PARTIAL_BEGIN
     };
     NSString *chars = [NSString stringWithFormat:@"%C", (unichar)(NSF1FunctionKey + number - 1)];
     NSPoint screenPoint = [NSEvent mouseLocation];
-    NSEvent *event = [NSEvent keyEventWithType:NSKeyDown
+    NSEvent *event = [NSEvent keyEventWithType:NSEventTypeKeyDown
                                       location:[self.window convertRectFromScreen:NSMakeRect(screenPoint.x, screenPoint.y, 0, 0)].origin
-                                 modifierFlags:([NSEvent modifierFlags] | NSFunctionKeyMask)
+                                 modifierFlags:([NSEvent modifierFlags] | NSEventModifierFlagFunction)
                                      timestamp:[currentEvent timestamp]
                                   windowNumber:self.window.windowNumber
                                        context:nil

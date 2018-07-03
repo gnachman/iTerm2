@@ -381,7 +381,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                    hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
     NSInteger mask = 0;
     if (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) {
-        mask = NSNonactivatingPanelMask;
+        mask = NSWindowStyleMaskNonactivatingPanel;
     }
     switch (windowType) {
         case WINDOW_TYPE_TOP:
@@ -393,18 +393,18 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
-            return mask | NSBorderlessWindowMask | NSResizableWindowMask;
+            return mask | NSWindowStyleMaskBorderless | NSWindowStyleMaskResizable;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            return mask | NSBorderlessWindowMask;
+            return mask | NSWindowStyleMaskBorderless;
 
         default:
             return (mask |
-                    NSTitledWindowMask |
-                    NSClosableWindowMask |
-                    NSMiniaturizableWindowMask |
-                    NSResizableWindowMask |
-                    NSTexturedBackgroundWindowMask);
+                    NSWindowStyleMaskTitled |
+                    NSWindowStyleMaskClosable |
+                    NSWindowStyleMaskMiniaturizable |
+                    NSWindowStyleMaskResizable |
+                    NSWindowStyleMaskTexturedBackground);
     }
 }
 
@@ -677,7 +677,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         [self.ptyWindow setLayoutDone];
     }
 
-    if (styleMask & NSTitledWindowMask) {
+    if (styleMask & NSWindowStyleMaskTitled) {
         if ([[self window] respondsToSelector:@selector(setBottomCornerRounded:)]) {
             // TODO: Why is this here?
             self.window.bottomCornerRounded = NO;
@@ -753,7 +753,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
             [[iTermWindowShortcutLabelTitlebarAccessoryViewController alloc] initWithNibName:@"iTermWindowShortcutAccessoryView"
                                                                                       bundle:nil];
     }
-    if ((self.window.styleMask & NSTitledWindowMask) && _shortcutAccessoryViewController) {
+    if ((self.window.styleMask & NSWindowStyleMaskTitled) && _shortcutAccessoryViewController) {
         [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
         [self updateWindowNumberVisibility:nil];
     }
@@ -883,7 +883,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // if we're in fullscreen.
     return ([iTermPreferences boolForKey:kPreferenceKeyEnableDivisionView] &&
             !togglingFullScreen_ &&
-            (self.window.styleMask & NSTitledWindowMask) &&
+            (self.window.styleMask & NSWindowStyleMaskTitled) &&
             ![self anyFullScreen] &&
             ![self tabBarVisibleOnTop]);
 }
@@ -1685,11 +1685,11 @@ ITERM_WEAKLY_REFERENCEABLE
         NSString *windowNumber = @"";
 #if ENABLE_SHORTCUT_ACCESSORY
         if (!_shortcutAccessoryViewController ||
-            !(self.window.styleMask & NSTitledWindowMask)) {
+            !(self.window.styleMask & NSWindowStyleMaskTitled)) {
             windowNumber = [NSString stringWithFormat:@"%d. ", number_ + 1];
         }
 #else
-        if (self.window.styleMask & NSTitledWindowMask) {
+        if (self.window.styleMask & NSWindowStyleMaskTitled) {
             windowNumber = [NSString stringWithFormat:@"%d. ", number_ + 1];
         }
 #endif
@@ -3189,9 +3189,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // Decide when to snap.  (We snap unless control, and only control, is held down.)
     const NSUInteger theMask =
-        (NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
+        (NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand | NSEventModifierFlagShift);
     BOOL modifierDown =
-        (([[NSApp currentEvent] modifierFlags] & theMask) == NSControlKeyMask);
+        (([[NSApp currentEvent] modifierFlags] & theMask) == NSEventModifierFlagControl);
     BOOL snapWidth = !modifierDown;
     BOOL snapHeight = !modifierDown;
     if (sender != [self window]) {
@@ -3230,7 +3230,7 @@ ITERM_WEAKLY_REFERENCEABLE
                   horizontalScrollerClass:nil
                     verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
                                borderType:NSNoBorder
-                              controlSize:NSRegularControlSize
+                              controlSize:NSControlSizeRegular
                             scrollerStyle:[self scrollerStyle]];
 
     int screenWidth = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin] * 2) / charWidth;
@@ -3247,7 +3247,7 @@ ITERM_WEAKLY_REFERENCEABLE
                        horizontalScrollerClass:nil
                          verticalScrollerClass:hasScrollbar ? [PTYScroller class] : nil
                                     borderType:NSNoBorder
-                                   controlSize:NSRegularControlSize
+                                   controlSize:NSControlSizeRegular
                                  scrollerStyle:[self scrollerStyle]];
     // Respect minimum tab sizes.
     for (NSTabViewItem* tabViewItem in [_contentView.tabView tabViewItems]) {
@@ -3679,7 +3679,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self.window setFrame:oldFrame_ display:YES];
 #if ENABLE_SHORTCUT_ACCESSORY
         if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
-            (self.window.styleMask & NSTitledWindowMask)) {
+            (self.window.styleMask & NSWindowStyleMaskTitled)) {
             [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
             [self updateWindowNumberVisibility:nil];
         }
@@ -4000,7 +4000,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         maxVerticallyPref = [iTermPreferences boolForKey:kPreferenceKeyMaximizeVerticallyOnly];
         if (maxVerticallyPref ^
-            (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) != 0)) {
+            (([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift) != 0)) {
             verticalOnly = YES;
         }
     }
@@ -4516,7 +4516,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         [tabViewImage drawAtPoint:viewRect.origin
                          fromRect:NSZeroRect
-                        operation:NSCompositeSourceOver
+                        operation:NSCompositingOperationSourceOver
                          fraction:1.0];
         [viewImage unlockFocus];
 
@@ -4550,7 +4550,7 @@ ITERM_WEAKLY_REFERENCEABLE
             offset->height = 0;
             offset->width = 0;
         }
-        *styleMask = NSBorderlessWindowMask;
+        *styleMask = NSWindowStyleMaskBorderless;
     } else {
         // grabs whole tabview image
         viewImage = [[tabViewItem identifier] image:YES];
@@ -4571,7 +4571,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
         }
 
-        *styleMask = NSBorderlessWindowMask;
+        *styleMask = NSWindowStyleMaskBorderless;
     }
 
     return viewImage;
@@ -6814,7 +6814,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView.tabView cycleFlagsChanged:[theEvent modifierFlags]];
 
     NSUInteger modifierFlags = [theEvent modifierFlags];
-    if (!(modifierFlags & NSCommandKeyMask) &&
+    if (!(modifierFlags & NSEventModifierFlagCommand) &&
         [[[self currentSession] textview] isFindingCursor]) {
         // The cmd key was let up while finding the cursor
 
@@ -6827,7 +6827,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    _contentView.tabBarControl.cmdPressed = ((modifierFlags & NSCommandKeyMask) == NSCommandKeyMask);
+    _contentView.tabBarControl.cmdPressed = ((modifierFlags & NSEventModifierFlagCommand) == NSEventModifierFlagCommand);
 }
 
 // Change position of window widgets.
@@ -6993,7 +6993,7 @@ ITERM_WEAKLY_REFERENCEABLE
                       horizontalScrollerClass:nil
                         verticalScrollerClass:(hasScrollbar ? [PTYScroller class] : nil)
                                    borderType:NSNoBorder
-                                  controlSize:NSRegularControlSize
+                                  controlSize:NSControlSizeRegular
                                 scrollerStyle:[self scrollerStyle]];
         rows = (contentSize.height - [iTermAdvancedSettingsModel terminalVMargin]*2) / charSize.height;
         columns = (contentSize.width - [iTermAdvancedSettingsModel terminalMargin]*2) / charSize.width;

@@ -90,7 +90,7 @@
 #pragma mark - QLPreviewPanelDelegate
 
 - (BOOL)previewPanel:(QLPreviewPanel *)panel handleEvent:(NSEvent *)event {
-  if ([event type] == NSKeyDown &&
+  if ([event type] == NSEventTypeKeyDown &&
       event.charactersIgnoringModifiers.length == 1 &&
       [event.charactersIgnoringModifiers characterAtIndex:0] == 27) {
     [self close];

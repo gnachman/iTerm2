@@ -11,10 +11,11 @@
 #import "DebugLogging.h"
 
 #import <objc/runtime.h>
+#import <os/lock.h>
 
 NSString *const iTermWeaklyReferenceableObjectWillDealloc = @"iTermWeaklyReferenceableObjectWillDealloc";
 
-static OSSpinLock lock = OS_SPINLOCK_INIT;
+static os_unfair_lock lock = OS_UNFAIR_LOCK_INIT;
 
 @implementation iTermWeakReference {
     id<iTermWeaklyReferenceable> _object;
@@ -36,17 +37,17 @@ static OSSpinLock lock = OS_SPINLOCK_INIT;
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    OSSpinLockLock(&lock);
+    os_unfair_lock_lock(&lock);
     _object = nil;
-    OSSpinLockUnlock(&lock);
+    os_unfair_lock_unlock(&lock);
     [_class release];
     [super dealloc];
 }
 
 - (NSString *)description {
-    OSSpinLockLock(&lock);
+    os_unfair_lock_lock(&lock);
     id theObject = [_object retain];
-    OSSpinLockUnlock(&lock);
+    os_unfair_lock_unlock(&lock);
 
     NSString *description = [NSString stringWithFormat:@"<%@: %p weak ref to %@>",
                              NSStringFromClass([self class]), self, theObject];
@@ -59,9 +60,9 @@ static OSSpinLock lock = OS_SPINLOCK_INIT;
 }
 
 - (id)weaklyReferencedObject {
-    OSSpinLockLock(&lock);
+    os_unfair_lock_lock(&lock);
     id theObject = [_object retain];
-    OSSpinLockUnlock(&lock);
+    os_unfair_lock_unlock(&lock);
 
     return [theObject autorelease];
 }
@@ -69,9 +70,9 @@ static OSSpinLock lock = OS_SPINLOCK_INIT;
 #pragma mark - Notifications
 
 - (void)objectWillDealloc:(NSNotification *)notification {
-    OSSpinLockLock(&lock);
+    os_unfair_lock_lock(&lock);
     _object = nil;
-    OSSpinLockUnlock(&lock);
+    os_unfair_lock_unlock(&lock);
 }
 
 #pragma mark - NSProxy
@@ -85,13 +86,13 @@ static OSSpinLock lock = OS_SPINLOCK_INIT;
 }
 
 - (NSMethodSignature *)methodSignatureForSelector:(SEL)selector {
-    OSSpinLockLock(&lock);
+    os_unfair_lock_lock(&lock);
     id theObject = [_object retain];
     // Prefer to use the object's class in case it got dynamically changed, but if the object has
     // already been deallocated used its cached class since we need to provide a non-nil signature.
     Class theClass = _object.class ?: _class;
     [theClass retain];
-    OSSpinLockUnlock(&lock);
+    os_unfair_lock_unlock(&lock);
 
     NSMethodSignature *signature;
     if (theObject) {
@@ -106,9 +107,9 @@ static OSSpinLock lock = OS_SPINLOCK_INIT;
 }
 
 - (void)forwardInvocation:(NSInvocation *)invocation {
-    OSSpinLockLock(&lock);
+    os_unfair_lock_lock(&lock);
     id theObject = [_object retain];
-    OSSpinLockUnlock(&lock);
+    os_unfair_lock_unlock(&lock);
 
     if (theObject) {
         [invocation invokeWithTarget:theObject];

@@ -33,8 +33,8 @@
 @class VT100Screen;
 @class VT100Terminal;
 
-#define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
-#define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
+#define NSLeftAlternateKeyMask  (0x000020 | NSEventModifierFlagOption)
+#define NSRightAlternateKeyMask (0x000040 | NSEventModifierFlagOption)
 
 // Types of characters. Used when classifying characters for word selection.
 typedef NS_ENUM(NSInteger, PTYCharType) {

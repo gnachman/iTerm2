@@ -264,7 +264,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
         int modifiers = [iTermPreferences intForKey:kPreferenceKeyHotkeyModifiers];
         int code = [iTermPreferences intForKey:kPreferenceKeyHotKeyCode];
         if (!theChar) {
-            [self setHotKeyChar:' ' code:kVK_Space mods:NSAlternateKeyMask];
+            [self setHotKeyChar:' ' code:kVK_Space mods:NSEventModifierFlagOption];
         } else {
             [self setHotKeyChar:theChar code:code mods:modifiers];
         }
