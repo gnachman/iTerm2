@@ -12,6 +12,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermRemotePreferences.h"
 #import "iTermShellHistoryController.h"
+#import "iTermWarning.h"
 #import "PasteboardHistory.h"
 #import "WindowArrangements.h"
 
@@ -228,6 +229,12 @@ enum {
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
+    };
+    info.onChange = ^{
+        [iTermWarning showWarningWithTitle:@"You must restart iTerm2 for this change to take effect."
+                                   actions:@[ @"OK" ]
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent];
     };
 
 
