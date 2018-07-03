@@ -227,7 +227,7 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
 {
     // Draw a label in a rounded rectangle at the bottom of the frame.
     NSMutableParagraphStyle* paragraph = [[[NSMutableParagraphStyle alloc] init] autorelease];
-    [paragraph setAlignment:NSCenterTextAlignment];
+    [paragraph setAlignment:NSTextAlignmentCenter];
     NSDictionary* attrs = [NSDictionary dictionaryWithObjectsAndKeys:
                            hasResult_ ? [NSColor yellowColor] : [NSColor whiteColor], NSForegroundColorAttributeName,
                            [NSFont systemFontOfSize:12], NSFontAttributeName,
@@ -326,12 +326,12 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
     if (!highlight_ && !hasResult_ && [theView resultView]) {
         [image drawAtPoint:imageFrame.origin
                   fromRect:NSZeroRect
-                 operation:NSCompositeSourceOver
+                 operation:NSCompositingOperationSourceOver
                   fraction:0.5];
     } else {
         [image drawAtPoint:imageFrame.origin
                   fromRect:NSZeroRect
-                 operation:NSCompositeSourceOver
+                 operation:NSCompositingOperationSourceOver
                   fraction:1.0];
     }
 

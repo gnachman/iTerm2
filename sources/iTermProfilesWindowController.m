@@ -244,7 +244,7 @@ typedef enum {
     if (!tabButton_.isEnabled && windowButton_.isEnabled) {
         windowButton_.keyEquivalentModifierMask = 0;
     } else {
-        windowButton_.keyEquivalentModifierMask = NSShiftKeyMask;
+        windowButton_.keyEquivalentModifierMask = NSEventModifierFlagShift;
     }
 }
 

@@ -182,7 +182,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
 
     [cache_ drawAtPoint:rect.origin
                fromRect:rect
-              operation:NSCompositeSourceOver
+              operation:NSCompositingOperationSourceOver
                fraction:1];
 }
 

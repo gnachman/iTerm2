@@ -1067,7 +1067,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
                     // this will happen if the user clicks a close button in a tab and all the tabs are
                     // rearranged
                     if ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]] &&
-                        [[NSApp currentEvent] type] != NSLeftMouseDown &&
+                        [[NSApp currentEvent] type] != NSEventTypeLeftMouseDown &&
                         NSMouseInRect(mousePoint, closeRect, [self isFlipped])) {
                         [cell setCloseButtonOver:YES];
                     }
@@ -1608,7 +1608,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
 
     if ([[self window] showsResizeIndicator] && NSIntersectsRect([self frame], resizeWidgetFrame)) {
         //the resize widgets are larger on metal windows
-        _resizeAreaCompensation = [[self window] styleMask] & NSTexturedBackgroundWindowMask ? 20 : 8;
+        _resizeAreaCompensation = [[self window] styleMask] & NSWindowStyleMaskTexturedBackground ? 20 : 8;
     } else {
         _resizeAreaCompensation = 0;
     }
@@ -2088,16 +2088,16 @@ const NSInteger kPSMStartResizeAnimation = 0;
 
 - (NSString*)_modifierString {
     NSString *str = @"";
-    if (_modifier & NSCommandKeyMask) {
+    if (_modifier & NSEventModifierFlagCommand) {
         str = [NSString stringWithFormat:@"⌘%@", str];
     }
-    if (_modifier & NSShiftKeyMask) {
+    if (_modifier & NSEventModifierFlagShift) {
         str = [NSString stringWithFormat:@"⇧%@", str];
     }
-    if (_modifier & NSAlternateKeyMask) {
+    if (_modifier & NSEventModifierFlagOption) {
         str = [NSString stringWithFormat:@"⌥%@", str];
     }
-    if (_modifier & NSControlKeyMask) {
+    if (_modifier & NSEventModifierFlagControl) {
         str = [NSString stringWithFormat:@"^%@", str];
     }
     return str;

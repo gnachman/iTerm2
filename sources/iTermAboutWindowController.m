@@ -49,7 +49,7 @@
         [[_dynamicText textStorage] appendAttributedString:webAString];
         [[_dynamicText textStorage] appendAttributedString:bugsAString];
         [[_dynamicText textStorage] appendAttributedString:creditsAString];
-        [_dynamicText setAlignment:NSCenterTextAlignment
+        [_dynamicText setAlignment:NSTextAlignmentCenter
                              range:NSMakeRange(0, [[_dynamicText textStorage] length])];
 
         [self setPatronsString:[self defaultPatronsString] animate:NO];
@@ -84,7 +84,7 @@
     [_patronsTextView setLinkTextAttributes:self.linkTextViewAttributes];
     [[_patronsTextView textStorage] deleteCharactersInRange:NSMakeRange(0, [[_patronsTextView textStorage] length])];
     [[_patronsTextView textStorage] appendAttributedString:patronsAttributedString];
-    [_patronsTextView setAlignment:NSLeftTextAlignment
+    [_patronsTextView setAlignment:NSTextAlignmentLeft
                          range:NSMakeRange(0, [[_patronsTextView textStorage] length])];
     _patronsTextView.horizontallyResizable = NO;
 

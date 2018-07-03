@@ -68,7 +68,7 @@
     rect.origin.y -= frameWidth;
     rect.size.width += frameWidth * 2;
     rect.size.height += frameWidth * 2;
-    NSFrameRectWithWidthUsingOperation(rect, 0.5, NSCompositeSourceOver);
+    NSFrameRectWithWidthUsingOperation(rect, 0.5, NSCompositingOperationSourceOver);
 }
 
 @end

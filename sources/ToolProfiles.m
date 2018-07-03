@@ -50,7 +50,7 @@ static const CGFloat kInnerMargin = 5;
         [_openButton bind:@"enabled" toObject:listView_ withKeyPath:@"hasSelection" options:nil];
 
         popup_ = [[[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width - _openButton.frame.size.width - kInnerMargin, kPopupHeight)] autorelease];
-        [[popup_ cell] setControlSize:NSSmallControlSize];
+        [[popup_ cell] setControlSize:NSControlSizeSmall];
         [[popup_ cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
         [[popup_ menu] addItemWithTitle:@"New Tab"
                                  action:@selector(toolProfilesNewTab:)
@@ -136,11 +136,11 @@ static const CGFloat kInnerMargin = 5;
 - (void)profileTableRowSelected:(id)profileTable
 {
     NSEvent *event = [[NSApplication sharedApplication] currentEvent];
-    if ([event modifierFlags] & (NSControlKeyMask)) {
+    if ([event modifierFlags] & (NSEventModifierFlagControl)) {
         [self toolProfilesNewHorizontalSplit:nil];
-    } else if ([event modifierFlags] & (NSAlternateKeyMask)) {
+    } else if ([event modifierFlags] & (NSEventModifierFlagOption)) {
         [self toolProfilesNewVerticalSplit:nil];
-    } else if ([event modifierFlags] & (NSShiftKeyMask)) {
+    } else if ([event modifierFlags] & (NSEventModifierFlagShift)) {
         [self toolProfilesNewWindow:nil];
     } else {
         [self toolProfilesNewTab:nil];

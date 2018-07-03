@@ -795,7 +795,7 @@ const CGFloat kEdgeWidth = 3;
             break;
         case NSReturnTextMovement:
             // Return key
-            if ([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) {
+            if ([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift) {
                 [self searchNext];
             } else {
                 [self searchPrevious];

@@ -59,7 +59,7 @@ static NSMutableArray *visibleToast;
         screen = [[term window] screen];
     }
     NSPanel *panel = [[[NSPanel alloc] initWithContentRect:NSZeroRect
-                                                 styleMask:NSBorderlessWindowMask
+                                                 styleMask:NSWindowStyleMaskBorderless
                                                    backing:NSBackingStoreBuffered
                                                      defer:NO
                                                     screen:screen] autorelease];

@@ -254,7 +254,7 @@ static const CGFloat kBottomPadding = 3;
                                           horizontalScrollerClass:[[scrollView_ horizontalScroller] class]
                                             verticalScrollerClass:[[scrollView_ verticalScroller] class]
                                                        borderType:NSNoBorder
-                                                      controlSize:NSRegularControlSize
+                                                      controlSize:NSControlSizeRegular
                                                     scrollerStyle:[scrollView_ scrollerStyle]];
     NSRect theFrame = NSMakeRect(NSMinX(scrollView_.frame),
                                  NSMinY(scrollView_.frame),

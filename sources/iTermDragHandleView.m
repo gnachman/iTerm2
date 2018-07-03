@@ -19,10 +19,10 @@
 }
 
 - (void)mouseDown:(NSEvent *)theEvent {
-    const NSUInteger mask = (NSLeftMouseDownMask |
-                             NSLeftMouseUpMask |
-                             NSLeftMouseDraggedMask |
-                             NSMouseMovedMask);
+    const NSUInteger mask = (NSEventMaskLeftMouseDown |
+                             NSEventMaskLeftMouseUp |
+                             NSEventMaskLeftMouseDragged |
+                             NSEventMaskMouseMoved);
     BOOL done = NO;
     _origin = [theEvent locationInWindow].x;
     while (!done) {
@@ -32,11 +32,11 @@
                                               dequeue:YES];
 
         switch ([event type]) {
-            case NSLeftMouseDragged:
+            case NSEventTypeLeftMouseDragged:
                 [self mouseDragged:event];
                 break;
 
-            case NSLeftMouseUp:
+            case NSEventTypeLeftMouseUp:
                 done = YES;
                 break;
 

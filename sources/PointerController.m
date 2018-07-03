@@ -98,7 +98,7 @@
 {
     return ![iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu] &&
            [event buttonNumber] == 0 &&
-           ([event modifierFlags] & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask | NSShiftKeyMask)) == NSControlKeyMask;
+           ([event modifierFlags] & (NSEventModifierFlagControl | NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagShift)) == NSEventModifierFlagControl;
 }
 
 - (NSString *)actionForEvent:(NSEvent *)event
@@ -107,7 +107,7 @@
 {
     NSUInteger modifierFlags = [event modifierFlags];
     if (ignoreOption_) {
-        modifierFlags &= ~NSAlternateKeyMask;
+        modifierFlags &= ~NSEventModifierFlagOption;
     }
 
     DLog(@"actionForEvent:%@ cicks:%d withTouches:%d", event, clicks, numTouches);

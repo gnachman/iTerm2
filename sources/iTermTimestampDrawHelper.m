@@ -110,7 +110,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
     NSGradient *gradient =
     [[NSGradient alloc] initWithStartingColor:[bgColor colorWithAlphaComponent:0]
                                   endingColor:[bgColor colorWithAlphaComponent:alpha]];
-    [context setCompositingOperation:NSCompositeSourceOver];
+    [context setCompositingOperation:NSCompositingOperationSourceOver];
     NSRect gradientFrame = frame;
     gradientFrame.size.width = iTermTimestampGradientWidth;
     [gradient drawInRect:gradientFrame
@@ -120,8 +120,8 @@ const CGFloat iTermTimestampGradientWidth = 20;
     solidFrame.origin.x += iTermTimestampGradientWidth;
     solidFrame.size.width -= iTermTimestampGradientWidth;
     [[bgColor colorWithAlphaComponent:alpha] set];
-    [context setCompositingOperation:NSCompositeSourceOver];
-    NSRectFillUsingOperation(solidFrame, NSCompositeSourceOver);
+    [context setCompositingOperation:NSCompositingOperationSourceOver];
+    NSRectFillUsingOperation(solidFrame, NSCompositingOperationSourceOver);
 }
 
 - (void)drawString:(NSString *)s row:(int)index frame:(NSRect)frame {

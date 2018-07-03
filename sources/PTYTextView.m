@@ -84,9 +84,9 @@
 
 static const int kMaxSelectedTextLengthForCustomActions = 400;
 
-static const NSUInteger kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
-static const NSUInteger kRectangularSelectionModifiers = (NSCommandKeyMask | NSAlternateKeyMask);
-static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelectionModifiers | NSControlKeyMask);
+static const NSUInteger kDragPaneModifiers = (NSEventModifierFlagOption | NSEventModifierFlagCommand | NSEventModifierFlagShift);
+static const NSUInteger kRectangularSelectionModifiers = (NSEventModifierFlagCommand | NSEventModifierFlagOption);
+static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelectionModifiers | NSEventModifierFlagControl);
 
 static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 
@@ -1360,8 +1360,8 @@ static const int kDragThreshold = 3;
     unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
 
     NSUInteger modifiers = [theEvent modifierFlags];
-    if ((modifiers & NSControlKeyMask) &&
-        (modifiers & NSFunctionKeyMask)) {
+    if ((modifiers & NSEventModifierFlagControl) &&
+        (modifiers & NSEventModifierFlagFunction)) {
         switch (unmodunicode) {
             case NSPageUpFunctionKey:
                 [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
@@ -1424,18 +1424,18 @@ static const int kDragThreshold = 3;
     unsigned short keyCode = [event keyCode];
     _hadMarkedTextBeforeHandlingKeypressEvent = [self hasMarkedText];
     BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
-    BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
+    BOOL leftAltPressed = (modflag & NSEventModifierFlagOption) == NSEventModifierFlagOption && !rightAltPressed;
 
     _keyIsARepeat = [event isARepeat];
     DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
     DLog(@"_hadMarkedTextBeforeHandlingKeypressEvent=%d", (int)_hadMarkedTextBeforeHandlingKeypressEvent);
     DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
-    DLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%lu", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
+    DLog(@"modFlag & (NSEventModifierFlagNumericPad | NSEventModifierFlagFunction)=%lu", (modflag & (NSEventModifierFlagNumericPad | NSEventModifierFlagFunction)));
     DLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
     DLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
     DLog(@"leftAltPressed && optionKey != NORMAL = %d", (int)(leftAltPressed && [delegate optionKey] != OPT_NORMAL));
     DLog(@"rightAltPressed && rightOptionKey != NORMAL = %d", (int)(rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL));
-    DLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
+    DLog(@"isControl=%d", (int)(modflag & NSEventModifierFlagControl));
     DLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
     DLog(@"event is repeated=%d", _keyIsARepeat);
 
@@ -1469,16 +1469,16 @@ static const int kDragThreshold = 3;
     unsigned int modflag = [event modifierFlags];
     unsigned short keyCode = [event keyCode];
     BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
-    BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
+    BOOL leftAltPressed = (modflag & NSEventModifierFlagOption) == NSEventModifierFlagOption && !rightAltPressed;
 
     // Should we process the event immediately in the delegate?
     if (!_hadMarkedTextBeforeHandlingKeypressEvent &&
         ([delegate hasActionableKeyMappingForEvent:event] ||       // delegate will do something useful
-         (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||  // is an arrow key, f key, etc.
+         (modflag & (NSEventModifierFlagNumericPad | NSEventModifierFlagFunction)) ||  // is an arrow key, f key, etc.
          ([[event charactersIgnoringModifiers] length] > 0 &&      // Will send Meta/Esc+ (length is 0 if it's a dedicated dead key)
           ((leftAltPressed && [delegate optionKey] != OPT_NORMAL) ||
            (rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL))) ||
-         ((modflag & NSControlKeyMask) &&                          // a few special cases
+         ((modflag & NSEventModifierFlagControl) &&                          // a few special cases
           (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
              DLog(@"PTYTextView keyDown: process in delegate");
              [delegate keyDown:event];
@@ -1487,7 +1487,7 @@ static const int kDragThreshold = 3;
 
     DLog(@"Test for command key");
 
-    if (modflag & NSCommandKeyMask) {
+    if (modflag & NSEventModifierFlagCommand) {
         // You pressed cmd+something but it's not handled by the delegate. Going further would
         // send the unmodified key to the terminal which doesn't make sense.
         DLog(@"PTYTextView keyDown You pressed cmd+something");
@@ -1498,7 +1498,7 @@ static const int kDragThreshold = 3;
     // standard combinations.
     BOOL workAroundControlBug = NO;
     if (!_hadMarkedTextBeforeHandlingKeypressEvent &&
-        (modflag & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask) {
+        (modflag & (NSEventModifierFlagControl | NSEventModifierFlagCommand | NSEventModifierFlagOption)) == NSEventModifierFlagControl) {
         DLog(@"Special ctrl+key handler running");
 
         NSString *unmodkeystr = [event charactersIgnoringModifiers];
@@ -1585,7 +1585,7 @@ static const int kDragThreshold = 3;
 - (BOOL)xtermMouseReporting {
     NSEvent *event = [NSApp currentEvent];
     return (([[self delegate] xtermMouseReporting]) &&        // Xterm mouse reporting is on
-            !([event modifierFlags] & NSAlternateKeyMask));   // Not holding Opt to disable mouse reporting
+            !([event modifierFlags] & NSEventModifierFlagOption));   // Not holding Opt to disable mouse reporting
 }
 
 - (BOOL)xtermMouseReportingAllowMouseWheel {
@@ -1776,7 +1776,7 @@ static const int kDragThreshold = 3;
     } else if (([event modifierFlags] & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
         changed = [self setCursor:[NSCursor crosshairCursor]];
     } else if (action &&
-               ([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask) {
+               ([event modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand) {
         changed = [self setCursor:[NSCursor pointingHandCursor]];
         if (action.hover && action.string.length) {
             hover = action.string;
@@ -1812,7 +1812,7 @@ static const int kDragThreshold = 3;
 // Update range of underlined chars indicating cmd-clicakble url.
 - (URLAction *)updateUnderlinedURLs:(NSEvent *)event {
     URLAction *action = nil;
-    if (([event modifierFlags] & NSCommandKeyMask) && (self.window.isKeyWindow ||
+    if (([event modifierFlags] & NSEventModifierFlagCommand) && (self.window.isKeyWindow ||
                                                        [iTermAdvancedSettingsModel cmdClickWhenInactiveInvokesSemanticHistory])) {
         NSPoint screenPoint = [NSEvent mouseLocation];
         NSRect windowRect = [[self window] convertRectFromScreen:NSMakeRect(screenPoint.x,
@@ -2072,10 +2072,10 @@ static const int kDragThreshold = 3;
 - (BOOL)mouseDownImpl:(NSEvent*)event {
     DLog(@"mouseDownImpl: called");
     _mouseDownWasFirstMouse = ([event eventNumber] == _firstMouseEventNumber) || ![NSApp keyWindow];
-    const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
-    BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
-    const BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
-    const BOOL ctrlPressed = ([event modifierFlags] & NSControlKeyMask) != 0;
+    const BOOL altPressed = ([event modifierFlags] & NSEventModifierFlagOption) != 0;
+    BOOL cmdPressed = ([event modifierFlags] & NSEventModifierFlagCommand) != 0;
+    const BOOL shiftPressed = ([event modifierFlags] & NSEventModifierFlagShift) != 0;
+    const BOOL ctrlPressed = ([event modifierFlags] & NSEventModifierFlagControl) != 0;
     if (gDebugLogging && altPressed && cmdPressed && shiftPressed && ctrlPressed) {
         // Dump view hierarchy
         NSBeep();
@@ -2304,7 +2304,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Returning from mouseUp because we'e emulating a right click.");
         return;
     }
-    const BOOL cmdActuallyPressed = (([event modifierFlags] & NSCommandKeyMask) != 0);
+    const BOOL cmdActuallyPressed = (([event modifierFlags] & NSEventModifierFlagCommand) != 0);
     // Make an exception to the first-mouse rule when cmd-click is set to always invoke
     // semantic history.
     const BOOL cmdPressed = cmdActuallyPressed && (!_mouseDownWasFirstMouse ||
@@ -2320,10 +2320,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     BOOL isUnshiftedSingleClick = ([event clickCount] < 2 &&
                                    !_mouseDragged &&
-                                   !([event modifierFlags] & NSShiftKeyMask));
+                                   !([event modifierFlags] & NSEventModifierFlagShift));
     BOOL isShiftedSingleClick = ([event clickCount] == 1 &&
                                  !_mouseDragged &&
-                                 ([event modifierFlags] & NSShiftKeyMask));
+                                 ([event modifierFlags] & NSEventModifierFlagShift));
     BOOL willFollowLink = (isUnshiftedSingleClick &&
                            cmdPressed &&
                            [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs]);
@@ -2371,7 +2371,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Just a click in the window.
         DLog(@"is a click in the window");
 
-        BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
+        BOOL altPressed = ([event modifierFlags] & NSEventModifierFlagOption) != 0;
         if (altPressed &&
             [iTermPreferences boolForKey:kPreferenceKeyOptionClickMovesCursor] &&
             !_mouseDownWasFirstMouse) {
@@ -2500,7 +2500,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     [self removeUnderline];
 
-    BOOL pressingCmdOnly = ([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask;
+    BOOL pressingCmdOnly = ([event modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == NSEventModifierFlagCommand;
     if (!pressingCmdOnly || dragThresholdMet) {
         DLog(@"mousedragged = yes");
         _mouseDragged = YES;
@@ -2509,7 +2509,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // It's ok to drag if Cmd is not required to be pressed or Cmd is pressed.
     BOOL okToDrag = (![iTermAdvancedSettingsModel requireCmdForDraggingText] ||
-                     ([event modifierFlags] & NSCommandKeyMask));
+                     ([event modifierFlags] & NSEventModifierFlagCommand));
     if (okToDrag) {
         if (_mouseDownOnImage && dragThresholdMet) {
             [self _dragImage:_imageBeingClickedOn forEvent:event];
@@ -2533,7 +2533,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
     if (_mouseDownOnSelection == YES &&
-        ([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == (NSAlternateKeyMask | NSCommandKeyMask) &&
+        ([event modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == (NSEventModifierFlagOption | NSEventModifierFlagCommand) &&
         !dragThresholdMet) {
         // Would be a drag of a rect region but mouse hasn't moved far enough yet. Prevent the
         // selection from changing.
@@ -4886,7 +4886,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
     // NOTE: draggingUpdated: calls this method because they need the same implementation.
     int numValid = -1;
-    if ([NSEvent modifierFlags] & NSAlternateKeyMask) {  // Option-drag to copy
+    if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {  // Option-drag to copy
         _drawingHelper.showDropTargets = YES;
     }
     NSDragOperation operation = [self dragOperationForSender:sender numberOfValidItems:&numValid];
@@ -5045,7 +5045,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"Perform drag operation");
     if (dragOperation & (NSDragOperationCopy | NSDragOperationGeneric)) {
         DLog(@"Drag operation is acceptable");
-        if ([NSEvent modifierFlags] & NSAlternateKeyMask) {
+        if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
             DLog(@"Holding option so doing an upload");
             NSPoint windowDropPoint = [sender draggingLocation];
             return [self uploadFilenamesOnPasteboard:draggingPasteboard location:windowDropPoint];
@@ -5759,7 +5759,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)createFindCursorWindowWithFireworks:(BOOL)forceFireworks {
     [self scrollRectToVisible:[self cursorFrame]];
     self.findCursorWindow = [[[NSWindow alloc] initWithContentRect:NSZeroRect
-                                                         styleMask:NSBorderlessWindowMask
+                                                         styleMask:NSWindowStyleMaskBorderless
                                                            backing:NSBackingStoreBuffered
                                                              defer:YES] autorelease];
     [_findCursorWindow setLevel:NSFloatingWindowLevel];
@@ -6267,7 +6267,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // It's ok to paste if the the drag obejct is either a file or a string.
     BOOL pasteOK = !![[sender draggingPasteboard] availableTypeFromArray:@[ NSFilenamesPboardType, NSStringPboardType ]];
 
-    const BOOL optionPressed = ([NSEvent modifierFlags] & NSAlternateKeyMask) != 0;
+    const BOOL optionPressed = ([NSEvent modifierFlags] & NSEventModifierFlagOption) != 0;
     NSDragOperation sourceMask = [sender draggingSourceOperationMask];
     DLog(@"source mask=%@, optionPressed=%@, pasteOk=%@", @(sourceMask), @(optionPressed), @(pasteOK));
     if (!optionPressed && pasteOK && (sourceMask & (NSDragOperationGeneric | NSDragOperationCopy)) != 0) {
@@ -6917,10 +6917,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (!NSPointInRect(point, liveRect)) {
         return NO;
     }
-    if ((event.type == NSLeftMouseDown || event.type == NSLeftMouseUp) && _mouseDownWasFirstMouse) {
+    if ((event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeLeftMouseUp) && _mouseDownWasFirstMouse) {
         return NO;
     }
-    if ((event.type == NSLeftMouseDown || event.type == NSLeftMouseUp) && self.window.firstResponder != self) {
+    if ((event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeLeftMouseUp) && self.window.firstResponder != self) {
         return NO;
     }
     if (event.type == NSScrollWheel) {
@@ -6933,14 +6933,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (MouseButtonNumber)mouseReportingButtonNumberForEvent:(NSEvent *)event {
     switch (event.type) {
-        case NSLeftMouseDragged:
-        case NSLeftMouseDown:
-        case NSLeftMouseUp:
+        case NSEventTypeLeftMouseDragged:
+        case NSEventTypeLeftMouseDown:
+        case NSEventTypeLeftMouseUp:
             return MOUSE_BUTTON_LEFT;
 
-        case NSRightMouseDown:
-        case NSRightMouseUp:
-        case NSRightMouseDragged:
+        case NSEventTypeRightMouseDown:
+        case NSEventTypeRightMouseUp:
+        case NSEventTypeRightMouseDragged:
             return MOUSE_BUTTON_RIGHT;
 
         case NSOtherMouseDown:

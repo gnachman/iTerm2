@@ -1268,14 +1268,14 @@ static BOOL hasBecomeActive = NO;
     [closeTab setTarget:frontTerminal];
     [closeTab setKeyEquivalent:@"w"];
     [closeWindow setKeyEquivalent:@"W"];
-    [closeWindow setKeyEquivalentModifierMask: NSCommandKeyMask];
+    [closeWindow setKeyEquivalentModifierMask: NSEventModifierFlagCommand];
 }
 
 - (void)nonTerminalWindowBecameKey:(NSNotification *)aNotification {
     [closeTab setAction:nil];
     [closeTab setKeyEquivalent:@""];
     [closeWindow setKeyEquivalent:@"w"];
-    [closeWindow setKeyEquivalentModifierMask:NSCommandKeyMask];
+    [closeWindow setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
 }
 
 - (void)updateAddressBookMenu:(NSNotification*)aNotification {

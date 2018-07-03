@@ -261,7 +261,7 @@ typedef enum {
                                    length:STATIC_STRLEN(KEY_PAGE_UP)];
     }
     NSMutableData* data = [[[NSMutableData alloc] init] autorelease];
-    if (modflag & NSAlternateKeyMask) {
+    if (modflag & NSEventModifierFlagOption) {
         char esc = ESC;
         [data appendData:[NSData dataWithBytes:&esc length:1]];
     }
@@ -280,7 +280,7 @@ typedef enum {
                                    length:STATIC_STRLEN(KEY_PAGE_DOWN)];
     }
     NSMutableData* data = [[[NSMutableData alloc] init] autorelease];
-    if (modflag & NSAlternateKeyMask) {
+    if (modflag & NSEventModifierFlagOption) {
         char esc = ESC;
         [data appendData:[NSData dataWithBytes:&esc length:1]];
     }
@@ -464,13 +464,13 @@ typedef enum {
         cb -= offset;
         cb |= MOUSE_BUTTON_SCROLL_FLAG;
     }
-    if (modflag & NSControlKeyMask) {
+    if (modflag & NSEventModifierFlagControl) {
         cb |= MOUSE_BUTTON_CTRL_FLAG;
     }
-    if (modflag & NSShiftKeyMask) {
+    if (modflag & NSEventModifierFlagShift) {
         cb |= MOUSE_BUTTON_SHIFT_FLAG;
     }
-    if (modflag & NSCommandKeyMask) {
+    if (modflag & NSEventModifierFlagCommand) {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
     char *buf = [self mouseReport:cb atX:(coord.x + 1) Y:(coord.y + 1)];
@@ -492,13 +492,13 @@ typedef enum {
         cb = 3;
     }
 
-    if (modflag & NSControlKeyMask) {
+    if (modflag & NSEventModifierFlagControl) {
         cb |= MOUSE_BUTTON_CTRL_FLAG;
     }
-    if (modflag & NSShiftKeyMask) {
+    if (modflag & NSEventModifierFlagShift) {
         cb |= MOUSE_BUTTON_SHIFT_FLAG;
     }
-    if (modflag & NSCommandKeyMask) {
+    if (modflag & NSEventModifierFlagCommand) {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
     char *buf = [self mouseReport:cb atX:(coord.x + 1) Y:(coord.y + 1)];
@@ -517,13 +517,13 @@ typedef enum {
     if (button > 3) {
         cb |= MOUSE_BUTTON_SCROLL_FLAG;
     }
-    if (modflag & NSControlKeyMask) {
+    if (modflag & NSEventModifierFlagControl) {
         cb |= MOUSE_BUTTON_CTRL_FLAG;
     }
-    if (modflag & NSShiftKeyMask) {
+    if (modflag & NSEventModifierFlagShift) {
         cb |= MOUSE_BUTTON_SHIFT_FLAG;
     }
-    if (modflag & NSCommandKeyMask) {
+    if (modflag & NSEventModifierFlagCommand) {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
     char *buf = [self mouseReport:(32 + cb) atX:(coord.x + 1) Y:(coord.y + 1)];
@@ -625,13 +625,13 @@ typedef enum {
 
 
         int theIndex = 0;
-        if (modflag & NSAlternateKeyMask) {
+        if (modflag & NSEventModifierFlagOption) {
             theIndex |= 4;
         }
-        if (modflag & NSControlKeyMask) {
+        if (modflag & NSEventModifierFlagControl) {
             theIndex |= 2;
         }
-        if (modflag & NSShiftKeyMask) {
+        if (modflag & NSEventModifierFlagShift) {
             theIndex |= 1;
         }
         int *modValues = _optionIsMetaForSpecialKeys ? metaModifierValues : altModifierValues;

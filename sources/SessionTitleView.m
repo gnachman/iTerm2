@@ -252,15 +252,15 @@ static const CGFloat kButtonSize = 17;
             break;
 
         case kPreferencesModifierTagEitherCommand:
-            prefix = [NSString stringForModifiersWithMask:NSCommandKeyMask];
+            prefix = [NSString stringForModifiersWithMask:NSEventModifierFlagCommand];
             break;
 
         case kPreferencesModifierTagEitherOption:
-            prefix = [NSString stringForModifiersWithMask:NSAlternateKeyMask];
+            prefix = [NSString stringForModifiersWithMask:NSEventModifierFlagOption];
             break;
 
         case kPreferencesModifierTagCommandAndOption:
-            prefix = [NSString stringForModifiersWithMask:(NSCommandKeyMask | NSAlternateKeyMask)];
+            prefix = [NSString stringForModifiersWithMask:(NSEventModifierFlagCommand | NSEventModifierFlagOption)];
             break;
     }
     return [NSString stringWithFormat:@"%@%@   %@", prefix, @(_ordinal), title_];

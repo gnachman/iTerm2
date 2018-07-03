@@ -113,7 +113,7 @@
         [image lockFocus];
         [self drawInRect:frame
                 fromRect:frame
-               operation:NSCompositeSourceOver
+               operation:NSCompositingOperationSourceOver
                 fraction:1];
         [image unlockFocus];
         image = [self onePixelBoxBlurOfImage:image alpha:1.0/9.0];
@@ -132,7 +132,7 @@
                                          size.width,
                                          size.height)
                      fromRect:NSMakeRect(0, 0, size.width, size.height)
-                    operation:NSCompositeSourceOver
+                    operation:NSCompositingOperationSourceOver
                      fraction:alpha];
         }
     }
@@ -244,7 +244,7 @@
     [NSGraphicsContext setCurrentContext:ctx];
     [self drawAtPoint:NSZeroPoint
              fromRect:NSZeroRect
-            operation:NSCompositeCopy
+            operation:NSCompositingOperationCopy
              fraction:1.0];
     [ctx flushGraphics];
     [NSGraphicsContext restoreGraphicsState];

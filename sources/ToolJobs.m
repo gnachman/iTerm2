@@ -75,7 +75,7 @@ static const CGFloat kMargin = 4;
         [self setCompletes:YES];
         [self setDataSource:self];
 
-        [[self cell] setControlSize:NSSmallControlSize];
+        [[self cell] setControlSize:NSControlSizeSmall];
         [[self cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
     }
     return self;

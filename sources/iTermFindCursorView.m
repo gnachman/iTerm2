@@ -61,7 +61,7 @@ const double kFindCursorHoleRadius = 30;
     double y = self.cursorPosition.y;
 
     const double focusRadius = kFindCursorHoleRadius;
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
+    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositingOperationCopy];
     NSBezierPath *circle = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(x - focusRadius,
                                                                              y - focusRadius,
                                                                              focusRadius * 2,

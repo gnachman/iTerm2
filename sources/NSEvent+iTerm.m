@@ -26,9 +26,9 @@
                                                      globalCoord,
                                                      2);
     int64_t clickCount = 1;
-    if (self.type == NSLeftMouseDown || self.type == NSLeftMouseUp ||
-        self.type == NSRightMouseDown || self.type == NSRightMouseUp ||
-        self.type == NSOtherMouseDown || self.type == NSOtherMouseUp) {
+    if (self.type == NSEventTypeLeftMouseDown || self.type == NSEventTypeLeftMouseUp ||
+        self.type == NSEventTypeRightMouseDown || self.type == NSEventTypeRightMouseUp ||
+        self.type == NSEventTypeOtherMouseDown || self.type == NSEventTypeOtherMouseUp) {
         clickCount = [self clickCount];
     }
     CGEventSetIntegerValueField(fakeCgEvent, kCGMouseEventClickState, clickCount);

@@ -372,7 +372,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
     if (_isPlaceholder){
         [[NSColor colorWithCalibratedWhite:0 alpha:0.2] set];
-        NSRectFillUsingOperation(cellFrame, NSCompositeSourceAtop);
+        NSRectFillUsingOperation(cellFrame, NSCompositingOperationSourceAtop);
         return;
     }
 
@@ -441,7 +441,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     [returnImage lockFocus];
     [image drawAtPoint:NSZeroPoint
               fromRect:NSZeroRect
-             operation:NSCompositeSourceOver
+             operation:NSCompositingOperationSourceOver
               fraction:1.0];
     [returnImage unlockFocus];
     if (![[self indicator] isHidden]) {
@@ -451,7 +451,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         NSPoint indicatorPoint = self.indicator.frame.origin;
         [piImage drawAtPoint:indicatorPoint
                     fromRect:NSZeroRect
-                   operation:NSCompositeSourceOver
+                   operation:NSCompositingOperationSourceOver
                     fraction:1.0];
         [returnImage unlockFocus];
         [piImage release];

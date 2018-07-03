@@ -184,7 +184,7 @@ const CGFloat kDefaultTagsWidth = 80;
                           horizontalScrollerClass:nil
                             verticalScrollerClass:[scrollView_.verticalScroller class]
                                        borderType:scrollView_.borderType
-                                      controlSize:NSRegularControlSize
+                                      controlSize:NSControlSizeRegular
                                     scrollerStyle:scrollView_.verticalScroller.scrollerStyle];
 
         tableView_ = [[ProfileTableView alloc] initWithFrame:tableViewFrame];
@@ -1123,7 +1123,7 @@ const CGFloat kDefaultTagsWidth = 80;
 
     if ([theFont pointSize] < 13) {
         [[searchField_ cell] setFont:theFont];
-        [[searchField_ cell] setControlSize:NSSmallControlSize];
+        [[searchField_ cell] setControlSize:NSControlSizeSmall];
         [searchField_ sizeToFit];
 
         margin_ = 5;

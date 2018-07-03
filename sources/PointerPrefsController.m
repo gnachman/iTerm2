@@ -160,16 +160,16 @@ typedef enum {
 + (NSString *)modCharsForMask:(int)modifiers
 {
     NSMutableString *modStr = [NSMutableString string];
-    if (modifiers & NSCommandKeyMask) {
+    if (modifiers & NSEventModifierFlagCommand) {
         [modStr appendString:kCommandKeyChar];
     }
-    if (modifiers & NSAlternateKeyMask) {
+    if (modifiers & NSEventModifierFlagOption) {
         [modStr appendString:kOptionKeyChar];
     }
-    if (modifiers & NSShiftKeyMask) {
+    if (modifiers & NSEventModifierFlagShift) {
         [modStr appendString:kShiftKeyChar];
     }
-    if (modifiers & NSControlKeyMask) {
+    if (modifiers & NSEventModifierFlagControl) {
         [modStr appendString:kControlKeyChar];
     }
     return modStr;
@@ -179,16 +179,16 @@ typedef enum {
 {
     int mask = 0;
     if ([modChars rangeOfString:kCommandKeyChar].location != NSNotFound) {
-        mask |= NSCommandKeyMask;
+        mask |= NSEventModifierFlagCommand;
     }
     if ([modChars rangeOfString:kOptionKeyChar].location != NSNotFound) {
-        mask |= NSAlternateKeyMask;
+        mask |= NSEventModifierFlagOption;
     }
     if ([modChars rangeOfString:kShiftKeyChar].location != NSNotFound) {
-        mask |= NSShiftKeyMask;
+        mask |= NSEventModifierFlagShift;
     }
     if ([modChars rangeOfString:kControlKeyChar].location != NSNotFound) {
-        mask |= NSControlKeyMask;
+        mask |= NSEventModifierFlagControl;
     }
     return mask;
 }
@@ -544,7 +544,7 @@ typedef enum {
                 }
             }
             temp = tempCopy;
-            int modMasks[] = { NSCommandKeyMask, NSAlternateKeyMask, NSControlKeyMask, NSShiftKeyMask };
+            int modMasks[] = { NSEventModifierFlagCommand, NSEventModifierFlagOption, NSEventModifierFlagControl, NSEventModifierFlagShift };
             int numModCombos = 1 << (sizeof(modMasks) / sizeof(int));
             for (int numClicks = 0; numClicks <= kMaxClicks; numClicks++) {
                 // i is a bitmask over the modMasks array indices.
@@ -721,10 +721,10 @@ typedef enum {
 
 - (void)setModifierButtons:(int)modMask
 {
-    [editModifiersCommand_ setState:(modMask & NSCommandKeyMask) ? NSOnState : NSOffState];
-    [editModifiersOption_ setState:(modMask & NSAlternateKeyMask) ? NSOnState : NSOffState];
-    [editModifiersShift_ setState:(modMask & NSShiftKeyMask) ? NSOnState : NSOffState];
-    [editModifiersControl_ setState:(modMask & NSControlKeyMask) ? NSOnState : NSOffState];
+    [editModifiersCommand_ setState:(modMask & NSEventModifierFlagCommand) ? NSOnState : NSOffState];
+    [editModifiersOption_ setState:(modMask & NSEventModifierFlagOption) ? NSOnState : NSOffState];
+    [editModifiersShift_ setState:(modMask & NSEventModifierFlagShift) ? NSOnState : NSOffState];
+    [editModifiersControl_ setState:(modMask & NSEventModifierFlagControl) ? NSOnState : NSOffState];
 }
 
 - (void)setButtonNumber:(int)buttonNumber clickCount:(int)clickCount modifiers:(int)modMask
@@ -870,10 +870,10 @@ typedef enum {
     NSString *currentArg = [PointerPrefsController argumentForKey:key];
     [self updateArgumentFieldsForAction:actionIdent argument:currentArg];
 
-    [editModifiersCommand_ setState:(modMask & NSCommandKeyMask) ? NSOnState : NSOffState];
-    [editModifiersOption_ setState:(modMask & NSAlternateKeyMask) ? NSOnState : NSOffState];
-    [editModifiersShift_ setState:(modMask & NSShiftKeyMask) ? NSOnState : NSOffState];
-    [editModifiersControl_ setState:(modMask & NSControlKeyMask) ? NSOnState : NSOffState];
+    [editModifiersCommand_ setState:(modMask & NSEventModifierFlagCommand) ? NSOnState : NSOffState];
+    [editModifiersOption_ setState:(modMask & NSEventModifierFlagOption) ? NSOnState : NSOffState];
+    [editModifiersShift_ setState:(modMask & NSEventModifierFlagShift) ? NSOnState : NSOffState];
+    [editModifiersControl_ setState:(modMask & NSEventModifierFlagControl) ? NSOnState : NSOffState];
     [editAction_ selectItemWithTitle:localizedAction];
     BOOL isButton = !key || [PointerPrefsController keyIsButton:key];
     if (isButton) {
@@ -928,10 +928,10 @@ typedef enum {
         [editAction_ selectItemWithTitle:[PointerPrefsController localizedActionForDict:action]];
 
         int modflags = [PointerPrefsController modifiersForKey:key];
-        [editModifiersCommand_ setState:(modflags & NSCommandKeyMask) ? NSOnState : NSOffState];
-        [editModifiersOption_ setState:(modflags & NSAlternateKeyMask) ? NSOnState : NSOffState];
-        [editModifiersShift_ setState:(modflags & NSShiftKeyMask) ? NSOnState : NSOffState];
-        [editModifiersControl_ setState:(modflags & NSControlKeyMask) ? NSOnState : NSOffState];
+        [editModifiersCommand_ setState:(modflags & NSEventModifierFlagCommand) ? NSOnState : NSOffState];
+        [editModifiersOption_ setState:(modflags & NSEventModifierFlagOption) ? NSOnState : NSOffState];
+        [editModifiersShift_ setState:(modflags & NSEventModifierFlagShift) ? NSOnState : NSOffState];
+        [editModifiersControl_ setState:(modflags & NSEventModifierFlagControl) ? NSOnState : NSOffState];
     }
     [editButtonLabel_ setTextColor:textColor];
     [editModifiersLabel_ setTextColor:textColor];
@@ -986,16 +986,16 @@ typedef enum {
     NSString *newKey;
     int modMask = 0;
     if ([editModifiersCommand_ state] == NSOnState) {
-        modMask |= NSCommandKeyMask;
+        modMask |= NSEventModifierFlagCommand;
     }
     if ([editModifiersOption_ state] == NSOnState) {
-        modMask |= NSAlternateKeyMask;
+        modMask |= NSEventModifierFlagOption;
     }
     if ([editModifiersShift_ state] == NSOnState) {
-        modMask |= NSShiftKeyMask;
+        modMask |= NSEventModifierFlagShift;
     }
     if ([editModifiersControl_ state] == NSOnState) {
-        modMask |= NSControlKeyMask;
+        modMask |= NSEventModifierFlagControl;
     }
     if ([editButton_ selectedTag] >= kMinGestureTag) {
         // Gesture

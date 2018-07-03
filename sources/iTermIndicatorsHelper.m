@@ -139,7 +139,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             block(identifier, image, NSMakeRect(point.x, point.y, image.size.width, image.size.height));
             [image drawInRect:NSMakeRect(point.x, point.y, image.size.width, image.size.height)
                      fromRect:NSMakeRect(0, 0, image.size.width, image.size.height)
-                    operation:NSCompositeSourceOver
+                    operation:NSCompositingOperationSourceOver
                      fraction:0.5
                respectFlipped:YES
                         hints:nil];
@@ -171,7 +171,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     [self enumerateTopRightIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect frame) {
         [image drawInRect:frame
                  fromRect:NSMakeRect(0, 0, image.size.width, image.size.height)
-                operation:NSCompositeSourceOver
+                operation:NSCompositingOperationSourceOver
                  fraction:0.5
            respectFlipped:YES
                     hints:nil];
@@ -181,7 +181,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     [self enumerateCenterIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect destinationRect, CGFloat alpha) {
         [image drawInRect:destinationRect
                  fromRect:NSMakeRect(0, 0, image.size.width, image.size.height)
-                operation:NSCompositeSourceOver
+                operation:NSCompositingOperationSourceOver
                  fraction:alpha
            respectFlipped:YES
                     hints:nil];
@@ -191,7 +191,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     if (_fullScreenAlpha > 0) {
         DLog(@"Drawing full screen flash overlay");
         [[[_delegate indicatorFullScreenFlashColor] colorWithAlphaComponent:_fullScreenAlpha] set];
-        NSRectFillUsingOperation(frame, NSCompositeSourceOver);
+        NSRectFillUsingOperation(frame, NSCompositingOperationSourceOver);
     } else if (_fullScreenFlashStartTime > 0 && _fullScreenAlpha == 0) {
         DLog(@"Not drawing full screen flash overlay");
     }
