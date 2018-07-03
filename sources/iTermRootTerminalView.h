@@ -36,6 +36,9 @@ extern const CGFloat kHorizontalTabBarHeight;
 // TODO: Get rid of this
 @property(nonatomic, assign) id<iTermRootTerminalViewDelegate> delegate;
 
+// Blur backdrop
+@property(nonatomic, readonly) NSVisualEffectView *visualEffectView;
+
 // The tabview occupies almost the entire window. Each tab has an identifier
 // which is a PTYTab.
 @property(nonatomic, readonly) PTYTabView *tabView;

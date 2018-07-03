@@ -26,6 +26,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 @interface iTermRootTerminalView()<iTermTabBarControlViewDelegate, iTermDragHandleViewDelegate>
 
 @property(nonatomic, retain) PTYTabView *tabView;
+@property(nonatomic, retain) NSVisualEffectView *visualEffectView;
 @property(nonatomic, retain) iTermTabBarControlView *tabBarControl;
 @property(nonatomic, retain) SolidColorView *divisionView;
 @property(nonatomic, retain) iTermToolbeltView *toolbelt;
@@ -46,6 +47,14 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     self = [super initWithFrame:frameRect color:color];
     if (self) {
         _delegate = delegate;
+
+        self.visualEffectView = [[NSVisualEffectView alloc] initWithFrame:frameRect];
+        _visualEffectView.material = NSVisualEffectMaterialAppearanceBased;
+        _visualEffectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+        _visualEffectView.state = NSVisualEffectStateActive;
+        _visualEffectView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
+
+        [self addSubview:_visualEffectView];
 
         self.autoresizesSubviews = YES;
         _leftTabBarPreferredWidth = [iTermPreferences doubleForKey:kPreferenceKeyLeftTabBarWidth];
@@ -106,6 +115,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 }
 
 - (void)dealloc {
+    [_visualEffectView release];
     [_tabView release];
 
     _tabBarControl.itermTabBarDelegate = nil;

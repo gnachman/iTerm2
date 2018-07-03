@@ -404,7 +404,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                     NSClosableWindowMask |
                     NSMiniaturizableWindowMask |
                     NSResizableWindowMask |
-                    NSTexturedBackgroundWindowMask);
+                    NSTexturedBackgroundWindowMask |
+                    NSFullSizeContentViewWindowMask);
     }
 }
 
@@ -655,12 +656,15 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                        tabBarDelegate:self
                                              delegate:self] autorelease];
     self.window.contentView = _contentView;
+    self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
     if (hotkeyWindowType == iTermHotkeyWindowTypeNone) {
         self.window.alphaValue = 1;
     } else {
         self.window.alphaValue = 0;
     }
     self.window.opaque = NO;
+    self.window.titleVisibility = NSWindowTitleHidden;
+    self.window.titlebarAppearsTransparent = YES;
 
     normalBackgroundColor = [_contentView color];
 
