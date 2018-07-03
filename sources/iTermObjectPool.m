@@ -7,6 +7,7 @@
 //
 
 #import "iTermObjectPool.h"
+#import <stdatomic.h>
 
 @interface iTermObjectPool ()
 - (void)recycleObject:(iTermPooledObject *)object;
@@ -112,6 +113,7 @@ typedef struct {
 }
 
 - (iTermPooledObject *)pooledObject {
+    int startIndex = atomic_fetch_add_explicit(memory_order_relaxed)
     int startIndex = OSAtomicIncrement32(&_counter) % _numCollections;
 
     for (int j = startIndex; j < startIndex + _numCollections; j++) {

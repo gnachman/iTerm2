@@ -60,12 +60,12 @@ NS_ASSUME_NONNULL_BEGIN
         NSUInteger fragmentIndex = [string rangeOfString:@"#"].location;
         if (fragmentIndex != NSNotFound) {
             // Don't want to percent encode a #.
-            NSString *before = [[string substringToIndex:fragmentIndex] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-            NSString *after = [[string substringFromIndex:fragmentIndex + 1] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+            NSString *before = [[string substringToIndex:fragmentIndex] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
+            NSString *after = [[string substringFromIndex:fragmentIndex + 1] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
             NSString *combined = [NSString stringWithFormat:@"%@#%@", before, after];
             return [NSURL URLWithString:combined];
         } else {
-            return [NSURL URLWithString:[string stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+            return [NSURL URLWithString:[string stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]]];
         }
     } else {
         return [NSURL URLWithString:string];
