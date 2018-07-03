@@ -1460,6 +1460,9 @@
 		A638A04B20EB3C3800DE347F /* iTermUnusedText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */; };
 		A638A04C20EB3C3800DE347F /* iTermUnusedText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */; };
 		A638A04D20EB3C3800DE347F /* iTermUnusedText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */; };
+		A638A05020EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04F20EB47A900DE347F /* iTermTextShaderCommon.metal */; };
+		A638A05120EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04F20EB47A900DE347F /* iTermTextShaderCommon.metal */; };
+		A638A05220EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */ = {isa = PBXBuildFile; fileRef = A638A04F20EB47A900DE347F /* iTermTextShaderCommon.metal */; };
 		A63BA39518A9CB43002BE075 /* iTermSelection.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39318A9CB43002BE075 /* iTermSelection.h */; };
 		A63BA39F18B27B92002BE075 /* iTermTextExtractor.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */; };
 		A63F4095183B398C003A6A6D /* PTYNoteViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F4093183B398C003A6A6D /* PTYNoteViewController.h */; };
@@ -3746,6 +3749,7 @@
 		A63819D21FAECE6800A9EF9E /* iTermCopyBackground.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermCopyBackground.metal; path = Metal/Shaders/iTermCopyBackground.metal; sourceTree = "<group>"; };
 		A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermUnusedText.metal; path = Metal/Shaders/iTermUnusedText.metal; sourceTree = "<group>"; };
 		A638A04E20EB40F600DE347F /* iTermTextShaderCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTextShaderCommon.h; path = Metal/Shaders/iTermTextShaderCommon.h; sourceTree = "<group>"; };
+		A638A04F20EB47A900DE347F /* iTermTextShaderCommon.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermTextShaderCommon.metal; path = Metal/Shaders/iTermTextShaderCommon.metal; sourceTree = "<group>"; };
 		A63BA39318A9CB43002BE075 /* iTermSelection.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelection.h; sourceTree = "<group>"; tabWidth = 4; };
 		A63BA39418A9CB43002BE075 /* iTermSelection.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSelection.m; sourceTree = "<group>"; tabWidth = 4; };
 		A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextExtractor.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -6161,6 +6165,7 @@
 				A6DBC04B2005F45700F1466D /* iTermHighlightRow.metal */,
 				A638A04A20EB3C3800DE347F /* iTermUnusedText.metal */,
 				A638A04E20EB40F600DE347F /* iTermTextShaderCommon.h */,
+				A638A04F20EB47A900DE347F /* iTermTextShaderCommon.metal */,
 			);
 			name = Shaders;
 			sourceTree = "<group>";
@@ -9510,6 +9515,7 @@
 				A67960F71F8202C2008A42BC /* iTermBackgroundColor.metal in Sources */,
 				A68400AC1FF82E05008D3EE2 /* iTermIndicator.metal in Sources */,
 				A68400B41FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
+				A638A05220EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */,
 				A67960FE1F8202C2008A42BC /* iTermText.metal in Sources */,
 				A68400C11FF99E1B008D3EE2 /* iTermTimestamps.metal in Sources */,
 				A67960FB1F8202C2008A42BC /* iTermCursorGuide.metal in Sources */,
@@ -9536,6 +9542,7 @@
 				A6C1FD551FC2B210006B9A69 /* iTermMargin.metal in Sources */,
 				A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */,
 				A67960F61F8202C1008A42BC /* iTermText.metal in Sources */,
+				A638A05120EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */,
 				A67960F31F8202C1008A42BC /* iTermCursorGuide.metal in Sources */,
 				A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */,
 				A68400B31FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
@@ -9572,6 +9579,7 @@
 				A67960E71F8202C0008A42BC /* iTermBackgroundColor.metal in Sources */,
 				A68400AA1FF82E02008D3EE2 /* iTermIndicator.metal in Sources */,
 				A68400B21FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
+				A638A05020EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */,
 				A67960EE1F8202C0008A42BC /* iTermText.metal in Sources */,
 				A68400BF1FF99E1B008D3EE2 /* iTermTimestamps.metal in Sources */,
 				A67960EB1F8202C0008A42BC /* iTermCursorGuide.metal in Sources */,
