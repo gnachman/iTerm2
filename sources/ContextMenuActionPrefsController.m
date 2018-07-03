@@ -69,7 +69,7 @@ static NSString* kParameterKey = @"parameter";
         case kOpenFileContextMenuAction:
             return parameter;
         case kOpenUrlContextMenuAction:
-            return [parameter stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+            return [parameter stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
         case kSendTextContextMenuAction:
             return parameter;
     }

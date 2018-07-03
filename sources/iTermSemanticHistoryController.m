@@ -321,7 +321,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
             [self launchSublimeTextWithBundleIdentifier:bundleId path:path];
         } else {
-            path = [path stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+            path = [path stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
             NSURL *url = nil;
             NSString *editorIdentifier = identifier;
             if (lineNumber) {
@@ -448,7 +448,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         // Percent-escape all the arguments.
         for (NSString *key in augmentedSubs.allKeys) {
             augmentedSubs[key] =
-                [augmentedSubs[key] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+                [augmentedSubs[key] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
         }
         url = [url stringByReplacingVariableReferencesWithVariables:augmentedSubs];
         DLog(@"Open url %@", url);
