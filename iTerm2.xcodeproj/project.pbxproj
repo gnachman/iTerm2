@@ -2276,7 +2276,6 @@
 		A6C762D91B45C52B00E3C992 /* PseudoTerminalRestorer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */; };
 		A6C762DA1B45C52B00E3C992 /* PTYScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF755F026DDA6303A80106 /* PTYScrollView.m */; };
 		A6C762DB1B45C52B00E3C992 /* PTYSession.m in Sources */ = {isa = PBXBuildFile; fileRef = F52ED8DD037F0A7D01A8A066 /* PTYSession.m */; };
-		A6C762DD1B45C52B00E3C992 /* PTYTab.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E802D129DA45A00F3D71E /* PTYTab.m */; };
 		A6C762DE1B45C52B00E3C992 /* PTYTabView.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E533B403B2959201A8A066 /* PTYTabView.m */; };
 		A6C762DF1B45C52B00E3C992 /* PTYTask.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7560026DDA6303A80106 /* PTYTask.m */; };
 		A6C762E01B45C52B00E3C992 /* PTYTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7561026DDA6303A80106 /* PTYTextView.m */; };
@@ -2621,6 +2620,7 @@
 		A6E713BF18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713BD18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h */; };
 		A6E7352A20EBF3270034FCFD /* iTermSetCurrentTerminalHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7352820EBF3270034FCFD /* iTermSetCurrentTerminalHelper.h */; };
 		A6E7352B20EBF3270034FCFD /* iTermSetCurrentTerminalHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7352920EBF3270034FCFD /* iTermSetCurrentTerminalHelper.m */; };
+		A6E7352C20EC04B40034FCFD /* PTYTab.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E802D129DA45A00F3D71E /* PTYTab.m */; };
 		A6E74748188C6344005355CF /* iTermCommandHistoryEntryMO+Additions.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74746188C6344005355CF /* iTermCommandHistoryEntryMO+Additions.h */; };
 		A6E7474D188C6394005355CF /* iTermCommandHistoryCommandUseMO+Addtions.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7474B188C6394005355CF /* iTermCommandHistoryCommandUseMO+Addtions.h */; };
 		A6E74752188C6693005355CF /* iTermExposeWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E74750188C6692005355CF /* iTermExposeWindow.h */; };
@@ -9688,6 +9688,7 @@
 				A6FE8D13209528F400B5C648 /* iTermPythonRuntimeDownloader.m in Sources */,
 				A6A4866720B6780C00493302 /* iTermAdvancedSettingsModel.m in Sources */,
 				A67960D41F81FCBB008A42BC /* iTermCursorGuideRenderer.m in Sources */,
+				A6E7352C20EC04B40034FCFD /* PTYTab.m in Sources */,
 				A6556EAA1FCB42E0000CC89C /* iTermCharacterSource.m in Sources */,
 				A65429B020C492F000CE71B1 /* iTermParameterPanelWindowController.m in Sources */,
 				A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */,
@@ -9879,7 +9880,6 @@
 				A62C3B261BCC24AB00B5629D /* iTermCommandHistoryEntryMO.m in Sources */,
 				A6C763AF1B45C52B00E3C992 /* CoprocessTrigger.m in Sources */,
 				A6C763C21B45C52B00E3C992 /* VT100DCSParser.m in Sources */,
-				A6C762DD1B45C52B00E3C992 /* PTYTab.m in Sources */,
 				A6F3E96F1D60E4F0000E97C4 /* iTermInitialDirectory.m in Sources */,
 				A6C763CA1B45C52B00E3C992 /* VT100Terminal.m in Sources */,
 				A6C763541B45C52B00E3C992 /* iTermOpenQuicklyTableCellView.m in Sources */,
