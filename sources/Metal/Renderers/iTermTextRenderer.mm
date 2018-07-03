@@ -357,7 +357,7 @@ static NSString *const FragmentFunctionName(BOOL underlined, BOOL blending) {
     tState.vertexBuffer.label = @"Text vertex buffer";
     tState.offsetBuffer.label = @"Offset";
     const float scale = tState.cellConfiguration.scale;
-    const bool blending = tState.cellConfiguration.usingIntermediatePass;
+    const bool blending = tState.cellConfiguration.usingIntermediatePass || tState.disableIndividualColorModels;
 
     // The vertex buffer's texture coordinates depend on the texture map's atlas size so it must
     // be initialized after the texture map.
@@ -406,7 +406,6 @@ static NSString *const FragmentFunctionName(BOOL underlined, BOOL blending) {
                 .underlineOffset = MAX(underlineThickness, cellSize.y - (underlineDescriptor.offset * scale)),
                 .underlineThickness = underlineThickness,
                 .scale = scale,
-                .disableExactColorModels = static_cast<bool>(tState.disableIndividualColorModels)
             };
 
             // These tend to get reused so avoid changing the buffer if it is the same as the last one.

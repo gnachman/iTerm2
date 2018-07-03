@@ -354,23 +354,16 @@ iTermTextFragmentShaderSolidBackground(iTermTextVertexFunctionOutput in [[stage_
     }
 
     // Not emoji, not underlined
-    half4 textColor;
-    if (dimensions->disableExactColorModels) {
-        return RemapColor(in.textColor * 17.0,
-                          in.backgroundColor,
-                          static_cast<float4>(bwColor),
-                          colorModelsTexture);
-    } else {
-        const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
-        // Base index for this color model
-        const int3 i = in.colorModelIndex * 256;
-        // Find RGB values to map colors in the black-on-white glyph to
-        const uchar4 rgba = uchar4(exactColorModels[i.x + bwIntIndices.x],
-                                   exactColorModels[i.y + bwIntIndices.y],
-                                   exactColorModels[i.z + bwIntIndices.z],
-                                   255);
-        return static_cast<half4>(rgba) / 255;
-    }
+
+    const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
+    // Base index for this color model
+    const int3 i = in.colorModelIndex * 256;
+    // Find RGB values to map colors in the black-on-white glyph to
+    const uchar4 rgba = uchar4(exactColorModels[i.x + bwIntIndices.x],
+                               exactColorModels[i.y + bwIntIndices.y],
+                               exactColorModels[i.z + bwIntIndices.z],
+                               255);
+    return static_cast<half4>(rgba) / 255;
 }
 
 // This path is slow but can deal with any combination of foreground/background
@@ -450,23 +443,15 @@ iTermTextFragmentShaderSolidBackgroundUnderlined(iTermTextVertexFunctionOutput i
         discard_fragment();
     }
 
-    half4 textColor;
-    if (dimensions->disableExactColorModels) {
-        textColor = RemapColor(in.textColor * 17.0,
-                               in.backgroundColor,
-                               static_cast<float4>(bwColor),
-                               colorModelsTexture);
-    } else {
-        const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
-        // Base index for this color model
-        const int3 i = in.colorModelIndex * 256;
-        // Find RGB values to map colors in the black-on-white glyph to
-        const uchar4 rgba = uchar4(exactColorModels[i.x + bwIntIndices.x],
-                                   exactColorModels[i.y + bwIntIndices.y],
-                                   exactColorModels[i.z + bwIntIndices.z],
-                                   255);
-        textColor = static_cast<half4>(rgba) / 255;
-    }
+    const short4 bwIntIndices = static_cast<short4>(bwColor * 255);
+    // Base index for this color model
+    const int3 i = in.colorModelIndex * 256;
+    // Find RGB values to map colors in the black-on-white glyph to
+    const uchar4 rgba = uchar4(exactColorModels[i.x + bwIntIndices.x],
+                               exactColorModels[i.y + bwIntIndices.y],
+                               exactColorModels[i.z + bwIntIndices.z],
+                               255);
+    half4 textColor = static_cast<half4>(rgba) / 255;
 
     return mix(textColor, in.underlineColor, underlineWeight);
 }
