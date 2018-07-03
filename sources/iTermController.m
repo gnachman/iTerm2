@@ -61,6 +61,7 @@
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermRestorableSession.h"
+#import "iTermSetCurrentTerminalHelper.h"
 #import "iTermSystemVersion.h"
 #import "iTermWarning.h"
 #import "PTYWindow.h"
@@ -74,6 +75,9 @@
 static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
 static iTermController *gSharedInstance;
 
+@interface iTermController()<iTermSetCurrentTerminalHelperDelegate>
+@end
+
 @implementation iTermController {
     NSMutableArray *_restorableSessions;
     NSMutableArray *_currentRestorableSessionsStack;
@@ -83,6 +87,7 @@ static iTermController *gSharedInstance;
     iTermFullScreenWindowManager *_fullScreenWindowManager;
     BOOL _willPowerOff;
     BOOL _arrangeHorizontallyPendingFullScreenTransitions;
+    iTermSetCurrentTerminalHelper *_setCurrentTerminalHelper;
 }
 
 + (iTermController *)sharedInstance {
@@ -124,6 +129,8 @@ static iTermController *gSharedInstance;
         // create the "~/Library/Application Support/iTerm2" directory if it does not exist
         [[NSFileManager defaultManager] applicationSupportDirectory];
 
+        _setCurrentTerminalHelper = [[iTermSetCurrentTerminalHelper alloc] init];
+        _setCurrentTerminalHelper.delegate = self;
         _terminalWindows = [[NSMutableArray alloc] init];
         _restorableSessions = [[NSMutableArray alloc] init];
         _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
@@ -194,6 +201,7 @@ static iTermController *gSharedInstance;
     [_currentRestorableSessionsStack release];
     [_fullScreenWindowManager release];
     [_lastSelection release];
+    [_setCurrentTerminalHelper release];
     [super dealloc];
 }
 
@@ -1463,22 +1471,8 @@ static iTermController *gSharedInstance;
     return _terminalWindows;
 }
 
-- (void)setCurrentTerminal:(PseudoTerminal *)thePseudoTerminal {
-    _frontTerminalWindowController = thePseudoTerminal;
-
-    // make sure this window is the key window
-    if ([thePseudoTerminal windowInitialized] && [[thePseudoTerminal window] isKeyWindow] == NO) {
-        [[thePseudoTerminal window] makeKeyAndOrderFront:self];
-        if ([thePseudoTerminal fullScreen]) {
-          [thePseudoTerminal hideMenuBar];
-        }
-    }
-
-    // Post a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey"
-                                                        object:thePseudoTerminal
-                                                      userInfo:nil];
-
+- (void)setCurrentTerminal:(PseudoTerminal *)currentTerminal {
+    [_setCurrentTerminalHelper setCurrentTerminal:currentTerminal];
 }
 
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow {
@@ -1557,6 +1551,26 @@ static iTermController *gSharedInstance;
                        }
                        return session;
                    }];
+}
+
+#pragma mark - iTermSetCurrentTerminalHelperDelegate
+
+- (void)reallySetCurrentTerminal:(PseudoTerminal *)thePseudoTerminal {
+    DLog(@"Actually make terminal current: %@", thePseudoTerminal);
+    _frontTerminalWindowController = thePseudoTerminal;
+
+    // make sure this window is the key window
+    if ([thePseudoTerminal windowInitialized] && [[thePseudoTerminal window] isKeyWindow] == NO) {
+        [[thePseudoTerminal window] makeKeyAndOrderFront:self];
+        if ([thePseudoTerminal fullScreen]) {
+            [thePseudoTerminal hideMenuBar];
+        }
+    }
+
+    // Post a notification
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey"
+                                                        object:thePseudoTerminal
+                                                      userInfo:nil];
 }
 
 @end
