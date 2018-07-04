@@ -14,3 +14,7 @@
 @property (nonatomic, strong) IBOutlet NSButton *maximizeThroughput;
 
 @end
+
+@interface iTermAdvancedGPUSettingsWindowController : NSWindowController
+@property (nonatomic, strong) IBOutlet iTermAdvancedGPUSettingsViewController *viewController;
+@end

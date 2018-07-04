@@ -34,3 +34,18 @@
 }
 
 @end
+
+@implementation iTermAdvancedGPUSettingsWindowController
+
+- (IBAction)ok:(id)sender {
+    [self.window.sheetParent endSheet:self.window
+                           returnCode:NSModalResponseOK];
+}
+
+- (IBAction)cancel:(id)sender {
+    [self.window.sheetParent endSheet:self.window
+                           returnCode:NSModalResponseCancel];
+}
+
+@end
+

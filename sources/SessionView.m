@@ -201,7 +201,12 @@ static NSDate* lastResizeDate_;
 
 - (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
     // Allocate a new metal view
-    if ([iTermPreferences boolForKey:kPreferenceKeyPreferIntegratedGPU]) {
+    static BOOL preferIntegrated;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        preferIntegrated = [iTermPreferences boolForKey:kPreferenceKeyPreferIntegratedGPU];
+    });
+    if (preferIntegrated) {
         NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
 
         id<MTLDevice> gpu = nil;
