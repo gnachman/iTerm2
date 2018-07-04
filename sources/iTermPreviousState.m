@@ -22,10 +22,10 @@
 }
 
 - (instancetype)init {
-    NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
-    DLog(@"Saving state: active app is %@", activeAppDict);
-    return [self initWithBundleIdentifier:activeAppDict[@"NSApplicationBundleIdentifier"]
-                                processID:[activeAppDict[@"NSApplicationProcessIdentifier"] longLongValue]];
+    NSRunningApplication *runningApp = [[NSWorkspace sharedWorkspace] frontmostApplication];
+    DLog(@"Saving state: active app is %@", runningApp);
+    return [self initWithBundleIdentifier:runningApp.bundleIdentifier
+                                processID:runningApp.processIdentifier];
 }
 
 - (instancetype)initWithRunningApp:(NSRunningApplication *)runningApp {

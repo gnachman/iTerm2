@@ -94,12 +94,22 @@
         NSURLRequest *req = [NSURLRequest requestWithURL:url
                                              cachePolicy:NSURLRequestUseProtocolCachePolicy
                                          timeoutInterval:kFetchTimeout];
-        NSURLResponse *response = nil;
-        NSError *error = nil;
+        __block NSURLResponse *response = nil;
+        __block NSError *error = nil;
+        __block NSData *data = nil;
 
-        NSData *data = [NSURLConnection sendSynchronousRequest:req
-                                             returningResponse:&response
-                                                         error:&error];
+        dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+        NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:req completionHandler:^(NSData * _Nullable taskData,
+                                                                                 NSURLResponse * _Nullable taskResponse,
+                                                                                 NSError * _Nullable taskError) {
+            data = taskData;
+            response = taskResponse;
+            error = taskError;
+            dispatch_semaphore_signal(sema);
+        }];
+        [task resume];
+        dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+
         if (!data || error) {
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Failed to load preferences from URL. Falling back to local copy.";

@@ -475,7 +475,7 @@ static const int kDragThreshold = 3;
         @{ NSBackgroundColorAttributeName: [self defaultBackgroundColor] ?: [NSColor blackColor],
            NSForegroundColorAttributeName: [self defaultTextColor] ?: [NSColor whiteColor],
            NSFontAttributeName: self.nonAsciiFont ?: [NSFont systemFontOfSize:12],
-           NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle | NSUnderlineByWordMask) };
+           NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle | NSUnderlineByWord) };
 
     [self setMarkedTextAttributes:theAttributes];
 }
@@ -1605,7 +1605,7 @@ static const int kDragThreshold = 3;
     if (!NSPointInRect(point, liveRect)) {
         return NO;
     }
-    if (event.type != NSScrollWheel) {
+    if (event.type != NSEventTypeScrollWheel) {
         return NO;
     }
     if (![self.dataSource showingAlternateScreen]) {
@@ -2484,7 +2484,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
         dragPosition.x -= [dragImage size].width / 2;
 
-        NSURL *url = [[[NSURL alloc] initWithScheme:@"file" host:nil path:path] autorelease];
+        NSURL *url = [NSURL fileURLWithPath:path];
 
         NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
         [pbItem setString:[url absoluteString] forType:(NSString *)kUTTypeFileURL];
@@ -3532,7 +3532,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                              isBackground:YES];
     fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];
 
-    int underlineStyle = (c.urlCode || c.underline) ? (NSUnderlineStyleSingle | NSUnderlineByWordMask) : 0;
+    int underlineStyle = (c.urlCode || c.underline) ? (NSUnderlineStyleSingle | NSUnderlineByWord) : 0;
 
     BOOL isItalic = c.italic;
     PTYFontInfo *fontInfo = [self getFontForChar:c.code
@@ -4786,11 +4786,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         mailto = [NSString stringWithFormat:@"mailto:%@", [self selectedText]];
     }
 
-    NSString* escapedString = (NSString *)CFURLCreateStringByAddingPercentEscapes(NULL,
-                                                                                  (CFStringRef)mailto,
-                                                                                  (CFStringRef)@"!*'();:@&=+$,/?%#[]",
-                                                                                  NULL,
-                                                                                  kCFStringEncodingUTF8 );
+    NSString *escapedString = [mailto stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet characterSetWithCharactersInString:@"!*'();:@&=+$,/?%#[]"]];
 
     NSURL* url = [NSURL URLWithString:escapedString];
     [escapedString release];
@@ -6854,7 +6850,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ((event.type == NSLeftMouseDown || event.type == NSLeftMouseUp) && self.window.firstResponder != self) {
         return NO;
     }
-    if (event.type == NSScrollWheel) {
+    if (event.type == NSEventTypeScrollWheel) {
         return ([self xtermMouseReporting] && [self xtermMouseReportingAllowMouseWheel]);
     } else {
         PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
@@ -6874,12 +6870,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         case NSRightMouseDragged:
             return MOUSE_BUTTON_RIGHT;
 
-        case NSOtherMouseDown:
-        case NSOtherMouseUp:
-        case NSOtherMouseDragged:
+        case NSEventTypeOtherMouseDown:
+        case NSEventTypeOtherMouseUp:
+        case NSEventTypeOtherMouseDragged:
             return MOUSE_BUTTON_MIDDLE;
 
-        case NSScrollWheel:
+        case NSEventTypeScrollWheel:
             if ([event scrollingDeltaY] > 0) {
                 return MOUSE_BUTTON_SCROLLDOWN;
             } else {
