@@ -2125,12 +2125,7 @@ static id sAPIHelperInstance;
 - (void)apiServerMenuItem:(ITMMenuItemRequest *)request handler:(void (^)(ITMMenuItemResponse *))handler {
     ITMMenuItemResponse *response = [[ITMMenuItemResponse alloc] init];
     NSMenuItem *menuItem = nil;
-    if (@available(macOS 10.12, *)) {
-        menuItem = [self menuItemWithIdentifier:request.identifier inMenu:[NSApp mainMenu]];
-    } else {
-        menuItem = [self menuItemWithTitleParts:[request.identifier componentsSeparatedByString:@"."]
-                                         inMenu:[NSApp mainMenu]];
-    }
+    menuItem = [self menuItemWithIdentifier:request.identifier inMenu:[NSApp mainMenu]];
     if (!menuItem) {
         response.status = ITMMenuItemResponse_Status_BadIdentifier;
         handler(response);

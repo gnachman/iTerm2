@@ -5901,7 +5901,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [self didInferEndOfCommand];
         }
 
-        if ((event.modifierFlags & NSControlKeyMask) && [event.charactersIgnoringModifiers isEqualToString:@"c"]) {
+        if ((event.modifierFlags & NSEventModifierFlagControl) && [event.charactersIgnoringModifiers isEqualToString:@"c"]) {
             if (self.terminal.receivingFile) {
                 // Offer to abort download if you press ^c while downloading an inline file
                 [self askAboutAbortingDownload];
@@ -5919,22 +5919,22 @@ ITERM_WEAKLY_REFERENCEABLE
         ITMKeystrokeNotification *keystrokeNotification = [[[ITMKeystrokeNotification alloc] init] autorelease];
         keystrokeNotification.characters = event.characters;
         keystrokeNotification.charactersIgnoringModifiers = event.charactersIgnoringModifiers;
-        if (event.modifierFlags & NSControlKeyMask) {
+        if (event.modifierFlags & NSEventModifierFlagControl) {
             [keystrokeNotification.modifiersArray addValue:ITMModifiers_Control];
         }
-        if (event.modifierFlags & NSAlternateKeyMask) {
+        if (event.modifierFlags & NSEventModifierFlagOption) {
             [keystrokeNotification.modifiersArray addValue:ITMModifiers_Option];
         }
-        if (event.modifierFlags & NSCommandKeyMask) {
+        if (event.modifierFlags & NSEventModifierFlagCommand) {
             [keystrokeNotification.modifiersArray addValue:ITMModifiers_Command];
         }
-        if (event.modifierFlags & NSShiftKeyMask) {
+        if (event.modifierFlags & NSEventModifierFlagShift) {
             [keystrokeNotification.modifiersArray addValue:ITMModifiers_Shift];
         }
-        if (event.modifierFlags & NSNumericPadKeyMask) {
+        if (event.modifierFlags & NSEventModifierFlagNumericPad) {
             [keystrokeNotification.modifiersArray addValue:ITMModifiers_Numpad];
         }
-        if (event.modifierFlags & NSFunctionKeyMask) {
+        if (event.modifierFlags & NSEventModifierFlagFunction) {
             [keystrokeNotification.modifiersArray addValue:ITMModifiers_Function];
         }
         keystrokeNotification.keyCode = event.keyCode;
@@ -7143,7 +7143,7 @@ ITERM_WEAKLY_REFERENCEABLE
     switch (eventType) {
         case NSEventTypeLeftMouseDown:
         case NSEventTypeRightMouseDown:
-        case NSOtherMouseDown:
+        case NSEventTypeOtherMouseDown:
             switch ([_terminal mouseMode]) {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
@@ -7164,7 +7164,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case NSEventTypeLeftMouseUp:
         case NSEventTypeRightMouseUp:
-        case NSOtherMouseUp:
+        case NSEventTypeOtherMouseUp:
             if (_reportingMouseDown) {
                 _reportingMouseDown = NO;
                 _lastReportedCoord = VT100GridCoordMake(-1, -1);
@@ -7202,7 +7202,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case NSEventTypeLeftMouseDragged:
         case NSEventTypeRightMouseDragged:
-        case NSOtherMouseDragged:
+        case NSEventTypeOtherMouseDragged:
             if (_reportingMouseDown &&
                 !VT100GridCoordEquals(coord, _lastReportedCoord)) {
                 _lastReportedCoord = coord;
@@ -7227,7 +7227,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             break;
 
-        case NSScrollWheel:
+        case NSEventTypeScrollWheel:
             switch ([_terminal mouseMode]) {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
