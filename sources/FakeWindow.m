@@ -237,5 +237,7 @@
     return NO;
 }
 
+- (void)createDuplicateOfTab:(PTYTab *)theTab {
+}
 
 @end
