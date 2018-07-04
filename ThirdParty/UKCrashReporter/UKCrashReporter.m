@@ -174,7 +174,9 @@ NSString* UKCrashReporterFindTenFiveCrashReportPath(NSString* appName, NSArray *
 NSString*    gCrashLogString = nil;
 
 
-@implementation UKCrashReporter
+@implementation UKCrashReporter {
+    NSURLSessionDataTask *_dataTask;
+}
 
 -(id)    initWithLogString: (NSString*)theLog
 {
@@ -200,8 +202,8 @@ NSString*    gCrashLogString = nil;
 
 -(void) dealloc
 {
-    [connection release];
-    connection = nil;
+    [_dataTask release];
+    _dataTask = nil;
     
     [super dealloc];
 }
@@ -316,8 +318,22 @@ NSString*    gCrashLogString = nil;
     [sendButton setEnabled: NO];
     [remindButton setEnabled: NO];
     [discardButton setEnabled: NO];
-    
-    connection = [[NSURLConnection connectionWithRequest: postRequest delegate: self] retain];
+
+    _dataTask = [[NSURLSession sharedSession] dataTaskWithRequest:postRequest completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        if (error) {
+            [self performSelectorOnMainThread: @selector(showFinishedMessage:) withObject: error waitUntilDone: NO];
+            return;
+        }
+        // Now that we successfully sent this crash, don't report it again:
+        if (!feedbackMode) {
+            [[NSUserDefaults standardUserDefaults] setFloat: [[NSDate date] timeIntervalSince1970] forKey:@"UKCrashReporterLastCrashReportDate"];
+            [[NSUserDefaults standardUserDefaults] synchronize];
+        }
+
+        [self performSelectorOnMainThread: @selector(showFinishedMessage:) withObject: nil waitUntilDone: NO];
+    }];
+    [_dataTask retain];
+    [_dataTask resume];
 }
 
 
@@ -361,30 +377,6 @@ NSString*    gCrashLogString = nil;
     [self autorelease];
 }
 
-
--(void)    connectionDidFinishLoading:(NSURLConnection *)conn
-{
-    [connection release];
-    connection = nil;
-    
-    // Now that we successfully sent this crash, don't report it again:
-    if( !feedbackMode )
-    {
-        [[NSUserDefaults standardUserDefaults] setFloat: [[NSDate date] timeIntervalSince1970] forKey: @"UKCrashReporterLastCrashReportDate"];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
-    
-    [self performSelectorOnMainThread: @selector(showFinishedMessage:) withObject: nil waitUntilDone: NO];
-}
-
-
--(void)    connection:(NSURLConnection *)conn didFailWithError:(NSError *)error
-{
-    [connection release];
-    connection = nil;
-    
-    [self performSelectorOnMainThread: @selector(showFinishedMessage:) withObject: error waitUntilDone: NO];
-}
 
 @end
 
