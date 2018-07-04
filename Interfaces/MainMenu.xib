@@ -957,7 +957,7 @@ DQ
                                     <action selector="arrangeHorizontally:" target="201" id="1179"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Arrange Split Panes Evenly" identifier="Arrange Windows Horizontally" id="xtk-nu-uNt">
+                            <menuItem title="Arrange Split Panes Evenly" identifier="Arrange Split Panes Evenly" id="xtk-nu-uNt">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="arrangeSplitPanesEvenly:" target="201" id="eE4-2D-fTq"/>
