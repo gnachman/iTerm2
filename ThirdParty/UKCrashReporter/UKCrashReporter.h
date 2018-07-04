@@ -44,7 +44,6 @@ void	UKCrashReporterCheckForCrash(void);
 	IBOutlet NSButton*				remindButton;
 	IBOutlet NSButton*				discardButton;
 	IBOutlet NSTabView*				switchTabView;
-	NSURLConnection*				connection;
 	BOOL							feedbackMode;
 }
 
