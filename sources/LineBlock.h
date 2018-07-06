@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "FindViewController.h"
+#import "iTermFindViewController.h"
 #import "ScreenChar.h"
 
 typedef struct {

@@ -14,10 +14,11 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSDictionary *layoutDictionary;
 @property (nonatomic, readonly) BOOL ok;
 
-- (instancetype)initWithLayoutDictionary:(NSDictionary *)layoutDictionary NS_DESIGNATED_INITIALIZER;
+- (nullable instancetype)initWithLayoutDictionary:(NSDictionary *)layoutDictionary NS_DESIGNATED_INITIALIZER;
 
-- (instancetype)initWithNibName:(NSNibName)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil NS_UNAVAILABLE;
-- (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
+- (instancetype)initWithNibName:(nullable NSNibName)nibNameOrNil
+                         bundle:(nullable NSBundle *)nibBundleOrNil NS_UNAVAILABLE;
+- (nullable instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
 
 @end
 

@@ -21,6 +21,7 @@
 #import "iTermController.h"
 #import "iTermCopyModeState.h"
 #import "iTermDisclosableView.h"
+#import "iTermFindDriver.h"
 #import "iTermNotificationController.h"
 #import "iTermHistogram.h"
 #import "iTermHotKeyController.h"
@@ -1324,7 +1325,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     aSession.view = sessionView;
 
-    [[sessionView findViewController] setDelegate:aSession];
+    sessionView.findDriver.delegate = aSession;
     NSDictionary<NSString *, NSString *> *overrides = arrangement[SESSION_ARRANGEMENT_FONT_OVERRIDES];
     if (overrides) {
         NSMutableDictionary *temp = [[theBookmark mutableCopy] autorelease];
@@ -1617,7 +1618,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (@available(macOS 10.11, *)) {
             self.view.driver.dataSource = _metalGlue;
         }
-        [[_view findViewController] setDelegate:self];
+        _view.findDriver.delegate = self;
     }
 
     _view.scrollview.hasVerticalRuler = [parent scrollbarShouldBeVisible];
@@ -2196,8 +2197,8 @@ ITERM_WEAKLY_REFERENCEABLE
     _screen.delegate = nil;
     [_screen setTerminal:nil];
     _terminal.delegate = nil;
-    if ([[_view findViewController] delegate] == self) {
-        [[_view findViewController] setDelegate:nil];
+    if (_view.findDriver.delegate == self) {
+        _view.findDriver.delegate = nil;
     }
 
     [_pasteHelper abort];
@@ -2275,7 +2276,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _screen.terminal = _terminal;
         _terminal.delegate = _screen;
         _shell.paused = NO;
-        _view.findViewController.delegate = self;
+        _view.findDriver.delegate = self;
 
         NSDictionary *shortcutDictionary = [iTermProfilePreferences objectForKey:KEY_SESSION_HOTKEY inProfile:self.profile];
         iTermShortcut *shortcut = [iTermShortcut shortcutWithDictionary:shortcutDictionary];
@@ -3941,7 +3942,7 @@ ITERM_WEAKLY_REFERENCEABLE
         newView.driver.dataSource = _metalGlue;
     }
     [newView updateTitleFrame];
-    [[_view findViewController] setDelegate:self];
+    _view.findDriver.delegate = self;
 }
 
 - (NSStringEncoding)encoding
@@ -4401,7 +4402,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // cadence since we might have just become idle.
     self.active = (somethingIsBlinking || transientTitle || animationPlaying);
 
-    if (_tailFindTimer && [[[_view findViewController] view] isHidden]) {
+    if (_tailFindTimer && _view.findDriver.viewController.view.isHidden) {
         [self stopTailFind];
     }
 
@@ -4800,60 +4801,49 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_screen lastMark] != nil;
 }
 
-- (void)useStringForFind:(NSString*)string
-{
-    [[_view findViewController] setFindString:string];
+- (void)useStringForFind:(NSString *)string {
+    _view.findDriver.findString = string;
 }
 
-- (void)findWithSelection
-{
+- (void)findWithSelection {
     if ([_textview selectedText]) {
-        [[_view findViewController] setFindString:[_textview selectedText]];
+        _view.findDriver.findString = _textview.selectedText;
     }
 }
 
-- (void)showFindPanel
-{
-    [[_view findViewController] makeVisible];
+- (void)showFindPanel {
+    [_view.findDriver makeVisible];
 }
 
-- (void)searchNext
-{
-    [[_view findViewController] searchNext];
+- (void)searchNext {
+    [_view.findDriver searchNext];
 }
 
-- (void)searchPrevious
-{
-    [[_view findViewController] searchPrevious];
+- (void)searchPrevious {
+    [_view.findDriver searchPrevious];
 }
 
-- (void)resetFindCursor
-{
+- (void)resetFindCursor {
     [_textview resetFindCursor];
 }
 
-- (BOOL)findInProgress
-{
+- (BOOL)findInProgress {
     return [_textview findInProgress];
 }
 
-- (BOOL)continueFind:(double *)progress
-{
+- (BOOL)continueFind:(double *)progress {
     return [_textview continueFind:progress];
 }
 
-- (BOOL)growSelectionLeft
-{
+- (BOOL)growSelectionLeft {
     return [_textview growSelectionLeft];
 }
 
-- (void)growSelectionRight
-{
+- (void)growSelectionRight {
     [_textview growSelectionRight];
 }
 
-- (NSString*)selectedText
-{
+- (NSString *)selectedText {
     return [_textview selectedText];
 }
 
@@ -4871,7 +4861,7 @@ ITERM_WEAKLY_REFERENCEABLE
                withOffset:offset];
 }
 
-- (NSString*)unpaddedSelectedText {
+- (NSString *)unpaddedSelectedText {
     return [_textview selectedText];
 }
 
@@ -5004,6 +4994,7 @@ ITERM_WEAKLY_REFERENCEABLE
         const BOOL safeForCompositing = (![PTYNoteViewController anyNoteVisible] &&
                                          !_view.findViewController.isVisible &&
                                          !_pasteHelper.pasteViewIsVisible &&
+                                         !_view.findDriver.isVisible &&
                                          _view.currentAnnouncement == nil &&
                                          !_view.hasHoverURL);
         if (!safeForCompositing) {
@@ -5320,9 +5311,9 @@ ITERM_WEAKLY_REFERENCEABLE
     // We want a content change notification if it's worth doing a tail find.
     // That means the find window is open, we're not already doing a tail find,
     // and a search was performed in the find window (vs select+cmd-e+cmd-f).
-    return !_tailFindTimer &&
-           ![[[_view findViewController] view] isHidden] &&
-           [_textview findContext].substring != nil;
+    return (!_tailFindTimer &&
+            !_view.findDriver.viewController.view.isHidden &&
+            [_textview findContext].substring != nil);
 }
 
 - (void)hideSession {
@@ -6337,8 +6328,8 @@ ITERM_WEAKLY_REFERENCEABLE
         }
 
         case KEY_ACTION_FIND_REGEX:
-            [[_view findViewController] closeViewAndDoTemporarySearchForString:keyBindingText
-                                                                          mode:iTermFindModeCaseSensitiveRegex];
+            [_view.findDriver closeViewAndDoTemporarySearchForString:keyBindingText
+                                                                mode:iTermFindModeCaseSensitiveRegex];
             break;
 
         case KEY_FIND_AGAIN_DOWN:

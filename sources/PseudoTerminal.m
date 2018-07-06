@@ -9,7 +9,6 @@
 #import "Coprocess.h"
 #import "DirectoriesPopup.h"
 #import "FakeWindow.h"
-#import "FindViewController.h"
 #import "FutureMethods.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
@@ -23,6 +22,7 @@
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermController.h"
 #import "iTermFindCursorView.h"
+#import "iTermFindDriver.h"
 #import "iTermFontPanel.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermNotificationController.h"
@@ -2185,10 +2185,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (IBAction)findUrls:(id)sender {
-    FindViewController *findViewController = [[[self currentSession] view] findViewController];
+    iTermFindDriver *findDriver = self.currentSession.view.findDriver;
     NSString *regex = [iTermAdvancedSettingsModel findUrlsRegex];
-    [findViewController closeViewAndDoTemporarySearchForString:regex
-                                                          mode:iTermFindModeCaseSensitiveRegex];
+    [findDriver closeViewAndDoTemporarySearchForString:regex
+                                                  mode:iTermFindModeCaseSensitiveRegex];
 }
 
 - (IBAction)detachTmux:(id)sender {

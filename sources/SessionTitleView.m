@@ -338,7 +338,9 @@ static const CGFloat kButtonSize = 17;
     if (theEvent.clickCount == 2) {
         [self.delegate doubleClickOnTitleView];
     } else {
-        [self.delegate sessionTitleViewBecomeFirstResponder];
+        if (self.window.firstResponder == self) {
+            [self.delegate sessionTitleViewBecomeFirstResponder];
+        }
         [super mouseUp:theEvent];
     }
 }

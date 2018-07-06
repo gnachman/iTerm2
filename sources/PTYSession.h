@@ -2,7 +2,7 @@
 
 #import "Api.pbobjc.h"
 #import "DVR.h"
-#import "FindViewController.h"
+#import "iTermFindDriver.h"
 #import "iTermFileDescriptorClient.h"
 #import "iTermWeakReference.h"
 #import "ITAddressBookMgr.h"
@@ -210,7 +210,7 @@ typedef enum {
 
 @class SessionView;
 @interface PTYSession : NSResponder <
-    FindViewControllerDelegate,
+    iTermFindDriverDelegate,
     iTermWeaklyReferenceable,
     PopupDelegate,
     PTYTaskDelegate,

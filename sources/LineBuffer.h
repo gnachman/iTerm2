@@ -28,7 +28,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "FindContext.h"
-#import "FindViewController.h"
+#import "iTermFindDriver.h"
 #import "ScreenChar.h"
 #import "LineBufferPosition.h"
 #import "LineBufferHelpers.h"

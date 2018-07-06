@@ -1,6 +1,5 @@
 #include <wctype.h>
 #import "Autocomplete.h"
-#import "FindViewController.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"

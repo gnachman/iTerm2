@@ -1,8 +1,8 @@
 #import <Cocoa/Cocoa.h>
-#import "FindViewController.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermColorMap.h"
+#import "iTermFindDriver.h"
 #import "iTermIndicatorsHelper.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermTextDrawingHelper.h"

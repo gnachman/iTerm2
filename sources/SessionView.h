@@ -26,7 +26,6 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import "FindViewController.h"
 #import "iTermMetalDriver.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
@@ -34,6 +33,7 @@
 #import "SplitSelectionView.h"
 
 @class iTermAnnouncementViewController;
+@class iTermFindDriver;
 @class iTermMetalDriver;
 @class PTYSession;
 @class SplitSelectionView;
@@ -148,6 +148,8 @@
 @property(nonatomic, readonly) iTermMetalDriver *driver NS_AVAILABLE_MAC(10_11);
 @property(nonatomic, readonly) MTKView *metalView NS_AVAILABLE_MAC(10_11);
 @property(nonatomic, readonly) BOOL useMetal NS_AVAILABLE_MAC(10_11);
+@property(nonatomic, readonly) iTermFindDriver *findDriver;
+
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11);;
 
 + (double)titleHeight;
@@ -157,7 +159,6 @@
 - (void)setMetalViewNeedsDisplayInTextViewRect:(NSRect)textViewRect NS_AVAILABLE_MAC(10_11);
 
 - (void)setDimmed:(BOOL)isDimmed;
-- (FindViewController*)findViewController;
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed;
 - (void)updateDim;
 - (void)saveFrameSize;

@@ -10,6 +10,7 @@
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarClockComponent.h"
 #import "iTermStatusBarFixedSpacerComponent.h"
+#import "iTermStatusBarSearchFieldComponent.h"
 #import "iTermStatusBarSpringComponent.h"
 #import "iTermStatusBarSetupCollectionViewItem.h"
 #import "iTermStatusBarSetupDestinationCollectionViewController.h"
@@ -34,7 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSDictionary *_initialLayout;
 }
 
-- (instancetype)initWithLayoutDictionary:(NSDictionary *)layoutDictionary {
+- (nullable instancetype)initWithLayoutDictionary:(NSDictionary *)layoutDictionary {
     self = [super initWithNibName:@"iTermStatusBarSetupViewController" bundle:nil];
     if (self) {
         _initialLayout = [layoutDictionary copy];
@@ -49,7 +50,8 @@ NS_ASSUME_NONNULL_BEGIN
                                  [iTermStatusBarClockComponent class],
                                  [iTermStatusBarHostnameComponent class],
                                  [iTermStatusBarUsernameComponent class],
-                                 [iTermStatusBarWorkingDirectoryComponent class] ];
+                                 [iTermStatusBarWorkingDirectoryComponent class],
+                                 [iTermStatusBarSearchFieldComponent class] ];
     _elements = [classes mapWithBlock:^id(Class theClass) {
         return [[iTermStatusBarSetupElement alloc] initWithComponentClass:theClass];
     }];
