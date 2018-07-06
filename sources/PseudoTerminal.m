@@ -3501,11 +3501,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)menuBarVisibleInFullScreen {
-    if (![iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyUIElement]) {
+        // LSUIElement can't hide it.
         return YES;
     }
-    // LSUIElement cannot hide the menu bar, but floating panels have a very high level and overlap it.
-    if ([iTermPreferences boolForKey:kPreferenceKeyUIElement] && ![self.window isKindOfClass:[iTermPanel class]]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
         return YES;
     }
     return NO;
@@ -6552,7 +6552,8 @@ ITERM_WEAKLY_REFERENCEABLE
         if ([[self window] isKeyWindow]) {
             // In practice, this never happens because the prefs panel is
             // always key when this notification is posted.
-            if ([iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
+            if (![iTermPreferences boolForKey:kPreferenceKeyUIElement] &&
+                [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
                 [self showMenuBarHideDock];
             } else {
                 [self hideMenuBar];
@@ -6659,7 +6660,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if (currentScreen == menubarScreen || [NSScreen screensHaveSeparateSpaces]) {
         DLog(@"set flags to auto-hide dock");
         int flags = NSApplicationPresentationAutoHideDock;
-        if ([iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
+        if (![iTermPreferences boolForKey:kPreferenceKeyUIElement] &&
+            [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
             DLog(@"Set flags to auto-hide menu bar");
             flags |= NSApplicationPresentationAutoHideMenuBar;
         }
