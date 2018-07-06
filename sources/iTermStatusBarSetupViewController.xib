@@ -133,12 +133,27 @@ Gw
                         <action selector="cancel:" target="-2" id="qVw-eN-g7m"/>
                     </connections>
                 </button>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pzS-4T-KPj">
+                    <rect key="frame" x="14" y="13" width="174" height="32"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="push" title="Configure Component" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="KIr-xD-7ke">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                        <string key="keyEquivalent" base64-UTF8="YES">
+Gw
+</string>
+                    </buttonCell>
+                    <connections>
+                        <action selector="configureComponent:" target="ngG-n2-wbL" id="r6C-x1-c8g"/>
+                    </connections>
+                </button>
             </subviews>
             <point key="canvasLocation" x="277" y="155.5"/>
         </customView>
         <collectionViewItem id="Lz2-ba-iPl"/>
-        <viewController id="ngG-n2-wbL" userLabel="Selected VC" customClass="iTermStatusBarSetupDestinationCollectionViewController">
+        <viewController id="ngG-n2-wbL" userLabel="Destination VC" customClass="iTermStatusBarSetupDestinationCollectionViewController">
             <connections>
+                <outlet property="_configureButton" destination="pzS-4T-KPj" id="ABa-42-iN8"/>
                 <outlet property="view" destination="jgc-om-qSy" id="IjL-Vk-ve8"/>
             </connections>
         </viewController>
