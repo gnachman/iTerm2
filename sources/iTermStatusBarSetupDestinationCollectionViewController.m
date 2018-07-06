@@ -8,6 +8,8 @@
 #import "iTermStatusBarSetupDestinationCollectionViewController.h"
 
 #import "iTermStatusBarSetupCollectionViewItem.h"
+
+#import "iTermStatusBarSetupConfigureComponentWindowController.h"
 #import "iTermStatusBarSetupKnobsViewController.h"
 #import "iTermStatusBarLayout.h"
 #import "iTermStatusBarTextComponent.h"
@@ -26,6 +28,7 @@
 @implementation iTermStatusBarSetupDestinationCollectionViewController {
     NSMutableArray<iTermStatusBarSetupElement *> *_elements;
     NSIndexPath *_draggingIndexPath;
+    IBOutlet NSButton *_configureButton;
 }
 
 - (void)awakeFromNib {
@@ -38,6 +41,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    _configureButton.enabled = NO;
     [self.collectionView registerClass:[iTermStatusBarSetupCollectionViewItem class]
                  forItemWithIdentifier:@"element"];
 }
@@ -286,26 +290,15 @@ viewForSupplementaryElementOfKind:(NSCollectionViewSupplementaryElementKind)kind
     const NSInteger index = [indexPath indexAtPosition:1];
     iTermStatusBarSetupElement *element = _elements[index];
     id<iTermStatusBarComponent> component = element.component;
-    NSCollectionViewItem *collectionViewItem = [collectionView itemAtIndexPath:indexPath];
-    iTermStatusBarSetupKnobsViewController *viewController =
-        [[iTermStatusBarSetupKnobsViewController alloc] initWithComponent:component];
-    [self showPopoverWithViewController:viewController
-                         attachedToView:collectionViewItem.view
-                                  frame:collectionViewItem.view.bounds];
+    _configureButton.enabled = ([[[component class] statusBarComponentKnobs] count] > 0);
 }
 
-- (void)showPopoverWithViewController:(NSViewController *)viewController
-                       attachedToView:(NSView *)view
-                                frame:(NSRect)frame {
-    // Show popover
-    [self presentViewController:viewController
-        asPopoverRelativeToRect:frame
-                         ofView:view
-                  preferredEdge:NSMaxYEdge
-                       behavior:NSPopoverBehaviorTransient];
+- (iTermStatusBarSetupKnobsViewController *)viewControllerToConfigureComponent:(id<iTermStatusBarComponent>)component {
+    return [[iTermStatusBarSetupKnobsViewController alloc] initWithComponent:component];
 }
 
 - (void)collectionView:(NSCollectionView *)collectionView didDeselectItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths {
+    _configureButton.enabled = collectionView.selectionIndexPaths.count > 0;
 }
 
 #pragma mark - iTermStatusBarSetupElementDelegate
@@ -321,6 +314,31 @@ viewForSupplementaryElementOfKind:(NSCollectionViewSupplementaryElementKind)kind
          NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
          [self.collectionView reloadItemsAtIndexPaths:[NSSet setWithObject:indexPath]];
      } completionHandler:^(BOOL finished) {}];
+}
+
+#pragma mark - Actions
+
+- (IBAction)configureComponent:(id)sender {
+    NSIndexPath *indexPath = [self.collectionView.selectionIndexPaths anyObject];
+    if (!indexPath) {
+        return;
+    }
+    
+    iTermStatusBarSetupElement *element = _elements[indexPath.item];
+    id<iTermStatusBarComponent> component = element.component;
+    if (!component) {
+        return;
+    }
+    
+    NSViewController *viewController = [self viewControllerToConfigureComponent:component];
+    iTermStatusBarSetupConfigureComponentWindowController *windowController =
+    [[iTermStatusBarSetupConfigureComponentWindowController alloc] initWithWindowNibName:@"iTermStatusBarSetupConfigureComponentWindowController"];
+    [windowController window];
+    [windowController setKnobsViewController:viewController];
+    [self.view.window beginSheet:windowController.window completionHandler:^(NSModalResponse returnCode) {
+        self->_configureButton.enabled = NO;
+        [windowController description];  // Hold on to the window controller
+    }];
 }
 
 @end

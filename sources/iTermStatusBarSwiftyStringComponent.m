@@ -29,7 +29,7 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
 
 + (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *expressionKnob =
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Expression:"
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"String Value:"
                                                           type:iTermStatusBarComponentKnobTypeText
                                                    placeholder:@"String with \\(expressions)"
                                                   defaultValue:@""
