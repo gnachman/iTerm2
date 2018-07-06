@@ -115,12 +115,23 @@ static const CGFloat kButtonSize = 17;
     _statusBarViewController = statusBarViewController;
     if (statusBarViewController) {
         [self addSubview:statusBarViewController.view];
+    }
+    [self layoutStatusBar];
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    [self layoutStatusBar];
+}
+
+- (void)layoutStatusBar {
+    if (_statusBarViewController) {
         const CGFloat margin = 5;
         const CGFloat minX = NSMaxX(closeButton_.frame) + margin;
-        statusBarViewController.view.frame = NSMakeRect(minX,
-                                                        0,
-                                                        NSMinX(menuButton_.frame) - margin - minX,
-                                                        self.frame.size.height);
+        _statusBarViewController.view.frame = NSMakeRect(minX,
+                                                         0,
+                                                         NSMinX(menuButton_.frame) - margin - minX,
+                                                         self.frame.size.height);
         label_.hidden = YES;
     } else {
         // You can have either a label or a status bar but not both.

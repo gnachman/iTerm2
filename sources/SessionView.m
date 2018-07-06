@@ -848,6 +848,9 @@ static NSDate* lastResizeDate_;
                                     aRect.size.height - kTitleHeight,
                                     aRect.size.width,
                                     kTitleHeight)];
+        NSViewController *viewController = [self.delegate sessionViewStatusBarViewController];
+        
+        [[viewController view] setNeedsLayout:YES];
     }
     [self updateScrollViewFrame];
     [self updateFindViewFrame];

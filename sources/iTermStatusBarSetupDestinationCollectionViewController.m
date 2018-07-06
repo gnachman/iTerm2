@@ -330,13 +330,17 @@ viewForSupplementaryElementOfKind:(NSCollectionViewSupplementaryElementKind)kind
         return;
     }
     
-    NSViewController *viewController = [self viewControllerToConfigureComponent:component];
+    iTermStatusBarSetupKnobsViewController *viewController = [self viewControllerToConfigureComponent:component];
+    viewController.view.frame = NSMakeRect(0, 0, viewController.preferredContentSize.width, viewController.preferredContentSize.height);
     iTermStatusBarSetupConfigureComponentWindowController *windowController =
     [[iTermStatusBarSetupConfigureComponentWindowController alloc] initWithWindowNibName:@"iTermStatusBarSetupConfigureComponentWindowController"];
     [windowController window];
     [windowController setKnobsViewController:viewController];
     [self.view.window beginSheet:windowController.window completionHandler:^(NSModalResponse returnCode) {
         self->_configureButton.enabled = NO;
+        if (returnCode == NSModalResponseOK) {
+            [component statusBarComponentSetKnobValues:viewController.knobValues];
+        }
         [windowController description];  // Hold on to the window controller
     }];
 }

@@ -34,7 +34,7 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
                                                    placeholder:@"String with \\(expressions)"
                                                   defaultValue:@""
                                                            key:iTermStatusBarSwiftyStringComponentExpressionKey];
-    return @[ expressionKnob ];
+    return [@[ expressionKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
 }
 
 - (id)statusBarComponentExemplar {

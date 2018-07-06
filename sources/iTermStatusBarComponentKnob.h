@@ -12,6 +12,7 @@ typedef NS_ENUM(NSUInteger, iTermStatusBarComponentKnobType) {
     iTermStatusBarComponentKnobTypeCheckbox,
     iTermStatusBarComponentKnobTypeText,
     iTermStatusBarComponentKnobTypeDouble,
+    iTermStatusBarComponentKnobTypeColor
 };
 
 NS_ASSUME_NONNULL_BEGIN

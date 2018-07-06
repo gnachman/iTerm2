@@ -11,6 +11,17 @@
 
 @end
 
+@interface iTermStatusBarSetupConfigureComponentContainerView : NSView
+@end
+
+@implementation iTermStatusBarSetupConfigureComponentContainerView
+
+- (NSSize)intrinsicContentSize {
+    return self.subviews.firstObject.frame.size;
+}
+
+@end
+
 @implementation iTermStatusBarSetupConfigureComponentWindowController {
     IBOutlet NSView *_knobsView;
     NSViewController *_knobsViewController;
@@ -20,16 +31,9 @@
     _knobsViewController = viewController;
     [self.window.contentViewController addChildViewController:viewController];
     NSView *view = _knobsViewController.view;
+    [_knobsView setFrameSize:view.frame.size];
     [_knobsView addSubview:view];
-    [_knobsView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-0-[view]-0-|"
-                                                                       options:0
-                                                                       metrics:nil
-                                                                         views:@{ @"view": view }]];
-    [_knobsView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-0-[view]-0-|"
-                                                                       options:0
-                                                                       metrics:nil
-                                                                         views:@{ @"view": view }]];
-
+    [_knobsView invalidateIntrinsicContentSize];
 }
 
 - (IBAction)ok:(id)sender {
