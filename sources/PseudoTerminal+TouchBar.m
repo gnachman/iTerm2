@@ -200,7 +200,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
     NSScrollView *scrollView = [[[NSScrollView alloc] init] autorelease];
     NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:iTermTouchBarFunctionKeysScrollView] autorelease];
     item.view = scrollView;
-    NSView *documentView = [[NSView alloc] init];
+    NSView *documentView = [[[NSView alloc] init] autorelease];
     documentView.translatesAutoresizingMaskIntoConstraints = NO;
     scrollView.documentView = documentView;
     NSButton *previous = nil;
