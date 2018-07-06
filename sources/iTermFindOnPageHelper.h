@@ -7,7 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "FindViewController.h"
+#import "iTermFindDriver.h"
 #import "VT100GridTypes.h"
 
 @class FindContext;

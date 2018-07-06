@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "FindViewController.h"
+#import "iTermFindDriver.h"
 
 typedef NS_OPTIONS(NSUInteger, FindOptions) {
     FindOptBackwards        = (1 << 0),

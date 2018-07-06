@@ -5,6 +5,8 @@
 #import "FutureMethods.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
+#import "iTermDropDownFindViewController.h"
+#import "iTermFindDriver.h"
 #import "iTermMetalClipView.h"
 #import "iTermMetalDeviceProvider.h"
 #import "iTermPreferences.h"
@@ -69,9 +71,6 @@ static NSDate* lastResizeDate_;
     BOOL _dim;
     BOOL _backgroundDimmed;
 
-    // Find window
-    FindViewController *_findView;
-
     // Saved size for unmaximizing.
     NSSize _savedSize;
 
@@ -113,12 +112,14 @@ static NSDate* lastResizeDate_;
         _announcements = [[NSMutableArray alloc] init];
 
         // Set up find view
-        _findView = [[FindViewController alloc] initWithNibName:@"FindView" bundle:nil];
-        [[_findView view] setHidden:YES];
-        [self addSubview:[_findView view]];
+        iTermDropDownFindViewController *dropDownViewController =
+            [[iTermDropDownFindViewController alloc] initWithNibName:@"FindView" bundle:nil];
+        _findDriver = [[iTermFindDriver alloc] initWithViewController:dropDownViewController];
+        [[dropDownViewController view] setHidden:YES];
+        [self addSubview:dropDownViewController.view];
         NSRect aRect = [self frame];
-        [_findView setFrameOrigin:NSMakePoint(aRect.size.width - [[_findView view] frame].size.width - 30,
-                                                     aRect.size.height - [[_findView view] frame].size.height)];
+        [dropDownViewController setFrameOrigin:NSMakePoint(aRect.size.width - [[dropDownViewController view] frame].size.width - 30,
+                                                           aRect.size.height - [[dropDownViewController view] frame].size.height)];
 
         // Assign a globally unique view ID.
         _viewId = nextViewId++;
@@ -280,8 +281,8 @@ static NSDate* lastResizeDate_;
 - (void)addSubview:(NSView *)aView {
     BOOL wasRunning = _inAddSubview;
     _inAddSubview = YES;
-    if (!wasRunning && _findView && aView != [_findView view]) {
-        [super addSubview:aView positioned:NSWindowBelow relativeTo:[_findView view]];
+    if (!wasRunning && _findDriver && aView != [_findDriver.viewController view]) {
+        [super addSubview:aView positioned:NSWindowBelow relativeTo:[_findDriver.viewController view]];
     } else {
         [super addSubview:aView];
     }
@@ -502,27 +503,24 @@ static NSDate* lastResizeDate_;
     --inme;
 }
 
-- (FindViewController*)findViewController {
-    return _findView;
-}
-
 - (void)setFrameSize:(NSSize)frameSize {
     [self updateAnnouncementFrame];
     [super setFrameSize:frameSize];
+    NSView *findView = _findDriver.viewController.view;
     if (frameSize.width < 340) {
-        [[_findView view] setFrameSize:NSMakeSize(MAX(150, frameSize.width - 50),
-                                                  [[_findView view] frame].size.height)];
-        [_findView setFrameOrigin:NSMakePoint(frameSize.width - [[_findView view] frame].size.width - 30,
-                                              frameSize.height - [[_findView view] frame].size.height)];
+        [findView setFrameSize:NSMakeSize(MAX(150, frameSize.width - 50),
+                                          [findView frame].size.height)];
+        [_findDriver.viewController setFrameOrigin:NSMakePoint(frameSize.width - [findView frame].size.width - 30,
+                                                               frameSize.height - [findView frame].size.height)];
     } else {
-        [[_findView view] setFrameSize:NSMakeSize(290,
-                                                  [[_findView view] frame].size.height)];
-        [_findView setFrameOrigin:NSMakePoint(frameSize.width - [[_findView view] frame].size.width - 30,
-                                              frameSize.height - [[_findView view] frame].size.height)];
+        [findView setFrameSize:NSMakeSize(290,
+                                          [findView frame].size.height)];
+        [_findDriver.viewController setFrameOrigin:NSMakePoint(frameSize.width - [findView frame].size.width - 30,
+                                                               frameSize.height - [findView frame].size.height)];
     }
 }
 
-+ (NSDate*)lastResizeDate {
++ (NSDate *)lastResizeDate {
     return lastResizeDate_;
 }
 
@@ -857,8 +855,9 @@ static NSDate* lastResizeDate_;
 
 - (void)updateFindViewFrame {
     NSRect aRect = self.frame;
-    [_findView setFrameOrigin:NSMakePoint(aRect.size.width - [[_findView view] frame].size.width - 30,
-                                          aRect.size.height - [[_findView view] frame].size.height)];
+    NSView *findView = _findDriver.viewController.view;
+    [_findDriver.viewController setFrameOrigin:NSMakePoint(aRect.size.width - [findView frame].size.width - 30,
+                                                           aRect.size.height - [findView frame].size.height)];
 }
 
 - (void)updateScrollViewFrame {

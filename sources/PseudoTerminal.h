@@ -2,6 +2,7 @@
 
 #import "Autocomplete.h"
 #import "FutureMethods.h"
+#import "iTermController.h"
 #import "iTermInstantReplayWindowController.h"
 #import "iTermPopupWindowController.h"
 #import "iTermToolbeltView.h"

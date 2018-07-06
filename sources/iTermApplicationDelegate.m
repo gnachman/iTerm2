@@ -69,8 +69,6 @@
 #import "iTermRemotePreferences.h"
 #import "iTermRestorableSession.h"
 #import "iTermScriptsMenuController.h"
-#warning DNS
-#import "iTermStatusBarSetupViewController.h"
 #import "iTermSystemVersion.h"
 #import "iTermTipController.h"
 #import "iTermTipWindowController.h"

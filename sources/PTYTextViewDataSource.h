@@ -1,6 +1,6 @@
 // DataSource for PTYTextView.
 #import "iTermCursor.h"
-#import "FindViewController.h"
+#import "iTermFindDriver.h"
 #import "ScreenChar.h"
 #import "LineBuffer.h"
 #import "VT100GridTypes.h"
