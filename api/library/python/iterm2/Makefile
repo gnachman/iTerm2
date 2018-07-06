@@ -1,4 +1,4 @@
-PYTHON=python3.6
+PYTHON=python3
 
 install-local: force
 	${PYTHON} setup.py install
@@ -28,7 +28,7 @@ docs: force
 force:
 
 upload: force
-	rm dist/*
+	rm -f dist/*
 	${PYTHON} setup.py bdist_wheel
 	${PYTHON} setup.py sdist
 	twine upload dist/*
