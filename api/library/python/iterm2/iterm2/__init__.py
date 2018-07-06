@@ -17,7 +17,7 @@ from iterm2.tmux import TmuxException, TmuxConnection, async_get_tmux_connection
 
 from iterm2.tool import async_register_web_view_tool
 
-from iterm2.util import frame_str, size_str, Size
+from iterm2.util import frame_str, size_str, Size, Point, Frame
 
 from iterm2.window import CreateTabException, SetPropertyException, GetPropertyException, SavedArrangementException, Window
 
