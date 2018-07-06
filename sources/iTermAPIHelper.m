@@ -1432,6 +1432,7 @@ static id sAPIHelperInstance;
             }
             response.status = [self setPropertyInWindow:term name:request.name value:value];
             handler(response);
+            return;
         }
 
         case ITMSetPropertyRequest_Identifier_OneOfCase_SessionId: {
