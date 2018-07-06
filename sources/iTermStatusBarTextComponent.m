@@ -8,14 +8,34 @@
 #import "iTermStatusBarTextComponent.h"
 
 #import "iTermStatusBarSetupKnobsViewController.h"
+#import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
+static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text color";
+
 @implementation iTermStatusBarTextComponent {
     NSTextField *_textField;
     NSTextField *_measuringField;
+}
+
++ (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+    iTermStatusBarComponentKnob *textColorKnob =
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Text Color"
+                                                          type:iTermStatusBarComponentKnobTypeColor
+                                                   placeholder:nil
+                                                  defaultValue:[[NSColor blackColor] dictionaryValue]
+                                                           key:iTermStatusBarTextComponentTextColorKey];
+    iTermStatusBarComponentKnob *backgroundColorKnob =
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Background Color"
+                                                          type:iTermStatusBarComponentKnobTypeColor
+                                                   placeholder:nil
+                                                  defaultValue:[[NSColor clearColor] dictionaryValue]
+                                                           key:iTermStatusBarSharedBackgroundColorKey];
+
+    return @[ textColorKnob, backgroundColorKnob ];
 }
 
 - (NSTextField *)newTextField {
@@ -24,9 +44,24 @@ NS_ASSUME_NONNULL_BEGIN
     textField.bordered = NO;
     textField.editable = NO;
     textField.selectable = NO;
-    textField.lineBreakMode = NSLineBreakByTruncatingTail;  
+    textField.lineBreakMode = NSLineBreakByTruncatingTail;
+    
+    textField.textColor = self.textColor;
+    textField.backgroundColor = self.backgroundColor;
+    textField.drawsBackground = (self.backgroundColor.alphaComponent > 0);
+
     [self setValueInField:textField];
     return textField;
+}
+
+- (NSColor *)textColor {
+    NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    return [knobValues[iTermStatusBarTextComponentTextColorKey] colorValue];
+}
+
+- (NSColor *)backgroundColor {
+    NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue];
 }
 
 - (void)setValueInField:(NSTextField *)textField {
@@ -35,7 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
     } else if (self.stringValue) {
         textField.stringValue = self.stringValue;
         textField.alignment = NSLeftTextAlignment;
-        textField.textColor = [NSColor textColor];
+        textField.textColor = self.textColor;
     }
     [textField sizeToFit];
 }

@@ -8,6 +8,7 @@
 #import "iTermStatusBarSetupKnobsViewController.h"
 
 #import "iTermStatusBarKnobCheckboxViewController.h"
+#import "iTermStatusBarKnobColorViewController.h"
 #import "iTermStatusBarKnobNumericViewController.h"
 #import "iTermStatusBarKnobTextViewController.h"
 #import "NSArray+iTerm.h"
@@ -29,6 +30,9 @@ static NSViewController<iTermStatusBarKnobViewController> *iTermNewViewControlle
         case iTermStatusBarComponentKnobTypeDouble:
             return [[iTermStatusBarKnobNumericViewController alloc] init];
 
+        case iTermStatusBarComponentKnobTypeColor:
+            return [[iTermStatusBarKnobColorViewController alloc] init];
+            
         default:
             return nil;
     }
@@ -50,6 +54,7 @@ static NSViewController<iTermStatusBarKnobViewController> *iTermNewViewControlle
         [_knobs enumerateObjectsUsingBlock:^(iTermStatusBarComponentKnob * _Nonnull knob, NSUInteger idx, BOOL * _Nonnull stop) {
             knob.value = knobValues[knob.key] ?: knob.value;
         }];
+        self->_size.height = iTermStatusBarSetupPopoverMargin * 2;;
         _viewControllers = [_knobs mapWithBlock:^id(iTermStatusBarComponentKnob *knob) {
             NSViewController<iTermStatusBarKnobViewController> *vc = iTermNewViewControllerForKnob(knob);
             [self addChildViewController:vc];
@@ -57,13 +62,15 @@ static NSViewController<iTermStatusBarKnobViewController> *iTermNewViewControlle
             [vc setDescription:knob.labelText placeholder:knob.placeholder];
             vc.value = knob.value;
             self->_size.width = MAX(self->_size.width, vc.view.frame.size.width);
-            self->_size.height = MAX(self->_size.height, vc.view.frame.size.height);
+            self->_size.height += vc.view.frame.size.height;
             self->_maxControlOffset = MAX(self->_maxControlOffset, vc.controlOffset);
             return vc;
         }];
     }
     _size.width += iTermStatusBarSetupPopoverMargin * 2;
-    _size.height += iTermStatusBarSetupPopoverMargin * 2;
+    if (_viewControllers.count >= 1) {
+        _size.height += 5 * (_viewControllers.count - 1);
+    }
 
     return self;
 }
