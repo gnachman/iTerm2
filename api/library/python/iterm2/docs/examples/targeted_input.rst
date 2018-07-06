@@ -28,6 +28,7 @@ created, run the following command (supposing you named it **TargetedInput**;
 if it has a different name, modify the path below appropriately):
 
 .. code-block:: bash
+
     ~/Library/ApplicationSupport/iTerm2/Scripts/TargetedInput/iterm2env/versions/*/bin/pip3 install aiohttp
 
 Then, replace `main.py` with:

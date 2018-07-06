@@ -5,15 +5,23 @@ class Size:
   """Describes a 2D size.
 
   Can be used where api_pb2.Size is accepted."""
-  
+
   def __init__(self, width, height):
     """Constructs a new size.
-        
+
     :param width: A nonnegative number giving the width.
     :param height: A nonnegative number giving the height.
     """
-    self.width = width
-    self.height = height
+    self.__width = width
+    self.__height = height
+
+  @property
+  def width(self):
+    return self.__width
+
+  @property
+  def height(self):
+    return self.__height
 
   @property
   def dict(self):
@@ -21,7 +29,7 @@ class Size:
     Returns a dict representation of the size.
     """
     return {"width": self.width, "height": self.height}
-  
+
   def load_from_dict(self, dict):
     """
     Initializes the size from a dict representation.
@@ -40,26 +48,34 @@ class Point:
   """Describes a 2D coordinate.
 
   Can be used where api_pb2.Point is accepted."""
-  
+
   def __init__(self, x, y):
     """Constructs a new point.
-        
+
     :param x: A number giving the X coordinate.
     :param y: A number giving the Y coordinate.
     """
-    self.x = x
-    self.y = y
+    self.__x = x
+    self.__y = y
+
+  @property
+  def x(self):
+    return self.__x
+
+  @property
+  def y(self):
+    return self.__y
 
   @property
   def dict(self):
     """Returns a dict representation of the point."""
     return {"x": self.x, "y": self.y}
-  
+
   def load_from_dict(self, dict):
       """Initializes the point from a dict representation."""
       self.x = dict["x"]
       self.y = dict["y"]
-  
+
   @property
   def json(self):
     """Returns a JSON representation of the point."""
@@ -69,19 +85,27 @@ class Frame:
   """Describes a bounding rectangle. 0,0 is the bottom left coordinate."""
   def __init__(self, origin=Point(0, 0), size=Size(0, 0)):
     """Constructs a new frame."""
-    self.origin = origin
-    self.size = size
+    self.__origin = origin
+    self.__size = size
+
+  @property
+  def origin(self):
+    return self.__origin
+
+  @property
+  def size(self):
+    return self.__size
 
   def load_from_dict(self, dict):
     """Sets the frame's values from a dict representation."""
     self.origin.load_from_dict(dict["origin"])
     self.size.load_from_dict(dict["size"])
-  
+
   @property
   def dict(self):
     """Returns a dict representation of the frame."""
     return {"origin": self.origin.dict, "size": self.size.dict}
-  
+
   @property
   def json(self):
     """Returns a JSON representation of the frame."""
@@ -104,7 +128,7 @@ def frame_str(frame):
 def size_str(size):
     """Formats an api_pb2.Size or :class:`Size` as a human-readable string.
 
-    :param frame: An api_pb2.Size or :class:`Size:
+    :param frame: An api_pb2.Size or :class:`Size`:
 
     :returns: A human-readable string."""
     if size is None:
@@ -115,9 +139,9 @@ def size_str(size):
 
 def point_str(point):
     """Formats an api_pb2.Point or :class:`Point` as a human-readable string.
-        
+
         :param frame: An api_pb2.Point or :class:`Point`
-        
+
         :returns: A human-readable string."""
     if point is None:
         return "[Undefined]"
