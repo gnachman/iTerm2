@@ -227,6 +227,8 @@ static NSDate* lastResizeDate_;
         _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                              device:MTLCreateSystemDefaultDevice()];
     }
+    _metalView.colorspace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    
     // There was a spike in crashes on 5/1. I'm removing this temporarily to see if it was the cause.
 #if ENABLE_LOW_POWER_GPU_DETECTION
                                          device:[[iTermMetalDeviceProvider sharedInstance] preferredDevice]];
