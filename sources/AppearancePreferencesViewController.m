@@ -132,12 +132,14 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                            key:kPreferenceKeyHideMenuBarInFullscreen
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
-
+    _hideMenuBarInFullscreen.enabled = ![self boolForKey:kPreferenceKeyUIElement];
+    
     info = [self defineControl:_uiElement
                            key:kPreferenceKeyUIElement
                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
         BOOL isOn = [sender state] == NSOnState;
+        BOOL didChange = NO;
         if (isOn) {
             iTermWarningSelection selection =
                 [iTermWarning showWarningWithTitle:@"When iTerm2 is excluded from the dock, you can "
@@ -149,9 +151,21 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                                        silenceable:kiTermWarningTypePersistent];
             if (selection == kiTermWarningSelection0) {
                 [weakSelf setBool:YES forKey:kPreferenceKeyUIElement];
+                [weakSelf setBool:NO forKey:kPreferenceKeyHideMenuBarInFullscreen];
+                didChange = YES;
             }
         } else {
+            didChange = YES;
             [weakSelf setBool:NO forKey:kPreferenceKeyUIElement];
+        }
+        if (didChange) {
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                strongSelf->_hideMenuBarInFullscreen.enabled = !isOn;
+                if (isOn) {
+                    strongSelf->_hideMenuBarInFullscreen.state = NSOffState;
+                }
+            }
         }
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessTypeDidChangeNotification
                                                             object:nil];
