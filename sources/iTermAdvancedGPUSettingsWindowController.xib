@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14113" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14109" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14109"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -17,7 +17,7 @@
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="lYj-Ug-93d">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="131" y="158" width="390" height="135"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="877"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1418"/>
             <view key="contentView" id="Zm4-XI-Uft">
                 <rect key="frame" x="0.0" y="0.0" width="390" height="135"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -89,6 +89,7 @@ Gw
                 <outlet property="disableWhenDisconnected" destination="tDk-ce-oAK" id="0fn-Zw-PJM"/>
                 <outlet property="maximizeThroughput" destination="vbb-Yh-2Ul" id="hzH-OH-F1Y"/>
                 <outlet property="preferIntegratedGPU" destination="k3k-2P-4l2" id="tl4-Sp-s7P"/>
+                <outlet property="view" destination="Zm4-XI-Uft" id="k4k-2g-O9V"/>
             </connections>
         </customObject>
     </objects>
