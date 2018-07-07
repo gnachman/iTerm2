@@ -1470,15 +1470,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
-- (void)removeSession:(PTYSession*)aSession {
-    SessionView *theView = [[[aSession view] retain] autorelease];
-
-    if (idMap_) {
-        [self unmaximize];
-    }
-    PtyLog(@"PTYTab removeSession:%p", aSession);
-    // Grab the nearest neighbor (arbitrarily, the subview before if there is on or after if not)
-    // to make its earliest descendent that is a session active.
+- (SessionView *)nearestNeighborOfSession:(PTYSession *)aSession {
     NSSplitView *parentSplit = (NSSplitView*)[[aSession view] superview];
     NSView *nearestNeighbor;
     if ([[parentSplit subviews] count] > 1) {
@@ -1499,12 +1491,25 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         // The window is about to close.
         nearestNeighbor = nil;
     }
+    return (SessionView *)nearestNeighbor;
+}
+
+- (void)removeSession:(PTYSession*)aSession {
+    SessionView *theView = aSession.view;
+
+    if (idMap_) {
+        [self unmaximize];
+    }
+    PtyLog(@"PTYTab removeSession:%p", aSession);
+    // Grab the nearest neighbor (arbitrarily, the subview before if there is on or after if not)
+    // to make its earliest descendent that is a session active.
+    SessionView *nearestNeighbor = [self nearestNeighborOfSession:aSession];
 
     // Remove the session.
     [self _recursiveRemoveView:[aSession view]];
 
     if (aSession == activeSession_) {
-        [self setActiveSession:[self sessionForSessionView:(SessionView*)nearestNeighbor]];
+        [self setActiveSession:[self sessionForSessionView:nearestNeighbor]];
     }
 
     [self recheckBlur];
@@ -3313,6 +3318,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)replaceViewHierarchyWithParseTree:(NSMutableDictionary *)parseTree
                            tmuxController:(TmuxController *)tmuxController {
+    SessionView *nearestNeighbor = [self nearestNeighborOfSession:self.activeSession];
+
     NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
     parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
     [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
@@ -3363,7 +3370,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (!activeSession) {
         NSArray *sessions = [self sessions];
         if ([sessions count]) {
-            [self setActiveSession:[sessions objectAtIndex:0]];
+            PTYSession *session = nil;
+            if (nearestNeighbor) {
+                session = [self sessionForSessionView:nearestNeighbor];
+            }
+            if (!session) {
+                session = sessions.firstObject;
+            }
+            [self setActiveSession:session];
         }
     }
 
