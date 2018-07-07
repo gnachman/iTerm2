@@ -28,6 +28,12 @@
     return self;
 }
 
+- (void)dealloc {
+
+    [_appHotKey release];
+    [super dealloc];
+}
+
 - (void)invalidate {
     if (self.appHotKey) {
         [[iTermHotKeyController sharedInstance] removeHotKey:self.appHotKey];

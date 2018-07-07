@@ -761,7 +761,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_screen release];
     [_terminal release];
     [_tailFindContext release];
-    _currentMarkOrNotePosition = nil;
     [_lastMark release];
     [_patternedImage release];
     [_announcements release];
@@ -804,6 +803,12 @@ ITERM_WEAKLY_REFERENCEABLE
         [_dvr releaseDecoder:_dvrDecoder];
         [_dvr release];
     }
+
+    [_cursorGuideColor release];
+    [_lastDirectory release];
+    [_lastRemoteHost release];
+    [_textview release];  // I'm not sure it's ever nonnil here
+    [_currentMarkOrNotePosition release];
 
     [super dealloc];
 }
@@ -1635,7 +1640,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [_wrapper addSubview:_textview];
     [_textview setFrame:NSMakeRect(0, [iTermAdvancedSettingsModel terminalVMargin], aSize.width, aSize.height - [iTermAdvancedSettingsModel terminalVMargin])];
-    [_textview release];
 
     // assign terminal and task objects
     _terminal.delegate = _screen;
@@ -2228,7 +2232,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
-    _textview = nil;
+    self.textview = nil;
     if (@available(macOS 10.11, *)) {
         _metalGlue.textView = nil;
     }
@@ -8518,7 +8522,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)injectData:(NSData *)data {
-    VT100Parser *parser = [[VT100Parser alloc] init];
+    VT100Parser *parser = [[[VT100Parser alloc] init] autorelease];
     parser.encoding = self.terminal.encoding;
     [parser putStreamData:data.bytes length:data.length];
     CVector vector;
@@ -9341,7 +9345,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     iTermKeyLabels *labels = [[[iTermKeyLabels alloc] init] autorelease];
     labels.name = value;
-    labels.map = _keyLabels;
+    labels.map = [_keyLabels.mutableCopy autorelease];
     [_keyLabelsStack addObject:labels];
 
     if (![value hasPrefix:@"."]) {
@@ -9554,8 +9558,8 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermSavedProfile *savedProfile = [[[iTermSavedProfile alloc] init] autorelease];
     savedProfile.profile = _profile;
     savedProfile.originalProfile = _originalProfile;
-    savedProfile.isDivorced = _isDivorced;
-    savedProfile.overriddenFields = _overriddenFields;
+    savedProfile.isDivorced = self.isDivorced;
+    savedProfile.overriddenFields = [[_overriddenFields mutableCopy] autorelease];
     return savedProfile;
 }
 
@@ -9940,7 +9944,7 @@ ITERM_WEAKLY_REFERENCEABLE
     cpps.repeats = 0;
     int o = 0;
     for (int i = 0; i < length; ++i) {
-        int numCodePoints = cpps.numCodePoints;
+        int numCodePoints;
 
         unichar c = screenChars[i].code;
         if (!screenChars[i].complexChar && c >= ITERM2_PRIVATE_BEGIN && c <= ITERM2_PRIVATE_END) {
@@ -10033,7 +10037,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     response.numLinesAboveScreen = _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
 
-    response.cursor = [[ITMCoord alloc] init];
+    response.cursor = [[[ITMCoord alloc] init] autorelease];
     response.cursor.x = _screen.currentGrid.cursor.x;
     response.cursor.y = _screen.currentGrid.cursor.y + response.numLinesAboveScreen;
 
@@ -10079,7 +10083,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
                                             connectionKey:(NSString *)connectionKey {
-    ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
+    ITMNotificationResponse *response = [[[ITMNotificationResponse alloc] init] autorelease];
     if (!request.hasSubscribe) {
         response.status = ITMNotificationResponse_Status_RequestMalformed;
         return response;

@@ -67,6 +67,8 @@ static NSError *SCPFileError(NSString *description) {
     [_homeDirectory release];
     [_userName release];
     [_hostName release];
+    [_localPath release];
+    [_path release];
     [super dealloc];
 }
 

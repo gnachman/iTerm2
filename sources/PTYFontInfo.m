@@ -131,6 +131,7 @@
     [font_ release];
     [boldVersion_ release];
     [italicVersion_ release];
+    [_boldItalicVersion release];
     [super dealloc];
 }
 
@@ -157,8 +158,8 @@
 
 - (CGFloat)computedBaselineOffset {
     if ([iTermAdvancedSettingsModel useExperimentalFontMetrics]) {
-        NSTextContainer *textContainer = [FontSizeEstimator newTextContainer];
-        NSLayoutManager *layoutManager = [FontSizeEstimator newLayoutManagerForFont:font_ textContainer:textContainer];
+        NSTextContainer *textContainer = [FontSizeEstimator textContainer];
+        NSLayoutManager *layoutManager = [FontSizeEstimator layoutManagerForFont:font_ textContainer:textContainer];
         CGFloat lineHeight = [layoutManager usedRectForTextContainer:textContainer].size.height;
         CGFloat baselineOffsetFromTop = [layoutManager defaultBaselineOffsetForFont:font_];
         return -floorf(lineHeight - baselineOffsetFromTop);
@@ -175,7 +176,8 @@
     NSDictionary *attributes = @{ NSFontNameAttribute: font_,
                                   NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle) };
     NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:@"M" attributes:attributes] autorelease];
-    NSTextStorage *textStorage = [[NSTextStorage alloc] initWithAttributedString:attributedString];
+#warning TODO: Test this - i added autorelease
+    NSTextStorage *textStorage = [[[NSTextStorage alloc] initWithAttributedString:attributedString] autorelease];
     [textStorage addLayoutManager:layoutManager];
 
     NSUInteger glyphIndex = [layoutManager glyphIndexForCharacterAtIndex:0];

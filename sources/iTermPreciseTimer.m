@@ -354,7 +354,7 @@ void iTermPreciseTimerLogOneEvent(NSString *identifier,
             }
             NSTimeInterval ms = stats[i].n * iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0;
             NSString *emoji = iTermEmojiForDuration(ms);
-            [name appendString:[[NSString alloc] initWithBytes:cname length:length encoding:NSUTF8StringEncoding]];
+            [name appendString:[[[NSString alloc] initWithBytes:cname length:length encoding:NSUTF8StringEncoding] autorelease]];
             NSString *other = @"";
             if (stats[i].n > 1) {
                 int count = iTermPreciseTimerStatsGetCount(&stats[i]);

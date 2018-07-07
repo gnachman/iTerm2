@@ -63,8 +63,8 @@ NS_ASSUME_NONNULL_BEGIN
     _tiled = tiled;
 }
 
-- (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
-           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundImageRendererTransientState *tState = transientState;
     [self loadVertexBuffer:tState];
     [_metalRenderer drawWithTransientState:tState
@@ -76,8 +76,8 @@ NS_ASSUME_NONNULL_BEGIN
                                   textures:@{ @(iTermTextureIndexPrimary): tState.texture }];
 }
 
-- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
-                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                                                                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     if (_image == nil) {
         return nil;
     }

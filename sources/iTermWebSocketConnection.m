@@ -81,11 +81,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
     NSString *host = headers[@"host"];
     NSInteger colon = [host rangeOfString:@":" options:NSBackwardsSearch].location;
-    NSInteger port;
-    if (colon == NSNotFound) {
-        port = 80;
-    } else {
-        port = [[host substringFromIndex:colon + 1] integerValue];
+    if (colon != NSNotFound) {
         host = [host substringToIndex:colon];
     }
     NSArray<NSString *> *loopbackNames = @[ @"localhost", @"127.0.0.1", @"[::1]" ];
@@ -214,8 +210,9 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                      frame:^(iTermWebSocketFrame *frame, BOOL *stop) {
                          if (!stop) {
                              [weakSelf reallyAbort];
+                         } else {
+                             *stop = [weakSelf didReceiveFrame:frame];
                          }
-                         *stop = [weakSelf didReceiveFrame:frame];
                      }];
     return _state != iTermWebSocketConnectionStateClosed;
 }

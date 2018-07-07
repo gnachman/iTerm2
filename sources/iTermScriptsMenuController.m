@@ -463,8 +463,8 @@ NS_ASSUME_NONNULL_BEGIN
     return accessoryView;
 }
 
-- (NSURL *)runSavePanelForNewScriptWithPicker:(iTermScriptTemplatePickerWindowController *)picker
-                                 dependencies:(out NSArray<NSString *> **)dependencies {
+- (nullable NSURL *)runSavePanelForNewScriptWithPicker:(iTermScriptTemplatePickerWindowController *)picker
+                                          dependencies:(out NSArray<NSString *> **)dependencies {
     NSSavePanel *savePanel = [NSSavePanel savePanel];
     savePanel.delegate = self;
     NSTokenField *tokenField = nil;

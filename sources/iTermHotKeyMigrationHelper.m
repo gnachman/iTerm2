@@ -108,16 +108,13 @@
 
     iTermWarningSelection update = kItermWarningSelectionError;
     iTermWarningSelection show = kItermWarningSelectionError;
-    iTermWarningSelection remove = kItermWarningSelectionError;
 
     if (replacementFile) {
         update = kiTermWarningSelection0;
         show = kiTermWarningSelection1;
-        remove = kiTermWarningSelection2;
         actions = @[ @"Update File", @"Show Me What to Add", @"Remove Hotkey" ];
     } else {
         show = kiTermWarningSelection0;
-        remove = kiTermWarningSelection1;
         actions = @[ @"Show Me What to Add", @"Remove Hotkey" ];
     }
 

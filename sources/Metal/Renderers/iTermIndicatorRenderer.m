@@ -66,8 +66,8 @@ NS_ASSUME_NONNULL_BEGIN
     return NO;
 }
 
-- (nonnull __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(nonnull iTermRenderConfiguration *)configuration
-                                                                              commandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer {
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                                                                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     __kindof iTermMetalRendererTransientState * _Nonnull transientState =
         [_metalRenderer createTransientStateForConfiguration:configuration
                                                commandBuffer:commandBuffer];
@@ -83,8 +83,8 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermMetalFrameDataStatPqCreateIndicatorsTS;
 }
 
-- (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
-           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermIndicatorRendererTransientState *tState = transientState;
     [tState.indicatorDescriptors enumerateObjectsUsingBlock:^(iTermIndicatorDescriptor * _Nonnull descriptor, NSUInteger idx, BOOL * _Nonnull stop) {
         [self drawDescriptor:descriptor
@@ -95,7 +95,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)drawDescriptor:(iTermIndicatorDescriptor *)descriptor
      withRenderEncoder:(nonnull id<MTLRenderCommandEncoder>)renderEncoder
-        transientState:(nonnull __kindof iTermMetalRendererTransientState *)tState {
+        transientState:(__kindof iTermMetalRendererTransientState *)tState {
     id<MTLBuffer> vertexBuffer = [self vertexBufferForFrame:descriptor.frame
                                                       scale:tState.configuration.scale
                                                     context:tState.poolContext];

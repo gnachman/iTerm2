@@ -51,7 +51,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface iTermCopyModeCursorRendererTransientState()
-@property (nonatomic, strong) id<MTLTexture> texture;
+@property (nullable, nonatomic, strong) id<MTLTexture> texture;
 @property (nonatomic, weak) iTermCopyModeCursorRenderer *renderer;
 @property (nonatomic, readonly) CGSize size;
 @end
@@ -255,8 +255,8 @@ NS_ASSUME_NONNULL_BEGIN
            fragmentFunctionName:@"iTermCursorFragmentShader"];
 }
 
-- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
-                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                                                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     __kindof iTermMetalRendererTransientState * _Nonnull transientState =
         [_cellRenderer createTransientStateForCellConfiguration:configuration
                                               commandBuffer:commandBuffer];
@@ -268,7 +268,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
-           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+           transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermCursorRendererTransientState *tState = transientState;
 
     const CGFloat rowNumber = (tState.cellConfiguration.gridSize.height - tState.coord.y - 1);

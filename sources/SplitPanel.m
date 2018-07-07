@@ -52,9 +52,9 @@
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [guid_ release];
+    [parent_ release];
     [super dealloc];
 }
 

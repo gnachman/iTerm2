@@ -37,7 +37,7 @@
 }
 
 - (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
-           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+           transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermCopyRendererTransientState *tState = transientState;
     [_metalRenderer drawWithTransientState:tState
                              renderEncoder:frameData.renderEncoder
@@ -52,7 +52,7 @@
     return NO;
 }
 
-- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
                                                                                commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     if (!_enabled) {
         return nil;

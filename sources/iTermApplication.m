@@ -61,6 +61,7 @@ NSString *const iTermApplicationCharacterPaletteDidClose = @"iTermApplicationCha
 
 - (void)dealloc {
     [_fakeCurrentEvent release];
+    [_statusBarItem release];
     [super dealloc];
 }
 
@@ -405,7 +406,7 @@ NSString *const iTermApplicationCharacterPaletteDidClose = @"iTermApplicationCha
 
         if ([iTermAdvancedSettingsModel statusBarIcon]) {
             NSImage *image = [NSImage imageNamed:@"StatusItem"];
-            self.statusBarItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:image.size.width] retain];
+            self.statusBarItem = [[NSStatusBar systemStatusBar] statusItemWithLength:image.size.width];
             _statusBarItem.title = @"";
             _statusBarItem.image = image;
             _statusBarItem.alternateImage = [NSImage imageNamed:@"StatusItemAlt"];

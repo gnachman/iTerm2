@@ -84,10 +84,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo;
 
-- (NSDictionary<NSNumber *, iTermCharacterBitmap *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
-                                                                        size:(CGSize)size
-                                                                       scale:(CGFloat)scale
-                                                                       emoji:(BOOL *)emoji;
+- (nullable NSDictionary<NSNumber *, iTermCharacterBitmap *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
+                                                                                 size:(CGSize)size
+                                                                                scale:(CGFloat)scale
+                                                                                emoji:(BOOL *)emoji;
 
 // Returns the background image or nil. If there's a background image, fill in blending and tiled.
 - (NSImage *)metalBackgroundImageGetTiled:(nullable BOOL *)tiled;

@@ -311,7 +311,8 @@ ITERM_IGNORE_PARTIAL_BEGIN
     NSScrollView *scrollView = [[[NSScrollView alloc] init] autorelease];
     NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:iTermTouchBarIdentifierColorPresetScrollview] autorelease];
     item.view = scrollView;
-    NSView *documentView = [[NSView alloc] init];
+#warning TODO: Test this - I added autorelease to documentView
+    NSView *documentView = [[[NSView alloc] init] autorelease];
     documentView.translatesAutoresizingMaskIntoConstraints = NO;
     scrollView.documentView = documentView;
     [self addButtonsToColorPresetsDocumentView:documentView];
@@ -324,7 +325,8 @@ ITERM_IGNORE_PARTIAL_BEGIN
     if ([identifier isEqualToString:iTermTabBarTouchBarIdentifier]) {
         NSScrubber *scrubber;
         if (!self.tabsTouchBarItem) {
-            self.tabsTouchBarItem = [[NSCustomTouchBarItem alloc] initWithIdentifier:identifier];
+#warning TODO: Test this. I added autorelease
+            self.tabsTouchBarItem = [[[NSCustomTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
             self.tabsTouchBarItem.customizationLabel = @"Full Screen Tab Bar";
 
             scrubber = [[NSScrubber alloc] initWithFrame:NSMakeRect(0, 0, 320, 30)];
@@ -335,7 +337,8 @@ ITERM_IGNORE_PARTIAL_BEGIN
             [scrubber registerClass:[NSScrubberTextItemView class] forItemIdentifier:iTermTabBarItemTouchBarIdentifier];
 
             // Use the flow layout.
-            NSScrubberLayout *scrubberLayout = [[NSScrubberFlowLayout alloc] init];
+#warning TODO: Test autoreleas
+            NSScrubberLayout *scrubberLayout = [[[NSScrubberFlowLayout alloc] init] autorelease];
             scrubber.scrubberLayout = scrubberLayout;
 
             scrubber.mode = NSScrubberModeFree;
@@ -358,7 +361,8 @@ ITERM_IGNORE_PARTIAL_BEGIN
 
         return self.tabsTouchBarItem;
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierAutocomplete]) {
-        self.autocompleteCandidateListItem = [[NSCandidateListTouchBarItem alloc] initWithIdentifier:identifier];
+#warning TODO: Test this
+        self.autocompleteCandidateListItem = [[[NSCandidateListTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
         self.autocompleteCandidateListItem.delegate = self;
         self.autocompleteCandidateListItem.customizationLabel = @"Autocomplete Suggestions";
         NSAttributedString *(^commandUseToAttributedString)(NSString *commandUse,
@@ -394,7 +398,6 @@ ITERM_IGNORE_PARTIAL_BEGIN
         label = @"Previous Mark";
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierColorPreset]) {
         image = [NSImage imageNamed:NSImageNameTouchBarColorPickerFill];
-        selector = @selector(colorPresetTouchBarItemSelected:);
         NSPopoverTouchBarItem *item = [[[NSPopoverTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
         item.customizationLabel = @"Color Preset";
         item.showsCloseButton = YES;

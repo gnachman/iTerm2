@@ -49,6 +49,11 @@
     return e;
 }
 
+- (void)dealloc {
+    [_timestamp release];
+    [super dealloc];
+}
+
 @end
 
 @implementation PasteboardHistory {

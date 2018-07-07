@@ -2825,6 +2825,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             break;
 
         case kURLActionOpenURL: {
+            if (!urlAction.string) {
+                break;
+            }
             url = [NSURL URLWithUserSuppliedString:urlAction.string];
             if (url && [self showWebkitPopoverAtPoint:event.locationInWindow url:url]) {
                 return;
@@ -2844,7 +2847,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                        _lineHeight);
 
         NSRect screenRect = [self.window convertRectToScreen:windowRect];
-        self.quickLookController = [[iTermQuickLookController alloc] init];
+        self.quickLookController = [[[iTermQuickLookController alloc] init] autorelease];
         [self.quickLookController addURL:url];
         [self.quickLookController showWithSourceRect:screenRect controller:self.window.delegate];
     }
@@ -4789,7 +4792,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *escapedString = [mailto stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet characterSetWithCharactersInString:@"!*'();:@&=+$,/?%#[]"]];
 
     NSURL* url = [NSURL URLWithString:escapedString];
-    [escapedString release];
 
     [[NSWorkspace sharedWorkspace] openURL:url];
 }

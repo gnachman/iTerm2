@@ -108,7 +108,7 @@
 {
     [_eventDate release];
     _eventDate = nil;
-	
+    [_eventPath release];
     [super dealloc];
 }
 

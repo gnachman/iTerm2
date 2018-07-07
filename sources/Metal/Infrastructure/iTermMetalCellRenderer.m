@@ -113,8 +113,8 @@ NS_ASSUME_NONNULL_BEGIN
     return _transientStateClass;
 }
 
-- (__kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
-                                                                          commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                                                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     __kindof iTermMetalRendererTransientState *transientState =
     [super createTransientStateForConfiguration:configuration commandBuffer:commandBuffer];
 

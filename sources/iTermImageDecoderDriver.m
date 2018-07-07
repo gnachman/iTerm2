@@ -219,6 +219,8 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
         case -1:
             // error
             NSLog(@"Fork failed: %s", strerror(errno));
+            free(sandbox);
+            free(utf8Executable);
             return nil;
 
         case 0:

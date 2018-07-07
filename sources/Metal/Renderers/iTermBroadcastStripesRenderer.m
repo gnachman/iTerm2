@@ -53,7 +53,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
-           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+           transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermBroadcastStripesRendererTransientState *tState = transientState;
     [_metalRenderer drawWithTransientState:tState
                              renderEncoder:frameData.renderEncoder
@@ -64,7 +64,7 @@ NS_ASSUME_NONNULL_BEGIN
                                   textures:@{ @(iTermTextureIndexPrimary): tState.texture }];
 }
 
-- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
                                                                                commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     if (!_enabled) {
         return nil;

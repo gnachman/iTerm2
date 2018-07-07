@@ -50,11 +50,7 @@
 
         NSMutableArray<NSString *> *files = [NSMutableArray array];
         int over = 0;
-        BOOL haveDotfile = NO;
         for (NSString *file in [fileManager enumeratorAtPath:legacy]) {
-            if ([file hasPrefix:@"."]) {
-                haveDotfile = YES;
-            }
             if (files.count > 5) {
                 over++;
             } else {

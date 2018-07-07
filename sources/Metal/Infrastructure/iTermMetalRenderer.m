@@ -97,7 +97,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     iTermPreciseTimerStatsMeasureAndRecordTimer(stat);
 }
 
-- (iTermPreciseTimerStats *)stats {
+- (nullable iTermPreciseTimerStats *)stats {
     return NULL;
 }
 
@@ -250,8 +250,8 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
 #pragma mark - Protocol Methods
 
-- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
-                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                                                                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     iTermMetalRendererTransientState *tState = [[self.transientStateClass alloc] initWithConfiguration:configuration];
     tState.pipelineState = [self pipelineState];
     return tState;
@@ -344,7 +344,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     return pipeline;
 }
 
-- (id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context {
+- (nullable id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context {
     return [self textureFromImage:image context:context pool:nil];
 }
 
@@ -368,7 +368,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     }
 }
 
-- (id<MTLTexture>)textureFromImage:(NSImage *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
+- (nullable id<MTLTexture>)textureFromImage:(NSImage *)image context:(iTermMetalBufferPoolContext *)context pool:(iTermTexturePool *)pool {
     if (!image) {
         return nil;
     }
@@ -454,7 +454,7 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     [renderEncoder setRenderPipelineState:tState.pipelineState];
 
     // Add viewport size to vertex buffers
-    NSDictionary<NSNumber *, id<MTLBuffer>> *vertexBuffers = clientVertexBuffers ?: @{};
+    NSDictionary<NSNumber *, id<MTLBuffer>> *vertexBuffers;
     vertexBuffers =
         [clientVertexBuffers dictionaryBySettingObject:[self vertexBufferForViewportSize:tState.configuration.viewportSize]
                                                 forKey:@(iTermVertexInputIndexViewportSize)];

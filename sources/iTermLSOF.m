@@ -65,6 +65,9 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
     // Consume argc
     size_t offset = 0;
     int nargs;
+    if (procargs == nil) {
+        return nil;
+    }
     memmove(&nargs, procargs + offset, sizeof(int));
     offset += sizeof(int);
 

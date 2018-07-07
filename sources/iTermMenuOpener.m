@@ -30,7 +30,7 @@
 
 - (void)revealMenuWithPath:(NSArray<NSString *> *)path
                    message:(NSString *)message {
-    NSArray *elements = [self elementsToMenuWithPath:path];
+    NSArray *elements = [self copyElementsToMenuWithPath:path];
     if (elements == nil) {
         return;
     }
@@ -55,6 +55,7 @@
     _menu = menu;
     menu.delegate = self;
 
+    NSArray *elementsToRelease = elements;
     [self clickThroughElements:elements completion:^{
         if (self->_menu.delegate == self) {
             DLog(@"Done clicking through elements.");
@@ -63,6 +64,10 @@
             [self showMessage:message byFrame:frame menuItem:item];
         } else {
             DLog(@"Delegate is no longer self");
+        }
+        for (NSInteger i = 0; i < elementsToRelease.count; i++) {
+            AXUIElementRef element = (__bridge AXUIElementRef)(elements[i]);
+            CFRelease(element);
         }
     }];
 }
@@ -148,9 +153,10 @@
     }
 }
 
-- (NSArray *)elementsToMenuWithPath:(NSArray<NSString *> *)path {
+- (NSArray *)copyElementsToMenuWithPath:(NSArray<NSString *> *)path {
     NSMutableArray *result = [NSMutableArray array];
-    AXUIElementRef element = [self menuBar];
+    AXUIElementRef menuBar = [self newMenuBar];
+    AXUIElementRef element = menuBar;
     NSInteger i = 0;
     while (element != nil && i < path.count) {
         element = [self childOfMenu:element withName:path[i]];
@@ -160,6 +166,9 @@
             element = [self submenuOfMenu:element];
         }
     }
+    if (menuBar) {
+        CFRelease(menuBar);
+    }
     if (i != path.count) {
         return nil;
     } else {
@@ -167,12 +176,13 @@
     }
 }
 
-- (AXUIElementRef)menuBar {
+- (AXUIElementRef)newMenuBar {
     AXUIElementRef appElement = AXUIElementCreateApplication(getpid());
     AXUIElementRef menuBar;
     AXError error = AXUIElementCopyAttributeValue(appElement,
                                                   kAXMenuBarAttribute,
                                                   (CFTypeRef *)&menuBar);
+    CFRelease(appElement);
     if (error) {
         return NULL;
     }
@@ -182,7 +192,10 @@
 - (NSArray *)childrenOfMenu:(AXUIElementRef)menuBar {
     CFIndex count = -1;
     AXError error = AXUIElementGetAttributeValueCount(menuBar, kAXChildrenAttribute, &count);
-
+    if (error) {
+        return NULL;
+    }
+    
     CFArrayRef children = nil;
     // Despite what the name would suggest, the children array and its contents don't seen to need
     // too be released by us.

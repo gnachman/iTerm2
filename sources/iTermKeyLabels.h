@@ -9,6 +9,6 @@
 #import <Foundation/Foundation.h>
 
 @interface iTermKeyLabels : NSObject
-@property(nonatomic, copy) NSMutableDictionary<NSString *, NSString *> *map;
+@property(nonatomic, strong) NSMutableDictionary<NSString *, NSString *> *map;
 @property(nonatomic, copy) NSString *name;
 @end

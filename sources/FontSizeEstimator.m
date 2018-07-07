@@ -44,7 +44,7 @@
     return self;
 }
 
-+ (NSLayoutManager *)newLayoutManagerForFont:(NSFont *)aFont textContainer:(NSTextContainer *)textContainer {
++ (NSLayoutManager *)layoutManagerForFont:(NSFont *)aFont textContainer:(NSTextContainer *)textContainer {
     NSString *myString = @"W";
 
     NSTextStorage *textStorage = [[[NSTextStorage alloc] initWithString:myString] autorelease];
@@ -59,7 +59,7 @@
     return layoutManager;
 }
 
-+ (NSTextContainer *)newTextContainer {
++ (NSTextContainer *)textContainer {
     return [[[NSTextContainer alloc] initWithContainerSize:NSMakeSize(FLT_MAX, FLT_MAX)] autorelease];
 }
 
@@ -102,9 +102,9 @@
         size.height = MAX(1, size.height);
 
         if ([iTermAdvancedSettingsModel useExperimentalFontMetrics]) {
-            NSTextContainer *textContainer = [self newTextContainer];
-            NSLayoutManager *layoutManager = [self newLayoutManagerForFont:aFont
-                                                             textContainer:textContainer];
+            NSTextContainer *textContainer = [self textContainer];
+            NSLayoutManager *layoutManager = [self layoutManagerForFont:aFont
+                                                          textContainer:textContainer];
             NSRect usedRect = [layoutManager usedRectForTextContainer:textContainer];
 
             fse.size = usedRect.size;

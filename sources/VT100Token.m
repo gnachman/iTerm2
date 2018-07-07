@@ -42,6 +42,15 @@ static iTermObjectPool *gPool;
     return token;
 }
 
+- (void)dealloc {
+    [_string release];
+    [_savedData release];
+    [_kvpKey release];
+    [_kvpValue release];
+    
+    [super dealloc];
+}
+
 - (void)destroyPooledObject {
     if (_csi) {
         free(_csi);

@@ -180,11 +180,11 @@ static NSString *const kStackKey = @"Profile Stack";
 #pragma mark - Private
 
 // Search all the profiles for one that is the best match for the current configuration.
-- (Profile *)highestScoringProfileForHostname:(NSString *)hostname
-                                     username:(NSString *)username
-                                         path:(NSString *)path
-                                       sticky:(BOOL *)sticky
-                                        score:(double *)scorePtr {
+- (nullable Profile *)highestScoringProfileForHostname:(NSString *)hostname
+                                              username:(NSString *)username
+                                                  path:(NSString *)path
+                                                sticky:(BOOL *)sticky
+                                                 score:(double *)scorePtr {
     // Construct a map from host binding to profile. This could be expensive with a lot of profiles
     // but it should be fairly rare for this code to run.
     NSMutableDictionary<NSString *, Profile *> *ruleToProfileMap = [NSMutableDictionary dictionary];
@@ -246,10 +246,10 @@ static NSString *const kStackKey = @"Profile Stack";
 
 // Search the stack (without modifying it) and return a saved profile that matches the current
 // configuration, or nil if none matches.
-- (iTermSavedProfile *)topmostSavedProfileMatchingHostname:(NSString *)hostname
-                                                  username:(NSString *)username
-                                                      path:(NSString *)path
-                                                     score:(double *)scorePtr {
+- (nullable iTermSavedProfile *)topmostSavedProfileMatchingHostname:(NSString *)hostname
+                                                           username:(NSString *)username
+                                                               path:(NSString *)path
+                                                              score:(double *)scorePtr {
     for (iTermSavedProfile *savedProfile in [_profileStack reverseObjectEnumerator]) {
         double score = [self highestScoreForProfile:savedProfile.profile hostname:hostname username:username path:path];
         if (score > 0) {

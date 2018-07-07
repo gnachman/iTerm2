@@ -43,6 +43,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 @synthesize prefs = prefs_;
 @synthesize delegate = delegate_;
 
+- (void)dealloc {
+    [prefs_ release];
+    [super dealloc];
+}
+
 - (BOOL)fileExistsAtPathLocally:(NSString *)path {
     return [self.fileManager fileExistsAtPathLocally:path
                               additionalNetworkPaths:[[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","]];

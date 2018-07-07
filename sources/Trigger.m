@@ -109,6 +109,8 @@ NSString * const kTriggerPartialLineKey = @"partial";
     [regex_ release];
     [action_ release];
     [param_ release];
+    [_backgroundColor release];
+    [_textColor release];
     [super dealloc];
 }
 

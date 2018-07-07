@@ -133,7 +133,7 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
     if ([iTermAdvancedSettingsModel disableGrowl]) {
         // Send to NSUserDefaults directly
         // The (BOOL)sticky parameter is ignored
-        NSUserNotification *notification = [[NSUserNotification alloc] init];
+        NSUserNotification *notification = [[[NSUserNotification alloc] init] autorelease];
         notification.title = title;
         notification.informativeText = description;
         notification.userInfo = context;

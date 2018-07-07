@@ -930,7 +930,7 @@ int decode_utf8_char(const unsigned char *datap,
     NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
     for (NSString *format in formats) {
         dateFormatter.dateFormat = format;
-        dateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
+        dateFormatter.locale = [[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"] autorelease];
         NSDate *date = [dateFormatter dateFromString:self];
         if (date) {
             return date;
@@ -1881,6 +1881,8 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
         CTFrameDraw(textFrame, ctx);
 
+        CFRelease(textFrame);
+        
         CFRange fitRange;
 
         // Get the height of the line and translate the context down by it

@@ -209,6 +209,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [_profileModel release];
     [_fontOverrides release];
     [_pendingNewWindows release];
+    [sessionName_ release];
+    [sessions_ release];
     [super dealloc];
 }
 

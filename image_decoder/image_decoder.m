@@ -17,7 +17,8 @@ static NSDictionary *GIFProperties(CGImageSourceRef source, size_t i) {
     if (properties) {
         CFDictionaryRef const gifProperties = CFDictionaryGetValue(properties,
                                                                    kCGImagePropertyGIFDictionary);
-        return (__bridge NSDictionary *)gifProperties;
+        NSDictionary *result = [(__bridge NSDictionary *)gifProperties copy];
+        return result;
     } else {
         return nil;
     }

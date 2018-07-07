@@ -34,6 +34,8 @@
 
 - (void)dealloc {
     [_progress release];
+    [_bytesPerCallKey release];
+    [_delayBetweenCallsKey release];
     [super dealloc];
 }
 

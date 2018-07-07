@@ -15,12 +15,11 @@
     self = [super init];
     if (self) {
         _imageCode = dict[@"imageCode"];
+        if (!_imageCode) {
+            return nil;
+        }
     }
-    if (!_imageCode) {
-        return nil;
-    } else {
-        return self;
-    }
+    return self;
 }
 
 - (NSDictionary *)dictionaryValue {
@@ -34,9 +33,7 @@
 - (void)dealloc {
     if (_imageCode) {
         ReleaseImage(_imageCode.integerValue);
-        [_imageCode release];
     }
-    [super dealloc];
 }
 
 @end

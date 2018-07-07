@@ -35,8 +35,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalRendererTransientState *)transientState;
 
-- (__kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
-                                                                      commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                                                                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
 @end
 
@@ -58,7 +58,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)measureTimeForStat:(int)index ofBlock:(void (^)(void))block;
-- (iTermPreciseTimerStats *)stats;
+- (nullable iTermPreciseTimerStats *)stats;
 - (int)numberOfStats;
 - (NSString *)nameForStat:(int)i;
 
@@ -128,15 +128,15 @@ NS_CLASS_AVAILABLE(10_11, NA)
                fragmentBuffers:(NSDictionary<NSNumber *, id<MTLBuffer>> *)fragmentBuffers
                       textures:(NSDictionary<NSNumber *, id<MTLTexture>> *)textures;
 
-- (id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context;
-- (id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context pool:(nullable iTermTexturePool *)pool;
+- (nullable id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context;
+- (nullable id<MTLTexture>)textureFromImage:(NSImage *)image context:(nullable iTermMetalBufferPoolContext *)context pool:(nullable iTermTexturePool *)pool;
 
 - (id<MTLRenderPipelineState>)newPipelineWithBlending:(nullable iTermMetalBlending *)blending
                                        vertexFunction:(id<MTLFunction>)vertexFunction
                                      fragmentFunction:(id<MTLFunction>)fragmentFunction;
 
-- (__kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
-                                                                      commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                                                                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
 @end
 

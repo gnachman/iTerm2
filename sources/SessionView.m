@@ -206,6 +206,9 @@ static NSDate* lastResizeDate_;
     dispatch_once(&onceToken, ^{
         preferIntegrated = [iTermPreferences boolForKey:kPreferenceKeyPreferIntegratedGPU];
     });
+    if (_metalView) {
+        [self removeMetalView];
+    }
     if (preferIntegrated) {
         NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
 
@@ -224,8 +227,10 @@ static NSDate* lastResizeDate_;
         _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                              device:gpu];
     } else {
+        id<MTLDevice> device = MTLCreateSystemDefaultDevice();
         _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
-                                             device:MTLCreateSystemDefaultDevice()];
+                                             device:device];
+        CFRelease((__bridge CFTypeRef)(device));
     }
     // There was a spike in crashes on 5/1. I'm removing this temporarily to see if it was the cause.
 #if ENABLE_LOW_POWER_GPU_DETECTION

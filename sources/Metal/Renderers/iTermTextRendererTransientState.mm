@@ -677,7 +677,6 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     const float yOffset = (self.cellConfiguration.gridSize.height - row - 1) * cellHeight + verticalShift;
 
     std::map<int, int> lastRelations;
-    BOOL havePrevious = NO;
     BOOL inMarkedRange = NO;
 
     for (int x = 0; x < count; x++) {
@@ -703,7 +702,6 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                  asciiAttrs:asciiAttrs
                                  attributes:attributes
                               inMarkedRange:inMarkedRange];
-            havePrevious = NO;
         } else {
             // Non-ASCII slower path
             const iTerm2::GlyphKey glyphKey(&glyphKeys[x]);
@@ -825,7 +823,7 @@ static vector_int3 SlowGetColorModelIndexForPIU(iTermTextRendererTransientState 
 
 - (void)didComplete {
     DLog(@"BEGIN didComplete for %@", self);
-    _texturePageCollectionSharedPointer.object->prune_if_needed();
+    _texturePageCollectionSharedPointer.object->prune_if_needed();  // The static analyzer wrongly says this is a use-after-free.
     DLog(@"END didComplete");
 }
 

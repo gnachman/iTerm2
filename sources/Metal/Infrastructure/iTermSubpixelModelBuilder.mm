@@ -138,7 +138,9 @@ static NSString *const iTermSubpixelModelString = @"O";
                                            glyphs,
                                            numCodes);
     ITDebugAssert(ok);
-
+    if (!ok) {
+        return;
+    }
     size_t length = numCodes;
 
     // Note: this is slow. It was faster than core text when I did it rarely, but I'm not sure if
@@ -152,7 +154,12 @@ static NSString *const iTermSubpixelModelString = @"O";
 #pragma clang diagnostic pop
 
     // TODO: could use extended srgb on macOS 10.12+
-    CGContextSetFillColorSpace(ctx, CGColorSpaceCreateWithName(kCGColorSpaceSRGB));
+    static CGColorSpaceRef srgb;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        srgb = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    });
+    CGContextSetFillColorSpace(ctx, srgb);
     CGContextSetFillColor(ctx, components);
 
     CGContextSetAllowsFontSubpixelQuantization(ctx, YES);

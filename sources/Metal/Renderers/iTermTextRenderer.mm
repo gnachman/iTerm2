@@ -234,8 +234,8 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     return NO;
 }
 
-- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
-                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                                                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     if (!CGSizeEqualToSize(configuration.cellSize, _cellSizeForQuadCache)) {
         // All quads depend on cell size. No point keeping usesless entries in the cache.
         [_quadCache removeAllObjects];
