@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSURL *)URLWithUserSuppliedString:(NSString *)string;
 
 - (BOOL)saveContentsOfPathToZip:(NSURL *)destination;
-- (NSData *)zippedContents;
+- (nullable NSData *)zippedContents;
 
 @end
 

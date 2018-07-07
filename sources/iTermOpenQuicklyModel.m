@@ -28,6 +28,11 @@ static const double kProfileNameMultiplierForArrangementItem = 0.11;
 
 @implementation iTermOpenQuicklyModel
 
+- (void)dealloc {
+    [_items release];
+    [super dealloc];
+}
+
 #pragma mark - Commands
 
 - (NSArray<Class> *)commands {

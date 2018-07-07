@@ -75,8 +75,8 @@
     return NO;
 }
 
-- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
-                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                                                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =
         [_cellRenderer createTransientStateForCellConfiguration:configuration
                                               commandBuffer:commandBuffer];
@@ -92,7 +92,7 @@
 
 
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
-           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+           transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundColorRendererTransientState *tState = transientState;
     [tState enumerateSegments:^(const iTermBackgroundColorPIU *pius, size_t numberOfInstances) {
         id<MTLBuffer> piuBuffer = [self->_piuPool requestBufferFromContext:tState.poolContext

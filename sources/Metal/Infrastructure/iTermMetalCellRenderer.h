@@ -42,8 +42,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalCellRendererTransientState *)transientState;
 
-- (__kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
-                                                                          commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                                                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
 @optional
 - (void)writeDebugInfoToFolder:(NSURL *)folderURL;
@@ -82,8 +82,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
                          piuElementSize:(size_t)piuElementSize
                     transientStateClass:(Class)transientStateClass NS_DESIGNATED_INITIALIZER;
 
-- (__kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
-                                                                          commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+                                                                                   commandBuffer:(id<MTLCommandBuffer>)commandBuffer;
 
 @end
 

@@ -296,37 +296,6 @@ typedef struct iTermTextColorContext {
     DLog(@"end drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
 }
 
-- (NSImage *)imageForCoord:(VT100GridCoord)coord size:(CGSize)size {
-    NSData *rawMatches = [_delegate drawingHelperMatchesOnLine:coord.y];
-    screen_char_t *line = [_delegate drawingHelperLineAtIndex:coord.y];
-    iTermBackgroundColorRun backgroundRun = {
-        .range = { coord.x, 1 },
-        .bgColor = line[coord.x].backgroundColor,
-        .bgGreen = line[coord.x].bgGreen,
-        .bgBlue = line[coord.x].bgBlue,
-        .bgColorMode = line[coord.x].backgroundColorMode,
-        .selected = [[_selection selectedIndexesOnLine:coord.y] containsIndex:coord.x],
-        .isMatch = CheckFindMatchAtIndex(rawMatches, coord.x),
-    };
-    iTermBoxedBackgroundColorRun *boxedRun = [iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:backgroundRun];
-    NSColor *color = [self unprocessedColorForBackgroundRun:&backgroundRun];
-    // The unprocessed color is needed for minimum contrast computation for text color.
-    boxedRun.unprocessedBackgroundColor = color;
-    boxedRun.backgroundColor = [_colorMap processedBackgroundColorForBackgroundColor:color];
-    NSImage *image = [[NSImage alloc] initWithSize:size];
-
-    [image lockFocus];
-    [[NSColor redColor] set];
-    NSRectFill(NSMakeRect(0, 0, size.width, size.height));
-    [self drawForegroundForLineNumber:coord.y
-                                    y:0
-                       backgroundRuns:@[ boxedRun ]
-                              context:[[NSGraphicsContext currentContext] graphicsPort]];
-    [image unlockFocus];
-
-    return image;
-}
-
 - (NSInteger)numberOfEquivalentBackgroundColorLinesInRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
                                                      fromIndex:(NSInteger)startIndex {
     NSInteger count = 1;
@@ -1988,7 +1957,6 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_SHOULD_SEGMENT]);
 
         NSDictionary *imageAttributes = [self imageAttributesForCharacter:&c displayColumn:i];
-        BOOL justSegmented = NO;
         BOOL combinedAttributesChanged = NO;
 
         // I tried segmenting when fastpath eligibility changes so we can use the fast path as much
@@ -2000,8 +1968,6 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                            previousAttributes:&previousCharacterAttributes
                       previousImageAttributes:previousImageAttributes
                      combinedAttributesChanged:&combinedAttributesChanged]) {
-            justSegmented = YES;
-
             iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_BUILD_MUTABLE_ATTRIBUTED_STRING]);
             id<iTermAttributedString> builtString = builder.attributedString;
             if (previousCharacterAttributes.underline || previousCharacterAttributes.isURL) {
@@ -2422,7 +2388,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 }
 
 - (void)drawCopyModeCursor {
-    iTermCursor *cursor = [iTermCursor copyModeCursorInSelectionState:self.copyModeSelecting];
+    iTermCursor *cursor = [iTermCursor itermCopyModeCursorInSelectionState:self.copyModeSelecting];
     cursor.delegate = self;
 
     [self reallyDrawCursor:cursor

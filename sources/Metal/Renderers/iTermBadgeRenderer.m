@@ -51,7 +51,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
-           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+           transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermBadgeRendererTransientState *tState = transientState;
     const CGSize size = tState.destinationRect.size;
     const CGFloat scale = tState.configuration.scale;
@@ -86,8 +86,8 @@ NS_ASSUME_NONNULL_BEGIN
                                   textures:@{ @(iTermTextureIndexPrimary): tState.texture }];
 }
 
-- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
-                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                                                                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     if (CGSizeEqualToSize(CGSizeZero, _size)) {
         return nil;
     }

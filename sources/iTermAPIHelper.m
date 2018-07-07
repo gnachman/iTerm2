@@ -704,7 +704,7 @@ NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPI
                                          targetSession:session];
         if (newSession == nil && !session.isTmuxClient) {
             response.status = ITMSplitPaneResponse_Status_CannotSplit;
-        } else {
+        } else if (newSession && newSession.guid) {  // The test for newSession.guid is just to quiet the analyzer
             [response.sessionIdArray addObject:newSession.guid];
         }
     }

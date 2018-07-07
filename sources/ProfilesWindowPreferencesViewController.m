@@ -138,9 +138,9 @@
         }
     };
 
-    info = [self defineControl:_syncTitle
-                           key:KEY_SYNC_TITLE
-                          type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_syncTitle
+                    key:KEY_SYNC_TITLE
+                   type:kPreferenceInfoTypeCheckbox];
     [self updateSyncTitleEnabled];
 
     [self defineControl:_preventTab

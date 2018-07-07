@@ -515,7 +515,9 @@
                 // This could cause an already correctly positioned window to resize.
                 [[control tabView] addTabViewItem:[[self draggedCell] representedObject]];
 
-                fixOriginBlock();
+                if (fixOriginBlock) {
+                    fixOriginBlock();
+                }
 
                 [[control window] makeKeyAndOrderFront:nil];
 

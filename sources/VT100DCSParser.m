@@ -101,17 +101,6 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     return self;
 }
 
-- (void)dealloc {
-    [_stateMachine release];
-    [_data release];
-    [_parameterString release];
-    [_intermediateString release];
-    [_privateMarkers release];
-    [_hook release];
-    [_uniqueID release];
-    [super dealloc];
-}
-
 // Defines the state machine.
 - (VT100StateMachine *)stateMachine {
     if (_stateMachine) {
@@ -165,13 +154,14 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     [stateMachine addState:dcsEscapeState];
     [stateMachine addState:dcsPassthroughState];
 
+    __weak __typeof(self) weakSelf = self;
     for (VT100State *state in stateMachine.states) {
         [state addStateTransitionForCharacter:VT100CC_CAN
                                            to:groundState
-                                   withAction:^(unsigned char c) { [self execute]; } ];
+                                   withAction:^(unsigned char c) { [weakSelf execute]; } ];
         [state addStateTransitionForCharacter:VT100CC_SUB
                                            to:groundState
-                                   withAction:^(unsigned char c) { [self execute]; } ];
+                                   withAction:^(unsigned char c) { [weakSelf execute]; } ];
         [state addStateTransitionForCharacter:VT100CC_ESC
                                            to:dcsEscapeState
                                    withAction:nil ];
@@ -198,12 +188,15 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Add transitions from entry state.
     dcsEntryState.entryAction = ^(unsigned char c) {
-        _malformed = NO;
-        _executed = NO;
-        [_data setString:@""];
-        [_parameterString setString:@""];
-        [_intermediateString setString:@""];
-        [_privateMarkers setString:@""];
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (strongSelf) {
+            strongSelf->_malformed = NO;
+            strongSelf->_executed = NO;
+            [strongSelf->_data setString:@""];
+            [strongSelf->_parameterString setString:@""];
+            [strongSelf->_intermediateString setString:@""];
+            [strongSelf->_privateMarkers setString:@""];
+        }
     };
     // Got initial passthrough. Entry action will save it.
     [dcsEntryState addStateTransitionForCharacterRange:MakeCharacterRange('@', '~')
@@ -213,19 +206,28 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     [dcsEntryState addStateTransitionForCharacterRange:MakeCharacterRange(' ', '/')
                                                     to:dcsIntermediateState
                                             withAction:^(unsigned char c) {
-                                                [_intermediateString appendCharacter:c];
+                                                __strong __typeof(self) strongSelf = weakSelf;
+                                                if (strongSelf) {
+                                                    [strongSelf->_intermediateString appendCharacter:c];
+                                                }
                                             }];
     // Transition to parameter string.
     [dcsEntryState addStateTransitionForCharacterRange:MakeCharacterRange('0', '9')
                                                     to:dcsParamState
                                             withAction:^(unsigned char c) {
-                                                [_parameterString appendCharacter:c];
+                                                __strong __typeof(self) strongSelf = weakSelf;
+                                                if (strongSelf) {
+                                                    [strongSelf->_parameterString appendCharacter:c];
+                                                }
                                             }];
     // Private char; parameter string must follow.
     [dcsEntryState addStateTransitionForCharacterRange:MakeCharacterRange('<', '?')
                                                     to:dcsParamState
                                             withAction:^(unsigned char c) {
-                                                [_privateMarkers appendCharacter:c];
+                                                __strong __typeof(self) strongSelf = weakSelf;
+                                                if (strongSelf) {
+                                                    [strongSelf->_privateMarkers appendCharacter:c];
+                                                }
                                             }];
     // Colon is not allowed here.
     [dcsEntryState addStateTransitionForCharacter:':'
@@ -239,7 +241,10 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     [dcsIntermediateState addStateTransitionForCharacterRange:MakeCharacterRange(' ', '/')
                                                            to:dcsIntermediateState
                                                    withAction:^(unsigned char c) {
-                                                       [_intermediateString appendCharacter:c];
+                                                       __strong __typeof(self) strongSelf = weakSelf;
+                                                       if (strongSelf) {
+                                                           [strongSelf->_intermediateString appendCharacter:c];
+                                                       }
                                                    }];
     // Illegal characters; swallow them up til we get a terminator in the ignore state.
     [dcsIntermediateState addStateTransitionForCharacterRange:MakeCharacterRange('0', '?')
@@ -263,19 +268,28 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     [dcsParamState addStateTransitionForCharacterRange:MakeCharacterRange(' ', '/')
                                                     to:dcsIntermediateState
                                             withAction:^(unsigned char c) {
-                                                [_intermediateString appendCharacter:c];
+                                                __strong __typeof(self) strongSelf = weakSelf;
+                                                if (strongSelf) {
+                                                    [strongSelf->_intermediateString appendCharacter:c];
+                                                }
                                             }];
     // Got a number, save it as a parameter.
     [dcsParamState addStateTransitionForCharacterRange:MakeCharacterRange('0', '9')
                                                     to:dcsParamState
                                             withAction:^(unsigned char c) {
-                                                [_parameterString appendCharacter:c];
+                                                __strong __typeof(self) strongSelf = weakSelf;
+                                                if (strongSelf) {
+                                                    [strongSelf->_parameterString appendCharacter:c];
+                                                }
                                             }];
     // Got a semicolon, save it as a parameter.
     [dcsParamState addStateTransitionForCharacter:';'
                                                to:dcsParamState
                                        withAction:^(unsigned char c) {
-                                           [_parameterString appendCharacter:c];
+                                           __strong __typeof(self) strongSelf = weakSelf;
+                                           if (strongSelf) {
+                                               [strongSelf->_parameterString appendCharacter:c];
+                                           }
                                        }];
     // Initial passthrough character. Entry action will save it.
     [dcsParamState addStateTransitionForCharacterRange:MakeCharacterRange('@', '~')
@@ -285,11 +299,16 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Add transitions from ignore state.
     // Only way out of ignore is ST.
-    dcsIgnoreState.entryAction = ^(unsigned char c) { _malformed = YES; };
+    dcsIgnoreState.entryAction = ^(unsigned char c) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (strongSelf) {
+            strongSelf->_malformed = YES;
+        }
+    };
     [dcsIgnoreState addStateTransitionForCharacter:VT100CC_ESC
                                                 to:dcsEscapeState
                                         withAction:^(unsigned char character) {
-                                            [self unhook];
+                                            [weakSelf unhook];
                                         }];
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -306,7 +325,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     [dcsEscapeState addStateTransitionForCharacter:'\\'
                                                 to:groundState
                                         withAction:^(unsigned char c) {
-                                            [self execute];
+                                            [weakSelf execute];
                                         }];
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -316,32 +335,35 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     // that cause us to re-enter passthrough after having already been in it so don't do anything
     // destructive here.
     dcsPassthroughState.entryAction = ^(unsigned char c) {
-        [_data appendCharacter:c];
-        if (!_hook) {
-            [self hook];
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (strongSelf) {
+            [strongSelf->_data appendCharacter:c];
+            if (!strongSelf->_hook) {
+                [strongSelf hook];
+            }
         }
     };
     [dcsPassthroughState addStateTransitionForCharacterRange:MakeCharacterRange(VT100CC_NULL,
                                                                                 VT100CC_ETB)
                                                           to:dcsPassthroughState
                                                   withAction:^(unsigned char c) {
-                                                      [self put:c];
+                                                      [weakSelf put:c];
                                                   }];
     [dcsPassthroughState addStateTransitionForCharacter:VT100CC_EM
                                                      to:dcsPassthroughState
                                              withAction:^(unsigned char c) {
-                                                 [self put:c];
+                                                 [weakSelf put:c];
                                              }];
     [dcsPassthroughState addStateTransitionForCharacterRange:MakeCharacterRange(VT100CC_FS,
                                                                                 VT100CC_US)
                                                           to:dcsPassthroughState
                                                   withAction:^(unsigned char c) {
-                                                      [self put:c];
+                                                      [weakSelf put:c];
                                                   }];
     [dcsPassthroughState addStateTransitionForCharacterRange:MakeCharacterRange(' ', '~')
                                                           to:dcsPassthroughState
                                                   withAction:^(unsigned char c) {
-                                                      [self put:c];
+                                                      [weakSelf put:c];
                                                   }];
 
     _stateMachine = stateMachine;
@@ -380,7 +402,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
         // could end in a BEL.
         [characterSet addCharactersInRange:NSMakeRange(VT100CC_BEL, 1)];
         [characterSet invert];
-        garbageCharacterSet = [characterSet retain];
+        garbageCharacterSet = characterSet;
     });
     return (_data.length > kMaxDataLength ||
             [_data rangeOfCharacterFromSet:garbageCharacterSet].location != NSNotFound);
@@ -431,21 +453,17 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
         VT100Token *token = _stateMachine.userInfo[kVT100DCSUserInfoToken];
         if (token) {
             token->type = DCS_TMUX_HOOK;
-            [_uniqueID autorelease];
             _uniqueID = [[[NSUUID UUID] UUIDString] copy];
             token.string = _uniqueID;
         }
 
-        [_hook release];
         _hook = [[VT100TmuxParser alloc] init];
         _hookFinished = NO;
     }
 }
 
 - (void)unhook {
-    [_hook autorelease];
     _hook = nil;
-    [_uniqueID autorelease];
     _uniqueID = nil;
 }
 
@@ -549,7 +567,6 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     }
 
     // Replace the hook with one in recovery mode.
-    [_hook release];
     _hook = [[VT100TmuxParser alloc] initInRecoveryMode];
 }
 

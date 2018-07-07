@@ -41,7 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
-           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+           transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermMarginRendererTransientState *tState = transientState;
     vector_float4 color = tState.color;
     id<MTLBuffer> colorBuffer = [_colorPool requestBufferFromContext:tState.poolContext
@@ -60,8 +60,8 @@ NS_ASSUME_NONNULL_BEGIN
     return NO;
 }
 
-- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(nonnull iTermCellRenderConfiguration *)configuration
-                                   commandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer {
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(nonnull iTermCellRenderConfiguration *)configuration
+                                                                          commandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer {
     __kindof iTermMetalRendererTransientState * _Nonnull transientState =
         [_cellRenderer createTransientStateForCellConfiguration:configuration
                                               commandBuffer:commandBuffer];
@@ -113,11 +113,11 @@ NS_ASSUME_NONNULL_BEGIN
     // Right
     const CGFloat gridWidth = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.cellSize.width;
     const CGFloat rightGutterWidth = tState.configuration.viewportSize.x - margins.left - margins.right - gridWidth;
-    v = [self appendVerticesForQuad:CGRectMake(size.width - margins.right - rightGutterWidth,
-                                               margins.top,
-                                               margins.right + rightGutterWidth,
-                                               innerHeight)
-                           vertices:v];
+    [self appendVerticesForQuad:CGRectMake(size.width - margins.right - rightGutterWidth,
+                                           margins.top,
+                                           margins.right + rightGutterWidth,
+                                           innerHeight)
+                       vertices:v];
 
     tState.vertexBuffer = [_verticesPool requestBufferFromContext:tState.poolContext
                                                         withBytes:vertices

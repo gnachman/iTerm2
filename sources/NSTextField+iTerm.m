@@ -14,7 +14,7 @@
 @implementation NSTextField (iTerm)
 
 + (instancetype)it_textFieldForTableViewWithIdentifier:(NSString *)identifier {
-    NSTextField *result = [[self alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
+    NSTextField *result = [[[self alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)] autorelease];
     result.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
     result.bezeled = NO;
     result.editable = NO;

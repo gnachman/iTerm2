@@ -172,6 +172,8 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
     [outputBuffer_ release];
     [_errors release];
     [_delegate release];
+    [_command release];
+    
     [super dealloc];
 }
 

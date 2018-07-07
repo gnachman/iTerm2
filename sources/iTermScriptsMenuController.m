@@ -272,7 +272,7 @@ NS_ASSUME_NONNULL_BEGIN
     [[NSWorkspace sharedWorkspace] selectFile:destinationTemplatePath inFileViewerRootedAtPath:@""];
 }
 
-- (NSURL *)runSavePanelForNewScriptWithPicker:(iTermScriptTemplatePickerWindowController *)picker {
+- (nullable NSURL *)runSavePanelForNewScriptWithPicker:(iTermScriptTemplatePickerWindowController *)picker {
     NSSavePanel *savePanel = [NSSavePanel savePanel];
     savePanel.delegate = self;
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {

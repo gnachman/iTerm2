@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy, nullable) Profile *profile;
 @property(nonatomic, copy) Profile *originalProfile;
 @property(nonatomic, assign) BOOL isDivorced;
-@property(nonatomic, copy, nullable) NSMutableSet *overriddenFields;
+@property(nonatomic, retain, nullable) NSMutableSet *overriddenFields;
 @end
 
 // The session that uses automatic profile switching should implement this protocol.

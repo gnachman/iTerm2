@@ -151,7 +151,7 @@
     return iTermMetalFrameDataStatPqCreateTimestampsTS;
 }
 
-- (__kindof iTermMetalRendererTransientState * _Nonnull)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
                                                                                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     if (!_enabled) {
         return nil;

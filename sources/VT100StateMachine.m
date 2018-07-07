@@ -18,6 +18,7 @@
 - (void)dealloc {
     [_states release];
     [_userInfo release];
+    [_groundState release];
     [super dealloc];
 }
 

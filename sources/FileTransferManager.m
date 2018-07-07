@@ -153,6 +153,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     AXError error = AXUIElementCopyAttributeValue(appElement,
                                                   kAXMenuBarAttribute,
                                                   (CFTypeRef *)&menuBar);
+    CFRelease(appElement);
     if (error) {
         return NULL;
     }

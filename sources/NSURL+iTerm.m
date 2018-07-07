@@ -72,7 +72,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
-- (NSData *)zippedContents {
+- (nullable NSData *)zippedContents {
     if (!self.fileURL) {
         return nil;
     }

@@ -203,7 +203,7 @@
 }
 
 - (iTermTextExtractor *)extractor {
-    return [[iTermTextExtractor alloc] initWithDataSource:_textView.dataSource];
+    return [[[iTermTextExtractor alloc] initWithDataSource:_textView.dataSource] autorelease];
 }
 
 - (VT100GridCoord)coordFromSelectionEndpoint:(PTYTextViewSelectionEndpoint)endpoint {

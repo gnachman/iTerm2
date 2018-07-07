@@ -80,7 +80,9 @@
     [task launch];
     NSData *data = [[[task standardOutput] fileHandleForReading] readDataToEndOfFile];
     NSData *errorMessage = [[[task standardError] fileHandleForReading] readDataToEndOfFile];
-    *error = nil;
+    if (error) {
+        *error = nil;
+    }
     if (errorMessage.length) {
         NSString *errorString = [errorMessage stringWithEncoding:NSUTF8StringEncoding];
         if (errorString) {

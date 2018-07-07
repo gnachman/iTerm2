@@ -315,8 +315,6 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
                          rectsPtr:(const NSRect *)rectArray
                         rectCount:(NSInteger)rectCount;
 
-- (NSImage *)imageForCoord:(VT100GridCoord)coord size:(CGSize)size;
-
 // If timestamps are to be shown, call this just before drawing.
 - (void)createTimestampDrawingHelper;
 

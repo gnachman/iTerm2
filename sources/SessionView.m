@@ -216,6 +216,9 @@ static NSDate* lastResizeDate_;
     dispatch_once(&onceToken, ^{
         preferIntegrated = [iTermPreferences boolForKey:kPreferenceKeyPreferIntegratedGPU];
     });
+    if (_metalView) {
+        [self removeMetalView];
+    }
     if (preferIntegrated) {
         NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
 
@@ -240,8 +243,10 @@ static NSDate* lastResizeDate_;
             CFRelease(gpu);
         }
     } else {
-          _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
-                                               device:MTLCreateSystemDefaultDevice()];
+        id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+        _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
+                                             device:device];
+        CFRelease(device);
       }
     // There was a spike in crashes on 5/1. I'm removing this temporarily to see if it was the cause.
 #warning Bring this back

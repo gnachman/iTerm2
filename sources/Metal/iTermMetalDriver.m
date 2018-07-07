@@ -608,7 +608,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             continue;
         }
         [frameData measureTimeForStat:renderer.createTransientStateStat ofBlock:^{
-            __kindof iTermMetalCellRendererTransientState * _Nonnull tState =
+            __kindof iTermMetalCellRendererTransientState *tState =
                 [renderer createTransientStateForCellConfiguration:cellConfiguration
                                                      commandBuffer:commandBuffer];
             if (tState) {

@@ -35,6 +35,7 @@
 
 - (void)dealloc {
     [_owner release];
+    [_previouslyActiveAppPID release];
     [super dealloc];
 }
 

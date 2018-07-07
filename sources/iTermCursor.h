@@ -26,7 +26,7 @@ typedef NS_ENUM(NSInteger, ITermCursorType) {
 @property(nonatomic, assign) id<iTermCursorDelegate> delegate;
 
 + (iTermCursor *)cursorOfType:(ITermCursorType)theType;
-+ (instancetype)copyModeCursorInSelectionState:(BOOL)selecting;
++ (instancetype)itermCopyModeCursorInSelectionState:(BOOL)selecting;
 
 // No default implementation.
 - (void)drawWithRect:(NSRect)rect

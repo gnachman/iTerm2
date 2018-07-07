@@ -7854,7 +7854,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!substitutions) {
         return nil;
     }
-    commandForSubs = [commandForSubs stringByReplacingOccurrencesOfString:@"$$$$" withString:@"$$"];
+    substitutions = [substitutions dictionaryBySettingObject:@"$$" forKey:@"$$$$"];
     if (command) {
         // Create a modified profile to run "command".
         NSMutableDictionary *temp = [[profile mutableCopy] autorelease];

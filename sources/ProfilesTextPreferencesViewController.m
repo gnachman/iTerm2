@@ -166,25 +166,25 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                                              selector:@selector(unicodeVersionDidChange)
                                                  name:iTermUnicodeVersionDidChangeNotification
                                                object:nil];
-    info = [self defineControl:_unicodeVersion9
-                           key:KEY_UNICODE_VERSION
-                          type:kPreferenceInfoTypeCheckbox
-                settingChanged:^(id sender) {
-                    __strong __typeof(weakSelf) strongSelf = weakSelf;
-                    if (!strongSelf) {
-                        return;
-                    }
-                    const NSInteger version = (strongSelf->_unicodeVersion9.state == NSOnState) ? 9 : 8;
-                    [strongSelf setInteger:version forKey:KEY_UNICODE_VERSION];
-                }
-                        update:^BOOL{
-                            __strong __typeof(weakSelf) strongSelf = weakSelf;
-                            if (!strongSelf) {
-                                return NO;
-                            }
-                            strongSelf->_unicodeVersion9.state = [strongSelf integerForKey:KEY_UNICODE_VERSION] == 9 ? NSOnState : NSOffState;
-                            return YES;
-                        }];
+    [self defineControl:_unicodeVersion9
+                    key:KEY_UNICODE_VERSION
+                   type:kPreferenceInfoTypeCheckbox
+         settingChanged:^(id sender) {
+             __strong __typeof(weakSelf) strongSelf = weakSelf;
+             if (!strongSelf) {
+                 return;
+             }
+             const NSInteger version = (strongSelf->_unicodeVersion9.state == NSOnState) ? 9 : 8;
+             [strongSelf setInteger:version forKey:KEY_UNICODE_VERSION];
+         }
+                 update:^BOOL{
+                     __strong __typeof(weakSelf) strongSelf = weakSelf;
+                     if (!strongSelf) {
+                         return NO;
+                     }
+                     strongSelf->_unicodeVersion9.state = [strongSelf integerForKey:KEY_UNICODE_VERSION] == 9 ? NSOnState : NSOffState;
+                     return YES;
+                 }];
 
 
     [self defineControl:_horizontalSpacing

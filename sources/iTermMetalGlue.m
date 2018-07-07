@@ -1276,10 +1276,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
               @"nonasciiAntialiased": @(_nonasciiAntialias) };
 }
 
-- (NSDictionary<NSNumber *, iTermCharacterBitmap *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
-                                                                        size:(CGSize)size
-                                                                       scale:(CGFloat)scale
-                                                                       emoji:(nonnull BOOL *)emoji {
+- (nullable NSDictionary<NSNumber *, iTermCharacterBitmap *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
+                                                                                 size:(CGSize)size
+                                                                                scale:(CGFloat)scale
+                                                                                emoji:(nonnull BOOL *)emoji {
     if (glyphKey->boxDrawing) {
         *emoji = NO;
         iTermCharacterBitmap *bitmap = [self bitmapForBoxDrawingCode:glyphKey->code size:size scale:scale];

@@ -58,13 +58,13 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     iTermImage *image = [[iTermImage alloc] init];
     image.size = nativeImage.size;
     [image.images addObject:nativeImage];
-    return image;
+    return [image autorelease];
 }
 
 + (instancetype)imageWithCompressedData:(NSData *)compressedData {
 #if DEBUG
     NSLog(@"** WARNING: Decompressing image in-process **");
-    return [[iTermImage alloc] initWithData:compressedData];
+    return [[[iTermImage alloc] initWithData:compressedData] autorelease];
 #else
     iTermImageDecoderDriver *driver = [[[iTermImageDecoderDriver alloc] init] autorelease];
     NSData *jsonData = [driver jsonForCompressedImageData:compressedData];
@@ -101,6 +101,10 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
             if (image.size.width != 0 && image.size.height != 0) {
                 imageSize = image.size;
             } else {
+                if (source) {
+                    CFRelease(source);
+                }
+                [self release];
                 return nil;
             }
         }
@@ -124,10 +128,13 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
                 double totalDelay = 0;
                 for (size_t i = 0; i < count; ++i) {
                     CGImageRef imageRef = CGImageSourceCreateImageAtIndex(source, i, NULL);
-                    NSImage *image = [[NSImage alloc] initWithCGImage:imageRef
-                                                                 size:NSMakeSize(CGImageGetWidth(imageRef),
-                                                                                 CGImageGetHeight(imageRef))];
+                    NSImage *image = [[[NSImage alloc] initWithCGImage:imageRef
+                                                                  size:NSMakeSize(CGImageGetWidth(imageRef),
+                                                                                  CGImageGetHeight(imageRef))] autorelease];
                     if (!image) {
+                        if (imageRef) {
+                            CFRelease(imageRef);
+                        }
                         return nil;
                     }
                     [_images addObject:image];
@@ -141,6 +148,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
         if (!isGIF) {
             [_images addObject:image];
         }
+        CFRelease(source);
     }
     return self;
 }

@@ -52,7 +52,7 @@
 }
 
 - (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
-           transientState:(nonnull __kindof iTermMetalRendererTransientState *)transientState {
+           transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermFullScreenFlashRendererTransientState *tState = transientState;
     if (tState.color.w > 0) {
         CGSize size = CGSizeMake(transientState.configuration.viewportSize.x,
@@ -72,7 +72,7 @@
     }
 }
 
-- (nonnull __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(nonnull iTermRenderConfiguration *)configuration
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(nonnull iTermRenderConfiguration *)configuration
                                                                               commandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer {
     __kindof iTermMetalRendererTransientState * _Nonnull transientState =
     [_metalRenderer createTransientStateForConfiguration:configuration

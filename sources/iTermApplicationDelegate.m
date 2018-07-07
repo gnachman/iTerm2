@@ -1084,7 +1084,7 @@ static BOOL hasBecomeActive = NO;
     // Register our services provider. Registration must happen only when we're
     // ready to accept requests, so I do it after a spin of the runloop.
     dispatch_async(dispatch_get_main_queue(), ^{
-        [NSApp setServicesProvider:[[iTermServiceProvider alloc] init]];
+        [NSApp setServicesProvider:[[[iTermServiceProvider alloc] init] autorelease]];
     });
 
     // Sometimes, open untitled doc isn't called in Lion. We need to give application:openFile:
@@ -1139,7 +1139,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (NSMenu *)statusBarMenu {
-    NSMenu *menu = [[NSMenu alloc] init];
+    NSMenu *menu = [[[NSMenu alloc] init] autorelease];
     NSMenuItem *item;
 
     item = [[[NSMenuItem alloc] initWithTitle:@"Preferences"

@@ -81,6 +81,8 @@
     [_fullPath release];
     [_workingDirectory release];
     [_identifier release];
+    [_representedObject release];
+
     [super dealloc];
 }
 
