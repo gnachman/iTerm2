@@ -57,6 +57,7 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
 - (void)viewWillLayout {
     NSArray<iTermStatusBarContainerView *> *previouslyVisible = _visibleContainerViews.copy;
     _visibleContainerViews = [self visibleContainerViews];
+    DLog(@"--- begin status bar layout ---");
     [self updateDesiredWidths];
     [self updateDesiredOrigins];
 
@@ -80,6 +81,7 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
             [self.view addSubview:view];
         }
     }
+    DLog(@"--- end status bar layout ---");
 }
 
 - (void)variablesDidChange:(NSSet<NSString *> *)names {
@@ -118,7 +120,7 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
     // Find views that can grow
     NSArray<iTermStatusBarContainerView *> *views = [_containerViews filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *view) {
         return (view.component.statusBarComponentCanStretch &&
-                view.component.statusBarComponentPreferredWidth > view.desiredWidth);
+                floor(view.component.statusBarComponentPreferredWidth) > floor(view.desiredWidth));
     }];
 
 
@@ -137,26 +139,35 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
         // Divvy up space proportionate to spring constants.
         [views enumerateObjectsUsingBlock:^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
             const double weight = view.component.statusBarComponentSpringConstant / sumOfSpringConstants;
-            double delta = availableWidth * weight;
+            double delta = floor(availableWidth * weight);
             const double maximum = view.component.statusBarComponentPreferredWidth;
             const double proposed = view.desiredWidth + delta;
-            const double overage = MAX(0, proposed - maximum);
+            const double overage = floor(MAX(0, proposed - maximum));
             delta -= overage;
             view.desiredWidth += delta;
             growth += delta;
-            DLog(@"  grow %@ by %@ to %@", view, @(delta), @(view.desiredWidth));
+            DLog(@"  grow %@ by %@ to %@. Its preferred width is %@", view.component, @(delta), @(view.desiredWidth), @(view.component.statusBarComponentPreferredWidth));
         }];
         availableWidth -= growth;
-        NSLog(@"updateDesiredWidths after divvying: available = %@", @(availableWidth));
+        DLog(@"updateDesiredWidths after divvying: available = %@", @(availableWidth));
 
         if (availableWidth < 1) {
             return;
         }
 
+        const NSInteger numberBefore = views.count;
         // Remove satisifed views.
         views = [views filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *view) {
-            return view.component.statusBarComponentPreferredWidth > view.desiredWidth;
+            const BOOL unsatisfied = floor(view.component.statusBarComponentPreferredWidth) > ceil(view.desiredWidth);
+            if (unsatisfied) {
+                DLog(@"%@ unsatisfied prefers=%@ allocated=%@", view.component.class, @(view.component.statusBarComponentPreferredWidth), @(view.desiredWidth));
+            }
+            return unsatisfied;
         }];
+        if (growth < 1 && views.count == numberBefore) {
+            DLog(@"Stopping. growth=%@ views %@->%@", @(growth), @(views.count), @(numberBefore));
+            return;
+        }
     }
 }
 
@@ -199,7 +210,7 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
 
 - (CGFloat)minimumWidthOfContainerViews:(NSArray<iTermStatusBarContainerView *> *)views {
     NSNumber *sumOfMinimumWidths = [views reduceWithFirstValue:@0 block:^id(NSNumber *sum, iTermStatusBarContainerView *containerView) {
-        NSLog(@"Minimum width of %@ is %@", containerView.component.class, @(containerView.component.statusBarComponentMinimumWidth));
+        DLog(@"Minimum width of %@ is %@", containerView.component.class, @(containerView.component.statusBarComponentMinimumWidth));
         return @(sum.doubleValue + containerView.component.statusBarComponentMinimumWidth);
     }];
     const NSInteger numberOfViews = views.count;

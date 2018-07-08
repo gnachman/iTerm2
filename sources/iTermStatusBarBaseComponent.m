@@ -13,6 +13,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+static NSString *const iTermStatusBarCompressionResistanceKey = @"base: compression resistance";
+
 @implementation iTermStatusBarBaseComponent
 
 @synthesize configuration = _configuration;
@@ -76,8 +78,13 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 + (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
-    [self doesNotRecognizeSelector:_cmd];
-    return @[];
+    iTermStatusBarComponentKnob *compressionResistanceKnob =
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Compression Resistance:"
+                                                      type:iTermStatusBarComponentKnobTypeDouble
+                                               placeholder:@""
+                                              defaultValue:@1
+                                                       key:iTermStatusBarCompressionResistanceKey];
+    return @[ compressionResistanceKnob ];
 }
 
 - (id)statusBarComponentExemplar {
@@ -125,7 +132,8 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (CGFloat)statusBarComponentSpringConstant {
-    return 1;
+    NSNumber *value = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarCompressionResistanceKey] ?: @1;
+    return MAX(0.01, value.doubleValue);
 }
 
 - (NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController {

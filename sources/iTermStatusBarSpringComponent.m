@@ -51,7 +51,7 @@ static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermS
 - (CGFloat)statusBarComponentSpringConstant {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
     NSNumber *number = knobValues[iTermStatusBarSpringComponentSpringConstantKey];
-    return number ? number.doubleValue : 1;
+    return MAX(0.01, number ? number.doubleValue : 1);
 }
 
 - (BOOL)statusBarComponentCanStretch {

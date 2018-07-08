@@ -35,7 +35,7 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
                                                   defaultValue:[[NSColor clearColor] dictionaryValue]
                                                            key:iTermStatusBarSharedBackgroundColorKey];
 
-    return @[ textColorKnob, backgroundColorKnob ];
+    return [@[ textColorKnob, backgroundColorKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
 }
 
 - (NSTextField *)newTextField {
