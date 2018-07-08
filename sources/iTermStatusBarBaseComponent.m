@@ -128,6 +128,10 @@ NS_ASSUME_NONNULL_BEGIN
     return 1;
 }
 
+- (NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController {
+    return nil;
+}
+
 #pragma mark - NSSecureCoding
 
 + (BOOL)supportsSecureCoding {

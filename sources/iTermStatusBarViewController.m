@@ -90,6 +90,12 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
     }];
 }
 
+- (NSViewController<iTermFindViewController> *)searchViewController {
+    return [_containerViews mapWithBlock:^id(iTermStatusBarContainerView *containerView) {
+        return containerView.component.statusBarComponentSearchViewController;
+    }].firstObject;
+}
+
 #pragma mark - Private
 
 - (void)updateDesiredWidths {

@@ -26,6 +26,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "iTermFindDriver.h"
 #import "iTermMetalDriver.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
@@ -39,7 +40,7 @@
 @class SplitSelectionView;
 @class SessionTitleView;
 
-@protocol iTermSessionViewDelegate<NSObject>
+@protocol iTermSessionViewDelegate<iTermFindDriverDelegate, NSObject>
 
 // Mouse entered the view.
 - (void)sessionViewMouseEntered:(NSEvent *)event;

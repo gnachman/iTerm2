@@ -78,4 +78,6 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 - (NSString *)hexString;
 + (instancetype)colorFromHexString:(NSString *)hexString;
 
++ (NSColor *)it_searchFieldBackgroundColor:(BOOL)selected;
+
 @end
