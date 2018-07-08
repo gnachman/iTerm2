@@ -21,6 +21,7 @@
 }
 
 - (void)viewDidLoad {
+    _well.noColorAllowed = YES;
     self.view.autoresizesSubviews = NO;
     self.value = _value;
 }

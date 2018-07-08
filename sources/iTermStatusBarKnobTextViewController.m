@@ -72,8 +72,7 @@
 - (void)insertNewline:(id)sender {
     // Mysteriously, calling parentViewController nukes the text field's value.
     _value = self.textField.stringValue;
-    NSViewController *parent = self.parentViewController;
-    [parent dismissViewController:parent];
+    [self.view.window.sheetParent endSheet:self.view.window returnCode:NSModalResponseOK];
 }
 
 @end
