@@ -375,6 +375,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     BOOL _windowWasJustCreated;
     BOOL _openingPopupWindow;
+
+    NSInteger _fullScreenRetryCount;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -3919,6 +3921,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
+    _fullScreenRetryCount = 0;
     lionFullScreen_ = YES;
     [_contentView.tabBarControl setFlashing:YES];
     [_contentView updateToolbelt];
@@ -3939,6 +3942,26 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self updateTouchBarIfNeeded:NO];
     [self updateUseMetalInAllTabs];
+}
+
+- (void)windowDidFailToEnterFullScreen:(NSWindow *)window {
+    DLog(@"windowDidFailToEnterFullScreen %@", self);
+    if (!togglingLionFullScreen_) {
+        DLog(@"It's ok though because togglingLionFullScreen is off");
+        return;
+    }
+    if (_fullScreenRetryCount < 3) {
+        _fullScreenRetryCount++;
+        DLog(@"Increment retry count to %@ and schedule an attempt after a delay %@", @(_fullScreenRetryCount), self);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            DLog(@"About to retry entering full screen with count %@: %@", @(_fullScreenRetryCount), self);
+            [self.window toggleFullScreen:self];
+        });
+    } else {
+        DLog(@"Giving up after three retries: %@", self);
+        togglingLionFullScreen_ = NO;
+        _fullScreenRetryCount = 0;
+    }
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
