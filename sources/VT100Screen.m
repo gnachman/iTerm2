@@ -2907,6 +2907,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)terminalPasteString:(NSString *)string {
     // check the configuration
     if (![iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        [delegate_ screenTerminalAttemptedPasteboardAccess];
         return;
     }
 
