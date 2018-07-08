@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTermFindViewController.h"
 #import "iTermStatusBarComponentKnob.h"
 
 static double iTermStatusBarComponentPriorityLow = 0.25;
@@ -92,5 +93,8 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 
 // Updates knob values
 - (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues;
+
+// If this component serves as a search view, returns the view controller. Otherwise, returns nil.
+- (NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController;
 
 @end

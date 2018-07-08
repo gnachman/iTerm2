@@ -854,7 +854,7 @@
 
     [self drawBackgroundInRect:rect color:[self tabBarColor] horizontal:horizontal];
     [[self topLineColorSelected:NO] set];
-    [self drawHorizontalLineInFrame:rect y:NSMinY(rect)];
+    [self drawHorizontalLineInFrame:rect y:0];
 
     // no tab view == not connected
     if (![bar tabView]){

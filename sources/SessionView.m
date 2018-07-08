@@ -10,6 +10,7 @@
 #import "iTermMetalClipView.h"
 #import "iTermMetalDeviceProvider.h"
 #import "iTermPreferences.h"
+#import "iTermStatusBarViewController.h"
 #import "NSView+iTerm.h"
 #import "MovePaneController.h"
 #import "NSResponder+iTerm.h"
@@ -59,7 +60,11 @@ static NSDate* lastResizeDate_;
 @end
 
 
-@interface SessionView () <iTermAnnouncementDelegate, NSDraggingSource, PTYScrollerDelegate>
+@interface SessionView () <
+    iTermAnnouncementDelegate,
+    iTermFindDriverDelegate,
+    NSDraggingSource,
+    PTYScrollerDelegate>
 @property(nonatomic, strong) PTYScrollView *scrollview;
 @end
 
@@ -88,6 +93,8 @@ static NSDate* lastResizeDate_;
 
     BOOL _useMetal;
     iTermMetalClipView *_metalClipView;
+    iTermFindDriverArbitrator *_findDriverArbitrator;
+    iTermDropDownFindViewController *_dropDownFindViewController;
 }
 
 + (double)titleHeight {
@@ -112,19 +119,18 @@ static NSDate* lastResizeDate_;
         _announcements = [[NSMutableArray alloc] init];
 
         // Set up find view
-        iTermDropDownFindViewController *dropDownViewController =
-            [[iTermDropDownFindViewController alloc] initWithNibName:@"FindView" bundle:nil];
-        _findDriver = [[iTermFindDriver alloc] initWithViewController:dropDownViewController];
-        [[dropDownViewController view] setHidden:YES];
-        [self addSubview:dropDownViewController.view];
-        NSRect aRect = [self frame];
-        [dropDownViewController setFrameOrigin:NSMakePoint(aRect.size.width - [[dropDownViewController view] frame].size.width - 30,
-                                                           aRect.size.height - [[dropDownViewController view] frame].size.height)];
+        _dropDownFindViewController = [self newDropDownFindView];
+        _findDriverArbitrator = [[iTermFindDriverArbitrator alloc] initWithDelegate:self];
+        [_findDriverArbitrator replaceViewControllerWithIdentifier:nil
+                                                              with:_dropDownFindViewController
+                                                        identifier:@"dropdown"
+                                                            before:nil];
 
         // Assign a globally unique view ID.
         _viewId = nextViewId++;
 
         // Allocate a scrollview
+        NSRect aRect = self.frame;
         _scrollview = [[PTYScrollView alloc] initWithFrame:NSMakeRect(0,
                                                                       0,
                                                                       aRect.size.width,
@@ -170,6 +176,22 @@ static NSDate* lastResizeDate_;
         [self removeTrackingArea:self.trackingAreas[0]];
     }
     _metalView.delegate = nil;
+}
+
+- (iTermDropDownFindViewController *)newDropDownFindView {
+    iTermDropDownFindViewController *dropDownViewController =
+        [[iTermDropDownFindViewController alloc] initWithNibName:@"FindView" bundle:nil];
+    [[dropDownViewController view] setHidden:YES];
+    [self addSubview:dropDownViewController.view];
+    NSRect aRect = [self frame];
+    NSSize size = [[dropDownViewController view] frame].size;
+    [dropDownViewController setFrameOrigin:NSMakePoint(aRect.size.width - size.width - 30,
+                                                       aRect.size.height - size.height)];
+    return dropDownViewController;
+}
+
+- (iTermFindDriver *)findDriver {
+    return _findDriverArbitrator.driver;
 }
 
 - (BOOL)useMetal {
@@ -281,8 +303,8 @@ static NSDate* lastResizeDate_;
 - (void)addSubview:(NSView *)aView {
     BOOL wasRunning = _inAddSubview;
     _inAddSubview = YES;
-    if (!wasRunning && _findDriver && aView != [_findDriver.viewController view]) {
-        [super addSubview:aView positioned:NSWindowBelow relativeTo:[_findDriver.viewController view]];
+    if (!wasRunning && _dropDownFindViewController && aView != _dropDownFindViewController.view) {
+        [super addSubview:aView positioned:NSWindowBelow relativeTo:_dropDownFindViewController.view];
     } else {
         [super addSubview:aView];
     }
@@ -506,17 +528,17 @@ static NSDate* lastResizeDate_;
 - (void)setFrameSize:(NSSize)frameSize {
     [self updateAnnouncementFrame];
     [super setFrameSize:frameSize];
-    NSView *findView = _findDriver.viewController.view;
+    NSView *findView = _dropDownFindViewController.view;
     if (frameSize.width < 340) {
         [findView setFrameSize:NSMakeSize(MAX(150, frameSize.width - 50),
                                           [findView frame].size.height)];
-        [_findDriver.viewController setFrameOrigin:NSMakePoint(frameSize.width - [findView frame].size.width - 30,
-                                                               frameSize.height - [findView frame].size.height)];
+        [_dropDownFindViewController setFrameOrigin:NSMakePoint(frameSize.width - [findView frame].size.width - 30,
+                                                                frameSize.height - [findView frame].size.height)];
     } else {
         [findView setFrameSize:NSMakeSize(290,
                                           [findView frame].size.height)];
-        [_findDriver.viewController setFrameOrigin:NSMakePoint(frameSize.width - [findView frame].size.width - 30,
-                                                               frameSize.height - [findView frame].size.height)];
+        [_dropDownFindViewController setFrameOrigin:NSMakePoint(frameSize.width - [findView frame].size.width - 30,
+                                                                frameSize.height - [findView frame].size.height)];
     }
 }
 
@@ -779,6 +801,7 @@ static NSDate* lastResizeDate_;
     }
     [self setTitle:[_delegate sessionViewTitle]];
     [self updateScrollViewFrame];
+    [self invalidateStatusBar];
     return YES;
 }
 
@@ -786,6 +809,10 @@ static NSDate* lastResizeDate_;
     iTermStatusBarViewController *newVC = [self.delegate sessionViewStatusBarViewController];
     if (newVC != _title.statusBarViewController) {
         _title.statusBarViewController = newVC;
+        [_findDriverArbitrator replaceViewControllerWithIdentifier:@"statusbar"
+                                                              with:_title.statusBarViewController.searchViewController
+                                                        identifier:@"statusbar"
+                                                            before:nil];
     }
 }
 
@@ -858,9 +885,9 @@ static NSDate* lastResizeDate_;
 
 - (void)updateFindViewFrame {
     NSRect aRect = self.frame;
-    NSView *findView = _findDriver.viewController.view;
-    [_findDriver.viewController setFrameOrigin:NSMakePoint(aRect.size.width - [findView frame].size.width - 30,
-                                                           aRect.size.height - [findView frame].size.height)];
+    NSView *findView = _dropDownFindViewController.view;
+    [_dropDownFindViewController setFrameOrigin:NSMakePoint(aRect.size.width - [findView frame].size.width - 30,
+                                                            aRect.size.height - [findView frame].size.height)];
 }
 
 - (void)updateScrollViewFrame {
@@ -1013,6 +1040,70 @@ static NSDate* lastResizeDate_;
 
 - (void)userScrollDidChange:(BOOL)userScroll {
     [self.delegate sessionViewUserScrollDidChange:userScroll];
+}
+
+#pragma mark - iTermFindDriverDelegate
+
+- (BOOL)canSearch {
+    return [self.delegate canSearch];
+}
+
+- (void)resetFindCursor {
+    [self.delegate resetFindCursor];
+}
+
+- (BOOL)findInProgress {
+    return [self.delegate findInProgress];
+}
+
+- (BOOL)continueFind:(double *)progress {
+    return [self.delegate continueFind:progress];
+}
+
+- (BOOL)growSelectionLeft {
+    return [self.delegate growSelectionLeft];
+}
+
+- (void)growSelectionRight {
+    [self.delegate growSelectionRight];
+}
+
+- (NSString *)selectedText {
+    return [self.delegate selectedText];
+}
+
+- (NSString *)unpaddedSelectedText {
+    return [self.delegate unpaddedSelectedText];
+}
+
+- (void)copySelection {
+    [self.delegate copySelection];
+}
+
+- (void)pasteString:(NSString *)string {
+    [self.delegate pasteString:string];
+}
+
+- (void)findViewControllerMakeDocumentFirstResponder {
+    [self.delegate findViewControllerMakeDocumentFirstResponder];
+}
+
+- (void)findViewControllerClearSearch {
+    [self.delegate findViewControllerClearSearch];
+}
+
+- (void)findString:(NSString *)aString
+  forwardDirection:(BOOL)direction
+              mode:(iTermFindMode)mode
+        withOffset:(int)offset {
+    [self.delegate findString:aString
+             forwardDirection:direction
+                         mode:mode
+                   withOffset:offset];
+}
+
+- (void)findViewControllerVisibilityDidChange:(id<iTermFindViewController>)sender {
+    [self.delegate findViewControllerVisibilityDidChange:sender];
 }
 
 @end

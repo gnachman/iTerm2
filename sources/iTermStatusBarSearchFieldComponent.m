@@ -7,21 +7,24 @@
 
 #import "iTermStatusBarSearchFieldComponent.h"
 
+#import "iTermMiniSearchFieldViewController.h"
 #import "iTermStatusBarSetupKnobsViewController.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@implementation iTermStatusBarSearchFieldComponent
+@implementation iTermStatusBarSearchFieldComponent {
+    iTermMiniSearchFieldViewController *_viewController;
+}
 
 - (CGFloat)statusBarComponentMinimumWidth {
     return 125;
 }
 
 - (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width {
-    [[NSSearchField castFrom:view] sizeToFit];
-    view.frame = NSMakeRect(0, 0, width, view.frame.size.height);
+    assert(view == _viewController.view);
+    [_viewController sizeToFitSize:NSMakeSize(width, view.frame.size.height)];
 }
 
 - (CGFloat)statusBarComponentPreferredWidth {
@@ -51,10 +54,15 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSView *)statusBarComponentCreateView {
-    NSSearchField *view = [[NSSearchField alloc] initWithFrame:NSZeroRect];
-    view.controlSize = NSControlSizeSmall;
-    view.font = [NSFont systemFontOfSize:[NSFont systemFontSizeForControlSize:NSControlSizeSmall]];
-    return view;
+    return self.statusBarComponentSearchViewController.view;
+}
+
+- (NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController {
+    if (!_viewController) {
+        _viewController = [[iTermMiniSearchFieldViewController alloc] initWithNibName:@"iTermMiniSearchFieldViewController"
+                                                                               bundle:[NSBundle mainBundle]];
+    }
+    return _viewController;
 }
 
 @end

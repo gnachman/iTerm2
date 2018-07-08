@@ -7,6 +7,8 @@
 
 #import "iTermSearchFieldCell.h"
 
+#import "NSColor+iTerm.h"
+
 static NSSize kFocusRingInset = { 2, 3 };
 const CGFloat kEdgeWidth = 3;
 
@@ -57,13 +59,18 @@ const CGFloat kEdgeWidth = 3;
     }
 }
 
-- (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView
-{
+- (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
     NSRect originalFrame = cellFrame;
-    [[NSColor whiteColor] set];
-
     BOOL focused = ([controlView respondsToSelector:@selector(currentEditor)] &&
                     [(NSControl *)controlView currentEditor]);
+    NSColor *backgroundColor;
+    if (self.controlSize == NSControlSizeRegular) {
+        backgroundColor = [NSColor whiteColor];
+    } else {
+        backgroundColor = [NSColor it_searchFieldBackgroundColor:focused];
+    }
+    
+    [backgroundColor set];
 
     CGFloat xInset, yInset;
     if (focused) {
