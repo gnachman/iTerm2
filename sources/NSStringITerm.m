@@ -1632,6 +1632,20 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     } while (NSMaxRange(range) < self.length);
 }
 
+- (NSString *)firstComposedCharacter:(NSString **)rest {
+    __block NSString *first = nil;
+    __block NSString *tail = self;
+    [self enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
+        first = [self substringWithRange:range];
+        tail = [self substringFromIndex:NSMaxRange(range)];
+        *stop = YES;
+    }];
+    if (rest) {
+        *rest = tail;
+    }
+    return first;
+}
+
 - (void)reverseEnumerateSubstringsEqualTo:(NSString *)query
                                     block:(void (^)(NSRange range))block {
     NSRange range = [self rangeOfString:query options:NSBackwardsSearch];

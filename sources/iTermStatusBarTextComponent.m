@@ -50,7 +50,7 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
     textField.backgroundColor = self.backgroundColor;
     textField.drawsBackground = (self.backgroundColor.alphaComponent > 0);
 
-    [self setValueInField:textField];
+    [self setValueInField:textField compressed:YES];
     return textField;
 }
 
@@ -64,15 +64,34 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
     return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue];
 }
 
-- (void)setValueInField:(NSTextField *)textField {
-    if (self.attributedStringValue) {
-        textField.attributedStringValue = self.attributedStringValue;
-    } else if (self.stringValue) {
-        textField.stringValue = self.stringValue;
-        textField.alignment = NSLeftTextAlignment;
-        textField.textColor = self.textColor;
+- (BOOL)shouldUpdateValue:(NSString *)proposed inField:(NSTextField *)textField {
+    const BOOL textFieldHasString = textField.stringValue.length > 0;
+    const BOOL iHaveString = proposed != nil;
+
+    if (textFieldHasString != iHaveString) {
+        return YES;
     }
+    if (textFieldHasString || iHaveString) {
+        return !([NSObject object:textField.stringValue isEqualToObject:proposed] &&
+                 [NSObject object:textField.textColor isEqualToObject:self.textColor]);
+    }
+    
+    return NO;
+}
+
+- (BOOL)setValueInField:(NSTextField *)textField compressed:(BOOL)compressed {
+    NSString *string = compressed ? [self stringValueForCurrentWidth] : self.stringValue;
+
+    if (![self shouldUpdateValue:string inField:textField]) {
+        return NO;
+    }
+
+    textField.stringValue = string ?: @"";
+    textField.alignment = NSLeftTextAlignment;
+    textField.textColor = self.textColor;
+
     [textField sizeToFit];
+    return YES;
 }
 
 - (NSTextField *)textField {
@@ -84,15 +103,29 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 
 - (void)setStringValue:(NSString *)stringValue {
     _stringValue = stringValue;
-    [self setValueInField:_textField];
+    [self updateTextFieldIfNeeded];
+}
+
+- (void)updateTextFieldIfNeeded {
+    if (![self setValueInField:_textField compressed:YES]) {
+        return;
+    }
     [self.delegate statusBarComponentPreferredSizeDidChange:self];
+}
+
+- (nullable NSString *)stringValueForCurrentWidth {
+    return _stringValue;
+}
+
+- (nullable NSString *)maximallyCompressedStringValue {
+    return _stringValue;
 }
 
 - (CGFloat)statusBarComponentPreferredWidth {
     if (!_measuringField) {
         _measuringField = [self newTextField];
     } else {
-        [self setValueInField:_measuringField];
+        [self setValueInField:_measuringField compressed:NO];
     }
     return [_measuringField frame].size.width;
 }
@@ -100,6 +133,26 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 - (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width {
     [[NSTextField castFrom:view] sizeToFit];
     view.frame = NSMakeRect(0, 0, width, view.frame.size.height);
+}
+
+- (CGFloat)widthForString:(NSString *)string {
+    if (!_measuringField) {
+        _measuringField = [self newTextField];
+    }
+    _measuringField.stringValue = string;
+    _measuringField.alignment = NSLeftTextAlignment;
+    _measuringField.textColor = self.textColor;
+    [_measuringField sizeToFit];
+    return [_measuringField frame].size.width;
+}
+
+- (CGFloat)statusBarComponentMinimumWidth {
+    NSString *compressed = self.maximallyCompressedStringValue;
+    if (compressed) {
+        return [self widthForString:compressed];
+    } else {
+        return [super statusBarComponentMinimumWidth];
+    }
 }
 
 #pragma mark - iTermStatusBarComponent
