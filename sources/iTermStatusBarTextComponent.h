@@ -20,7 +20,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, nullable) NSAttributedString *attributedStringValue;
 @property (nonatomic, readonly) NSTextField *textField;
 
+// Subclasses can override these if they can compress the string depending on available space.
+@property (nonatomic, readonly, nullable) NSString *stringValueForCurrentWidth;
+@property (nonatomic, readonly, nullable) NSString *maximallyCompressedStringValue;
+
 - (void)setStringValue:(NSString *)stringValue;
+- (CGFloat)widthForString:(NSString *)string;
+- (void)updateTextFieldIfNeeded;
 
 @end
 

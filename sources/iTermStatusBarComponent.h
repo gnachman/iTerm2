@@ -97,4 +97,7 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 // If this component serves as a search view, returns the view controller. Otherwise, returns nil.
 - (NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController;
 
+// Called when the view size changes.
+- (void)statusBarComponentWidthDidChangeTo:(CGFloat)newWidth;
+
 @end

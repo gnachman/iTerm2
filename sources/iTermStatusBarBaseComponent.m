@@ -132,6 +132,9 @@ NS_ASSUME_NONNULL_BEGIN
     return nil;
 }
 
+- (void)statusBarComponentWidthDidChangeTo:(CGFloat)newWidth {
+}
+
 #pragma mark - NSSecureCoding
 
 + (BOOL)supportsSecureCoding {

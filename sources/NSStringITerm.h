@@ -217,6 +217,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
                                               NSString *complexString,
                                               BOOL *stop))block;
 
+- (NSString *)firstComposedCharacter:(NSString **)rest;
+
 // It is safe to modify, delete, or insert characters in `range` within `block`.
 - (void)reverseEnumerateSubstringsEqualTo:(NSString *)query
                                     block:(void (^)(NSRange range))block;

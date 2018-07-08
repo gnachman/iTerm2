@@ -66,6 +66,7 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
                                  iTermStatusBarViewControllerTopMargin,
                                  view.desiredWidth,
                                  iTermStatusBarViewControllerContainerHeight);
+         [view.component statusBarComponentWidthDidChangeTo:view.desiredWidth];
      }];
     // Remove defunct views
     for (iTermStatusBarContainerView *view in previouslyVisible) {
@@ -198,6 +199,7 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
 
 - (CGFloat)minimumWidthOfContainerViews:(NSArray<iTermStatusBarContainerView *> *)views {
     NSNumber *sumOfMinimumWidths = [views reduceWithFirstValue:@0 block:^id(NSNumber *sum, iTermStatusBarContainerView *containerView) {
+        NSLog(@"Minimum width of %@ is %@", containerView.component.class, @(containerView.component.statusBarComponentMinimumWidth));
         return @(sum.doubleValue + containerView.component.statusBarComponentMinimumWidth);
     }];
     const NSInteger numberOfViews = views.count;
