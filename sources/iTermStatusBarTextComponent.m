@@ -26,13 +26,13 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Text Color"
                                                           type:iTermStatusBarComponentKnobTypeColor
                                                    placeholder:nil
-                                                  defaultValue:[[NSColor blackColor] dictionaryValue]
+                                                  defaultValue:nil
                                                            key:iTermStatusBarTextComponentTextColorKey];
     iTermStatusBarComponentKnob *backgroundColorKnob =
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Background Color"
                                                           type:iTermStatusBarComponentKnobTypeColor
                                                    placeholder:nil
-                                                  defaultValue:[[NSColor clearColor] dictionaryValue]
+                                                  defaultValue:nil
                                                            key:iTermStatusBarSharedBackgroundColorKey];
 
     return [@[ textColorKnob, backgroundColorKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
