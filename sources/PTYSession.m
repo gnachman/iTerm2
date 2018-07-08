@@ -4063,6 +4063,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (originalGuid) {
         // This code path is taken when changing an existing session's profile.
         // See bug 2632.
+        // It is also taken when you "new tab with same profile" and that profile is divorced.
         Profile *possibleOriginalProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:originalGuid];
         if (possibleOriginalProfile) {
             [_originalProfile autorelease];
