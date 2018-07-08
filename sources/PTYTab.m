@@ -421,8 +421,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     BOOL anyChange = NO;
     const BOOL showTitles = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
     NSArray *sessions = [self sessions];
+    const BOOL anySessionHasStatusBar = [sessions anyWithBlock:^BOOL(PTYSession *session) {
+        return [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:session.profile];
+    }];
+    const BOOL shouldShowTitles = (showTitles && [sessions count] > 1) || anySessionHasStatusBar;
     for (PTYSession *aSession in sessions) {
-        if ([[aSession view] setShowTitle:(showTitles && [sessions count] > 1)
+        if ([[aSession view] setShowTitle:shouldShowTitles
                          adjustScrollView:![self isTmuxTab]]) {
             if (![self isTmuxTab]) {
                 if ([self fitSessionToCurrentViewSize:aSession]) {
@@ -2970,6 +2974,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     BOOL haveMultipleSessions = ([theChildren count] > 1);
     BOOL showTitles =
         [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] && (zoomed || haveMultipleSessions);
+    if ([iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:profile]) {
+        showTitles = YES;
+    }
     // Begin by decorating the tree with pixel sizes.
     [PTYTab _recursiveSetSizesInTmuxParseTree:parseTree
                                    showTitles:showTitles
@@ -3031,7 +3038,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
-    if ([iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] && haveMultipleSessions) {
+    const BOOL shouldShowTitles = (([iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] && haveMultipleSessions) ||
+                                   [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:tmuxController.profile]);
+    if (shouldShowTitles) {
         // Set the showTitle flag so recompact does not make the views too small.
         for (PTYSession *aSession in [theTab sessions]) {
             [aSession.view setShowTitle:YES adjustScrollView:NO];
@@ -3441,8 +3450,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }
     }
 
-    const BOOL showTitles = ([iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] &&
-                             self.sessions.count > 1);
+    const BOOL showTitles = (([iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] &&
+                              self.sessions.count > 1) ||
+                             [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:self.tmuxController.profile]);
 
     for (PTYSession *aSession in [self sessions]) {
         NSNumber *n = [NSNumber numberWithInt:[aSession tmuxPane]];
@@ -3632,7 +3642,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)resizeTmuxSessionView:(SessionView *)sessionView toGridSize:(VT100GridSize)gridSize {
     DLog(@"resize view %@ to grid size %@", sessionView, VT100GridSizeDescription(gridSize));
-    const BOOL showTitles = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
+    const BOOL showTitles = ([iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] ||
+                             [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:self.tmuxController.profile]);
     NSSize size = [PTYTab _sessionSizeWithCellSize:[PTYTab cellSizeForBookmark:self.tmuxController.profile]
                                         dimensions:NSMakeSize(gridSize.width, gridSize.height)
                                         showTitles:showTitles
