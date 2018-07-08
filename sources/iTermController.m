@@ -300,7 +300,16 @@ static iTermController *gSharedInstance;
     if (_frontTerminalWindowController) {
         bookmark = [[_frontTerminalWindowController currentSession] profile];
     }
-    [self launchBookmark:bookmark inTerminal:_frontTerminalWindowController];
+    BOOL divorced = ([[ProfileModel sessionsInstance] bookmarkWithGuid:bookmark[KEY_GUID]] != nil);
+    if (divorced) {
+        DLog(@"Creating a new session with a sessions instance guid");
+        NSString *guid = [ProfileModel freshGuid];
+        bookmark = [bookmark dictionaryBySettingObject:guid forKey:KEY_GUID];
+    }
+    PTYSession *session = [self launchBookmark:bookmark inTerminal:_frontTerminalWindowController];
+    if (divorced) {
+        [session divorceAddressBookEntryFromPreferences];
+    }
 }
 
 // Launch a new session using the default profile. If the current session is
