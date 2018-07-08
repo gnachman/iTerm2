@@ -74,8 +74,7 @@
 }
 
 - (void)insertNewline:(id)sender {
-    NSViewController *parent = self.parentViewController;
-    [parent dismissViewController:parent];
+    [self.view.window.sheetParent endSheet:self.view.window returnCode:NSModalResponseOK];
 }
 
 @end
