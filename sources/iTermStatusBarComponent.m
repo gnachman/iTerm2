@@ -8,7 +8,4 @@
 #import <Foundation/Foundation.h>
 #import "iTermStatusBarComponent.h"
 
-iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyPriority = @"priority";
-iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyJustification = @"justification";
-iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyMinimumWidth = @"minimum width";
 iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyKnobValues = @"knobs";

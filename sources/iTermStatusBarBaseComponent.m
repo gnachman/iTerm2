@@ -14,6 +14,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const iTermStatusBarCompressionResistanceKey = @"base: compression resistance";
+static NSString *const iTermStatusBarPriorityKey = @"base: priority";
 
 @implementation iTermStatusBarBaseComponent
 
@@ -38,10 +39,6 @@ static NSString *const iTermStatusBarCompressionResistanceKey = @"base: compress
 }
 
 - (CGFloat)statusBarComponentMinimumWidth {
-    NSNumber *number = _configuration[iTermStatusBarComponentConfigurationKeyMinimumWidth];
-    if (number) {
-        return number.doubleValue;
-    }
     return self.statusBarComponentCreateView.frame.size.width;
 }
 
@@ -84,7 +81,13 @@ static NSString *const iTermStatusBarCompressionResistanceKey = @"base: compress
                                                placeholder:@""
                                               defaultValue:@1
                                                        key:iTermStatusBarCompressionResistanceKey];
-    return @[ compressionResistanceKnob ];
+    iTermStatusBarComponentKnob *priorityKnob =
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Priority:"
+                                                      type:iTermStatusBarComponentKnobTypeDouble
+                                               placeholder:@""
+                                              defaultValue:@5
+                                                       key:iTermStatusBarPriorityKey];
+    return @[ compressionResistanceKnob, priorityKnob ];
 }
 
 - (id)statusBarComponentExemplar {
@@ -105,11 +108,11 @@ static NSString *const iTermStatusBarCompressionResistanceKey = @"base: compress
 }
 
 - (double)statusBarComponentPriority {
-    NSNumber *number = _configuration[iTermStatusBarComponentConfigurationKeyPriority];
+    NSNumber *number = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarPriorityKey] ?: @5;
     if (number) {
         return number.doubleValue;
     }
-    return iTermStatusBarComponentPriorityMedium;
+    return 5;
 }
 
 - (NSSet<NSString *> *)statusBarComponentVariableDependencies {
@@ -141,6 +144,10 @@ static NSString *const iTermStatusBarCompressionResistanceKey = @"base: compress
 }
 
 - (void)statusBarComponentWidthDidChangeTo:(CGFloat)newWidth {
+}
+
+- (BOOL)statusBarComponentHasMargins {
+    return YES;
 }
 
 #pragma mark - NSSecureCoding
