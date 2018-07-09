@@ -153,6 +153,7 @@
 @property(nonatomic, readonly) BOOL isDropDownSearchVisible;
 @property(nonatomic, weak) id<iTermFindDriverDelegate> findDriverDelegate;
 @property(nonatomic, readonly) BOOL findViewIsHidden;
+@property(nonatomic, readonly) BOOL findViewHasKeyboardFocus;
 @property(nonatomic, readonly) iTermFindDriver *findDriver;
 
 - (void)showFindUI;

@@ -208,7 +208,7 @@ static NSDate* lastResizeDate_;
     return _dropDownFindDriver.delegate;
 }
 
-- (BOOL)findViewIsHidden {
+- (BOOL)findViewHasKeyboardFocus {
     switch (_findDriver) {
         case iTermSessionViewFindDriverDropDown:
             return !_dropDownFindDriver.isVisible;
@@ -216,6 +216,20 @@ static NSDate* lastResizeDate_;
             return NO;
         case iTermSessionViewFindDriverTemporaryStatusBar:
             return !_temporaryStatusBarFindDriver.isVisible;
+    }
+    assert(false);
+    return YES;
+}
+
+- (BOOL)findViewIsHidden {
+
+    switch (_findDriver) {
+        case iTermSessionViewFindDriverDropDown:
+            return !_dropDownFindDriver.isVisible;
+        case iTermSessionViewFindDriverPermanentStatusBar:
+            return NO;
+        case iTermSessionViewFindDriverTemporaryStatusBar:
+            return _title.statusBarViewController.temporaryLeftComponent == nil;
     }
     assert(false);
     return YES;
