@@ -892,6 +892,8 @@ static NSDate* lastResizeDate_;
         _title.statusBarViewController = newVC;
         if (newVC.searchViewController) {
             _findDriver = iTermSessionViewFindDriverPermanentStatusBar;
+            _permanentStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:newVC.searchViewController];
+            _permanentStatusBarFindDriver.delegate = self.findDriverDelegate;
         } else if (newVC) {
             _findDriver = iTermSessionViewFindDriverTemporaryStatusBar;
         } else {
