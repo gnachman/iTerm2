@@ -149,8 +149,14 @@
 @property(nonatomic, readonly) iTermMetalDriver *driver NS_AVAILABLE_MAC(10_11);
 @property(nonatomic, readonly) MTKView *metalView NS_AVAILABLE_MAC(10_11);
 @property(nonatomic, readonly) BOOL useMetal NS_AVAILABLE_MAC(10_11);
+
+@property(nonatomic, readonly) BOOL isDropDownSearchVisible;
+@property(nonatomic, weak) id<iTermFindDriverDelegate> findDriverDelegate;
+@property(nonatomic, readonly) BOOL findViewIsHidden;
 @property(nonatomic, readonly) iTermFindDriver *findDriver;
 
+- (void)showFindUI;
+- (void)findViewDidHide;
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11);;
 
 + (double)titleHeight;

@@ -10,6 +10,7 @@
 #import "iTermMetalClipView.h"
 #import "iTermMetalDeviceProvider.h"
 #import "iTermPreferences.h"
+#import "iTermStatusBarSearchFieldComponent.h"
 #import "iTermStatusBarViewController.h"
 #import "NSView+iTerm.h"
 #import "MovePaneController.h"
@@ -93,8 +94,15 @@ static NSDate* lastResizeDate_;
 
     BOOL _useMetal;
     iTermMetalClipView *_metalClipView;
-    iTermFindDriverArbitrator *_findDriverArbitrator;
     iTermDropDownFindViewController *_dropDownFindViewController;
+    enum {
+        iTermSessionViewFindDriverDropDown,
+        iTermSessionViewFindDriverTemporaryStatusBar,
+        iTermSessionViewFindDriverPermanentStatusBar
+    } _findDriver;
+    iTermFindDriver *_dropDownFindDriver;
+    iTermFindDriver *_permanentStatusBarFindDriver;
+    iTermFindDriver *_temporaryStatusBarFindDriver;
 }
 
 + (double)titleHeight {
@@ -120,11 +128,7 @@ static NSDate* lastResizeDate_;
 
         // Set up find view
         _dropDownFindViewController = [self newDropDownFindView];
-        _findDriverArbitrator = [[iTermFindDriverArbitrator alloc] initWithDelegate:self];
-        [_findDriverArbitrator replaceViewControllerWithIdentifier:nil
-                                                              with:_dropDownFindViewController
-                                                        identifier:@"dropdown"
-                                                            before:nil];
+        _dropDownFindDriver = [[iTermFindDriver alloc] initWithViewController:_dropDownFindViewController];
 
         // Assign a globally unique view ID.
         _viewId = nextViewId++;
@@ -190,8 +194,71 @@ static NSDate* lastResizeDate_;
     return dropDownViewController;
 }
 
+- (BOOL)isDropDownSearchVisible {
+    return _findDriver == iTermSessionViewFindDriverDropDown && _dropDownFindDriver.isVisible;
+}
+
+- (void)setFindDriverDelegate:(id<iTermFindDriverDelegate>)delegate {
+    _dropDownFindDriver.delegate = delegate;
+    _temporaryStatusBarFindDriver.delegate = delegate;
+    _permanentStatusBarFindDriver.delegate = delegate;
+}
+
+- (id<iTermFindDriverDelegate>)findDriverDelegate {
+    return _dropDownFindDriver.delegate;
+}
+
+- (BOOL)findViewIsHidden {
+    switch (_findDriver) {
+        case iTermSessionViewFindDriverDropDown:
+            return !_dropDownFindDriver.isVisible;
+        case iTermSessionViewFindDriverPermanentStatusBar:
+            return NO;
+        case iTermSessionViewFindDriverTemporaryStatusBar:
+            return !_temporaryStatusBarFindDriver.isVisible;
+    }
+    assert(false);
+    return YES;
+}
+
 - (iTermFindDriver *)findDriver {
-    return _findDriverArbitrator.driver;
+    switch (_findDriver) {
+        case iTermSessionViewFindDriverDropDown:
+            return _dropDownFindDriver;
+        case iTermSessionViewFindDriverPermanentStatusBar:
+            return _permanentStatusBarFindDriver;
+        case iTermSessionViewFindDriverTemporaryStatusBar:
+            return _temporaryStatusBarFindDriver;
+    }
+    assert(false);
+    return nil;
+}
+
+- (void)showFindUI {
+    if (self.findViewIsHidden) {
+        if (_title.statusBarViewController) {
+            if (!_title.statusBarViewController.temporaryLeftComponent) {
+                _findDriver = iTermSessionViewFindDriverTemporaryStatusBar;
+                NSDictionary *knobs = @{ iTermStatusBarPriorityKey: @(INFINITY),
+                                         iTermStatusBarSearchComponentIsTemporaryKey: @YES };
+                NSDictionary *configuration = @{ iTermStatusBarComponentConfigurationKeyKnobValues: knobs};
+                iTermStatusBarSearchFieldComponent *component =
+                    [[iTermStatusBarSearchFieldComponent alloc] initWithConfiguration:configuration];
+                _temporaryStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:component.statusBarComponentSearchViewController];
+                _temporaryStatusBarFindDriver.delegate = _dropDownFindDriver.delegate;
+                component.statusBarComponentSearchViewController.driver = _temporaryStatusBarFindDriver;
+                _title.statusBarViewController.temporaryLeftComponent = component;
+            }
+        } else {
+            _findDriver = iTermSessionViewFindDriverDropDown;
+            [_temporaryStatusBarFindDriver open];
+        }
+    }
+    [self.findDriver makeVisible];
+}
+
+- (void)findViewDidHide {
+    _title.statusBarViewController.temporaryLeftComponent = nil;
 }
 
 - (BOOL)useMetal {
@@ -832,10 +899,13 @@ static NSDate* lastResizeDate_;
     iTermStatusBarViewController *newVC = [self.delegate sessionViewStatusBarViewController];
     if (newVC != _title.statusBarViewController) {
         _title.statusBarViewController = newVC;
-        [_findDriverArbitrator replaceViewControllerWithIdentifier:@"statusbar"
-                                                              with:_title.statusBarViewController.searchViewController
-                                                        identifier:@"statusbar"
-                                                            before:nil];
+        if (newVC.searchViewController) {
+            _findDriver = iTermSessionViewFindDriverPermanentStatusBar;
+        } else if (newVC) {
+            _findDriver = iTermSessionViewFindDriverTemporaryStatusBar;
+        } else {
+            _findDriver = iTermSessionViewFindDriverDropDown;
+        }
     }
 }
 
@@ -1113,6 +1183,7 @@ static NSDate* lastResizeDate_;
 
 - (void)findViewControllerClearSearch {
     [self.delegate findViewControllerClearSearch];
+    _title.statusBarViewController.temporaryLeftComponent = nil;
 }
 
 - (void)findString:(NSString *)aString

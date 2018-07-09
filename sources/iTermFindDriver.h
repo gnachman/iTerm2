@@ -91,20 +91,3 @@
                                           mode:(iTermFindMode)mode;
 
 @end
-
-@interface iTermFindDriverArbitrator : NSObject
-
-@property (nonatomic, readonly) iTermFindDriver *driver;
-@property (nonatomic, weak, readonly) id<iTermFindDriverDelegate> delegate;
-
-// Gives view controllers in priority order. The first one is assumed to be available.
-- (instancetype)initWithDelegate:(id<iTermFindDriverDelegate>) delegate NS_DESIGNATED_INITIALIZER;
-- (instancetype)init NS_UNAVAILABLE;
-
-// Changes whether a view controller is available.
-- (void)replaceViewControllerWithIdentifier:(NSString *)identifierToRemove
-                                       with:(NSViewController<iTermFindViewController> *)replacement
-                                 identifier:(NSString *)identifier
-                                     before:(NSString *)beforeIdentifier;
-
-@end

@@ -12,6 +12,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermVariableScope;
 
+// Knob key taking a number.
+extern NSString *const iTermStatusBarPriorityKey;
+
 @interface iTermStatusBarBaseComponent : NSObject<iTermStatusBarComponent>
 
 @property (nonatomic, readonly) iTermVariableScope *scope;

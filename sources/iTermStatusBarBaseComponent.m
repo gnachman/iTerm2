@@ -14,7 +14,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const iTermStatusBarCompressionResistanceKey = @"base: compression resistance";
-static NSString *const iTermStatusBarPriorityKey = @"base: priority";
+NSString *const iTermStatusBarPriorityKey = @"base: priority";
 
 @implementation iTermStatusBarBaseComponent
 

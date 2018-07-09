@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermStatusBarContainerView.h"
 #import "iTermStatusBarLayout.h"
+#import "iTermStatusBarSpringComponent.h"
 #import "iTermStatusBarView.h"
 #import "NSArray+iTerm.h"
 #import "NSTimer+iTerm.h"
@@ -82,6 +83,18 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
         }
     }
     DLog(@"--- end status bar layout ---");
+}
+
+- (void)setTemporaryLeftComponent:(nullable id<iTermStatusBarComponent>)temporaryLeftComponent {
+    _temporaryLeftComponent = temporaryLeftComponent;
+    [self updateViews];
+    [self.view layoutSubtreeIfNeeded];
+}
+
+- (void)setTemporaryRightComponent:(nullable id<iTermStatusBarComponent>)temporaryRightComponent {
+    _temporaryRightComponent = temporaryRightComponent;
+    [self updateViews];
+    [self.view layoutSubtreeIfNeeded];
 }
 
 - (void)variablesDidChange:(NSSet<NSString *> *)names {
@@ -275,7 +288,16 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
 
 - (void)updateViews {
     NSMutableArray<iTermStatusBarContainerView *> *updatedContainerViews = [NSMutableArray array];
-    for (id<iTermStatusBarComponent> component in _layout.components) {
+    NSMutableArray<id<iTermStatusBarComponent>> *components = [_layout.components mutableCopy];
+    if (_temporaryLeftComponent) {
+        [components insertObject:_temporaryLeftComponent atIndex:0];
+    }
+    if (_temporaryRightComponent) {
+        iTermStatusBarSpringComponent *spring = [iTermStatusBarSpringComponent springComponentWithCompressionResistance:1];
+        [components addObject:spring];
+        [components addObject:_temporaryRightComponent];
+    }
+    for (id<iTermStatusBarComponent> component in components) {
         iTermStatusBarContainerView *view = [self containerViewForComponent:component];
         if (view) {
             [_containerViews removeObject:view];
