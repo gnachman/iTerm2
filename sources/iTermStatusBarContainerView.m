@@ -46,6 +46,10 @@ NS_ASSUME_NONNULL_BEGIN
     [_timer invalidate];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p frame=%@ component=%@>", self.class, self, NSStringFromRect(self.frame), self.component];
+}
+
 - (void)reevaluateTimer:(NSTimer *)timer {
     [self setNeedsUpdate];
 }

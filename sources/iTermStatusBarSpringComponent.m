@@ -7,9 +7,12 @@
 
 #import "iTermStatusBarSpringComponent.h"
 
+#import "NSDictionary+iTerm.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermStatusBarSpringComponentSpringConstantKey";
+static NSString *const iTermStatusBarSpringColorKey = @"spring: color";
 
 @implementation iTermStatusBarSpringComponent {
     NSView *_view;
@@ -30,22 +33,42 @@ static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermS
 - (NSView *)statusBarComponentCreateView {
     if (!_view) {
         _view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, self.statusBarComponentMinimumWidth, 0)];
+        _view.wantsLayer = YES;
+        _view.layer.backgroundColor = [self color].CGColor;
     }
     return _view;
 }
 
+- (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width {
+    NSRect rect = view.frame;
+    rect.size.width = width;
+    rect.size.height = view.superview.frame.size.height;
+    view.frame = rect;
+}
+
 - (CGFloat)statusBarComponentMinimumWidth {
-    return 0;
+    return 5;
+}
+
+- (NSColor *)color {
+    NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    return [knobValues[iTermStatusBarSpringColorKey] colorValue];
 }
 
 + (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
-    iTermStatusBarComponentKnob *expressionKnob =
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Spring Constant:"
+    iTermStatusBarComponentKnob *springConstantKnob =
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Compression Resistance:"
                                                           type:iTermStatusBarComponentKnobTypeDouble
                                                    placeholder:@""
-                                                  defaultValue:@1
+                                                  defaultValue:@0.01
                                                            key:iTermStatusBarSpringComponentSpringConstantKey];
-    return @[ expressionKnob ];
+    iTermStatusBarComponentKnob *backgroundColorKnob =
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Color"
+                                                      type:iTermStatusBarComponentKnobTypeColor
+                                               placeholder:nil
+                                              defaultValue:nil
+                                                       key:iTermStatusBarSpringColorKey];
+    return @[ springConstantKnob, backgroundColorKnob ];
 }
 
 - (CGFloat)statusBarComponentSpringConstant {
@@ -60,6 +83,10 @@ static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermS
 
 - (CGFloat)statusBarComponentPreferredWidth {
     return INFINITY;
+}
+
+- (BOOL)statusBarComponentHasMargins {
+    return NO;
 }
 
 @end

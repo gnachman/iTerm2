@@ -10,14 +10,8 @@
 #import "iTermFindViewController.h"
 #import "iTermStatusBarComponentKnob.h"
 
-static double iTermStatusBarComponentPriorityLow = 0.25;
-static double iTermStatusBarComponentPriorityMedium = 0.5;
-static double iTermStatusBarComponentPriorityHigh = 0.75;
-static double iTermStatusBarComponentPriorityMaximum = 1;
 
 typedef NSString *iTermStatusBarComponentConfigurationKey NS_EXTENSIBLE_STRING_ENUM;
-extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyPriority;  // NSNumber
-extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyMinimumWidth;  // NSNumber
 extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyKnobValues;  // NSDictionary
 
 // Knob key
@@ -99,5 +93,8 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 
 // Called when the view size changes.
 - (void)statusBarComponentWidthDidChangeTo:(CGFloat)newWidth;
+
+// Does the view have margins between it and adjacent views
+- (BOOL)statusBarComponentHasMargins;
 
 @end

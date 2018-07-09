@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) id<iTermStatusBarComponent> component;
 @property (nonatomic) CGFloat desiredWidth;
 @property (nonatomic) CGFloat desiredOrigin;
+@property (nonatomic) CGFloat leftMargin;
+@property (nonatomic) CGFloat rightMargin;
 
 - (nullable instancetype)initWithComponent:(id<iTermStatusBarComponent>)component NS_DESIGNATED_INITIALIZER;
 
