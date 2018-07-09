@@ -10,6 +10,9 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermStatusBarSpringComponent : iTermStatusBarBaseComponent
+
++ (instancetype)springComponentWithCompressionResistance:(double)compressionResistance;
+
 @end
 
 NS_ASSUME_NONNULL_END

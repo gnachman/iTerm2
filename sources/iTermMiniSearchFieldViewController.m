@@ -68,6 +68,9 @@
 }
 
 - (void)close {
+    if (self.canClose) {
+        [self.driver setVisible:NO];
+    }
 }
 
 - (void)open {

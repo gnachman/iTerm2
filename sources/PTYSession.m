@@ -1319,7 +1319,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     aSession.view = sessionView;
 
-    sessionView.findDriver.delegate = aSession;
+    [sessionView setFindDriverDelegate:aSession];
     NSDictionary<NSString *, NSString *> *overrides = arrangement[SESSION_ARRANGEMENT_FONT_OVERRIDES];
     if (overrides) {
         NSMutableDictionary *temp = [[theBookmark mutableCopy] autorelease];
@@ -1612,7 +1612,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (@available(macOS 10.11, *)) {
             self.view.driver.dataSource = _metalGlue;
         }
-        _view.findDriver.delegate = self;
+        [_view setFindDriverDelegate:self];
     }
 
     _view.scrollview.hasVerticalRuler = [parent scrollbarShouldBeVisible];
@@ -2192,8 +2192,8 @@ ITERM_WEAKLY_REFERENCEABLE
     _screen.delegate = nil;
     [_screen setTerminal:nil];
     _terminal.delegate = nil;
-    if (_view.findDriver.delegate == self) {
-        _view.findDriver.delegate = nil;
+    if (_view.findDriverDelegate == self) {
+        _view.findDriverDelegate = nil;
     }
 
     [_pasteHelper abort];
@@ -2271,7 +2271,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _screen.terminal = _terminal;
         _terminal.delegate = _screen;
         _shell.paused = NO;
-        _view.findDriver.delegate = self;
+        [_view setFindDriverDelegate:self];
 
         NSDictionary *shortcutDictionary = [iTermProfilePreferences objectForKey:KEY_SESSION_HOTKEY inProfile:self.profile];
         iTermShortcut *shortcut = [iTermShortcut shortcutWithDictionary:shortcutDictionary];
@@ -3925,7 +3925,7 @@ ITERM_WEAKLY_REFERENCEABLE
         newView.driver.dataSource = _metalGlue;
     }
     [newView updateTitleFrame];
-    _view.findDriver.delegate = self;
+    [_view setFindDriverDelegate:self];
 }
 
 - (NSStringEncoding)encoding
@@ -4384,7 +4384,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // cadence since we might have just become idle.
     self.active = (somethingIsBlinking || transientTitle || animationPlaying);
 
-    if (_tailFindTimer && _view.findDriver.viewController.view.isHidden) {
+    if (_tailFindTimer && _view.findViewIsHidden) {
         [self stopTailFind];
     }
 
@@ -4794,7 +4794,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)showFindPanel {
-    [_view.findDriver makeVisible];
+    [_view showFindUI];
 }
 
 - (void)searchNext {
@@ -4866,6 +4866,9 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)findViewControllerVisibilityDidChange:(id)sender {
     if (@available(macOS 10.11, *)) {
         [_delegate sessionUpdateMetalAllowed];
+    }
+    if (_view.findViewIsHidden) {
+        [_view findViewDidHide];
     }
 }
 
@@ -4946,7 +4949,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 _textview.transparencyAlpha == 1 &&
                 ![self ligaturesEnabledInEitherFont] &&
                 ![PTYNoteViewController anyNoteVisible] &&
-                !_view.findDriver.isVisible &&
+                !_view.isDropDownSearchVisible &&
                 !_pasteHelper.pasteViewIsVisible &&
                 _view.currentAnnouncement == nil &&
                 !_view.hasHoverURL &&
@@ -5262,7 +5265,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // That means the find window is open, we're not already doing a tail find,
     // and a search was performed in the find window (vs select+cmd-e+cmd-f).
     return (!_tailFindTimer &&
-            !_view.findDriver.viewController.view.isHidden &&
+            !_view.findViewIsHidden &&
             [_textview findContext].substring != nil);
 }
 

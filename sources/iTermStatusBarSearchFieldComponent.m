@@ -14,6 +14,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
+
 @implementation iTermStatusBarSearchFieldComponent {
     iTermMiniSearchFieldViewController *_viewController;
 }
@@ -61,6 +63,9 @@ NS_ASSUME_NONNULL_BEGIN
     if (!_viewController) {
         _viewController = [[iTermMiniSearchFieldViewController alloc] initWithNibName:@"iTermMiniSearchFieldViewController"
                                                                                bundle:[NSBundle mainBundle]];
+        if ([self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarSearchComponentIsTemporaryKey] boolValue]) {
+            _viewController.canClose = YES;
+        }
     }
     return _viewController;
 }

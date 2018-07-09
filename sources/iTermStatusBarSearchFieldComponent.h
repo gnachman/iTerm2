@@ -9,6 +9,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSString *iTermStatusBarSearchComponentIsTemporaryKey;  // knob taking a boolean
+
 @interface iTermStatusBarSearchFieldComponent : iTermStatusBarBaseComponent
 
 @end

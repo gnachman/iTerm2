@@ -154,6 +154,7 @@ static NSString *gSearchString;
 
     [_delegate findViewControllerClearSearch];
     [_delegate findViewControllerMakeDocumentFirstResponder];
+    [self.delegate findViewControllerVisibilityDidChange:_viewController];
 }
 
 - (void)makeVisible {
@@ -482,99 +483,3 @@ static NSString *gSearchString;
 }
 
 @end
-
-@implementation iTermFindDriverArbitrator {
-    NSMutableArray<iTermTuple<iTermFindDriver *, NSString *> *> *_tuples;
-}
-
-- (instancetype)initWithDelegate:(id<iTermFindDriverDelegate>)delegate {
-    self = [super init];
-    if (self) {
-        _delegate = delegate;
-        _tuples = [NSMutableArray array];
-    }
-    return self;
-}
-
-- (iTermFindDriver *)newFindDriverForViewController:(NSViewController<iTermFindViewController> *)viewController {
-    iTermFindDriver *driver = [[iTermFindDriver alloc] initWithViewController:viewController];
-    driver.delegate = self.delegate;
-    return driver;
-}
-
-- (NSUInteger)indexOfViewControllerWithIdentifier:(NSString *)identifier {
-    if (!identifier) {
-        return NSNotFound;
-    }
-    return [_tuples indexOfObjectPassingTest:^BOOL(iTermTuple<iTermFindDriver *,NSNumber *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
-        return [tuple.secondObject isEqual:identifier];
-    }];
-}
-
-- (void)addViewController:(NSViewController<iTermFindViewController> *)viewController identifier:(NSString *)identifier {
-    iTermFindDriver *driver = [self newFindDriverForViewController:viewController];
-    [_tuples addObject:[iTermTuple tupleWithObject:driver andObject:identifier]];
-    [self updateCurrentDriver];
-}
-
-- (void)insertViewController:(NSViewController<iTermFindViewController> *)viewController
-                  identifier:(NSString *)identifier
-                      before:(NSString *)beforeIdentifier {
-    NSUInteger index = [self indexOfViewControllerWithIdentifier:beforeIdentifier];
-    if (index == NSNotFound) {
-        [self addViewController:viewController identifier:identifier];
-        return;
-    }
-
-    iTermFindDriver *driver = [self newFindDriverForViewController:viewController];
-    [_tuples insertObject:[iTermTuple tupleWithObject:driver andObject:identifier]
-                  atIndex:index];
-    [self updateCurrentDriver];
-}
-
-- (void)removeViewControllerWithIdentifier:(NSString *)identifier {
-    NSUInteger index = [self indexOfViewControllerWithIdentifier:identifier];
-    if (index != NSNotFound) {
-        [_tuples removeObjectAtIndex:index];
-    }
-    [self updateCurrentDriver];
-}
-
-- (void)replaceViewControllerWithIdentifier:(NSString *)identifierToRemove
-                                       with:(NSViewController<iTermFindViewController> *)replacement
-                                 identifier:(NSString *)identifier
-                                     before:(NSString *)beforeIdentifier {
-    NSUInteger index = [self indexOfViewControllerWithIdentifier:identifierToRemove];
-    if (index == NSNotFound) {
-        if (replacement == nil) {
-            return;
-        }
-        [self insertViewController:replacement identifier:identifier before:beforeIdentifier];
-        return;
-    }
-    if (!replacement) {
-        [self removeViewControllerWithIdentifier:identifierToRemove];
-        return;
-    }
-
-    _tuples[index].firstObject = [self newFindDriverForViewController:replacement];
-    _tuples[index].secondObject = identifier;
-    [self updateCurrentDriver];
-}
-
-#pragma mark - Private
-
-- (void)updateCurrentDriver {
-    iTermFindDriver *currentDriver = _tuples.lastObject.firstObject;
-    assert(currentDriver);
-    if (_driver == currentDriver) {
-        return;
-    }
-    if ([_driver isVisible]) {
-        [_driver close];
-    }
-    _driver = currentDriver;
-}
-
-@end
-

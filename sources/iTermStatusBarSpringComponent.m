@@ -18,6 +18,12 @@ static NSString *const iTermStatusBarSpringColorKey = @"spring: color";
     NSView *_view;
 }
 
++ (instancetype)springComponentWithCompressionResistance:(double)compressionResistance {
+    NSDictionary *knobs = @{ iTermStatusBarSpringComponentSpringConstantKey: @(compressionResistance) };
+    NSDictionary *configuration = @{ iTermStatusBarComponentConfigurationKeyKnobValues: knobs };
+    return [[iTermStatusBarSpringComponent alloc] initWithConfiguration:configuration];
+}
+
 - (id)statusBarComponentExemplar {
     return @"║┄┄║";
 }

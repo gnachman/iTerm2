@@ -9,6 +9,7 @@
 #import "iTermFindViewController.h"
 
 @interface iTermMiniSearchFieldViewController : NSViewController<iTermFindViewController>
+@property (nonatomic) BOOL canClose;
 
 - (void)sizeToFitSize:(NSSize)size;
 
