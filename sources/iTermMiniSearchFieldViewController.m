@@ -38,6 +38,7 @@
 @implementation iTermMiniSearchFieldViewController {
     IBOutlet NSSearchField *_searchField;
     IBOutlet NSSegmentedControl *_arrowsControl;
+    IBOutlet NSButton *_closeButton;
     NSTimer *_animationTimer;
 }
 
@@ -51,13 +52,20 @@
     rect.size = size;
     self.view.frame = rect;
     
-    _arrowsControl.frame = NSMakeRect(size.width - _arrowsControl.frame.size.width,
-                                      1,
+    // This makes the arrows and close buttons line up visually.
+    const CGFloat verticalOffset = 1;
+    
+    _closeButton.frame = NSMakeRect(size.width - _closeButton.frame.size.width,
+                                    verticalOffset,
+                                    _closeButton.frame.size.width,
+                                    searchFieldSize.height);
+    _arrowsControl.frame = NSMakeRect(size.width - _arrowsControl.frame.size.width - _closeButton.frame.size.width,
+                                      verticalOffset,
                                       _arrowsControl.frame.size.width,
                                       _arrowsControl.frame.size.height);
     const CGFloat margin = 3;
     const CGFloat leftMargin = 2;
-    const CGFloat used = leftMargin + _arrowsControl.frame.size.width + margin;
+    const CGFloat used = leftMargin + _arrowsControl.frame.size.width + _closeButton.frame.size.width + margin;
     _searchField.frame = NSMakeRect(leftMargin, 0, self.view.frame.size.width - used, searchFieldSize.height);
 }
 
@@ -140,6 +148,10 @@
 
 - (IBAction)changeMode:(id)sender {
     self.driver.mode = (iTermFindMode)[sender tag];
+}
+
+- (IBAction)closeButton:(id)sender {
+    [self.driver close];
 }
 
 #pragma mark - NSViewController

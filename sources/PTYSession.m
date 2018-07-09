@@ -4867,7 +4867,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.11, *)) {
         [_delegate sessionUpdateMetalAllowed];
     }
-    if (_view.findViewIsHidden) {
+    if (_view.findViewHasKeyboardFocus) {
         [_view findViewDidHide];
     }
 }
