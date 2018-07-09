@@ -47,7 +47,7 @@ static NSString *const iTermStatusBarSpringColorKey = @"spring: color";
 }
 
 - (CGFloat)statusBarComponentMinimumWidth {
-    return 5;
+    return 0;
 }
 
 - (NSColor *)color {
