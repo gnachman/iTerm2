@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 
 import argparse
 import asyncio
@@ -450,6 +450,17 @@ async def set_tmux_window_visible(connection, args):
     ids.append(connection.connection_id)
   print("No connection with id {} found. Have: {}".format(args.connection_id, ", ".join(ids)))
 
+async def sort_tabs(connection, args):
+  app = await iterm2.async_get_app(connection)
+  for w in app.terminal_windows:
+    tabs = w.tabs
+    for t in tabs:
+      t.tab_name = await t.async_get_variable("currentSession.session.name")
+    def tab_name(t):
+      return t.tab_name
+    sorted_tabs = sorted(tabs, key=tab_name)
+    await w.async_set_tabs(sorted_tabs)
+
 def make_parser():
   parser = argparse.ArgumentParser(description='iTerm2 CLI')
   subparsers = parser.add_subparsers(help='Commands')
@@ -538,14 +549,14 @@ def make_parser():
   set_variable_parser.set_defaults(func=set_variable)
 
   get_variable_parser = subparsers.add_parser("get-variable", help="Get a variable in a session. See Badges documentation for details.")
-  set_variable_parser.add_argument("--session", type=str, nargs='?', help="Session ID")
-  set_variable_parser.add_argument("--tab", type=str, nargs='?', help="Tab ID")
+  get_variable_parser.add_argument("--session", type=str, nargs='?', help="Session ID")
+  get_variable_parser.add_argument("--tab", type=str, nargs='?', help="Tab ID")
   get_variable_parser.add_argument("name", type=str, help="Variable name. Starts with \"user.\"")
   get_variable_parser.set_defaults(func=get_variable)
 
   list_variables_parser = subparsers.add_parser("list-variables", help="Lists variable names available in a session.")
-  set_variable_parser.add_argument("--session", type=str, nargs='?', help="Session ID")
-  set_variable_parser.add_argument("--tab", type=str, nargs='?', help="Tab ID")
+  list_variables_parser.add_argument("--session", type=str, nargs='?', help="Session ID")
+  list_variables_parser.add_argument("--tab", type=str, nargs='?', help="Tab ID")
   list_variables_parser.set_defaults(func=list_variables)
 
   saved_arrangement_parser = subparsers.add_parser("saved-arrangement", help="Saves and restores window arrangements")
@@ -583,6 +594,9 @@ def make_parser():
   set_tmux_window_visible_parser.add_argument('--no-visible', dest='visible', action='store_false')
   set_tmux_window_visible_parser.set_defaults(visible=True)
   set_tmux_window_visible_parser.set_defaults(func=set_tmux_window_visible)
+
+  sort_tabs_parser = subparsers.add_parser("sort-tabs", help="Sort tabs alphabetically by name")
+  sort_tabs_parser.set_defaults(func=sort_tabs)
 
   return parser
 
