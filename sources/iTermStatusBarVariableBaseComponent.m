@@ -48,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
     return @"";
 }
 
-- (BOOL)statusBarComponentCanStretch {
++ (BOOL)statusBarComponentCanStretch {
     return YES;
 }
 

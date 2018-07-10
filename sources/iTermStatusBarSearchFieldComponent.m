@@ -14,7 +14,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-extern NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
+NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
 
 @implementation iTermStatusBarSearchFieldComponent {
     iTermMiniSearchFieldViewController *_viewController;
@@ -33,7 +33,7 @@ extern NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: tempora
     return 200;
 }
 
-- (BOOL)statusBarComponentCanStretch {
++ (BOOL)statusBarComponentCanStretch {
     return YES;
 }
 

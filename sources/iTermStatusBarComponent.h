@@ -58,7 +58,7 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 // If this returns YES the component's width may exceed its minimum width.
 // The spring constant determines how multiple stretching components compete
 // for space.
-- (BOOL)statusBarComponentCanStretch;
++ (BOOL)statusBarComponentCanStretch;
 
 // How hard it pushes against its neighbors. Only applies to components that
 // can stretch.
@@ -96,5 +96,8 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 
 // Does the view have margins between it and adjacent views
 - (BOOL)statusBarComponentHasMargins;
+
+// Vertical offset for components that don't center propertly
+- (CGFloat)statusBarComponentVerticalOffset;
 
 @end

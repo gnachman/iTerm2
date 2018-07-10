@@ -45,7 +45,7 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
     }
 }
 
-- (BOOL)statusBarComponentCanStretch {
++ (BOOL)statusBarComponentCanStretch {
     return YES;
 }
 

@@ -86,7 +86,7 @@ NS_ASSUME_NONNULL_BEGIN
     const CGFloat myWidth = self.frame.size.width;
     const CGFloat viewWidth = _view.frame.size.width;
     _view.frame = NSMakeRect((myWidth - viewWidth) / 2,
-                             (myHeight - viewHeight) / 2,
+                             (myHeight - viewHeight) / 2 + _component.statusBarComponentVerticalOffset,
                              viewWidth,
                              viewHeight);
 }

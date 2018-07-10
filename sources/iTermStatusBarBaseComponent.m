@@ -50,7 +50,7 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
     return [self statusBarComponentMinimumWidth];
 }
 
-- (BOOL)statusBarComponentCanStretch {
++ (BOOL)statusBarComponentCanStretch {
     return NO;
 }
 
@@ -75,19 +75,26 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
 }
 
 + (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
-    iTermStatusBarComponentKnob *compressionResistanceKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Compression Resistance:"
-                                                      type:iTermStatusBarComponentKnobTypeDouble
-                                               placeholder:@""
-                                              defaultValue:@1
-                                                       key:iTermStatusBarCompressionResistanceKey];
+    iTermStatusBarComponentKnob *compressionResistanceKnob = nil;
+    if ([self statusBarComponentCanStretch]) {
+        compressionResistanceKnob =
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Compression Resistance:"
+                                                          type:iTermStatusBarComponentKnobTypeDouble
+                                                   placeholder:@""
+                                                  defaultValue:@1
+                                                           key:iTermStatusBarCompressionResistanceKey];
+    }
     iTermStatusBarComponentKnob *priorityKnob =
     [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Priority:"
                                                       type:iTermStatusBarComponentKnobTypeDouble
                                                placeholder:@""
                                               defaultValue:@5
                                                        key:iTermStatusBarPriorityKey];
-    return @[ compressionResistanceKnob, priorityKnob ];
+    if (compressionResistanceKnob) {
+        return @[ compressionResistanceKnob, priorityKnob ];
+    } else {
+        return @[ priorityKnob ];
+    }
 }
 
 - (id)statusBarComponentExemplar {
@@ -148,6 +155,10 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
 
 - (BOOL)statusBarComponentHasMargins {
     return YES;
+}
+
+- (CGFloat)statusBarComponentVerticalOffset {
+    return 0;
 }
 
 #pragma mark - NSSecureCoding
