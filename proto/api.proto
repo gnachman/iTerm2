@@ -40,6 +40,7 @@ message ClientOriginatedMessage {
     SetTabLayoutRequest set_tab_layout_request = 122;
     GetBroadcastDomainsRequest get_broadcast_domains_request = 123;
     TmuxRequest tmux_request = 124;
+    ReorderTabsRequest reorder_tabs_request = 125;
   }
 }
 
@@ -77,10 +78,29 @@ message ServerOriginatedMessage {
     SetTabLayoutResponse set_tab_layout_response = 122;
     GetBroadcastDomainsResponse get_broadcast_domains_response = 123;
     TmuxResponse tmux_response = 124;
+    ReorderTabsResponse reorder_tabs_response = 125;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
   }
+}
+
+message ReorderTabsRequest {
+  message Assignment {
+    optional string window_id = 1;
+    repeated string tab_ids = 2;
+  }
+  repeated Assignment assignments = 3;
+}
+
+message ReorderTabsResponse {
+  enum Status {
+    OK = 0;
+    INVALID_ASSIGNMENT = 1;  // e.g., duplicate tab id
+    INVALID_WINDOW_ID = 2;
+    INVALID_TAB_ID = 3;
+  }
+  optional Status status = 4;
 }
 
 message TmuxRequest {

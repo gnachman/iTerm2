@@ -176,6 +176,7 @@ BOOL ITMModifiers_IsValidValue(int32_t value__) {
 @dynamic setTabLayoutRequest;
 @dynamic getBroadcastDomainsRequest;
 @dynamic tmuxRequest;
+@dynamic reorderTabsRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -204,6 +205,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMSetTabLayoutRequest *setTabLayoutRequest;
   ITMGetBroadcastDomainsRequest *getBroadcastDomainsRequest;
   ITMTmuxRequest *tmuxRequest;
+  ITMReorderTabsRequest *reorderTabsRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -447,6 +449,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "reorderTabsRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMReorderTabsRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_ReorderTabsRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, reorderTabsRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -507,6 +518,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic setTabLayoutResponse;
 @dynamic getBroadcastDomainsResponse;
 @dynamic tmuxResponse;
+@dynamic reorderTabsResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -537,6 +549,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMSetTabLayoutResponse *setTabLayoutResponse;
   ITMGetBroadcastDomainsResponse *getBroadcastDomainsResponse;
   ITMTmuxResponse *tmuxResponse;
+  ITMReorderTabsResponse *reorderTabsResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -791,6 +804,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "reorderTabsResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMReorderTabsResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_ReorderTabsResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, reorderTabsResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
@@ -827,6 +849,186 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMReorderTabsRequest
+
+@implementation ITMReorderTabsRequest
+
+@dynamic assignmentsArray, assignmentsArray_Count;
+
+typedef struct ITMReorderTabsRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *assignmentsArray;
+} ITMReorderTabsRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "assignmentsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMReorderTabsRequest_Assignment),
+        .number = ITMReorderTabsRequest_FieldNumber_AssignmentsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMReorderTabsRequest__storage_, assignmentsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMReorderTabsRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMReorderTabsRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMReorderTabsRequest_Assignment
+
+@implementation ITMReorderTabsRequest_Assignment
+
+@dynamic hasWindowId, windowId;
+@dynamic tabIdsArray, tabIdsArray_Count;
+
+typedef struct ITMReorderTabsRequest_Assignment__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *windowId;
+  NSMutableArray *tabIdsArray;
+} ITMReorderTabsRequest_Assignment__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "windowId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMReorderTabsRequest_Assignment_FieldNumber_WindowId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMReorderTabsRequest_Assignment__storage_, windowId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "tabIdsArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMReorderTabsRequest_Assignment_FieldNumber_TabIdsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMReorderTabsRequest_Assignment__storage_, tabIdsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMReorderTabsRequest_Assignment class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMReorderTabsRequest_Assignment__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMReorderTabsRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMReorderTabsResponse
+
+@implementation ITMReorderTabsResponse
+
+@dynamic hasStatus, status;
+
+typedef struct ITMReorderTabsResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMReorderTabsResponse_Status status;
+} ITMReorderTabsResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMReorderTabsResponse_Status_EnumDescriptor,
+        .number = ITMReorderTabsResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMReorderTabsResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMReorderTabsResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMReorderTabsResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMReorderTabsResponse_Status
+
+GPBEnumDescriptor *ITMReorderTabsResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000InvalidAssignment\000InvalidWindowId\000Inv"
+        "alidTabId\000";
+    static const int32_t values[] = {
+        ITMReorderTabsResponse_Status_Ok,
+        ITMReorderTabsResponse_Status_InvalidAssignment,
+        ITMReorderTabsResponse_Status_InvalidWindowId,
+        ITMReorderTabsResponse_Status_InvalidTabId,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMReorderTabsResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMReorderTabsResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMReorderTabsResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMReorderTabsResponse_Status_Ok:
+    case ITMReorderTabsResponse_Status_InvalidAssignment:
+    case ITMReorderTabsResponse_Status_InvalidWindowId:
+    case ITMReorderTabsResponse_Status_InvalidTabId:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
 #pragma mark - ITMTmuxRequest
 
 @implementation ITMTmuxRequest

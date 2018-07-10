@@ -472,6 +472,24 @@ async def async_rpc_set_tmux_window_visible(connection, tmux_connection_id, wind
     request.tmux_request.set_window_visible.visible = visible
     return await _async_call(connection, request)
 
+async def async_reorder_tabs(connection, assignments):
+    """Reassigns tabs to windows and specifies their orders.
+
+    :param assignments: a list of tuples of (window_id, [tab_id, ...])
+    """
+    request = _alloc_request()
+    request.reorder_tabs_request.SetInParent()
+
+    def make_assignment(window_id, tab_ids):
+        assignment = iterm2.api_pb2.ReorderTabsRequest.Assignment()
+        assignment.window_id = window_id
+        assignment.tab_ids.extend(tab_ids)
+        return assignment
+
+    protos = list(map(lambda a: make_assignment(a[0], a[1]), assignments))
+    request.reorder_tabs_request.assignments.extend(protos)
+    return await _async_call(connection, request)
+
 ## Private --------------------------------------------------------------------
 
 def _alloc_id():

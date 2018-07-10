@@ -704,6 +704,16 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
+- (void)handleReorderTabsRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+    ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
+    
+    __weak __typeof(self) weakSelf = self;
+    [_delegate apiServerReorderTabsRequest:request.reorderTabsRequest handler:^(ITMReorderTabsResponse *theResponse) {
+        response.reorderTabsResponse = theResponse;
+        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
+    }];
+}
+
 // Runs on main queue, either in or not in a transaction.
 - (void)dispatchRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     DLog(@"Got request %@", request);
@@ -820,6 +830,10 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
         case ITMClientOriginatedMessage_Submessage_OneOfCase_TmuxRequest:
             [self handleTmuxRequest:request connection:webSocketConnection];
+            break;
+            
+        case ITMClientOriginatedMessage_Submessage_OneOfCase_ReorderTabsRequest:
+            [self handleReorderTabsRequest:request connection:webSocketConnection];
             break;
     }
 }

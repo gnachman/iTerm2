@@ -84,6 +84,9 @@ CF_EXTERN_C_BEGIN
 @class ITMRange;
 @class ITMRegisterToolRequest;
 @class ITMRegisterToolResponse;
+@class ITMReorderTabsRequest;
+@class ITMReorderTabsRequest_Assignment;
+@class ITMReorderTabsResponse;
 @class ITMRestartSessionRequest;
 @class ITMRestartSessionResponse;
 @class ITMSavedArrangementRequest;
@@ -172,6 +175,25 @@ GPBEnumDescriptor *ITMModifiers_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMModifiers_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMReorderTabsResponse_Status
+
+typedef GPB_ENUM(ITMReorderTabsResponse_Status) {
+  ITMReorderTabsResponse_Status_Ok = 0,
+
+  /** e.g., duplicate tab id */
+  ITMReorderTabsResponse_Status_InvalidAssignment = 1,
+  ITMReorderTabsResponse_Status_InvalidWindowId = 2,
+  ITMReorderTabsResponse_Status_InvalidTabId = 3,
+};
+
+GPBEnumDescriptor *ITMReorderTabsResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMReorderTabsResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMTmuxResponse_Status
 
@@ -691,6 +713,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_SetTabLayoutRequest = 122,
   ITMClientOriginatedMessage_FieldNumber_GetBroadcastDomainsRequest = 123,
   ITMClientOriginatedMessage_FieldNumber_TmuxRequest = 124,
+  ITMClientOriginatedMessage_FieldNumber_ReorderTabsRequest = 125,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -720,6 +743,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_SetTabLayoutRequest = 122,
   ITMClientOriginatedMessage_Submessage_OneOfCase_GetBroadcastDomainsRequest = 123,
   ITMClientOriginatedMessage_Submessage_OneOfCase_TmuxRequest = 124,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_ReorderTabsRequest = 125,
 };
 
 /**
@@ -783,6 +807,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMTmuxRequest *tmuxRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMReorderTabsRequest *reorderTabsRequest;
+
 @end
 
 /**
@@ -820,6 +846,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_SetTabLayoutResponse = 122,
   ITMServerOriginatedMessage_FieldNumber_GetBroadcastDomainsResponse = 123,
   ITMServerOriginatedMessage_FieldNumber_TmuxResponse = 124,
+  ITMServerOriginatedMessage_FieldNumber_ReorderTabsResponse = 125,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -851,6 +878,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_SetTabLayoutResponse = 122,
   ITMServerOriginatedMessage_Submessage_OneOfCase_GetBroadcastDomainsResponse = 123,
   ITMServerOriginatedMessage_Submessage_OneOfCase_TmuxResponse = 124,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_ReorderTabsResponse = 125,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -919,6 +947,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMTmuxResponse *tmuxResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMReorderTabsResponse *reorderTabsResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 
@@ -928,6 +958,52 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
  * Clears whatever value was set for the oneof 'submessage'.
  **/
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
+
+#pragma mark - ITMReorderTabsRequest
+
+typedef GPB_ENUM(ITMReorderTabsRequest_FieldNumber) {
+  ITMReorderTabsRequest_FieldNumber_AssignmentsArray = 3,
+};
+
+@interface ITMReorderTabsRequest : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMReorderTabsRequest_Assignment*> *assignmentsArray;
+/** The number of items in @c assignmentsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger assignmentsArray_Count;
+
+@end
+
+#pragma mark - ITMReorderTabsRequest_Assignment
+
+typedef GPB_ENUM(ITMReorderTabsRequest_Assignment_FieldNumber) {
+  ITMReorderTabsRequest_Assignment_FieldNumber_WindowId = 1,
+  ITMReorderTabsRequest_Assignment_FieldNumber_TabIdsArray = 2,
+};
+
+@interface ITMReorderTabsRequest_Assignment : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+/** Test to see if @c windowId has been set. */
+@property(nonatomic, readwrite) BOOL hasWindowId;
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *tabIdsArray;
+/** The number of items in @c tabIdsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger tabIdsArray_Count;
+
+@end
+
+#pragma mark - ITMReorderTabsResponse
+
+typedef GPB_ENUM(ITMReorderTabsResponse_FieldNumber) {
+  ITMReorderTabsResponse_FieldNumber_Status = 4,
+};
+
+@interface ITMReorderTabsResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMReorderTabsResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@end
 
 #pragma mark - ITMTmuxRequest
 
@@ -1440,12 +1516,12 @@ typedef GPB_ENUM(ITMVariableRequest_Scope_OneOfCase) {
 
 @interface ITMVariableRequest : GPBMessage
 
-/** TODO: Add a scope so you can get variables from a tab or app */
 @property(nonatomic, readonly) ITMVariableRequest_Scope_OneOfCase scopeOneOfCase;
 
 /** "all" is allowed only if no gets (only sets allowed) */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
 
+/** "all" is allowed only if no gets (only sets allowed) */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *tabId;
 
 @property(nonatomic, readwrite) BOOL app;
@@ -1454,7 +1530,7 @@ typedef GPB_ENUM(ITMVariableRequest_Scope_OneOfCase) {
 /** The number of items in @c setArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger setArray_Count;
 
-/** Set to special value "*" to get all in newline-delimited list. */
+/** Set to special value "*" to get all in a JSON dictionary */
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *getArray;
 /** The number of items in @c getArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger getArray_Count;

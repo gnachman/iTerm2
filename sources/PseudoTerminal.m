@@ -4459,11 +4459,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tabView:(NSTabView*)aTabView
     didDropTabViewItem:(NSTabViewItem *)tabViewItem
-              inTabBar:(PSMTabBarControl *)aTabBarControl
-{
+              inTabBar:(PSMTabBarControl *)aTabBarControl {
     PTYTab *aTab = [tabViewItem identifier];
     PseudoTerminal *term = (PseudoTerminal *)[aTabBarControl delegate];
+    [self didDonateTab:aTab toWindowController:term];
+}
 
+- (void)didDonateTab:(PTYTab *)aTab toWindowController:(PseudoTerminal *)term {
     if ([term numberOfTabs] == 1) {
         [term fitWindowToTabs];
     } else {
@@ -6417,10 +6419,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (IBAction)moveTabLeft:(id)sender
-{
+- (IBAction)moveTabLeft:(id)sender {
     NSInteger selectedIndex = [_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]];
     NSInteger destinationIndex = selectedIndex - 1;
+    [self moveTabAtIndex:selectedIndex toIndex:destinationIndex];
+}
+
+- (void)moveTabAtIndex:(NSInteger)selectedIndex toIndex:(NSInteger)destinationIndex {
     if (destinationIndex < 0) {
         destinationIndex = [_contentView.tabView numberOfTabViewItems] - 1;
     }
@@ -6432,16 +6437,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self tabsDidReorder];
 }
 
-- (IBAction)moveTabRight:(id)sender
-{
+- (IBAction)moveTabRight:(id)sender {
     NSInteger selectedIndex = [_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]];
     NSInteger destinationIndex = (selectedIndex + 1) % [_contentView.tabView numberOfTabViewItems];
-    if (selectedIndex == destinationIndex) {
-        return;
-    }
-    [_contentView.tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
-    [self _updateTabObjectCounts];
-    [self tabsDidReorder];
+    [self moveTabAtIndex:selectedIndex toIndex:destinationIndex];
 }
 
 - (IBAction)increaseHeight:(id)sender {

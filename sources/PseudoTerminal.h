@@ -348,6 +348,8 @@ extern NSString *const iTermBroadcastDomainsDidChangeNotification;
 - (iTermRestorableSession *)restorableSessionForSession:(PTYSession *)session;
 
 - (void)addSessionInNewTab:(PTYSession *)object;
+- (void)didDonateTab:(PTYTab *)aTab toWindowController:(PseudoTerminal *)term;
+- (void)moveTabAtIndex:(NSInteger)selectedIndex toIndex:(NSInteger)destinationIndex;
 
 @end
 

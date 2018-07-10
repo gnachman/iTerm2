@@ -2298,4 +2298,75 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     handler(response);
 }
 
+- (ITMReorderTabsResponse_Status)validateReorderTabsRequest:(ITMReorderTabsRequest *)request {
+    NSMutableSet<NSString *> *windowIds = [NSMutableSet set];
+    NSMutableSet<NSString *> *tabIds = [NSMutableSet set];
+    for (ITMReorderTabsRequest_Assignment *assignment in request.assignmentsArray) {
+        if ([windowIds containsObject:assignment.windowId]) {
+            return ITMReorderTabsResponse_Status_InvalidAssignment;
+        }
+        PseudoTerminal *term = [[iTermController sharedInstance] terminalWithGuid:assignment.windowId];
+        if (!term) {
+            return ITMReorderTabsResponse_Status_InvalidWindowId;
+        }
+        [windowIds addObject:assignment.windowId];
+        
+        for (NSString *tabid in assignment.tabIdsArray) {
+            PTYTab *tab = [self tabWithID:tabid];
+            if (!tab) {
+                return ITMReorderTabsResponse_Status_InvalidTabId;
+            }
+            if ([tabIds containsObject:tabid]) {
+                return ITMReorderTabsResponse_Status_InvalidAssignment;
+            }
+            [tabIds addObject:tabid];
+        }
+    }
+    
+    return ITMReorderTabsResponse_Status_Ok;
+}
+
+- (void)performReorderAssignment:(ITMReorderTabsRequest_Assignment *)assignment {
+    PseudoTerminal *destination = [[iTermController sharedInstance] terminalWithGuid:assignment.windowId];
+    assert(destination);
+    
+    NSInteger index = 0;
+    for (NSString *tabId in assignment.tabIdsArray) {
+        PTYTab *tab = [self tabWithID:tabId];
+        assert(tab);
+
+        PseudoTerminal *source = (PseudoTerminal *)tab.realParentWindow;
+        if (source == destination) {
+            NSInteger sourceIndex = [source.tabs indexOfObject:tab];
+            assert(sourceIndex != NSNotFound);
+            [source moveTabAtIndex:sourceIndex toIndex:index];
+        } else {
+            for (PTYSession *aSession in tab.sessions) {
+                [aSession setIgnoreResizeNotifications:YES];
+            }
+            [source.tabView removeTabViewItem:tab.tabViewItem];
+            
+            [destination insertTab:tab atIndex:index];
+            [source didDonateTab:tab toWindowController:destination];
+            if (source.tabs.count == 0) {
+                [source.window close];
+            }
+        }
+        index++;
+    }
+}
+
+- (void)apiServerReorderTabsRequest:(ITMReorderTabsRequest *)request handler:(void (^)(ITMReorderTabsResponse *))handler {
+    ITMReorderTabsResponse *response = [[ITMReorderTabsResponse alloc] init];
+    response.status = [self validateReorderTabsRequest:request];
+    if (response.status != ITMReorderTabsResponse_Status_Ok) {
+        handler(response);
+        return;
+    }
+    for (ITMReorderTabsRequest_Assignment *assignment in request.assignmentsArray) {
+        [self performReorderAssignment:assignment];
+    }
+    handler(response);
+}
+
 @end

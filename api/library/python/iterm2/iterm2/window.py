@@ -77,6 +77,21 @@ class Window:
         """
         return self.__tabs
 
+    async def async_set_tabs(self, tabs):
+        """Changes the tabs and their order.
+
+        The provided tabs may belong to any window. They will be moved if needed. Windows entirely denuded of tabs will be closed.
+
+        All provided tabs will be inserted in the given order starting at the first positions. Any tabs already belonging to this window not in the list will remain after the provided tabs.
+
+        :param tabs: a list of :class:`iterm2.Tab` objects
+        :raises: RPCException if something goes wrong.
+        """
+        tab_ids = map(lambda tab: tab.tab_id, tabs)
+        result = await iterm2.rpc.async_reorder_tabs(
+            self.connection,
+            assignments=[(self.window_id, tab_ids)])
+
     @property
     def current_tab(self):
         """
