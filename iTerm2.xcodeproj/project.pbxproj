@@ -1309,18 +1309,6 @@
 		A608F22120F07658008E8009 /* iTermImageMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3B411BD40E7C00B5629D /* iTermImageMark.m */; };
 		A608F22220F08369008E8009 /* VT100DCSParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E39E18C351F400450FA1 /* VT100DCSParser.m */; };
 		A6099B0518D6B0FD00081FA9 /* iTermWarning.h in Headers */ = {isa = PBXBuildFile; fileRef = A6099B0318D6B0FD00081FA9 /* iTermWarning.h */; };
-		A60A7C1B20F19B0C00652907 /* GoBack.png in Resources */ = {isa = PBXBuildFile; fileRef = A60A7C1720F19B0B00652907 /* GoBack.png */; };
-		A60A7C1C20F19B0C00652907 /* GoBack.png in Resources */ = {isa = PBXBuildFile; fileRef = A60A7C1720F19B0B00652907 /* GoBack.png */; };
-		A60A7C1D20F19B0C00652907 /* GoBack.png in Resources */ = {isa = PBXBuildFile; fileRef = A60A7C1720F19B0B00652907 /* GoBack.png */; };
-		A60A7C1E20F19B0C00652907 /* GoBack@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60A7C1820F19B0C00652907 /* GoBack@2x.png */; };
-		A60A7C1F20F19B0C00652907 /* GoBack@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60A7C1820F19B0C00652907 /* GoBack@2x.png */; };
-		A60A7C2020F19B0C00652907 /* GoBack@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60A7C1820F19B0C00652907 /* GoBack@2x.png */; };
-		A60A7C2120F19B0C00652907 /* GoForward.png in Resources */ = {isa = PBXBuildFile; fileRef = A60A7C1920F19B0C00652907 /* GoForward.png */; };
-		A60A7C2220F19B0C00652907 /* GoForward.png in Resources */ = {isa = PBXBuildFile; fileRef = A60A7C1920F19B0C00652907 /* GoForward.png */; };
-		A60A7C2320F19B0C00652907 /* GoForward.png in Resources */ = {isa = PBXBuildFile; fileRef = A60A7C1920F19B0C00652907 /* GoForward.png */; };
-		A60A7C2420F19B0C00652907 /* GoForward@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60A7C1A20F19B0C00652907 /* GoForward@2x.png */; };
-		A60A7C2520F19B0C00652907 /* GoForward@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60A7C1A20F19B0C00652907 /* GoForward@2x.png */; };
-		A60A7C2620F19B0C00652907 /* GoForward@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60A7C1A20F19B0C00652907 /* GoForward@2x.png */; };
 		A60BB37E1EB5149100D76C09 /* iTermCopyModeState.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BB37C1EB5149100D76C09 /* iTermCopyModeState.h */; };
 		A60BB37F1EB5149100D76C09 /* iTermCopyModeState.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB37D1EB5149100D76C09 /* iTermCopyModeState.m */; };
 		A60BB3811EB51D0E00D76C09 /* iTermCopyModeState.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB37D1EB5149100D76C09 /* iTermCopyModeState.m */; };
@@ -1450,6 +1438,19 @@
 		A62C3B3E1BD40DC900B5629D /* iTermCapturedOutputMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3B3C1BD40DC900B5629D /* iTermCapturedOutputMark.h */; };
 		A62C3B3F1BD40DC900B5629D /* iTermCapturedOutputMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3B3D1BD40DC900B5629D /* iTermCapturedOutputMark.m */; };
 		A62C3B421BD40E7C00B5629D /* iTermImageMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3B401BD40E7C00B5629D /* iTermImageMark.h */; };
+		A62C3B431BD40E7C00B5629D /* iTermImageMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3B411BD40E7C00B5629D /* iTermImageMark.m */; };
+		A62DBB9920F47CFA008B63D1 /* GoBack.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9520F47CF9008B63D1 /* GoBack.png */; };
+		A62DBB9A20F47CFA008B63D1 /* GoBack.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9520F47CF9008B63D1 /* GoBack.png */; };
+		A62DBB9B20F47CFA008B63D1 /* GoBack.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9520F47CF9008B63D1 /* GoBack.png */; };
+		A62DBB9C20F47CFA008B63D1 /* GoForward.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9620F47CF9008B63D1 /* GoForward.png */; };
+		A62DBB9D20F47CFA008B63D1 /* GoForward.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9620F47CF9008B63D1 /* GoForward.png */; };
+		A62DBB9E20F47CFA008B63D1 /* GoForward.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9620F47CF9008B63D1 /* GoForward.png */; };
+		A62DBB9F20F47CFA008B63D1 /* GoForward@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9720F47CFA008B63D1 /* GoForward@2x.png */; };
+		A62DBBA020F47CFA008B63D1 /* GoForward@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9720F47CFA008B63D1 /* GoForward@2x.png */; };
+		A62DBBA120F47CFA008B63D1 /* GoForward@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9720F47CFA008B63D1 /* GoForward@2x.png */; };
+		A62DBBA220F47CFA008B63D1 /* GoBack@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9820F47CFA008B63D1 /* GoBack@2x.png */; };
+		A62DBBA320F47CFA008B63D1 /* GoBack@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9820F47CFA008B63D1 /* GoBack@2x.png */; };
+		A62DBBA420F47CFA008B63D1 /* GoBack@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9820F47CFA008B63D1 /* GoBack@2x.png */; };
 		A62EED9220DF5B2F00943DE3 /* iTermScriptChooser.h in Headers */ = {isa = PBXBuildFile; fileRef = A62EED9020DF5B2F00943DE3 /* iTermScriptChooser.h */; };
 		A62EED9320DF5B2F00943DE3 /* iTermScriptChooser.m in Sources */ = {isa = PBXBuildFile; fileRef = A62EED9120DF5B2F00943DE3 /* iTermScriptChooser.m */; };
 		A62EED9620DF602F00943DE3 /* iTermCommandRunner.h in Headers */ = {isa = PBXBuildFile; fileRef = A62EED9420DF602F00943DE3 /* iTermCommandRunner.h */; };
@@ -3711,10 +3712,6 @@
 		A6057C161883D12E004A60AF /* broken_image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = broken_image.png; path = images/broken_image.png; sourceTree = "<group>"; };
 		A6099B0318D6B0FD00081FA9 /* iTermWarning.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermWarning.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6099B0418D6B0FD00081FA9 /* iTermWarning.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWarning.m; sourceTree = "<group>"; tabWidth = 4; };
-		A60A7C1720F19B0B00652907 /* GoBack.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = GoBack.png; path = ../../../../git/iTerm2/images/GoBack.png; sourceTree = "<group>"; };
-		A60A7C1820F19B0C00652907 /* GoBack@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "GoBack@2x.png"; path = "../../../../git/iTerm2/images/GoBack@2x.png"; sourceTree = "<group>"; };
-		A60A7C1920F19B0C00652907 /* GoForward.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = GoForward.png; path = ../../../../git/iTerm2/images/GoForward.png; sourceTree = "<group>"; };
-		A60A7C1A20F19B0C00652907 /* GoForward@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "GoForward@2x.png"; path = "../../../../git/iTerm2/images/GoForward@2x.png"; sourceTree = "<group>"; };
 		A60BB37C1EB5149100D76C09 /* iTermCopyModeState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCopyModeState.h; sourceTree = "<group>"; };
 		A60BB37D1EB5149100D76C09 /* iTermCopyModeState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCopyModeState.m; sourceTree = "<group>"; };
 		A60BB3821EB54B6700D76C09 /* CopyMode.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = CopyMode.png; path = images/CopyMode.png; sourceTree = "<group>"; };
@@ -3816,6 +3813,10 @@
 		A62C3B3D1BD40DC900B5629D /* iTermCapturedOutputMark.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCapturedOutputMark.m; sourceTree = "<group>"; };
 		A62C3B401BD40E7C00B5629D /* iTermImageMark.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermImageMark.h; sourceTree = "<group>"; };
 		A62C3B411BD40E7C00B5629D /* iTermImageMark.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImageMark.m; sourceTree = "<group>"; };
+		A62DBB9520F47CF9008B63D1 /* GoBack.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = GoBack.png; path = images/GoBack.png; sourceTree = "<group>"; };
+		A62DBB9620F47CF9008B63D1 /* GoForward.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = GoForward.png; path = images/GoForward.png; sourceTree = "<group>"; };
+		A62DBB9720F47CFA008B63D1 /* GoForward@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "GoForward@2x.png"; path = "images/GoForward@2x.png"; sourceTree = "<group>"; };
+		A62DBB9820F47CFA008B63D1 /* GoBack@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "GoBack@2x.png"; path = "images/GoBack@2x.png"; sourceTree = "<group>"; };
 		A62EED9020DF5B2F00943DE3 /* iTermScriptChooser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermScriptChooser.h; sourceTree = "<group>"; };
 		A62EED9120DF5B2F00943DE3 /* iTermScriptChooser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScriptChooser.m; sourceTree = "<group>"; };
 		A62EED9420DF602F00943DE3 /* iTermCommandRunner.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCommandRunner.h; sourceTree = "<group>"; };
@@ -5407,10 +5408,10 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
-				A60A7C1720F19B0B00652907 /* GoBack.png */,
-				A60A7C1820F19B0C00652907 /* GoBack@2x.png */,
-				A60A7C1920F19B0C00652907 /* GoForward.png */,
-				A60A7C1A20F19B0C00652907 /* GoForward@2x.png */,
+				A62DBB9520F47CF9008B63D1 /* GoBack.png */,
+				A62DBB9820F47CFA008B63D1 /* GoBack@2x.png */,
+				A62DBB9620F47CF9008B63D1 /* GoForward.png */,
+				A62DBB9720F47CFA008B63D1 /* GoForward@2x.png */,
 				A65429A120BE7ECA00CE71B1 /* ScriptIcon.png */,
 				A65429A220BE7ECA00CE71B1 /* ScriptIcon@2x.png */,
 				A6FE8D06209382C000B5C648 /* download.png */,
@@ -8669,6 +8670,7 @@
 				A630118720E6A61F008114B7 /* iTermStatusBarSetupViewController.xib in Resources */,
 				1D6ED98719AEA20D005A7799 /* Maximized.png in Resources */,
 				1D6ED98A19AEA20D005A7799 /* LogoFrame.png in Resources */,
+				A62DBBA420F47CFA008B63D1 /* GoBack@2x.png in Resources */,
 				A6614A2720958EDD00A10D97 /* iTermBuildingScriptWindowController.xib in Resources */,
 				A6FE8D09209382C000B5C648 /* download@2x.png in Resources */,
 				A686C19A1ADF62F200906FAE /* Zoomed@2x.png in Resources */,
@@ -8716,7 +8718,6 @@
 				1D6ED9A519AEA20D005A7799 /* MigrationMap.plist in Resources */,
 				1D6ED9A619AEA20D005A7799 /* DefaultGlobalKeyMap.plist in Resources */,
 				1D6ED9A719AEA20D005A7799 /* EncodingsWithLowerCase.plist in Resources */,
-				A60A7C2620F19B0C00652907 /* GoForward@2x.png in Resources */,
 				A6B3A73D1AC74E02008E8D4E /* FindCursorCell2.png in Resources */,
 				1D6ED9AA19AEA20D005A7799 /* IBarCursor.png in Resources */,
 				1D6ED9AC19AEA20D005A7799 /* NewOutput@2x.png in Resources */,
@@ -8741,6 +8742,7 @@
 				A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */,
 				1D6ED9BB19AEA20D005A7799 /* SmartSelectionRules.plist in Resources */,
 				53FF980D20918D23008688D7 /* template_basic_simple.py in Resources */,
+				A62DBBA120F47CFA008B63D1 /* GoForward@2x.png in Resources */,
 				A65B72571B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D6ED9BC19AEA20D005A7799 /* closebutton.png in Resources */,
 				1D6ED9BD19AEA20D005A7799 /* BroadcastInput.png in Resources */,
@@ -8773,7 +8775,8 @@
 				1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */,
 				A60BB3881EB54BD300D76C09 /* CopyMode.png in Resources */,
 				1D6ED9C919AEA20D005A7799 /* IBarCursor@2x.png in Resources */,
-				A60A7C1D20F19B0C00652907 /* GoBack.png in Resources */,
+				A62DBB9B20F47CFA008B63D1 /* GoBack.png in Resources */,
+				A62DBB9E20F47CFA008B63D1 /* GoForward.png in Resources */,
 				1D6ED9CA19AEA20D005A7799 /* IBarCursorXMR@2x.png in Resources */,
 				1D6ED9CE19AEA20D005A7799 /* TabClose_Front_Rollover@2x.png in Resources */,
 				1D8BBA721B30F7FB0005A852 /* Dismiss@2x.png in Resources */,
@@ -8788,7 +8791,6 @@
 				1D6ED9D419AEA20D005A7799 /* TabClose_Front_Rollover.png in Resources */,
 				A6EFF23C1D20F6C000806EEF /* EraseDarkBackground@2x.png in Resources */,
 				1DEDF56B19C917FD005B023A /* new-tab.png in Resources */,
-				A60A7C2020F19B0C00652907 /* GoBack@2x.png in Resources */,
 				1D6ED9D519AEA20D005A7799 /* TabClose_Front.png in Resources */,
 				A60C036B2089897400FE2F1F /* iTermScriptConsole.xib in Resources */,
 				A6FE8D17209541BC00B5C648 /* rsa_pub.pem in Resources */,
@@ -8809,7 +8811,6 @@
 				1D6ED9E219AEA20D005A7799 /* PrefsAppearance@2x.png in Resources */,
 				A67D0D6A1A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
 				1D6ED9E319AEA20D005A7799 /* Alert.png in Resources */,
-				A60A7C2320F19B0C00652907 /* GoForward.png in Resources */,
 				A63011BD20E83083008114B7 /* iTermStatusBarKnobTextViewController.xib in Resources */,
 				1D6ED9E419AEA20D005A7799 /* PrefsProfile.png in Resources */,
 				1D6ED9E519AEA20D005A7799 /* PrefsProfile@2x.png in Resources */,
@@ -8900,6 +8901,7 @@
 				1DA76A251B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
 				1D44D0051CC7F5A600BE5630 /* PTYTextViewTest-golden-testCursorBoost.png in Resources */,
 				1D44D03B1CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForeground.png in Resources */,
+				A62DBB9D20F47CFA008B63D1 /* GoForward.png in Resources */,
 				1D44D04A1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-test24BitColor.png in Resources */,
 				1D44CFDB1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png in Resources */,
 				1D44D0851CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testNonAsciiAntiAliasOnly.png in Resources */,
@@ -8959,7 +8961,7 @@
 				1D44D06B1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testDimmingTextAndBg.png in Resources */,
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				1D44D03D1CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png in Resources */,
-				A60A7C1C20F19B0C00652907 /* GoBack.png in Resources */,
+				A62DBB9A20F47CFA008B63D1 /* GoBack.png in Resources */,
 				A65B72B21B33C07D00F947A7 /* NextTip.png in Resources */,
 				A6614A2620958EDC00A10D97 /* iTermBuildingScriptWindowController.xib in Resources */,
 				A65B72AA1B3285A300F947A7 /* DisableTips.png in Resources */,
@@ -9071,10 +9073,10 @@
 				1D44D0821CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testMinimumContrastAndCursorBoost.png in Resources */,
 				1D44CFC61CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testOversizeGlyphs.png in Resources */,
 				53FF9819209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */,
+				A62DBBA320F47CFA008B63D1 /* GoBack@2x.png in Resources */,
 				1D44D0721CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testDontUseNonAsciiFont.png in Resources */,
 				1D44D0521CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBackgroundImageWithTransparency.png in Resources */,
 				A67D0D331A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
-				A60A7C1F20F19B0C00652907 /* GoBack@2x.png in Resources */,
 				1D44CFE01CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSurrogatePairWithCombiningMark.png in Resources */,
 				A6CEDA6219988A7300BB57EC /* LogoShadow.png in Resources */,
 				1D44D0A91CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testVerticalSpacing.png in Resources */,
@@ -9162,12 +9164,12 @@
 				A663010C19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
 				1D44CFB61CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testFrameCursor.png in Resources */,
 				1D44D0651CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testCombiningMark.png in Resources */,
+				A62DBBA020F47CFA008B63D1 /* GoForward@2x.png in Resources */,
 				1D44D0861CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testNonretinaFakeBold.png in Resources */,
 				1D44D0731CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testDoubleWidthCharacter.png in Resources */,
 				1D44D0121CC7F5A600BE5630 /* PTYTextViewTest-golden-testDoubleWidthCharacter.png in Resources */,
 				A67D0D3C1A2EE12A003A8B35 /* Autocomplete.xib in Resources */,
 				1D44D0461CC7F5A600BE5630 /* PTYTextViewTest-golden-testUnderlineHost.png in Resources */,
-				A60A7C2520F19B0C00652907 /* GoForward@2x.png in Resources */,
 				1D44D05C1CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBlockCursor.png in Resources */,
 				1D44D0781CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testFrameCursor.png in Resources */,
 				1D44D0761CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testFaintTextWithTransparency.png in Resources */,
@@ -9235,7 +9237,6 @@
 				1D44D0A61CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testUnderlineCursorReverseVideo.png in Resources */,
 				1D44D0251CC7F5A600BE5630 /* PTYTextViewTest-golden-testNonretinaFakeBold.png in Resources */,
 				1D44CFF41CC7F5A600BE5630 /* PTYTextViewTest-golden-testBarCursor.png in Resources */,
-				A60A7C2220F19B0C00652907 /* GoForward.png in Resources */,
 				A67D0D5A1A2EE12A003A8B35 /* iTerm.strings in Resources */,
 				1D44CF8C1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBackgroundImageHighBlending.png in Resources */,
 				A66A1FAF1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
@@ -9289,7 +9290,7 @@
 				A67D0D531A2EE12A003A8B35 /* GlobalSearch.xib in Resources */,
 				A67D0D8F1A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */,
 				A66DB8331C8E4C2E00233E88 /* ChangeProfile@2x.png in Resources */,
-				A60A7C2120F19B0C00652907 /* GoForward.png in Resources */,
+				A62DBBA220F47CFA008B63D1 /* GoBack@2x.png in Resources */,
 				A68E33381DE746F5003F1D8E /* Previous Mark Touch Bar Icon@2x.png in Resources */,
 				A67D0D351A2EE12A003A8B35 /* AddressBook.strings in Resources */,
 				A6EFF2311D2049A300806EEF /* Erase.png in Resources */,
@@ -9303,7 +9304,9 @@
 				A65B72551B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
+				A62DBB9F20F47CFA008B63D1 /* GoForward@2x.png in Resources */,
 				53FF980B20918D23008688D7 /* template_basic_simple.py in Resources */,
+				A62DBB9C20F47CFA008B63D1 /* GoForward.png in Resources */,
 				A6EFF2321D2049A300806EEF /* Erase@2x.png in Resources */,
 				A67D0D7A1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				1D8BBA841B31DC0D0005A852 /* ChevronDown.png in Resources */,
@@ -9327,7 +9330,7 @@
 				A623D94E1F8984700011F8C3 /* key@2x.png in Resources */,
 				93A6FEFA10685E9900A5F905 /* dsa_pub.pem in Resources */,
 				53FF9820209283BE008688D7 /* template_basic_daemon.py in Resources */,
-				A60A7C1B20F19B0C00652907 /* GoBack.png in Resources */,
+				A62DBB9920F47CFA008B63D1 /* GoBack.png in Resources */,
 				1DCF3CB71222FF1400AD56F1 /* PresetKeyMappings.plist in Resources */,
 				A67D0D411A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */,
 				1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */,
@@ -9367,7 +9370,6 @@
 				1DE922E61AC3709200965876 /* BackgroundStripes.png in Resources */,
 				A69A15731D7FD78200A9E7EF /* TipCalendar.png in Resources */,
 				1DA02CFB1327612600D7E7DB /* bell.png in Resources */,
-				A60A7C1E20F19B0C00652907 /* GoBack@2x.png in Resources */,
 				A67D0D861A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */,
 				A6FD85311B767D6300EB9DCE /* Hamburger@2x.png in Resources */,
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
@@ -9474,7 +9476,6 @@
 				9DB3D6ED176CC47E0071CCF8 /* PrefsMouse@2x.png in Resources */,
 				A68E33331DE746F5003F1D8E /* Add Mark Touch Bar Icon.png in Resources */,
 				1DA76A241B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
-				A60A7C2420F19B0C00652907 /* GoForward@2x.png in Resources */,
 				9DB3D6F0176CCABE0071CCF8 /* PrefsArrangements.png in Resources */,
 				9DB3D6F1176CCABE0071CCF8 /* PrefsArrangements@2x.png in Resources */,
 			);
