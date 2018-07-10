@@ -12,6 +12,7 @@ Here are a collection of working scripts for you to crib from.
 * :doc:`create_window`
 * :doc:`targeted_input`
 * :doc:`broadcast`
+* :doc:`sorttabs`
 
 ----
 
