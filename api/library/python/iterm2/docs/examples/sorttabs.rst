@@ -1,0 +1,29 @@
+Sort Tabs
+=========
+
+This script sorts the tabs in all windows by the name of the current session.
+
+.. code-block:: python
+
+    #!/usr/bin/env python3
+
+    import asyncio
+    import iterm2
+    import sys
+    import time
+
+    async def main(connection, argv):
+        app = await iterm2.async_get_app(connection)
+        for window in app.terminal_windows:
+            tabs = window.tabs
+            for tab in tabs:
+                tab.tab_name = await tab.async_get_variable("currentSession.session.name")
+            def tab_name(tab):
+                return tab.tab_name
+            sorted_tabs = sorted(tabs, key=tab_name)
+            await window.async_set_tabs(sorted_tabs)
+
+    if __name__ == "__main__":
+    iterm2.Connection().run(main, sys.argv)
+
+
