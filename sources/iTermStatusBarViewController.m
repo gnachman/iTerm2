@@ -176,14 +176,14 @@ static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
 
     // Find views that can grow
     NSArray<iTermStatusBarContainerView *> *views = [_visibleContainerViews filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *view) {
-        return (view.component.statusBarComponentCanStretch &&
+        return ([view.component.class statusBarComponentCanStretch] &&
                 floor(view.component.statusBarComponentPreferredWidth) > floor(view.desiredWidth));
     }];
 
 
     while (views.count) {
         double sumOfSpringConstants = [[views reduceWithFirstValue:@0 block:^NSNumber *(NSNumber *sum, iTermStatusBarContainerView *containerView) {
-            if (!containerView.component.statusBarComponentCanStretch) {
+            if (![containerView.component.class statusBarComponentCanStretch]) {
                 return sum;
             }
             return @(sum.doubleValue + containerView.component.statusBarComponentSpringConstant);

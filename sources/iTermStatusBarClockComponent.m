@@ -37,7 +37,7 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
     return @"Clock";
 }
 
-- (BOOL)statusBarComponentCanStretch {
++ (BOOL)statusBarComponentCanStretch {
     return YES;
 }
 

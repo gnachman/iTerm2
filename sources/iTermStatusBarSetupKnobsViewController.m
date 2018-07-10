@@ -49,12 +49,12 @@ static NSViewController<iTermStatusBarKnobViewController> *iTermNewViewControlle
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
         _component = component;
-        _knobs = [component.class statusBarComponentKnobs];
+        _knobs = [component.class statusBarComponentKnobs].reverseObjectEnumerator.allObjects;
         NSDictionary *knobValues = component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
         [_knobs enumerateObjectsUsingBlock:^(iTermStatusBarComponentKnob * _Nonnull knob, NSUInteger idx, BOOL * _Nonnull stop) {
             knob.value = knobValues[knob.key] ?: knob.value;
         }];
-        self->_size.height = iTermStatusBarSetupPopoverMargin * 2;;
+        self->_size.height = iTermStatusBarSetupPopoverMargin * 2;
         _viewControllers = [_knobs mapWithBlock:^id(iTermStatusBarComponentKnob *knob) {
             NSViewController<iTermStatusBarKnobViewController> *vc = iTermNewViewControllerForKnob(knob);
             [self addChildViewController:vc];

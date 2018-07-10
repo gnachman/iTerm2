@@ -83,7 +83,7 @@ static NSString *const iTermStatusBarSpringColorKey = @"spring: color";
     return MAX(0.01, number ? number.doubleValue : 1);
 }
 
-- (BOOL)statusBarComponentCanStretch {
++ (BOOL)statusBarComponentCanStretch {
     return YES;
 }
 
