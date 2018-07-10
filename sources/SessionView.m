@@ -243,11 +243,14 @@ static NSDate* lastResizeDate_;
             CFRelease(gpu);
         }
     } else {
-        id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+        static id<MTLDevice> device;
+        static dispatch_once_t once;
+        dispatch_once(&once, ^{
+            device = MTLCreateSystemDefaultDevice();
+        });
         _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                              device:device];
-        CFRelease(device);
-      }
+    }
     // There was a spike in crashes on 5/1. I'm removing this temporarily to see if it was the cause.
 #warning Bring this back
 //                                         device:[[iTermMetalDeviceProvider sharedInstance] preferredDevice]];
