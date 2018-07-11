@@ -8,6 +8,7 @@
 
 #import "iTermLSOF.h"
 
+#import "DebugLogging.h"
 #import "iTermSocketAddress.h"
 #import "NSStringITerm.h"
 #import "ProcessCache.h"
@@ -18,8 +19,37 @@
 #include <string.h>
 #include <sys/sysctl.h>
 
-int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, int buffersize) {
-    return proc_pidinfo(pid, flavor, arg, buffer, buffersize);
+int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int buffersize) {
+    static dispatch_once_t onceToken;
+    static dispatch_queue_t queue;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("com.iterm2.proc_pidinfo", DISPATCH_QUEUE_SERIAL);
+    });
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+    __block int rc;
+    char *temp = malloc(MAX(1, buffersize));
+    dispatch_async(queue, ^{
+        rc = proc_pidinfo(pid, flavor, arg, temp, buffersize);
+        dispatch_semaphore_signal(sema);
+    });
+    const NSTimeInterval timeoutSeconds = 0.5;
+    int timedOut = dispatch_semaphore_wait(sema,
+                                           dispatch_time(DISPATCH_TIME_NOW,
+                                                         timeoutSeconds * NSEC_PER_SEC));
+    if (timedOut) {
+        DLog(@"proc_pidinfo timed out");
+        dispatch_async(queue, ^{
+            DLog(@"about to free temp buffer due to timeout");
+            free(temp);
+        });
+        return -1;
+    }
+
+    DLog(@"proc_pidinfo finished in time with rc=%@", @(rc));
+    memmove(buffer, temp, buffersize);
+    free(temp);
+
+    return rc;
 }
 
 @implementation iTermLSOF {
