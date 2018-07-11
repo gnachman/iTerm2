@@ -764,6 +764,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_lastMark release];
     [_patternedImage release];
     [_announcements release];
+    [self recycleQueuedTokens];
     [_queuedTokens release];
     [_badgeFormat release];
     [_variables release];
@@ -2706,6 +2707,18 @@ ITERM_WEAKLY_REFERENCEABLE
             !_suppressAllOutput);
 }
 
+- (void)recycleQueuedTokens {
+    NSArray<VT100Token *> *tokens = [_queuedTokens retain];
+    [_queuedTokens autorelease];
+    _queuedTokens = [[NSMutableArray alloc] init];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+        for (VT100Token *token in tokens) {
+            [token recycleObject];
+        }
+        [tokens release];
+    });
+}
+
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length {
     STOPWATCH_START(executing);
     DLog(@"Session %@ begins executing tokens", self);
@@ -2713,7 +2726,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if (_shell.paused || _copyMode) {
         // Session was closed or is not accepting new tokens because it's in copy mode. These can
-        // be handled later (unclose or exit copy mode), so queu them up.
+        // be handled later (unclose or exit copy mode), so queue them up.
         for (int i = 0; i < n; i++) {
             [_queuedTokens addObject:CVectorGetObject(vector, i)];
         }
@@ -2727,7 +2740,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             [_terminal executeToken:token];
         }
-        [_queuedTokens removeAllObjects];
+        [self recycleQueuedTokens];
     }
 
     for (int i = 0; i < n; i++) {
