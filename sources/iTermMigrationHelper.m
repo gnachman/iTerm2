@@ -14,6 +14,35 @@
 
 @implementation iTermMigrationHelper
 
++ (BOOL)removeLegacyAppSupportFolderIfPossible {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *legacy = [fileManager legacyApplicationSupportDirectory];
+
+    if (![fileManager itemIsDirectory:legacy]) {
+        return NO;
+    }
+
+    BOOL foundVersionTxt = NO;
+    for (NSString *file in [fileManager enumeratorAtPath:legacy]) {
+        if ([file isEqualToString:@"version.txt"]) {
+            foundVersionTxt = YES;
+        } else {
+            return NO;
+        }
+    }
+    if (foundVersionTxt) {
+        NSError *error = nil;
+        [fileManager removeItemAtPath:[legacy stringByAppendingPathComponent:@"version.txt"] error:&error];
+        if (error) {
+            return NO;
+        }
+    }
+
+    NSError *error = nil;
+    [fileManager removeItemAtPath:legacy error:&error];
+    return error == nil;
+}
+
 + (void)migrateApplicationSupportDirectoryIfNeeded {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *modern = [fileManager applicationSupportDirectory];
@@ -21,6 +50,10 @@
 
     if ([fileManager itemIsSymlink:legacy]) {
         // Looks migrated, or crazy and impossible to reason about.
+        return;
+    }
+
+    if ([self removeLegacyAppSupportFolderIfPossible]) {
         return;
     }
 
