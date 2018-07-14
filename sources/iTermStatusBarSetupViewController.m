@@ -7,10 +7,12 @@
 
 #import "iTermStatusBarSetupViewController.h"
 
+#import "iTermAPIHelper.h"
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarClockComponent.h"
 #import "iTermStatusBarFixedSpacerComponent.h"
 #import "iTermStatusBarFunctionCallComponent.h"
+#import "iTermStatusBarRPCProvidedTextComponent.h"
 #import "iTermStatusBarSearchFieldComponent.h"
 #import "iTermStatusBarSpringComponent.h"
 #import "iTermStatusBarSetupCollectionViewItem.h"
@@ -44,6 +46,12 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
+- (iTermStatusBarSetupElement *)newElementForProviderRegistrationRequest:(ITMRPCRegistrationRequest *)request {
+    iTermStatusBarRPCComponentFactory *factory =
+        [[iTermStatusBarRPCComponentFactory alloc] initWithRegistrationRequest:request];
+    return [[iTermStatusBarSetupElement alloc] initWithComponentFactory:factory];
+}
+
 - (void)awakeFromNib {
     NSArray<Class> *classes = @[ [iTermStatusBarSwiftyStringComponent class],
                                  [iTermStatusBarFunctionCallComponent class],
@@ -55,8 +63,16 @@ NS_ASSUME_NONNULL_BEGIN
                                  [iTermStatusBarWorkingDirectoryComponent class],
                                  [iTermStatusBarSearchFieldComponent class] ];
     _elements = [classes mapWithBlock:^id(Class theClass) {
-        return [[iTermStatusBarSetupElement alloc] initWithComponentClass:theClass];
+        iTermStatusBarBuiltInComponentFactory *factory =
+            [[iTermStatusBarBuiltInComponentFactory alloc] initWithClass:theClass];
+        return [[iTermStatusBarSetupElement alloc] initWithComponentFactory:factory];
     }];
+    for (ITMRPCRegistrationRequest *request in iTermAPIHelper.statusBarComponentProviderRegistrationRequests) {
+        iTermStatusBarSetupElement *element = [self newElementForProviderRegistrationRequest:request];
+        if (element) {
+            _elements = [_elements arrayByAddingObject:element];
+        }
+    }
     [_collectionView registerForDraggedTypes: @[iTermStatusBarElementPasteboardType]];
     [_collectionView setDraggingSourceOperationMask:NSDragOperationCopy forLocal:YES];
     _collectionView.selectable = YES;

@@ -21,7 +21,7 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
     NSTextField *_measuringField;
 }
 
-+ (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *textColorKnob =
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Text Color"
                                                           type:iTermStatusBarComponentKnobTypeColor

@@ -16,6 +16,49 @@ NS_ASSUME_NONNULL_BEGIN
 static NSString *const iTermStatusBarCompressionResistanceKey = @"base: compression resistance";
 NSString *const iTermStatusBarPriorityKey = @"base: priority";
 
+@implementation iTermStatusBarBuiltInComponentFactory {
+    Class _class;
+    // NOTE: If mutable state is added update copyWithZone:
+}
+
+- (instancetype)initWithClass:(Class)theClass {
+    self = [super init];
+    if (self) {
+        _class = theClass;
+    }
+    return self;
+}
+
+- (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
+    self = [super init];
+    if (self) {
+        NSString *className = [aDecoder decodeObjectOfClass:[NSString class]
+                                                     forKey:@"class"] ?: @"";
+        _class = NSClassFromString(className);
+        if (!_class) {
+            return nil;
+        }
+    }
+    return self;
+}
+- (id<iTermStatusBarComponent>)newComponent {
+    return [[_class alloc] initWithConfiguration:@{}];
+}
+
+- (void)encodeWithCoder:(NSCoder *)aCoder {
+    [aCoder encodeObject:NSStringFromClass(_class) ?: @"" forKey:@"class"];
+}
+
+- (NSString *)componentDescription {
+    return NSStringFromClass(_class);
+}
+
+- (id)copyWithZone:(nullable NSZone *)zone {
+    return self;
+}
+
+@end
+
 @implementation iTermStatusBarBaseComponent
 
 @synthesize configuration = _configuration;
@@ -38,6 +81,10 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
     return [self initWithConfiguration:configuration];
 }
 
+- (id<iTermStatusBarComponentFactory>)statusBarComponentFactory {
+    return [[iTermStatusBarBuiltInComponentFactory alloc] initWithClass:self.class];
+}
+
 - (CGFloat)statusBarComponentMinimumWidth {
     return self.statusBarComponentCreateView.frame.size.width;
 }
@@ -50,7 +97,7 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
     return [self statusBarComponentMinimumWidth];
 }
 
-+ (BOOL)statusBarComponentCanStretch {
+- (BOOL)statusBarComponentCanStretch {
     return NO;
 }
 
@@ -64,17 +111,17 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
 
 #pragma mark - iTermStatusBarComponent
 
-+ (NSString *)statusBarComponentShortDescription {
+- (NSString *)statusBarComponentShortDescription {
     [self doesNotRecognizeSelector:_cmd];
     return @"Base class! This should not be called!";
 }
 
-+ (NSString *)statusBarComponentDetailedDescription {
+- (NSString *)statusBarComponentDetailedDescription {
     [self doesNotRecognizeSelector:_cmd];
     return @"Base class! This should not be called!";
 }
 
-+ (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *compressionResistanceKnob = nil;
     if ([self statusBarComponentCanStretch]) {
         compressionResistanceKnob =

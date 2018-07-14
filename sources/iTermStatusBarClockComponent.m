@@ -15,15 +15,15 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
     NSDateFormatter *_dateFormatter;
 }
 
-+ (NSString *)statusBarComponentShortDescription {
+- (NSString *)statusBarComponentShortDescription {
     return @"Clock";
 }
 
-+ (NSString *)statusBarComponentDetailedDescription {
+- (NSString *)statusBarComponentDetailedDescription {
     return @"Shows current date and time with a configurable format.";
 }
 
-+ (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *formatKnob =
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Date Format:"
                                                           type:iTermStatusBarComponentKnobTypeText
@@ -37,7 +37,7 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
     return @"Clock";
 }
 
-+ (BOOL)statusBarComponentCanStretch {
+- (BOOL)statusBarComponentCanStretch {
     return YES;
 }
 

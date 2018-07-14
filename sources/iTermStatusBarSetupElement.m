@@ -22,50 +22,45 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
 - (instancetype)initWithComponent:(id<iTermStatusBarComponent>)component {
     self = [super init];
     if (self) {
-        _shortDescription = [component.class statusBarComponentShortDescription];
-        _detailedDescription = [component.class statusBarComponentDetailedDescription];
-        _componentClass = component.class;
+        _shortDescription = [component statusBarComponentShortDescription];
+        _detailedDescription = [component statusBarComponentDetailedDescription];
         _component = component;
         _component.delegate = self;
     }
     return self;
 }
 
-- (instancetype)initWithComponentClass:(Class)componentClass {
-    return [self initWithComponent:[[componentClass alloc] initWithConfiguration:@{}]];
+- (instancetype)initWithComponentFactory:(id<iTermStatusBarComponentFactory>)factory {
+    return [self initWithComponent:factory.newComponent];
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p %@>", NSStringFromClass([self class]), self, NSStringFromClass(_componentClass)];
+    return [NSString stringWithFormat:@"<%@: %p %@>", NSStringFromClass([self class]), self, NSStringFromClass(_component.class)];
 }
 
 - (id)exemplar {
     return self.component.statusBarComponentExemplar;
 }
 
-- (void)setComponentClass:(Class _Nonnull)componentClass {
-    _componentClass = componentClass;
-}
-
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(nullable NSZone *)zone {
-    return [[iTermStatusBarSetupElement alloc] initWithComponentClass:_componentClass];
+    return [[iTermStatusBarSetupElement alloc] initWithComponent:_component.statusBarComponentFactory.newComponent];
 }
 
 #pragma mark - NSCoding
 
 - (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
-    NSString *className = [aDecoder decodeObjectOfClass:[NSString class] forKey:@"componentClassName"];
-    if (!className) {
+    id<iTermStatusBarComponentFactory> factory = [aDecoder decodeObjectForKey:@"componentFactory"];
+    if (!factory) {
         return nil;
     }
-    return [self initWithComponentClass:NSClassFromString(className)];
+    return [self initWithComponentFactory:factory];
 }
 
 
 - (void)encodeWithCoder:(NSCoder *)aCoder {
-    [aCoder encodeObject:NSStringFromClass(self.componentClass) forKey:@"componentClassName"];
+    [aCoder encodeObject:_component.statusBarComponentFactory forKey:@"componentFactory"];
 }
 
 #pragma mark - NSPasteboardWriting

@@ -81,6 +81,9 @@ CF_EXTERN_C_BEGIN
 @class ITMRPCRegistrationRequest;
 @class ITMRPCRegistrationRequest_RPCArgument;
 @class ITMRPCRegistrationRequest_RPCArgumentSignature;
+@class ITMRPCRegistrationRequest_SessionTitleAttributes;
+@class ITMRPCRegistrationRequest_StatusBarComponentAttributes;
+@class ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob;
 @class ITMRange;
 @class ITMRegisterToolRequest;
 @class ITMRegisterToolResponse;
@@ -400,6 +403,7 @@ BOOL ITMRegisterToolRequest_ToolType_IsValidValue(int32_t value);
 typedef GPB_ENUM(ITMRPCRegistrationRequest_Role) {
   ITMRPCRegistrationRequest_Role_Generic = 1,
   ITMRPCRegistrationRequest_Role_SessionTitle = 2,
+  ITMRPCRegistrationRequest_Role_StatusBarComponent = 3,
 };
 
 GPBEnumDescriptor *ITMRPCRegistrationRequest_Role_EnumDescriptor(void);
@@ -409,6 +413,23 @@ GPBEnumDescriptor *ITMRPCRegistrationRequest_Role_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMRPCRegistrationRequest_Role_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type
+
+typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type) {
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_Checkbox = 1,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_String = 2,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_PositiveFloatingPoint = 3,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_Color = 4,
+};
+
+GPBEnumDescriptor *ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMRegisterToolResponse_Status
 
@@ -1440,12 +1461,12 @@ typedef GPB_ENUM(ITMVariableRequest_Scope_OneOfCase) {
 
 @interface ITMVariableRequest : GPBMessage
 
-/** TODO: Add a scope so you can get variables from a tab or app */
 @property(nonatomic, readonly) ITMVariableRequest_Scope_OneOfCase scopeOneOfCase;
 
 /** "all" is allowed only if no gets (only sets allowed) */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
 
+/** "all" is allowed only if no gets (only sets allowed) */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *tabId;
 
 @property(nonatomic, readwrite) BOOL app;
@@ -1454,7 +1475,7 @@ typedef GPB_ENUM(ITMVariableRequest_Scope_OneOfCase) {
 /** The number of items in @c setArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger setArray_Count;
 
-/** Set to special value "*" to get all in newline-delimited list. */
+/** Set to special value "*" to get all in a JSON dictionary */
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *getArray;
 /** The number of items in @c getArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger getArray_Count;
@@ -1813,6 +1834,14 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_FieldNumber) {
   ITMRPCRegistrationRequest_FieldNumber_DefaultsArray = 4,
   ITMRPCRegistrationRequest_FieldNumber_Role = 5,
   ITMRPCRegistrationRequest_FieldNumber_DisplayName = 6,
+  ITMRPCRegistrationRequest_FieldNumber_SessionTitleAttributes = 7,
+  ITMRPCRegistrationRequest_FieldNumber_StatusBarComponentAttributes = 8,
+};
+
+typedef GPB_ENUM(ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase) {
+  ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase_SessionTitleAttributes = 7,
+  ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase_StatusBarComponentAttributes = 8,
 };
 
 /**
@@ -1840,12 +1869,22 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_FieldNumber) {
 @property(nonatomic, readwrite) ITMRPCRegistrationRequest_Role role;
 
 @property(nonatomic, readwrite) BOOL hasRole;
-/** Used by SESSION_TITLE to control name in Preferences menu */
-@property(nonatomic, readwrite, copy, null_resettable) NSString *displayName;
+@property(nonatomic, readonly) ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase roleSpecificAttributesOneOfCase;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMRPCRegistrationRequest_SessionTitleAttributes *sessionTitleAttributes;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMRPCRegistrationRequest_StatusBarComponentAttributes *statusBarComponentAttributes;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *displayName DEPRECATED_ATTRIBUTE;
 /** Test to see if @c displayName has been set. */
-@property(nonatomic, readwrite) BOOL hasDisplayName;
+@property(nonatomic, readwrite) BOOL hasDisplayName DEPRECATED_ATTRIBUTE;
 
 @end
+
+/**
+ * Clears whatever value was set for the oneof 'roleSpecificAttributes'.
+ **/
+void ITMRPCRegistrationRequest_ClearRoleSpecificAttributesOneOfCase(ITMRPCRegistrationRequest *message);
 
 #pragma mark - ITMRPCRegistrationRequest_RPCArgumentSignature
 
@@ -1877,6 +1916,87 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_RPCArgument_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *path;
 /** Test to see if @c path has been set. */
 @property(nonatomic, readwrite) BOOL hasPath;
+
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_SessionTitleAttributes
+
+typedef GPB_ENUM(ITMRPCRegistrationRequest_SessionTitleAttributes_FieldNumber) {
+  ITMRPCRegistrationRequest_SessionTitleAttributes_FieldNumber_DisplayName = 1,
+};
+
+@interface ITMRPCRegistrationRequest_SessionTitleAttributes : GPBMessage
+
+/** Used by SESSION_TITLE to control name in Preferences menu */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *displayName;
+/** Test to see if @c displayName has been set. */
+@property(nonatomic, readwrite) BOOL hasDisplayName;
+
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_StatusBarComponentAttributes
+
+typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber) {
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_ShortDescription = 1,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_DetailedDescription = 2,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_KnobsArray = 3,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_Exemplar = 4,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_UpdateCadence = 5,
+};
+
+@interface ITMRPCRegistrationRequest_StatusBarComponentAttributes : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *shortDescription;
+/** Test to see if @c shortDescription has been set. */
+@property(nonatomic, readwrite) BOOL hasShortDescription;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *detailedDescription;
+/** Test to see if @c detailedDescription has been set. */
+@property(nonatomic, readwrite) BOOL hasDetailedDescription;
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob*> *knobsArray;
+/** The number of items in @c knobsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger knobsArray_Count;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *exemplar;
+/** Test to see if @c exemplar has been set. */
+@property(nonatomic, readwrite) BOOL hasExemplar;
+
+@property(nonatomic, readwrite) float updateCadence;
+
+@property(nonatomic, readwrite) BOOL hasUpdateCadence;
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob
+
+typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber) {
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_Name = 1,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_Type = 2,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_Placeholder = 3,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_JsonDefaultValue = 4,
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_Key = 5,
+};
+
+@interface ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+/** Test to see if @c name has been set. */
+@property(nonatomic, readwrite) BOOL hasName;
+
+@property(nonatomic, readwrite) ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type type;
+
+@property(nonatomic, readwrite) BOOL hasType;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *placeholder;
+/** Test to see if @c placeholder has been set. */
+@property(nonatomic, readwrite) BOOL hasPlaceholder;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *jsonDefaultValue;
+/** Test to see if @c jsonDefaultValue has been set. */
+@property(nonatomic, readwrite) BOOL hasJsonDefaultValue;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *key;
+/** Test to see if @c key has been set. */
+@property(nonatomic, readwrite) BOOL hasKey;
 
 @end
 

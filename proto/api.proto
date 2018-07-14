@@ -448,11 +448,44 @@ message RPCRegistrationRequest {
   enum Role {
     GENERIC = 1;
     SESSION_TITLE = 2;
+    STATUS_BAR_COMPONENT = 3;
   }
   optional Role role = 5 [default=GENERIC];
 
-  // Used by SESSION_TITLE to control name in Preferences menu
-  optional string display_name = 6;
+  message SessionTitleAttributes {
+    // Used by SESSION_TITLE to control name in Preferences menu
+    optional string display_name = 1;
+  }
+  message StatusBarComponentAttributes {
+    // Used by STATUS_BAR_COMPONENT
+    optional string short_description = 1;
+    optional string detailed_description = 2;
+
+    message Knob {
+      optional string name = 1;
+      enum Type {
+        Checkbox = 1;
+        String = 2;
+        PositiveFloatingPoint = 3;
+        Color = 4;
+      }
+      optional Type type = 2;
+      optional string placeholder = 3;
+      optional string json_default_value = 4;
+      optional string key = 5;
+    }
+    repeated Knob knobs = 3;
+
+    optional string exemplar = 4;
+    optional float update_cadence = 5;
+  }
+
+  oneof RoleSpecificAttributes {
+    SessionTitleAttributes session_title_attributes = 7;
+    StatusBarComponentAttributes status_bar_component_attributes = 8;
+  }
+
+  optional string display_name = 6 [deprecated=true];
 }
 
 message RegisterToolResponse {

@@ -28,11 +28,11 @@ static NSString *const iTermStatusBarSpringColorKey = @"spring: color";
     return @"║┄┄║";
 }
 
-+ (NSString *)statusBarComponentShortDescription {
+- (NSString *)statusBarComponentShortDescription {
     return @"Spring";
 }
 
-+ (NSString *)statusBarComponentDetailedDescription {
+- (NSString *)statusBarComponentDetailedDescription {
     return @"Pushes items apart. Use one spring to right-align status bar elements that follow it. Use two to center those inbetween.";
 }
 
@@ -61,7 +61,7 @@ static NSString *const iTermStatusBarSpringColorKey = @"spring: color";
     return [knobValues[iTermStatusBarSpringColorKey] colorValue];
 }
 
-+ (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *springConstantKnob =
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Compression Resistance:"
                                                           type:iTermStatusBarComponentKnobTypeDouble
@@ -83,7 +83,7 @@ static NSString *const iTermStatusBarSpringColorKey = @"spring: color";
     return MAX(0.01, number ? number.doubleValue : 1);
 }
 
-+ (BOOL)statusBarComponentCanStretch {
+- (BOOL)statusBarComponentCanStretch {
     return YES;
 }
 

@@ -23,7 +23,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
     NSButton *_button;
 }
 
-+ (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *labelKnob =
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Label"
                                                           type:iTermStatusBarComponentKnobTypeText
@@ -90,11 +90,11 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
     return _button.frame.size.width;
 }
 
-+ (NSString *)statusBarComponentShortDescription {
+- (NSString *)statusBarComponentShortDescription {
     return @"Call Script Function";
 }
 
-+ (NSString *)statusBarComponentDetailedDescription {
+- (NSString *)statusBarComponentDetailedDescription {
     return @"Adds a button that invokes a script function with a user-provided invocation.";
 }
 

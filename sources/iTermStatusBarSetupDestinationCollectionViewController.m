@@ -290,7 +290,7 @@ viewForSupplementaryElementOfKind:(NSCollectionViewSupplementaryElementKind)kind
     const NSInteger index = [indexPath indexAtPosition:1];
     iTermStatusBarSetupElement *element = _elements[index];
     id<iTermStatusBarComponent> component = element.component;
-    _configureButton.enabled = ([[[component class] statusBarComponentKnobs] count] > 0);
+    _configureButton.enabled = ([[component statusBarComponentKnobs] count] > 0);
 }
 
 - (iTermStatusBarSetupKnobsViewController *)viewControllerToConfigureComponent:(id<iTermStatusBarComponent>)component {
@@ -339,6 +339,7 @@ viewForSupplementaryElementOfKind:(NSCollectionViewSupplementaryElementKind)kind
     [self.view.window beginSheet:windowController.window completionHandler:^(NSModalResponse returnCode) {
         self->_configureButton.enabled = NO;
         if (returnCode == NSModalResponseOK) {
+            [viewController commit];
             [component statusBarComponentSetKnobValues:viewController.knobValues];
         }
         [windowController description];  // Hold on to the window controller

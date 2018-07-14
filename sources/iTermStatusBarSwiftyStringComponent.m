@@ -18,16 +18,16 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
     iTermSwiftyString *_swiftyString;
 }
 
-+ (NSString *)statusBarComponentShortDescription {
+- (NSString *)statusBarComponentShortDescription {
     return @"Interpolated String";
 }
 
-+ (NSString *)statusBarComponentDetailedDescription {
+- (NSString *)statusBarComponentDetailedDescription {
     return @"Shows the evaluation of a string with inline expressions which may include session "
            @"variables or the output of registered scripting functions";
 }
 
-+ (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *expressionKnob =
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"String Value:"
                                                           type:iTermStatusBarComponentKnobTypeText
@@ -45,7 +45,7 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
     }
 }
 
-+ (BOOL)statusBarComponentCanStretch {
+- (BOOL)statusBarComponentCanStretch {
     return YES;
 }
 

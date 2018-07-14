@@ -9,6 +9,8 @@ from iterm2.profile import Profile, Color, PartialProfile, BadGUIDException, Loc
 
 from iterm2.session import SplitPaneException, Splitter, Session, InvalidSessionId
 
+from iterm2.statusbar import StatusBarComponent, CheckboxKnob, StringKnob, PositiveFloatingPointKnob, ColorKnob
+
 from iterm2.transaction import Transaction
 
 from iterm2.tab import Tab
