@@ -26,19 +26,27 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 - (void)statusBarComponentPreferredSizeDidChange:(id<iTermStatusBarComponent>)component;
 @end
 
+@protocol iTermStatusBarComponentFactory<NSCoding, NSCopying, NSObject>
+
+- (id<iTermStatusBarComponent>)newComponent;
+- (NSString *)componentDescription;
+
+@end
+
 // The model for a object in a status bar.
 @protocol iTermStatusBarComponent<NSSecureCoding, NSObject>
 
 @property (nonatomic, readonly) NSDictionary<iTermStatusBarComponentConfigurationKey, id> *configuration;
 @property (nonatomic, weak) id<iTermStatusBarComponentDelegate> delegate;
+@property (nonatomic, readonly) id<iTermStatusBarComponentFactory> statusBarComponentFactory;
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration;
 
-+ (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs;
+- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs;
 
 // NSString or NSAttributedString
-+ (NSString *)statusBarComponentShortDescription;
-+ (NSString *)statusBarComponentDetailedDescription;
+- (NSString *)statusBarComponentShortDescription;
+- (NSString *)statusBarComponentDetailedDescription;
 
 // Value to show in setup UI
 - (id)statusBarComponentExemplar;
@@ -58,7 +66,7 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 // If this returns YES the component's width may exceed its minimum width.
 // The spring constant determines how multiple stretching components compete
 // for space.
-+ (BOOL)statusBarComponentCanStretch;
+- (BOOL)statusBarComponentCanStretch;
 
 // How hard it pushes against its neighbors. Only applies to components that
 // can stretch.

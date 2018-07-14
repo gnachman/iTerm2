@@ -3700,21 +3700,26 @@ BOOL ITMRegisterToolRequest_ToolType_IsValidValue(int32_t value__) {
 
 @implementation ITMRPCRegistrationRequest
 
+@dynamic roleSpecificAttributesOneOfCase;
 @dynamic hasName, name;
 @dynamic argumentsArray, argumentsArray_Count;
 @dynamic defaultsArray, defaultsArray_Count;
 @dynamic hasTimeout, timeout;
 @dynamic hasRole, role;
+@dynamic sessionTitleAttributes;
+@dynamic statusBarComponentAttributes;
 @dynamic hasDisplayName, displayName;
 
 typedef struct ITMRPCRegistrationRequest__storage_ {
-  uint32_t _has_storage_[1];
+  uint32_t _has_storage_[2];
   float timeout;
   ITMRPCRegistrationRequest_Role role;
   NSString *name;
   NSMutableArray *argumentsArray;
   NSMutableArray *defaultsArray;
   NSString *displayName;
+  ITMRPCRegistrationRequest_SessionTitleAttributes *sessionTitleAttributes;
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes *statusBarComponentAttributes;
 } ITMRPCRegistrationRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -3783,6 +3788,26 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
         .core.flags = GPBFieldOptional,
         .core.dataType = GPBDataTypeString,
       },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "sessionTitleAttributes",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_SessionTitleAttributes),
+        .core.number = ITMRPCRegistrationRequest_FieldNumber_SessionTitleAttributes,
+        .core.hasIndex = -1,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, sessionTitleAttributes),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeMessage,
+      },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "statusBarComponentAttributes",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes),
+        .core.number = ITMRPCRegistrationRequest_FieldNumber_StatusBarComponentAttributes,
+        .core.hasIndex = -1,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, statusBarComponentAttributes),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest class]
@@ -3792,6 +3817,12 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMRPCRegistrationRequest__storage_)
                                          flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
+    static const char *oneofs[] = {
+      "roleSpecificAttributes",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }
@@ -3800,16 +3831,22 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
 
 @end
 
+void ITMRPCRegistrationRequest_ClearRoleSpecificAttributesOneOfCase(ITMRPCRegistrationRequest *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
 #pragma mark - Enum ITMRPCRegistrationRequest_Role
 
 GPBEnumDescriptor *ITMRPCRegistrationRequest_Role_EnumDescriptor(void) {
   static GPBEnumDescriptor *descriptor = NULL;
   if (!descriptor) {
     static const char *valueNames =
-        "Generic\000SessionTitle\000";
+        "Generic\000SessionTitle\000StatusBarComponent\000";
     static const int32_t values[] = {
         ITMRPCRegistrationRequest_Role_Generic,
         ITMRPCRegistrationRequest_Role_SessionTitle,
+        ITMRPCRegistrationRequest_Role_StatusBarComponent,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMRPCRegistrationRequest_Role)
@@ -3828,6 +3865,7 @@ BOOL ITMRPCRegistrationRequest_Role_IsValidValue(int32_t value__) {
   switch (value__) {
     case ITMRPCRegistrationRequest_Role_Generic:
     case ITMRPCRegistrationRequest_Role_SessionTitle:
+    case ITMRPCRegistrationRequest_Role_StatusBarComponent:
       return YES;
     default:
       return NO;
@@ -3932,6 +3970,272 @@ typedef struct ITMRPCRegistrationRequest_RPCArgument__storage_ {
 }
 
 @end
+
+#pragma mark - ITMRPCRegistrationRequest_SessionTitleAttributes
+
+@implementation ITMRPCRegistrationRequest_SessionTitleAttributes
+
+@dynamic hasDisplayName, displayName;
+
+typedef struct ITMRPCRegistrationRequest_SessionTitleAttributes__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *displayName;
+} ITMRPCRegistrationRequest_SessionTitleAttributes__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "displayName",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_SessionTitleAttributes_FieldNumber_DisplayName,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_SessionTitleAttributes__storage_, displayName),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest_SessionTitleAttributes class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRPCRegistrationRequest_SessionTitleAttributes__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_StatusBarComponentAttributes
+
+@implementation ITMRPCRegistrationRequest_StatusBarComponentAttributes
+
+@dynamic hasShortDescription, shortDescription;
+@dynamic hasDetailedDescription, detailedDescription;
+@dynamic knobsArray, knobsArray_Count;
+@dynamic hasExemplar, exemplar;
+@dynamic hasUpdateCadence, updateCadence;
+
+typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ {
+  uint32_t _has_storage_[1];
+  float updateCadence;
+  NSString *shortDescription;
+  NSString *detailedDescription;
+  NSMutableArray *knobsArray;
+  NSString *exemplar;
+} ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "shortDescription",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_ShortDescription,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, shortDescription),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "detailedDescription",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_DetailedDescription,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, detailedDescription),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "knobsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob),
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_KnobsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, knobsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "exemplar",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_Exemplar,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, exemplar),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "updateCadence",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_UpdateCadence,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, updateCadence),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeFloat,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest_StatusBarComponentAttributes class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob
+
+@implementation ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob
+
+@dynamic hasName, name;
+@dynamic hasType, type;
+@dynamic hasPlaceholder, placeholder;
+@dynamic hasJsonDefaultValue, jsonDefaultValue;
+@dynamic hasKey, key;
+
+typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__storage_ {
+  uint32_t _has_storage_[1];
+  ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type type;
+  NSString *name;
+  NSString *placeholder;
+  NSString *jsonDefaultValue;
+  NSString *key;
+} ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescriptionWithDefault fields[] = {
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "name",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_Name,
+        .core.hasIndex = 0,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__storage_, name),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+      {
+        .defaultValue.valueEnum = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_Checkbox,
+        .core.name = "type",
+        .core.dataTypeSpecific.enumDescFunc = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_EnumDescriptor,
+        .core.number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_Type,
+        .core.hasIndex = 1,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__storage_, type),
+        .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .core.dataType = GPBDataTypeEnum,
+      },
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "placeholder",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_Placeholder,
+        .core.hasIndex = 2,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__storage_, placeholder),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "jsonDefaultValue",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_JsonDefaultValue,
+        .core.hasIndex = 3,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__storage_, jsonDefaultValue),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "key",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_Key,
+        .core.hasIndex = 4,
+        .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__storage_, key),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
+                                   storageSize:sizeof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__storage_)
+                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type
+
+GPBEnumDescriptor *ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Checkbox\000String\000PositiveFloatingPoint\000Co"
+        "lor\000";
+    static const int32_t values[] = {
+        ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_Checkbox,
+        ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_String,
+        ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_PositiveFloatingPoint,
+        ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_Color,
+    };
+    static const char *extraTextFormatInfo = "\004\000\010\000\001\006\000\002\025\000\003\005\000";
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_IsValidValue
+                              extraTextFormatInfo:extraTextFormatInfo];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_Checkbox:
+    case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_String:
+    case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_PositiveFloatingPoint:
+    case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_Color:
+      return YES;
+    default:
+      return NO;
+  }
+}
 
 #pragma mark - ITMRegisterToolResponse
 

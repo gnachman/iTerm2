@@ -33,12 +33,12 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
-+ (NSString *)statusBarComponentShortDescription {
+- (NSString *)statusBarComponentShortDescription {
     [self doesNotRecognizeSelector:_cmd];
     return @"";
 }
 
-+ (NSString *)statusBarComponentDetailedDescription {
+- (NSString *)statusBarComponentDetailedDescription {
     [self doesNotRecognizeSelector:_cmd];
     return @"";
 }
@@ -48,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
     return @"";
 }
 
-+ (BOOL)statusBarComponentCanStretch {
+- (BOOL)statusBarComponentCanStretch {
     return YES;
 }
 
@@ -79,11 +79,11 @@ NS_ASSUME_NONNULL_BEGIN
     return [super initWithPath:@"session.hostname" configuration:configuration];
 }
 
-+ (NSString *)statusBarComponentShortDescription {
+- (NSString *)statusBarComponentShortDescription {
     return @"Host Name";
 }
 
-+ (NSString *)statusBarComponentDetailedDescription {
+- (NSString *)statusBarComponentDetailedDescription {
     return @"Current host name. Requires shell integration.";
 }
 
@@ -147,11 +147,11 @@ NS_ASSUME_NONNULL_BEGIN
     return [super initWithPath:@"session.username" configuration:configuration];
 }
 
-+ (NSString *)statusBarComponentShortDescription {
+- (NSString *)statusBarComponentShortDescription {
     return @"User Name";
 }
 
-+ (NSString *)statusBarComponentDetailedDescription {
+- (NSString *)statusBarComponentDetailedDescription {
     return @"Current user name. Requires shell integration.";
 }
 
@@ -181,11 +181,11 @@ NS_ASSUME_NONNULL_BEGIN
     return [super initWithPath:@"session.path" configuration:configuration];
 }
 
-+ (NSString *)statusBarComponentShortDescription {
+- (NSString *)statusBarComponentShortDescription {
     return @"Current Directory";
 }
 
-+ (NSString *)statusBarComponentDetailedDescription {
+- (NSString *)statusBarComponentDetailedDescription {
     return @"Current directory. Best with shell integration.";
 }
 

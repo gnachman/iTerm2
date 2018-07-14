@@ -33,21 +33,21 @@ NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
     return 200;
 }
 
-+ (BOOL)statusBarComponentCanStretch {
+- (BOOL)statusBarComponentCanStretch {
     return YES;
 }
 
 #pragma mark - iTermStatusBarComponent
 
-+ (NSString *)statusBarComponentShortDescription {
+- (NSString *)statusBarComponentShortDescription {
     return @"Search Tool";
 }
 
-+ (NSString *)statusBarComponentDetailedDescription {
+- (NSString *)statusBarComponentDetailedDescription {
     return @"Search tool to find text in the terminal window.";
 }
 
-+ (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     return @[];
 }
 

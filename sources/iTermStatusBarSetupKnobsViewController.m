@@ -49,7 +49,7 @@ static NSViewController<iTermStatusBarKnobViewController> *iTermNewViewControlle
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
         _component = component;
-        _knobs = [component.class statusBarComponentKnobs].reverseObjectEnumerator.allObjects;
+        _knobs = [component statusBarComponentKnobs].reverseObjectEnumerator.allObjects;
         NSDictionary *knobValues = component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
         [_knobs enumerateObjectsUsingBlock:^(iTermStatusBarComponentKnob * _Nonnull knob, NSUInteger idx, BOOL * _Nonnull stop) {
             knob.value = knobValues[knob.key] ?: knob.value;
@@ -101,6 +101,10 @@ static NSViewController<iTermStatusBarKnobViewController> *iTermNewViewControlle
 }
 
 - (void)viewWillDisappear {
+    [self commit];
+}
+
+- (void)commit {
     for (NSInteger i = 0; i < _knobs.count; i++) {
         id value = _viewControllers[i].value;
         [_knobs[i] setValue:value];

@@ -2464,6 +2464,10 @@ class Color:
         else:
             self.color_space = "sRGB"
 
+    @property
+    def json(self):
+        return json.dumps(self.get_dict())
+
 class PartialProfile(Profile):
     """Represents a profile that has only a subset of fields available for reading."""
 

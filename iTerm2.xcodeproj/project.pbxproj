@@ -1240,6 +1240,8 @@
 		535EA50520D1869800FC81E0 /* iTermSwiftyStringParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 535EA50320D1869800FC81E0 /* iTermSwiftyStringParser.m */; };
 		535EA51220D82A9C00FC81E0 /* PTYSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD6707614934ADE008E4361 /* PTYSplitView.m */; };
 		535EA51420D8C1EB00FC81E0 /* iTermProfilesWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5EBE7122B892900C736B0 /* iTermProfilesWindowController.m */; };
+		5370ECDA20F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370ECD820F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.h */; };
+		5370ECDB20F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370ECD920F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m */; };
 		5370F2EA1C7895F800874C0F /* QLPreviewPanel+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */; };
 		5370F2EB1C7895FD00874C0F /* QLPreviewPanel+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */; };
 		538BE55620C9E69A00AD15B0 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
@@ -3535,6 +3537,8 @@
 		535EA4FF20D0F15400FC81E0 /* iTermQuotedRecognizer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermQuotedRecognizer.m; sourceTree = "<group>"; };
 		535EA50220D1869800FC81E0 /* iTermSwiftyStringParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSwiftyStringParser.h; sourceTree = "<group>"; };
 		535EA50320D1869800FC81E0 /* iTermSwiftyStringParser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSwiftyStringParser.m; sourceTree = "<group>"; };
+		5370ECD820F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarRPCProvidedTextComponent.h; sourceTree = "<group>"; };
+		5370ECD920F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarRPCProvidedTextComponent.m; sourceTree = "<group>"; };
 		5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QLPreviewPanel+iTerm.h"; sourceTree = "<group>"; };
 		5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "QLPreviewPanel+iTerm.m"; sourceTree = "<group>"; };
 		539325EE1DD66EF100CABCEF /* iTermPreciseTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPreciseTimer.h; sourceTree = "<group>"; };
@@ -6255,6 +6259,8 @@
 				A65FF3C020F18547008BD0AE /* iTermMiniSearchFieldViewController.xib */,
 				A62DBBA520F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.h */,
 				A62DBBA620F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m */,
+				5370ECD820F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.h */,
+				5370ECD920F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m */,
 			);
 			name = Components;
 			sourceTree = "<group>";
@@ -8261,6 +8267,7 @@
 				A6DBC0381FF9B30000F1466D /* iTermTexturePool.h in Headers */,
 				A667194B1DCE36C3000CE608 /* iTermModifierRemapper.h in Headers */,
 				A667194C1DCE36C3000CE608 /* iTermSocket.h in Headers */,
+				5370ECDA20F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.h in Headers */,
 				A60C03642089897400FE2F1F /* iTermScriptConsole.h in Headers */,
 				530AB8B420B2098000D2AA08 /* iTermVariables.h in Headers */,
 				A667194D1DCE36C3000CE608 /* iTermWebSocketConnection.h in Headers */,
@@ -10009,6 +10016,7 @@
 				A66719651DCE3772000CE608 /* iTermHTTPConnection.m in Sources */,
 				530AB8B920B3627200D2AA08 /* iTermGrammarProcessor.m in Sources */,
 				A67960CE1F81FCB6008A42BC /* iTermTextureArray.m in Sources */,
+				5370ECDB20F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m in Sources */,
 				A631FCA220EF0BCC00EB824F /* iTermStatusBarKnobColorViewController.m in Sources */,
 				A655E69A207153CB00DC21B9 /* NSSavePanel+iTerm.m in Sources */,
 				A6A4866E20B67A0300493302 /* iTermRemotePreferences.m in Sources */,

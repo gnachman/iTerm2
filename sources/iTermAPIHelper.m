@@ -203,6 +203,10 @@ static id sAPIHelperInstance;
     return [sAPIHelperInstance sessionTitleFunctions] ?: @[];
 }
 
++ (NSArray<ITMRPCRegistrationRequest *> *)statusBarComponentProviderRegistrationRequests {
+    return [sAPIHelperInstance statusBarComponentProviderRegistrationRequests] ?: @[];
+}
+
 - (instancetype)initPrivate {
     self = [super init];
     if (self) {
@@ -609,11 +613,21 @@ static id sAPIHelperInstance;
 }
 
 - (NSString *)invocationOfRegistrationRequest:(ITMRPCRegistrationRequest *)req {
-    NSArray<NSString *> *defaults = [req.defaultsArray mapWithBlock:^id(ITMRPCRegistrationRequest_RPCArgument *def) {
+    return [iTermAPIHelper invocationWithName: req.name defaults:req.defaultsArray];
+}
+
++ (NSString *)invocationWithName:(NSString *)name
+                        defaults:(NSArray<ITMRPCRegistrationRequest_RPCArgument*> *)defaultsArray {
+    NSArray<ITMRPCRegistrationRequest_RPCArgument*> *sortedDefaults =
+        [defaultsArray sortedArrayUsingComparator:^NSComparisonResult(ITMRPCRegistrationRequest_RPCArgument * _Nonnull obj1,
+                                                                      ITMRPCRegistrationRequest_RPCArgument * _Nonnull obj2) {
+            return [obj1.name compare:obj2.name];
+        }];
+    NSArray<NSString *> *defaults = [sortedDefaults mapWithBlock:^id(ITMRPCRegistrationRequest_RPCArgument *def) {
         return [NSString stringWithFormat:@"%@:%@", def.name, def.path];
     }];
     defaults = [defaults sortedArrayUsingSelector:@selector(compare:)];
-    return [NSString stringWithFormat:@"%@(%@)", req.name, [defaults componentsJoinedByString:@","]];
+    return [NSString stringWithFormat:@"%@(%@)", name, [defaults componentsJoinedByString:@","]];
 }
 
 - (NSArray<iTermTuple<NSString *,NSString *> *> *)sessionTitleFunctions {
@@ -626,7 +640,20 @@ static id sAPIHelperInstance;
             return nil;
         }
         NSString *invocation = [self invocationOfRegistrationRequest:req.rpcRegistrationRequest];
-        return [iTermTuple tupleWithObject:req.rpcRegistrationRequest.displayName andObject:invocation];
+        return [iTermTuple tupleWithObject:req.rpcRegistrationRequest.sessionTitleAttributes.displayName andObject:invocation];
+    }];
+}
+
+- (NSArray<ITMRPCRegistrationRequest *> *)statusBarComponentProviderRegistrationRequests {
+    return [_serverOriginatedRPCSubscriptions.allKeys mapWithBlock:^id(NSString *signature) {
+        ITMNotificationRequest *req = self->_serverOriginatedRPCSubscriptions[signature].secondObject;
+        if (!req) {
+            return nil;
+        }
+        if (req.rpcRegistrationRequest.role != ITMRPCRegistrationRequest_Role_StatusBarComponent) {
+            return nil;
+        }
+        return req.rpcRegistrationRequest;
     }];
 }
 
@@ -918,9 +945,14 @@ static id sAPIHelperInstance;
                                                                                    andObject:request];
             [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIRegisteredFunctionsDidChangeNotification
                                                                 object:nil];
-            if (request.rpcRegistrationRequest.role == ITMRPCRegistrationRequest_Role_SessionTitle) {
-                [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIDidRegisterSessionTitleFunctionNotification
-                                                                    object:request.rpcRegistrationRequest.name];
+            switch (request.rpcRegistrationRequest.role) {
+                case ITMRPCRegistrationRequest_Role_SessionTitle:
+                    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIDidRegisterSessionTitleFunctionNotification
+                                                                        object:request.rpcRegistrationRequest.name];
+                    break;
+                case ITMRPCRegistrationRequest_Role_Generic:
+                case ITMRPCRegistrationRequest_Role_StatusBarComponent:
+                    break;
             }
         } else {
             if (!_serverOriginatedRPCSubscriptions[signatureString] ||

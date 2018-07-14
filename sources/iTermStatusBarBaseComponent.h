@@ -25,4 +25,10 @@ extern NSString *const iTermStatusBarPriorityKey;
 
 @end
 
+@interface iTermStatusBarBuiltInComponentFactory : NSObject<iTermStatusBarComponentFactory>
+
+- (instancetype)initWithClass:(Class)theClass;
+
+@end
+
 NS_ASSUME_NONNULL_END

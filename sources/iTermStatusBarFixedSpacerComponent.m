@@ -17,11 +17,11 @@ NS_ASSUME_NONNULL_BEGIN
     return @"";
 }
 
-+ (NSString *)statusBarComponentShortDescription {
+- (NSString *)statusBarComponentShortDescription {
     return @"Fixed-size Spacer";
 }
 
-+ (NSString *)statusBarComponentDetailedDescription {
+- (NSString *)statusBarComponentDetailedDescription {
     return @"Adds ten points of space";
 }
 
