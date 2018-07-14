@@ -311,7 +311,6 @@ ITERM_IGNORE_PARTIAL_BEGIN
     NSScrollView *scrollView = [[[NSScrollView alloc] init] autorelease];
     NSCustomTouchBarItem *item = [[[NSCustomTouchBarItem alloc] initWithIdentifier:iTermTouchBarIdentifierColorPresetScrollview] autorelease];
     item.view = scrollView;
-#warning TODO: Test this - I added autorelease to documentView
     NSView *documentView = [[[NSView alloc] init] autorelease];
     documentView.translatesAutoresizingMaskIntoConstraints = NO;
     scrollView.documentView = documentView;
@@ -325,7 +324,6 @@ ITERM_IGNORE_PARTIAL_BEGIN
     if ([identifier isEqualToString:iTermTabBarTouchBarIdentifier]) {
         NSScrubber *scrubber;
         if (!self.tabsTouchBarItem) {
-#warning TODO: Test this. I added autorelease
             self.tabsTouchBarItem = [[[NSCustomTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
             self.tabsTouchBarItem.customizationLabel = @"Full Screen Tab Bar";
 
@@ -337,7 +335,6 @@ ITERM_IGNORE_PARTIAL_BEGIN
             [scrubber registerClass:[NSScrubberTextItemView class] forItemIdentifier:iTermTabBarItemTouchBarIdentifier];
 
             // Use the flow layout.
-#warning TODO: Test autoreleas
             NSScrubberLayout *scrubberLayout = [[[NSScrubberFlowLayout alloc] init] autorelease];
             scrubber.scrubberLayout = scrubberLayout;
 
@@ -361,7 +358,6 @@ ITERM_IGNORE_PARTIAL_BEGIN
 
         return self.tabsTouchBarItem;
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierAutocomplete]) {
-#warning TODO: Test this
         self.autocompleteCandidateListItem = [[[NSCandidateListTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
         self.autocompleteCandidateListItem.delegate = self;
         self.autocompleteCandidateListItem.customizationLabel = @"Autocomplete Suggestions";

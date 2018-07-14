@@ -39,7 +39,6 @@
 - (void)dealloc {
     [_clearButton release];
     [_hotkeyBeingRecorded release];
-#warning TODO: Test this
     [_shortcut release];
     [_stringValue release];
     [super dealloc];
