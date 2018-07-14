@@ -9,6 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBadgeRendererTransientState ()
 @property (nonatomic, strong) id<MTLTexture> texture;
+@property (nonatomic) CGSize imageSize;
 @end
 
 @implementation iTermBadgeRendererTransientState
@@ -18,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermMetalRenderer *_metalRenderer;
     id<MTLTexture> _texture;
     CGSize _size;
+    CGSize _imageSize;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -46,6 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setBadgeImage:(NSImage *)image context:(nonnull iTermMetalBufferPoolContext *)context {
     _size = image.size;
+    _imageSize = image.size;
     _texture = [_metalRenderer textureFromImage:image context:context];
     _texture.label = @"Badge";
 }
@@ -61,8 +64,13 @@ NS_ASSUME_NONNULL_BEGIN
                              scale * size.width,
                              scale * size.height);
     // The destinationRect is clipped to the visible area.
-    const CGFloat textureHeight = tState.texture.height;
-    const CGFloat fractionVisible = quad.size.height / textureHeight;
+    CGFloat fractionVisible;
+    if (tState.imageSize.height <= 0.01) {
+        fractionVisible = 1;
+    } else {
+        const CGFloat quadSizeHeightPoints = quad.size.height / scale;
+        fractionVisible = quadSizeHeightPoints / tState.imageSize.height;
+    }
     CGRect textureFrame = CGRectMake(0, 1 - fractionVisible, 1, fractionVisible);
     const iTermVertex vertices[] = {
         // Pixel Positions                              Texture Coordinates
@@ -101,6 +109,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermBadgeRendererTransientState *)tState {
     tState.texture = _texture;
+    tState.imageSize = _imageSize;
 }
 
 @end
