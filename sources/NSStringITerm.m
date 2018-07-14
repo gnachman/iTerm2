@@ -135,14 +135,30 @@
     return [self stringByReplacingOccurrencesOfString:@"\t" withString:replacement];
 }
 
-- (NSString *)stringWithPercentEscape
-{
+// TODO: Make some kind of sense out of all the URL escaping. Use NSURLComponents to escape each
+// part individually.
+
+// This one is permissive about allowing unescaped characters (like /) through and can kind of work
+// on a whole URL.
+- (NSString *)stringByEscapingForURL {
+    static NSMutableCharacterSet *allowedCharacters;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        allowedCharacters = [[NSCharacterSet appleURLCharacterSet] mutableCopy];
+        [allowedCharacters addCharactersInString:@"!*'();:@&=+$,/?%#[]"];
+    });
+
+    return [self stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
+}
+
+// This one is conservative and can be used for query parameters.
+- (NSString *)stringWithPercentEscape {
     // From
     // http://stackoverflow.com/questions/705448/iphone-sdk-problem-with-ampersand-in-the-url-string
     static NSMutableCharacterSet *allowedCharacters;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        allowedCharacters = [[NSCharacterSet URLHostAllowedCharacterSet] mutableCopy];
+        allowedCharacters = [[NSCharacterSet appleURLCharacterSet] mutableCopy];
         [allowedCharacters removeCharactersInString:@"￼=,!$&'()*+;@?\n\"<>#\t :/"];
     });
 
@@ -727,17 +743,6 @@ int decode_utf8_char(const unsigned char *datap,
     } while (found);
 
     return s;
-}
-
-- (NSString *)stringByEscapingForURL {
-    static NSMutableCharacterSet *allowedCharacters;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        allowedCharacters = [[NSCharacterSet URLHostAllowedCharacterSet] mutableCopy];
-        [allowedCharacters addCharactersInString:@"!*'();:@&=+$,/?%#[]"];
-    });
-
-    return [self stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
 }
 
 - (NSString *)stringByCapitalizingFirstLetter {

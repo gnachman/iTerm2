@@ -7,7 +7,9 @@
 //
 
 #import "ContextMenuActionPrefsController.h"
+
 #import "FutureMethods.h"
+#import "NSCharacterSet+iTerm.h"
 #import "NSStringITerm.h"
 #import "VT100RemoteHost.h"
 
@@ -69,7 +71,7 @@ static NSString* kParameterKey = @"parameter";
         case kOpenFileContextMenuAction:
             return parameter;
         case kOpenUrlContextMenuAction:
-            return [parameter stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
+            return [parameter stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet appleURLCharacterSet]];
         case kSendTextContextMenuAction:
             return parameter;
     }

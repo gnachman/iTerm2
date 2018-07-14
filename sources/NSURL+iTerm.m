@@ -8,6 +8,8 @@
 
 #import "NSURL+iTerm.h"
 
+#import "NSCharacterSet+iTerm.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @implementation NSURL(iTerm)
@@ -58,14 +60,15 @@ NS_ASSUME_NONNULL_BEGIN
     NSCharacterSet *nonAsciiCharacterSet = [NSCharacterSet characterSetWithRange:NSMakeRange(128, 0x10FFFF - 128)];
     if ([string rangeOfCharacterFromSet:nonAsciiCharacterSet].location != NSNotFound) {
         NSUInteger fragmentIndex = [string rangeOfString:@"#"].location;
+        NSCharacterSet *characterSet = [NSCharacterSet appleURLCharacterSet];
         if (fragmentIndex != NSNotFound) {
             // Don't want to percent encode a #.
-            NSString *before = [[string substringToIndex:fragmentIndex] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
-            NSString *after = [[string substringFromIndex:fragmentIndex + 1] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
+            NSString *before = [[string substringToIndex:fragmentIndex] stringByAddingPercentEncodingWithAllowedCharacters:characterSet];
+            NSString *after = [[string substringFromIndex:fragmentIndex + 1] stringByAddingPercentEncodingWithAllowedCharacters:characterSet];
             NSString *combined = [NSString stringWithFormat:@"%@#%@", before, after];
             return [NSURL URLWithString:combined];
         } else {
-            return [NSURL URLWithString:[string stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]]];
+            return [NSURL URLWithString:[string stringByAddingPercentEncodingWithAllowedCharacters:characterSet]];
         }
     } else {
         return [NSURL URLWithString:string];

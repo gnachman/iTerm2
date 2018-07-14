@@ -1166,4 +1166,14 @@
     return urlChars;
 }
 
++ (NSCharacterSet *)appleURLCharacterSet {
+    NSMutableCharacterSet *characterSet = [[[NSCharacterSet URLHostAllowedCharacterSet] mutableCopy] autorelease];
+    [characterSet formUnionWithCharacterSet:[NSCharacterSet URLPathAllowedCharacterSet]];
+    [characterSet formUnionWithCharacterSet:[NSCharacterSet URLUserAllowedCharacterSet]];
+    [characterSet formUnionWithCharacterSet:[NSCharacterSet URLQueryAllowedCharacterSet]];
+    [characterSet formUnionWithCharacterSet:[NSCharacterSet URLFragmentAllowedCharacterSet]];
+    [characterSet formUnionWithCharacterSet:[NSCharacterSet URLPasswordAllowedCharacterSet]];
+    return characterSet;
+}
+
 @end

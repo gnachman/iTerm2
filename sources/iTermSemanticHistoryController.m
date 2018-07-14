@@ -28,6 +28,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermLaunchServices.h"
 #import "iTermSemanticHistoryPrefsController.h"
+#import "NSCharacterSet+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
@@ -281,7 +282,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
             [self launchSublimeTextWithBundleIdentifier:bundleId path:path];
         } else {
-            path = [path stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
+            path = [path stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLPathAllowedCharacterSet]];
             NSURL *url = nil;
             NSString *editorIdentifier = identifier;
             if (lineNumber) {
@@ -401,9 +402,10 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         // Replace the path with a non-shell-escaped path.
         augmentedSubs[@"1"] = path ?: @"";
         // Percent-escape all the arguments.
+        NSMutableCharacterSet *characterSet = [NSCharacterSet appleURLCharacterSet];
         for (NSString *key in augmentedSubs.allKeys) {
             augmentedSubs[key] =
-                [augmentedSubs[key] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]];
+                [augmentedSubs[key] stringByAddingPercentEncodingWithAllowedCharacters:characterSet];
         }
         url = [url stringByReplacingVariableReferencesWithVariables:augmentedSubs];
         DLog(@"Open url %@", url);

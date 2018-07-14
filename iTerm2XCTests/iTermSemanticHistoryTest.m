@@ -515,7 +515,7 @@
     NSURL *expectedURL =
         [NSURL URLWithString:@"http://foo/The%20Path?line=1&prefix=The%20Prefix&suffix=The%20Suffix&dir=/&uservar=User%20Variable"];
     NSURL *actualURL = _semanticHistoryController.openedURL;
-    XCTAssert([expectedURL isEqual:actualURL]);
+    XCTAssertEqualObjects(expectedURL, actualURL);
     XCTAssert(!_semanticHistoryController.openedEditor);
 }
 

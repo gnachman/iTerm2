@@ -23,5 +23,6 @@
 
 + (NSCharacterSet *)urlCharacterSet;
 + (NSCharacterSet *)filenameCharacterSet;
++ (NSCharacterSet *)appleURLCharacterSet;
 
 @end
