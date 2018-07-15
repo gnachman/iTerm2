@@ -33,7 +33,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     BOOL _fakeBold;
     BOOL _fakeItalic;
     BOOL _antialiased;
-
+    BOOL _postprocessed NS_AVAILABLE_MAC(10_14);
+    
     CGSize _partSize;
     CTLineRef _lineRef;
     CGContextRef _cgContext;
@@ -145,7 +146,23 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     bitmap.data = [NSMutableData uninitializedDataWithLength:length];
     bitmap.size = _partSize;
 
-    const char *source = (const char *)CGBitmapContextGetData(_cgContext);
+    unsigned char *source = (unsigned char *)CGBitmapContextGetData(_cgContext);
+    
+    if (@available(macOS 10.14, *)) {
+        if (!_postprocessed && !_isEmoji) {
+            // Copy red channel to alpha channel
+            // Rendering over transparent looks bad. So we render white over black and then tweak the
+            // alpha channel.
+            for (int i = 0 ; i < _size.height * _size.width * 4; i += 4) {
+                source[i + 3] = source[i];
+                source[i + 0] = 255;
+                source[i + 1] = 255;
+                source[i + 2] = 255;
+            }
+            _postprocessed = YES;
+        }
+    }
+
     char *dest = (char *)bitmap.data.mutableBytes;
 
     // Flip vertically and copy. The vertical flip is for historical reasons
@@ -158,6 +175,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         sourceOffset += sourceRowSize;
         destOffset -= destRowSize;
     }
+
     return bitmap;
 }
 
@@ -290,10 +308,18 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 - (void)fillBackground {
-    if (_isEmoji) {
-        CGContextSetRGBFillColor(_cgContext, 1, 1, 1, 0);
+    if (@available(macOS 10.14, *)) {
+        if (_isEmoji) {
+            CGContextSetRGBFillColor(_cgContext, 0, 0, 0, 0);
+        } else {
+            CGContextSetRGBFillColor(_cgContext, 0, 0, 0, 1);
+        }
     } else {
-        CGContextSetRGBFillColor(_cgContext, 1, 1, 1, 1);
+        if (_isEmoji) {
+            CGContextSetRGBFillColor(_cgContext, 1, 1, 1, 0);
+        } else {
+            CGContextSetRGBFillColor(_cgContext, 1, 1, 1, 1);
+        }
     }
     CGContextFillRect(_cgContext, CGRectMake(0, 0, _size.width, _size.height));
 }
@@ -320,8 +346,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
             // Now that we know we can do the setup operations that depend on
             // knowing if it's emoji.
             [self fillBackground];
-            CGContextSetFillColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
-            CGContextSetStrokeColorWithColor(_cgContext, [[NSColor blackColor] CGColor]);
+            CGContextSetFillColorWithColor(_cgContext, [self.textColor CGColor]);
+            CGContextSetStrokeColorWithColor(_cgContext, [self.textColor CGColor]);
         }
         if (!haveSetTextMatrix) {
             [self initializeTextMatrixInContext:_cgContext
@@ -335,6 +361,14 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         } else {
             CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, _cgContext);
         }
+    }
+}
+
+- (NSColor *)textColor {
+    if (@available(macOS 10.14, *)) {
+        return [NSColor whiteColor];
+    } else {
+        return [NSColor blackColor];
     }
 }
 
@@ -400,7 +434,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         paragraphStyle.baseWritingDirection = NSWritingDirectionLeftToRight;
     });
     return @{ (NSString *)kCTLigatureAttributeName: @0,
-              (NSString *)kCTForegroundColorAttributeName: (id)[[NSColor blackColor] CGColor],
+              (NSString *)kCTForegroundColorAttributeName: (id)[self.textColor CGColor],
               NSFontAttributeName: _font,
               NSParagraphStyleAttributeName: paragraphStyle };
 }

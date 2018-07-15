@@ -59,7 +59,7 @@ typedef struct iTermTextPIU {
     vector_float4 textColor;
 
     // Passed through to the solid background color fragment shader.
-    vector_int3 colorModelIndex;
+    vector_int3 colorModelIndex;  // deprecated for macOS 10.14+
 
     // What kind of underline to draw. The offset is provided in iTermTextureDimensions.
     iTermMetalGlyphAttributesUnderline underlineStyle;
