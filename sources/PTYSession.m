@@ -4783,6 +4783,48 @@ ITERM_WEAKLY_REFERENCEABLE
             machineSupportsMetal = devices.count > 0;
             [devices release];
         });
+        if (!machineSupportsMetal) {
+            if (reason) {
+                *reason = @"no usable GPU found on this machine.";
+            }
+            return NO;
+        }
+        if (![iTermPreferences boolForKey:kPreferenceKeyUseMetal]) {
+            if (reason) {
+                *reason = @"GPU Renderer is disabled in Preferences > General.";
+            }
+            return NO;
+        }
+        if ([self ligaturesEnabledInEitherFont]) {
+            if (reason) {
+                *reason = @"ligatures are enabled. You can disable them in Prefs>Profiles>Text>Use ligatures.";
+            }
+            return NO;
+        }
+        if (_metalDeviceChanging) {
+            if (reason) {
+                *reason = @"the GPU renderer is initializing. It should be ready soon.";
+            }
+            return NO;
+        }
+        if (![self metalViewSizeIsLegal]) {
+            if (reason) {
+                *reason = @"the session is too large or too small.";
+            }
+            return NO;
+        }
+        if ([_textview verticalSpacing] < 1) {
+#warning TODO: In 10.14 I should be able to render glyphs over each other, making this possible.
+            // Metal cuts off the tops of letters when line height reduced
+            if (reason) {
+                *reason = @"the font's vertical spacing set to less than 100%. You can change it in Prefs>Profiles>Text>Change Font.";
+            }
+            return NO;
+        }
+        if (@available(macOS 10.14, *)) {
+            // View compositing works in Mojave but not at all before it.
+            return YES;
+        }
         // Metal's not allowed when other views are composited over the metal view because that just
         // doesn't seem to work, even if you use presentsWithTransaction (even if it did work, it
         // requires presenting the drawable on the main thread which defeats the purpose of the metal
@@ -4794,40 +4836,15 @@ ITERM_WEAKLY_REFERENCEABLE
         const BOOL hasSquareCorners = untitled || nativeFullScreen;
         const BOOL marginsOk = ([iTermAdvancedSettingsModel terminalVMargin] >= 2 &&
                                 [iTermAdvancedSettingsModel terminalMargin] >= 1);  // Smaller margins break rounded window corners
-        if (![iTermPreferences boolForKey:kPreferenceKeyUseMetal]) {
-            if (reason) {
-                *reason = @"GPU Renderer is disabled in Preferences > General.";
-            }
-            return NO;
-        }
         if (!(hasSquareCorners || marginsOk)) {
             if (reason) {
                 *reason = @"terminal window margins are too small. You can edit them in Prefs>Advanced.";
             }
             return NO;
         }
-        if ([_textview verticalSpacing] < 1) {
-            // Metal cuts off the tops of letters when line height reduced
-            if (reason) {
-                *reason = @"the font's vertical spacing set to less than 100%. You can change it in Prefs>Profiles>Text>Change Font.";
-            }
-            return NO;
-        }
-        if (!machineSupportsMetal) {
-            if (reason) {
-                *reason = @"no usable GPU found on this machine.";
-            }
-            return NO;
-        }
         if (_textview.transparencyAlpha < 1) {
             if (reason) {
                 *reason = @"transparent windows not supported. You can change window transparency in Prefs>Profiles>Window>Transparency";
-            }
-            return NO;
-        }
-        if ([self ligaturesEnabledInEitherFont]) {
-            if (reason) {
-                *reason = @"ligatures are enabled. You can disable them in Prefs>Profiles>Text>Use ligatures.";
             }
             return NO;
         }
@@ -4858,18 +4875,6 @@ ITERM_WEAKLY_REFERENCEABLE
         if (_view.hasHoverURL) {
             if (reason) {
                 *reason = @"a URL preview is visible.";
-            }
-            return NO;
-        }
-        if (_metalDeviceChanging) {
-            if (reason) {
-                *reason = @"the GPU renderer is initializing. It should be ready soon.";
-            }
-            return NO;
-        }
-        if (![self metalViewSizeIsLegal]) {
-            if (reason) {
-                *reason = @"the session is too large or too small.";
             }
             return NO;
         }
