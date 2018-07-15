@@ -4937,6 +4937,30 @@ ITERM_WEAKLY_REFERENCEABLE
             machineSupportsMetal = devices.count > 0;
             [devices release];
         });
+        if (!machineSupportsMetal) {
+            return NO;
+        }
+        if (![iTermPreferences boolForKey:kPreferenceKeyUseMetal]) {
+            return NO;
+        }
+        if ([self ligaturesEnabledInEitherFont]) {
+            return NO;
+        }
+        if (_metalDeviceChanging) {
+            return NO;
+        }
+        if (![self metalViewSizeIsLegal]) {
+            return NO;
+        }
+        if ([_textview verticalSpacing] < 1) {
+#warning TODO: In 10.14 I should be able to render glyphs over each other, making this possible.
+           // Metal cuts off the tops of letters when line height reduced
+            return NO;
+        }
+        if (@available(macOS 10.14, *)) {
+            // View compositing works in Mojave but not at all before it.
+            return YES;
+        }
         // Metal's not allowed when other views are composited over the metal view because that just
         // doesn't seem to work, even if you use presentsWithTransaction (even if it did work, it
         // requires presenting the drawable on the main thread which defeats the purpose of the metal
@@ -4948,19 +4972,21 @@ ITERM_WEAKLY_REFERENCEABLE
         const BOOL hasSquareCorners = untitled || nativeFullScreen;
         const BOOL marginsOk = ([iTermAdvancedSettingsModel terminalVMargin] >= 2 &&
                                 [iTermAdvancedSettingsModel terminalMargin] >= 1);  // Smaller margins break rounded window corners
-        return ([iTermPreferences boolForKey:kPreferenceKeyUseMetal] &&
-                (hasSquareCorners || marginsOk) &&
-                [_textview verticalSpacing] >= 1 &&  // Metal cuts off the tops of letters when line height reduced
-                machineSupportsMetal &&
-                _textview.transparencyAlpha == 1 &&
-                ![self ligaturesEnabledInEitherFont] &&
-                ![PTYNoteViewController anyNoteVisible] &&
-                !_view.findViewController.isVisible &&
-                !_pasteHelper.pasteViewIsVisible &&
-                _view.currentAnnouncement == nil &&
-                !_view.hasHoverURL &&
-                !_metalDeviceChanging &&
-                [self metalViewSizeIsLegal]);
+        const BOOL safeForWindowCorners = (hasSquareCorners || marginsOk);
+        if (!safeForWindowCorners) {
+            return NO;
+        }
+        
+        const BOOL safeForCompositing = (![PTYNoteViewController anyNoteVisible] &&
+                                         !_view.findViewController.isVisible &&
+                                         !_pasteHelper.pasteViewIsVisible &&
+                                         _view.currentAnnouncement == nil &&
+                                         !_view.hasHoverURL);
+        if (!safeForCompositing) {
+            return NO;
+        }
+#warning TODO: See if this works. I might get it for free.        
+        return _textview.transparencyAlpha == 1;
     } else {
         return NO;
     }
