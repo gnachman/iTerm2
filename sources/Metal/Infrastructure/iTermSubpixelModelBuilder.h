@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <simd/simd.h>
 
+NS_CLASS_DEPRECATED_MAC(10_12, 10_14)
 @interface iTermSubpixelModel : NSObject
 
 // The table contains 256 values that map a reference value to a color value in this channel.
@@ -28,6 +29,7 @@
 // to the colors used in a glyph with an arbitrary foreground and background color. Thanks to this
 // mapping, we only need black-on-white textures with subpixel antialiasing and the GPU can color
 // them in the fragment shader.
+NS_CLASS_DEPRECATED_MAC(10_12, 10_14)
 @interface iTermSubpixelModelBuilder : NSObject
 
 + (instancetype)sharedInstance;

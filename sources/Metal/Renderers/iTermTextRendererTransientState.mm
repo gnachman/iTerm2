@@ -114,7 +114,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
     }
 }
 
-- (void)setDisableIndividualColorModels:(BOOL)disableIndividualColorModels {
+- (void)setDisableIndividualColorModels:(BOOL)disableIndividualColorModels NS_DEPRECATED_MAC(10_12, 10_14) {
     _disableIndividualColorModels = disableIndividualColorModels;
     if (disableIndividualColorModels) {
         _colorModels = nil;
@@ -288,8 +288,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
         }
     }
 
-    NSString *s = [NSString stringWithFormat:@"disableIndividualColorModels=%@\nbackgroundTexture=%@\nasciiUnderlineDescriptor=%@\nnonAsciiUnderlineDescriptor=%@\ndefaultBackgroundColor=(%@, %@, %@, %@)",
-                   @(_disableIndividualColorModels),
+    NSString *s = [NSString stringWithFormat:@"backgroundTexture=%@\nasciiUnderlineDescriptor=%@\nnonAsciiUnderlineDescriptor=%@\ndefaultBackgroundColor=(%@, %@, %@, %@)",
                    _backgroundTexture,
                    iTermMetalUnderlineDescriptorDescription(&_asciiUnderlineDescriptor),
                    iTermMetalUnderlineDescriptorDescription(&_nonAsciiUnderlineDescriptor),
@@ -297,6 +296,9 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                    @(_defaultBackgroundColor.y),
                    @(_defaultBackgroundColor.z),
                    @(_defaultBackgroundColor.w)];
+    if (@available(macOS 10.14, *)) {} else {
+        s = [s stringByAppendingFormat:@"\ndisableIndividualColorModels=%@", @(_disableIndividualColorModels)];
+    }
     [s writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
        atomically:NO
          encoding:NSUTF8StringEncoding

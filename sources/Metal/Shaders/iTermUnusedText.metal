@@ -66,19 +66,19 @@ iTermTextFragmentShaderSolidBackgroundUnderlinedEmoji(iTermTextVertexFunctionOut
     half4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
 
     // Emoji, underlined
-    half underlineWeight = ComputeWeightOfUnderlineForEmoji(in.underlineStyle,
-                                                            in.clipSpacePosition.xy,
-                                                            in.viewportSize,
-                                                            in.cellOffset,
-                                                            dimensions->underlineOffset,
-                                                            dimensions->underlineThickness,
-                                                            dimensions->textureSize,
-                                                            in.textureOffset,
-                                                            in.textureCoordinate,
-                                                            dimensions->cellSize,
-                                                            texture,
-                                                            textureSampler,
-                                                            dimensions->scale);
+    half underlineWeight = ComputeWeightOfUnderlineRegular(in.underlineStyle,
+                                                           in.clipSpacePosition.xy,
+                                                           in.viewportSize,
+                                                           in.cellOffset,
+                                                           dimensions->underlineOffset,
+                                                           dimensions->underlineThickness,
+                                                           dimensions->textureSize,
+                                                           in.textureOffset,
+                                                           in.textureCoordinate,
+                                                           dimensions->cellSize,
+                                                           texture,
+                                                           textureSampler,
+                                                           dimensions->scale);
     return mix(bwColor,
                in.underlineColor,
                underlineWeight);
@@ -97,19 +97,19 @@ iTermTextFragmentShaderSolidBackgroundUnderlined(iTermTextVertexFunctionOutput i
     half underlineWeight = 0;
 
     // Not emoji, underlined
-    underlineWeight = ComputeWeightOfUnderline(in.underlineStyle,
-                                               in.clipSpacePosition.xy,
-                                               in.viewportSize,
-                                               in.cellOffset,
-                                               dimensions->underlineOffset,
-                                               dimensions->underlineThickness,
-                                               dimensions->textureSize,
-                                               in.textureOffset,
-                                               in.textureCoordinate,
-                                               dimensions->cellSize,
-                                               texture,
-                                               textureSampler,
-                                               dimensions->scale);
+    underlineWeight = ComputeWeightOfUnderlineInverted(in.underlineStyle,
+                                                       in.clipSpacePosition.xy,
+                                                       in.viewportSize,
+                                                       in.cellOffset,
+                                                       dimensions->underlineOffset,
+                                                       dimensions->underlineThickness,
+                                                       dimensions->textureSize,
+                                                       in.textureOffset,
+                                                       in.textureCoordinate,
+                                                       dimensions->cellSize,
+                                                       texture,
+                                                       textureSampler,
+                                                       dimensions->scale);
     if (underlineWeight == 0 && bwColor.x == 1 && bwColor.y == 1 && bwColor.z == 1) {
         discard_fragment();
     }

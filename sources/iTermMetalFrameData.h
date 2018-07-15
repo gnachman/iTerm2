@@ -145,9 +145,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // If nonnil then all draw stages before text draw with encoders from this render pass descriptor.
 // It will have a texture identical to the drawable's texture. Invoke createIntermediateRenderPassDescriptor
 // to create this if it's nil.
-@property (nonatomic, strong) MTLRenderPassDescriptor *intermediateRenderPassDescriptor;
+@property (nonatomic, strong) MTLRenderPassDescriptor *intermediateRenderPassDescriptor NS_DEPRECATED_MAC(10_12, 10_14);
 #if ENABLE_USE_TEMPORARY_TEXTURE
-@property (nonatomic, strong) MTLRenderPassDescriptor *temporaryRenderPassDescriptor;
+@property (nonatomic, strong) MTLRenderPassDescriptor *temporaryRenderPassDescriptor NS_DEPRECATED_MAC(10_12, 10_14);
 #endif
 
 - (instancetype)initWithView:(MTKView *)view
@@ -158,9 +158,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 #if ENABLE_PRIVATE_QUEUE
 - (void)dispatchToPrivateQueue:(dispatch_queue_t)queue forPreparation:(void (^)(void))block;
 #endif
-- (void)createIntermediateRenderPassDescriptor;
+- (void)createIntermediateRenderPassDescriptor NS_DEPRECATED_MAC(10_12, 10_14);
 #if ENABLE_USE_TEMPORARY_TEXTURE
-- (void)createTemporaryRenderPassDescriptor;
+- (void)createTemporaryRenderPassDescriptor NS_DEPRECATED_MAC(10_12, 10_14);;
 #endif
 - (void)dispatchToQueue:(dispatch_queue_t)queue forCompletion:(void (^)(void))block;
 - (void)enqueueDrawCallsWithBlock:(void (^)(void))block;

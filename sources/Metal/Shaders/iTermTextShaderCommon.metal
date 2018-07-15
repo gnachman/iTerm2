@@ -169,19 +169,19 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
     return weight;
 }
 
-float ComputeWeightOfUnderline(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
-                               float2 clipSpacePosition,
-                               float2 viewportSize,
-                               float2 cellOffset,
-                               float underlineOffset,
-                               float underlineThickness,
-                               float2 textureSize,
-                               float2 textureOffset,
-                               float2 textureCoordinate,
-                               float2 cellSize,
-                               texture2d<half> texture,
-                               sampler textureSampler,
-                               float scale) {
+float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
+                                       float2 clipSpacePosition,
+                                       float2 viewportSize,
+                                       float2 cellOffset,
+                                       float underlineOffset,
+                                       float underlineThickness,
+                                       float2 textureSize,
+                                       float2 textureOffset,
+                                       float2 textureCoordinate,
+                                       float2 cellSize,
+                                       texture2d<half> texture,
+                                       sampler textureSampler,
+                                       float scale) {
     float weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
                                                                   clipSpacePosition,
                                                                   viewportSize,
@@ -212,19 +212,19 @@ float ComputeWeightOfUnderline(int underlineStyle,  // iTermMetalGlyphAttributes
     }
 }
 
-float ComputeWeightOfUnderlineForEmoji(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
-                                       float2 clipSpacePosition,
-                                       float2 viewportSize,
-                                       float2 cellOffset,
-                                       float underlineOffset,
-                                       float underlineThickness,
-                                       float2 textureSize,
-                                       float2 textureOffset,
-                                       float2 textureCoordinate,
-                                       float2 cellSize,
-                                       texture2d<half> texture,
-                                       sampler textureSampler,
-                                       float scale) {
+float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAttributesUnderline
+                                      float2 clipSpacePosition,
+                                      float2 viewportSize,
+                                      float2 cellOffset,
+                                      float underlineOffset,
+                                      float underlineThickness,
+                                      float2 textureSize,
+                                      float2 textureOffset,
+                                      float2 textureCoordinate,
+                                      float2 cellSize,
+                                      texture2d<half> texture,
+                                      sampler textureSampler,
+                                      float scale) {
     float weight = FractionOfPixelThatIntersectsUnderlineForStyle(underlineStyle,
                                                                   clipSpacePosition,
                                                                   viewportSize,

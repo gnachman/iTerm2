@@ -106,7 +106,7 @@ typedef struct {
     iTermCursorRenderer *_keyCursorRenderer;
     iTermImageRenderer *_imageRenderer;
 #if ENABLE_USE_TEMPORARY_TEXTURE
-    iTermCopyToDrawableRenderer *_copyToDrawableRenderer;
+    iTermCopyToDrawableRenderer *_copyToDrawableRenderer NS_DEPRECATED_MAC(10_12, 10_14);
 #endif
 
     // This one is special because it's debug only
@@ -176,7 +176,9 @@ typedef struct {
         _keyCursorRenderer = [iTermCursorRenderer newKeyCursorRendererWithDevice:device];
         _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:device];
 #if ENABLE_USE_TEMPORARY_TEXTURE
-        _copyToDrawableRenderer = [[iTermCopyToDrawableRenderer alloc] initWithDevice:device];
+        if (@available(macOS 10.14, *)) {} else {
+            _copyToDrawableRenderer = [[iTermCopyToDrawableRenderer alloc] initWithDevice:device];
+        }
 #endif
 
         _commandQueue = [device newCommandQueue];
@@ -497,7 +499,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [frameData createIntermediateRenderPassDescriptor];
     }
 #if ENABLE_USE_TEMPORARY_TEXTURE
-    [frameData createTemporaryRenderPassDescriptor];
+    if (@available(macOS 10.14, *)) {} else {
+        [frameData createTemporaryRenderPassDescriptor];
+    }
 #endif
 
     // Set properties of the renderers for values that tend not to change very often and which
@@ -582,6 +586,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (BOOL)shouldCreateIntermediateRenderPassDescriptor:(iTermMetalFrameData *)frameData {
+    if (@available(macOS 10.14, *)) {
+        return NO;
+    }
     if (!_backgroundImageRenderer.rendererDisabled && [frameData.perFrameState metalBackgroundImageGetTiled:NULL]) {
         return YES;
     }
@@ -842,7 +849,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
     _copyBackgroundRenderer.enabled = (frameData.intermediateRenderPassDescriptor != nil);
 #if ENABLE_USE_TEMPORARY_TEXTURE
-    _copyToDrawableRenderer.enabled = YES;
+    if (@available(macOS 10.14, *)) {} else {
+        _copyToDrawableRenderer.enabled = YES;
+    }
 #endif
 }
 
@@ -892,7 +901,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 #pragma mark - Populate Transient States
 
-- (void)populateCopyBackgroundRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+- (void)populateCopyBackgroundRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData NS_DEPRECATED_MAC(10_12, 10_14) {
     if (_copyBackgroundRenderer.rendererDisabled) {
         return;
     }
@@ -1302,31 +1311,41 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                     label:(NSString *)label {
     const int pass = frameData.currentPass;
 
+    BOOL useTemporaryTexture;
+    if (@available(macOS 10.14, *)) {
+        useTemporaryTexture = NO;
+    } else {
 #if ENABLE_USE_TEMPORARY_TEXTURE
-    assert(pass >= 0 && pass <= 2);
-
-    NSArray<MTLRenderPassDescriptor *> *descriptors =
-        @[ frameData.intermediateRenderPassDescriptor ?: frameData.temporaryRenderPassDescriptor,
-           frameData.temporaryRenderPassDescriptor,
-           frameData.renderPassDescriptor ];
-    iTermMetalFrameDataStat stats[3] = {
-        iTermMetalFrameDataStatPqEnqueueDrawCreateFirstRenderEncoder,
-        iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder,
-        iTermMetalFrameDataStatPqEnqueueDrawCreateThirdRenderEncoder
-    };
+        useTemporaryTexture = YES;
 #else
-    // No temporary texture
-    assert(pass >= 0 && pass <= 1);
-
-    NSArray<MTLRenderPassDescriptor *> *descriptors =
-    @[ frameData.intermediateRenderPassDescriptor ?: frameData.renderPassDescriptor,
-       frameData.renderPassDescriptor,
-       frameData.renderPassDescriptor ];
-    iTermMetalFrameDataStat stats[3] = {
-        iTermMetalFrameDataStatPqEnqueueDrawCreateFirstRenderEncoder,
-        iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder,
-    };
+        useTemporaryTexture = NO;
 #endif
+    }
+    
+    NSArray<MTLRenderPassDescriptor *> *descriptors;
+    iTermMetalFrameDataStat stats[3];
+    if (useTemporaryTexture) {
+        assert(pass >= 0 && pass <= 2);
+
+        descriptors =
+            @[ frameData.intermediateRenderPassDescriptor ?: frameData.temporaryRenderPassDescriptor,
+               frameData.temporaryRenderPassDescriptor,
+               frameData.renderPassDescriptor ];
+        stats[0] = iTermMetalFrameDataStatPqEnqueueDrawCreateFirstRenderEncoder;
+        stats[1] = iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder;
+        stats[2] = iTermMetalFrameDataStatPqEnqueueDrawCreateThirdRenderEncoder;
+    } else {
+        // No temporary texture
+        assert(pass >= 0 && pass <= 1);
+
+        descriptors =
+        @[ frameData.intermediateRenderPassDescriptor ?: frameData.renderPassDescriptor,
+           frameData.renderPassDescriptor,
+           frameData.renderPassDescriptor ];
+        
+        stats[0] = iTermMetalFrameDataStatPqEnqueueDrawCreateFirstRenderEncoder;
+        stats[1] = iTermMetalFrameDataStatPqEnqueueDrawCreateSecondRenderEncoder;
+    }
 
     [frameData updateRenderEncoderWithRenderPassDescriptor:descriptors[pass]
                                                       stat:stats[pass]
@@ -1462,6 +1481,26 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (void)finishDrawingWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
                              frameData:(iTermMetalFrameData *)frameData {
+    BOOL shouldCopyToDrawable;
+    if (@available(macOS 10.14, *)) {
+        shouldCopyToDrawable = NO;
+    } else {
+#if ENABLE_USE_TEMPORARY_TEXTURE
+        shouldCopyToDrawable = YES;
+#else
+        shouldCopyToDrawable = NO;
+#endif
+    }
+    
+    if (shouldCopyToDrawable) {
+        // Copy to the drawable
+        frameData.currentPass = 2;
+        [frameData.renderEncoder endEncoding];
+        [self updateRenderEncoderForCurrentPass:frameData label:@"Copy to drawable"];
+        [self drawRenderer:_copyToDrawableRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
+    }
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable ofBlock:^{
         [frameData.renderEncoder endEncoding];
     }];
@@ -1594,15 +1633,29 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (NSArray<id<iTermMetalRenderer>> *)nonCellRenderers {
-    return @[ _backgroundImageRenderer,
-              _badgeRenderer,
-              _broadcastStripesRenderer,
-              _copyBackgroundRenderer,
+    NSArray *shared = @[ _backgroundImageRenderer,
+                         _badgeRenderer,
+                         _broadcastStripesRenderer,
+                         _copyBackgroundRenderer,
+                         _indicatorRenderer,
+                         _flashRenderer ];
+
+    BOOL useTemporaryTexture;
+    if (@available(macOS 10.14, *)) {
+        useTemporaryTexture = NO;
+    } else {
 #if ENABLE_USE_TEMPORARY_TEXTURE
-              _copyToDrawableRenderer,
+        useTemporaryTexture = YES;
+#else
+        useTemporaryTexture = NO;
 #endif
-              _indicatorRenderer,
-              _flashRenderer ];
+    }
+    
+    if (useTemporaryTexture) {
+        return [shared arrayByAddingObject:_copyToDrawableRenderer];
+    } else {
+        return shared;
+    }
 }
 
 - (void)scheduleDrawIfNeededInView:(MTKView *)view {
