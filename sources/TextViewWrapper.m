@@ -36,6 +36,32 @@
     BOOL _needsClear;
 }
 
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        if (@available(macOS 10.14, *)) {
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(scrollViewDidScroll:)
+                                                         name:NSViewBoundsDidChangeNotification
+                                                       object:nil];
+        }
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
+}
+
+// This is a hack to fix an apparent bug in macOS 10.14 beta 3. I would like to remove it when it's no longer needed.
+- (void)scrollViewDidScroll:(NSNotification *)notification {
+    if (notification.object != self.superview) {
+        return;
+    }
+    [self setNeedsDisplay:YES];
+}
+
 - (void)drawRect:(NSRect)rect {
     if (_useMetal) {
         if (!_needsClear) {
