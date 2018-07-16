@@ -176,7 +176,6 @@
     NSDictionary *attributes = @{ NSFontNameAttribute: font_,
                                   NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle) };
     NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:@"M" attributes:attributes] autorelease];
-#warning TODO: Test this - i added autorelease
     NSTextStorage *textStorage = [[[NSTextStorage alloc] initWithAttributedString:attributedString] autorelease];
     [textStorage addLayoutManager:layoutManager];
 
