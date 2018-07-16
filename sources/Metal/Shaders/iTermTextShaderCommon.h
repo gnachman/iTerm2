@@ -42,7 +42,7 @@ typedef struct {
 typedef struct {
     float4 clipSpacePosition [[position]];  // In vector function is normalized. In fragment function is in pixels, with a half pixel offset since it refers to the center of the pixel.
     float2 textureCoordinate;
-    float4 textColor;
+    half4 textColor;
 } iTermTextVertexFunctionOutputMonochrome;
 
 // Returns the weight in [0, 1] of underline for a pixel at `clipSpacePosition`.

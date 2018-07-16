@@ -102,7 +102,7 @@ iTermTextVertexShaderMonochrome(uint vertexID [[ vertex_id ]],
     out.clipSpacePosition.w = 1;
 
     out.textureCoordinate = vertexArray[vertexID].textureCoordinate + perInstanceUniforms[iid].textureOffset;
-    out.textColor = perInstanceUniforms[iid].textColor;
+    out.textColor = static_cast<half4>(perInstanceUniforms[iid].textColor);
 
     return out;
 }
@@ -218,7 +218,7 @@ iTermTextFragmentShaderWithBlendingUnderlined(iTermTextVertexFunctionOutput in [
 
 // Color and return sample from texture
 fragment half4
-iTermTextFragmentShaderMonochrome(iTermTextVertexFunctionOutputBlending in [[stage_in]],
+iTermTextFragmentShaderMonochrome(iTermTextVertexFunctionOutputMonochrome in [[stage_in]],
                                   texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]],
                                   texture2d<half> drawable [[ texture(iTermTextureIndexBackground) ]],
                                   constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
@@ -226,8 +226,7 @@ iTermTextFragmentShaderMonochrome(iTermTextVertexFunctionOutputBlending in [[sta
                                      min_filter::linear);
 
     half4 textureColor = texture.sample(textureSampler, in.textureCoordinate);
-#warning TODO: Monochrome can take a half4 from the vertex function
-    return textureColor * static_cast<half4>(in.textColor);
+    return textureColor * in.textColor;
 }
 
 // Return sample from texture plus underline
@@ -286,9 +285,7 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
                                                                  textureSampler,
                                                                  dimensions->scale);
 
-    
-    
-#warning TODO: monochrome can take a half4 from the vertex function
+    // I could eke out a little speed by passing a half4 from the vector shader but this is so slow I'd rather not add the complexity.
     return mix(textureColor * static_cast<half4>(in.textColor),
                in.underlineColor,
                underlineWeight);
