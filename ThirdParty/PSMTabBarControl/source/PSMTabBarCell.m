@@ -566,7 +566,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 }
 
 - (CGFloat)highlightAnimationDuration {
-    if ([(PSMTabBarControl *)_controlView orientation] == PSMTabBarHorizontalOrientation) {
+    if ([(PSMTabBarControl *)self.controlView orientation] == PSMTabBarHorizontalOrientation) {
         return 0.2;
     } else {
         return 0;
@@ -583,7 +583,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 #pragma mark - PSMProgressIndicatorDelegate
 
 - (void)progressIndicatorNeedsUpdate {
-    return [_controlView progressIndicatorNeedsUpdate];
+    return [(PSMTabBarControl *)self.controlView progressIndicatorNeedsUpdate];
 }
 
 @end
