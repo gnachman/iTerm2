@@ -5018,8 +5018,6 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     if (@available(macOS 10.14, *)) {
-#warning TODO: This breaks the selected tab in the Light theme making it transparent.
-        // ...but it is necessary for transparent windows to work at all.
         self.window.backgroundColor = [NSColor clearColor];
     } else {
         [self.window setBackgroundColor:backgroundColor];
