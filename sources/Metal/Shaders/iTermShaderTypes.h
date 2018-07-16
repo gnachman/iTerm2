@@ -27,6 +27,9 @@ typedef enum {
     iTermFragmentInputIndexTextureDimensions = 2,  // Points at iTermTextureDimensions
     iTermFragmentBufferIndexIndicatorAlpha = 3, // Points at a single float giving alpha value
     iTermFragmentBufferIndexFullScreenFlashColor = 4, // Points at a float4
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+    iTermFragmentInputIndexAlpha = 5,  // float4 pointer
+#endif
 } iTermFragmentBufferIndex;
 
 typedef enum {

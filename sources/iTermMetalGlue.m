@@ -582,6 +582,14 @@ static NSColor *ColorForVector(vector_float4 v) {
     [_markStyles addObject:@(markStyle)];
 }
 
+- (CGFloat)transparencyAlpha {
+    return _transparencyAlpha;
+}
+
+- (BOOL)hasBackgroundImage {
+    return _backgroundImage != nil;
+}
+
 - (BOOL)cutOutLeftCorner {
     return _cutOutLeftCorner;
 }
@@ -628,7 +636,12 @@ static NSColor *ColorForVector(vector_float4 v) {
 
 - (void)loadIndicatorsFromTextView:(PTYTextView *)textView {
     _indicators = [NSMutableArray array];
-    const CGFloat vmargin = [iTermAdvancedSettingsModel terminalVMargin];
+    CGFloat vmargin;
+    if (@available(macOS 10.14, *)) {
+        vmargin = 0;
+    } else {
+        vmargin = [iTermAdvancedSettingsModel terminalVMargin];
+    }
     NSRect frame = NSMakeRect(0, vmargin, textView.visibleRect.size.width, textView.visibleRect.size.height);
     [textView.indicatorsHelper enumerateTopRightIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect rect) {
         rect.origin.y = frame.size.height - NSMaxY(rect);
@@ -832,10 +845,16 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 - (vector_float4)processedDefaultBackgroundColor {
+    float alpha;
+    if (@available(macOS 10.14, *)) {
+        alpha = _backgroundImage ? 1 - _backgroundImageBlending : _transparencyAlpha;
+    } else {
+        alpha = _backgroundImage ? 1 - _backgroundImageBlending : 1;
+    }
     return simd_make_float4((float)_processedDefaultBackgroundColor.redComponent,
                             (float)_processedDefaultBackgroundColor.greenComponent,
                             (float)_processedDefaultBackgroundColor.blueComponent,
-                            _backgroundImage ? 1 - _backgroundImageBlending : 1);
+                            alpha);
 }
 
 // Private queue
@@ -882,7 +901,12 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     NSUInteger sketch = *sketchPtr;
     vector_float4 lastUnprocessedBackgroundColor = simd_make_float4(0, 0, 0, 0);
     BOOL lastSelected = NO;
-
+    float alpha;
+    if (@available(macOS 10.14, *)) {
+        alpha = _transparencyAlpha;
+    } else {
+        alpha = 1;
+    }
     // Prime numbers chosen more or less arbitrarily.
     const vector_float4 bmul = simd_make_float4(7, 11, 13, 1) * 255;
     const vector_float4 fmul = simd_make_float4(17, 19, 23, 1) * 255;
@@ -940,21 +964,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey];
             lastUnprocessedBackgroundColor = unprocessedBackgroundColor;
             // The unprocessed color is needed for minimum contrast computation for text color.
-            backgroundRLE[rles].color = [_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
+            backgroundColor = [_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
+            backgroundRLE[rles].color = backgroundColor;
             backgroundRLE[rles].origin = x;
             backgroundRLE[rles].count = 1;
-            if (_backgroundImage) {
-                // This is kind of ugly but it simplifies things a lot to do it
-                // here. The alpha value for background colors should be 1
-                // except when there's a background image, in which case the
-                // default background color gets a user-defined alpha value.
-                const BOOL isDefaultBackgroundColor = (backgroundKey.bgColorMode == ColorModeAlternate &&
-                                                       backgroundKey.bgColor == ALTSEM_DEFAULT &&
-                                                       !selected &&
-                                                       !findMatch);
-                backgroundRLE[rles].color.w = isDefaultBackgroundColor ? (1 - _backgroundImageBlending) : 1;
-            }
-            backgroundColor = backgroundRLE[rles].color;
             rles++;
         }
         lastBackgroundKey = backgroundKey;
@@ -1176,9 +1189,9 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                           isBackground:YES];
         }
 
-//        if (defaultBackground && _hasBackgroundImage) {
-//            alpha = 1 - _blend;
-//        }
+        if (defaultBackground && _backgroundImage) {
+            alpha = 1 - _backgroundImageBlending;
+        }
     }
     color.w = alpha;
     return color;

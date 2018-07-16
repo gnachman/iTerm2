@@ -5017,7 +5017,13 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
         }
     }
-    [self.window setBackgroundColor:backgroundColor];
+    if (@available(macOS 10.14, *)) {
+#warning TODO: This breaks the selected tab in the Light theme making it transparent.
+        // ...but it is necessary for transparent windows to work at all.
+        self.window.backgroundColor = [NSColor clearColor];
+    } else {
+        [self.window setBackgroundColor:backgroundColor];
+    }
     if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
         self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
     } else {

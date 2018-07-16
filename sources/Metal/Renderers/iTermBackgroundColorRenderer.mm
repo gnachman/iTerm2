@@ -45,20 +45,44 @@
 @end
 
 @implementation iTermBackgroundColorRenderer {
-    iTermMetalCellRenderer *_cellRenderer;
+    iTermMetalCellRenderer *_blendingRenderer;
+    iTermMetalCellRenderer *_nonblendingRenderer NS_AVAILABLE_MAC(10_14);
+
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+    iTermMetalCellRenderer *_compositeOverRenderer NS_AVAILABLE_MAC(10_14);
+#endif
     iTermMetalMixedSizeBufferPool *_piuPool;
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
-        _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
-                                                    vertexFunctionName:@"iTermBackgroundColorVertexShader"
-                                                  fragmentFunctionName:@"iTermBackgroundColorFragmentShader"
-                                                              blending:[[iTermMetalBlending alloc] init]
-                                                        piuElementSize:sizeof(iTermBackgroundColorPIU)
-                                                   transientStateClass:[iTermBackgroundColorRendererTransientState class]];
-        _cellRenderer.formatterDelegate = self;
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+        if (@available(macOS 10.14, *)) {
+            _nonblendingRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
+                                                        vertexFunctionName:@"iTermBackgroundColorVertexShader"
+                                                      fragmentFunctionName:@"iTermBackgroundColorFragmentShader"
+                                                                  blending:nil
+                                                            piuElementSize:sizeof(iTermBackgroundColorPIU)
+                                                       transientStateClass:[iTermBackgroundColorRendererTransientState class]];
+            _nonblendingRenderer.formatterDelegate = self;
+
+            _compositeOverRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
+                                                        vertexFunctionName:@"iTermBackgroundColorVertexShader"
+                                                      fragmentFunctionName:@"iTermBackgroundColorFragmentShader"
+                                                                  blending:[iTermMetalBlending backgroundColorCompositing]
+                                                            piuElementSize:sizeof(iTermBackgroundColorPIU)
+                                                       transientStateClass:[iTermBackgroundColorRendererTransientState class]];
+            _compositeOverRenderer.formatterDelegate = self;
+        }
+#endif
+        _blendingRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
+                                                        vertexFunctionName:@"iTermBackgroundColorVertexShader"
+                                                      fragmentFunctionName:@"iTermBackgroundColorFragmentShader"
+                                                                  blending:[[iTermMetalBlending alloc] init]
+                                                            piuElementSize:sizeof(iTermBackgroundColorPIU)
+                                                       transientStateClass:[iTermBackgroundColorRendererTransientState class]];
+        _blendingRenderer.formatterDelegate = self;
         // TODO: The capacity here is a total guess. But this would be a lot of rows to have.
         _piuPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
                                                                 capacity:512
@@ -75,21 +99,35 @@
     return NO;
 }
 
+- (iTermMetalCellRenderer *)rendererForConfiguration:(iTermCellRenderConfiguration *)configuration {
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+    if (@available(macOS 10.14, *)) {
+        if (configuration.hasBackgroundImage) {
+            return _blendingRenderer;
+        } else {
+            return _nonblendingRenderer;
+        }
+    }
+#else
+    return _blendingRenderer;
+#endif
+}
+
 - (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
                                                                                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    iTermMetalCellRenderer *renderer = [self rendererForConfiguration:configuration];
     __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =
-        [_cellRenderer createTransientStateForCellConfiguration:configuration
+        [renderer createTransientStateForCellConfiguration:configuration
                                               commandBuffer:commandBuffer];
     [self initializeTransientState:transientState];
     return transientState;
 }
 
 - (void)initializeTransientState:(iTermBackgroundColorRendererTransientState *)tState {
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.cellConfiguration.cellSize
-                                           poolContext:tState.poolContext];
+    tState.vertexBuffer = [[self rendererForConfiguration:tState.cellConfiguration] newQuadOfSize:tState.cellConfiguration.cellSize
+                                                                                      poolContext:tState.poolContext];
     tState.vertexBuffer.label = @"Vertices";
 }
-
 
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
@@ -99,15 +137,16 @@
                                                                       size:numberOfInstances * sizeof(*pius)
                                                                      bytes:pius];
         piuBuffer.label = @"PIUs";
-        [self->_cellRenderer drawWithTransientState:tState
-                                      renderEncoder:frameData.renderEncoder
-                                   numberOfVertices:6
-                                       numberOfPIUs:numberOfInstances
-                                      vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
-                                                       @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
-                                                       @(iTermVertexInputIndexOffset): tState.offsetBuffer }
-                                    fragmentBuffers:@{}
-                                           textures:@{} ];
+        iTermMetalCellRenderer *cellRenderer = [self rendererForConfiguration:tState.cellConfiguration];
+        [cellRenderer drawWithTransientState:tState
+                               renderEncoder:frameData.renderEncoder
+                            numberOfVertices:6
+                                numberOfPIUs:numberOfInstances
+                               vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
+                                                @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
+                                                @(iTermVertexInputIndexOffset): tState.offsetBuffer }
+                             fragmentBuffers:@{}
+                                    textures:@{} ];
     }];
 }
 

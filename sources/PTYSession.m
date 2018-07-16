@@ -4957,6 +4957,11 @@ ITERM_WEAKLY_REFERENCEABLE
            // Metal cuts off the tops of letters when line height reduced
             return NO;
         }
+#if !ENABLE_TRANSPARENT_METAL_WINDOWS
+        if (_textview.transparencyAlpha < 1) {
+            return NO;
+        }
+#endif
         if (@available(macOS 10.14, *)) {
             // View compositing works in Mojave but not at all before it.
             return YES;
@@ -4985,8 +4990,8 @@ ITERM_WEAKLY_REFERENCEABLE
         if (!safeForCompositing) {
             return NO;
         }
-#warning TODO: See if this works. I might get it for free.        
-        return _textview.transparencyAlpha == 1;
+        
+        return YES;
     } else {
         return NO;
     }

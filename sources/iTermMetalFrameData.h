@@ -117,6 +117,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic) CGSize cellSize;
 @property (atomic) CGSize cellSizeWithoutSpacing;
 @property (atomic) CGFloat scale;
+@property (atomic) BOOL hasBackgroundImage;
 @property (atomic, strong) NSString *status;
 @property (atomic, strong) id<MTLDevice> device;
 @property (atomic, strong, readonly) MTKView *view;

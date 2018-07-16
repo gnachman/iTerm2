@@ -21,10 +21,12 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermRenderConfiguration : NSObject
 @property (nonatomic, readonly) vector_uint2 viewportSize;
 @property (nonatomic, readonly) CGFloat scale;
+@property (nonatomic, readonly) BOOL hasBackgroundImage;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
-                               scale:(CGFloat)scale NS_DESIGNATED_INITIALIZER;
+                               scale:(CGFloat)scale
+                  hasBackgroundImage:(BOOL)hasBackgroundImage NS_DESIGNATED_INITIALIZER;
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)
@@ -80,6 +82,11 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 // Use this for premultiplied blending.
 + (instancetype)compositeSourceOver;
+
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+// Blends rgb according to source alpha but preserves destination alpha
++ (instancetype)backgroundColorCompositing;
+#endif
 
 @end
 

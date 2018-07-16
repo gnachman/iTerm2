@@ -235,11 +235,16 @@ static NSDate* lastResizeDate_;
         _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                              device:device];
     }
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+    _metalView.layer.opaque = NO;
+#else
+    _metalView.layer.opaque = YES;
+#endif
+    
     // There was a spike in crashes on 5/1. I'm removing this temporarily to see if it was the cause.
 #if ENABLE_LOW_POWER_GPU_DETECTION
                                          device:[[iTermMetalDeviceProvider sharedInstance] preferredDevice]];
 #endif
-    _metalView.layer.opaque = YES;
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
 
@@ -278,6 +283,7 @@ static NSDate* lastResizeDate_;
         // TODO: Would be nice to draw only the rect, but I don't see a way to do that with MTKView
         // that doesn't involve doing something nutty like saving a copy of the drawable.
         [_metalView setNeedsDisplay:YES];
+        [_scrollview setNeedsDisplay:YES];
     }
 }
 
@@ -364,7 +370,11 @@ static NSDate* lastResizeDate_;
 }
 
 - (NSRect)frameByInsettingForMetal:(NSRect)frame {
-    return NSInsetRect(frame, 1, [iTermAdvancedSettingsModel terminalVMargin]);
+    if (@available(macOS 10.14, *)) {
+        return frame;
+    } else {
+        return NSInsetRect(frame, 1, [iTermAdvancedSettingsModel terminalVMargin]);
+    }
 }
 
 - (void)setDelegate:(id<iTermSessionViewDelegate>)delegate {

@@ -9,11 +9,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
                                scale:(CGFloat)scale
+                  hasBackgroundImage:(BOOL)hasBackgroundImage
                             cellSize:(CGSize)cellSize
               cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                             gridSize:(VT100GridSize)gridSize
                usingIntermediatePass:(BOOL)usingIntermediatePass {
-    self = [super initWithViewportSize:viewportSize scale:scale];
+    self = [super initWithViewportSize:viewportSize
+                                 scale:scale
+                    hasBackgroundImage:hasBackgroundImage];
     if (self) {
         _cellSize = cellSize;
         _cellSizeWithoutSpacing = cellSizeWithoutSpacing;
@@ -60,8 +63,17 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSEdgeInsets)margins {
-    const CGFloat MARGIN_WIDTH = MAX(0, [iTermAdvancedSettingsModel terminalMargin] - 1) * self.configuration.scale;
-    const CGFloat MARGIN_HEIGHT = 0;
+    CGFloat MARGIN_WIDTH;
+    CGFloat MARGIN_HEIGHT;
+    if (@available(macOS 10.14, *)) {
+        // MTKView goes to window's edges. It does not overlap the rounded corners.
+        MARGIN_WIDTH = [iTermAdvancedSettingsModel terminalMargin] * self.configuration.scale;
+        MARGIN_HEIGHT = [iTermAdvancedSettingsModel terminalVMargin] * self.configuration.scale;
+    } else {
+        // MTKView inset on sides and top to avoid overlapping rounded corners too much.
+        MARGIN_WIDTH = MAX(0, [iTermAdvancedSettingsModel terminalMargin] - 1) * self.configuration.scale;
+        MARGIN_HEIGHT = 0;
+    }
 
     CGSize usableSize = CGSizeMake(self.cellConfiguration.viewportSize.x - MARGIN_WIDTH * 2,
                                    self.cellConfiguration.viewportSize.y - MARGIN_HEIGHT * 2);

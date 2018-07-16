@@ -36,3 +36,10 @@
 // it always has to be the *same* thread.
 #define ENABLE_DEFER_CURRENT_DRAWABLE 0
 
+// This is not 100% baked, but since the OS appears to be busted I'm not going to invest
+// any more in it. If I ever do figure this out, I need to test the blending modes for various
+// combinations of transparency, blending, and keep-non-default-background-colors-opaque settings.
+// https://stackoverflow.com/questions/51354283/transparent-mtkview-not-blending-properly-with-windows-behind-it
+// https://openradar.appspot.com/radar?id=4996901569036288
+#define ENABLE_TRANSPARENT_METAL_WINDOWS 0
+

@@ -192,9 +192,10 @@ static BOOL gMonochromeText;
                 gMonochromeText = NO;
             }
         });
+        // NOTE: The vertex and fragment function names get changed later. These aren't used but must be valid.
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermTextVertexShader"
-                                                  fragmentFunctionName:@"iTermTextFragmentShader"
+                                                  fragmentFunctionName:@"iTermTextFragmentShaderWithBlendingEmoji"
                                                               blending:[[iTermMetalBlending alloc] init]
                                                         piuElementSize:sizeof(iTermTextPIU)
                                                    transientStateClass:[iTermTextRendererTransientState class]];
@@ -256,8 +257,6 @@ static BOOL gMonochromeText;
     // NOTE: Any time a glyph overflows its bounds into a neighboring cell it's possible the strokes will intersect.
     // I haven't thought of a way to make that look good yet without having to do one draw pass per overflow glyph that
     // blends using the output of the preceding passes.
-#warning TODO: Remove this
-    _cellRenderer.fragmentFunctionName = configuration.usingIntermediatePass ? @"iTermTextFragmentShaderWithBlending" : @"iTermTextFragmentShaderSolidBackground";
     __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =
         [_cellRenderer createTransientStateForCellConfiguration:configuration
                                               commandBuffer:commandBuffer];
