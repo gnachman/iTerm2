@@ -26,3 +26,20 @@
 
 // Pretty ASCII overlap requires the use of a temporary texture as a scratchpad.
 #define ENABLE_USE_TEMPORARY_TEXTURE ENABLE_PRETTY_ASCII_OVERLAP
+
+//I've had to disable this feature because it appears to tickle a race condition. It dies saying:
+//"[CAMetalLayerDrawable texture] should not be called after already presenting this drawable. Get a nextDrawable instead"
+//That gets logged when accessing the texture immediately after getting a drawable and before it
+//has been presented. However, that drawable gets touched in two different threads at different
+// points in time, and another drawable gets presented at about the same time in a different thread.
+// So my theory is that MTKView.currentDrawable can be used in a thread besides the main thread but
+// it always has to be the *same* thread.
+#define ENABLE_DEFER_CURRENT_DRAWABLE 0
+
+// This is not 100% baked, but since the OS appears to be busted I'm not going to invest
+// any more in it. If I ever do figure this out, I need to test the blending modes for various
+// combinations of transparency, blending, and keep-non-default-background-colors-opaque settings.
+// https://stackoverflow.com/questions/51354283/transparent-mtkview-not-blending-properly-with-windows-behind-it
+// https://openradar.appspot.com/radar?id=4996901569036288
+#define ENABLE_TRANSPARENT_METAL_WINDOWS 0
+

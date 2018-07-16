@@ -424,6 +424,7 @@ static NSInteger gNextFrameDataNumber;
     if (!_cellConfiguration) {
         _cellConfiguration = [[iTermCellRenderConfiguration alloc] initWithViewportSize:self.viewportSize
                                                                                   scale:self.scale
+                                                                     hasBackgroundImage:self.hasBackgroundImage
                                                                                cellSize:self.cellSize
                                                                  cellSizeWithoutSpacing:self.cellSizeWithoutSpacing
                                                                                gridSize:self.gridSize

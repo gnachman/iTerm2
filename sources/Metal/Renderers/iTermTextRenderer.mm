@@ -192,6 +192,7 @@ static BOOL gMonochromeText;
                 gMonochromeText = NO;
             }
         });
+        // NOTE: The vertex and fragment function names get changed later. These aren't used but must be valid.
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:VertexFunctionName(false, true, false)
                                                   fragmentFunctionName:FragmentFunctionName(false, true, false)

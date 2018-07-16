@@ -27,13 +27,27 @@ iTermBackgroundImageVertexShader(uint vertexID [[ vertex_id ]],
     return out;
 }
 
-fragment float4
+fragment half4
 iTermBackgroundImageFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
                                    texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear,
                                      address::repeat);
 
-    const half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
-    return float4(colorSample);
+    return texture.sample(textureSampler, in.textureCoordinate);
 }
+
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+fragment half4
+iTermBackgroundImageWithAlphaFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
+                                            constant float *alpha [[ buffer(iTermFragmentInputIndexAlpha) ]],
+                                            texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
+    constexpr sampler textureSampler(mag_filter::linear,
+                                     min_filter::linear,
+                                     address::repeat);
+    
+    half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
+    colorSample.w = static_cast<half>(*alpha);
+    return colorSample;
+}
+#endif

@@ -16,7 +16,10 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @implementation iTermMarginRenderer {
-    iTermMetalCellRenderer *_cellRenderer;
+    iTermMetalCellRenderer *_blendingRenderer;
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+    iTermMetalCellRenderer *_nonblendingRenderer NS_AVAILABLE_MAC(10_14);
+#endif
     iTermMetalBufferPool *_colorPool;
     iTermMetalBufferPool *_verticesPool;
 }
@@ -24,12 +27,23 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
-        _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
-                                                    vertexFunctionName:@"iTermMarginVertexShader"
-                                                  fragmentFunctionName:@"iTermMarginFragmentShader"
-                                                              blending:[[iTermMetalBlending alloc] init]
-                                                        piuElementSize:0
-                                                   transientStateClass:[iTermMarginRendererTransientState class]];
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+        iTermMetalBlending *blending;
+        if (@available(macOS 10.14, *)) {
+            _nonblendingRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
+                                                               vertexFunctionName:@"iTermMarginVertexShader"
+                                                             fragmentFunctionName:@"iTermMarginFragmentShader"
+                                                                         blending:nil
+                                                                   piuElementSize:0
+                                                              transientStateClass:[iTermMarginRendererTransientState class]];
+        }
+#endif
+        _blendingRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
+                                                        vertexFunctionName:@"iTermMarginVertexShader"
+                                                      fragmentFunctionName:@"iTermMarginFragmentShader"
+                                                                  blending:[[iTermMetalBlending alloc] init]
+                                                            piuElementSize:0
+                                                       transientStateClass:[iTermMarginRendererTransientState class]];
         _colorPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
         _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float2) * 6 * 4];
     }
@@ -40,6 +54,20 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermMetalFrameDataStatPqCreateMarginTS;
 }
 
+- (iTermMetalCellRenderer *)rendererForConfiguration:(iTermCellRenderConfiguration *)configuration {
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+    if (@available(macOS 10.14, *)) {
+        if (configuration.hasBackgroundImage) {
+            return _blendingRenderer;
+        } else {
+            return _nonblendingRenderer;
+        }
+    }
+#else
+    return _blendingRenderer;
+#endif
+}
+
 - (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermMarginRendererTransientState *tState = transientState;
@@ -47,13 +75,14 @@ NS_ASSUME_NONNULL_BEGIN
     id<MTLBuffer> colorBuffer = [_colorPool requestBufferFromContext:tState.poolContext
                                                            withBytes:&color
                                                       checkIfChanged:YES];
-    [_cellRenderer drawWithTransientState:tState
-                             renderEncoder:frameData.renderEncoder
-                          numberOfVertices:6 * 4
-                              numberOfPIUs:0
-                             vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
-                           fragmentBuffers:@{ @(iTermFragmentBufferIndexMarginColor): colorBuffer }
-                                  textures:@{}];
+    iTermMetalCellRenderer *cellRenderer = [self rendererForConfiguration:tState.cellConfiguration];
+    [cellRenderer drawWithTransientState:tState
+                           renderEncoder:frameData.renderEncoder
+                        numberOfVertices:6 * 4
+                            numberOfPIUs:0
+                           vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
+                         fragmentBuffers:@{ @(iTermFragmentBufferIndexMarginColor): colorBuffer }
+                                textures:@{}];
 }
 
 - (BOOL)rendererDisabled {
@@ -62,9 +91,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(nonnull iTermCellRenderConfiguration *)configuration
                                                                           commandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer {
+    iTermMetalCellRenderer *renderer = [self rendererForConfiguration:configuration];
     __kindof iTermMetalRendererTransientState * _Nonnull transientState =
-        [_cellRenderer createTransientStateForCellConfiguration:configuration
-                                              commandBuffer:commandBuffer];
+        [renderer createTransientStateForCellConfiguration:configuration
+                                             commandBuffer:commandBuffer];
     [self initializeTransientState:transientState];
     return transientState;
 }

@@ -29,7 +29,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermBackgroundImageRenderer {
     iTermMetalRenderer *_metalRenderer;
-
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+    iTermMetalBufferPool *_alphaPool NS_AVAILABLE_MAC(10_14);
+#endif
     BOOL _tiled;
     NSImage *_image;
     id<MTLTexture> _texture;
@@ -43,6 +45,11 @@ NS_ASSUME_NONNULL_BEGIN
                                                fragmentFunctionName:@"iTermBackgroundImageFragmentShader"
                                                            blending:nil
                                                 transientStateClass:[iTermBackgroundImageRendererTransientState class]];
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+        if (@available(macOS 10.14, *)) {
+            _alphaPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(float)];
+        }
+#endif
     }
     return self;
 }
@@ -63,16 +70,45 @@ NS_ASSUME_NONNULL_BEGIN
     _tiled = tiled;
 }
 
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+- (id<MTLBuffer>)alphaBufferWithValue:(float)value
+                          poolContext:(iTermMetalBufferPoolContext *)poolContext NS_AVAILABLE_MAC(10_14) {
+    return [_alphaPool requestBufferFromContext:poolContext
+                                      withBytes:&value
+                                 checkIfChanged:YES];
+    
+}
+#endif
+
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundImageRendererTransientState *tState = transientState;
     [self loadVertexBuffer:tState];
+    
+    NSDictionary *fragmentBuffers = nil;
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+    float alpha = tState.transparencyAlpha;
+    if (alpha < 1) {
+        _metalRenderer.fragmentFunctionName = @"iTermBackgroundImageWithAlphaFragmentShader";
+        id<MTLBuffer> alphaBuffer = [self alphaBufferWithValue:alpha poolContext:tState.poolContext];
+        fragmentBuffers = @{ @(iTermFragmentInputIndexAlpha): alphaBuffer };
+    } else {
+        _metalRenderer.fragmentFunctionName = @"iTermBackgroundImageFragmentShader";
+        fragmentBuffers = @{};
+    }
+#else
+    _metalRenderer.fragmentFunctionName = @"iTermBackgroundImageFragmentShader";
+    fragmentBuffers = @{};
+#endif
+    
+    tState.pipelineState = [_metalRenderer pipelineState];
+
     [_metalRenderer drawWithTransientState:tState
                              renderEncoder:frameData.renderEncoder
                           numberOfVertices:6
                               numberOfPIUs:0
                              vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
-                           fragmentBuffers:@{}
+                           fragmentBuffers:fragmentBuffers
                                   textures:@{ @(iTermTextureIndexPrimary): tState.texture }];
 }
 
@@ -110,7 +146,12 @@ NS_ASSUME_NONNULL_BEGIN
         textureSize = CGSizeMake(1, 1);
     }
     NSEdgeInsets insets = tState.edgeInsets;
-    const CGFloat vmargin = [iTermAdvancedSettingsModel terminalVMargin] * scale;
+    CGFloat vmargin;
+    if (@available(macOS 10.14, *)) {
+        vmargin = 0;
+    } else {
+        vmargin = [iTermAdvancedSettingsModel terminalVMargin] * scale;
+    }
     const CGFloat topMargin = insets.bottom + vmargin;
     const CGFloat bottomMargin = insets.top + vmargin;
     const CGFloat leftMargin = insets.left;

@@ -29,6 +29,29 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     return blending;
 }
 
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
++ (instancetype)backgroundColorCompositing {
+    // What I want:
+    // If bg's alpha is 0, destination shows through exactly, alpha and all
+    // If bg's alpha is 1, obscure destination's RGB but preserve its alpha
+    // Destination alpha is always preserved.
+    // RGB are mixed per bg's alpha. bg=source
+    //
+    // RGB=S*Sa+D*(1-Sa)
+    //   A=Da
+    iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
+    blending.rgbBlendOperation = MTLBlendOperationAdd;
+    blending.sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+    blending.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+    
+    blending.alphaBlendOperation = MTLBlendOperationAdd;
+    blending.sourceAlphaBlendFactor = MTLBlendFactorZero;
+    blending.destinationAlphaBlendFactor = MTLBlendFactorOne;
+    
+    return blending;
+}
+#endif
+
 - (instancetype)init {
     self = [super init];
     if (self) {
@@ -47,11 +70,14 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
 @implementation iTermRenderConfiguration
 
-- (instancetype)initWithViewportSize:(vector_uint2)viewportSize scale:(CGFloat)scale {
+- (instancetype)initWithViewportSize:(vector_uint2)viewportSize
+                               scale:(CGFloat)scale
+                  hasBackgroundImage:(BOOL)hasBackgroundImage {
     self = [super init];
     if (self) {
         _viewportSize = viewportSize;
         _scale = scale;
+        _hasBackgroundImage = hasBackgroundImage;
     }
     return self;
 }

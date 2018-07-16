@@ -473,6 +473,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         frameData.cellSizeWithoutSpacing = rescale(frameData.perFrameState.cellSizeWithoutSpacing);
 
         frameData.scale = self.mainThreadState->scale;
+        frameData.hasBackgroundImage = frameData.perFrameState.hasBackgroundImage;
     }];
     return frameData;
 }
@@ -1181,6 +1182,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)populateBackgroundImageRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermBackgroundImageRendererTransientState *tState =
         [frameData transientStateForRenderer:_backgroundImageRenderer];
+    tState.transparencyAlpha = frameData.perFrameState.transparencyAlpha;
     tState.edgeInsets = frameData.perFrameState.edgeInsets;
 }
 

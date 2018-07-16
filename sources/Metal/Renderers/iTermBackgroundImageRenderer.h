@@ -5,6 +5,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBackgroundImageRendererTransientState : iTermMetalRendererTransientState
 @property (nonatomic) NSEdgeInsets edgeInsets;
+@property (nonatomic) CGFloat transparencyAlpha;
 @end
 
 @interface iTermBackgroundImageRenderer : NSObject<iTermMetalRenderer>

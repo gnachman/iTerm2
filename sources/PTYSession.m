@@ -4821,6 +4821,11 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             return NO;
         }
+#if !ENABLE_TRANSPARENT_METAL_WINDOWS
+        if (_textview.transparencyAlpha < 1) {
+            return NO;
+        }
+#endif
         if (@available(macOS 10.14, *)) {
             // View compositing works in Mojave but not at all before it.
             return YES;

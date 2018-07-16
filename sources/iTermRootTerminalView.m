@@ -53,7 +53,11 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
         // Create the tab view.
         self.tabView = [[[PTYTabView alloc] initWithFrame:self.bounds] autorelease];
-        self.tabView.drawsBackground = !_useMetal;
+        if (@available(macOS 10.14, *)) {
+            self.tabView.drawsBackground = NO;
+        } else {
+            self.tabView.drawsBackground = !_useMetal;
+        }
         _tabView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
         _tabView.autoresizesSubviews = YES;
         _tabView.allowsTruncatedLabels = NO;
@@ -121,6 +125,11 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+    if (@available(macOS 10.14, *)) {
+        return;
+    }
+#endif
     if (_useMetal) {
         return;
     } else {
@@ -130,7 +139,11 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 - (void)setUseMetal:(BOOL)useMetal {
     _useMetal = useMetal;
-    self.tabView.drawsBackground = !_useMetal;
+    if (@available(macOS 10.14, *)) {
+        self.tabView.drawsBackground = NO;
+    } else {
+        self.tabView.drawsBackground = !_useMetal;
+    }
 
     [_divisionView removeFromSuperview];
     [_divisionView release];
