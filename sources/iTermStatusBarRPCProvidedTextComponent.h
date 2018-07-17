@@ -11,7 +11,8 @@
 
 @interface iTermStatusBarRPCProvidedTextComponent : iTermStatusBarTextComponent
 
-- (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest;
+- (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest
+                                      knobs:(NSDictionary *)knobs;
 
 @end
 

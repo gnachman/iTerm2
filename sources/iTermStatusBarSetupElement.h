@@ -29,7 +29,8 @@ extern NSString *const iTermStatusBarElementPasteboardType;
 @property (nonatomic, readonly) id<iTermStatusBarComponent> component;
 @property (nonatomic, weak) id<iTermStatusBarSetupElementDelegate> delegate;
 
-- (instancetype)initWithComponentFactory:(id<iTermStatusBarComponentFactory>)factory;
+- (instancetype)initWithComponentFactory:(id<iTermStatusBarComponentFactory>)factory
+                                   knobs:(NSDictionary *)knobs;
 - (instancetype)initWithComponent:(id<iTermStatusBarComponent>)component NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 

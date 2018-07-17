@@ -8,6 +8,8 @@
 #import "iTermStatusBarTextComponent.h"
 
 #import "iTermStatusBarSetupKnobsViewController.h"
+#import "iTermTuple.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -50,7 +52,6 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
     textField.backgroundColor = self.backgroundColor;
     textField.drawsBackground = (self.backgroundColor.alphaComponent > 0);
 
-    [self setValueInField:textField compressed:YES];
     return textField;
 }
 
@@ -84,7 +85,7 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
     if (compressed) {
         proposed = [self stringValueForCurrentWidth];
     } else {
-        proposed = self.stringValue;
+        proposed = [self longestStringValue];
     }
 
     if (![self shouldUpdateValue:proposed inField:textField]) {
@@ -102,13 +103,9 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 - (NSTextField *)textField {
     if (!_textField) {
         _textField = [self newTextField];
+        [self setValueInField:_textField compressed:YES];
     }
     return _textField;
-}
-
-- (void)setStringValue:(NSString *)stringValue {
-    _stringValue = stringValue;
-    [self updateTextFieldIfNeeded];
 }
 
 - (void)updateTextFieldIfNeeded {
@@ -119,20 +116,34 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 }
 
 - (nullable NSString *)stringValueForCurrentWidth {
-    return _stringValue;
+    CGFloat currentWidth = _textField.frame.size.width;
+    return [self stringForWidth:currentWidth];
 }
 
-- (nullable NSString *)maximallyCompressedStringValue {
-    return _stringValue;
+- (nullable NSString *)longestStringValue {
+    return [self stringForWidth:INFINITY];
+}
+
+- (NSArray<iTermTuple<NSString *,NSNumber *> *> *)widthStringTuples {
+    return [self.stringVariants mapWithBlock:^id(NSString *anObject) {
+        CGFloat width = [self widthForString:anObject];
+        return [iTermTuple tupleWithObject:anObject andObject:@(width)];
+    }];
+}
+
+- (nullable NSString *)stringForWidth:(CGFloat)width {
+    NSArray<iTermTuple<NSString *,NSNumber *> *> *tuples = [self widthStringTuples];
+    tuples = [tuples filteredArrayUsingBlock:^BOOL(iTermTuple<NSString *,NSNumber *> *anObject) {
+        return ceil(anObject.secondObject.doubleValue) <= ceil(width);
+    }];
+    return [tuples maxWithBlock:^NSComparisonResult(iTermTuple<NSString *,NSNumber *> *obj1, iTermTuple<NSString *,NSNumber *> *obj2) {
+        return [obj1.secondObject compare:obj2.secondObject];
+    }].firstObject ?: @"";
 }
 
 - (CGFloat)statusBarComponentPreferredWidth {
-    if (!_measuringField) {
-        _measuringField = [self newTextField];
-    } else {
-        [self setValueInField:_measuringField compressed:NO];
-    }
-    return [_measuringField frame].size.width;
+    NSString *longest = [self longestStringValue];
+    return [self widthForString:longest];
 }
 
 - (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width {
@@ -152,12 +163,11 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 }
 
 - (CGFloat)statusBarComponentMinimumWidth {
-    NSString *compressed = self.maximallyCompressedStringValue;
-    if (compressed) {
-        return [self widthForString:compressed];
-    } else {
-        return [super statusBarComponentMinimumWidth];
-    }
+    NSArray<iTermTuple<NSString *,NSNumber *> *> *tuples = [self widthStringTuples];
+    NSNumber *number = [tuples minWithBlock:^NSComparisonResult(iTermTuple<NSString *,NSNumber *> *obj1, iTermTuple<NSString *,NSNumber *> *obj2) {
+        return [obj1.secondObject compare:obj2.secondObject];
+    }].secondObject;
+    return number.doubleValue;
 }
 
 #pragma mark - iTermStatusBarComponent
@@ -167,6 +177,10 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 }
 
 - (void)statusBarComponentUpdate {
+    [self updateTextFieldIfNeeded];
+}
+
+- (void)statusBarComponentWidthDidChangeTo:(CGFloat)newWidth {
     [self updateTextFieldIfNeeded];
 }
 

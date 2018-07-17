@@ -30,8 +30,9 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     return self;
 }
 
-- (instancetype)initWithComponentFactory:(id<iTermStatusBarComponentFactory>)factory {
-    return [self initWithComponent:factory.newComponent];
+- (instancetype)initWithComponentFactory:(id<iTermStatusBarComponentFactory>)factory
+                                   knobs:(NSDictionary *)knobs {
+    return [self initWithComponent:[factory newComponentWithKnobs:knobs]];
 }
 
 - (NSString *)description {
@@ -45,7 +46,8 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(nullable NSZone *)zone {
-    return [[iTermStatusBarSetupElement alloc] initWithComponent:_component.statusBarComponentFactory.newComponent];
+    NSDictionary *knobs = _component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    return [[iTermStatusBarSetupElement alloc] initWithComponent:[_component.statusBarComponentFactory newComponentWithKnobs:knobs]];
 }
 
 #pragma mark - NSCoding
@@ -55,12 +57,16 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     if (!factory) {
         return nil;
     }
-    return [self initWithComponentFactory:factory];
+    NSDictionary *knobs = [aDecoder decodeObjectOfClass:[NSDictionary class] forKey:@"knobs"];
+    return [self initWithComponentFactory:factory knobs:knobs];
 }
 
 
 - (void)encodeWithCoder:(NSCoder *)aCoder {
     [aCoder encodeObject:_component.statusBarComponentFactory forKey:@"componentFactory"];
+    NSDictionary *knobs = _component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues] ?: @{};
+    [aCoder encodeObject:knobs
+                  forKey:@"knobs"];
 }
 
 #pragma mark - NSPasteboardWriting

@@ -6,6 +6,7 @@
 //
 
 #import "iTermStatusBarClockComponent.h"
+#import "NSDictionary+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -28,9 +29,14 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Date Format:"
                                                           type:iTermStatusBarComponentKnobTypeText
                                                    placeholder:@"Date Format (Unicode TR 35)"
-                                                  defaultValue:@"MM-dd hh:mm"
+                                                  defaultValue:self.class.statusBarComponentDefaultKnobs[iTermStatusBarClockComponentFormatKey]
                                                            key:iTermStatusBarClockComponentFormatKey];
     return @[ formatKnob ];
+}
+
++ (NSDictionary *)statusBarComponentDefaultKnobs {
+    NSDictionary *fromSuper = [super statusBarComponentDefaultKnobs];
+    return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarClockComponentFormatKey: @"MM-dd hh:mm" }];
 }
 
 - (id)statusBarComponentExemplar {
@@ -65,6 +71,10 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
 
 - (NSTimeInterval)statusBarComponentUpdateCadence {
     return 1;
+}
+
+- (nullable NSArray<NSString *> *)stringVariants {
+    return @[ self.stringValue ?: @"" ];
 }
 
 @end

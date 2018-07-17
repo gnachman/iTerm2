@@ -77,6 +77,11 @@ static NSString *const iTermStatusBarSpringColorKey = @"spring: color";
     return @[ springConstantKnob, backgroundColorKnob ];
 }
 
++ (NSDictionary *)statusBarComponentDefaultKnobs {
+    NSDictionary *fromSuper = [super statusBarComponentDefaultKnobs];
+    return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarSpringComponentSpringConstantKey: @0.01 }];
+}
+
 - (CGFloat)statusBarComponentSpringConstant {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
     NSNumber *number = knobValues[iTermStatusBarSpringComponentSpringConstantKey];

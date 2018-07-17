@@ -40,7 +40,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Timeout (seconds)"
                                                           type:iTermStatusBarComponentKnobTypeDouble
                                                    placeholder:nil
-                                                  defaultValue:@5
+                                                  defaultValue:self.class.statusBarComponentDefaultKnobs[iTermStatusBarTimeoutKey]
                                                            key:iTermStatusBarTimeoutKey];
     iTermStatusBarComponentKnob *backgroundColorKnob =
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Background Color"
@@ -50,6 +50,11 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
                                                            key:iTermStatusBarSharedBackgroundColorKey];
     
     return [@[ labelKnob, invocationKnob, timeoutKnob, backgroundColorKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+}
+
++ (NSDictionary *)statusBarComponentDefaultKnobs {
+    NSDictionary *fromSuper = [super statusBarComponentDefaultKnobs];
+    return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarTimeoutKey: @5 }];
 }
 
 - (NSButton *)newButton {

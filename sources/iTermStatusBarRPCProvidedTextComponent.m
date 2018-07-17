@@ -59,9 +59,6 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     }
     return self;
 }
-- (id<iTermStatusBarComponent>)newComponent {
-    return [[iTermStatusBarRPCProvidedTextComponent alloc] initWithRegistrationRequest:_registrationRequest];
-}
 
 - (void)encodeWithCoder:(NSCoder *)aCoder {
     [aCoder encodeObject:_registrationRequest.data forKey:@"registrationRequest"];
@@ -75,6 +72,22 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     return self;
 }
 
+- (NSDictionary *)defaultKnobs {
+    NSMutableDictionary *knobs = [NSMutableDictionary dictionary];
+    [_registrationRequest.statusBarComponentAttributes.knobsArray enumerateObjectsUsingBlock:^(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        id value = [NSJSONSerialization it_objectForJsonString:obj.jsonDefaultValue];
+        if (value) {
+            knobs[obj.name] = obj.jsonDefaultValue;
+        }
+    }];
+    return [knobs copy];
+}
+
+- (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs {
+    return [[iTermStatusBarRPCProvidedTextComponent alloc] initWithRegistrationRequest:_registrationRequest
+                                                                                 knobs:knobs];
+}
+
 @end
 
 @implementation iTermStatusBarRPCProvidedTextComponent {
@@ -84,8 +97,10 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     NSMutableSet<NSString *> *_missingFunctions;
 }
 
-- (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest {
-    return [self initWithConfiguration:@{ iTermStatusBarRPCRegistrationRequestKey: registrationRequest.data }];
+- (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest
+                                      knobs:(NSDictionary *)knobs {
+    return [self initWithConfiguration:@{ iTermStatusBarRPCRegistrationRequestKey: registrationRequest.data,
+                                          iTermStatusBarComponentConfigurationKeyKnobValues: knobs }];
 }
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration {
@@ -205,6 +220,10 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     [self updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
 }
 
+- (nullable NSArray<NSString *> *)stringVariants {
+    return @[ _value ?: @"" ];
+}
+
 - (void)updateWithKnobValues:(NSDictionary<NSString *, id> *)knobValues {
     __weak __typeof(self) weakSelf = self;
     [iTermScriptFunctionCall callFunction:self.invocation
@@ -224,14 +243,16 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
              NSString *message = [NSString stringWithFormat:@"Error evaluating status bar component function invocation %@: %@\n%@\n",
                                   self.invocation, error.localizedDescription, error.localizedFailureReason];
              [[iTermScriptHistoryEntry globalEntry] addOutput:message];
-             self.stringValue = @"🐞";
+             self->_value = @"🐞";
              __strong __typeof(self) strongSelf = weakSelf;
              if (strongSelf) {
                  strongSelf->_missingFunctions = [missingFunctions mutableCopy];
              }
+             [self updateTextFieldIfNeeded];
              return;
          }
-         [self setStringValue:value ?: @""];
+         self->_value = value ?: @"";
+         [self updateTextFieldIfNeeded];
      }];
 }
 

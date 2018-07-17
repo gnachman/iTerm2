@@ -21,6 +21,7 @@
 #import "iTermStatusBarSwiftyStringComponent.h"
 #import "iTermStatusBarVariableBaseComponent.h"
 #import "NSArray+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
 
@@ -49,7 +50,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermStatusBarSetupElement *)newElementForProviderRegistrationRequest:(ITMRPCRegistrationRequest *)request {
     iTermStatusBarRPCComponentFactory *factory =
         [[iTermStatusBarRPCComponentFactory alloc] initWithRegistrationRequest:request];
-    return [[iTermStatusBarSetupElement alloc] initWithComponentFactory:factory];
+    return [[iTermStatusBarSetupElement alloc] initWithComponentFactory:factory
+                                                                  knobs:factory.defaultKnobs];
 }
 
 - (void)awakeFromNib {
@@ -65,7 +67,8 @@ NS_ASSUME_NONNULL_BEGIN
     _elements = [classes mapWithBlock:^id(Class theClass) {
         iTermStatusBarBuiltInComponentFactory *factory =
             [[iTermStatusBarBuiltInComponentFactory alloc] initWithClass:theClass];
-        return [[iTermStatusBarSetupElement alloc] initWithComponentFactory:factory];
+        return [[iTermStatusBarSetupElement alloc] initWithComponentFactory:factory
+                                                                      knobs:factory.defaultKnobs];
     }];
     for (ITMRPCRegistrationRequest *request in iTermAPIHelper.statusBarComponentProviderRegistrationRequests) {
         iTermStatusBarSetupElement *element = [self newElementForProviderRegistrationRequest:request];

@@ -16,15 +16,9 @@ NS_ASSUME_NONNULL_BEGIN
 // statusBarComponentUpdateCadence, and statusBarComponentUpdate.
 @interface iTermStatusBarTextComponent : iTermStatusBarBaseComponent
 
-@property (nonatomic, readonly, nullable) NSString *stringValue;
-@property (nonatomic, readonly, nullable) NSAttributedString *attributedStringValue;
+@property (nonatomic, readonly, nullable) NSArray<NSString *> *stringVariants;
 @property (nonatomic, readonly) NSTextField *textField;
 
-// Subclasses can override these if they can compress the string depending on available space.
-@property (nonatomic, readonly, nullable) NSString *stringValueForCurrentWidth;
-@property (nonatomic, readonly, nullable) NSString *maximallyCompressedStringValue;
-
-- (void)setStringValue:(NSString *)stringValue;
 - (CGFloat)widthForString:(NSString *)string;
 - (void)updateTextFieldIfNeeded;
 

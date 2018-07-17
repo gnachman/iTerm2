@@ -28,8 +28,9 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 
 @protocol iTermStatusBarComponentFactory<NSCoding, NSCopying, NSObject>
 
-- (id<iTermStatusBarComponent>)newComponent;
+- (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs;
 - (NSString *)componentDescription;
+- (NSDictionary *)defaultKnobs;
 
 @end
 
@@ -39,6 +40,8 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 @property (nonatomic, readonly) NSDictionary<iTermStatusBarComponentConfigurationKey, id> *configuration;
 @property (nonatomic, weak) id<iTermStatusBarComponentDelegate> delegate;
 @property (nonatomic, readonly) id<iTermStatusBarComponentFactory> statusBarComponentFactory;
+
++ (NSDictionary *)statusBarComponentDefaultKnobs;
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration;
 

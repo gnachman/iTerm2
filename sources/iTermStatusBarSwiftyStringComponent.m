@@ -9,6 +9,7 @@
 
 #import "iTermStatusBarComponentKnob.h"
 #import "iTermVariables.h"
+#import "NSDictionary+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -16,6 +17,7 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
 
 @implementation iTermStatusBarSwiftyStringComponent {
     iTermSwiftyString *_swiftyString;
+    NSString *_value;
 }
 
 - (NSString *)statusBarComponentShortDescription {
@@ -37,6 +39,11 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
     return [@[ expressionKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
 }
 
++ (NSDictionary *)statusBarComponentDefaultKnobs {
+    NSDictionary *fromSuper = [super statusBarComponentDefaultKnobs];
+    return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarSwiftyStringComponentExpressionKey: @"" }];
+}
+
 - (id)statusBarComponentExemplar {
     if (!_swiftyString.swiftyString.length) {
         return @"\\(expression)";
@@ -47,10 +54,6 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
 
 - (BOOL)statusBarComponentCanStretch {
     return YES;
-}
-
-- (nullable NSString *)stringValue {
-    return _swiftyString.evaluatedString;
 }
 
 - (NSSet<NSString *> *)statusBarComponentVariableDependencies {
@@ -64,6 +67,15 @@ static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expr
 - (void)statusBarComponentSetVariableScope:(iTermVariableScope *)scope {
     [super statusBarComponentSetVariableScope:scope];
     [self updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
+}
+
+- (void)setStringValue:(NSString *)value {
+    _value = [value copy];
+    [self updateTextFieldIfNeeded];
+}
+
+- (nullable NSArray<NSString *> *)stringVariants {
+    return @[ _value ?: @"" ];
 }
 
 - (void)updateWithKnobValues:(NSDictionary<NSString *, id> *)knobValues {

@@ -7,7 +7,6 @@ import iterm2.notifications
 import iterm2.profile
 import iterm2.rpc
 import iterm2.session
-import iterm2.statusbar
 import iterm2.tab
 import iterm2.window
 

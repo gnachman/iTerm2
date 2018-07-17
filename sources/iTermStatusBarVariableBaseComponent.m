@@ -10,6 +10,7 @@
 #import "iTermVariables.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -52,8 +53,12 @@ NS_ASSUME_NONNULL_BEGIN
     return YES;
 }
 
-- (nullable NSString *)stringValue {
+- (NSString *)fullString {
     return [self.scope valueForVariableName:_path];
+}
+
+- (nullable NSArray<NSString *> *)stringVariants {
+    return [self variantsOf:self.cached ?: @""];
 }
 
 - (NSSet<NSString *> *)statusBarComponentVariableDependencies {
@@ -61,19 +66,41 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)statusBarComponentVariablesDidChange:(NSSet<NSString *> *)variables {
-    [self setStringValue:self.stringValue];
+    [self updateTextFieldIfNeeded];
 }
 
 - (void)statusBarComponentSetVariableScope:(iTermVariableScope *)scope {
     [super statusBarComponentSetVariableScope:scope];
-    [self setStringValue:self.stringValue];
+    [self updateTextFieldIfNeeded];
+}
+
+- (void)updateTextFieldIfNeeded {
+    _cached = self.fullString;
+    [super updateTextFieldIfNeeded];
+}
+
+- (NSArray<NSString *> *)variantsOf:(NSString *)string {
+    if (string.length == 0) {
+        return @[];
+    }
+
+    NSMutableArray<NSString *> *result = [NSMutableArray array];
+    NSString *prev = nil;
+    while (string != nil && (!prev || string.length < prev.length)) {
+        [result addObject:string];
+        prev = string;
+        string = [self stringByCompressingString:string];
+    }
+    return [result copy];
+}
+
+- (NSString *)stringByCompressingString:(NSString *)source {
+    return nil;
 }
 
 @end
 
-@implementation iTermStatusBarHostnameComponent {
-    NSString *_compressedString;
-}
+@implementation iTermStatusBarHostnameComponent
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration {
     return [super initWithPath:@"session.hostname" configuration:configuration];
@@ -97,46 +124,14 @@ NS_ASSUME_NONNULL_BEGIN
     NSUInteger index = [parts indexOfObjectWithOptions:NSEnumerationReverse
                                            passingTest:
                         ^BOOL(NSString * _Nonnull part, NSUInteger idx, BOOL * _Nonnull stop) {
-                            __block int count = 0;
-                            [part enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
-                                count++;
-                                if (count > 1) {
-                                    // Has more than one composed character so the last one seen will be its abbreviation, stored in `replacement`.
-                                    *stop = YES;
-                                } else {
-                                    replacement = [part substringWithRange:range];
-                                }
-                            }];
-                            return count > 1;
+                            replacement = [part firstComposedCharacter:nil];
+                            return ![replacement isEqualToString:part];
                         }];
     if (index == NSNotFound) {
         return nil;
     }
     parts[index] = replacement;
     return [parts componentsJoinedByString:@"."];
-}
-
-- (NSString *)stringForWidth:(CGFloat)newWidth {
-    NSString *string = self.stringValue;
-    NSString *lastGood = self.stringValue;
-    while (string != nil && [self widthForString:string] > newWidth) {
-        lastGood = string;
-        string = [self stringByCompressingString:string];
-    }
-    return string ?: lastGood;
-}
-
-- (void)statusBarComponentWidthDidChangeTo:(CGFloat)newWidth {
-    _compressedString = [self stringForWidth:newWidth];
-    [self updateTextFieldIfNeeded];
-}
-
-- (nullable NSString *)maximallyCompressedStringValue {
-    return [self stringForWidth:0];
-}
-
-- (nullable NSString *)stringValueForCurrentWidth {
-    return _compressedString;
 }
 
 @end
@@ -160,22 +155,19 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (CGFloat)statusBarComponentMinimumWidth {
-    if (!self.stringValue) {
-        return [super statusBarComponentMinimumWidth];
-    }
-    NSString *rest;
-    NSString *prefix = [self.stringValue firstComposedCharacter:&rest];
-    if (rest.length > 0) {
-        prefix = [prefix stringByAppendingString:@"…"];
-    }
-    return [self widthForString:prefix];
+    NSString *firstCharacter = [self.cached firstComposedCharacter:nil];
+    CGFloat full = [self widthForString:self.cached];
+    CGFloat trunc = [self widthForString:[firstCharacter stringByAppendingString:@"…"]];
+    return MIN(full, trunc);
+}
+
+- (nullable NSString *)stringForWidth:(CGFloat)width {
+    return self.cached;
 }
 
 @end
 
-@implementation iTermStatusBarWorkingDirectoryComponent {
-    NSString *_compressedString;
-}
+@implementation iTermStatusBarWorkingDirectoryComponent
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration {
     return [super initWithPath:@"session.path" configuration:configuration];
@@ -197,51 +189,14 @@ NS_ASSUME_NONNULL_BEGIN
     NSMutableArray<NSString *> *parts = [[source componentsSeparatedByString:@"/"] mutableCopy];
     __block NSString *replacement = nil;
     NSUInteger index = [parts indexOfObjectPassingTest:^BOOL(NSString * _Nonnull part, NSUInteger idx, BOOL * _Nonnull stop) {
-        __block int count = 0;
-        [part enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
-            count++;
-            if (count > 1) {
-                // Has more than one composed character so the last one seen will be its abbreviation, stored in `replacement`.
-                *stop = YES;
-            } else {
-                replacement = [part substringWithRange:range];
-            }
-        }];
-        return count > 1;
+        replacement = [part firstComposedCharacter:nil];
+        return replacement && ![replacement isEqualToString:part];
     }];
     if (index == NSNotFound) {
         return nil;
     }
     parts[index] = replacement;
     return [parts componentsJoinedByString:@"/"];
-}
-
-- (NSString *)stringForWidth:(CGFloat)newWidth {
-    NSString *string = self.stringValue;
-    NSString *lastGood = self.stringValue;
-    while (string != nil && [self widthForString:string] > newWidth) {
-        lastGood = string;
-        string = [self stringByCompressingString:string];
-    }
-    return string ?: lastGood;
-}
-
-- (void)setStringValue:(NSString *)stringValue {
-    _compressedString = [self stringForWidth:self.textField.frame.size.width];
-    [super setStringValue:stringValue];
-}
-
-- (void)statusBarComponentWidthDidChangeTo:(CGFloat)newWidth {
-    _compressedString = [self stringForWidth:newWidth];
-    [self updateTextFieldIfNeeded];
-}
-
-- (nullable NSString *)maximallyCompressedStringValue {
-    return [self stringForWidth:0];
-}
-
-- (nullable NSString *)stringValueForCurrentWidth {
-    return _compressedString;
 }
 
 @end

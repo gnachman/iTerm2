@@ -41,8 +41,8 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
     }
     return self;
 }
-- (id<iTermStatusBarComponent>)newComponent {
-    return [[_class alloc] initWithConfiguration:@{}];
+- (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs {
+    return [[_class alloc] initWithConfiguration:@{iTermStatusBarComponentConfigurationKeyKnobValues: knobs}];
 }
 
 - (void)encodeWithCoder:(NSCoder *)aCoder {
@@ -55,6 +55,10 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
 
 - (id)copyWithZone:(nullable NSZone *)zone {
     return self;
+}
+
+- (NSDictionary *)defaultKnobs {
+    return [_class statusBarComponentDefaultKnobs];
 }
 
 @end
@@ -128,20 +132,25 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Compression Resistance:"
                                                           type:iTermStatusBarComponentKnobTypeDouble
                                                    placeholder:@""
-                                                  defaultValue:@1
+                                                  defaultValue:self.class.statusBarComponentDefaultKnobs[iTermStatusBarCompressionResistanceKey]
                                                            key:iTermStatusBarCompressionResistanceKey];
     }
     iTermStatusBarComponentKnob *priorityKnob =
     [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Priority:"
                                                       type:iTermStatusBarComponentKnobTypeDouble
                                                placeholder:@""
-                                              defaultValue:@5
+                                              defaultValue:self.class.statusBarComponentDefaultKnobs[iTermStatusBarPriorityKey]
                                                        key:iTermStatusBarPriorityKey];
     if (compressionResistanceKnob) {
         return @[ compressionResistanceKnob, priorityKnob ];
     } else {
         return @[ priorityKnob ];
     }
+}
+
++ (NSDictionary *)statusBarComponentDefaultKnobs {
+    return @{ iTermStatusBarCompressionResistanceKey: @1,
+              iTermStatusBarPriorityKey: @5 };
 }
 
 - (id)statusBarComponentExemplar {

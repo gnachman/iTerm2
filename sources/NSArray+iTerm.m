@@ -371,6 +371,36 @@
     }
 }
 
+- (id)maxWithBlock:(NSComparisonResult (^)(id, id))block {
+    id max = nil;
+    for (id object in self) {
+        if (max) {
+            NSComparisonResult result = block(max, object);
+            if (result == NSOrderedAscending) {
+                max = object;
+            }
+        } else {
+            max = object;
+        }
+    }
+    return max;
+}
+
+- (id)minWithBlock:(NSComparisonResult (^)(id, id))block {
+    id min = nil;
+    for (id object in self) {
+        if (min) {
+            NSComparisonResult result = block(min, object);
+            if (result == NSOrderedDescending) {
+                min = object;
+            }
+        } else {
+            min = object;
+        }
+    }
+    return min;
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)

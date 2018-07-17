@@ -11,10 +11,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermStatusBarVariableBaseComponent : iTermStatusBarTextComponent
 
+@property (nonatomic, readonly) NSString *fullString;  // evaluates
+@property (nonatomic, readonly) NSString *cached;  // cached fullString
+
 - (instancetype)initWithPath:(NSString *)path
                configuration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration NS_UNAVAILABLE;
+- (NSString *)stringByCompressingString:(NSString *)source;
 
 @end
 

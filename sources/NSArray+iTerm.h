@@ -89,6 +89,9 @@
 - (NSDictionary<id, NSArray<ObjectType> *> *)classifyWithBlock:(id (^)(ObjectType))block;
 - (ObjectType)uncheckedObjectAtIndex:(NSInteger)index;
 
+- (ObjectType)maxWithBlock:(NSComparisonResult (^)(ObjectType obj1, ObjectType obj2))block;
+- (ObjectType)minWithBlock:(NSComparisonResult (^)(ObjectType obj1, ObjectType obj2))block;
+
 @end
 
 @interface NSMutableArray<ObjectType> (iTerm)
