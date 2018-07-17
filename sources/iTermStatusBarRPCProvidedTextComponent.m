@@ -14,6 +14,7 @@
 #import "iTermVariables.h"
 #import "NSArray+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
+#import "NSObject+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -77,7 +78,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     [_registrationRequest.statusBarComponentAttributes.knobsArray enumerateObjectsUsingBlock:^(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         id value = [NSJSONSerialization it_objectForJsonString:obj.jsonDefaultValue];
         if (value) {
-            knobs[obj.name] = obj.jsonDefaultValue;
+            knobs[obj.key] = obj.jsonDefaultValue;
         }
     }];
     return [knobs copy];
@@ -92,7 +93,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 
 @implementation iTermStatusBarRPCProvidedTextComponent {
     ITMRPCRegistrationRequest *_registrationRequest;
-    NSString *_value;
+    NSArray<NSString *> *_variants;
     NSSet<NSString *> *_dependencies;
     NSMutableSet<NSString *> *_missingFunctions;
 }
@@ -193,10 +194,6 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     return YES;
 }
 
-- (nullable NSString *)stringValue {
-    return _value ?: @"";
-}
-
 - (NSSet<NSString *> *)statusBarComponentVariableDependencies {
     NSArray *paths = [_registrationRequest.defaultsArray mapWithBlock:^id(ITMRPCRegistrationRequest_RPCArgument *anObject) {
         return anObject.path;
@@ -221,7 +218,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 }
 
 - (nullable NSArray<NSString *> *)stringVariants {
-    return @[ _value ?: @"" ];
+    return _variants ?: @[ @"" ];
 }
 
 - (void)updateWithKnobValues:(NSDictionary<NSString *, id> *)knobValues {
@@ -240,20 +237,37 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
                                completion:
      ^(id value, NSError *error, NSSet<NSString *> *missingFunctions) {
          if (error) {
-             NSString *message = [NSString stringWithFormat:@"Error evaluating status bar component function invocation %@: %@\n%@\n",
-                                  self.invocation, error.localizedDescription, error.localizedFailureReason];
-             [[iTermScriptHistoryEntry globalEntry] addOutput:message];
-             self->_value = @"🐞";
-             __strong __typeof(self) strongSelf = weakSelf;
-             if (strongSelf) {
-                 strongSelf->_missingFunctions = [missingFunctions mutableCopy];
-             }
-             [self updateTextFieldIfNeeded];
+             [weakSelf handleEvaluationError:error missingFunctions:missingFunctions];
              return;
          }
-         self->_value = value ?: @"";
-         [self updateTextFieldIfNeeded];
+         [weakSelf handleSuccessfulEvaluationWithValue:value];
      }];
+}
+
+- (void)handleSuccessfulEvaluationWithValue:(id)value {
+    NSString *stringValue = [NSString castFrom:value];
+    NSArray *arrayValue = [NSArray castFrom:value];
+    if (stringValue) {
+        _variants = @[ stringValue ];
+    } else if ([arrayValue allWithBlock:^BOOL(id anObject) {
+        return [anObject isKindOfClass:[NSString class]];
+    }]) {
+        _variants = arrayValue;
+    } else {
+        [[iTermScriptHistoryEntry globalEntry] addOutput:[NSString stringWithFormat:@"Return value from %@ invalid. Return value was: %@", self.invocation, value]];
+        _variants = @[ @"🐞" ];
+    }
+    [self updateTextFieldIfNeeded];
+}
+
+- (void)handleEvaluationError:(NSError *)error
+             missingFunctions:(NSSet<NSString *> *)missingFunctions {
+    NSString *message = [NSString stringWithFormat:@"Error evaluating status bar component function invocation %@: %@\n%@\n",
+                         self.invocation, error.localizedDescription, error.localizedFailureReason];
+    [[iTermScriptHistoryEntry globalEntry] addOutput:message];
+    _variants = @[ @"🐞" ];
+    _missingFunctions = [missingFunctions mutableCopy];
+    [self updateTextFieldIfNeeded];
 }
 
 - (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues {
