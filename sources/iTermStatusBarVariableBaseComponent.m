@@ -226,6 +226,11 @@ NS_ASSUME_NONNULL_BEGIN
     return string ?: lastGood;
 }
 
+- (void)setStringValue:(NSString *)stringValue {
+    _compressedString = [self stringForWidth:self.textField.frame.size.width];
+    [super setStringValue:stringValue];
+}
+
 - (void)statusBarComponentWidthDidChangeTo:(CGFloat)newWidth {
     _compressedString = [self stringForWidth:newWidth];
     [self updateTextFieldIfNeeded];

@@ -4995,7 +4995,6 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         
         const BOOL safeForCompositing = (![PTYNoteViewController anyNoteVisible] &&
-                                         !_view.findViewController.isVisible &&
                                          !_pasteHelper.pasteViewIsVisible &&
                                          !_view.findDriver.isVisible &&
                                          !_view.isDropDownSearchVisible &&

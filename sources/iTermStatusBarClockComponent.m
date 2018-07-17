@@ -54,6 +54,10 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
     return [self.dateFormatter stringFromDate:[NSDate date]];
 }
 
+- (nullable NSString *)stringValueForCurrentWidth {
+    return self.stringValue;
+}
+
 - (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues {
     _dateFormatter = nil;
     [super statusBarComponentSetKnobValues:knobValues];

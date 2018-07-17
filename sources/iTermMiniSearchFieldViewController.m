@@ -212,7 +212,7 @@ doCommandBySelector:(SEL)commandSelector {
             break;
         case NSReturnTextMovement:
             // Return key
-            if ([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) {
+            if ([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagShift) {
                 [self.driver searchNext];
             } else {
                 [self.driver searchPrevious];

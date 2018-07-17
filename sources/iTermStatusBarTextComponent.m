@@ -80,14 +80,19 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 }
 
 - (BOOL)setValueInField:(NSTextField *)textField compressed:(BOOL)compressed {
-    NSString *string = compressed ? [self stringValueForCurrentWidth] : self.stringValue;
+    NSString *proposed;
+    if (compressed) {
+        proposed = [self stringValueForCurrentWidth];
+    } else {
+        proposed = self.stringValue;
+    }
 
-    if (![self shouldUpdateValue:string inField:textField]) {
+    if (![self shouldUpdateValue:proposed inField:textField]) {
         return NO;
     }
 
-    textField.stringValue = string ?: @"";
-    textField.alignment = NSLeftTextAlignment;
+    textField.stringValue = proposed ?: @"";
+    textField.alignment = NSTextAlignmentLeft;
     textField.textColor = self.textColor;
 
     [textField sizeToFit];
@@ -140,7 +145,7 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
         _measuringField = [self newTextField];
     }
     _measuringField.stringValue = string;
-    _measuringField.alignment = NSLeftTextAlignment;
+    _measuringField.alignment = NSTextAlignmentLeft;
     _measuringField.textColor = self.textColor;
     [_measuringField sizeToFit];
     return [_measuringField frame].size.width;
@@ -159,6 +164,10 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 
 - (NSView *)statusBarComponentCreateView {
     return self.textField;
+}
+
+- (void)statusBarComponentUpdate {
+    [self updateTextFieldIfNeeded];
 }
 
 @end

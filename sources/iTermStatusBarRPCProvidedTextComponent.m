@@ -9,7 +9,7 @@
 
 #import "iTermAPIHelper.h"
 #import "iTermScriptFunctionCall.h"
-#import "iTermScriptHistory.h"invo
+#import "iTermScriptHistory.h"
 #import "iTermStatusBarComponentKnob.h"
 #import "iTermVariables.h"
 #import "NSArray+iTerm.h"
