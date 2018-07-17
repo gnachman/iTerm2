@@ -2022,6 +2022,7 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNum
 
 @interface ITMRPCRegistrationRequest_StatusBarComponentAttributes : GPBMessage
 
+/** Used by STATUS_BAR_COMPONENT */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *shortDescription;
 /** Test to see if @c shortDescription has been set. */
 @property(nonatomic, readwrite) BOOL hasShortDescription;
