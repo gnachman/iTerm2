@@ -16,15 +16,6 @@ This script is a long-running daemon since the registered function gets called w
         app=await iterm2.async_get_app(connection)
 
         # Define the configuration knobs:
-        happy = "HAPPY_FACE"
-        knobs = [iterm2.StatusBarComponent.Knob(
-                     iterm2.StatusBarComponent.Knob.TYPE_CHECKBOX,
-                     "Happy Face?",
-                     "",
-                     "false",
-                     happy)]
-
-        # Define the settings of the component
         component = iterm2.StatusBarComponent(
             "StatusBarDemo",
             "Status Bar Demo",

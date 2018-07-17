@@ -22,7 +22,7 @@ class Knob:
 
 class CheckboxKnob:
     """A status bar configuration knob to select a checkbox.
-    
+
     :param name: Description of the knob.
     :param default_value: Default value (Boolean).
     :param key: A unique string key identifying this knob.
@@ -35,7 +35,7 @@ class CheckboxKnob:
 
 class StringKnob:
     """A status bar configuration knob to select a string.
-    
+
     :param name: Description of the knob.
     :param placeholder: Placeholder value (shown in gray) for the text field when it has no content.
     :param default_value: Default value.
@@ -49,7 +49,7 @@ class StringKnob:
 
 class PositiveFloatingPointKnob:
     """A status bar configuration knob to select a positive floating point value.
-    
+
     :param name: Description of the knob.
     :param default_value: Default value.
     :param key: A unique string key identifying this knob.
@@ -62,7 +62,7 @@ class PositiveFloatingPointKnob:
 
 class ColorKnob:
     """A status bar configuration knob to select color.
-    
+
     :param name: Description of the knob.
     :param default_value: Default value (a :class:`Color`)
     :param key: A unique string key identifying this knob
