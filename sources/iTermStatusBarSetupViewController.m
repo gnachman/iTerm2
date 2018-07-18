@@ -158,8 +158,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - NSCollectionViewDelegate
 
-#pragma mark Drag and drop support
-
 - (BOOL)collectionView:(NSCollectionView *)collectionView
 canDragItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
              withEvent:(NSEvent *)event {
@@ -180,7 +178,6 @@ writeItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     return YES;
 }
 
-//- draggingImageForItemsAtIndexPaths:withEvent:offset:
 - (NSImage *)collectionView:(NSCollectionView *)collectionView draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
                   withEvent:(NSEvent *)event
                      offset:(NSPointPointer)dragImageOffset {
@@ -200,26 +197,6 @@ writeItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
                                    center.y - locationInItem.y + heightDifference / 2);
     return item.view.snapshot;
 }
-
-//- (NSDragOperation)collectionView:(NSCollectionView *)collectionView validateDrop:(id <NSDraggingInfo>)draggingInfo proposedIndexPath:(NSIndexPath * __nonnull * __nonnull)proposedDropIndexPath dropOperation:(NSCollectionViewDropOperation *)proposedDropOperation NS_AVAILABLE_MAC(10_11);
-// - (BOOL)collectionView:(NSCollectionView *)collectionView acceptDrop:(id <NSDraggingInfo>)draggingInfo indexPath:(NSIndexPath *)indexPath dropOperation:(NSCollectionViewDropOperation)dropOperation NS_AVAILABLE_MAC(10_11);
-
-//- (nullable id <NSPasteboardWriting>)collectionView:(NSCollectionView *)collectionView
-//                 pasteboardWriterForItemAtIndexPath:(NSIndexPath *)indexPath {
-//    NSUInteger index = [indexPath indexAtPosition:1];
-//    return _elements[index];
-//}
-
-//- (void)collectionView:(NSCollectionView *)collectionView draggingSession:(NSDraggingSession *)session willBeginAtPoint:(NSPoint)screenPoint forItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths NS_AVAILABLE_MAC(10_11);
-// - (void)collectionView:(NSCollectionView *)collectionView draggingSession:(NSDraggingSession *)session endedAtPoint:(NSPoint)screenPoint dragOperation:(NSDragOperation)operation;
-// - (void)collectionView:(NSCollectionView *)collectionView updateDraggingItemsForDrag:(id <NSDraggingInfo>)draggingInfo;
-
-// - (NSSet<NSIndexPath *> *)collectionView:(NSCollectionView *)collectionView shouldChangeItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths toHighlightState:(NSCollectionViewItemHighlightState)highlightState NS_AVAILABLE_MAC(10_11);
-// - (void)collectionView:(NSCollectionView *)collectionView didChangeItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths toHighlightState:(NSCollectionViewItemHighlightState)highlightState NS_AVAILABLE_MAC(10_11);
-// - (NSSet<NSIndexPath *> *)collectionView:(NSCollectionView *)collectionView shouldSelectItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths NS_AVAILABLE_MAC(10_11);
-// - (NSSet<NSIndexPath *> *)collectionView:(NSCollectionView *)collectionView shouldDeselectItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths NS_AVAILABLE_MAC(10_11);
-// - (void)collectionView:(NSCollectionView *)collectionView didSelectItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths NS_AVAILABLE_MAC(10_11);
-// - (void)collectionView:(NSCollectionView *)collectionView didDeselectItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths NS_AVAILABLE_MAC(10_11);
 
 @end
 

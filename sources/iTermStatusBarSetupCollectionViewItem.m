@@ -23,7 +23,6 @@
 - (void)awakeFromNib {
     [super awakeFromNib];
     self.view.wantsLayer = YES;
-//    self.view.layer.backgroundColor = [[NSColor blueColor] CGColor];
     self.view.autoresizesSubviews = NO;
     self.textField.superview.autoresizesSubviews = NO;
 

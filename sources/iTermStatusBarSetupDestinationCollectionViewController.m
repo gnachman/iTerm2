@@ -253,16 +253,6 @@ viewForSupplementaryElementOfKind:(NSCollectionViewSupplementaryElementKind)kind
                                           forIndexPath:indexPath];
 }
 
-//- (nullable id <NSPasteboardWriting>)collectionView:(NSCollectionView *)collectionView
-//                 pasteboardWriterForItemAtIndexPath:(NSIndexPath *)indexPath {
-//    NSUInteger index = [indexPath indexAtPosition:1];
-//    return _elements[index];
-//}
-
-//- (void)collectionView:(NSCollectionView *)collectionView draggingSession:(NSDraggingSession *)session willBeginAtPoint:(NSPoint)screenPoint forItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths NS_AVAILABLE_MAC(10_11);
-// - (void)collectionView:(NSCollectionView *)collectionView draggingSession:(NSDraggingSession *)session endedAtPoint:(NSPoint)screenPoint dragOperation:(NSDragOperation)operation;
-// - (void)collectionView:(NSCollectionView *)collectionView updateDraggingItemsForDrag:(id <NSDraggingInfo>)draggingInfo;
-
 - (NSSet<NSIndexPath *> *)collectionView:(NSCollectionView *)collectionView shouldChangeItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths toHighlightState:(NSCollectionViewItemHighlightState)highlightState {
     return indexPaths;
 }
