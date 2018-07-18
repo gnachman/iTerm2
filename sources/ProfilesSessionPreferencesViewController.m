@@ -174,6 +174,7 @@
             }
             strongSelf->_configureStatusBar.enabled = [strongSelf boolForKey:KEY_SHOW_STATUS_BAR];
         };
+        info.onChange = ^() { [weakSelf postRefreshNotification]; };
     } else {
         _statusBarEnabled.enabled = NO;
         _configureStatusBar.enabled = NO;
