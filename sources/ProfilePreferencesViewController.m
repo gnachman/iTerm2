@@ -316,8 +316,8 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     [_textViewController changeFont:fontManager];
 }
 
-- (void)resizeWindowForCurrentTab {
-    [self resizeWindowForTabViewItem:_tabView.selectedTabViewItem animated:YES];
+- (void)resizeWindowForCurrentTabAnimated:(BOOL)animated {
+    [self resizeWindowForTabViewItem:_tabView.selectedTabViewItem animated:animated];
 }
 
 #pragma mark - ProfileListViewDelegate
@@ -450,6 +450,13 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     if (NSEqualRects(_desiredFrame, frame)) {
         return;
     }
+    if (!animated) {
+        _desiredFrame = NSZeroRect;
+        [window setFrame:frame display:YES];
+        return;
+    }
+
+    // Animated
     _desiredFrame = frame;
     NSTimeInterval duration = [window animationResizeTime:frame];
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {

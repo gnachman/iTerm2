@@ -48,6 +48,6 @@ extern NSString *const kProfileSessionHotkeyDidChange;
 // Update views for changed backing state.
 - (void)refresh;
 
-- (void)resizeWindowForCurrentTab;
+- (void)resizeWindowForCurrentTabAnimated:(BOOL)animated;
 
 @end
