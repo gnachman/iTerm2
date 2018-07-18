@@ -655,9 +655,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self populateMarginRendererTransientStateWithFrameData:frameData];
     [self populateCopyBackgroundRendererTransientStateWithFrameData:frameData];
     if (@available(macOS 10.14, *)) {
-        if (frameData.postmultipliedRenderPassDescriptor) {
-            [self populatePremultiplyAlphaTransientStateWithFrameData:frameData];
-        }
+        [self populatePremultiplyAlphaTransientStateWithFrameData:frameData];
     }
     [self populateCursorRendererTransientStateWithFrameData:frameData];
     [self populateTextAndBackgroundRenderersTransientStateWithFrameData:frameData];
@@ -917,8 +915,12 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (_premultiplyAlphaRenderer.rendererDisabled) {
         return;
     }
+    if (!frameData.postmultipliedRenderPassDescriptor) {
+        return;
+    }
     iTermPremultiplyAlphaRendererTransientState *tstate = [frameData transientStateForRenderer:_premultiplyAlphaRenderer];
     tstate.sourceTexture = frameData.postmultipliedRenderPassDescriptor.colorAttachments[0].texture;
+    tstate.destinationTexture = frameData.renderPassDescriptor.colorAttachments[0].texture;
 }
 
 - (void)populateCursorRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -1354,11 +1356,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         BOOL premultiply = NO;
         if (@available(macOS 10.14, *)) {
             if (frameData.postmultipliedRenderPassDescriptor) {
-                assert(pass >= 0 && pass <= 2);
+                assert(pass >= 0 && pass <= 1);
                 descriptors =
                     @[ frameData.intermediateRenderPassDescriptor ?: frameData.postmultipliedRenderPassDescriptor,
-                       frameData.postmultipliedRenderPassDescriptor,
-                       frameData.renderPassDescriptor ];
+                       frameData.postmultipliedRenderPassDescriptor ];
                 premultiply = YES;
             }
         }
@@ -1559,15 +1560,15 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)finishDrawingWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
                              frameData:(iTermMetalFrameData *)frameData {
     BOOL shouldCopyToDrawable;
-    if (@available(macOS 10.14, *)) {
-        shouldCopyToDrawable = (frameData.postmultipliedRenderPassDescriptor != nil);
-    } else {
 #if ENABLE_USE_TEMPORARY_TEXTURE
-        shouldCopyToDrawable = YES;
-#else
+    if (@available(macOS 10.14, *)) {
         shouldCopyToDrawable = NO;
-#endif
+    } else {
+        shouldCopyToDrawable = YES;
     }
+#else
+    shouldCopyToDrawable = NO;
+#endif
     
 #if ENABLE_DEFER_CURRENT_DRAWABLE
     if (frameData.deferCurrentDrawable) {
@@ -1584,21 +1585,23 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         // Copy to the drawable
         frameData.currentPass = 2;
         [frameData.renderEncoder endEncoding];
-        if (@available(macOS 10.14, *)) {
-            [self updateRenderEncoderForCurrentPass:frameData label:@"Premultiply Alpha"];
-            [self drawRenderer:_premultiplyAlphaRenderer
-                     frameData:frameData
-                          stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
-        } else {
-            [self updateRenderEncoderForCurrentPass:frameData label:@"Copy to drawable"];
-            [self drawRenderer:_copyToDrawableRenderer
-                     frameData:frameData
-                          stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
-        }
+        [self updateRenderEncoderForCurrentPass:frameData label:@"Copy to drawable"];
+        [self drawRenderer:_copyToDrawableRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
     }
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable ofBlock:^{
         [frameData.renderEncoder endEncoding];
     }];
+    
+    if (@available(macOS 10.14, *)) {
+        if (frameData.postmultipliedRenderPassDescriptor) {
+            // Note this has to happen after endEncoding because it uses a performance shader.
+            [self drawRenderer:_premultiplyAlphaRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
+        }
+    }
 
     if (frameData.debugInfo) {
         [self copyOffscreenTextureToDrawableInFrameData:frameData];

@@ -341,6 +341,7 @@ static NSDate* lastResizeDate_;
     }
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     _metalView.layer.opaque = NO;
+    _metalView.framebufferOnly = NO;
 #else
     _metalView.layer.opaque = YES;
 #endif

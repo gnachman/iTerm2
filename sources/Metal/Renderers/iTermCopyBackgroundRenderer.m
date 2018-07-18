@@ -6,7 +6,7 @@
 //
 
 #import "iTermCopyBackgroundRenderer.h"
-
+#import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 
 @implementation iTermCopyRendererTransientState
 
@@ -119,7 +119,21 @@
 @implementation iTermPremultiplyAlphaRendererTransientState
 @end
 
-@implementation iTermPremultiplyAlphaRenderer
+@implementation iTermPremultiplyAlphaRenderer {
+    MPSImageConversion *_conversion;
+}
+
+- (instancetype)initWithDevice:(id<MTLDevice>)device {
+    self = [super initWithDevice:device];
+    if (self) {
+        _conversion = [[MPSImageConversion alloc] initWithDevice:device
+                                                        srcAlpha:MPSAlphaTypeNonPremultiplied
+                                                       destAlpha:MPSAlphaTypePremultiplied
+                                                 backgroundColor:nil
+                                                  conversionInfo:nil];
+    }
+    return self;
+}
 
 - (Class)transientStateClass {
     return [iTermPremultiplyAlphaRendererTransientState class];
@@ -127,6 +141,24 @@
 
 - (NSString *)fragmentFunctionName {
     return @"iTermPremultiplyAlphaFragmentShader";
+}
+
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
+                                                                               commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    iTermPremultiplyAlphaRendererTransientState *tState = [super createTransientStateForConfiguration:configuration
+                                                                                        commandBuffer:commandBuffer];
+    if (!tState) {
+        return nil;
+    }
+    tState.commandBuffer = commandBuffer;
+    return tState;
+}
+
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData transientState:(__kindof iTermMetalRendererTransientState *)transientState {
+    iTermPremultiplyAlphaRendererTransientState *tState = transientState;
+    [_conversion encodeToCommandBuffer:tState.commandBuffer
+                         sourceTexture:tState.sourceTexture
+                    destinationTexture:tState.destinationTexture];
 }
 
 @end

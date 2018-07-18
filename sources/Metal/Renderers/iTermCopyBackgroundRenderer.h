@@ -59,6 +59,8 @@ NS_CLASS_DEPRECATED_MAC(10_12, 10_14)
 
 NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermPremultiplyAlphaRendererTransientState : iTermCopyRendererTransientState
+@property (nonatomic, strong) id<MTLCommandBuffer> commandBuffer;
+@property (nonatomic, strong) id<MTLTexture> destinationTexture;
 @end
 
 NS_CLASS_AVAILABLE_MAC(10_14)
