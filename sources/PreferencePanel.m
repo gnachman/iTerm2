@@ -215,7 +215,7 @@ static PreferencePanel *gSessionsPreferencePanel;
     [_profilesViewController layoutSubviewsForEditCurrentSessionMode];
     [_toolbar setVisible:NO];
 
-    [_profilesViewController resizeWindowForCurrentTab];
+    [_profilesViewController resizeWindowForCurrentTabAnimated:NO];
 
 }
 
@@ -454,7 +454,7 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     if (tabViewItem == _bookmarksTabViewItem) {
-        [_profilesViewController resizeWindowForCurrentTab];
+        [_profilesViewController resizeWindowForCurrentTabAnimated:YES];
     } else {
         [self resizeWindowForTabViewItem:tabViewItem];
     }
