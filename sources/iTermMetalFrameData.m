@@ -282,6 +282,17 @@ static NSInteger gNextFrameDataNumber;
     return renderPassDescriptor;
 }
 
+- (void)createpostmultipliedRenderPassDescriptor NS_AVAILABLE_MAC(10_14) {
+    [self measureTimeForStat:iTermMetalFrameDataStatPqCreateTemporary ofBlock:^{
+        assert(!self.postmultipliedRenderPassDescriptor);
+        
+        self.postmultipliedRenderPassDescriptor = [self newRenderPassDescriptorWithLabel:@"SRGB Texture"
+                                                                          fast:YES];
+        
+        [self->_debugInfo setPostmultipliedRenderPassDescriptor:self.postmultipliedRenderPassDescriptor];
+    }];
+}
+
 - (void)createIntermediateRenderPassDescriptor {
     [self measureTimeForStat:iTermMetalFrameDataStatPqCreateIntermediate ofBlock:^{
         assert(!self.intermediateRenderPassDescriptor);
@@ -318,6 +329,11 @@ static NSInteger gNextFrameDataNumber;
         [self.fullSizeTexturePool returnTexture:self.temporaryRenderPassDescriptor.colorAttachments[0].texture];
     }
 #endif
+    if (@available(macOS 10.14, *)) {
+        if (self.postmultipliedRenderPassDescriptor) {
+            [self.fullSizeTexturePool returnTexture:self.postmultipliedRenderPassDescriptor.colorAttachments[0].texture];
+        }
+    }
     double duration;
 
     duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatGpu]);

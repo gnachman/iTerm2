@@ -125,11 +125,9 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
     if (@available(macOS 10.14, *)) {
         return;
     }
-#endif
     if (_useMetal) {
         return;
     } else {

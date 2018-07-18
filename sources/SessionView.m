@@ -245,11 +245,17 @@ static NSDate* lastResizeDate_;
     if (@available(macOS 10.14, *)) {
         _metalView.layer.opaque = NO;
     } else {
+
         _metalView.layer.opaque = YES;
     }
 #else
     _metalView.layer.opaque = YES;
 #endif
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    _metalView.colorspace = colorSpace;
+    CFAutorelease(colorSpace);
+
+    // There was a spike in crashes on 5/1. I'm removing this temporarily to see if it was the cause.
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
 

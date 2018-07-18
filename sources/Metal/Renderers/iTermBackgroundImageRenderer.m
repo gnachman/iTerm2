@@ -88,11 +88,14 @@ NS_ASSUME_NONNULL_BEGIN
     NSDictionary *fragmentBuffers = nil;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     float alpha = tState.transparencyAlpha;
-    if (alpha < 1) {
-        _metalRenderer.fragmentFunctionName = @"iTermBackgroundImageWithAlphaFragmentShader";
-        id<MTLBuffer> alphaBuffer = [self alphaBufferWithValue:alpha poolContext:tState.poolContext];
-        fragmentBuffers = @{ @(iTermFragmentInputIndexAlpha): alphaBuffer };
-    } else {
+    if (@available(macOS 10.14, *)) {
+        if (alpha < 1) {
+            _metalRenderer.fragmentFunctionName = @"iTermBackgroundImageWithAlphaFragmentShader";
+            id<MTLBuffer> alphaBuffer = [self alphaBufferWithValue:alpha poolContext:tState.poolContext];
+            fragmentBuffers = @{ @(iTermFragmentInputIndexAlpha): alphaBuffer };
+        }
+    }
+    if (alpha >= 1) {
         _metalRenderer.fragmentFunctionName = @"iTermBackgroundImageFragmentShader";
         fragmentBuffers = @{};
     }

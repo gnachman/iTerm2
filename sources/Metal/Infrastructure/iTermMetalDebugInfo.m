@@ -74,6 +74,7 @@
 
 @implementation iTermMetalDebugInfo {
     MTLRenderPassDescriptor *_renderPassDescriptor;
+    MTLRenderPassDescriptor *_postmultipliedRenderPassDescriptor;
     MTLRenderPassDescriptor *_intermediateRenderPassDescriptor;
     MTLRenderPassDescriptor *_temporaryRenderPassDescriptor;
     NSMutableArray<iTermMetalRowData *> *_rowData;
@@ -96,6 +97,10 @@
 
 - (void)setRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor {
     _renderPassDescriptor = renderPassDescriptor;
+}
+
+- (void)setPostmultipliedRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor {
+    _postmultipliedRenderPassDescriptor = renderPassDescriptor;
 }
 
 - (void)setIntermediateRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor {
@@ -165,6 +170,11 @@
     [self writeRenderPassDescriptor:_renderPassDescriptor
                                  to:[self newFolderNamed:@"RenderPassDescriptor"
                                                     root:root]];
+    if (_postmultipliedRenderPassDescriptor) {
+        [self writeRenderPassDescriptor:_postmultipliedRenderPassDescriptor
+                                     to:[self newFolderNamed:@"postmultipliedRenderPassDescriptor"
+                                                        root:root]];
+    }
     if (_intermediateRenderPassDescriptor) {
         [self writeRenderPassDescriptor:_intermediateRenderPassDescriptor
                                      to:[self newFolderNamed:@"IntermediateRenderPassDescriptor"
