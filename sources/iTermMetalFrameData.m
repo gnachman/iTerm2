@@ -286,6 +286,17 @@ static NSInteger gNextFrameDataNumber;
     return renderPassDescriptor;
 }
 
+- (void)createpostmultipliedRenderPassDescriptor NS_AVAILABLE_MAC(10_14) {
+    [self measureTimeForStat:iTermMetalFrameDataStatPqCreateTemporary ofBlock:^{
+        assert(!self.postmultipliedRenderPassDescriptor);
+        
+        self.postmultipliedRenderPassDescriptor = [self newRenderPassDescriptorWithLabel:@"SRGB Texture"
+                                                                          fast:YES];
+        
+        [self->_debugInfo setPostmultipliedRenderPassDescriptor:self.postmultipliedRenderPassDescriptor];
+    }];
+}
+
 - (void)createIntermediateRenderPassDescriptor {
     [self measureTimeForStat:iTermMetalFrameDataStatPqCreateIntermediate ofBlock:^{
         assert(!self.intermediateRenderPassDescriptor);
@@ -316,6 +327,11 @@ static NSInteger gNextFrameDataNumber;
     self.status = @"complete";
     if (self.intermediateRenderPassDescriptor) {
         [[self sharedTexturePool] returnTexture:self.intermediateRenderPassDescriptor.colorAttachments[0].texture];
+    }
+    if (@available(macOS 10.14, *)) {
+        if (self.postmultipliedRenderPassDescriptor) {
+            [[self sharedTexturePool] returnTexture:self.postmultipliedRenderPassDescriptor.colorAttachments[0].texture];
+        }
     }
     double duration;
 

@@ -25,11 +25,15 @@
     if (self) {
         _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
                                                  vertexFunctionName:@"iTermCopyBackgroundVertexShader"
-                                               fragmentFunctionName:@"iTermCopyBackgroundFragmentShader"
+                                               fragmentFunctionName:self.fragmentFunctionName
                                                            blending:nil
                                                 transientStateClass:[self transientStateClass]];
     }
     return self;
+}
+
+- (NSString *)fragmentFunctionName {
+    return @"iTermCopyBackgroundFragmentShader";
 }
 
 - (iTermMetalFrameDataStat)createTransientStateStat {
@@ -111,3 +115,18 @@
 
 @end
 #endif
+
+@implementation iTermPremultiplyAlphaRendererTransientState
+@end
+
+@implementation iTermPremultiplyAlphaRenderer
+
+- (Class)transientStateClass {
+    return [iTermPremultiplyAlphaRendererTransientState class];
+}
+
+- (NSString *)fragmentFunctionName {
+    return @"iTermPremultiplyAlphaFragmentShader";
+}
+
+@end

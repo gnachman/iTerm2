@@ -37,3 +37,14 @@ iTermCopyBackgroundFragmentShader(iTermCopyBackgroundVertexFunctionOutput in [[s
     return float4(colorSample);
 }
 
+fragment half4
+iTermPremultiplyAlphaFragmentShader(iTermCopyBackgroundVertexFunctionOutput in [[stage_in]],
+                                    texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
+    constexpr sampler textureSampler (mag_filter::linear,
+                                      min_filter::linear);
+    
+    const half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
+    half4 premultiplied = colorSample * colorSample.w;
+    premultiplied.w = colorSample.w;
+    return premultiplied;
+}

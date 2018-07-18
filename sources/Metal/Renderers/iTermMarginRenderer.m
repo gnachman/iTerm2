@@ -28,7 +28,6 @@ NS_ASSUME_NONNULL_BEGIN
     self = [super init];
     if (self) {
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
-        iTermMetalBlending *blending;
         if (@available(macOS 10.14, *)) {
             _nonblendingRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                                vertexFunctionName:@"iTermMarginVertexShader"
@@ -63,9 +62,8 @@ NS_ASSUME_NONNULL_BEGIN
             return _nonblendingRenderer;
         }
     }
-#else
-    return _blendingRenderer;
 #endif
+    return _blendingRenderer;
 }
 
 - (void)drawWithFrameData:(nonnull iTermMetalFrameData *)frameData

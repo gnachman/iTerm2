@@ -45,6 +45,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSUInteger numberOfRecordedDraws;
 
 - (void)setRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor;
+- (void)setPostmultipliedRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor NS_AVAILABLE_MAC(10_14);
 - (void)setIntermediateRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor;
 - (void)setTemporaryRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor;
 - (void)addRowData:(iTermMetalRowData *)rowData;
