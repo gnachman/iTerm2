@@ -54,22 +54,24 @@ static NSViewController<iTermStatusBarKnobViewController> *iTermNewViewControlle
         [_knobs enumerateObjectsUsingBlock:^(iTermStatusBarComponentKnob * _Nonnull knob, NSUInteger idx, BOOL * _Nonnull stop) {
             knob.value = knobValues[knob.key] ?: knob.value;
         }];
-        self->_size.height = iTermStatusBarSetupPopoverMargin * 2;
+        _size.height = iTermStatusBarSetupPopoverMargin * 2;
+        __block CGFloat maxControlWidth = 0;
         _viewControllers = [_knobs mapWithBlock:^id(iTermStatusBarComponentKnob *knob) {
             NSViewController<iTermStatusBarKnobViewController> *vc = iTermNewViewControllerForKnob(knob);
             [self addChildViewController:vc];
             [vc view];
             [vc setDescription:knob.labelText placeholder:knob.placeholder];
             vc.value = knob.value;
-            self->_size.width = MAX(self->_size.width, vc.view.frame.size.width);
+            const CGFloat controlWidth = vc.view.frame.size.width - vc.controlOffset;
+            maxControlWidth = MAX(controlWidth, maxControlWidth);
             self->_size.height += vc.view.frame.size.height;
             self->_maxControlOffset = MAX(self->_maxControlOffset, vc.controlOffset);
             return vc;
         }];
-    }
-    _size.width += iTermStatusBarSetupPopoverMargin * 2;
-    if (_viewControllers.count >= 1) {
-        _size.height += 5 * (_viewControllers.count - 1);
+        _size.width = _maxControlOffset + maxControlWidth + iTermStatusBarSetupPopoverMargin * 2;
+        if (_viewControllers.count >= 1) {
+            _size.height += 5 * (_viewControllers.count - 1);
+        }
     }
 
     return self;
