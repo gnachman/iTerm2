@@ -108,9 +108,8 @@
             return _nonblendingRenderer;
         }
     }
-#else
-    return _blendingRenderer;
 #endif
+    return _blendingRenderer;
 }
 
 - (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
