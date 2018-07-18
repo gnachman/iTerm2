@@ -155,9 +155,13 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (CGFloat)statusBarComponentMinimumWidth {
+    CGFloat full = [self widthForString:self.cached ?: @""];
     NSString *firstCharacter = [self.cached firstComposedCharacter:nil];
-    CGFloat full = [self widthForString:self.cached];
-    CGFloat trunc = [self widthForString:[firstCharacter stringByAppendingString:@"…"]];
+    if (!firstCharacter) {
+        return full;
+    }
+    NSString *truncated = [firstCharacter stringByAppendingString:@"…"];
+    CGFloat trunc = [self widthForString:truncated];
     return MIN(full, trunc);
 }
 

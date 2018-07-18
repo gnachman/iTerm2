@@ -143,6 +143,9 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 
 - (CGFloat)statusBarComponentPreferredWidth {
     NSString *longest = [self longestStringValue];
+    if (!longest) {
+        return 0;
+    }
     return [self widthForString:longest];
 }
 
