@@ -34,6 +34,7 @@
 #import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
+#import "iTermProcessCache.h"
 #import "iTermProfilePreferences.h"
 #import "iTermPromptOnCloseReason.h"
 #import "iTermRecentDirectoryMO.h"
@@ -77,7 +78,6 @@
 #import "PasteContext.h"
 #import "PasteEvent.h"
 #import "PreferencePanel.h"
-#import "ProcessCache.h"
 #import "ProfilePreferencesViewController.h"
 #import "ProfilesColorsPreferencesViewController.h"
 #import "ProfilesGeneralPreferencesViewController.h"
@@ -1781,22 +1781,28 @@ ITERM_WEAKLY_REFERENCEABLE
     return x;
 }
 
-- (NSArray *)childJobNames {
-    int skip = 0;
+#warning TODO: Test this
+- (NSArray<NSString *> *)childJobNames {
     pid_t thePid = [_shell pid];
-    if ([[[ProcessCache sharedInstance] getNameOfPid:thePid isForeground:nil] isEqualToString:@"login"]) {
-        skip = 1;
+
+    iTermProcessInfo *info = [[iTermProcessCache sharedInstance] processInfoForPid:thePid];
+    if (!info) {
+        return @[];
     }
-    NSMutableArray *names = [NSMutableArray array];
-    for (NSNumber *n in [[ProcessCache sharedInstance] childrenOfPid:thePid levelsToSkip:skip]) {
-        pid_t pid = [n intValue];
-        NSDictionary *info = [[ProcessCache sharedInstance] dictionaryOfTaskInfoForPid:pid];
-        NSString *jobName = [info objectForKey:PID_INFO_NAME];
-        if (jobName) {
-            [names addObject:jobName];
-        }
+
+    NSArray<iTermProcessInfo *> *startingInfos;
+    if ([info.name isEqualToString:@"login"]) {
+        startingInfos = @[info];
+    } else {
+        startingInfos = info.children ?: @[];
     }
-    return names;
+
+    NSArray<iTermProcessInfo *> *allInfos = [startingInfos flatMapWithBlock:^id(iTermProcessInfo *info) {
+        return info.flattenedTree;
+    }];
+    return [allInfos mapWithBlock:^id(iTermProcessInfo *info) {
+        return info.name;
+    }];
 }
 
 - (iTermPromptOnCloseReason *)promptOnCloseReason {
@@ -2787,7 +2793,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // Make sure the screen gets redrawn soonish
     self.active = YES;
-    [[ProcessCache sharedInstance] notifyNewOutput];
+#warning TODO:Test this
+    [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
 }
 
 - (void)checkTriggers {
@@ -4389,7 +4396,10 @@ ITERM_WEAKLY_REFERENCEABLE
             _lastUpdate = now;
         }
     } else {
-        self.jobName = [_shell currentJob:NO];
+#warning TODO: Test this
+        int pid;
+        NSString *name = [_shell currentJob:NO pid:&pid];
+        [self setJobName:name pid:pid];
         [self.view setTitle:_nameController.presentationSessionTitle];
     }
 
@@ -4413,14 +4423,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 // Update the tab, session view, and window title.
 - (void)updateTitles {
-    NSString *newJobName = [_shell currentJob:NO];
-    // Update the job name in the tab title.
-    if (![NSObject object:newJobName isEqualToObject:self.jobName]) {
-        self.jobName = newJobName;
-    }
-    if (!(newJobName == self.jobName || [newJobName isEqualToString:self.jobName])) {
-        self.jobName = newJobName;
-    }
+    int pid;
+    NSString *newJobName = [_shell currentJob:NO pid:&pid];
+    [self setJobName:newJobName pid:pid];
 
     if ([_delegate sessionBelongsToVisibleTab]) {
         // Revert to the permanent tab title.
@@ -4428,10 +4433,15 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)setJobName:(NSString *)jobName {
+- (void)setJobName:(NSString *)jobName pid:(pid_t)pid {
+#warning TODO: Why is there a _jobName ivar?
     [_jobName autorelease];
     _jobName = [jobName copy];
     [self.variablesScope setValue:jobName forVariableNamed:iTermVariableKeySessionJob];
+    [self.variablesScope setValue:@(pid) forVariableNamed:iTermVariableKeySessionJobPid];
+    if (!_exited && _shell.pid > 0) {
+        [self.variablesScope setValue:@(_shell.pid) forVariableNamed:iTermVariableKeySessionChildPid];
+    }
 }
 
 - (void)refresh {

@@ -6,13 +6,33 @@
 //
 //
 
+#import "iTermLSOF.h"
 #import "iTermProcessCollection.h"
 #import "NSArray+iTerm.h"
 
+@interface iTermProcessInfo()
+@property(nonatomic, weak, readwrite) iTermProcessInfo *parent;
+@property(atomic, strong) NSString *nameValue;
+@property(atomic) NSNumber *isForegroundJobValue;
+@end
+
 @implementation iTermProcessInfo {
-    NSMutableArray *_children;
+    NSMutableArray<iTermProcessInfo *> *_children;
     __weak iTermProcessInfo *_deepestForegroundJob;
     BOOL _haveDeepestForegroundJob;
+    NSString *_name;
+    NSNumber *_isForegroundJob;
+    dispatch_once_t _once;
+}
+
+- (instancetype)initWithPid:(pid_t)processID
+                       ppid:(pid_t)parentProcessID {
+    self = [super init];
+    if (self) {
+        _processID = processID;
+        _parentProcessID = parentProcessID;
+    }
+    return self;
 }
 
 - (NSString *)treeStringWithIndent:(NSString *)indent {
@@ -55,11 +75,11 @@
     NSInteger bestLevel = *levelInOut;
     iTermProcessInfo *bestProcessInfo = nil;
 
-    if (_children.count == 0 && _isForegroundJob) {
+    if (_children.count == 0 && self.isForegroundJob) {
         _haveDeepestForegroundJob = YES;
         _deepestForegroundJob = self;
         return self;
-    } else if (_isForegroundJob) {
+    } else if (self.isForegroundJob) {
         bestProcessInfo = self;
     }
 
@@ -84,6 +104,46 @@
     return bestProcessInfo;
 }
 
+- (NSArray<iTermProcessInfo *> *)flattenedTree {
+    NSArray *flat = [_children flatMapWithBlock:^id(iTermProcessInfo *child) {
+        return child.flattenedTree;
+    }];
+    if (flat.count) {
+        return [@[ self ] arrayByAddingObjectsFromArray:flat];
+    } else {
+        return @[ self ];
+    }
+}
+
+- (void)doSlowLookup {
+    dispatch_once(&_once, ^{
+        BOOL fg;
+        self.nameValue = [iTermLSOF nameOfProcessWithPid:self->_processID isForeground:&fg];
+        self.isForegroundJobValue = @(fg);
+    });
+}
+
+- (NSString *)name {
+    [self doSlowLookup];
+    return self.nameValue;
+}
+
+- (BOOL)isForegroundJob {
+    [self doSlowLookup];
+    return self.isForegroundJobValue.boolValue;
+}
+
+- (void)resolveAsynchronously {
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("com.iterm2.pid-lookup", DISPATCH_QUEUE_SERIAL);
+    });
+    dispatch_async(queue, ^{
+        [self doSlowLookup];
+    });
+}
+
 @end
 
 @implementation iTermProcessCollection {
@@ -103,16 +163,13 @@
         return [anObject treeStringWithIndent:@""];
     }] componentsJoinedByString:@"\n"];
 }
-- (void)addProcessWithName:(NSString *)name
-                 processID:(pid_t)processID
-           parentProcessID:(pid_t)parentProcessID
-           isForegroundJob:(BOOL)isForegroundJob {
-    iTermProcessInfo *info = [[iTermProcessInfo alloc] init];
-    info.name = name;
-    info.processID = processID;
-    info.parentProcessID = parentProcessID;
-    info.isForegroundJob = isForegroundJob;
+
+- (iTermProcessInfo *)addProcessWithProcessID:(pid_t)processID
+                              parentProcessID:(pid_t)parentProcessID {
+    iTermProcessInfo *info = [[iTermProcessInfo alloc] initWithPid:processID
+                                                              ppid:parentProcessID];
     _processes[@(processID)] = info;
+    return info;
 }
 
 - (void)commit {

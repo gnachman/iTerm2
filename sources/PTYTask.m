@@ -3,9 +3,9 @@
 #import "Coprocess.h"
 #import "DebugLogging.h"
 #import "iTermNotificationController.h"
+#import "iTermProcessCache.h"
 #import "NSWorkspace+iTerm.h"
 #import "PreferencePanel.h"
-#import "ProcessCache.h"
 #import "PTYTask.h"
 #import "TaskNotifier.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -647,8 +647,17 @@ static void HandleSigChld(int n) {
 // arbitrary tty-controller in the tty's pgid that has this task as an ancestor
 // may be chosen. This function also implements a chache to avoid doing the
 // potentially expensive system calls too often.
-- (NSString *)currentJob:(BOOL)forceRefresh {
-    return [[ProcessCache sharedInstance] jobNameWithPid:self.pid];
+- (NSString *)currentJob:(BOOL)forceRefresh pid:(pid_t *)pid {
+#warning TODO: Test this
+    iTermProcessInfo *info = [[[iTermProcessCache sharedInstance] processInfoForPid:self.pid] deepestForegroundJob];
+    if (!info) {
+        return nil;
+    }
+
+    if (pid) {
+        *pid = info.processID;
+    }
+    return info.name;
 }
 
 - (void)writeTask:(NSData *)data {

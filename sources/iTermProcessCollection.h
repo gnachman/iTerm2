@@ -10,14 +10,17 @@
 
 @interface iTermProcessInfo : NSObject
 
-@property(nonatomic, retain) NSString *name;
-@property(nonatomic, assign) pid_t processID;
-@property(nonatomic, assign) pid_t parentProcessID;
+@property(nonatomic, readonly, strong) NSString *name;
+@property(nonatomic, readonly) pid_t processID;
+@property(nonatomic, readonly) pid_t parentProcessID;
 @property(nonatomic, readonly) NSMutableArray<iTermProcessInfo *> *children;
-@property(nonatomic, weak) iTermProcessInfo *parent;
-@property(nonatomic, assign) BOOL isForegroundJob;
+@property(nonatomic, weak, readonly) iTermProcessInfo *parent;
+@property(nonatomic, readonly) BOOL isForegroundJob;
 
 @property(nonatomic, weak, readonly) iTermProcessInfo *deepestForegroundJob;
+@property(nonatomic, readonly) NSArray<iTermProcessInfo *> *flattenedTree;
+
+- (void)resolveAsynchronously;
 
 @end
 
@@ -25,10 +28,8 @@
 
 @property (nonatomic, readonly) NSString *treeString;
 
-- (void)addProcessWithName:(NSString *)name
-                 processID:(pid_t)processID
-           parentProcessID:(pid_t)parentProcessID
-           isForegroundJob:(BOOL)isForegroundJob;
+- (iTermProcessInfo *)addProcessWithProcessID:(pid_t)processID
+                              parentProcessID:(pid_t)parentProcessID;
 
 - (void)commit;
 

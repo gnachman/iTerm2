@@ -64,7 +64,6 @@
 #import "PopupModel.h"
 #import "PopupWindow.h"
 #import "PreferencePanel.h"
-#import "ProcessCache.h"
 #import "PseudoTerminalRestorer.h"
 #import "PSMDarkTabStyle.h"
 #import "PSMDarkHighContrastTabStyle.h"
