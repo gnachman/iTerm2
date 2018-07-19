@@ -154,7 +154,8 @@ NSString *const iTermVariableKeySessionChildPid = @"session.pid";
 + (NSSet<NSString *> *)recordedVariableNamesInContext:(iTermVariablesSuggestionContext)context {
     NSSet<NSString *> *result = [NSSet set];
     for (int bit = 0; bit < 64; bit++) {
-        NSUInteger mask = 1 << bit;
+        const NSUInteger one = 1;
+        NSUInteger mask = one << bit;
         if (mask & context) {
             result = [result setByAddingObjectsFromSet:self.mutableRecordedNames[@(mask)] ?: [NSSet set]];
         }

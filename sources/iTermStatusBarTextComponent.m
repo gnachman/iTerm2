@@ -152,6 +152,9 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 }
 
 - (CGFloat)widthForString:(NSString *)string {
+    if (!string) {
+        return 0;
+    }
     if (!_measuringField) {
         _measuringField = [self newTextField];
     }
