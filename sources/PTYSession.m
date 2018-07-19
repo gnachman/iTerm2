@@ -4975,14 +4975,17 @@ ITERM_WEAKLY_REFERENCEABLE
            // Metal cuts off the tops of letters when line height reduced
             return NO;
         }
-#if !ENABLE_TRANSPARENT_METAL_WINDOWS
-        if (_textview.transparencyAlpha < 1) {
-            return NO;
-        }
-#endif
         if (@available(macOS 10.14, *)) {
             // View compositing works in Mojave but not at all before it.
+#if !ENABLE_TRANSPARENT_METAL_WINDOWS
+            if (_textview.transparencyAlpha < 1) {
+                return NO;
+            }
+#endif
             return YES;
+        }
+        if (_textview.transparencyAlpha < 1) {
+            return NO;
         }
         // Metal's not allowed when other views are composited over the metal view because that just
         // doesn't seem to work, even if you use presentsWithTransaction (even if it did work, it
