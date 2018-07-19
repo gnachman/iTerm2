@@ -21,16 +21,5 @@
   ToolbeltTool,
   NSComboBoxDelegate,
   NSTableViewDelegate,
-  NSTableViewDataSource> {
-    NSScrollView *scrollView_;
-    NSTableView *tableView_;
-    NSButton *kill_;
-    SignalPicker *signal_;
-    NSTimer *timer_;
-    NSMutableArray *names_;
-    NSArray *pids_;
-    BOOL shutdown_;
-    NSTimeInterval timerInterval_;
-}
-
+  NSTableViewDataSource>
 @end

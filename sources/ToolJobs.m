@@ -9,13 +9,14 @@
 #import "ToolJobs.h"
 
 #import "iTermCompetentTableRowView.h"
+#import "iTermProcessCache.h"
 #import "iTermToolWrapper.h"
+#import "NSArray+iTerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTask.h"
-#import "ProcessCache.h"
 
 // For SignalPicker
 static const int kDefaultSignal = 9;
@@ -175,13 +176,21 @@ static const CGFloat kMargin = 4;
 @property(nonatomic, assign) BOOL killable;
 @end
 
-@implementation ToolJobs
+@implementation ToolJobs {
+    NSScrollView *scrollView_;
+    NSTableView *tableView_;
+    NSButton *kill_;
+    SignalPicker *signal_;
+    NSTimer *timer_;
+    NSArray<iTermProcessInfo *> *_processInfos;
+    BOOL shutdown_;
+    NSTimeInterval timerInterval_;
+}
 
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        names_ = [[NSMutableArray alloc] init];
-        pids_ = [[NSArray alloc] init];
+        _processInfos = @[];
 
         kill_ = [[[NSButton alloc] initWithFrame:NSMakeRect(0,
                                                             frame.size.height - kButtonHeight,
@@ -294,8 +303,7 @@ static const CGFloat kMargin = 4;
     [scrollView_ release];
     [timer_ invalidate];
     timer_ = nil;
-    [names_ release];
-    [pids_ release];
+    [_processInfos release];
     [super dealloc];
 }
 
@@ -316,27 +324,27 @@ static const CGFloat kMargin = 4;
     }
     iTermToolWrapper *wrapper = self.toolWrapper;
     pid_t rootPid = [wrapper.delegate.delegate toolbeltCurrentShellProcessId];
-    NSSet *pids = [[ProcessCache sharedInstance] childrenOfPid:rootPid levelsToSkip:0];
-    if (![pids isEqualToSet:[NSSet setWithArray:pids_]]) {
-        // Something changed. Get job names, which is expensive.
-        [pids_ release];
-        NSArray *sortedArray = [[pids allObjects] sortedArrayUsingSelector:@selector(compare:)];
-        pids_ = [[NSMutableArray arrayWithArray:sortedArray] retain];
-        [names_ removeAllObjects];
-        int i = 0;
-        for (NSNumber *pid in pids_) {
-            BOOL fg;
-            NSString *pidName;
-            pidName = [[ProcessCache sharedInstance] getNameOfPid:[pid intValue]
-                                                     isForeground:&fg];
-            if (pidName) {
-                [names_ addObject:pidName];
-                i++;
-                if (i > kMaxJobs) {
-                    break;
-                }
+
+    NSArray<iTermProcessInfo *> *infos = [[[iTermProcessCache sharedInstance] processInfoForPid:rootPid] flattenedTree];
+    NSSet<NSNumber *> *oldPids = [NSSet setWithArray:[_processInfos mapWithBlock:^id(iTermProcessInfo *info) {
+        return @(info.processID);
+    }]];
+    NSSet<NSNumber *> *newPids = [NSSet setWithArray:[infos mapWithBlock:^id(iTermProcessInfo *info) {
+        return @(info.processID);
+    }]];
+    if (![oldPids isEqual:newPids]) {
+        NSArray<iTermProcessInfo *> *sortedInfos = [infos sortedArrayUsingComparator:^NSComparisonResult(iTermProcessInfo * _Nonnull obj1, iTermProcessInfo * _Nonnull obj2) {
+            return [@(obj1.processID) compare:@(obj2.processID)];
+        }];
+        [sortedInfos enumerateObjectsUsingBlock:^(iTermProcessInfo * _Nonnull info, NSUInteger idx, BOOL * _Nonnull stop) {
+            if (idx == kMaxJobs) {
+                *stop = YES;
+                return;
             }
-        }
+            [info resolveAsynchronously];
+        }];
+        [_processInfos autorelease];
+        _processInfos = [sortedInfos retain];
         [tableView_ reloadData];
 
         // Updating the table data causes the cursor to change into an arrow!
@@ -365,7 +373,7 @@ static const CGFloat kMargin = 4;
 }
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
-    return [names_ count];
+    return MIN(_processInfos.count, kMaxJobs);
 }
 
 - (NSView *)tableView:(NSTableView *)tableView
@@ -387,10 +395,10 @@ static const CGFloat kMargin = 4;
                                row:(NSInteger)rowIndex {
     if ([[aTableColumn identifier] isEqualToString:@"name"]) {
         // name
-        return [names_ objectAtIndex:rowIndex];
+        return _processInfos[rowIndex].name;
     } else {
         // pid
-        return [[pids_ objectAtIndex:rowIndex] stringValue];
+        return [@(_processInfos[rowIndex].processID) stringValue];
     }
 }
 
@@ -401,16 +409,16 @@ static const CGFloat kMargin = 4;
 
 - (id <NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
     NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
-    NSString *aString = [pids_[row] stringValue];
+    NSString *aString = [@(_processInfos[row].processID) stringValue];
     [pbItem setString:aString forType:(NSString *)kUTTypeUTF8PlainText];
     return pbItem;
 }
 
-- (void)kill:(id)sender
-{
-    NSNumber *pid = [pids_ objectAtIndex:[tableView_ selectedRow]];
-    pid_t p = [pid intValue];
-    kill(p, [signal_ intValue]);
+- (void)kill:(id)sender {
+    pid_t p = _processInfos[tableView_.selectedRow].processID;
+    if (p > 0) {
+        kill(p, [signal_ intValue]);
+    }
 }
 
 - (CGFloat)minimumHeight

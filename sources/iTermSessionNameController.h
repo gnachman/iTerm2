@@ -14,7 +14,6 @@
 @property (nonatomic, copy) NSString *tmuxClientName;
 @property (nonatomic) BOOL haveTmuxController;
 @property (nonatomic, copy) NSString *tmuxWindowName;
-@property (nonatomic, copy) NSString *jobName;
 @end
 
 @protocol iTermSessionNameControllerDelegate<NSObject>

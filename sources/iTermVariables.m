@@ -48,6 +48,9 @@ NSString *const iTermVariableKeySessionTmuxRole = @"session.tmuxRole";
 NSString *const iTermVariableKeySessionTmuxClientName = @"session.tmuxClientName";
 NSString *const iTermVariableKeySessionAutoName = @"session.autoName";
 NSString *const iTermVariableKeySessionTmuxWindowPane = @"session.tmuxWindowPane";
+NSString *const iTermVariableKeySessionJobPid = @"session.jobPid";
+NSString *const iTermVariableKeySessionChildPid = @"session.pid";
+
 // NOTE: If you add here, also update +recordBuiltInVariables
 
 @implementation iTermVariables {
@@ -91,7 +94,9 @@ NSString *const iTermVariableKeySessionTmuxWindowPane = @"session.tmuxWindowPane
                                     iTermVariableKeySessionTmuxRole,
                                     iTermVariableKeySessionTmuxClientName,
                                     iTermVariableKeySessionAutoName,
-                                    iTermVariableKeySessionTmuxWindowPane, ];
+                                    iTermVariableKeySessionTmuxWindowPane,
+                                    iTermVariableKeySessionJobPid,
+                                    iTermVariableKeySessionChildPid ];
     [names enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [self recordUseOfVariableNamed:obj inContext:iTermVariablesSuggestionContextSession];
     }];

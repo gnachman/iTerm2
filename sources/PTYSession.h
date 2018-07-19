@@ -358,8 +358,6 @@ typedef enum {
 // You should usually not assign to this; instead use divorceAddressBookEntryFromPreferences.
 @property(nonatomic, assign) BOOL isDivorced;
 
-@property(nonatomic, readonly) NSString *jobName;
-
 // Ignore resize notifications. This would be set because the session's size musn't be changed
 // due to temporary changes in the window size, as code later on may need to know the session's
 // size to set the window size properly.

@@ -18,6 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
                configuration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration NS_UNAVAILABLE;
+
+// If you override stringVariants you don't need to provide this.
 - (NSString *)stringByCompressingString:(NSString *)source;
 
 @end

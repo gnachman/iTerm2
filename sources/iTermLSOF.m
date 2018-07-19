@@ -11,7 +11,6 @@
 #import "DebugLogging.h"
 #import "iTermSocketAddress.h"
 #import "NSStringITerm.h"
-#import "ProcessCache.h"
 #include <arpa/inet.h>
 #include <libproc.h>
 #include <stdlib.h>
@@ -158,7 +157,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
 
 + (void)enumerateProcesses:(void(^)(pid_t, BOOL*))block {
     BOOL stop = NO;
-    for (NSNumber *pidNumber in [ProcessCache allPids]) {
+    for (NSNumber *pidNumber in [self allPids]) {
         block(pidNumber.intValue, &stop);
         if (stop) {
             break;
@@ -373,6 +372,80 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg, void *buffer, int
             assert(false);
     }
     return storage;
+}
+
++ (NSArray<NSNumber *> *)allPids {
+    const int bufferSize = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    if (bufferSize <= 0) {
+        return @[];
+    }
+
+    // Put all the pids of running jobs in the pids array.
+    int *pids = (int *)malloc(bufferSize);
+    const int bytesReturned = proc_listpids(PROC_ALL_PIDS, 0, pids, bufferSize);
+    if (bytesReturned <= 0) {
+        free(pids);
+        return @[];
+    }
+
+    const int numPids = bytesReturned / sizeof(int);
+
+    NSMutableArray<NSNumber *> *pidsArray = [NSMutableArray array];
+    for (int i = 0; i < numPids; i++) {
+        [pidsArray addObject:@(pids[i])];
+    }
+
+    free(pids);
+
+    return pidsArray;
+}
+
+// Returns 0 on failure.
++ (pid_t)ppidForPid:(pid_t)childPid {
+    struct proc_bsdshortinfo taskShortInfo;
+    memset(&taskShortInfo, 0, sizeof(taskShortInfo));
+    int rc = iTermProcPidInfoWrapper(childPid,
+                                     PROC_PIDT_SHORTBSDINFO,
+                                     0,
+                                     &taskShortInfo,
+                                     sizeof(taskShortInfo));
+    if (rc <= 0) {
+        return 0;
+    } else {
+        return taskShortInfo.pbsi_ppid;
+    }
+}
+
+// Use sysctl magic to get the name of a process and whether it is controlling
+// the tty. This code was adapted from ps, here:
+// http://opensource.apple.com/source/adv_cmds/adv_cmds-138.1/ps/
+//
+// The equivalent in ps would be:
+//   ps -aef -o stat
+// If a + occurs in the STAT column then it is considered to be a foreground
+// job.
++ (NSString *)nameOfProcessWithPid:(pid_t)thePid isForeground:(BOOL *)isForeground {
+    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, thePid };
+    struct kinfo_proc kp;
+    size_t bufSize = sizeof(kp);
+
+    kp.kp_proc.p_comm[0] = 0;
+    if (sysctl(mib, 4, &kp, &bufSize, NULL, 0) < 0) {
+        return nil;
+    }
+
+    // has a controlling terminal and
+    // process group id = tty process group id
+    if (isForeground) {
+        *isForeground = ((kp.kp_proc.p_flag & P_CONTROLT) &&
+                         kp.kp_eproc.e_pgid == kp.kp_eproc.e_tpgid);
+    }
+
+    if (kp.kp_proc.p_comm[0]) {
+        return [NSString stringWithUTF8String:kp.kp_proc.p_comm];
+    } else {
+        return nil;
+    }
 }
 
 @end

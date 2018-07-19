@@ -52,12 +52,7 @@ const float kItermExposeThumbMargin = 25;
     if (i == 0) {
         return @"Defunct Tab";
     }
-    NSString* jobName = [[aTab activeSession] jobName];
-    if (jobName) {
-        return [NSString stringWithFormat:@"%d/%d. %@", i, j, [[aTab activeSession] name]];
-    } else {
-        return [NSString stringWithFormat:@"%d/%d. %@", i, j, [[aTab activeSession] name]];
-    }
+    return [NSString stringWithFormat:@"%d/%d. %@", i, j, [[aTab activeSession] name]];
 }
 
 + (iTermExpose*)sharedInstance
