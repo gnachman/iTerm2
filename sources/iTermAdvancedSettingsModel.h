@@ -216,9 +216,6 @@
 + (BOOL)openNewWindowAtStartup;
 + (BOOL)resetSGROnPrompt;
 
-#warning Bring this back
-//+ (BOOL)useLowPowerGPUWhenUnplugged;
-
 + (BOOL)retinaInlineImages;
 + (double)timeToWaitForEmojiPanel;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;

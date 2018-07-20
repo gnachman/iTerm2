@@ -6,7 +6,6 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermMetalClipView.h"
-#import "iTermMetalDeviceProvider.h"
 #import "iTermPreferences.h"
 #import "NSView+iTerm.h"
 #import "MovePaneController.h"
@@ -146,15 +145,6 @@ static NSDate* lastResizeDate_;
         // assign the main view
         [self addSubview:_scrollview];
 
-#warning Bring this back
-#if 0
-        if (@available(macOS 10.11, *)) {
-            [[NSNotificationCenter defaultCenter] addObserver:self
-                                                     selector:@selector(preferredMetalDeviceDidChange:)
-                                                         name:iTermMetalDeviceProviderPreferredDeviceDidChangeNotification
-                                                       object:nil];
-        }
-#endif
     }
     return self;
 }
@@ -252,8 +242,6 @@ static NSDate* lastResizeDate_;
                                              device:device];
     }
     // There was a spike in crashes on 5/1. I'm removing this temporarily to see if it was the cause.
-#warning Bring this back
-//                                         device:[[iTermMetalDeviceProvider sharedInstance] preferredDevice]];
     _metalView.layer.opaque = YES;
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
