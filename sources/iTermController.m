@@ -396,9 +396,7 @@ static iTermController *gSharedInstance;
                 [terminalArrangements addObject:arrangement];
             }
         }
-        if (terminalArrangements.count) {
-            [WindowArrangements setArrangement:terminalArrangements withName:name];
-        }
+        [WindowArrangements setArrangement:terminalArrangements withName:name];
     } else {
         PseudoTerminal *currentTerminal = [self currentTerminal];
         if (!currentTerminal) {
