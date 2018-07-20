@@ -2878,5 +2878,68 @@ do { \
                @"........!"]);
 }
 
+- (void)testGridRunFromRange_basic {
+    NSRange range = NSMakeRange(0, 5);
+    VT100Grid *grid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(10, 10) delegate:self] autorelease];
+    VT100GridRun actual = [grid gridRunFromRange:range relativeToRow:0];
+    VT100GridRun expected = VT100GridRunMake(0, 0, 5);
+    XCTAssertTrue(VT100GridRunEquals(actual, expected),
+                  "actual=%@, expected=%@", VT100GridRunDescription(actual), VT100GridRunDescription(expected));
+}
+
+- (void)testGridRunFromRange_spanLines {
+    NSRange range = NSMakeRange(8, 5);
+    VT100Grid *grid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(10, 10) delegate:self] autorelease];
+    VT100GridRun actual = [grid gridRunFromRange:range relativeToRow:0];
+    VT100GridRun expected = VT100GridRunMake(8, 0, 5);
+    XCTAssertTrue(VT100GridRunEquals(actual, expected),
+                  "actual=%@, expected=%@", VT100GridRunDescription(actual), VT100GridRunDescription(expected));
+}
+
+- (void)testGridRunFromRange_startOnSubsequentLine {
+    NSRange range = NSMakeRange(18, 5);
+    VT100Grid *grid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(10, 10) delegate:self] autorelease];
+    VT100GridRun actual = [grid gridRunFromRange:range relativeToRow:0];
+    VT100GridRun expected = VT100GridRunMake(8, 1, 5);
+    XCTAssertTrue(VT100GridRunEquals(actual, expected),
+                  "actual=%@, expected=%@", VT100GridRunDescription(actual), VT100GridRunDescription(expected));
+}
+
+- (void)testGridRunFromRange_positiveRow {
+    NSRange range = NSMakeRange(18, 5);
+    VT100Grid *grid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(10, 10) delegate:self] autorelease];
+    VT100GridRun actual = [grid gridRunFromRange:range relativeToRow:5];
+    VT100GridRun expected = VT100GridRunMake(8, 6, 5);
+    XCTAssertTrue(VT100GridRunEquals(actual, expected),
+                  "actual=%@, expected=%@", VT100GridRunDescription(actual), VT100GridRunDescription(expected));
+}
+
+- (void)testGridRunFromRange_negativeRowNoTruncation {
+    NSRange range = NSMakeRange(18, 5);
+    VT100Grid *grid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(10, 10) delegate:self] autorelease];
+    VT100GridRun actual = [grid gridRunFromRange:range relativeToRow:-1];
+    VT100GridRun expected = VT100GridRunMake(8, 0, 5);
+    XCTAssertTrue(VT100GridRunEquals(actual, expected),
+                  "actual=%@, expected=%@", VT100GridRunDescription(actual), VT100GridRunDescription(expected));
+}
+
+- (void)testGridRunFromRange_negativeRowTruncatedStart {
+    NSRange range = NSMakeRange(18, 5);
+    VT100Grid *grid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(10, 10) delegate:self] autorelease];
+    VT100GridRun actual = [grid gridRunFromRange:range relativeToRow:-2];
+    VT100GridRun expected = VT100GridRunMake(0, 0, 3);
+    XCTAssertTrue(VT100GridRunEquals(actual, expected),
+                  "actual=%@, expected=%@", VT100GridRunDescription(actual), VT100GridRunDescription(expected));
+}
+
+- (void)testGridRunFromRange_negativeRowCompletelyTruncated {
+    NSRange range = NSMakeRange(18, 5);
+    VT100Grid *grid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(10, 10) delegate:self] autorelease];
+    VT100GridRun actual = [grid gridRunFromRange:range relativeToRow:-3];
+    VT100GridRun expected = VT100GridRunMake(0, 0, 0);
+    XCTAssertTrue(VT100GridRunEquals(actual, expected),
+                  "actual=%@, expected=%@", VT100GridRunDescription(actual), VT100GridRunDescription(expected));
+}
+
 @end
 

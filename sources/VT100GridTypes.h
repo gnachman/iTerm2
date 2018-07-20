@@ -142,6 +142,11 @@ NS_INLINE BOOL VT100GridCoordEquals(VT100GridCoord a, VT100GridCoord b) {
     return a.x == b.x && a.y == b.y;
 }
 
+NS_INLINE BOOL VT100GridRunEquals(VT100GridRun a, VT100GridRun b) {
+    return (a.length == b.length &&
+            VT100GridCoordEquals(a.origin, b.origin));
+}
+
 NS_INLINE BOOL VT100GridAbsCoordEquals(VT100GridAbsCoord a, VT100GridAbsCoord b) {
     return a.x == b.x && a.y == b.y;
 }
@@ -288,6 +293,10 @@ NS_INLINE VT100GridAbsWindowedRange VT100GridAbsWindowedRangeFromRelative(VT100G
 
 NS_INLINE NSString *VT100GridCoordDescription(VT100GridCoord c) {
     return [NSString stringWithFormat:@"(%d, %d)", c.x, c.y];
+}
+
+NS_INLINE NSString *VT100GridRunDescription(VT100GridRun run) {
+    return [NSString stringWithFormat:@"[origin=%@ length=%@]", VT100GridCoordDescription(run.origin), @(run.length)];
 }
 
 NS_INLINE NSString *VT100GridRangeDescription(VT100GridRange r) {
