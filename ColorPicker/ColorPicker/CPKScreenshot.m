@@ -80,12 +80,14 @@
 
 - (NSColor *)colorAtX:(NSInteger)x y:(NSInteger)y {
     unsigned char *b = (unsigned char *)_data.bytes;
-    b += y * (int)_size.width * 4;
-    b += x * 4;
-    return [NSColor colorWithSRGBRed:b[1] / 255.0
-                               green:b[2] / 255.0
-                                blue:b[3] / 255.0
-                               alpha:b[0] / 255.0];
+    NSInteger offset = (x + y * (NSInteger)_size.width) * 4;
+    if (offset < 0 || offset > _data.length) {
+        return nil;
+    }
+    return [NSColor colorWithSRGBRed:b[offset + 1] / 255.0
+                               green:b[offset + 2] / 255.0
+                                blue:b[offset + 3] / 255.0
+                               alpha:b[offset + 0] / 255.0];
 }
 
 @end
