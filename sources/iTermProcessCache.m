@@ -7,6 +7,7 @@
 
 #import "iTermLSOF.h"
 #import "iTermProcessCache.h"
+#import "iTermRateLimitedUpdate.h"
 #import "NSArray+iTerm.h"
 #import <stdatomic.h>
 
@@ -18,6 +19,7 @@
     dispatch_queue_t _queue;
     iTermProcessCollection *_collection; // _queue
     _Atomic bool _needsUpdate;
+    iTermRateLimitedUpdate *_rateLimit;  // keeps updateIfNeeded from eating all the CPU
 }
 
 + (instancetype)sharedInstance {
@@ -33,6 +35,8 @@
     self = [super init];
     if (self) {
         _queue = dispatch_queue_create("com.iterm2.process-cache", DISPATCH_QUEUE_SERIAL);
+        _rateLimit = [[iTermRateLimitedUpdate alloc] init];
+        _rateLimit.minimumInterval = 0.1;
         [self setNeedsUpdate:YES];
     }
     return self;
@@ -43,9 +47,7 @@
 - (void)setNeedsUpdate:(BOOL)needsUpdate {
     self.needsUpdateFlag = needsUpdate;
     if (needsUpdate) {
-        dispatch_async(_queue, ^{
-            [self updateIfNeeded];
-        });
+        [_rateLimit performRateLimitedSelector:@selector(updateIfNeeded) onTarget:self withObject:nil];
     }
 }
 
@@ -84,9 +86,6 @@
     [collection commit];
     _collection = collection;
     self.needsUpdateFlag = NO;
-
-    // Keep this queue from spinning
-    [NSThread sleepForTimeInterval:0.1];
 }
 
 @end
