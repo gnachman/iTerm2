@@ -241,7 +241,8 @@ enum {
 
     _advancedGPUWindowController.viewController.maximizeThroughput.target = self;
     _advancedGPUWindowController.viewController.maximizeThroughput.action = @selector(settingChanged:);
-#warning TODO: This should also defer currentDrawable, but that feature is only on the master branch.
+
+    // NOTE: if the defer currentDrawable feature ever makes it to this branch this will need to be updated.
     info = [self defineControl:_advancedGPUWindowController.viewController.maximizeThroughput
                            key:kPreferenceKeyMetalMaximizeThroughput
                           type:kPreferenceInfoTypeCheckbox];
