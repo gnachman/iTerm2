@@ -12,6 +12,7 @@
 #import "NSStringITerm.h"
 
 static const NSInteger iTermStatusBarCPUUtilizationComponentMaximumNumberOfSamples = 60;
+static const CGFloat iTermCPUUtilizationWidth = 120;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -42,34 +43,141 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (id)statusBarComponentExemplar {
-    return @"CPU [❚❚❚❚❚❚❚❚  ] 72%";
+    return @"12% ▃▃▅▂ CPU";
 }
 
 - (BOOL)statusBarComponentCanStretch {
     return NO;
 }
 
-- (nullable NSString *)stringValue {
-    const NSInteger N = 10;
-    NSArray<NSNumber *> *bins = [self binnedSamples:_samples count:N];
-    NSString *sparklines = @"";
-    for (NSInteger i = 0; i < bins.count; i++) {
-        sparklines = [sparklines stringByAppendingString:[NSString sparkWithHeight:bins[i].doubleValue]];
-    }
-    sparklines = [[@" " stringRepeatedTimes:N - bins.count] stringByAppendingString:sparklines];
-    return [NSString stringWithFormat:@"CPU [%@] %d%%", sparklines, (int)(_samples.lastObject.doubleValue * 100)];
-}
-
-- (nullable NSString *)stringValueForCurrentWidth {
-    return self.stringValue;
-}
-
 - (NSTimeInterval)statusBarComponentUpdateCadence {
     return 1;
 }
 
-- (nullable NSArray<NSString *> *)stringVariants {
-    return @[ self.stringValue ?: @"" ];
+- (CGFloat)statusBarComponentMinimumWidth {
+    return iTermCPUUtilizationWidth;
+}
+
+- (CGFloat)statusBarComponentPreferredWidth {
+    return iTermCPUUtilizationWidth;
+}
+
+- (NSArray<NSNumber *> *)values {
+    return _samples;
+}
+
+- (int)currentEstimate {
+    double alpha = 0.7;
+    NSArray<NSNumber *> *lastSamples = _samples;
+    const NSInteger maxSamplesToUse = 4;
+    double x = _samples.lastObject.doubleValue;
+    if (lastSamples.count > maxSamplesToUse) {
+        lastSamples = [lastSamples subarrayWithRange:NSMakeRange(lastSamples.count - maxSamplesToUse,
+                                                                 maxSamplesToUse)];
+    }
+    for (NSNumber *number in lastSamples) {
+        x *= (1.0 - alpha);
+        x += number.doubleValue * alpha;
+    }
+    return x * 100;
+}
+
+- (void)drawTextWithRect:(NSRect)rect
+                    left:(NSString *)left
+                   right:(NSString *)right
+               rightSize:(CGSize)rightSize {
+    NSRect textRect = rect;
+    textRect.size.height = rightSize.height;
+    NSFont *font = self.font;
+    const CGFloat baselineOffset = font.leading - font.descender;
+    const CGFloat capHeight = font.capHeight;
+
+    textRect.origin.y += self.view.bounds.size.height / 2 - baselineOffset - capHeight / 2;
+    [left drawInRect:textRect withAttributes:self.leftAttributes];
+    [right drawInRect:textRect withAttributes:self.rightAttributes];
+}
+
+- (NSRect)graphRectForRect:(NSRect)rect
+                  leftSize:(CGSize)leftSize
+                 rightSize:(CGSize)rightSize {
+    NSRect graphRect = rect;
+    const CGFloat margin = 4;
+    CGFloat rightWidth = rightSize.width + margin;
+    CGFloat leftWidth = leftSize.width + margin;
+    graphRect.origin.x += leftWidth;
+    graphRect.size.width -= (leftWidth + rightWidth);
+    graphRect = NSInsetRect(graphRect, 0, 2);
+    return graphRect;
+}
+
+- (NSFont *)font {
+    static NSFont *font;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        font = [NSFont fontWithName:@"Menlo" size:12];
+    });
+    return font;
+}
+
+- (NSDictionary *)leftAttributes {
+    static NSDictionary *leftAttributes;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableParagraphStyle *leftAlignStyle =
+            [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+            [leftAlignStyle setAlignment:NSTextAlignmentLeft];
+            [leftAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
+
+        leftAttributes = @{ NSParagraphStyleAttributeName: leftAlignStyle,
+                            NSFontAttributeName: self.font,
+                            NSForegroundColorAttributeName: [NSColor blackColor] };
+    });
+    return leftAttributes;
+}
+
+- (NSDictionary *)rightAttributes {
+    static NSDictionary *rightAttributes;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableParagraphStyle *rightAlignStyle =
+            [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+            [rightAlignStyle setAlignment:NSTextAlignmentRight];
+            [rightAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
+        rightAttributes = @{ NSParagraphStyleAttributeName: rightAlignStyle,
+                             NSFontAttributeName: self.font,
+                             NSForegroundColorAttributeName: [NSColor blackColor] };
+    });
+    return rightAttributes;
+}
+
+- (NSSize)leftSize {
+    NSString *longestPercentage = @"100%";
+    return [longestPercentage sizeWithAttributes:self.rightAttributes];
+}
+
+- (CGSize)rightSize {
+    return [self.rightText sizeWithAttributes:self.rightAttributes];
+}
+
+- (NSString *)leftText {
+    return [NSString stringWithFormat:@"%3d%%", self.currentEstimate];
+}
+
+- (NSString *)rightText {
+    return @"CPU";
+}
+
+- (void)drawRect:(NSRect)rect {
+    CGSize rightSize = self.rightSize;
+    
+    [self drawTextWithRect:rect
+                      left:self.leftText
+                     right:self.rightText
+                 rightSize:rightSize];
+
+    NSRect graphRect = [self graphRectForRect:rect leftSize:self.leftSize rightSize:rightSize];
+
+    [super drawRect:graphRect];
 }
 
 #pragma mark - Private
@@ -79,32 +187,9 @@ NS_ASSUME_NONNULL_BEGIN
     while (_samples.count > iTermStatusBarCPUUtilizationComponentMaximumNumberOfSamples) {
         [_samples removeObjectAtIndex:0];
     }
+    [self invalidate];
 }
 
-- (NSArray<NSNumber *> *)binnedSamples:(NSArray<NSNumber *> *)samples count:(NSInteger)count {
-    if (samples.count < count) {
-        return samples;
-    }
-    double samplesPerBin = (double)samples.count / (double)count;
-
-    NSMutableArray<NSNumber *> *bins = [NSMutableArray array];
-    for (NSInteger i = 0; i < count; i++) {
-        double sum = 0;
-        double start = samplesPerBin * i;
-        double remaining = samplesPerBin;
-        int j = floor(start);
-        double weight = floor(start + 1) - start;
-        while (remaining > 0 && j < samples.count) {
-            sum += samples[j].doubleValue * weight;
-            remaining -= weight;
-            weight = MIN(1, remaining);
-            j++;
-        }
-        assert(remaining < 0.01);
-        [bins addObject:@(sum)];
-    }
-    return bins;
-}
 @end
 
 NS_ASSUME_NONNULL_END

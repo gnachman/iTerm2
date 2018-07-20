@@ -202,14 +202,32 @@
     if (values.count == 0) {
         return;
     }
-    [self.lineColor set];
-    CGFloat x = rect.size.width - values.count;
-    const CGFloat w = 1;
+
+    const CGFloat numBars = MIN(rect.size.width, values.count);
+    const CGFloat barWidth = MIN(1, rect.size.width / numBars);
+    CGFloat x = NSMaxX(rect) - values.count * barWidth;
+
     const CGFloat margin = 2;
+
+    // Draw baseline
+    [[NSColor colorWithWhite:0.5 alpha:1] set];
+    NSRectFill(NSMakeRect(NSMinX(rect), rect.origin.y + margin, NSWidth(rect), 1));
+
+    const CGFloat y = margin + rect.origin.y;
+    NSBezierPath *path = [[NSBezierPath alloc] init];
+    const CGFloat x0 = x;
+    [path moveToPoint:NSMakePoint(x, y)];
     for (NSNumber *n in values) {
-        NSRectFill(NSMakeRect(x, margin, 1, n.doubleValue * rect.size.height - margin * 2));
-        x += w;
+        const CGFloat height = n.doubleValue * (rect.size.height - margin * 2);
+        [path lineToPoint:NSMakePoint(x, y + height)];
+        x += barWidth;
     }
+    [path lineToPoint:NSMakePoint(x, y)];
+    [path lineToPoint:NSMakePoint(x0, y)];
+
+    NSGradient *gradient = [[NSGradient alloc] initWithColors:@[ [NSColor blackColor],
+                                                                 [NSColor colorWithRed:1 green:0.25 blue:0 alpha:1] ]];
+    [gradient drawInBezierPath:path angle:90];
 }
 
 - (void)invalidate {

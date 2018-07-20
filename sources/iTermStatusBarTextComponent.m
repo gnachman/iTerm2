@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarTextComponent.h"
 
+#import "DebugLogging.h"
 #import "iTermStatusBarSetupKnobsViewController.h"
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
