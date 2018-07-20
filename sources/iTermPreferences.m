@@ -231,7 +231,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAutoHideTmuxClientSession: @NO,
                   kPreferenceKeyUseMetal: @YES,
                   kPreferenceKeyDisableMetalWhenUnplugged: @YES,
-                  kPreferenceKeyPreferIntegratedGPU: @NO,
+                  kPreferenceKeyPreferIntegratedGPU: @YES,
                   kPreferenceKeyMetalMaximizeThroughput: @YES,
 
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),
