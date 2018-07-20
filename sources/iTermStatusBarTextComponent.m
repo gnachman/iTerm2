@@ -67,14 +67,19 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 
 - (BOOL)shouldUpdateValue:(NSString *)proposed inField:(NSTextField *)textField {
     const BOOL textFieldHasString = textField.stringValue.length > 0;
-    const BOOL iHaveString = proposed != nil;
+    const BOOL iHaveString = proposed.length > 0;
 
     if (textFieldHasString != iHaveString) {
+        DLog(@"%@ updating because nilness changed. textfield=%@ proposed=%@", self, textField.stringValue, proposed);
         return YES;
     }
     if (textFieldHasString || iHaveString) {
-        return !([NSObject object:textField.stringValue isEqualToObject:proposed] &&
-                 [NSObject object:textField.textColor isEqualToObject:self.textColor]);
+        BOOL result = !([NSObject object:textField.stringValue isEqualToObject:proposed] &&
+                        [NSObject object:textField.textColor isEqualToObject:self.textColor]);
+        if (result) {
+            DLog(@"%@ updating because %@ != %@", self, textField.stringValue, proposed);
+        }
+        return result;
     }
     
     return NO;
