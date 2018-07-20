@@ -181,9 +181,11 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
+        // The fragment and vertex function names are changed later, but since it has to be created
+        // with a valid pair, may as well be these which are most commonly used.
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
-                                                    vertexFunctionName:@"iTermTextVertexShader"
-                                                  fragmentFunctionName:@"iTermTextFragmentShader"
+                                                    vertexFunctionName:VertexFunctionName(false, true, false)
+                                                  fragmentFunctionName:FragmentFunctionName(false, true, false)
                                                               blending:[[iTermMetalBlending alloc] init]
                                                         piuElementSize:sizeof(iTermTextPIU)
                                                    transientStateClass:[iTermTextRendererTransientState class]];
@@ -244,8 +246,6 @@ static const int iTermTextRendererMaximumNumberOfTexturePages = 4096;
     // NOTE: Any time a glyph overflows its bounds into a neighboring cell it's possible the strokes will intersect.
     // I haven't thought of a way to make that look good yet without having to do one draw pass per overflow glyph that
     // blends using the output of the preceding passes.
-#warning TODO: Remove this
-    _cellRenderer.fragmentFunctionName = configuration.usingIntermediatePass ? @"iTermTextFragmentShaderWithBlending" : @"iTermTextFragmentShaderSolidBackground";
     __kindof iTermMetalCellRendererTransientState * _Nonnull transientState =
         [_cellRenderer createTransientStateForCellConfiguration:configuration
                                               commandBuffer:commandBuffer];
