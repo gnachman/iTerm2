@@ -206,6 +206,9 @@ typedef enum {
 
 - (iTermVariables *)sessionTabVariables;
 - (void)sessionDuplicateTab;
+
+- (BOOL)sessionShouldAutoClose:(PTYSession *)session;
+
 @end
 
 @class SessionView;
