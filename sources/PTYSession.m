@@ -549,6 +549,7 @@ static NSString *const iTermSessionTitleSession = @"session";
                                                            host:host
                                                            tmux:tmux
                                                      components:titleComponents];
+             DLog(@"Title for session %@ is %@", self, result);
              completion(result, nil);
          }];
     [[iTermBuiltInFunctions sharedInstance] registerFunction:[func autorelease]
@@ -845,6 +846,8 @@ ITERM_WEAKLY_REFERENCEABLE
                              host:(NSString *)hostVariable
                              tmux:(NSString *)tmuxVariable
                        components:(iTermTitleComponents)titleComponents {
+    DLog(@"Compute title for sessionName=%@ profileName=%@ jobVariable=%@ pwdVariable=%@ ttyVariable=%@ userVariable=%@ hostVariable=%@ tmuxVariable=%@",
+         sessionName, profileName, jobVariable, pwdVariable, ttyVariable, userVariable, hostVariable, tmuxVariable);
     NSString *name = nil;
     NSMutableString *result = [NSMutableString string];
 
