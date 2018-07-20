@@ -211,6 +211,11 @@
     if ([prefix hasSuffix:@" "]) {
         return @[];
     }
+    if (prefix.length == 0) {
+        // Zero-prefix suggest. This is a special case to avoid an annoying shift-reduce conflict
+        // and because I expect it will need fancier ranking.
+        return [self pathsAndFunctionSuggestionsWithPrefix:@"" legalPaths:_paths.allObjects];
+    }
     _prefix = prefix;
     CPTokenStream *tokenStream = [_tokenizer tokenise:prefix];
     id result = [_parser parse:tokenStream];
@@ -329,21 +334,26 @@
                 }];
             }
         }
-        NSArray<NSString *> *functionNames = _functionSignatures.allKeys;
-        functionNames = [functionNames mapWithBlock:^id(NSString *anObject) {
-            NSString *firstArgName  = [self argumentNamesForFunction:anObject].firstObject ?: @")";
-            firstArgName = [firstArgName stringByAppendingString:@":"];
-            return [anObject stringByAppendingFormat:@"(%@", firstArgName];
-        }];
-
-        NSArray<NSString *> *options = [legalPaths arrayByAddingObjectsFromArray:functionNames];
-        NSString *prefix = expression[@"path"];
-        return [[options filteredArrayUsingBlock:^BOOL(NSString *anObject) {
-            return prefix.length == 0 || [anObject hasPrefix:prefix];
-        }] mapWithBlock:^id(NSString *s) {
-            return [s substringFromIndex:prefix.length];
-        }];
+        return [self pathsAndFunctionSuggestionsWithPrefix:expression[@"path"]
+                                                legalPaths:legalPaths];
     }
+}
+
+- (NSArray<NSString *> *)pathsAndFunctionSuggestionsWithPrefix:(NSString *)prefix
+                                                    legalPaths:(NSArray<NSString *> *)legalPaths {
+    NSArray<NSString *> *functionNames = _functionSignatures.allKeys;
+    functionNames = [functionNames mapWithBlock:^id(NSString *anObject) {
+        NSString *firstArgName  = [self argumentNamesForFunction:anObject].firstObject ?: @")";
+        firstArgName = [firstArgName stringByAppendingString:@":"];
+        return [anObject stringByAppendingFormat:@"(%@", firstArgName];
+    }];
+
+    NSArray<NSString *> *options = [legalPaths arrayByAddingObjectsFromArray:functionNames];
+    return [[options filteredArrayUsingBlock:^BOOL(NSString *anObject) {
+        return prefix.length == 0 || [anObject hasPrefix:prefix];
+    }] mapWithBlock:^id(NSString *s) {
+        return [s substringFromIndex:prefix.length];
+    }];
 }
 
 - (NSArray<NSString *> *)suggestedParameterNamesForFunction:(NSString *)function
@@ -418,15 +428,39 @@
     iTermSwiftyStringParser *parser = [[iTermSwiftyStringParser alloc] initWithString:prefix];
     parser.tolerateTruncation = YES;
     NSInteger index = [parser enumerateSwiftySubstringsWithBlock:nil];
-    if (index >= prefix.length ||
+    if (index > prefix.length ||
         index == NSNotFound ||
         !parser.wasTruncated ||
         parser.wasTruncatedInLiteral) {
         return @[];
     }
     NSString *truncatedExpression = [prefix substringFromIndex:index];
-    return [[super suggestionsForString:truncatedExpression] mapWithBlock:^id(NSString *tail) {
+    NSArray<NSString *> *undecoratedSuggestions;
+
+    undecoratedSuggestions = [super suggestionsForString:truncatedExpression];
+    NSArray<NSString *> *allSuggestions = [undecoratedSuggestions mapWithBlock:^id(NSString *tail) {
         return [prefix stringByAppendingString:tail];
+    }];
+    NSArray<NSString *> *suggestionsUpToFirstPeriod = [allSuggestions mapWithBlock:^id(NSString *string) {
+        NSInteger remaining = string.length;
+        remaining -= prefix.length;
+        if (remaining <= 0) {
+            return nil;
+        }
+        NSInteger index = [string rangeOfString:@"." options:0 range:NSMakeRange(prefix.length, remaining)].location;
+        if (index == NSNotFound) {
+            return string;
+        } else {
+            return [string substringToIndex:index];
+        }
+    }];
+    return [[suggestionsUpToFirstPeriod sortedArrayUsingSelector:@selector(compare:)] reduceWithFirstValue:@[] block:^id(NSArray *uniqueValues, NSString *string) {
+        if (uniqueValues.count < 50 &&
+            ![NSObject object:uniqueValues.lastObject isEqualToObject:string]) {
+            return [uniqueValues arrayByAddingObject:string];
+        } else {
+            return uniqueValues;
+        }
     }];
 }
 

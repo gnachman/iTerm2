@@ -160,6 +160,13 @@ NSString *const iTermVariableKeySessionChildPid = @"session.pid";
             result = [result setByAddingObjectsFromSet:self.mutableRecordedNames[@(mask)] ?: [NSSet set]];
         }
     }
+    if ((context & (iTermVariablesSuggestionContextSession | iTermVariablesSuggestionContextTab)) &&
+        !(context & iTermVariablesSuggestionContextApp)) {
+        NSSet<NSString *> *appVariables = [self recordedVariableNamesInContext:iTermVariablesSuggestionContextApp];
+        result = [NSSet setWithArray:[result.allObjects arrayByAddingObjectsFromArray:[appVariables.allObjects mapWithBlock:^id(NSString *appVariable) {
+            return [@"iterm2." stringByAppendingString:appVariable];
+        }]]];
+    }
     return result;
 }
 
