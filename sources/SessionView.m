@@ -26,6 +26,7 @@
 #import <MetalKit/MetalKit.h>
 
 static int nextViewId;
+// NOTE: This must equal iTermStatusBarHeight
 static const double kTitleHeight = 22;
 
 // Last time any window was resized TODO(georgen):it would be better to track per window.

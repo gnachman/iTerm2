@@ -12,6 +12,7 @@
 #import "iTermStatusBarClockComponent.h"
 #import "iTermStatusBarFixedSpacerComponent.h"
 #import "iTermStatusBarFunctionCallComponent.h"
+#import "iTermStatusBarGraphicComponent.h"
 #import "iTermStatusBarJobComponent.h"
 #import "iTermStatusBarRPCProvidedTextComponent.h"
 #import "iTermStatusBarSearchFieldComponent.h"
@@ -56,7 +57,10 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)awakeFromNib {
-    NSArray<Class> *classes = @[ [iTermStatusBarSwiftyStringComponent class],
+    NSArray<Class> *classes = @[
+#warning TODO: Remove this and write some useful sparklines components
+                                 [iTermStatusBarSparklineDemoComponent class],
+                                 [iTermStatusBarSwiftyStringComponent class],
                                  [iTermStatusBarFunctionCallComponent class],
                                  [iTermStatusBarFixedSpacerComponent class],
                                  [iTermStatusBarSpringComponent class],

@@ -1,0 +1,278 @@
+//
+//  iTermStatusBarGraphicComponent.m
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 7/20/18.
+//
+
+#import "iTermStatusBarGraphicComponent.h"
+
+#import "iTermStatusBarViewController.h"
+#import "NSColor+iTerm.h"
+#import "NSDictionary+iTerm.h"
+#import "NSImage+iTerm.h"
+#import "NSObject+iTerm.h"
+
+@implementation iTermStatusBarImageComponentView
+
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        self.wantsLayer = YES;
+        _imageView = [[NSImageView alloc] initWithFrame:self.bounds];
+        [self addSubview:_imageView];
+        self.layer.backgroundColor = [[NSColor clearColor] CGColor];
+    }
+    return self;
+}
+
+- (NSColor *)backgroundColor {
+    return [NSColor colorWithCGColor:self.layer.backgroundColor];
+}
+
+- (void)setBackgroundColor:(NSColor *)backgroundColor {
+    self.layer.backgroundColor = backgroundColor.CGColor;
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    _imageView.frame = self.bounds;
+}
+
+@end
+
+@implementation iTermStatusBarGraphicComponent {
+    CGFloat _preferredWidth;
+    CGFloat _renderedWidth;
+    iTermStatusBarImageComponentView *_view;
+}
+
+- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+    iTermStatusBarComponentKnob *backgroundColorKnob =
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Background Color"
+                                                          type:iTermStatusBarComponentKnobTypeColor
+                                                   placeholder:nil
+                                                  defaultValue:nil
+                                                           key:iTermStatusBarSharedBackgroundColorKey];
+
+    return [@[ backgroundColorKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+}
+
+- (iTermStatusBarImageComponentView *)newView {
+    return [[iTermStatusBarImageComponentView alloc] initWithFrame:NSZeroRect];
+}
+
+- (iTermStatusBarImageComponentView *)view {
+    if (!_view) {
+        _view = [self newView];
+    }
+    return _view;
+}
+
+- (NSColor *)backgroundColor {
+    NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue];
+}
+
+- (BOOL)shouldUpdateValue:(NSObject *)proposed {
+    iTermStatusBarImageComponentView *view = self.view;
+    NSObject *existing = self.model;
+    const BOOL hasValue = existing != nil;
+    const BOOL haveProposedvalue = proposed != nil;
+
+    if (hasValue != haveProposedvalue) {
+        return YES;
+    }
+    if (hasValue || haveProposedvalue) {
+        return !([NSObject object:existing isEqualToObject:proposed] &&
+                 [NSObject object:view.backgroundColor isEqualToObject:self.backgroundColor]);
+    }
+
+    return NO;
+}
+
+- (void)updateViewIfNeeded {
+    CGFloat preferredWidth = 0;
+    NSObject *newPreferred = [self widestModel:&preferredWidth];
+
+    if (preferredWidth != _preferredWidth) {
+        _preferredWidth = preferredWidth;
+        [self.delegate statusBarComponentPreferredSizeDidChange:self];
+    }
+
+    NSObject *proposedForCurrentWidth = [self modelForCurrentWidth];
+
+    const CGFloat viewWidth = self.view.frame.size.width;
+    if ([self shouldUpdateValue:proposedForCurrentWidth] || viewWidth != _renderedWidth) {
+        [self redraw];
+        _renderedWidth = viewWidth;
+    }
+
+    _model = proposedForCurrentWidth;
+    _preferredModel = newPreferred;
+}
+
+- (void)redraw {
+    NSSize size = NSMakeSize(self.view.frame.size.width, iTermStatusBarHeight);
+    if (size.width > 0) {
+        NSImage *image = [NSImage imageOfSize:size drawBlock:^{
+            [[NSColor clearColor] set];
+            NSRect rect = NSMakeRect(0, 0, size.width, size.height);
+            NSRectFill(rect);
+            [self drawRect:rect];
+        }];
+        self.view.imageView.image = image;
+    }
+    NSRect frame = self.view.frame;
+    frame.size = size;
+    self.view.frame = frame;
+}
+
+- (NSObject *)modelForCurrentWidth {
+    CGFloat currentWidth = self.view.frame.size.width;
+    return [self modelForWidth:currentWidth width:nil];
+}
+
+- (NSObject *)widestModel:(out CGFloat *)width {
+    return [self modelForWidth:INFINITY width:width];
+}
+
+- (CGFloat)statusBarComponentPreferredWidth {
+    CGFloat width = 0;
+    [self widestModel:&width];
+    return width;
+}
+
+- (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width {
+    self.view.frame = NSMakeRect(0, 0, width, iTermStatusBarHeight);
+}
+
+- (CGFloat)statusBarComponentMinimumWidth {
+    return 1;
+}
+
+#pragma mark - iTermStatusBarComponent
+
+- (NSView *)statusBarComponentCreateView {
+    return self.view;
+}
+
+- (void)statusBarComponentUpdate {
+    [self updateViewIfNeeded];
+}
+
+- (void)statusBarComponentWidthDidChangeTo:(CGFloat)newWidth {
+    [self updateViewIfNeeded];
+}
+
+#pragma mark - Required overrides
+
+- (NSObject *)modelForWidth:(CGFloat)maximumWidth width:(out CGFloat *)preferredWidth {
+    [self doesNotRecognizeSelector:_cmd];
+    return @{};
+}
+
+- (void)drawRect:(NSRect)rect {
+    [self doesNotRecognizeSelector:_cmd];
+}
+
+@end
+
+@implementation iTermStatusBarSparklinesComponent {
+    NSInteger _currentCount;
+}
+
+- (NSColor *)lineColor {
+    return [NSColor blackColor];
+}
+
+- (NSObject *)modelForWidth:(CGFloat)maximumWidth width:(out CGFloat *)preferredWidth {
+    NSArray *model = self.values;
+    if (model.count > maximumWidth) {
+        model = [model subarrayWithRange:NSMakeRange(model.count - maximumWidth, maximumWidth)];
+    }
+    if (preferredWidth) {
+        *preferredWidth = model.count;
+    }
+    return model;
+}
+
+- (void)drawRect:(NSRect)rect {
+    NSArray<NSNumber *> *values = self.model;
+    if (values.count == 0) {
+        return;
+    }
+    [self.lineColor set];
+    CGFloat x = rect.size.width - values.count;
+    const CGFloat w = 1;
+    const CGFloat margin = 2;
+    for (NSNumber *n in values) {
+        NSRectFill(NSMakeRect(x, margin, 1, n.doubleValue * rect.size.height - margin * 2));
+        x += w;
+    }
+}
+
+- (void)invalidate {
+    [self updateViewIfNeeded];
+}
+
+@end
+
+static const NSInteger iTermStatusBarSparklineDemoComponentMaximumNumberOfValues = 30;
+
+@implementation iTermStatusBarSparklineDemoComponent {
+    NSMutableArray<NSNumber *> *_mutableValues;
+    NSTimer *_timer;
+}
+
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration {
+    self = [super initWithConfiguration:configuration];
+    if (self) {
+        _mutableValues = [NSMutableArray array];
+        __weak __typeof(self) weakSelf = self;
+        _timer = [NSTimer scheduledTimerWithTimeInterval:0.1 repeats:YES block:^(NSTimer * _Nonnull timer) {
+            [weakSelf update];
+        }];
+    }
+    return self;
+}
+
+- (void)update {
+    double n = arc4random_uniform(100) / 100.0;
+    [_mutableValues addObject:@(n)];
+    if (_mutableValues.count == iTermStatusBarSparklineDemoComponentMaximumNumberOfValues) {
+        [_mutableValues removeObjectAtIndex:0];
+    }
+    [self invalidate];
+}
+
+- (NSString *)statusBarComponentShortDescription {
+    return @"Sparklines Demo";
+}
+
+- (NSString *)statusBarComponentDetailedDescription {
+    return @"Demonstrates sparklines.";
+}
+
+- (id)statusBarComponentExemplar {
+    return @"Sparklines";
+}
+
+- (CGFloat)statusBarComponentMinimumWidth {
+    return iTermStatusBarSparklineDemoComponentMaximumNumberOfValues;
+}
+
+- (CGFloat)statusBarComponentPreferredWidth {
+    return _mutableValues.count;
+}
+
+- (BOOL)statusBarComponentCanStretch {
+    return NO;
+}
+
+- (NSArray<NSNumber *> *)values {
+    return [_mutableValues copy];
+}
+
+@end
+

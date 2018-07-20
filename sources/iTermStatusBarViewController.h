@@ -11,6 +11,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern const CGFloat iTermStatusBarHeight;
+
 @class iTermStatusBarLayout;
 @class iTermVariableScope;
 

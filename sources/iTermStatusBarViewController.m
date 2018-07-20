@@ -22,6 +22,9 @@ static const CGFloat iTermStatusBarViewControllerMargin = 5;
 static const CGFloat iTermStatusBarViewControllerTopMargin = 1;
 static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
 
+// NOTE: SessionView's kTitleHeight must equal this value
+const CGFloat iTermStatusBarHeight = 22;
+
 @interface iTermStatusBarViewController ()<
     iTermStatusBarComponentDelegate,
     iTermStatusBarLayoutDelegate>
