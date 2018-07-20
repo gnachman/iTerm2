@@ -1292,20 +1292,20 @@ static NSString *const kGridSizeKey = @"Size";
 }
 
 - (VT100GridRun)gridRunFromRange:(NSRange)range relativeToRow:(int)row {
-    NSInteger location = range.location;
-    NSInteger length = range.length;
-    if (row < 0) {
-        location += row * size_.width;
-        length += row * size_.width;
+    const NSInteger longRow = row;
+    const NSInteger location = (NSInteger)range.location + longRow * (NSInteger)size_.width;
+    const NSInteger length = range.length;
+    const NSInteger overage = MAX(0, -location);
+    const NSInteger adjustedLocation = location + overage;
+    const NSInteger adjustedLength = length - overage;
 
-        if (location < 0 || length <= 0) {
-            return VT100GridRunMake(0, 0, 0);
-        }
+    if (adjustedLocation < 0 || adjustedLength < 0) {
+        return VT100GridRunMake(0, 0, 0);
     }
 
-    return VT100GridRunMake(location % size_.width,
-                            row + location / size_.width,
-                            length);
+    return VT100GridRunMake(adjustedLocation % size_.width,
+                            adjustedLocation / size_.width,
+                            adjustedLength);
 }
 
 - (void)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
