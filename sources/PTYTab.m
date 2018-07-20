@@ -190,6 +190,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     BOOL _isDraggingSplitInTmuxTab;
 
     BOOL _resizingSplit;
+
+    NSInteger _numberOfSplitViewDragsInProgress;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -3898,6 +3900,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 #pragma mark NSSplitView delegate methods
 
 - (void)splitView:(PTYSplitView *)splitView draggingWillBeginOfSplit:(int)splitterIndex {
+    _numberOfSplitViewDragsInProgress++;
     if (![self isTmuxTab]) {
         // Don't care for non-tmux tabs.
         return;
@@ -3909,6 +3912,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)splitView:(PTYSplitView *)splitView
   draggingDidEndOfSplit:(int)splitterIndex
            pixels:(NSSize)pxMoved {
+    _numberOfSplitViewDragsInProgress--;
     if (![self isTmuxTab]) {
         // Don't care for non-tmux tabs.
         return;
@@ -4620,9 +4624,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return proposedPosition;
     }
     PtyLog(@"PTYTab splitView:constraintSplitPosition%f divider:%d case ", (float)proposedPosition, (int)dividerIndex);
-    NSArray* subviews = [splitView subviews];
-    NSView* childBefore = [subviews objectAtIndex:dividerIndex];
-    NSView* childAfter = [subviews objectAtIndex:dividerIndex + 1];
+    NSArray<NSView *> *subviews = [splitView subviews];
+    if (dividerIndex < 0 ||
+        subviews.count < dividerIndex + 2) {
+        DLog(@"Have %@ subviews. Aborting.", @(subviews.count));
+        return proposedPosition;
+    }
+    NSView *childBefore = subviews[dividerIndex];
+    NSView *childAfter = subviews[dividerIndex + 1];
     CGFloat beforeStep = [self _recursiveStepSize:childBefore wantWidth:[splitView isVertical]];
     CGFloat afterStep = [self _recursiveStepSize:childAfter wantWidth:[splitView isVertical]];
     CGFloat step = MAX(beforeStep, afterStep);
@@ -4955,6 +4964,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)sessionDidClearScrollbackBuffer:(PTYSession *)session {
     [realParentWindow_ tabDidClearScrollbackBufferInSession:session];
+}
+
+- (BOOL)sessionShouldAutoClose:(PTYSession *)session {
+    return _numberOfSplitViewDragsInProgress == 0;
 }
 
 @end

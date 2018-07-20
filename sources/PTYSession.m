@@ -2699,7 +2699,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_terminal resetByUserRequest:NO];
         [self appendBrokenPipeMessage:@"Session Restarted"];
         [self replaceTerminatedShellWithNewInstance];
-    } else if ([self autoClose]) {
+    } else if ([self autoClose] && [_delegate sessionShouldAutoClose:self]) {
         [self appendBrokenPipeMessage:@"Broken Pipe"];
         [_delegate closeSession:self];
     } else {

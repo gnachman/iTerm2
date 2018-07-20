@@ -745,6 +745,8 @@ typedef enum {
 - (void)setVariableNamed:(NSString *)name toValue:(NSString *)newValue;
 - (void)injectData:(NSData *)data;
 
+- (BOOL)sessionShouldAutoClose:(PTYSession *)session;
+
 #pragma mark - API
 
 - (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request;
