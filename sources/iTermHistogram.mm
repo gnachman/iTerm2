@@ -331,13 +331,14 @@ static double iTermSaneDouble(const double d) {
 }
 
 - (NSString *)sparkWithHeight:(double)fraction {
-    if (fraction == 0) {
+    if (fraction <= 0) {
         return @" ";
     }
-
+    if (fraction > 1) {
+        fraction = 1;
+    }
     NSArray *characters = @[ @"▁", @"▂", @"▃", @"▄", @"▅", @"▆", @"▇", @"█" ];
-    int index = std::round(fraction * (characters.count - 1));
+    int index = round(fraction * (characters.count - 1));
     return characters[index];
 }
-
 @end

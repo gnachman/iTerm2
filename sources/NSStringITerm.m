@@ -1968,6 +1968,21 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
++ (NSString *)sparkWithHeight:(double)fraction {
+    if (fraction <= 0) {
+        return @" ";
+    }
+    if (fraction != fraction) {
+        return @" ";
+    }
+    if (fraction > 1) {
+        fraction = 1;
+    }
+    NSArray *characters = @[ @"▁", @"▂", @"▃", @"▄", @"▅", @"▆", @"▇", @"█" ];
+    int index = round(fraction * (characters.count - 1));
+    return characters[index];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

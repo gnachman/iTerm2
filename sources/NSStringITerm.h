@@ -283,6 +283,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)it_stringByExpandingBackslashEscapedCharacters;
 - (NSString *)stringByReplacingVariableReferencesWithVariablesFromScope:(iTermVariableScope *)scope
                                                 nonVariableReplacements:(NSDictionary *)nonvars;
++ (NSString *)sparkWithHeight:(double)fraction;
 
 @end
 

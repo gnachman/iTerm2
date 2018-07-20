@@ -9,6 +9,7 @@
 
 #import "iTermAPIHelper.h"
 #import "iTermStatusBarComponent.h"
+#import "iTermStatusBarCPUUtilizationComponent.h"
 #import "iTermStatusBarClockComponent.h"
 #import "iTermStatusBarFixedSpacerComponent.h"
 #import "iTermStatusBarFunctionCallComponent.h"
@@ -69,7 +70,8 @@ NS_ASSUME_NONNULL_BEGIN
                                  [iTermStatusBarUsernameComponent class],
                                  [iTermStatusBarWorkingDirectoryComponent class],
                                  [iTermStatusBarSearchFieldComponent class],
-                                 [iTermStatusBarJobComponent class] ];
+                                 [iTermStatusBarJobComponent class],
+                                 [iTermStatusBarCPUUtilizationComponent class] ];
     _elements = [classes mapWithBlock:^id(Class theClass) {
         iTermStatusBarBuiltInComponentFactory *factory =
             [[iTermStatusBarBuiltInComponentFactory alloc] initWithClass:theClass];
