@@ -402,7 +402,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         // Replace the path with a non-shell-escaped path.
         augmentedSubs[@"1"] = path ?: @"";
         // Percent-escape all the arguments.
-        NSMutableCharacterSet *characterSet = [NSCharacterSet appleURLCharacterSet];
+        NSCharacterSet *characterSet = [NSCharacterSet appleURLCharacterSet];
         for (NSString *key in augmentedSubs.allKeys) {
             augmentedSubs[key] =
                 [augmentedSubs[key] stringByAddingPercentEncodingWithAllowedCharacters:characterSet];

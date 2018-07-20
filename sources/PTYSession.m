@@ -6875,7 +6875,7 @@ ITERM_WEAKLY_REFERENCEABLE
     switch (eventType) {
         case NSEventTypeLeftMouseDown:
         case NSEventTypeRightMouseDown:
-        case NSOtherMouseDown:
+        case NSEventTypeOtherMouseDown:
             switch ([_terminal mouseMode]) {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
@@ -6896,7 +6896,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case NSEventTypeLeftMouseUp:
         case NSEventTypeRightMouseUp:
-        case NSOtherMouseUp:
+        case NSEventTypeOtherMouseUp:
             if (_reportingMouseDown) {
                 _reportingMouseDown = NO;
                 _lastReportedCoord = VT100GridCoordMake(-1, -1);
@@ -6934,7 +6934,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case NSEventTypeLeftMouseDragged:
         case NSEventTypeRightMouseDragged:
-        case NSOtherMouseDragged:
+        case NSEventTypeOtherMouseDragged:
             if (_reportingMouseDown &&
                 !VT100GridCoordEquals(coord, _lastReportedCoord)) {
                 _lastReportedCoord = coord;
@@ -6959,7 +6959,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             break;
 
-        case NSScrollWheel:
+        case NSEventTypeScrollWheel:
             switch ([_terminal mouseMode]) {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
