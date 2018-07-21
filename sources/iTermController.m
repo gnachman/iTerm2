@@ -1042,7 +1042,8 @@ static iTermController *gSharedInstance;
 }
 
 - (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toSshTo:(NSURL *)url {
-    NSMutableString *tempString = [NSMutableString stringWithString:@"ssh "];
+    NSMutableString *tempString = [NSMutableString stringWithString:[iTermAdvancedSettingsModel sshSchemePath]];
+    [tempString appendString:@" "];
     NSString *username = url.user;
     BOOL cd = ([iTermAdvancedSettingsModel sshURLsSupportPath] && url.path.length > 1);
     if (username) {
