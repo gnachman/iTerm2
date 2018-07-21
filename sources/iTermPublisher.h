@@ -19,9 +19,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermPublisher<PayloadType> : NSObject
 
-@property (nonatomic, readonly) NSInteger numberOfSubscribers;
 @property (nonatomic, weak) id<iTermPublisherDelegate> delegate;
 @property (nonatomic, readonly) NSTimeInterval timeIntervalSinceLastUpdate;
+@property (nonatomic, readonly) BOOL hasAnySubscribers;
 
 - (void)publish:(PayloadType)payload;
 

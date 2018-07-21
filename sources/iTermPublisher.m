@@ -7,6 +7,7 @@
 
 #import "iTermPublisher.h"
 
+#import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #include <mach/mach_time.h>
 
@@ -28,57 +29,113 @@ static const char* siTermPublisherAttachment = "siTermPublisherAttachment";
 
 @end
 
+@interface iTermSubscriber : NSObject<NSCopying>
+@property (nonatomic, weak, readonly) id object;
+@property (nonatomic, copy) void (^block)(id);
+
+- (instancetype)initWithWeakReferenceToObject:(id)object block:(void (^)(id))block;
+@end
+
+@implementation iTermSubscriber {
+    __weak id _object;
+}
+
+- (instancetype)initWithWeakReferenceToObject:(id)object block:(void (^)(id))block {
+    self = [super init];
+    if (self) {
+        _object = object;
+        _block = [block copy];
+    }
+    return self;
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p object=%@>", self.class, self, _object];
+}
+
+- (BOOL)isEqual:(id)object {
+    return object == self;
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    // yay for being immutable!
+    return self;
+}
+
+@end
+
 @implementation iTermPublisher {
-    NSInteger _count;
-    NSMapTable<id, void (^)(id)> *_subscribers;
+    // NSMapTable would be perfect here, except it's a broken pile of shit.
+    // http://cocoamine.net/blog/2013/12/13/nsmaptable-and-zeroing-weak-references/
+    //
+    // Quoting from the closest thing to documentation that Apple can be bothered to write:
+    //
+    // https://developer.apple.com/library/archive/releasenotes/Foundation/RN-FoundationOlderNotes/#//apple_ref/doc/uid/TP40008080-TRANSLATED_CHAPTER_965-TRANSLATED_DEST_999B
+    //
+    // "weak-to-strong NSMapTables are not currently recommended, as the strong values for weak keys
+    // which get zero'd out do not get cleared away (and released) until/unless the map table
+    // resizes itself"
+    //
+    // While this doesn't seem to be the case in 10.13, the count is still wrong. As this appears to
+    // be a dumpster fire I'll go my own way.
+    NSMutableArray<iTermSubscriber *> *_subscribers;
     uint64_t _updateTime;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _subscribers = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsWeakMemory | NSPointerFunctionsObjectPersonality
-                                                 valueOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPersonality
-                                                     capacity:1];
+        _subscribers = [NSMutableArray array];
     }
     return self;
 }
 
-- (void)addSubscriber:(id)subscriber block:(void (^)(id))block {
+- (void)addSubscriber:(id)object block:(void (^)(id))block {
     iTermSubscriberAttachment *attachment = [[iTermSubscriberAttachment alloc] init];
     __weak __typeof(self) weakSelf = self;
+    iTermSubscriber *subscriber = [[iTermSubscriber alloc] initWithWeakReferenceToObject:object
+                                                                                   block:block];
     attachment.willDealloc = ^{
         dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf countDidChange];
+            [weakSelf didDeallocObjectForSubscriber:subscriber];
         });
     };
-    [subscriber it_setAssociatedObject:attachment
-                                forKey:(void *)siTermPublisherAttachment];
-    [_subscribers setObject:block forKey:subscriber];
+    [object it_setAssociatedObject:attachment
+                            forKey:(void *)siTermPublisherAttachment];
+    [_subscribers addObject:subscriber];
     [self countDidChange];
 }
 
-- (NSInteger)numberOfSubscribers {
-    return _subscribers.count;
+- (void)didDeallocObjectForSubscriber:(iTermSubscriber *)subscriber {
+    [_subscribers removeObject:subscriber];
+    [self countDidChange];
+}
+
+- (BOOL)haveSubscribers {
+    return _subscribers.count > 0;
 }
 
 - (void)countDidChange {
-    if (_subscribers.count != _count) {
-        _count = _subscribers.count;
+    BOOL hasAnySubscribers = [self haveSubscribers];
+    if (hasAnySubscribers != _hasAnySubscribers) {
+        _hasAnySubscribers = hasAnySubscribers;
         [self.delegate publisherDidChangeNumberOfSubscribers:self];
     }
 }
 
-- (void)removeSubscriber:(id)subscriber {
-    [_subscribers removeObjectForKey:subscriber];
+- (void)removeSubscriber:(id)object {
+    iTermSubscriber *subscriber = [_subscribers objectPassingTest:^BOOL(iTermSubscriber *element, NSUInteger index, BOOL *stop) {
+        return element.object == subscriber;
+    }];
+    [_subscribers removeObject:object];
+    [self countDidChange];
 }
 
 - (void)publish:(id)payload {
     _updateTime = mach_absolute_time();
-    for (id key in _subscribers) {
-        void (^block)(id) = [_subscribers objectForKey:key];
-        if (block) {
-            block(payload);
+    for (iTermSubscriber *obj in _subscribers) {
+        if (obj.object) {
+            obj.block(payload);
         }
     }
 }

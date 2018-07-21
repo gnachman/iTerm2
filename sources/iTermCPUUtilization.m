@@ -98,7 +98,7 @@ typedef struct {
 #pragma mark - iTermPublisherDelegate
 
 - (void)publisherDidChangeNumberOfSubscribers:(iTermPublisher *)publisher {
-    if (_publisher.numberOfSubscribers == 0) {
+    if (!_publisher.hasAnySubscribers) {
         [_timer invalidate];
         _timer = nil;
     } else if (!_timer) {
