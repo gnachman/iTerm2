@@ -32,7 +32,3 @@
 - (void)invalidate;
 
 @end
-
-@interface iTermStatusBarSparklineDemoComponent : iTermStatusBarSparklinesComponent
-@end
-

@@ -59,8 +59,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)awakeFromNib {
     NSArray<Class> *classes = @[
-#warning TODO: Remove this and write some useful sparklines components
-                                 [iTermStatusBarSparklineDemoComponent class],
                                  [iTermStatusBarSwiftyStringComponent class],
                                  [iTermStatusBarFunctionCallComponent class],
                                  [iTermStatusBarFixedSpacerComponent class],
