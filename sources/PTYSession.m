@@ -725,7 +725,6 @@ static NSString *const iTermSessionTitleSession = @"session";
 
 ITERM_WEAKLY_REFERENCEABLE
 
-#warning TODO: These appear to be leaking in master
 - (void)iterm_dealloc {
     [_view release];
     if (@available(macOS 10.11, *)) {
