@@ -109,7 +109,7 @@
                                                    block:
          ^PTYSession *(Profile *profile, PseudoTerminal *term) {
              iTermFileDescriptorServerConnection theServerConnection = serverConnection;
-             PTYSession *session = [term.sessionFactory newSessionWithProfile:defaultProfile];
+             PTYSession *session = [[term.sessionFactory newSessionWithProfile:defaultProfile] autorelease];
              [term addSessionInNewTab:session];
              const BOOL ok = [term.sessionFactory attachOrLaunchCommandInSession:session
                                                                        canPrompt:NO

@@ -7756,7 +7756,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     // Initialize a new session
-    PTYSession *aSession = [self.sessionFactory newSessionWithProfile:profile];
+    PTYSession *aSession = [[self.sessionFactory newSessionWithProfile:profile] autorelease];
 
     // Add this session to our term and make it current
     [self addSessionInNewTab:aSession];

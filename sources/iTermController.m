@@ -1226,7 +1226,7 @@ static iTermController *gSharedInstance;
         session = block(aDict, term);
     } else if (url) {
         DLog(@"Creating a new session");
-        session = [term.sessionFactory newSessionWithProfile:aDict];
+        session = [[term.sessionFactory newSessionWithProfile:aDict] autorelease];
         [term addSessionInNewTab:session];
         const BOOL ok = [term.sessionFactory attachOrLaunchCommandInSession:session
                                                                   canPrompt:YES
