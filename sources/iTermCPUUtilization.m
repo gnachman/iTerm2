@@ -6,6 +6,7 @@
 //
 
 #import "iTermCPUUtilization.h"
+#import "iTermPublisher.h"
 
 #include <mach/mach.h>
 #include <mach/mach_init.h>
@@ -20,11 +21,13 @@ typedef struct {
 } iTermCPUTicks;
 
 
+@interface iTermCPUUtilization()<iTermPublisherDelegate>
+@end
+
 @implementation iTermCPUUtilization {
     iTermCPUTicks _last;
-    NSHashTable<iTermCPUUtilizationObserver> *_observers;
     NSTimer *_timer;
-    uint64_t _updateTime;
+    iTermPublisher<NSNumber *> *_publisher;
 }
 
 + (instancetype)sharedInstance {
@@ -40,19 +43,16 @@ typedef struct {
     self = [super init];
     if (self) {
         _cadence = 1;
-        _observers = [[NSHashTable alloc] initWithOptions:NSPointerFunctionsWeakMemory | NSPointerFunctionsObjectPersonality capacity:1];
+        _publisher = [[iTermPublisher alloc] init];
+        _publisher.delegate = self;
     }
     return self;
 }
 
-- (void)addSubscriber:(iTermCPUUtilizationObserver)block {
-    if (_observers.count == 0) {
-        __weak __typeof(self) weakSelf = self;
-        _timer = [NSTimer scheduledTimerWithTimeInterval:self.cadence repeats:YES block:^(NSTimer * _Nonnull timer) {
-            [weakSelf update];
-        }];
-    }
-    [_observers addObject:block];
+- (void)addSubscriber:(id)subscriber block:(iTermCPUUtilizationObserver)block {
+    [_publisher addSubscriber:subscriber block:^(NSNumber * _Nonnull payload) {
+        block(payload.doubleValue);
+    }];
 }
 
 #pragma mark - Private
@@ -66,7 +66,6 @@ typedef struct {
 }
 
 - (void)update {
-    _updateTime = mach_absolute_time();
     iTermCPUTicks current = [self sample];
     iTermCPUTicks delta = current;
     delta.idle -= _last.idle;
@@ -74,31 +73,7 @@ typedef struct {
     _last = current;
 
     double value = [self utilizationInDelta:delta];
-    for (iTermCPUUtilizationObserver observer in _observers) {
-        if (observer) {
-            observer(value);
-        }
-    }
-    if (_observers.count == 0) {
-        [_timer invalidate];
-        _timer = nil;
-    }
-}
-
-- (NSTimeInterval)timeIntervalSinceLastUpdate {
-    if (_updateTime == 0) {
-        return INFINITY;
-    }
-
-    int64_t now = mach_absolute_time();
-    const int64_t elapsed = now - _updateTime;
-    static mach_timebase_info_data_t sTimebaseInfo;
-    if (sTimebaseInfo.denom == 0) {
-        mach_timebase_info(&sTimebaseInfo);
-    }
-
-    double nanoseconds = elapsed * sTimebaseInfo.numer / sTimebaseInfo.denom;
-    return nanoseconds / 1000000000.0;
+    [_publisher publish:@(value)];
 }
 
 - (iTermCPUTicks)sample {
@@ -120,4 +95,18 @@ typedef struct {
     return result;
 }
 
+#pragma mark - iTermPublisherDelegate
+
+- (void)publisherDidChangeNumberOfSubscribers:(iTermPublisher *)publisher {
+    if (_publisher.numberOfSubscribers == 0) {
+        [_timer invalidate];
+        _timer = nil;
+    } else if (!_timer) {
+        _timer = [NSTimer scheduledTimerWithTimeInterval:self.cadence
+                                                  target:self
+                                                selector:@selector(update)
+                                                userInfo:nil
+                                                 repeats:YES];
+    }
+}
 @end

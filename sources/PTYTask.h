@@ -31,7 +31,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 @interface PTYTask : NSObject
 
 @property(atomic, readonly) BOOL hasMuteCoprocess;
-@property(atomic, assign) id<PTYTaskDelegate> delegate;
+@property(atomic, weak) id<PTYTaskDelegate> delegate;
 
 // No reading or writing allowed for now.
 @property(atomic, assign) BOOL paused;

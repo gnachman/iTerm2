@@ -26,10 +26,9 @@ NS_ASSUME_NONNULL_BEGIN
     if (self) {
         _samples = [NSMutableArray array];
         __weak __typeof(self) weakSelf = self;
-        _block = ^(double value){
+        [[iTermCPUUtilization sharedInstance] addSubscriber:self block:^(double value) {
             [weakSelf update:value];
-        };
-        [[iTermCPUUtilization sharedInstance] addSubscriber:_block];
+        }];
     }
     return self;
 }

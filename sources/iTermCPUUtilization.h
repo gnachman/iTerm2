@@ -13,6 +13,6 @@ typedef void (^iTermCPUUtilizationObserver)(double);
 @property (nonatomic) NSTimeInterval cadence;
 
 + (instancetype)sharedInstance;
-- (void)addSubscriber:(iTermCPUUtilizationObserver)block;
+- (void)addSubscriber:(id)subscriber block:(iTermCPUUtilizationObserver)block;
 
 @end

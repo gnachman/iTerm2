@@ -1,0 +1,36 @@
+//
+//  iTermPublisher.h
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 7/20/18.
+//
+
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@class iTermPublisher;
+
+@protocol iTermPublisherDelegate<NSObject>
+
+- (void)publisherDidChangeNumberOfSubscribers:(iTermPublisher *)publisher;
+
+@end
+
+@interface iTermPublisher<PayloadType> : NSObject
+
+@property (nonatomic, readonly) NSInteger numberOfSubscribers;
+@property (nonatomic, weak) id<iTermPublisherDelegate> delegate;
+@property (nonatomic, readonly) NSTimeInterval timeIntervalSinceLastUpdate;
+
+- (void)publish:(PayloadType)payload;
+
+- (void)addSubscriber:(id)subscriber
+                block:(void (^)(PayloadType payload))block;
+
+- (void)removeSubscriber:(id)subscriber;
+
+@end
+
+NS_ASSUME_NONNULL_END
+
