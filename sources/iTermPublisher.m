@@ -125,9 +125,9 @@ static const char* siTermPublisherAttachment = "siTermPublisherAttachment";
 
 - (void)removeSubscriber:(id)object {
     iTermSubscriber *subscriber = [_subscribers objectPassingTest:^BOOL(iTermSubscriber *element, NSUInteger index, BOOL *stop) {
-        return element.object == subscriber;
+        return element.object == object;
     }];
-    [_subscribers removeObject:object];
+    [_subscribers removeObject:subscriber];
     [self countDidChange];
 }
 
