@@ -248,16 +248,24 @@
 }
 
 - (NSArray *)uniq {
+    return [self uniqWithComparator:^BOOL(id obj1, id obj2) {
+        return [obj1 isEqual:obj2];
+    }];
+}
+
+- (NSArray *)uniqWithComparator:(BOOL (^)(id, id))block {
     __block id last = nil;
     return [self filteredArrayUsingBlock:^BOOL(id anObject) {
+        BOOL result;
         if (!last) {
-            return YES;
-        }
-        if ([anObject isEqual:last]) {
-            return NO;
+            result = YES;
+        } else if (block(anObject, last)) {
+            result = NO;
+        } else {
+            result = YES;
         }
         last = anObject;
-        return YES;
+        return result;
     }];
 }
 

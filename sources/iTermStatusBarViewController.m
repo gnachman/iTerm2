@@ -93,7 +93,9 @@ const CGFloat iTermStatusBarHeight = 22;
     __block NSNumber *lastFixedSpacerOffset = nil;
     __block iTermStatusBarContainerView *previousObject = nil;
     view.sections = [[_visibleContainerViews flatMapWithBlock:^id(iTermStatusBarContainerView *anObject) {
-        NSNumber *offset = @(anObject.desiredOrigin + anObject.desiredWidth + iTermStatusBarViewControllerMargin / 2.0);
+        const BOOL isSpring = [anObject.component isKindOfClass:[iTermStatusBarSpringComponent class]];
+        CGFloat margin = isSpring ? 0 : iTermStatusBarViewControllerMargin / 2.0;
+        NSNumber *offset = @(anObject.desiredOrigin + anObject.desiredWidth + margin);
         if ([anObject.component isKindOfClass:[iTermStatusBarFixedSpacerComponent class]]) {
             lastFixedSpacerOffset = offset;
             previousObject = anObject;
@@ -116,7 +118,9 @@ const CGFloat iTermStatusBarHeight = 22;
             lastColor = nil;// anObject.backgroundColor;
             return @[ [iTermTuple tupleWithObject:anObject.backgroundColor andObject:offset] ];
         }
-    }] uniq];
+    }] uniqWithComparator:^BOOL(iTermTuple<NSColor *, NSNumber *> *obj1, iTermTuple<NSColor *, NSNumber *> *obj2) {
+        return [NSObject object:obj1.secondObject isEqualToObject:obj2.secondObject];
+    }];
 
     [view setNeedsDisplay:YES];
     DLog(@"--- end status bar layout ---");
