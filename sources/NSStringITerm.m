@@ -1993,10 +1993,20 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         NSString *format;
     } units[] = {
         { 10 * k,   k, @"%1.1f kB" },  // 9.9 KB
-        { 10 * mb, mb, @"%1.1f MB" },  // 9.9 MB
-        { 10 * gb, gb, @"%1.1f GB" },  // 9.9 GB
-        { 10 * tb, tb, @"%1.1f TB" },  // 9.9 TB
-        { 10 * pb, pb, @"%1.1f PB" },  // 9.9 PB
+        { 100 * k,  k, @" %2.0f kB" }, //  99 KB
+        { mb,       k, @"%3.0f kB" },  // 999 KB
+
+        { 10 * mb,  mb, @"%1.1f MB" },  // 9.9 MB
+        { 100 * mb, mb, @" %2.0f MB" }, //  99 MB
+        { gb,       mb, @"%3.0f MB" },  // 999 MB
+
+        { 10 * gb,  gb, @"%1.1f GB" },  // 9.9 GB
+        { 100 * gb, gb, @" %2.0f GB" }, //  99 GB
+        { tb,       gb, @"%3.0f GB" },  // 999 GB
+
+        { 10 * tb,  tb, @"%1.1f TB" },  // 9.9 TB
+        { 100 * tb, tb, @" %2.0f TB" }, //  99 TB
+        { pb,       tb, @"%3.0f TB" },  // 999 GB
     };
 
     for (int i = 0; i < sizeof(units) / sizeof(*units); i++) {
@@ -2004,7 +2014,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
             return [NSString stringWithFormat:units[i].format, bytes / units[i].divisor];
         }
     }
-    return @"∞";
+    return @"     ∞";
 }
 
 + (NSString *)sparkWithHeight:(double)fraction {
