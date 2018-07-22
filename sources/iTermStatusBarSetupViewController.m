@@ -15,6 +15,7 @@
 #import "iTermStatusBarFunctionCallComponent.h"
 #import "iTermStatusBarGraphicComponent.h"
 #import "iTermStatusBarJobComponent.h"
+#import "iTermStatusBarMemoryUtilizationComponent.h"
 #import "iTermStatusBarRPCProvidedTextComponent.h"
 #import "iTermStatusBarSearchFieldComponent.h"
 #import "iTermStatusBarSpringComponent.h"
@@ -65,6 +66,7 @@ NS_ASSUME_NONNULL_BEGIN
                                  [iTermStatusBarSpringComponent class],
                                  [iTermStatusBarClockComponent class],
                                  [iTermStatusBarHostnameComponent class],
+                                 [iTermStatusBarMemoryUtilizationComponent class],
                                  [iTermStatusBarUsernameComponent class],
                                  [iTermStatusBarWorkingDirectoryComponent class],
                                  [iTermStatusBarSearchFieldComponent class],

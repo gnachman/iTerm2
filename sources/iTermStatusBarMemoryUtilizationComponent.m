@@ -1,22 +1,23 @@
 //
-//  iTermStatusBarCPUUtilizationComponent.m
+//  iTermStatusBarMemoryUtilizationComponent.m
 //  iTerm2SharedARC
 //
-//  Created by George Nachman on 7/19/18.
+//  Created by George Nachman on 7/21/18.
 //
 
-#import "iTermStatusBarCPUUtilizationComponent.h"
+#import "iTermStatusBarMemoryUtilizationComponent.h"
 
-#import "iTermCPUUtilization.h"
+#import "iTermMemoryUtilization.h"
+
 #import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
 
-static const NSInteger iTermStatusBarCPUUtilizationComponentMaximumNumberOfSamples = 60;
-static const CGFloat iTermCPUUtilizationWidth = 120;
+static const NSInteger iTermStatusBarMemoryUtilizationComponentMaximumNumberOfSamples = 60;
+static const CGFloat iTermMemoryUtilizationWidth = 120;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@implementation iTermStatusBarCPUUtilizationComponent {
+@implementation iTermStatusBarMemoryUtilizationComponent {
     NSMutableArray<NSNumber *> *_samples;
 }
 
@@ -25,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (self) {
         _samples = [NSMutableArray array];
         __weak __typeof(self) weakSelf = self;
-        [[iTermCPUUtilization sharedInstance] addSubscriber:self block:^(double value) {
+        [[iTermMemoryUtilization sharedInstance] addSubscriber:self block:^(long long value) {
             [weakSelf update:value];
         }];
     }
@@ -33,15 +34,15 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"CPU Utilization";
+    return @"Memory Utilization";
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Shows current CPU utilization.";
+    return @"Shows current memory utilization.";
 }
 
 - (id)statusBarComponentExemplar {
-    return @"12% ▃▃▅▂ CPU";
+    return @"3.1 GBd ▂▃▃▅ RAM";
 }
 
 - (BOOL)statusBarComponentCanStretch {
@@ -53,31 +54,19 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (CGFloat)statusBarComponentMinimumWidth {
-    return iTermCPUUtilizationWidth;
+    return iTermMemoryUtilizationWidth;
 }
 
 - (CGFloat)statusBarComponentPreferredWidth {
-    return iTermCPUUtilizationWidth;
+    return iTermMemoryUtilizationWidth;
 }
 
 - (NSArray<NSNumber *> *)values {
     return _samples;
 }
 
-- (int)currentEstimate {
-    double alpha = 0.7;
-    NSArray<NSNumber *> *lastSamples = _samples;
-    const NSInteger maxSamplesToUse = 4;
-    double x = _samples.lastObject.doubleValue;
-    if (lastSamples.count > maxSamplesToUse) {
-        lastSamples = [lastSamples subarrayWithRange:NSMakeRange(lastSamples.count - maxSamplesToUse,
-                                                                 maxSamplesToUse)];
-    }
-    for (NSNumber *number in lastSamples) {
-        x *= (1.0 - alpha);
-        x += number.doubleValue * alpha;
-    }
-    return x * 100;
+- (long long)currentEstimate {
+    return  _samples.lastObject.doubleValue * [[iTermMemoryUtilization sharedInstance] availableMemory];
 }
 
 - (void)drawTextWithRect:(NSRect)rect
@@ -105,6 +94,7 @@ NS_ASSUME_NONNULL_BEGIN
     graphRect.origin.x += leftWidth;
     graphRect.size.width -= (leftWidth + rightWidth);
     graphRect = NSInsetRect(graphRect, 0, 2);
+
     return graphRect;
 }
 
@@ -122,9 +112,9 @@ NS_ASSUME_NONNULL_BEGIN
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         NSMutableParagraphStyle *leftAlignStyle =
-            [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
-            [leftAlignStyle setAlignment:NSTextAlignmentLeft];
-            [leftAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
+        [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+        [leftAlignStyle setAlignment:NSTextAlignmentLeft];
+        [leftAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
 
         leftAttributes = @{ NSParagraphStyleAttributeName: leftAlignStyle,
                             NSFontAttributeName: self.font,
@@ -138,9 +128,9 @@ NS_ASSUME_NONNULL_BEGIN
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         NSMutableParagraphStyle *rightAlignStyle =
-            [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
-            [rightAlignStyle setAlignment:NSTextAlignmentRight];
-            [rightAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
+        [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+        [rightAlignStyle setAlignment:NSTextAlignmentRight];
+        [rightAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
         rightAttributes = @{ NSParagraphStyleAttributeName: rightAlignStyle,
                              NSFontAttributeName: self.font,
                              NSForegroundColorAttributeName: [NSColor blackColor] };
@@ -148,32 +138,29 @@ NS_ASSUME_NONNULL_BEGIN
     return rightAttributes;
 }
 
-- (NSSize)leftSize {
-    NSString *longestPercentage = @"100%";
-    return [longestPercentage sizeWithAttributes:self.leftAttributes];
-}
-
 - (CGSize)rightSize {
     return [self.rightText sizeWithAttributes:self.rightAttributes];
 }
 
 - (NSString *)leftText {
-    return [NSString stringWithFormat:@"%3d%%", self.currentEstimate];
+    return [NSString it_formatBytes:self.currentEstimate];
 }
 
 - (NSString *)rightText {
-    return @"CPU";
+    return @"RAM";
 }
 
 - (void)drawRect:(NSRect)rect {
     CGSize rightSize = self.rightSize;
-    
+
     [self drawTextWithRect:rect
                       left:self.leftText
                      right:self.rightText
                  rightSize:rightSize];
 
-    NSRect graphRect = [self graphRectForRect:rect leftSize:self.leftSize rightSize:rightSize];
+    NSRect graphRect = [self graphRectForRect:rect
+                                     leftSize:[self.leftText sizeWithAttributes:self.leftAttributes]
+                                    rightSize:rightSize];
 
     [super drawRect:graphRect];
 }
@@ -181,8 +168,9 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Private
 
 - (void)update:(double)value {
-    [_samples addObject:@(value)];
-    while (_samples.count > iTermStatusBarCPUUtilizationComponentMaximumNumberOfSamples) {
+    double available = [[iTermMemoryUtilization sharedInstance] availableMemory];
+    [_samples addObject:@(value / available)];
+    while (_samples.count > iTermStatusBarMemoryUtilizationComponentMaximumNumberOfSamples) {
         [_samples removeObjectAtIndex:0];
     }
     [self invalidate];

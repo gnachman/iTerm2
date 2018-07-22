@@ -1949,23 +1949,36 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 + (NSString *)it_formatBytes:(double)bytes {
-    if (bytes < 1) {
-        return [NSString stringWithFormat:@"%.04lf bytes", bytes];
-    } else if (bytes < 1024) {
-        return [NSString stringWithFormat:@"%d bytes", (int)bytes];
-    } else if (bytes < 10240) {
-        return [NSString stringWithFormat:@"%.1lf kB", bytes / 10];
-    } else if (bytes < 1048576) {
-        return [NSString stringWithFormat:@"%d kB", (int)bytes / 1024];
-    } else if (bytes < 10485760) {
-        return [NSString stringWithFormat:@"%.1lf MB", bytes / 1048576];
-    } else if (bytes < 1024.0 * 1024.0 * 1024.0) {
-        return [NSString stringWithFormat:@"%.0lf MB", bytes / 1048576];
-    } else if (bytes < 1024.0 * 1024.0 * 1024.0 * 10) {
-        return [NSString stringWithFormat:@"%.1lf GB", bytes / (1024.0 * 1024.0 * 1024.0)];
-    } else {
-        return [NSString stringWithFormat:@"%.0lf GB", bytes / (1024.0 * 1024.0 * 1024.0)];
+    const double k = 1000.0;
+    const double mb = k * k;
+    const double gb = mb * k;
+    const double tb = gb * k;
+    const double pb = tb * k;
+    struct {
+        double limit;
+        double divisor;
+        NSString *format;
+    } units[] = {
+        { 1,        1, @"%.04f bytes" }, // 0.9999 bytes
+        { k,        1, @"%.0f bytes" }, // 999 bytes
+        { 10 * k,   k, @"%.1f kB" },  // 9.9 KB
+        { mb,       k, @"%.0f kB" },  // 999 KB
+        { 10 * mb, mb, @"%.1f MB" },  // 9.9 MB
+        { gb,      mb, @"%.0f MB" },  // 999 MB
+        { 10 * gb, gb, @"%.1f GB" },  // 9.9 GB
+        { tb,      gb, @"%.0f GB" },  // 999 GB
+        { 10 * tb, tb, @"%.1f TB" },  // 9.9 TB
+        { pb,      tb, @"%.0f TB" },  // 999 TB
+        { 10 * pb, pb, @"%.1f PB" },  // 9.9 PB
+        { k * pb,  pb, @"%.0f PB" },  // 999 PB
+    };
+
+    for (int i = 0; i < sizeof(units) / sizeof(*units); i++) {
+        if (bytes < units[i].limit) {
+            return [NSString stringWithFormat:units[i].format, bytes / units[i].divisor];
+        }
     }
+    return @"∞";
 }
 
 + (NSString *)sparkWithHeight:(double)fraction {

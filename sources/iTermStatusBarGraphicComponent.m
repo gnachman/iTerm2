@@ -203,7 +203,7 @@
         return;
     }
 
-    const CGFloat numBars = MIN(rect.size.width, values.count);
+    const CGFloat numBars = values.count;
     const CGFloat barWidth = MIN(1, rect.size.width / numBars);
     CGFloat x = NSMaxX(rect) - values.count * barWidth;
 
