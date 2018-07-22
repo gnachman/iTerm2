@@ -1820,6 +1820,10 @@
 		A66F3CF11FEA3D9E00AA2021 /* iTermHistogram.mm in Sources */ = {isa = PBXBuildFile; fileRef = A66F3CEF1FEA3D9E00AA2021 /* iTermHistogram.mm */; };
 		A66F3CF71FED741E00AA2021 /* iTermTextRendererTransientState.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F3CF51FED741E00AA2021 /* iTermTextRendererTransientState.h */; };
 		A66F3CF81FED741E00AA2021 /* iTermTextRendererTransientState.mm in Sources */ = {isa = PBXBuildFile; fileRef = A66F3CF61FED741E00AA2021 /* iTermTextRendererTransientState.mm */; };
+		A66F52A9210458CA00571168 /* iTermNetworkUtilization.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F52A7210458CA00571168 /* iTermNetworkUtilization.h */; };
+		A66F52AA210458CA00571168 /* iTermNetworkUtilization.m in Sources */ = {isa = PBXBuildFile; fileRef = A66F52A8210458CA00571168 /* iTermNetworkUtilization.m */; };
+		A66F52AD21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F52AB21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.h */; };
+		A66F52AE21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A66F52AC21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.m */; };
 		A673BFDE1E16C54500FA2386 /* iTermKeyLabels.h in Headers */ = {isa = PBXBuildFile; fileRef = A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */; };
 		A673BFDF1E16C54500FA2386 /* iTermKeyLabels.m in Sources */ = {isa = PBXBuildFile; fileRef = A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */; };
 		A673BFE21E176AA300FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */ = {isa = PBXBuildFile; fileRef = A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */; };
@@ -4088,6 +4092,10 @@
 		A66F3CF61FED741E00AA2021 /* iTermTextRendererTransientState.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermTextRendererTransientState.mm; path = Metal/Renderers/iTermTextRendererTransientState.mm; sourceTree = "<group>"; };
 		A66F3CF91FED75EA00AA2021 /* iTermTextRendererCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermTextRendererCommon.h; path = Metal/Renderers/iTermTextRendererCommon.h; sourceTree = "<group>"; };
 		A66F3CFA1FED770100AA2021 /* iTermTextRendererTransientState+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "iTermTextRendererTransientState+Private.h"; path = "Metal/Renderers/iTermTextRendererTransientState+Private.h"; sourceTree = "<group>"; };
+		A66F52A7210458CA00571168 /* iTermNetworkUtilization.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermNetworkUtilization.h; sourceTree = "<group>"; };
+		A66F52A8210458CA00571168 /* iTermNetworkUtilization.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermNetworkUtilization.m; sourceTree = "<group>"; };
+		A66F52AB21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarNetworkUtilizationComponent.h; sourceTree = "<group>"; };
+		A66F52AC21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarNetworkUtilizationComponent.m; sourceTree = "<group>"; };
 		A673BFDC1E16C54500FA2386 /* iTermKeyLabels.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermKeyLabels.h; sourceTree = "<group>"; };
 		A673BFDD1E16C54500FA2386 /* iTermKeyLabels.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyLabels.m; sourceTree = "<group>"; };
 		A673BFE01E1743F400FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-travis-testCustomUnderline.png"; path = "tests/Goldens/PTYTextViewTest-golden-travis-testCustomUnderline.png"; sourceTree = "<group>"; };
@@ -6294,6 +6302,8 @@
 				537BFDD42101B2500098C91F /* iTermStatusBarCPUUtilizationComponent.m */,
 				A6393597210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.h */,
 				A6393598210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m */,
+				A66F52AB21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.h */,
+				A66F52AC21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.m */,
 			);
 			name = Components;
 			sourceTree = "<group>";
@@ -7028,6 +7038,8 @@
 				537BFDD02101AD9F0098C91F /* iTermCPUUtilization.m */,
 				A63935932103FD8B00A16D1C /* iTermMemoryUtilization.h */,
 				A63935942103FD8B00A16D1C /* iTermMemoryUtilization.m */,
+				A66F52A7210458CA00571168 /* iTermNetworkUtilization.h */,
+				A66F52A8210458CA00571168 /* iTermNetworkUtilization.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -8296,6 +8308,7 @@
 				A65429AB20C4880300CE71B1 /* iTermSessionFactory.h in Headers */,
 				A66719461DCE36C3000CE608 /* iTermSocketIPV4Address.h in Headers */,
 				537BFDD52101B2500098C91F /* iTermStatusBarCPUUtilizationComponent.h in Headers */,
+				A66F52AD21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.h in Headers */,
 				5312269A20CB1D3A004831C6 /* iTermBuiltInFunctions.h in Headers */,
 				A66719471DCE36C3000CE608 /* NSTableColumn+iTerm.h in Headers */,
 				A66719481DCE36C3000CE608 /* iTermAdditionalHotKeyTableCellView.h in Headers */,
@@ -8348,6 +8361,7 @@
 				A60C0372208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.h in Headers */,
 				A623D9541F8B04890011F8C3 /* iTermMetalGlue.h in Headers */,
 				535EA4F120D0CB7A00FC81E0 /* iTermSwiftyString.h in Headers */,
+				A66F52A9210458CA00571168 /* iTermNetworkUtilization.h in Headers */,
 				A631FC9120EDDBC600EB824F /* iTermFindDriver.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -10108,6 +10122,7 @@
 				A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */,
 				A639358C21023BDB00A16D1C /* iTermStatusBarGraphicComponent.m in Sources */,
 				538BE55620C9E69A00AD15B0 /* NSDictionary+iTerm.m in Sources */,
+				A66F52AE21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.m in Sources */,
 				530AB8A820B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
 				A6FE8D04209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m in Sources */,
@@ -10176,6 +10191,7 @@
 				A62EED9320DF5B2F00943DE3 /* iTermScriptChooser.m in Sources */,
 				A6A4867B20B67E5D00493302 /* ProfilesTerminalPreferencesViewController.m in Sources */,
 				A66719631DCE3772000CE608 /* iTermSocketIPV4Address.m in Sources */,
+				A66F52AA210458CA00571168 /* iTermNetworkUtilization.m in Sources */,
 				A63011CE20E85B16008114B7 /* SessionTitleView.m in Sources */,
 				53FF982B2093C823008688D7 /* iTermSignatureVerifier.m in Sources */,
 				535EA4FD20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.m in Sources */,

@@ -1981,6 +1981,32 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return @"∞";
 }
 
++ (NSString *)it_formatBytesCompact:(double)bytes {
+    const double k = 1000.0;
+    const double mb = k * k;
+    const double gb = mb * k;
+    const double tb = gb * k;
+    const double pb = tb * k;
+    struct {
+        double limit;
+        double divisor;
+        NSString *format;
+    } units[] = {
+        { 10 * k,   k, @"%1.1f kB" },  // 9.9 KB
+        { 10 * mb, mb, @"%1.1f MB" },  // 9.9 MB
+        { 10 * gb, gb, @"%1.1f GB" },  // 9.9 GB
+        { 10 * tb, tb, @"%1.1f TB" },  // 9.9 TB
+        { 10 * pb, pb, @"%1.1f PB" },  // 9.9 PB
+    };
+
+    for (int i = 0; i < sizeof(units) / sizeof(*units); i++) {
+        if (bytes < units[i].limit) {
+            return [NSString stringWithFormat:units[i].format, bytes / units[i].divisor];
+        }
+    }
+    return @"∞";
+}
+
 + (NSString *)sparkWithHeight:(double)fraction {
     if (fraction <= 0) {
         return @" ";

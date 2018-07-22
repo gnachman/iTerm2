@@ -272,6 +272,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (BOOL)startsWithEmoji;
 + (NSString *)it_formatBytes:(double)bytes;
++ (NSString *)it_formatBytesCompact:(double)bytes;
 
 // For a string like
 // lll\(eee(eee,eee,"eee","\\"","ee\(EE())"))ll

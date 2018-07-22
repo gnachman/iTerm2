@@ -8,6 +8,7 @@
 #import "iTermStatusBarGraphicComponent.h"
 
 #import "iTermStatusBarViewController.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -178,12 +179,22 @@
 
 @end
 
+static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
+
 @implementation iTermStatusBarSparklinesComponent {
     NSInteger _currentCount;
 }
 
 - (NSColor *)lineColor {
     return [NSColor blackColor];
+}
+
+- (NSInteger)numberOfTimeSeries {
+    return 1;
+}
+
+- (double)ceiling {
+    return 1.0;
 }
 
 - (NSObject *)modelForWidth:(CGFloat)maximumWidth width:(out CGFloat *)preferredWidth {
@@ -203,31 +214,58 @@
         return;
     }
 
-    const CGFloat numBars = values.count;
-    const CGFloat barWidth = MIN(1, rect.size.width / numBars);
-    CGFloat x = NSMaxX(rect) - values.count * barWidth;
-
-    const CGFloat margin = 2;
-
     // Draw baseline
     [[NSColor colorWithWhite:0.5 alpha:1] set];
-    NSRectFill(NSMakeRect(NSMinX(rect), rect.origin.y + margin, NSWidth(rect), 1));
+    NSRectFill(NSMakeRect(NSMinX(rect), rect.origin.y + iTermStatusBarSparklineBottomMargin, NSWidth(rect), 1));
 
-    const CGFloat y = margin + rect.origin.y;
+    if (self.numberOfTimeSeries == 1) {
+        NSBezierPath *path = [self bezierPathWithValues:self.values inRect:rect];
+        [self drawBezierPath:path forTimeSeries:0];
+    } else {
+        for (NSInteger i = 0; i < self.numberOfTimeSeries; i++) {
+            NSArray<NSNumber *> *values = [self.values mapWithBlock:^id(id anObject) {
+                return [[NSArray castFrom:anObject] objectAtIndex:i];
+            }];
+            NSBezierPath *path = [self bezierPathWithValues:values inRect:rect];
+            [self drawBezierPath:path forTimeSeries:i];
+        }
+    }
+}
+
+- (void)drawBezierPath:(NSBezierPath *)bezierPath forTimeSeries:(NSInteger)timeSeriesIndex {
+    if (self.numberOfTimeSeries == 1) {
+        NSGradient *gradient = [[NSGradient alloc] initWithColors:@[ [NSColor blackColor],
+                                                                     [NSColor colorWithRed:1 green:0.25 blue:0 alpha:1] ]];
+        [gradient drawInBezierPath:bezierPath angle:90];
+    } else if (self.numberOfTimeSeries == 2) {
+        if (timeSeriesIndex == 0) {
+            [[[NSColor blueColor] colorWithAlphaComponent:0.5] setFill];
+        } else {
+            [[[NSColor redColor] colorWithAlphaComponent:0.5] setFill];
+        }
+        [bezierPath fill];
+    }
+}
+
+- (NSBezierPath *)bezierPathWithValues:(NSArray<NSNumber *> *)values
+                                inRect:(NSRect)rect {
+    const CGFloat numBars = values.count;
+    const CGFloat barWidth = MIN(1, rect.size.width / numBars);
+
+    CGFloat x = NSMaxX(rect) - values.count * barWidth;
+    const CGFloat y = iTermStatusBarSparklineBottomMargin + rect.origin.y;
     NSBezierPath *path = [[NSBezierPath alloc] init];
     const CGFloat x0 = x;
     [path moveToPoint:NSMakePoint(x, y)];
+    const double ceiling = self.ceiling;
     for (NSNumber *n in values) {
-        const CGFloat height = n.doubleValue * (rect.size.height - margin * 2);
+        const CGFloat height = n.doubleValue * (rect.size.height - iTermStatusBarSparklineBottomMargin * 2) / ceiling;
         [path lineToPoint:NSMakePoint(x, y + height)];
         x += barWidth;
     }
     [path lineToPoint:NSMakePoint(x, y)];
     [path lineToPoint:NSMakePoint(x0, y)];
-
-    NSGradient *gradient = [[NSGradient alloc] initWithColors:@[ [NSColor blackColor],
-                                                                 [NSColor colorWithRed:1 green:0.25 blue:0 alpha:1] ]];
-    [gradient drawInBezierPath:path angle:90];
+    return path;
 }
 
 - (void)invalidate {

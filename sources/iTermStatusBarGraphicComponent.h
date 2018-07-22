@@ -26,9 +26,13 @@
 
 @interface iTermStatusBarSparklinesComponent : iTermStatusBarGraphicComponent
 
-@property (nonatomic, readonly) NSArray<NSNumber *> *values;
+@property (nonatomic, readonly) NSArray *values;
 @property (nonatomic, readonly) NSColor *lineColor;
+@property (nonatomic, readonly) NSInteger numberOfTimeSeries;
+@property (nonatomic, readonly) double ceiling;
 
 - (void)invalidate;
+- (void)drawBezierPath:(NSBezierPath *)bezierPath
+         forTimeSeries:(NSInteger)timeSeriesIndex;
 
 @end
