@@ -36,5 +36,6 @@
                  completion:(void (^)(BOOL finished))completion;
 
 - (void)enumerateHierarchy:(void (NS_NOESCAPE ^)(NSView *))block;
+- (CGFloat)retinaRound:(CGFloat)value;
 
 @end

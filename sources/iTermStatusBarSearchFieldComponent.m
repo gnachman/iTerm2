@@ -70,6 +70,10 @@ NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
     return _viewController;
 }
 
+- (CGFloat)statusBarComponentVerticalOffset {
+    return 0;
+}
+
 @end
 
 NS_ASSUME_NONNULL_END

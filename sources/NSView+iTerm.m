@@ -102,4 +102,16 @@
     }
 }
 
+- (CGFloat)retinaRound:(CGFloat)value {
+    NSWindow *window = self.window;
+    CGFloat scale = window.backingScaleFactor;
+    if (!scale) {
+        scale = [[NSScreen mainScreen] backingScaleFactor];
+    }
+    if (!scale) {
+        scale = 1;
+    }
+    return round(scale * value) / scale;
+}
+
 @end

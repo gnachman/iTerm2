@@ -214,7 +214,8 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
 }
 
 - (CGFloat)statusBarComponentVerticalOffset {
-    return 0;
+    // Since most components are text this improves the vertical alignment of latin characters
+    return 1.5;
 }
 
 #pragma mark - NSSecureCoding

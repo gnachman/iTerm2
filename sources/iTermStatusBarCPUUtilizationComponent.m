@@ -10,6 +10,7 @@
 #import "iTermCPUUtilization.h"
 #import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSView+iTerm.h"
 
 static const NSInteger iTermStatusBarCPUUtilizationComponentMaximumNumberOfSamples = 60;
 static const CGFloat iTermCPUUtilizationWidth = 120;
@@ -91,11 +92,6 @@ NS_ASSUME_NONNULL_BEGIN
     [right drawInRect:textRect withAttributes:self.rightAttributes];
 }
 
-- (CGFloat)retinaRound:(CGFloat)value {
-    CGFloat scaleFactor = self.view.window.backingScaleFactor ?: 1.0;
-    return round(scaleFactor * value) / scaleFactor;
-}
-
 - (NSRect)graphRectForRect:(NSRect)rect
                   leftSize:(CGSize)leftSize
                  rightSize:(CGSize)rightSize {
@@ -105,7 +101,7 @@ NS_ASSUME_NONNULL_BEGIN
     CGFloat leftWidth = leftSize.width + margin;
     graphRect.origin.x += leftWidth;
     graphRect.size.width -= (leftWidth + rightWidth);
-    graphRect = NSInsetRect(graphRect, 0, [self retinaRound:-self.font.descender]);
+    graphRect = NSInsetRect(graphRect, 0, [self.view retinaRound:-self.font.descender]);
 
     return graphRect;
 }
