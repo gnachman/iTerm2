@@ -43,6 +43,7 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 
 - (NSTextField *)newTextField {
     NSTextField *textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    textField.font = [NSFont fontWithName:@"Menlo" size:12];
     textField.drawsBackground = NO;
     textField.bordered = NO;
     textField.editable = NO;

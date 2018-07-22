@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (id)statusBarComponentExemplar {
-    return @"3.1 GBd ▂▃▃▅ RAM";
+    return @"3.1 GB ▂▃▃▅ RAM";
 }
 
 - (BOOL)statusBarComponentCanStretch {
@@ -75,13 +75,14 @@ NS_ASSUME_NONNULL_BEGIN
                rightSize:(CGSize)rightSize {
     NSRect textRect = rect;
     textRect.size.height = rightSize.height;
-    NSFont *font = self.font;
-    const CGFloat baselineOffset = font.leading - font.descender;
-    const CGFloat capHeight = font.capHeight;
-
-    textRect.origin.y += self.view.bounds.size.height / 2 - baselineOffset - capHeight / 2;
+    textRect.origin.y = (self.view.bounds.size.height - rightSize.height) / 2.0;
     [left drawInRect:textRect withAttributes:self.leftAttributes];
     [right drawInRect:textRect withAttributes:self.rightAttributes];
+}
+
+- (CGFloat)retinaRound:(CGFloat)value {
+    CGFloat scaleFactor = self.view.window.backingScaleFactor ?: 1.0;
+    return round(scaleFactor * value) / scaleFactor;
 }
 
 - (NSRect)graphRectForRect:(NSRect)rect
@@ -93,7 +94,7 @@ NS_ASSUME_NONNULL_BEGIN
     CGFloat leftWidth = leftSize.width + margin;
     graphRect.origin.x += leftWidth;
     graphRect.size.width -= (leftWidth + rightWidth);
-    graphRect = NSInsetRect(graphRect, 0, 2);
+    graphRect = NSInsetRect(graphRect, 0, [self retinaRound:-self.font.descender]);
 
     return graphRect;
 }

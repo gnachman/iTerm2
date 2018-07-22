@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermStatusBarContainerView.h"
+#import "iTermStatusBarFixedSpacerComponent.h"
 #import "iTermStatusBarLayout.h"
 #import "iTermStatusBarSpringComponent.h"
 #import "iTermStatusBarView.h"
@@ -72,6 +73,7 @@ const CGFloat iTermStatusBarHeight = 22;
                                  view.desiredWidth,
                                  iTermStatusBarViewControllerContainerHeight);
          [view.component statusBarComponentWidthDidChangeTo:view.desiredWidth];
+         view.rightSeparatorOffset = -1;
      }];
     // Remove defunct views
     for (iTermStatusBarContainerView *view in previouslyVisible) {
@@ -85,6 +87,38 @@ const CGFloat iTermStatusBarHeight = 22;
             [self.view addSubview:view];
         }
     }
+    iTermStatusBarView *view = (iTermStatusBarView *)self.view;
+    __block BOOL haveFoundNonSpacer = NO;
+    __block NSColor *lastColor = nil;
+    __block NSNumber *lastFixedSpacerOffset = nil;
+    __block iTermStatusBarContainerView *previousObject = nil;
+    view.sections = [[_visibleContainerViews flatMapWithBlock:^id(iTermStatusBarContainerView *anObject) {
+        NSNumber *offset = @(anObject.desiredOrigin + anObject.desiredWidth + iTermStatusBarViewControllerMargin / 2.0);
+        if ([anObject.component isKindOfClass:[iTermStatusBarFixedSpacerComponent class]]) {
+            lastFixedSpacerOffset = offset;
+            previousObject = anObject;
+            return nil;
+        } else if (lastFixedSpacerOffset && haveFoundNonSpacer) {
+            haveFoundNonSpacer = YES;
+            previousObject.rightSeparatorOffset = lastFixedSpacerOffset.doubleValue;
+            anObject.rightSeparatorOffset = offset.doubleValue;
+            previousObject = anObject;
+            NSArray *result = @[ [iTermTuple tupleWithObject:lastColor andObject:lastFixedSpacerOffset],
+                                 [iTermTuple tupleWithObject:anObject.backgroundColor andObject:offset] ];
+            lastFixedSpacerOffset = nil;
+            lastColor = nil;
+            return result;
+        } else {
+            haveFoundNonSpacer = YES;
+            anObject.rightSeparatorOffset = offset.doubleValue;
+            lastFixedSpacerOffset = nil;
+            previousObject = anObject;
+            lastColor = nil;// anObject.backgroundColor;
+            return @[ [iTermTuple tupleWithObject:anObject.backgroundColor andObject:offset] ];
+        }
+    }] uniq];
+
+    [view setNeedsDisplay:YES];
     DLog(@"--- end status bar layout ---");
 }
 
@@ -119,41 +153,29 @@ const CGFloat iTermStatusBarHeight = 22;
 
 - (void)updateMargins:(NSArray<iTermStatusBarContainerView *> *)views {
     __block BOOL foundMargin = NO;
-    __block BOOL previousHadMargin = NO;
     [views enumerateObjectsUsingBlock:^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
         const BOOL hasMargins = view.component.statusBarComponentHasMargins;
         if (hasMargins && !foundMargin) {
-            view.leftMargin = iTermStatusBarViewControllerMargin;
+            view.leftMargin = iTermStatusBarViewControllerMargin + 1;
             foundMargin = YES;
         } else if (hasMargins) {
-            if (previousHadMargin) {
-                view.leftMargin = iTermStatusBarViewControllerMargin / 2;
-            } else {
-                view.leftMargin = 0;
-            }
+            view.leftMargin = iTermStatusBarViewControllerMargin / 2 + 1;
         } else {
             view.leftMargin = 0;
         }
-        previousHadMargin = hasMargins;
     }];
     
     foundMargin = NO;
-    previousHadMargin = NO;
     [views enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
         const BOOL hasMargins = view.component.statusBarComponentHasMargins;
         if (hasMargins && !foundMargin) {
             view.rightMargin = iTermStatusBarViewControllerMargin;
             foundMargin = YES;
         } else if (hasMargins) {
-            if (previousHadMargin) {
-                view.rightMargin = iTermStatusBarViewControllerMargin / 2;
-            } else {
-                view.rightMargin = 0;
-            }
+            view.rightMargin = iTermStatusBarViewControllerMargin / 2;
         } else {
             view.rightMargin = 0;
         }
-        previousHadMargin = hasMargins;
     }];
 }
 

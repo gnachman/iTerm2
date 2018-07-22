@@ -33,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (CGFloat)statusBarComponentMinimumWidth {
-    return 10;
+    return 5;
 }
 
 @end

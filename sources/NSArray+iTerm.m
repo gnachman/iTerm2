@@ -247,6 +247,20 @@
     return [[[[NSSet alloc] initWithArray:self] autorelease] allObjects];
 }
 
+- (NSArray *)uniq {
+    __block id last = nil;
+    return [self filteredArrayUsingBlock:^BOOL(id anObject) {
+        if (!last) {
+            return YES;
+        }
+        if ([anObject isEqual:last]) {
+            return NO;
+        }
+        last = anObject;
+        return YES;
+    }];
+}
+
 - (NSString *)numbersAsHexStrings {
     NSMutableString *result = [NSMutableString string];
     NSString *separator = @"";
@@ -399,6 +413,13 @@
         }
     }
     return min;
+}
+
+- (NSArray<id> *)it_arrayByDroppingLastN:(NSUInteger)n {
+    if (n >= self.count) {
+        return @[];
+    }
+    return [self subarrayToIndex:self.count - n];
 }
 
 @end

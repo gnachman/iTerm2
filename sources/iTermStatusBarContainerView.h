@@ -19,6 +19,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) CGFloat leftMargin;
 @property (nonatomic) CGFloat rightMargin;
 
+@property (nonatomic, readonly) NSColor *backgroundColor;
+@property (nonatomic) CGFloat leftSeparatorOffset;
+@property (nonatomic) CGFloat rightSeparatorOffset;
+
 - (nullable instancetype)initWithComponent:(id<iTermStatusBarComponent>)component NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithFrame:(NSRect)frame NS_UNAVAILABLE;

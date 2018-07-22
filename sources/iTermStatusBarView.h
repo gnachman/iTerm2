@@ -6,7 +6,11 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermTuple.h"
 
 @interface iTermStatusBarView : NSView
+
+// color, x offset
+@property (nonatomic, copy) NSArray<iTermTuple<NSColor *, NSNumber *> *> *sections;
 
 @end
