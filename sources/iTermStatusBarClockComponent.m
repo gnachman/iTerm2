@@ -31,16 +31,16 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
                                                    placeholder:@"Date Format (Unicode TR 35)"
                                                   defaultValue:self.class.statusBarComponentDefaultKnobs[iTermStatusBarClockComponentFormatKey]
                                                            key:iTermStatusBarClockComponentFormatKey];
-    return @[ formatKnob ];
+    return [@[ formatKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
 }
 
 + (NSDictionary *)statusBarComponentDefaultKnobs {
     NSDictionary *fromSuper = [super statusBarComponentDefaultKnobs];
-    return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarClockComponentFormatKey: @"MM-dd hh:mm" }];
+    return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarClockComponentFormatKey: @"M-dd h:mm" }];
 }
 
 - (id)statusBarComponentExemplar {
-    return @"Clock";
+    return [[self dateFormatter] stringFromDate:[NSDate date]];
 }
 
 - (BOOL)statusBarComponentCanStretch {
@@ -51,7 +51,7 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
     if (!_dateFormatter) {
         _dateFormatter = [[NSDateFormatter alloc] init];
         NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-        _dateFormatter.dateFormat = knobValues[iTermStatusBarClockComponentFormatKey] ?: @"MM-dd hh:mm";
+        _dateFormatter.dateFormat = knobValues[iTermStatusBarClockComponentFormatKey] ?: @"M-dd h:mm";
     }
     return _dateFormatter;
 }
