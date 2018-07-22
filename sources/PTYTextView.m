@@ -250,6 +250,8 @@ static const int kDragThreshold = 3;
 
     // Used to report scroll wheel mouse events.
     iTermScrollAccumulator *_scrollAccumulator;
+
+    BOOL _haveSeenScrollWheelEvent;
 }
 
 
@@ -1648,9 +1650,24 @@ static const int kDragThreshold = 3;
     }
 }
 
+- (void)jiggle {
+    [self scrollLineUp:nil];
+    [self scrollLineDown:nil];
+}
+
 - (void)scrollWheel:(NSEvent *)event {
     DLog(@"scrollWheel:%@", event);
 
+    if (!_haveSeenScrollWheelEvent) {
+        // Work around a weird bug. Commit 9e4b97b18fac24bea6147c296b65687f0523ad83 caused it.
+        // When you restore a window and have an inline scroller (but not a legacy scroller!) then
+        // it will be at the top, even though we're scrolled to the bottom. You can either jiggle
+        // it after a delay to fix it, or after thousands of dispatch_async calls, or here. None of
+        // these make any sense, nor does the bug itself. I get the feeling that a giant rats' nest
+        // of insanity underlies scroll wheels on macOS.
+        _haveSeenScrollWheelEvent = YES;
+        [self jiggle];
+    }
     NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
     if ([self scrollWheelShouldSendDataForEvent:event at:point]) {
         DLog(@"Scroll wheel sending data");
