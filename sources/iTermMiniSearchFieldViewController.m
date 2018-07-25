@@ -54,18 +54,25 @@
     
     // This makes the arrows and close buttons line up visually.
     const CGFloat verticalOffset = 1;
-    
-    _closeButton.frame = NSMakeRect(size.width - _closeButton.frame.size.width,
-                                    verticalOffset,
-                                    _closeButton.frame.size.width,
-                                    searchFieldSize.height);
-    _arrowsControl.frame = NSMakeRect(size.width - _arrowsControl.frame.size.width - _closeButton.frame.size.width,
+
+    CGFloat closeWidth = 0;
+    if (self.canClose) {
+        _closeButton.hidden = NO;
+        _closeButton.frame = NSMakeRect(size.width - _closeButton.frame.size.width,
+                                        verticalOffset,
+                                        _closeButton.frame.size.width,
+                                        searchFieldSize.height);
+        closeWidth = _closeButton.frame.size.width;
+    } else {
+        _closeButton.hidden = YES;
+    }
+    _arrowsControl.frame = NSMakeRect(size.width - _arrowsControl.frame.size.width - closeWidth,
                                       verticalOffset,
                                       _arrowsControl.frame.size.width,
                                       _arrowsControl.frame.size.height);
     const CGFloat margin = 3;
     const CGFloat leftMargin = 2;
-    const CGFloat used = leftMargin + _arrowsControl.frame.size.width + _closeButton.frame.size.width + margin;
+    const CGFloat used = leftMargin + _arrowsControl.frame.size.width + closeWidth + margin;
     _searchField.frame = NSMakeRect(leftMargin, 0, self.view.frame.size.width - used, searchFieldSize.height);
 }
 
@@ -132,6 +139,11 @@
 
 - (void)setFindString:(NSString *)string {
     [_searchField setStringValue:string];
+}
+
+- (void)setCanClose:(BOOL)canClose {
+    _canClose = canClose;
+    [self view];
 }
 
 #pragma mark - Actions
