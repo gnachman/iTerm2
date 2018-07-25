@@ -262,13 +262,13 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     [result appendAttributedString:branch];
     [result appendAttributedString:space];
 
-    if (upCount) {
+    if (_gitPoller.state.pushArrow.integerValue > 0) {
         [result appendAttributedString:upImage];
         [result appendAttributedString:upCount];
         [result appendAttributedString:space];
     }
 
-    if (downCount) {
+    if (_gitPoller.state.pullArrow.integerValue > 0) {
         [result appendAttributedString:downImage];
         [result appendAttributedString:downCount];
         [result appendAttributedString:space];
