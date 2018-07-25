@@ -59,6 +59,8 @@
 - (NSDictionary *)mapWithBlock:(iTermTuple * (^)(KeyType key, ObjectType object))block;
 - (NSDictionary<id, NSDictionary<KeyType, ObjectType> *> *)classifyWithBlock:(id (^NS_NOESCAPE)(KeyType key, ObjectType object))block;
 
+- (BOOL)it_writeToXMLPropertyListAt:(NSString *)path;
+
 @end
 
 // A handy way of describing the essential parts of a hotkey, as far as being a uniquely registered
