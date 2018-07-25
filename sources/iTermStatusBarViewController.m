@@ -357,6 +357,7 @@ const CGFloat iTermStatusBarHeight = 22;
 }
 
 - (void)statusBarComponentPreferredSizeDidChange:(id<iTermStatusBarComponent>)component {
+    DLog(@"Preferred size did change for %@", component);
     [self.view setNeedsLayout:YES];
 }
 

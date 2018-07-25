@@ -100,7 +100,6 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
     }
 
     textField.stringValue = proposed ?: @"";
-    textField.alignment = NSTextAlignmentLeft;
     textField.textColor = self.textColor;
 
     [textField sizeToFit];
@@ -169,7 +168,6 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
         _measuringField = [self newTextField];
     }
     _measuringField.stringValue = string;
-    _measuringField.alignment = NSTextAlignmentLeft;
     _measuringField.textColor = self.textColor;
     [_measuringField sizeToFit];
     return [_measuringField frame].size.width;

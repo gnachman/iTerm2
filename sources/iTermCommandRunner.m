@@ -10,7 +10,14 @@
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 
-@implementation iTermCommandRunner
+@interface iTermCommandRunner()
+@property (atomic) BOOL running;
+@end
+
+@implementation iTermCommandRunner {
+    NSTask *_task;
+    NSPipe *_pipe;
+}
 
 + (void)unzipURL:(NSURL *)zipURL
    withArguments:(NSArray<NSString *> *)arguments
@@ -50,6 +57,9 @@
                            path:(NSString *)currentDirectoryPath {
     self = [super init];
     if (self) {
+        _task = [[NSTask alloc] init];
+        _pipe = [[NSPipe alloc] init];
+
         self.command = command;
         self.arguments = arguments;
         self.currentDirectoryPath = currentDirectoryPath;
@@ -63,50 +73,90 @@
     });
 }
 
-- (void)runSynchronously {
-    NSTask *task = [[NSTask alloc] init];
-    NSPipe *pipe = [[NSPipe alloc] init];
-    [task setStandardOutput:pipe];
-    [task setStandardError:pipe];
-    task.launchPath = self.command;
-    if (self.currentDirectoryPath) {
-        task.currentDirectoryPath = self.currentDirectoryPath;
+- (void)runWithTimeout:(NSTimeInterval)timeout {
+    if (![self launchTask]) {
+        return;
     }
-    task.arguments = self.arguments;
-    DLog(@"runCommand: Launching %@", task);
+    NSTask *task = _task;
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        [self readAndWait:task];
+    });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (self.running) {
+            [task terminate];
+            self->_task = nil;
+        }
+    });
+}
+
+- (BOOL)launchTask {
+    [_task setStandardOutput:_pipe];
+    [_task setStandardError:_pipe];
+    _task.launchPath = self.command;
+    if (self.currentDirectoryPath) {
+        _task.currentDirectoryPath = self.currentDirectoryPath;
+    }
+    _task.arguments = self.arguments;
+    DLog(@"runCommand: Launching %@", _task);
     @try {
-        [task launch];
+        [_task launch];
     } @catch (NSException *e) {
         if (self.completion) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 self.completion(-1);
             });
         }
+        return NO;
+    }
+    self.running = YES;
+    return YES;
+}
+
+- (void)runSynchronously {
+    if (![self launchTask]) {
         return;
     }
+    [self readAndWait:_task];
+}
 
-    NSFileHandle *readHandle = [pipe fileHandleForReading];
+- (void)readAndWait:(NSTask *)task {
+    NSPipe *pipe = _pipe;
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        [task waitUntilExit];
+        // This makes -availableData return immediately.
+        pipe.fileHandleForReading.readabilityHandler = nil;
+        dispatch_semaphore_signal(sema);
+    });
+    NSFileHandle *readHandle = [_pipe fileHandleForReading];
     DLog(@"runCommand: Reading");
-    NSData *inData = [readHandle availableData];
+    NSData *inData = nil;
+
+    @try {
+        inData = [readHandle availableData];
+    } @catch (NSException *e) {
+        inData = nil;
+    }
+
     while (inData.length) {
         DLog(@"runCommand: Read %@", inData);
-        if (self.outputHandler) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self.outputHandler(inData);
-            });
-        } else {
-#if DEBUG
-            NSLog(@"%@", [[NSString alloc] initWithData:inData encoding:NSUTF8StringEncoding]);
-#else
-            DLog(@"%@", [[NSString alloc] initWithData:inData encoding:NSUTF8StringEncoding]);
-#endif
+        [self didReadData:inData];
+        if (!self.outputHandler) {
+            DLog(@"%@: %@", [task.arguments componentsJoinedByString:@" "],
+                 [[NSString alloc] initWithData:inData encoding:NSUTF8StringEncoding]);
         }
         DLog(@"runCommand: Reading");
-        inData = [readHandle availableData];
+        @try {
+            inData = [readHandle availableData];
+        } @catch (NSException *e) {
+            inData = nil;
+        }
     }
 
     DLog(@"runCommand: Done reading. Wait");
-    [task waitUntilExit];
+    dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+
+    self.running = NO;
     if (self.completion) {
         dispatch_async(dispatch_get_main_queue(), ^{
             self.completion(task.terminationStatus);
@@ -114,4 +164,30 @@
     }
 }
 
+- (void)didReadData:(NSData *)inData {
+    if (!self.outputHandler) {
+        return;
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self.outputHandler(inData);
+    });
+}
+
 @end
+
+@implementation iTermBufferedCommandRunner {
+    NSMutableData *_output;
+}
+
+- (void)didReadData:(NSData *)inData {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (!self->_output) {
+            self->_output = [NSMutableData data];
+        }
+        [self->_output appendData:inData];
+    });
+    [super didReadData:inData];
+}
+
+@end
+

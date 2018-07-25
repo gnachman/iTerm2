@@ -28,8 +28,16 @@
 
 - (instancetype)initWithCommand:(NSString *)command
                   withArguments:(NSArray<NSString *> *)arguments
-                           path:(NSString *)currentDirectoryPath;
+                           path:(NSString *)currentDirectoryPath NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
 
 - (void)run;
+- (void)runWithTimeout:(NSTimeInterval)timeout;
 
 @end
+
+// Saves all data read into output.
+@interface iTermBufferedCommandRunner : iTermCommandRunner
+@property (nonatomic, readonly) NSData *output;
+@end
+
