@@ -527,6 +527,14 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
                 token.string = [_data substringFromIndex:5];
             }
             break;
+
+        case MAKE_COMPACT_SEQUENCE('=', 0, 's'):
+            token->type = DCS_BEGIN_SYNCHRONIZED_UPDATE;
+            break;
+
+        case MAKE_COMPACT_SEQUENCE('=', 0, 0):
+            token->type = DCS_END_SYNCHRONIZED_UPDATE;
+            break;
     }
 }
 

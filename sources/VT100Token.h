@@ -161,6 +161,9 @@ typedef enum {
 
     // DCS
     DCS_REQUEST_TERMCAP_TERMINFO,  // Request Termcap/Terminfo String
+    // https://gitlab.com/gnachman/iterm2/wikis/synchronized-updates-spec
+    DCS_BEGIN_SYNCHRONIZED_UPDATE,
+    DCS_END_SYNCHRONIZED_UPDATE,
 
     // Toggle between ansi/vt52
     STRICT_ANSI_MODE,

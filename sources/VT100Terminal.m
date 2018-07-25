@@ -1958,6 +1958,14 @@ static const int kMaxScreenRows = 4096;
             // This is a no-op and it shouldn't happen.
             break;
 
+        case DCS_BEGIN_SYNCHRONIZED_UPDATE:
+            [self.delegate terminalSynchronizedUpdate:YES];
+            break;
+
+        case DCS_END_SYNCHRONIZED_UPDATE:
+            [self.delegate terminalSynchronizedUpdate:NO];
+            break;
+
         case DCS_REQUEST_TERMCAP_TERMINFO: {
             static NSString *const kFormat = @"%@=%@";
             BOOL ok = NO;

@@ -441,7 +441,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 }
 
 - (void)setSize:(VT100GridSize)newSize {
-    [self.temporaryDoubleBuffer reset];
+    [self.temporaryDoubleBuffer resetExplicitly];
 
     DLog(@"Resize session to %@", VT100GridSizeDescription(newSize));
     DLog(@"Before:\n%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
@@ -3150,6 +3150,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [delegate_ screenInTmuxMode];
 }
 
+- (void)terminalSynchronizedUpdate:(BOOL)begin {
+    if (begin) {
+        [_temporaryDoubleBuffer startExplicitly];
+    } else {
+        [_temporaryDoubleBuffer resetExplicitly];
+    }
+}
+
 - (int)terminalWidth {
     return [self width];
 }
@@ -5124,7 +5132,7 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (iTermTemporaryDoubleBufferedGridController *)temporaryDoubleBuffer {
-    if ([delegate_ screenShouldReduceFlicker]) {
+    if ([delegate_ screenShouldReduceFlicker] || _temporaryDoubleBuffer.explicit) {
         return _temporaryDoubleBuffer;
     } else {
         return nil;
