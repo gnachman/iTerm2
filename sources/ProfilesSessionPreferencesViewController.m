@@ -327,7 +327,12 @@
 - (id)tableView:(NSTableView *)aTableView
     objectValueForTableColumn:(NSTableColumn *)aTableColumn
                 row:(NSInteger)rowIndex {
-    return [self jobs][rowIndex];
+    NSArray *jobs = self.jobs;
+    if (rowIndex >= jobs.count) {
+        // Can happen during teardown when the ProfilePreferencesViewController's delegate is nilled.
+        return @"";
+    }
+    return jobs[rowIndex];
 }
 
 #pragma mark - NSTableViewDelegate
