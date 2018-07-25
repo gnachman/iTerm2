@@ -5,6 +5,7 @@
 #import "iTermRemotePreferences.h"
 #import "iTermPreferences.h"
 #import "iTermWarning.h"
+#import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
@@ -204,9 +205,8 @@
 
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSDictionary *myDict =
-    [userDefaults persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
-    BOOL isOk;
-    isOk = [myDict writeToFile:filename atomically:YES];
+        [userDefaults persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
+    BOOL isOk = [myDict it_writeToXMLPropertyListAt:filename];
     if (!isOk) {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Failed to copy preferences to custom directory.";

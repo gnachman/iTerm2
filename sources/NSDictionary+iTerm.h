@@ -47,6 +47,8 @@
 - (NSData *)propertyListData;
 - (NSString *)sizeInfo;
 
+- (BOOL)it_writeToXMLPropertyListAt:(NSString *)path;
+
 @end
 
 // A handy way of describing the essential parts of a hotkey, as far as being a uniquely registered
