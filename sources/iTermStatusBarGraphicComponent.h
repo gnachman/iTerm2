@@ -19,6 +19,7 @@
 @property (nonatomic, readonly) iTermStatusBarImageComponentView *view;
 @property (nonatomic, readonly) id model;
 @property (nonatomic, strong) id preferredModel;
+@property (nonatomic, readonly) NSColor *defaultTextColor;
 
 - (void)drawRect:(NSRect)rect;
 

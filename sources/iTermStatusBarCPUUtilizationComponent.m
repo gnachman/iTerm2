@@ -116,34 +116,24 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSDictionary *)leftAttributes {
-    static NSDictionary *leftAttributes;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSMutableParagraphStyle *leftAlignStyle =
-            [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
-            [leftAlignStyle setAlignment:NSTextAlignmentLeft];
-            [leftAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
+    NSMutableParagraphStyle *leftAlignStyle =
+        [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+    [leftAlignStyle setAlignment:NSTextAlignmentLeft];
+    [leftAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
 
-        leftAttributes = @{ NSParagraphStyleAttributeName: leftAlignStyle,
-                            NSFontAttributeName: self.font,
-                            NSForegroundColorAttributeName: [NSColor blackColor] };
-    });
-    return leftAttributes;
+    return @{ NSParagraphStyleAttributeName: leftAlignStyle,
+              NSFontAttributeName: self.font,
+              NSForegroundColorAttributeName: self.defaultTextColor };
 }
 
 - (NSDictionary *)rightAttributes {
-    static NSDictionary *rightAttributes;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSMutableParagraphStyle *rightAlignStyle =
-            [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
-            [rightAlignStyle setAlignment:NSTextAlignmentRight];
-            [rightAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
-        rightAttributes = @{ NSParagraphStyleAttributeName: rightAlignStyle,
-                             NSFontAttributeName: self.font,
-                             NSForegroundColorAttributeName: [NSColor blackColor] };
-    });
-    return rightAttributes;
+    NSMutableParagraphStyle *rightAlignStyle =
+        [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+    [rightAlignStyle setAlignment:NSTextAlignmentRight];
+    [rightAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
+    return @{ NSParagraphStyleAttributeName: rightAlignStyle,
+              NSFontAttributeName: self.font,
+              NSForegroundColorAttributeName: self.defaultTextColor };
 }
 
 - (NSSize)leftSize {

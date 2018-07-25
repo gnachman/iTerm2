@@ -48,6 +48,14 @@
     iTermStatusBarImageComponentView *_view;
 }
 
+- (NSColor *)defaultTextColor {
+    if ([_view.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {
+        return [NSColor colorWithWhite:0.75 alpha:1];
+    } else {
+        return [NSColor blackColor];
+    }
+}
+
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *backgroundColorKnob =
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Background Color"

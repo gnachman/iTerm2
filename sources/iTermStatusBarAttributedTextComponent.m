@@ -38,6 +38,14 @@ NS_ASSUME_NONNULL_BEGIN
     CGFloat _baselineOffset;
 }
 
+- (NSColor *)defaultTextColor {
+    if ([self.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {
+        return [NSColor colorWithWhite:0.75 alpha:1];
+    } else {
+        return [NSColor blackColor];
+    }
+}
+
 - (void)drawString:(NSString *)string
         attributes:(NSDictionary *)attrs
              point:(CGPoint)point
@@ -45,7 +53,7 @@ NS_ASSUME_NONNULL_BEGIN
              width:(out CGFloat *)width {
     NSTextAttachment *attachment = attrs[NSAttachmentAttributeName];
     if (attachment) {
-        NSImage *image = attachment.image;
+        NSImage *image = [attachment.image it_imageWithTintColor:self.defaultTextColor];
         if (reallyDraw) {
             [image drawAtPoint:NSMakePoint(point.x, point.y + _baselineOffset)
                       fromRect:NSZeroRect
@@ -57,6 +65,10 @@ NS_ASSUME_NONNULL_BEGIN
     }
 
     if (reallyDraw) {
+        NSColor *textColor = attrs[NSForegroundColorAttributeName];
+        if (!textColor) {
+            attrs = [attrs dictionaryBySettingObject:self.defaultTextColor forKey:NSForegroundColorAttributeName];
+        }
         [string drawAtPoint:point withAttributes:attrs];
     }
     *width = [self retinaRound:[string sizeWithAttributes:attrs].width];

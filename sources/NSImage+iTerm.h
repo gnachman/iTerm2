@@ -46,4 +46,6 @@
 - (NSImageRep *)bestRepresentationForScale:(CGFloat)scale;
 - (void)saveAsPNGTo:(NSString *)filename;
 
+- (NSImage *)it_imageWithTintColor:(NSColor *)tintColor;
+
 @end

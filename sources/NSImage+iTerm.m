@@ -20,12 +20,14 @@
 
 + (instancetype)imageOfSize:(NSSize)size drawBlock:(void (^)(void))block {
     NSImage *image = [[[NSImage alloc] initWithSize:size] autorelease];
-
-    [image lockFocus];
-    block();
-    [image unlockFocus];
-
+    [image it_drawWithBlock:block];
     return image;
+}
+
+- (void)it_drawWithBlock:(void (^)(void))block {
+    [self lockFocus];
+    block();
+    [self unlockFocus];
 }
 
 + (NSMutableData *)argbDataForImageOfSize:(NSSize)size drawBlock:(void (^)(CGContextRef context))block {
@@ -267,6 +269,21 @@
         }
     }
     return best;
+}
+
+- (NSImage *)it_imageWithTintColor:(NSColor *)tintColor {
+    if (!tintColor) {
+        return self;
+    }
+    NSSize size = self.size;
+    NSImage *image = [self copy];
+    [image it_drawWithBlock:^{
+        [tintColor set];
+        NSRectFillUsingOperation(NSMakeRect(0, 0, size.width, size.height),
+                                 NSCompositingOperationSourceAtop);
+    }];
+    return image;
+
 }
 
 @end
