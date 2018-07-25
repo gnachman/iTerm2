@@ -34,7 +34,9 @@
 }
 
 - (void)startExplicitly {
-    if (!_savedGrid) {
+    if (_savedGrid) {
+        [self scheduleTimer];
+    } else {
         _explicit = YES;
         [self snapshot];
     }
@@ -63,9 +65,15 @@
 
 - (void)snapshot {
     DLog(@"Take a snapshot of the grid because cursor was hidden (delegate=%@)", _delegate);
+    self.savedGrid = [_delegate temporaryDoubleBufferedGridCopy];
+
+    [self scheduleTimer];
+    _drewSavedGrid = NO;
+}
+
+- (void)scheduleTimer {
     static const NSTimeInterval kTimeToKeepSavedGrid = 0.2;
     static const NSTimeInterval kExplicitSaveTime = 1.0;
-    self.savedGrid = [_delegate temporaryDoubleBufferedGridCopy];
 
     [_timer invalidate];
     _timer = [NSTimer scheduledTimerWithTimeInterval:_explicit ? kExplicitSaveTime : kTimeToKeepSavedGrid
@@ -73,7 +81,6 @@
                                             selector:@selector(savedGridExpirationTimer:)
                                             userInfo:nil
                                              repeats:NO];
-    _drewSavedGrid = NO;
 }
 
 - (void)savedGridExpirationTimer:(NSTimer *)timer {
