@@ -67,6 +67,7 @@
         void (^block)(void) = _block;
         _block = nil;
         block();
+        [self scheduleTimer];
     }
 }
 

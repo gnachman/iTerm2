@@ -437,8 +437,10 @@ static void HandleSigChld(int n) {
     // leaders?
     if (_childPid > 0) {
         // Terminate an owned child.
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_childPid];
         killpg(_childPid, SIGHUP);
     } else if (_serverChildPid) {
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_serverChildPid];
         // Kill a server-owned child.
         // TODO: Don't want to do this when Sparkle is upgrading.
         killpg(_serverChildPid, SIGHUP);
@@ -648,7 +650,7 @@ static void HandleSigChld(int n) {
 // may be chosen. This function also implements a chache to avoid doing the
 // potentially expensive system calls too often.
 - (NSString *)currentJob:(BOOL)forceRefresh pid:(pid_t *)pid {
-    iTermProcessInfo *info = [[[iTermProcessCache sharedInstance] processInfoForPid:self.pid] deepestForegroundJob];
+    iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:self.pid];
     if (!info) {
         return nil;
     }
@@ -684,8 +686,10 @@ static void HandleSigChld(int n) {
         DLog(@"Sending signal to server %@", @(_serverPid));
         kill(_serverPid, signo);
     } else if (_serverChildPid != -1) {
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_serverChildPid];
         kill(_serverChildPid, signo);
     } else if (_childPid >= 0) {
+        [[iTermProcessCache sharedInstance] unregisterTrackedPID:_childPid];
         kill(_childPid, signo);
     }
 }
@@ -900,6 +904,9 @@ static void HandleSigChld(int n) {
     fd = serverConnection.ptyMasterFd;
     _serverPid = serverConnection.serverPid;
     _serverChildPid = serverConnection.childPid;
+    if (_serverChildPid > 0) {
+        [[iTermProcessCache sharedInstance] registerTrackedPID:_serverChildPid];
+    }
     _socketFd = serverConnection.socketFd;
     [[TaskNotifier sharedInstance] registerTask:self];
 }
@@ -1030,6 +1037,9 @@ static void HandleSigChld(int n) {
 - (void)forkToRunJobDirectlyWithForkState:(iTermForkState *)forkState
                                  ttyState:(iTermTTYState *)ttyState {
     forkState->pid = _childPid = forkpty(&fd, ttyState->tty, &ttyState->term, &ttyState->win);
+    if (_childPid > 0) {
+        [[iTermProcessCache sharedInstance] registerTrackedPID:_childPid];
+    }
     forkState->numFileDescriptorsToPreserve = 3;
 }
 
