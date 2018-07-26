@@ -479,7 +479,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
                                                                      DLog(@"Application did become active completion block finished. Removing observer.");
                                                                      [[NSNotificationCenter defaultCenter] removeObserver:observer];
                                                                  }];
-        [self activateIgnoringOtherApps:YES];
+        // It's not clear how this differs from [self activateIgnoringOtherApps:YES], but on 10.13
+        // it does not cause previously ordered-out windows to be ordered over other applications'
+        // windows. See issue 6875.
+        [[NSRunningApplication currentApplication] activateWithOptions:NSApplicationActivateIgnoringOtherApps];
     }
 }
 
