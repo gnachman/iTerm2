@@ -65,6 +65,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTextField *_badgeTextForEditCurrentSession;
     iTermFunctionCallTextFieldDelegate *_badgeTextFieldDelegate;
     iTermFunctionCallTextFieldDelegate *_badgeTextForEditCurrentSessionFieldDelegate;
+    IBOutlet NSPopUpButton *_titleSettingsForEditCurrentSession;
 
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
@@ -120,6 +121,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             return;
         }
         [strongSelf->_profileDelegate profilesGeneralPreferencesNameWillChange];
+    };
+    info.onChange = ^() {
+        [weakSelf ensureSessionNameVisible];
     };
     info.controlTextDidEndEditing = ^(NSNotification *notification) {
         __strong __typeof(weakSelf) strongSelf = self;
@@ -197,6 +201,15 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                      [self updateSelectedTitleComponents];
                      return YES;
                  }];
+    [self defineControl:_titleSettingsForEditCurrentSession
+                    key:KEY_TITLE_COMPONENTS
+                   type:kPreferenceInfoTypePopup
+         settingChanged:^(id sender) { [self toggleSelectedTitleComponent]; }
+                 update:^BOOL {
+                     [self updateTitleSettingsMenu];
+                     [self updateSelectedTitleComponents];
+                     return YES;
+                 }];
     [self updateSelectedTitleComponents];
 
     [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
@@ -242,20 +255,47 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     return [_profiles selectedGuid];
 }
 
+- (void)ensureSessionNameVisible {
+    // Unless a custom title function is in use, ensure session name is visible in the title.
+    NSUInteger components = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
+
+    if (components & (iTermTitleComponentsSessionName | iTermTitleComponentsProfileAndSessionName)) {
+        return;
+    }
+    if (components == iTermTitleComponentsCustom) {
+        return;
+    }
+    if (components & iTermTitleComponentsProfileName) {
+        NSUInteger updated = components;
+        updated &= ~iTermTitleComponentsProfileName;
+        updated |= iTermTitleComponentsProfileAndSessionName;
+        [self setUnsignedInteger:updated
+                          forKey:KEY_TITLE_COMPONENTS];
+        return;
+    }
+    [self setUnsignedInteger:(components | iTermTitleComponentsSessionName)
+                      forKey:KEY_TITLE_COMPONENTS];
+}
+
 - (void)updateTitleSettingsMenu {
+    [self updateTitleSettingsMenuForView:_titleSettings];
+    [self updateTitleSettingsMenuForView:_titleSettingsForEditCurrentSession];
+}
+
+- (void)updateTitleSettingsMenuForView:(NSPopUpButton *)titleSettings {
     // First remove any programatically added items
-    NSIndexSet *indexSet = [_titleSettings.menu.itemArray indexesOfObjectsPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    NSIndexSet *indexSet = [titleSettings.menu.itemArray indexesOfObjectsPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         return obj.tag == -1;
     }];
     [indexSet enumerateIndexesWithOptions:NSEnumerationReverse usingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
-        [self->_titleSettings.menu removeItemAtIndex:idx];
+        [titleSettings.menu removeItemAtIndex:idx];
     }];
 
     NSArray<iTermTuple<NSString *, NSString *> *> *funcs = [iTermAPIHelper sessionTitleFunctions];
     if (funcs.count) {
         NSMenuItem *separator = [NSMenuItem separatorItem];
         separator.identifier = @"";
-        [self->_titleSettings.menu addItem:separator];
+        [titleSettings.menu addItem:separator];
     }
     NSString *func = [self titleFunctionInvocation];
     NSString *funcName = [self titleFunctionDisplayName];
@@ -271,7 +311,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             func = nil;
         }
         item.tag = -1;
-        [_titleSettings.menu addItem:item];
+        [titleSettings.menu addItem:item];
     }
     if (func) {
         // Did not find the currently selected func. Maybe the script hasn't started, crashed, etc.
@@ -280,7 +320,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         item.identifier = func;
         item.enabled = NO;
         item.tag = -1;
-        [_titleSettings.menu addItem:item];
+        [titleSettings.menu addItem:item];
     }
 }
 
@@ -530,7 +570,12 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 #pragma mark - Title Components
 
 - (void)toggleSelectedTitleComponent {
-    NSMenuItem *menuItem = [NSMenuItem castFrom:[_titleSettings selectedItem]];
+    [self toggleSelectedTitleComponentForView:_titleSettings];
+    [self toggleSelectedTitleComponentForView:_titleSettingsForEditCurrentSession];
+}
+
+- (void)toggleSelectedTitleComponentForView:(NSPopUpButton *)titleSettings {
+    NSMenuItem *menuItem = [NSMenuItem castFrom:[titleSettings selectedItem]];
     if (menuItem.tag == -1) {
         // Selected a registered title function.
         NSString *invocation = menuItem.identifier;
@@ -544,7 +589,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     }
 
     const iTermTitleComponents originalValue = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
-    const iTermTitleComponents selectedTag = (iTermTitleComponents)_titleSettings.selectedItem.tag;
+    const iTermTitleComponents selectedTag = (iTermTitleComponents)titleSettings.selectedItem.tag;
     NSUInteger newValue = originalValue;
 
     if (selectedTag == iTermTitleComponentsCustom &&
@@ -594,11 +639,16 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 }
 
 - (void)updateSelectedTitleComponents {
+    [self updateSelectedTitleComponentsForView:_titleSettings];
+    [self updateSelectedTitleComponentsForView:_titleSettingsForEditCurrentSession];
+}
+
+- (void)updateSelectedTitleComponentsForView:(NSPopUpButton *)titleSettings {
     const iTermTitleComponents value = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS] ?: iTermTitleComponentsProfileName;
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
     NSString *currentInvocation = self.titleFunctionInvocation;
     NSString *customName = nil;
-    for (NSMenuItem *item in _titleSettings.menu.itemArray) {
+    for (NSMenuItem *item in titleSettings.menu.itemArray) {
         BOOL selected = !!(item.tag & value);
         if (value & iTermTitleComponentsCustom) {
             selected = [NSObject object:item.identifier isEqualToObject:currentInvocation];
@@ -612,21 +662,21 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         }
     }
 
-    _titleSettings.title = customName ?: [PTYSession titleForSessionName:@"Name"
-                                                             profileName:@"Profile"
-                                                                     job:@"Job"
-                                                                     pwd:@"PWD"
-                                                                     tty:@"TTY"
-                                                                    user:@"User"
-                                                                    host:@"Host"
-                                                                    tmux:nil
-                                                              components:value];
+    titleSettings.title = customName ?: [PTYSession titleForSessionName:@"Name"
+                                                            profileName:@"Profile"
+                                                                    job:@"Job"
+                                                                    pwd:@"PWD"
+                                                                    tty:@"TTY"
+                                                                   user:@"User"
+                                                                   host:@"Host"
+                                                                   tmux:nil
+                                                             components:value];
 
-    const CGFloat maxWidth = NSMinX(_customTitleHelp.frame) - NSMinX(_titleSettings.frame) - 5;
-    [_titleSettings sizeToFit];
-    NSRect frame = _titleSettings.frame;
+    const CGFloat maxWidth = NSMinX(_customTitleHelp.frame) - NSMinX(titleSettings.frame) - 5;
+    [titleSettings sizeToFit];
+    NSRect frame = titleSettings.frame;
     frame.size.width = MIN(maxWidth, frame.size.width);
-    _titleSettings.frame = frame;
+    titleSettings.frame = frame;
 }
 
 #pragma mark - NSTokenField delegate

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14113" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14109" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14109"/>
         <capability name="box content view" minToolsVersion="7.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -1410,6 +1410,7 @@ DQ
                 <outlet property="_tagsLabel" destination="3243" id="GLJ-cK-wWn"/>
                 <outlet property="_tagsTokenField" destination="3245" id="dUf-HQ-eA6"/>
                 <outlet property="_titleSettings" destination="2VF-JO-c2O" id="ICH-hq-e0E"/>
+                <outlet property="_titleSettingsForEditCurrentSession" destination="srn-wx-IXg" id="oUv-eH-70S"/>
                 <outlet property="_urlSchemes" destination="5037" id="lLd-os-fwk"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="KYZ-OC-7cf"/>
                 <outlet property="profileDelegate" destination="HVI-63-mNz" id="0qp-TV-M54"/>
@@ -3499,7 +3500,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>
@@ -5907,7 +5908,7 @@ DQ
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="12134" userLabel="Name label">
                     <rect key="frame" x="18" y="368" width="104" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Session Title:" id="12135">
+                    <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Session Name:" id="12135">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -5964,8 +5965,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="15766" customClass="ProfileListView">
-                    <rect key="frame" x="16" y="101" width="530" height="229"/>
+                <customView misplaced="YES" id="15766" customClass="ProfileListView">
+                    <rect key="frame" x="16" y="101" width="530" height="200"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <connections>
                         <outlet property="delegate" destination="dVg-Ac-SiZ" id="Om9-WP-Nbp"/>
@@ -5998,6 +5999,44 @@ DQ
                         <outlet property="shortcutDelegate" destination="dVg-Ac-SiZ" id="pGc-uX-EJj"/>
                     </connections>
                 </customView>
+                <textField verticalHuggingPriority="750" misplaced="YES" allowsCharacterPickerTouchBarItem="YES" id="S9t-V1-nTN" userLabel="Name label">
+                    <rect key="frame" x="14" y="312" width="108" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Title:" id="v5v-p4-3ab">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" misplaced="YES" id="srn-wx-IXg" userLabel="Title Components Popup">
+                    <rect key="frame" x="125" y="306" width="186" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="Components" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" autoenablesItems="NO" selectedItem="YRV-oK-I4f" id="2Pb-yH-LeK" userLabel="Title Popup Button Cell">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" autoenablesItems="NO" id="SYi-rt-Kyn">
+                            <items>
+                                <menuItem title="Components" hidden="YES" id="YRV-oK-I4f"/>
+                                <menuItem title="Name" enabled="NO" id="BRC-Z5-OON"/>
+                                <menuItem title="Session Name" tag="1" indentationLevel="1" id="QVc-n8-Dea"/>
+                                <menuItem title="Profile Name" tag="32" indentationLevel="1" id="i36-jp-Kj1"/>
+                                <menuItem title="Profile &amp; Session Name" tag="64" indentationLevel="1" id="hlq-lI-UJc"/>
+                                <menuItem isSeparatorItem="YES" id="0yw-OO-ww2"/>
+                                <menuItem title="Job" tag="2" id="TSw-HA-tbI"/>
+                                <menuItem title="User" tag="128" id="5FR-Lh-CHT"/>
+                                <menuItem title="Host" tag="256" id="1tc-es-At9"/>
+                                <menuItem title="PWD" tag="4" id="BZe-Na-nZ4"/>
+                                <menuItem title="TTY" tag="8" id="OSx-El-oIk"/>
+                            </items>
+                            <connections>
+                                <outlet property="delegate" destination="dVg-Ac-SiZ" id="6Ag-Qf-1vo"/>
+                            </connections>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="85t-iz-axj"/>
+                    </connections>
+                </popUpButton>
             </subviews>
             <point key="canvasLocation" x="1514" y="818"/>
         </customView>
