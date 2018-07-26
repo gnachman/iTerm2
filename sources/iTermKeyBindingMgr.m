@@ -571,6 +571,9 @@ exit:
         default:
             actionString = [NSString stringWithFormat: @"%@ %d", @"Unknown Action ID", action];
             break;
+        case KEY_ACTION_MOVE_TO_SPLIT_PANE:
+            actionString = @"Move to Split Pane";
+            break;
     }
 
     return actionString;

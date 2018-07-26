@@ -77,9 +77,14 @@
                                             <menuItem title="New Tab with Profile" tag="27" id="yer-8x-Rrr">
                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                             </menuItem>
+                                            <menuItem isSeparatorItem="YES" id="vW0-Pi-EVl"/>
                                             <menuItem title="Duplicate Tab" tag="61" id="Mfu-F0-x5K">
                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                             </menuItem>
+                                            <menuItem title="Move Session to Split Pane" tag="62" id="zLs-mG-pmk">
+                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                            </menuItem>
+                                            <menuItem isSeparatorItem="YES" id="Aaz-Cw-Dsa"/>
                                             <menuItem title="Split Horizontally with Profile" tag="28" id="29Q-kA-i03">
                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                             </menuItem>

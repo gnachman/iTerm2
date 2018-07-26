@@ -6138,6 +6138,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case KEY_ACTION_SWAP_PANE_BELOW:
         case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
         case KEY_ACTION_DUPLICATE_TAB:
+        case KEY_ACTION_MOVE_TO_SPLIT_PANE:
             return NO;
 
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
@@ -6443,6 +6444,9 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
         case KEY_ACTION_DUPLICATE_TAB:
             [self.delegate sessionDuplicateTab];
+            break;
+        case KEY_ACTION_MOVE_TO_SPLIT_PANE:
+            [self textViewMovePane];
             break;
         default:
             XLog(@"Unknown key action %d", keyBindingAction);
