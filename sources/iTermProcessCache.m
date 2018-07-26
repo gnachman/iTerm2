@@ -5,6 +5,8 @@
 //  Created by George Nachman on 7/18/18.
 //
 
+#import <Cocoa/Cocoa.h>
+
 #import "iTermLSOF.h"
 #import "iTermProcessCache.h"
 #import "iTermRateLimitedUpdate.h"
@@ -41,9 +43,17 @@
     if (self) {
         _queue = dispatch_queue_create("com.iterm2.process-cache", DISPATCH_QUEUE_SERIAL);
         _rateLimit = [[iTermRateLimitedUpdate alloc] init];
-        _rateLimit.minimumInterval = 0.1;
+        _rateLimit.minimumInterval = 0.5;
         _trackedPids = [NSMutableSet set];
         [self setNeedsUpdate:YES];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidBecomeActive:)
+                                                     name:NSApplicationDidBecomeActiveNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidResignActive:)
+                                                     name:NSApplicationDidResignActiveNotification
+                                                   object:nil];
     }
     return self;
 }
@@ -119,6 +129,16 @@
     
     _collection = collection;
     self.needsUpdateFlag = NO;
+}
+
+#pragma mark - Notifications
+
+- (void)applicationDidResignActive:(NSNotification *)notification {
+    _rateLimit.minimumInterval = 5;
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
+    _rateLimit.minimumInterval = 0.5;
 }
 
 @end

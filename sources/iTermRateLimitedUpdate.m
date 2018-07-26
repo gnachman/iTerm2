@@ -29,6 +29,15 @@
                                                  repeats:NO];
 }
 
+- (void)setMinimumInterval:(NSTimeInterval)minimumInterval {
+    if (minimumInterval < _minimumInterval && _timer) {
+        [_timer invalidate];
+        _minimumInterval = minimumInterval;
+        [self performBlockIfNeeded:_timer];
+    } else {
+        _minimumInterval = minimumInterval;
+    }
+}
 - (void)performRateLimitedBlock:(void (^)(void))block {
     if (_timer == nil) {
         block();
