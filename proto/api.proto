@@ -41,6 +41,7 @@ message ClientOriginatedMessage {
     GetBroadcastDomainsRequest get_broadcast_domains_request = 123;
     TmuxRequest tmux_request = 124;
     ReorderTabsRequest reorder_tabs_request = 125;
+    PreferencesRequest preferences_request = 126;
   }
 }
 
@@ -79,10 +80,64 @@ message ServerOriginatedMessage {
     GetBroadcastDomainsResponse get_broadcast_domains_response = 123;
     TmuxResponse tmux_response = 124;
     ReorderTabsResponse reorder_tabs_response = 125;
+    PreferencesResponse preferences_response = 126;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
   }
+}
+
+message PreferencesRequest {
+  message Request {
+    message SetPreference {
+      optional string key = 1;
+      optional string json_value = 2;
+    }
+    message GetPreference {
+      optional string key = 1;
+    }
+    message SetDefaultProfile {
+      optional string guid = 1;
+    }
+    oneof request {
+      SetPreference set_preference_request = 1;
+      GetPreference get_preference_request = 2;
+      SetDefaultProfile set_default_profile_request = 3;
+    }
+  }
+  repeated Request requests = 1;
+}
+
+message PreferencesResponse {
+  message Result {
+    message SetPreferenceResult {
+      enum Status {
+        OK = 0;
+        BAD_JSON = 1;
+        INVALID_VALUE = 2;  // Not legal for a plist
+      }
+      optional Status status = 1;
+    }
+    message GetPreferenceResult {
+      optional string json_value = 1;  // Will be unset if no value assigned. Will always be set if there is a default value.
+    }
+    message SetDefaultProfileResult {
+      enum Status {
+        OK = 0;
+        BAD_GUID = 1;
+      }
+      optional Status status = 1;
+    }
+    message UnrecognizedResult {
+    }
+    oneof result {
+      UnrecognizedResult unrecognized_request = 1;
+      SetPreferenceResult set_preference_result = 2;
+      GetPreferenceResult get_preference_result = 3;
+      SetDefaultProfileResult set_default_profile_result = 4;
+    }
+  }
+  repeated Result results = 1;
 }
 
 message ReorderTabsRequest {

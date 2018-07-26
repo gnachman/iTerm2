@@ -70,6 +70,8 @@ extern NSString *const iTermAPIServerConnectionClosed;
                      handler:(void (^)(ITMTmuxResponse *))handler;
 - (void)apiServerReorderTabsRequest:(ITMReorderTabsRequest *)request
                             handler:(void (^)(ITMReorderTabsResponse *))response;
+- (void)apiServerPreferencesRequest:(ITMPreferencesRequest *)request
+                            handler:(void (^)(ITMPreferencesResponse *))response;
 @end
 
 @interface iTermAPIServer : NSObject

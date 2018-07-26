@@ -2401,4 +2401,80 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     handler(response);
 }
 
+- (void)apiServerPreferencesRequest:(ITMPreferencesRequest *)request handler:(void (^)(ITMPreferencesResponse *))handler {
+    ITMPreferencesResponse *response = [[ITMPreferencesResponse alloc] init];
+
+    [request.requestsArray enumerateObjectsUsingBlock:^(ITMPreferencesRequest_Request * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        ITMPreferencesResponse_Result *result = [self handlePreferencesRequest:obj];
+        [response.resultsArray addObject:result];
+    }];
+
+    handler(response);
+}
+
+- (ITMPreferencesResponse_Result *)handlePreferencesRequest:(ITMPreferencesRequest_Request *)request {
+    ITMPreferencesResponse_Result *result = [[ITMPreferencesResponse_Result alloc] init];
+    switch (request.requestOneOfCase) {
+        case ITMPreferencesRequest_Request_Request_OneOfCase_GetPreferenceRequest:
+            result.getPreferenceResult = [self handleGetPreferenceRequestForKey:request.getPreferenceRequest.key];
+            break;
+
+        case ITMPreferencesRequest_Request_Request_OneOfCase_GPBUnsetOneOfCase:
+            result.unrecognizedRequest = [[ITMPreferencesResponse_Result_UnrecognizedResult alloc] init];
+            break;
+
+        case ITMPreferencesRequest_Request_Request_OneOfCase_SetPreferenceRequest:
+            result.setPreferenceResult = [self handleSetPreferenceRequestWithKey:request.setPreferenceRequest.key
+                                                                       jsonValue:request.setPreferenceRequest.jsonValue];
+            break;
+        case ITMPreferencesRequest_Request_Request_OneOfCase_SetDefaultProfileRequest:
+            result.setDefaultProfileResult = [self handleSetDefaultProfileWithGUID:request.setDefaultProfileRequest.guid];
+            break;
+    }
+    return result;
+}
+
+- (ITMPreferencesResponse_Result_GetPreferenceResult *)handleGetPreferenceRequestForKey:(NSString *)key {
+    ITMPreferencesResponse_Result_GetPreferenceResult *result = [[ITMPreferencesResponse_Result_GetPreferenceResult alloc] init];
+    id obj = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+    NSString *json = [NSJSONSerialization it_jsonStringForObject:obj];
+    result.jsonValue = json;
+    return result;
+}
+
+- (ITMPreferencesResponse_Result_SetPreferenceResult *)handleSetPreferenceRequestWithKey:(NSString *)key
+                                                                               jsonValue:(NSString *)jsonValue {
+    ITMPreferencesResponse_Result_SetPreferenceResult *result = [[ITMPreferencesResponse_Result_SetPreferenceResult alloc] init];
+    NSError *error = nil;
+    id obj = [NSJSONSerialization it_objectForJsonString:jsonValue error:&error];
+    if (error) {
+        result.status = ITMPreferencesResponse_Result_SetPreferenceResult_Status_BadJson;
+        return result;
+    }
+    if (![obj it_isSafeForPlist]) {
+        result.status = ITMPreferencesResponse_Result_SetPreferenceResult_Status_InvalidValue;
+        return result;
+    }
+    if (!obj) {
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+    } else {
+        [[NSUserDefaults standardUserDefaults] setObject:obj forKey:key];
+    }
+    result.status = ITMPreferencesResponse_Result_SetPreferenceResult_Status_Ok;
+
+    return result;
+}
+
+- (ITMPreferencesResponse_Result_SetDefaultProfileResult *)handleSetDefaultProfileWithGUID:(NSString *)guid {
+    ITMPreferencesResponse_Result_SetDefaultProfileResult *result = [[ITMPreferencesResponse_Result_SetDefaultProfileResult alloc] init];
+    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    if (!profile) {
+        result.status = ITMPreferencesResponse_Result_SetDefaultProfileResult_Status_BadGuid;
+        return result;
+    }
+    [[ProfileModel sharedInstance] setDefaultByGuid:guid];
+    result.status = ITMPreferencesResponse_Result_SetDefaultProfileResult_Status_Ok;
+    return result;
+}
+
 @end

@@ -1,6 +1,6 @@
 """Provides classes for representing, querying, and modifying iTerm2 profiles."""
-import json
 import iterm2.rpc
+import json
 
 class BadGUIDException(Exception):
     """Raised when a profile does not have a GUID or the GUID is unknown."""
@@ -2364,6 +2364,10 @@ class Profile(WriteOnlyProfile):
         """
         return self._simple_get("Working Directory", value)
 
+    async def async_make_default(self):
+        """Makes this profile the default profile."""
+        await iterm2.rpc.async_set_default_profile(self.connection, self.guid)
+
 class Color:
     """Describes a color."""
     def __init__(self, r=0, g=0, b=0, a=255, color_space="sRGB"):
@@ -2487,4 +2491,8 @@ class PartialProfile(Profile):
         if len(response.list_profiles_response.profiles) != 1:
             raise BadGUIDException()
         return Profile(None, self.connection, response.list_profiles_response.profiles[0].properties)
+
+    async def async_make_default(self):
+        """Makes this profile the default profile."""
+        await iterm2.rpc.async_set_default_profile(self.connection, self.guid)
 

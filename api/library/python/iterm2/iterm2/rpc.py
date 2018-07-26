@@ -490,6 +490,26 @@ async def async_reorder_tabs(connection, assignments):
     request.reorder_tabs_request.assignments.extend(protos)
     return await _async_call(connection, request)
 
+async def async_set_default_profile(connection, guid):
+    """Sets the default profile."""
+    request = _alloc_request()
+    request.preferences_request.SetInParent()
+    my_request = iterm2.api_pb2.PreferencesRequest.Request()
+    my_request.set_default_profile_request.SetInParent()
+    my_request.set_default_profile_request.guid = guid
+    request.preferences_request.requests.extend([my_request])
+    return await _async_call(connection, request)
+
+async def async_get_preference(connection, key):
+    """Sets the default profile."""
+    request = _alloc_request()
+    request.preferences_request.SetInParent()
+    my_request = iterm2.api_pb2.PreferencesRequest.Request()
+    my_request.get_preference_request.SetInParent()
+    my_request.get_preference_request.key = key
+    request.preferences_request.requests.extend([my_request])
+    return await _async_call(connection, request)
+
 ## Private --------------------------------------------------------------------
 
 def _alloc_id():

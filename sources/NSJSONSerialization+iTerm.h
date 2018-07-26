@@ -16,4 +16,6 @@
 // Converts a string to JSON.
 + (id)it_objectForJsonString:(NSString *)string;
 
++ (id)it_objectForJsonString:(NSString *)string error:(out NSError **)error;
+
 @end

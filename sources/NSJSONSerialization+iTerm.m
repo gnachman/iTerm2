@@ -48,4 +48,11 @@
                                              error:&error];
 }
 
++ (id)it_objectForJsonString:(NSString *)string error:(out NSError **)error {
+    NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
+    return [NSJSONSerialization JSONObjectWithData:data
+                                           options:NSJSONReadingAllowFragments
+                                             error:error];
+}
+
 @end

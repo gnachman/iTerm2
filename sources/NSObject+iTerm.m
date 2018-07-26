@@ -91,4 +91,43 @@
     func(self, selector, object);
 }
 
+- (BOOL)it_isSafeForPlist {
+    if ([self isKindOfClass:[NSString class]]) {
+        return YES;
+    }
+    if ([self isKindOfClass:[NSNumber class]]) {
+        return YES;
+    }
+    if ([self isKindOfClass:[NSDate class]]) {
+        return YES;
+    }
+    if ([self isKindOfClass:[NSData class]]) {
+        return YES;
+    }
+    NSArray *array = [NSArray castFrom:self];
+    if (array) {
+        for (NSObject *obj in array) {
+            if (![obj it_isSafeForPlist]) {
+                return NO;
+            }
+        }
+        return YES;
+    }
+
+    NSDictionary *dictionary = [NSDictionary castFrom:self];
+    if (dictionary) {
+        for (NSObject *key in dictionary) {
+            if (![key it_isSafeForPlist]) {
+                return NO;
+            }
+            if (![dictionary[key] it_isSafeForPlist]) {
+                return NO;
+            }
+        }
+        return YES;
+    }
+
+    return NO;
+}
+
 @end

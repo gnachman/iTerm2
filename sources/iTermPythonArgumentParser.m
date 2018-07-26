@@ -35,6 +35,11 @@ NS_ASSUME_NONNULL_BEGIN
                    [args[1] isEqualToString:@"--no-readline"] &&
                    [args[2] hasPrefix:@"--banner="]) {
             return YES;
+        } else if (args.count == 4 &&
+                   [args[1] isEqualToString:@"--no-readline"] &&
+                   [args[2] isEqualToString:@"--prompt-control"] &&
+                   [args[3] hasPrefix:@"--banner="]) {
+            return YES;
         }
     }
     return NO;
