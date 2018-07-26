@@ -2,6 +2,7 @@
 
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermLogoGenerator.h"
 #import "iTermMinimumSubsequenceMatcher.h"
@@ -9,6 +10,7 @@
 #import "iTermOpenQuicklyItem.h"
 #import "iTermScriptsMenuController.h"
 #import "iTermVariables.h"
+#import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession+Scripting.h"
@@ -25,6 +27,9 @@ static const double kHostnameMultiplier = 1.2;
 static const double kUsernameMultiplier = 0.5;
 static const double kProfileNameMultiplier = 1;
 static const double kUserDefinedVariableMultiplier = 1;
+
+// Multiplier for color preset name. Rank between scripts and profiles.
+static const double kProfileNameMultiplierForColorPresetItem = 0.095;
 
 // Multipliers for profile items
 static const double kProfileNameMultiplierForProfileItem = 0.1;
@@ -47,6 +52,7 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                       [iTermOpenQuicklySearchSessionsCommand class],
                       [iTermOpenQuicklySwitchProfileCommand class],
                       [iTermOpenQuicklyCreateTabCommand class],
+                      [iTermOpenQuicklyColorPresetCommand class],
                       [iTermOpenQuicklyScriptCommand class] ];
     });
     return commands;
@@ -161,6 +167,34 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
             newSessionWithProfileItem.title = attributedName;
             newSessionWithProfileItem.identifier = profile[KEY_GUID];
             [items addObject:newSessionWithProfileItem];
+        }
+    }
+}
+
+- (void)addChangeColorPresetToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+                        withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    iTermColorPresetDictionary *allPresets = [iTermColorPresets allColorPresets];
+    NSColor *defaultColor = [NSColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1];
+    for (NSString *name in allPresets) {
+        iTermColorPreset *preset = allPresets[name];
+        
+        iTermOpenQuicklyColorPresetItem *item = [[iTermOpenQuicklyColorPresetItem alloc] init];
+        item.presetName = name;
+        item.logoGenerator.textColor = [preset[KEY_FOREGROUND_COLOR] colorValue];
+        item.logoGenerator.backgroundColor = [preset[KEY_BACKGROUND_COLOR] colorValue];
+        item.logoGenerator.tabColor = [preset[KEY_TAB_COLOR] colorValue] ?: defaultColor;
+        item.logoGenerator.cursorColor = [preset[KEY_CURSOR_COLOR] colorValue] ?: defaultColor;
+
+        NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
+        item.score = [self scoreForColorPreset:name matcher:matcher attributedName:attributedName];
+        if (item.score > 0) {
+            NSString *value = [NSString stringWithFormat:@"Load color preset ”%@“", name];
+            item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                            value:value
+                                                               highlightedIndexes:nil];
+            item.title = attributedName;
+            item.identifier = name;
+            [items addObject:item];
         }
     }
 }
@@ -286,6 +320,9 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
     if ([command supportsScript]) {
         [self addScriptToItems:items withMatcher:matcher];
     }
+    if ([command supportsColorPreset] && haveCurrentWindow) {
+        [self addChangeColorPresetToItems:items withMatcher:matcher];
+    }
 
     // Sort from highest to lowest score.
     [items sortUsingComparator:^NSComparisonResult(iTermOpenQuicklyItem *obj1,
@@ -320,6 +357,8 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
             }
         }
     } else if ([item isKindOfClass:[iTermOpenQuicklyScriptItem class]]) {
+        return item;
+    } else if ([item isKindOfClass:[iTermOpenQuicklyColorPresetItem class]]) {
         return item;
     }
     return nil;
@@ -358,6 +397,22 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                                       name:nil
                                   features:nameFeature
                                      limit:2 * kProfileNameMultiplierForScriptItem];
+    if (nameFeature.count) {
+        [attributedName appendAttributedString:nameFeature[0][0]];
+    }
+    return score;
+}
+
+- (double)scoreForColorPreset:(NSString *)presetName
+                      matcher:(iTermMinimumSubsequenceMatcher *)matcher
+               attributedName:(NSMutableAttributedString *)attributedName {
+    NSMutableArray *nameFeature = [NSMutableArray array];
+    double score = [self scoreUsingMatcher:matcher
+                                 documents:@[ presetName ]
+                                multiplier:kProfileNameMultiplierForColorPresetItem
+                                      name:nil
+                                  features:nameFeature
+                                     limit:2 * kProfileNameMultiplierForColorPresetItem];
     if (nameFeature.count) {
         [attributedName appendAttributedString:nameFeature[0][0]];
     }

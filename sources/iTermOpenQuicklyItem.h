@@ -52,3 +52,9 @@
 @interface iTermOpenQuicklyScriptItem : iTermOpenQuicklyItem
 @end
 
+@interface iTermOpenQuicklyColorPresetItem : iTermOpenQuicklyItem
+// Holds the session's colors and can create a logo with them as needed.
+@property(nonatomic, retain) iTermLogoGenerator *logoGenerator;
+@property(nonatomic, copy) NSString *presetName;
+@end
+

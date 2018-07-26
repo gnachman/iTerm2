@@ -51,6 +51,28 @@
 
 @end
 
+@implementation iTermOpenQuicklyColorPresetItem
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _logoGenerator = [[iTermLogoGenerator alloc] init];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_logoGenerator release];
+    [_presetName release];
+    [super dealloc];
+}
+
+- (NSImage *)icon {
+    return [_logoGenerator generatedImage];
+}
+
+@end
+
 @implementation iTermOpenQuicklyArrangementItem
 
 - (NSImage *)icon {

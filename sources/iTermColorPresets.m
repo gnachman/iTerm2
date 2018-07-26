@@ -3,6 +3,7 @@
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermProfilePreferences.h"
+#import "NSDictionary+iTerm.h"
 
 NSString *const kCustomColorPresetsKey = @"Custom Color Presets";
 NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
@@ -17,6 +18,10 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
   NSString *plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"ColorPresets"
                                                                          ofType:@"plist"];
   return [NSDictionary dictionaryWithContentsOfFile:plistFile];
+}
+
++ (iTermColorPresetDictionary *)allColorPresets {
+    return [[self builtInColorPresets] dictionaryByMergingDictionary:[self customColorPresets]];
 }
 
 + (BOOL)importColorPresetFromFile:(NSString *)filename {

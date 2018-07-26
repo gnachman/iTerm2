@@ -23,6 +23,9 @@ typedef NSDictionary<NSString *, iTermColorPreset *> iTermColorPresetDictionary;
 // Factory-supplied presets
 + (iTermColorPresetDictionary *)builtInColorPresets;
 
+// Both loaded and builtin
++ (iTermColorPresetDictionary *)allColorPresets;
+
 // Loook up a loaded preset by name
 + (iTermColorPreset *)presetWithName:(NSString *)presetName;
 

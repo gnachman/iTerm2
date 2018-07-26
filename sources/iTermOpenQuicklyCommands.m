@@ -53,6 +53,10 @@
     return NO;
 }
 
+- (BOOL)supportsColorPreset {
+    return NO;
+}
+
 @end
 
 @implementation iTermOpenQuicklyWindowArrangementCommand
@@ -135,6 +139,22 @@
 
 @end
 
+@implementation iTermOpenQuicklyColorPresetCommand
+
++ (NSString *)restrictionDescription {
+    return @"load color preset";
+}
+
++ (NSString *)command {
+    return @"c";
+}
+
+- (BOOL)supportsColorPreset {
+    return YES;
+}
+
+@end
+
 @implementation iTermOpenQuicklyNoCommand
 
 - (BOOL)supportsSessionLocation {
@@ -154,6 +174,10 @@
 }
 
 - (BOOL)supportsScript {
+    return YES;
+}
+
+- (BOOL)supportsColorPreset {
     return YES;
 }
 

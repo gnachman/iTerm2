@@ -35,6 +35,7 @@ static NSMutableDictionary *gLogoCache;
 }
 
 - (NSImage *)generatedImage {
+    
     NSString *key = [self cacheKey];
     NSImage *cachedImage = gLogoCache[key];
     if (cachedImage) {
@@ -57,7 +58,8 @@ static NSMutableDictionary *gLogoCache;
     [frame drawInRect:NSMakeRect(0, 0, width, height)];
     if (self.tabColor) {
         [[self.tabColor colorWithAlphaComponent:0.5] set];
-        NSRectFillUsingOperation(NSMakeRect(0, 0, width, height), NSCompositingOperationSourceIn);
+        CGFloat tabHeight = 9;
+        NSRectFillUsingOperation(NSMakeRect(0, height - tabHeight, width, tabHeight), NSCompositingOperationSourceIn);
     }
 
     [shadow drawInRect:NSMakeRect(0, 0, width, height)];

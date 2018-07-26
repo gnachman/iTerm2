@@ -224,6 +224,11 @@
         } else if ([object isKindOfClass:[iTermOpenQuicklyScriptItem class]]) {
             iTermOpenQuicklyScriptItem *item = [iTermOpenQuicklyScriptItem castFrom:object];
             [[[[iTermApplication sharedApplication] delegate] scriptsMenuController] launchScriptWithRelativePath:item.identifier];
+        } else if ([object isKindOfClass:[iTermOpenQuicklyColorPresetItem class]]) {
+            iTermOpenQuicklyColorPresetItem *item = [iTermOpenQuicklyColorPresetItem castFrom:object];
+            PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+            PTYSession *session = term.currentSession;
+            [session setColorsFromPresetNamed:item.presetName];
         }
     }
 
