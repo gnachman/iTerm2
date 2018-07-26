@@ -549,7 +549,7 @@ static NSString *const iTermSessionTitleSession = @"session";
                                                            host:host
                                                            tmux:tmux
                                                      components:titleComponents];
-             DLog(@"Title for session %@ is %@", self, result);
+             DLog(@"Title for session %@ is %@", session, result);
              completion(result, nil);
          }];
     [[iTermBuiltInFunctions sharedInstance] registerFunction:[func autorelease]

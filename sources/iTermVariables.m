@@ -206,7 +206,16 @@ NSString *const iTermVariableKeySessionChildPid = @"session.pid";
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p delegate=%@>", self.class, self, self.delegate];
+}
+
 #pragma mark - APIs
+
+- (void)setDelegate:(nullable id<iTermVariablesDelegate>)delegate {
+    _delegate = delegate;
+    DLog(@"Update delegate of %@", self);
+}
 
 - (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name {
     iTermVariables *owner = [self setValue:value forVariableNamed:name withSideEffects:YES];
@@ -296,9 +305,11 @@ NSString *const iTermVariableKeySessionChildPid = @"session.pid";
         if ([value isKindOfClass:[iTermVariables class]]) {
             _values[name] = value;
         } else {
+            DLog(@"Set variable %@ = %@ (%@)", name, value, self);
             _values[name] = [value copy];
         }
     } else {
+        DLog(@"Unset variable %@ (%@)", name, self);
         [_values removeObjectForKey:name];
     }
 
