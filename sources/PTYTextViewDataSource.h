@@ -5,13 +5,21 @@
 #import "LineBuffer.h"
 #import "VT100GridTypes.h"
 
+@class iTermColorMap;
 @class PTYNoteViewController;
 @class PTYSession;
 @class PTYTask;
 @class SCPPath;
+@class VT100Grid;
 @class VT100RemoteHost;
 @class VT100ScreenMark;
 @class VT100Terminal;
+
+@interface PTYTextViewSynchronousUpdateState : NSObject
+@property (nonatomic, strong) VT100Grid *grid;
+@property (nonatomic) BOOL cursorVisible;
+@property (nonatomic, strong) iTermColorMap *colorMap;
+@end
 
 @protocol iTermTextDataSource <NSObject>
 
@@ -121,8 +129,8 @@
 
 // When the cursor is about to be hidden, a copy of the grid is saved. This
 // method is used to temporarily swap in the saved grid if one is available. It
-// returns YES if the saved grid was swapped in (only possible if useSavedGrid
+// returns a nonnil state if the saved grid was swapped in (only possible if useSavedGrid
 // is YES, of course).
-- (BOOL)setUseSavedGridIfAvailable:(BOOL)useSavedGrid;
+- (PTYTextViewSynchronousUpdateState *)setUseSavedGridIfAvailable:(BOOL)useSavedGrid;
 
 @end

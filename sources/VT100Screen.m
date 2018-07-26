@@ -2247,20 +2247,20 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return range;
 }
 
-- (BOOL)setUseSavedGridIfAvailable:(BOOL)useSavedGrid {
-    if (useSavedGrid && !realCurrentGrid_ && self.temporaryDoubleBuffer.savedGrid) {
+- (PTYTextViewSynchronousUpdateState *)setUseSavedGridIfAvailable:(BOOL)useSavedGrid {
+    if (useSavedGrid && !realCurrentGrid_ && self.temporaryDoubleBuffer.savedState) {
         realCurrentGrid_ = [currentGrid_ retain];
         [currentGrid_ release];
-        currentGrid_ = [self.temporaryDoubleBuffer.savedGrid retain];
+        currentGrid_ = [self.temporaryDoubleBuffer.savedState.grid retain];
         self.temporaryDoubleBuffer.drewSavedGrid = YES;
-        return YES;
+        return self.temporaryDoubleBuffer.savedState;
     } else if (!useSavedGrid && realCurrentGrid_) {
         [currentGrid_ release];
         currentGrid_ = [realCurrentGrid_ retain];
         [realCurrentGrid_ release];
         realCurrentGrid_ = nil;
     }
-    return NO;
+    return nil;
 }
 
 - (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
@@ -5145,6 +5145,23 @@ static void SwapInt(int *a, int *b) {
     VT100Grid *copy = [[currentGrid_ copy] autorelease];
     copy.delegate = nil;
     return copy;
+}
+
+- (PTYTextViewSynchronousUpdateState *)temporaryDoubleBufferedGridSavedState {
+    PTYTextViewSynchronousUpdateState *state = [[[PTYTextViewSynchronousUpdateState alloc] init] autorelease];
+
+    state.grid = [currentGrid_.copy autorelease];
+    state.grid.delegate = nil;
+
+    state.colorMap = [self.delegate.screenColorMap.copy autorelease];
+    state.cursorVisible = self.temporaryDoubleBuffer.explicit ? _cursorVisible : YES;
+
+    return state;
+
+}
+
+- (iTermColorMap *)temporaryDoubleBufferedGridColorMapCopy {
+    return [[delegate_ screenColorMap] copy];
 }
 
 - (void)temporaryDoubleBufferedGridDidExpire {

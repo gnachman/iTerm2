@@ -1082,17 +1082,26 @@ static const int kDragThreshold = 3;
 }
 
 - (void)performBlockWithFlickerFixerGrid:(void (NS_NOESCAPE ^)(void))block {
-    // Try to use a saved grid if one is available. If it succeeds, that implies that the cursor was
-    // recently hidden and what we're drawing is how the screen looked just before the cursor was
-    // hidden. Therefore, we'll temporarily show the cursor, but we'll need to restore cursorVisible's
-    // value when we're done.
-    BOOL savedCursorVisible = _drawingHelper.cursorVisible;
-    if ([_dataSource setUseSavedGridIfAvailable:YES]) {
-        _drawingHelper.cursorVisible = YES;
+    PTYTextViewSynchronousUpdateState *originalState = nil;
+    PTYTextViewSynchronousUpdateState *savedState = [_dataSource setUseSavedGridIfAvailable:YES];
+    if (savedState) {
+        originalState = [[[PTYTextViewSynchronousUpdateState alloc] init] autorelease];
+        originalState.colorMap = _colorMap;
+        originalState.cursorVisible = _drawingHelper.cursorVisible;
+
+        _drawingHelper.cursorVisible = savedState.cursorVisible;
+        _drawingHelper.colorMap = savedState.colorMap;
+        _colorMap = savedState.colorMap;
     }
+
     block();
+
     [_dataSource setUseSavedGridIfAvailable:NO];
-    _drawingHelper.cursorVisible = savedCursorVisible;
+    if (originalState) {
+        _drawingHelper.colorMap = originalState.colorMap;
+        _colorMap = originalState.colorMap;
+        _drawingHelper.cursorVisible = originalState.cursorVisible;
+    }
 }
 
 - (iTermTextDrawingHelper *)drawingHelper {
