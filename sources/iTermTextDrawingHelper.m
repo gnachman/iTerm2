@@ -1141,12 +1141,18 @@ typedef struct iTermTextColorContext {
     [transform translateXBy:pos.x yBy:pos.y];
     [transform concat];
 
+    BOOL solid = NO;
     for (NSBezierPath *path in [iTermBoxDrawingBezierCurveFactory bezierPathsForBoxDrawingCode:theCharacter
                                                                                       cellSize:_cellSize
-                                                                                         scale:1]) {
+                                                                                         scale:1
+                                                                                         solid:&solid]) {
         NSColor *color = [NSColor colorWithCGColor:(CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName]];
         [color set];
-        [path stroke];
+        if (solid) {
+            [path fill];
+        } else {
+            [path stroke];
+        }
     }
 
     [ctx restoreGraphicsState];

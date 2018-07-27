@@ -10,10 +10,12 @@ U+254x	╀	╁	╂	╃	╄	╅	╆	╇	╈	╉	╊	╋	╌	╍	╎	╏
 U+255x	═	║	╒	╓	╔	╕	╖	╗	╘	╙	╚	╛	╜	╝	╞	╟
 U+256x	╠	╡	╢	╣	╤	╥	╦	╧	╨	╩	╪	╫	╬	╭	╮	╯
 U+257x	╰	╱	╲	╳	╴	╵	╶	╷	╸	╹	╺	╻	╼	╽	╾	╿
+U+258x  ▀   ▁   ▂   ▃   ▄   ▅   ▆   ▇   █   ▉   ▊   ▋   ▌   ▍   ▎   ▏
+U+259x  ▐   ░   ▒   ▓   ▔   ▕   ▖   ▗   ▘   ▙   ▚   ▛   ▜   ▝   ▞   ▟
 */
 
 #define iTermBoxDrawingCodeMin 0x2500
-#define iTermBoxDrawingCodeMax 0x257f
+#define iTermBoxDrawingCodeMax 0x2580
 
 typedef NS_ENUM(unichar, iTermBoxDrawingCode) {
     iTermBoxDrawingCodeLightHorizontal = 0x2500,  // ─
@@ -187,6 +189,40 @@ typedef NS_ENUM(unichar, iTermBoxDrawingCode) {
     iTermBoxDrawingCodeHeavyLeftAndLightRight = 0x257E,  // ╾
 
     iTermBoxDrawingCodeHeavyUpAndLightDown = 0x257F,  // ╿
+
+
+    iTermUpperHalfBlock                               = 0x2580, // ▀
+    iTermLowerOneEighthBlock                          = 0x2581, // ▁
+    iTermLowerOneQuarterBlock                         = 0x2582, // ▂
+    iTermLowerThreeEighthsBlock                       = 0x2583, // ▃
+    iTermLowerHalfBlock                               = 0x2584, // ▄
+    iTermLowerFiveEighthsBlock                        = 0x2585, // ▅
+    iTermLowerThreeQuartersBlock                      = 0x2586, // ▆
+    iTermLowerSevenEighthsBlock                       = 0x2587, // ▇
+    iTermFullBlock                                    = 0x2588, // █
+    iTermLeftSevenEighthsBlock                        = 0x2589, // ▉
+    iTermLeftThreeQuartersBlock                       = 0x258A, // ▊
+    iTermLeftFiveEighthsBlock                         = 0x258B, // ▋
+    iTermLeftHalfBlock                                = 0x258C, // ▌
+    iTermLeftThreeEighthsBlock                        = 0x258D, // ▍
+    iTermLeftOneQuarterBlock                          = 0x258E, // ▎
+    iTermLeftOneEighthBlock                           = 0x258F, // ▏
+    iTermRightHalfBlock                               = 0x2590, // ▐
+    iTermLightShade                                   = 0x2591, // ░
+    iTermMediumShade                                  = 0x2592, // ▒
+    iTermDarkShade                                    = 0x2593, // ▓
+    iTermUpperOneEighthBlock                          = 0x2594, // ▔
+    iTermRightOneEighthBlock                          = 0x2595, // ▕
+    iTermQuadrantLowerLeft                            = 0x2596, // ▖
+    iTermQuadrantLowerRight                           = 0x2597, // ▗
+    iTermQuadrantUpperLeft                            = 0x2598, // ▘
+    iTermQuadrantUpperLeftAndLowerLeftAndLowerRight   = 0x2599, // ▙
+    iTermQuadrantUpperLeftAndLowerRight               = 0x259A, // ▚
+    iTermQuadrantUpperLeftAndUpperRightAndLowerLeft   = 0x259B, // ▛
+    iTermQuadrantUpperLeftAndUpperRightAndLowerRight  = 0x259C, // ▜
+    iTermQuadrantUpperRight                           = 0x259D, // ▝
+    iTermQuadrantUpperRightAndLowerLeft               = 0x259E, // ▞
+    iTermQuadrantUpperRightAndLowerLeftAndLowerRight  = 0x259F, // ▟
 };
 
 // Defines a mapping from ascii characters to their Unicode graphical equivalent. Used in line-

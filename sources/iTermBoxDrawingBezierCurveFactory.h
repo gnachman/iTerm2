@@ -13,6 +13,7 @@
 + (NSCharacterSet *)boxDrawingCharactersWithBezierPaths;
 + (NSArray<NSBezierPath *> *)bezierPathsForBoxDrawingCode:(unichar)code
                                                  cellSize:(NSSize)cellSize
-                                                    scale:(CGFloat)scale;
+                                                    scale:(CGFloat)scale
+                                                    solid:(out BOOL *)solid;
 
 @end

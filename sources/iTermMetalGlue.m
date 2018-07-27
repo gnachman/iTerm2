@@ -1472,16 +1472,21 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     NSMutableData *data = [NSImage argbDataForImageOfSize:size drawBlock:^(CGContextRef context) {
         NSAffineTransform *transform = [NSAffineTransform transform];
         [transform concat];
+        [backgroundColor set];
+        NSRectFill(NSMakeRect(0, 0, size.width, size.height));
+        [foregroundColor set];
 
+        BOOL solid = NO;
         for (NSBezierPath *path in [iTermBoxDrawingBezierCurveFactory bezierPathsForBoxDrawingCode:code
                                                                                           cellSize:size
-                                                                                             scale:scale]) {
-            [backgroundColor set];
-            NSRectFill(NSMakeRect(0, 0, size.width, size.height));
-
-            [foregroundColor set];
-            [path setLineWidth:scale];
-            [path stroke];
+                                                                                             scale:scale
+                                                                                             solid:&solid]) {
+            if (solid) {
+                [path fill];
+            } else {
+                [path setLineWidth:scale];
+                [path stroke];
+            }
         }
     }];
 
