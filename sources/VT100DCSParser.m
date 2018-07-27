@@ -529,11 +529,11 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
             break;
 
         case MAKE_COMPACT_SEQUENCE('=', 0, 's'):
-            token->type = DCS_BEGIN_SYNCHRONIZED_UPDATE;
-            break;
-
-        case MAKE_COMPACT_SEQUENCE('=', 0, 0):
-            token->type = DCS_END_SYNCHRONIZED_UPDATE;
+            if ([_parameterString isEqualToString:@"1"]) {
+                token->type = DCS_BEGIN_SYNCHRONIZED_UPDATE;
+            } else if ([_parameterString isEqualToString:@"2"]) {
+                token->type = DCS_END_SYNCHRONIZED_UPDATE;
+            }
             break;
     }
 }
