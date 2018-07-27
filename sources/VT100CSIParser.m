@@ -7,6 +7,7 @@
 //
 
 #import "VT100CSIParser.h"
+#import "iTermParser.h"
 
 // Functions to modify the packed command in CSIParam.cmd.
 static int32_t SetFinalByteInPackedCommand(int32_t command, unsigned char c) {
@@ -197,11 +198,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                     // string that starts with a colon.
                     const int paramNum = param->count - 1;
                     assert(paramNum >= 0 && paramNum < VT100CSIPARAM_MAX);
-                    int subParamNum = param->subCount[paramNum];
-                    if (subParamNum < VT100CSISUBPARAM_MAX) {
-                        param->sub[paramNum][subParamNum] = n;
-                        param->subCount[paramNum]++;
-                    }
+                    iTermParserAddCSISubparameter(param, paramNum, n);
                 } else if (param->count < VT100CSIPARAM_MAX) {
                     param->p[param->count] = n;
                     // increment the parameter count

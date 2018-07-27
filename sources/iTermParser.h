@@ -155,12 +155,63 @@ typedef struct {
     // final byte.
     int32_t cmd;
 
-    // Sub-parameters.
-    int sub[VT100CSIPARAM_MAX][VT100CSISUBPARAM_MAX];
-
-    // Number of subparameters for each parameter.
-    int subCount[VT100CSIPARAM_MAX];
+    struct {
+        int parameter_index;
+        int subparameter_index;
+        int value;
+    } subparameters[VT100CSISUBPARAM_MAX];
+    int num_subparameters;
 } CSIParam;
+
+// Returns the number of subparameters for a particular parameter.
+static inline int iTermParserGetNumberOfCSISubparameters(const CSIParam *csi, int parameter_index) {
+    int count = 0;
+    for (int j = 0; j < csi->num_subparameters; j++) {
+        if (csi->subparameters[j].parameter_index == parameter_index) {
+            count++;
+        }
+    }
+    return count;
+}
+
+// Appends a subparameter for a parameter. Silently fails if there is not enough room.
+static inline void iTermParserAddCSISubparameter(CSIParam *csi, int parameter_index, int value) {
+    int i = csi->num_subparameters;
+    if (i == VT100CSISUBPARAM_MAX) {
+        return;
+    }
+
+    csi->subparameters[i].parameter_index = parameter_index;
+    csi->subparameters[i].subparameter_index = iTermParserGetNumberOfCSISubparameters(csi, parameter_index);
+    csi->subparameters[i].value = value;
+
+    csi->num_subparameters++;
+}
+
+// Returns the value of a subparameter for some parameter. Returns -1 if it cannot be found.
+static inline int iTermParserGetCSISubparameter(CSIParam *csi, int parameter_index, int subparameter_index) {
+    int i = 0;
+    for (int j = 0; j < csi->num_subparameters; j++) {
+        if (csi->subparameters[j].parameter_index == parameter_index) {
+            if (i == 0) {
+                return csi->subparameters[j].value;
+            }
+            i--;
+        }
+    }
+    return -1;
+}
+
+// Fills arrayToFill with subparameters for the given parameter index. Returns the number of subs.
+static inline int iTermParserGetAllCSISubparametersForParameter(CSIParam *csi, int parameter_index, int arrayToFill[VT100CSISUBPARAM_MAX]) {
+    int i = 0;
+    for (int j = 0; j < csi->num_subparameters; j++) {
+        if (csi->subparameters[j].parameter_index == parameter_index) {
+            arrayToFill[i++] = csi->subparameters[j].value;
+        }
+    }
+    return i;
+}
 
 // If the n'th parameter has a negative (default) value, replace it with |value|.
 // CSI parameter values are all initialized to -1 before parsing, so this has the effect of setting

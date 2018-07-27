@@ -1,5 +1,6 @@
 #import "VT100Terminal.h"
 #import "DebugLogging.h"
+#import "iTermParser.h"
 #import "iTermURLStore.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
@@ -688,7 +689,7 @@ static const int kMaxScreenRows = 4096;
                     graphicRendition_.bgBlue = 0;
                     graphicRendition_.bgColorMode = ColorModeAlternate;
                     break;
-                case VT100CHARATTR_FG_256:
+                case VT100CHARATTR_FG_256: {
                     // The actual spec for this is called ITU T.416-199303
                     // You can download it for free! If you prefer to spend money, ISO/IEC 8613-6
                     // is supposedly the same thing.
@@ -723,31 +724,34 @@ static const int kMaxScreenRows = 4096;
                     // CSI 38:2:[colorspace]:[red]:[green]:[blue]
                     // CSI 38:2:[colorspace]:[red]:[green]:[blue]:<one or more additional colon-delimited arguments, all ignored>
                     // CSI 38;2;[red];[green];[blue]   // Notice semicolons in place of colons here
-                    if (token.csi->subCount[i] > 0) {
+
+                    int subs[VT100CSISUBPARAM_MAX];
+                    int numberOfSubparameters = iTermParserGetAllCSISubparametersForParameter(token.csi, i, subs);
+                    if (numberOfSubparameters > 0) {
                         // Preferred syntax using colons to delimit subparameters
-                        if (token.csi->subCount[i] >= 2 && token.csi->sub[i][0] == 5) {
+                        if (numberOfSubparameters >= 2 && subs[0] == 5) {
                             // CSI 38:5:P m
-                            graphicRendition_.fgColorCode = token.csi->sub[i][1];
+                            graphicRendition_.fgColorCode = subs[1];
                             graphicRendition_.fgGreen = 0;
                             graphicRendition_.fgBlue = 0;
                             graphicRendition_.fgColorMode = ColorModeNormal;
-                        } else if (token.csi->subCount[i] >= 4 && token.csi->sub[i][0] == 2) {
+                        } else if (numberOfSubparameters >= 4 && subs[0] == 2) {
                             // 24-bit color
-                            if (token.csi->subCount[i] >= 5) {
+                            if (numberOfSubparameters >= 5) {
                                 // Spec-compliant. Likely rarely used in 2017.
                                 // CSI 38:2:colorspace:R:G:B m
                                 // TODO: Respect the color space argument. See ITU-T Rec. T.414,
                                 // but good luck actually finding the colour space IDs.
-                                graphicRendition_.fgColorCode = token.csi->sub[i][2];
-                                graphicRendition_.fgGreen = token.csi->sub[i][3];
-                                graphicRendition_.fgBlue = token.csi->sub[i][4];
+                                graphicRendition_.fgColorCode = subs[2];
+                                graphicRendition_.fgGreen = subs[3];
+                                graphicRendition_.fgBlue = subs[4];
                                 graphicRendition_.fgColorMode = ColorMode24bit;
                             } else {
                                 // Misinterpration compliant.
                                 // CSI 38:2:R:G:B m  <- misinterpration compliant
-                                graphicRendition_.fgColorCode = token.csi->sub[i][1];
-                                graphicRendition_.fgGreen = token.csi->sub[i][2];
-                                graphicRendition_.fgBlue = token.csi->sub[i][3];
+                                graphicRendition_.fgColorCode = subs[1];
+                                graphicRendition_.fgGreen = subs[2];
+                                graphicRendition_.fgBlue = subs[3];
                                 graphicRendition_.fgColorMode = ColorMode24bit;
                             }
                         }
@@ -772,21 +776,24 @@ static const int kMaxScreenRows = 4096;
                         i += 4;
                     }
                     break;
-                case VT100CHARATTR_BG_256:
-                    if (token.csi->subCount[i] > 0) {
+                }
+                case VT100CHARATTR_BG_256: {
+                    int subs[VT100CSISUBPARAM_MAX];
+                    int numberOfSubparameters = iTermParserGetAllCSISubparametersForParameter(token.csi, i, subs);
+                    if (numberOfSubparameters > 0) {
                         // Preferred syntax using colons to delimit subparameters
-                        if (token.csi->subCount[i] >= 2 && token.csi->sub[i][0] == 5) {
+                        if (numberOfSubparameters >= 2 && subs[0] == 5) {
                             // CSI 48:5:P m
-                            graphicRendition_.bgColorCode = token.csi->sub[i][1];
+                            graphicRendition_.bgColorCode = subs[1];
                             graphicRendition_.bgGreen = 0;
                             graphicRendition_.bgBlue = 0;
                             graphicRendition_.bgColorMode = ColorModeNormal;
-                        } else if (token.csi->subCount[i] >= 4 && token.csi->sub[i][0] == 2) {
+                        } else if (numberOfSubparameters >= 4 && subs[0] == 2) {
                             // CSI 48:2:R:G:B m
                             // 24-bit color
-                            graphicRendition_.bgColorCode = token.csi->sub[i][1];
-                            graphicRendition_.bgGreen = token.csi->sub[i][2];
-                            graphicRendition_.bgBlue = token.csi->sub[i][3];
+                            graphicRendition_.bgColorCode = subs[1];
+                            graphicRendition_.bgGreen = subs[2];
+                            graphicRendition_.bgBlue = subs[3];
                             graphicRendition_.bgColorMode = ColorMode24bit;
                         }
                     } else if (token.csi->count - i >= 3 && token.csi->p[i + 1] == 5) {
@@ -806,6 +813,7 @@ static const int kMaxScreenRows = 4096;
                         i += 4;
                     }
                     break;
+                }
                 default:
                     // 8 color support
                     if (n >= VT100CHARATTR_FG_BLACK &&
