@@ -96,14 +96,14 @@
         y = bestY;
     }
 
-    [[self delegate] splitView:self draggingWillBeginOfSplit:clickedOnSplitterIndex];
-
     // mouseDown blocks and lets the user drag things around.
     if (clickedOnSplitterIndex < 0) {
         // You don't seem to have clicked on a splitter.
         DLog(@"Click in PTYSplitView was not on splitter");
         return;
     }
+    [[self delegate] splitView:self draggingWillBeginOfSplit:clickedOnSplitterIndex];
+
     [super mouseDown:theEvent];
 
     // See how much the view after the splitter moved

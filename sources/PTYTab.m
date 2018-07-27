@@ -4018,7 +4018,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)splitView:(PTYSplitView *)splitView draggingWillBeginOfSplit:(int)splitterIndex {
+    DLog(@"%@: draggingWillBeginOfSplit:%@", self, @(splitterIndex));
     _numberOfSplitViewDragsInProgress++;
+    DLog(@"%@ split drags in progress", @(_numberOfSplitViewDragsInProgress));
     if (![self isTmuxTab]) {
         // Don't care for non-tmux tabs.
         return;
@@ -4030,7 +4032,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)splitView:(PTYSplitView *)splitView
   draggingDidEndOfSplit:(int)splitterIndex
            pixels:(NSSize)pxMoved {
+    DLog(@"%@: draggingDidEndOfSplit:%@", self, @(splitterIndex));
     _numberOfSplitViewDragsInProgress--;
+    DLog(@"%@ split drags in progress", @(_numberOfSplitViewDragsInProgress));
     if (![self isTmuxTab]) {
         // Don't care for non-tmux tabs.
         return;
