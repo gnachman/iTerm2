@@ -5007,7 +5007,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         
         const BOOL safeForCompositing = (![PTYNoteViewController anyNoteVisible] &&
-                                         !_pasteHelper.pasteViewIsVisible &&
+                                         !_pasteHelper.dropDownPasteViewIsVisible &&
                                          !_view.findDriver.isVisible &&
                                          !_view.isDropDownSearchVisible &&
                                          _view.currentAnnouncement == nil &&
@@ -9602,6 +9602,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSView *)pasteHelperViewForIndicator {
     return _view;
+}
+
+- (iTermStatusBarViewController *)pasteHelperStatusBarViewController {
+    return _statusBarViewController;
 }
 
 - (BOOL)pasteHelperShouldWaitForPrompt {

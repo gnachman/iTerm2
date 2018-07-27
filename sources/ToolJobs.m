@@ -386,7 +386,7 @@ static const CGFloat kMargin = 4;
     }
 
     NSString *value = [self stringForTableColumn:tableColumn row:row];
-    result.stringValue = value;
+    result.stringValue = value ?: @"";
 
     return result;
 }

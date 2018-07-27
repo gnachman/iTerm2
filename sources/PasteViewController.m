@@ -25,8 +25,9 @@ static float kAnimationDuration = 0.25;
 @synthesize remainingLength = remainingLength_;
 
 - (instancetype)initWithContext:(PasteContext *)pasteContext
-               length:(int)length {
-    self = [super initWithNibName:@"PasteView" bundle:nil];
+                         length:(int)length
+                           mini:(BOOL)mini {
+    self = [super initWithNibName:mini ? @"MiniPasteView" : @"PasteView" bundle:nil];
     if (self) {
         [self view];
 

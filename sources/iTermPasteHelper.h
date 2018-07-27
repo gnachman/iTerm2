@@ -12,6 +12,8 @@
 extern const int kNumberOfSpacesPerTabCancel;
 extern const int kNumberOfSpacesPerTabNoConversion;
 
+@class iTermStatusBarViewController;
+
 @protocol iTermPasteHelperDelegate <NSObject>
 
 - (void)pasteHelperWriteString:(NSString *)string;
@@ -27,6 +29,7 @@ extern const int kNumberOfSpacesPerTabNoConversion;
 
 // View in which to show the paste indicator.
 - (NSView *)pasteHelperViewForIndicator;
+- (iTermStatusBarViewController *)pasteHelperStatusBarViewController;
 
 // Are you currently at a shell prompt? Implies shell integration.
 - (BOOL)pasteHelperIsAtShellPrompt;
@@ -46,7 +49,7 @@ extern const int kNumberOfSpacesPerTabNoConversion;
 
 @property(nonatomic, assign) id<iTermPasteHelperDelegate> delegate;
 @property(nonatomic, readonly) BOOL isPasting;
-@property(nonatomic, readonly) BOOL pasteViewIsVisible;
+@property(nonatomic, readonly) BOOL dropDownPasteViewIsVisible;
 
 + (NSMutableCharacterSet *)unsafeControlCodeSet;
 

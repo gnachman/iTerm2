@@ -20,7 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (nullable instancetype)initWithComponent:(id<iTermStatusBarComponent>)component {
-    self = [super initWithFrame:NSZeroRect];
+    self = [super initWithFrame:NSMakeRect(0, 0, 200, 21)];
     if (self) {
         self.wantsLayer = YES;
         _component = component;

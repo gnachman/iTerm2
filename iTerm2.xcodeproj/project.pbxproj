@@ -1669,6 +1669,13 @@
 		A6614A2520958EDC00A10D97 /* iTermBuildingScriptWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6614A2220958ED400A10D97 /* iTermBuildingScriptWindowController.xib */; };
 		A6614A2620958EDC00A10D97 /* iTermBuildingScriptWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6614A2220958ED400A10D97 /* iTermBuildingScriptWindowController.xib */; };
 		A6614A2720958EDD00A10D97 /* iTermBuildingScriptWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6614A2220958ED400A10D97 /* iTermBuildingScriptWindowController.xib */; };
+		A6614C74210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A6614C72210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.h */; };
+		A6614C75210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A6614C73210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.m */; };
+		A6614C77210AE5FD0001EAA3 /* MiniPasteView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6614C76210AE5FD0001EAA3 /* MiniPasteView.xib */; };
+		A6614C78210AE5FD0001EAA3 /* MiniPasteView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6614C76210AE5FD0001EAA3 /* MiniPasteView.xib */; };
+		A6614C79210AE5FD0001EAA3 /* MiniPasteView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6614C76210AE5FD0001EAA3 /* MiniPasteView.xib */; };
+		A6614C7C210AE7350001EAA3 /* iTermPasteViewManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A6614C7A210AE7350001EAA3 /* iTermPasteViewManager.h */; };
+		A6614C7D210AE7350001EAA3 /* iTermPasteViewManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A6614C7B210AE7350001EAA3 /* iTermPasteViewManager.m */; };
 		A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010919CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
@@ -4071,6 +4078,11 @@
 		A6614A2020958ED400A10D97 /* iTermBuildingScriptWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBuildingScriptWindowController.h; sourceTree = "<group>"; };
 		A6614A2120958ED400A10D97 /* iTermBuildingScriptWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBuildingScriptWindowController.m; sourceTree = "<group>"; };
 		A6614A2220958ED400A10D97 /* iTermBuildingScriptWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermBuildingScriptWindowController.xib; sourceTree = "<group>"; };
+		A6614C72210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarProgressComponent.h; sourceTree = "<group>"; };
+		A6614C73210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarProgressComponent.m; sourceTree = "<group>"; };
+		A6614C76210AE5FD0001EAA3 /* MiniPasteView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = MiniPasteView.xib; path = Interfaces/MiniPasteView.xib; sourceTree = "<group>"; };
+		A6614C7A210AE7350001EAA3 /* iTermPasteViewManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPasteViewManager.h; sourceTree = "<group>"; };
+		A6614C7B210AE7350001EAA3 /* iTermPasteViewManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPasteViewManager.m; sourceTree = "<group>"; };
 		A663010619CFCE74004AF81C /* SuppressAllOutput.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SuppressAllOutput.png; path = images/SuppressAllOutput.png; sourceTree = "<group>"; };
 		A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "SuppressAllOutput@2x.png"; path = "images/SuppressAllOutput@2x.png"; sourceTree = "<group>"; };
 		A663010E19CFE41A004AF81C /* iTermAboutWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAboutWindow.h; sourceTree = "<group>"; };
@@ -5340,6 +5352,7 @@
 		0464AB22006CD2EC7F000001 /* Interface Builder Files */ = {
 			isa = PBXGroup;
 			children = (
+				A6614C76210AE5FD0001EAA3 /* MiniPasteView.xib */,
 				A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */,
 				A67D0D121A2EE12A003A8B35 /* AddressBook.strings */,
 				A67D0D131A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib */,
@@ -6368,6 +6381,8 @@
 				A66F52B02105ABCA00571168 /* iTermStatusBarAttributedTextComponent.m */,
 				A66F52B32105AC5B00571168 /* iTermStatusBarGitComponent.h */,
 				A66F52B42105AC5B00571168 /* iTermStatusBarGitComponent.m */,
+				A6614C72210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.h */,
+				A6614C73210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.m */,
 			);
 			name = Components;
 			sourceTree = "<group>";
@@ -7105,6 +7120,8 @@
 				A63935942103FD8B00A16D1C /* iTermMemoryUtilization.m */,
 				A66F52A7210458CA00571168 /* iTermNetworkUtilization.h */,
 				A66F52A8210458CA00571168 /* iTermNetworkUtilization.m */,
+				A6614C7A210AE7350001EAA3 /* iTermPasteViewManager.h */,
+				A6614C7B210AE7350001EAA3 /* iTermPasteViewManager.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -8290,6 +8307,7 @@
 				A66719211DCE36C3000CE608 /* iTermHTTPConnection.h in Headers */,
 				A66719221DCE36C3000CE608 /* iTermWindowOcclusionChangeMonitor.h in Headers */,
 				A65FF3C120F18547008BD0AE /* iTermMiniSearchFieldViewController.h in Headers */,
+				A6614C74210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.h in Headers */,
 				A631FC9820EF04E900EB824F /* iTermStatusBarSetupConfigureComponentWindowController.h in Headers */,
 				A66719231DCE36C3000CE608 /* QLPreviewPanel+iTerm.h in Headers */,
 				A66719241DCE36C3000CE608 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */,
@@ -8396,6 +8414,7 @@
 				A60C03642089897400FE2F1F /* iTermScriptConsole.h in Headers */,
 				530AB8B420B2098000D2AA08 /* iTermVariables.h in Headers */,
 				A667194D1DCE36C3000CE608 /* iTermWebSocketConnection.h in Headers */,
+				A6614C7C210AE7350001EAA3 /* iTermPasteViewManager.h in Headers */,
 				A667194E1DCE36C3000CE608 /* iTermInitialDirectory.h in Headers */,
 				A68400AF1FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.h in Headers */,
 				A61ED2A520E99DCD0035BECD /* iTermStatusBarClockComponent.h in Headers */,
@@ -8887,6 +8906,7 @@
 				A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */,
 				1D6ED9BB19AEA20D005A7799 /* SmartSelectionRules.plist in Resources */,
 				A66F52C62106F6F100571168 /* gitdown.png in Resources */,
+				A6614C79210AE5FD0001EAA3 /* MiniPasteView.xib in Resources */,
 				53FF980D20918D23008688D7 /* template_basic_simple.py in Resources */,
 				A62DBBA120F47CFA008B63D1 /* GoForward@2x.png in Resources */,
 				A65B72571B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
@@ -9014,6 +9034,7 @@
 				1D44D0371CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_onIsland.png in Resources */,
 				1D44CFCE1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allCursorColor.png in Resources */,
 				1D44CFB01CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testDontUseNonAsciiFont.png in Resources */,
+				A6614C78210AE5FD0001EAA3 /* MiniPasteView.xib in Resources */,
 				1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */,
 				1D44CF961CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBlinkingCursorHidden.png in Resources */,
 				1D44D03A1CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png in Resources */,
@@ -9585,6 +9606,7 @@
 				A67D0D561A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
 				A65B725A1B1A630100F947A7 /* CheckMark.png in Resources */,
 				A67D0D321A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
+				A6614C77210AE5FD0001EAA3 /* MiniPasteView.xib in Resources */,
 				A66F52C42106F6F100571168 /* gitdown.png in Resources */,
 				A6CEDA6119988A7300BB57EC /* LogoShadow.png in Resources */,
 				1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */,
@@ -10169,6 +10191,7 @@
 				530AB7B920A6242C00D2AA08 /* iTermAPIAuthorizationController.m in Sources */,
 				A68400A71FF82424008D3EE2 /* iTermIndicatorRenderer.m in Sources */,
 				A68400B51FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
+				A6614C75210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.m in Sources */,
 				A6F385DF1FA55E2000739939 /* iTermSmartCursorColor.m in Sources */,
 				A658882A201F06ED006F48DB /* iTermTexture.m in Sources */,
 				A630118920E6B4DA008114B7 /* iTermStatusBarComponent.m in Sources */,
@@ -10201,6 +10224,7 @@
 				A67960D01F81FCBB008A42BC /* iTermBackgroundColorRenderer.mm in Sources */,
 				A6DBC0391FF9B30000F1466D /* iTermTexturePool.m in Sources */,
 				A6A4865E20B6758D00493302 /* iTermPreferencesBaseViewController.m in Sources */,
+				A6614C7D210AE7350001EAA3 /* iTermPasteViewManager.m in Sources */,
 				A66F52B62105AC5B00571168 /* iTermStatusBarGitComponent.m in Sources */,
 				A66F3CF81FED741E00AA2021 /* iTermTextRendererTransientState.mm in Sources */,
 				A67960E41F8201A1008A42BC /* iTermMetalDriver.m in Sources */,

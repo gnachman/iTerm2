@@ -13,6 +13,7 @@
 #import "iTermPasteHelper.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPasteSpecialWindowController.h"
+#import "iTermPasteViewManager.h"
 #import "iTermPreferences.h"
 #import "iTermWarning.h"
 #import "NSData+iTerm.h"
@@ -26,18 +27,17 @@
 const int kNumberOfSpacesPerTabCancel = -2;
 const int kNumberOfSpacesPerTabNoConversion = -1;
 
-@interface iTermPasteHelper () <PasteViewControllerDelegate>
+@interface iTermPasteHelper () <iTermPasteViewManagerDelegate>
 @end
 
 @implementation iTermPasteHelper {
     NSMutableArray *_eventQueue;
-    PasteViewController *_pasteViewController;
     PasteContext *_pasteContext;
 
     // Paste from the head of this string from a timer until it's empty.
     NSMutableString *_buffer;
     NSTimer *_timer;
-
+    iTermPasteViewManager *_pasteViewManager;
 }
 
 + (NSMutableCharacterSet *)unsafeControlCodeSet {
@@ -53,15 +53,17 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     if (self) {
         _eventQueue = [[NSMutableArray alloc] init];
         _buffer = [[NSMutableString alloc] init];
+        _pasteViewManager = [[iTermPasteViewManager alloc] init];
+        _pasteViewManager.delegate = self;
     }
     return self;
 }
 
 - (void)dealloc {
     [_eventQueue release];
-    [_pasteViewController release];
     [_pasteContext release];
     [_buffer release];
+    [_pasteViewManager release];
     if (_timer) {
         [_timer invalidate];
     }
@@ -379,31 +381,20 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     [_eventQueue addObject:event];
 }
 
-- (void)showPasteIndicatorInView:(NSView *)view {
-    _pasteViewController = [[PasteViewController alloc] initWithContext:_pasteContext
-                                                                 length:_buffer.length];
-    _pasteViewController.delegate = self;
-    _pasteViewController.view.frame = NSMakeRect(20,
-                                                 view.frame.size.height - _pasteViewController.view.frame.size.height,
-                                                 _pasteViewController.view.frame.size.width,
-                                                 _pasteViewController.view.frame.size.height);
-    [view addSubview:_pasteViewController.view];
-    [_pasteViewController updateFrame];
-    _pasteViewIsVisible = YES;
-    [self.delegate pasteHelperPasteViewVisibilityDidChange];
+- (void)showPasteIndicatorInView:(NSView *)view
+         statusBarViewController:(iTermStatusBarViewController *)statusBarViewController {
+    _pasteViewManager.pasteContext = _pasteContext;
+    _pasteViewManager.bufferLength = _buffer.length;
+    [_pasteViewManager startWithViewForDropdown:view
+                        statusBarViewController:statusBarViewController];
 }
 
 - (void)hidePasteIndicator {
-    [_pasteViewController closeWithCompletion:^{
-        [self.delegate pasteHelperPasteViewVisibilityDidChange];
-    }];
-    [_pasteViewController release];
-    _pasteViewController = nil;
-    _pasteViewIsVisible = NO;
+    [_pasteViewManager didStop];
 }
 
 - (void)updatePasteIndicator {
-    [_pasteViewController setRemainingLength:_buffer.length];
+    [_pasteViewManager setRemainingLength:_buffer.length];
 }
 
 - (void)pasteNextChunkAndScheduleTimer {
@@ -497,7 +488,8 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     if (!isUpload) {
         if ((sumOfDelays + timeSpentWriting > kMinEstimatedPasteTimeToShowIndicator) ||
             blockAtNewline) {
-            [self showPasteIndicatorInView:[_delegate pasteHelperViewForIndicator]];
+            [self showPasteIndicatorInView:[_delegate pasteHelperViewForIndicator]
+                   statusBarViewController:[_delegate pasteHelperStatusBarViewController]];
         }
     }
 
@@ -611,9 +603,17 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     return kNumberOfSpacesPerTabNoConversion;
 }
 
-#pragma mark - PasteViewControllerDelegate
+- (BOOL)dropDownPasteViewIsVisible {
+    return _pasteViewManager.dropDownPasteViewIsVisible;
+}
 
-- (void)pasteViewControllerDidCancel {
+#pragma mark - iTermPasteViewManagerDelegate
+
+- (void)pasteViewManagerDropDownPasteViewVisibilityDidChange {
+    [self.delegate pasteHelperPasteViewVisibilityDidChange];
+}
+
+- (void)pasteViewManagerUserDidCancel {
     [self hidePasteIndicator];
     [_timer invalidate];
     _timer = nil;
