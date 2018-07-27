@@ -81,8 +81,6 @@ static NSDate* lastResizeDate_;
     BOOL _showTitle;
     SessionTitleView *_title;
 
-    BOOL _inAddSubview;
-
     NSView *_hoverURLView;
     NSTextField *_hoverURLTextField;
 
@@ -116,7 +114,7 @@ static NSDate* lastResizeDate_;
         // Set up find view
         _findView = [[FindViewController alloc] initWithNibName:@"FindView" bundle:nil];
         [[_findView view] setHidden:YES];
-        [self addSubview:[_findView view]];
+        [super addSubview:[_findView view]];
         NSRect aRect = [self frame];
         [_findView setFrameOrigin:NSMakePoint(aRect.size.width - [[_findView view] frame].size.width - 30,
                                                      aRect.size.height - [[_findView view] frame].size.height)];
@@ -143,7 +141,7 @@ static NSDate* lastResizeDate_;
         _scrollview.contentView.copiesOnScroll = NO;
 
         // assign the main view
-        [self addSubview:_scrollview];
+        [self addSubviewBelowFindView:_scrollview];
 
     }
     return self;
@@ -295,15 +293,12 @@ static NSDate* lastResizeDate_;
     }
 }
 
-- (void)addSubview:(NSView *)aView {
-    BOOL wasRunning = _inAddSubview;
-    _inAddSubview = YES;
-    if (!wasRunning && _findView && aView != [_findView view]) {
-        [super addSubview:aView positioned:NSWindowBelow relativeTo:[_findView view]];
+- (void)addSubviewBelowFindView:(NSView *)aView {
+    if (_findView.view) {
+        [self addSubview:aView positioned:NSWindowBelow relativeTo:[_findView view]];
     } else {
         [super addSubview:aView];
     }
-    _inAddSubview = NO;
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldBoundsSize {
@@ -570,7 +565,7 @@ static NSDate* lastResizeDate_;
     _splitSelectionView.wantsLayer = [iTermPreferences boolForKey:kPreferenceKeyUseMetal];
     [_splitSelectionView setFrameOrigin:NSMakePoint(0, 0)];
     [_splitSelectionView setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
-    [self addSubview:_splitSelectionView];
+    [self addSubviewBelowFindView:_splitSelectionView];
     [_splitSelectionView release];
 }
 
@@ -655,7 +650,7 @@ static NSDate* lastResizeDate_;
                                                                                frame.size.width,
                                                                                frame.size.height)];
     _splitSelectionView.wantsLayer = [iTermPreferences boolForKey:kPreferenceKeyUseMetal];
-    [self addSubview:_splitSelectionView];
+    [self addSubviewBelowFindView:_splitSelectionView];
     [_splitSelectionView release];
     [[self window] orderFront:nil];
 }
@@ -689,7 +684,7 @@ static NSDate* lastResizeDate_;
         _hoverURLTextField.autoresizingMask = NSViewNotSizable;
         [_hoverURLView addSubview:_hoverURLTextField];
         _hoverURLView.frame = _hoverURLTextField.bounds;
-        [self addSubview:_hoverURLView];
+        [super addSubview:_hoverURLView];
         [_delegate sessionViewDidChangeHoverURLVisible:YES];
     } else if (url == nil) {
         [_hoverURLView removeFromSuperview];
@@ -788,7 +783,7 @@ static NSDate* lastResizeDate_;
         }
         _title.delegate = self;
         [_title setDimmingAmount:[self adjustedDimmingAmount]];
-        [self addSubview:_title];
+        [self addSubviewBelowFindView:_title];
     } else {
         frame.size.height += kTitleHeight;
         [_title removeFromSuperview];
@@ -993,7 +988,7 @@ static NSDate* lastResizeDate_;
 
         _currentAnnouncement.view.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
         [_currentAnnouncement didBecomeVisible];
-        [self addSubview:_currentAnnouncement.view];
+        [self addSubviewBelowFindView:_currentAnnouncement.view];
     }
     [self.delegate sessionViewAnnouncementDidChange:self];
 }

@@ -5795,7 +5795,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Move the scrollView created by PTYSession into sessionView.
     [scrollView retain];
     [scrollView removeFromSuperview];
-    [sessionView addSubview:scrollView];
+    [sessionView addSubviewBelowFindView:scrollView];
     [scrollView release];
     if (!performSetup) {
         [scrollView setFrameSize:[sessionView frame].size];
