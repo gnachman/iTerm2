@@ -294,6 +294,26 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)addSubviewBelowFindView:(NSView *)aView {
+    if ([aView isKindOfClass:[PTYScrollView class]]) {
+        NSInteger i = [self.subviews indexOfObjectPassingTest:^BOOL(__kindof NSView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            return [obj isKindOfClass:[MTKView class]];
+        }];
+        if (i != NSNotFound) {
+            // Insert scrollview after metal view
+            [self addSubview:aView positioned:NSWindowAbove relativeTo:self.subviews[i]];
+            return;
+        }
+    }
+    if ([aView isKindOfClass:[MTKView class]]) {
+        NSInteger i = [self.subviews indexOfObjectPassingTest:^BOOL(__kindof NSView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            return [obj isKindOfClass:[PTYScrollView class]];
+        }];
+        if (i != NSNotFound) {
+            // Insert metal view before scroll view
+            [self addSubview:aView positioned:NSWindowBelow relativeTo:self.subviews[i]];
+            return;
+        }
+    }
     if (_findView.view) {
         [self addSubview:aView positioned:NSWindowBelow relativeTo:[_findView view]];
     } else {
