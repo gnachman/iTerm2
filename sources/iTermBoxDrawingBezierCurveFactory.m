@@ -24,17 +24,142 @@
             sBoxDrawingCharactersWithBezierPaths =
             [[NSCharacterSet characterSetWithCharactersInString:@"─━│┃┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤"
               @"┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╴╵╶╷╸╹╺╻╼╽╾╿"
-              @"╯╮╰╭╱╲╳"] retain];
+              @"╯╮╰╭╱╲╳▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐▔▕▖▗▘▙▚▛▜▝▞▟"] retain];
         };
     });
     return sBoxDrawingCharactersWithBezierPaths;
 }
 
++ (NSArray<NSBezierPath *> *)bezierPathsForSolidBoxesForCode:(unichar)code
+                                                    cellSize:(NSSize)cellSize
+                                                       scale:(CGFloat)scale {
+    NSArray<NSString *> *parts = nil;
 
+    // First two characters give the letter + number of origin in eighths.
+    // Then come two digits giving width and height in eighths.
+    switch (code) {
+        case iTermUpperHalfBlock: // ▀
+            parts = @[ @"a084" ];
+            break;
+        case iTermLowerOneEighthBlock: // ▁
+            parts = @[ @"a781" ];
+            break;
+        case iTermLowerOneQuarterBlock: // ▂
+            parts = @[ @"a682" ];
+            break;
+        case iTermLowerThreeEighthsBlock: // ▃
+            parts = @[ @"a583" ];
+            break;
+        case iTermLowerHalfBlock: // ▄
+            parts = @[ @"a484" ];
+            break;
+        case iTermLowerFiveEighthsBlock: // ▅
+            parts = @[ @"a385" ];
+            break;
+        case iTermLowerThreeQuartersBlock: // ▆
+            parts = @[ @"a286" ];
+            break;
+        case iTermLowerSevenEighthsBlock: // ▇
+            parts = @[ @"a187" ];
+            break;
+        case iTermFullBlock: // █
+            parts = @[ @"a088" ];
+            break;
+        case iTermLeftSevenEighthsBlock: // ▉
+            parts = @[ @"a078" ];
+            break;
+        case iTermLeftThreeQuartersBlock: // ▊
+            parts = @[ @"a068" ];
+            break;
+        case iTermLeftFiveEighthsBlock: // ▋
+            parts = @[ @"a058" ];
+            break;
+        case iTermLeftHalfBlock: // ▌
+            parts = @[ @"a048" ];
+            break;
+        case iTermLeftThreeEighthsBlock: // ▍
+            parts = @[ @"a038" ];
+            break;
+        case iTermLeftOneQuarterBlock: // ▎
+            parts = @[ @"a028" ];
+            break;
+        case iTermLeftOneEighthBlock: // ▏
+            parts = @[ @"a018" ];
+            break;
+        case iTermRightHalfBlock: // ▐
+            parts = @[ @"e048" ];
+            break;
+        case iTermUpperOneEighthBlock: // ▔
+            parts = @[ @"a081" ];
+            break;
+        case iTermRightOneEighthBlock: // ▕
+            parts = @[ @"h018" ];
+            break;
+        case iTermQuadrantLowerLeft: // ▖
+            parts = @[ @"a444" ];
+            break;
+        case iTermQuadrantLowerRight: // ▗
+            parts = @[ @"e444" ];
+            break;
+        case iTermQuadrantUpperLeft: // ▘
+            parts = @[ @"a044" ];
+            break;
+        case iTermQuadrantUpperLeftAndLowerLeftAndLowerRight: // ▙
+            parts = @[ @"a044", @"a444", @"e444" ];
+            break;
+        case iTermQuadrantUpperLeftAndLowerRight: // ▚
+            parts = @[ @"a044", @"e444" ];
+            break;
+        case iTermQuadrantUpperLeftAndUpperRightAndLowerLeft: // ▛
+            parts = @[ @"a044", @"e044", @"a444" ];
+            break;
+        case iTermQuadrantUpperLeftAndUpperRightAndLowerRight: // ▜
+            parts = @[ @"a044", @"e044", @"e444" ];
+            break;
+        case iTermQuadrantUpperRight: // ▝
+            parts = @[ @"e044" ];
+            break;
+        case iTermQuadrantUpperRightAndLowerLeft: // ▞
+            parts = @[ @"e044", @"a444" ];
+            break;
+        case iTermQuadrantUpperRightAndLowerLeftAndLowerRight: // ▟
+            parts = @[ @"e044", @"a444", @"e444" ];
+            break;
+
+        case iTermLightShade: // ░
+        case iTermMediumShade: // ▒
+        case iTermDarkShade: // ▓
+            return nil;
+    }
+
+    return [parts mapWithBlock:^id(NSString *part) {
+        const char *bytes = part.UTF8String;
+
+        CGFloat xo = cellSize.width * (CGFloat)(bytes[0] - 'a') / 8.0;
+        CGFloat yo = cellSize.height * (CGFloat)(bytes[1] - '0') / 8.0;
+        CGFloat w = cellSize.width / 8.0 * (CGFloat)(bytes[2] - '0');
+        CGFloat h = cellSize.height / 8.0 * (CGFloat)(bytes[3] - '0');
+
+        return [NSBezierPath bezierPathWithRect:NSMakeRect(xo, yo, w, h)];
+    }];
+}
 
 + (NSArray<NSBezierPath *> *)bezierPathsForBoxDrawingCode:(unichar)code
                                                  cellSize:(NSSize)cellSize
-                                                    scale:(CGFloat)scale {
+                                                    scale:(CGFloat)scale
+                                                    solid:(out BOOL *)solid {
+    NSArray<NSBezierPath *> *solidBoxPaths = [self bezierPathsForSolidBoxesForCode:code
+                                                                          cellSize:cellSize
+                                                                             scale:scale];
+    if (solidBoxPaths) {
+        if (solid) {
+            *solid = YES;
+        }
+        return solidBoxPaths;
+    }
+    if (solid) {
+        *solid = NO;
+    }
     //          l         hc-1    hc-1/2    hc    hc+1/2      hc+1             r
     //          a         b       c         d     e           f                g
     // t        1
