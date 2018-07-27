@@ -2874,14 +2874,37 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (NSRect)visibleFrameForScreen:(NSScreen *)screen {
+    if ([[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats]) {
+        return screen.frameExceptMenuBar;
+    }
+
+    if (self.fullScreen) {
+        return screen.visibleFrame;
+    }
+
+    BOOL otherScreenHasLionFullscreenTerminalWindow = NO;
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        if (term.lionFullScreen) {
+            if (term.window.screen == screen) {
+                return screen.frame;
+            } else {
+                otherScreenHasLionFullscreenTerminalWindow = YES;
+            }
+        }
+    }
+    if (otherScreenHasLionFullscreenTerminalWindow) {
+        return screen.frameExceptMenuBar;
+    } else {
+        return screen.visibleFrame;
+    }
+}
+
 - (NSRect)canonicalFrameForScreen:(NSScreen *)screen windowFrame:(NSRect)frame preserveSize:(BOOL)preserveSize {
     PTYSession* session = [self currentSession];
-    NSRect screenVisibleFrame = [screen visibleFrame];
+    NSRect screenVisibleFrame = [self visibleFrameForScreen:screen];
     NSRect screenVisibleFrameIgnoringHiddenDock = [self screenFrameForEdgeSpanningWindows:screen];
 
-    if ([[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats]) {
-        screenVisibleFrame = screen.frameExceptMenuBar;
-    }
     PtyLog(@"The new screen visible frame is %@", [NSValue valueWithRect:screenVisibleFrame]);
 
     // NOTE: In bug 1347, we see that for some machines, [screen frame].size.width==0 at some point
