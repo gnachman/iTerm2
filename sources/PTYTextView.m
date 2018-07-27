@@ -6187,7 +6187,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
              respectingHardNewlines:(BOOL)respectHardNewlines {
     DLog(@"urlActionForClickAt:%@,%@ respectingHardNewlines:%@",
          @(x), @(y), @(respectHardNewlines));
-
+    if (y < 0) {
+        return nil;
+    }
     const VT100GridCoord coord = VT100GridCoordMake(x, y);
     iTermImageInfo *imageInfo = [self imageInfoAtCoord:coord];
     if (imageInfo) {
