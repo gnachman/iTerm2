@@ -88,8 +88,6 @@ static NSDate* lastResizeDate_;
     BOOL _showTitle;
     SessionTitleView *_title;
 
-    BOOL _inAddSubview;
-
     NSView *_hoverURLView;
     NSTextField *_hoverURLTextField;
 
@@ -154,7 +152,7 @@ static NSDate* lastResizeDate_;
         _scrollview.contentView.copiesOnScroll = NO;
 
         // assign the main view
-        [self addSubview:_scrollview];
+        [self addSubviewBelowFindView:_scrollview];
 
 #if ENABLE_LOW_POWER_GPU_DETECTION
         if (@available(macOS 10.11, *)) {
@@ -187,7 +185,7 @@ static NSDate* lastResizeDate_;
     iTermDropDownFindViewController *dropDownViewController =
         [[iTermDropDownFindViewController alloc] initWithNibName:@"FindView" bundle:nil];
     [[dropDownViewController view] setHidden:YES];
-    [self addSubview:dropDownViewController.view];
+    [super addSubview:dropDownViewController.view];
     NSRect aRect = [self frame];
     NSSize size = [[dropDownViewController view] frame].size;
     [dropDownViewController setFrameOrigin:NSMakePoint(aRect.size.width - size.width - 30,
@@ -402,15 +400,32 @@ static NSDate* lastResizeDate_;
     }
 }
 
-- (void)addSubview:(NSView *)aView {
-    BOOL wasRunning = _inAddSubview;
-    _inAddSubview = YES;
-    if (!wasRunning && _dropDownFindViewController && aView != _dropDownFindViewController.view) {
-        [super addSubview:aView positioned:NSWindowBelow relativeTo:_dropDownFindViewController.view];
+- (void)addSubviewBelowFindView:(NSView *)aView {
+    if ([aView isKindOfClass:[PTYScrollView class]]) {
+        NSInteger i = [self.subviews indexOfObjectPassingTest:^BOOL(__kindof NSView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            return [obj isKindOfClass:[MTKView class]];
+        }];
+        if (i != NSNotFound) {
+            // Insert scrollview after metal view
+            [self addSubview:aView positioned:NSWindowAbove relativeTo:self.subviews[i]];
+            return;
+        }
+    }
+    if ([aView isKindOfClass:[MTKView class]]) {
+        NSInteger i = [self.subviews indexOfObjectPassingTest:^BOOL(__kindof NSView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            return [obj isKindOfClass:[PTYScrollView class]];
+        }];
+        if (i != NSNotFound) {
+            // Insert metal view before scroll view
+            [self addSubview:aView positioned:NSWindowBelow relativeTo:self.subviews[i]];
+            return;
+        }
+    }
+    if (_dropDownFindViewController.view && [self.subviews containsObject:_dropDownFindViewController.view]) {
+        [self addSubview:aView positioned:NSWindowBelow relativeTo:[_dropDownFindViewController view]];
     } else {
         [super addSubview:aView];
     }
-    _inAddSubview = NO;
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldBoundsSize {
@@ -677,7 +692,7 @@ static NSDate* lastResizeDate_;
     _splitSelectionView.wantsLayer = [iTermPreferences boolForKey:kPreferenceKeyUseMetal];
     [_splitSelectionView setFrameOrigin:NSMakePoint(0, 0)];
     [_splitSelectionView setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
-    [self addSubview:_splitSelectionView];
+    [self addSubviewBelowFindView:_splitSelectionView];
 }
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move session:(id)session {
@@ -761,7 +776,7 @@ static NSDate* lastResizeDate_;
                                                                                frame.size.width,
                                                                                frame.size.height)];
     _splitSelectionView.wantsLayer = [iTermPreferences boolForKey:kPreferenceKeyUseMetal];
-    [self addSubview:_splitSelectionView];
+    [self addSubviewBelowFindView:_splitSelectionView];
     [[self window] orderFront:nil];
 }
 
@@ -794,7 +809,7 @@ static NSDate* lastResizeDate_;
         _hoverURLTextField.autoresizingMask = NSViewNotSizable;
         [_hoverURLView addSubview:_hoverURLTextField];
         _hoverURLView.frame = _hoverURLTextField.bounds;
-        [self addSubview:_hoverURLView];
+        [super addSubview:_hoverURLView];
         [_delegate sessionViewDidChangeHoverURLVisible:YES];
     } else if (url == nil) {
         [_hoverURLView removeFromSuperview];
@@ -894,7 +909,7 @@ static NSDate* lastResizeDate_;
         }
         _title.delegate = self;
         [_title setDimmingAmount:[self adjustedDimmingAmount]];
-        [self addSubview:_title];
+        [self addSubviewBelowFindView:_title];
     } else {
         frame.size.height += kTitleHeight;
         [_title removeFromSuperview];
@@ -1119,7 +1134,7 @@ static NSDate* lastResizeDate_;
 
         _currentAnnouncement.view.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
         [_currentAnnouncement didBecomeVisible];
-        [self addSubview:_currentAnnouncement.view];
+        [self addSubviewBelowFindView:_currentAnnouncement.view];
     }
     [self.delegate sessionViewAnnouncementDidChange:self];
 }
