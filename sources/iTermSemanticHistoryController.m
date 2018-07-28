@@ -597,11 +597,13 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                     }
                     if (suffixChars) {
                         NSInteger lengthOfBadSuffix = trimmedPath.length - modifiedPossiblePath.length;
+                        int n;
                         if (trimWhitespace) {
-                            *suffixChars = [[right stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length] - lengthOfBadSuffix;
+                            n = [[right stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length] - lengthOfBadSuffix;
                         } else {
-                            *suffixChars = right.length - lengthOfBadSuffix;
+                            n = right.length - lengthOfBadSuffix;
                         }
+                        *suffixChars = MAX(0, n);
                     }
                     DLog(@"Using path %@", modifiedPossiblePath);
                     return modifiedPossiblePath;
