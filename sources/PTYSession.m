@@ -3241,7 +3241,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [self setProfile:updatedProfile];
         return;
     }
-    [self sanityCheck];
 
     // Copy non-overridden fields over.
     NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
@@ -3280,39 +3279,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
     [self setPreferencesFromAddressBookEntry:temp];
     [self setProfile:temp];
-    [self sanityCheck];
-}
-
-- (void)sanityCheck {
-    if (self.isDivorced) {
-        NSDictionary *sessionsProfile =
-            [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
-        NSArray *trimCallStack = [NSThread trimCallStackSymbols];
-        if (sessionsProfile || !_profile) {
-            [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: OK with guid %@, original guid %@ at\n%@",
-                                        self,
-                                        _profile[KEY_GUID],
-                                        _profile[KEY_ORIGINAL_GUID],
-                                        [trimCallStack componentsJoinedByString:@"\n"]]];
-        } else { // !sessionProfile && _profile
-            // this is bad because you're divorced and you don't have a sessionsProfile.  That might
-            // be excusable if you didn't have a profile at all, but you have one. So the GUID of
-            // your supposedly divorced profile does not refer to an extant sessions profile!
-            [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: NOT OK with guid %@, original guid %@ at\n%@",
-                                        self,
-                                        _profile[KEY_GUID],
-                                        _profile[KEY_ORIGINAL_GUID],
-                                        [trimCallStack componentsJoinedByString:@"\n"]]];
-            CrashLog(@"Sanity check failed:\n%@", [[ProfileModel debugHistory] componentsJoinedByString:@"\n"]);
-            const BOOL sane = NO;
-            ITBetaAssert(sane, @"Sanity check failed");
-        }
-    } else {
-        [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: not divorced. guid is %@ at\%@",
-                                    self,
-                                    _profile[KEY_GUID],
-                                    [NSThread callStackSymbols]]];
-    }
 }
 
 - (void)sessionProfileDidChange
@@ -3322,7 +3288,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     NSDictionary *updatedProfile =
         [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
-    [self sanityCheck];
 
     NSMutableSet *keys = [NSMutableSet setWithArray:[updatedProfile allKeys]];
     [keys addObjectsFromArray:[_profile allKeys]];
@@ -3344,11 +3309,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setProfile:updatedProfile];
     [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
                                                         object:_profile[KEY_GUID]];
-    [self sanityCheck];
 }
 
 - (BOOL)reloadProfile {
-    [self sanityCheck];
     DLog(@"Reload profile for %@", self);
     BOOL didChange = NO;
     NSDictionary *sharedProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:_originalProfile[KEY_GUID]];
@@ -3370,7 +3333,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     _textview.badgeLabel = [self badgeLabel];
-    [self sanityCheck];
     return didChange;
 }
 
@@ -4057,14 +4019,6 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setProfile:(Profile *)newProfile {
     assert(newProfile);
     DLog(@"Set profile to one with guid %@", newProfile[KEY_GUID]);
-    NSArray *trimCallStack = [NSThread trimCallStackSymbols];
-    if (![NSObject object:_profile[KEY_GUID] isEqualToObject:newProfile[KEY_GUID]]) {
-        [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: Set profile to one with guid %@. My last guid was %@ from\n%@",
-                                                self,
-                                                newProfile[KEY_GUID],
-                                                _profile[KEY_GUID],
-                                                [trimCallStack componentsJoinedByString:@"\n"]]];
-    }
 
     NSMutableDictionary *mutableProfile = [[newProfile mutableCopy] autorelease];
     // This is the most practical way to migrate the bopy of a
@@ -4433,7 +4387,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                      toName:profile[KEY_NAME]];
         _tmuxTitleOutOfSync = NO;
     }
-    [self sanityCheck];
 }
 
 - (void)sessionHotkeyDidChange:(NSNotification *)notification {
@@ -4444,7 +4397,6 @@ ITERM_WEAKLY_REFERENCEABLE
         NSDictionary *dict = [iTermProfilePreferences objectForKey:KEY_SESSION_HOTKEY inProfile:profile];
         [_tmuxController setHotkeyForWindowPane:_tmuxPane to:dict];
     }
-    [self sanityCheck];
 }
 
 - (void)apiServerUnsubscribe:(NSNotification *)notification {
@@ -4580,7 +4532,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues {
-    [self sanityCheck];
     if (!self.isDivorced) {
         [self divorceAddressBookEntryFromPreferences];
     }
@@ -4642,7 +4593,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_overriddenFields removeAllObjects];
     [_overriddenFields addObjectsFromArray:@[ KEY_GUID, KEY_ORIGINAL_GUID] ];
     [self setProfile:[[ProfileModel sessionsInstance] bookmarkWithGuid:guid]];
-    [self sanityCheck];
     return guid;
 }
 
@@ -7986,7 +7936,6 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!preserveName && nameMatchesProfileName) {
         [self setName:newProfile[KEY_NAME]];
     }
-    [self sanityCheck];
 }
 
 - (void)screenSetPasteboard:(NSString *)value {
@@ -9313,7 +9262,6 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [self setSessionSpecificProfileValues:overrides];
     }
-    [self sanityCheck];
 }
 
 - (NSArray<NSDictionary *> *)automaticProfileSwitcherAllProfiles {
@@ -9925,13 +9873,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setIsDivorced:(BOOL)isDivorced {
-    if (isDivorced != _realIsDivorced) {
-        NSArray *trimCallStack = [NSThread trimCallStackSymbols];
-        [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: set isDivorced to %@ from\n%@",
-                                                self,
-                                                @(isDivorced),
-                                                [trimCallStack componentsJoinedByString:@"\n"]]];
-    }
+    DLog(@"Set divorced = %@ on %@", @(isDivorced), self);
     _realIsDivorced = isDivorced;
 }
 #endif
