@@ -107,12 +107,15 @@
     }
     NSColor *color = self.selectedColor ?: [NSColor clearColor];
     NSDraggingItem *dragItem = [[NSDraggingItem alloc] initWithPasteboardWriter:color];
-
+    NSSize size = self.frame.size;
+    if (size.width == 0 || size.height == 0) {
+        return;
+    }
     dragItem.imageComponentsProvider = ^NSArray<NSDraggingImageComponent *> *(void) {
         NSDraggingImageComponent *imageComponent =
             [NSDraggingImageComponent draggingImageComponentWithKey:NSDraggingImageComponentIconKey];
 
-        NSImage *snapshot = [[NSImage alloc] initWithSize:self.frame.size];
+        NSImage *snapshot = [[NSImage alloc] initWithSize:size];
         [snapshot lockFocus];
         [self drawRect:self.bounds];
         [snapshot unlockFocus];
