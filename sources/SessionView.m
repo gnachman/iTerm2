@@ -302,16 +302,12 @@ static NSDate* lastResizeDate_;
     }
 }
 
-- (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
-    // Allocate a new metal view
+- (id<MTLDevice>)metalDevice {
     static BOOL preferIntegrated;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         preferIntegrated = [iTermPreferences boolForKey:kPreferenceKeyPreferIntegratedGPU];
     });
-    if (_metalView) {
-        [self removeMetalView];
-    }
     if (preferIntegrated) {
         NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
 
@@ -327,17 +323,27 @@ static NSDate* lastResizeDate_;
         if (!gpu) {
             gpu = MTLCreateSystemDefaultDevice();
         }
-        _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
-                                             device:gpu];
+        // I'm intentionally leaking devices and gpu because I'm seeing crazy crashes where
+        // metal occasionally thinks something is over-released. There's no reason to do that
+        // dangerous dance here.
+        return gpu;
     } else {
         static id<MTLDevice> device;
         static dispatch_once_t once;
         dispatch_once(&once, ^{
             device = MTLCreateSystemDefaultDevice();
         });
-        _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
-                                             device:device];
+        return device;
     }
+}
+
+- (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
+    if (_metalView) {
+        [self removeMetalView];
+    }
+    // Allocate a new metal view
+    _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
+                                         device:[self metalDevice]];
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     _metalView.layer.opaque = NO;
 #else
