@@ -3515,7 +3515,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [self setProfile:updatedProfile];
         return;
     }
-    [self sanityCheck];
 
     // Copy non-overridden fields over.
     NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
@@ -3554,36 +3553,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
     [self setPreferencesFromAddressBookEntry:temp];
     [self setProfile:temp];
-    [self sanityCheck];
-}
-
-- (void)sanityCheck {
-    if (_isDivorced) {
-        NSDictionary *sessionsProfile =
-            [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
-        NSArray *trimCallStack = [NSThread trimCallStackSymbols];
-        if (sessionsProfile || !_profile) {
-            [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: OK with guid %@, original guid %@ at\n%@",
-                                                    self,
-                                                    _profile[KEY_GUID],
-                                                    _profile[KEY_ORIGINAL_GUID],
-                                                    [trimCallStack componentsJoinedByString:@"\n"]]];
-        } else {
-            [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: NOT OK with guid %@, original guid %@ at\n%@",
-                                                    self,
-                                                    _profile[KEY_GUID],
-                                                    _profile[KEY_ORIGINAL_GUID],
-                                                    [trimCallStack componentsJoinedByString:@"\n"]]];
-            CrashLog(@"Sanity check failed:\n%@", [[ProfileModel debugHistory] componentsJoinedByString:@"\n"]);
-            const BOOL sane = NO;
-            ITBetaAssert(sane, @"Sanity check failed");
-        }
-    } else {
-        [[ProfileModel debugHistory] addObject:[NSString stringWithFormat:@"%@: not divorced. guid is %@ at\%@",
-                                                self,
-                                                _profile[KEY_GUID],
-                                                [NSThread callStackSymbols]]];
-    }
 }
 
 - (void)sessionProfileDidChange
@@ -3593,7 +3562,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     NSDictionary *updatedProfile =
         [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
-    [self sanityCheck];
 
     NSMutableSet *keys = [NSMutableSet setWithArray:[updatedProfile allKeys]];
     [keys addObjectsFromArray:[_profile allKeys]];
@@ -3615,11 +3583,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setProfile:updatedProfile];
     [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
                                                         object:_profile[KEY_GUID]];
-    [self sanityCheck];
 }
 
 - (BOOL)reloadProfile {
-    [self sanityCheck];
     DLog(@"Reload profile for %@", self);
     BOOL didChange = NO;
     NSDictionary *sharedProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:_originalProfile[KEY_GUID]];
@@ -3641,7 +3607,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
-    [self sanityCheck];
     return didChange;
 }
 
@@ -4198,6 +4163,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setProfile:(Profile *)newProfile {
     assert(newProfile);
     DLog(@"Set profile to one with guid %@", newProfile[KEY_GUID]);
+
     NSMutableDictionary *mutableProfile = [[newProfile mutableCopy] autorelease];
     // This is the most practical way to migrate the bopy of a
     // profile that's stored in a saved window arrangement. It doesn't get
@@ -4566,7 +4532,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                      toName:profile[KEY_NAME]];
         _tmuxTitleOutOfSync = NO;
     }
-    [self sanityCheck];
 }
 
 - (void)sessionHotkeyDidChange:(NSNotification *)notification {
@@ -4577,7 +4542,6 @@ ITERM_WEAKLY_REFERENCEABLE
         NSDictionary *dict = [iTermProfilePreferences objectForKey:KEY_SESSION_HOTKEY inProfile:profile];
         [_tmuxController setHotkeyForWindowPane:self.tmuxPane to:dict];
     }
-    [self sanityCheck];
 }
 
 - (void)apiServerUnsubscribe:(NSNotification *)notification {
@@ -4713,8 +4677,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues {
-    [self sanityCheck];
-    if (!_isDivorced) {
+    if (!self.isDivorced) {
         [self divorceAddressBookEntryFromPreferences];
     }
     NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
@@ -4775,7 +4738,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_overriddenFields removeAllObjects];
     [_overriddenFields addObjectsFromArray:@[ KEY_GUID, KEY_ORIGINAL_GUID] ];
     [self setProfile:[[ProfileModel sessionsInstance] bookmarkWithGuid:guid]];
-    [self sanityCheck];
     return guid;
 }
 
@@ -9657,7 +9619,6 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [self setSessionSpecificProfileValues:overrides];
     }
-    [self sanityCheck];
 }
 
 - (NSArray<NSDictionary *> *)automaticProfileSwitcherAllProfiles {
