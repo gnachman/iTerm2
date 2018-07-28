@@ -4428,6 +4428,7 @@ static void SwapInt(int *a, int *b) {
     VT100GridCoord end = VT100GridRunMax(run, width);
     x = end.x;
     y = end.y;
+    ITBetaAssert(y >= 0, @"Negative y to from max of run %@", VT100GridRunDescription(run));
     line = [self getLineAtIndex:y];
     while (result.length > 0 && line[x].code == 0 && y < numberOfLines) {
         x--;
@@ -4477,8 +4478,8 @@ static void SwapInt(int *a, int *b) {
     VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(startX, startY),
                                               VT100GridCoordMake(endX, endY),
                                               currentGrid_.size.width);
-    if (run.length == 0) {
-        DLog(@"Run has length 0 given start and end of %@ and %@", VT100GridCoordDescription(start),
+    if (run.length <= 0) {
+        DLog(@"Run has length %@ given start and end of %@ and %@", @(run.length), VT100GridCoordDescription(start),
              VT100GridCoordDescription(end));
         return NO;
     }
