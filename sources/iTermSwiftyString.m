@@ -118,7 +118,16 @@
          }
          completion(result);
      }];
-    _dependencies = dependencies;
+    _dependencies = [self dependenciesByAddingAllParentPaths:dependencies];
+}
+
+- (NSSet<NSString *> *)dependenciesByAddingAllParentPaths:(NSSet<NSString *> *)deps {
+    return [NSSet setWithArray:[deps.allObjects flatMapWithBlock:^NSArray *(NSString *path) {
+        NSArray<NSString *> *parts = [path componentsSeparatedByString:@"."];
+        return [[NSArray sequenceWithRange:NSMakeRange(1, parts.count)] mapWithBlock:^id(NSNumber *length) {
+            return [[parts subarrayWithRange:NSMakeRange(0, length.unsignedIntegerValue)] componentsJoinedByString:@"."];
+        }];
+    }]];
 }
 
 - (void)setNeedsReevaluation {

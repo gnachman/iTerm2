@@ -3970,7 +3970,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (iTermVariableScope *)variablesScope {
     iTermVariableScope *scope = [[iTermVariableScope alloc] init];
     [scope addVariables:_variables toScopeNamed:nil];
-    [scope addVariables:[iTermVariables globalInstance] toScopeNamed:@"iterm2"];
+    [scope addVariables:[iTermVariables globalInstance] toScopeNamed:iTermVariableKeyGlobalScopeName];
     return scope;
 }
 

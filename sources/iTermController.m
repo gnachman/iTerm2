@@ -216,7 +216,7 @@ static iTermController *gSharedInstance;
 
 - (void)updateWindowTitles {
     for (PseudoTerminal *terminal in _terminalWindows) {
-        if ([terminal currentSessionName]) {
+        if ([terminal undecoratedWindowTitle]) {
             [terminal setWindowTitle];
         }
     }

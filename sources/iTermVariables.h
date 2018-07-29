@@ -9,6 +9,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSString *const iTermVariableKeyGlobalScopeName;
+
 extern NSString *const iTermVariableKeyApplicationPID;
 
 extern NSString *const iTermVariableKeyTabTitleOverride;
@@ -44,6 +46,9 @@ extern NSString *const iTermVariableKeySessionTmuxWindowPane;  // NSNumber. Wind
 extern NSString *const iTermVariableKeySessionJobPid;  // NSNumber. Process id of foreground job.
 extern NSString *const iTermVariableKeySessionChildPid;  // NSNumber. Process id of child of session task.
 
+extern NSString *const iTermVariableKeyWindowTitleOverride;
+extern NSString *const iTermVariableKeyWindowCurrentTab;
+
 @class iTermVariables;
 @class iTermVariableScope;
 
@@ -52,6 +57,7 @@ typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
     iTermVariablesSuggestionContextSession = (1 << 0),
     iTermVariablesSuggestionContextTab = (1 << 1),
     iTermVariablesSuggestionContextApp = (1 << 2),
+    iTermVariablesSuggestionContextWindow = (1 << 4),
 };
 
 @protocol iTermVariablesDelegate<NSObject>

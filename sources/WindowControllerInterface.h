@@ -244,8 +244,8 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // or "Finish" if it's closed.
 - (void)setName:(NSString *)theSessionName forSession:(PTYSession*)aSession;
 
-// Return the name of the foreground session.
-- (NSString *)currentSessionName;
+// Return the window title, minus it number, bell, etc.
+- (NSString *)undecoratedWindowTitle;
 
 // Show the pref panel for the current session, divorcing it from its profile.
 - (void)editSession:(PTYSession*)session makeKey:(BOOL)makeKey;

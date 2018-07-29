@@ -7403,7 +7403,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (iTermVariableScope *)variablesScope {
     iTermVariableScope *scope = [[iTermVariableScope alloc] init];
     [scope addVariables:self.variables toScopeNamed:nil];
-    [scope addVariables:[iTermVariables globalInstance] toScopeNamed:@"iterm2"];
+    [scope addVariables:[iTermVariables globalInstance] toScopeNamed:iTermVariableKeyGlobalScopeName];
     return scope;
 }
 

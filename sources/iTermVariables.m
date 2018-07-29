@@ -19,6 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef iTermTriple<NSNumber *, iTermVariables *, NSString *> iTermVariablesDepthOwnerNamesTriple;
 
+NSString *const iTermVariableKeyGlobalScopeName = @"iterm2";
+
 NSString *const iTermVariableKeyApplicationPID = @"pid";
 
 NSString *const iTermVariableKeyTabTitleOverride = @"titleOverride";
@@ -51,6 +53,9 @@ NSString *const iTermVariableKeySessionTmuxWindowPane = @"session.tmuxWindowPane
 NSString *const iTermVariableKeySessionJobPid = @"session.jobPid";
 NSString *const iTermVariableKeySessionChildPid = @"session.pid";
 
+NSString *const iTermVariableKeyWindowTitleOverride = @"titleOverride";
+NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
+
 // NOTE: If you add here, also update +recordBuiltInVariables
 
 @implementation iTermVariables {
@@ -72,7 +77,8 @@ NSString *const iTermVariableKeySessionChildPid = @"session.pid";
 
 + (void)recordBuiltInVariables {
     // Session context
-    NSArray<NSString *> *names = @[ iTermVariableKeySessionAutoLogID,
+    NSArray<NSString *> *names = @[ iTermVariableKeyGlobalScopeName,
+                                    iTermVariableKeySessionAutoLogID,
                                     iTermVariableKeySessionColumns,
                                     iTermVariableKeySessionCreationTimeString,
                                     iTermVariableKeySessionHostname,
@@ -105,6 +111,12 @@ NSString *const iTermVariableKeySessionChildPid = @"session.pid";
     [self recordUseOfVariableNamed:iTermVariableKeyTabTitleOverride inContext:iTermVariablesSuggestionContextTab];
     [self recordUseOfVariableNamed:iTermVariableKeyTabCurrentSession inContext:iTermVariablesSuggestionContextTab];
     [self recordUseOfVariableNamed:iTermVariableKeyTabTmuxWindow inContext:iTermVariablesSuggestionContextTab];
+    [self recordUseOfVariableNamed:iTermVariableKeyGlobalScopeName inContext:iTermVariablesSuggestionContextTab];
+
+    // Window context
+    [self recordUseOfVariableNamed:iTermVariableKeyWindowTitleOverride inContext:iTermVariablesSuggestionContextWindow];
+    [self recordUseOfVariableNamed:iTermVariableKeyWindowCurrentTab inContext:iTermVariablesSuggestionContextWindow];
+    [self recordUseOfVariableNamed:iTermVariableKeyGlobalScopeName inContext:iTermVariablesSuggestionContextWindow];
 
     // App context
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationPID inContext:iTermVariablesSuggestionContextApp];
@@ -178,6 +190,9 @@ NSString *const iTermVariableKeySessionChildPid = @"session.pid";
     if (context & iTermVariablesSuggestionContextTab) {
         parts = [parts arrayByAddingObject:@"Tab"];
     }
+    if (context & iTermVariablesSuggestionContextWindow) {
+        parts = [parts arrayByAddingObject:@"Window"];
+    }
     if (context & iTermVariablesSuggestionContextApp) {
         parts = [parts arrayByAddingObject:@"App"];
     }
@@ -202,6 +217,11 @@ NSString *const iTermVariableKeySessionChildPid = @"session.pid";
     if (self) {
         _context = context;
         _values = [NSMutableDictionary dictionary];
+        
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            [iTermVariables recordBuiltInVariables];
+        });
     }
     return self;
 }

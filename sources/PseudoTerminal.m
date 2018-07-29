@@ -43,6 +43,7 @@
 #import "iTermSelection.h"
 #import "iTermSessionFactory.h"
 #import "iTermShellHistoryController.h"
+#import "iTermSwiftyString.h"
 #import "iTermSystemVersion.h"
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
@@ -159,6 +160,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     PTYTabDelegate,
     iTermRootTerminalViewDelegate,
     iTermToolbeltViewDelegate,
+    iTermVariablesDelegate,
     NSComboBoxDelegate>
 
 @property(nonatomic, assign) BOOL windowInitialized;
@@ -172,6 +174,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 // new request is made before the timer is up this property gets changed. It is
 // reset to nil after the change is made in the window.
 @property(nonatomic, copy) NSString *desiredTitle;
+
+@property(nonatomic, retain) NSString *titleOverride;
+@property(nonatomic, readonly) iTermVariables *variables;
+@property(nonatomic, readonly) iTermVariableScope *scope;
+@property(nonatomic, readonly) iTermSwiftyString *windowTitleOverrideSwiftyString;
 @end
 
 @implementation PseudoTerminal {
@@ -371,6 +378,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     NSInteger _fullScreenRetryCount;
 }
+
+@synthesize scope = _scope;
+@synthesize variables = _variables;
+@synthesize windowTitleOverrideSwiftyString = _windowTitleOverrideSwiftyString;
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
@@ -859,6 +870,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_touchBarRateLimitedUpdate release];
     [_previousTouchBarWord release];
     [_sessionFactory release];
+    [_variables release];
+    [_scope release];
+    [_windowTitleOverrideSwiftyString release];
 
     [super dealloc];
 }
@@ -1661,13 +1675,13 @@ ITERM_WEAKLY_REFERENCEABLE
             aTitle = [NSString stringWithFormat:@"%d✕%d", session.columns, session.rows];
         } else {
             aTitle = [NSString stringWithFormat:@"%@ \u2014 %d✕%d",
-                      [self currentSessionName],
+                      [self undecoratedWindowTitle],
                       [session columns],
                       [session rows]];
         }
         [self setWindowTitle:aTitle];
     } else {
-        [self setWindowTitle:[self currentSessionName]];
+        [self setWindowTitle:[self undecoratedWindowTitle]];
     }
 }
 
@@ -2181,6 +2195,74 @@ ITERM_WEAKLY_REFERENCEABLE
 + (PseudoTerminal*)terminalWithArrangement:(NSDictionary *)arrangement
                   forceOpeningHotKeyWindow:(BOOL)force {
     return [self terminalWithArrangement:arrangement sessions:nil forceOpeningHotKeyWindow:force];
+}
+
+- (void)setTitleOverride:(NSString *)titleOverride {
+    [_windowTitleOverrideSwiftyString invalidate];
+    if (!titleOverride) {
+        _windowTitleOverrideSwiftyString = nil;
+        [self.scope setValue:nil forVariableNamed:iTermVariableKeyWindowTitleOverride];
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    _windowTitleOverrideSwiftyString =
+    [[iTermSwiftyString alloc] initWithString:titleOverride
+                                       source:
+     ^id _Nonnull(NSString * _Nonnull name) {
+         return [weakSelf.scope valueForVariableName:name];
+     }
+                                      mutates:[NSSet setWithObject:iTermVariableKeyWindowTitleOverride]
+                                     observer:
+     ^(NSString * _Nonnull newValue) {
+         [weakSelf.scope setValue:newValue forVariableNamed:iTermVariableKeyWindowTitleOverride];
+         [weakSelf setWindowTitle];
+     }];
+}
+
+- (NSString *)titleOverride {
+    return _windowTitleOverrideSwiftyString.swiftyString;
+}
+
+- (iTermVariables *)variables {
+    if (!_variables) {
+        _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextWindow];
+        _variables.delegate = self;
+    }
+    return _variables;
+}
+
+- (iTermVariableScope *)scope {
+    if (!_scope) {
+        _scope = [[iTermVariableScope alloc] init];
+        [_scope addVariables:self.variables toScopeNamed:nil];
+        [_scope addVariables:[iTermVariables globalInstance] toScopeNamed:iTermVariableKeyGlobalScopeName];
+        [_scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
+    }
+    return _scope;
+}
+
+- (IBAction)editWindowTitle:(id)sender {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = @"Set Window Title";
+    alert.informativeText = @"If this is empty, the window takes the active session’s title. Variables and function calls enclosed in \\(…) will replaced with their evalution.";
+    NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 400, 24 * 3)] autorelease];
+    iTermFunctionCallTextFieldDelegate *delegate;
+    delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:[iTermVariables recordedVariableNamesInContext:iTermVariablesSuggestionContextWindow]
+                                                              passthrough:nil
+                                                            functionsOnly:NO] autorelease];
+    titleTextField.delegate = delegate;
+    titleTextField.editable = YES;
+    titleTextField.selectable = YES;
+    titleTextField.stringValue = self.titleOverride ?: @"";
+    alert.accessoryView = titleTextField;
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [titleTextField.window makeFirstResponder:titleTextField];
+    });
+    if ([alert runModal] == NSAlertFirstButtonReturn) {
+        self.titleOverride = titleTextField.stringValue.length ? titleTextField.stringValue : nil;
+    }
 }
 
 - (IBAction)findUrls:(id)sender {
@@ -4338,6 +4420,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self updateCurrentLocation];
     [self updateUseMetalInAllTabs];
+    [self.scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
 }
 
@@ -7200,7 +7283,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (NSString *)currentSessionName {
+- (NSString *)undecoratedWindowTitle {
+    if (self.titleOverride &&
+        self.windowTitleOverrideSwiftyString.evaluatedString.length > 0) {
+        return self.windowTitleOverrideSwiftyString.evaluatedString;
+    }
     return self.currentSession.nameController.presentationWindowTitle ?: @"Untitled";
 }
 
@@ -8122,6 +8209,12 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([[self superclass] instancesRespondToSelector:_cmd]) {
         [super controlTextDidChange:aNotification];
     }
+}
+
+#pragma mark - iTermVariablesDelegate
+
+- (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames group:(dispatch_group_t)group {
+    [self.windowTitleOverrideSwiftyString variablesDidChange:changedNames];
 }
 
 @end
