@@ -481,11 +481,6 @@ static const NSUInteger kMaxHosts = 100;
     int _nextMetalDisabledToken;
     NSMutableSet *_metalDisabledTokens;
     BOOL _metalDeviceChanging;
-
-#if BETA
-#warning TODO: Remove this after the sanity check failures are figured out
-    BOOL _realIsDivorced;
-#endif
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -9939,17 +9934,5 @@ ITERM_WEAKLY_REFERENCEABLE
     response.status = ITMSetProfilePropertyResponse_Status_Ok;
     return response;
 }
-
-#if BETA
-
-- (BOOL)isDivorced {
-    return _realIsDivorced;
-}
-
-- (void)setIsDivorced:(BOOL)isDivorced {
-    DLog(@"Set divorced = %@ on %@", @(isDivorced), self);
-    _realIsDivorced = isDivorced;
-}
-#endif
 
 @end
