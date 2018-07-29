@@ -200,6 +200,8 @@ typedef enum {
 // Scrollback buffer cleared.
 - (void)sessionDidClearScrollbackBuffer:(PTYSession *)session;
 
+- (BOOL)sessionShouldAutoClose:(PTYSession *)session;
+
 @end
 
 @class SessionView;
@@ -744,8 +746,6 @@ typedef enum {
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length;
 - (void)setVariableNamed:(NSString *)name toValue:(NSString *)newValue;
 - (void)injectData:(NSData *)data;
-
-- (BOOL)sessionShouldAutoClose:(PTYSession *)session;
 
 #pragma mark - API
 
