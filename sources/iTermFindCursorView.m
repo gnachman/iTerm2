@@ -42,15 +42,26 @@ const double kFindCursorHoleRadius = 30;
     self = [super initWithFrame:frameRect];
 
     if (self) {
-        self.alphaValue = 0.7;
+        self.alphaValue = 0.9;
     }
     return self;
 }
 
 // drawLayer:inContext: only gets called if drawRect: is implemented. wtf.
 - (void)drawRect:(CGRect)dirtyRect {
-    NSGradient *grad = [[NSGradient alloc] initWithStartingColor:[NSColor whiteColor]
+// TODO: use background color of terminal instead of hardcode blackc olor
+NSColor *bgColor = [NSColor blackColor];
+#if 0
+    NSGradient *grad = [[NSGradient alloc] initWithStartingColor:[NSColor clearColor]
                                                      endingColor:[NSColor blackColor]];
+#endif
+NSGradient* grad = [[NSGradient alloc]
+initWithColorsAndLocations:
+
+[NSColor clearColor], (CGFloat)0.0,
+bgColor, (CGFloat)0.1,
+bgColor, (CGFloat)1,
+nil];
     NSPoint relativeCursorPosition = NSMakePoint(2 * (self.cursorPosition.x / self.frame.size.width - 0.5),
                                                  2 * (self.cursorPosition.y / self.frame.size.height - 0.5));
     NSRect rect = NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height);

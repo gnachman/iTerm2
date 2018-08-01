@@ -5747,7 +5747,7 @@ return;
     } else {
         [_findCursorView stopTearDownTimer];
     }
-    _findCursorView.autohide = NO;
+    _findCursorView.autohide = YES;
 }
 
 - (void)placeFindCursorOnAutoHide {
