@@ -1308,7 +1308,9 @@ DQ
                 <outlet property="_stretchTabsToFillBar" destination="q7y-hG-x0m" id="HPi-ia-0YJ"/>
                 <outlet property="_tabPosition" destination="4463" id="Rxp-XS-Fkx"/>
                 <outlet property="_tabStyle" destination="uFJ-bZ-kag" id="BZV-Cb-HaF"/>
+<!--
                 <outlet property="_uiElement" destination="zde-kb-c7t" id="kdn-MM-Kyo"/>
+-->
                 <outlet property="_windowNumber" destination="4529" id="QlD-L4-Oy3"/>
                 <outlet property="view" destination="yCt-fi-XI9" id="KeB-DX-cn6"/>
             </connections>
@@ -4717,6 +4719,7 @@ DQ
                         <action selector="settingChanged:" target="wvi-ET-SJJ" id="WbD-TV-ddw"/>
                     </connections>
                 </button>
+<!--
                 <button id="zde-kb-c7t">
                     <rect key="frame" x="18" y="18" width="334" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4729,6 +4732,7 @@ DQ
                         <action selector="settingChanged:" target="wvi-ET-SJJ" id="Saj-Ug-CMy"/>
                     </connections>
                 </button>
+-->
                 <popUpButton verticalHuggingPriority="750" id="uFJ-bZ-kag">
                     <rect key="frame" x="130" y="319" width="187" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>

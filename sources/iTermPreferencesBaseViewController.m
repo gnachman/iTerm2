@@ -267,7 +267,10 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                            update:(BOOL (^)(void))update {
     assert(![_keyMap objectForKey:key]);
     assert(key);
-    assert(control);
+if (!control) {
+return NULL;
+}
+    // assert(control);
     assert([self keyHasDefaultValue:key]);
     if (!settingChanged || !update) {
         assert([self defaultValueForKey:key isCompatibleWithType:type]);

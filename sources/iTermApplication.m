@@ -374,6 +374,8 @@
 }
 
 - (void)setIsUIElement:(BOOL)uiElement {
+return;
+#if 0
     if (uiElement == _isUIElement) {
         return;
     }
@@ -403,6 +405,7 @@
         [[NSStatusBar systemStatusBar] removeStatusItem:_statusBarItem];
         self.statusBarItem = nil;
     }
+#endif
 }
 
 - (NSArray<NSWindow *> *)orderedWindowsPlusVisibleHotkeyPanels {
