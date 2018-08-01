@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="13771" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14113" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="13771"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -528,7 +529,7 @@ Gw
                             <menuItem isSeparatorItem="YES" id="QEZ-2e-3zm">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Find Cursor" keyEquivalent="/" identifier="Find Cursor" id="1286">
+                            <menuItem title="Find Cursor" keyEquivalent="." identifier="Find Cursor" id="1286">
                                 <connections>
                                     <action selector="findCursor:" target="-1" id="1288"/>
                                 </connections>
@@ -620,14 +621,6 @@ DQ
                                     <action selector="toggleForeground:" target="201" id="12323"/>
                                 </connections>
                             </menuItem>
-<!--
-                            <menuItem title="Exposé all Tabs" keyEquivalent="e" identifier="Exposé all Tabs" id="1231">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="exposeForTabs:" target="201" id="1232"/>
-                                </connections>
-                            </menuItem>
--->
                             <menuItem isSeparatorItem="YES" id="849">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
