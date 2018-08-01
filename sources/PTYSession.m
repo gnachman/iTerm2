@@ -3926,13 +3926,16 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.isTmuxClient) {
         [_tmuxController clearHistoryForWindowPane:self.tmuxPane];
     }
-    if ([iTermAdvancedSettingsModel jiggleTTYSizeOnClearBuffer]) {
+    // if ([iTermAdvancedSettingsModel jiggleTTYSizeOnClearBuffer]) {
+    // ALWAYS JIGGLE THE SCREEN AFTER CLEARING BUFFER (small resize to force program to redraw)
+    if (YES) {
         VT100GridSize size = _screen.size;
         size.width++;
         _shell.size = size;
         _shell.size = _screen.size;
     }
     _view.scrollview.ptyVerticalScroller.userScroll = NO;
+    [self screenNeedsRedraw];
 }
 
 - (void)clearScrollbackBuffer {
