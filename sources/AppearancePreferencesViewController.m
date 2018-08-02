@@ -132,7 +132,6 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                            key:kPreferenceKeyHideMenuBarInFullscreen
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
-    _hideMenuBarInFullscreen.enabled = ![self boolForKey:kPreferenceKeyUIElement];
     
     info = [self defineControl:_uiElement
                            key:kPreferenceKeyUIElement
@@ -161,7 +160,6 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
         if (didChange) {
             __strong __typeof(self) strongSelf = weakSelf;
             if (strongSelf) {
-                strongSelf->_hideMenuBarInFullscreen.enabled = !isOn;
                 if (isOn) {
                     strongSelf->_hideMenuBarInFullscreen.state = NSOffState;
                 }
