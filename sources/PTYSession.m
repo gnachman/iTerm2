@@ -21,6 +21,7 @@
 #import "iTermController.h"
 #import "iTermCopyModeState.h"
 #import "iTermDisclosableView.h"
+#import "iTermEchoProbe.h"
 #import "iTermFindDriver.h"
 #import "iTermNotificationController.h"
 #import "iTermHistogram.h"
@@ -237,6 +238,7 @@ static NSString *const iTermSessionTitleSession = @"session";
 @interface PTYSession () <
     iTermAutomaticProfileSwitcherDelegate,
     iTermCoprocessDelegate,
+    iTermEchoProbeDelegate,
     iTermHotKeyNavigableSession,
     iTermMetalGlueDelegate,
     iTermPasteHelperDelegate,
@@ -386,17 +388,6 @@ static NSString *const iTermSessionTitleSession = @"session";
     // If so, then the profile setting will be disregarded.
     BOOL _cursorGuideSettingHasChanged;
 
-    // Number of bytes received since an echo probe was sent.
-    enum {
-        iTermEchoProbeOff = 0,
-        iTermEchoProbeWaiting = 1,
-        iTermEchoProbeOneAsterisk = 2,
-        iTermEchoProbeBackspaceOverAsterisk = 3,
-        iTermEchoProbeSpaceOverAsterisk = 4,
-        iTermEchoProbeBackspaceOverSpace = 5,
-        iTermEchoProbeFailed = 6,
-    } _echoProbeState;
-
     // The last time at which a partial-line trigger check occurred. This keeps us from wasting CPU
     // checking long lines over and over.
     NSTimeInterval _lastPartialLineTriggerCheck;
@@ -482,6 +473,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     iTermVariables *_userVariables;
     iTermSwiftyString *_badgeSwiftyString;
     iTermStatusBarViewController *_statusBarViewController;
+    iTermEchoProbe *_echoProbe;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -660,7 +652,9 @@ static NSString *const iTermSessionTitleSession = @"session";
             _metalGlue.delegate = self;
             _metalGlue.screen = _screen;
         }
-
+        _echoProbe = [[iTermEchoProbe alloc] init];
+        _echoProbe.delegate = self;
+        
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:@"kCoprocessStatusChangeNotification"
@@ -800,7 +794,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_metalDisabledTokens release];
     [_badgeSwiftyString release];
     [_statusBarViewController release];
-
+    [_echoProbe release];
+    
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -2605,63 +2600,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [self performSelectorOnMainThread:@selector(release) withObject:nil waitUntilDone:NO];
 }
 
-- (void)updateEchoProbeStateWithBuffer:(char *)buffer length:(int)length {
-    for (int i = 0; i < length; i++) {
-        switch (_echoProbeState) {
-            case iTermEchoProbeOff:
-            case iTermEchoProbeFailed:
-                return;
-
-            case iTermEchoProbeWaiting:
-                if (buffer[i] == '*') {
-                    _echoProbeState = iTermEchoProbeOneAsterisk;
-                } else {
-                    _echoProbeState = iTermEchoProbeFailed;
-                    return;
-                }
-                break;
-
-            case iTermEchoProbeOneAsterisk:
-                if (buffer[i] == '\b') {
-                    _echoProbeState = iTermEchoProbeBackspaceOverAsterisk;
-                } else {
-                    _echoProbeState = iTermEchoProbeFailed;
-                    return;
-                }
-                break;
-
-            case iTermEchoProbeBackspaceOverAsterisk:
-                if (buffer[i] == ' ') {
-                    _echoProbeState = iTermEchoProbeSpaceOverAsterisk;
-                } else {
-                    _echoProbeState = iTermEchoProbeFailed;
-                    return;
-                }
-                break;
-
-            case iTermEchoProbeSpaceOverAsterisk:
-                if (buffer[i] == '\b') {
-                    _echoProbeState = iTermEchoProbeBackspaceOverSpace;
-                } else {
-                    _echoProbeState = iTermEchoProbeFailed;
-                    return;
-                }
-                break;
-
-            case iTermEchoProbeBackspaceOverSpace:
-                _echoProbeState = iTermEchoProbeFailed;
-                return;
-        }
-    }
-}
-
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
 // in the main thread to execute the parsed tokens.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
     @synchronized (self) {
-        if (_echoProbeState != iTermEchoProbeOff) {
-            [self updateEchoProbeStateWithBuffer:buffer length:length];
-        }
+        [_echoProbe updateEchoProbeStateWithBuffer:buffer length:length];
     }
 
     // Pass the input stream to the parser.
@@ -5151,62 +5094,8 @@ ITERM_WEAKLY_REFERENCEABLE
 #pragma mark - Password Management
 
 - (void)enterPassword:(NSString *)password {
-    NSData *backspace = [self backspaceData];
-    if (backspace) {
-        // Try to figure out if we're at a shell prompt. Send a space character and immediately
-        // backspace over it. If no output is received within a specified timeout, then go ahead and
-        // send the password. Otherwise, ask for confirmation.
-        [self writeTaskNoBroadcast:@" "];
-        [self writeLatin1EncodedData:backspace broadcastAllowed:NO];
-        @synchronized(self) {
-            _echoProbeState = iTermEchoProbeWaiting;
-        }
-        [self performSelector:@selector(enterPasswordIfEchoProbeOk:)
-                   withObject:password
-                   afterDelay:[iTermAdvancedSettingsModel echoProbeDuration]];
-    } else {
-        // Rare case: we don't know how to send a backspace. Just enter the password.
-        [self enterPasswordNoProbe:password];
-    }
-}
-
-- (void)enterPasswordIfEchoProbeOk:(NSString *)password {
-    BOOL ok = NO;
-    BOOL prompt = NO;
-    @synchronized (self) {
-        switch (_echoProbeState) {
-            case iTermEchoProbeWaiting:
-            case iTermEchoProbeBackspaceOverSpace:
-                // It looks like we're at a password prompt. Send the password.
-                ok = YES;
-                break;
-
-            case iTermEchoProbeFailed:
-            case iTermEchoProbeOff:
-            case iTermEchoProbeSpaceOverAsterisk:
-            case iTermEchoProbeBackspaceOverAsterisk:
-            case iTermEchoProbeOneAsterisk:
-                prompt = YES;
-                break;
-        }
-        _echoProbeState = iTermEchoProbeOff;
-    }
-
-    if (prompt) {
-        ok = ([iTermWarning showWarningWithTitle:@"Are you really at a password prompt? It looks "
-                                                 @"like what you're typing is echoed to the screen."
-                                         actions:@[ @"Cancel", @"Enter Password" ]
-                                      identifier:nil
-                                     silenceable:kiTermWarningTypePersistent] == kiTermWarningSelection1);
-    }
-    if (ok) {
-        [self enterPasswordNoProbe:password];
-    }
-}
-
-- (void)enterPasswordNoProbe:(NSString *)password {
-    [self writeTaskNoBroadcast:password];
-    [self writeTaskNoBroadcast:@"\n"];
+    [_echoProbe beginProbeWithBackspace:[self backspaceData]
+                               password:password];
 }
 
 - (NSImage *)dragImage
@@ -10275,6 +10164,27 @@ ITERM_WEAKLY_REFERENCEABLE
     [_badgeSwiftyString variablesDidChange:changedNames];
     [_textview setBadgeLabel:[self badgeLabel]];
     [_statusBarViewController variablesDidChange:changedNames];
+}
+
+#pragma mark - iTermEchoProbeDelegate
+
+- (void)echoProbeWriteString:(NSString *)string {
+    [self writeTaskNoBroadcast:string];
+}
+
+- (void)echoProbeWriteData:(NSData *)data {
+    [self writeLatin1EncodedData:data broadcastAllowed:NO];
+}
+
+- (void)echoProbeDidFail {
+    BOOL ok = ([iTermWarning showWarningWithTitle:@"Are you really at a password prompt? It looks "
+                @"like what you're typing is echoed to the screen."
+                                          actions:@[ @"Cancel", @"Enter Password" ]
+                                       identifier:nil
+                                      silenceable:kiTermWarningTypePersistent] == kiTermWarningSelection1);
+    if (ok) {
+        [_echoProbe enterPassword];
+    }
 }
 
 @end

@@ -1567,6 +1567,8 @@
 		A63935962103FD8B00A16D1C /* iTermMemoryUtilization.m in Sources */ = {isa = PBXBuildFile; fileRef = A63935942103FD8B00A16D1C /* iTermMemoryUtilization.m */; };
 		A6393599210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A6393597210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.h */; };
 		A639359A210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A6393598210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m */; };
+		A639E1A02112CA33001696DE /* iTermEchoProbe.h in Headers */ = {isa = PBXBuildFile; fileRef = A639E19E2112CA32001696DE /* iTermEchoProbe.h */; };
+		A639E1A12112CA33001696DE /* iTermEchoProbe.m in Sources */ = {isa = PBXBuildFile; fileRef = A639E19F2112CA33001696DE /* iTermEchoProbe.m */; };
 		A63BA39518A9CB43002BE075 /* iTermSelection.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39318A9CB43002BE075 /* iTermSelection.h */; };
 		A63BA39F18B27B92002BE075 /* iTermTextExtractor.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */; };
 		A63F4095183B398C003A6A6D /* PTYNoteViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F4093183B398C003A6A6D /* PTYNoteViewController.h */; };
@@ -3987,6 +3989,8 @@
 		A63935942103FD8B00A16D1C /* iTermMemoryUtilization.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMemoryUtilization.m; sourceTree = "<group>"; };
 		A6393597210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarMemoryUtilizationComponent.h; sourceTree = "<group>"; };
 		A6393598210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarMemoryUtilizationComponent.m; sourceTree = "<group>"; };
+		A639E19E2112CA32001696DE /* iTermEchoProbe.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermEchoProbe.h; sourceTree = "<group>"; };
+		A639E19F2112CA33001696DE /* iTermEchoProbe.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermEchoProbe.m; sourceTree = "<group>"; };
 		A63BA39318A9CB43002BE075 /* iTermSelection.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelection.h; sourceTree = "<group>"; tabWidth = 4; };
 		A63BA39418A9CB43002BE075 /* iTermSelection.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSelection.m; sourceTree = "<group>"; tabWidth = 4; };
 		A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextExtractor.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -7122,6 +7126,8 @@
 				A66F52A8210458CA00571168 /* iTermNetworkUtilization.m */,
 				A6614C7A210AE7350001EAA3 /* iTermPasteViewManager.h */,
 				A6614C7B210AE7350001EAA3 /* iTermPasteViewManager.m */,
+				A639E19E2112CA32001696DE /* iTermEchoProbe.h */,
+				A639E19F2112CA33001696DE /* iTermEchoProbe.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -8397,6 +8403,7 @@
 				A66719471DCE36C3000CE608 /* NSTableColumn+iTerm.h in Headers */,
 				A66719481DCE36C3000CE608 /* iTermAdditionalHotKeyTableCellView.h in Headers */,
 				A66719491DCE36C3000CE608 /* iTermHotkeyPreferencesWindowController.h in Headers */,
+				A639E1A02112CA33001696DE /* iTermEchoProbe.h in Headers */,
 				A6C1FD5A1FC2BD72006B9A69 /* GlyphKey.h in Headers */,
 				A630116520E606F9008114B7 /* iTermStatusBarViewController.h in Headers */,
 				A614F2651FE4B0A200EEE919 /* iTermCharacterParts.h in Headers */,
@@ -10307,6 +10314,7 @@
 				A6A4866C20B679DB00493302 /* iTermProfilePreferences.m in Sources */,
 				A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */,
 				A6DBC04A2005F09100F1466D /* iTermHighlightRowRenderer.mm in Sources */,
+				A639E1A12112CA33001696DE /* iTermEchoProbe.m in Sources */,
 				530AB8A420B12B9500D2AA08 /* iTermFunctionCallTextFieldDelegate.m in Sources */,
 				A630116620E606F9008114B7 /* iTermStatusBarViewController.m in Sources */,
 				53FF9817209247E2008688D7 /* iTermScriptTemplatePickerWindowController.m in Sources */,
