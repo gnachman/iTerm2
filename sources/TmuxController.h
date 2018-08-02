@@ -111,7 +111,8 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 // If affinity is given then the newly created tab will be considered "manually opened" which is
 // used to determine the tab's eventual location in the tabbar.
 - (void)newWindowWithAffinity:(NSString *)windowId
-             initialDirectory:(iTermInitialDirectory *)initialDirectory;
+             initialDirectory:(iTermInitialDirectory *)initialDirectory
+                   completion:(void (^)(int newWindowId))completion;
 
 - (void)movePane:(int)srcPane
         intoPane:(int)destPane

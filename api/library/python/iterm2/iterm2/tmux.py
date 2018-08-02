@@ -69,6 +69,22 @@ class TmuxConnection:
                 iterm2.api_pb2.TmuxResponse.Status.Name(
                     response.tmux_response.status))
 
+    async def async_create_window(self):
+        """Creates a new tmux window.
+
+        :returns: A new :class:`Window`.
+        """
+        response = await iterm2.rpc.async_rpc_create_tmux_window(self.__app.connection,
+                                                                 self.__connection_id)
+        if response.tmux_response.status != iterm2.api_pb2.TmuxResponse.Status.Value("OK"):
+            raise TmuxException(
+                iterm2.api_pb2.TmuxResponse.Status.Name(
+                    response.tmux_response.status))
+        tab_id = response.tmux_response.create_window.tab_id
+        app = self.__app
+        return app.get_window_for_tab(tab_id)
+
+
 async def async_get_tmux_connections(connection):
     """Fetches a list of tmux connections.
 
@@ -89,3 +105,16 @@ async def async_get_tmux_connections(connection):
             iterm2.api_pb2.TmuxResponse.Status.Name(
                 response.tmux_response.status))
 
+async def async_get_tmux_connection_by_connection_id(connection, connection_id):
+    """Find a tmux connection by its ID.
+
+    :param connection: An existing :class:`iterm2.Connection`.
+    :param connection_id: A connection ID for a :class:`TmuxConnection`.
+
+    :returns: Either a :class:`TmuxConnection` or `None`.
+    """
+    connections = await async_get_tmux_connections(connection)
+    for tc in connections:
+        if tc.connection_id == connection_id:
+            return tc
+    return None

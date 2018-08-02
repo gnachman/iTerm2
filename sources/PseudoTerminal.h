@@ -93,6 +93,7 @@ extern NSString *const iTermBroadcastDomainsDidChangeNotification;
 @property(nonatomic, readonly) BOOL hasBeenKeySinceActivation;
 
 @property(nonatomic, readonly) iTermSessionFactory *sessionFactory;
+@property(nonatomic, readonly) int number;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,

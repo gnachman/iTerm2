@@ -1688,12 +1688,14 @@ BOOL ITMReorderTabsResponse_Status_IsValidValue(int32_t value__) {
 @dynamic listConnections;
 @dynamic sendCommand;
 @dynamic setWindowVisible;
+@dynamic createWindow;
 
 typedef struct ITMTmuxRequest__storage_ {
   uint32_t _has_storage_[2];
   ITMTmuxRequest_ListConnections *listConnections;
   ITMTmuxRequest_SendCommand *sendCommand;
   ITMTmuxRequest_SetWindowVisible *setWindowVisible;
+  ITMTmuxRequest_CreateWindow *createWindow;
 } ITMTmuxRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -1726,6 +1728,15 @@ typedef struct ITMTmuxRequest__storage_ {
         .number = ITMTmuxRequest_FieldNumber_SetWindowVisible,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMTmuxRequest__storage_, setWindowVisible),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "createWindow",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxRequest_CreateWindow),
+        .number = ITMTmuxRequest_FieldNumber_CreateWindow,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTmuxRequest__storage_, createWindow),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
@@ -1908,6 +1919,61 @@ typedef struct ITMTmuxRequest_SetWindowVisible__storage_ {
 
 @end
 
+#pragma mark - ITMTmuxRequest_CreateWindow
+
+@implementation ITMTmuxRequest_CreateWindow
+
+@dynamic hasConnectionId, connectionId;
+@dynamic hasAffinity, affinity;
+
+typedef struct ITMTmuxRequest_CreateWindow__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *connectionId;
+  NSString *affinity;
+} ITMTmuxRequest_CreateWindow__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "connectionId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMTmuxRequest_CreateWindow_FieldNumber_ConnectionId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTmuxRequest_CreateWindow__storage_, connectionId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "affinity",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMTmuxRequest_CreateWindow_FieldNumber_Affinity,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMTmuxRequest_CreateWindow__storage_, affinity),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTmuxRequest_CreateWindow class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTmuxRequest_CreateWindow__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMTmuxResponse
 
 @implementation ITMTmuxResponse
@@ -1916,6 +1982,7 @@ typedef struct ITMTmuxRequest_SetWindowVisible__storage_ {
 @dynamic listConnections;
 @dynamic sendCommand;
 @dynamic setWindowVisible;
+@dynamic createWindow;
 @dynamic hasStatus, status;
 
 typedef struct ITMTmuxResponse__storage_ {
@@ -1924,6 +1991,7 @@ typedef struct ITMTmuxResponse__storage_ {
   ITMTmuxResponse_ListConnections *listConnections;
   ITMTmuxResponse_SendCommand *sendCommand;
   ITMTmuxResponse_SetWindowVisible *setWindowVisible;
+  ITMTmuxResponse_CreateWindow *createWindow;
 } ITMTmuxResponse__storage_;
 
 // This method is threadsafe because it is initially called
@@ -1967,6 +2035,15 @@ typedef struct ITMTmuxResponse__storage_ {
         .offset = (uint32_t)offsetof(ITMTmuxResponse__storage_, status),
         .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
         .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "createWindow",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxResponse_CreateWindow),
+        .number = ITMTmuxResponse_FieldNumber_CreateWindow,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTmuxResponse__storage_, createWindow),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -2199,6 +2276,50 @@ typedef struct ITMTmuxResponse_SetWindowVisible__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMTmuxResponse_SetWindowVisible__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxResponse)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTmuxResponse_CreateWindow
+
+@implementation ITMTmuxResponse_CreateWindow
+
+@dynamic hasTabId, tabId;
+
+typedef struct ITMTmuxResponse_CreateWindow__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *tabId;
+} ITMTmuxResponse_CreateWindow__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "tabId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMTmuxResponse_CreateWindow_FieldNumber_TabId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTmuxResponse_CreateWindow__storage_, tabId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTmuxResponse_CreateWindow class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTmuxResponse_CreateWindow__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxResponse)];
     NSAssert(descriptor == nil, @"Startup recursed!");
@@ -8142,9 +8263,11 @@ typedef struct ITMListSessionsResponse__storage_ {
 @dynamic tabsArray, tabsArray_Count;
 @dynamic hasWindowId, windowId;
 @dynamic hasFrame, frame;
+@dynamic hasNumber, number;
 
 typedef struct ITMListSessionsResponse_Window__storage_ {
   uint32_t _has_storage_[1];
+  int32_t number;
   NSMutableArray *tabsArray;
   NSString *windowId;
   ITMFrame *frame;
@@ -8183,6 +8306,15 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "number",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMListSessionsResponse_Window_FieldNumber_Number,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Window__storage_, number),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt32,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMListSessionsResponse_Window class]
@@ -8208,12 +8340,14 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
 @dynamic hasRoot, root;
 @dynamic hasTabId, tabId;
 @dynamic hasTmuxWindowId, tmuxWindowId;
+@dynamic hasTmuxConnectionId, tmuxConnectionId;
 
 typedef struct ITMListSessionsResponse_Tab__storage_ {
   uint32_t _has_storage_[1];
   NSString *tabId;
   ITMSplitTreeNode *root;
   NSString *tmuxWindowId;
+  NSString *tmuxConnectionId;
 } ITMListSessionsResponse_Tab__storage_;
 
 // This method is threadsafe because it is initially called
@@ -8246,6 +8380,15 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
         .number = ITMListSessionsResponse_Tab_FieldNumber_TmuxWindowId,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, tmuxWindowId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "tmuxConnectionId",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMListSessionsResponse_Tab_FieldNumber_TmuxConnectionId,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, tmuxConnectionId),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },

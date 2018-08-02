@@ -181,8 +181,8 @@ class App:
                     tmux_window_id = tab.tmux_window_id
                 else:
                     tmux_window_id = None
-                tabs.append(iterm2.tab.Tab(connection, tab.tab_id, root, tmux_window_id))
-            windows.append(iterm2.window.Window(connection, window.window_id, tabs, window.frame))
+                tabs.append(iterm2.tab.Tab(connection, tab.tab_id, root, tmux_window_id, tab.tmux_connection_id))
+            windows.append(iterm2.window.Window(connection, window.window_id, tabs, window.frame, window.number))
         return windows
 
     @staticmethod

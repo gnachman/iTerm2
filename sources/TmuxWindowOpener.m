@@ -81,6 +81,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     [_zoomed release];
     [_tabColors release];
     [_profile release];
+    [_completion release];
 
     [super dealloc];
 }
@@ -400,6 +401,9 @@ static int OctalValue(const char *bytes) {
         }
         if (isNewWindow) {
             [[iTermController sharedInstance] didFinishCreatingTmuxWindow:(PseudoTerminal *)term];
+        }
+        if (self.completion) {
+            self.completion(windowIndex_);
         }
     }
 }

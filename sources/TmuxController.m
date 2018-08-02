@@ -14,6 +14,7 @@
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermShortcut.h"
+#import "iTermTuple.h"
 #import "NSFont+iTerm.h"
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
@@ -147,7 +148,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     BOOL _haveOpenendInitialWindows;
     Profile *_profile;
     ProfileModel *_profileModel;
-    NSMutableIndexSet *_pendingNewWindows;
+    // Maps the window ID of an about to be opened window to a completion block to invoke when it opens.
+    NSMutableDictionary<NSNumber *, void(^)(int)> *_pendingWindows;
 }
 
 @synthesize gateway = gateway_;
@@ -182,7 +184,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         _tabColors = [[NSMutableDictionary alloc] init];
         self.clientName = [[TmuxControllerRegistry sharedInstance] uniqueClientNameBasedOn:clientName];
         _windowOpenerOptions = [[NSMutableDictionary alloc] init];
-        _pendingNewWindows = [[NSMutableIndexSet alloc] init];
+        _pendingWindows = [[NSMutableDictionary alloc] init];
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
     }
     return self;
@@ -208,7 +210,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [_profile release];
     [_profileModel release];
     [_fontOverrides release];
-    [_pendingNewWindows release];
+    [_pendingWindows release];
     [sessionName_ release];
     [sessions_ release];
     [super dealloc];
@@ -261,8 +263,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.manuallyOpened = _manualOpenRequested;
     windowOpener.tabColors = _tabColors;
     windowOpener.profile = self.profile;
-    windowOpener.initial = initial || ![_pendingNewWindows containsIndex:windowIndex];
-    [_pendingNewWindows removeIndex:windowIndex];
+    windowOpener.initial = initial || !_pendingWindows[@(windowIndex)];
+    windowOpener.completion = _pendingWindows[@(windowIndex)];
+    [_pendingWindows removeObjectForKey:@(windowIndex)];
     _manualOpenRequested = NO;
     if (![windowOpener openWindows:YES]) {
         [pendingWindowOpens_ removeObject:n];
@@ -929,12 +932,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)newWindowWithAffinity:(NSString *)windowIdString
-             initialDirectory:(iTermInitialDirectory *)initialDirectory {
+             initialDirectory:(iTermInitialDirectory *)initialDirectory
+                   completion:(void (^)(int))completion {
     _manualOpenRequested = (windowIdString != nil);
     [gateway_ sendCommand:[initialDirectory tmuxNewWindowCommandRecyclingSupported:self.recyclingSupported]
            responseTarget:self
-         responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
-           responseObject:windowIdString
+         responseSelector:@selector(newWindowWithAffinityCreated:affinityWindowAndCompletion:)
+           responseObject:[iTermTuple tupleWithObject:windowIdString andObject:[[completion copy] autorelease]]
                     flags:0];
 }
 
@@ -1780,11 +1784,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 // Called only for iTerm2-initiated new windows/tabs.
 - (void)newWindowWithAffinityCreated:(NSString *)responseStr
-                      affinityWindow:(NSString *)affinityWindow {  // Value passed in to -newWindowWithAffinity:, may be nil
+         affinityWindowAndCompletion:(iTermTuple *)tuple {  // Value passed in to -newWindowWithAffinity:, may be nil
     if ([responseStr hasPrefix:@"@"]) {
         int intWindowId = [[responseStr substringFromIndex:1] intValue];
         NSString  *windowId = [NSString stringWithInt:intWindowId];
-        [_pendingNewWindows addIndex:intWindowId];
+        void (^completion)(int) = tuple.secondObject;
+        _pendingWindows[@(intWindowId)] = completion ?: ^(int i){};
+        NSString *affinityWindow = tuple.firstObject;
         if (affinityWindow) {
             [affinities_ setValue:windowId
                      equalToValue:affinityWindow];

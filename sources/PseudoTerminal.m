@@ -1071,8 +1071,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return term;
 }
 
-- (int)number
-{
+- (int)number {
     return number_;
 }
 
@@ -2289,7 +2288,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (IBAction)newTmuxWindow:(id)sender {
     [[self currentTmuxController] newWindowWithAffinity:nil
                                        initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:self.currentSession.profile
-                                                                                                objectType:iTermWindowObject]];
+                                                                                                objectType:iTermWindowObject]
+                                             completion:nil];
 }
 
 - (IBAction)newTmuxTab:(id)sender {
@@ -2299,7 +2299,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [[self currentTmuxController] newWindowWithAffinity:[NSString stringWithFormat:@"%d", tmuxWindow]
                                        initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:self.currentSession.profile
-                                                                                                objectType:iTermTabObject]];
+                                                                                                objectType:iTermTabObject]
+                                             completion:nil];
 }
 
 - (NSSize)tmuxCompatibleSize {

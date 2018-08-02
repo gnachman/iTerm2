@@ -6,12 +6,13 @@ import json
 
 class Tab:
     """Represents a tab."""
-    def __init__(self, connection, tab_id, root, tmux_window_id=None):
+    def __init__(self, connection, tab_id, root, tmux_window_id=None, tmux_connection_id=None):
         self.connection = connection
         self.__tab_id = tab_id
         self.__root = root
         self.active_session_id = None
         self.__tmux_window_id = tmux_window_id
+        self.__tmux_connection_id = tmux_connection_id
 
     def __repr__(self):
         return "<Tab id=%s sessions=%s>" % (self.__tab_id, self.sessions)
@@ -24,6 +25,10 @@ class Tab:
     def update_session(self, session):
         """Replaces references to a session."""
         self.__root.update_session(session)
+
+    @property
+    def tmux_connection_id(self):
+        return self.__tmux_connection_id
 
     @property
     def tab_id(self):

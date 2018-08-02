@@ -1253,6 +1253,7 @@ static id sAPIHelperInstance;
         windowMessage.frame.origin.y = frame.origin.y;
         windowMessage.frame.size.width = frame.size.width;
         windowMessage.frame.size.height = frame.size.height;
+        windowMessage.number = window.number;
 
         for (PTYTab *tab in window.tabs) {
             ITMListSessionsResponse_Tab *tabMessage = [[ITMListSessionsResponse_Tab alloc] init];
@@ -2272,6 +2273,25 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     handler(response);
 }
 
+- (void)handleTmuxCreateWindow:(ITMTmuxRequest_CreateWindow *)request handler:(void (^)(ITMTmuxResponse *))handler {
+    ITMTmuxResponse *response = [[ITMTmuxResponse alloc] init];
+    TmuxController *controller = [[TmuxControllerRegistry sharedInstance] controllerForClient:request.connectionId];
+    if (!controller) {
+        response.status = ITMTmuxResponse_Status_InvalidConnectionId;
+        handler(response);
+        return;
+    }
+    
+    [controller newWindowWithAffinity:request.hasAffinity ? request.affinity : nil
+                     initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:controller.profile
+                                                                              objectType:iTermWindowObject]
+                           completion:^(int newWindowId) {
+                               PTYTab *tab = [controller window:newWindowId];
+                               response.createWindow.tabId = [NSString stringWithFormat:@"%d", tab.uniqueId];
+                               handler(response);
+                           }];
+}
+
 - (void)handleTmuxSetWindowVisible:(ITMTmuxRequest_SetWindowVisible *)request handler:(void (^)(ITMTmuxResponse *))handler {
     ITMTmuxResponse *response = [[ITMTmuxResponse alloc] init];
     TmuxController *controller = [[TmuxControllerRegistry sharedInstance] controllerForClient:request.connectionId];
@@ -2321,6 +2341,9 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
             return;
         case ITMTmuxRequest_Payload_OneOfCase_SetWindowVisible:
             [self handleTmuxSetWindowVisible:request.setWindowVisible handler:handler];
+            return;
+        case ITMTmuxRequest_Payload_OneOfCase_CreateWindow:
+            [self handleTmuxCreateWindow:request.createWindow handler:handler];
             return;
         case ITMTmuxRequest_Payload_OneOfCase_GPBUnsetOneOfCase:
             break;

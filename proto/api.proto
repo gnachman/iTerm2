@@ -170,10 +170,15 @@ message TmuxRequest {
     optional string window_id = 2;
     optional bool visible = 3;
   }
+  message CreateWindow {
+    optional string connection_id = 1;
+    optional string affinity = 2;
+  }
   oneof payload {
     ListConnections list_connections = 1;
     SendCommand send_command = 2;
     SetWindowVisible set_window_visible = 3;
+    CreateWindow create_window = 4;
   }
 }
 
@@ -191,10 +196,15 @@ message TmuxResponse {
   }
   message SetWindowVisible {
   }
+  message CreateWindow {
+    // This is an iTerm2 tab ID.
+    optional string tab_id = 1;
+  }
   oneof payload {
     ListConnections list_connections = 1;
     SendCommand send_command = 2;
     SetWindowVisible set_window_visible = 3;
+    CreateWindow create_window = 5;
   }
 
   enum Status{
@@ -1195,11 +1205,13 @@ message ListSessionsResponse {
     repeated Tab tabs = 1;
     optional string window_id = 2;
     optional Frame frame = 3;
+    optional int32 number = 4;
   }
   message Tab {
     optional SplitTreeNode root = 3;
     optional string tab_id = 2;
     optional string tmux_window_id = 4;
+    optional string tmux_connection_id = 5;
   }
   repeated Window windows = 1;
   repeated SessionSummary buried_sessions = 2;

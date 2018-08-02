@@ -472,6 +472,16 @@ async def async_rpc_set_tmux_window_visible(connection, tmux_connection_id, wind
     request.tmux_request.set_window_visible.visible = visible
     return await _async_call(connection, request)
 
+async def async_rpc_create_tmux_window(connection, tmux_connection_id, affinity=None):
+    """Creates a new tmux window."""
+    request = _alloc_request()
+    request.tmux_request.SetInParent()
+    request.tmux_request.create_window.SetInParent()
+    request.tmux_request.create_window.connection_id = tmux_connection_id
+    if affinity:
+        request.tmux_request.create_window.affinity = affinity
+    return await _async_call(connection, request)
+
 async def async_reorder_tabs(connection, assignments):
     """Reassigns tabs to windows and specifies their orders.
 

@@ -128,10 +128,12 @@ CF_EXTERN_C_BEGIN
 @class ITMSplitTreeNode_SplitTreeLink;
 @class ITMTerminateSessionNotification;
 @class ITMTmuxRequest;
+@class ITMTmuxRequest_CreateWindow;
 @class ITMTmuxRequest_ListConnections;
 @class ITMTmuxRequest_SendCommand;
 @class ITMTmuxRequest_SetWindowVisible;
 @class ITMTmuxResponse;
+@class ITMTmuxResponse_CreateWindow;
 @class ITMTmuxResponse_ListConnections;
 @class ITMTmuxResponse_ListConnections_Connection;
 @class ITMTmuxResponse_SendCommand;
@@ -1274,6 +1276,7 @@ typedef GPB_ENUM(ITMTmuxRequest_FieldNumber) {
   ITMTmuxRequest_FieldNumber_ListConnections = 1,
   ITMTmuxRequest_FieldNumber_SendCommand = 2,
   ITMTmuxRequest_FieldNumber_SetWindowVisible = 3,
+  ITMTmuxRequest_FieldNumber_CreateWindow = 4,
 };
 
 typedef GPB_ENUM(ITMTmuxRequest_Payload_OneOfCase) {
@@ -1281,6 +1284,7 @@ typedef GPB_ENUM(ITMTmuxRequest_Payload_OneOfCase) {
   ITMTmuxRequest_Payload_OneOfCase_ListConnections = 1,
   ITMTmuxRequest_Payload_OneOfCase_SendCommand = 2,
   ITMTmuxRequest_Payload_OneOfCase_SetWindowVisible = 3,
+  ITMTmuxRequest_Payload_OneOfCase_CreateWindow = 4,
 };
 
 @interface ITMTmuxRequest : GPBMessage
@@ -1292,6 +1296,8 @@ typedef GPB_ENUM(ITMTmuxRequest_Payload_OneOfCase) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMTmuxRequest_SendCommand *sendCommand;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMTmuxRequest_SetWindowVisible *setWindowVisible;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTmuxRequest_CreateWindow *createWindow;
 
 @end
 
@@ -1348,6 +1354,25 @@ typedef GPB_ENUM(ITMTmuxRequest_SetWindowVisible_FieldNumber) {
 @property(nonatomic, readwrite) BOOL hasVisible;
 @end
 
+#pragma mark - ITMTmuxRequest_CreateWindow
+
+typedef GPB_ENUM(ITMTmuxRequest_CreateWindow_FieldNumber) {
+  ITMTmuxRequest_CreateWindow_FieldNumber_ConnectionId = 1,
+  ITMTmuxRequest_CreateWindow_FieldNumber_Affinity = 2,
+};
+
+@interface ITMTmuxRequest_CreateWindow : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *connectionId;
+/** Test to see if @c connectionId has been set. */
+@property(nonatomic, readwrite) BOOL hasConnectionId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *affinity;
+/** Test to see if @c affinity has been set. */
+@property(nonatomic, readwrite) BOOL hasAffinity;
+
+@end
+
 #pragma mark - ITMTmuxResponse
 
 typedef GPB_ENUM(ITMTmuxResponse_FieldNumber) {
@@ -1355,6 +1380,7 @@ typedef GPB_ENUM(ITMTmuxResponse_FieldNumber) {
   ITMTmuxResponse_FieldNumber_SendCommand = 2,
   ITMTmuxResponse_FieldNumber_SetWindowVisible = 3,
   ITMTmuxResponse_FieldNumber_Status = 4,
+  ITMTmuxResponse_FieldNumber_CreateWindow = 5,
 };
 
 typedef GPB_ENUM(ITMTmuxResponse_Payload_OneOfCase) {
@@ -1362,6 +1388,7 @@ typedef GPB_ENUM(ITMTmuxResponse_Payload_OneOfCase) {
   ITMTmuxResponse_Payload_OneOfCase_ListConnections = 1,
   ITMTmuxResponse_Payload_OneOfCase_SendCommand = 2,
   ITMTmuxResponse_Payload_OneOfCase_SetWindowVisible = 3,
+  ITMTmuxResponse_Payload_OneOfCase_CreateWindow = 5,
 };
 
 @interface ITMTmuxResponse : GPBMessage
@@ -1373,6 +1400,8 @@ typedef GPB_ENUM(ITMTmuxResponse_Payload_OneOfCase) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMTmuxResponse_SendCommand *sendCommand;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMTmuxResponse_SetWindowVisible *setWindowVisible;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTmuxResponse_CreateWindow *createWindow;
 
 @property(nonatomic, readwrite) ITMTmuxResponse_Status status;
 
@@ -1435,6 +1464,21 @@ typedef GPB_ENUM(ITMTmuxResponse_SendCommand_FieldNumber) {
 #pragma mark - ITMTmuxResponse_SetWindowVisible
 
 @interface ITMTmuxResponse_SetWindowVisible : GPBMessage
+
+@end
+
+#pragma mark - ITMTmuxResponse_CreateWindow
+
+typedef GPB_ENUM(ITMTmuxResponse_CreateWindow_FieldNumber) {
+  ITMTmuxResponse_CreateWindow_FieldNumber_TabId = 1,
+};
+
+@interface ITMTmuxResponse_CreateWindow : GPBMessage
+
+/** This is an iTerm2 tab ID. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabId;
+/** Test to see if @c tabId has been set. */
+@property(nonatomic, readwrite) BOOL hasTabId;
 
 @end
 
@@ -3524,6 +3568,7 @@ typedef GPB_ENUM(ITMListSessionsResponse_Window_FieldNumber) {
   ITMListSessionsResponse_Window_FieldNumber_TabsArray = 1,
   ITMListSessionsResponse_Window_FieldNumber_WindowId = 2,
   ITMListSessionsResponse_Window_FieldNumber_Frame = 3,
+  ITMListSessionsResponse_Window_FieldNumber_Number = 4,
 };
 
 @interface ITMListSessionsResponse_Window : GPBMessage
@@ -3540,6 +3585,9 @@ typedef GPB_ENUM(ITMListSessionsResponse_Window_FieldNumber) {
 /** Test to see if @c frame has been set. */
 @property(nonatomic, readwrite) BOOL hasFrame;
 
+@property(nonatomic, readwrite) int32_t number;
+
+@property(nonatomic, readwrite) BOOL hasNumber;
 @end
 
 #pragma mark - ITMListSessionsResponse_Tab
@@ -3548,6 +3596,7 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
   ITMListSessionsResponse_Tab_FieldNumber_TabId = 2,
   ITMListSessionsResponse_Tab_FieldNumber_Root = 3,
   ITMListSessionsResponse_Tab_FieldNumber_TmuxWindowId = 4,
+  ITMListSessionsResponse_Tab_FieldNumber_TmuxConnectionId = 5,
 };
 
 @interface ITMListSessionsResponse_Tab : GPBMessage
@@ -3563,6 +3612,10 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *tmuxWindowId;
 /** Test to see if @c tmuxWindowId has been set. */
 @property(nonatomic, readwrite) BOOL hasTmuxWindowId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tmuxConnectionId;
+/** Test to see if @c tmuxConnectionId has been set. */
+@property(nonatomic, readwrite) BOOL hasTmuxConnectionId;
 
 @end
 

@@ -25,11 +25,12 @@ class SavedArrangementException(Exception):
 
 class Window:
     """Represents an iTerm2 window."""
-    def __init__(self, connection, window_id, tabs, frame):
+    def __init__(self, connection, window_id, tabs, frame, number):
         self.connection = connection
         self.__window_id = window_id
         self.__tabs = tabs
         self.frame = frame
+        self.__number = number
         # None means unknown. Can get set later.
         self.selected_tab_id = None
 
@@ -101,6 +102,24 @@ class Window:
             if tab.tab_id == self.selected_tab_id:
                 return tab
         return None
+
+    async def async_create_tmux_tab(self, tmux_connection):
+        """Creates a new tmux tab in this window.
+
+        :param tmux_connection: A :class:`TmuxConnection` that owns the new tab.
+
+        :returns: :class:`Tab`"""
+        tmux_window_id = "{}".format(-(self.__number + 1))
+        response = await iterm2.rpc.async_rpc_create_tmux_window(
+            self.connection,
+            tmux_connection.connection_id,
+            tmux_window_id)
+        if response.tmux_response.status != iterm2.api_pb2.TmuxResponse.Status.Value("OK"):
+            raise CreateTabException(
+                iterm2.api_pb2.TmuxResponse.Status.Name(response.tmux_response.status))
+        tab_id = response.tmux_response.create_window.tab_id
+        app = await iterm2.app.async_get_app(self.connection)
+        return app.get_tab_by_id(tab_id)
 
     async def async_create_tab(self, profile=None, command=None, index=None, profile_customizations=None):
         """
