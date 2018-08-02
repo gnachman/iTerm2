@@ -2073,6 +2073,21 @@ static BOOL hasBecomeActive = NO;
     [[TmuxDashboardController sharedInstance] showWindow:nil];
 }
 
+- (IBAction)gpuRendererAvailability:(id)sender {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = @"GPU Renderer Availability";
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    PTYSession *session = [term currentSession];
+    PTYTab *tab = [term tabForSession:session];
+    NSString *reason = tab.metalUnavailableReason;
+    if (reason) {
+        alert.informativeText = [NSString stringWithFormat:@"GPU rendering is off in the current session because %@", reason];
+    } else {
+        alert.informativeText = @"GPU rendering is enabled for the current session.";
+    }
+    [alert runModal];
+}
+
 - (IBAction)openSourceLicenses:(id)sender {
     NSURL *url = [[NSBundle mainBundle] URLForResource:@"Licenses" withExtension:@"txt"];
     [[NSWorkspace sharedWorkspace] openURL:url];

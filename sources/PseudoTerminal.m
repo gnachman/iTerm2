@@ -8125,8 +8125,14 @@ ITERM_WEAKLY_REFERENCEABLE
     _contentView.useMetal = useMetal;
 }
 
-- (BOOL)tabCanUseMetal:(PTYTab *)tab {
-    return !_contentView.tabBarControl.flashing;
+- (BOOL)tabCanUseMetal:(PTYTab *)tab reason:(out NSString **)reason {
+    if (_contentView.tabBarControl.flashing) {
+        if (reason) {
+            *reason = @"the tab bar is temporarily visible.";
+            return NO;
+        }
+    }
+    return YES;
 }
 
 - (void)currentSessionWordAtCursorDidBecome:(NSString *)word {

@@ -295,7 +295,10 @@ static NSString *gSearchString;
 #pragma mark - Internal
 
 - (void)setVisible:(BOOL)visible {
-    _isVisible = NO;
+    if (visible != _isVisible) {
+        _isVisible = visible;
+        [self.delegate findViewControllerVisibilityDidChange:self.viewController];
+    }
 }
 
 - (void)loadFindStringIntoSharedPasteboard:(NSString *)stringValue {

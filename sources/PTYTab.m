@@ -4918,8 +4918,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)updateUseMetal NS_AVAILABLE_MAC(10_11) {
     const BOOL resizing = self.realParentWindow.windowIsResizing;
     const BOOL powerOK = [[iTermPowerManager sharedInstance] metalAllowed];
+    __block NSString *sessionReason;
     const BOOL allSessionsAllowMetal = [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
-        return anObject.metalAllowed;
+        return [anObject metalAllowed:&sessionReason];
     }];
     const BOOL allSessionsIdle = (allSessionsAllowMetal &&
                                   [iTermAdvancedSettingsModel disableMetalWhenIdle] &&
@@ -4932,16 +4933,40 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     const NSInteger maxNumberOfSplitPanesForMetal = 6;
     const BOOL numberOfSplitPanesIsReasonable = self.sessions.count < maxNumberOfSplitPanesForMetal;
 
-    const BOOL allowed = (!resizing &&
-                          powerOK &&
-                          allSessionsAllowMetal &&
-                          !allSessionsIdle &&
-                          numberOfSplitPanesIsReasonable &&
-                          [_delegate tabCanUseMetal:self]);
+    NSString *reason = nil;
+    BOOL allowed = NO;
+    if (resizing) {
+        _metalUnavailableReason = @"the window is being resized.";
+    } else if (!powerOK) {
+        _metalUnavailableReason = @"the computer is not connected to power. You can enable GPU rendering while disconnected from power in Prefs>General>Advanced GPU Settings.";
+    } else if (!allSessionsAllowMetal) {
+        _metalUnavailableReason = sessionReason;
+    } else if (allSessionsIdle) {
+        _metalUnavailableReason = @"the session is idle. You can enable Metal while idle in Prefs>Advanced.";
+    } else if (!numberOfSplitPanesIsReasonable) {
+        static NSString *tooManyPanesReason;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            tooManyPanesReason = [NSString stringWithFormat:@"there are more than %@ split frames in this tab.",
+                                  @(maxNumberOfSplitPanesForMetal - 1)];
+        });
+        _metalUnavailableReason = tooManyPanesReason;
+    } else if (![_delegate tabCanUseMetal:self reason:&reason]) {
+        _metalUnavailableReason = reason;
+    } else {
+        _metalUnavailableReason = nil;
+        allowed = YES;
+    }
     const BOOL ONLY_KEY_WINDOWS_USE_METAL = NO;
     const BOOL isKey = [[[self realParentWindow] window] isKeyWindow];
     const BOOL satisfiesKeyRequirement = (isKey || !ONLY_KEY_WINDOWS_USE_METAL);
+    if (!satisfiesKeyRequirement) {
+        _metalUnavailableReason = @"the window does not have keyboard focus.";
+    }
     const BOOL foregroundTab = [self isForegroundTab];
+    if (!foregroundTab) {
+        _metalUnavailableReason = @"this tab is not active.";
+    }
     const BOOL useMetal = allowed && satisfiesKeyRequirement && foregroundTab;
     [self.sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         obj.useMetal = useMetal;
