@@ -317,7 +317,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermCursorRendererTransientState *tState = transientState;
     int d = tState.doubleWidth ? 2 : 1;
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.cellConfiguration.cellSize.width * d,
-                                                                  tState.configuration.scale * tState.cellConfiguration.scale)
+                                                                  [iTermAdvancedSettingsModel underlineCursorHeight] * tState.cellConfiguration.scale)
                                            poolContext:tState.poolContext];
     [super drawWithFrameData:frameData transientState:transientState];
 }

@@ -233,5 +233,6 @@
 + (NSString *)pathToFTP;
 + (NSString *)pathToTelnet;
 + (BOOL)sshURLsSupportPath;
++ (double)underlineCursorHeight;
 
 @end

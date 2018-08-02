@@ -84,7 +84,7 @@
              focused:(BOOL)focused
                coord:(VT100GridCoord)coord
              outline:(BOOL)outline {
-    const CGFloat height = 2;
+    const CGFloat height = [iTermAdvancedSettingsModel underlineCursorHeight];
     NSRect cursorRect = NSMakeRect(rect.origin.x,
                                    rect.origin.y + rect.size.height - height - [iTermAdvancedSettingsModel underlineCursorOffset],
                                    ceil(rect.size.width),
