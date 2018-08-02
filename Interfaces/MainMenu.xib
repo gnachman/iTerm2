@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14109" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14113" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14109"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -1114,10 +1114,18 @@ DQ
                                     <action selector="copyModeShortcuts:" target="-1" id="fOs-EL-nnE"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="bmQ-Hv-xgs"/>
                             <menuItem title="Open Source Licenses" identifier="Open Source Licenses" id="dV2-dF-UB1">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="openSourceLicenses:" target="201" id="kij-nS-KMI"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="bgo-A0-EFK"/>
+                            <menuItem title="GPU Renderer Availability" identifier="GPU Renderer Availability" id="16n-FV-p0f">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="gpuRendererAvailability:" target="-1" id="Z2a-Sj-1Vf"/>
                                 </connections>
                             </menuItem>
                         </items>

@@ -4771,6 +4771,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)metalAllowed {
+    return [self metalAllowed:nil];
+}
+
+- (BOOL)metalAllowed:(out NSString **)reason {
     // While Metal is supported on macOS 10.11, it crashes a lot. It seems to have a memory stomping
     // bug (lots of crashes in dtoa during printf formatting) and assertions in -[MTKView initCommon].
     // All metal code except this is available on macOS 10.11, so this is the one place that
@@ -4794,20 +4798,90 @@ ITERM_WEAKLY_REFERENCEABLE
         const BOOL hasSquareCorners = untitled || nativeFullScreen;
         const BOOL marginsOk = ([iTermAdvancedSettingsModel terminalVMargin] >= 2 &&
                                 [iTermAdvancedSettingsModel terminalMargin] >= 1);  // Smaller margins break rounded window corners
-        return ([iTermPreferences boolForKey:kPreferenceKeyUseMetal] &&
-                (hasSquareCorners || marginsOk) &&
-                [_textview verticalSpacing] >= 1 &&  // Metal cuts off the tops of letters when line height reduced
-                machineSupportsMetal &&
-                _textview.transparencyAlpha == 1 &&
-                ![self ligaturesEnabledInEitherFont] &&
-                ![PTYNoteViewController anyNoteVisible] &&
-                !_view.findViewController.isVisible &&
-                !_pasteHelper.pasteViewIsVisible &&
-                _view.currentAnnouncement == nil &&
-                !_view.hasHoverURL &&
-                !_metalDeviceChanging &&
-                [self metalViewSizeIsLegal]);
+        if (![iTermPreferences boolForKey:kPreferenceKeyUseMetal]) {
+            if (reason) {
+                *reason = @"GPU Renderer is disabled in Preferences > General.";
+            }
+            return NO;
+        }
+        if (!(hasSquareCorners || marginsOk)) {
+            if (reason) {
+                *reason = @"terminal window margins are too small. You can edit them in Prefs>Advanced.";
+            }
+            return NO;
+        }
+        if ([_textview verticalSpacing] < 1) {
+            // Metal cuts off the tops of letters when line height reduced
+            if (reason) {
+                *reason = @"the font's vertical spacing set to less than 100%. You can change it in Prefs>Profiles>Text>Change Font.";
+            }
+            return NO;
+        }
+        if (!machineSupportsMetal) {
+            if (reason) {
+                *reason = @"no usable GPU found on this machine.";
+            }
+            return NO;
+        }
+        if (_textview.transparencyAlpha < 1) {
+            if (reason) {
+                *reason = @"transparent windows not supported. You can change window transparency in Prefs>Profiles>Window>Transparency";
+            }
+            return NO;
+        }
+        if ([self ligaturesEnabledInEitherFont]) {
+            if (reason) {
+                *reason = @"ligatures are enabled. You can disable them in Prefs>Profiles>Text>Use ligatures.";
+            }
+            return NO;
+        }
+        if ([PTYNoteViewController anyNoteVisible]) {
+            if (reason) {
+                *reason = @"annotations are open. Find the session with visible annotations and close them with View>Show Annotations.";
+            }
+            return NO;
+        }
+        if (_view.findViewController.isVisible) {
+            if (reason) {
+                *reason = @"the find panel is open.";
+            }
+            return NO;
+        }
+        if (_pasteHelper.pasteViewIsVisible) {
+            if (reason) {
+                *reason = @"the paste progress indicator is open.";
+            }
+            return NO;
+        }
+        if (_view.currentAnnouncement) {
+            if (reason) {
+                *reason = @"an announcement (yellow bar) is visible.";
+            }
+            return NO;
+        }
+        if (_view.hasHoverURL) {
+            if (reason) {
+                *reason = @"a URL preview is visible.";
+            }
+            return NO;
+        }
+        if (_metalDeviceChanging) {
+            if (reason) {
+                *reason = @"the GPU renderer is initializing. It should be ready soon.";
+            }
+            return NO;
+        }
+        if (![self metalViewSizeIsLegal]) {
+            if (reason) {
+                *reason = @"the session is too large or too small.";
+            }
+            return NO;
+        }
+        return YES;
     } else {
+        if (reason) {
+            *reason = @"macOS version 10.12 required";
+        }
         return NO;
     }
 }

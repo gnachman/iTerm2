@@ -63,6 +63,7 @@ extern NSString *const iTermSessionBecameKey;
 // adjustSubviews of the splitview (ordinarily done by a call to -[PTYTab
 // setSize:]).
 @property(nonatomic, assign) __unsafe_unretained PTYSession *lockedSession;
+@property(nonatomic, readonly) NSString *metalUnavailableReason;
 
 // Save the contents of all sessions. Used during window restoration so that if
 // the sessions are later restored from a saved arrangement during startup
