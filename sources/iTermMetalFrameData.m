@@ -257,6 +257,7 @@ static NSInteger gNextFrameDataNumber;
     MTLRenderPassDescriptor *renderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
     MTLRenderPassColorAttachmentDescriptor *colorAttachment = renderPassDescriptor.colorAttachments[0];
     colorAttachment.storeAction = MTLStoreActionStore;
+#warning TODO: Shouldn't fast be taken into account when picking a pool?
     colorAttachment.texture = [[self sharedTexturePool] requestTextureOfSize:self.viewportSize];
     if (!colorAttachment.texture) {
         // Allocate a new texture.
@@ -279,6 +280,8 @@ static NSInteger gNextFrameDataNumber;
                           forTexture:colorAttachment.texture];
         colorAttachment.texture.label = label;
         [[self sharedTexturePool] stampTextureWithGeneration:colorAttachment.texture];
+    } else {
+        colorAttachment.texture.label = label;
     }
 
     assert(renderPassDescriptor.colorAttachments[0].texture != nil);
@@ -316,6 +319,11 @@ static NSInteger gNextFrameDataNumber;
     if (self.intermediateRenderPassDescriptor) {
         [[self sharedTexturePool] returnTexture:self.intermediateRenderPassDescriptor.colorAttachments[0].texture];
     }
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    if (self.temporaryRenderPassDescriptor) {
+        [[self sharedTexturePool] returnTexture:self.temporaryRenderPassDescriptor.colorAttachments[0].texture];
+    }
+#endif
     double duration;
 
     duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[iTermMetalFrameDataStatGpu]);
