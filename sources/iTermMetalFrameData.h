@@ -104,12 +104,14 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @class iTermMetalDebugInfo;
 @class iTermMetalRendererTransientState;
 @class iTermMetalRowData;
+@class iTermTexturePool;
 @class MTKView;
 @class MTLRenderPassDescriptor;
 @protocol CAMetalDrawable;
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalFrameData : NSObject
+@property (atomic, readonly) iTermTexturePool *fullSizeTexturePool;
 @property (atomic, strong) id<iTermMetalDriverDataSourcePerFrameState> perFrameState;
 @property (atomic, strong) NSMutableArray<iTermMetalRowData *> *rows;
 @property (atomic) vector_uint2 viewportSize;
@@ -152,7 +154,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) MTLRenderPassDescriptor *postmultipliedRenderPassDescriptor NS_AVAILABLE_MAC(10_14);
 #endif
 
-- (instancetype)initWithView:(MTKView *)view NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithView:(MTKView *)view
+         fullSizeTexturePool:(iTermTexturePool *)fullSizeTexturePool NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^)(void))block;

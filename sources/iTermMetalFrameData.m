@@ -110,10 +110,11 @@ static NSInteger gNextFrameDataNumber;
     iTermCellRenderConfiguration *_cellConfiguration;
 }
 
-- (instancetype)initWithView:(MTKView *)view {
+- (instancetype)initWithView:(MTKView *)view fullSizeTexturePool:(iTermTexturePool *)fullSizeTexturePool {
     self = [super init];
     if (self) {
         _view = view;
+        _fullSizeTexturePool = fullSizeTexturePool;
         _device = view.device;
         _creation = [NSDate timeIntervalSinceReferenceDate];
         _frameNumber = gNextFrameDataNumber++;
@@ -213,15 +214,6 @@ static NSInteger gNextFrameDataNumber;
     iTermPreciseTimerStatsStartTimer(&_stats[iTermMetalFrameDataStatGpu]);
 }
 
-- (iTermTexturePool *)sharedTexturePool {
-    static iTermTexturePool *instance;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        instance = [[iTermTexturePool alloc] init];
-    });
-    return instance;
-}
-
 - (void)updateRenderEncoderWithRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor
                                                stat:(iTermMetalFrameDataStat)stat
                                               label:(NSString *)label {
@@ -258,8 +250,7 @@ static NSInteger gNextFrameDataNumber;
     MTLRenderPassDescriptor *renderPassDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
     MTLRenderPassColorAttachmentDescriptor *colorAttachment = renderPassDescriptor.colorAttachments[0];
     colorAttachment.storeAction = MTLStoreActionStore;
-#warning TODO: Shouldn't fast be taken into account when picking a pool?
-    colorAttachment.texture = [[self sharedTexturePool] requestTextureOfSize:self.viewportSize];
+    colorAttachment.texture = fast ? [self.fullSizeTexturePool requestTextureOfSize:self.viewportSize] : nil;
     if (!colorAttachment.texture) {
         // Allocate a new texture.
         MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
@@ -267,7 +258,7 @@ static NSInteger gNextFrameDataNumber;
                                                                                                     height:self.viewportSize.y
                                                                                                  mipmapped:NO];
         if (fast) {
-            textureDescriptor.usage = (MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget) ;
+            textureDescriptor.usage = (MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget);
         } else {
             textureDescriptor.usage = (MTLTextureUsageShaderRead |
                                        MTLTextureUsageShaderWrite |
@@ -280,7 +271,9 @@ static NSInteger gNextFrameDataNumber;
                      samplesPerPixel:4
                           forTexture:colorAttachment.texture];
         colorAttachment.texture.label = label;
-        [[self sharedTexturePool] stampTextureWithGeneration:colorAttachment.texture];
+        if (fast) {
+            [self.fullSizeTexturePool stampTextureWithGeneration:colorAttachment.texture];
+        }
     } else {
         colorAttachment.texture.label = label;
     }
@@ -329,7 +322,7 @@ static NSInteger gNextFrameDataNumber;
                                 owner:(NSString *)owner {
     self.status = @"complete";
     if (self.intermediateRenderPassDescriptor) {
-        [[self sharedTexturePool] returnTexture:self.intermediateRenderPassDescriptor.colorAttachments[0].texture];
+        [self.fullSizeTexturePool returnTexture:self.intermediateRenderPassDescriptor.colorAttachments[0].texture];
     }
     if (@available(macOS 10.14, *)) {
         if (self.postmultipliedRenderPassDescriptor) {
@@ -338,7 +331,7 @@ static NSInteger gNextFrameDataNumber;
     }
 #if ENABLE_USE_TEMPORARY_TEXTURE
     if (self.temporaryRenderPassDescriptor) {
-        [[self sharedTexturePool] returnTexture:self.temporaryRenderPassDescriptor.colorAttachments[0].texture];
+        [self.fullSizeTexturePool returnTexture:self.temporaryRenderPassDescriptor.colorAttachments[0].texture];
     }
 #endif
     double duration;
