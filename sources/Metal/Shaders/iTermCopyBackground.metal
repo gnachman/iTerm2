@@ -27,14 +27,13 @@ iTermCopyBackgroundVertexShader(uint vertexID [[ vertex_id ]],
     return out;
 }
 
-fragment float4
+fragment half4
 iTermCopyBackgroundFragmentShader(iTermCopyBackgroundVertexFunctionOutput in [[stage_in]],
                                   texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
     constexpr sampler textureSampler (mag_filter::linear,
                                       min_filter::linear);
 
-    const half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
-    return float4(colorSample);
+    return texture.sample(textureSampler, in.textureCoordinate);
 }
 
 fragment half4
