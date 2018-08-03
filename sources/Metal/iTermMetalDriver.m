@@ -110,7 +110,7 @@ typedef struct {
 
     // This one is special because it's debug only
     iTermCopyOffscreenRenderer *_copyOffscreenRenderer;
-
+    iTermTexturePool *_fullSizeTexturePool;
 
 
     // The command Queue from which we'll obtain command buffers
@@ -149,6 +149,8 @@ typedef struct {
         _startToStartHistogram = [[iTermHistogram alloc] init];
         _inFlightHistogram = [[iTermHistogram alloc] init];
         _startTime = [NSDate timeIntervalSinceReferenceDate];
+        _fullSizeTexturePool = [[iTermTexturePool alloc] init];
+        
         _marginRenderer = [[iTermMarginRenderer alloc] initWithDevice:device];
         _backgroundImageRenderer = [[iTermBackgroundImageRenderer alloc] initWithDevice:device];
         _textRenderer = [[iTermTextRenderer alloc] initWithDevice:device];
@@ -414,7 +416,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 // Called on the main queue
 - (iTermMetalFrameData *)newFrameDataForView:(MTKView *)view {
-    iTermMetalFrameData *frameData = [[iTermMetalFrameData alloc] initWithView:view];
+    iTermMetalFrameData *frameData = [[iTermMetalFrameData alloc] initWithView:view
+                                                           fullSizeTexturePool:_fullSizeTexturePool];
 
     [frameData measureTimeForStat:iTermMetalFrameDataStatMtExtractFromApp ofBlock:^{
         frameData.viewportSize = self.mainThreadState->viewportSize;
