@@ -2603,10 +2603,6 @@ ITERM_WEAKLY_REFERENCEABLE
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
 // in the main thread to execute the parsed tokens.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
-    @synchronized (self) {
-        [_echoProbe updateEchoProbeStateWithBuffer:buffer length:length];
-    }
-
     // Pass the input stream to the parser.
     [_terminal.parser putStreamData:buffer length:length];
 
@@ -2618,6 +2614,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (CVectorCount(&vector) == 0) {
         CVectorDestroy(&vector);
         return;
+    }
+
+    @synchronized (self) {
+        [_echoProbe updateEchoProbeStateWithTokenCVector:&vector];
     }
 
     // This limits the number of outstanding execution blocks to prevent the main thread from

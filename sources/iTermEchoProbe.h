@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "CVector.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -25,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)beginProbeWithBackspace:(NSData *)backspaceData
                        password:(NSString *)password;
-- (void)updateEchoProbeStateWithBuffer:(char *)buffer length:(int)length;
+- (void)updateEchoProbeStateWithTokenCVector:(CVector *)vector;
 - (void)enterPassword;
 
 @end

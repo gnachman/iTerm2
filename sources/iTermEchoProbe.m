@@ -8,6 +8,7 @@
 #import "iTermEchoProbe.h"
 
 #import "iTermAdvancedSettingsModel.h"
+#import "VT100Token.h"
 
 typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
     iTermEchoProbeOff = 0,
@@ -47,58 +48,61 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
     }
 }
 
-- (void)updateEchoProbeStateWithBuffer:(char *)buffer length:(int)length {
+- (void)updateEchoProbeStateWithTokenCVector:(CVector *)vector {
     @synchronized(self) {
-        if (_state == iTermEchoProbeOff) {
+        if (_state == iTermEchoProbeOff || _state == iTermEchoProbeFailed) {
             return;
         }
-        for (int i = 0; i < length; i++) {
-            switch (_state) {
-                case iTermEchoProbeOff:
-                case iTermEchoProbeFailed:
-                    return;
-                    
-                case iTermEchoProbeWaiting:
-                    if (buffer[i] == '*') {
-                        _state = iTermEchoProbeOneAsterisk;
-                    } else {
-                        _state = iTermEchoProbeFailed;
-                        return;
-                    }
-                    break;
-                    
-                case iTermEchoProbeOneAsterisk:
-                    if (buffer[i] == '\b') {
-                        _state = iTermEchoProbeBackspaceOverAsterisk;
-                    } else {
-                        _state = iTermEchoProbeFailed;
-                        return;
-                    }
-                    break;
-                    
-                case iTermEchoProbeBackspaceOverAsterisk:
-                    if (buffer[i] == ' ') {
-                        _state = iTermEchoProbeSpaceOverAsterisk;
-                    } else {
-                        _state = iTermEchoProbeFailed;
-                        return;
-                    }
-                    break;
-                    
-                case iTermEchoProbeSpaceOverAsterisk:
-                    if (buffer[i] == '\b') {
-                        _state = iTermEchoProbeBackspaceOverSpace;
-                    } else {
-                        _state = iTermEchoProbeFailed;
-                        return;
-                    }
-                    break;
-                    
-                case iTermEchoProbeBackspaceOverSpace:
-                    _state = iTermEchoProbeFailed;
-                    return;
+        const int count = CVectorCount(vector);
+        for (int i = 0; i < count; i++) {
+            VT100Token *token = CVectorGetObject(vector, i);
+            _state = iTermEchoProbeGetNextState(_state, token);
+            if (_state == iTermEchoProbeOff || _state == iTermEchoProbeFailed) {
+                break;
             }
         }
+    }
+}
+
+iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100Token *token) {
+    switch (state) {
+        case iTermEchoProbeOff:
+        case iTermEchoProbeFailed:
+            return state;
+            
+        case iTermEchoProbeWaiting:
+            if (token->type == VT100_ASCIISTRING && [[token stringForAsciiData] isEqualToString:@"*"]) {
+                return iTermEchoProbeOneAsterisk;
+            } else {
+                return iTermEchoProbeFailed;
+            }
+            
+        case iTermEchoProbeOneAsterisk:
+            if (token->type == VT100CC_BS ||
+                (token->type == VT100CSI_CUB && token.csi->p[0] == 1)) {
+                return iTermEchoProbeBackspaceOverAsterisk;
+            } else {
+                return iTermEchoProbeFailed;
+            }
+    
+        case iTermEchoProbeBackspaceOverAsterisk:
+            if (token->type == VT100_ASCIISTRING && [[token stringForAsciiData] isEqualToString:@" "]) {
+                return iTermEchoProbeSpaceOverAsterisk;
+            } else if (token->type == VT100CSI_EL && token.csi->p[0] == 0) {
+                return iTermEchoProbeBackspaceOverSpace;
+            } else {
+                return iTermEchoProbeFailed;
+            }
+            
+        case iTermEchoProbeSpaceOverAsterisk:
+            if (token->type == VT100CC_BS) {
+                return iTermEchoProbeBackspaceOverSpace;
+            } else {
+                return iTermEchoProbeFailed;
+            }
+            
+        case iTermEchoProbeBackspaceOverSpace:
+            return iTermEchoProbeFailed;
     }
 }
 
