@@ -36,7 +36,7 @@ COMPACTDATE=$(date +"%Y%m%d")-nightly
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 SVNDIR=~/iterm2-website
-git log > $SVNDIR/source/appcasts/nightly_changes.txt
+(git log --after={`date -v-1m "+%Y-%m-01"`} --pretty=format:"%cd: %B" --date=short | fmt -w 60) > $SVNDIR/source/appcasts/nightly_changes.txt
 
 CASK_DATE=$(echo -n $COMPACTDATE | sed -e 's/-nightly//')
 CASK_VERSION=$(cat version.txt | sed -e "s/%(extra)s/$CASK_DATE/")
