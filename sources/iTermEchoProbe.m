@@ -37,54 +37,56 @@
 }
 
 - (void)updateEchoProbeStateWithBuffer:(char *)buffer length:(int)length {
-    if (_state == iTermEchoProbeOff) {
-        return;
-    }
-    for (int i = 0; i < length; i++) {
-        switch (_state) {
-            case iTermEchoProbeOff:
-            case iTermEchoProbeFailed:
-                return;
-                
-            case iTermEchoProbeWaiting:
-                if (buffer[i] == '*') {
-                    _state = iTermEchoProbeOneAsterisk;
-                } else {
+    @synchronized(self) {
+        if (_state == iTermEchoProbeOff) {
+            return;
+        }
+        for (int i = 0; i < length; i++) {
+            switch (_state) {
+                case iTermEchoProbeOff:
+                case iTermEchoProbeFailed:
+                    return;
+                    
+                case iTermEchoProbeWaiting:
+                    if (buffer[i] == '*') {
+                        _state = iTermEchoProbeOneAsterisk;
+                    } else {
+                        _state = iTermEchoProbeFailed;
+                        return;
+                    }
+                    break;
+                    
+                case iTermEchoProbeOneAsterisk:
+                    if (buffer[i] == '\b') {
+                        _state = iTermEchoProbeBackspaceOverAsterisk;
+                    } else {
+                        _state = iTermEchoProbeFailed;
+                        return;
+                    }
+                    break;
+                    
+                case iTermEchoProbeBackspaceOverAsterisk:
+                    if (buffer[i] == ' ') {
+                        _state = iTermEchoProbeSpaceOverAsterisk;
+                    } else {
+                        _state = iTermEchoProbeFailed;
+                        return;
+                    }
+                    break;
+                    
+                case iTermEchoProbeSpaceOverAsterisk:
+                    if (buffer[i] == '\b') {
+                        _state = iTermEchoProbeBackspaceOverSpace;
+                    } else {
+                        _state = iTermEchoProbeFailed;
+                        return;
+                    }
+                    break;
+                    
+                case iTermEchoProbeBackspaceOverSpace:
                     _state = iTermEchoProbeFailed;
                     return;
-                }
-                break;
-                
-            case iTermEchoProbeOneAsterisk:
-                if (buffer[i] == '\b') {
-                    _state = iTermEchoProbeBackspaceOverAsterisk;
-                } else {
-                    _state = iTermEchoProbeFailed;
-                    return;
-                }
-                break;
-                
-            case iTermEchoProbeBackspaceOverAsterisk:
-                if (buffer[i] == ' ') {
-                    _state = iTermEchoProbeSpaceOverAsterisk;
-                } else {
-                    _state = iTermEchoProbeFailed;
-                    return;
-                }
-                break;
-                
-            case iTermEchoProbeSpaceOverAsterisk:
-                if (buffer[i] == '\b') {
-                    _state = iTermEchoProbeBackspaceOverSpace;
-                } else {
-                    _state = iTermEchoProbeFailed;
-                    return;
-                }
-                break;
-                
-            case iTermEchoProbeBackspaceOverSpace:
-                _state = iTermEchoProbeFailed;
-                return;
+            }
         }
     }
 }
