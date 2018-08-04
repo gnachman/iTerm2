@@ -9,8 +9,19 @@
 
 #import "iTermAdvancedSettingsModel.h"
 
+typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
+    iTermEchoProbeOff = 0,
+    iTermEchoProbeWaiting = 1,
+    iTermEchoProbeOneAsterisk = 2,
+    iTermEchoProbeBackspaceOverAsterisk = 3,
+    iTermEchoProbeSpaceOverAsterisk = 4,
+    iTermEchoProbeBackspaceOverSpace = 5,
+    iTermEchoProbeFailed = 6,
+};
+
 @implementation iTermEchoProbe {
     NSString *_password;
+    iTermEchoProbeState _state;
 }
 
 - (void)beginProbeWithBackspace:(NSData *)backspace
