@@ -235,19 +235,35 @@ static LAContext *sAuthenticatedContext;
 }
 
 - (IBAction)edit:(id)sender {
-    if ([_tableView selectedRow] >= 0) {
-        NSInteger row = _tableView.selectedRow;
-        [self setPasswordBeingShown:[self selectedPassword] onRow:row];
-        [_tableView editColumn:[[_tableView tableColumns] indexOfObject:_passwordColumn]
-                           row:row
-                     withEvent:nil
-                        select:YES];
+    NSInteger row = _tableView.selectedRow;
+    if (row >= 0) {
+        __weak __typeof(self) weakSelf = self;
+        [self requestPassword:^(NSString *password) {
+            [weakSelf reallyEditRow:row password:password];
+        }];
     }
+}
+
+- (void)reallyEditRow:(NSInteger)row password:(NSString *)password {
+    if (row != _tableView.selectedRow) {
+        return;
+    }
+    [self setPasswordBeingShown:password onRow:row];
+    [_tableView editColumn:[[_tableView tableColumns] indexOfObject:_passwordColumn]
+                       row:row
+                 withEvent:nil
+                    select:YES];
 }
 
 - (IBAction)enterPassword:(id)sender {
     DLog(@"enterPassword");
-    NSString *password = [self selectedPassword];
+    __weak __typeof(self) weakSelf = self;
+    [self requestPassword:^(NSString *password) {
+        [weakSelf reallyEnterPassword:password];
+    }];
+}
+
+- (void)reallyEnterPassword:(NSString *)password {
     if (password) {
         DLog(@"enterPassword: giving password to delegate");
         [_delegate iTermPasswordManagerEnterPassword:password];
@@ -267,16 +283,36 @@ static LAContext *sAuthenticatedContext;
 }
 
 - (IBAction)revealPassword:(id)sender {
-    if (!_passwordBeingShown && [_tableView selectedRow] >= 0) {
-        [self setPasswordBeingShown:[self selectedPassword] onRow:[_tableView selectedRow]];
-        [_tableView reloadData];
+    const NSInteger row = [_tableView selectedRow];
+    if (!_passwordBeingShown && row >= 0) {
+        __weak __typeof(self) weakSelf = self;
+        NSString *account = [_accounts[row] copy];
+        [self requestPassword:^(NSString *password) {
+            [weakSelf reallyRevealPassword:password account:account row:row];
+        }];
     }
 }
 
+- (void)reallyRevealPassword:(NSString *)password account:(NSString *)account row:(NSInteger)row {
+    if ([_tableView selectedRow] != row) {
+        return;
+    }
+    if (![account isEqualToString:_accounts[row]]) {
+        return;
+    }
+    [self setPasswordBeingShown:password onRow:row];
+    [_tableView reloadData];
+}
+
 - (IBAction)copyPassword:(id)sender {
-    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    [pasteboard declareTypes:@[ NSStringPboardType ] owner:self];
-    [pasteboard setString:[self selectedPassword] forType:NSStringPboardType];
+    __weak __typeof(self) weakSelf = self;
+    [self requestPassword:^(NSString *password) {
+        if (weakSelf) {
+            NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+            [pasteboard declareTypes:@[ NSStringPboardType ] owner:self];
+            [pasteboard setString:password forType:NSStringPboardType];
+        }
+    }];
 }
 
 #pragma mark - Private
@@ -335,36 +371,43 @@ static LAContext *sAuthenticatedContext;
     _rowForPasswordBeingShown = -1;
 }
 
-- (NSString *)selectedPassword {
+- (void)requestPassword:(void (^)(NSString *password))block {
     DLog(@"selectedPassowrd");
     if (!sAuthenticatedContext) {
         DLog(@"selectedPassword: return nil, not authenticated");
-        return nil;
+        block(nil);
     }
     NSInteger index = [_tableView selectedRow];
     if (index < 0) {
         DLog(@"selectedPassowrd: return nil, negative index");
-        return nil;
+        block(nil);
     }
-    NSError *error = nil;
-    NSString *password = [[self keychain] passwordForService:kServiceName
-                                                     account:_accounts[index]
-                                                     context:sAuthenticatedContext
-                                                       error:&error];
-    if (error) {
-        DLog(@"selectedPassword: return nil, keychain gave error %@", error);
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = [NSString stringWithFormat:@"Could not get password. Keychain query failed: %@", error];
-            [alert addButtonWithTitle:@"OK"];
-            [alert runModal];
-        });
-        return nil;
-    } else {
-        DLog(@"selectedPassowrd: return nonnil password");
-        return password ?: @"";
-    }
+    NSString *account = [_accounts[index] copy];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSError *error = nil;
+        NSString *password = [[self keychain] passwordForService:kServiceName
+                                                         account:account
+                                                         context:sAuthenticatedContext
+                                                           error:&error];
+        if (error) {
+            DLog(@"selectedPassword: return nil, keychain gave error %@", error);
+            static dispatch_once_t onceToken;
+            dispatch_once(&onceToken, ^{
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    NSAlert *alert = [[NSAlert alloc] init];
+                    alert.messageText = [NSString stringWithFormat:@"Could not get password. Keychain query failed: %@", error];
+                    [alert addButtonWithTitle:@"OK"];
+                    [alert runModal];
+                });
+            });
+            block(nil);
+        } else {
+            DLog(@"selectedPassowrd: return nonnil password");
+            dispatch_async(dispatch_get_main_queue(), ^{
+                block(password ?: @"");
+            });
+        }
+    });
 }
 
 - (NSUInteger)indexOfAccountName:(NSString *)name {
