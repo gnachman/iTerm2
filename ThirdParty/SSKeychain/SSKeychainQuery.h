@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import <Security/Security.h>
 
+@class LAContext;
+
 // Keychain synchronization available at compile time; this requires a
 // deployment target of 10.9. Changed for iTerm2 because our SDK differs from
 // our deployment target.
@@ -61,6 +63,7 @@ typedef NS_ENUM(NSUInteger, SSKeychainQuerySynchronizationMode) {
  */
 @property (nonatomic, copy) NSString *password;
 
+@property (nonatomic, strong) LAContext *localAuthContext;
 
 ///------------------------
 /// @name Saving & Deleting

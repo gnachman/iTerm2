@@ -118,6 +118,9 @@
 	NSMutableDictionary *query = [self query];
 	[query setObject:@YES forKey:(__bridge id)kSecReturnData];
 	[query setObject:(__bridge id)kSecMatchLimitOne forKey:(__bridge id)kSecMatchLimit];
+	if (self.localAuthContext) {
+		[query setObject:self.localAuthContext forKey:(__bridge id)kSecUseAuthenticationContext];
+	}
 	status = SecItemCopyMatching((__bridge CFDictionaryRef)query, &result);
 
 	if (status != errSecSuccess && error != NULL) {

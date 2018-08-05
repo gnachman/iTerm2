@@ -18,7 +18,7 @@
 
 static NSString *const kServiceName = @"iTerm2";
 static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersShouldReloadData";
-static BOOL sAuthenticated;
+static LAContext *sAuthenticatedContext;
 
 @interface iTermPasswordManagerWindowController () <
     NSTableViewDataSource,
@@ -41,7 +41,7 @@ static BOOL sAuthenticated;
 }
 
 + (NSArray *)accountNamesWithFilter:(NSString *)filter {
-    if (!sAuthenticated) {
+    if (!sAuthenticatedContext) {
         return @[ ];
     }
 
@@ -60,7 +60,7 @@ static BOOL sAuthenticated;
                 [array addObject:accountName];
             }
     }
-    return [[array sortedArrayUsingSelector:@selector(compare:)] retain];
+    return [array sortedArrayUsingSelector:@selector(compare:)];
 }
 
 + (void)authenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext reply:(void(^)(BOOL success, NSError * __nullable error))reply NS_AVAILABLE_MAC(10_11) {
@@ -68,7 +68,6 @@ static BOOL sAuthenticated;
 
     NSString *myLocalizedReasonString = @"open the password manager";
     // You're supposed to hold a reference to the context until it's done doing its thing.
-    [myContext retain];
     if (policy == LAPolicyDeviceOwnerAuthentication) {
         [[iTermApplication sharedApplication] setLocalAuthenticationDialogOpen:YES];
     }
@@ -80,19 +79,16 @@ static BOOL sAuthenticated;
                             }
                             if (success) {
                                 dispatch_async(dispatch_get_main_queue(), ^{
-                                    sAuthenticated = YES;
+                                    sAuthenticatedContext = myContext;
                                     reply(success, error);
                                 });
                             } else {
                                 dispatch_async(dispatch_get_main_queue(), ^{
-                                    sAuthenticated = NO;
+                                    sAuthenticatedContext = nil;
                                     if (error.code != LAErrorSystemCancel &&
                                         error.code != LAErrorAppCancel) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpartial-availability"
                                         BOOL isTouchID = (policy == LAPolicyDeviceOwnerAuthenticationWithBiometrics);
-#pragma clang diagnostic pop
-                                        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+                                        NSAlert *alert = [[NSAlert alloc] init];
                                         alert.messageText = @"Authentication Failed";
                                         alert.informativeText = [NSString stringWithFormat:@"Authentication failed because %@", [self reasonForAuthenticationError:error touchID:isTouchID]];
                                         [alert addButtonWithTitle:@"OK"];
@@ -101,7 +97,6 @@ static BOOL sAuthenticated;
                                     reply(success, error);
                                 });
                             }
-                            [myContext release];
                         }];
 }
 
@@ -153,10 +148,7 @@ static BOOL sAuthenticated;
 }
 
 - (void)dealloc {
-    [_accounts release];
-    [_accountNameToSelectAfterAuthentication release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [super dealloc];
 }
 
 - (void)awakeFromNib {
@@ -167,7 +159,7 @@ static BOOL sAuthenticated;
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
-    if (sAuthenticated) {
+    if (sAuthenticatedContext) {
         [[self window] makeFirstResponder:_searchField];
     }
 }
@@ -192,8 +184,7 @@ static BOOL sAuthenticated;
     if (index != NSNotFound) {
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
                 byExtendingSelection:NO];
-    } else if (!sAuthenticated) {
-        [_accountNameToSelectAfterAuthentication autorelease];
+    } else if (!sAuthenticatedContext) {
         _accountNameToSelectAfterAuthentication = [name copy];
     }
 }
@@ -219,9 +210,9 @@ static BOOL sAuthenticated;
 }
 
 - (IBAction)add:(id)sender {
-    if (sAuthenticated) {
+    if (sAuthenticatedContext) {
         NSString *name = [self nameForNewAccount];
-        if ([[self keychain] setPassword:@"" forService:kServiceName account:name]) {
+        if ([[self keychain] setPassword:@"" forService:kServiceName account:name context:sAuthenticatedContext error:nil]) {
             [self reloadAccounts];
             NSUInteger index = [self indexOfAccountName:name];
             if (index != NSNotFound) {
@@ -233,11 +224,11 @@ static BOOL sAuthenticated;
 }
 
 - (IBAction)remove:(id)sender {
-    if (sAuthenticated) {
+    if (sAuthenticatedContext) {
         NSInteger selectedRow = [_tableView selectedRow];
         NSString *selectedAccountName = [self accountNameForRow:selectedRow];
         [_tableView reloadData];
-        [[self keychain] deletePasswordForService:kServiceName account:selectedAccountName];
+        [[self keychain] deletePasswordForService:kServiceName account:selectedAccountName context:sAuthenticatedContext error:nil];
         [self reloadAccounts];
         [self passwordsDidChange];
     }
@@ -291,7 +282,7 @@ static BOOL sAuthenticated;
 #pragma mark - Private
 
 - (Class)keychain {
-    if (sAuthenticated) {
+    if (sAuthenticatedContext) {
         return [SSKeychain class];
     } else {
         return nil;
@@ -300,97 +291,54 @@ static BOOL sAuthenticated;
 
 - (void)requestAuthenticationIfPossible {
     DLog(@"Request auth if possible");
-    if (sAuthenticated) {
+    if (sAuthenticatedContext) {
         DLog(@"Already authenticated");
         return;
     }
-    if (!NSClassFromString(@"LAContext") || !IsElCapitanOrLater()) {
-        DLog(@"OS is too old to check auth. Setting auth flag to YES");
-        sAuthenticated = YES;
-        return;
-    }
-
-    if (@available(macOS 10.11, *)) {
-        LAContext *myContext = [[[LAContext alloc] init] autorelease];
-        NSString *reason = nil;
-        if (![self tryToAuthenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext reason:&reason]) {
-            DLog(@"There are no auth policies that can succeed on this machine. Giving up. %@", reason);
-            sAuthenticated = YES;
-        }
-    }
-}
-
-- (BOOL)policyAvailableOnThisOSVersion:(LAPolicy)policy NS_AVAILABLE_MAC(10_11) {
-    switch (policy) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpartial-availability"
-        case LAPolicyDeviceOwnerAuthenticationWithBiometrics:
-#pragma clang diagnostic pop
-            return IsTouchBarAvailable();
-
-        case LAPolicyDeviceOwnerAuthentication:
-            return IsElCapitanOrLater();
-
-        default:
-            return NO;
-    }
-}
-
-- (BOOL)tryToAuthenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext reason:(NSString **)reason NS_AVAILABLE_MAC(10_11) {
-    DLog(@"Try to auth with %@", @(policy));
-    NSError *authError = nil;
-    if (![self policyAvailableOnThisOSVersion:policy]) {
-        *reason = @"Policy not available on this OS version";
-        return NO;
-    }
-    if ([myContext canEvaluatePolicy:policy error:&authError]) {
-        DLog(@"It says we can evaluate this policy");
-        [self authenticateWithPolicy:policy context:myContext];
-        return YES;
-    } else {
-        *reason = [NSString stringWithFormat:@"Can't authenticate with policy %@: %@", @(policy), authError];
-        return NO;
-    }
+    LAContext *myContext = [[LAContext alloc] init];
+    [self authenticateWithPolicy:LAPolicyDeviceOwnerAuthentication context:myContext];
 }
 
 - (void)authenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext NS_AVAILABLE_MAC(10_11) {
+    __weak __typeof(self) weakSelf = self;
     [[self class] authenticateWithPolicy:policy context:myContext reply:^(BOOL success, NSError * _Nullable error) {
-        // When a sheet is attached to a hotkey window another app becomes active after the auth dialog
-        // is dismissed, leaving the hotkey behind another app.
-        [NSApp activateIgnoringOtherApps:YES];
-        [self.window.sheetParent makeKeyAndOrderFront:nil];
-
-        if (success) {
-            [self reloadAccounts];
-            if (_accountNameToSelectAfterAuthentication) {
-                [self selectAccountName:_accountNameToSelectAfterAuthentication];
-                [_accountNameToSelectAfterAuthentication release];
-                _accountNameToSelectAfterAuthentication = nil;
-            } else {
-                [[self window] makeFirstResponder:_searchField];
-            }
-        } else {
-            [self closeOrEndSheet];
-        }
+        [weakSelf didAuthenticateWithSuccess:success error:error];
     }];
 }
 
+- (void)didAuthenticateWithSuccess:(BOOL)success error:(NSError *)error {
+    // When a sheet is attached to a hotkey window another app becomes active after the auth dialog
+    // is dismissed, leaving the hotkey behind another app.
+    [NSApp activateIgnoringOtherApps:YES];
+    [self.window.sheetParent makeKeyAndOrderFront:nil];
+    
+    if (success) {
+        [self reloadAccounts];
+        if (_accountNameToSelectAfterAuthentication) {
+            [self selectAccountName:_accountNameToSelectAfterAuthentication];
+            _accountNameToSelectAfterAuthentication = nil;
+        } else {
+            [[self window] makeFirstResponder:_searchField];
+        }
+    } else {
+        [self closeOrEndSheet];
+    }
+}
+
 - (void)setPasswordBeingShown:(NSString *)password onRow:(NSInteger)row {
-    [_passwordBeingShown release];
-    _passwordBeingShown = [password retain];
+    _passwordBeingShown = password;
     _rowForPasswordBeingShown = row;
 }
 
 - (void)clearPasswordBeingShown {
-    [_passwordBeingShown release];
     _passwordBeingShown = nil;
     _rowForPasswordBeingShown = -1;
 }
 
 - (NSString *)selectedPassword {
     DLog(@"selectedPassowrd");
-    if (!sAuthenticated) {
-        DLog(@"selectedPassowrd: return nil, not authenticated");
+    if (!sAuthenticatedContext) {
+        DLog(@"selectedPassword: return nil, not authenticated");
         return nil;
     }
     NSInteger index = [_tableView selectedRow];
@@ -401,12 +349,13 @@ static BOOL sAuthenticated;
     NSError *error = nil;
     NSString *password = [[self keychain] passwordForService:kServiceName
                                                      account:_accounts[index]
+                                                     context:sAuthenticatedContext
                                                        error:&error];
     if (error) {
-        DLog(@"selectedPassowrd: return nil, keychain gave error %@", error);
+        DLog(@"selectedPassword: return nil, keychain gave error %@", error);
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = [NSString stringWithFormat:@"Could not get password. Keychain query failed: %@", error];
             [alert addButtonWithTitle:@"OK"];
             [alert runModal];
@@ -439,9 +388,8 @@ static BOOL sAuthenticated;
 
 - (void)reloadAccounts {
     [self clearPasswordBeingShown];
-    [_accounts release];
     NSString *filter = [_searchField stringValue];
-    if (sAuthenticated) {
+    if (sAuthenticatedContext) {
         _accounts = [[self class] accountNamesWithFilter:filter];
     } else {
         _accounts = @[];
@@ -485,7 +433,7 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
    setObjectValue:(id)anObject
    forTableColumn:(NSTableColumn *)aTableColumn
               row:(NSInteger)rowIndex {
-    if (!sAuthenticated) {
+    if (!sAuthenticatedContext) {
         return;
     }
     if (rowIndex < 0 || rowIndex >= _accounts.count) {
@@ -496,19 +444,20 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
         NSError *error = nil;
         NSString *password = [[self keychain] passwordForService:kServiceName
                                                          account:accountName
+                                                         context:sAuthenticatedContext
                                                            error:&error];
         if (!error) {
             if (!password) {
                 password = @"";
             }
-            if ([[self keychain] deletePasswordForService:kServiceName account:accountName]) {
-                [[self keychain] setPassword:password forService:kServiceName account:anObject];
+            if ([[self keychain] deletePasswordForService:kServiceName account:accountName context:sAuthenticatedContext error:nil]) {
+                [[self keychain] setPassword:password forService:kServiceName account:anObject context:sAuthenticatedContext error:nil];
                 [self reloadAccounts];
             }
         }
     } else {
         [self clearPasswordBeingShown];
-        [[self keychain] setPassword:anObject forService:kServiceName account:accountName];
+        [[self keychain] setPassword:anObject forService:kServiceName account:accountName context:sAuthenticatedContext error:nil];
     }
     [self passwordsDidChange];
 }
@@ -539,17 +488,17 @@ shouldEditTableColumn:(NSTableColumn *)aTableColumn
 dataCellForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
     if (tableColumn == _accountNameColumn) {
-        NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@"name"] autorelease];
+        NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@"name"];
         [cell setEditable:YES];
         return cell;
     } else if (tableColumn == _passwordColumn) {
         if ([_tableView editedRow] == row) {
-            NSSecureTextFieldCell *cell = [[[NSSecureTextFieldCell alloc] initTextCell:@"editPassword"] autorelease];
+            NSSecureTextFieldCell *cell = [[NSSecureTextFieldCell alloc] initTextCell:@"editPassword"];
             [cell setEditable:YES];
             [cell setEchosBullets:YES];
             return cell;
         } else {
-            NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@"password"] autorelease];
+            NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@"password"];
             [cell setEditable:YES];
             return cell;
         }

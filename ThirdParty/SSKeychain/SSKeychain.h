@@ -73,6 +73,10 @@ extern NSString *const kSSKeychainWhereKey;
  */
 + (NSString *)passwordForService:(NSString *)serviceName account:(NSString *)account;
 + (NSString *)passwordForService:(NSString *)serviceName account:(NSString *)account error:(NSError **)error;
++ (NSString *)passwordForService:(NSString *)serviceName
+                         account:(NSString *)account
+                         context:(LAContext *)context
+                           error:(NSError **)error;
 
 
 /**
@@ -86,6 +90,7 @@ extern NSString *const kSSKeychainWhereKey;
  */
 + (BOOL)deletePasswordForService:(NSString *)serviceName account:(NSString *)account;
 + (BOOL)deletePasswordForService:(NSString *)serviceName account:(NSString *)account error:(NSError **)error;
++ (BOOL)deletePasswordForService:(NSString *)serviceName account:(NSString *)account context:(LAContext *)context error:(NSError **)error;
 
 
 /**
@@ -101,6 +106,7 @@ extern NSString *const kSSKeychainWhereKey;
  */
 + (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account;
 + (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account error:(NSError **)error;
++ (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account context:(LAContext *)context error:(NSError **)error;
 
 
 /**

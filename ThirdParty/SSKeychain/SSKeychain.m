@@ -29,9 +29,17 @@ NSString *const kSSKeychainWhereKey = @"svce";
 
 
 + (NSString *)passwordForService:(NSString *)serviceName account:(NSString *)account error:(NSError *__autoreleasing *)error {
+    return [self passwordForService:serviceName account:account context:nil error:error];
+}
+
++ (NSString *)passwordForService:(NSString *)serviceName
+                         account:(NSString *)account
+                         context:(LAContext *)context
+                           error:(NSError *__autoreleasing *)error {
 	SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
 	query.service = serviceName;
 	query.account = account;
+	query.localAuthContext = context;
 	[query fetch:error];
 	return query.password;
 }
@@ -43,9 +51,14 @@ NSString *const kSSKeychainWhereKey = @"svce";
 
 
 + (BOOL)deletePasswordForService:(NSString *)serviceName account:(NSString *)account error:(NSError *__autoreleasing *)error {
+    return [self deletePasswordForService:serviceName account:account context:nil error:error];
+}
+
++ (BOOL)deletePasswordForService:(NSString *)serviceName account:(NSString *)account context:(LAContext *)context error:(NSError *__autoreleasing *)error {
 	SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
 	query.service = serviceName;
 	query.account = account;
+	query.localAuthContext = context;
 	return [query deleteItem:error];
 }
 
@@ -56,10 +69,15 @@ NSString *const kSSKeychainWhereKey = @"svce";
 
 
 + (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account error:(NSError *__autoreleasing *)error {
+    return [self setPassword:password forService:serviceName account:account context:nil error:error];
+}
+
++ (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account context:(LAContext *)context error:(NSError *__autoreleasing *)error {
 	SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
 	query.service = serviceName;
 	query.account = account;
 	query.password = password;
+	query.localAuthContext = context;
 	return [query save:error];
 }
 
