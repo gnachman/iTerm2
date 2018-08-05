@@ -322,8 +322,7 @@ typedef enum {
 // tty device
 @property(nonatomic, readonly) NSString *tty;
 
-// True if background image should be tiled
-@property(nonatomic, assign) BOOL backgroundImageTiled;
+@property(nonatomic, assign) iTermBackgroundImageMode backgroundImageMode;
 
 // Filename of background image.
 @property(nonatomic, copy) NSString *backgroundImagePath;  // Used by scripting

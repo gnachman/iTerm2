@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14109" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14113" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14109"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
         <capability name="box content view" minToolsVersion="7.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -1493,10 +1493,10 @@ DQ
                 <outlet property="view" destination="G2G-W6-kWa" id="dro-S5-ibW"/>
             </connections>
         </customObject>
-        <customObject id="BMA-OA-Kzc" customClass="ProfilesWindowPreferencesViewController">
+        <customObject id="BMA-OA-Kzc" userLabel="Profiles&gt;Window" customClass="ProfilesWindowPreferencesViewController">
             <connections>
+                <outlet property="_backgroundImageMode" destination="TfM-qR-99a" id="6E7-ta-mrr"/>
                 <outlet property="_backgroundImagePreview" destination="4974" id="zoR-T3-lJq"/>
-                <outlet property="_backgroundImageTiled" destination="6395" id="yEm-Wg-cU2"/>
                 <outlet property="_blendAmount" destination="6320" id="FUt-BP-aez"/>
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
@@ -2775,7 +2775,7 @@ DQ
             <point key="canvasLocation" x="504" y="1335"/>
         </customView>
         <customView misplaced="YES" id="77f-eM-Dma" userLabel="Prefs - Profiles - Window" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="559" height="354"/>
+            <rect key="frame" x="0.0" y="0.0" width="571" height="354"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4911">
@@ -2831,8 +2831,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <popUpButton verticalHuggingPriority="750" id="4916">
-                    <rect key="frame" x="324" y="102" width="221" height="26"/>
+                <popUpButton verticalHuggingPriority="750" misplaced="YES" id="4916">
+                    <rect key="frame" x="333" y="102" width="221" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Fullscreen" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="4944" id="4941">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -2860,8 +2860,8 @@ DQ
                         <outlet property="nextKeyView" destination="4917" id="5260"/>
                     </connections>
                 </popUpButton>
-                <popUpButton verticalHuggingPriority="750" id="4917">
-                    <rect key="frame" x="324" y="76" width="221" height="26"/>
+                <popUpButton verticalHuggingPriority="750" misplaced="YES" id="4917">
+                    <rect key="frame" x="333" y="76" width="221" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" alternateTitle="Current Screen" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4939">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -2873,8 +2873,8 @@ DQ
                         <outlet property="nextKeyView" destination="4921" id="5261"/>
                     </connections>
                 </popUpButton>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4918">
-                    <rect key="frame" x="284" y="108" width="41" height="17"/>
+                <textField verticalHuggingPriority="750" misplaced="YES" allowsCharacterPickerTouchBarItem="YES" id="4918">
+                    <rect key="frame" x="293" y="108" width="41" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Style:" id="4938">
                         <font key="font" metaFont="system"/>
@@ -2882,8 +2882,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4919">
-                    <rect key="frame" x="272" y="82" width="53" height="17"/>
+                <textField verticalHuggingPriority="750" misplaced="YES" allowsCharacterPickerTouchBarItem="YES" id="4919">
+                    <rect key="frame" x="281" y="82" width="53" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Screen:" id="4937">
                         <font key="font" metaFont="system"/>
@@ -2891,8 +2891,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4920">
-                    <rect key="frame" x="272" y="56" width="53" height="17"/>
+                <textField verticalHuggingPriority="750" misplaced="YES" allowsCharacterPickerTouchBarItem="YES" id="4920">
+                    <rect key="frame" x="281" y="56" width="53" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Space:" id="4936">
                         <font key="font" metaFont="system"/>
@@ -2900,8 +2900,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <popUpButton verticalHuggingPriority="750" id="4921">
-                    <rect key="frame" x="323" y="49" width="222" height="26"/>
+                <popUpButton verticalHuggingPriority="750" misplaced="YES" id="4921">
+                    <rect key="frame" x="332" y="49" width="222" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Current Space" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="4935" id="4922">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -2927,8 +2927,8 @@ DQ
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="cwq-Sh-GKV"/>
                     </connections>
                 </popUpButton>
-                <button id="4973">
-                    <rect key="frame" x="275" y="305" width="144" height="18"/>
+                <button misplaced="YES" id="4973">
+                    <rect key="frame" x="284" y="305" width="144" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Background image:" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4988">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2939,20 +2939,8 @@ DQ
                         <outlet property="nextKeyView" destination="2100" id="5267"/>
                     </connections>
                 </button>
-                <button toolTip="Tessellates the image instead of stretching it." id="6395">
-                    <rect key="frame" x="297" y="185" width="88" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Tile image" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6396">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="BMA-OA-Kzc" id="ybT-gs-oVX"/>
-                        <outlet property="nextKeyView" destination="2100" id="6398"/>
-                    </connections>
-                </button>
-                <imageView id="4974" customClass="iTermImageWell">
-                    <rect key="frame" x="296" y="206" width="249" height="96"/>
+                <imageView misplaced="YES" id="4974" customClass="iTermImageWell">
+                    <rect key="frame" x="305" y="206" width="249" height="96"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <imageCell key="cell" selectable="YES" editable="YES" alignment="left" imageScaling="proportionallyDown" imageFrameStyle="grayBezel" id="4987"/>
                     <connections>
@@ -2968,10 +2956,10 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6324">
-                    <rect key="frame" x="296" y="162" width="68" height="17"/>
+                <textField verticalHuggingPriority="750" misplaced="YES" allowsCharacterPickerTouchBarItem="YES" id="rG2-Kr-L09">
+                    <rect key="frame" x="272" y="184" width="62" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Blending:" id="6325">
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Mode:" id="nqL-V5-PvW">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -2997,8 +2985,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6327">
-                    <rect key="frame" x="275" y="331" width="146" height="20"/>
+                <textField verticalHuggingPriority="750" misplaced="YES" allowsCharacterPickerTouchBarItem="YES" id="6327">
+                    <rect key="frame" x="284" y="331" width="146" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Background Image" id="6328">
                         <font key="font" metaFont="systemBold"/>
@@ -3060,8 +3048,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <slider toolTip="How much of the background image is visible through the background color." verticalHuggingPriority="750" id="6320">
-                    <rect key="frame" x="367" y="160" width="177" height="21"/>
+                <slider toolTip="How much of the background image is visible through the background color." verticalHuggingPriority="750" misplaced="YES" id="6320">
+                    <rect key="frame" x="338" y="154" width="215" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.050000000000000003" maxValue="1" doubleValue="0.40000000000000002" tickMarkPosition="below" sliderType="linear" id="6321"/>
                     <connections>
@@ -3115,8 +3103,36 @@ DQ
                         <outlet property="nextKeyView" destination="fwj-4Y-nja" id="u8P-d1-x0a"/>
                     </connections>
                 </button>
+                <popUpButton verticalHuggingPriority="750" misplaced="YES" id="TfM-qR-99a" userLabel="Mode Popup">
+                    <rect key="frame" x="338" y="178" width="216" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" title="Stretch" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="SZF-cW-ZSJ" id="Td6-wf-6Jq" userLabel="Mode Popup Cell">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" id="Vd1-ex-T43">
+                            <items>
+                                <menuItem title="Stretch" state="on" id="SZF-cW-ZSJ"/>
+                                <menuItem title="Tile" tag="1" id="dDL-md-i3w"/>
+                                <menuItem title="Scale to Fill" tag="2" id="4Qt-SM-LZH"/>
+                                <menuItem title="Scale to Fit" tag="3" id="b9n-62-qE3"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="BMA-OA-Kzc" id="nTF-Vw-epZ"/>
+                    </connections>
+                </popUpButton>
+                <textField verticalHuggingPriority="750" misplaced="YES" allowsCharacterPickerTouchBarItem="YES" id="6324">
+                    <rect key="frame" x="268" y="159" width="66" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Blending:" id="6325">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
             </subviews>
-            <point key="canvasLocation" x="-823.5" y="654"/>
+            <point key="canvasLocation" x="-817.5" y="654"/>
         </customView>
         <customView misplaced="YES" id="0rQ-EK-tyN" userLabel="Prefs - Profiles - Terminal" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="578" height="545"/>

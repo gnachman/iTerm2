@@ -28,7 +28,7 @@
     IBOutlet NSSlider *_blurRadius;
     IBOutlet NSButton *_useBackgroundImage;
     IBOutlet iTermImageWell *_backgroundImagePreview;
-    IBOutlet NSButton *_backgroundImageTiled;
+    IBOutlet NSButton *_backgroundImageMode;
     IBOutlet NSSlider *_blendAmount;
     IBOutlet NSTextField *_columnsField;
     IBOutlet NSTextField *_rowsField;
@@ -87,10 +87,10 @@
     [self defineControl:_blurRadius
                     key:KEY_BLUR_RADIUS
                    type:kPreferenceInfoTypeSlider];
-
-    [self defineControl:_backgroundImageTiled
-                    key:KEY_BACKGROUND_IMAGE_TILED
-                   type:kPreferenceInfoTypeCheckbox];
+#warning TODO: Add this to python preferences once I get the source off my other machine
+    [self defineControl:_backgroundImageMode
+                    key:KEY_BACKGROUND_IMAGE_MODE
+                   type:kPreferenceInfoTypePopup];
 
     [self defineControl:_blendAmount
                     key:KEY_BLEND

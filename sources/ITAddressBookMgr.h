@@ -137,9 +137,10 @@
 #define KEY_USE_NONASCII_FONT      @"Use Non-ASCII Font"
 #define KEY_NONASCII_ANTI_ALIASED  @"Non-ASCII Anti Aliased"
 #define KEY_BACKGROUND_IMAGE_LOCATION @"Background Image Location"
-#define KEY_BACKGROUND_IMAGE_TILED @"Background Image Is Tiled"
+#define KEY_BACKGROUND_IMAGE_TILED_DEPRECATED @"Background Image Is Tiled"  // DEPRECATED
 #define KEY_ASCII_LIGATURES        @"ASCII Ligatures"
 #define KEY_NON_ASCII_LIGATURES    @"Non-ASCII Ligatures"
+#define KEY_BACKGROUND_IMAGE_MODE @"Background Image Mode"  // iTermBackgroundImageMode enum
 
 // Terminal
 #define KEY_DISABLE_WINDOW_RESIZING           @"Disable Window Resizing"
@@ -303,6 +304,13 @@ typedef NS_ENUM(NSUInteger, iTermUnicodeNormalization) {
     iTermUnicodeNormalizationNFC = 1,
     iTermUnicodeNormalizationNFD = 2,
     iTermUnicodeNormalizationHFSPlus = 3,
+};
+
+typedef NS_ENUM(NSUInteger, iTermBackgroundImageMode) {
+    iTermBackgroundImageModeStretch = 0,
+    iTermBackgroundImageModeTile = 1,
+    iTermBackgroundImageModeScaleAspectFill = 2,
+    iTermBackgroundImageModeScaleAspectFit = 3
 };
 
 typedef NS_OPTIONS(NSUInteger, iTermTitleComponents) {

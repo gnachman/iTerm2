@@ -189,7 +189,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                          KEY_BLINK_ALLOWED, KEY_USE_ITALIC_FONT, KEY_AMBIGUOUS_DOUBLE_WIDTH,
                          KEY_UNICODE_NORMALIZATION, KEY_HORIZONTAL_SPACING, KEY_VERTICAL_SPACING,
                          KEY_USE_NONASCII_FONT, KEY_TRANSPARENCY, KEY_BLUR, KEY_BLUR_RADIUS,
-                         KEY_BACKGROUND_IMAGE_TILED, KEY_BLEND, KEY_SYNC_TITLE_DEPRECATED,
+                         KEY_BACKGROUND_IMAGE_TILED_DEPRECATED, KEY_BACKGROUND_IMAGE_MODE, KEY_BLEND, KEY_SYNC_TITLE_DEPRECATED,
                          KEY_DISABLE_WINDOW_RESIZING,
                          KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR,
                          KEY_ASCII_ANTI_ALIASED, KEY_NONASCII_ANTI_ALIASED, KEY_SCROLLBACK_LINES,
@@ -286,7 +286,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_TRANSPARENCY: @0.0,
                   KEY_BLUR: @NO,
                   KEY_BLUR_RADIUS: @2.0,
-                  KEY_BACKGROUND_IMAGE_TILED: @NO,
+                  KEY_BACKGROUND_IMAGE_TILED_DEPRECATED: @NO,
+                  KEY_BACKGROUND_IMAGE_MODE: @(iTermBackgroundImageModeStretch),
                   KEY_BLEND: @0.5,
                   KEY_COLUMNS: @80,
                   KEY_ROWS: @25,
@@ -415,7 +416,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         dict = @{ KEY_IDLE_PERIOD: PROFILE_BLOCK(antiIdlePeriodWithLegacyDefaultInProfile),
                   KEY_UNICODE_NORMALIZATION: PROFILE_BLOCK(unicodeNormalizationForm),
                   KEY_UNICODE_VERSION: PROFILE_BLOCK(unicodeVersion),
-                  KEY_TITLE_COMPONENTS: PROFILE_BLOCK(titleComponents)
+                  KEY_TITLE_COMPONENTS: PROFILE_BLOCK(titleComponents),
+                  KEY_BACKGROUND_IMAGE_MODE: PROFILE_BLOCK(backgroundImageMode)
                 };
     }
     return dict;
@@ -493,6 +495,18 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         // Fall back to the default from the dictionary.
         return [self defaultObjectForKey:key];
     }
+}
+
++ (id)backgroundImageMode:(Profile *)profile {
+    if (profile[KEY_BACKGROUND_IMAGE_MODE] != nil) {
+        return profile[KEY_BACKGROUND_IMAGE_MODE];
+    }
+    NSNumber *tiled = profile[KEY_BACKGROUND_IMAGE_TILED_DEPRECATED];
+    if (tiled.boolValue) {
+        return @(iTermBackgroundImageModeTile);
+    }
+    
+    return @(iTermBackgroundImageModeStretch);
 }
 
 + (id)titleComponents:(Profile *)profile {
