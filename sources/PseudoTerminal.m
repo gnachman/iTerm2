@@ -5016,9 +5016,8 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         [movePaneController removeAndClearSession];
     }
-    PTYTab *theTab = [[[PTYTab alloc] initWithSession:session] autorelease];
+    PTYTab *theTab = [[[PTYTab alloc] initWithSession:session parentWindow:self] autorelease];
     [theTab setActiveSession:session];
-    [theTab setParentWindow:self];
     theTab.delegate = self;
     NSTabViewItem *tabViewItem = [[[NSTabViewItem alloc] initWithIdentifier:(id)theTab] autorelease];
     [theTab setTabViewItem:tabViewItem];
@@ -7273,7 +7272,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if ([[self allSessions] indexOfObject:aSession] == NSNotFound) {
         // create a new tab
-        PTYTab *aTab = [[PTYTab alloc] initWithSession:aSession];
+        PTYTab *aTab = [[PTYTab alloc] initWithSession:aSession
+                                          parentWindow:self];
         [aSession setIgnoreResizeNotifications:YES];
         if ([self numberOfTabs] == 0) {
             [aTab setReportIdealSizeAsCurrent:YES];

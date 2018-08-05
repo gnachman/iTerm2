@@ -306,7 +306,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 #pragma mark - NSObject
 
-- (instancetype)initWithSession:(PTYSession *)session {
+- (instancetype)initWithSession:(PTYSession *)session
+                   parentWindow:(NSWindowController<iTermWindowController> *)parentWindow {
     self = [super init];
     if (self) {
         PtyLog(@"PTYTab initWithSession %p", self);
@@ -321,6 +322,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             tmuxController_ = [oldTab tmuxController];
             parseTree_ = oldTab->parseTree_;
             [tmuxController_ changeWindow:self.tmuxWindow tabTo:self];
+        }
+        if (parentWindow) {
+            [self setParentWindow:parentWindow];
         }
         session.delegate = self;
         [root_ addSubview:[session view]];
