@@ -326,7 +326,7 @@ static NSInteger gNextFrameDataNumber;
     }
     if (@available(macOS 10.14, *)) {
         if (self.postmultipliedRenderPassDescriptor) {
-            [[self sharedTexturePool] returnTexture:self.postmultipliedRenderPassDescriptor.colorAttachments[0].texture];
+            [self.fullSizeTexturePool returnTexture:self.postmultipliedRenderPassDescriptor.colorAttachments[0].texture];
         }
     }
 #if ENABLE_USE_TEMPORARY_TEXTURE
