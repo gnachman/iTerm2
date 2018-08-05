@@ -2638,8 +2638,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewDidFindDirtyRects {
 }
 
-- (BOOL)backgroundImageTiled {
-    return NO;
+- (BOOL)backgroundImageMode {
+    return iTermBackgroundImageModeStretch;
 }
 
 - (NSImage *)textViewBackgroundImage {

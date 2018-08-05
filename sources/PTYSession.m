@@ -6949,7 +6949,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
     *drawRect = destinationRect;
     
-    CGFloat sideOverage = MAX(0, -sourceRect.origin.x);
     if (imageAspectRatio <= viewAspectRatio) {
         // Left pillarbox
         const CGFloat pillarboxWidth = (viewSize.width - viewRect.size.width) / 2;

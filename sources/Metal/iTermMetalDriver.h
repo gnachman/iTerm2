@@ -91,8 +91,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
                                                                                 scale:(CGFloat)scale
                                                                                 emoji:(BOOL *)emoji;
 
-// Returns the background image or nil. If there's a background image, fill in blending and tiled.
-- (NSImage *)metalBackgroundImageGetTiled:(nullable BOOL *)tiled;
+// Returns the background image or nil. If there's a background image, fill in mode.
+- (NSImage *)metalBackgroundImageGetMode:(nullable iTermBackgroundImageMode *)mode;
 
 // An object that compares as equal if ascii characters produced by metalImagesForGlyph would
 // produce the same bitmap.

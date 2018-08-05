@@ -197,7 +197,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (void)textViewNeedsDisplayInRect:(NSRect)rect;
 - (void)textViewDidSelectPasswordPrompt;
 - (NSImage *)textViewBackgroundImage;
-- (BOOL)backgroundImageTiled;
+- (iTermBackgroundImageMode)backgroundImageMode;
 - (BOOL)textViewShouldDrawRect;
 - (void)textViewDidHighightMark;
 

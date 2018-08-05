@@ -1,5 +1,6 @@
 #import "iTermBackgroundImageRenderer.h"
 
+#import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermShaderTypes.h"
 
@@ -7,7 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBackgroundImageRendererTransientState ()
 @property (nonatomic, strong) id<MTLTexture> texture;
-@property (nonatomic) BOOL tiled;
+@property (nonatomic) iTermBackgroundImageMode mode;
 @property (nonatomic) NSSize imageSize;
 @end
 
@@ -19,10 +20,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)writeDebugInfoToFolder:(NSURL *)folder {
     [super writeDebugInfoToFolder:folder];
-    [[NSString stringWithFormat:@"tiled=%@", _tiled ? @"YES" : @"NO"] writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
-                                                                      atomically:NO
-                                                                        encoding:NSUTF8StringEncoding
-                                                                           error:NULL];
+    [[NSString stringWithFormat:@"mode=%@", @(_mode)] writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
+                                                      atomically:NO
+                                                        encoding:NSUTF8StringEncoding
+                                                           error:NULL];
 }
 
 @end
@@ -32,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     iTermMetalBufferPool *_alphaPool;
 #endif
-    BOOL _tiled;
+    iTermBackgroundImageMode _mode;
     NSImage *_image;
     id<MTLTexture> _texture;
 }
@@ -60,12 +61,12 @@ NS_ASSUME_NONNULL_BEGIN
     return iTermMetalFrameDataStatPqCreateBackgroundImageTS;
 }
 
-- (void)setImage:(NSImage *)image tiled:(BOOL)tiled context:(nullable iTermMetalBufferPoolContext *)context {
+- (void)setImage:(NSImage *)image mode:(iTermBackgroundImageMode)mode context:(nullable iTermMetalBufferPoolContext *)context {
     if (image != _image) {
         _texture = image ? [_metalRenderer textureFromImage:image context:context] : nil;
     }
     _image = image;
-    _tiled = tiled;
+    _mode = mode;
 }
 
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
@@ -126,7 +127,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermBackgroundImageRendererTransientState *)tState {
     tState.texture = _texture;
-    tState.tiled = _tiled;
+    tState.mode = _mode;
     tState.imageSize = _image.size;
 }
 
@@ -134,15 +135,8 @@ NS_ASSUME_NONNULL_BEGIN
     const CGFloat scale = tState.configuration.scale;
     const CGSize nativeTextureSize = NSMakeSize(tState.imageSize.width * scale,
                                                 tState.imageSize.height * scale);
-    const CGSize size = CGSizeMake(tState.configuration.viewportSize.x,
-                                   tState.configuration.viewportSize.y);
-    CGSize textureSize;
-    if (_tiled) {
-        textureSize = CGSizeMake(size.width / nativeTextureSize.width,
-                                 size.height / nativeTextureSize.height);
-    } else {
-        textureSize = CGSizeMake(1, 1);
-    }
+    const CGSize viewportSize = CGSizeMake(tState.configuration.viewportSize.x,
+                                           tState.configuration.viewportSize.y);
     NSEdgeInsets insets = tState.edgeInsets;
     CGFloat vmargin;
     if (@available(macOS 10.14, *)) {
@@ -154,14 +148,42 @@ NS_ASSUME_NONNULL_BEGIN
     const CGFloat bottomMargin = insets.top + vmargin;
     const CGFloat leftMargin = insets.left;
     const CGFloat rightMargin = insets.right;
-    tState.vertexBuffer = [_metalRenderer newQuadWithFrame:CGRectMake(-leftMargin,
-                                                                      -topMargin,
-                                                                      size.width + leftMargin + rightMargin,
-                                                                      size.height + topMargin + bottomMargin)
-                                              textureFrame:CGRectMake(0,
-                                                                      0,
-                                                                      textureSize.width,
-                                                                      textureSize.height)
+
+    // pixel coordinates
+    CGRect quadFrame = CGRectMake(-leftMargin,
+                                  -topMargin,
+                                  viewportSize.width + leftMargin + rightMargin,
+                                  viewportSize.height + topMargin + bottomMargin);
+    
+    // normalized coordinates
+    CGRect textureFrame = CGRectMake(0, 0, nativeTextureSize.width, nativeTextureSize.height);
+    switch (_mode) {
+        case iTermBackgroundImageModeStretch:
+            break;
+            
+        case iTermBackgroundImageModeTile:
+            textureFrame = CGRectMake(0,
+                                      0,
+                                      viewportSize.width,
+                                      viewportSize.height);
+            break;
+            
+        case iTermBackgroundImageModeScaleAspectFit:
+            // TODO
+            break;
+            
+        case iTermBackgroundImageModeScaleAspectFill:
+            // TODO
+            break;
+    }
+
+    // Convert textureFrame to normalized coordinates
+    textureFrame.origin.x /= nativeTextureSize.width;
+    textureFrame.size.width /= nativeTextureSize.width;
+    textureFrame.origin.y /= nativeTextureSize.height;
+    textureFrame.size.height /= nativeTextureSize.height;
+    tState.vertexBuffer = [_metalRenderer newQuadWithFrame:quadFrame
+                                              textureFrame:textureFrame
                                                poolContext:tState.poolContext];
 }
 

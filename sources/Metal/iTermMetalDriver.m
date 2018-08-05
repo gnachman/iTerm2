@@ -584,7 +584,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (@available(macOS 10.14, *)) {
         return NO;
     }
-    if (!_backgroundImageRenderer.rendererDisabled && [frameData.perFrameState metalBackgroundImageGetTiled:NULL]) {
+    if (!_backgroundImageRenderer.rendererDisabled && [frameData.perFrameState metalBackgroundImageGetMode:NULL]) {
         return YES;
     }
     if (!_badgeRenderer.rendererDisabled && [frameData.perFrameState badgeImage]) {
@@ -845,9 +845,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (_backgroundImageRenderer.rendererDisabled) {
         return;
     }
-    BOOL tiled;
-    NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetTiled:&tiled];
-    [_backgroundImageRenderer setImage:backgroundImage tiled:tiled context:frameData.framePoolContext];
+    iTermBackgroundImageMode mode;
+    NSImage *backgroundImage = [frameData.perFrameState metalBackgroundImageGetMode:&mode];
+    [_backgroundImageRenderer setImage:backgroundImage mode:mode context:frameData.framePoolContext];
 }
 
 - (void)updateCopyBackgroundRendererForFrameData:(iTermMetalFrameData *)frameData {

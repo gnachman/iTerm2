@@ -117,7 +117,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     NSTimeInterval _timeSinceCursorMoved;
 
     CGFloat _backgroundImageBlending;
-    BOOL _backgroundImageTiled;
+    iTermBackgroundImageMode _backgroundImageMode;
     NSImage *_backgroundImage;
     BOOL _asciiAntialias;
     BOOL _nonasciiAntialias;
@@ -515,7 +515,7 @@ static NSColor *ColorForVector(vector_float4 v) {
 
 - (void)loadBackgroundImageWithTextView:(PTYTextView *)textView {
     _backgroundImageBlending = textView.blend;
-    _backgroundImageTiled = textView.delegate.backgroundImageTiled;
+    _backgroundImageMode = textView.delegate.backgroundImageMode;
     _backgroundImage = [textView.delegate textViewBackgroundImage];
 
     _edgeInsets = textView.delegate.textViewEdgeInsets;
@@ -863,9 +863,9 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 // Private queue
-- (NSImage *)metalBackgroundImageGetTiled:(nullable BOOL *)tiled {
-    if (tiled) {
-        *tiled = _backgroundImageTiled;
+- (NSImage *)metalBackgroundImageGetMode:(nullable iTermBackgroundImageMode *)mode {
+    if (mode) {
+        *mode = _backgroundImageMode;
     }
     return _backgroundImage;
 }

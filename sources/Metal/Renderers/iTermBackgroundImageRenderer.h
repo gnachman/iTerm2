@@ -1,4 +1,6 @@
 #import <Cocoa/Cocoa.h>
+
+#import "ITAddressBookMgr.h"
 #import "iTermMetalRenderer.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -17,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Call this before creating transient state.
 - (void)setImage:(NSImage *)image
-           tiled:(BOOL)tiled
+            mode:(iTermBackgroundImageMode)mode
          context:(nullable iTermMetalBufferPoolContext *)context;
 
 @end
