@@ -9,6 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermBackgroundImageRendererTransientState ()
 @property (nonatomic, strong) id<MTLTexture> texture;
 @property (nonatomic) iTermBackgroundImageMode mode;
+@property (nonatomic) BOOL repeat;
 @property (nonatomic) NSSize imageSize;
 @end
 
@@ -43,7 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (self) {
         _metalRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
                                                  vertexFunctionName:@"iTermBackgroundImageVertexShader"
-                                               fragmentFunctionName:@"iTermBackgroundImageFragmentShader"
+                                               fragmentFunctionName:@"iTermBackgroundImageClampFragmentShader"
                                                            blending:nil
                                                 transientStateClass:[iTermBackgroundImageRendererTransientState class]];
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
@@ -88,15 +89,15 @@ NS_ASSUME_NONNULL_BEGIN
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     float alpha = tState.transparencyAlpha;
     if (alpha < 1) {
-        _metalRenderer.fragmentFunctionName = @"iTermBackgroundImageWithAlphaFragmentShader";
+        _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageWithAlphaRepeatFragmentShader" : @"iTermBackgroundImageWithAlphaClampFragmentShader";
         id<MTLBuffer> alphaBuffer = [self alphaBufferWithValue:alpha poolContext:tState.poolContext];
         fragmentBuffers = @{ @(iTermFragmentInputIndexAlpha): alphaBuffer };
     } else {
-        _metalRenderer.fragmentFunctionName = @"iTermBackgroundImageFragmentShader";
+        _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageRepeatFragmentShader" : @"iTermBackgroundImageClampFragmentShader";
         fragmentBuffers = @{};
     }
 #else
-    _metalRenderer.fragmentFunctionName = @"iTermBackgroundImageFragmentShader";
+    _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageRepeatFragmentShader" : @"iTermBackgroundImageClampFragmentShader";
     fragmentBuffers = @{};
 #endif
     
@@ -129,6 +130,7 @@ NS_ASSUME_NONNULL_BEGIN
     tState.texture = _texture;
     tState.mode = _mode;
     tState.imageSize = _image.size;
+    tState.repeat = (_mode == iTermBackgroundImageModeTile);
 }
 
 - (void)loadVertexBuffer:(iTermBackgroundImageRendererTransientState *)tState {
@@ -149,13 +151,20 @@ NS_ASSUME_NONNULL_BEGIN
     const CGFloat leftMargin = insets.left;
     const CGFloat rightMargin = insets.right;
 
-    // pixel coordinates
-    CGRect quadFrame = CGRectMake(-leftMargin,
-                                  -topMargin,
-                                  viewportSize.width + leftMargin + rightMargin,
-                                  viewportSize.height + topMargin + bottomMargin);
+    const CGFloat imageAspectRatio = nativeTextureSize.width / nativeTextureSize.height;
+    const CGFloat viewAspectRatio = viewportSize.width / viewportSize.height;
     
-    // normalized coordinates
+    // pixel coordinates
+    const CGFloat viewHeight = viewportSize.height + topMargin + bottomMargin;
+    const CGFloat viewWidth = viewportSize.width + leftMargin + rightMargin;
+    const CGFloat minX = -leftMargin;
+    const CGFloat minY = -topMargin;
+    CGRect quadFrame = CGRectMake(minX,
+                                  minY,
+                                  viewWidth,
+                                  viewHeight);
+    
+    // pixel coordinates
     CGRect textureFrame = CGRectMake(0, 0, nativeTextureSize.width, nativeTextureSize.height);
     switch (_mode) {
         case iTermBackgroundImageModeStretch:
@@ -169,11 +178,39 @@ NS_ASSUME_NONNULL_BEGIN
             break;
             
         case iTermBackgroundImageModeScaleAspectFit:
-            // TODO
+            if (imageAspectRatio > viewAspectRatio) {
+                // Image is wide relative to view.
+                // There will be letterboxes top and bottom.
+                const CGFloat letterboxHeight = (viewHeight - viewWidth / imageAspectRatio) / 2.0;
+                quadFrame = CGRectMake(minX,
+                                       minY + letterboxHeight,
+                                       viewWidth,
+                                       viewHeight - letterboxHeight * 2);
+            } else {
+                // Image is tall relative to view.
+                // There will be pillarboxes left and right.
+                const CGFloat pillarboxWidth = (viewWidth - viewHeight * imageAspectRatio) / 2.0;
+                quadFrame = CGRectMake(minX + pillarboxWidth,
+                                       minY,
+                                       viewWidth - pillarboxWidth * 2,
+                                       viewHeight);
+            }
             break;
             
         case iTermBackgroundImageModeScaleAspectFill:
-            // TODO
+            if (imageAspectRatio > viewAspectRatio) {
+                // Image is wide relative to view.
+                // Crop left and right.
+                const CGFloat width = nativeTextureSize.height * viewAspectRatio;
+                const CGFloat crop = (nativeTextureSize.width - width) / 2.0;
+                textureFrame = CGRectMake(crop, 0, width, nativeTextureSize.height);
+            } else {
+                // Image is tall relative to view.
+                // Crop top and bottom.
+                const CGFloat height = nativeTextureSize.width / viewAspectRatio;
+                const CGFloat crop = (nativeTextureSize.height - height) / 2.0;
+                textureFrame = CGRectMake(0, crop, nativeTextureSize.width, height);
+            }
             break;
     }
 

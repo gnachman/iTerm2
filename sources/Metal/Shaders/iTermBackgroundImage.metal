@@ -28,20 +28,41 @@ iTermBackgroundImageVertexShader(uint vertexID [[ vertex_id ]],
 }
 
 fragment half4
-iTermBackgroundImageFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
-                                   texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
+iTermBackgroundImageClampFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
+                                        texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
+    constexpr sampler textureSampler(mag_filter::linear,
+                                     min_filter::linear);
+
+    return texture.sample(textureSampler, in.textureCoordinate);
+}
+
+fragment half4
+iTermBackgroundImageRepeatFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
+                                         texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear,
                                      address::repeat);
-
+    
     return texture.sample(textureSampler, in.textureCoordinate);
 }
 
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
 fragment half4
-iTermBackgroundImageWithAlphaFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
-                                            constant float *alpha [[ buffer(iTermFragmentInputIndexAlpha) ]],
-                                            texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
+iTermBackgroundImageWithAlphaClampFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
+                                                 constant float *alpha [[ buffer(iTermFragmentInputIndexAlpha) ]],
+                                                 texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
+    constexpr sampler textureSampler(mag_filter::linear,
+                                     min_filter::linear);
+    
+    half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
+    colorSample.w = static_cast<half>(*alpha);
+    return colorSample;
+}
+
+fragment half4
+iTermBackgroundImageWithAlphaRepeatFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
+                                                  constant float *alpha [[ buffer(iTermFragmentInputIndexAlpha) ]],
+                                                  texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear,
                                      address::repeat);
