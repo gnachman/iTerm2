@@ -6670,7 +6670,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                        localRect.size.height * dy);
         [image drawInRect:rect
                  fromRect:sourceRect
-                operation:NSCompositingOperationCopy
+                operation:NSCompositingOperationSourceOver
                  fraction:alpha
            respectFlipped:YES
                     hints:nil];
