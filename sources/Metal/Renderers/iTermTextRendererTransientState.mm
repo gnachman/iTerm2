@@ -255,8 +255,8 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
     }
 
     @autoreleasepool {
-        NSMutableString *s = [NSMutableString string];
         for (int k = 0; k < iTermPIUArraySize; k++) {
+            NSMutableString *s = [NSMutableString string];
             for (auto entry : _pius[k]) {
                 const iTerm2::TexturePage *texturePage = entry.first;
                 iTerm2::PIUArray<iTermTextPIU> *piuArray = entry.second;

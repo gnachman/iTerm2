@@ -62,10 +62,11 @@
         NSString *file = [NSString stringWithFormat:@"texture-description.%@.txt", key];
         [description writeToURL:[folder URLByAppendingPathComponent:file] atomically:NO encoding:NSUTF8StringEncoding error:nil];
     }];
-    NSString *description = [NSString stringWithFormat:@"vertex count: %@\ninstance count: %@\nrenderPipelineState: %@\n",
+    NSString *description = [NSString stringWithFormat:@"vertex count: %@\ninstance count: %@\nFragment function: %@\nVertex function: %@\n",
                              @(_vertexCount),
                              @(_instanceCount),
-                             self.renderPipelineState];
+                             self.fragmentFunctionName,
+                             self.vertexFunctionName];
     [description writeToURL:[folder URLByAppendingPathComponent:@"description.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
 }
 
