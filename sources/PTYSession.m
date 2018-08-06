@@ -7060,7 +7060,7 @@ ITERM_WEAKLY_REFERENCEABLE
         
         [image drawInRect:drawRect
                  fromRect:sourceRect
-                operation:NSCompositingOperationCopy
+                operation:NSCompositingOperationSourceOver
                  fraction:alpha
            respectFlipped:YES
                     hints:nil];
