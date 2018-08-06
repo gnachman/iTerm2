@@ -476,7 +476,8 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     iTermMetalDebugDrawInfo *debugDrawInfo = [tState.debugInfo newDrawWithFormatter:self];
     debugDrawInfo.name = NSStringFromClass(tState.class);
 
-    debugDrawInfo.renderPipelineState = tState.pipelineState;
+    debugDrawInfo.fragmentFunctionName = self.fragmentFunctionName;
+    debugDrawInfo.vertexFunctionName = self.vertexFunctionName;
     [renderEncoder setRenderPipelineState:tState.pipelineState];
 
     // Add viewport size to vertex buffers

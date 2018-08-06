@@ -24,7 +24,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalDebugDrawInfo : NSObject
 
-@property (nonatomic, strong) id<MTLRenderPipelineState> renderPipelineState;
+@property (nonatomic, copy) NSString *fragmentFunctionName;
+@property (nonatomic, copy) NSString *vertexFunctionName;
 @property (nonatomic, weak) id<iTermMetalDebugInfoFormatter> formatter;
 @property (nonatomic, copy) NSString *name;
 
