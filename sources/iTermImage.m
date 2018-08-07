@@ -63,9 +63,14 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
 
 + (instancetype)imageWithCompressedData:(NSData *)compressedData {
 #if DEBUG
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
     NSLog(@"** WARNING: Decompressing image in-process **");
     return [[[iTermImage alloc] initWithData:compressedData] autorelease];
-#else
+#endif
+#endif
+#endif
+
     iTermImageDecoderDriver *driver = [[[iTermImageDecoderDriver alloc] init] autorelease];
     NSData *jsonData = [driver jsonForCompressedImageData:compressedData];
     if (jsonData) {
@@ -73,7 +78,6 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     } else {
         return nil;
     }
-#endif
 }
 
 - (instancetype)init {
