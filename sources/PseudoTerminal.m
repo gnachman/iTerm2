@@ -5255,6 +5255,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem {
+    if (!tabViewItem) {
+        return;
+    }
     [tabView selectTabViewItem:tabViewItem];
     PTYTab *tab = tabViewItem.identifier;
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
