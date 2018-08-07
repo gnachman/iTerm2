@@ -318,6 +318,12 @@ static const CGFloat kMargin = 4;
     pid_t rootPid = [wrapper.delegate.delegate toolbeltCurrentShellProcessId];
     NSSet *pids = [[ProcessCache sharedInstance] childrenOfPid:rootPid levelsToSkip:0];
     if (![pids isEqualToSet:[NSSet setWithArray:pids_]]) {
+        NSInteger selectedIndex = [tableView_ selectedRow];
+        NSNumber *previouslySelectedPID = nil;
+        if (selectedIndex >= 0) {
+            previouslySelectedPID = pids_[selectedIndex];
+        }
+
         // Something changed. Get job names, which is expensive.
         [pids_ release];
         NSArray *sortedArray = [[pids allObjects] sortedArrayUsingSelector:@selector(compare:)];
@@ -337,7 +343,18 @@ static const CGFloat kMargin = 4;
                 }
             }
         }
+
         [tableView_ reloadData];
+
+        if (previouslySelectedPID) {
+            NSInteger indexToSelect = [pids_ indexOfObject:previouslySelectedPID];
+            if (indexToSelect != NSNotFound) {
+                [tableView_ selectRowIndexes:[NSIndexSet indexSetWithIndex:indexToSelect]
+                        byExtendingSelection:NO];
+            } else {
+                self.killable = NO;
+            }
+        }
 
         // Updating the table data causes the cursor to change into an arrow!
         [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
