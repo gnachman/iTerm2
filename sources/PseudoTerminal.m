@@ -4967,8 +4967,10 @@ ITERM_WEAKLY_REFERENCEABLE
             [session.shell originalCommand] ?: @"None"];
 }
 
-- (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem
-{
+- (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem {
+    if (!tabViewItem) {
+        return;
+    }
     [tabView selectTabViewItem:tabViewItem];
     [self editCurrentSession:self];
 }
