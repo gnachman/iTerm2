@@ -322,6 +322,10 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     if (_live) {
         return;
     }
+    if (coord.y < 0) {
+        coord.x = 0;
+        coord.y = 0;
+    }
     if (_resumable && resume && [_subSelections count]) {
         _range = [self lastRange];
         [_subSelections removeLastObject];
