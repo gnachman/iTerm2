@@ -333,6 +333,12 @@ static const CGFloat kMargin = 4;
         return @(info.processID);
     }]];
     if (![oldPids isEqual:newPids]) {
+        NSInteger selectedIndex = [tableView_ selectedRow];
+        NSNumber *previouslySelectedPID = nil;
+        if (selectedIndex >= 0) {
+            previouslySelectedPID = @(_processInfos[selectedIndex].processID);
+        }
+
         NSArray<iTermProcessInfo *> *sortedInfos = [infos sortedArrayUsingComparator:^NSComparisonResult(iTermProcessInfo * _Nonnull obj1, iTermProcessInfo * _Nonnull obj2) {
             return [@(obj1.processID) compare:@(obj2.processID)];
         }];
@@ -345,7 +351,20 @@ static const CGFloat kMargin = 4;
         }];
         [_processInfos autorelease];
         _processInfos = [sortedInfos retain];
+
         [tableView_ reloadData];
+
+        if (previouslySelectedPID) {
+            NSInteger indexToSelect = [_processInfos indexOfObjectPassingTest:^BOOL(iTermProcessInfo * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                return obj.processID == previouslySelectedPID.integerValue;
+            }];
+            if (indexToSelect != NSNotFound) {
+                [tableView_ selectRowIndexes:[NSIndexSet indexSetWithIndex:indexToSelect]
+                        byExtendingSelection:NO];
+            } else {
+                self.killable = NO;
+            }
+        }
 
         // Updating the table data causes the cursor to change into an arrow!
         [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
