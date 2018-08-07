@@ -743,8 +743,11 @@ const NSInteger kLongMaximumWordLength = 100000;
         if (actionRequired) {
             // There is no match when using word selection and rangeForWordAt:maximumLength: can be slow.
             *range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), -1, -1);
-        } else {
+        } else if (location.y >= 0) {
             *range = [self rangeForWordAt:location maximumLength:kReasonableMaximumWordLength];
+        } else {
+            *range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1),
+                                                _logicalWindow.location, _logicalWindow.length);
         }
         return nil;
     }
