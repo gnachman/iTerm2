@@ -2827,6 +2827,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)showDefinitionForWordAt:(NSPoint)clickPoint {
+    if (clickPoint.y < 0) {
+        return;
+    }
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     VT100GridWindowedRange range =
         [extractor rangeForWordAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
