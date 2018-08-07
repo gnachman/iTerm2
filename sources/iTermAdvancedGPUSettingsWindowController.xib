@@ -27,9 +27,9 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <subviews>
                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="tDk-ce-oAK">
-                                <rect key="frame" x="18" y="99" width="354" height="18"/>
+                                <rect key="frame" x="18" y="99" width="348" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <buttonCell key="cell" type="check" title="Disable Metal renderer when disconnected from power" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="tTM-lD-Hre">
+                                <buttonCell key="cell" type="check" title="Disable GPU renderer when disconnected from power" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="tTM-lD-Hre">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
