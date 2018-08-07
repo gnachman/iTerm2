@@ -99,8 +99,9 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
     DLog(@"Queueing load of %@", self.uniqueIdentifier);
     void (^block)(void) = ^{
         // This is a slow operation that blocks for a long time.
-        iTermImage *image = [iTermImage imageWithCompressedData:_data];
+        iTermImage *image = [[iTermImage imageWithCompressedData:_data] retain];
         dispatch_sync(dispatch_get_main_queue(), ^{
+            [image autorelease];
             [_queuedBlock release];
             _queuedBlock = nil;
             _animatedImage = [[iTermAnimatedImageInfo alloc] initWithImage:image];
