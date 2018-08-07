@@ -51,7 +51,7 @@
                                     <action selector="copyPerformanceStats:" target="201" id="Q9K-AS-x9Q"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Capture Metal Frame" identifier="Capture Metal Frame" id="8KO-hG-xdC">
+                            <menuItem title="Capture GPU Frame" identifier="Capture Metal Frame" id="8KO-hG-xdC">
                                 <connections>
                                     <action selector="captureNextMetalFrame:" target="-1" id="vR7-q7-IN8"/>
                                 </connections>
