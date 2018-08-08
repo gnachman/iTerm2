@@ -152,10 +152,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     return frameToCenter;
 }
 
-@interface NSWindow (private)
-- (void)setBottomCornerRounded:(BOOL)rounded;
-@end
-
 @interface PseudoTerminal () <
     iTermTabBarControlViewDelegate,
     iTermPasswordManagerDelegate,
@@ -389,6 +385,15 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
         [PTYTab registerSessionsInArrangement:tabArrangement];
     }
+}
+
++ (void)updateDecorationsOfWindow:(NSWindow *)myWindow forType:(iTermWindowType)windowType {
+    const BOOL isCompact = (windowType == WINDOW_TYPE_COMPACT);
+    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL ||
+                            isCompact)];
+    // Chrome doesn't change titleVisibility so neither do we.
+    // Some truly dreadful hacks are used instead. See PTYWindow.m.
+    myWindow.titlebarAppearsTransparent = isCompact;
 }
 
 + (NSInteger)styleMaskForWindowType:(iTermWindowType)windowType
@@ -632,65 +637,18 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
         // We want to set the style mask to the window's non-fullscreen appearance so we're prepared
         // to exit fullscreen with the right style.
-        styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType hotkeyWindowType:hotkeyWindowType];
+        styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType
+                                          hotkeyWindowType:hotkeyWindowType];
     } else {
-        styleMask = [PseudoTerminal styleMaskForWindowType:windowType hotkeyWindowType:hotkeyWindowType];
+        styleMask = [PseudoTerminal styleMaskForWindowType:windowType
+                                          hotkeyWindowType:hotkeyWindowType];
     }
     savedWindowType_ = savedWindowType;
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
-    iTermTerminalWindow *myWindow;
-    Class windowClass;
-    const BOOL panel = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel);
-    const BOOL compact = windowType_ == WINDOW_TYPE_COMPACT;
-    if (panel) {
-        if (compact) {
-            windowClass = [iTermCompactPanel class];
-        } else {
-            windowClass = [iTermPanel class];
-        }
-    } else {
-        if (compact) {
-            windowClass = [iTermCompactWindow class];
-        } else {
-            windowClass = [iTermWindow class];
-        }
-    }
-    // TODO: Some day when I have more appetite for risk, I think this should be
-    // myWindow = [[windowClass alloc] initWithContentRect:[NSWindow contentRectForFrameRect:initialFrame styleMask:styleMask]
-    myWindow = [[windowClass alloc] initWithContentRect:initialFrame
-                                              styleMask:styleMask
-                                                backing:NSBackingStoreBuffered
-                                                  defer:(hotkeyWindowType != iTermHotkeyWindowTypeNone)];
-    if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
-        // For some reason, you don't always get the frame you requested. I saw
-        // this on OS 10.10 when creating normal windows on a 2-screen display. The
-        // frames were within the visible frame of screen #2.
-        // However, setting the frame at this point while restoring a Lion fullscreen window causes
-        // it to appear with a title bar. TODO: Test if lion fullscreen windows restore on the right
-        // monitor.
-        [myWindow setFrame:initialFrame display:NO];
-    }
-
-    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL ||
-                            windowType == WINDOW_TYPE_COMPACT)];
-    if (windowType == WINDOW_TYPE_COMPACT) {
-        // Chrome doesn't change titleVisibility so neither do we.
-        // Some truly dreadful hacks are used instead. See PTYWindow.m.
-        myWindow.titlebarAppearsTransparent = YES;
-        myWindow.movableByWindowBackground = YES;
-    }
-    DLog(@"Create window %@", myWindow);
-
-    PtyLog(@"finishInitializationWithSmartLayout - new window is at %p", myWindow);
-    [self setWindow:myWindow];
-    [myWindow release];
-
-    // This had been in iTerm2 for years and was removed, but I can't tell why. Issue 3833 reveals
-    // that it is still needed, at least on OS 10.9.
-    if ([myWindow respondsToSelector:@selector(_setContentHasShadow:)]) {
-        [myWindow _setContentHasShadow:NO];
-    }
+    [self setWindowWithWindowType:windowType
+                 hotkeyWindowType:hotkeyWindowType
+                     initialFrame:initialFrame];
 
     _fullScreen = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
     _contentView =
@@ -719,13 +677,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     if (!smartLayout || windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         PtyLog(@"no smart layout or is full screen, so set layout done");
         [self.ptyWindow setLayoutDone];
-    }
-
-    if (styleMask & NSWindowStyleMaskTitled) {
-        if ([[self window] respondsToSelector:@selector(setBottomCornerRounded:)]) {
-            // TODO: Why is this here?
-            self.window.bottomCornerRounded = NO;
-        }
     }
 
     [self updateTabBarStyle];
@@ -3807,6 +3758,62 @@ ITERM_WEAKLY_REFERENCEABLE
                       [iTermAdvancedSettingsModel terminalVMargin] * 2 + sessionSize.height * cellSize.height + decorationSize.height);
 }
 
+- (NSWindow *)setWindowWithWindowType:(iTermWindowType)windowType
+                     hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
+                         initialFrame:(NSRect)initialFrame {
+    const BOOL panel = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel);
+    const BOOL compact = windowType == WINDOW_TYPE_COMPACT;
+    Class windowClass;
+    if (panel) {
+        if (compact) {
+            windowClass = [iTermCompactPanel class];
+        } else {
+            windowClass = [iTermPanel class];
+        }
+    } else {
+        if (compact) {
+            windowClass = [iTermCompactWindow class];
+        } else {
+            windowClass = [iTermWindow class];
+        }
+    }
+    NSWindowStyleMask styleMask = [PseudoTerminal styleMaskForWindowType:windowType
+                                                        hotkeyWindowType:hotkeyWindowType];
+    const BOOL defer = (hotkeyWindowType != iTermHotkeyWindowTypeNone);
+    NSWindow<PTYWindow> *myWindow = [[[windowClass alloc] initWithContentRect:initialFrame
+                                                                    styleMask:styleMask
+                                                                      backing:NSBackingStoreBuffered
+                                                                        defer:defer] autorelease];
+    if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
+        // For some reason, you don't always get the frame you requested. I saw
+        // this on OS 10.10 when creating normal windows on a 2-screen display. The
+        // frames were within the visible frame of screen #2.
+        // However, setting the frame at this point while restoring a Lion fullscreen window causes
+        // it to appear with a title bar. TODO: Test if lion fullscreen windows restore on the right
+        // monitor.
+        [myWindow setFrame:initialFrame display:NO];
+    }
+    [PseudoTerminal updateDecorationsOfWindow:myWindow forType:windowType];
+    [self setWindow:myWindow];
+    if ([myWindow respondsToSelector:@selector(_setContentHasShadow:)]) {
+        [myWindow _setContentHasShadow:NO];
+    }
+    return myWindow;
+}
+
+- (void)replaceWindowWithWindowOfType:(iTermWindowType)newWindowType {
+    NSWindow *oldWindow = self.window;
+    oldWindow.delegate = nil;
+    [self setWindowWithWindowType:newWindowType
+                 hotkeyWindowType:_hotkeyWindowType
+                     initialFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]];
+    [self.window.ptyWindow setLayoutDone];
+    self.window.contentView = _contentView;
+    self.window.opaque = NO;
+    self.window.delegate = self;
+    [oldWindow close];
+}
+
 - (void)toggleTraditionalFullScreenMode {
     [SessionView windowDidResize];
     PtyLog(@"toggleFullScreenMode called");
@@ -3823,14 +3830,22 @@ ITERM_WEAKLY_REFERENCEABLE
         self.windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         [self.window setOpaque:NO];
         self.window.alphaValue = 0;
-        self.window.styleMask = [self styleMask];
-        [self.window setFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]
-                      display:YES];
+        if (savedWindowType_ == WINDOW_TYPE_COMPACT) {
+            [self replaceWindowWithWindowOfType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN];
+        } else {
+            self.window.styleMask = [self styleMask];
+            [self.window setFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]
+                          display:YES];
+        }
         self.window.alphaValue = 1;
     } else {
         [self showMenuBar];
         self.windowType = savedWindowType_;
-        self.window.styleMask = [self styleMask];
+        if (savedWindowType_ == WINDOW_TYPE_COMPACT) {
+            [self replaceWindowWithWindowOfType:savedWindowType_];
+        } else {
+            self.window.styleMask = [self styleMask];
+        }
 
         // This will be close but probably not quite right because tweaking to the decoration size
         // happens later.
@@ -3847,7 +3862,8 @@ ITERM_WEAKLY_REFERENCEABLE
 #endif
         PtyLog(@"toggleFullScreenMode - allocate new terminal");
     }
-    [self.window setHasShadow:(windowType_ == WINDOW_TYPE_NORMAL)];
+    [self.window setHasShadow:(windowType_ == WINDOW_TYPE_NORMAL ||
+                               windowType_ == WINDOW_TYPE_COMPACT)];
 
     if (!_fullScreen &&
         [iTermPreferences boolForKey:kPreferenceKeyDisableFullscreenTransparencyByDefault]) {
@@ -3948,12 +3964,20 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [self.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
     [self.window makeFirstResponder:[[self currentSession] textview]];
+    if (savedWindowType_ == WINDOW_TYPE_COMPACT || windowType_ == WINDOW_TYPE_COMPACT) {
+        [self didChangeCompactness];
+    }
     [self refreshTools];
     [self updateTabColors];
     [self saveTmuxWindowOrigins];
-
+    [self didChangeCompactness];
     [self updateTouchBarIfNeeded:NO];
     [self updateUseMetalInAllTabs];
+}
+
+- (void)didChangeCompactness {
+    [PseudoTerminal updateDecorationsOfWindow:self.window forType:windowType_];
+    [_contentView didChangeCompactness];
 }
 
 - (BOOL)fullScreen
@@ -4067,6 +4091,7 @@ ITERM_WEAKLY_REFERENCEABLE
     togglingLionFullScreen_ = YES;
     [self updateUseMetalInAllTabs];
     [self repositionWidgets];
+    [_contentView didChangeCompactness];
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
@@ -4115,6 +4140,8 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Giving up after three retries: %@", self);
         togglingLionFullScreen_ = NO;
         _fullScreenRetryCount = 0;
+        [_contentView didChangeCompactness];
+        [_contentView layoutSubviews];
     }
 }
 
@@ -4154,6 +4181,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.window makeFirstResponder:self.currentSession.textview];
     [self updateTouchBarIfNeeded:NO];
     [self updateUseMetalInAllTabs];
+    [_contentView didChangeCompactness];
+    [_contentView layoutSubviews];
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame {
@@ -6900,6 +6929,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([self inInstantReplay] != visible) {
         [self showHideInstantReplay];
     }
+}
+
+- (BOOL)enteringLionFullscreen {
+    return togglingLionFullScreen_;
 }
 
 - (BOOL)exitingLionFullscreen {

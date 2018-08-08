@@ -29,6 +29,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 - (BOOL)tabBarAlwaysVisible;
 - (NSEdgeInsets)tabBarInsets;
 - (BOOL)exitingLionFullscreen;
+- (BOOL)enteringLionFullscreen;
 - (BOOL)divisionViewShouldBeVisible;
 - (NSWindow *)window;
 - (BOOL)enableStoplightHotbox;
@@ -100,5 +101,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 - (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)numberOfAdditionalTabs;
 
 - (void)willShowTabBar;
+
+- (void)didChangeCompactness;
 
 @end
