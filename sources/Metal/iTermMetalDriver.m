@@ -298,14 +298,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (BOOL)drawSynchronouslyInView:(MTKView *)view {
-    if (!view || !view.delegate) {
-        return NO;
-    }
-    DLog(@"Start synchronous draw");
-    iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view];
-    dispatch_group_wait(context.group, DISPATCH_TIME_FOREVER);
-    DLog(@"Synchronous draw completed.");
-    return !context.aborted;
+    return YES;
 }
 
 - (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion {
@@ -318,6 +311,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (BOOL)reallyDrawInMTKView:(nonnull MTKView *)view startToStartTime:(NSTimeInterval)startToStartTime {
+    DLog(@"Attempt draw");
     @synchronized (self) {
         [_inFlightHistogram addValue:_framesInFlight];
     }
@@ -378,14 +372,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (_total > 1) {
         [_startToStartHistogram addValue:startToStartTime * 1000];
     }
-#if ENABLE_PRIVATE_QUEUE
-    [self acquireScarceResources:frameData view:view];
-    if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
-        DLog(@"  abort: failed to get drawable or RPD");
-        self.needsDraw = YES;
-        return NO;
-    }
-#endif
 
     @synchronized(self) {
         [_currentFrames addObject:frameData];
@@ -483,21 +469,28 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqPopulateTransientStates ofBlock:^{
         [self populateTransientStatesWithFrameData:frameData range:NSMakeRange(0, frameData.rows.count)];
     }];
-
-#if !ENABLE_PRIVATE_QUEUE
-    [self acquireScarceResources:frameData view:view];
-    if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
-        DLog(@"  abort: failed to get drawable or RPD");
-        self.needsDraw = YES;
-        [self complete:frameData];
-        return;
-    }
-#endif
-
-    [frameData enqueueDrawCallsWithBlock:^{
-        [self enequeueDrawCallsForFrameData:frameData
-                              commandBuffer:commandBuffer];
-    }];
+k
+    dispatch_queue_t queue = _queue;
+    DLog(@"Go to main queue to get scarce resources for frame %@", @(frameData.frameNumber));
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DLog(@"Acquiring scarce resources for frame %@...", @(frameData.frameNumber));
+        [self acquireScarceResources:frameData view:view];
+        DLog(@"Finished acquiring scarce resources. Drawable is %@ for frame %@", frameData.destinationDrawable, @(frameData.frameNumber));
+        if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
+            DLog(@"  abort: failed to get drawable or RPD for frame %@", @(frameData.frameNumber));
+            self.needsDraw = YES;
+            [self complete:frameData];
+            return;
+        }
+        DLog(@"Return to private queue to enqueue draw calls for frame %@", @(frameData.frameNumber));
+        dispatch_async(queue, ^{
+            DLog(@"On private queue. Enqueuing draw calls for frame %@", @(frameData.frameNumber));
+            [frameData enqueueDrawCallsWithBlock:^{
+                [self enequeueDrawCallsForFrameData:frameData
+                                      commandBuffer:commandBuffer];
+            }];
+        });
+    });
 }
 
 - (void)addRowDataToFrameData:(iTermMetalFrameData *)frameData {
@@ -1419,49 +1412,50 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (frameData.debugInfo) {
         [self copyOffscreenTextureToDrawableInFrameData:frameData];
     }
-    [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawPresentAndCommit ofBlock:^{
+    iTermHistogram *scheduleWaitHist = frameData.statHistograms[iTermMetalFrameDataStatGpuScheduleWait];
+    iTermPreciseTimerStats *scheduleWaitStat = &frameData.stats[iTermMetalFrameDataStatGpuScheduleWait];
+    void (^scheduledBlock)(void) = [^{
+        const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(scheduleWaitStat);
+        [scheduleWaitHist addValue:duration * 1000];
+        [frameData class];  // force a reference to frameData to be kept
+    } copy];
+    dispatch_queue_t queue = _queue;
+
 #if !ENABLE_SYNCHRONOUS_PRESENTATION
-        if (frameData.destinationDrawable) {
-            [commandBuffer presentDrawable:frameData.destinationDrawable];
-        }
+    if (frameData.destinationDrawable) {
+        DLog(@"Present drawable %@ for frame %@", frameData.destinationDrawable, @(frameData.frameNumber));
+        [commandBuffer presentDrawable:frameData.destinationDrawable];
+    }
 #endif
 
-        iTermPreciseTimerStatsStartTimer(&frameData.stats[iTermMetalFrameDataStatGpuScheduleWait]);
+    iTermPreciseTimerStatsStartTimer(&frameData.stats[iTermMetalFrameDataStatGpuScheduleWait]);
 
-        iTermPreciseTimerStats *scheduleWaitStat = &frameData.stats[iTermMetalFrameDataStatGpuScheduleWait];
-        iTermHistogram *scheduleWaitHist = frameData.statHistograms[iTermMetalFrameDataStatGpuScheduleWait];
-        void (^scheduledBlock)(void) = [^{
-            const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(scheduleWaitStat);
-            [scheduleWaitHist addValue:duration * 1000];
-            [frameData class];  // force a reference to frameData to be kept
-        } copy];
-        [commandBuffer addScheduledHandler:^(id<MTLCommandBuffer> _Nonnull commandBuffer) {
-            dispatch_async(self->_queue, scheduledBlock);
-        }];
+    [commandBuffer addScheduledHandler:^(id<MTLCommandBuffer> _Nonnull commandBuffer) {
+        dispatch_async(queue, scheduledBlock);
+    }];
 
-        __block BOOL completed = NO;
-        void (^completedBlock)(void) = [^{
-            completed = [self didComplete:completed withFrameData:frameData];
-        } copy];
+    __block BOOL completed = NO;
+    void (^completedBlock)(void) = [^{
+        completed = [self didComplete:completed withFrameData:frameData];
+    } copy];
 
-        [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _Nonnull buffer) {
+    [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _Nonnull buffer) {
 #if ENABLE_PRIVATE_QUEUE
-            [frameData dispatchToQueue:self->_queue forCompletion:completedBlock];
+        [frameData dispatchToQueue:self->_queue forCompletion:completedBlock];
 #else
-            [frameData dispatchToQueue:dispatch_get_main_queue() forCompletion:block];
-#endif
-        }];
-
-        [commandBuffer commit];
-#if ENABLE_SYNCHRONOUS_PRESENTATION
-        if (frameData.destinationDrawable) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [commandBuffer waitUntilScheduled];
-                [frameData.destinationDrawable present];
-            });
-        }
+        [frameData dispatchToQueue:dispatch_get_main_queue() forCompletion:block];
 #endif
     }];
+
+    [commandBuffer commit];
+#if ENABLE_SYNCHRONOUS_PRESENTATION
+    if (frameData.destinationDrawable) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [commandBuffer waitUntilScheduled];
+            [frameData.destinationDrawable present];
+        });
+    }
+#endif
 }
 
 - (BOOL)didComplete:(BOOL)completed withFrameData:(iTermMetalFrameData *)frameData {
@@ -1494,7 +1488,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #pragma mark - Drawing Helpers
 
 - (void)complete:(iTermMetalFrameData *)frameData {
-    DLog(@"  Completed");
+    DLog(@"  Completed %@", @(frameData.frameNumber));
 
     if (!_textRenderer.rendererDisabled) {
         // Unlock indices and free up the stage texture.
