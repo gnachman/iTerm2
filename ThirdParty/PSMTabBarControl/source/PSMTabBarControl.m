@@ -302,7 +302,8 @@ const NSInteger kPSMStartResizeAnimation = 0;
 - (void)setStyle:(id <PSMTabStyle>)newStyle {
     [_style autorelease];
     _style = [newStyle retain];
-
+    _style.tabBar = self;
+    
     // restyle add tab button
     if (_addTabButton){
         NSImage *newButtonImage = [_style addTabButtonImage];
@@ -401,6 +402,36 @@ const NSInteger kPSMStartResizeAnimation = 0;
 - (void)setAllowsBackgroundTabClosing:(BOOL)value {
     _allowsBackgroundTabClosing = value;
     [self update];
+}
+
+- (BOOL)wantsMouseDownAtPoint:(NSPoint)point {
+    if ([self orientation] == PSMTabBarHorizontalOrientation) {
+        if (point.x < self.insets.left) {
+            return NO;
+        }
+        PSMTabBarCell *lastCell = _cells.lastObject;
+        if (!lastCell) {
+            return NO;
+        }
+        if (lastCell.isInOverflowMenu) {
+            return YES;
+        }
+        const CGFloat maxX = NSMaxX(lastCell.frame);
+        return point.x < maxX;
+    } else {
+        if (point.y < self.insets.top) {
+            return NO;
+        }
+        PSMTabBarCell *lastCell = _cells.lastObject;
+        if (!lastCell) {
+            return NO;
+        }
+        if (lastCell.isInOverflowMenu) {
+            return YES;
+        }
+        const CGFloat minY = NSMinY(lastCell.frame);
+        return point.y < minY;
+    }
 }
 
 #pragma mark -

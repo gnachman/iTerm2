@@ -410,6 +410,14 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return mask | NSWindowStyleMaskBorderless;
 
+        case WINDOW_TYPE_COMPACT:
+            return (mask |
+                    NSWindowStyleMaskFullSizeContentView |
+                    NSWindowStyleMaskTitled |
+                    NSWindowStyleMaskClosable |
+                    NSWindowStyleMaskMiniaturizable |
+                    NSWindowStyleMaskResizable);
+
         default:
             return (mask |
                     NSWindowStyleMaskTitled |
@@ -546,7 +554,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     }
     // Force the nib to load
     [self window];
-    windowType_ = windowType;
+    self.windowType = windowType;
     broadcastViewIds_ = [[NSMutableSet alloc] init];
 
     NSScreen *screen = [self anchorToScreenNumber:screenNumber];
@@ -580,6 +588,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
             NSLog(@"Unknown window type: %d", (int)windowType);
             // fall through
         case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_NO_TITLE_BAR:
             // Use the system-supplied frame which has a reasonable origin. It may
             // be overridden by smart window placement or a saved window location.
@@ -629,7 +638,22 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
     iTermTerminalWindow *myWindow;
-    Class windowClass = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) ? [iTermPanel class] : [iTermWindow class];
+    Class windowClass;
+    const BOOL panel = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel);
+    const BOOL compact = windowType_ == WINDOW_TYPE_COMPACT;
+    if (panel) {
+        if (compact) {
+            windowClass = [iTermCompactPanel class];
+        } else {
+            windowClass = [iTermPanel class];
+        }
+    } else {
+        if (compact) {
+            windowClass = [iTermCompactWindow class];
+        } else {
+            windowClass = [iTermWindow class];
+        }
+    }
     // TODO: Some day when I have more appetite for risk, I think this should be
     // myWindow = [[windowClass alloc] initWithContentRect:[NSWindow contentRectForFrameRect:initialFrame styleMask:styleMask]
     myWindow = [[windowClass alloc] initWithContentRect:initialFrame
@@ -646,8 +670,14 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         [myWindow setFrame:initialFrame display:NO];
     }
 
-    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL)];
-
+    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL ||
+                            windowType == WINDOW_TYPE_COMPACT)];
+    if (windowType == WINDOW_TYPE_COMPACT) {
+        // Chrome doesn't change titleVisibility so neither do we.
+        // Some truly dreadful hacks are used instead. See PTYWindow.m.
+        myWindow.titlebarAppearsTransparent = YES;
+        myWindow.movableByWindowBackground = YES;
+    }
     DLog(@"Create window %@", myWindow);
 
     PtyLog(@"finishInitializationWithSmartLayout - new window is at %p", myWindow);
@@ -1030,6 +1060,7 @@ ITERM_WEAKLY_REFERENCEABLE
     switch (windowType_) {
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_COMPACT:
             newWindowType = windowType_;
             break;
 
@@ -1061,7 +1092,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [[iTermController sharedInstance] addTerminalWindow:term];
 
     if (newWindowType == WINDOW_TYPE_NORMAL ||
-        newWindowType == WINDOW_TYPE_NO_TITLE_BAR) {
+        newWindowType == WINDOW_TYPE_NO_TITLE_BAR ||
+        newWindowType == WINDOW_TYPE_COMPACT) {
         [[term window] setFrameOrigin:point];
     } else if (newWindowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         [[term window] makeKeyAndOrderFront:nil];
@@ -1217,6 +1249,17 @@ ITERM_WEAKLY_REFERENCEABLE
     return windowType_;
 }
 
+- (void)setWindowType:(iTermWindowType)windowType {
+    if (@available(macOS 10.14, *)) {
+        windowType_ = windowType;
+    } else if (windowType == WINDOW_TYPE_COMPACT) {
+        // Requires layer support
+        windowType_ = WINDOW_TYPE_NO_TITLE_BAR;
+    } else {
+        // Normal 10.12, 10.13 code path
+        windowType_ = windowType;
+    }
+}
 // Convert a lexicographically sorted array like ["a", "b", "b", "c"] into
 // ["a", "2 instances of \"b\"", "c"].
 - (NSArray *)uniqWithCounts:(NSArray *)a
@@ -1877,6 +1920,7 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
 
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_NORMAL:
             rect.origin.x = xOrigin + xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
             double h = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
@@ -2426,7 +2470,8 @@ ITERM_WEAKLY_REFERENCEABLE
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
 
     if (windowType == WINDOW_TYPE_NORMAL ||
-        windowType == WINDOW_TYPE_NO_TITLE_BAR) {
+        windowType == WINDOW_TYPE_NO_TITLE_BAR ||
+        windowType == WINDOW_TYPE_COMPACT) {
         // The window may have changed size while adding tab bars, etc.
         // TODO: for window type top, set width to screen width.
         [[self window] setFrame:rect display:YES];
@@ -2889,12 +2934,14 @@ ITERM_WEAKLY_REFERENCEABLE
     switch (windowType_) {
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_LION_FULL_SCREEN:
             if ([self updateSessionScrollbars]) {
                 PtyLog(@"Fitting tabs to window because scrollbars changed.");
                 [self fitTabsToWindow];
             }
-
+            break;
+            
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
@@ -3116,8 +3163,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_LION_FULL_SCREEN:
-            PtyLog(@"Window type = NORMAL, NO_TITLE_BAR, or LION_FULL_SCREEN");
+            PtyLog(@"Window type = NORMAL, NO_TITLE_BAR, WINDOW_TYPE_COMPACT, or LION_FULL_SCREEN");
             return frame;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -3262,10 +3310,41 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COMPACT:
             return YES;
     }
 
     return YES;
+}
+
+- (BOOL)enableStoplightHotbox {
+    return (windowType_ == WINDOW_TYPE_COMPACT &&
+            [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab);
+}
+
+- (NSEdgeInsets)tabBarInsets {
+    if (windowType_ != WINDOW_TYPE_COMPACT) {
+        return NSEdgeInsetsZero;
+    }
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_TopTab:
+            return NSEdgeInsetsMake(0, 69, 0, 0);
+            
+        case PSMTab_LeftTab:
+            return NSEdgeInsetsMake(24, 0, 0, 0);
+            
+        case PSMTab_BottomTab:
+            return NSEdgeInsetsZero;
+    }
+    assert(false);
+    return NSEdgeInsetsZero;
+}
+
+- (BOOL)tabBarAlwaysVisible {
+    if (![iTermPreferences boolForKey:kPreferenceKeyHideTabBar]) {
+        return YES;
+    }
+    return windowType_ == WINDOW_TYPE_COMPACT;
 }
 
 - (BOOL)anyFullScreen
@@ -3659,12 +3738,12 @@ ITERM_WEAKLY_REFERENCEABLE
         if (lionFullScreen_) {
             // will exit fullscreen
             DLog(@"Set window type to lion fs");
-            windowType_ = WINDOW_TYPE_LION_FULL_SCREEN;
+            self.windowType = WINDOW_TYPE_LION_FULL_SCREEN;
         } else {
             // Will enter fullscreen
             DLog(@"Set saved window type to %d before setting window type to normal in preparation for going fullscreen", savedWindowType_);
             savedWindowType_ = windowType_;
-            windowType_ = WINDOW_TYPE_NORMAL;
+            self.windowType = WINDOW_TYPE_NORMAL;
         }
         // TODO(georgen): toggle enabled status of use transparency menu item
         return;
@@ -3766,7 +3845,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [_shortcutAccessoryViewController removeFromParentViewController];
         }
 #endif
-        windowType_ = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
+        self.windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         [self.window setOpaque:NO];
         self.window.alphaValue = 0;
         self.window.styleMask = [self styleMask];
@@ -3775,7 +3854,7 @@ ITERM_WEAKLY_REFERENCEABLE
         self.window.alphaValue = 1;
     } else {
         [self showMenuBar];
-        windowType_ = savedWindowType_;
+        self.windowType = savedWindowType_;
         self.window.styleMask = [self styleMask];
 
         // This will be close but probably not quite right because tweaking to the decoration size
@@ -3945,9 +4024,9 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_TOP_PARTIAL:
             if ((frame.size.width < screenFrameForEdgeSpanningWindow.size.width)) {
-                windowType_ = WINDOW_TYPE_TOP_PARTIAL;
+                self.windowType = WINDOW_TYPE_TOP_PARTIAL;
             } else {
-                windowType_ = WINDOW_TYPE_TOP;
+                self.windowType = WINDOW_TYPE_TOP;
             }
             // desiredRows/Columns get reset here to fix issue 4073. If you manually resize a window
             // then its desired size becomes irrelevant; we want it to preserve the size you set
@@ -3959,9 +4038,9 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
             if (frame.size.width < screenFrameForEdgeSpanningWindow.size.width) {
-                windowType_ = WINDOW_TYPE_BOTTOM_PARTIAL;
+                self.windowType = WINDOW_TYPE_BOTTOM_PARTIAL;
             } else {
-                windowType_ = WINDOW_TYPE_BOTTOM;
+                self.windowType = WINDOW_TYPE_BOTTOM;
             }
             desiredRows_ = -1;
             break;
@@ -3969,9 +4048,9 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_LEFT_PARTIAL:
             if (frame.size.height < screenFrameForEdgeSpanningWindow.size.height) {
-                windowType_ = WINDOW_TYPE_LEFT_PARTIAL;
+                self.windowType = WINDOW_TYPE_LEFT_PARTIAL;
             } else {
-                windowType_ = WINDOW_TYPE_LEFT;
+                self.windowType = WINDOW_TYPE_LEFT;
             }
             desiredColumns_ = -1;
             break;
@@ -3979,9 +4058,9 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_RIGHT_PARTIAL:
             if (frame.size.height < screenFrameForEdgeSpanningWindow.size.height) {
-                windowType_ = WINDOW_TYPE_RIGHT_PARTIAL;
+                self.windowType = WINDOW_TYPE_RIGHT_PARTIAL;
             } else {
-                windowType_ = WINDOW_TYPE_RIGHT;
+                self.windowType = WINDOW_TYPE_RIGHT;
             }
             desiredColumns_ = -1;
             break;
@@ -4090,7 +4169,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView updateToolbelt];
 
     DLog(@"Window did exit fullscreen. Set window type to %d", savedWindowType_);
-    windowType_ = savedWindowType_;
+    self.windowType = savedWindowType_;
     for (PTYTab *aTab in [self tabs]) {
         [aTab notifyWindowChanged];
     }
@@ -4749,6 +4828,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
             // fitWindowToTabs will detect the window changed sizes and do a bogus move of it in this case.
             if (windowType_ == WINDOW_TYPE_NORMAL ||
+                windowType_ == WINDOW_TYPE_COMPACT ||
                 windowType_ == WINDOW_TYPE_NO_TITLE_BAR) {
                 [[self window] setFrameOrigin:originalOrigin];
             }
@@ -4887,6 +4967,7 @@ ITERM_WEAKLY_REFERENCEABLE
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab:
             switch ([term windowType]) {
+                case WINDOW_TYPE_COMPACT:
                 case WINDOW_TYPE_NORMAL: {
                     CGFloat contentHeight = [term.window contentRectForFrameRect:NSMakeRect(0, 0, 100, 100)].size.height;
                     CGFloat titleBarHeight = 100 - contentHeight;
@@ -4922,6 +5003,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case PSMTab_BottomTab:
             switch ([term windowType]) {
                 case WINDOW_TYPE_NORMAL:
+                case WINDOW_TYPE_COMPACT:
                 case WINDOW_TYPE_NO_TITLE_BAR:
                     if (![iTermPreferences boolForKey:kPreferenceKeyHideTabBar]) {
                         point.y -= self.tabBarControl.frame.size.height;
@@ -4944,6 +5026,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case PSMTab_LeftTab:
             switch ([term windowType]) {
+                case WINDOW_TYPE_COMPACT:
                 case WINDOW_TYPE_NO_TITLE_BAR: {
                     [[term window] setFrameTopLeftPoint:point];
                     break;
@@ -6872,14 +6955,19 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)haveTopBorder {
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
+        return NO;
+    }
+    if (windowType_ == WINDOW_TYPE_COMPACT) {
+        return YES;
+    }
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
     BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
     BOOL visibleTopTabBar = (tabBarVisible && topTabBar);
     BOOL windowTypeCompatibleWithTopBorder = (windowType_ == WINDOW_TYPE_BOTTOM ||
                                               windowType_ == WINDOW_TYPE_NO_TITLE_BAR ||
                                               windowType_ == WINDOW_TYPE_BOTTOM_PARTIAL);
-    return ([iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder] &&
-            !visibleTopTabBar &&
+    return (!visibleTopTabBar &&
             windowTypeCompatibleWithTopBorder);
 }
 
@@ -7830,6 +7918,14 @@ ITERM_WEAKLY_REFERENCEABLE
     _contentView.tabBarControl.hidden = YES;
     [self repositionWidgets];
     [self updateUseMetalInAllTabs];
+}
+
+- (BOOL)iTermTabBarWindowIsFullScreen {
+    return self.anyFullScreen;
+}
+
+- (BOOL)iTermTabBarCanDragWindow {
+    return (windowType_ == WINDOW_TYPE_COMPACT);
 }
 
 - (PTYSession *)createTabWithProfile:(Profile *)profile

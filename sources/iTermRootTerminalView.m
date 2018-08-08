@@ -9,13 +9,22 @@
 #import "iTermRootTerminalView.h"
 
 #import "DebugLogging.h"
+#import "NSObject+iTerm.h"
+#import "NSView+iTerm.h"
+#import "PTYTabView.h"
+#import "PTYWindow.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermDragHandleView.h"
 #import "iTermPreferences.h"
+#import "iTermStandardWindowButtonsView.h"
+#import "iTermStoplightHotbox.h"
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
-#import "PTYTabView.h"
 
+const CGFloat iTermStandardButtonsViewHeight = 25;
+const CGFloat iTermStandardButtonsViewWidth = 69;
+const CGFloat iTermStoplightHotboxWidth = iTermStandardButtonsViewWidth + 12;
+const CGFloat iTermStoplightHotboxHeight = iTermStandardButtonsViewHeight + 8;
 const CGFloat kHorizontalTabBarHeight = 24;
 const CGFloat kDivisionViewHeight = 1;
 
@@ -23,7 +32,10 @@ static const CGFloat kMinimumToolbeltSizeInPoints = 100;
 static const CGFloat kMinimumToolbeltSizeAsFractionOfWindow = 0.05;
 static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
-@interface iTermRootTerminalView()<iTermTabBarControlViewDelegate, iTermDragHandleViewDelegate>
+@interface iTermRootTerminalView()<
+    iTermTabBarControlViewDelegate,
+    iTermDragHandleViewDelegate,
+    iTermStoplightHotboxDelegate>
 
 @property(nonatomic, retain) PTYTabView *tabView;
 @property(nonatomic, retain) iTermTabBarControlView *tabBarControl;
@@ -33,10 +45,12 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 @end
 
-
 @implementation iTermRootTerminalView {
     BOOL _tabViewFrameReduced;
     BOOL _haveShownToolbelt;
+    iTermStoplightHotbox *_stoplightHotbox;
+    iTermStandardWindowButtonsView *_standardWindowButtonsView;
+    NSMutableDictionary<NSNumber *, NSButton *> *_standardButtons;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -71,9 +85,19 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         self.tabBarControl = [[[iTermTabBarControlView alloc] initWithFrame:tabBarFrame] autorelease];
         _tabBarControl.itermTabBarDelegate = self;
 
+        NSRect stoplightFrame = NSMakeRect(0,
+                                           0,
+                                           iTermStoplightHotboxWidth,
+                                           iTermStoplightHotboxHeight);
+        _stoplightHotbox = [[iTermStoplightHotbox alloc] initWithFrame:stoplightFrame];
+        [self addSubview:_stoplightHotbox];
+        _stoplightHotbox.hidden = YES;
+        _stoplightHotbox.delegate = self;
+        
         int theModifier =
             [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]];
         [_tabBarControl setModifier:theModifier];
+        _tabBarControl.insets = [self.delegate tabBarInsets];
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_BottomTab:
                 _tabBarControl.orientation = PSMTabBarHorizontalOrientation;
@@ -120,8 +144,97 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     [_toolbelt release];
     _leftTabBarDragHandle.delegate = nil;
     [_leftTabBarDragHandle release];
+    [_stoplightHotbox release];
+    [_standardButtons release];
+    [_standardWindowButtonsView release];
 
     [super dealloc];
+}
+
+- (CGFloat)leftInsetForWindowButtons {
+    return 6;
+}
+
+- (CGFloat)strideForWindowButtons {
+    return 20;
+}
+
+- (NSEdgeInsets)insetsForStoplightHotbox {
+    if (![self.delegate enableStoplightHotbox]) {
+        return NSEdgeInsetsZero;
+    }
+    const CGFloat hotboxSideInset = (iTermStoplightHotboxWidth - iTermStandardButtonsViewWidth) / 2.0;
+    const CGFloat hotboxVerticalInset = (iTermStoplightHotboxHeight - iTermStandardButtonsViewHeight) / 2.0;
+    return NSEdgeInsetsMake(hotboxVerticalInset, hotboxSideInset, hotboxVerticalInset, hotboxSideInset);
+}
+
+- (NSRect)frameForStandardWindowButtons {
+    CGFloat x = self.leftInsetForWindowButtons;
+    const CGFloat stride = self.strideForWindowButtons;
+    const NSEdgeInsets insets = [self insetsForStoplightHotbox];
+    CGFloat height;
+    if ([self.delegate enableStoplightHotbox]) {
+        height = iTermStoplightHotboxHeight;
+    } else {
+        height = iTermStandardButtonsViewHeight;
+    }
+    NSRect frame = NSMakeRect(insets.left,
+                              self.frame.size.height - height + insets.bottom + 1,
+                              x + stride * self.numberOfWindowButtons,
+                              iTermStandardButtonsViewHeight);
+    return frame;
+}
+
+- (NSWindowButton *)windowButtonTypes {
+    static NSWindowButton buttons[] = {
+        NSWindowCloseButton,
+        NSWindowMiniaturizeButton,
+        NSWindowZoomButton
+    };
+    return buttons;
+}
+
+- (NSInteger)numberOfWindowButtons {
+    return 3;
+}
+
+- (void)viewDidMoveToWindow {
+    if (!self.window) {
+        return;
+    }
+    id<PTYWindow> ptyWindow = self.window.ptyWindow;
+    if (!ptyWindow.isCompact) {
+        [_standardWindowButtonsView removeFromSuperview];
+        _standardWindowButtonsView = nil;
+        return;
+    }
+    if (_standardWindowButtonsView) {
+        return;
+    }
+    
+    // This is a compact window that gets special handling for the stoplights buttons.
+    CGFloat x = self.leftInsetForWindowButtons;
+    const CGFloat stride = self.strideForWindowButtons;
+    _standardWindowButtonsView = [[iTermStandardWindowButtonsView alloc] initWithFrame:[self frameForStandardWindowButtons]];
+    _standardWindowButtonsView.autoresizingMask = (NSViewMaxXMargin | NSViewMinYMargin);
+    [self addSubview:_standardWindowButtonsView];
+
+    const NSUInteger styleMask = self.window.styleMask;
+    _standardButtons = [[NSMutableDictionary alloc] init];
+    for (int i = 0; i < self.numberOfWindowButtons; i++) {
+        NSButton *button = [NSWindow standardWindowButton:self.windowButtonTypes[i]
+                                             forStyleMask:styleMask];
+        NSRect frame = button.frame;
+        frame.origin.x = x;
+        frame.origin.y = 4;
+        button.frame = frame;
+        [_standardWindowButtonsView addSubview:button];
+        _standardButtons[@(self.windowButtonTypes[i])] = button;
+        x += stride;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [button setNeedsDisplay];
+        });
+    }
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
@@ -265,8 +378,10 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         ![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
         return NO;
     }
-    return ([self.tabView numberOfTabViewItems] + numberOfAdditionalTabs > 1 ||
-            ![iTermPreferences boolForKey:kPreferenceKeyHideTabBar]);
+    if ([_delegate tabBarAlwaysVisible]) {
+        return YES;
+    }
+    return [self.tabView numberOfTabViewItems] + numberOfAdditionalTabs > 1;
 }
 
 - (CGFloat)tabviewWidth {
@@ -299,9 +414,20 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     DLog(@"layoutSubviews");
 
     BOOL showToolbeltInline = self.shouldShowToolbelt;
-    BOOL hasScrollbar = self.scrollbarShouldBeVisible;
     NSWindow *thisWindow = _delegate.window;
-    [thisWindow setShowsResizeIndicator:hasScrollbar];
+
+    if ([self.delegate enableStoplightHotbox]) {
+        if (_stoplightHotbox.hidden) {
+            _stoplightHotbox.hidden = NO;
+            _stoplightHotbox.alphaValue = 0;
+            _standardWindowButtonsView.alphaValue = 0;
+        }
+        [_stoplightHotbox setFrameOrigin:NSMakePoint(0, self.frame.size.height - _stoplightHotbox.frame.size.height)];
+    } else {
+        _stoplightHotbox.hidden = YES;
+        _standardWindowButtonsView.alphaValue = 1;
+    }
+    _standardWindowButtonsView.frame = [self frameForStandardWindowButtons];
 
     // The tab view frame (calculated below) is based on the toolbelt's width. If the toolbelt is
     // too big for the current window size, you could end up with a negative-width tab view frame.
@@ -366,6 +492,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                                                 kHorizontalTabBarHeight);
 
                 [self updateDivisionView];
+                self.tabBarControl.insets = [self.delegate tabBarInsets];
                 self.tabBarControl.frame = tabBarFrame;
                 self.tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
                 break;
@@ -379,6 +506,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                                                 _delegate.haveBottomBorder ? 1 : 0,
                                                 [self tabviewWidth],
                                                 kHorizontalTabBarHeight);
+                self.tabBarControl.insets = [self.delegate tabBarInsets];
                 self.tabBarControl.frame = tabBarFrame;
                 self.tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewMaxYMargin);
 
@@ -419,6 +547,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                                                 _delegate.haveBottomBorder ? 1 : 0,
                                                 [self tabviewWidth],
                                                 [thisWindow.contentView frame].size.height - heightAdjustment);
+                self.tabBarControl.insets = [self.delegate tabBarInsets];
                 self.tabBarControl.frame = tabBarFrame;
                 self.tabBarControl.autoresizingMask = (NSViewHeightSizable | NSViewMaxXMargin);
 
@@ -527,6 +656,14 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     [_delegate iTermTabBarDidFinishFlash];
 }
 
+- (BOOL)iTermTabBarWindowIsFullScreen {
+    return [_delegate iTermTabBarWindowIsFullScreen];
+}
+
+- (BOOL)iTermTabBarCanDragWindow {
+    return[ _delegate iTermTabBarCanDragWindow];
+}
+
 #pragma mark - iTermDragHandleViewDelegate
 
 // For the left-side tab bar.
@@ -541,6 +678,50 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 - (void)dragHandleViewDidFinishMoving:(iTermDragHandleView *)dragHandle {
     [_delegate rootTerminalViewDidResizeContentArea];
+}
+
+#pragma mark - iTermStoplightHotboxDelegate
+
+- (void)stoplightHotboxMouseExit {
+    [NSView animateWithDuration:0.25
+                     animations:^{
+                         _stoplightHotbox.animator.alphaValue = 0;
+                         _standardWindowButtonsView.animator.alphaValue = 0;
+                     }
+                     completion:^(BOOL finished) {
+                         if (!finished) {
+                             return;
+                         }
+                     }];
+}
+
+- (BOOL)stoplightHotboxMouseEnter {
+    if ([[NSApp currentEvent] modifierFlags] & NSEventModifierFlagCommand) {
+        return NO;
+    }
+    [_stoplightHotbox setNeedsDisplay:YES];
+    _stoplightHotbox.alphaValue = 0;
+    _standardWindowButtonsView.alphaValue = 0;
+    [NSView animateWithDuration:0.25
+                     animations:^{
+                         _stoplightHotbox.animator.alphaValue = 1;
+                         _standardWindowButtonsView.animator.alphaValue = 1;
+                     }
+                     completion:nil];
+    return YES;
+}
+
+- (NSColor *)stoplightHotboxColor {
+    return [NSColor windowBackgroundColor];
+}
+
+- (NSColor *)stoplightHotboxOutlineColor {
+    return [NSColor grayColor];
+}
+
+- (BOOL)stoplightHotboxCanDrag {
+    return ([self.delegate iTermTabBarCanDragWindow] &&
+            ![self.delegate iTermTabBarWindowIsFullScreen]);
 }
 
 @end

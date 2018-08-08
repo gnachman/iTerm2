@@ -61,6 +61,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 @property(nonatomic, readonly) NSString *windowIdentifier;
 @property(nonatomic, readonly) id<PTYWindowDelegateProtocol> ptyDelegate;
 @property(nonatomic, readonly) BOOL titleChangedRecently;
+@property(nonatomic, readonly) BOOL isCompact;
 
 - (void)smartLayout;
 - (void)setLayoutDone;
@@ -79,16 +80,31 @@ typedef NSWindow<iTermWeaklyReferenceable, PTYWindow> iTermTerminalWindow;
 
 // A normal terminal window.
 @interface iTermWindow : NSWindow<iTermWeaklyReferenceable, PTYWindow>
+
+@end
+
+@interface iTermCompactWindow : NSWindow<iTermWeaklyReferenceable, PTYWindow>
 @end
 
 // A floating hotkey window. This can overlap a lion fullscreen window.
 @interface iTermPanel : NSPanel<iTermWeaklyReferenceable, PTYWindow>
+
+@end
+
+@interface iTermCompactPanel : NSPanel<iTermWeaklyReferenceable, PTYWindow>
 @end
 
 @interface NSWindow (Private)
 
 // Private NSWindow method, needed to avoid ghosting when using transparency.
 - (BOOL)_setContentHasShadow:(BOOL)contentHasShadow;
+
+@end
+
+@interface NSWindow (iTermWindow)
+
+// Returns nil if this is not a PTYWindow
+- (id<PTYWindow>)ptyWindow;
 
 @end
 

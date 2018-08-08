@@ -15,6 +15,8 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 
 @protocol PSMTabStyle <NSObject>
 
+@property(nonatomic, weak) PSMTabBarControl *tabBar;
+
 // identity
 - (NSString *)name;
 

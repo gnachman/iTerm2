@@ -110,8 +110,9 @@
     NSDictionary *_objectCountStringAttributes;
 
     PSMTabBarOrientation _orientation;
-    PSMTabBarControl *_tabBar;
 }
+
+@synthesize tabBar = _tabBar;
 
 - (NSString *)name {
     return @"Yosemite";
@@ -149,7 +150,7 @@
 #pragma mark - Control Specific
 
 - (float)leftMarginForTabBarControl {
-    return 0.0f;
+    return self.tabBar.insets.left;
 }
 
 - (float)rightMarginForTabBarControl {
@@ -159,7 +160,7 @@
 
 // For vertical orientation
 - (float)topMarginForTabBarControl {
-    return 0.0f;
+    return self.tabBar.insets.top;
 }
 
 #pragma mark - Add Tab Button

@@ -45,6 +45,7 @@
     IBOutlet NSButton *_preventTab;
     IBOutlet NSButton *_transparencyAffectsOnlyDefaultBackgroundColor;
     IBOutlet NSButton *_openToolbelt;
+    IBOutlet NSMenuItem *_compactWindowStyleMenuItem;
 }
 
 - (void)dealloc {
@@ -52,6 +53,10 @@
 }
 
 - (void)awakeFromNib {
+    if (@available(macOS 10.14, *)) { } else {
+        // Compact style requires sane layers support so it's 10.14+.
+        [_compactWindowStyleMenuItem.menu removeItem:_compactWindowStyleMenuItem];
+    }
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadProfile)  // In superclass
                                                  name:kReloadAllProfiles

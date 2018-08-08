@@ -13,6 +13,10 @@
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
 
+@interface NSView (Private)
+- (NSRect)_opaqueRectForWindowMoveWhenInTitlebar;
+@end
+
 typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     kFlashOff,
     kFlashHolding,  // Regular delay
@@ -206,6 +210,69 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     NSArray *names = @[ @"Off", @"FadeIn", @"Holding", @"Extending", @"FadeOut" ];
     DLog(@"%@ -> %@ from\n%@", names[self.flashState], names[flashState], [NSThread callStackSymbols]);
     _flashState = flashState;
+}
+
+#pragma mark - Window Dragging
+
+- (BOOL)mouseDownCanMoveWindow {
+    return [self.itermTabBarDelegate iTermTabBarCanDragWindow] ? NO : [super mouseDownCanMoveWindow];
+}
+
+- (NSRect)_opaqueRectForWindowMoveWhenInTitlebar {
+    return [self.itermTabBarDelegate iTermTabBarCanDragWindow] ? self.bounds : [super _opaqueRectForWindowMoveWhenInTitlebar];
+}
+
+- (void)mouseDown:(NSEvent *)event {
+    if (![self.itermTabBarDelegate iTermTabBarCanDragWindow]) {
+        [super mouseDown:event];
+        return;
+    }
+
+    NSView *superview = [self superview];
+    NSPoint hitLocation = [[superview superview] convertPoint:[event locationInWindow]
+                                                     fromView:nil];
+    NSView *hitView = [superview hitTest:hitLocation];
+
+    NSPoint pointInView = [self convertPoint:event.locationInWindow fromView:nil];
+    const BOOL handleDrag = ([self.itermTabBarDelegate iTermTabBarCanDragWindow] &&
+                             ![self wantsMouseDownAtPoint:pointInView] &&
+                             hitView == self &&
+                             ![self.itermTabBarDelegate iTermTabBarWindowIsFullScreen]);
+    if (handleDrag) {
+        [self trackClickForWindowMove:event];
+        return;
+    }
+    
+    [super mouseDown:event];
+}
+
+- (void)trackClickForWindowMove:(NSEvent*)event {
+    NSWindow *window = self.window;
+    NSPoint origin = [window frame].origin;
+    NSPoint lastPointInScreenCoords = [NSEvent mouseLocation];
+    const NSEventMask eventMask = (NSEventMaskLeftMouseDown |
+                                   NSEventMaskLeftMouseDragged |
+                                   NSEventMaskLeftMouseUp);
+    event = [NSApp nextEventMatchingMask:eventMask
+                               untilDate:[NSDate distantFuture]
+                                  inMode:NSEventTrackingRunLoopMode
+                                 dequeue:YES];
+    while (event && event.type != NSEventTypeLeftMouseUp) {
+        @autoreleasepool {
+            NSPoint currentPointInScreenCoords = [NSEvent mouseLocation];
+            
+            origin.x += currentPointInScreenCoords.x - lastPointInScreenCoords.x;
+            origin.y += currentPointInScreenCoords.y - lastPointInScreenCoords.y;
+            lastPointInScreenCoords = currentPointInScreenCoords;
+            
+            [window setFrameOrigin:origin];
+            
+            event = [NSApp nextEventMatchingMask:eventMask
+                                       untilDate:[NSDate distantFuture]
+                                          inMode:NSEventTrackingRunLoopMode
+                                         dequeue:YES];
+        }
+    }
 }
 
 @end

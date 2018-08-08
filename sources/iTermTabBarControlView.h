@@ -14,6 +14,8 @@
 - (BOOL)iTermTabBarShouldFlashAutomatically;
 - (void)iTermTabBarWillBeginFlash;
 - (void)iTermTabBarDidFinishFlash;
+- (BOOL)iTermTabBarWindowIsFullScreen;
+- (BOOL)iTermTabBarCanDragWindow;
 
 @end
 

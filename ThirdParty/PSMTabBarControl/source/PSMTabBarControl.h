@@ -202,7 +202,11 @@ enum {
 - (void)bindPropertiesForCell:(PSMTabBarCell *)cell andTabViewItem:(NSTabViewItem *)item;
 - (void)removeTabForCell:(PSMTabBarCell *)cell;
 
-// iTerm add-ons
+#pragma mark - iTerm add-ons
+
+// Internal inset. Ensures nothing but background is drawn in this are.
+@property(nonatomic, assign) NSEdgeInsets insets;
+
 - (void)setTabColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
 - (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
 - (void)setModifier:(int)mask;
@@ -222,5 +226,9 @@ enum {
 
 // Safely remove a cell.
 - (void)removeCell:(PSMTabBarCell *)cell;
+
+// Is there anything useful at this point or just background? Useful if you can
+// drag the window by dragging the background.
+- (BOOL)wantsMouseDownAtPoint:(NSPoint)point;
 
 @end

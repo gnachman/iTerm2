@@ -433,7 +433,13 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
                                                  orientation:[[self psmTabControlView] orientation]];
 
     [[self psmTabControlView] lockFocus];
-    NSBitmapImageRep *rep = [[[NSBitmapImageRep alloc] initWithFocusedViewRect:cellFrame] autorelease];
+    NSBitmapImageRep *rep;
+    if (@available(macOS 10.14, *)) {
+        rep = [self.controlView bitmapImageRepForCachingDisplayInRect:cellFrame];
+        [self.controlView cacheDisplayInRect:cellFrame toBitmapImageRep:rep];
+    } else {
+        rep = [[[NSBitmapImageRep alloc] initWithFocusedViewRect:cellFrame] autorelease];
+    }
     [[self psmTabControlView] unlockFocus];
     NSImage *image = [[[NSImage alloc] initWithSize:[rep size]] autorelease];
     [image addRepresentation:rep];

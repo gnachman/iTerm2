@@ -4,6 +4,8 @@
 @end
 #endif
 
+@class iTermThemeFrame;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @implementation THE_CLASS
@@ -404,6 +406,20 @@ ITERM_WEAKLY_REFERENCEABLE
          [NSThread callStackSymbols]);
     [super setFrame:frameRect display:flag];
 }
+
+#if ENABLE_COMPACT_WINDOW_HACK
+- (BOOL)isCompact {
+    return YES;
+}
+
++ (Class)frameViewClassForStyleMask:(NSUInteger)windowStyle {
+    return [iTermThemeFrame class] ?: [super frameViewClassForStyleMask:windowStyle];
+}
+#else
+- (BOOL)isCompact {
+    return NO;
+}
+#endif
 
 NS_ASSUME_NONNULL_END
 

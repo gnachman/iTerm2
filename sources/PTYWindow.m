@@ -40,10 +40,63 @@ const NSTimeInterval iTermWindowTitleChangeMinimumInterval = 0.1;
 - (NSView *)titlebarContainerView;
 @end
 
+// Insane hacks inspired by Chrome.
+// This makes it possible to implement our own window dragging.
+// Absurdly, making the window title invisible does not stop it from being used
+// to drag the window.
+
+@interface NSWindow (PrivateAPI)
++ (Class)frameViewClassForStyleMask:(NSUInteger)windowStyle;
+@end
+
+@interface NSFrameView : NSView
+@end
+
+@interface NSTitledFrame : NSFrameView
+// From class-dump
++ (float)_titlebarHeight:(unsigned int)fp8;
+@end
+
+@interface NSThemeFrame : NSTitledFrame
+@end
+
+@interface iTermThemeFrame : NSThemeFrame
+@end
+
+@implementation iTermThemeFrame
+
+// Height of built-in titlebar to create.
+- (CGFloat)_titlebarHeight {
+    return 0;
+}
+
+@end
+
+@implementation NSWindow(iTermWindow)
+
+- (id<PTYWindow>)ptyWindow {
+    if ([self conformsToProtocol:@protocol(PTYWindow)]) {
+        return (id<PTYWindow>)self;
+    } else {
+        return nil;
+    }
+}
+
+@end
+
 #define THE_CLASS iTermWindow
 #include "iTermWindowImpl.m"
 #undef THE_CLASS
 
 #define THE_CLASS iTermPanel
+#include "iTermWindowImpl.m"
+#undef THE_CLASS
+
+#define ENABLE_COMPACT_WINDOW_HACK 1
+#define THE_CLASS iTermCompactWindow
+#include "iTermWindowImpl.m"
+#undef THE_CLASS
+
+#define THE_CLASS iTermCompactPanel
 #include "iTermWindowImpl.m"
 #undef THE_CLASS
