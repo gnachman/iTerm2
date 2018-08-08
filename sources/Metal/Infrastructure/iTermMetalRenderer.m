@@ -10,7 +10,7 @@
 #import "NSImage+iTerm.h"
 #import <simd/simd.h>
 
-const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
+const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 1;
 
 @implementation iTermMetalBlending
 
