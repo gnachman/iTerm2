@@ -574,6 +574,20 @@
         cellSize.height
 
     };
+    CGFloat (^retinaRound)(CGFloat) = ^CGFloat(CGFloat value) {
+        return round(scale * value) / scale;
+    };
+    CGFloat (^centerPoint)(CGFloat) = ^CGFloat(CGFloat value) {
+        CGFloat nearest = retinaRound(value);
+        if (nearest > 0) {
+            return nearest + scale / 2;
+        } else {
+            return 0;
+        }
+    };
+    CGPoint (^makePoint)(CGFloat, CGFloat) = ^CGPoint(CGFloat x, CGFloat y) {
+        return CGPointMake(centerPoint(cx), centerPoint(cy));
+    };
     while (i + 4 <= length) {
         int x1 = bytes[i++] - 'a';
         int y1 = bytes[i++] - '1';
@@ -581,18 +595,19 @@
         int y2 = bytes[i++] - '1';
 
         if (x1 != lastX || y1 != lastY) {
-            [path moveToPoint:NSMakePoint(xs[x1], ys[y1])];
+            [path moveToPoint:makePoint((xs[x1]),
+                                          (ys[y1]))];
         }
         if (i < length && isalpha(bytes[i])) {
             int cx1 = bytes[i++] - 'a';
             int cy1 = bytes[i++] - '1';
             int cx2 = bytes[i++] - 'a';
             int cy2 = bytes[i++] - '1';
-            [path curveToPoint:NSMakePoint(xs[x2], ys[y2])
-                 controlPoint1:NSMakePoint(xs[cx1], ys[cy1])
-                 controlPoint2:NSMakePoint(xs[cx2], ys[cy2])];
+            [path curveToPoint:makePoint((xs[x2]), (ys[y2]))
+                 controlPoint1:makePoint((xs[cx1]), (ys[cy1]))
+                 controlPoint2:makePoint((xs[cx2]), (ys[cy2]))];
         } else {
-            [path lineToPoint:NSMakePoint(xs[x2], ys[y2])];
+            [path lineToPoint:makePoint((xs[x2]), (ys[y2]))];
         }
 
         i++;
