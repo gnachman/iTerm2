@@ -47,6 +47,7 @@
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchServices.h"
 #import "iTermLSOF.h"
+#import "iTermMenuBarObserver.h"
 #import "iTermMigrationHelper.h"
 #import "iTermModifierRemapper.h"
 #import "iTermPreferences.h"
@@ -980,6 +981,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
+    [iTermMenuBarObserver sharedInstance];
     // Cleanly crash on uncaught exceptions, such as during actions.
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{ @"NSApplicationCrashOnExceptions": @YES }];
 

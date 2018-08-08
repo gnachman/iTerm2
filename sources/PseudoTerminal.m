@@ -29,6 +29,7 @@
 #import "iTermHotKeyMigrationHelper.h"
 #import "iTermInstantReplayWindowController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermMenuBarObserver.h"
 #import "iTermOpenQuicklyWindow.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
@@ -3525,15 +3526,30 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self traditionalFullScreenFrameForScreen:self.window.screen];
 }
 
-- (BOOL)menuBarVisibleInFullScreen {
-    if ([iTermPreferences boolForKey:kPreferenceKeyUIElement]) {
-        // LSUIElement can't hide it.
-        return YES;
+- (BOOL)fullScreenWindowFrameShouldBeShiftedDownBelowMenuBar {
+    const BOOL wantToHideMenuBar = [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen];
+    const BOOL canHideMenuBar = ![iTermPreferences boolForKey:kPreferenceKeyUIElement];
+    const BOOL menuBarIsHidden = ![[iTermMenuBarObserver sharedInstance] menuBarVisible];
+    const BOOL canOverlapMenuBar = [self.window isKindOfClass:[iTermPanel class]];
+
+    DLog(@"Checking if the fullscreen window frame should be shifted down below the menu bar. "
+         @"wantToHideMenuBar=%@, canHideMenuBar=%@, menuIsHidden=%@, canOverlapMenuBar=%@",
+         @(wantToHideMenuBar), @(canHideMenuBar), @(menuBarIsHidden), @(canOverlapMenuBar));
+    if (wantToHideMenuBar && canHideMenuBar) {
+        DLog(@"Nope");
+        return NO;
     }
-    if (![iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen]) {
-        return YES;
+    if (menuBarIsHidden) {
+        DLog(@"Nope");
+        return NO;
     }
-    return NO;
+    if (canOverlapMenuBar && wantToHideMenuBar) {
+        DLog(@"Nope");
+        return NO;
+    }
+
+    DLog(@"Yep");
+    return YES;
 }
 
 - (NSRect)traditionalFullScreenFrameForScreen:(NSScreen *)screen {
@@ -3542,9 +3558,7 @@ ITERM_WEAKLY_REFERENCEABLE
     frameMinusMenuBar.size.height -= [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
     BOOL menuBarIsVisible = NO;
 
-    if ([self menuBarVisibleInFullScreen]) {
-        // Menu bar can show in fullscreen...
-        // There is a menu bar on all screens.
+    if ([self fullScreenWindowFrameShouldBeShiftedDownBelowMenuBar]) {
         menuBarIsVisible = YES;
     }
     if (menuBarIsVisible) {
