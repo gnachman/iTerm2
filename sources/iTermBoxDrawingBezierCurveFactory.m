@@ -586,7 +586,7 @@
         }
     };
     CGPoint (^makePoint)(CGFloat, CGFloat) = ^CGPoint(CGFloat x, CGFloat y) {
-        return CGPointMake(centerPoint(cx), centerPoint(cy));
+        return CGPointMake(centerPoint(x), centerPoint(y));
     };
     while (i + 4 <= length) {
         int x1 = bytes[i++] - 'a';
