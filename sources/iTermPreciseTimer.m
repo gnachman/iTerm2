@@ -293,7 +293,7 @@ void iTermPreciseTimerLog(NSString *identifier,
          [@"-" stringRepeatedTimes:millisWidth - 3],  // p75
          [@"-" stringRepeatedTimes:millisWidth - 3]]; // p95
         for (size_t i = 0; i < count; i++) {
-            if ([histograms[i] count] == 0) {
+            if (histograms && [histograms[i] count] == 0) {
                 continue;
             }
             NSTimeInterval mean = iTermPreciseTimerStatsGetMean(&stats[i]) * 1000.0;
