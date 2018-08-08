@@ -4313,7 +4313,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6331">
-                    <rect key="frame" x="337" y="154" width="118" height="17"/>
+                    <rect key="frame" x="337" y="164" width="118" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="tmux Integration" id="6332">
                         <font key="font" metaFont="systemBold"/>
@@ -4427,7 +4427,7 @@ DQ
                     </connections>
                 </button>
                 <button id="6366">
-                    <rect key="frame" x="337" y="77" width="398" height="18"/>
+                    <rect key="frame" x="337" y="88" width="398" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Automatically bury the tmux client session after connecting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6367">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4628,7 +4628,7 @@ DQ
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="5629"/>
                 </imageView>
                 <popUpButton verticalHuggingPriority="750" id="6337">
-                    <rect key="frame" x="337" y="122" width="361" height="26"/>
+                    <rect key="frame" x="337" y="132" width="361" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">A tmux server has multiple virtual windows. When you attach to a tmux server, these virtual windows can be presented as windows or tabs. This setting determines how they should appear in iTerm2.</string>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="6338">
@@ -4665,7 +4665,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6343">
-                    <rect key="frame" x="337" y="103" width="252" height="17"/>
+                    <rect key="frame" x="337" y="113" width="252" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Open dashboard if there are more than" id="6344">
                         <font key="font" metaFont="system"/>
@@ -4674,7 +4674,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6347">
-                    <rect key="frame" x="632" y="103" width="95" height="17"/>
+                    <rect key="frame" x="632" y="112" width="95" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="tmux windows" id="6348">
                         <font key="font" metaFont="system"/>
@@ -4683,7 +4683,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField toolTip="The tmux dashboard can be found under the Shell&gt;tmux menu and helps for managing large numbers of tmux windows." verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6345">
-                    <rect key="frame" x="591" y="101" width="36" height="22"/>
+                    <rect key="frame" x="580" y="110" width="49" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="6346">
                         <font key="font" metaFont="system"/>
@@ -4730,7 +4730,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="2057" y="-50"/>
+            <point key="canvasLocation" x="2057" y="-50.5"/>
         </customView>
         <customView id="yCt-fi-XI9" userLabel="Prefs - Appearance" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="744" height="358"/>
