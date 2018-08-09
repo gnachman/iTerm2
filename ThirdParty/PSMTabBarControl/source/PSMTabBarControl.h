@@ -41,6 +41,9 @@ extern const NSInteger kPSMStartResizeAnimation;
 @class PSMTabBarControl;
 @protocol PSMTabStyle;
 
+typedef NSString *PSMTabBarControlOptionKey NS_EXTENSIBLE_STRING_ENUM;
+extern PSMTabBarControlOptionKey PSMTabBarControlOptionColoredSelectedTabOutlineStrength;  // NSNumber in 0-3
+
 // Tab views controlled by the tab bar may expect this protocol to be conformed to by their delegate.
 @protocol PSMTabViewDelegate<NSTabViewDelegate>
 - (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem;
@@ -120,6 +123,7 @@ extern const NSInteger kPSMStartResizeAnimation;
 - (void)fillPath:(NSBezierPath*)path;
 - (void)tabView:(NSTabView *)tabView closeTab:(id)identifier;
 - (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
+- (id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option;
 
 @end
 

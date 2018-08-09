@@ -39,6 +39,8 @@ const NSInteger kPSMIsNotBeingResized = -1;
 // Value used in _currentStep when a resizing operation has just been started
 const NSInteger kPSMStartResizeAnimation = 0;
 
+PSMTabBarControlOptionKey PSMTabBarControlOptionColoredSelectedTabOutlineStrength = @"PSMTabBarControlOptionColoredSelectedTabOutlineStrength";
+
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol>
 @end
 

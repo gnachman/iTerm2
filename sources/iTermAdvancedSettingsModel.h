@@ -222,5 +222,6 @@
 + (int)minimumWeightDifferenceForBoldFont;
 + (double)metalSlowFrameRate;
 + (double)fractionOfCharacterSelectingNextNeighbor;
++ (double)coloredSelectedTabOutlineStrength;
 
 @end
