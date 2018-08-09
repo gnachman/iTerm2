@@ -22,6 +22,8 @@
 - (NSColor *)dividerColor {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch (preferredStyle) {
+        case TAB_STYLE_AUTOMATIC:
+#warning TODO
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
             return [NSColor lightGrayColor];

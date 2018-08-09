@@ -342,6 +342,9 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                         saturation:0
                                         brightness:0.25
                                              alpha:1];
+        case TAB_STYLE_AUTOMATIC:
+#warning TODO
+            return [NSColor redColor];
     }
 }
 
