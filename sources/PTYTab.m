@@ -208,6 +208,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 + (NSImage *)imageForNewOutput {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch (preferredStyle) {
+        case TAB_STYLE_AUTOMATIC:
+#warning TODO
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
             return [NSImage imageNamed:@"NewOutput"];
@@ -229,6 +231,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 + (NSImage *)deadImage {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch (preferredStyle) {
+        case TAB_STYLE_AUTOMATIC:
+#warning TODO
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
             return [NSImage imageNamed:@"dead"];

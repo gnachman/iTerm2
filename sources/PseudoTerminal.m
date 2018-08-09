@@ -6677,6 +6677,8 @@ ITERM_WEAKLY_REFERENCEABLE
     id<PSMTabStyle> style;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch (preferredStyle) {
+        case TAB_STYLE_AUTOMATIC:
+#warning TODO
         case TAB_STYLE_LIGHT:
             style = [[[PSMYosemiteTabStyle alloc] init] autorelease];
             break;

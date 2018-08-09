@@ -95,6 +95,11 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
+    if (@available(macOS 10.14, *)) { } else {
+        // Remove "automatic" and separator prior to 10.14
+        [_tabStyle.menu removeItem:_tabStyle.menu.itemArray.firstObject];
+        [_tabStyle.menu removeItem:_tabStyle.menu.itemArray.firstObject];
+    }
     info = [self defineControl:_tabStyle
                            key:kPreferenceKeyTabStyle
                           type:kPreferenceInfoTypePopup];

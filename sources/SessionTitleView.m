@@ -141,6 +141,8 @@ static const CGFloat kButtonSize = 17;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     CGFloat whiteLevel = 0;
     switch (preferredStyle) {
+        case TAB_STYLE_AUTOMATIC:
+#warning TODO
         case TAB_STYLE_LIGHT:
             if (![delegate_ sessionTitleViewIsFirstResponder]) {
                 // Not selected
@@ -190,6 +192,8 @@ static const CGFloat kButtonSize = 17;
         CGFloat brightness = tabColor.brightnessComponent;
         iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
         switch (preferredStyle) {
+            case TAB_STYLE_AUTOMATIC:
+#warning TODO
             case TAB_STYLE_LIGHT:
                 tabColor = [NSColor colorWithCalibratedHue:hue
                                                 saturation:saturation * .5
@@ -281,6 +285,8 @@ static const CGFloat kButtonSize = 17;
     CGFloat whiteLevel = 0;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch (preferredStyle) {
+        case TAB_STYLE_AUTOMATIC:
+#warning TODO
         case TAB_STYLE_LIGHT:
             if (dimmingAmount_ > 0) {
                 // Not selected

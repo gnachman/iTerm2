@@ -60,7 +60,8 @@ NSString *const kPreferenceKeyDisableMetalWhenUnplugged = @"disableMetalWhenUnpl
 NSString *const kPreferenceKeyPreferIntegratedGPU = @"preferIntegratedGPU";
 NSString *const kPreferenceKeyMetalMaximizeThroughput = @"metalMaximizeThroughput";
 
-NSString *const kPreferenceKeyTabStyle = @"TabStyle";
+NSString *const kPreferenceKeyTabStyle_Deprecated = @"TabStyle";  // Pre-10.14
+NSString *const kPreferenceKeyTabStyle = @"TabStyleWithAutomaticOption";  // Pre-10.14
 NSString *const kPreferenceKeyTabPosition = @"TabViewType";
 NSString *const kPreferenceKeyHideTabBar = @"HideTab";
 NSString *const kPreferenceKeyHideTabNumber = @"HideTabNumber";
@@ -234,7 +235,9 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyPreferIntegratedGPU: @YES,
                   kPreferenceKeyMetalMaximizeThroughput: @YES,
 
+                  kPreferenceKeyTabStyle_Deprecated: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),
+                  
                   kPreferenceKeyTabPosition: @(TAB_POSITION_TOP),
                   kPreferenceKeyHideTabBar: @YES,
                   kPreferenceKeyHideTabNumber: @NO,
@@ -361,7 +364,8 @@ static NSString *sPreviousVersion;
     if (!dict) {
         dict = @{ kPreferenceKeyOpenArrangementAtStartup: BLOCK(computedOpenArrangementAtStartup),
                   kPreferenceKeyCustomFolder: BLOCK(computedCustomFolder),
-                  kPreferenceKeyCharactersConsideredPartOfAWordForSelection: BLOCK(computedWordChars) };
+                  kPreferenceKeyCharactersConsideredPartOfAWordForSelection: BLOCK(computedWordChars),
+                  kPreferenceKeyTabStyle: BLOCK(computedTabStyle) };
     }
     return dict;
 }
@@ -532,6 +536,24 @@ static NSString *sPreviousVersion;
     NSString *wordChars =
         [self uncomputedObjectForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelection];
     return wordChars ?: @"";
+}
+
+// Migrates all pre-10.14 users now on 10.14 to automatic, since anything else looks bad.
++ (NSNumber *)computedTabStyle {
+    NSNumber *value;
+    if (@available(macOS 10.14, *)) {
+        value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyTabStyle];
+        if (value) {
+            return value;
+        }
+        return @(TAB_STYLE_AUTOMATIC);
+    }
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyTabStyle_Deprecated];
+    if (value) {
+        return value;
+    } else {
+        return @(TAB_STYLE_LIGHT);
+    }
 }
 
 @end
