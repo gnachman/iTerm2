@@ -5337,6 +5337,13 @@ ITERM_WEAKLY_REFERENCEABLE
     return _contentView.tabView;
 }
 
+- (id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option {
+    if ([option isEqualToString:PSMTabBarControlOptionColoredSelectedTabOutlineStrength]) {
+        return @([iTermAdvancedSettingsModel coloredSelectedTabOutlineStrength]);
+    }
+    return nil;
+}
+
 - (BOOL)isInitialized
 {
     return _contentView.tabView != nil;

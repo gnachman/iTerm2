@@ -234,5 +234,7 @@
 + (NSString *)pathToTelnet;
 + (BOOL)sshURLsSupportPath;
 + (double)underlineCursorHeight;
++ (double)fractionOfCharacterSelectingNextNeighbor;
++ (double)coloredSelectedTabOutlineStrength;
 
 @end
