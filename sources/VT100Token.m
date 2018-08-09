@@ -122,6 +122,7 @@ static iTermObjectPool *gPool;
                           @(VT100CSI_CUD):                    @"VT100CSI_CUD",
                           @(VT100CSI_CUF):                    @"VT100CSI_CUF",
                           @(VT100CSI_CUP):                    @"VT100CSI_CUP",
+                          @(VT100CSI_CHT):                    @"VT100CSI_CHT",
                           @(VT100CSI_CUU):                    @"VT100CSI_CUU",
                           @(VT100CSI_DA):                     @"VT100CSI_DA",
                           @(VT100CSI_DA2):                    @"VT100CSI_DA2",

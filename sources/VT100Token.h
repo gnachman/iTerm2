@@ -54,6 +54,7 @@ typedef enum {
     VT100CSI_CUD,                   // Cursor Down
     VT100CSI_CUF,                   // Cursor Forward
     VT100CSI_CUP,                   // Cursor Position
+    VT100CSI_CHT,                   // Cursor Forward Tabulation Ps tab stops
     VT100CSI_CUU,                   // Cursor Up
     VT100CSI_CNL,                   // Cursor Next Line
     VT100CSI_CPL,                   // Cursor Preceding Line

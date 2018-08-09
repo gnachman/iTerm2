@@ -1377,6 +1377,11 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_CUP:
             [delegate_ terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
             break;
+        case VT100CSI_CHT:
+            for (int i = 0; i < token.csi->p[0]; i++) {
+                [delegate_ terminalAppendTabAtCursor:!_softAlternateScreenMode];
+            }
+            break;
         case VT100CSI_CUU:
             [delegate_ terminalCursorUp:token.csi->p[0] > 0 ? token.csi->p[0] : 1
                        andToStartOfLine:NO];
