@@ -76,6 +76,14 @@ static NSString *const kArrangement = @"Arrangement";
                                                  selector:@selector(characterPanelDidClose:)
                                                      name:iTermApplicationCharacterPaletteDidClose
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(updateWindowLevel)
+                                                     name:iTermApplicationWillShowModalWindow
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(updateWindowLevel)
+                                                     name:iTermApplicationDidCloseModalWindow
+                                                   object:nil];
     }
     return self;
 }
@@ -162,7 +170,8 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (NSWindowLevel)floatingLevel {
-    if ([iTermApplication sharedApplication].it_characterPanelIsOpen) {
+    iTermApplication *app = [iTermApplication sharedApplication];
+    if (app.it_characterPanelIsOpen || app.it_modalWindowOpen) {
         return NSFloatingWindowLevel;
     } else {
         return NSStatusWindowLevel;
