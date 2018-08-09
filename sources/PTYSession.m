@@ -9160,6 +9160,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return self.variables[name];
 }
 
+- (void)screenReportFocusWillChangeTo:(BOOL)reportFocus {
+    [self dismissAnnouncementWithIdentifier:kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier];
+}
+
 #pragma mark - Announcements
 
 - (BOOL)hasAnnouncementWithIdentifier:(NSString *)identifier {

@@ -413,4 +413,5 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 
 - (void)terminalRepeatPreviousCharacter:(int)times;
 
+- (void)terminalReportFocusWillChangeTo:(BOOL)reportFocus;
 @end
