@@ -30,4 +30,31 @@
 
 @implementation DVRIndexEntry
 
++ (instancetype)entryFromDictionaryValue:(NSDictionary *)dict {
+    DVRIndexEntry *entry = [[[self alloc] init] autorelease];
+    entry->position = [dict[@"position"] longLongValue];
+    entry->frameLength = [dict[@"frameLength"] intValue];
+
+    NSDictionary *infoDict = dict[@"info"];
+    entry->info.width = [infoDict[@"width"] intValue];
+    entry->info.height = [infoDict[@"height"] intValue];
+    entry->info.cursorX = [infoDict[@"cursorX"] intValue];
+    entry->info.cursorY = [infoDict[@"cursorY"] intValue];
+    entry->info.timestamp = [infoDict[@"timestamp"] longLongValue];
+    entry->info.frameType = [infoDict[@"frameType"] intValue];
+
+    return entry;
+}
+
+- (NSDictionary *)dictionaryValue {
+    return @{ @"info": @{ @"width": @(info.width),
+                          @"height": @(info.height),
+                          @"cursorX": @(info.cursorX),
+                          @"cursorY": @(info.cursorY),
+                          @"timestamp": @(info.timestamp),
+                          @"frameType": @(info.frameType) },
+              @"position": @(position),
+              @"frameLength": @(frameLength) };
+}
+
 @end

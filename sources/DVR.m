@@ -29,6 +29,7 @@
 
 #import "DVR.h"
 #import "DVRIndexEntry.h"
+#import "NSData+iTerm.h"
 #include <sys/time.h>
 
 @implementation DVR {
@@ -37,6 +38,8 @@
     NSMutableArray* decoders_;
     DVREncoder* encoder_;
 }
+
+@synthesize readOnly = readOnly_;
 
 - (instancetype)initWithBufferCapacity:(int)bytes {
     self = [super init];
@@ -61,10 +64,14 @@
 
 - (void)appendFrame:(NSArray*)frameLines length:(int)length info:(DVRFrameInfo*)info
 {
+    if (readOnly_) {
+        return;
+    }
     if (length > [buffer_ capacity] / 2) {
         // Protect the buffer from overflowing if you have a really big window.
         return;
     }
+    _empty = NO;
     int prevFirst = [buffer_ firstKey];
     if ([encoder_ reserve:length]) {
         // Leading frames were freed. Invalidate them in all decoders.
@@ -107,6 +114,47 @@
         return 0;
     }
     return entry->info.timestamp;
+}
+
+- (NSDictionary *)dictionaryValue {
+    return @{ @"version": @1,
+              @"capacity": @(capacity_),
+              @"buffer": buffer_.dictionaryValue };
+}
+
+- (BOOL)loadDictionary:(NSDictionary *)dict {
+    if (!dict) {
+        return NO;
+    }
+    if ([dict[@"version"] integerValue] != 1) {
+        return NO;
+    }
+    int capacity = [dict[@"capacity"] intValue];
+    if (capacity == 0) {
+        return NO;
+    }
+    NSDictionary *bufferDict = dict[@"buffer"];
+    if (!bufferDict) {
+        return NO;
+    }
+
+    [buffer_ release];
+    buffer_ = [DVRBuffer alloc];
+    [buffer_ initWithBufferCapacity:capacity];
+    capacity_ = capacity;
+
+    [decoders_ release];
+    decoders_ = [[NSMutableArray alloc] init];
+
+    [encoder_ release];
+    encoder_ = [DVREncoder alloc];
+    [encoder_ initWithBuffer:buffer_];
+
+    if (![buffer_ loadFromDictionary:bufferDict]) {
+        return NO;
+    }
+    readOnly_ = YES;
+    return YES;
 }
 
 @end

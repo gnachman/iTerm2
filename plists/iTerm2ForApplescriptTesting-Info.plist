@@ -6,6 +6,18 @@
 	<string>English</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
+                <dict>
+                        <key>CFBundleTypeExtensions</key>
+                        <array>
+                                <string>itr</string>
+                        </array>
+                        <key>CFBundleTypeIconFile</key>
+                        <string>iTerm2.icns</string>
+                        <key>CFBundleTypeName</key>
+                        <string>iTerm2 Recording</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Editor</string>
+                </dict>
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>

@@ -62,6 +62,7 @@
 #import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
+#import "iTermRecordingCodec.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermServiceProvider.h"
@@ -81,6 +82,7 @@
 #import "NSApplication+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSBundle+iTerm.h"
+#import "NSData+GZIP.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
@@ -561,6 +563,10 @@ static BOOL hasBecomeActive = NO;
             alert.informativeText = @"The color scheme was imported and added to presets. You can find it under Preferences>Profiles>Colors>Load Presets….";
             [alert runModal];
         }
+        return YES;
+    }
+    if ([filename.pathExtension isEqualToString:@"itr"]) {
+        [iTermRecordingCodec loadRecording:[NSURL fileURLWithPath:filename]];
         return YES;
     }
     NSLog(@"Quiet launch");
@@ -2091,6 +2097,10 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)openSourceLicenses:(id)sender {
     NSURL *url = [[NSBundle mainBundle] URLForResource:@"Licenses" withExtension:@"txt"];
     [[NSWorkspace sharedWorkspace] openURL:url];
+}
+
+- (IBAction)loadRecording:(id)sender {
+    [iTermRecordingCodec loadRecording];
 }
 
 #pragma mark - Private

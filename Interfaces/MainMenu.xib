@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14113" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14109" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14109"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -816,6 +816,17 @@ DQ
                                         <menuItem title="Stop" identifier="Log.Stop" id="230">
                                             <connections>
                                                 <action selector="logStop:" target="-1" id="232"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="xCY-NV-Vjc"/>
+                                        <menuItem title="Import Recording" identifier="Log.ImportRecording" id="Xu9-L5-uPr">
+                                            <connections>
+                                                <action selector="loadRecording:" target="201" id="1pk-Ll-Rih"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Export Recording" identifier="Log.ExportRecording" id="Bxx-ai-xsx">
+                                            <connections>
+                                                <action selector="exportRecording:" target="-1" id="e25-uz-tFr"/>
                                             </connections>
                                         </menuItem>
                                     </items>

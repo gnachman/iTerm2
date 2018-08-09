@@ -32,6 +32,18 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
                          identifier:(NSString *)identifier
                    initialDirectory:(NSString *)initialDirectory
                     defaultFilename:(NSString *)defaultFilename {
+    return [self showWithOptions:options
+                      identifier:identifier
+                initialDirectory:initialDirectory
+                 defaultFilename:defaultFilename
+                allowedFileTypes:nil];
+}
+
++ (iTermSavePanel *)showWithOptions:(NSInteger)options
+                         identifier:(NSString *)identifier
+                   initialDirectory:(NSString *)initialDirectory
+                    defaultFilename:(NSString *)defaultFilename
+                   allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes {
     NSString *key = [self keyForIdentifier:identifier];
     NSDictionary *savedSettings = [[NSUserDefaults standardUserDefaults] objectForKey:key];
     if (savedSettings) {
@@ -43,6 +55,10 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
         savePanel.directoryURL = [NSURL fileURLWithPath:initialDirectory];
     }
     savePanel.nameFieldStringValue = defaultFilename;
+    if (allowedFileTypes) {
+        savePanel.extensionHidden = NO;
+        savePanel.allowedFileTypes = allowedFileTypes;
+    }
     iTermSavePanel *delegate = [[[iTermSavePanel alloc] initWithOptions:options] autorelease];
 
     savePanel.delegate = delegate;
@@ -66,11 +82,17 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
             // The path contains random crap in the last path component. Use what we saved instead.
             NSString *directory = [savePanel.URL.path stringByDeletingLastPathComponent];
             delegate.path = [directory stringByAppendingPathComponent:delegate.filename];
+            if (allowedFileTypes.count && ![allowedFileTypes containsObject:delegate.path.pathExtension]) {
+                delegate.path = [delegate.path stringByAppendingPathExtension:allowedFileTypes.firstObject];
+            }
 
             // Show the replace/append/cancel panel.
             retrying = [delegate checkForExistingFile];
         } else {
             delegate.path = savePanel.URL.path;
+            if (allowedFileTypes.count && ![allowedFileTypes containsObject:delegate.path.pathExtension]) {
+                delegate.path = [delegate.path stringByAppendingPathExtension:allowedFileTypes.firstObject];
+            }
         }
     } while (retrying);
 

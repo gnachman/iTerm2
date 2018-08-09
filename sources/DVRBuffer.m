@@ -27,7 +27,7 @@
  */
 
 #import "DVRBuffer.h"
-
+#import "NSDictionary+iTerm.h"
 
 @implementation DVRBuffer {
     // Points to start of large circular buffer.
@@ -82,6 +82,58 @@
     index_ = nil;
     free(store_);
     [super dealloc];
+}
+
+- (NSDictionary *)exportedIndex {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    for (NSNumber *key in index_) {
+        DVRIndexEntry *entry = index_[key];
+        dict[key] = entry.dictionaryValue;
+    }
+    return dict;
+}
+
+- (NSDictionary *)dictionaryValue {
+    NSDictionary *dict =
+        @{ @"store": [NSData dataWithBytes:store_ length:capacity_],
+           @"scratchOffset": scratch_ ? @(scratch_ - store_) : [NSNull null],
+           @"index": [self exportedIndex],
+           @"firstKey": @(firstKey_),
+           @"nextKey": @(nextKey_),
+           @"begin": @(begin_),
+           @"end": @(end_) };
+    return [dict dictionaryByRemovingNullValues];
+}
+
+- (BOOL)loadFromDictionary:(NSDictionary *)dict {
+    NSData *store = dict[@"store"];
+    if (store.length != capacity_) {
+        return NO;
+    }
+    memmove(store_, store.bytes, store.length);
+
+    id scratch = dict[@"scratchOffset"];
+    if ([scratch isKindOfClass:[NSNull class]]) {
+        scratch_ = nil;
+    } else {
+        scratch_ = store_ + [scratch integerValue];
+    }
+
+    NSDictionary *indexDict = dict[@"index"];
+    for (NSNumber *key in indexDict) {
+        NSDictionary *value = indexDict[key];
+        DVRIndexEntry *entry = [DVRIndexEntry entryFromDictionaryValue:value];
+        if (!entry) {
+            return NO;
+        }
+        index_[key] = entry;
+    }
+
+    firstKey_ = [dict[@"firstKey"] longLongValue];
+    nextKey_ = [dict[@"nextKey"] longLongValue];
+    begin_ = [dict[@"begin"] longLongValue];
+    end_ = [dict[@"end"] longLongValue];
+    return YES;
 }
 
 - (BOOL)reserve:(long long)length

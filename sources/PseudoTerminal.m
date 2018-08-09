@@ -38,7 +38,9 @@
 #import "iTermPromptOnCloseReason.h"
 #import "iTermQuickLookController.h"
 #import "iTermRateLimitedUpdate.h"
+#import "iTermRecordingCodec.h"
 #import "iTermRootTerminalView.h"
+#import "iTermSavePanel.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermSelection.h"
 #import "iTermSessionFactory.h"
@@ -1626,7 +1628,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (okToClose) {
         // Just in case IR is open, close it first.
-        [self closeInstantReplay:self];
+        [self closeInstantReplay:self orTerminateSession:NO];
         [self closeSession:aSession];
     }
 }
@@ -5358,6 +5360,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded {
+    if (self.currentSession.liveSession.screen.dvr.readOnly) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self close];
+        });
+    }
     if ([[self currentSession] liveSession]) {
         [self showLiveSession:[[self currentSession] liveSession] inPlaceOf:[self currentSession]];
     }
@@ -5429,8 +5436,17 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self window] makeFirstResponder:[[self currentSession] textview]];
 }
 
-- (void)closeInstantReplay:(id)sender {
-    [self closeInstantReplayWindow];
+- (BOOL)closeInstantReplay:(id)sender orTerminateSession:(BOOL)orTerminateSession {
+    if (!self.currentSession.liveSession.screen.dvr.readOnly) {
+        [self closeInstantReplayWindow];
+        return YES;
+    } else if (orTerminateSession) {
+        [self closeInstantReplay:self orTerminateSession:NO];
+        [self closeSession:sender];
+        return YES;
+    } else {
+        return NO;
+    }
 }
 
 - (void)fitWindowToTab:(PTYTab*)tab
@@ -6599,7 +6615,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session move:(BOOL)move {
     // Things would get really complicated if you could do this in IR, so just
     // close it.
-    [self closeInstantReplay:nil];
+    [self closeInstantReplay:nil orTerminateSession:NO];
     for (PTYSession *aSession in [self allSessions]) {
         if (mode) {
             [aSession setSplitSelectionMode:(aSession != session) ? kSplitSelectionModeOn : kSplitSelectionModeCancel
@@ -7413,6 +7429,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self currentSession] clearScrollbackBuffer];
 }
 
+- (IBAction)exportRecording:(id)sender {
+    [iTermRecordingCodec exportRecording:self.currentSession];
+}
+
 // Turn on session logging in the current session.
 - (IBAction)logStart:(id)sender
 {
@@ -7566,6 +7586,8 @@ ITERM_WEAKLY_REFERENCEABLE
         return self.currentSession.textViewIsZoomedIn;
     } else if (item.action == @selector(captureNextMetalFrame:)) {
         return self.currentSession.canProduceMetalFramecap;
+    } else if (item.action == @selector(exportRecording:)) {
+        return !self.currentSession.screen.dvr.empty;
     }
 
     return result;

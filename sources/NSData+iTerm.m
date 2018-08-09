@@ -188,4 +188,26 @@
     return [[[NSString alloc] initWithData:self encoding:encoding] autorelease];
 }
 
++ (NSData *)it_dataWithArchivedObject:(id<NSCoding>)object {
+    NSMutableData *data = [NSMutableData data];
+    NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initForWritingWithMutableData:data];
+    [archiver encodeObject:object forKey:@"object"];
+    [archiver finishEncoding];
+    [archiver release];
+    return data;
+}
+
+- (id)it_unarchivedObject {
+    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingWithData:self];
+    id object = nil;
+    @try {
+        object = [unarchiver decodeObjectForKey:@"object"];
+    }
+    @catch (NSException *exception) {
+        return nil;
+    }
+    [unarchiver finishDecoding];
+    return object;
+}
+
 @end

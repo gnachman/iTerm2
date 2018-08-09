@@ -592,7 +592,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)setActiveSession:(PTYSession *)session updateActivityCounter:(BOOL)updateActivityCounter {
     PtyLog(@"PTYTab setActiveSession:%p", session);
     if (activeSession_ &&  activeSession_ != session && [activeSession_ dvr]) {
-        [realParentWindow_ closeInstantReplay:self];
+        [realParentWindow_ closeInstantReplay:self orTerminateSession:NO];
     }
     BOOL changed = session != activeSession_;
     if (changed && updateActivityCounter) {

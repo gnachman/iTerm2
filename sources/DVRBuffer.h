@@ -55,6 +55,7 @@ typedef enum {
 
 // Are there no frames?
 @property(nonatomic, readonly, getter=isEmpty) BOOL empty;
+@property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
 - (instancetype)initWithBufferCapacity:(long long)capacity;
 
@@ -78,6 +79,7 @@ typedef enum {
 
 // Look up an index entry by key.
 - (DVRIndexEntry*)entryForKey:(long long)key;
+- (BOOL)loadFromDictionary:(NSDictionary *)dict;
 
 @end
 

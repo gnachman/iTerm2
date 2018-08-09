@@ -37,11 +37,15 @@
 // Get timestamp of first/last frame. Times are in microseconds since 1970.
 @property(nonatomic, readonly) long long lastTimeStamp;
 @property(nonatomic, readonly) long long firstTimeStamp;
+@property(nonatomic, readonly) BOOL readOnly;
+@property(nonatomic, readonly) BOOL empty;
+@property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
 // Allocates a circular buffer of the given size in bytes to store screen
 // contents. Somewhat more memory is used because there's some per-frame
 // storage, but it should be small in comparison.
 - (instancetype)initWithBufferCapacity:(int)bytes;
+- (BOOL)loadDictionary:(NSDictionary *)dict;
 
 // Save the screen state into the DVR.
 //   frameLines: An array of screen lines that DVREncoder understands.

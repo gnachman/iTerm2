@@ -298,7 +298,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (BOOL)inInstantReplay;
 
 // Hide the IR bar and end instant replay.
-- (void)closeInstantReplay:(id)sender;
+- (BOOL)closeInstantReplay:(id)sender orTerminateSession:(BOOL)orTerminateSession;
 
 // Step forward/back in IR.
 - (void)irPrev:(id)sender;

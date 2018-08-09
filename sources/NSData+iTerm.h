@@ -36,4 +36,7 @@
 // Converts data into a string using the given encoding.
 - (NSString *)stringWithEncoding:(NSStringEncoding)encoding;
 
++ (NSData *)it_dataWithArchivedObject:(id<NSCoding>)object;
+- (id)it_unarchivedObject;
+
 @end

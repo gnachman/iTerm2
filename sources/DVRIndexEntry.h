@@ -55,4 +55,9 @@ typedef struct {
     // Number of bytes in buffer.
     int frameLength;
 }
+
++ (instancetype)entryFromDictionaryValue:(NSDictionary *)dict;
+
+@property (nonatomic, readonly) NSDictionary *dictionaryValue;
+
 @end

@@ -3510,7 +3510,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     NSDictionary *updatedProfile =
         [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
-
+    if (!updatedProfile) {
+        // Can happen when replaying a recorded session.
+        return;
+    }
+    
     NSMutableSet *keys = [NSMutableSet setWithArray:[updatedProfile allKeys]];
     [keys addObjectsFromArray:[_profile allKeys]];
     for (NSString *aKey in keys) {
@@ -6401,7 +6405,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // session, even though it might be displayed.
         if (unicode == 27) {
             // Escape exits IR
-            [[_delegate realParentWindow] closeInstantReplay:self];
+            [[_delegate realParentWindow] closeInstantReplay:self orTerminateSession:YES];
             return;
         } else if (unmodunicode == NSLeftArrowFunctionKey) {
             // Left arrow moves to prev frame
