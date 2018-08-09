@@ -66,6 +66,9 @@
 
 - (void)drawRect:(NSRect)rect {
     if (_useMetal) {
+        if (@available(macOS 10.14, *)) {
+            return;
+        }
         if (!_needsClear) {
             return;
         }
