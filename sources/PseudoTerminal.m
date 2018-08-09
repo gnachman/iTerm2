@@ -2877,10 +2877,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSRect)visibleFrameForScreen:(NSScreen *)screen {
     if ([[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats]) {
+        DLog(@"visibleFrameForScreen: floating hotkey window gets frameExceptMenuBar");
         return screen.frameExceptMenuBar;
     }
 
     if (self.fullScreen) {
+        DLog(@"visibleFrameForScreen: fullScreen gets visibleFrame %@", NSStringFromRect(screen.visibleFrame));
         return screen.visibleFrame;
     }
 
@@ -2895,8 +2897,10 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     if (otherScreenHasLionFullscreenTerminalWindow) {
+        DLog(@"visibleFrameForScreen: otherScreenHasLionFullscreenTerminalWindow gets frameExceptMenuBar");
         return screen.frameExceptMenuBar;
     } else {
+        DLog(@"visibleFrameForScreen: !otherScreenHasLionFullscreenTerminalWindow gets visibleFrame %@", NSStringFromRect(screen.visibleFrame));
         return screen.visibleFrame;
     }
 }
@@ -2904,6 +2908,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSRect)canonicalFrameForScreen:(NSScreen *)screen windowFrame:(NSRect)frame preserveSize:(BOOL)preserveSize {
     PTYSession* session = [self currentSession];
     NSRect screenVisibleFrame = [self visibleFrameForScreen:screen];
+    DLog(@"screenVisibleFrame is %@", NSStringFromRect(screenVisibleFrame));
     NSRect screenVisibleFrameIgnoringHiddenDock = [self screenFrameForEdgeSpanningWindows:screen];
 
     PtyLog(@"The new screen visible frame is %@", [NSValue valueWithRect:screenVisibleFrame]);
@@ -2951,6 +2956,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
             }
             frame.origin.y = screenVisibleFrame.origin.y + screenVisibleFrame.size.height - frame.size.height;
+            DLog(@"Canonical frame for top of screen window is %@", NSStringFromRect(frame));
             return frame;
             break;
 
