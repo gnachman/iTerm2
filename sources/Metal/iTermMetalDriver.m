@@ -309,6 +309,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (BOOL)drawSynchronouslyInView:(MTKView *)view {
+    if (@available(macOS 10.14, *)) {
+        // See issue 6906
+        [view setNeedsDisplay:YES];
+        return YES;
+    }
     if (!view || !view.delegate) {
         return NO;
     }
@@ -749,7 +754,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (void)enequeueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
                         commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    DLog(@"  enequeueDrawCallsForFrameData");
+    DLog(@"  enequeueDrawCallsForFrameData %@", frameData);
 
     NSString *firstLabel;
     if (frameData.intermediateRenderPassDescriptor) {
@@ -1696,7 +1701,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #pragma mark - Drawing Helpers
 
 - (void)complete:(iTermMetalFrameData *)frameData {
-    DLog(@"  Completed");
+    DLog(@"  in complete: for %@", frameData);
 
     if (!_textRenderer.rendererDisabled) {
         // Unlock indices and free up the stage texture.
