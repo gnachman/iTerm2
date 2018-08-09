@@ -341,7 +341,7 @@ static const int kMaxScreenRows = 4096;
     [self saveCursor];  // reset saved text attributes
     [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
     [delegate_ terminalSetUseColumnScrollRegion:NO];
-    _reportFocus = NO;
+    self.reportFocus = NO;
 
     self.strictAnsiMode = NO;
     self.allowColumnMode = NO;
@@ -1106,6 +1106,11 @@ static const int kMaxScreenRows = 4096;
     savedCursor->origin = self.originMode;
     savedCursor->wraparound = self.wraparoundMode;
     savedCursor->unicodeVersion = [delegate_ terminalUnicodeVersion];
+}
+
+- (void)setReportFocus:(BOOL)reportFocus {
+    [self.delegate terminalReportFocusWillChangeTo:reportFocus];
+    _reportFocus = reportFocus;
 }
 
 - (void)resetSavedCursorPositions {

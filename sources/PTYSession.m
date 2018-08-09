@@ -9379,6 +9379,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)screenReportFocusWillChangeTo:(BOOL)reportFocus {
+    [self dismissAnnouncementWithIdentifier:kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier];
+}
+
 #pragma mark - Announcements
 
 - (BOOL)hasAnnouncementWithIdentifier:(NSString *)identifier {
