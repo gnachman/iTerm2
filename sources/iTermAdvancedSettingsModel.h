@@ -221,9 +221,13 @@
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (int)minimumWeightDifferenceForBoldFont;
 + (double)metalSlowFrameRate;
-+ (double)fractionOfCharacterSelectingNextNeighbor;
-+ (double)coloredSelectedTabOutlineStrength;
 + (double)coloredUnselectedTabTextProminence;
 + (BOOL)throttleMetalConcurrentFrames;
++ (NSString *)pathToFTP;
++ (NSString *)pathToTelnet;
++ (BOOL)sshURLsSupportPath;
++ (double)underlineCursorHeight;
++ (double)fractionOfCharacterSelectingNextNeighbor;
++ (double)coloredSelectedTabOutlineStrength;
 
 @end
