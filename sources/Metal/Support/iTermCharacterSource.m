@@ -309,11 +309,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 - (void)fillBackground {
     if (@available(macOS 10.14, *)) {
-        if (_isEmoji) {
-            CGContextSetRGBFillColor(_cgContext, 0, 0, 0, 0);
-        } else {
-            CGContextSetRGBFillColor(_cgContext, 0, 0, 0, 1);
-        }
+        CGContextSetRGBFillColor(_cgContext, 0, 0, 0, 0);
     } else {
         if (_isEmoji) {
             CGContextSetRGBFillColor(_cgContext, 1, 1, 1, 0);

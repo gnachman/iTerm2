@@ -1480,8 +1480,15 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 - (iTermCharacterBitmap *)bitmapForBoxDrawingCode:(unichar)code
                                              size:(CGSize)size
                                             scale:(CGFloat)scale {
-    NSColor *backgroundColor = [NSColor whiteColor];
-    NSColor *foregroundColor = [NSColor blackColor];
+    NSColor *backgroundColor;
+    NSColor *foregroundColor;
+    if (@available(macOS 10.14, *)) {
+        backgroundColor = [NSColor clearColor];
+        foregroundColor = [NSColor whiteColor];
+    } else {
+        backgroundColor = [NSColor whiteColor];
+        foregroundColor = [NSColor blackColor];
+    }
     NSMutableData *data = [NSImage argbDataForImageOfSize:size drawBlock:^(CGContextRef context) {
         NSAffineTransform *transform = [NSAffineTransform transform];
         [transform concat];
