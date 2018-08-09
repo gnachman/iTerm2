@@ -37,6 +37,7 @@
 #import "iTermShortcutInputView.h"
 #import "iTermWindowHacks.h"
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"``
 #import "NSTextField+iTerm.h"
 #import "NSWindow+iTerm.h"
 #import "PreferencePanel.h"
@@ -50,9 +51,14 @@ unsigned short iTermBogusVirtualKeyCode = 0xffff;
 NSString *const iTermApplicationCharacterPaletteWillOpen = @"iTermApplicationCharacterPaletteWillOpen";
 NSString *const iTermApplicationCharacterPaletteDidClose = @"iTermApplicationCharacterPaletteDidClose";
 
+NSString *const iTermApplicationWillShowModalWindow = @"iTermApplicationWillShowModalWindow";
+NSString *const iTermApplicationDidCloseModalWindow = @"iTermApplicationDidCloseModalWindow";
+
 @interface iTermApplication()
 @property(nonatomic, retain) NSStatusItem *statusBarItem;
 @end
+
+static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 
 @implementation iTermApplication {
     BOOL _it_characterPanelIsOpen;
@@ -62,13 +68,39 @@ NSString *const iTermApplicationCharacterPaletteDidClose = @"iTermApplicationCha
 - (void)dealloc {
     [_fakeCurrentEvent release];
     [_statusBarItem release];
+    [self removeObserver:self forKeyPath:@"modalWindow"];
     [super dealloc];
 }
 
 + (iTermApplication *)sharedApplication {
     __kindof NSApplication *sharedApplication = [super sharedApplication];
     assert([sharedApplication isKindOfClass:[iTermApplication class]]);
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        [sharedApplication addObserver:sharedApplication
+                            forKeyPath:@"modalWindow"
+                               options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+                               context:(void *)iTermApplicationKVOKey];
+    });
     return sharedApplication;
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    if (context == iTermApplicationKVOKey &&
+        [keyPath isEqualToString:@"modalWindow"]) {
+        change = [change dictionaryByRemovingNullValues];
+        if (change[NSKeyValueChangeOldKey] == nil &&
+            change[NSKeyValueChangeNewKey] != nil) {
+            _it_modalWindowOpen = YES;
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationWillShowModalWindow object:nil];
+        } else if (change[NSKeyValueChangeOldKey] != nil &&
+                   change[NSKeyValueChangeNewKey] == nil) {
+            _it_modalWindowOpen = NO;
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationDidCloseModalWindow object:nil];
+        }
+    } else {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
 }
 
 - (BOOL)_eventUsesNavigationKeys:(NSEvent*)event {
@@ -478,5 +510,10 @@ NSString *const iTermApplicationCharacterPaletteDidClose = @"iTermApplicationCha
         return open || ([NSDate timeIntervalSinceReferenceDate] < deadlineToOpen);  // keep running while open
     }];
 }
+
+- (void)setModalWindow:(NSWindow *)window {
+    [super setModalWindow:window];
+}
+
 @end
 

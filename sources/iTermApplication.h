@@ -38,6 +38,9 @@ extern unsigned short iTermBogusVirtualKeyCode;
 extern NSString *const iTermApplicationCharacterPaletteWillOpen;
 extern NSString *const iTermApplicationCharacterPaletteDidClose;
 
+extern NSString *const iTermApplicationWillShowModalWindow;
+extern NSString *const iTermApplicationDidCloseModalWindow;
+
 @class iTermApplicationDelegate;
 @class iTermScriptingWindow;
 
@@ -58,6 +61,7 @@ extern NSString *const iTermApplicationCharacterPaletteDidClose;
 @property(nonatomic) BOOL isUIElement;
 @property(nonatomic) BOOL localAuthenticationDialogOpen;
 @property(nonatomic) BOOL it_characterPanelIsOpen;
+@property(nonatomic, readonly) BOOL it_modalWindowOpen;
 
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate<iTermApplicationDelegate> *)delegate;
