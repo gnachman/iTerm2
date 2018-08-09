@@ -68,7 +68,6 @@
     XCTAssert(token->type == VT100CSI_CUB);
     XCTAssert(token.csi->count == 1);
     XCTAssert(token.csi->p[0] == 1);  // Default
-    XCTAssert(token.csi->subCount[0] == 0);
 }
 
 - (void)testSimpleCSIWithParameter {
@@ -76,7 +75,6 @@
     XCTAssert(token->type == VT100CSI_CUB);
     XCTAssert(token.csi->count == 1);
     XCTAssert(token.csi->p[0] == 2);  // Parameter
-    XCTAssert(token.csi->subCount[0] == 0);
 }
 
 - (void)testSimpleCSIWithTwoDigitParameter {
@@ -84,7 +82,6 @@
     XCTAssert(token->type == VT100CSI_CUB);
     XCTAssert(token.csi->count == 1);
     XCTAssert(token.csi->p[0] == 23);  // Parameter
-    XCTAssert(token.csi->subCount[0] == 0);
 }
 
 - (void)testParameterPrefix {
@@ -92,7 +89,6 @@
     XCTAssert(token->type == VT100CSI_DA2);
     XCTAssert(token.csi->count == 1);
     XCTAssert(token.csi->p[0] == 23);  // Parameter
-    XCTAssert(token.csi->subCount[0] == 0);
 }
 
 - (void)testTwoParameters {
@@ -101,7 +97,20 @@
     XCTAssert(token.csi->count == 2);
     XCTAssert(token.csi->p[0] == 5);
     XCTAssert(token.csi->p[1] == 6);
-    XCTAssert(token.csi->subCount[0] == 0);
+}
+
+- (void)testCursorForwardTabulation {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[2I", VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_CHT);
+    XCTAssert(token.csi->count == 1);
+    XCTAssert(token.csi->p[0] == 2);
+}
+
+- (void)testCursorForwardTabulationDefault {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[I", VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_CHT);
+    XCTAssert(token.csi->count == 1);
+    XCTAssert(token.csi->p[0] == 1);
 }
 
 - (void)testSubParameter {
@@ -109,14 +118,18 @@
     XCTAssert(token->type == VT100CSI_SGR);
     XCTAssert(token.csi->count == 1);
     XCTAssert(token.csi->p[0] == 38);
-    XCTAssert(token.csi->subCount[0] == 7);
-    XCTAssert(token.csi->sub[0][0] == 2);
-    XCTAssert(token.csi->sub[0][1] == 255);
-    XCTAssert(token.csi->sub[0][2] == 128);
-    XCTAssert(token.csi->sub[0][3] == 64);
-    XCTAssert(token.csi->sub[0][4] == 0);
-    XCTAssert(token.csi->sub[0][5] == 5);
-    XCTAssert(token.csi->sub[0][6] == 1);
+
+    int subs[VT100CSISUBPARAM_MAX];
+    int numberOfSubparameters = iTermParserGetAllCSISubparametersForParameter(token.csi, 0, subs);
+
+    XCTAssert(numberOfSubparameters == 7);
+    XCTAssert(subs[0] == 2);
+    XCTAssert(subs[1] == 255);
+    XCTAssert(subs[2] == 128);
+    XCTAssert(subs[3] == 64);
+    XCTAssert(subs[4] == 0);
+    XCTAssert(subs[5] == 5);
+    XCTAssert(subs[6] == 1);
 }
 
 - (void)testBogusCharacterInParameters {
@@ -131,7 +144,6 @@
     XCTAssert(token->type == VT100CSI_DECSCUSR);
     XCTAssert(token.csi->count == 1);
     XCTAssert(token.csi->p[0] == 3);
-    XCTAssert(token.csi->subCount[0] == 0);
 }
 
 - (void)testBogusCharInParameterSection {
