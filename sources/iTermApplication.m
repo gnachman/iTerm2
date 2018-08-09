@@ -37,7 +37,7 @@
 #import "iTermShortcutInputView.h"
 #import "iTermWindowHacks.h"
 #import "NSArray+iTerm.h"
-#import "NSDictionary+iTerm.h"``
+#import "NSDictionary+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSWindow+iTerm.h"
 #import "PreferencePanel.h"
@@ -506,10 +506,6 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         }
         return open || ([NSDate timeIntervalSinceReferenceDate] < deadlineToOpen);  // keep running while open
     }];
-}
-
-- (void)setModalWindow:(NSWindow *)window {
-    [super setModalWindow:window];
 }
 
 @end
