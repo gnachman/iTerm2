@@ -115,6 +115,9 @@ static const CGFloat kBottomPadding = 3;
     textView_.textContainer.containerSize = NSMakeSize(scrollView_.frame.size.width, FLT_MAX);
     textView_.textContainer.widthTracksTextView = YES;
     textView_.delegate = self;
+    if (@available(macOS 10.14, *)) {
+        textView_.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+    }
     scrollView_.documentView = textView_;
 
     // Put the scrollview in a wrapper so we can have a few pixels of padding

@@ -68,16 +68,23 @@
 - (void)awakeFromNib {
     // Initialize the table
     [_table setDoubleAction:@selector(doubleClick:)];
-    _table.backgroundColor = [NSColor controlColor];
-
-    // Initialize the window
-    [self.window setOpaque:NO];
-    self.window.alphaValue = 0.95;
-    self.window.backgroundColor = [NSColor clearColor];
 
     // Initialize the window's contentView
     SolidColorView *contentView = [self.window contentView];
-    contentView.color = [NSColor controlColor];
+
+    // Initialize the window
+    [self.window setOpaque:NO];
+    if (@available(macOS 10.14, *)) {
+        _table.backgroundColor = [NSColor clearColor];
+        _table.enclosingScrollView.drawsBackground = NO;
+        contentView.color = [NSColor clearColor];
+        self.window.backgroundColor = [NSColor clearColor];
+    } else {
+        _table.backgroundColor = [NSColor controlColor];
+        self.window.alphaValue = 0.95;
+        self.window.backgroundColor = [NSColor clearColor];
+        contentView.color = [NSColor controlColor];
+    }
 
     // Rounded corners for contentView
     contentView.wantsLayer = YES;
@@ -264,13 +271,20 @@
         result.detailTextField.stringValue = @"";
     }
     NSColor *color;
-    if (row == tableView.selectedRow) {
-        color = [NSColor whiteColor];
+    NSColor *detailColor;
+    if (@available(macOS 10.14, *)) {
+        color = [NSColor labelColor];
+        detailColor = [NSColor secondaryLabelColor];
     } else {
-        color = [self blackColor];
+        if (row == tableView.selectedRow) {
+            color = [NSColor whiteColor];
+        } else {
+            color = [self blackColor];
+        }
+        detailColor = color;
     }
     result.textField.textColor = color;
-    result.detailTextField.textColor = color;
+    result.detailTextField.textColor = detailColor;
     return result;
 }
 
@@ -283,13 +297,18 @@
     // Fix up text color for all items
     for (int i = 0; i < _model.items.count; i++) {
         iTermOpenQuicklyItem *item = _model.items[i];
-        if (i == row) {
-            item.view.textField.textColor = [NSColor whiteColor];
-            item.view.detailTextField.textColor = [NSColor whiteColor];
+        NSColor *color;
+        if (@available(macOS 10.14, *)) {
+            color = [NSColor labelColor];
         } else {
-            item.view.textField.textColor = [self blackColor];
-            item.view.detailTextField.textColor = [self blackColor];
+            if (i == row) {
+                color = [NSColor whiteColor];
+            } else {
+                color = [NSColor blackColor];
+            }
         }
+        item.view.textField.textColor = color;
+        item.view.detailTextField.textColor = color;
     }
 }
 
