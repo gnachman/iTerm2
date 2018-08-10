@@ -7,8 +7,21 @@
 //
 
 #import "iTermOpenQuicklyView.h"
+#import "NSView+iTerm.h"
 
-@implementation iTermOpenQuicklyView
+@interface iTermVibrantVisualEffectView : NSVisualEffectView
+@end
+
+@implementation iTermVibrantVisualEffectView
+- (BOOL)allowsVibrancy {
+    return YES;
+}
+@end
+
+@implementation iTermOpenQuicklyView {
+    NSVisualEffectView *_visualEffectView;
+    NSView *_container;
+}
 
 - (BOOL)isFlipped {
     return YES;
@@ -24,8 +37,34 @@
         view.frame = frame;
     }
 
+    if (@available(macOS 10.14, *)) {
+        _container = [[NSView alloc] initWithFrame:self.bounds];
+        [self insertSubview:_container atIndex:0];
+        
+        _visualEffectView = [[iTermVibrantVisualEffectView alloc] initWithFrame:self.bounds];
+        _visualEffectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+        _visualEffectView.material = NSVisualEffectMaterialLight;
+        _visualEffectView.state = NSVisualEffectStateActive;
+        [_container addSubview:_visualEffectView];
+    }
     // Even though this is set in IB, we have to set it manually.
     self.autoresizesSubviews = NO;
+}
+
+- (void)drawRect:(NSRect)dirtyRect {
+    return;
+}
+
+- (void)setFrameSize:(NSSize)newSize {
+    [super setFrameSize:newSize];
+    _container.frame = self.bounds;
+    _visualEffectView.frame = _container.bounds;
+}
+
+- (void)resizeWithOldSuperviewSize:(NSSize)oldSize {
+    [super resizeWithOldSuperviewSize:oldSize];
+    _container.frame = self.bounds;
+    _visualEffectView.frame = _container.bounds;
 }
 
 @end

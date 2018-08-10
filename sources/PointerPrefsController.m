@@ -13,6 +13,7 @@
 #import "iTermApplicationDelegate.h"
 #import "ITAddressBookMgr.h"
 #import "FutureMethods.h"
+#import "NSTextField+iTerm.h"
 
 static NSString *kPointerActionsKey = @"PointerActions";  // Used in NSUserDefaults
 static NSString *kActionKey = @"Action";  // Used within values
@@ -895,10 +896,10 @@ typedef enum {
 - (IBAction)buttonOrGestureChanged:(id)sender
 {
     if ([editButton_ selectedTag] >= kMinGestureTag) {
-        [editClickTypeLabel_ setTextColor:[NSColor disabledControlTextColor]];
+        editClickTypeLabel_.labelEnabled = NO;
         [editClickType_ setEnabled:NO];
     } else {
-        [editClickTypeLabel_ setTextColor:[NSColor blackColor]];
+        editClickTypeLabel_.labelEnabled = YES;
         [editClickType_ setEnabled:YES];
     }
 }
@@ -917,10 +918,7 @@ typedef enum {
     self.hasSelection = [tableView_ numberOfSelectedRows] > 0;
     int rowIndex = [tableView_ selectedRow];
 
-    NSColor *textColor = [NSColor disabledControlTextColor];
     if (self.hasSelection) {
-        textColor = [NSColor blackColor];
-
         NSString *key = [PointerPrefsController keyForRowIndex:rowIndex];
         NSDictionary *action = [[PointerPrefsController settings] objectForKey:key];
 
@@ -933,9 +931,9 @@ typedef enum {
         [editModifiersShift_ setState:(modflags & NSEventModifierFlagShift) ? NSOnState : NSOffState];
         [editModifiersControl_ setState:(modflags & NSEventModifierFlagControl) ? NSOnState : NSOffState];
     }
-    [editButtonLabel_ setTextColor:textColor];
-    [editModifiersLabel_ setTextColor:textColor];
-    [editActionLabel_ setTextColor:textColor];
+    editButtonLabel_.labelEnabled = self.hasSelection;
+    editModifiersLabel_.labelEnabled = self.hasSelection;
+    editActionLabel_.labelEnabled = self.hasSelection;
 }
 
 - (void)tableViewRowDoubleClicked:(id)sender

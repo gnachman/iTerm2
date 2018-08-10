@@ -131,9 +131,15 @@
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-    [[NSColor whiteColor] set];
-    NSRectFill(dirtyRect);
-    [[NSColor blackColor] set];
+    if (@available(macOS 10.14, *)) {
+        [[NSColor controlBackgroundColor] set];
+        NSRectFill(dirtyRect);
+        [[NSColor separatorColor] set];
+    } else {
+        [[NSColor whiteColor] set];
+        NSRectFill(dirtyRect);
+        [[NSColor blackColor] set];
+    }
     NSFrameRect(NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height));
 
     [super drawRect:dirtyRect];

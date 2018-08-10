@@ -39,7 +39,11 @@
 }
 
 - (void)setLabelEnabled:(BOOL)enabled {
-    self.textColor = enabled ? [NSColor blackColor] : [NSColor disabledControlTextColor];
+    if (@available(macOS 10.14, *)) {
+        self.textColor = enabled ? [NSColor labelColor] : [NSColor disabledControlTextColor];
+    } else {
+        self.textColor = enabled ? [NSColor blackColor] : [NSColor disabledControlTextColor];
+    }
 }
 
 - (int)separatorTolerantIntValue {
