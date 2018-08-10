@@ -43,7 +43,7 @@
         
         _visualEffectView = [[iTermVibrantVisualEffectView alloc] initWithFrame:self.bounds];
         _visualEffectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-        _visualEffectView.material = NSVisualEffectMaterialLight;
+        _visualEffectView.material = NSVisualEffectMaterialSheet;
         _visualEffectView.state = NSVisualEffectStateActive;
         [_container addSubview:_visualEffectView];
     }
