@@ -11,6 +11,7 @@
 #import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
 #import "MovePaneController.h"
+#import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSFont+iTerm.h"
@@ -205,11 +206,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return [NSImage imageNamed:@"important"];
 }
 
-+ (NSImage *)imageForNewOutput {
++ (NSImage *)imageForNewOutputWithAppearance:(NSAppearance *)appearance {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    switch (preferredStyle) {
+    switch ([appearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
-#warning TODO
+            assert(NO);
+            
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
             return [NSImage imageNamed:@"NewOutput"];
@@ -221,18 +223,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return [NSImage imageNamed:@"NewOutput"];
 }
 
-+ (NSImage *)idleImage {
++ (NSImage *)idleImageWithAppearance:(NSAppearance *)appearance {
     // There was a separate idle graphic, but I prefer NewOutput. The distinction is already drawn
     // because a spinner is present only while new output is being received. It's still in the git
     // repo, named "Idle.png".
-    return [self imageForNewOutput];
+    return [self imageForNewOutputWithAppearance:appearance];
 }
 
-+ (NSImage *)deadImage {
++ (NSImage *)deadImageWithAppearance:(NSAppearance *)appearance {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    switch (preferredStyle) {
+    switch ([appearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
-#warning TODO
+            assert(NO);
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
             return [NSImage imageNamed:@"dead"];
@@ -531,15 +533,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)updateIcon {
     if (_state & kPTYTabDeadState) {
-        [self setIcon:[PTYTab deadImage]];
+        [self setIcon:[PTYTab deadImageWithAppearance:self.realParentWindow.window.effectiveAppearance]];
     } else if (_state & kPTYTabBellState) {
         [self setIcon:[PTYTab bellImage]];
     } else if ([iTermPreferences boolForKey:kPreferenceKeyShowNewOutputIndicator] &&
                (_state & (kPTYTabNewOutputState))) {
-        [self setIcon:[PTYTab imageForNewOutput]];
+        [self setIcon:[PTYTab imageForNewOutputWithAppearance:self.realParentWindow.window.effectiveAppearance]];
     } else if ([iTermPreferences boolForKey:kPreferenceKeyShowNewOutputIndicator] &&
                (_state & kPTYTabIdleState)) {
-        [self setIcon:[PTYTab idleImage]];
+        [self setIcon:[PTYTab idleImageWithAppearance:self.realParentWindow.window.effectiveAppearance]];
     } else {
         [self setIcon:nil];
     }

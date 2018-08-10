@@ -125,12 +125,17 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
     if (!self.window) {
         return;
     }
-    if ([self.window.appearance.name isEqual:NSAppearanceNameVibrantDark]) {
-        textView_.backgroundColor = [NSColor blackColor];
-        textView_.textColor = [NSColor whiteColor];
+    if (@available(macOS 10.14, *)) {
+        textView_.backgroundColor = [NSColor textBackgroundColor];
+        textView_.textColor = [NSColor textColor];
     } else {
-        textView_.backgroundColor = [NSColor whiteColor];
-        textView_.textColor = [NSColor blackColor];
+        if ([self.window.appearance.name isEqual:NSAppearanceNameVibrantDark]) {
+            textView_.backgroundColor = [NSColor blackColor];
+            textView_.textColor = [NSColor whiteColor];
+        } else {
+            textView_.backgroundColor = [NSColor whiteColor];
+            textView_.textColor = [NSColor blackColor];
+        }
     }
 }
 

@@ -29,6 +29,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 - (BOOL)exitingLionFullscreen;
 - (BOOL)divisionViewShouldBeVisible;
 - (NSWindow *)window;
+- (void)rootTerminalViewDidChangeEffectiveAppearance;
 @end
 
 @interface iTermRootTerminalView : SolidColorView

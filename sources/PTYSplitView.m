@@ -8,6 +8,7 @@
 #import "PTYSplitView.h"
 #import "DebugLogging.h"
 #import "iTermPreferences.h"
+#import "NSAppearance+iTerm.h"
 
 @implementation PTYSplitView
 
@@ -15,9 +16,10 @@
 
 - (NSColor *)dividerColor {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    switch (preferredStyle) {
+    switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
-#warning TODO
+            assert(NO);
+            
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
             return [NSColor lightGrayColor];
