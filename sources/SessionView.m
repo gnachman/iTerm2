@@ -1053,6 +1053,10 @@ static NSDate* lastResizeDate_;
 
 #pragma mark SessionTitleViewDelegate
 
+- (NSColor *)sessionTitleViewBackgroundColorForMinimalStyle {
+    return [_delegate sessionViewBackgroundColor];
+}
+
 - (BOOL)sessionTitleViewIsFirstResponder {
     return [_delegate sessionViewTerminalIsFirstResponder];
 }

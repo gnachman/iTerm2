@@ -171,6 +171,7 @@ static const CGFloat kButtonSize = 17;
     CGFloat whiteLevel = 0;
     switch ([appearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_MINIMAL:
             assert(NO);
         case TAB_STYLE_LIGHT:
             if (![delegate_ sessionTitleViewIsFirstResponder]) {
@@ -220,33 +221,38 @@ static const CGFloat kButtonSize = 17;
         CGFloat saturation = tabColor.saturationComponent;
         CGFloat brightness = tabColor.brightnessComponent;
         iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-        switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
-            case TAB_STYLE_AUTOMATIC:
-                assert(NO);
-            case TAB_STYLE_LIGHT:
-                tabColor = [NSColor colorWithCalibratedHue:hue
-                                                saturation:saturation * .5
-                                                brightness:MAX(0.7, brightness)
-                                                     alpha:1];
-                break;
-            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-                tabColor = [NSColor colorWithCalibratedHue:hue
-                                                saturation:saturation * .25
-                                                brightness:MAX(0.85, brightness)
-                                                     alpha:1];
-                break;
-            case TAB_STYLE_DARK:
-                tabColor = [NSColor colorWithCalibratedHue:hue
-                                                saturation:saturation * .75
-                                                brightness:MIN(0.3, brightness)
-                                                     alpha:1];
-                break;
-            case TAB_STYLE_DARK_HIGH_CONTRAST:
-                tabColor = [NSColor colorWithCalibratedHue:hue
-                                                saturation:saturation * .95
-                                                brightness:MIN(0.15, brightness)
-                                                     alpha:1];
-                break;
+        if (preferredStyle == TAB_STYLE_MINIMAL) {
+            tabColor = delegate_.sessionTitleViewBackgroundColorForMinimalStyle;
+        } else {
+            switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
+                case TAB_STYLE_AUTOMATIC:
+                case TAB_STYLE_MINIMAL:
+                    assert(NO);
+                case TAB_STYLE_LIGHT:
+                    tabColor = [NSColor colorWithCalibratedHue:hue
+                                                    saturation:saturation * .5
+                                                    brightness:MAX(0.7, brightness)
+                                                         alpha:1];
+                    break;
+                case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                    tabColor = [NSColor colorWithCalibratedHue:hue
+                                                    saturation:saturation * .25
+                                                    brightness:MAX(0.85, brightness)
+                                                         alpha:1];
+                    break;
+                case TAB_STYLE_DARK:
+                    tabColor = [NSColor colorWithCalibratedHue:hue
+                                                    saturation:saturation * .75
+                                                    brightness:MIN(0.3, brightness)
+                                                         alpha:1];
+                    break;
+                case TAB_STYLE_DARK_HIGH_CONTRAST:
+                    tabColor = [NSColor colorWithCalibratedHue:hue
+                                                    saturation:saturation * .95
+                                                    brightness:MIN(0.15, brightness)
+                                                         alpha:1];
+                    break;
+            }
         }
         if ([delegate_ sessionTitleViewIsFirstResponder]) {
             [tabColor set];

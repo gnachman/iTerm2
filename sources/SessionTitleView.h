@@ -13,6 +13,7 @@
 @protocol SessionTitleViewDelegate <NSObject>
 
 - (NSColor *)tabColor;
+- (NSColor *)sessionTitleViewBackgroundColorForMinimalStyle;
 - (NSMenu *)menu;
 - (void)close;
 - (void)beginDrag;

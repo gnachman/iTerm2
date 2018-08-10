@@ -88,6 +88,7 @@
 
 // Is this session's text view the first responder?
 - (BOOL)sessionViewTerminalIsFirstResponder;
+- (NSColor *)sessionViewBackgroundColor;
 
 // Gives the tab color for this session.
 - (NSColor *)sessionViewTabColor;

@@ -9614,6 +9614,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return VT100GridSizeMake(_screen.width, _screen.height);
 }
 
+- (NSColor *)sessionViewBackgroundColor {
+    return [_colorMap colorForKey:kColorMapBackground];
+}
+
 - (BOOL)sessionViewTerminalIsFirstResponder {
     return _textview.window.firstResponder == _textview;
 }

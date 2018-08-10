@@ -14,10 +14,6 @@
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
 
-@interface NSColor (HSP)
-@property (nonatomic, readonly) CGFloat it_hspBrightness;
-@end
-
 @implementation NSColor (HSP)
 
 // http://www.nbdtech.com/Blog/archive/2008/04/27/Calculating-the-Perceived-Brightness-of-a-Color.aspx
@@ -440,7 +436,7 @@
     }
 }
 
-- (NSColor *)verticalLineColor {
+- (NSColor *)verticalLineColorSelected:(BOOL)selected {
     if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
         return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
     } else {
@@ -479,11 +475,13 @@
 }
 
 - (void)drawHorizontalLineInFrame:(NSRect)rect y:(CGFloat)y {
-    NSRectFill(NSMakeRect(NSMinX(rect), y, rect.size.width + 1, 1));
+    NSRect modifiedRect = NSMakeRect(NSMinX(rect), y, rect.size.width + 1, 1);
+    NSRectFillUsingOperation(modifiedRect, NSCompositingOperationSourceOver);
 }
 
 - (void)drawVerticalLineInFrame:(NSRect)rect x:(CGFloat)x {
-    NSRectFill(NSMakeRect(x, NSMinY(rect) + 1, 1, rect.size.height - 2));
+    NSRect modifiedRect = NSMakeRect(x, NSMinY(rect) + 1, 1, rect.size.height - 2);
+    NSRectFillUsingOperation(modifiedRect, NSCompositingOperationSourceOver);
 }
 
 - (NSColor *)cellBackgroundColorForTabColor:(NSColor *)tabColor
@@ -550,12 +548,12 @@
         BOOL isLeftmostTab = NSMinX(cellFrame) == 0;
         if (!isLeftmostTab) {
             // Left line
-            [[self verticalLineColor] set];
+            [[self verticalLineColorSelected:selected] set];
             [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
         }
         // Right line
         CGFloat adjustment = 0;
-        [[self verticalLineColor] set];
+        [[self verticalLineColorSelected:selected] set];
         [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame) + adjustment];
 
         // Top line
@@ -574,7 +572,7 @@
 
     } else {
         // Bottom line
-        [[self verticalLineColor] set];
+        [[self verticalLineColorSelected:selected] set];
         cellFrame.origin.x += 1;
         cellFrame.size.width -= 3;
         [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];

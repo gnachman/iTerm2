@@ -90,9 +90,12 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     if (@available(macOS 10.14, *)) { } else {
-        // Remove "automatic" and separator prior to 10.14
-        [_tabStyle.menu removeItem:_tabStyle.menu.itemArray.firstObject];
-        [_tabStyle.menu removeItem:_tabStyle.menu.itemArray.firstObject];
+        NSMenuItem *lastItem = nil;
+        // Everything through the first separator is 10.14 only
+        while (![lastItem isSeparatorItem]) {
+            lastItem = _tabStyle.menu.itemArray.firstObject;
+            [_tabStyle.menu removeItem:lastItem];
+        }
     }
     info = [self defineControl:_tabStyle
                            key:kPreferenceKeyTabStyle

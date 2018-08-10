@@ -37,7 +37,7 @@
     return [NSColor colorWithCalibratedWhite:0.00 alpha:1.00];
 }
 
-- (NSColor *)verticalLineColor {
+- (NSColor *)verticalLineColorSelected:(BOOL)selected {
     return [NSColor colorWithCalibratedWhite:0.08 alpha:1.00];
 }
 

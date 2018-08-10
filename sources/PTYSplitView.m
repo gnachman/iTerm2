@@ -22,8 +22,12 @@
 
 - (NSColor *)dividerColor {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (preferredStyle == TAB_STYLE_MINIMAL) {
+        return [NSColor clearColor];
+    }
     switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_MINIMAL:
             assert(NO);
             
         case TAB_STYLE_LIGHT:

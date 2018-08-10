@@ -11,7 +11,7 @@
 @implementation NSAppearance (iTerm)
 
 - (iTermPreferencesTabStyle)it_tabStyle:(iTermPreferencesTabStyle)tabStyle {
-    if (tabStyle != TAB_STYLE_AUTOMATIC) {
+    if (tabStyle != TAB_STYLE_AUTOMATIC && tabStyle != TAB_STYLE_MINIMAL) {
         return tabStyle;
     }
     if (@available(macOS 10.14, *)) {

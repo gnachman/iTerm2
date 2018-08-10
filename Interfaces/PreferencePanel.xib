@@ -5037,6 +5037,7 @@ DQ
                         <menu key="menu" title="OtherViews" id="dVY-ir-1iD">
                             <items>
                                 <menuItem title="Automatic" state="on" tag="4" id="ZNW-QH-Lff"/>
+                                <menuItem title="Minimal" tag="5" id="pzb-ff-PHK"/>
                                 <menuItem isSeparatorItem="YES" id="Efu-Me-UrR"/>
                                 <menuItem title="Light" id="4kv-Gg-Pyp"/>
                                 <menuItem title="Dark" tag="1" id="jvn-mf-Qsy"/>
@@ -5620,11 +5621,11 @@ DQ
                     <rect key="frame" x="265" y="36" width="629" height="397"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="e7Z-SC-6xP">
-                        <rect key="frame" x="3" y="3" width="623" height="378"/>
+                        <rect key="frame" x="3" y="3" width="623" height="379"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <customView id="5571" customClass="ArrangementPreviewView">
-                                <rect key="frame" x="4" y="2" width="619" height="374"/>
+                                <rect key="frame" x="4" y="3" width="619" height="374"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </customView>
                         </subviews>

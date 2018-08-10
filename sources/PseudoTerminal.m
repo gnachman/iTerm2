@@ -72,6 +72,7 @@
 #import "PSMDarkTabStyle.h"
 #import "PSMDarkHighContrastTabStyle.h"
 #import "PSMLightHighContrastTabStyle.h"
+#import "PSMMinimalTabStyle.h"
 #import "PSMTabStyle.h"
 #import "PSMYosemiteTabStyle.h"
 #import "PTYScrollView.h"
@@ -160,7 +161,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     iTermRootTerminalViewDelegate,
     iTermToolbeltViewDelegate,
     iTermVariablesDelegate,
-    NSComboBoxDelegate>
+    NSComboBoxDelegate,
+    PSMMinimalTabStyleDelegate>
 
 @property(nonatomic, assign) BOOL windowInitialized;
 
@@ -6849,21 +6851,27 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)updateTabBarStyle {
     id<PSMTabStyle> style;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
-        case TAB_STYLE_AUTOMATIC:
-            assert(NO);
-        case TAB_STYLE_LIGHT:
-            style = [[[PSMYosemiteTabStyle alloc] init] autorelease];
-            break;
-        case TAB_STYLE_DARK:
-            style = [[[PSMDarkTabStyle alloc] init] autorelease];
-            break;
-        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            style = [[[PSMLightHighContrastTabStyle alloc] init] autorelease];
-            break;
-        case TAB_STYLE_DARK_HIGH_CONTRAST:
-            style = [[[PSMDarkHighContrastTabStyle alloc] init] autorelease];
-            break;
+    if (preferredStyle == TAB_STYLE_MINIMAL) {
+        style = [[[PSMMinimalTabStyle alloc] init] autorelease];
+        [(PSMMinimalTabStyle *)style setDelegate:self];
+    } else {
+        switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
+            case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_MINIMAL:
+                assert(NO);
+            case TAB_STYLE_LIGHT:
+                style = [[[PSMYosemiteTabStyle alloc] init] autorelease];
+                break;
+            case TAB_STYLE_DARK:
+                style = [[[PSMDarkTabStyle alloc] init] autorelease];
+                break;
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                style = [[[PSMLightHighContrastTabStyle alloc] init] autorelease];
+                break;
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+                style = [[[PSMDarkHighContrastTabStyle alloc] init] autorelease];
+                break;
+        }
     }
     [_contentView.tabBarControl setStyle:style];
     [self updateTabColors];
@@ -8353,6 +8361,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames group:(dispatch_group_t)group {
     [self.windowTitleOverrideSwiftyString variablesDidChange:changedNames];
+}
+
+#pragma mark - PSMMinimalTabStyleDelegate
+
+- (NSColor *)minimalTabStyleBackgroundColor {
+    return [self.currentSession.colorMap colorForKey:kColorMapBackground];
 }
 
 @end

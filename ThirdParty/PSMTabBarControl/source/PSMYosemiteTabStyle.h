@@ -10,6 +10,10 @@
 #import "PSMTabStyle.h"
 #import "PSMTabBarControl.h"
 
+@interface NSColor (HSP)
+@property (nonatomic, readonly) CGFloat it_hspBrightness;
+@end
+
 @interface PSMYosemiteTabStyle : NSObject<NSCoding, PSMTabStyle>
 
 @property(nonatomic, readonly) NSColor *tabBarColor;
