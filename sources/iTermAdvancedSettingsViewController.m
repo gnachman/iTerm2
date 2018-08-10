@@ -252,7 +252,9 @@ static NSDictionary *gIntrospection;
     [_tableView setGridColor:[NSColor clearColor]];
     [_tableView setGridStyleMask:NSTableViewGridNone];
     [_tableView setIntercellSpacing:NSMakeSize(0, 0)];
-    [_tableView setBackgroundColor:[NSColor whiteColor]];
+    if (@available(macOS 10.14, *)) { } else {
+        [_tableView setBackgroundColor:[NSColor whiteColor]];
+    }
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(advancedSettingsDidChange:)
@@ -268,9 +270,15 @@ static NSDictionary *gIntrospection;
     NSDictionary *spacerAttributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:topMargin] };
     NSAttributedString *topSpacer = [[NSAttributedString alloc] initWithString:@"\n"
                                                                     attributes:spacerAttributes];
+    NSColor *textColor;
+    if (@available(macOS 10.14, *)) {
+        textColor = [NSColor labelColor];
+    } else {
+        textColor = (selected && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor blackColor];
+    }
     NSDictionary *attributes =
         @{ NSFontAttributeName: bold ? [NSFont boldSystemFontOfSize:size] : [NSFont systemFontOfSize:size],
-           NSForegroundColorAttributeName: (selected && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor blackColor] };
+           NSForegroundColorAttributeName: textColor };
     NSAttributedString *title = [[NSAttributedString alloc] initWithString:string
                                                                 attributes:attributes];
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
@@ -302,7 +310,9 @@ static NSDictionary *gIntrospection;
               row:(NSInteger)row {
     NSArray *settings = [self filteredAdvancedSettings];
     id obj = settings[row];
-    [cell setBackgroundColor:[NSColor whiteColor]];
+    if (@available(macOS 10.14, *)) { } else {
+        [cell setBackgroundColor:[NSColor whiteColor]];
+    }
     if ([obj isKindOfClass:[NSString class]]) {
         [cell setDrawsBackground:YES];
     } else {
@@ -339,7 +349,12 @@ static NSDictionary *gIntrospection;
                                    selected:tableView.selectedRow == row
                                        bold:NO];
         if (subtitle) {
-            NSColor *color = (tableView.selectedRow == row && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor grayColor];
+            NSColor *color;
+            if (@available(macOS 10.14, *)) {
+                color = [NSColor secondaryLabelColor];
+            } else {
+                color = (tableView.selectedRow == row && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor grayColor];
+            }
             NSDictionary *attributes = @{ NSForegroundColorAttributeName: color,
                                           NSFontAttributeName: [NSFont systemFontOfSize:11] };
             NSAttributedString *attributedSubtitle =
