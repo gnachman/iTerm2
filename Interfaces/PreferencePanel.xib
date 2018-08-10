@@ -366,6 +366,7 @@ Gw
                     </textField>
                 </subviews>
             </view>
+            <accessibility identifier="editPointerSettingsPanel"/>
         </window>
         <window title="Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="1923" userLabel="Main Preferences Window" customClass="iTermPrefsPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
@@ -630,6 +631,7 @@ Gw
                     <outlet property="delegate" destination="-2" id="5896"/>
                 </connections>
             </toolbar>
+            <accessibility identifier="mainPreferencesWindow"/>
             <connections>
                 <outlet property="delegate" destination="-2" id="2982"/>
                 <outlet property="initialFirstResponder" destination="1959" id="5303"/>
@@ -726,6 +728,7 @@ Gw
                     </textFieldCell>
                 </textField>
             </subviews>
+            <accessibility identifier="fontAcecssory"/>
         </customView>
         <customObject id="5572" customClass="WindowArrangements">
             <connections>
@@ -753,7 +756,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Oi5-ZC-SxR">
                             <rect key="frame" x="1" y="0.0" width="762" height="264"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783">
                                     <rect key="frame" x="0.0" y="0.0" width="762" height="247"/>
@@ -894,6 +897,7 @@ DQ
                     </textField>
                 </subviews>
             </view>
+            <accessibility identifier="triggersPanel"/>
             <connections>
                 <outlet property="delegate" destination="5797" id="6373"/>
             </connections>
@@ -913,7 +917,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="0.0" width="763" height="264"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5844" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="763" height="247"/>
@@ -1075,6 +1079,7 @@ DQ
                     </button>
                 </subviews>
             </view>
+            <accessibility identifier="smartSelectionRulesPanel"/>
         </window>
         <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6086">
             <rect key="frame" x="0.0" y="0.0" width="77" height="17"/>
@@ -1084,6 +1089,7 @@ DQ
                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
             </textFieldCell>
+            <accessibility identifier="rightClick"/>
         </textField>
         <window title="Edit Smart Selection Actions" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" visibleAtLaunch="NO" animationBehavior="default" id="6274" userLabel="Edit Smart Selections Actions Panel" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
@@ -1127,7 +1133,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Moz-RU-iUF">
                             <rect key="frame" x="1" y="0.0" width="533" height="153"/>
-                            <autoresizingMask key="autoresizingMask"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
                                     <rect key="frame" x="0.0" y="0.0" width="533" height="136"/>
@@ -1243,6 +1249,7 @@ DQ
                     </button>
                 </subviews>
             </view>
+            <accessibility identifier="editSmartSelectionsActionsPanel"/>
             <connections>
                 <outlet property="delegate" destination="6306" id="6372"/>
             </connections>
@@ -1256,7 +1263,7 @@ DQ
                 <outlet property="view" destination="FiR-vo-BeU" id="S6R-hb-DbD"/>
             </connections>
         </customObject>
-        <customObject id="9Se-ld-UJa" customClass="GeneralPreferencesViewController">
+        <customObject id="9Se-ld-UJa" userLabel="Prefs&gt;General View Controller" customClass="GeneralPreferencesViewController">
             <connections>
                 <outlet property="_adjustWindowForFontSizeChange" destination="6377" id="8Ci-Ia-xoQ"/>
                 <outlet property="_advancedGPU" destination="2nT-Ny-kwd" id="0Md-l7-fQI"/>
@@ -1288,6 +1295,7 @@ DQ
                 <outlet property="_selectionCopiesText" destination="1988" id="V7j-Ak-mbO"/>
                 <outlet property="_smartPlacement" destination="4570" id="jBA-SY-4Wo"/>
                 <outlet property="_tmuxDashboardLimit" destination="6345" id="MSF-0U-l1k"/>
+                <outlet property="_tmuxDashboardLimitStepper" destination="e8L-On-UFF" id="oji-Oa-reU"/>
                 <outlet property="_wordChars" destination="2096" id="hwf-SH-vM1"/>
                 <outlet property="view" destination="zBG-6Q-502" id="Pic-en-AMU"/>
             </connections>
@@ -1610,7 +1618,7 @@ DQ
                 <outlet property="view" destination="prV-vq-Wo2" id="GbH-gF-fmF"/>
             </connections>
         </customObject>
-        <customView id="xGo-ez-mEe" userLabel="Prefs - Profiles - General" customClass="iTermSizeRememberingView">
+        <customView id="xGo-ez-mEe" userLabel="Prefs - Profiles - General" customClass="iTermPrefsProfilesGeneralView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="462"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
@@ -1980,6 +1988,7 @@ DQ
                     </buttonCell>
                 </button>
             </subviews>
+            <accessibility identifier="prefsProfilesGeneral"/>
             <point key="canvasLocation" x="977.5" y="-831"/>
         </customView>
         <customView id="SCN-fS-hNB" userLabel="Prefs - Profiles - Colors" customClass="iTermSizeRememberingView">
@@ -2423,6 +2432,7 @@ DQ
                     </textFieldCell>
                 </textField>
             </subviews>
+            <accessibility identifier="prefsProfilesColors"/>
             <point key="canvasLocation" x="2351" y="393"/>
         </customView>
         <customView id="G2G-W6-kWa" userLabel="Prefs - Profiles - Text" customClass="iTermSizeRememberingView">
@@ -2772,6 +2782,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
+            <accessibility identifier="prefsProfilesText"/>
             <point key="canvasLocation" x="504" y="1335"/>
         </customView>
         <customView id="77f-eM-Dma" userLabel="Prefs - Profiles - Window" customClass="iTermSizeRememberingView">
@@ -3134,6 +3145,7 @@ DQ
                     </textFieldCell>
                 </textField>
             </subviews>
+            <accessibility identifier="prefsProfilesWindow"/>
             <point key="canvasLocation" x="-817.5" y="654"/>
         </customView>
         <customView id="0rQ-EK-tyN" userLabel="Prefs - Profiles - Terminal" customClass="iTermSizeRememberingView">
@@ -3507,6 +3519,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
+            <accessibility identifier="prefsProfilesTerminal"/>
             <point key="canvasLocation" x="183" y="-824"/>
         </customView>
         <customView id="ayN-Cl-pQs" userLabel="Prefs - Profiles - Session" customClass="iTermSizeRememberingView">
@@ -3518,7 +3531,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>
@@ -3815,6 +3828,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
+            <accessibility identifier="prefsProfilesSession"/>
             <point key="canvasLocation" x="1332.5" y="305.5"/>
         </customView>
         <customView id="M5G-Dw-0HO" userLabel="Prefs - Profiles - Keys" customClass="iTermSizeRememberingView">
@@ -3985,6 +3999,7 @@ DQ
                     </connections>
                 </matrix>
             </subviews>
+            <accessibility identifier="prefsProfilesKeys"/>
             <point key="canvasLocation" x="-4.5" y="35"/>
         </customView>
         <customView id="prV-vq-Wo2" userLabel="Prefs - Profiles - Advanced" customClass="iTermSizeRememberingView">
@@ -4158,7 +4173,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="519" height="76"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="519" height="76"/>
@@ -4249,10 +4264,11 @@ DQ
                     </textFieldCell>
                 </textField>
             </subviews>
+            <accessibility identifier="prefsProfilesAdvanced"/>
             <point key="canvasLocation" x="1320" y="1438"/>
         </customView>
         <customView id="zBG-6Q-502" userLabel="Prefs - General" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="770" height="455"/>
+            <rect key="frame" x="0.0" y="0.0" width="788" height="455"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <button id="1950">
@@ -4287,7 +4303,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4573">
-                    <rect key="frame" x="337" y="291" width="65" height="17"/>
+                    <rect key="frame" x="337" y="312" width="65" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Window" id="4574">
                         <font key="font" metaFont="systemBold"/>
@@ -4314,7 +4330,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6331">
-                    <rect key="frame" x="337" y="164" width="118" height="17"/>
+                    <rect key="frame" x="337" y="177" width="118" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="tmux Integration" id="6332">
                         <font key="font" metaFont="systemBold"/>
@@ -4390,7 +4406,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="2096">
-                    <rect key="frame" x="352" y="323" width="294" height="22"/>
+                    <rect key="frame" x="646" y="348" width="122" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2097">
                         <font key="font" metaFont="system"/>
@@ -4404,7 +4420,7 @@ DQ
                     </connections>
                 </textField>
                 <button toolTip="&quot;Zoom&quot; is the green button, except on OS 10.10 where you must hold Option while pressing the green button." id="4540">
-                    <rect key="frame" x="337" y="226" width="268" height="18"/>
+                    <rect key="frame" x="337" y="247" width="268" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Zoom maximizes vertically only" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4541">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4415,7 +4431,7 @@ DQ
                     </connections>
                 </button>
                 <button id="5319">
-                    <rect key="frame" x="337" y="204" width="189" height="18"/>
+                    <rect key="frame" x="337" y="225" width="189" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">Native full screen windows animate into their own desktop. Non-native full screen windows quickly expand to fill the window's screen.</string>
                     <buttonCell key="cell" type="check" title="Native full screen windows" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5320">
@@ -4428,7 +4444,7 @@ DQ
                     </connections>
                 </button>
                 <button id="6366">
-                    <rect key="frame" x="337" y="88" width="398" height="18"/>
+                    <rect key="frame" x="337" y="100" width="398" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Automatically bury the tmux client session after connecting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6367">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4439,7 +4455,7 @@ DQ
                     </connections>
                 </button>
                 <button toolTip="Smart window placement puts new windows where the most free space is available." id="4570">
-                    <rect key="frame" x="337" y="267" width="233" height="18"/>
+                    <rect key="frame" x="337" y="288" width="233" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Smart window placement" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4571">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4451,7 +4467,7 @@ DQ
                     </connections>
                 </button>
                 <button identifier="adjustWindowForFontSizeChange" toolTip="If enabled, changes to font size will try to preserve session dimensions." id="6377">
-                    <rect key="frame" x="337" y="247" width="274" height="18"/>
+                    <rect key="frame" x="337" y="268" width="274" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Adjust window when changing font size" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6378">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4629,7 +4645,7 @@ DQ
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="5629"/>
                 </imageView>
                 <popUpButton verticalHuggingPriority="750" id="6337">
-                    <rect key="frame" x="337" y="132" width="361" height="26"/>
+                    <rect key="frame" x="490" y="146" width="281" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">A tmux server has multiple virtual windows. When you attach to a tmux server, these virtual windows can be presented as windows or tabs. This setting determines how they should appear in iTerm2.</string>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="6338">
@@ -4637,9 +4653,9 @@ DQ
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="6339">
                             <items>
-                                <menuItem title="Open tmux windows as native windows" id="6340"/>
-                                <menuItem title="Open tmux windows as native tabs in a new window" tag="1" id="6341"/>
-                                <menuItem title="Open tmux windows as tabs in existing window" tag="2" id="rh8-sm-6ap"/>
+                                <menuItem title="Native windows" id="6340"/>
+                                <menuItem title="Native tabs in a new window" tag="1" id="6341"/>
+                                <menuItem title="Tabs in the attaching window" tag="2" id="rh8-sm-6ap"/>
                             </items>
                         </menu>
                     </popUpButtonCell>
@@ -4666,36 +4682,22 @@ DQ
                     </connections>
                 </popUpButton>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6343">
-                    <rect key="frame" x="337" y="113" width="252" height="17"/>
+                    <rect key="frame" x="337" y="127" width="290" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Open dashboard if there are more than" id="6344">
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Maximum tmux windows to open automatically:" id="6344">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6347">
-                    <rect key="frame" x="632" y="112" width="95" height="17"/>
+                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="rci-Sr-fks">
+                    <rect key="frame" x="338" y="152" width="148" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="tmux windows" id="6348">
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Open tmux windows as:" id="OHo-9E-q2w">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
-                </textField>
-                <textField toolTip="The tmux dashboard can be found under the Shell&gt;tmux menu and helps for managing large numbers of tmux windows." verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6345">
-                    <rect key="frame" x="580" y="110" width="49" height="22"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="6346">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                    <connections>
-                        <action selector="settingChanged:" target="9Se-ld-UJa" id="sMI-rY-vub"/>
-                        <outlet property="delegate" destination="9Se-ld-UJa" id="bWh-sA-m40"/>
-                        <outlet property="nextKeyView" destination="6366" id="VML-f4-Dbi"/>
-                    </connections>
                 </textField>
                 <button id="tYA-B3-SU5">
                     <rect key="frame" x="18" y="18" width="280" height="18"/>
@@ -4730,7 +4732,29 @@ DQ
                         <action selector="advancedGPU:" target="9Se-ld-UJa" id="q48-sD-aZR"/>
                     </connections>
                 </button>
+                <textField toolTip="The tmux dashboard can be found under the Shell&gt;tmux menu and helps for managing large numbers of tmux windows." verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6345">
+                    <rect key="frame" x="634" y="124" width="113" height="22"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="6346">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <outlet property="delegate" destination="9Se-ld-UJa" id="bWh-sA-m40"/>
+                        <outlet property="nextKeyView" destination="6366" id="VML-f4-Dbi"/>
+                    </connections>
+                </textField>
+                <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" id="e8L-On-UFF">
+                    <rect key="frame" x="752" y="120" width="19" height="27"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <stepperCell key="cell" continuous="YES" alignment="left" maxValue="999" id="dcl-ZK-7Hl"/>
+                    <connections>
+                        <action selector="tmuxDashboardLimitStepperDidChange:" target="9Se-ld-UJa" id="AyH-g2-9wd"/>
+                    </connections>
+                </stepper>
             </subviews>
+            <accessibility identifier="prefsGeneral"/>
             <point key="canvasLocation" x="2057" y="-50.5"/>
         </customView>
         <customView id="yCt-fi-XI9" userLabel="Prefs - Appearance" customClass="iTermSizeRememberingView">
@@ -5007,12 +5031,12 @@ DQ
                 <popUpButton verticalHuggingPriority="750" id="uFJ-bZ-kag">
                     <rect key="frame" x="130" y="279" width="187" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Automatic" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" tag="4" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="ZNW-QH-Lff" id="dAw-Fo-tf4" userLabel="Tab Style">
+                    <popUpButtonCell key="cell" type="push" title="Automatic" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" tag="4" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="ZNW-QH-Lff" id="dAw-Fo-tf4" userLabel="Tab Style">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="dVY-ir-1iD">
                             <items>
-                                <menuItem title="Automatic" tag="4" id="ZNW-QH-Lff"/>
+                                <menuItem title="Automatic" state="on" tag="4" id="ZNW-QH-Lff"/>
                                 <menuItem isSeparatorItem="YES" id="Efu-Me-UrR"/>
                                 <menuItem title="Light" id="4kv-Gg-Pyp"/>
                                 <menuItem title="Dark" tag="1" id="jvn-mf-Qsy"/>
@@ -5115,6 +5139,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
+            <accessibility identifier="prefsAppearance"/>
             <point key="canvasLocation" x="-263" y="1191"/>
         </customView>
         <customView id="Z7N-XT-vVo" userLabel="Prefs - Keys" customClass="iTermSizeRememberingView">
@@ -5523,6 +5548,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
             </subviews>
+            <accessibility identifier="prefsKeys"/>
             <point key="canvasLocation" x="756" y="-218"/>
         </customView>
         <customView id="rwh-oX-e8l" userLabel="Prefs - Arrangements" customClass="iTermSizeRememberingView">
@@ -5534,7 +5560,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="N1C-ir-dI5">
                         <rect key="frame" x="1" y="0.0" width="238" height="378"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" headerView="5563" id="5562">
                                 <rect key="frame" x="0.0" y="0.0" width="238" height="361"/>
@@ -5627,6 +5653,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
+            <accessibility identifier="prefsArrangement"/>
             <point key="canvasLocation" x="-860" y="186"/>
         </customView>
         <customView id="qwf-ly-A8K" userLabel="Prefs - Pointer" customClass="iTermSizeRememberingView">
@@ -5647,7 +5674,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="2zv-hI-Vxj">
                         <rect key="frame" x="1" y="0.0" width="849" height="245"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
                                 <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
@@ -5822,6 +5849,7 @@ DQ
                     </connections>
                 </button>
             </subviews>
+            <accessibility identifier="prefsPointer"/>
             <point key="canvasLocation" x="-685" y="-595"/>
         </customView>
         <customView id="FiR-vo-BeU" userLabel="Prefs - Advanced" customClass="iTermSizeRememberingView">
@@ -5833,7 +5861,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="Fm3-fw-Qw5">
                         <rect key="frame" x="1" y="1" width="950" height="362"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" id="5ik-Xh-beg">
                                 <rect key="frame" x="0.0" y="0.0" width="950" height="362"/>
@@ -5907,6 +5935,7 @@ DQ
                     </textFieldCell>
                 </textField>
             </subviews>
+            <accessibility identifier="prefsAdvanced"/>
         </customView>
         <customView id="IUK-Yc-d7G" userLabel="Edit Session…" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="566" height="388"/>
@@ -6058,6 +6087,7 @@ DQ
                     </connections>
                 </popUpButton>
             </subviews>
+            <accessibility identifier="editSessionGeneral"/>
             <point key="canvasLocation" x="1514" y="818"/>
         </customView>
         <window title="Filter Alerts" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="u39-OD-7hu" customClass="NSPanel">
@@ -6141,6 +6171,7 @@ DQ
                     </button>
                 </subviews>
             </view>
+            <accessibility identifier="filterAlertsPanel"/>
         </window>
     </objects>
     <resources>

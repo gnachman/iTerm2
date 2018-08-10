@@ -29,3 +29,6 @@
 }
 
 @end
+
+@implementation iTermPrefsProfilesGeneralView
+@end

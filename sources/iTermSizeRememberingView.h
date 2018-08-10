@@ -14,3 +14,7 @@
 - (void)resetToOriginalSize;
 
 @end
+
+@interface iTermPrefsProfilesGeneralView : iTermSizeRememberingView
+@end
+
