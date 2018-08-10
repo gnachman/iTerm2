@@ -93,6 +93,13 @@ static const CGFloat kWindowWidth = 400;
     [super dealloc];
 }
 
+- (void)awakeFromNib {
+    if (@available(macOS 10.14, *)) {
+        self.window.backgroundColor = [NSColor clearColor];
+    }
+    [super awakeFromNib];
+}
+
 // Expanded means the "more options" is open.
 - (void)loadCardExpanded:(BOOL)expanded {
     iTermTipCardViewController *card =
