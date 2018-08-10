@@ -1203,7 +1203,7 @@ static const int kDragThreshold = 3;
             [subview setNeedsDisplay:YES];
         }
 
-        if (_drawingHelper.blinkingFound) {
+        if (_drawingHelper.blinkingFound && _blinkAllowed) {
             // The user might have used the scroll wheel to cause blinking text to become
             // visible. Make sure the timer is running if anything onscreen is
             // blinking.
