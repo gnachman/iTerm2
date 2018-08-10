@@ -223,5 +223,6 @@
 + (double)metalSlowFrameRate;
 + (double)fractionOfCharacterSelectingNextNeighbor;
 + (double)coloredSelectedTabOutlineStrength;
++ (double)coloredUnselectedTabTextProminence;
 
 @end

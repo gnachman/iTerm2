@@ -5078,6 +5078,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option {
     if ([option isEqualToString:PSMTabBarControlOptionColoredSelectedTabOutlineStrength]) {
         return @([iTermAdvancedSettingsModel coloredSelectedTabOutlineStrength]);
+    } else if ([option isEqualToString:PSMTabBarControlOptionColoredUnselectedTabTextProminence]) {
+        return @([iTermAdvancedSettingsModel coloredUnselectedTabTextProminence]);
     }
     return nil;
 }
