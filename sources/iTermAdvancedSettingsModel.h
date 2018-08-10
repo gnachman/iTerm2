@@ -238,5 +238,6 @@
 + (double)minimalTabStyleBackgroundColorDifference;
 + (double)minimalTabStyleOutlineStrength;
 + (double)coloredUnselectedTabTextProminence;
++ (BOOL)throttleMetalConcurrentFrames;
 
 @end

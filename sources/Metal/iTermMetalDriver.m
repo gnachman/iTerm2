@@ -140,6 +140,8 @@ typedef struct {
     NSTimeInterval _lastFrameStartTime;
     iTermHistogram *_startToStartHistogram;
     iTermHistogram *_inFlightHistogram;
+    MovingAverage *_currentDrawableTime;
+    NSInteger _maxFramesInFlight;
 
     // For client-driven calls through drawSynchronouslyInView/drawAsynchronouslyInView, this will
     // be nonnil and holds the state needed by those calls. Will bet set to nil if the frame will
@@ -191,12 +193,17 @@ typedef struct {
         _queue = dispatch_queue_create("com.iterm2.metalDriver", NULL);
 #endif
         _currentFrames = [NSMutableArray array];
+        _currentDrawableTime = [[MovingAverage alloc] init];
+        _currentDrawableTime.alpha = 0.75;
+
         _fpsMovingAverage = [[MovingAverage alloc] init];
         _fpsMovingAverage.alpha = 0.75;
         iTermMetalFrameDataStatsBundleInitialize(_stats);
         _statHistograms = [[NSArray sequenceWithRange:NSMakeRange(0, iTermMetalFrameDataStatCount)] mapWithBlock:^id(NSNumber *anObject) {
             return [[iTermHistogram alloc] init];
         }];
+
+        _maxFramesInFlight = iTermMetalDriverMaximumNumberOfFramesInFlight;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidBecomeActive:)
@@ -300,7 +307,34 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (int)maximumNumberOfFramesInFlight {
-    return iTermMetalDriverMaximumNumberOfFramesInFlight;
+    if (![iTermAdvancedSettingsModel throttleMetalConcurrentFrames]) {
+        return iTermMetalDriverMaximumNumberOfFramesInFlight;
+    }
+
+    const CGFloat slowEnoughToDowngradeThreshold = 0.002;
+    const CGFloat fastEnoughToUpgradeTreshold = 0.0005;
+    if (_currentDrawableTime.numberOfMeasurements > 5 &&
+        _maxFramesInFlight > 1 &&
+        _currentDrawableTime.value > slowEnoughToDowngradeThreshold) {
+        DLog(@"Moving average of currentDrawable latency of %0.2fms with %@ measurements with mff of %@ is too high. Decrease mff to %@",
+             _currentDrawableTime.value * 1000,
+             @(_currentDrawableTime.numberOfMeasurements),
+             @(_maxFramesInFlight),
+             @(_maxFramesInFlight - 1));
+        _maxFramesInFlight -= 1;
+        [_currentDrawableTime reset];
+    } else if (_currentDrawableTime.numberOfMeasurements > 10 &&
+               _maxFramesInFlight < iTermMetalDriverMaximumNumberOfFramesInFlight &&
+               _currentDrawableTime.value < fastEnoughToUpgradeTreshold) {
+        DLog(@"Moving average of currentDrawable latency of %0.2fms with %@ measurements with mff of %@ is low. Increase mff to %@",
+              _currentDrawableTime.value * 1000,
+              @(_currentDrawableTime.numberOfMeasurements),
+              @(_maxFramesInFlight),
+              @(_maxFramesInFlight + 1));
+        _maxFramesInFlight += 1;
+        [_currentDrawableTime reset];
+    }
+    return _maxFramesInFlight;
 }
 
 - (iTermMetalDriverAsyncContext *)newContextForDrawInView:(MTKView *)view count:(int)count {
@@ -734,6 +768,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             frameData.destinationDrawable = view.currentDrawable;
             frameData.destinationTexture = frameData.renderPassDescriptor.colorAttachments[0].texture;
         }];
+
     } else {
 #if ENABLE_DEFER_CURRENT_DRAWABLE
         const BOOL synchronousDraw = (_context.group != nil);
@@ -743,10 +778,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         frameData.deferCurrentDrawable = NO;
 #endif
         if (!frameData.deferCurrentDrawable) {
-            [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
+            NSTimeInterval duration = [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
                 frameData.destinationDrawable = view.currentDrawable;
                 frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
             }];
+            [_currentDrawableTime addValue:duration];
         }
 
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{

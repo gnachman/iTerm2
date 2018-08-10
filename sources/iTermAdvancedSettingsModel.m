@@ -371,5 +371,6 @@ DEFINE_BOOL(retinaInlineImages, YES, @"Experimental Features: Show inline images
 DEFINE_BOOL(evaluateSwiftyStrings, NO, @"Experimental Features: Evaluate certain strings with inline expressions using a Swift-like syntax?\nThis applies to session names and will eventually apply in other places.");
 DEFINE_BOOL(metalDeferCurrentDrawable, NO, @"Experimental Features: Defer invoking currentDrawable.\nThis may improve overall performance at the cost of a lower frame rate.");
 DEFINE_BOOL(sshURLsSupportPath, YES_IF_BETA_ELSE_NO, @"Experimental Features: SSH URLs respect the path.\nThey run the command: ssh -t \"cd $$PATH$$; exec \\$SHELL -l\"");
+DEFINE_BOOL(throttleMetalConcurrentFrames, YES, @"Experimental Features: Reduce number of frames in flight when GPU can't produce drawables quickly.");
 
 @end

@@ -14,11 +14,13 @@
 @property(nonatomic, assign) double value;
 @property(nonatomic, readonly) NSTimeInterval timeSinceTimerStarted;
 @property(nonatomic, readonly) BOOL timerStarted;
+@property(nonatomic, readonly) NSInteger numberOfMeasurements;
 
 - (void)startTimer;
 - (void)pauseTimer;
 - (void)resumeTimer;
 - (void)addValue:(double)value;
 - (BOOL)haveStartedTimer;
+- (void)reset;
 
 @end

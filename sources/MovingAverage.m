@@ -46,6 +46,7 @@
         _initialized = YES;
         _value = value;
     }
+    _numberOfMeasurements++;
 }
 
 - (BOOL)haveStartedTimer {
@@ -66,4 +67,12 @@
     _timePaused = 0;
 }
 
+- (void)reset {
+    _time = 0;
+    _timePaused = 0;
+    _initialized = NO;
+    _value = 0;
+    _numberOfMeasurements = 0;
+
+}
 @end
