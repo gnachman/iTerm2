@@ -45,6 +45,7 @@ typedef NSString *PSMTabBarControlOptionKey NS_EXTENSIBLE_STRING_ENUM;
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionColoredSelectedTabOutlineStrength;  // NSNumber in 0-3
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleBackgroundColorDifference;  // Number in 0-1
 extern PSMTabBarControlOptionKey PSMTabBarControlOptionColoredMinimalOutlineStrength;  // Number in 0-1
+extern PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminence;  // NSNumber in 0-0.5
 
 // Tab views controlled by the tab bar may expect this protocol to be conformed to by their delegate.
 @protocol PSMTabViewDelegate<NSTabViewDelegate>

@@ -44,6 +44,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleBackgroundColorDiffe
     @"PSMTabBarControlOptionMinimalStyleBackgroundColorDifference";
 PSMTabBarControlOptionKey PSMTabBarControlOptionColoredMinimalOutlineStrength =
     @"PSMTabBarControlOptionColoredMinimalOutlineStrength";
+PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminence = @"PSMTabBarControlOptionColoredUnselectedTabTextProminence";
 
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol>
 @end

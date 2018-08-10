@@ -237,5 +237,6 @@
 + (double)coloredSelectedTabOutlineStrength;
 + (double)minimalTabStyleBackgroundColorDifference;
 + (double)minimalTabStyleOutlineStrength;
++ (double)coloredUnselectedTabTextProminence;
 
 @end

@@ -398,15 +398,18 @@
                 // dark tab
                 textColor = [NSColor whiteColor];
             }
-        } else
+        } else {
             // Non-selected cell when any cell has a tab color
+            CGFloat prominence = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionColoredUnselectedTabTextProminence] doubleValue];
+            CGFloat delta = prominence ?: 0.1;
             if (cellBrightness > 0.5) {
                 // Light tab
-                return [NSColor colorWithWhite:cellBrightness - 0.4 alpha:1];
+                return [NSColor colorWithWhite:0.5 - delta alpha:1];
             } else {
                 // Dark tab
-                return [NSColor colorWithWhite:cellBrightness + 0.4 alpha:1];
+                return [NSColor colorWithWhite:0.5 + delta alpha:1];
             }
+        }
     } else {
         // No cell has a tab color
         if (selected) {

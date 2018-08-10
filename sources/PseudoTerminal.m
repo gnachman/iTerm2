@@ -5402,6 +5402,9 @@ ITERM_WEAKLY_REFERENCEABLE
                       PSMTabBarControlOptionMinimalStyleBackgroundColorDifference: ^id() {
                           return @([iTermAdvancedSettingsModel minimalTabStyleBackgroundColorDifference]);
                       },
+                      PSMTabBarControlOptionColoredUnselectedTabTextProminence: ^id() {
+                          return @([iTermAdvancedSettingsModel coloredUnselectedTabTextProminence]);
+                      },
                       PSMTabBarControlOptionColoredMinimalOutlineStrength: ^id() {
                           return @([iTermAdvancedSettingsModel minimalTabStyleOutlineStrength]);
                       }, };
