@@ -147,10 +147,10 @@ static NSInteger gNextFrameDataNumber;
     [_debugInfo setRenderPassDescriptor:renderPassDescriptor];
 }
 
-- (void)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^)(void))block {
+- (NSTimeInterval)measureTimeForStat:(iTermMetalFrameDataStat)stat ofBlock:(void (^)(void))block {
     if (stat == iTermMetalFrameDataStatNA) {
         block();
-        return;
+        return 0;
     }
     
     self.status = [NSString stringWithUTF8String:_stats[stat].name];
@@ -158,6 +158,7 @@ static NSInteger gNextFrameDataNumber;
     block();
     const double duration = iTermPreciseTimerStatsMeasureAndRecordTimer(&_stats[stat]);
     [_statHistograms[stat] addValue:duration * 1000];
+    return duration;
 }
 
 - (void)extractStateFromAppInBlock:(void (^)(void))block {

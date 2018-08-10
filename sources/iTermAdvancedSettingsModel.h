@@ -224,5 +224,6 @@
 + (double)fractionOfCharacterSelectingNextNeighbor;
 + (double)coloredSelectedTabOutlineStrength;
 + (double)coloredUnselectedTabTextProminence;
++ (BOOL)throttleMetalConcurrentFrames;
 
 @end

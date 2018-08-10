@@ -346,5 +346,6 @@ DEFINE_BOOL(proportionalScrollWheelReporting, YES, @"Experimental Features: Repo
 DEFINE_BOOL(useModernScrollWheelAccumulator, NO, @"Experimental Features: Use modern scroll wheel accumulator.\nThis should support wheel mice better and feel more natural.");
 DEFINE_BOOL(resetSGROnPrompt, YES, @"Experimental Features: Reset colors at shell prompt?\nUses shell integration to detect a shell prompt and, if enabled, resets colors to their defaults.");
 DEFINE_BOOL(retinaInlineImages, YES, @"Experimental Features: Show inline images at Retina resolution.");
+DEFINE_BOOL(throttleMetalConcurrentFrames, YES, @"Experimental Features: Reduce number of frames in flight when GPU can't produce drawables quickly.");
 
 @end
