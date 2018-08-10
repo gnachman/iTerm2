@@ -27,10 +27,17 @@
 }
 
 - (void)initializeRoundedCornerScrollView {
-  self.wantsLayer = YES;
-  [self makeBackingLayer];
-  self.layer.cornerRadius = 4;
-  self.borderType = NSNoBorder;
+    if (@available(macOS 10.14, *)) {
+        // TODO: This doesn't work. Not sure why.
+        self.layer.cornerRadius = 4;
+        self.layer.masksToBounds = YES;
+        self.borderType = NSNoBorder;
+    } else {
+        self.wantsLayer = YES;
+        [self makeBackingLayer];
+        self.layer.cornerRadius = 4;
+        self.borderType = NSNoBorder;
+    }
 }
 
 @end

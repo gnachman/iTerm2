@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "iTermPreferences.h"
+#import "NSAppearance+iTerm.h"
 
 // Constants for converting RGB to luma.
 static const double kRedComponentBrightness = 0.30;
@@ -319,9 +320,10 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return [NSColor colorWithSRGBRed:red/255.0 green:green/255.0 blue:blue/255.0 alpha:1];
 }
 
-+ (NSColor *)it_searchFieldBackgroundColor:(BOOL)selected {
++ (NSColor *)it_searchFieldBackgroundColor:(BOOL)selected
+                                appearance:(NSAppearance *)appearance {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    switch (preferredStyle) {
+    switch ([appearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_LIGHT:
             return [NSColor colorWithCalibratedHue:0
                                         saturation:0
@@ -343,8 +345,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                         brightness:0.25
                                              alpha:1];
         case TAB_STYLE_AUTOMATIC:
-#warning TODO
-            return [NSColor redColor];
+            assert(NO);
     }
 }
 

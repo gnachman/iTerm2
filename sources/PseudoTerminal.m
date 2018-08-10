@@ -54,6 +54,7 @@
 #import "iTermWarning.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "MovePaneController.h"
+#import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -6841,12 +6842,16 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView.tabView setNeedsDisplay:YES];
 }
 
+- (void)rootTerminalViewDidChangeEffectiveAppearance {
+    [self refreshTerminal:nil];
+}
+
 - (void)updateTabBarStyle {
     id<PSMTabStyle> style;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    switch (preferredStyle) {
+    switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
-#warning TODO
+            assert(NO);
         case TAB_STYLE_LIGHT:
             style = [[[PSMYosemiteTabStyle alloc] init] autorelease];
             break;

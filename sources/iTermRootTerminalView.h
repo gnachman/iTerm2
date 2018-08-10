@@ -33,6 +33,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 - (BOOL)divisionViewShouldBeVisible;
 - (NSWindow *)window;
 - (BOOL)enableStoplightHotbox;
+- (void)rootTerminalViewDidChangeEffectiveAppearance;
 @end
 
 @interface iTermRootTerminalView : SolidColorView

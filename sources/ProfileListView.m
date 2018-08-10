@@ -44,9 +44,8 @@
 // NSAttributedString attribute keys used as source values by
 // iTermProfileListViewTextField. One of these colors will be used as the
 // NSForegroundColorAttributeName's value when the background style changes.
-static NSString *const iTermRegularTextColorAttribute = @"iTermRegularTextColorAttribute";
-static NSString *const iTermSelectedActiveTextColorAttribute = @"iTermSelectedActiveTextColorAttribute";
-static NSString *const iTermSelectedInactiveTextColorAttribute = @"iTermSelectedInactiveTextColorAttribute";
+static NSString *const iTermSelectedActiveForegroundColor = @"iTermSelectedActiveForegroundColor";
+static NSString *const iTermRegularForegroundColor = @"iTermRegularForegroundColor";
 
 // This is a text field that updates its text colors depending on the current background style.
 @interface iTermProfileListViewTextField : NSTextField
@@ -55,13 +54,31 @@ static NSString *const iTermSelectedInactiveTextColorAttribute = @"iTermSelected
 @implementation iTermProfileListViewTextField
 
 - (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
+    if (@available(macOS 10.14, *)) {
+        switch (backgroundStyle) {
+            case NSBackgroundStyleNormal:
+                self.textColor = [NSColor labelColor];
+                [self setAttributedTextColorsForKey:iTermRegularForegroundColor];
+                break;
+            case NSBackgroundStyleEmphasized:
+                [self setAttributedTextColorsForKey:iTermSelectedActiveForegroundColor];
+                self.textColor = [NSColor labelColor];
+                break;
+                
+            case NSBackgroundStyleRaised:
+            case NSBackgroundStyleLowered:
+                DLog(@"Unexpected background style %@", @(backgroundStyle));
+                break;
+        }
+        return;
+    }
     switch (backgroundStyle) {
         case NSBackgroundStyleDark:
             self.textColor = [NSColor whiteColor];
-            [self setAttributedTextColorsForKey:iTermSelectedActiveTextColorAttribute];
+            [self setAttributedTextColorsForKey:iTermRegularForegroundColor];
             break;
         case NSBackgroundStyleLight:
-            [self setAttributedTextColorsForKey:iTermRegularTextColorAttribute];
+            [self setAttributedTextColorsForKey:iTermSelectedActiveForegroundColor];
             self.textColor = [NSColor blackColor];
             break;
 
@@ -599,7 +616,10 @@ const CGFloat kDefaultTagsWidth = 80;
     return ![self.window.appearance.name isEqual:NSAppearanceNameVibrantDark];
 }
 
-- (NSColor *)textColorWhenActiveAndSelected {
+- (NSColor *)regularTextColor {
+    if (@available(macOS 10.14, *)) {
+        return [NSColor labelColor];
+    }
     if ([self lightTheme]) {
         return [NSColor whiteColor];
     } else {
@@ -608,6 +628,9 @@ const CGFloat kDefaultTagsWidth = 80;
 }
 
 - (NSColor *)textColorWhenInactiveAndSelected {
+    if (@available(macOS 10.14, *)) {
+        return [NSColor unemphasizedSelectedTextColor];
+    }
     if ([self lightTheme]) {
         return [NSColor blackColor];
     } else {
@@ -615,7 +638,10 @@ const CGFloat kDefaultTagsWidth = 80;
     }
 }
 
-- (NSColor *)tagColorWhenSelected {
+- (NSColor *)selectedActiveTagColor {
+    if (@available(macOS 10.14, *)) {
+        return [NSColor selectedMenuItemTextColor];
+    }
     if ([self lightTheme]) {
         return [NSColor whiteColor];
     } else {
@@ -623,7 +649,10 @@ const CGFloat kDefaultTagsWidth = 80;
     }
 }
 
-- (NSColor *)textColorWhenUnselected {
+- (NSColor *)selectedActiveTextColor {
+    if (@available(macOS 10.14, *)) {
+        return [NSColor selectedMenuItemTextColor];
+    }
     if ([self lightTheme]) {
         return [NSColor blackColor];
     } else {
@@ -631,7 +660,7 @@ const CGFloat kDefaultTagsWidth = 80;
     }
 }
 
-- (NSColor *)tagColorWhenUnselected {
+- (NSColor *)regularTagColor {
     return [NSColor colorWithCalibratedWhite:0.5 alpha:1];
 }
 
@@ -642,35 +671,29 @@ const CGFloat kDefaultTagsWidth = 80;
                                          filter:(NSString *)filter {
     NSColor *highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
 
-    NSColor *selectedActiveTextColor = [self textColorWhenActiveAndSelected];
-    NSColor *selectedInactiveTextColor = [self textColorWhenInactiveAndSelected];
-    NSColor *selectedActiveTagColor = [self tagColorWhenSelected];
-    NSColor *selectedInactiveTagColor = [self tagColorWhenSelected];
-    NSColor *regularTextColor = [self textColorWhenUnselected];
-    NSColor *regularTagColor = [self tagColorWhenUnselected];
-
+    NSColor *textColor = [self regularTextColor];
+    NSColor *tagColor = [self regularTagColor];
+    NSColor *selectedActiveTextColor = [self selectedActiveTextColor];
+    NSColor *selectedActiveTagColor = [self selectedActiveTagColor];
+    
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
 
-        NSDictionary* plainAttributes = @{ iTermRegularTextColorAttribute: regularTextColor,
-                                       iTermSelectedActiveTextColorAttribute: selectedActiveTextColor,
-                                       iTermSelectedInactiveTextColorAttribute: selectedInactiveTextColor,
+    NSDictionary* plainAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTextColor,
+                                       iTermRegularForegroundColor: textColor,
                                        NSParagraphStyleAttributeName: paragraphStyle,
                                        NSFontAttributeName: self.mainFont };
-    NSDictionary* highlightedNameAttributes = @{ iTermRegularTextColorAttribute: regularTextColor,
-                                                 iTermSelectedActiveTextColorAttribute: selectedActiveTextColor,
-                                                 iTermSelectedInactiveTextColorAttribute: selectedInactiveTextColor,
+    NSDictionary* highlightedNameAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTextColor,
+                                                 iTermRegularForegroundColor: textColor,
                                                  NSParagraphStyleAttributeName: paragraphStyle,
                                                  NSBackgroundColorAttributeName: highlightedBackgroundColor,
                                                  NSFontAttributeName: self.mainFont };
-    NSDictionary* smallAttributes = @{ iTermRegularTextColorAttribute: regularTagColor,
-                                       iTermSelectedActiveTextColorAttribute: selectedActiveTagColor,
-                                       iTermSelectedInactiveTextColorAttribute: selectedInactiveTagColor,
+    NSDictionary* smallAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTagColor,
+                                       iTermRegularForegroundColor: tagColor,
                                        NSParagraphStyleAttributeName: paragraphStyle,
                                        NSFontAttributeName: self.tagFont };
-    NSDictionary* highlightedSmallAttributes = @{ iTermRegularTextColorAttribute: regularTagColor,
-                                                  iTermSelectedActiveTextColorAttribute: selectedActiveTagColor,
-                                                  iTermSelectedInactiveTextColorAttribute: selectedInactiveTagColor,
+    NSDictionary* highlightedSmallAttributes = @{ iTermSelectedActiveForegroundColor: selectedActiveTagColor,
+                                                  iTermRegularForegroundColor: tagColor,
                                                   NSParagraphStyleAttributeName: paragraphStyle,
                                                   NSBackgroundColorAttributeName: highlightedBackgroundColor,
                                                   NSFontAttributeName: self.tagFont };

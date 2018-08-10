@@ -67,7 +67,8 @@ const CGFloat kEdgeWidth = 3;
     if (self.controlSize == NSControlSizeRegular) {
         backgroundColor = [NSColor whiteColor];
     } else {
-        backgroundColor = [NSColor it_searchFieldBackgroundColor:focused];
+        backgroundColor = [NSColor it_searchFieldBackgroundColor:focused
+                                                      appearance:controlView.effectiveAppearance];
     }
     
     [backgroundColor set];

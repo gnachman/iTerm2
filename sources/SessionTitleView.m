@@ -9,6 +9,7 @@
 #import "SessionTitleView.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarViewController.h"
+#import "NSAppearance+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 #import "PSMTabBarControl.h"
@@ -165,12 +166,12 @@ static const CGFloat kButtonSize = 17;
     return [NSColor colorWithCalibratedRed:r green:g blue:b alpha:1];
 }
 
-- (NSColor *)dimmedBackgroundColor {
+- (NSColor *)dimmedBackgroundColorWithAppearance:(NSAppearance *)appearance {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     CGFloat whiteLevel = 0;
-    switch (preferredStyle) {
+    switch ([appearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
-#warning TODO
+            assert(NO);
         case TAB_STYLE_LIGHT:
             if (![delegate_ sessionTitleViewIsFirstResponder]) {
                 // Not selected
@@ -219,9 +220,9 @@ static const CGFloat kButtonSize = 17;
         CGFloat saturation = tabColor.saturationComponent;
         CGFloat brightness = tabColor.brightnessComponent;
         iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-        switch (preferredStyle) {
+        switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
             case TAB_STYLE_AUTOMATIC:
-#warning TODO
+                assert(NO);
             case TAB_STYLE_LIGHT:
                 tabColor = [NSColor colorWithCalibratedHue:hue
                                                 saturation:saturation * .5
@@ -253,7 +254,7 @@ static const CGFloat kButtonSize = 17;
             [[SessionTitleView colorByDimmingColor:tabColor byDimmingAmount:0.3] set];
         }
     } else {
-        [[self dimmedBackgroundColor] set];
+        [[self dimmedBackgroundColorWithAppearance:self.effectiveAppearance] set];
     }
     NSRectFill(dirtyRect);
 
@@ -308,12 +309,18 @@ static const CGFloat kButtonSize = 17;
     [self updateTextColor];
 }
 
+- (void)viewDidChangeEffectiveAppearance {
+    [super viewDidChangeEffectiveAppearance];
+    [self updateTextColor];
+}
+
 - (void)updateTextColor {
     CGFloat whiteLevel = 0;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    switch (preferredStyle) {
+    switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
-#warning TODO
+            assert(NO);
+            
         case TAB_STYLE_LIGHT:
             if (dimmingAmount_ > 0) {
                 // Not selected

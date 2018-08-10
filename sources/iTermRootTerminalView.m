@@ -270,6 +270,10 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     [self updateDivisionView];
 }
 
+- (void)viewDidChangeEffectiveAppearance {
+    [self.delegate rootTerminalViewDidChangeEffectiveAppearance];
+}
+
 #pragma mark - Division View
 
 - (void)updateDivisionView {
