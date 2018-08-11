@@ -58,7 +58,6 @@ zip: Deployment
 	zip -r iTerm2-$(NAME).zip iTerm2.app
 
 clean:
-	xcodebuild -parallelizeTargets -alltargets clean
 	rm -rf build
 	rm -f *~
 
