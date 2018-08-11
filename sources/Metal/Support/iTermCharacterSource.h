@@ -15,6 +15,14 @@
 @property (nonatomic, readonly) CGRect frame;
 @property (nonatomic, readonly) NSArray<NSNumber *> *parts;
 
+// Using conservative settings (bold, italic, thick strokes, antialiased)
+// returns the frame that contains all characters in the range. This is useful
+// for finding the bounding box of all ASCII glyphs.
++ (NSRect)boundingRectForCharactersInRange:(NSRange)range
+                                      font:(NSFont *)font
+                            baselineOffset:(CGFloat)baselineOffset
+                                     scale:(CGFloat)scale;
+
 - (instancetype)initWithCharacter:(NSString *)string
                              font:(NSFont *)font
                              size:(CGSize)size
@@ -23,7 +31,8 @@
                    useThinStrokes:(BOOL)useThinStrokes
                          fakeBold:(BOOL)fakeBold
                        fakeItalic:(BOOL)fakeItalic
-                      antialiased:(BOOL)antialiased;
+                      antialiased:(BOOL)antialiased
+                           radius:(int)radius;
 
 - (iTermCharacterBitmap *)bitmapForPart:(int)part;
 

@@ -68,6 +68,10 @@
 }
 
 + (NSString *)stringWithLongCharacter:(UTF32Char)longCharacter {
+    if (longCharacter <= 0xffff) {
+        unichar c = longCharacter;
+        return [self stringWithCharacters:&c length:1];
+    }
     UniChar c[2];
     CFStringGetSurrogatePairForLongCharacter(longCharacter, c);
     return [[[NSString alloc] initWithCharacters:c length:2] autorelease];

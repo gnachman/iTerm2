@@ -137,6 +137,8 @@ float FractionOfPixelThatIntersectsUnderlineForStyle(int underlineStyle,  // iTe
                                                           underlineThickness);
     switch (static_cast<iTermMetalGlyphAttributesUnderline>(underlineStyle)) {
         case iTermMetalGlyphAttributesUnderlineNone:
+            return 0;
+
         case iTermMetalGlyphAttributesUnderlineSingle:
             return weight;
 

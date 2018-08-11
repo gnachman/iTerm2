@@ -13,8 +13,13 @@ extern const CGFloat BOTTOM_MARGIN;
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermCellRenderConfiguration : iTermRenderConfiguration
+// This is the size of a cell on screen--the distance from the beginning of one character to the next.
 @property (nonatomic, readonly) CGSize cellSize;
+// The same, but without extra vertical/horizontal spacing.
 @property (nonatomic, readonly) CGSize cellSizeWithoutSpacing;
+// Maximum size of a glyph part. On 10.14, this is large enough to contain all
+// ASCII glyphs on. On earlier OS versions it equals cellSize.
+@property (nonatomic, readonly) CGSize glyphSize;
 @property (nonatomic, readonly) VT100GridSize gridSize;
 
 // This determines how subpixel antialiasing is done. It's unfortunate that one
@@ -32,6 +37,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                                scale:(CGFloat)scale
                   hasBackgroundImage:(BOOL)hasBackgroundImage
                             cellSize:(CGSize)cellSize
+                           glyphSize:(CGSize)glyphSize
               cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                             gridSize:(VT100GridSize)gridSize
                usingIntermediatePass:(BOOL)usingIntermediatePass NS_DESIGNATED_INITIALIZER;

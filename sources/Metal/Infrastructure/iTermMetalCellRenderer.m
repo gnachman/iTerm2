@@ -11,6 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
                                scale:(CGFloat)scale
                   hasBackgroundImage:(BOOL)hasBackgroundImage
                             cellSize:(CGSize)cellSize
+                           glyphSize:(CGSize)glyphSize
               cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                             gridSize:(VT100GridSize)gridSize
                usingIntermediatePass:(BOOL)usingIntermediatePass {
@@ -20,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (self) {
         _cellSize = cellSize;
         _cellSizeWithoutSpacing = cellSizeWithoutSpacing;
+        _glyphSize = glyphSize;
         _gridSize = gridSize;
         _usingIntermediatePass = usingIntermediatePass;
     }

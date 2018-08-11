@@ -117,6 +117,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic) vector_uint2 viewportSize;
 @property (atomic) VT100GridSize gridSize;
 @property (atomic) CGSize cellSize;
+@property (atomic) CGSize glyphSize;
 @property (atomic) CGSize cellSizeWithoutSpacing;
 @property (atomic) CGFloat scale;
 @property (atomic) BOOL hasBackgroundImage;

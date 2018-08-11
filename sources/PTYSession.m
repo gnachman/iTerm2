@@ -16,6 +16,7 @@
 #import "iTermBuriedSessions.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermCarbonHotKeyController.h"
+#import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
 #import "iTermColorPresets.h"
 #import "iTermCommandHistoryCommandUseMO+Addtions.h"
@@ -4911,14 +4912,6 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         return NO;
     }
-    if ([_textview verticalSpacing] < 1) {
-#warning TODO: In 10.14 I should be able to render glyphs over each other, making this possible.
-        if (reason) {
-            *reason = @"the font's vertical spacing set to less than 100%. You can change it in Prefs>Profiles>Text>Change Font.";
-        }
-       // Metal cuts off the tops of letters when line height reduced
-        return NO;
-    }
     if (_textview.transparencyAlpha < 1) {
         BOOL transparencyAllowed = NO;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
@@ -4933,8 +4926,16 @@ ITERM_WEAKLY_REFERENCEABLE
             return NO;
         }
     }
-    // Composting works on macOS 10.14
     if (@available(macOS 10.14, *)) { } else {
+        // The following conditions only apply before macOS 10.14.
+        // Mojave fixed compositing of views over MTKView and removed subpixel antialiasing making blending of text easier.
+        if ([_textview verticalSpacing] < 1) {
+            if (reason) {
+                *reason = @"the font's vertical spacing set to less than 100%. You can change it in Prefs>Profiles>Text>Change Font.";
+            }
+            // Metal cuts off the tops of letters when line height reduced
+            return NO;
+        }
         // Metal's not allowed when other views are composited over the metal view because that just
         // doesn't seem to work, even if you use presentsWithTransaction (even if it did work, it
         // requires presenting the drawable on the main thread which defeats the purpose of the metal
@@ -5134,8 +5135,22 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateMetalDriver NS_AVAILABLE_MAC(10_11) {
-    [_view.driver setCellSize:CGSizeMake(_textview.charWidth, _textview.lineHeight)
+    const CGSize cellSize = CGSizeMake(_textview.charWidth, _textview.lineHeight);
+    CGSize glyphSize;
+    if (@available(macOS 10.14, *)) {
+        // Mojave can use a glyph size larger than cell size because compositing is trivial without subpixel AA.
+        NSRect rect = [iTermCharacterSource boundingRectForCharactersInRange:NSMakeRange(32, 127-32)
+                                                                        font:_textview.font
+                                                              baselineOffset:_textview.primaryFont.baselineOffset
+                                                                       scale:_view.window.backingScaleFactor ?: 1];
+        glyphSize.width = MAX(cellSize.width, NSMaxX(rect));
+        glyphSize.height = MAX(cellSize.height, NSMaxY(rect));
+    } else {
+        glyphSize = cellSize;
+    }
+    [_view.driver setCellSize:cellSize
        cellSizeWithoutSpacing:CGSizeMake(_textview.charWidthWithoutSpacing, _textview.charHeightWithoutSpacing)
+                    glyphSize:glyphSize
                      gridSize:_screen.currentGrid.size
                         scale:_view.window.screen.backingScaleFactor];
 }
