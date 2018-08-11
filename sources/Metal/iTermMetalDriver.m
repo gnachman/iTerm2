@@ -74,6 +74,7 @@ typedef struct {
     int rows;
     int columns;
     CGFloat scale;
+    CGSize glyphSize;
 } iTermMetalDriverMainThreadState;
 
 @interface iTermMetalDriver()
@@ -117,7 +118,7 @@ typedef struct {
 
     // The command Queue from which we'll obtain command buffers
     id<MTLCommandQueue> _commandQueue;
-    iTermMetalDriverMainThreadState __mainThreadState;
+    iTermMetalDriverMainThreadState _mainThreadState;
 
 #if ENABLE_PRIVATE_QUEUE
     dispatch_queue_t _queue;
@@ -217,7 +218,7 @@ typedef struct {
 
 - (iTermMetalDriverMainThreadState *)mainThreadState {
     assert([NSThread isMainThread]);
-    return &__mainThreadState;
+    return &_mainThreadState;
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
@@ -241,12 +242,16 @@ typedef struct {
 
 - (void)setCellSize:(CGSize)cellSize
 cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
+          glyphSize:(CGSize)glyphSize
            gridSize:(VT100GridSize)gridSize
               scale:(CGFloat)scale {
     scale = MAX(1, scale);
     cellSize.width *= scale;
     cellSize.height *= scale;
 
+    glyphSize.width *= scale;
+    glyphSize.height *= scale;
+    
     cellSizeWithoutSpacing.width *= scale;
     cellSizeWithoutSpacing.height *= scale;
 
@@ -259,6 +264,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     self.mainThreadState->rows = MAX(1, gridSize.height);
     self.mainThreadState->columns = MAX(1, gridSize.width);
     self.mainThreadState->scale = scale;
+    self.mainThreadState->glyphSize = glyphSize;
 }
 
 #pragma mark - MTKViewDelegate
@@ -480,7 +486,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         };
         frameData.cellSize = rescale(frameData.perFrameState.cellSize);
         frameData.cellSizeWithoutSpacing = rescale(frameData.perFrameState.cellSizeWithoutSpacing);
-
+        frameData.glyphSize = self.mainThreadState->glyphSize;
+        
         frameData.scale = self.mainThreadState->scale;
         frameData.hasBackgroundImage = frameData.perFrameState.hasBackgroundImage;
     }];
@@ -831,9 +838,11 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
     __weak __typeof(self) weakSelf = self;
     CGSize cellSize = frameData.cellSize;
+    CGSize glyphSize = frameData.glyphSize;
     CGFloat scale = frameData.scale;
     __weak iTermMetalFrameData *weakFrameData = frameData;
     [_textRenderer setASCIICellSize:cellSize
+                          glyphSize:glyphSize
                  creationIdentifier:[frameData.perFrameState metalASCIICreationIdentifier]
                            creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(char c, iTermASCIITextureAttributes attributes) {
                                __typeof(self) strongSelf = weakSelf;
@@ -850,7 +859,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                    };
                                    BOOL emoji = NO;
                                    return [strongFrameData.perFrameState metalImagesForGlyphKey:&glyphKey
-                                                                                           size:cellSize
+                                                                                           size:glyphSize
                                                                                           scale:scale
                                                                                           emoji:&emoji];
                                } else {
@@ -1063,6 +1072,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     textState.defaultBackgroundColor = frameData.perFrameState.defaultBackgroundColor;
 
     CGSize cellSize = textState.cellConfiguration.cellSize;
+    CGSize glyphSize = textState.cellConfiguration.glyphSize;
     iTermBackgroundColorRendererTransientState *backgroundState = [frameData transientStateForRenderer:_backgroundColorRenderer];
 
     iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
@@ -1112,7 +1122,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                 context:textState.poolContext
                                creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(int x, BOOL *emoji) {
                                    return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
-                                                                                     size:cellSize
+                                                                                     size:glyphSize
                                                                                     scale:scale
                                                                                     emoji:emoji];
                                }];

@@ -141,6 +141,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (void)setCellSize:(CGSize)cellSize
 cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
+          glyphSize:(CGSize)glyphSize
            gridSize:(VT100GridSize)gridSize
               scale:(CGFloat)scale;
 

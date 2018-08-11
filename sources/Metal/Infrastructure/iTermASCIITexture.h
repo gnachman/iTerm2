@@ -66,7 +66,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithAttributes:(iTermASCIITextureAttributes)attributes
-                          cellSize:(CGSize)cellSize
+                         glyphSize:(CGSize)glyphSize
                             device:(id<MTLDevice>)device
                           creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull (^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
 
@@ -95,16 +95,16 @@ NS_CLASS_AVAILABLE(10_11, NA)
     iTermASCIITexture *_textures[iTermASCIITextureAttributesMax * 2];
 }
 
-@property (nonatomic, readonly) CGSize cellSize;
+@property (nonatomic, readonly) CGSize glyphSize;
 @property (nonatomic, strong, readonly) id<MTLDevice> device;
 @property (nonatomic, copy, readonly) NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^creation)(char, iTermASCIITextureAttributes);
 @property (nonatomic, readonly) id creationIdentifier;
 @property (nonatomic, readonly) vector_float2 atlasSize;
 
-- (instancetype)initWithCellSize:(CGSize)cellSize
-                          device:(id<MTLDevice>)device
-              creationIdentifier:(id)creationIdentifier
-                        creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithGlyphSize:(CGSize)glyphSize
+                           device:(id<MTLDevice>)device
+               creationIdentifier:(id)creationIdentifier
+                         creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (iTermASCIITexture *)asciiTextureForAttributes:(iTermASCIITextureAttributes)attributes;

@@ -358,7 +358,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                       piuArrays[i].size_of_segment(j),
                       asciiTexture.textureArray.texture,
                       CGSizeToVectorUInt2(asciiTexture.textureArray.atlasSize),
-                      CGSizeToVectorUInt2(_asciiTextureGroup.cellSize),
+                      CGSizeToVectorUInt2(_asciiTextureGroup.glyphSize),
                       _asciiUnderlineDescriptor,
                       underlined,
                       emoji);
@@ -555,8 +555,27 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
         underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
     }
 
-    // Add PIU for left overflow
     iTermTextPIU *piu;
+    if (@available(macOS 10.14, *)) {
+        // There is only a center part for ASCII on Mojave because the glyph size is increased to contain the largest ASCII glyph.
+        piu = iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[outerPIUIndex][asciiAttrs].get_next(),
+                                                          code,
+                                                          w,
+                                                          h,
+                                                          texture,
+                                                          cellWidth,
+                                                          x,
+                                                          yOffset,
+                                                          iTermASCIITextureOffsetCenter,
+                                                          textColor,
+                                                          attributes[x].backgroundColor,
+                                                          underlineStyle,
+                                                          underlineColor);
+        return;
+    }
+    // Pre-10.14, ASCII glyphs can get chopped up into multiple parts. This is necessary so subpixel AA will work right.
+    
+    // Add PIU for left overflow
     if (parts & iTermASCIITexturePartsLeft) {
         if (x > 0) {
             // Normal case
@@ -672,7 +691,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     [_backgroundColorRLEDataArray addObject:backgroundColorRLEData];
     const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.mutableBytes;
     const iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)attributesData.mutableBytes;
-    vector_float2 asciiCellSize = 1.0 / _asciiTextureGroup.atlasSize;
+    vector_float2 reciprocalAsciiAtlasSize = 1.0 / _asciiTextureGroup.atlasSize;
+    CGSize glyphSize = self.cellConfiguration.glyphSize;
     const float cellHeight = self.cellConfiguration.cellSize.height;
     const float cellWidth = self.cellConfiguration.cellSize.width;
     const float verticalShift = round((cellHeight - self.cellConfiguration.cellSizeWithoutSpacing.height) / (2 * self.configuration.scale)) * self.configuration.scale;
@@ -698,8 +718,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             [self addASCIICellToPIUsForCode:glyphKeys[x].code
                                           x:x
                                     yOffset:yOffset
-                                          w:asciiCellSize.x
-                                          h:asciiCellSize.y
+                                          w:reciprocalAsciiAtlasSize.x
+                                          h:reciprocalAsciiAtlasSize.y
                                   cellWidth:cellWidth
                                  asciiAttrs:asciiAttrs
                                  attributes:attributes
@@ -733,8 +753,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                 const int &part = entry->_part;
                 const int dx = iTermImagePartDX(part);
                 const int dy = iTermImagePartDY(part);
-                piu->offset = simd_make_float2((x + dx) * cellWidth,
-                                               -dy * cellHeight + yOffset);
+                piu->offset = simd_make_float2(x * cellWidth + dx * glyphSize.width,
+                                               -dy * glyphSize.height + yOffset);
                 MTLOrigin origin = entry->get_origin();
                 vector_float2 reciprocal_atlas_size = entry->_page->get_reciprocal_atlas_size();
                 piu->textureOffset = simd_make_float2(origin.x * reciprocal_atlas_size.x,
@@ -751,8 +771,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                     piu->underlineStyle = attributes[x].underlineStyle;
                     piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
                 }
-                if (part != iTermTextureMapMiddleCharacterPart) {
-                    // Only underline center part of the character. There are weird artifacts otherwise,
+                if (part != iTermTextureMapMiddleCharacterPart &&
+                    part != iTermTextureMapMiddleCharacterPart + 1) {
+                    // Only underline center part and its right neighbor of the character. There are weird artifacts otherwise,
                     // such as floating underlines (for parts above and below) or doubly drawn
                     // underlines.
                     piu->underlineStyle = iTermMetalGlyphAttributesUnderlineNone;

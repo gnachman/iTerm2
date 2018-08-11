@@ -14,6 +14,7 @@
 #import "iTermAutomaticProfileSwitcher.h"
 #import "iTermBuriedSessions.h"
 #import "iTermCarbonHotKeyController.h"
+#import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
 #import "iTermColorPresets.h"
 #import "iTermCommandHistoryCommandUseMO+Addtions.h"
@@ -4771,66 +4772,72 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)metalAllowed:(out NSString **)reason {
-    // While Metal is supported on macOS 10.11, it crashes a lot. It seems to have a memory stomping
-    // bug (lots of crashes in dtoa during printf formatting) and assertions in -[MTKView initCommon].
-    // All metal code except this is available on macOS 10.11, so this is the one place that
-    // restricts it to 10.12+.
-    if (@available(macOS 10.12, *)) {
-        static dispatch_once_t onceToken;
-        static BOOL machineSupportsMetal;
-        dispatch_once(&onceToken, ^{
-            NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
-            machineSupportsMetal = devices.count > 0;
-            [devices release];
-        });
-        if (!machineSupportsMetal) {
-            if (reason) {
-                *reason = @"no usable GPU found on this machine.";
-            }
-            return NO;
+    static dispatch_once_t onceToken;
+    static BOOL machineSupportsMetal;
+    dispatch_once(&onceToken, ^{
+        NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
+        machineSupportsMetal = devices.count > 0;
+        [devices release];
+    });
+    if (!machineSupportsMetal) {
+        if (reason) {
+            *reason = @"no usable GPU found on this machine.";
         }
-        if (![iTermPreferences boolForKey:kPreferenceKeyUseMetal]) {
-            if (reason) {
-                *reason = @"GPU Renderer is disabled in Preferences > General.";
-            }
-            return NO;
+        return NO;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyUseMetal]) {
+        if (reason) {
+            *reason = @"GPU Renderer is disabled in Preferences > General.";
         }
-        if ([self ligaturesEnabledInEitherFont]) {
-            if (reason) {
-                *reason = @"ligatures are enabled. You can disable them in Prefs>Profiles>Text>Use ligatures.";
-            }
-            return NO;
+        return NO;
+    }
+    if ([self ligaturesEnabledInEitherFont]) {
+        if (reason) {
+            *reason = @"ligatures are enabled. You can disable them in Prefs>Profiles>Text>Use ligatures.";
         }
-        if (_metalDeviceChanging) {
-            if (reason) {
-                *reason = @"the GPU renderer is initializing. It should be ready soon.";
-            }
-            return NO;
+        return NO;
+    }
+    if (_metalDeviceChanging) {
+        if (reason) {
+            *reason = @"the GPU renderer is initializing. It should be ready soon.";
         }
-        if (![self metalViewSizeIsLegal]) {
-            if (reason) {
-                *reason = @"the session is too large or too small.";
-            }
-            return NO;
+        return NO;
+    }
+    if (![self metalViewSizeIsLegal]) {
+        if (reason) {
+            *reason = @"the session is too large or too small.";
         }
-        if ([_textview verticalSpacing] < 1) {
-#warning TODO: In 10.14 I should be able to render glyphs over each other, making this possible.
-            // Metal cuts off the tops of letters when line height reduced
-            if (reason) {
-                *reason = @"the font's vertical spacing set to less than 100%. You can change it in Prefs>Profiles>Text>Change Font.";
-            }
-            return NO;
-        }
+        return NO;
+    }
+    if (_textview.transparencyAlpha < 1) {
         if (@available(macOS 10.14, *)) {
             // View compositing works in Mojave but not at all before it.
 #if !ENABLE_TRANSPARENT_METAL_WINDOWS
-            if (_textview.transparencyAlpha < 1) {
-                return NO;
-            }
+            return NO;
 #endif
             return YES;
         }
+        return NO;
+    }
+    if (@available(macOS 10.14, *)) {
         if (_textview.transparencyAlpha < 1) {
+#if !ENABLE_TRANSPARENT_METAL_WINDOWS
+            if (reason) {
+                *reason = @"transparent windows not supported. You can change window transparency in Prefs>Profiles>Window>Transparency";
+            }
+            return NO;
+#endif
+        }
+        return YES;
+    } else {
+        // The following conditions only apply before macOS 10.14.
+        // View compositing works in Mojave but not at all before it.
+        // Mojave fixed compositing of views over MTKView and removed subpixel antialiasing making blending of text easier.
+        if ([_textview verticalSpacing] < 1) {
+            if (reason) {
+                *reason = @"the font's vertical spacing set to less than 100%. You can change it in Prefs>Profiles>Text>Change Font.";
+            }
+            // Metal cuts off the tops of letters when line height reduced
             return NO;
         }
         // Metal's not allowed when other views are composited over the metal view because that just
@@ -4847,12 +4854,6 @@ ITERM_WEAKLY_REFERENCEABLE
         if (!(hasSquareCorners || marginsOk)) {
             if (reason) {
                 *reason = @"terminal window margins are too small. You can edit them in Prefs>Advanced.";
-            }
-            return NO;
-        }
-        if (_textview.transparencyAlpha < 1) {
-            if (reason) {
-                *reason = @"transparent windows not supported. You can change window transparency in Prefs>Profiles>Window>Transparency";
             }
             return NO;
         }
@@ -4887,11 +4888,6 @@ ITERM_WEAKLY_REFERENCEABLE
             return NO;
         }
         return YES;
-    } else {
-        if (reason) {
-            *reason = @"macOS version 10.12 required";
-        }
-        return NO;
     }
 }
 
@@ -5040,8 +5036,22 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateMetalDriver NS_AVAILABLE_MAC(10_11) {
-    [_view.driver setCellSize:CGSizeMake(_textview.charWidth, _textview.lineHeight)
+    const CGSize cellSize = CGSizeMake(_textview.charWidth, _textview.lineHeight);
+    CGSize glyphSize;
+    if (@available(macOS 10.14, *)) {
+        // Mojave can use a glyph size larger than cell size because compositing is trivial without subpixel AA.
+        NSRect rect = [iTermCharacterSource boundingRectForCharactersInRange:NSMakeRange(32, 127-32)
+                                                                        font:_textview.font
+                                                              baselineOffset:_textview.primaryFont.baselineOffset
+                                                                       scale:_view.window.backingScaleFactor ?: 1];
+        glyphSize.width = MAX(cellSize.width, NSMaxX(rect));
+        glyphSize.height = MAX(cellSize.height, NSMaxY(rect));
+    } else {
+        glyphSize = cellSize;
+    }
+    [_view.driver setCellSize:cellSize
        cellSizeWithoutSpacing:CGSizeMake(_textview.charWidthWithoutSpacing, _textview.charHeightWithoutSpacing)
+                    glyphSize:glyphSize
                      gridSize:_screen.currentGrid.size
                         scale:_view.window.screen.backingScaleFactor];
 }

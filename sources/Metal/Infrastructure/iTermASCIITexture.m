@@ -18,15 +18,15 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
 @implementation iTermASCIITexture
 
 - (instancetype)initWithAttributes:(iTermASCIITextureAttributes)attributes
-                          cellSize:(CGSize)cellSize
+                         glyphSize:(CGSize)glyphSize
                             device:(id<MTLDevice>)device
                           creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull (^)(char, iTermASCIITextureAttributes))creation {
     self = [super init];
     if (self) {
         _parts = (iTermASCIITextureParts *)calloc(128, sizeof(iTermASCIITextureParts));
         _attributes = attributes;
-        _textureArray = [[iTermTextureArray alloc] initWithTextureWidth:cellSize.width
-                                                          textureHeight:cellSize.height
+        _textureArray = [[iTermTextureArray alloc] initWithTextureWidth:glyphSize.width
+                                                          textureHeight:glyphSize.height
                                                             arrayLength:iTermASCIITextureCapacity
                                                                    bgra:YES
                                                                  device:device];
@@ -69,17 +69,17 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
 
 @implementation iTermASCIITextureGroup
 
-- (instancetype)initWithCellSize:(CGSize)cellSize
-                          device:(id<MTLDevice>)device
-              creationIdentifier:(id)creationIdentifier
-                        creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull (^)(char, iTermASCIITextureAttributes))creation {
+- (instancetype)initWithGlyphSize:(CGSize)glyphSize
+                           device:(id<MTLDevice>)device
+               creationIdentifier:(id)creationIdentifier
+                         creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull (^)(char, iTermASCIITextureAttributes))creation {
     self = [super init];
     if (self) {
-        _cellSize = cellSize;
+        _glyphSize = glyphSize;
         _device = device;
         _creationIdentifier = creationIdentifier;
         _creation = [creation copy];
-        CGSize temp = [iTermTextureArray atlasSizeForUnitSize:cellSize
+        CGSize temp = [iTermTextureArray atlasSizeForUnitSize:glyphSize
                                                   arrayLength:iTermASCIITextureCapacity
                                                   cellsPerRow:NULL];
         _atlasSize = simd_make_float2(temp.width, temp.height);
@@ -93,7 +93,7 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
     }
 
     _textures[attributes] = [[iTermASCIITexture alloc] initWithAttributes:attributes
-                                                                 cellSize:_cellSize
+                                                                glyphSize:_glyphSize
                                                                    device:_device
                                                                  creation:_creation];
     return _textures[attributes];
@@ -104,7 +104,7 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
         return NO;
     }
     iTermASCIITextureGroup *other = object;
-    return (CGSizeEqualToSize(other.cellSize, _cellSize) &&
+    return (CGSizeEqualToSize(other.glyphSize, _glyphSize) &&
             other.device == _device &&
             [other.creationIdentifier isEqual:_creationIdentifier]);
 }

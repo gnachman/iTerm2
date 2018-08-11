@@ -12,6 +12,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)setASCIICellSize:(CGSize)cellSize
+               glyphSize:(CGSize)glyphSize
       creationIdentifier:(id)creationIdentifier
                 creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation;
 

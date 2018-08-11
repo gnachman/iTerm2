@@ -442,6 +442,7 @@ static NSInteger gNextFrameDataNumber;
                                                                                   scale:self.scale
                                                                      hasBackgroundImage:self.hasBackgroundImage
                                                                                cellSize:self.cellSize
+                                                                              glyphSize:self.glyphSize
                                                                  cellSizeWithoutSpacing:self.cellSizeWithoutSpacing
                                                                                gridSize:self.gridSize
                                                                   usingIntermediatePass:(self.intermediateRenderPassDescriptor != nil)];

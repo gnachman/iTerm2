@@ -1315,6 +1315,13 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     NSFont *font = fontInfo.font;
     assert(font);
 
+    int radius = iTermTextureMapMaxCharacterParts / 2;
+    if (@available(macOS 10.14, *)) {
+        if (isAscii) {
+            // These are always guaranteed to fit in a single part.
+            radius = 0;
+        }
+    }
     iTermCharacterSource *characterSource =
         [[iTermCharacterSource alloc] initWithCharacter:CharToStr(glyphKey->code, glyphKey->isComplex)
                                                    font:font
@@ -1324,7 +1331,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                          useThinStrokes:glyphKey->thinStrokes
                                                fakeBold:fakeBold
                                              fakeItalic:fakeItalic
-                                            antialiased:isAscii ? _asciiAntialias : _nonasciiAntialias];
+                                            antialiased:isAscii ? _asciiAntialias : _nonasciiAntialias
+                                                 radius:radius];
     if (characterSource == nil) {
         return nil;
     }

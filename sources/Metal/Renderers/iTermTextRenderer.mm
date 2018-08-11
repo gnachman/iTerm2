@@ -277,8 +277,8 @@ static BOOL gMonochromeText;
     }
     if (!_texturePageCollectionSharedPointer) {
         iTerm2::TexturePageCollection *collection = new iTerm2::TexturePageCollection(_cellRenderer.device,
-                                                                                      simd_make_uint2(tState.cellConfiguration.cellSize.width,
-                                                                                                      tState.cellConfiguration.cellSize.height),
+                                                                                      simd_make_uint2(tState.cellConfiguration.glyphSize.width,
+                                                                                                      tState.cellConfiguration.glyphSize.height),
                                                                                       iTermTextAtlasCapacity,
                                                                                       iTermTextRendererMaximumNumberOfTexturePages);
         _texturePageCollectionSharedPointer = [[iTermTexturePageCollectionSharedPointer alloc] initWithObject:collection];
@@ -449,14 +449,14 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                              NSInteger instances,
                              id<MTLTexture> texture,
                              vector_uint2 textureSize,
-                             vector_uint2 cellSize,
+                             vector_uint2 glyphSize,
                              iTermMetalUnderlineDescriptor underlineDescriptor,
                              BOOL underlined,
                              BOOL emoji) {
         totalInstances += instances;
         __block id<MTLBuffer> vertexBuffer;
         [tState measureTimeForStat:iTermTextRendererStatNewQuad ofBlock:^{
-            vertexBuffer = [self quadOfSize:tState.cellConfiguration.cellSize
+            vertexBuffer = [self quadOfSize:CGSizeMake(glyphSize.x, glyphSize.y)
                                 textureSize:CGSizeMake(textureSize.x, textureSize.y)
                                 poolContext:tState.poolContext];
         }];
@@ -482,8 +482,8 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
         [tState measureTimeForStat:iTermTextRendererStatNewDims ofBlock:^{
             iTermTextureDimensions textureDimensions = {
                 .textureSize = simd_make_float2(textureSize.x, textureSize.y),
-                .cellSize = simd_make_float2(cellSize.x, cellSize.y),
-                .underlineOffset = MAX(underlineThickness, cellSize.y - (underlineDescriptor.offset * scale)),
+                .cellSize = simd_make_float2(glyphSize.x, glyphSize.y),
+                .underlineOffset = MAX(underlineThickness, glyphSize.y - (underlineDescriptor.offset * scale)),
                 .underlineThickness = underlineThickness,
                 .scale = scale,
             };
@@ -494,7 +494,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                 textureDimensionsBuffer = previousTextureDimensionsBuffer;
             } else {
                 textureDimensionsBuffer = [self->_dimensionsPool requestBufferFromContext:tState.poolContext
-                                                                                withBytes:&textureDimensions
+                                                                               withBytes:&textureDimensions
                                                                            checkIfChanged:YES];
                 textureDimensionsBuffer.label = @"Texture dimensions";
                 previousTextureDimensionsBuffer = textureDimensionsBuffer;
@@ -541,12 +541,13 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
 }
 
 - (void)setASCIICellSize:(CGSize)cellSize
+               glyphSize:(CGSize)glyphSize
       creationIdentifier:(id)creationIdentifier
                 creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation {
-    iTermASCIITextureGroup *replacement = [[iTermASCIITextureGroup alloc] initWithCellSize:cellSize
-                                                                                    device:_cellRenderer.device
-                                                                        creationIdentifier:(id)creationIdentifier
-                                                                                  creation:creation];
+    iTermASCIITextureGroup *replacement = [[iTermASCIITextureGroup alloc] initWithGlyphSize:glyphSize
+                                                                                     device:_cellRenderer.device
+                                                                         creationIdentifier:(id)creationIdentifier
+                                                                                   creation:creation];
     if (![replacement isEqual:_asciiTextureGroup]) {
         _asciiTextureGroup = replacement;
     }

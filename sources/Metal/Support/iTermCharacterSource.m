@@ -12,13 +12,14 @@
 #import "iTermCharacterParts.h"
 #import "iTermCharacterSource.h"
 #import "iTermTextureArray.h"
+#import "NSImage+iTerm.h"
 #import "NSMutableData+iTerm.h"
 #import "NSStringITerm.h"
 
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
 extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
-static const CGFloat iTermFakeItalicSkew = 0.4;
+static const CGFloat iTermFakeItalicSkew = 0.2;
 static const CGFloat iTermCharacterSourceAntialiasedRetinaFakeBoldShiftPoints = 0.5;
 static const CGFloat iTermCharacterSourceAntialiasedNonretinaFakeBoldShiftPoints = 0;
 static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
@@ -46,7 +47,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     BOOL _haveDrawn;
     CGImageRef _imageRef;
     NSArray<NSNumber *> *_parts;
-
+    int _radius;
+    
     // If true then _isEmoji is valid.
     BOOL _haveTestedForEmoji;
 }
@@ -81,6 +83,51 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     return context;
 }
 
++ (NSRect)boundingRectForCharactersInRange:(NSRange)range
+                                      font:(NSFont *)font
+                            baselineOffset:(CGFloat)baselineOffset
+                                     scale:(CGFloat)scale {
+    static NSMutableDictionary<NSArray *, NSValue *> *cache;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cache = [NSMutableDictionary dictionary];
+    });
+    NSArray *key = @[ NSStringFromRange(range),
+                      font.fontName,
+                      @(font.pointSize),
+                      @(baselineOffset),
+                      @(scale)];
+    if (cache[key]) {
+        return [cache[key] rectValue];
+    }
+    
+    NSRect unionRect = NSZeroRect;
+    for (NSInteger i = 0; i < range.length; i++) {
+        @autoreleasepool {
+            UTF32Char c = range.location + i;
+            iTermCharacterSource *source = [[iTermCharacterSource alloc] initWithCharacter:[NSString stringWithLongCharacter:c]
+                                                                                      font:font
+                                                                                      size:CGSizeMake(font.pointSize * 10,
+                                                                                                      font.pointSize * 10)
+                                                                            baselineOffset:baselineOffset
+                                                                                     scale:scale
+                                                                            useThinStrokes:NO
+                                                                                  fakeBold:YES
+                                                                                fakeItalic:YES
+                                                                               antialiased:YES
+                                                                                    radius:0];
+            CGRect frame = [source frameFlipped:NO];
+            unionRect = NSUnionRect(unionRect, frame);
+        }
+    }
+    unionRect.size.width = ceil(unionRect.size.width / scale);
+    unionRect.size.height = ceil(unionRect.size.height / scale);
+    unionRect.origin.x /= scale;
+    unionRect.origin.y /= scale;
+    cache[key] = [NSValue valueWithRect:unionRect];
+    return unionRect;
+}
+
 - (instancetype)initWithCharacter:(NSString *)string
                              font:(NSFont *)font
                              size:(CGSize)size
@@ -89,7 +136,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                    useThinStrokes:(BOOL)useThinStrokes
                          fakeBold:(BOOL)fakeBold
                        fakeItalic:(BOOL)fakeItalic
-                      antialiased:(BOOL)antialiased {
+                      antialiased:(BOOL)antialiased
+                           radius:(int)radius {
     ITDebugAssert(font);
     ITDebugAssert(size.width > 0 && size.height > 0);
     ITDebugAssert(scale > 0);
@@ -103,8 +151,9 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         _string = [string copy];
         _font = font;
         _partSize = size;
-        _size = CGSizeMake(size.width * iTermTextureMapMaxCharacterParts,
-                           size.height * iTermTextureMapMaxCharacterParts);
+        _radius = radius;
+        _size = CGSizeMake(size.width * self.maxParts,
+                           size.height * self.maxParts);
         _baselineOffset = baselineOffset;
         _scale = scale;
         _useThinStrokes = useThinStrokes;
@@ -131,11 +180,15 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
 }
 
+- (int)maxParts {
+    return _radius * 2 + 1;
+}
+
 #pragma mark - APIs
 
 - (iTermCharacterBitmap *)bitmapForPart:(int)part {
     [self drawIfNeeded];
-    const int radius = iTermTextureMapMaxCharacterParts / 2;
+    const int radius = _radius;
     const int dx = iTermImagePartDX(part) + radius;
     const int dy = iTermImagePartDY(part) + radius;
     const size_t sourceRowSize = _size.width * 4;
@@ -147,7 +200,18 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     bitmap.size = _partSize;
 
     unsigned char *source = (unsigned char *)CGBitmapContextGetData(_cgContext);
-    
+
+    static BOOL saveBitmapsForDebugging = NO;
+    if (saveBitmapsForDebugging) {
+        NSImage *image = [NSImage imageWithRawData:[NSData dataWithBytes:source length:bitmap.data.length]
+                                              size:_partSize
+                                     bitsPerSample:8
+                                   samplesPerPixel:4
+                                          hasAlpha:YES
+                                    colorSpaceName:NSDeviceRGBColorSpace];
+        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/%@.png", _string]];
+    }
+
     if (@available(macOS 10.14, *)) {
         if (!_postprocessed && !_isEmoji) {
             // Copy red channel to alpha channel
@@ -192,10 +256,10 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 - (NSArray<NSNumber *> *)newParts {
     CGRect boundingBox = self.frame;
-    const int radius = iTermTextureMapMaxCharacterParts / 2;
+    const int radius = _radius;
     NSMutableArray<NSNumber *> *result = [NSMutableArray array];
-    for (int y = 0; y < iTermTextureMapMaxCharacterParts; y++) {
-        for (int x = 0; x < iTermTextureMapMaxCharacterParts; x++) {
+    for (int y = 0; y < self.maxParts; y++) {
+        for (int x = 0; x < self.maxParts; x++) {
             CGRect partRect = CGRectMake(x * _partSize.width,
                                          y * _partSize.height,
                                          _partSize.width,
@@ -224,7 +288,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 - (void)drawIfNeeded {
     if (!_haveDrawn) {
-        const int radius = iTermTextureMapMaxCharacterParts / 2;
+        const int radius = _radius;
         [self drawWithOffset:CGPointMake(_partSize.width * radius,
                                          _partSize.height * radius)];
     }
@@ -243,13 +307,17 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 - (CGRect)frame {
+    return [self frameFlipped:YES];
+}
+
+- (CGRect)frameFlipped:(BOOL)flipped {
     if (_string.length == 0) {
         return CGRectZero;
     }
     CGContextRef cgContext = [iTermCharacterSource onePixelContext];
 
     CGRect frame = CTLineGetImageBounds(_lineRef, cgContext);
-    const int radius = iTermTextureMapMaxCharacterParts / 2;
+    const int radius = _radius;
     frame.origin.y -= _baselineOffset;
     frame.origin.x *= _scale;
     frame.origin.y *= _scale;
@@ -259,11 +327,11 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     if (_fakeItalic) {
         // Unfortunately it looks like CTLineGetImageBounds ignores the context's text matrix so we
         // have to guess what the frame's width would be when skewing it.
-        frame.size.width += CGRectGetMaxY(frame) * iTermFakeItalicSkew;
-        CGFloat minY = CGRectGetMinY(frame);
-        if (minY < 0) {
-            frame.size.width -= minY * iTermFakeItalicSkew;
-            frame.origin.x += minY * iTermFakeItalicSkew;
+        const CGFloat heightAboveBaseline = NSMaxY(frame) + _baselineOffset * _scale;
+        const CGFloat scaledSkew = iTermFakeItalicSkew * _scale;
+        const CGFloat rightExtension = heightAboveBaseline * scaledSkew;
+        if (rightExtension > 0) {
+            frame.size.width += rightExtension;
         }
     }
     if (_fakeBold) {
@@ -272,7 +340,9 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
     frame.origin.x += radius * _partSize.width;
     frame.origin.y += radius * _partSize.height;
-    frame.origin.y = _size.height - frame.origin.y - frame.size.height;
+    if (flipped) {
+        frame.origin.y = _size.height - frame.origin.y - frame.size.height;
+    }
 
     CGPoint min = CGPointMake(floor(CGRectGetMinX(frame)),
                               floor(CGRectGetMinY(frame)));
@@ -411,9 +481,9 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                offset:(CGPoint)offset {
     if (!_isEmoji) {
         // Can't use this with emoji.
-        CGAffineTransform textMatrix = CGAffineTransformMake(_scale, 0.0,
-                                                             skew, _scale,
-                                                             offset.x, offset.y);
+        CGAffineTransform textMatrix = CGAffineTransformMake(_scale,        0.0,
+                                                             skew * _scale, _scale,
+                                                             offset.x,      offset.y);
         CGContextSetTextMatrix(cgContext, textMatrix);
     }
 }
