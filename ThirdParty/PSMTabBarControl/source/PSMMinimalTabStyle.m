@@ -40,14 +40,7 @@
 }
 
 - (NSColor *)bottomLineColorSelected:(BOOL)selected {
-    if (!selected) {
-        return self.tabBarColor;
-    }
-    
-    return [NSColor colorWithSRGBRed:0.5
-                               green:0.5
-                                blue:0.5
-                               alpha:0.25];
+    return self.tabBarColor;
 }
 
 - (NSColor *)verticalLineColorSelected:(BOOL)selected {
@@ -55,6 +48,19 @@
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
+    if (self.tabBar.cells.count > 1 && !selected) {
+        NSColor *color = [self.tabBarColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+        CGFloat delta;
+        if (color.it_hspBrightness < 0.5) {
+            delta = 0.2;
+        } else {
+            delta = -0.2;
+        }
+        return [NSColor colorWithSRGBRed:color.redComponent + delta
+                                   green:color.greenComponent + delta
+                                    blue:color.blueComponent + delta
+                                   alpha:1];
+    }
     return self.tabBarColor;
 }
 
