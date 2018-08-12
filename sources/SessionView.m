@@ -402,6 +402,7 @@ static NSDate* lastResizeDate_;
     if (@available(macOS 10.11, *)) {
         if (needsDisplay) {
             [_metalView setNeedsDisplay:YES];
+            [_title setNeedsDisplay:YES];
         }
     }
 }

@@ -1192,6 +1192,84 @@ ITERM_WEAKLY_REFERENCEABLE
     return !([profileHotKey rollingIn] || [profileHotKey rollingOut]);
 }
 
+- (NSColor *)terminalWindowDecorationBackgroundColor {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (self.shouldUseMinimalStyle) {
+        return [self.currentSession.colorMap colorForKey:kColorMapBackground];
+    } else {
+        CGFloat whiteLevel = 0;
+        switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
+            case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_MINIMAL:
+                assert(NO);
+            case TAB_STYLE_LIGHT:
+                whiteLevel = 0.70;
+                break;
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                whiteLevel = 0.80;
+                break;
+            case TAB_STYLE_DARK:
+                whiteLevel = 0.27;
+                break;
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+                whiteLevel = 0.17;
+                break;
+        }
+
+        return [NSColor colorWithCalibratedWhite:whiteLevel alpha:1];
+    }
+}
+
+- (NSColor *)terminalWindowDecorationTextColor {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (self.shouldUseMinimalStyle) {
+        PSMMinimalTabStyle *style = [PSMMinimalTabStyle castFrom:_contentView.tabBarControl.style];
+        return [style textColorDefaultSelected:YES];
+    } else {
+        CGFloat whiteLevel;
+        switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
+            case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_MINIMAL:
+                assert(NO);
+
+            case TAB_STYLE_LIGHT:
+                whiteLevel = 0.2;
+                break;
+
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                whiteLevel = 0;
+                break;
+
+            case TAB_STYLE_DARK:
+                whiteLevel = 0.8;
+                break;
+
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+                whiteLevel = 1;
+                break;
+        }
+        return [NSColor colorWithCalibratedWhite:whiteLevel alpha:1];
+    }
+}
+
+- (BOOL)shouldUseMinimalStyle {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (preferredStyle != TAB_STYLE_MINIMAL) {
+        return NO;
+    }
+    if (self.anyFullScreen) {
+        return YES;
+    }
+    if (togglingLionFullScreen_) {
+        return YES;
+    }
+    return self.windowType != WINDOW_TYPE_NORMAL;
+}
+
+- (BOOL)terminalWindowUseMinimalStyle {
+    return self.shouldUseMinimalStyle;
+}
+
 - (void)closeSession:(PTYSession *)aSession {
     [self closeSession:aSession soft:NO];
 }
@@ -2897,7 +2975,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 [self fitTabsToWindow];
             }
             break;
-            
+
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
@@ -3285,10 +3363,10 @@ ITERM_WEAKLY_REFERENCEABLE
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab:
             return NSEdgeInsetsMake(0, 69, 0, 0);
-            
+
         case PSMTab_LeftTab:
             return NSEdgeInsetsMake(24, 0, 0, 0);
-            
+
         case PSMTab_BottomTab:
             return NSEdgeInsetsZero;
     }
@@ -4476,7 +4554,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     PTYSession *activeSession = [self currentSession];
     for (PTYSession *s in [self allSessions]) {
-      [s setFocused:(s == activeSession)];
+        [s setFocused:(s == activeSession)];
     }
     [self showOrHideInstantReplayBar];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
@@ -4551,7 +4629,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)saveAffinitiesLater:(PTYTab *)theTab {
     // Avoid saving affinities during detach because the windows will be gone by the time it saves them.
-//    if ([theTab isTmuxTab] && !theTab.tmuxController.detaching) {
+    //    if ([theTab isTmuxTab] && !theTab.tmuxController.detaching) {
     if ([theTab isTmuxTab]) {
         PtyLog(@"Queueing call to saveAffinitiesLater from %@", [NSThread callStackSymbols]);
         [self performSelector:@selector(saveAffinitiesAndOriginsForController:)
@@ -4563,8 +4641,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem
 {
     [self saveAffinitiesLater:[tabViewItem identifier]];
-        iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-        [itad updateBroadcastMenuState];
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
+    [itad updateBroadcastMenuState];
 }
 
 - (void)tabView:(NSTabView *)tabView willAddTabViewItem:(NSTabViewItem *)tabViewItem
@@ -4572,8 +4650,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [self tabView:tabView willInsertTabViewItem:tabViewItem atIndex:[tabView numberOfTabViewItems]];
     [self saveAffinitiesLater:[tabViewItem identifier]];
-        iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-        [itad updateBroadcastMenuState];
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
+    [itad updateBroadcastMenuState];
 }
 
 - (void)tabView:(NSTabView *)tabView
@@ -4970,7 +5048,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     NSWindowController<iTermWindowController> * term =
-        [self terminalDraggedFromAnotherWindowAtPoint:point];
+    [self terminalDraggedFromAnotherWindowAtPoint:point];
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab:
             switch ([term windowType]) {
@@ -5069,7 +5147,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSDragOperation)tabView:(NSTabView *)destinationTabView
-        draggingEnteredTabBarForSender:(id<NSDraggingInfo>)draggingInfo {
+    draggingEnteredTabBarForSender:(id<NSDraggingInfo>)draggingInfo {
     return NSDragOperationMove;
 }
 
@@ -5129,7 +5207,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem {
-        PTYSession *session = [[aTabViewItem identifier] activeSession];
+    PTYSession *session = [[aTabViewItem identifier] activeSession];
     return [NSString stringWithFormat:@"Name: %@\nProfile: %@\nCommand: %@",
             session.name,
             [[session profile] objectForKey:KEY_NAME],
@@ -5282,16 +5360,16 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [session reveal];
     DLog(@"Show the password manager as a sheet");
-     _passwordManagerWindowController.delegate = nil;
-     [_passwordManagerWindowController autorelease];
-     _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
+    _passwordManagerWindowController.delegate = nil;
+    [_passwordManagerWindowController autorelease];
+    _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
     _passwordManagerWindowController.delegate = self;
-     BOOL noAnimations = [iTermAdvancedSettingsModel disablePasswordManagerAnimations];
-     if (noAnimations) {
+    BOOL noAnimations = [iTermAdvancedSettingsModel disablePasswordManagerAnimations];
+    if (noAnimations) {
         [CATransaction begin];
         [CATransaction setValue:@YES
                          forKey:kCATransactionDisableActions];
-     }
+    }
 
     [self.window beginSheet:[_passwordManagerWindowController window] completionHandler:^(NSModalResponse returnCode) {
         if (noAnimations) {
@@ -5815,7 +5893,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark
 {
     if ([self inInstantReplay]) {
-    // Things get very complicated in this case. Just disallow it.
+        // Things get very complicated in this case. Just disallow it.
         return NO;
     }
     NSFont* asciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NORMAL_FONT]];
@@ -6816,7 +6894,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         // Update dimmed status of inactive sessions in split panes in case the preference changed.
         for (PTYSession* aSession in [aTab sessions]) {
-                        [self setDimmingForSession:aSession];
+            [self setDimmingForSession:aSession];
             [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
 
             // In case dimming amount slider moved update the dimming amount.
@@ -7499,7 +7577,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self allSessions] count] > 1);
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||
-        [item action] == @selector(openSplitVerticallySheet:)) {
+               [item action] == @selector(openSplitVerticallySheet:)) {
         result = ![[self currentTab] isTmuxTab];
     } else if ([item action] == @selector(jumpToSavedScrollPosition:)) {
         result = [self hasSavedScrollPosition];
@@ -7522,9 +7600,9 @@ ITERM_WEAKLY_REFERENCEABLE
     } else if ([item action] == @selector(irNext:)) {
         result = [[self currentSession] canInstantReplayNext];
     } else if ([item action] == @selector(toggleCursorGuide:)) {
-      PTYSession *session = [self currentSession];
-      [item setState:session.highlightCursorLine ? NSOnState : NSOffState];
-      result = YES;
+        PTYSession *session = [self currentSession];
+        [item setState:session.highlightCursorLine ? NSOnState : NSOffState];
+        result = YES;
     } else if ([item action] == @selector(toggleSelectionRespectsSoftBoundaries:)) {
         [item setState:[[iTermController sharedInstance] selectionRespectsSoftBoundaries] ? NSOnState : NSOffState];
         result = YES;
@@ -7913,12 +7991,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
     NSDockTile *dockTile;
     if (self.window.isMiniaturized) {
-      dockTile = self.window.dockTile;
+        dockTile = self.window.dockTile;
     } else {
-      if ([[NSApplication sharedApplication] isActive]) {
-        return;
-      }
-      dockTile = [[NSApplication sharedApplication] dockTile];
+        if ([[NSApplication sharedApplication] isActive]) {
+            return;
+        }
+        dockTile = [[NSApplication sharedApplication] dockTile];
     }
     int count = [[dockTile badgeLabel] intValue];
     if (count == 999) {
@@ -8001,7 +8079,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (command) {
         profile = [[profile
                     dictionaryBySettingObject:@"Yes" forKey:KEY_CUSTOM_COMMAND]
-                    dictionaryBySettingObject:command forKey:KEY_COMMAND_LINE];
+                   dictionaryBySettingObject:command forKey:KEY_COMMAND_LINE];
 
     }
 
@@ -8252,6 +8330,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tabKeyLabelsDidChangeForSession:(PTYSession *)session {
     [self updateTouchBarFunctionKeyLabels];
+}
+
+- (void)tabSessionDidChangeBackgroundColor:(PTYTab *)tab {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (preferredStyle == TAB_STYLE_MINIMAL) {
+        [self.contentView setNeedsDisplay:YES];
+    }
 }
 
 - (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState {

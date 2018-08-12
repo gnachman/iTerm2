@@ -421,6 +421,18 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 #endif
 
+- (NSColor *)it_terminalWindowDecorationBackgroundColor {
+    return [self.ptyDelegate terminalWindowDecorationBackgroundColor];
+}
+
+- (NSColor *)it_terminalWindowDecorationTextColor {
+    return [self.ptyDelegate terminalWindowDecorationTextColor];
+}
+
+- (BOOL)it_terminalWindowUseMinimalStyle {
+    return [self.ptyDelegate terminalWindowUseMinimalStyle];
+}
+
 NS_ASSUME_NONNULL_END
 
 @end

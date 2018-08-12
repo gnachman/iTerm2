@@ -109,6 +109,11 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
 - (void)statusBarComponentPreferredSizeDidChange:(id<iTermStatusBarComponent>)component {
 }
 
+- (NSColor *)statusBarComponentDefaultTextColor {
+    return [NSColor blackColor];
+}
+
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -183,8 +183,6 @@ NS_ASSUME_NONNULL_BEGIN
     }] maxWithBlock:^NSComparisonResult(NSNumber *n1, NSNumber *n2) {
         return [n1 compare:n2];
     }] doubleValue];
-
-    [self invalidate];
 }
 
 @end

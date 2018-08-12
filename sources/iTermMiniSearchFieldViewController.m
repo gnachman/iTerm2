@@ -52,6 +52,22 @@
     rect.size = size;
     self.view.frame = rect;
     
+    [self updateSubviews];
+}
+
+- (void)awakeFromNib {
+    [self updateSubviews];
+}
+
+- (void)viewWillLayout {
+    [super viewWillLayout];
+    [self updateSubviews];
+}
+
+- (void)updateSubviews {
+    NSSize size = self.view.frame.size;
+    NSSize searchFieldSize = _searchField.frame.size;
+
     // This makes the arrows and close buttons line up visually.
     const CGFloat verticalOffset = 1;
 

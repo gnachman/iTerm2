@@ -35,6 +35,7 @@ const CGFloat iTermStatusBarHeight = 22;
 @implementation iTermStatusBarViewController {
     NSMutableArray<iTermStatusBarContainerView *> *_containerViews;
     NSArray<iTermStatusBarContainerView *> *_visibleContainerViews;
+    NSInteger _updating;
 }
 
 - (instancetype)initWithLayout:(iTermStatusBarLayout *)layout
@@ -66,6 +67,7 @@ const CGFloat iTermStatusBarHeight = 22;
     [self updateDesiredWidths];
     [self updateDesiredOrigins];
 
+    _updating++;
     [_visibleContainerViews enumerateObjectsUsingBlock:
      ^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
          view.frame = NSMakeRect(view.desiredOrigin,
@@ -75,6 +77,7 @@ const CGFloat iTermStatusBarHeight = 22;
          [view.component statusBarComponentWidthDidChangeTo:view.desiredWidth];
          view.rightSeparatorOffset = -1;
      }];
+    _updating--;
     // Remove defunct views
     for (iTermStatusBarContainerView *view in previouslyVisible) {
         if (![_visibleContainerViews containsObject:view]) {
@@ -358,7 +361,15 @@ const CGFloat iTermStatusBarHeight = 22;
 
 - (void)statusBarComponentPreferredSizeDidChange:(id<iTermStatusBarComponent>)component {
     DLog(@"Preferred size did change for %@", component);
+    if (_updating) {
+        DLog(@"Igoring size change because am updating");
+        return;
+    }
     [self.view setNeedsLayout:YES];
+}
+
+- (NSColor *)statusBarComponentDefaultTextColor {
+    return [self.delegate statusBarDefaultTextColor];
 }
 
 @end

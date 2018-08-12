@@ -6,9 +6,11 @@
 //
 
 #import "PTYSplitView.h"
+
 #import "DebugLogging.h"
 #import "iTermPreferences.h"
 #import "NSAppearance+iTerm.h"
+#import "PTYWindow.h"
 
 @implementation PTYSplitView {
     BOOL _dead;  // inside superclass's dealloc?
@@ -22,7 +24,7 @@
 
 - (NSColor *)dividerColor {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    if (preferredStyle == TAB_STYLE_MINIMAL) {
+    if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
         return [NSColor clearColor];
     }
     switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {

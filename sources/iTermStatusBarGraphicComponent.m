@@ -49,10 +49,11 @@
 }
 
 - (NSColor *)defaultTextColor {
-    if ([_view.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {
-        return [NSColor colorWithWhite:0.75 alpha:1];
+    NSColor *provided = [self.delegate statusBarComponentDefaultTextColor];
+    if (provided) {
+        return provided;
     } else {
-        return [NSColor blackColor];
+        return [NSColor labelColor];
     }
 }
 

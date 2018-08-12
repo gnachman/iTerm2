@@ -16,6 +16,7 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
+#import "PTYWindow.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -39,11 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSColor *)defaultTextColor {
-    if ([self.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {
-        return [NSColor colorWithWhite:0.75 alpha:1];
-    } else {
-        return [NSColor blackColor];
-    }
+    return self.window.ptyWindow.it_terminalWindowDecorationTextColor;
 }
 
 - (void)drawString:(NSString *)string

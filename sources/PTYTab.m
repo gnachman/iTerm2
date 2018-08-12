@@ -5069,6 +5069,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (session.isTmuxClient) {
         [self updateFlexibleViewColors];
     }
+    [self.delegate tabSessionDidChangeBackgroundColor:self];
 }
 
 - (void)sessionKeyLabelsDidChange:(PTYSession *)session {

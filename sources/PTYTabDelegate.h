@@ -37,5 +37,6 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (void)tabDidChangeTmuxLayout:(PTYTab *)tab;
 - (void)tab:(PTYTab *)tab didSetMetalEnabled:(BOOL)useMetal;
 - (BOOL)tabCanUseMetal:(PTYTab *)tab reason:(out NSString **)reason;
+- (void)tabSessionDidChangeBackgroundColor:(PTYTab *)tab;
 
 @end

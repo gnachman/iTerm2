@@ -173,7 +173,6 @@ NS_ASSUME_NONNULL_BEGIN
     while (_samples.count > iTermStatusBarCPUUtilizationComponentMaximumNumberOfSamples) {
         [_samples removeObjectAtIndex:0];
     }
-    [self invalidate];
 }
 
 @end

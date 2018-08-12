@@ -12,7 +12,9 @@
 #import "NSAppearance+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
+#import "PSMMinimalTabStyle.h"
 #import "PSMTabBarControl.h"
+#import "PTYWindow.h"
 
 const double kBottomMargin = 0;
 static const CGFloat kButtonSize = 17;
@@ -168,6 +170,9 @@ static const CGFloat kButtonSize = 17;
 
 - (NSColor *)dimmedBackgroundColorWithAppearance:(NSAppearance *)appearance {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
+        return [self.delegate sessionTitleViewBackgroundColorForMinimalStyle];
+    }
     CGFloat whiteLevel = 0;
     switch ([appearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
@@ -215,13 +220,13 @@ static const CGFloat kButtonSize = 17;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     NSColor *tabColor = delegate_.tabColor;
     if (tabColor) {
         CGFloat hue = tabColor.hueComponent;
         CGFloat saturation = tabColor.saturationComponent;
         CGFloat brightness = tabColor.brightnessComponent;
-        iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-        if (preferredStyle == TAB_STYLE_MINIMAL) {
+        if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
             tabColor = delegate_.sessionTitleViewBackgroundColorForMinimalStyle;
         } else {
             switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
@@ -264,8 +269,10 @@ static const CGFloat kButtonSize = 17;
     }
     NSRectFill(dirtyRect);
 
-    [[NSColor blackColor] set];
-    NSRectFill(NSMakeRect(dirtyRect.origin.x, 0, dirtyRect.size.width, 1));
+    if (!self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
+        [[NSColor blackColor] set];
+        NSRectFill(NSMakeRect(dirtyRect.origin.x, 0, dirtyRect.size.width, 1));
+    }
 
     [super drawRect:dirtyRect];
 }
@@ -323,6 +330,11 @@ static const CGFloat kButtonSize = 17;
 - (void)updateTextColor {
     CGFloat whiteLevel = 0;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
+        label_.textColor = self.window.ptyWindow.it_terminalWindowDecorationTextColor;
+        [self setNeedsDisplay:YES];
+        return;
+    }
     switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
         case TAB_STYLE_MINIMAL:

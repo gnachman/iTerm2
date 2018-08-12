@@ -84,8 +84,10 @@
 #import "ProfilePreferencesViewController.h"
 #import "ProfilesColorsPreferencesViewController.h"
 #import "ProfilesGeneralPreferencesViewController.h"
+#import "PSMMinimalTabStyle.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
+#import "PTYWindow.h"
 #import "SCPFile.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
@@ -247,6 +249,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     iTermPasteHelperDelegate,
     iTermSessionNameControllerDelegate,
     iTermSessionViewDelegate,
+    iTermStatusBarViewControllerDelegate,
     iTermUpdateCadenceControllerDelegate,
     iTermVariablesDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
@@ -3724,7 +3727,9 @@ ITERM_WEAKLY_REFERENCEABLE
                 _statusBarViewController =
                     [[iTermStatusBarViewController alloc] initWithLayout:newLayout
                                                                    scope:self.variablesScope];
+                _statusBarViewController.delegate = self;
             } else {
+                _statusBarViewController.delegate = nil;
                 _statusBarViewController = nil;
             }
             [_view invalidateStatusBar];
@@ -7407,6 +7412,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)textViewBackgroundColorDidChange {
     [_delegate sessionBackgroundColorDidChange:self];
     [_delegate sessionUpdateMetalAllowed];
+    [self.view setNeedsDisplay:YES];
 }
 
 - (void)textViewBurySession {
@@ -10251,6 +10257,20 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (CGFloat)backgroundDrawingHelperBlending {
     return _textview.blend;
+}
+
+#pragma mark - iTermStatusBarViewControllerDelegate
+
+- (NSColor *)statusBarDefaultTextColor {
+    if (self.view.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
+        return self.view.window.ptyWindow.it_terminalWindowDecorationTextColor;
+    } else if (@available(macOS 10.14, *)) {
+        return [NSColor labelColor];
+    } else if ([_view.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {
+        return [NSColor colorWithWhite:0.75 alpha:1];
+    } else {
+        return [NSColor blackColor];
+    }
 }
 
 @end

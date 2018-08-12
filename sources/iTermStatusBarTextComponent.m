@@ -59,7 +59,7 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 
 - (NSColor *)textColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    return [knobValues[iTermStatusBarTextComponentTextColorKey] colorValue];
+    return [knobValues[iTermStatusBarTextComponentTextColorKey] colorValue] ?: [self.delegate statusBarComponentDefaultTextColor];
 }
 
 - (NSColor *)backgroundColor {
@@ -104,6 +104,11 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 
     [textField sizeToFit];
     return YES;
+}
+
+- (void)setDelegate:(id<iTermStatusBarComponentDelegate>)delegate {
+    [super setDelegate:delegate];
+    _textField.textColor = self.textColor;
 }
 
 - (NSTextField *)textField {

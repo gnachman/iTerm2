@@ -58,6 +58,7 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 
 - (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell;
 - (NSColor *)verticalLineColorSelected:(BOOL)selected;
+- (NSColor *)textColorDefaultSelected:(BOOL)selected;
 
 @end
 

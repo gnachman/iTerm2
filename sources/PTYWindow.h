@@ -50,6 +50,9 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 
 // Should the window's frame be constrainted to its present screen?
 - (BOOL)terminalWindowShouldConstrainFrameToScreen;
+- (NSColor *)terminalWindowDecorationBackgroundColor;
+- (NSColor *)terminalWindowDecorationTextColor;
+- (BOOL)terminalWindowUseMinimalStyle;
 
 @end
 
@@ -62,6 +65,10 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 @property(nonatomic, readonly) id<PTYWindowDelegateProtocol> ptyDelegate;
 @property(nonatomic, readonly) BOOL titleChangedRecently;
 @property(nonatomic, readonly) BOOL isCompact;
+
+- (NSColor *)it_terminalWindowDecorationBackgroundColor;
+- (NSColor *)it_terminalWindowDecorationTextColor;
+- (BOOL)it_terminalWindowUseMinimalStyle;
 
 - (void)smartLayout;
 - (void)setLayoutDone;

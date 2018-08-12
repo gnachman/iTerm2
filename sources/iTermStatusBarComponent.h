@@ -24,6 +24,7 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 - (void)statusBarComponentKnobsDidChange:(id<iTermStatusBarComponent>)component;
 - (BOOL)statusBarComponentIsInSetupUI:(id<iTermStatusBarComponent>)component;
 - (void)statusBarComponentPreferredSizeDidChange:(id<iTermStatusBarComponent>)component;
+- (NSColor *)statusBarComponentDefaultTextColor;
 @end
 
 @protocol iTermStatusBarComponentFactory<NSCoding, NSCopying, NSObject>
