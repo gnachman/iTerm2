@@ -254,6 +254,7 @@ static NSString *const kDynamicToolURL = @"URL";
     NSColor *color = [NSColor colorWithCalibratedWhite:237.0/255.0 alpha:1];
     switch ([self.effectiveAppearance it_tabStyle:[iTermPreferences intForKey:kPreferenceKeyTabStyle]]) {
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_MINIMAL:
             assert(NO);
             
         case TAB_STYLE_LIGHT:

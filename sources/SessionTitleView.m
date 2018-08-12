@@ -325,6 +325,7 @@ static const CGFloat kButtonSize = 17;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_MINIMAL:
             assert(NO);
             
         case TAB_STYLE_LIGHT:
