@@ -92,6 +92,9 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     dispatch_once(&onceToken, ^{
         cache = [NSMutableDictionary dictionary];
     });
+    if (!font) {
+        return NSMakeRect(0, 0, 1, 1);
+    }
     NSArray *key = @[ NSStringFromRange(range),
                       font.fontName,
                       @(font.pointSize),
