@@ -1582,35 +1582,34 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self view] setSplitSelectionMode:mode move:move session:self];
 }
 
-- (int)overUnder:(int)proposedSize inVerticalDimension:(BOOL)vertically
-{
-    int x = proposedSize;
+- (int)overUnder:(int)proposedSize inVerticalDimension:(BOOL)vertically {
+    int result = proposedSize;
     if (vertically) {
         if ([_view showTitle]) {
-            x -= [SessionView titleHeight];
+            result -= [SessionView titleHeight];
         }
-        x -= [iTermAdvancedSettingsModel terminalVMargin] * 2;
+        result -= [iTermAdvancedSettingsModel terminalVMargin] * 2;
         int iLineHeight = [_textview lineHeight];
         if (iLineHeight == 0) {
             return 0;
         }
-        x %= iLineHeight;
-        if (x > iLineHeight / 2) {
-            x -= iLineHeight;
+        result %= iLineHeight;
+        if (result > iLineHeight / 2) {
+            result -= iLineHeight;
         }
-        return x;
+        return result;
     } else {
-        x -= [iTermAdvancedSettingsModel terminalMargin] * 2;
+        result -= [iTermAdvancedSettingsModel terminalMargin] * 2;
         int iCharWidth = [_textview charWidth];
         if (iCharWidth == 0) {
             return 0;
         }
-        x %= iCharWidth;
-        if (x > iCharWidth / 2) {
-            x -= iCharWidth;
+        result %= iCharWidth;
+        if (result > iCharWidth / 2) {
+            result -= iCharWidth;
         }
     }
-    return x;
+    return result;
 }
 
 - (NSArray *)childJobNames {
@@ -4806,6 +4805,12 @@ ITERM_WEAKLY_REFERENCEABLE
     if (![self metalViewSizeIsLegal]) {
         if (reason) {
             *reason = @"the session is too large or too small.";
+        }
+        return NO;
+    }
+    if (!_textview) {
+        if (reason) {
+            *reason = @"the session is initializing.";
         }
         return NO;
     }
