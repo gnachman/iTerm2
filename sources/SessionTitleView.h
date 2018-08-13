@@ -7,28 +7,24 @@
 //
 
 #import <Cocoa/Cocoa.h>
-
-@class iTermStatusBarViewController;
+#import "iTermStatusBarViewController.h"
 
 @protocol SessionTitleViewDelegate <NSObject>
 
-- (NSColor *)tabColor;
-- (NSColor *)sessionTitleViewBackgroundColorForMinimalStyle;
 - (NSMenu *)menu;
 - (void)close;
 - (void)beginDrag;
-- (BOOL)sessionTitleViewIsFirstResponder;
 - (void)doubleClickOnTitleView;
 - (void)sessionTitleViewBecomeFirstResponder;
+- (NSColor *)sessionTitleViewBackgroundColor;
 
 @end
 
-@interface SessionTitleView : NSView
+@interface SessionTitleView : NSView<iTermStatusBarContainer>
 
 @property(nonatomic, copy) NSString *title;
 @property(nonatomic, weak) id<SessionTitleViewDelegate> delegate;
 @property(nonatomic, assign) double dimmingAmount;
 @property(nonatomic, assign) int ordinal;
-@property(nonatomic, strong) iTermStatusBarViewController *statusBarViewController;
 
 @end

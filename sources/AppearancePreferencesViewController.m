@@ -21,6 +21,8 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     // Tab position within window. See TAB_POSITION_XXX defines.
     IBOutlet NSPopUpButton *_tabPosition;
 
+    IBOutlet NSPopUpButton *_statusBarPosition;
+    
     // Hide tab bar when there is only one session
     IBOutlet NSButton *_hideTab;
 
@@ -97,6 +99,12 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
             [_tabStyle.menu removeItem:lastItem];
         }
     }
+    
+    info = [self defineControl:_statusBarPosition
+                           key:kPreferenceKeyStatusBarPosition
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^{ [weakSelf postRefreshNotification]; };
+    
     info = [self defineControl:_tabStyle
                            key:kPreferenceKeyTabStyle
                           type:kPreferenceInfoTypePopup];

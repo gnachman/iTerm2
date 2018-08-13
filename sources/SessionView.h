@@ -175,6 +175,10 @@
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move session:(id)session;
 - (BOOL)setShowTitle:(BOOL)value adjustScrollView:(BOOL)adjustScrollView;
 - (BOOL)showTitle;
+
+- (BOOL)setShowBottomStatusBar:(BOOL)value adjustScrollView:(BOOL)adjustScrollView;
+- (BOOL)showBottomStatusBar;
+
 - (void)setTitle:(NSString *)title;
 // For tmux sessions, autoresizing is turned off so the title must be moved
 // manually. This repositions the title view and the find view.

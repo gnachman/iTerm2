@@ -14,10 +14,15 @@ NS_ASSUME_NONNULL_BEGIN
 extern const CGFloat iTermStatusBarHeight;
 
 @class iTermStatusBarLayout;
+@class iTermStatusBarViewController;
 @class iTermVariableScope;
 
 @protocol iTermStatusBarViewControllerDelegate<NSObject>
 - (NSColor *)statusBarDefaultTextColor;
+@end
+
+@protocol iTermStatusBarContainer<NSObject>
+@property (nullable, nonatomic, strong) iTermStatusBarViewController *statusBarViewController;
 @end
 
 @interface iTermStatusBarViewController : NSViewController

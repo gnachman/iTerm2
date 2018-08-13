@@ -4243,6 +4243,10 @@ ITERM_WEAKLY_REFERENCEABLE
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
     lionFullScreen_ = NO;
+    
+    DLog(@"Window did exit fullscreen. Set window type to %d", savedWindowType_);
+    self.windowType = savedWindowType_;
+
     [_contentView.tabBarControl updateFlashing];
     // Set scrollbars appropriately
     [self updateSessionScrollbars];
@@ -4251,8 +4255,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self invalidateRestorableState];
     [_contentView updateToolbelt];
 
-    DLog(@"Window did exit fullscreen. Set window type to %d", savedWindowType_);
-    self.windowType = savedWindowType_;
     for (PTYTab *aTab in [self tabs]) {
         [aTab notifyWindowChanged];
     }
@@ -4898,9 +4900,16 @@ ITERM_WEAKLY_REFERENCEABLE
             // its incorrect current size.
             [firstTab setReportIdealSizeAsCurrent:YES];
 
-            // Remove the tab title bar.
-            PTYSession *session = firstTab.sessions.firstObject;
-            [[session view] setShowTitle:NO adjustScrollView:YES];
+            // Update visibility of title bars.
+            const BOOL perPaneTitleBarEnabled = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
+            const BOOL statusBarsOnTop = ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition] == iTermStatusBarPositionTop);
+            const BOOL haveMultipleSessions = firstTab.sessions.count > 1;
+            for (PTYSession *session in firstTab.sessions) {
+                const BOOL sessionHasStatusBar = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:session.profile];
+                const BOOL showTitleBar = perPaneTitleBarEnabled && (firstTab.isMaximized || haveMultipleSessions);
+                const BOOL showTopStatusBar = statusBarsOnTop && sessionHasStatusBar;
+                [[session view] setShowTitle:showTitleBar || showTopStatusBar adjustScrollView:YES];
+            }
         }
         if (willShowTabBar && [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
             [_contentView willShowTabBar];
@@ -5561,6 +5570,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setupSession:newSession withSize:nil];
     [[newSession view] setViewId:[[oldSession view] viewId]];
     [[newSession view] setShowTitle:[[oldSession view] showTitle] adjustScrollView:YES];
+    [[newSession view] setShowBottomStatusBar:oldSession.view.showBottomStatusBar adjustScrollView:YES];
 
     // Add this session to our term and make it current
     PTYTab *theTab = [tabViewItem identifier];

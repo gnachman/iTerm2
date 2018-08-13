@@ -48,6 +48,8 @@
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
+#warning TODO: Support highlightAmount
+#warning TODO: If there's a tab color then this should not adjust non-selected tabs
     if (self.tabBar.cells.count > 1 && !selected) {
         NSColor *color = [self.tabBarColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
         CGFloat delta;

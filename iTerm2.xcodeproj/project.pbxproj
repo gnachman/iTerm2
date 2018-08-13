@@ -1529,6 +1529,8 @@
 		A63011CC20E851E0008114B7 /* iTermStatusBarSpringComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = A63011CA20E851E0008114B7 /* iTermStatusBarSpringComponent.h */; };
 		A63011CD20E851E0008114B7 /* iTermStatusBarSpringComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = A63011CB20E851E0008114B7 /* iTermStatusBarSpringComponent.m */; };
 		A63011CE20E85B16008114B7 /* SessionTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */; };
+		A631749F21214698004F0142 /* iTermGenericStatusBarContainer.h in Headers */ = {isa = PBXBuildFile; fileRef = A631749D21214698004F0142 /* iTermGenericStatusBarContainer.h */; };
+		A63174A021214698004F0142 /* iTermGenericStatusBarContainer.m in Sources */ = {isa = PBXBuildFile; fileRef = A631749E21214698004F0142 /* iTermGenericStatusBarContainer.m */; };
 		A631FC8D20EDDAEA00EB824F /* iTermSearchFieldCell.h in Headers */ = {isa = PBXBuildFile; fileRef = A631FC8B20EDDAEA00EB824F /* iTermSearchFieldCell.h */; };
 		A631FC8E20EDDAEA00EB824F /* iTermSearchFieldCell.m in Sources */ = {isa = PBXBuildFile; fileRef = A631FC8C20EDDAEA00EB824F /* iTermSearchFieldCell.m */; };
 		A631FC9120EDDBC600EB824F /* iTermFindDriver.h in Headers */ = {isa = PBXBuildFile; fileRef = A631FC8F20EDDBC600EB824F /* iTermFindDriver.h */; };
@@ -3978,6 +3980,8 @@
 		A63011C720E8518A008114B7 /* iTermStatusBarFixedSpacerComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarFixedSpacerComponent.m; sourceTree = "<group>"; };
 		A63011CA20E851E0008114B7 /* iTermStatusBarSpringComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarSpringComponent.h; sourceTree = "<group>"; };
 		A63011CB20E851E0008114B7 /* iTermStatusBarSpringComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarSpringComponent.m; sourceTree = "<group>"; };
+		A631749D21214698004F0142 /* iTermGenericStatusBarContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGenericStatusBarContainer.h; sourceTree = "<group>"; };
+		A631749E21214698004F0142 /* iTermGenericStatusBarContainer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGenericStatusBarContainer.m; sourceTree = "<group>"; };
 		A631FC8B20EDDAEA00EB824F /* iTermSearchFieldCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSearchFieldCell.h; sourceTree = "<group>"; };
 		A631FC8C20EDDAEA00EB824F /* iTermSearchFieldCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSearchFieldCell.m; sourceTree = "<group>"; };
 		A631FC8F20EDDBC600EB824F /* iTermFindDriver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFindDriver.h; sourceTree = "<group>"; };
@@ -5805,6 +5809,8 @@
 				A6F9EF3620850C41005530F7 /* iTermCompetentTableRowView.m */,
 				530AB8C220B5284A00D2AA08 /* iTermFocusReportingTextField.h */,
 				530AB8C320B5284A00D2AA08 /* iTermFocusReportingTextField.m */,
+				A631749D21214698004F0142 /* iTermGenericStatusBarContainer.h */,
+				A631749E21214698004F0142 /* iTermGenericStatusBarContainer.m */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -8401,6 +8407,7 @@
 				530AB89620AFDF5000D2AA08 /* iTermScriptFunctionCall.h in Headers */,
 				A6FE8D12209528F400B5C648 /* iTermPythonRuntimeDownloader.h in Headers */,
 				A66719201DCE36C3000CE608 /* iTermImageMark.h in Headers */,
+				A631749F21214698004F0142 /* iTermGenericStatusBarContainer.h in Headers */,
 				A61ED2AD20E9FA230035BECD /* iTermStatusBarSearchFieldComponent.h in Headers */,
 				A630119820E70CDA008114B7 /* iTermStatusBarSetupElement.h in Headers */,
 				A66719211DCE36C3000CE608 /* iTermHTTPConnection.h in Headers */,
@@ -10271,6 +10278,7 @@
 				A62DBBA820F4852A008B63D1 /* iTermStatusBarFunctionCallComponent.m in Sources */,
 				A6DBC04220049CB100F1466D /* iTermImage.metal in Sources */,
 				A67960D11F81FCBB008A42BC /* iTermBackgroundImageRenderer.m in Sources */,
+				A63174A021214698004F0142 /* iTermGenericStatusBarContainer.m in Sources */,
 				A6A4865D20B6706700493302 /* ProfilesKeysPreferencesViewController.m in Sources */,
 				A6A4867220B67AB800493302 /* PointerPreferencesViewController.m in Sources */,
 				A67C44E8211E24F6004EDB1C /* PSMMinimalTabStyle.m in Sources */,

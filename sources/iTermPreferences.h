@@ -29,6 +29,11 @@ typedef NS_ENUM(int, iTermPreferencesTabStyle) {
     TAB_STYLE_MINIMAL = 5
 };
 
+typedef NS_ENUM(NSUInteger, iTermStatusBarPosition) {
+    iTermStatusBarPositionTop,
+    iTermStatusBarPositionBottom
+};
+
 // Values for kPreferenceKeyTabPosition (corresponds to tags in control).
 #define TAB_POSITION_TOP PSMTab_TopTab
 #define TAB_POSITION_BOTTOM PSMTab_BottomTab
@@ -84,6 +89,7 @@ extern NSString *const kPreferenceKeyMetalMaximizeThroughput;
 extern NSString *const kPreferenceKeyTabStyle_Depcreated;
 extern NSString *const kPreferenceKeyTabStyle;
 extern NSString *const kPreferenceKeyTabPosition;
+extern NSString *const kPreferenceKeyStatusBarPosition;
 extern NSString *const kPreferenceKeyHideTabBar;
 extern NSString *const kPreferenceKeyHideTabNumber;
 extern NSString *const kPreferenceKeyHideTabCloseButton;

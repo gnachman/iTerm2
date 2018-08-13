@@ -1757,7 +1757,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (int)overUnder:(int)proposedSize inVerticalDimension:(BOOL)vertically {
     int result = proposedSize;
     if (vertically) {
-        if ([_view xshowTitle]) {
+        if ([_view showTitle]) {
             result -= [SessionView titleHeight];
         }
         if (_view.showBottomStatusBar) {

@@ -80,4 +80,5 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 
 + (NSColor *)it_searchFieldBackgroundColor:(BOOL)selected
                                 appearance:(NSAppearance *)appearance;
+- (NSColor *)it_colorByDimmingByAmount:(double)dimmingAmount;
 @end

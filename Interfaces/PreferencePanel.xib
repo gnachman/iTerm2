@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14306.4" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14295.6" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14306.4"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14295.6"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -756,7 +756,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Oi5-ZC-SxR">
                             <rect key="frame" x="1" y="0.0" width="762" height="264"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783">
                                     <rect key="frame" x="0.0" y="0.0" width="762" height="247"/>
@@ -917,7 +917,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="0.0" width="763" height="264"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5844" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="763" height="247"/>
@@ -1133,7 +1133,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Moz-RU-iUF">
                             <rect key="frame" x="1" y="0.0" width="533" height="153"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
                                     <rect key="frame" x="0.0" y="0.0" width="533" height="136"/>
@@ -1300,7 +1300,7 @@ DQ
                 <outlet property="view" destination="zBG-6Q-502" id="Pic-en-AMU"/>
             </connections>
         </customObject>
-        <customObject id="wvi-ET-SJJ" customClass="AppearancePreferencesViewController">
+        <customObject id="wvi-ET-SJJ" userLabel="Prefs&gt;Appearance View Controller" customClass="AppearancePreferencesViewController">
             <connections>
                 <outlet property="_dimBackgroundWindows" destination="5325" id="bBy-YM-fp0"/>
                 <outlet property="_dimInactiveSplitPanes" destination="4560" id="rO0-eh-PYK"/>
@@ -1320,6 +1320,7 @@ DQ
                 <outlet property="_showPaneTitles" destination="6051" id="n0P-0K-pxx"/>
                 <outlet property="_showTabBarInFullscreen" destination="e4x-7h-mzh" id="21B-SP-LU5"/>
                 <outlet property="_showWindowBorder" destination="5144" id="wpg-cZ-0wM"/>
+                <outlet property="_statusBarPosition" destination="Cjh-dQ-HBQ" id="uIH-25-Bdn"/>
                 <outlet property="_stretchTabsToFillBar" destination="q7y-hG-x0m" id="HPi-ia-0YJ"/>
                 <outlet property="_tabPosition" destination="4463" id="Rxp-XS-Fkx"/>
                 <outlet property="_tabStyle" destination="uFJ-bZ-kag" id="BZV-Cb-HaF"/>
@@ -4173,7 +4174,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="519" height="76"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="519" height="76"/>
@@ -4758,11 +4759,11 @@ DQ
             <point key="canvasLocation" x="2057" y="-50.5"/>
         </customView>
         <customView id="yCt-fi-XI9" userLabel="Prefs - Appearance" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="744" height="358"/>
+            <rect key="frame" x="0.0" y="0.0" width="744" height="378"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <button id="4446">
-                    <rect key="frame" x="18" y="232" width="263" height="18"/>
+                    <rect key="frame" x="18" y="138" width="263" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Show tab numbers" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4447">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4774,7 +4775,7 @@ DQ
                     </connections>
                 </button>
                 <button id="1dE-aB-uR8">
-                    <rect key="frame" x="18" y="212" width="263" height="18"/>
+                    <rect key="frame" x="18" y="118" width="263" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Show tab close buttons" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="GRU-c6-tJK">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4786,7 +4787,7 @@ DQ
                     </connections>
                 </button>
                 <button id="5374">
-                    <rect key="frame" x="18" y="192" width="160" height="18"/>
+                    <rect key="frame" x="18" y="98" width="160" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Show activity indicator" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5375">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4798,7 +4799,7 @@ DQ
                     </connections>
                 </button>
                 <button id="Q0o-aJ-Wec">
-                    <rect key="frame" x="18" y="172" width="186" height="18"/>
+                    <rect key="frame" x="18" y="78" width="186" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Show new-output indicator" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="P1b-LJ-ARG">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4810,7 +4811,7 @@ DQ
                     </connections>
                 </button>
                 <button id="Esq-U7-Af7">
-                    <rect key="frame" x="18" y="152" width="316" height="18"/>
+                    <rect key="frame" x="18" y="58" width="316" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Flash tab bar when switching tabs in fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="2Eu-ti-9Nf">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4822,7 +4823,7 @@ DQ
                     </connections>
                 </button>
                 <button id="4462">
-                    <rect key="frame" x="18" y="254" width="298" height="18"/>
+                    <rect key="frame" x="18" y="160" width="298" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Show tab bar even when there is only one tab" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4499">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4832,36 +4833,17 @@ DQ
                         <action selector="settingChanged:" target="wvi-ET-SJJ" id="Let-n9-0Kb"/>
                     </connections>
                 </button>
-                <popUpButton verticalHuggingPriority="750" id="4463">
-                    <rect key="frame" x="130" y="310" width="112" height="26"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="4495">
-                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="menu"/>
-                        <menu key="menu" title="OtherViews" id="4496">
-                            <items>
-                                <menuItem title="Top" id="4497"/>
-                                <menuItem title="Bottom" tag="1" id="4498"/>
-                                <menuItem title="Left" tag="2" id="KWx-TT-5ME"/>
-                            </items>
-                        </menu>
-                    </popUpButtonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="wvi-ET-SJJ" id="O9y-2N-MjT"/>
-                        <outlet property="nextKeyView" destination="4462" id="5199"/>
-                    </connections>
-                </popUpButton>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4556">
-                    <rect key="frame" x="18" y="341" width="140" height="17"/>
+                    <rect key="frame" x="18" y="361" width="140" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Tabs" id="4557">
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="General" id="4557">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <button id="4529">
-                    <rect key="frame" x="360" y="175" width="219" height="18"/>
+                    <rect key="frame" x="360" y="201" width="219" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Show window number in title bar" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4536">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4872,7 +4854,7 @@ DQ
                     </connections>
                 </button>
                 <button id="4560">
-                    <rect key="frame" x="360" y="252" width="178" height="18"/>
+                    <rect key="frame" x="360" y="334" width="178" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Dim inactive split panes" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4565">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4884,7 +4866,7 @@ DQ
                     </connections>
                 </button>
                 <button id="5325">
-                    <rect key="frame" x="360" y="232" width="186" height="18"/>
+                    <rect key="frame" x="360" y="314" width="186" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Dim background windows" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5326">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4896,7 +4878,7 @@ DQ
                     </connections>
                 </button>
                 <button id="5330">
-                    <rect key="frame" x="360" y="317" width="298" height="18"/>
+                    <rect key="frame" x="360" y="294" width="298" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Dimming affects only text, not background." bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5331">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4908,7 +4890,7 @@ DQ
                     </connections>
                 </button>
                 <button id="4561">
-                    <rect key="frame" x="360" y="135" width="228" height="18"/>
+                    <rect key="frame" x="360" y="161" width="228" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Hide scrollbars" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4564">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4920,7 +4902,7 @@ DQ
                     </connections>
                 </button>
                 <button toolTip="If this is on then transparency can be toggled window-by-window under View&gt;Use Transparency" id="5753">
-                    <rect key="frame" x="360" y="115" width="366" height="18"/>
+                    <rect key="frame" x="360" y="141" width="366" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Disable transparency for fullscreen windows by default" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5754">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4932,7 +4914,7 @@ DQ
                     </connections>
                 </button>
                 <button toolTip="If this is on then transparency can be toggled window-by-window under View&gt;Use Transparency" id="tyx-QN-l9J">
-                    <rect key="frame" x="360" y="95" width="366" height="18"/>
+                    <rect key="frame" x="360" y="121" width="366" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Show line under title bar when the tab bar is not visible" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="fyA-Fd-O2Q">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4944,7 +4926,7 @@ DQ
                     </connections>
                 </button>
                 <button id="5144">
-                    <rect key="frame" x="360" y="155" width="228" height="18"/>
+                    <rect key="frame" x="360" y="181" width="228" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Show border around window" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5145">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4955,7 +4937,7 @@ DQ
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4562">
-                    <rect key="frame" x="360" y="341" width="66" height="17"/>
+                    <rect key="frame" x="360" y="361" width="66" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Dimming" id="4563">
                         <font key="font" metaFont="systemBold"/>
@@ -4964,7 +4946,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5335">
-                    <rect key="frame" x="360" y="199" width="66" height="17"/>
+                    <rect key="frame" x="360" y="225" width="66" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Window" id="5336">
                         <font key="font" metaFont="systemBold"/>
@@ -4972,17 +4954,17 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6049">
-                    <rect key="frame" x="360" y="42" width="44" height="17"/>
+                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="Xh6-OD-H7j">
+                    <rect key="frame" x="18" y="184" width="66" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Panes" id="6050">
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Tabs" id="MNI-BA-Cxc">
                         <font key="font" metaFont="systemBold"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <slider toolTip="Inactive sessions get dimmed to help find the active session." verticalHuggingPriority="750" id="5337">
-                    <rect key="frame" x="481" y="290" width="177" height="21"/>
+                    <rect key="frame" x="481" y="267" width="177" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="0.10000000000000001" maxValue="0.59999999999999998" doubleValue="0.40000000000000002" tickMarkPosition="above" sliderType="linear" id="5338"/>
                     <connections>
@@ -4991,7 +4973,7 @@ DQ
                     </connections>
                 </slider>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5339">
-                    <rect key="frame" x="360" y="294" width="119" height="17"/>
+                    <rect key="frame" x="360" y="271" width="119" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Dimming amount:" id="5340">
                         <font key="font" metaFont="system"/>
@@ -5000,7 +4982,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5341">
-                    <rect key="frame" x="480" y="278" width="43" height="11"/>
+                    <rect key="frame" x="480" y="255" width="43" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Minimal" id="5342">
                         <font key="font" metaFont="miniSystem"/>
@@ -5009,7 +4991,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="5343">
-                    <rect key="frame" x="615" y="221" width="44" height="11"/>
+                    <rect key="frame" x="615" y="255" width="44" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Very Dim" id="5344">
                         <font key="font" metaFont="miniSystem"/>
@@ -5017,19 +4999,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button id="6051">
-                    <rect key="frame" x="360" y="18" width="275" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Show per-pane title bar with split panes" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6052">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="wvi-ET-SJJ" id="a8V-u3-5nt"/>
-                    </connections>
-                </button>
                 <popUpButton verticalHuggingPriority="750" id="uFJ-bZ-kag">
-                    <rect key="frame" x="130" y="279" width="187" height="26"/>
+                    <rect key="frame" x="144" y="330" width="191" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Automatic" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" tag="4" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="ZNW-QH-Lff" id="dAw-Fo-tf4" userLabel="Tab Style">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -5052,26 +5023,36 @@ DQ
                         <outlet property="nextKeyView" destination="4462" id="UCs-bO-Qrg"/>
                     </connections>
                 </popUpButton>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="sxm-tG-syy">
-                    <rect key="frame" x="18" y="316" width="107" height="17"/>
+                <popUpButton verticalHuggingPriority="750" id="Cjh-dQ-HBQ">
+                    <rect key="frame" x="144" y="220" width="191" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Tab bar location:" id="jnA-10-c4D">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
+                    <popUpButtonCell key="cell" type="push" title="Top" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="7BM-xw-fbE" id="9o6-qH-zo0" userLabel="Tab Style">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="TGp-XX-gkr">
+                            <items>
+                                <menuItem title="Top" id="7BM-xw-fbE">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="Bottom" tag="1" id="kqT-50-xBs"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="wvi-ET-SJJ" id="47u-q3-W3G"/>
+                    </connections>
+                </popUpButton>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="ThU-HR-f8F">
-                    <rect key="frame" x="18" y="284" width="107" height="17"/>
+                    <rect key="frame" x="18" y="335" width="122" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="Theme:" id="uhj-9S-l8R">
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Theme:" id="uhj-9S-l8R">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <button id="e4x-7h-mzh">
-                    <rect key="frame" x="18" y="132" width="316" height="18"/>
+                    <rect key="frame" x="18" y="38" width="316" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Show tab bar in fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="UI6-As-YT2">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5083,7 +5064,7 @@ DQ
                     </connections>
                 </button>
                 <button id="q7y-hG-x0m" userLabel="Stretch Tabs to Fill Bar">
-                    <rect key="frame" x="18" y="112" width="316" height="18"/>
+                    <rect key="frame" x="18" y="18" width="316" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Stretch tabs to fill bar" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="X12-cb-Cnf">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5095,7 +5076,7 @@ DQ
                     </connections>
                 </button>
                 <button toolTip="Enables an icon in the window title bar that represents the current working directory." id="6Pr-69-fM1">
-                    <rect key="frame" x="360" y="75" width="366" height="18"/>
+                    <rect key="frame" x="360" y="101" width="366" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Show proxy icon in window title bar" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="GIz-HY-hrx">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5107,7 +5088,7 @@ DQ
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="Gs7-G7-B8C">
-                    <rect key="frame" x="18" y="62" width="53" height="17"/>
+                    <rect key="frame" x="360" y="62" width="53" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="System" id="MWf-jU-9g4">
                         <font key="font" metaFont="systemBold"/>
@@ -5116,7 +5097,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button id="awA-hH-ziY">
-                    <rect key="frame" x="18" y="38" width="306" height="18"/>
+                    <rect key="frame" x="360" y="38" width="306" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">For this setting to take effect you must disable "Native full screen windows" in Prefs&gt;General. If this setting is enabled, the menu bar will remain visible. This is useful for multi-monitor systems.</string>
                     <buttonCell key="cell" type="check" title="Auto-hide menu bar in non-native fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="MM6-3I-2ep">
@@ -5128,7 +5109,7 @@ DQ
                     </connections>
                 </button>
                 <button id="zde-kb-c7t">
-                    <rect key="frame" x="18" y="18" width="334" height="18"/>
+                    <rect key="frame" x="360" y="18" width="334" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">This is useful if you only use iTerm2 with a hotkey window. The preference is disabled if no dedicated hotkey window is defined since it would be impossible to get to iTerm2 when it has no windows and no hotkey is defined.</string>
                     <buttonCell key="cell" type="check" title="Exclude from Dock and ⌘-Tab Application Switcher" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="90f-c6-lvp">
@@ -5139,9 +5120,66 @@ DQ
                         <action selector="settingChanged:" target="wvi-ET-SJJ" id="Saj-Ug-CMy"/>
                     </connections>
                 </button>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="ghv-jZ-ql9">
+                    <rect key="frame" x="18" y="226" width="122" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Status bar location:" id="jtG-zd-rvL">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" id="4463">
+                    <rect key="frame" x="144" y="303" width="191" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="4495">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="4496">
+                            <items>
+                                <menuItem title="Top" id="4497"/>
+                                <menuItem title="Bottom" tag="1" id="4498"/>
+                                <menuItem title="Left" tag="2" id="KWx-TT-5ME"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="wvi-ET-SJJ" id="O9y-2N-MjT"/>
+                        <outlet property="nextKeyView" destination="4462" id="5199"/>
+                    </connections>
+                </popUpButton>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="sxm-tG-syy">
+                    <rect key="frame" x="18" y="309" width="122" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Tab bar location:" id="jnA-10-c4D">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="6049">
+                    <rect key="frame" x="18" y="274" width="44" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Panes" id="6050">
+                        <font key="font" metaFont="systemBold"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <button id="6051">
+                    <rect key="frame" x="18" y="250" width="275" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Show per-pane title bar with split panes" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6052">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="wvi-ET-SJJ" id="a8V-u3-5nt"/>
+                    </connections>
+                </button>
             </subviews>
             <accessibility identifier="prefsAppearance"/>
-            <point key="canvasLocation" x="-263" y="1191"/>
+            <point key="canvasLocation" x="-263" y="1201"/>
         </customView>
         <customView id="Z7N-XT-vVo" userLabel="Prefs - Keys" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="932" height="420"/>
@@ -5561,7 +5599,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="N1C-ir-dI5">
                         <rect key="frame" x="1" y="0.0" width="238" height="378"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" headerView="5563" id="5562">
                                 <rect key="frame" x="0.0" y="0.0" width="238" height="361"/>
@@ -5675,7 +5713,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="2zv-hI-Vxj">
                         <rect key="frame" x="1" y="0.0" width="849" height="245"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
                                 <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
@@ -5862,7 +5900,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="Fm3-fw-Qw5">
                         <rect key="frame" x="1" y="1" width="950" height="362"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" id="5ik-Xh-beg">
                                 <rect key="frame" x="0.0" y="0.0" width="950" height="362"/>

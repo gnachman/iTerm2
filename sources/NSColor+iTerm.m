@@ -350,4 +350,22 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     }
 }
 
+- (NSColor *)it_colorByDimmingByAmount:(double)dimmingAmount {
+    NSColor *color = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    double r = [color redComponent];
+    double g = [color greenComponent];
+    double b = [color blueComponent];
+    double alpha = 1 - dimmingAmount;
+    
+    // Biases the input color by 1-alpha toward gray of (basis, basis, basis).
+    double basis = 0.15;
+    
+    r = alpha * r + (1 - alpha) * basis;
+    g = alpha * g + (1 - alpha) * basis;
+    b = alpha * b + (1 - alpha) * basis;
+    
+    return [NSColor colorWithSRGBRed:r green:g blue:b alpha:1];
+}
+
+
 @end
