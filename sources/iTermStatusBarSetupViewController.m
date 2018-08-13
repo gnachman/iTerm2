@@ -11,6 +11,7 @@
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarCPUUtilizationComponent.h"
 #import "iTermStatusBarClockComponent.h"
+#import "iTermStatusBarComposerComponent.h"
 #import "iTermStatusBarFixedSpacerComponent.h"
 #import "iTermStatusBarFunctionCallComponent.h"
 #import "iTermStatusBarGitComponent.h"
@@ -62,20 +63,27 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)awakeFromNib {
     NSArray<Class> *classes = @[
-                                 [iTermStatusBarSwiftyStringComponent class],
-                                 [iTermStatusBarFunctionCallComponent class],
-                                 [iTermStatusBarFixedSpacerComponent class],
-                                 [iTermStatusBarSpringComponent class],
-                                 [iTermStatusBarClockComponent class],
-                                 [iTermStatusBarGitComponent class],
-                                 [iTermStatusBarHostnameComponent class],
+                                 [iTermStatusBarCPUUtilizationComponent class],
                                  [iTermStatusBarMemoryUtilizationComponent class],
                                  [iTermStatusBarNetworkUtilizationComponent class],
+
+                                 [iTermStatusBarClockComponent class],
+
+                                 [iTermStatusBarGitComponent class],
+                                 [iTermStatusBarHostnameComponent class],
                                  [iTermStatusBarUsernameComponent class],
-                                 [iTermStatusBarWorkingDirectoryComponent class],
-                                 [iTermStatusBarSearchFieldComponent class],
                                  [iTermStatusBarJobComponent class],
-                                 [iTermStatusBarCPUUtilizationComponent class] ];
+                                 [iTermStatusBarWorkingDirectoryComponent class],
+
+                                 [iTermStatusBarSearchFieldComponent class],
+                                 [iTermStatusBarComposerComponent class],
+
+                                 [iTermStatusBarFixedSpacerComponent class],
+                                 [iTermStatusBarSpringComponent class],
+
+                                 [iTermStatusBarSwiftyStringComponent class],
+                                 [iTermStatusBarFunctionCallComponent class],
+                                 ];
     _elements = [classes mapWithBlock:^id(Class theClass) {
         iTermStatusBarBuiltInComponentFactory *factory =
             [[iTermStatusBarBuiltInComponentFactory alloc] initWithClass:theClass];
