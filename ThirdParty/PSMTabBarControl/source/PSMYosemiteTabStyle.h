@@ -18,5 +18,7 @@
 #pragma mark - For subclasses
 
 - (NSColor *)topLineColorSelected:(BOOL)selected;
+- (BOOL)anyTabHasColor;
+- (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell;
 
 @end

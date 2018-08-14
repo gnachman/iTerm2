@@ -112,7 +112,7 @@ DEFINE_INT(minimumTabDragDistance, 10, @"Tabs: How far must the mouse move befor
 DEFINE_BOOL(tabTitlesUseSmartTruncation, YES, @"Tabs: Use “smart truncation” for tab titles.\nIf a tab‘s title is too long to fit, ellipsize the start of the title if more tabs have unique suffixes than prefixes in a given window.");
 DEFINE_BOOL(middleClickClosesTab, YES, @"Tabs: Should middle-click on a tab in the tab bar close the tab?");
 DEFINE_FLOAT(coloredSelectedTabOutlineStrength, 0.5, @"Tabs: How prominent should the outline around the selected tab be drawn when there are colored tabs in a window?\nTakes a value in 0 to 3, where 0 means no outline and 3 means a very prominent outline.");
-DEFINE_FLOAT(coloredUnselectedTabTextProminence, 0.1, @"Tabs: How prominent should the text in a non-selected tab be when there are colored tabs in a window?\nTakes a value in 0 to 0.5, the distance from middle gray.");
+DEFINE_FLOAT(coloredUnselectedTabTextProminence, 0.3, @"Tabs: How prominent should the text in a non-selected tab be when there are colored tabs in a window?\nTakes a value in 0 to 0.5, the distance from the brightness of the background color.");
 
 #pragma mark Mouse
 DEFINE_STRING(alternateMouseScrollStringForUp, @"",

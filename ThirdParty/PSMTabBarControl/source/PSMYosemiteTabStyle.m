@@ -404,10 +404,10 @@
             CGFloat delta = prominence ?: 0.1;
             if (cellBrightness > 0.5) {
                 // Light tab
-                return [NSColor colorWithWhite:0.5 - delta alpha:1];
+                return [NSColor colorWithWhite:cellBrightness - delta alpha:1];
             } else {
                 // Dark tab
-                return [NSColor colorWithWhite:0.5 + delta alpha:1];
+                return [NSColor colorWithWhite:cellBrightness + delta alpha:1];
             }
         }
     } else {
