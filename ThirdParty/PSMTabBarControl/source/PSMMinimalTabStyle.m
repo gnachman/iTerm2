@@ -7,6 +7,25 @@
 
 #import "PSMMinimalTabStyle.h"
 
+@implementation NSColor(PSMMinimalTabStyle)
+
+- (NSColor *)psm_nonSelectedColor {
+    NSColor *color = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    const CGFloat amount = 0.1;
+    CGFloat delta = -amount;
+    CGFloat proposed = color.it_hspBrightness + delta;
+    if (proposed < 0 || proposed > 1) {
+        delta = -delta;
+    }
+    return [NSColor colorWithSRGBRed:color.redComponent + delta
+                               green:color.greenComponent + delta
+                                blue:color.blueComponent + delta
+                               alpha:1];
+    
+}
+
+@end
+
 @implementation PSMMinimalTabStyle
 
 - (NSString *)name {
@@ -51,22 +70,7 @@
 #warning TODO: Support highlightAmount
 #warning TODO: If there's a tab color then this should not adjust non-selected tabs
     if (self.tabBar.cells.count > 1 && !selected) {
-        NSColor *color = [self.tabBarColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
-        CGFloat delta;
-        const CGFloat amount = 0.1;
-        if (color.it_hspBrightness < 0.5) {
-            delta = -amount;
-        } else {
-            delta = -amount;
-        }
-        CGFloat proposed = color.it_hspBrightness + delta;
-        if (proposed < 0 || proposed > 1) {
-            delta = -delta;
-        }
-        return [NSColor colorWithSRGBRed:color.redComponent + delta
-                                   green:color.greenComponent + delta
-                                    blue:color.blueComponent + delta
-                                   alpha:1];
+        return [self.tabBarColor psm_nonSelectedColor];
     }
     return self.tabBarColor;
 }

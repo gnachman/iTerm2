@@ -16,6 +16,7 @@
 #import "NSView+iTerm.h"
 #import "MovePaneController.h"
 #import "NSResponder+iTerm.h"
+#import "PSMMinimalTabStyle.h"
 #import "PSMTabDragAssistant.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
@@ -798,9 +799,16 @@ static NSDate* lastResizeDate_;
 }
 
 - (NSColor *)dimmedBackgroundColorWithAppearance:(NSAppearance *)appearance {
+    const BOOL inactive = ![_delegate sessionViewTerminalIsFirstResponder];
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
-        return [_delegate sessionViewBackgroundColor];
+        NSColor *color = [_delegate sessionViewBackgroundColor];
+        if (inactive) {
+            return [color colorDimmedBy:[self adjustedDimmingAmount]
+                       towardsGrayLevel:0.5];
+        } else {
+            return color;
+        }
     }
     CGFloat whiteLevel = 0;
     switch ([appearance it_tabStyle:preferredStyle]) {
@@ -808,7 +816,7 @@ static NSDate* lastResizeDate_;
         case TAB_STYLE_MINIMAL:
             assert(NO);
         case TAB_STYLE_LIGHT:
-            if (![_delegate sessionViewTerminalIsFirstResponder]) {
+            if (inactive) {
                 // Not selected
                 whiteLevel = 0.58;
             } else {
@@ -817,7 +825,7 @@ static NSDate* lastResizeDate_;
             }
             break;
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            if (![_delegate sessionViewTerminalIsFirstResponder]) {
+            if (inactive) {
                 // Not selected
                 whiteLevel = 0.68;
             } else {
@@ -826,7 +834,7 @@ static NSDate* lastResizeDate_;
             }
             break;
         case TAB_STYLE_DARK:
-            if (![_delegate sessionViewTerminalIsFirstResponder]) {
+            if (inactive) {
                 // Not selected
                 whiteLevel = 0.18;
             } else {
@@ -835,7 +843,7 @@ static NSDate* lastResizeDate_;
             }
             break;
         case TAB_STYLE_DARK_HIGH_CONTRAST:
-            if (![_delegate sessionViewTerminalIsFirstResponder]) {
+            if (inactive) {
                 // Not selected
                 whiteLevel = 0.08;
             } else {

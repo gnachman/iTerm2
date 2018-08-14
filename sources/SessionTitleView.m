@@ -207,6 +207,7 @@ static const CGFloat kButtonSize = 17;
 {
     dimmingAmount_ = value;
     [self updateTextColor];
+    [_statusBarViewController.view setNeedsDisplay:YES];
 }
 
 - (void)viewDidChangeEffectiveAppearance {

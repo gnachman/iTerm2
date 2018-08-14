@@ -9,6 +9,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@interface NSColor(PSMMinimalTabStyle)
+- (NSColor *)psm_nonSelectedColor;
+@end
+
 @protocol PSMMinimalTabStyleDelegate<NSObject>
 - (NSColor *)minimalTabStyleBackgroundColor;
 @end
