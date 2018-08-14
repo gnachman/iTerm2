@@ -53,10 +53,15 @@
     if (self.tabBar.cells.count > 1 && !selected) {
         NSColor *color = [self.tabBarColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
         CGFloat delta;
+        const CGFloat amount = 0.1;
         if (color.it_hspBrightness < 0.5) {
-            delta = 0.2;
+            delta = -amount;
         } else {
-            delta = -0.2;
+            delta = -amount;
+        }
+        CGFloat proposed = color.it_hspBrightness + delta;
+        if (proposed < 0 || proposed > 1) {
+            delta = -delta;
         }
         return [NSColor colorWithSRGBRed:color.redComponent + delta
                                    green:color.greenComponent + delta
