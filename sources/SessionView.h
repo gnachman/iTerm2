@@ -156,6 +156,7 @@
 @property(nonatomic, readonly) BOOL findViewIsHidden;
 @property(nonatomic, readonly) BOOL findViewHasKeyboardFocus;
 @property(nonatomic, readonly) iTermFindDriver *findDriver;
+@property(nonatomic, readonly) NSSize internalDecorationSize;
 
 - (void)showFindUI;
 - (void)findViewDidHide;

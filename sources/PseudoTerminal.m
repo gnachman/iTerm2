@@ -3438,8 +3438,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // Compute proposed tab size (window minus decorations).
     NSSize decorationSize = [self windowDecorationSize];
-    NSSize tabSize = NSMakeSize(proposedFrameSize.width - decorationSize.width,
-                                proposedFrameSize.height - decorationSize.height);
+    NSSize internalDecorationSize = self.currentSession.view.internalDecorationSize;
+    NSSize tabSize = NSMakeSize(proposedFrameSize.width - decorationSize.width - internalDecorationSize.width,
+                                proposedFrameSize.height - decorationSize.height - internalDecorationSize.height);
 
     // Snap proposed tab size to grid.  The snapping uses a grid spaced to
     // match the current pane's character size and aligned so margins are
@@ -3478,8 +3479,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     // Compute new window size from tab size.
-    proposedFrameSize.width = tabSize.width + decorationSize.width;
-    proposedFrameSize.height = tabSize.height + decorationSize.height;
+    proposedFrameSize.width = tabSize.width + decorationSize.width + internalDecorationSize.width;
+    proposedFrameSize.height = tabSize.height + decorationSize.height + internalDecorationSize.height;
 
     // Apply maximum window size.
     NSSize maxFrameSize = [self maxFrame].size;

@@ -252,6 +252,17 @@ static NSDate* lastResizeDate_;
     return nil;
 }
 
+- (NSSize)internalDecorationSize {
+    NSSize size = NSZeroSize;
+    if (_showTitle) {
+        size.height += _title.frame.size.height;
+    }
+    if (_showBottomStatusBar) {
+        size.height += iTermStatusBarHeight;
+    }
+    return size;
+}
+
 - (void)showFindUI {
     iTermStatusBarViewController *statusBarViewController = self.delegate.sessionViewStatusBarViewController;
     if (self.findViewIsHidden) {
