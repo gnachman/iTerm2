@@ -83,7 +83,6 @@
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
-#warning TODO: If there's a tab color then this should not adjust non-selected tabs
     NSColor *color;
     if (self.tabBar.cells.count > 1 && !selected) {
         color = [self.tabBarColor psm_nonSelectedColor];
