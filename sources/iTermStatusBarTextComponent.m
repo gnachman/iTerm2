@@ -89,6 +89,8 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 }
 
 - (BOOL)setValueInField:(NSTextField *)textField compressed:(BOOL)compressed {
+    textField.textColor = self.textColor;
+
     NSString *proposed;
     if (compressed) {
         proposed = [self stringValueForCurrentWidth];
@@ -101,7 +103,6 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
     }
 
     textField.stringValue = proposed ?: @"";
-    textField.textColor = self.textColor;
 
     [textField sizeToFit];
     return YES;
