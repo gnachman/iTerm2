@@ -384,10 +384,10 @@
             // Non-selected cell when any cell has a tab color
             if (cellBrightness > 0.5) {
                 // Light tab
-                return [NSColor colorWithWhite:0.4 alpha:1];
+                return [NSColor colorWithWhite:cellBrightness - 0.4 alpha:1];
             } else {
                 // Dark tab
-                return [NSColor colorWithWhite:0.6 alpha:1];
+                return [NSColor colorWithWhite:cellBrightness + 0.4 alpha:1];
             }
     } else {
         // No cell has a tab color
