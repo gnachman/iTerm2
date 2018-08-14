@@ -113,6 +113,37 @@
 }
 
 - (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell {
+    if (self.anyTabHasColor) {
+        const CGFloat brightness = [self tabColorBrightness:cell];
+        NSRect rect = NSInsetRect(cell.frame, 0, 1.5);
+        NSBezierPath *path;
+        
+        NSColor *outerColor;
+        NSColor *innerColor;
+        const CGFloat alpha = [self.tabBar.window isKeyWindow] ? 0.5 : 0.3;
+        if (brightness > 0.5) {
+            outerColor = [NSColor colorWithWhite:1 alpha:alpha];
+            innerColor = [NSColor colorWithWhite:0 alpha:alpha];
+        } else {
+            outerColor = [NSColor colorWithWhite:0 alpha:alpha];
+            innerColor = [NSColor colorWithWhite:1 alpha:alpha];
+        }
+        
+        [innerColor set];
+        path = [NSBezierPath bezierPath];
+        [path moveToPoint:NSMakePoint(NSMinX(rect), NSMaxY(rect))];
+        [path lineToPoint:NSMakePoint(NSMaxX(rect), NSMaxY(rect))];
+        [path setLineWidth:1];
+        [path stroke];
+        
+        [outerColor set];
+        rect = NSInsetRect(rect, 0, 1);
+        path = [NSBezierPath bezierPath];
+        [path moveToPoint:NSMakePoint(NSMinX(rect), NSMaxY(rect))];
+        [path lineToPoint:NSMakePoint(NSMaxX(rect), NSMaxY(rect))];
+        [path setLineWidth:1];
+        [path stroke];
+    }
 }
 
 @end
