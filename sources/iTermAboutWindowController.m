@@ -10,6 +10,23 @@
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 
+@interface iTermAboutWindowContentView : NSView
+@end
+
+@implementation iTermAboutWindowContentView {
+    IBOutlet NSScrollView *_bottomAlignedScrollView;
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    NSRect frame = _bottomAlignedScrollView.frame;
+    [super resizeSubviewsWithOldSize:oldSize];
+    CGFloat topMargin = oldSize.height - NSMaxY(frame);
+    frame.origin.y = self.frame.size.height - topMargin - frame.size.height;
+    _bottomAlignedScrollView.frame = frame;
+}
+
+@end
+
 @implementation iTermAboutWindowController {
     IBOutlet NSTextView *_dynamicText;
     IBOutlet NSTextView *_patronsTextView;
@@ -43,9 +60,11 @@
         // Force IBOutlets to be bound by creating window.
         [self window];
 
+        NSDictionary *versionAttributes = @{ NSForegroundColorAttributeName: [NSColor controlTextColor] };
         [_dynamicText setLinkTextAttributes:self.linkTextViewAttributes];
         [[_dynamicText textStorage] deleteCharactersInRange:NSMakeRange(0, [[_dynamicText textStorage] length])];
-        [[_dynamicText textStorage] appendAttributedString:[[[NSAttributedString alloc] initWithString:versionString] autorelease]];
+        [[_dynamicText textStorage] appendAttributedString:[[[NSAttributedString alloc] initWithString:versionString
+                                                                                            attributes:versionAttributes] autorelease]];
         [[_dynamicText textStorage] appendAttributedString:webAString];
         [[_dynamicText textStorage] appendAttributedString:bugsAString];
         [[_dynamicText textStorage] appendAttributedString:creditsAString];
@@ -72,7 +91,7 @@
 
 - (NSDictionary *)linkTextViewAttributes {
     return @{ NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
-              NSForegroundColorAttributeName: [NSColor blueColor],
+              NSForegroundColorAttributeName: [NSColor linkColor],
               NSCursorAttributeName: [NSCursor pointingHandCursor] };
 }
 
@@ -92,18 +111,25 @@
     [_patronsTextView sizeToFit];
     CGFloat diff = _patronsTextView.frame.size.height - rect.size.height;
     rect.size.height = _patronsTextView.frame.size.height;
+    rect.origin.y -= diff;
     _patronsTextView.enclosingScrollView.frame = rect;
-
+    
     rect = self.window.frame;
     rect.size.height += diff;
+    rect.origin.y -= diff;
     [self.window setFrame:rect display:YES animate:animate];
 }
 
 - (NSAttributedString *)defaultPatronsString {
     NSString *string = [NSString stringWithFormat:@"Loading supporters…"];
     NSMutableAttributedString *attributedString =
-        [[[NSMutableAttributedString alloc] initWithString:string] autorelease];
+        [[[NSMutableAttributedString alloc] initWithString:string
+                                                attributes:self.attributes] autorelease];
     return attributedString;
+}
+
+- (NSDictionary *)attributes {
+    return @{ NSForegroundColorAttributeName: [NSColor controlTextColor] };
 }
 
 - (void)setPatrons:(NSArray *)patronNames {
@@ -117,8 +143,10 @@
     }];
     NSString *patrons = [sortedNames componentsJoinedWithOxfordComma];
     NSString *string = [NSString stringWithFormat:@"iTerm2 is generously supported by %@ on ", patrons];
+    NSDictionary *attributes = [self attributes];
     NSMutableAttributedString *attributedString =
-        [[[NSMutableAttributedString alloc] initWithString:string] autorelease];
+        [[[NSMutableAttributedString alloc] initWithString:string
+                                                attributes:attributes] autorelease];
     NSAttributedString *patreonLink = [self attributedStringWithLinkToURL:@"https://patreon.com/gnachman"
                                                                     title:@"Patreon"];
     [attributedString appendAttributedString:patreonLink];
