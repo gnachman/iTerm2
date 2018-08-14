@@ -24,6 +24,22 @@
     
 }
 
+- (NSColor *)psm_highlightedColor:(double)weight {
+    NSColor *color = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    const CGFloat amount = 0.1;
+    CGFloat delta = amount;
+    CGFloat proposed = color.it_hspBrightness + delta;
+    if (proposed < 0 || proposed > 1) {
+        delta = -delta;
+    }
+    delta *= weight;
+    return [NSColor colorWithSRGBRed:color.redComponent + delta
+                               green:color.greenComponent + delta
+                                blue:color.blueComponent + delta
+                               alpha:1];
+    
+}
+
 @end
 
 @implementation PSMMinimalTabStyle
@@ -67,12 +83,18 @@
 }
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
-#warning TODO: Support highlightAmount
 #warning TODO: If there's a tab color then this should not adjust non-selected tabs
+    NSColor *color;
     if (self.tabBar.cells.count > 1 && !selected) {
-        return [self.tabBarColor psm_nonSelectedColor];
+        color = [self.tabBarColor psm_nonSelectedColor];
+    } else {
+        color = self.tabBarColor;
     }
-    return self.tabBarColor;
+    if (selected || highlightAmount == 0) {
+        return color;
+    }
+    color = [color psm_highlightedColor:highlightAmount];
+    return color;
 }
 
 - (BOOL)useLightControls {
