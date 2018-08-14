@@ -22,6 +22,7 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 @implementation iTermStatusBarTextComponent {
     NSTextField *_textField;
     NSTextField *_measuringField;
+    NSString *_longestStringValue;
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
@@ -120,10 +121,13 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 }
 
 - (void)updateTextFieldIfNeeded {
-    if (![self setValueInField:_textField compressed:YES]) {
-        return;
+    [self setValueInField:_textField compressed:YES];
+
+    NSString *longest = self.longestStringValue ?: @"";
+    if (![longest isEqual:_longestStringValue]) {
+        _longestStringValue = longest;
+        [self.delegate statusBarComponentPreferredSizeDidChange:self];
     }
-    [self.delegate statusBarComponentPreferredSizeDidChange:self];
 }
 
 - (nullable NSString *)stringValueForCurrentWidth {
