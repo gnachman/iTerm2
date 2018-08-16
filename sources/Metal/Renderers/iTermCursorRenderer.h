@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)newIMECursorRendererWithDevice:(id<MTLDevice>)device;
 + (instancetype)newBlockCursorRendererWithDevice:(id<MTLDevice>)device;
 + (instancetype)newFrameCursorRendererWithDevice:(id<MTLDevice>)device;
++ (instancetype)newKeyCursorRendererWithDevice:(id<MTLDevice>)device;
 
 + (iTermCopyModeCursorRenderer *)newCopyModeCursorRendererWithDevice:(id<MTLDevice>)device;
 
@@ -34,6 +35,9 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface iTermFrameCursorRenderer : iTermCursorRenderer
+@end
+
+@interface iTermKeyCursorRenderer : iTermCursorRenderer
 @end
 
 NS_ASSUME_NONNULL_END

@@ -103,6 +103,7 @@ typedef struct {
     iTermCursorRenderer *_frameCursorRenderer;
     iTermCopyModeCursorRenderer *_copyModeCursorRenderer;
     iTermCopyBackgroundRenderer *_copyBackgroundRenderer;
+    iTermCursorRenderer *_keyCursorRenderer;
     iTermImageRenderer *_imageRenderer;
 #if ENABLE_USE_TEMPORARY_TEXTURE
     iTermCopyToDrawableRenderer *_copyToDrawableRenderer;
@@ -172,6 +173,7 @@ typedef struct {
         _blockCursorRenderer = [iTermCursorRenderer newBlockCursorRendererWithDevice:device];
         _frameCursorRenderer = [iTermCursorRenderer newFrameCursorRendererWithDevice:device];
         _copyModeCursorRenderer = [iTermCursorRenderer newCopyModeCursorRendererWithDevice:device];
+        _keyCursorRenderer = [iTermCursorRenderer newKeyCursorRendererWithDevice:device];
         _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:device];
 #if ENABLE_USE_TEMPORARY_TEXTURE
         _copyToDrawableRenderer = [[iTermCopyToDrawableRenderer alloc] initWithDevice:device];
@@ -933,6 +935,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         iTermCopyModeCursorRendererTransientState *tState = [frameData transientStateForRenderer:_copyModeCursorRenderer];
         tState.selecting = cursorInfo.copyModeCursorSelecting;
         tState.coord = cursorInfo.copyModeCursorCoord;
+    } else if (cursorInfo.password) {
+        iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_keyCursorRenderer];
+        tState.coord = cursorInfo.coord;
     } else if (cursorInfo.cursorVisible) {
         switch (cursorInfo.type) {
             case CURSOR_UNDERLINE: {
@@ -1331,7 +1336,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 - (void)drawCursorBeforeTextWithFrameData:(iTermMetalFrameData *)frameData {
     iTermMetalCursorInfo *cursorInfo = [frameData.perFrameState metalDriverCursorInfo];
 
-    if (!cursorInfo.copyMode && cursorInfo.cursorVisible) {
+    if (!cursorInfo.copyMode && !cursorInfo.password && cursorInfo.cursorVisible) {
         switch (cursorInfo.type) {
             case CURSOR_UNDERLINE:
                 if (frameData.intermediateRenderPassDescriptor) {
@@ -1365,6 +1370,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     if (cursorInfo.copyMode) {
         [self drawCellRenderer:_copyModeCursorRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
+    } else if (cursorInfo.password) {
+        [self drawCellRenderer:_keyCursorRenderer
                      frameData:frameData
                           stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
     } else if (cursorInfo.cursorVisible) {
@@ -1576,6 +1585,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
               _blockCursorRenderer,
               _frameCursorRenderer,
               _copyModeCursorRenderer,
+              _keyCursorRenderer,
               _timestampsRenderer ];
 }
 
