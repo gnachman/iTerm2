@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
     id<MTLTexture> _texture;
     CGSize _size;
     CGSize _imageSize;
+    NSImage *_previousImage;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -47,6 +48,10 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)setBadgeImage:(NSImage *)image context:(nonnull iTermMetalBufferPoolContext *)context {
+    if (image == _previousImage) {
+        return;
+    }
+    _previousImage = image;
     _size = image.size;
     _imageSize = image.size;
     _texture = [_metalRenderer textureFromImage:image context:context];
