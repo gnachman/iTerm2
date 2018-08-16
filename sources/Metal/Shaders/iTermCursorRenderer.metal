@@ -64,12 +64,12 @@ iTermTextureCursorVertexShader(uint vertexID [[ vertex_id ]],
     return out;
 }
 
-fragment float4
+fragment half4
 iTermTextureCursorFragmentShader(iTermTextureCursorVertexFunctionOutput in [[stage_in]],
                                    texture2d<half> texture [[ texture(iTermTextureIndexPrimary) ]]) {
     constexpr sampler textureSampler (mag_filter::linear,
                                       min_filter::linear);
 
     const half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
-    return float4(colorSample);
+    return colorSample;
 }
