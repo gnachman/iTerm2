@@ -31,6 +31,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // This is a "frame" cursor, as seen when the view does not have focus.
 @property (nonatomic) BOOL frameOnly;
 @property (nonatomic) BOOL copyMode;
+@property (nonatomic) BOOL password;
 @property (nonatomic) BOOL copyModeCursorSelecting;
 @property (nonatomic) VT100GridCoord copyModeCursorCoord;
 @end
