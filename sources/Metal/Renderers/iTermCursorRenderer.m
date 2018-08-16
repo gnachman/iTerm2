@@ -85,24 +85,25 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (CGSize)size {
     CGSize size = self.cellConfiguration.cellSize;
-    size.width += 1;
+    size.width *= 2;
     return size;
 }
 
 - (NSImage *)newImage {
-    NSImage *image = [[NSImage alloc] initWithSize:self.size];
+    CGSize size = self.size;
+    NSImage *image = [[NSImage alloc] initWithSize:size];
 
     [image lockFocus];
     const CGFloat heightFraction = 1 / 3.0;
     const CGFloat scale = self.cellConfiguration.scale;
-    NSRect rect = NSMakeRect(scale / 2,
-                             scale / 2,
-                             self.cellConfiguration.cellSize.width,
-                             self.cellConfiguration.cellSize.height - scale / 2);
-    NSRect cursorRect = NSMakeRect(scale / 2,
-                                   rect.size.height * (1 - heightFraction) + scale / 2,
+    NSRect rect = NSMakeRect(0,
+                             0,
+                             size.width,
+                             size.height);
+    NSRect cursorRect = NSMakeRect(0,
+                                   rect.size.height * (1 - heightFraction),
                                    rect.size.width,
-                                   self.cellConfiguration.cellSize.height * heightFraction - scale / 2);
+                                   size.height * heightFraction);
     const CGFloat r = (self.selecting ? 2 : 1) * scale;
 
     NSBezierPath *path = [[NSBezierPath alloc] init];
@@ -462,13 +463,15 @@ NS_ASSUME_NONNULL_BEGIN
     iTermCopyModeCursorRendererTransientState *tState = transientState;
     iTermCursorDescription description = {
         .origin = {
-            tState.cellConfiguration.cellSize.width * tState.coord.x - tState.cellConfiguration.cellSize.width / 2,
+            tState.cellConfiguration.cellSize.width * tState.coord.x - tState.cellConfiguration.cellSize.width,
             tState.cellConfiguration.cellSize.height * (tState.cellConfiguration.gridSize.height - tState.coord.y - 1),
         },
         .color = { 0, 0, 0, 0 }
     };
     // This cursor is a little larger than a cell.
-    tState.vertexBuffer = [_cellRenderer newQuadOfSize:tState.size poolContext:tState.poolContext];
+    tState.vertexBuffer = [_cellRenderer newQuadOfSize:CGSizeMake(tState.size.width,
+                                                                  tState.size.height)
+                                           poolContext:tState.poolContext];
     id<MTLBuffer> descriptionBuffer = [_descriptionPool requestBufferFromContext:tState.poolContext
                                                                        withBytes:&description
                                                                   checkIfChanged:YES];
