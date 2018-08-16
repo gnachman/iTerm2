@@ -1018,7 +1018,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         iTermCopyModeCursorRendererTransientState *tState = [frameData transientStateForRenderer:_copyModeCursorRenderer];
         tState.selecting = cursorInfo.copyModeCursorSelecting;
         tState.coord = cursorInfo.copyModeCursorCoord;
-    } else if (cursorInfo.password) {
+    }
+    if (cursorInfo.cursorVisible && cursorInfo.password) {
         iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_keyCursorRenderer];
         tState.coord = cursorInfo.coord;
     } else if (cursorInfo.cursorVisible) {
@@ -1488,35 +1489,38 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [self drawCellRenderer:_copyModeCursorRenderer
                      frameData:frameData
                           stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
-    } else if (cursorInfo.password) {
-        [self drawCellRenderer:_keyCursorRenderer
-                     frameData:frameData
-                          stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
-    } else if (cursorInfo.cursorVisible) {
-        switch (cursorInfo.type) {
-            case CURSOR_UNDERLINE:
-                if (!frameData.intermediateRenderPassDescriptor) {
-                    [self drawCellRenderer:_underlineCursorRenderer
-                                 frameData:frameData
-                                      stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
-                }
-                break;
-            case CURSOR_BOX:
-                if (cursorInfo.frameOnly) {
-                    [self drawCellRenderer:_frameCursorRenderer
-                                 frameData:frameData
-                                      stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
-                }
-                break;
-            case CURSOR_VERTICAL:
-                if (!frameData.intermediateRenderPassDescriptor) {
-                    [self drawCellRenderer:_barCursorRenderer
-                                 frameData:frameData
-                                      stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
-                }
-                break;
-            case CURSOR_DEFAULT:
-                break;
+    }
+    if (cursorInfo.cursorVisible) {
+        if (cursorInfo.password) {
+            [self drawCellRenderer:_keyCursorRenderer
+                         frameData:frameData
+                              stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
+        } else {
+            switch (cursorInfo.type) {
+                case CURSOR_UNDERLINE:
+                    if (!frameData.intermediateRenderPassDescriptor) {
+                        [self drawCellRenderer:_underlineCursorRenderer
+                                     frameData:frameData
+                                          stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
+                    }
+                    break;
+                case CURSOR_BOX:
+                    if (cursorInfo.frameOnly) {
+                        [self drawCellRenderer:_frameCursorRenderer
+                                     frameData:frameData
+                                          stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
+                    }
+                    break;
+                case CURSOR_VERTICAL:
+                    if (!frameData.intermediateRenderPassDescriptor) {
+                        [self drawCellRenderer:_barCursorRenderer
+                                     frameData:frameData
+                                          stat:iTermMetalFrameDataStatPqEnqueueDrawCursor];
+                    }
+                    break;
+                case CURSOR_DEFAULT:
+                    break;
+            }
         }
     }
     if (frameData.perFrameState.imeInfo) {
