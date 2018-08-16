@@ -372,7 +372,6 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
     if (!image) {
         return nil;
     }
-
     NSRect imageRect = NSMakeRect(0, 0, image.size.width, image.size.height);
     CGImageRef imageRef = [image CGImageForProposedRect:&imageRect context:NULL hints:nil];
 
@@ -426,7 +425,9 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
                       forTexture:texture];
 
     free(rawData);
-
+    if (texture) {
+        [context didAddTextureOfSize:texture.width * texture.height];
+    }
     return texture;
 }
 
