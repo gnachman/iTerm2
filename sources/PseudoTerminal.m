@@ -5338,10 +5338,25 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (id)tabView:(PSMTabBarControl *)tabView valueOfOption:(PSMTabBarControlOptionKey)option {
-    if ([option isEqualToString:PSMTabBarControlOptionColoredSelectedTabOutlineStrength]) {
-        return @([iTermAdvancedSettingsModel coloredSelectedTabOutlineStrength]);
+    typedef id (^iTermTabSettingsProvider)(void);
+    static NSDictionary<PSMTabBarControlOptionKey, iTermTabSettingsProvider> *providers;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        providers = @{
+                      PSMTabBarControlOptionColoredSelectedTabOutlineStrength: ^id() {
+                          return @([iTermAdvancedSettingsModel coloredSelectedTabOutlineStrength]);
+                      },
+                      PSMTabBarControlOptionMinimalStyleBackgroundColorDifference: ^id() {
+                          return @([iTermAdvancedSettingsModel minimalTabStyleBackgroundColorDifference]);
+                      }, };
+        [providers retain];
+    });
+    iTermTabSettingsProvider provider = providers[option];
+    if (provider) {
+        return provider();
+    } else {
+        return nil;
     }
-    return nil;
 }
 
 - (BOOL)isInitialized

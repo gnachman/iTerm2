@@ -379,8 +379,9 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     [[[self psmTabControlView] style] drawTabCell:self highlightAmount:[self highlightAmount]];
 }
 
-- (void)drawPostHocDecorationsOnSelectedCellWithTabBarControl:(PSMTabBarControl *)bar {
-    [[[self psmTabControlView] style] drawPostHocDecorationsOnSelectedCell:self
+- (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell
+                               tabBarControl:(PSMTabBarControl *)bar {
+    [[[self psmTabControlView] style] drawPostHocDecorationsOnSelectedCell:cell
                                                              tabBarControl:bar];
 }
 

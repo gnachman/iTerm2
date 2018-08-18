@@ -14,14 +14,13 @@
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
 
-@interface NSColor (HSP)
-@property(nonatomic, readonly) CGFloat it_hspBrightness;
+@interface NSColor (PSMYosemiteTabStyle)
 
 - (NSColor *)it_srgbForColorInWindow:(NSWindow *)window;
 
 @end
 
-@implementation NSColor (HSP)
+@implementation NSColor (PSMYosemiteTabStyle)
 
 // http://www.nbdtech.com/Blog/archive/2008/04/27/Calculating-the-Perceived-Brightness-of-a-Color.aspx
 // http://alienryderflex.com/hsp.html
@@ -923,7 +922,7 @@
     }
     for (PSMTabBarCell *cell in [bar cells]) {
         if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], rect) && cell.state == NSOnState) {
-            [cell drawPostHocDecorationsOnSelectedCellWithTabBarControl:bar];
+            [cell drawPostHocDecorationsOnSelectedCell:cell tabBarControl:bar];
         }
     }
 }

@@ -9,10 +9,9 @@
 
 @implementation NSColor(PSMMinimalTabStyle)
 
-- (NSColor *)psm_nonSelectedColor {
+- (NSColor *)psm_nonSelectedColorWithDifference:(double)difference {
     NSColor *color = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
-    const CGFloat amount = 0.1;
-    CGFloat delta = -amount;
+    CGFloat delta = -difference;
     CGFloat proposed = color.it_hspBrightness + delta;
     if (proposed < 0 || proposed > 1) {
         delta = -delta;
@@ -85,7 +84,9 @@
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
     NSColor *color;
     if (self.tabBar.cells.count > 1 && !selected) {
-        color = [self.tabBarColor psm_nonSelectedColor];
+        const double difference = [[self.tabBar.delegate tabView:self.tabBar
+                                                   valueOfOption:PSMTabBarControlOptionMinimalStyleBackgroundColorDifference] doubleValue];
+        color = [self.tabBarColor psm_nonSelectedColorWithDifference:difference];
     } else {
         color = self.tabBarColor;
     }
@@ -112,7 +113,8 @@
     return [self textColorDefaultSelected:YES];
 }
 
-- (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell {
+- (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell
+                               tabBarControl:(PSMTabBarControl *)bar {
     if (self.anyTabHasColor) {
         const CGFloat brightness = [self tabColorBrightness:cell];
         NSRect rect = NSInsetRect(cell.frame, 0, 1.5);
