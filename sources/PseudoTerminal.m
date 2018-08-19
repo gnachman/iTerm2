@@ -882,7 +882,9 @@ ITERM_WEAKLY_REFERENCEABLE
     // are cases in fullscreen (e.g., when entering Lion fullscreen) when the
     // window doesn't have a title bar but also isn't borderless we also check
     // if we're in fullscreen.
+    const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     return ([iTermPreferences boolForKey:kPreferenceKeyEnableDivisionView] &&
+            preferredStyle != TAB_STYLE_MINIMAL &&
             !togglingFullScreen_ &&
             (self.window.styleMask & NSWindowStyleMaskTitled) &&
             ![self anyFullScreen] &&
@@ -5348,6 +5350,9 @@ ITERM_WEAKLY_REFERENCEABLE
                       },
                       PSMTabBarControlOptionMinimalStyleBackgroundColorDifference: ^id() {
                           return @([iTermAdvancedSettingsModel minimalTabStyleBackgroundColorDifference]);
+                      },
+                      PSMTabBarControlOptionColoredMinimalOutlineStrength: ^id() {
+                          return @([iTermAdvancedSettingsModel minimalTabStyleOutlineStrength]);
                       }, };
         [providers retain];
     });

@@ -148,4 +148,105 @@
     }
 }
 
+- (NSColor *)outlineColor {
+    CGFloat backgroundBrightness = self.tabBarColor.it_hspBrightness;
+    
+    const CGFloat delta = [[self.tabBar.delegate tabView:self.tabBar
+                                           valueOfOption:PSMTabBarControlOptionColoredMinimalOutlineStrength] doubleValue];
+    CGFloat value;
+    if (backgroundBrightness < 0.5) {
+        value = MIN(1, backgroundBrightness + delta);
+    } else {
+        value = MAX(0, backgroundBrightness - delta);
+    }
+    return [NSColor colorWithWhite:value alpha:1];
+}
+
+- (void)drawTabBar:(PSMTabBarControl *)bar
+            inRect:(NSRect)rect
+        horizontal:(BOOL)horizontal {
+    [super drawTabBar:bar inRect:rect horizontal:horizontal];
+    
+    NSRect beforeRect;
+    NSRect selectedRect = NSZeroRect;
+    NSRect afterRect;
+    if (bar.orientation == PSMTabBarHorizontalOrientation) {
+        beforeRect = NSMakeRect(0,
+                                0,
+                                [self leftMarginForTabBarControl],
+                                kPSMTabBarControlHeight);
+        afterRect = NSMakeRect(bar.frame.size.width - self.rightMarginForTabBarControl,
+                               0,
+                               self.rightMarginForTabBarControl,
+                               kPSMTabBarControlHeight);
+    } else {
+        beforeRect = NSMakeRect(0,
+                                0,
+                                bar.frame.size.width,
+                                self.topMarginForTabBarControl);
+        afterRect = NSMakeRect(0,
+                               bar.frame.size.height,
+                               bar.frame.size.width,
+                               1);
+    }
+    NSRect *current = &beforeRect;
+    
+    for (PSMTabBarCell *cell in [bar cells]) {
+        if ([cell isInOverflowMenu]) {
+            continue;
+        }
+        NSRect rect = cell.frame;
+        rect = NSInsetRect(rect, 0.5, 0.5);
+        if (cell.state == NSOnState) {
+            current = &selectedRect;
+        } else if (current == &selectedRect) {
+            current = &afterRect;
+        }
+        *current = NSUnionRect(*current, rect);
+    }
+    
+    NSBezierPath *path = [NSBezierPath bezierPath];
+    if (bar.orientation == PSMTabBarHorizontalOrientation) {
+        if (bar.tabLocation == PSMTab_TopTab) {
+            [path moveToPoint:NSMakePoint(NSMinX(beforeRect), NSMaxY(beforeRect))];
+            if (!NSEqualRects(selectedRect, NSZeroRect)) {
+                [path lineToPoint:NSMakePoint(NSMinX(selectedRect), NSMaxY(selectedRect))];
+                [path lineToPoint:NSMakePoint(NSMinX(selectedRect), NSMinY(selectedRect))];
+                [path lineToPoint:NSMakePoint(NSMaxX(selectedRect), NSMinY(selectedRect))];
+                [path lineToPoint:NSMakePoint(NSMaxX(selectedRect), NSMaxY(selectedRect))];
+            }
+            [path lineToPoint:NSMakePoint(NSMaxX(afterRect), NSMaxY(afterRect))];
+        } else {
+            // Bottom
+            const BOOL leftTruncated = (beforeRect.size.width == 0);
+            if (leftTruncated) {
+                [path moveToPoint:NSMakePoint(NSMinX(selectedRect), NSMaxY(selectedRect))];
+            } else {
+                [path moveToPoint:NSMakePoint(NSMinX(beforeRect), NSMinY(beforeRect))];
+            }
+            if (!NSEqualRects(selectedRect, NSZeroRect)) {
+                if (!leftTruncated) {
+                    [path lineToPoint:NSMakePoint(NSMinX(selectedRect), NSMinY(selectedRect))];
+                    [path lineToPoint:NSMakePoint(NSMinX(selectedRect), NSMaxY(selectedRect))];
+                }
+                [path lineToPoint:NSMakePoint(NSMaxX(selectedRect), NSMaxY(selectedRect))];
+                [path lineToPoint:NSMakePoint(NSMaxX(selectedRect), NSMinY(selectedRect))];
+            }
+            [path lineToPoint:NSMakePoint(NSMaxX(afterRect), NSMinY(afterRect))];
+        }
+    } else {
+        // Vertical orientation
+        [path moveToPoint:NSMakePoint(NSMaxX(beforeRect), NSMinY(beforeRect))];
+        if (!NSEqualRects(selectedRect, NSZeroRect)) {
+            [path lineToPoint:NSMakePoint(NSMaxX(selectedRect), NSMinY(selectedRect))];
+            [path lineToPoint:NSMakePoint(NSMinX(selectedRect), NSMinY(selectedRect))];
+            [path lineToPoint:NSMakePoint(NSMinX(selectedRect), NSMaxY(selectedRect))];
+            [path lineToPoint:NSMakePoint(NSMaxX(selectedRect), NSMaxY(selectedRect))];
+        }
+        [path lineToPoint:NSMakePoint(NSMaxX(afterRect), NSMaxY(afterRect))];
+    }
+    [[self outlineColor] set];
+    [path stroke];
+}
+
 @end

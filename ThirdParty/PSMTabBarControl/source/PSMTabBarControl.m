@@ -42,6 +42,8 @@ const NSInteger kPSMStartResizeAnimation = 0;
 PSMTabBarControlOptionKey PSMTabBarControlOptionColoredSelectedTabOutlineStrength = @"PSMTabBarControlOptionColoredSelectedTabOutlineStrength";
 PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalStyleBackgroundColorDifference =
     @"PSMTabBarControlOptionMinimalStyleBackgroundColorDifference";
+PSMTabBarControlOptionKey PSMTabBarControlOptionColoredMinimalOutlineStrength =
+    @"PSMTabBarControlOptionColoredMinimalOutlineStrength";
 
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol>
 @end

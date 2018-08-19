@@ -236,5 +236,6 @@
 + (double)underlineCursorHeight;
 + (double)coloredSelectedTabOutlineStrength;
 + (double)minimalTabStyleBackgroundColorDifference;
++ (double)minimalTabStyleOutlineStrength;
 
 @end
