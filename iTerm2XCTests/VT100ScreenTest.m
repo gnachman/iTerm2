@@ -901,6 +901,15 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenDidClearScrollbackBuffer:(VT100Screen *)screen {
 }
 
+- (CGFloat)screenBackingScaleFactor {
+    return 1;
+}
+
+
+- (void)screenReportFocusWillChangeTo:(BOOL)reportFocus {
+}
+
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {

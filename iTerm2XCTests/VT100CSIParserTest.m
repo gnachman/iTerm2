@@ -119,8 +119,8 @@
     XCTAssert(token.csi->count == 1);
     XCTAssert(token.csi->p[0] == 38);
 
-    int subs[VT100CSISUBPARAM_MAX];
-    int numberOfSubparameters = iTermParserGetAllCSISubparametersForParameter(token.csi, 0, subs);
+    int *subs = token.csi->sub[0];
+    int numberOfSubparameters = token.csi->subCount[0];
 
     XCTAssert(numberOfSubparameters == 7);
     XCTAssert(subs[0] == 2);
@@ -180,6 +180,7 @@
         { 0, 0, 'F', VT100CSI_CPL, 1, -1, -1 },
         { 0, 0, 'G', ANSICSI_CHA, 1, -1, -1 },
         { 0, 0, 'H', VT100CSI_CUP, 1, 1, -1 },
+        { 0, 0, 'I', VT100CSI_CHT, 1, -1, -1 },
         // I not supported (Cursor Forward Tabulation P s tab stops (default = 1) (CHT))
         { 0, 0, 'J', VT100CSI_ED, 0, -1, -1 },
         // ?J not supported (Erase in Display (DECSED))
@@ -287,7 +288,6 @@
 // This test is here to remind you to write a test when implementing support for a new CSI code.
 - (void)testUnsupportedCodes {
     char *unsupported[] = {
-        "I",
         "?J",
         "?K",
         "?1;1;1S",
@@ -323,7 +323,7 @@
     const int n = sizeof(unsupported) / sizeof(*unsupported);
     for (int i = 0; i < n; i++) {
         VT100Token *token = [self tokenForDataWithFormat:@"%c[%s", VT100CC_ESC, unsupported[i]];
-        XCTAssert(token->type == VT100_NOTSUPPORT);
+        XCTAssert(token->type == VT100_NOTSUPPORT, @"Token became supported: %@", token.description);
     }
 }
 

@@ -2678,4 +2678,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewShowHoverURL:(NSString *)url {
 }
 
+- (NSEdgeInsets)textViewEdgeInsets {
+    return NSEdgeInsetsZero;
+}
+
 @end

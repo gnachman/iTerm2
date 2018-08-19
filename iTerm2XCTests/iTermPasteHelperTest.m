@@ -517,7 +517,7 @@ static const double kFloatingPointTolerance = 0.00001;
                 isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
-    [_helper enqueueEvent:[NSEvent keyEventWithType:NSKeyDown
+    [_helper enqueueEvent:[NSEvent keyEventWithType:NSEventTypeKeyDown
                                            location:NSZeroPoint
                                       modifierFlags:0
                                           timestamp:[NSDate timeIntervalSinceReferenceDate]
