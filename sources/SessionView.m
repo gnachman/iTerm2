@@ -245,7 +245,6 @@ static NSDate* lastResizeDate_;
     if (@available(macOS 10.14, *)) {
         _metalView.layer.opaque = NO;
     } else {
-
         _metalView.layer.opaque = YES;
     }
 #else
