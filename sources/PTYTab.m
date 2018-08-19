@@ -397,6 +397,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [parseTree_ release];
     [hiddenLiveViews_ release];
     [_viewToSessionMap release];
+    [tabViewItem_ release];
     [super dealloc];
 }
 
@@ -808,7 +809,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)setTabViewItem:(NSTabViewItem *)theTabViewItem {
     PtyLog(@"PTYTab setTabViewItem:%p", theTabViewItem);
     // The tab view item holds a reference to us. So we don't hold a reference to it.
-    tabViewItem_ = theTabViewItem;
+    [tabViewItem_ autorelease];
+    tabViewItem_ = [theTabViewItem retain];
     if (theTabViewItem != nil) {
         // While Lion-restoring windows, there may be no active session.
         if ([self activeSession]) {
