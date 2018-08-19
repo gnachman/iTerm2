@@ -289,7 +289,11 @@ static NSString *const kLogDebugInfoKey = @"Log Smart Selection Debug Info";
 }
 
 - (IBAction)editActions:(id)sender {
-    NSDictionary *rule = [self.rules objectAtIndex:[tableView_ selectedRow]];
+    const NSInteger row = [tableView_ selectedRow];
+    if (row < 0 || row >= self.rules.count) {
+        return;
+    }
+    NSDictionary *rule = [self.rules objectAtIndex:row];
     if (!rule) {
         return;
     }
