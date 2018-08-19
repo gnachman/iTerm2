@@ -2677,7 +2677,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _queuedTokens = [[NSMutableArray alloc] init];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
         for (VT100Token *token in tokens) {
-            [token recycleObject];
+            [token release];
         }
         [tokens release];
     });
@@ -2725,7 +2725,7 @@ ITERM_WEAKLY_REFERENCEABLE
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
         for (int i = 0; i < n; i++) {
             VT100Token *token = CVectorGetObject(&temp, i);
-            [token recycleObject];
+            [token release];
         }
         CVectorDestroy(&temp);
     })

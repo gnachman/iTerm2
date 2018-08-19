@@ -1,5 +1,4 @@
 #import <Foundation/Foundation.h>
-#import "iTermObjectPool.h"
 #import "iTermParser.h"
 #import "ScreenChar.h"
 
@@ -208,7 +207,7 @@ typedef struct {
     ScreenChars *screenChars;
 } AsciiData;
 
-@interface VT100Token : iTermPooledObject {
+@interface VT100Token : NSObject {
 @public
     VT100TerminalTokenType type;
 
@@ -241,7 +240,6 @@ typedef struct {
 // For ascii strings (type==VT100_ASCIISTRING).
 @property(nonatomic, readonly) AsciiData *asciiData;
 
-// Warning: autoreleased VT100Token doesn't behave normally. Use -recycleObject.
 + (instancetype)token;
 + (instancetype)tokenForControlCharacter:(unsigned char)controlCharacter;
 
