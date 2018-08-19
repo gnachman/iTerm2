@@ -11,6 +11,10 @@
 @implementation NSAppearance (iTerm)
 
 - (iTermPreferencesTabStyle)it_tabStyle:(iTermPreferencesTabStyle)tabStyle {
+    if (tabStyle >= TAB_STYLE_COUNT) {
+        // Could happen when going from nightly (with compact style) to 3.2.x, which lacks it.
+        return TAB_STYLE_LIGHT;
+    }
     if (tabStyle != TAB_STYLE_AUTOMATIC) {
         return tabStyle;
     }

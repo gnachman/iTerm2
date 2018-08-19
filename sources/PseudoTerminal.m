@@ -2815,6 +2815,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_COUNT:
             if ([self updateSessionScrollbars]) {
                 PtyLog(@"Fitting tabs to window because scrollbars changed.");
                 [self fitTabsToWindow];
@@ -3048,6 +3049,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_COUNT:
             PtyLog(@"Window type = NORMAL, NO_TITLE_BAR, or LION_FULL_SCREEN");
             return frame;
 
@@ -3193,6 +3195,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_COUNT:
             return YES;
     }
 
@@ -4801,6 +4804,7 @@ ITERM_WEAKLY_REFERENCEABLE
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab:
             switch ([term windowType]) {
+                case WINDOW_TYPE_COUNT:
                 case WINDOW_TYPE_NORMAL: {
                     CGFloat contentHeight = [term.window contentRectForFrameRect:NSMakeRect(0, 0, 100, 100)].size.height;
                     CGFloat titleBarHeight = 100 - contentHeight;
@@ -4837,6 +4841,7 @@ ITERM_WEAKLY_REFERENCEABLE
             switch ([term windowType]) {
                 case WINDOW_TYPE_NORMAL:
                 case WINDOW_TYPE_NO_TITLE_BAR:
+                case WINDOW_TYPE_COUNT:
                     if (![iTermPreferences boolForKey:kPreferenceKeyHideTabBar]) {
                         point.y -= self.tabBarControl.frame.size.height;
                         [[term window] setFrameOrigin:point];
@@ -4863,6 +4868,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     break;
                 }
 
+                case WINDOW_TYPE_COUNT:
                 case WINDOW_TYPE_NORMAL: {
                     CGFloat contentHeight = [term.window contentRectForFrameRect:NSMakeRect(0, 0, 100, 100)].size.height;
                     CGFloat titleBarHeight = 100 - contentHeight;
@@ -6683,6 +6689,7 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_COUNT:
             assert(NO);
         case TAB_STYLE_LIGHT:
             style = [[[PSMYosemiteTabStyle alloc] init] autorelease];

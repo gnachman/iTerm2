@@ -213,6 +213,7 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_LION_FULL_SCREEN:
             return [windowController canonicalFrameForScreen:screen];
 
+        case WINDOW_TYPE_COUNT:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
             return [self frameByMovingFrame:windowController.window.frame
@@ -253,6 +254,7 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_BOTTOM_PARTIAL:
             return NSMakePoint(rect.origin.x, NSMinY(screen.visibleFrameIgnoringHiddenDock) - NSHeight(rect));
 
+        case WINDOW_TYPE_COUNT:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
             return [self frameByMovingFrame:rect fromScreen:self.windowController.window.screen toScreen:screen].origin;
@@ -376,6 +378,7 @@ static NSString *const kArrangement = @"Arrangement";
             return kAnimationDirectionUp;
             break;
 
+        case WINDOW_TYPE_COUNT:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
@@ -427,6 +430,7 @@ static NSString *const kArrangement = @"Arrangement";
                 [self rollInAnimatingInDirection:[self animateInDirectionForWindowType:self.windowController.windowType]];
                 break;
 
+            case WINDOW_TYPE_COUNT:
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
@@ -475,6 +479,7 @@ static NSString *const kArrangement = @"Arrangement";
                 break;
             }
 
+            case WINDOW_TYPE_COUNT:
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)

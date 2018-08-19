@@ -263,6 +263,8 @@ typedef enum {
     WINDOW_TYPE_RIGHT_PARTIAL = 11,
 
     WINDOW_TYPE_NO_TITLE_BAR = 12,
+
+    WINDOW_TYPE_COUNT  // This must be last
 } iTermWindowType;
 
 typedef NS_ENUM(NSInteger, iTermObjectType) {

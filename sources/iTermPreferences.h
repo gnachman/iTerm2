@@ -25,7 +25,9 @@ typedef NS_ENUM(int, iTermPreferencesTabStyle) {
     TAB_STYLE_DARK = 1,
     TAB_STYLE_LIGHT_HIGH_CONTRAST = 2,
     TAB_STYLE_DARK_HIGH_CONTRAST = 3,
-    TAB_STYLE_AUTOMATIC = 4
+    TAB_STYLE_AUTOMATIC = 4,
+
+    TAB_STYLE_COUNT // This must be last
 };
 
 // Values for kPreferenceKeyTabPosition (corresponds to tags in control).

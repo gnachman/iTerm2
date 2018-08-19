@@ -344,6 +344,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                         brightness:0.25
                                              alpha:1];
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_COUNT:
             assert(NO);
     }
 }

@@ -143,6 +143,7 @@ static const CGFloat kButtonSize = 17;
     CGFloat whiteLevel = 0;
     switch ([appearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_COUNT:
             assert(NO);
         case TAB_STYLE_LIGHT:
             if (![delegate_ sessionTitleViewIsFirstResponder]) {
@@ -194,6 +195,7 @@ static const CGFloat kButtonSize = 17;
         iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
         switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
             case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_COUNT:
                 assert(NO);
             case TAB_STYLE_LIGHT:
                 tabColor = [NSColor colorWithCalibratedHue:hue
@@ -292,6 +294,7 @@ static const CGFloat kButtonSize = 17;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_COUNT:
             assert(NO);
             
         case TAB_STYLE_LIGHT:
