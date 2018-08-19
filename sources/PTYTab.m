@@ -1191,7 +1191,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                               session:oldSession] autorelease]];
 
     // This starts the new session's update timer
-    [newSession updateDisplay];
+    [newSession updateDisplayBecause:@"replacing active session with synthetic"];
     [realParentWindow_.window makeFirstResponder:newSession.textview];
 
     // Keep the live session in self.viewToSessionMap so it doesn't get released.

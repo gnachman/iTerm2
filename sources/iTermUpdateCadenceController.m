@@ -66,6 +66,15 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     [_updateTimer invalidate];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p delegate=%@ active=%@ cadence=%@>",
+            NSStringFromClass([self class]),
+            self,
+            self.delegate,
+            @(self.isActive),
+            @(_cadence)];
+}
+
 - (void)changeCadenceIfNeeded {
     [self changeCadenceIfNeeded:NO];
 }
@@ -102,6 +111,15 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
 - (void)changeCadenceIfNeeded:(BOOL)force {
     iTermUpdateCadenceState state = [_delegate updateCadenceControllerState];
+    DLog(@"%@ state: active=%@, idle=%@, visible=%@, useAdaptiveFrameRate=%@, adaptiveFrameRateThroughputThreshold=%@, slowFrameRate=%@, liveResizing=%@",
+         self,
+         @(state.active),
+         @(state.idle),
+         @(state.visible),
+         @(state.useAdaptiveFrameRate),
+         @(state.adaptiveFrameRateThroughputThreshold),
+         @(state.slowFrameRate),
+         @(state.liveResizing));
 
     self.isActive = (state.active || !state.idle);
     BOOL effectivelyActive = (_isActive || [NSApp isActive]);
@@ -110,14 +128,18 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
             const NSInteger kThroughputLimit = state.adaptiveFrameRateThroughputThreshold;
             const NSInteger estimatedThroughput = [_throughputEstimator estimatedThroughput];
             if (estimatedThroughput < kThroughputLimit && estimatedThroughput > 0) {
+                DLog(@"select fast cadence");
                 [self setUpdateCadence:kFastUpdateCadence liveResizing:state.liveResizing force:force];
             } else {
+                DLog(@"select slow frame rate");
                 [self setUpdateCadence:1.0 / state.slowFrameRate liveResizing:state.liveResizing force:force];
             }
         } else {
+            DLog(@"select active update cadence");
             [self setUpdateCadence:_activeUpdateCadence liveResizing:state.liveResizing force:force];
         }
     } else {
+        DLog(@"select background update cadence");
         [self setUpdateCadence:kBackgroundUpdateCadence liveResizing:state.liveResizing force:force];
     }
 }
@@ -132,10 +154,10 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
 - (void)setTimerUpdateCadence:(NSTimeInterval)cadence liveResizing:(BOOL)liveResizing force:(BOOL)force {
     if (_updateTimer.timeInterval == cadence) {
-        DLog(@"No change to cadence.");
+        DLog(@"No change to cadence: %@", self);
         return;
     }
-    DLog(@"Set cadence of %@ to %f", self.delegate, cadence);
+    DLog(@"Set cadence of %@ to %f", self, cadence);
 
     if (liveResizing) {
         // This solves the bug where we don't redraw properly during live resize.
@@ -165,10 +187,10 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 - (void)setGCDUpdateCadence:(NSTimeInterval)cadence liveResizing:(BOOL)liveResizing force:(BOOL)force {
     const NSTimeInterval period = liveResizing ? _activeUpdateCadence : cadence;
     if (_cadence == period) {
-        DLog(@"No change to cadence.");
+        DLog(@"No change to cadence: %@", self);
         return;
     }
-    DLog(@"Set cadence of %@ to %f", self.delegate, cadence);
+    DLog(@"Set cadence of %@ to %f", self, cadence);
 
     if (!force && _cadence > 0 && cadence > _cadence) {
         // Don't increase the cadence until after the screen has a chance to
@@ -194,6 +216,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
                               0.0005 * NSEC_PER_SEC);
     __weak __typeof(self) weakSelf = self;
     dispatch_source_set_event_handler(_gcdUpdateTimer, ^{
+        DLog(@"GCD cadence timer fired for %@", weakSelf);
         [weakSelf updateDisplay];
     });
     dispatch_resume(_gcdUpdateTimer);
