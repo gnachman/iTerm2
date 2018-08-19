@@ -4840,10 +4840,19 @@ ITERM_WEAKLY_REFERENCEABLE
         viewImage = [[[NSImage alloc] initWithSize:contentFrame.size] autorelease];
         NSImage *tabViewImage = [[[NSImage alloc] init] autorelease];
 
-        [textview lockFocus];
-        NSBitmapImageRep *tabviewRep = [[[NSBitmapImageRep alloc] initWithFocusedViewRect:viewRect] autorelease];
+        NSBitmapImageRep *tabviewRep;
+        
+        if (@available(macOS 10.14, *)) {
+            tabviewRep = [textview bitmapImageRepForCachingDisplayInRect:viewRect];
+            [textview cacheDisplayInRect:viewRect toBitmapImageRep:tabviewRep];
+        } else {
+            [textview lockFocus];
+            tabviewRep = [[[NSBitmapImageRep alloc] initWithFocusedViewRect:viewRect] autorelease];
+            [textview unlockFocus];
+        }
+        
         [tabViewImage addRepresentation:tabviewRep];
-        [textview unlockFocus];
+
 
         [viewImage lockFocus];
         BOOL isHorizontal = YES;
