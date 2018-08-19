@@ -46,7 +46,6 @@ iTermBackgroundImageRepeatFragmentShader(iTermBackgroundImageVertexFunctionOutpu
     return texture.sample(textureSampler, in.textureCoordinate);
 }
 
-#if ENABLE_TRANSPARENT_METAL_WINDOWS
 fragment half4
 iTermBackgroundImageWithAlphaClampFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
                                                  constant float *alpha [[ buffer(iTermFragmentInputIndexAlpha) ]],
@@ -71,4 +70,3 @@ iTermBackgroundImageWithAlphaRepeatFragmentShader(iTermBackgroundImageVertexFunc
     colorSample.w = static_cast<half>(*alpha);
     return colorSample;
 }
-#endif

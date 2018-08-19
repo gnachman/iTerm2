@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermMetalCellRenderer *_blendingRenderer;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     iTermMetalCellRenderer *_nonblendingRenderer NS_AVAILABLE_MAC(10_14);
+    iTermMetalCellRenderer *_compositeOverRenderer NS_AVAILABLE_MAC(10_14);
 #endif
     iTermMetalBufferPool *_colorPool;
     iTermMetalBufferPool *_verticesPool;
@@ -35,6 +36,12 @@ NS_ASSUME_NONNULL_BEGIN
                                                                          blending:nil
                                                                    piuElementSize:0
                                                               transientStateClass:[iTermMarginRendererTransientState class]];
+            _compositeOverRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
+                                                                 vertexFunctionName:@"iTermMarginVertexShader"
+                                                               fragmentFunctionName:@"iTermMarginFragmentShader"
+                                                                           blending:[iTermMetalBlending backgroundColorCompositing]
+                                                                     piuElementSize:0
+                                                                transientStateClass:[iTermMarginRendererTransientState class]];
         }
 #endif
         _blendingRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
@@ -57,7 +64,7 @@ NS_ASSUME_NONNULL_BEGIN
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     if (@available(macOS 10.14, *)) {
         if (configuration.hasBackgroundImage) {
-            return _blendingRenderer;
+            return _compositeOverRenderer;
         } else {
             return _nonblendingRenderer;
         }
