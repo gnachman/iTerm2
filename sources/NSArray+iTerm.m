@@ -67,7 +67,7 @@
     return temp;
 }
 
-- (NSArray *)filteredArrayUsingBlock:(BOOL (^)(id anObject))block {
+- (NSArray *)filteredArrayUsingBlock:(BOOL (^NS_NOESCAPE)(id))block {
     NSIndexSet *indexes = [self indexesOfObjectsPassingTest:^BOOL(id  _Nonnull obj,
                                                                   NSUInteger idx,
                                                                   BOOL * _Nonnull stop) {

@@ -2537,12 +2537,12 @@ static BOOL ArrayDefault_IsValidValue(int32_t value) {
   return [_array countByEnumeratingWithState:state objects:buffer count:len];
 }
 
-- (void)enumerateObjectsUsingBlock:(void (^)(id obj, NSUInteger idx, BOOL *stop))block {
+- (void)enumerateObjectsUsingBlock:(void (^ NS_NOESCAPE)(id _Nonnull, NSUInteger, BOOL * _Nonnull))block {
   [_array enumerateObjectsUsingBlock:block];
 }
 
 - (void)enumerateObjectsWithOptions:(NSEnumerationOptions)opts
-                         usingBlock:(void (^)(id obj, NSUInteger idx, BOOL *stop))block {
+                         usingBlock:(nonnull void (^NS_NOESCAPE)(id _Nonnull, NSUInteger, BOOL * _Nonnull))block {
   [_array enumerateObjectsWithOptions:opts usingBlock:block];
 }
 
