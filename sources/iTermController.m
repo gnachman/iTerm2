@@ -981,7 +981,6 @@ static iTermController *gSharedInstance;
     PseudoTerminal *term =
         [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                           windowType:windowType
-#warning TODO: I fixed this but there are still lots of other places that are buggy. The saved window type should not be NORMAL because if it opens over a lion fullscreen window it'll go directly into lion fullscreen without assigning to savedWindowType.
                                      savedWindowType:windowType
                                               screen:[iTermProfilePreferences intForKey:KEY_SCREEN inProfile:profile]
                                     hotkeyWindowType:iTermHotkeyWindowTypeNone] autorelease];
@@ -1205,7 +1204,7 @@ static iTermController *gSharedInstance;
             DLog(@"Create a new window controller");
             term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                      windowType:windowType
-                                                savedWindowType:WINDOW_TYPE_NORMAL
+                                                savedWindowType:windowType
                                                          screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
                                                hotkeyWindowType:hotkeyWindowType] autorelease];
         }

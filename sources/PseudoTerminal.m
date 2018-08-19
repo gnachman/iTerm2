@@ -634,6 +634,16 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     }
     preferredOrigin_ = initialFrame.origin;
 
+    if (savedWindowType == WINDOW_TYPE_LION_FULL_SCREEN ||
+        savedWindowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
+        // This is not allowed.
+        savedWindowType = windowType;
+        if (savedWindowType == WINDOW_TYPE_LION_FULL_SCREEN ||
+            savedWindowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
+            savedWindowType = WINDOW_TYPE_NORMAL;
+        }
+        PtyLog(@"Downgraded saved window type from fullscreen to %@", @(savedWindowType));
+    }
     PtyLog(@"finishInitializationWithSmartLayout - initWithContentRect");
     // create the window programmatically with appropriate style mask
     NSUInteger styleMask;
@@ -650,6 +660,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
     [self setWindowWithWindowType:windowType
+           windowTypeForStyleMask:(windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) ? windowType : savedWindowType
                  hotkeyWindowType:hotkeyWindowType
                      initialFrame:initialFrame];
 
@@ -1002,8 +1013,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (NSWindowController<iTermWindowController> *)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point
-{
+- (NSWindowController<iTermWindowController> *)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point {
     PseudoTerminal *term;
 
     int screen;
@@ -1014,12 +1024,24 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     // create a new terminal window
-    int newWindowType;
-    switch (windowType_) {
-        case WINDOW_TYPE_NO_TITLE_BAR:
+    iTermWindowType newWindowType;
+    iTermWindowType savedWindowType;
+    
+    iTermWindowType realWindowType;
+    if (self.lionFullScreen) {
+        realWindowType = WINDOW_TYPE_LION_FULL_SCREEN;
+    } else {
+        realWindowType = windowType_;
+    }
+    switch (realWindowType) {
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            savedWindowType = savedWindowType_;
+            newWindowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
+            break;
+            
+        case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
-            newWindowType = windowType_;
+            savedWindowType = newWindowType = windowType_;
             break;
 
         case WINDOW_TYPE_TOP:
@@ -1030,16 +1052,19 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
+            savedWindowType = newWindowType = WINDOW_TYPE_NORMAL;
+            break;
+            
         case WINDOW_TYPE_LION_FULL_SCREEN:
-            newWindowType = WINDOW_TYPE_NORMAL;
+            savedWindowType = newWindowType = savedWindowType_;
             break;
 
         default:
-            newWindowType = windowType_;
+            savedWindowType = newWindowType = windowType_;
     }
     term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                              windowType:newWindowType
-                                        savedWindowType:WINDOW_TYPE_NORMAL
+                                        savedWindowType:savedWindowType
                                                  screen:screen] autorelease];
     if (term == nil) {
         return nil;
@@ -2228,7 +2253,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:windowType
-                                            savedWindowType:WINDOW_TYPE_NORMAL
+                                            savedWindowType:windowType
                                                      screen:screenIndex
                                            hotkeyWindowType:hotkeyWindowType] autorelease];
 
@@ -3843,6 +3868,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSWindow *)setWindowWithWindowType:(iTermWindowType)windowType
+               windowTypeForStyleMask:(iTermWindowType)windowTypeForStyleMask
                      hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                          initialFrame:(NSRect)initialFrame {
     const BOOL panel = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel);
@@ -3861,7 +3887,7 @@ ITERM_WEAKLY_REFERENCEABLE
             windowClass = [iTermWindow class];
         }
     }
-    NSWindowStyleMask styleMask = [PseudoTerminal styleMaskForWindowType:windowType
+    NSWindowStyleMask styleMask = [PseudoTerminal styleMaskForWindowType:windowTypeForStyleMask
                                                         hotkeyWindowType:hotkeyWindowType];
     const BOOL defer = (hotkeyWindowType != iTermHotkeyWindowTypeNone);
     NSWindow<PTYWindow> *myWindow = [[[windowClass alloc] initWithContentRect:initialFrame
@@ -3877,7 +3903,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // monitor.
         [myWindow setFrame:initialFrame display:NO];
     }
-    [PseudoTerminal updateDecorationsOfWindow:myWindow forType:windowType];
+    [PseudoTerminal updateDecorationsOfWindow:myWindow forType:windowTypeForStyleMask];
     [self setWindow:myWindow];
     if ([myWindow respondsToSelector:@selector(_setContentHasShadow:)]) {
         [myWindow _setContentHasShadow:NO];
@@ -3889,6 +3915,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSWindow *oldWindow = self.window;
     oldWindow.delegate = nil;
     [self setWindowWithWindowType:newWindowType
+           windowTypeForStyleMask:newWindowType
                  hotkeyWindowType:_hotkeyWindowType
                      initialFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]];
     [self.window.ptyWindow setLayoutDone];
@@ -4233,6 +4260,7 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     DLog(@"Window will exit lion fullscreen");
     exitingLionFullscreen_ = YES;
+    self.window.styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType_ hotkeyWindowType:_hotkeyWindowType];
     [_contentView.tabBarControl updateFlashing];
     [self fitTabsToWindow];
     [self repositionWidgets];
