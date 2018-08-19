@@ -117,9 +117,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // See kPTYTab*State constants above.
     int _tabNumberForItermSessionId;
 
-    // Owning tab view item
-    NSTabViewItem* tabViewItem_;
-
     __weak NSWindowController<iTermWindowController> *realParentWindow_;  // non-nil only if parent is PseudoTerminal*. Implements optional methods of protocol.
     FakeWindow* fakeParentWindow_;  // non-nil only if parent is FakeWindow*
 
@@ -409,7 +406,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [parseTree_ release];
     [hiddenLiveViews_ release];
     [_viewToSessionMap release];
-    [tabViewItem_ release];
     [super dealloc];
 }
 
@@ -821,8 +817,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)setTabViewItem:(NSTabViewItem *)theTabViewItem {
     PtyLog(@"PTYTab setTabViewItem:%p", theTabViewItem);
     // The tab view item holds a reference to us. So we don't hold a reference to it.
-    [tabViewItem_ autorelease];
-    tabViewItem_ = [theTabViewItem retain];
+    tabViewItem_ = theTabViewItem;
     if (theTabViewItem != nil) {
         // While Lion-restoring windows, there may be no active session.
         if ([self activeSession]) {

@@ -44,7 +44,7 @@ extern NSString *const iTermSessionBecameKey;
 // While activeSession is not retained, it should only ever refer to a session that belongs to
 // this tab, and is thus retained through the view-to-session map.
 @property(nonatomic, weak) PTYSession *activeSession;
-@property(nonatomic, retain) NSTabViewItem *tabViewItem;
+@property(nonatomic, weak) NSTabViewItem *tabViewItem;
 
 // These values are observed by PSMTTabBarControl:
 // Tab number for display
