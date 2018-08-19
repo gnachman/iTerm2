@@ -119,7 +119,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // Owning tab view item
     NSTabViewItem* tabViewItem_;
 
-    NSWindowController<iTermWindowController> *realParentWindow_;  // non-nil only if parent is PseudoTerminal*. Implements optional methods of protocol.
+    __weak NSWindowController<iTermWindowController> *realParentWindow_;  // non-nil only if parent is PseudoTerminal*. Implements optional methods of protocol.
     FakeWindow* fakeParentWindow_;  // non-nil only if parent is FakeWindow*
 
     // The tab number that is observed by PSMTabBarControl.
