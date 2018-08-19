@@ -92,7 +92,7 @@
     [self defineControl:_blurRadius
                     key:KEY_BLUR_RADIUS
                    type:kPreferenceInfoTypeSlider];
-#warning TODO: Add this to python preferences once I get the source off my other machine
+
     [self defineControl:_backgroundImageMode
                     key:KEY_BACKGROUND_IMAGE_MODE
                    type:kPreferenceInfoTypePopup];

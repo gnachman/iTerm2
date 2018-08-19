@@ -4453,6 +4453,9 @@
 		A68A3113186E2F14007F550F /* PopupWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PopupWindow.m; sourceTree = "<group>"; tabWidth = 4; };
 		A68A3117186E2F54007F550F /* PopupModel.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PopupModel.h; sourceTree = "<group>"; tabWidth = 4; };
 		A68A3118186E2F54007F550F /* PopupModel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PopupModel.m; sourceTree = "<group>"; tabWidth = 4; };
+		A68A4C892128ED1200424F8A /* tmux.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = tmux.py; sourceTree = "<group>"; };
+		A68A4C8A2128ED1200424F8A /* preferences.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = preferences.py; sourceTree = "<group>"; };
+		A68A4C8B2128ED1300424F8A /* statusbar.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = statusbar.py; sourceTree = "<group>"; };
 		A68AC8F11F05C0860023A216 /* NSBundle+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSBundle+iTerm.h"; sourceTree = "<group>"; };
 		A68AC8F21F05C0860023A216 /* NSBundle+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSBundle+iTerm.m"; sourceTree = "<group>"; };
 		A68AC8F51F0823100023A216 /* iTermFindOnPageHelperTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFindOnPageHelperTest.m; sourceTree = "<group>"; };
@@ -6211,6 +6214,9 @@
 		530AB86B20AE85DF00D2AA08 /* iterm2 */ = {
 			isa = PBXGroup;
 			children = (
+				A68A4C8A2128ED1200424F8A /* preferences.py */,
+				A68A4C8B2128ED1300424F8A /* statusbar.py */,
+				A68A4C892128ED1200424F8A /* tmux.py */,
 				530AB86C20AE85DF00D2AA08 /* window.py */,
 				530AB86D20AE85DF00D2AA08 /* _version.py */,
 				530AB86E20AE85DF00D2AA08 /* util.py */,

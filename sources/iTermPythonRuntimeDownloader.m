@@ -197,9 +197,9 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                 NSAlert *alert = [[NSAlert alloc] init];
                 alert.messageText = @"Download Python Runtime?";
                 if (requiredToContinue) {
-                    alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. It must be downloaded to complete the requested action. The download is about 27 MB. OK to download it now?";
+                    alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. It must be downloaded to complete the requested action. The download is about 29 MB. OK to download it now?";
                 } else {
-                    alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. The download is about 27 MB. OK to download it now?";
+                    alert.informativeText = @"The Python Runtime is used by Python scripts that work with iTerm2. The download is about 29 MB. OK to download it now?";
                 }
                 [alert addButtonWithTitle:@"OK"];
                 [alert addButtonWithTitle:@"Cancel"];

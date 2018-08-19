@@ -154,8 +154,8 @@ class PreferenceKeys(enum.Enum):
     """Theme.
 
     Takes an integer.
-    0 = Light, 1 = Dark, 2 = Light high contrast, 3 = Dark high contrast."""
-    THEME                                    = "TabStyle"
+    0 = Light, 1 = Dark, 2 = Light high contrast, 3 = Dark high contrast, 4 = Automatic (10.14+), 5 = Minimal (10.14+)."""
+    THEME                                    = "TabStyleWithAutomaticOption"
 
     """Where the tab bar should be placed.
 
@@ -443,10 +443,10 @@ async def async_get_preference(connection, key):
     """
     Gets a preference by key.
 
-    :param key: The preference key
+    :param key: The preference key, from the `PreferenceKeys` enum.
     :returns: An object with the preferences value, or None if unset and no default exists.
     """
-    proto = await iterm2.rpc.async_set_default_profile(connection, key)
-    j = proto.results[0].get_preference_result.json_value
+    proto = await iterm2.rpc.async_get_preference(connection, key.value)
+    j = proto.preferences_response.results[0].get_preference_result.json_value
     return json.loads(j)
 

@@ -1,6 +1,13 @@
 """Provides classes for representing, querying, and modifying iTerm2 profiles."""
+import enum
 import iterm2.rpc
 import json
+
+class BackgroundImageMode(enum.Enum):
+    STRETCH = 0
+    TILE = 1
+    ASPECT_FILL = 2
+    ASPECT_FIT = 3
 
 class BadGUIDException(Exception):
     """Raised when a profile does not have a GUID or the GUID is unknown."""
@@ -340,11 +347,11 @@ class LocalWriteOnlyProfile:
         :param value: A float between 0 and 30"""
         return self._simple_set("Blur Radius", value)
 
-    def set_background_image_is_tiled(self, value):
-        """Sets whether the background image is tiled (true) or stretched (false)
+    def set_background_image_mode(self, value):
+        """Sets how the background image is drawn.
 
-        :param value: A bool"""
-        return self._simple_set("Background Image Is Tiled", value)
+        :param value: A `BackgroundImageMode`"""
+        return self._simple_set("Background Image Mode", value)
 
     def set_blend(self, value):
         """Sets how much the default background color gets blended with the background image.
@@ -1071,11 +1078,11 @@ class WriteOnlyProfile:
         :param value: A float between 0 and 30"""
         return await self._async_simple_set("Blur Radius", value)
 
-    async def async_set_background_image_is_tiled(self, value):
-        """Sets whether the background image is tiled (true) or stretched (false)
+    async def async_set_background_image_mode(self, value):
+        """Sets how the background iamge is draw.
 
-        :param value: A bool"""
-        return await self._async_simple_set("Background Image Is Tiled", value)
+        :param value: A `BackgroundImageMode`"""
+        return await self._async_simple_set("Background Image Mode", value)
 
     async def async_set_blend(self, value):
         """Sets how much the default background color gets blended with the background image.
@@ -1885,11 +1892,11 @@ class Profile(WriteOnlyProfile):
         return self._simple_get("Blur Radius")
 
     @property
-    def background_image_is_tiled(self):
-        """Returns whether the background image is tiled (true) or stretched (false)
+    def background_image_mode(self):
+        """Returns how the background image is drawn
 
-        :returns: A bool"""
-        return self._simple_get("Background Image Is Tiled")
+        :returns: A `BackgroundImageMode`"""
+        return BackgroundImageMode(self._simple_get("Background Image Mode"))
 
     @property
     def blend(self):

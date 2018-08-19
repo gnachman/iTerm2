@@ -63,7 +63,6 @@ NSString *const kPreferenceKeyMetalMaximizeThroughput = @"metalMaximizeThroughpu
 NSString *const kPreferenceKeyTabStyle_Deprecated = @"TabStyle";  // Pre-10.14
 NSString *const kPreferenceKeyTabStyle = @"TabStyleWithAutomaticOption";  // Pre-10.14
 NSString *const kPreferenceKeyTabPosition = @"TabViewType";
-#warning TODO: Add this to python prefs
 NSString *const kPreferenceKeyStatusBarPosition = @"StatusBarPosition";
 NSString *const kPreferenceKeyHideTabBar = @"HideTab";
 NSString *const kPreferenceKeyHideTabNumber = @"HideTabNumber";
