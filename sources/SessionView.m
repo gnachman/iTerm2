@@ -364,16 +364,16 @@ static NSDate* lastResizeDate_;
     _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                          device:[self metalDevice]];
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
-    _metalView.layer.opaque = NO;
+    if (@available(macOS 10.14, *)) {
+        _metalView.layer.opaque = NO;
+    } else {
+        _metalView.layer.opaque = YES;
+    }
 #else
     _metalView.layer.opaque = YES;
 #endif
     _metalView.colorspace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     
-    // There was a spike in crashes on 5/1. I'm removing this temporarily to see if it was the cause.
-#if ENABLE_LOW_POWER_GPU_DETECTION
-                                         device:[[iTermMetalDeviceProvider sharedInstance] preferredDevice]];
-#endif
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
 

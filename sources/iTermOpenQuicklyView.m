@@ -37,16 +37,19 @@
         view.frame = frame;
     }
 
+    _container = [[NSView alloc] initWithFrame:self.bounds];
+    [self insertSubview:_container atIndex:0];
+
+    _visualEffectView = [[iTermVibrantVisualEffectView alloc] initWithFrame:self.bounds];
+    _visualEffectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
     if (@available(macOS 10.14, *)) {
-        _container = [[NSView alloc] initWithFrame:self.bounds];
-        [self insertSubview:_container atIndex:0];
-        
-        _visualEffectView = [[iTermVibrantVisualEffectView alloc] initWithFrame:self.bounds];
-        _visualEffectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
         _visualEffectView.material = NSVisualEffectMaterialSheet;
-        _visualEffectView.state = NSVisualEffectStateActive;
-        [_container addSubview:_visualEffectView];
+    } else {
+        _visualEffectView.material = NSVisualEffectMaterialMenu;
     }
+    _visualEffectView.state = NSVisualEffectStateActive;
+    [_container addSubview:_visualEffectView];
+
     // Even though this is set in IB, we have to set it manually.
     self.autoresizesSubviews = NO;
 }

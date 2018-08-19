@@ -81,7 +81,6 @@
         self.window.backgroundColor = [NSColor clearColor];
     } else {
         _table.backgroundColor = [NSColor controlColor];
-        self.window.alphaValue = 0.95;
         self.window.backgroundColor = [NSColor clearColor];
         contentView.color = [NSColor controlColor];
     }
