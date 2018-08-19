@@ -677,10 +677,11 @@ typedef struct iTermTextColorContext {
     const CGFloat kMaxHeight = 15 * scale;
     const CGFloat kMinMargin = 3 * scale;
     const CGFloat kMargin = MAX(kMinMargin, (cellSizeWithoutSpacing.height - kMaxHeight) / 2.0);
-
+    const CGFloat kMaxMargin = 4 * scale;
+    
     const CGFloat overage = rect.size.width - rect.size.height + 2 * kMargin;
     if (overage > 0) {
-        rect.origin.x += overage * .7;
+        rect.origin.x += MAX(0, overage - kMaxMargin);
         rect.size.width -= overage;
     }
 
