@@ -143,8 +143,10 @@ NS_ASSUME_NONNULL_BEGIN
     CGFloat vmargin;
     if (@available(macOS 10.14, *)) {
         vmargin = 0;
+        insets = NSEdgeInsetsZero;
     } else {
         vmargin = [iTermAdvancedSettingsModel terminalVMargin] * scale;
+        insets = tState.edgeInsets;
     }
     const CGFloat topMargin = insets.bottom + vmargin;
     const CGFloat bottomMargin = insets.top + vmargin;
