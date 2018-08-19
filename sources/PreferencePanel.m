@@ -148,6 +148,7 @@ static PreferencePanel *gSessionsPreferencePanel;
     // arrangements tab. It's also a singleton :(
     IBOutlet WindowArrangements *arrangements_;
     NSSize _standardSize;
+    NSInteger _disableResize;
 }
 
 + (instancetype)sharedInstance {
@@ -229,7 +230,9 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 - (void)selectProfilesTab {
+    _disableResize++;
     [_tabView selectTabViewItem:_bookmarksTabViewItem];
+    _disableResize--;
     [_toolbar setSelectedItemIdentifier:[_bookmarksToolbarItem itemIdentifier]];
 }
 
@@ -454,7 +457,9 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     if (tabViewItem == _bookmarksTabViewItem) {
-        [_profilesViewController resizeWindowForCurrentTabAnimated:YES];
+        if (_disableResize == 0) {
+            [_profilesViewController resizeWindowForCurrentTabAnimated:YES];
+        }
     } else {
         [self resizeWindowForTabViewItem:tabViewItem];
     }
