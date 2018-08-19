@@ -103,7 +103,7 @@
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     if (@available(macOS 10.14, *)) {
         if (configuration.hasBackgroundImage) {
-            return _blendingRenderer;
+            return _compositeOverRenderer;
         } else {
             return _nonblendingRenderer;
         }
