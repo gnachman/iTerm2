@@ -1137,7 +1137,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminen
                 overflowMenu = [[[NSMenu alloc] initWithTitle:@"TITLE"] autorelease];
                 [overflowMenu insertItemWithTitle:@"FIRST" action:nil keyEquivalent:@"" atIndex:0]; // Because the overflowPupUpButton is a pull down menu
             }
-            menuItem = [[NSMenuItem alloc] initWithTitle:[[cell attributedStringValue] string] action:@selector(overflowMenuAction:) keyEquivalent:@""];
+            NSString *title = [[cell attributedStringValue] string] ?: @"";
+            menuItem = [[NSMenuItem alloc] initWithTitle:title action:@selector(overflowMenuAction:) keyEquivalent:@""];
             [menuItem setTarget:self];
             [menuItem setRepresentedObject:[cell representedObject]];
             [cell setIsInOverflowMenu:YES];
