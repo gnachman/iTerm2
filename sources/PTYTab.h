@@ -39,11 +39,11 @@ extern NSString *const iTermSessionBecameKey;
 @property(nonatomic, readonly) BOOL isMaximized;
 // Sessions ordered in a similar-to-reading-order fashion.
 @property(nonatomic, readonly) NSArray *orderedSessions;
-@property(nonatomic, assign) id<PTYTabDelegate> delegate;
+@property(nonatomic, weak) id<PTYTabDelegate> delegate;
 
 // While activeSession is not retained, it should only ever refer to a session that belongs to
 // this tab, and is thus retained through the view-to-session map.
-@property(nonatomic, assign) __unsafe_unretained PTYSession *activeSession;
+@property(nonatomic, weak) PTYSession *activeSession;
 @property(nonatomic, retain) NSTabViewItem *tabViewItem;
 
 // These values are observed by PSMTTabBarControl:
@@ -62,7 +62,7 @@ extern NSString *const iTermSessionBecameKey;
 // to change a session's size. You can resize it, lock it, and then
 // adjustSubviews of the splitview (ordinarily done by a call to -[PTYTab
 // setSize:]).
-@property(nonatomic, assign) __unsafe_unretained PTYSession *lockedSession;
+@property(nonatomic, weak) PTYSession *lockedSession;
 @property(nonatomic, readonly) NSString *metalUnavailableReason;
 
 // Save the contents of all sessions. Used during window restoration so that if
