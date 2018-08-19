@@ -32,7 +32,7 @@ extern NSString *const iTermSessionBecameKey;
 @property(nonatomic, assign, getter=isBroadcasting) BOOL broadcasting;
 
 // Parent controller. Always set. Equals one of realParent or fakeParent.
-@property(nonatomic, assign) __unsafe_unretained id<WindowControllerInterface> parentWindow;
+@property(nonatomic, weak) id<WindowControllerInterface> parentWindow;
 
 // uniqueId lazily auto-assigns a unique id unless you assign it a value first. It is never 0.
 @property(nonatomic, assign) int uniqueId;
