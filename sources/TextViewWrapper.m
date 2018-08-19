@@ -55,6 +55,7 @@
 }
 
 // This is a hack to fix an apparent bug in macOS 10.14 beta 3. I would like to remove it when it's no longer needed.
+#warning TODO: Test this on later 10.14 betas and see if it is still needed.
 - (void)scrollViewDidScroll:(NSNotification *)notification {
     if (notification.object != self.superview) {
         return;
