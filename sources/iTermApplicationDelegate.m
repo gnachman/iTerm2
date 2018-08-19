@@ -595,6 +595,16 @@ static BOOL hasBecomeActive = NO;
                 } else {
                     initialText = [NSString stringWithFormat:@"%@; exit", filename];
                 }
+
+                const iTermWarningSelection selection =
+                    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"OK to run “%@”?", filename]
+                                               actions:@[ @"OK", @"Cancel" ]
+                                            identifier:@"NoSyncConfirmRunOpenFile"
+                                           silenceable:kiTermWarningTypePermanentlySilenceable];
+                if (selection != kiTermWarningSelection0) {
+                    return YES;
+                }
+
                 bookmark[KEY_INITIAL_TEXT] = initialText;
             }
         }
@@ -608,7 +618,7 @@ static BOOL hasBecomeActive = NO;
             [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
         }
     }
-    return (YES);
+    return YES;
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
