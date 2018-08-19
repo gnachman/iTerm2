@@ -55,6 +55,15 @@ DEFINE_BOOL(name, theDefault, theDescription) \
                                                      description:theDescription]; \
 }
 
+#define DEFINE_NONNEGATIVE_INT(name, theDefault, theDescription) \
++ (int)name { \
+    NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
+    int result = [iTermAdvancedSettingsViewController intForIdentifier:theIdentifier \
+                                                          defaultValue:theDefault \
+                                                           description:theDescription]; \
+    return MAX(0, result); \
+}
+
 #define DEFINE_BOUNDED_INT(name, theDefault, theDescription, minValue, maxValue) \
 + (int)name { \
     NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
@@ -197,7 +206,7 @@ DEFINE_BOOL(jiggleTTYSizeOnClearBuffer, NO, @"General: Redraw the screen after t
 DEFINE_BOOL(indicateBellsInDockBadgeLabel, YES, @"General: Indicate the number of bells rung while the app is inactive in the dock icon’s badge label");
 DEFINE_STRING(downloadsDirectory, @"", @"General: Downloads folder.\nIf set, downloaded files go to this location instead of the user’s $HOME/Downloads folder.");
 DEFINE_FLOAT(pointSizeOfTimeStamp, 10, @"General: Point size for timestamps");
-DEFINE_BOUNDED_INT(terminalMargin, 5, @"General: Width of left and right margins in terminal panes\nHow much space to leave between the left and right edges of the terminal.\nYou must restart iTerm2 after modifying this property. Saved window arrangements should be re-created.", 0, 100);
+DEFINE_NONNEGATIVE_INT(terminalMargin, 5, @"General: Width of left and right margins in terminal panes\nHow much space to leave between the left and right edges of the terminal.\nYou must restart iTerm2 after modifying this property. Saved window arrangements should be re-created.");
 DEFINE_INT(terminalVMargin, 2, @"General: Height of top and bottom margins in terminal panes\nHow much space to leave between the top and bottom edges of the terminal.\nYou must restart iTerm2 after modifying this property. Saved window arrangements should be re-created.");
 DEFINE_BOOL(useVirtualKeyCodesForDetectingDigits, YES, @"General: On keyboards that require a modifier to press a digit, do not require that modifier for switching between windows, tabs, and panes by number.\nFor example, AZERTY requires you to hold down Shift to enter a number. To switch tabs with ⌘+Number on an AZERTY keyboard, you must enable this setting. Then, for example, ⌘-& switches to tab 1. When this setting is enabled, some user-defined shortcuts may become unavailable because the tab/window/pane switching behavior takes precedence.");
 DEFINE_STRING(viewManPageCommand, @"man %@ || sleep 3", @"General: Command to view man pages.\nUsed when you press the man page button on the touch bar. %@ is replaced with the command. End the command with & to avoid opening an iTerm2 window (e.g., if you're launching an external viewer).");
