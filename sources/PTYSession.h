@@ -623,7 +623,7 @@ typedef enum {
 - (void)logStop;
 
 // Display timer stuff
-- (void)updateDisplay;
+- (void)updateDisplayBecause:(NSString *)reason;
 - (void)doAntiIdle;
 - (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Profile*)aDict;
 - (void)updateScroll;

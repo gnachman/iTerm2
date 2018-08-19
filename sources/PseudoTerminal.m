@@ -2925,7 +2925,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // Start the timers back up
     for (PTYSession* aSession in [self allSessions]) {
-        [aSession updateDisplay];
+        [aSession updateDisplayBecause:@"windowDidBecomeKey"];
         [[aSession view] setBackgroundDimmed:NO];
         [aSession setFocused:aSession == [self currentSession]];
     }
@@ -4575,7 +4575,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // Background tabs' timers run infrequently so make sure the display is
         // up to date to avoid a jump when it's shown.
         [[aSession textview] setNeedsDisplay:YES];
-        [aSession updateDisplay];
+        [aSession updateDisplayBecause:@"tabView:didSelectTabViewItem:"];
         aSession.active = YES;
         [self setDimmingForSession:aSession];
         [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
@@ -7601,7 +7601,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // Reset all state associated with the terminal.
 - (void)reset:(id)sender {
     [[[self currentSession] terminal] resetByUserRequest:YES];
-    [[self currentSession] updateDisplay];
+    [[self currentSession] updateDisplayBecause:@"reset terminal"];
 }
 
 - (IBAction)resetCharset:(id)sender

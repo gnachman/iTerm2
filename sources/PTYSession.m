@@ -2199,7 +2199,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[iTermSessionHotkeyController sharedInstance] removeSession:self];
 
     // final update of display
-    [self updateDisplay];
+    [self updateDisplayBecause:@"terminate session"];
 
     [_delegate removeSession:self];
 
@@ -2925,7 +2925,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if ([self isRestartable]) {
             [self queueRestartSessionAnnouncement];
         }
-        [self updateDisplay];
+        [self updateDisplayBecause:@"broken pipe"];
     }
 }
 
@@ -4293,7 +4293,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)updateDisplay {
+- (void)updateDisplayBecause:(NSString *)reason {
+    DLog(@"updateDisplayBecause:%@", reason);
     _updateCount++;
     if (@available(macOS 10.11, *)) {
         if (_useMetal && _updateCount % 10 == 0) {
@@ -7764,7 +7765,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenUpdateDisplay:(BOOL)redraw {
-    [self updateDisplay];
+    [self updateDisplayBecause:[NSString stringWithFormat:@"screen requested update redraw=%@", @(redraw)]];
     if (redraw) {
         [_textview setNeedsDisplay:YES];
     }
@@ -9883,7 +9884,7 @@ ITERM_WEAKLY_REFERENCEABLE
 #pragma mark - iTermUpdateCadenceController
 
 - (void)updateCadenceControllerUpdateDisplay:(iTermUpdateCadenceController *)controller {
-    [self updateDisplay];
+    [self updateDisplayBecause:controller.description];
 }
 
 - (iTermUpdateCadenceState)updateCadenceControllerState {
