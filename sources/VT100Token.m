@@ -10,8 +10,6 @@
 #import "DebugLogging.h"
 #include <stdlib.h>
 
-static iTermObjectPool *gPool;
-
 @interface VT100Token ()
 @property(nonatomic, readwrite) CSIParam *csi;
 @end
@@ -21,44 +19,25 @@ static iTermObjectPool *gPool;
     ScreenChars _screenChars;
 }
 
-+ (void)initialize {
-    gPool = [[iTermObjectPool alloc] initWithClass:self collections:20 objectsPerCollection:100];
-}
-
 + (instancetype)token {
-    if (gDebugLogging) {
-        static int i;
-        if (i % 100000 == 0) {
-            DLog(@"%@", gPool);
-        }
-        i++;
-    }
-    return (VT100Token *)[gPool pooledObject];
+    return [[[VT100Token alloc] init] autorelease];
 }
 
 + (instancetype)tokenForControlCharacter:(unsigned char)controlCharacter {
-    VT100Token *token = (VT100Token *)[gPool pooledObject];
+    VT100Token *token = [[VT100Token alloc] init];
     token->type = controlCharacter;
     return token;
 }
 
-- (void)destroyPooledObject {
+- (void)dealloc {
     if (_csi) {
         free(_csi);
-        _csi = NULL;
     }
 
     [_string release];
-    _string = nil;
-
     [_kvpKey release];
-    _kvpKey = nil;
-
     [_kvpValue release];
-    _kvpValue = nil;
-
     [_savedData release];
-    _savedData = nil;
 
     if (_asciiData.buffer != _asciiData.staticBuffer) {
         free(_asciiData.buffer);
@@ -67,12 +46,8 @@ static iTermObjectPool *gPool;
         _asciiData.screenChars->buffer != _asciiData.screenChars->staticBuffer) {
         free(_asciiData.screenChars->buffer);
     }
-    _asciiData.buffer = NULL;
-    _asciiData.length = 0;
-    _asciiData.screenChars = NULL;
 
-    type = 0;
-    code = 0;
+    [super dealloc];
 }
 
 - (NSString *)codeName {

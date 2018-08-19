@@ -184,12 +184,12 @@
         // Don't append the outer wrapper to the output. Earlier, it was unwrapped and the inner
         // tokens were already added.
         if (token->type != DCS_TMUX_CODE_WRAP) {
+            [token retain];
             CVectorAppend(vector, token);
         }
         return YES;
     }
 
-    [token recycleObject];
     return NO;
 }
 

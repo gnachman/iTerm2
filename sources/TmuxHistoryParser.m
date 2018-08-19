@@ -65,7 +65,7 @@
                          length:sizeof(screen_char_t) * len];
             free(screenChars);
         }
-        [token recycleObject];
+        [token release];
     }
     CVectorDestroy(&vector);
 
