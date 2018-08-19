@@ -816,16 +816,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawHighlightRow];
 
-#if ENABLE_USE_TEMPORARY_TEXTURE
-    // Copy to the drawable
-    frameData.currentPass = 2;
-    [frameData.renderEncoder endEncoding];
-    [self updateRenderEncoderForCurrentPass:frameData label:@"Copy to drawable"];
-    [self drawRenderer:_copyToDrawableRenderer
-             frameData:frameData
-                  stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
-#endif
-
     [self finishDrawingWithCommandBuffer:commandBuffer
                                frameData:frameData];
 }
