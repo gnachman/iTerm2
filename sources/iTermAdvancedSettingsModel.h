@@ -223,10 +223,6 @@
 + (double)metalSlowFrameRate;
 + (double)coloredUnselectedTabTextProminence;
 + (BOOL)throttleMetalConcurrentFrames;
-+ (NSString *)pathToFTP;
-+ (NSString *)pathToTelnet;
-+ (BOOL)sshURLsSupportPath;
-+ (double)underlineCursorHeight;
 + (double)fractionOfCharacterSelectingNextNeighbor;
 + (double)coloredSelectedTabOutlineStrength;
 
