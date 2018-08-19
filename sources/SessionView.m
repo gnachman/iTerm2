@@ -320,38 +320,40 @@ static NSDate* lastResizeDate_;
 }
 
 - (id<MTLDevice>)metalDevice {
+    static id<MTLDevice> chosenDevice;
     static BOOL preferIntegrated;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         preferIntegrated = [iTermPreferences boolForKey:kPreferenceKeyPreferIntegratedGPU];
-    });
-    if (preferIntegrated) {
-        NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
+        if (preferIntegrated) {
+            NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
 
-        id<MTLDevice> gpu = nil;
+            id<MTLDevice> gpu = nil;
 
-        for (id<MTLDevice> device in devices) {
-            if (device.isLowPower) {
-                gpu = device;
-                break;
+            for (id<MTLDevice> device in devices) {
+                if (device.isLowPower) {
+                    gpu = device;
+                    break;
+                }
             }
-        }
 
-        if (!gpu) {
-            gpu = MTLCreateSystemDefaultDevice();
+            if (!gpu) {
+                gpu = MTLCreateSystemDefaultDevice();
+            }
+            // I'm intentionally leaking devices and gpu because I'm seeing crazy crashes where
+            // metal occasionally thinks something is over-released. There's no reason to do that
+            // dangerous dance here.
+            chosenDevice = gpu;
+        } else {
+            static id<MTLDevice> device;
+            static dispatch_once_t once;
+            dispatch_once(&once, ^{
+                device = MTLCreateSystemDefaultDevice();
+            });
+            chosenDevice = device;
         }
-        // I'm intentionally leaking devices and gpu because I'm seeing crazy crashes where
-        // metal occasionally thinks something is over-released. There's no reason to do that
-        // dangerous dance here.
-        return gpu;
-    } else {
-        static id<MTLDevice> device;
-        static dispatch_once_t once;
-        dispatch_once(&once, ^{
-            device = MTLCreateSystemDefaultDevice();
-        });
-        return device;
-    }
+    });
+    return chosenDevice;
 }
 
 - (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
