@@ -436,8 +436,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminen
         if (lastCell.isInOverflowMenu) {
             return YES;
         }
-        const CGFloat minY = NSMinY(lastCell.frame);
-        return point.y < minY;
+        const CGFloat maxY = NSMaxY(lastCell.frame);
+        return point.y < maxY;
     }
 }
 

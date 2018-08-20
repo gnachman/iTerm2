@@ -122,8 +122,6 @@
     NSImage *_addTabButtonRolloverImage;
 
     NSDictionary *_objectCountStringAttributes;
-
-    PSMTabBarOrientation _orientation;
 }
 
 @synthesize tabBar = _tabBar;
@@ -550,21 +548,30 @@
     }
 }
 
-- (void)drawCellBackgroundAndFrameHorizontallyOriented:(BOOL)horizontal
-                                                inRect:(NSRect)cellFrame
-                                              selected:(BOOL)selected
-                                          withTabColor:(NSColor *)tabColor
-                                                isLast:(BOOL)isLast
-                                       highlightAmount:(CGFloat)highlightAmount {
+- (void)drawCellBackgroundSelected:(BOOL)selected
+                            inRect:(NSRect)cellFrame
+                      withTabColor:(NSColor *)tabColor
+                   highlightAmount:(CGFloat)highlightAmount {
     [[self backgroundColorSelected:selected highlightAmount:highlightAmount] set];
     NSRectFill(cellFrame);
-
     if (tabColor) {
         NSColor *color = [self cellBackgroundColorForTabColor:tabColor selected:selected];
         // Alpha the inactive tab's colors a bit to make it clear which tab is active.
         [color set];
         NSRectFillUsingOperation(cellFrame, NSCompositingOperationSourceOver);
     }
+}
+
+- (void)drawCellBackgroundAndFrameHorizontallyOriented:(BOOL)horizontal
+                                                inRect:(NSRect)cellFrame
+                                              selected:(BOOL)selected
+                                          withTabColor:(NSColor *)tabColor
+                                                isLast:(BOOL)isLast
+                                       highlightAmount:(CGFloat)highlightAmount {
+    [self drawCellBackgroundSelected:selected
+                              inRect:cellFrame
+                        withTabColor:tabColor
+                     highlightAmount:highlightAmount];
 
     if (horizontal) {
         BOOL isLeftmostTab = NSMinX(cellFrame) == 0;
