@@ -6846,7 +6846,9 @@ ITERM_WEAKLY_REFERENCEABLE
 // Pastes the current string in the clipboard. Uses the sender's tag to get flags.
 - (void)paste:(id)sender {
     DLog(@"PTYSession paste:");
-    [self pasteString:[PTYSession pasteboardString] flags:[sender tag]];
+    
+    // Might not be called from a menu item so just use no flags in this case
+    [self pasteString:[PTYSession pasteboardString] flags:[sender isKindOfClass:NSMenuItem.class] ? [sender tag] : 0];
 }
 
 // Show advanced paste window.
