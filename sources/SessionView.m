@@ -188,7 +188,7 @@ static NSDate* lastResizeDate_;
 
 - (iTermDropDownFindViewController *)newDropDownFindView {
     iTermDropDownFindViewController *dropDownViewController =
-        [[iTermDropDownFindViewController alloc] initWithNibName:@"FindView" bundle:nil];
+        [[iTermDropDownFindViewController alloc] initWithNibName:@"FindView" bundle:[NSBundle bundleForClass:self.class]];
     [[dropDownViewController view] setHidden:YES];
     [super addSubview:dropDownViewController.view];
     NSRect aRect = [self frame];

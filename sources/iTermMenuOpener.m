@@ -108,7 +108,7 @@
 
     // Create view controller
     iTermHelpMessageViewController *viewController = [[iTermHelpMessageViewController alloc] initWithNibName:@"iTermHelpMessageViewController"
-                                                                                                      bundle:[NSBundle mainBundle]];
+                                                                                                      bundle:[NSBundle bundleForClass:self.class]];
     [viewController setMessage:message];
 
     // Create popover

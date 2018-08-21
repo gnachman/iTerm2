@@ -24,7 +24,7 @@ static NSString *const iTermTouchBarIDPrefix = @"touchbar:";
 }
 
 - (instancetype)init {
-    self = [super initWithNibName:@"iTermKeyMapping" bundle:nil];
+    self = [super initWithNibName:@"iTermKeyMapping" bundle:[NSBundle bundleForClass:self.class]];
     if (self) {
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(keyBindingsChanged)

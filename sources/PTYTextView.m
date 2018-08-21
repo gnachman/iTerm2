@@ -5120,7 +5120,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([content isKindOfClass:[NSAttributedString class]]) {
         attributedString = content;
         accessory = [[[iTermPrintAccessoryViewController alloc] initWithNibName:@"iTermPrintAccessoryViewController"
-                                                                         bundle:nil] autorelease];
+                                                                         bundle:[NSBundle bundleForClass:self.class]] autorelease];
         accessory.userDidChangeSetting = ^() {
             NSAttributedString *theAttributedString = nil;
             if (accessory.blackAndWhite) {

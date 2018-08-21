@@ -104,7 +104,7 @@ static const CGFloat kWindowWidth = 400;
 - (void)loadCardExpanded:(BOOL)expanded {
     iTermTipCardViewController *card =
         [[[iTermTipCardViewController alloc] initWithNibName:@"iTermTipCardViewController"
-                                                      bundle:nil] autorelease];
+                                                      bundle:[NSBundle bundleForClass:self.class]] autorelease];
     self.cardViewController = card;
     [card view];
     card.titleString = self.tip.title;

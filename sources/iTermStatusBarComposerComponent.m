@@ -53,7 +53,7 @@
 
 - (iTermsStatusBarComposerViewController *)viewController {
     if (!_viewController) {
-        _viewController = [[iTermsStatusBarComposerViewController alloc] initWithNibName:@"iTermsStatusBarComposerViewController" bundle:nil];
+        _viewController = [[iTermsStatusBarComposerViewController alloc] initWithNibName:@"iTermsStatusBarComposerViewController" bundle:[NSBundle bundleForClass:self.class]];
         _viewController.delegate = self;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(commandHistoryDidChange:)

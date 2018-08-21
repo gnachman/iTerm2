@@ -27,7 +27,7 @@ static float kAnimationDuration = 0.25;
 - (instancetype)initWithContext:(PasteContext *)pasteContext
                          length:(int)length
                            mini:(BOOL)mini {
-    self = [super initWithNibName:mini ? @"MiniPasteView" : @"PasteView" bundle:nil];
+    self = [super initWithNibName:mini ? @"MiniPasteView" : @"PasteView" bundle:[NSBundle bundleForClass:self.class]];
     if (self) {
         [self view];
 
