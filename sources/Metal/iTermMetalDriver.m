@@ -752,12 +752,22 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     } else {
         NSTimeInterval duration = [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
             frameData.destinationDrawable = view.currentDrawable;
+            if (frameData.destinationDrawable == nil) {
+                DLog(@"YIKES: View %@ returned a nil drawable", view);
+                return;
+            }
             frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
         }];
         [_currentDrawableTime addValue:duration];
-
+        if (frameData.destinationDrawable == nil) {
+            DLog(@"acquireScarceResources returning early because of nil drawable.");
+            return;
+        }
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
             frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
+            if (frameData.renderPassDescriptor == nil) {
+                DLog(@"YIKES: View %@ returned a nil render pass descriptor", view);
+            }
         }];
     }
 }
