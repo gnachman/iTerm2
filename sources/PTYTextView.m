@@ -758,6 +758,17 @@ static const int kDragThreshold = 3;
     [self setNeedsDisplay:YES];
 }
 
+- (BOOL)showTimestamps
+{
+    return _drawingHelper.showTimestamps;
+}
+
+- (void)setShowTimestamps:(BOOL)value
+{
+    _drawingHelper.showTimestamps = value;
+    [self setNeedsDisplay:YES];
+}
+
 - (NSRect)scrollViewContentSize {
     NSRect r = NSMakeRect(0, 0, 0, 0);
     r.size = [[self enclosingScrollView] contentSize];
