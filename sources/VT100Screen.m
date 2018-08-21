@@ -3505,7 +3505,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     const BOOL isBroken = !image;
     if (isBroken) {
         DLog(@"Image is broken");
-        image = [iTermImage imageWithNativeImage:[NSImage imageNamed:@"broken_image"]];
+        image = [iTermImage imageWithNativeImage:[[NSBundle bundleForClass:self.class] imageForResource:@"broken_image"]];
         assert(image);
     }
 

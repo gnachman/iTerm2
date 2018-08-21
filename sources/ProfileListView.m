@@ -557,8 +557,8 @@ const CGFloat kDefaultTagsWidth = 80;
     if ([sortDescriptors count] > 0) {
         NSSortDescriptor* primarySortDesc = [sortDescriptors objectAtIndex:0];
         [aTableView setIndicatorImage:([primarySortDesc ascending] ?
-                                       [NSImage imageNamed:@"NSAscendingSortIndicator"] :
-                                       [NSImage imageNamed:@"NSDescendingSortIndicator"])
+                                       [[NSBundle bundleForClass:self.class] imageForResource:@"NSAscendingSortIndicator"] :
+                                       [[NSBundle bundleForClass:self.class] imageForResource:@"NSDescendingSortIndicator"])
                         inTableColumn:[aTableView tableColumnWithIdentifier:[primarySortDesc key]]];
     }
 

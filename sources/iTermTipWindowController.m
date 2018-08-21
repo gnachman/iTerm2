@@ -119,14 +119,14 @@ static const CGFloat kWindowWidth = 400;
 - (void)addButtonsToCard:(iTermTipCardViewController *)card expanded:(BOOL)expanded {
     if (_tip.url) {
         [card addActionWithTitle:kLearnMoreTitle
-                            icon:[NSImage imageNamed:@"Navigate"]
+                            icon:[[NSBundle bundleForClass:self.class] imageForResource:@"Navigate"]
                            block:^(id sendingCard) {
                                [self openURL];
                            }];
     }
     [card addActionWithTitle:kDismissTipTitle
                     shortcut:@"⎋"
-                        icon:[NSImage imageNamed:@"Dismiss"]
+                        icon:[[NSBundle bundleForClass:self.class] imageForResource:@"Dismiss"]
                        block:^(id sendingCard) {
                            [self dismiss];
                        }];
@@ -134,7 +134,7 @@ static const CGFloat kWindowWidth = 400;
     NSString *toggleTitle = expanded ? kFewerOptionsTitle : kMoreOptionsTitle;
     iTermTipCardActionButton *button =
         [card addActionWithTitle:toggleTitle
-                            icon:[NSImage imageNamed:@"ChevronDown"]
+                            icon:[[NSBundle bundleForClass:self.class] imageForResource:@"ChevronDown"]
                            block:^(id sendingCard) {
                                [self toggleOptionsInCard:sendingCard];
                            }];
@@ -142,7 +142,7 @@ static const CGFloat kWindowWidth = 400;
 
     button =
         [card addActionWithTitle:kShowThisLaterTitle
-                            icon:[NSImage imageNamed:@"Later"]
+                            icon:[[NSBundle bundleForClass:self.class] imageForResource:@"Later"]
                            block:^(id sendingCard) {
                                [self showThisLater];
                            }];
@@ -180,7 +180,7 @@ static const CGFloat kWindowWidth = 400;
     }
     button =
         [card addActionWithTitle:frequencyTitle
-                            icon:[NSImage imageNamed:@"TipCalendar"]
+                            icon:[[NSBundle bundleForClass:self.class] imageForResource:@"TipCalendar"]
                            block:^(id sendingCard) {
                                [_delegate toggleTipFrequency];
                                iTermTipCardActionButton *theButton = [card actionWithTitle:kShowTipsWeeklyTitle];
@@ -203,7 +203,7 @@ static const CGFloat kWindowWidth = 400;
     }
     button =
         [card addActionWithTitle:enableOrDisableTitle
-                            icon:[NSImage imageNamed:@"DisableTips"]
+                            icon:[[NSBundle bundleForClass:self.class] imageForResource:@"DisableTips"]
                            block:^(id sendingCard) {
                                if (![_delegate tipWindowTipsAreDisabled]) {
                                    [self disableTips];
@@ -220,7 +220,7 @@ static const CGFloat kWindowWidth = 400;
     if ([_delegate tipWindowTipAfterTipWithIdentifier:self.tip.identifier]) {
         button =
             [card addActionWithTitle:kShowNextTipTitle
-                                icon:[NSImage imageNamed:@"NextTip"]
+                                icon:[[NSBundle bundleForClass:self.class] imageForResource:@"NextTip"]
                                block:^(id sendingCard) {
                                    [self showNextTip];
                                }];
@@ -231,7 +231,7 @@ static const CGFloat kWindowWidth = 400;
     if ([_delegate tipWindowTipBeforeTipWithIdentifier:self.tip.identifier]) {
         button =
             [card addActionWithTitle:kShowPreviousTipTitle
-                                icon:[NSImage imageNamed:@"NextTip"]
+                                icon:[[NSBundle bundleForClass:self.class] imageForResource:@"NextTip"]
                                block:^(id sendingCard) {
                                    [self showPreviousTip];
                                }];

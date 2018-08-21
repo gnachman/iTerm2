@@ -11,7 +11,7 @@
 @implementation iTermNoColorAccessoryButton
 
 - (instancetype)init {
-  NSImage *image = [NSImage imageNamed:@"NoColor"];
+  NSImage *image = [[NSBundle bundleForClass:self.class] imageForResource:@"NoColor"];
   static const CGFloat kTopBottomMargin = 8;
   self = [super initWithFrame:NSMakeRect(0, 0, image.size.width, image.size.height + kTopBottomMargin * 2)];
   [self setButtonType:NSMomentaryPushInButton];

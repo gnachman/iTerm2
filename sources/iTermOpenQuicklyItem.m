@@ -38,7 +38,7 @@
 @implementation iTermOpenQuicklyProfileItem
 
 - (NSImage *)icon {
-  return [NSImage imageNamed:@"new-tab"];
+  return [[NSBundle bundleForClass:self.class] imageForResource:@"new-tab"];
 }
 
 @end
@@ -46,7 +46,7 @@
 @implementation iTermOpenQuicklyChangeProfileItem
 
 - (NSImage *)icon {
-    return [NSImage imageNamed:@"ChangeProfile"];
+    return [[NSBundle bundleForClass:self.class] imageForResource:@"ChangeProfile"];
 }
 
 @end
@@ -76,7 +76,7 @@
 @implementation iTermOpenQuicklyArrangementItem
 
 - (NSImage *)icon {
-  return [NSImage imageNamed:@"restore-arrangement"];
+  return [[NSBundle bundleForClass:self.class] imageForResource:@"restore-arrangement"];
 }
 
 @end
@@ -84,7 +84,7 @@
 @implementation iTermOpenQuicklyHelpItem
 
 - (NSImage *)icon {
-    return [NSImage imageNamed:@"Info"];
+    return [[NSBundle bundleForClass:self.class] imageForResource:@"Info"];
 }
 
 @end
@@ -92,7 +92,7 @@
 @implementation iTermOpenQuicklyScriptItem
 
 - (NSImage *)icon {
-    return [NSImage imageNamed:@"ScriptIcon"];
+    return [[NSBundle bundleForClass:self.class] imageForResource:@"ScriptIcon"];
 }
 
 @end

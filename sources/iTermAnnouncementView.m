@@ -92,7 +92,7 @@ NSString *const iTermWindowAppearanceDidChange = @"iTermWindowAppearanceDidChang
         _internalView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
         [self addSubview:_internalView];
 
-        NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
+        NSImage *closeImage = [[NSBundle bundleForClass:self.class] imageForResource:@"closebutton"];
         NSSize closeSize = closeImage.size;
         _buttonWidth = ceil(closeSize.width + kMargin);
         NSButton *closeButton = [[[NSButton alloc] initWithFrame:NSMakeRect(frameRect.size.width - _buttonWidth,
@@ -239,7 +239,7 @@ NSString *const iTermWindowAppearanceDidChange = @"iTermWindowAppearanceDidChang
             iconString = @"⚠";  // Warning sign
             break;
         case kiTermAnnouncementViewStyleQuestion:
-            return [NSImage imageNamed:@"QuestionMarkSign"];
+            return [[NSBundle bundleForClass:self.class] imageForResource:@"QuestionMarkSign"];
     }
 
     NSFont *emojiFont = [NSFont fontWithName:@"Apple Color Emoji" size:18];

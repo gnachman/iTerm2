@@ -136,9 +136,9 @@
 - (id)init {
     if ((self = [super init]))  {
         // Load close buttons 
-        _closeButton = [[NSImage imageNamed:@"TabClose_Front"] retain];
-        _closeButtonDown = [[NSImage imageNamed:@"TabClose_Front_Pressed"] retain];
-        _closeButtonOver = [[NSImage imageNamed:@"TabClose_Front_Rollover"] retain];
+        _closeButton = [[[NSBundle bundleForClass:self.class] imageForResource:@"TabClose_Front"] retain];
+        _closeButtonDown = [[[NSBundle bundleForClass:self.class] imageForResource:@"TabClose_Front_Pressed"] retain];
+        _closeButtonOver = [[[NSBundle bundleForClass:self.class] imageForResource:@"TabClose_Front_Rollover"] retain];
 
         // Load "new tab" buttons
         _addTabButtonImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabNewMetal"]];

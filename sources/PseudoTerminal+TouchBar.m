@@ -381,19 +381,19 @@ ITERM_IGNORE_PARTIAL_BEGIN
         selector = @selector(statusTouchBarItemSelected:);
         label = @"Your Message Here";
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierAddMark]) {
-        image = [[NSImage imageNamed:@"Add Mark Touch Bar Icon"] imageWithColor:[NSColor labelColor]];
+        image = [[[NSBundle bundleForClass:self.class] imageForResource:@"Add Mark Touch Bar Icon"] imageWithColor:[NSColor labelColor]];
         selector = @selector(addMarkTouchBarItemSelected:);
         label = @"Add Mark";
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierNextMark]) {
-        image = [NSImage imageNamed:NSImageNameTouchBarGoDownTemplate];
+        image = [[NSBundle bundleForClass:self.class] imageForResource:NSImageNameTouchBarGoDownTemplate];
         selector = @selector(nextMarkTouchBarItemSelected:);
         label = @"Next Mark";
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierPreviousMark]) {
-        image = [NSImage imageNamed:NSImageNameTouchBarGoUpTemplate];
+        image = [[NSBundle bundleForClass:self.class] imageForResource:NSImageNameTouchBarGoUpTemplate];
         selector = @selector(previousMarkTouchBarItemSelected:);
         label = @"Previous Mark";
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierColorPreset]) {
-        image = [NSImage imageNamed:NSImageNameTouchBarColorPickerFill];
+        image = [[NSBundle bundleForClass:self.class] imageForResource:NSImageNameTouchBarColorPickerFill];
         NSPopoverTouchBarItem *item = [[[NSPopoverTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
         item.customizationLabel = @"Color Preset";
         item.showsCloseButton = YES;
@@ -405,7 +405,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
         item.popoverTouchBar = secondaryTouchBar;
         return item;
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierFunctionKeys]) {
-        image = [NSImage imageNamed:@"Touch Bar Function Keys"];
+        image = [[NSBundle bundleForClass:self.class] imageForResource:@"Touch Bar Function Keys"];
         NSPopoverTouchBarItem *item = [[[NSPopoverTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
         item.customizationLabel = @"Function Keys Popover";
         item.showsCloseButton = YES;
@@ -434,7 +434,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
         item.customizationLabel = label;
         if ([identifier isEqualToString:iTermTouchBarIdentifierManPage]) {
             button.title = @"";
-            button.image = [NSImage imageNamed:@"Man Page Touch Bar Icon"];
+            button.image = [[NSBundle bundleForClass:self.class] imageForResource:@"Man Page Touch Bar Icon"];
             button.imagePosition = NSImageOnly;
             button.enabled = NO;
         }

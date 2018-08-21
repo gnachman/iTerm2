@@ -65,16 +65,16 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 + (NSDictionary *)indicatorImages {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        gIndicatorImages = @{ kiTermIndicatorBell: [NSImage imageNamed:@"bell"],
-                              kiTermIndicatorWrapToTop: [NSImage imageNamed:@"wrap_to_top"],
-                              kiTermIndicatorWrapToBottom: [NSImage imageNamed:@"wrap_to_bottom"],
-                              kItermIndicatorBroadcastInput: [NSImage imageNamed:@"BroadcastInput"],
-                              kiTermIndicatorMaximized: [NSImage imageNamed:@"Maximized"],
-                              kiTermIndicatorCoprocess: [NSImage imageNamed:@"Coprocess"],
-                              kiTermIndicatorAlert: [NSImage imageNamed:@"Alert"],
-                              kiTermIndicatorAllOutputSuppressed: [NSImage imageNamed:@"SuppressAllOutput"],
-                              kiTermIndicatorZoomedIn: [NSImage imageNamed:@"Zoomed"],
-                              kiTermIndicatorCopyMode: [NSImage imageNamed:@"CopyMode"] };
+        gIndicatorImages = @{ kiTermIndicatorBell: [[NSBundle bundleForClass:self.class] imageForResource:@"bell"],
+                              kiTermIndicatorWrapToTop: [[NSBundle bundleForClass:self.class] imageForResource:@"wrap_to_top"],
+                              kiTermIndicatorWrapToBottom: [[NSBundle bundleForClass:self.class] imageForResource:@"wrap_to_bottom"],
+                              kItermIndicatorBroadcastInput: [[NSBundle bundleForClass:self.class] imageForResource:@"BroadcastInput"],
+                              kiTermIndicatorMaximized: [[NSBundle bundleForClass:self.class] imageForResource:@"Maximized"],
+                              kiTermIndicatorCoprocess: [[NSBundle bundleForClass:self.class] imageForResource:@"Coprocess"],
+                              kiTermIndicatorAlert: [[NSBundle bundleForClass:self.class] imageForResource:@"Alert"],
+                              kiTermIndicatorAllOutputSuppressed: [[NSBundle bundleForClass:self.class] imageForResource:@"SuppressAllOutput"],
+                              kiTermIndicatorZoomedIn: [[NSBundle bundleForClass:self.class] imageForResource:@"Zoomed"],
+                              kiTermIndicatorCopyMode: [[NSBundle bundleForClass:self.class] imageForResource:@"CopyMode"] };
         [gIndicatorImages retain];
     });
 

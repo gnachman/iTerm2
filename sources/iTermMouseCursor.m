@@ -83,7 +83,7 @@ enum {
 - (instancetype)initWithType:(iTermMouseCursorType)cursorType {
     switch (cursorType) {
         case iTermMouseCursorTypeIBeamWithCircle:
-            self = [super initWithImage:[NSImage imageNamed:@"IBarCursorXMR"]
+            self = [super initWithImage:[[NSBundle bundleForClass:self.class] imageForResource:@"IBarCursorXMR"]
                                 hotSpot:NSMakePoint(4, 8)];
             if (self) {
                 _hasImage = YES;
@@ -97,7 +97,7 @@ enum {
                     _type = kIBeamCursor;
                 }
             } else {
-                self = [super initWithImage:[NSImage imageNamed:@"IBarCursor"]
+                self = [super initWithImage:[[NSBundle bundleForClass:self.class] imageForResource:@"IBarCursor"]
                                     hotSpot:NSMakePoint(4, 8)];
                 if (self) {
                     _hasImage = YES;

@@ -437,7 +437,7 @@ enum {
     }
 
     BOOL remoteLocationIsValid = [[iTermRemotePreferences sharedInstance] remoteLocationIsValid];
-    _prefsDirWarning.image = remoteLocationIsValid ? [NSImage imageNamed:@"CheckMark"] : [NSImage imageNamed:@"WarningSign"];
+    _prefsDirWarning.image = remoteLocationIsValid ? [[NSBundle bundleForClass:self.class] imageForResource:@"CheckMark"] : [[NSBundle bundleForClass:self.class] imageForResource:@"WarningSign"];
     BOOL isValidFile = (shouldLoadRemotePrefs &&
                         remoteLocationIsValid &&
                         ![[iTermRemotePreferences sharedInstance] remoteLocationIsURL]);

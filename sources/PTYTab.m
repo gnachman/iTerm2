@@ -204,7 +204,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 @synthesize lockedSession = lockedSession_;
 
 + (NSImage *)bellImage {
-    return [NSImage imageNamed:@"important"];
+    return [[NSBundle bundleForClass:self.class] imageForResource:@"important"];
 }
 
 + (NSImage *)imageForNewOutputWithAppearance:(NSAppearance *)appearance {
@@ -216,13 +216,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            return [NSImage imageNamed:@"NewOutput"];
+            return [[NSBundle bundleForClass:self.class] imageForResource:@"NewOutput"];
         case TAB_STYLE_DARK:
         case TAB_STYLE_DARK_HIGH_CONTRAST:
-            return [NSImage imageNamed:@"NewOutputForDarkTheme"];
+            return [[NSBundle bundleForClass:self.class] imageForResource:@"NewOutputForDarkTheme"];
     }
 
-    return [NSImage imageNamed:@"NewOutput"];
+    return [[NSBundle bundleForClass:self.class] imageForResource:@"NewOutput"];
 }
 
 + (NSImage *)idleImageWithAppearance:(NSAppearance *)appearance {
@@ -240,12 +240,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             assert(NO);
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            return [NSImage imageNamed:@"dead"];
+            return [[NSBundle bundleForClass:self.class] imageForResource:@"dead"];
         case TAB_STYLE_DARK:
         case TAB_STYLE_DARK_HIGH_CONTRAST:
-            return [NSImage imageNamed:@"DeadForDarkTheme"];
+            return [[NSBundle bundleForClass:self.class] imageForResource:@"DeadForDarkTheme"];
     }
-    return [NSImage imageNamed:@"dead"];
+    return [[NSBundle bundleForClass:self.class] imageForResource:@"dead"];
 }
 
 + (void)_recursiveRegisterSessionsInArrangement:(NSDictionary *)arrangement {

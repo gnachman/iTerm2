@@ -46,9 +46,9 @@
 
 - (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
     if (backgroundStyle == NSBackgroundStyleLight) {
-        [_clearButton setImage:[NSImage imageNamed:@"Erase"]];
+        [_clearButton setImage:[[NSBundle bundleForClass:self.class] imageForResource:@"Erase"]];
     } else {
-        [_clearButton setImage:[NSImage imageNamed:@"EraseDarkBackground"]];
+        [_clearButton setImage:[[NSBundle bundleForClass:self.class] imageForResource:@"EraseDarkBackground"]];
     }
     _backgroundStyle = backgroundStyle;
     [self setNeedsDisplay:YES];
@@ -198,14 +198,14 @@
 
 - (void)addClearButton {
     NSSize size = self.bounds.size;
-    NSSize buttonSize = [[NSImage imageNamed:@"Erase"] size];
+    NSSize buttonSize = [[[NSBundle bundleForClass:self.class] imageForResource:@"Erase"] size];
 
     _clearButton = [[NSButton alloc] initWithFrame:NSMakeRect(size.width - buttonSize.width - 2,
                                                               (size.height - buttonSize.height) / 2.0,
                                                               buttonSize.width,
                                                               buttonSize.height)];
     [_clearButton setTarget:self];
-    [_clearButton setImage:[NSImage imageNamed:@"Erase"]];
+    [_clearButton setImage:[[NSBundle bundleForClass:self.class] imageForResource:@"Erase"]];
     [_clearButton setAction:@selector(clear:)];
     [_clearButton setBordered:NO];
     self.autoresizesSubviews = YES;

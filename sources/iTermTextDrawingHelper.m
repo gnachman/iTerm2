@@ -611,7 +611,7 @@ typedef struct iTermTextColorContext {
 
 - (void)drawStripesInRect:(NSRect)rect {
     if (!_backgroundStripesImage) {
-        _backgroundStripesImage = [[NSImage imageNamed:@"BackgroundStripes"] retain];
+        _backgroundStripesImage = [[[NSBundle bundleForClass:self.class] imageForResource:@"BackgroundStripes"] retain];
     }
     NSColor *color = [NSColor colorWithPatternImage:_backgroundStripesImage];
     [color set];
@@ -2418,7 +2418,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         NSRect rect = [self reallyDrawCursor:cursor at:_cursorCoord outline:outline];
 
         if (_showSearchingCursor) {
-            NSImage *image = [NSImage imageNamed:@"SearchCursor"];
+            NSImage *image = [[NSBundle bundleForClass:self.class] imageForResource:@"SearchCursor"];
             if (image) {
                 NSRect imageRect = rect;
                 CGFloat aspectRatio = image.size.height / image.size.width;
@@ -2472,7 +2472,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     }
 
     if (_passwordInput) {
-        NSImage *keyImage = [NSImage imageNamed:@"key"];
+        NSImage *keyImage = [[NSBundle bundleForClass:self.class] imageForResource:@"key"];
         CGPoint point = rect.origin;
         [keyImage drawInRect:NSMakeRect(point.x, point.y, _cellSize.width, _cellSize.height)
                     fromRect:NSZeroRect

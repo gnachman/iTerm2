@@ -39,7 +39,7 @@ const CGFloat kDragAreaSize = 5;
     self = [super initWithFrame:frame];
     if (self) {
         backgroundColor_ = [[self defaultBackgroundColor] retain];
-        NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
+        NSImage *closeImage = [[NSBundle bundleForClass:self.class] imageForResource:@"closebutton"];
         killButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, kButtonSize, kButtonSize)];
         [killButton_ setButtonType:NSMomentaryPushInButton];
         [killButton_ setImage:closeImage];

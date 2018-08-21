@@ -2844,7 +2844,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                        units:kVT100TerminalUnitsCells
                          preserveAspectRatio:NO
                                        inset:zeroInset
-                                       image:[NSImage imageNamed:@"BrokenPipeDivider"]
+                                       image:[[NSBundle bundleForClass:self.class] imageForResource:@"BrokenPipeDivider"]
                                         data:nil];
     }
     [_screen appendStringAtCursor:message];
@@ -2857,7 +2857,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                        units:kVT100TerminalUnitsCells
                          preserveAspectRatio:NO
                                        inset:zeroInset
-                                       image:[NSImage imageNamed:@"BrokenPipeDivider"]
+                                       image:[[NSBundle bundleForClass:self.class] imageForResource:@"BrokenPipeDivider"]
                                         data:nil];
     }
     [_screen crlf];

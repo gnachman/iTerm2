@@ -187,7 +187,7 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermKeyCursorRendererTransientState
 
 - (NSImage *)newImage {
-    return [NSImage imageNamed:@"key"];
+    return [[NSBundle bundleForClass:self.class] imageForResource:@"key"];
 }
 
 @end
@@ -518,7 +518,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                        withBytes:&description
                                                                   checkIfChanged:YES];
     if (!_texture) {
-        _texture = [self.cellRenderer textureFromImage:[NSImage imageNamed:@"key"] context:nil];
+        _texture = [self.cellRenderer textureFromImage:[[NSBundle bundleForClass:self.class] imageForResource:@"key"] context:nil];
     }
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:frameData.renderEncoder
