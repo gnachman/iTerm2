@@ -103,6 +103,10 @@
     return map[type];
 }
 
++ (instancetype)it_imageNamed:(NSImageName)name forClass:(Class)theClass {
+    return [[NSBundle bundleForClass:theClass] imageForResource:name];
+}
+
 - (NSImage *)blurredImageWithRadius:(int)radius {
     // Initially, this used a CIFilter but this doesn't work on some machines for mysterious reasons.
     // Instead, this algorithm implements a really simple box blur. It's quite fast--about 5ms on

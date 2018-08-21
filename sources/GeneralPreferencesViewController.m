@@ -15,6 +15,7 @@
 #import "iTermWarning.h"
 #import "PasteboardHistory.h"
 #import "WindowArrangements.h"
+#import "NSImage+iTerm.h"
 
 static const NSInteger iTermMaximumTmuxDashboardLimit = 1000;
 
@@ -437,7 +438,7 @@ enum {
     }
 
     BOOL remoteLocationIsValid = [[iTermRemotePreferences sharedInstance] remoteLocationIsValid];
-    _prefsDirWarning.image = remoteLocationIsValid ? [NSImage imageNamed:@"CheckMark"] : [NSImage imageNamed:@"WarningSign"];
+    _prefsDirWarning.image = remoteLocationIsValid ? [NSImage it_imageNamed:@"CheckMark" forClass:self.class] : [NSImage it_imageNamed:@"WarningSign" forClass:self.class];
     BOOL isValidFile = (shouldLoadRemotePrefs &&
                         remoteLocationIsValid &&
                         ![[iTermRemotePreferences sharedInstance] remoteLocationIsURL]);

@@ -73,7 +73,7 @@ static NSString *const kSubstitution = @"Substitution";
 }
 
 - (instancetype)init {
-    self = [super initWithNibName:@"iTermPasteSpecialViewController" bundle:nil];
+    self = [super initWithNibName:@"iTermPasteSpecialViewController" bundle:[NSBundle bundleForClass:self.class]];
     return self;
 }
 

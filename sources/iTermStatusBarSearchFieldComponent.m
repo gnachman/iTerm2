@@ -62,7 +62,7 @@ NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
 - (NSViewController<iTermFindViewController> *)statusBarComponentSearchViewController {
     if (!_viewController) {
         _viewController = [[iTermMiniSearchFieldViewController alloc] initWithNibName:@"iTermMiniSearchFieldViewController"
-                                                                               bundle:[NSBundle mainBundle]];
+                                                                               bundle:[NSBundle bundleForClass:self.class]];
         const BOOL canClose = [self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarSearchComponentIsTemporaryKey] boolValue];
         _viewController.canClose = canClose;
     }

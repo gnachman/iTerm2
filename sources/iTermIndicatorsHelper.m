@@ -9,6 +9,7 @@
 #import "iTermIndicatorsHelper.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "NSImage+iTerm.h"
 
 static NSDictionary *gIndicatorImages;
 
@@ -65,16 +66,16 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 + (NSDictionary *)indicatorImages {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        gIndicatorImages = @{ kiTermIndicatorBell: [NSImage imageNamed:@"bell"],
-                              kiTermIndicatorWrapToTop: [NSImage imageNamed:@"wrap_to_top"],
-                              kiTermIndicatorWrapToBottom: [NSImage imageNamed:@"wrap_to_bottom"],
-                              kItermIndicatorBroadcastInput: [NSImage imageNamed:@"BroadcastInput"],
-                              kiTermIndicatorMaximized: [NSImage imageNamed:@"Maximized"],
-                              kiTermIndicatorCoprocess: [NSImage imageNamed:@"Coprocess"],
-                              kiTermIndicatorAlert: [NSImage imageNamed:@"Alert"],
-                              kiTermIndicatorAllOutputSuppressed: [NSImage imageNamed:@"SuppressAllOutput"],
-                              kiTermIndicatorZoomedIn: [NSImage imageNamed:@"Zoomed"],
-                              kiTermIndicatorCopyMode: [NSImage imageNamed:@"CopyMode"] };
+        gIndicatorImages = @{ kiTermIndicatorBell: [NSImage it_imageNamed:@"bell" forClass:self.class],
+                              kiTermIndicatorWrapToTop: [NSImage it_imageNamed:@"wrap_to_top" forClass:self.class],
+                              kiTermIndicatorWrapToBottom: [NSImage it_imageNamed:@"wrap_to_bottom" forClass:self.class],
+                              kItermIndicatorBroadcastInput: [NSImage it_imageNamed:@"BroadcastInput" forClass:self.class],
+                              kiTermIndicatorMaximized: [NSImage it_imageNamed:@"Maximized" forClass:self.class],
+                              kiTermIndicatorCoprocess: [NSImage it_imageNamed:@"Coprocess" forClass:self.class],
+                              kiTermIndicatorAlert: [NSImage it_imageNamed:@"Alert" forClass:self.class],
+                              kiTermIndicatorAllOutputSuppressed: [NSImage it_imageNamed:@"SuppressAllOutput" forClass:self.class],
+                              kiTermIndicatorZoomedIn: [NSImage it_imageNamed:@"Zoomed" forClass:self.class],
+                              kiTermIndicatorCopyMode: [NSImage it_imageNamed:@"CopyMode" forClass:self.class] };
         [gIndicatorImages retain];
     });
 

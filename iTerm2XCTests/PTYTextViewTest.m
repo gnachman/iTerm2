@@ -758,7 +758,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     } else {
         NSImage *golden = [[NSImage alloc] initWithContentsOfFile:goldenName];
         if (!golden) {
-            golden = [NSImage imageNamed:[self shortNameForGolden:name]];
+            golden = [[NSBundle bundleForClass:self.class] imageForResource:[self shortNameForGolden:name]];
         }
         XCTAssertNotNil(golden, @"Failed to load golden image with name %@, short name %@", goldenName, [self shortNameForGolden:name]);
         NSData *goldenData = [golden rawPixelsInRGBColorSpace];

@@ -9,6 +9,7 @@
 #import "iTermFindCursorView.h"
 #import "NSBezierPath+iTerm.h"
 #import "NSDate+iTerm.h"
+#import "NSImage+iTerm.h"
 #import <QuartzCore/QuartzCore.h>
 
 // Delay before teardown.
@@ -96,7 +97,7 @@ const double kFindCursorHoleRadius = 30;
     if (self) {
         [self setWantsLayer:YES];
         _arrowLayer = [[CALayer alloc] init];
-        NSImage *image = [NSImage imageNamed:@"BigArrow"];
+        NSImage *image = [NSImage it_imageNamed:@"BigArrow" forClass:self.class];
         _arrowLayer.frame = NSMakeRect(0, 0, image.size.width, image.size.height);
         _arrowLayer.contents = (id)[image CGImageForProposedRect:nil context:nil hints:nil];
         [self.layer addSublayer:_arrowLayer];
@@ -236,7 +237,7 @@ const double kFindCursorHoleRadius = 30;
     [cell setScaleSpeed:0.3];
     [cell setScaleRange:0.1];
     NSString *name = [NSString stringWithFormat:@"FindCursorCell%d", imageNumber];
-    NSImage *image = [NSImage imageNamed:name];
+    NSImage *image = [NSImage it_imageNamed:name forClass:self.class];
     if (image) {
         [cell setContents:(id)[image CGImageForProposedRect:nil context:nil hints:nil]];
     }

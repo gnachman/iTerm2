@@ -29,6 +29,7 @@
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 #import "PTYFontInfo.h"
 #import "RegexKitLite.h"
@@ -611,7 +612,7 @@ typedef struct iTermTextColorContext {
 
 - (void)drawStripesInRect:(NSRect)rect {
     if (!_backgroundStripesImage) {
-        _backgroundStripesImage = [[NSImage imageNamed:@"BackgroundStripes"] retain];
+        _backgroundStripesImage = [[NSImage it_imageNamed:@"BackgroundStripes" forClass:self.class] retain];
     }
     NSColor *color = [NSColor colorWithPatternImage:_backgroundStripesImage];
     [color set];
@@ -2418,7 +2419,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         NSRect rect = [self reallyDrawCursor:cursor at:_cursorCoord outline:outline];
 
         if (_showSearchingCursor) {
-            NSImage *image = [NSImage imageNamed:@"SearchCursor"];
+            NSImage *image = [NSImage it_imageNamed:@"SearchCursor" forClass:self.class];
             if (image) {
                 NSRect imageRect = rect;
                 CGFloat aspectRatio = image.size.height / image.size.width;
@@ -2472,7 +2473,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     }
 
     if (_passwordInput) {
-        NSImage *keyImage = [NSImage imageNamed:@"key"];
+        NSImage *keyImage = [NSImage it_imageNamed:@"key" forClass:self.class];
         CGPoint point = rect.origin;
         [keyImage drawInRect:NSMakeRect(point.x, point.y, _cellSize.width, _cellSize.height)
                     fromRect:NSZeroRect

@@ -23,7 +23,7 @@
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        search_ = [[GlobalSearch alloc] initWithNibName:@"GlobalSearch" bundle:nil];
+        search_ = [[GlobalSearch alloc] initWithNibName:@"GlobalSearch" bundle:[NSBundle bundleForClass:self.class]];
         [search_ setDelegate:self];
         const int SEARCH_MARGIN = 10;
         [[search_ view] setFrame:NSMakeRect(SEARCH_MARGIN,

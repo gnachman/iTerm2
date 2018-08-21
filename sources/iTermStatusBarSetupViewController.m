@@ -47,7 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (nullable instancetype)initWithLayoutDictionary:(NSDictionary *)layoutDictionary {
-    self = [super initWithNibName:@"iTermStatusBarSetupViewController" bundle:nil];
+    self = [super initWithNibName:@"iTermStatusBarSetupViewController" bundle:[NSBundle bundleForClass:self.class]];
     if (self) {
         _initialLayout = [layoutDictionary copy];
     }
@@ -169,7 +169,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSSize)collectionView:(NSCollectionView *)collectionView
                   layout:(NSCollectionViewLayout*)collectionViewLayout
   sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
-    iTermStatusBarSetupCollectionViewItem *item = [[iTermStatusBarSetupCollectionViewItem alloc] initWithNibName:@"iTermStatusBarSetupCollectionViewItem" bundle:nil];
+    iTermStatusBarSetupCollectionViewItem *item = [[iTermStatusBarSetupCollectionViewItem alloc] initWithNibName:@"iTermStatusBarSetupCollectionViewItem" bundle:[NSBundle bundleForClass:self.class]];
     [item view];
     [self initializeItem:item atIndexPath:indexPath];
     [item sizeToFit];

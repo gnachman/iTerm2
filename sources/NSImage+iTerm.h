@@ -31,6 +31,8 @@
 // Returns "gif", "png", etc., or nil.
 + (NSString *)extensionForUniformType:(NSString *)type;
 
++ (instancetype)it_imageNamed:(NSImageName)name forClass:(Class)theClass;
+
 // Returns an image blurred by repeated box blurs with |radius| iterations.
 - (NSImage *)blurredImageWithRadius:(int)radius;
 

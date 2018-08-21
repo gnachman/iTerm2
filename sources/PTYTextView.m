@@ -758,6 +758,15 @@ static const int kDragThreshold = 3;
     [self setNeedsDisplay:YES];
 }
 
+- (BOOL)showTimestamps {
+    return _drawingHelper.showTimestamps;
+}
+
+- (void)setShowTimestamps:(BOOL)value {
+    _drawingHelper.showTimestamps = value;
+    [self setNeedsDisplay:YES];
+}
+
 - (NSRect)scrollViewContentSize {
     NSRect r = NSMakeRect(0, 0, 0, 0);
     r.size = [[self enclosingScrollView] contentSize];
@@ -5120,7 +5129,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([content isKindOfClass:[NSAttributedString class]]) {
         attributedString = content;
         accessory = [[[iTermPrintAccessoryViewController alloc] initWithNibName:@"iTermPrintAccessoryViewController"
-                                                                         bundle:nil] autorelease];
+                                                                         bundle:[NSBundle bundleForClass:self.class]] autorelease];
         accessory.userDidChangeSetting = ^() {
             NSAttributedString *theAttributedString = nil;
             if (accessory.blackAndWhite) {

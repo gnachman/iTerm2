@@ -761,7 +761,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)]) {
         _shortcutAccessoryViewController =
             [[iTermWindowShortcutLabelTitlebarAccessoryViewController alloc] initWithNibName:@"iTermWindowShortcutAccessoryView"
-                                                                                      bundle:nil];
+                                                                                      bundle:[NSBundle bundleForClass:self.class]];
     }
     if ((self.window.styleMask & NSWindowStyleMaskTitled) && _shortcutAccessoryViewController) {
         [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
