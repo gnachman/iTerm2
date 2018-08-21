@@ -55,6 +55,8 @@ typedef NS_ENUM(NSInteger, MouseFormat) {
 - (NSData *)reportColor:(NSColor *)color atIndex:(int)index prefix:(NSString *)prefix;
 
 - (NSData *)reportChecksum:(int)checksum withIdentifier:(int)identifier;
+- (NSData *)reportSGRCodes:(NSArray<NSString *> *)codes;
+
 - (NSData *)reportFocusGained:(BOOL)gained;
 - (NSData *)reportiTerm2Version;
 

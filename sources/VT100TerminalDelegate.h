@@ -100,6 +100,7 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 
 // Sums the visible characters in the given rectangle onscreen.
 - (int)terminalChecksumInRectangle:(VT100GridRect)rect;
+- (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)rect;
 
 // Erase all characters before the cursor and/or after the cursor.
 - (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after;

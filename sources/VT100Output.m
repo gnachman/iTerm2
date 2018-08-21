@@ -585,6 +585,11 @@ typedef enum {
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
+- (NSData *)reportSGRCodes:(NSArray<NSString *> *)codes {
+    NSString *string = [NSString stringWithFormat:@"%c[%@m", ESC, [codes componentsJoinedByString:@";"]];
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
+}
+
 #pragma mark - Private
 
 - (NSData *)specialKey:(int)terminfo

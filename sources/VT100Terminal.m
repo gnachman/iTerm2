@@ -1007,6 +1007,19 @@ static const int kMaxScreenRows = 4096;
     [delegate_ terminalSendReport:[self.output reportChecksum:checksum withIdentifier:identifier]];
 }
 
+- (void)sendSGRReportWithRectangle:(VT100GridRect)rect {
+    if (![delegate_ terminalShouldSendReport]) {
+        return;
+    }
+    if (![self rectangleIsValid:rect]) {
+        [delegate_ terminalSendReport:[self.output reportSGRCodes:@[]]];
+        return;
+    }
+    // TODO: Respect origin mode
+    NSArray<NSString *> *codes = [delegate_ terminalSGRCodesInRectangle:rect];
+    [delegate_ terminalSendReport:[self.output reportSGRCodes:codes]];
+}
+
 - (NSString *)decodedBase64PasteCommand:(NSString *)commandString {
     //
     // - write access
@@ -1553,6 +1566,19 @@ static const int kMaxScreenRows = 4096;
             }
             break;
         }
+        case VT100CSI_XTREPORTSGR: {
+            if ([delegate_ terminalIsTrusted]) {
+                VT100GridRect defaultRectangle = VT100GridRectMake(0,
+                                                                   0,
+                                                                   [delegate_ terminalWidth],
+                                                                   [delegate_ terminalHeight]);
+                [self sendSGRReportWithRectangle:[self rectangleInToken:token
+                                                        startingAtIndex:0
+                                                       defaultRectangle:defaultRectangle]];
+            }
+            break;
+        }
+
         case VT100CSI_DECSTR:
             [self softReset];
             break;

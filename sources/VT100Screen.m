@@ -4104,6 +4104,120 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return result;
 }
 
+- (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c {
+    NSMutableSet<NSString *> *result = [NSMutableSet set];
+    switch (c.foregroundColorMode) {
+        case ColorModeNormal:
+            if (c.foregroundColor < 8) {
+                [result addObject:[NSString stringWithFormat:@"%@", @(c.foregroundColor + 30)]];
+            } else if (c.foregroundColor < 16) {
+                [result addObject:[NSString stringWithFormat:@"%@", @(c.foregroundColor + 90)]];
+            } else {
+                [result addObject:[NSString stringWithFormat:@"38:5:%@", @(c.foregroundColor)]];
+            }
+            break;
+
+        case ColorModeAlternate:
+            switch (c.foregroundColor) {
+                case ALTSEM_DEFAULT:
+                case ALTSEM_REVERSED_DEFAULT:  // Not sure quite how to handle this, going with the simplest approach for now.
+                    [result addObject:@"39"];
+                    break;
+
+                case ALTSEM_SELECTED:
+                case ALTSEM_CURSOR:
+                    // This isn't used as far as I can tell.
+                    break;
+
+            }
+            break;
+
+        case ColorMode24bit:
+            [result addObject:[NSString stringWithFormat:@"38:2:1:%@:%@:%@",
+              @(c.foregroundColor), @(c.fgGreen), @(c.fgBlue)]];
+            break;
+
+        case ColorModeInvalid:
+            break;
+    }
+
+    switch (c.backgroundColorMode) {
+        case ColorModeNormal:
+            if (c.backgroundColor < 8) {
+                [result addObject:[NSString stringWithFormat:@"%@", @(c.backgroundColor + 40)]];
+            } else if (c.backgroundColor < 16) {
+                [result addObject:[NSString stringWithFormat:@"%@", @(c.backgroundColor + 100)]];
+            } else {
+                [result addObject:[NSString stringWithFormat:@"48:5:%@", @(c.backgroundColor)]];
+            }
+            break;
+
+        case ColorModeAlternate:
+            switch (c.backgroundColor) {
+                case ALTSEM_DEFAULT:
+                case ALTSEM_REVERSED_DEFAULT:  // Not sure quite how to handle this, going with the simplest approach for now.
+                    [result addObject:@"49"];
+                    break;
+
+                case ALTSEM_SELECTED:
+                case ALTSEM_CURSOR:
+                    // This isn't used as far as I can tell.
+                    break;
+
+            }
+            break;
+
+        case ColorMode24bit:
+            [result addObject:[NSString stringWithFormat:@"48:2:1:%@:%@:%@",
+              @(c.backgroundColor), @(c.bgGreen), @(c.bgBlue)]];
+            break;
+
+        case ColorModeInvalid:
+            break;
+    }
+
+    if (c.bold) {
+        [result addObject:@"1"];
+    }
+    if (c.faint) {
+        [result addObject:@"2"];
+    }
+    if (c.italic) {
+        [result addObject:@"3"];
+    }
+    if (c.underline) {
+        [result addObject:@"4"];
+    }
+    if (c.blink) {
+        [result addObject:@"5"];
+    }
+
+    return result;
+}
+
+- (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)rect {
+    NSMutableSet<NSString *> *codes = nil;
+    for (int y = rect.origin.y; y < rect.origin.y + rect.size.height; y++) {
+        screen_char_t *theLine = [self getLineAtScreenIndex:y];
+        for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < self.width; x++) {
+            screen_char_t c = theLine[x];
+            if (c.code == 0 && !c.complexChar && !c.image) {
+                continue;
+            }
+            NSSet<NSString *> *charCodes = [self sgrCodesForChar:c];
+            if (!codes) {
+                codes = [[charCodes mutableCopy] autorelease];
+            } else {
+                [codes intersectSet:charCodes];
+                if (!codes.count) {
+                    return @[];
+                }
+            }
+        }
+    }
+    return codes.allObjects ?: @[];
+}
+
 - (NSSize)terminalCellSizeInPoints:(double *)scaleOut {
     *scaleOut = [delegate_ screenBackingScaleFactor];
     return [delegate_ screenCellSize];
