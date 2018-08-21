@@ -2107,7 +2107,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)openSourceLicenses:(id)sender {
-    NSURL *url = [[NSBundle mainBundle] URLForResource:@"Licenses" withExtension:@"txt"];
+    NSURL *url = [[NSBundle bundleForClass:self.class] URLForResource:@"Licenses" withExtension:@"txt"];
     [[NSWorkspace sharedWorkspace] openURL:url];
 }
 

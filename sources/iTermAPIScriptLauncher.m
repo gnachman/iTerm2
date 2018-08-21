@@ -108,7 +108,7 @@
 }
 
 + (NSArray *)argumentsToRunScript:(NSString *)filename withVirtualEnv:(NSString *)providedVirtualEnv {
-    NSString *wrapper = [[NSBundle mainBundle] pathForResource:@"it2_api_wrapper" ofType:@"sh"];
+    NSString *wrapper = [[NSBundle bundleForClass:self.class] pathForResource:@"it2_api_wrapper" ofType:@"sh"];
     NSString *pyenv = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython];
     NSString *virtualEnv = providedVirtualEnv ?: pyenv;
     NSString *command = [NSString stringWithFormat:@"%@ %@ %@",

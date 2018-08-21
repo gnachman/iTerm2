@@ -295,7 +295,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSString *templateName = [NSString stringWithFormat:@"template_%@_%@",
                               environmentNamePart[picker.selectedEnvironment],
                               templateNamePart[picker.selectedTemplate]];
-    NSString *templatePath = [[NSBundle mainBundle] pathForResource:templateName ofType:@"py"];
+    NSString *templatePath = [[NSBundle bundleForClass:self.class] pathForResource:templateName ofType:@"py"];
     return templatePath;
 }
 

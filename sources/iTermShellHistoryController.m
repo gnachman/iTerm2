@@ -164,7 +164,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 // vacuum a database after changing the setting to in-memory. It doesn't make sense to vacuum RAM,
 // after all.
 - (BOOL)initializeCoreDataWithRetry:(BOOL)retry vacuum:(BOOL)vacuum {
-    NSURL *modelURL = [[NSBundle mainBundle] URLForResource:@"Model" withExtension:@"momd"];
+    NSURL *modelURL = [[NSBundle bundleForClass:self.class] URLForResource:@"Model" withExtension:@"momd"];
     assert(modelURL);
 
     NSManagedObjectModel *managedObjectModel =
