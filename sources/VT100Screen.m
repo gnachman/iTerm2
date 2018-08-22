@@ -571,7 +571,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
           toScrollback:linebuffer_
         withUsedHeight:[primaryGrid_ numberOfLinesUsed]
              newHeight:newSize.height];
-    DLog(@"History after appending screen to scrollback:\n%@", [linebuffer_ debugString]);
+    DLog(@"Have appended primary grid to line buffer");
 
     // Contains iTermSubSelection*s updated for the new screen size. Used
     // regardless of whether we were in the alt screen, as it's simply the set
@@ -597,6 +597,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
             }
         }
     }
+    DLog(@"Have updated sub-selections");
 
     if ([intervalTree_ count]) {
         // Fix up the intervals for the primary grid.
@@ -639,12 +640,13 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         }
     }
     currentGrid_.size = newSize;
+    DLog(@"Have fixed up intervals for primary grid");
 
     // Restore the screen contents that were pushed onto the linebuffer.
     [currentGrid_ restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
                             maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
-    DLog(@"After restoring screen from line buffer:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
+    DLog(@"Have restored screen from line buffer");
 
     // If we're in the alternate screen, restore its contents from the temporary
     // linebuffer.
