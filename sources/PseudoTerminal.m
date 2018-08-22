@@ -4040,7 +4040,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
                 case PSMTab_TopTab:
                 case PSMTab_BottomTab:
-                    contentSize.height -= kHorizontalTabBarHeight;
+                    contentSize.height -= _contentView.tabBarControl.height;
                     break;
             }
         }
@@ -4832,7 +4832,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
             case PSMTab_TopTab:
             case PSMTab_BottomTab:
-                contentFrame.size.height += kHorizontalTabBarHeight;
+                contentFrame.size.height += _contentView.tabBarControl.height;
                 break;
         }
 
@@ -4867,7 +4867,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
 
             case PSMTab_BottomTab:
-                viewRect.origin.y += kHorizontalTabBarHeight;
+                viewRect.origin.y += _contentView.tabBarControl.height;
                 break;
         }
 
@@ -4900,9 +4900,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
         offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
         if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
-            offset->height = kHorizontalTabBarHeight;
+            offset->height = _contentView.tabBarControl.height;
         } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
-            offset->height = viewRect.size.height + kHorizontalTabBarHeight;
+            offset->height = viewRect.size.height + _contentView.tabBarControl.height;
         } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
             offset->height = 0;
             offset->width = 0;
@@ -4920,7 +4920,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
 
             case PSMTab_TopTab:
-                offset->height = kHorizontalTabBarHeight;
+                offset->height = _contentView.tabBarControl.height;
                 break;
 
             case PSMTab_BottomTab:
@@ -7027,6 +7027,20 @@ ITERM_WEAKLY_REFERENCEABLE
     [self refreshTerminal:nil];
 }
 
+- (CGFloat)rootTerminalViewHeightOfTabBar:(iTermRootTerminalView *)sender {
+    if (windowType_ != WINDOW_TYPE_COMPACT && savedWindowType_ != WINDOW_TYPE_COMPACT) {
+        return 0;
+    }
+
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (preferredStyle != TAB_STYLE_MINIMAL) {
+        return 0;
+    }
+
+    // compact + minimal gives 36 pt tabs
+    return 36;
+}
+
 - (void)updateTabBarStyle {
     id<PSMTabStyle> style;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
@@ -7213,7 +7227,7 @@ ITERM_WEAKLY_REFERENCEABLE
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_TopTab:
             case PSMTab_BottomTab:
-                contentSize.height += kHorizontalTabBarHeight;
+                contentSize.height += _contentView.tabBarControl.height;
                 break;
             case PSMTab_LeftTab:
                 contentSize.width += [self tabviewWidth];

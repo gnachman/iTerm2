@@ -313,11 +313,11 @@
         beforeRect = inset(NSMakeRect(0,
                                       0,
                                       [self leftMarginForTabBarControl],
-                                      kPSMTabBarControlHeight));
+                                      bar.height));
         afterRect = inset(NSMakeRect(bar.frame.size.width - self.rightMarginForTabBarControl,
                                      0,
                                      self.rightMarginForTabBarControl,
-                                     kPSMTabBarControlHeight));
+                                     bar.height));
     } else {
         beforeRect = inset(NSMakeRect(0,
                                       0,

@@ -22,7 +22,6 @@ NSString *const kPSMModifierChangedNotification = @"kPSMModifierChangedNotificat
 NSString *const kPSMTabModifierKey = @"TabModifier";
 NSString *const PSMTabDragDidEndNotification = @"PSMTabDragDidEndNotification";
 NSString *const PSMTabDragDidBeginNotification = @"PSMTabDragDidBeginNotification";
-const CGFloat kPSMTabBarControlHeight = 24;
 const CGFloat kSPMTabBarCellInternalXMargin = 6;
 
 const CGFloat kPSMTabBarCellPadding = 4;
@@ -104,7 +103,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminen
     aRect.origin.x = [_style leftMarginForTabBarControl];
     aRect.origin.y = 0.0;
     aRect.size.width = [self availableCellWidth];
-    aRect.size.height = kPSMTabBarControlHeight;
+    aRect.size.height = self.height;
     return aRect;
 }
 
@@ -117,6 +116,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminen
         // Initialization
         _cells = [[NSMutableArray alloc] initWithCapacity:10];
         _animationTimer = nil;
+        const CGFloat defaultHeight = 24;
+        _height = defaultHeight;
 
         // default config
         _currentStep = kPSMIsNotBeingResized;
@@ -1203,14 +1204,14 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminen
     NSRect cellRect;
     int i;
 
-    cellRect.size.height = kPSMTabBarControlHeight;
+    cellRect.size.height = self.height;
     cellRect.size.width = [_style rightMarginForTabBarControl];
     if ([self orientation] == PSMTabBarHorizontalOrientation) {
         cellRect.origin.y = 0;
         cellRect.origin.x = [self frame].size.width - [_style rightMarginForTabBarControl] + (_resizeAreaCompensation ? -_resizeAreaCompensation : 1);
     } else {
         cellRect.origin.x = 0;
-        cellRect.origin.y = [self frame].size.height - kPSMTabBarControlHeight;
+        cellRect.origin.y = [self frame].size.height - self.height;
         cellRect.size.width = [self frame].size.width;
     }
 

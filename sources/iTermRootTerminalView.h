@@ -9,8 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "SolidColorView.h"
 
-extern const CGFloat kHorizontalTabBarHeight;
-
+@class iTermRootTerminalView;
 @class iTermTabBarControlView;
 @protocol iTermTabBarControlViewDelegate;
 @class iTermToolbeltView;
@@ -34,6 +33,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 - (NSWindow *)window;
 - (BOOL)enableStoplightHotbox;
 - (void)rootTerminalViewDidChangeEffectiveAppearance;
+- (CGFloat)rootTerminalViewHeightOfTabBar:(iTermRootTerminalView *)sender;
 @end
 
 @interface iTermRootTerminalView : SolidColorView

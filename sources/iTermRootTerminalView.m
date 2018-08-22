@@ -25,7 +25,6 @@ const CGFloat iTermStandardButtonsViewHeight = 25;
 const CGFloat iTermStandardButtonsViewWidth = 69;
 const CGFloat iTermStoplightHotboxWidth = iTermStandardButtonsViewWidth + 12;
 const CGFloat iTermStoplightHotboxHeight = iTermStandardButtonsViewHeight + 8;
-const CGFloat kHorizontalTabBarHeight = 24;
 const CGFloat kDivisionViewHeight = 1;
 
 static const CGFloat kMinimumToolbeltSizeInPoints = 100;
@@ -81,8 +80,13 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
         // Create the tab bar.
         NSRect tabBarFrame = self.bounds;
-        tabBarFrame.size.height = kHorizontalTabBarHeight;
+        tabBarFrame.size.height = _tabBarControl.height;
         self.tabBarControl = [[[iTermTabBarControlView alloc] initWithFrame:tabBarFrame] autorelease];
+        CGFloat customHeight = [delegate rootTerminalViewHeightOfTabBar:self];
+        if (customHeight > 0) {
+            self.tabBarControl.height = customHeight;
+        }
+
         _tabBarControl.itermTabBarDelegate = self;
 
         NSRect stoplightFrame = NSMakeRect(0,
@@ -479,7 +483,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                 CGFloat yOrigin = _delegate.haveBottomBorder ? 1 : 0;
                 CGFloat heightAdjustment = 0;
                 if (!self.tabBarControl.flashing) {
-                    heightAdjustment += kHorizontalTabBarHeight;
+                    heightAdjustment += _tabBarControl.height;
                 }
                 if (_delegate.haveTopBorder) {
                     heightAdjustment += 1;
@@ -496,11 +500,11 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                 DLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
                 [self.tabView setFrame:tabViewFrame];
 
-                heightAdjustment = self.tabBarControl.flashing ? kHorizontalTabBarHeight : 0;
+                heightAdjustment = self.tabBarControl.flashing ? _tabBarControl.height : 0;
                 NSRect tabBarFrame = NSMakeRect(tabViewFrame.origin.x,
                                                 NSMaxY(tabViewFrame) - heightAdjustment,
                                                 tabViewFrame.size.width,
-                                                kHorizontalTabBarHeight);
+                                                _tabBarControl.height);
 
                 [self updateDivisionView];
                 self.tabBarControl.insets = [self.delegate tabBarInsets];
@@ -516,12 +520,12 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                 NSRect tabBarFrame = NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
                                                 _delegate.haveBottomBorder ? 1 : 0,
                                                 [self tabviewWidth],
-                                                kHorizontalTabBarHeight);
+                                                _tabBarControl.height);
                 self.tabBarControl.insets = [self.delegate tabBarInsets];
                 self.tabBarControl.frame = tabBarFrame;
                 self.tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewMaxYMargin);
 
-                CGFloat heightAdjustment = self.tabBarControl.flashing ? 0 : tabBarFrame.origin.y + kHorizontalTabBarHeight;
+                CGFloat heightAdjustment = self.tabBarControl.flashing ? 0 : tabBarFrame.origin.y + _tabBarControl.height;
                 if (_delegate.haveTopBorder) {
                     heightAdjustment += 1;
                 }
@@ -530,7 +534,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                 }
                 CGFloat y = tabBarFrame.origin.y;
                 if (!self.tabBarControl.flashing) {
-                    y += kHorizontalTabBarHeight;
+                    y += _tabBarControl.height;
                 }
                 NSRect tabViewFrame = NSMakeRect(tabBarFrame.origin.x,
                                                  y,

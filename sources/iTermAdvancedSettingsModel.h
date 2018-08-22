@@ -239,5 +239,6 @@
 + (double)minimalTabStyleOutlineStrength;
 + (double)coloredUnselectedTabTextProminence;
 + (BOOL)throttleMetalConcurrentFrames;
++ (double)tabHeight;
 
 @end
