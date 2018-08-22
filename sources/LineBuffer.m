@@ -537,11 +537,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine
                      timestamp:(NSTimeInterval *)timestampPtr
-                  continuation:(screen_char_t *)continuationPtr
-{
+                  continuation:(screen_char_t *)continuationPtr {
+    DLog(@"Entered popandcopy width=%d", width);
     if ([self numLinesWithWidth: width] == 0) {
+        DLog(@"there are 0 lines");
         return NO;
     }
+    DLog(@"there is at least one line");
     num_wrapped_lines_width = -1;
 
     LineBlock* block = [blocks lastObject];
@@ -554,12 +556,14 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int length;
     screen_char_t* temp;
     screen_char_t continuation;
+    DLog(@"calling pop last line");
     BOOL ok __attribute__((unused)) =
         [block popLastLineInto:&temp
                     withLength:&length
                      upToWidth:width
                      timestamp:timestampPtr
                   continuation:&continuation];
+    DLog(@"returned from pop last line");
     if (continuationPtr) {
         *continuationPtr = continuation;
     }
@@ -569,11 +573,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     // Copy into the provided buffer.
     memcpy(ptr, temp, sizeof(screen_char_t) * length);
+    DLog(@"extend continuation");
     [self extendContinuation:continuation inBuffer:ptr ofLength:length toWidth:width];
 
     // Clean up the block if the whole thing is empty, otherwise another call
     // to this function would not work correctly.
     if ([block isEmpty]) {
+        DLog(@"remove last block");
         [blocks removeLastObject];
     }
 
@@ -609,22 +615,27 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
-- (BOOL) getCursorInLastLineWithWidth: (int) width atX: (int*) x
-{
+- (BOOL)getCursorInLastLineWithWidth: (int) width atX: (int*) x {
+    DLog(@"Begin search for cursor width=%d", width);
+
     int total_raw_lines = 0;
     int i;
     for (i = 0; i < [blocks count]; ++i) {
         total_raw_lines += [[blocks objectAtIndex:i] numRawLines];
     }
+    DLog(@"total_raw_lines=%d, cursor_rawline=%d", total_raw_lines, cursor_rawline);
     if (cursor_rawline == total_raw_lines-1) {
         // The cursor is on the last line in the buffer.
+        DLog(@"the cursor is on the last line in the buffer");
         LineBlock* block = [blocks lastObject];
         int last_line_length = [block getRawLineLength: ([block numEntries]-1)];
         screen_char_t* lastRawLine = [block rawLine: ([block numEntries]-1)];
+        DLog(@"About to compute the number of full lines");
         int num_overflow_lines = NumberOfFullLines(lastRawLine,
                                                    last_line_length,
                                                    width,
                                                    _mayHaveDoubleWidthCharacter);
+        DLog(@"About to compute the offset of wrapped line %d", num_overflow_lines);
         int min_x = OffsetOfWrappedLine(lastRawLine,
                                         num_overflow_lines,
                                         last_line_length,

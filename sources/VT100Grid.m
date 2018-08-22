@@ -1311,8 +1311,12 @@ static NSString *const kGridSizeKey = @"Size";
 - (void)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
                     withDefaultChar:(screen_char_t)defaultChar
                   maxLinesToRestore:(int)maxLines {
+    DLog(@"restoreScreenFromLineBuffer maxLinesToREstore=%d", maxLines);
+
     // Move scrollback lines into screen
     int numLinesInLineBuffer = [lineBuffer numLinesWithWidth:size_.width];
+    DLog(@"Line buffer contains %d lines at width %d", numLinesInLineBuffer, size_.width);
+
     int destLineNumber;
     if (numLinesInLineBuffer >= size_.height) {
         destLineNumber = size_.height - 1;
@@ -1323,17 +1327,22 @@ static NSString *const kGridSizeKey = @"Size";
 
     screen_char_t *defaultLine = [[self lineOfWidth:size_.width
                                      filledWithChar:defaultChar] mutableBytes];
+    DLog(@"Have fetched default line");
 
     BOOL foundCursor = NO;
     BOOL prevLineStartsWithDoubleWidth = NO;
     int numPopped = 0;
     while (destLineNumber >= 0) {
+        DLog(@"Copy to destination line number %d", destLineNumber);
+
         screen_char_t *dest = [self screenCharsAtLineNumber:destLineNumber];
         memcpy(dest, defaultLine, sizeof(screen_char_t) * size_.width);
         if (!foundCursor) {
+            DLog(@"Checking for cursor");
             int tempCursor = cursor_.x;
             foundCursor = [lineBuffer getCursorInLastLineWithWidth:size_.width atX:&tempCursor];
             if (foundCursor) {
+                DLog(@"Found cursor");
                 VT100GridCoord newCursorCoord = VT100GridCoordMake(tempCursor % size_.width,
                                                                    destLineNumber + tempCursor / size_.width);
                 if (tempCursor / size_.width > 0 && newCursorCoord.x == 0) {
@@ -1341,19 +1350,25 @@ static NSString *const kGridSizeKey = @"Size";
                     newCursorCoord.x = size_.width;
                     newCursorCoord.y -= 1;
                 }
+                DLog(@"Move cursor");
                 [self setCursor:newCursorCoord];
+            } else {
+                DLog(@"Did not find cursor");
             }
         }
         int cont;
         NSTimeInterval timestamp;
         screen_char_t continuation;
         ++numPopped;
+        DLog(@"will pop and copy last line");
         assert([lineBuffer popAndCopyLastLineInto:dest
                                             width:size_.width
                                 includesEndOfLine:&cont
                                         timestamp:&timestamp
                                      continuation:&continuation]);
+        DLog(@"did pop and copy last line");
         [[self lineInfoAtLineNumber:destLineNumber] setTimestamp:timestamp];
+        DLog(@"did update timestamp");
         if (cont && dest[size_.width - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
             // line below it starts with a DWC, it's safe to conclude that a DWC
@@ -1371,6 +1386,7 @@ static NSString *const kGridSizeKey = @"Size";
         if (cont == EOL_DWC) {
             dest[size_.width - 1].code = DWC_SKIP;
         }
+        DLog(@"Finished line %d", destLineNumber);
         --destLineNumber;
     }
 }

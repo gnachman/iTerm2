@@ -301,12 +301,14 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
     if (width > 1 && mayHaveDoubleWidthCharacter) {
         // TODO: Use memoization here
         int fullLines = 0;
+        DLog(@"Computing number of full lines the slow way. width=%d, length=%d", width, length);
         for (int i = width; i < length; i += width) {
             if (buffer[i].code == DWC_RIGHT) {
                 --i;
             }
             ++fullLines;
         }
+        DLog(@"Done with the slow thing. fullLines=%d", fullLines);
         return fullLines;
     } else {
         return (length - 1) / width;
@@ -497,6 +499,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     if (width > 1 && mayHaveDwc) {
         int lines = 0;
         int i = 0;
+        DLog(@"Computing offset of wrapped line the expensive way. Counting up to %d", n);
         while (lines < n) {
             // Advance i to the start of the next line
             i += width;
@@ -509,6 +512,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                 --i;
             }
         }
+        DLog(@"Finished doing the expensive thing. Offset is %d", i);
         return i;
     } else {
         return n * width;
@@ -719,6 +723,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
         // If the width is four and the last line is "0123456789" then return "89". It would
         // wrap as: 0123/4567/89. If there are double-width characters, this ensures they are
         // not split across lines when computing the wrapping.
+        DLog(@"last raw line is longer than width. Compute offset of wrapped line");
         int offset_from_start = OffsetOfWrappedLine(buffer_start + start,
                                                     NumberOfFullLines(buffer_start + start,
                                                                       available_len,
@@ -727,6 +732,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                                                     available_len,
                                                     width,
                                                     _mayHaveDoubleWidthCharacter);
+        DLog(@"offset from start is %d", offset_from_start);
         *length = available_len - offset_from_start;
         *ptr = buffer_start + start + offset_from_start;
         cumulative_line_lengths[cll_entries - 1] -= *length;
