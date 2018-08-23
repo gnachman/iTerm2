@@ -1268,16 +1268,12 @@ const NSInteger kLongMaximumWordLength = 100000;
                                   iTermImageInfo *imageInfo = GetImageInfo(theChar.code);
                                   NSImage *image = imageInfo.image.images.firstObject;
                                   if (image) {
-                                      if (IsElCapitanOrLater()) {
-                                          copiedImage = YES;
-                                          NSTextAttachment *textAttachment = [[[NSTextAttachment alloc] init] autorelease];
-                                          ITERM_IGNORE_PARTIAL_BEGIN
-                                          textAttachment.image = imageInfo.image.images.firstObject;
-                                          ITERM_IGNORE_PARTIAL_END
-                                          NSAttributedString *attributedStringWithAttachment = [NSAttributedString attributedStringWithAttachment:textAttachment];
-                                          [result appendAttributedString:attributedStringWithAttachment];
-                                          [coords addObject:[NSValue valueWithGridCoord:coord]];
-                                      }
+                                      copiedImage = YES;
+                                      NSTextAttachment *textAttachment = [[[NSTextAttachment alloc] init] autorelease];
+                                      textAttachment.image = imageInfo.image.images.firstObject;
+                                      NSAttributedString *attributedStringWithAttachment = [NSAttributedString attributedStringWithAttachment:textAttachment];
+                                      [result appendAttributedString:attributedStringWithAttachment];
+                                      [coords addObject:[NSValue valueWithGridCoord:coord]];
                                   }
                               }
                           } else if (theChar.code == TAB_FILLER && !theChar.complexChar) {

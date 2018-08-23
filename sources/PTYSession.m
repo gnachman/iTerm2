@@ -3188,8 +3188,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSArray *parts = [theName componentsSeparatedByString:@"\n"];
     NSString *title = parts.firstObject;
     NSString *identifier = nil;
-    // Only 10.12 and later support identifiers on menu items in interface builder.
-    if (IsSierraOrLater() && parts.count > 1) {
+    if (parts.count > 1) {
         identifier = parts[1];
     }
     if (![self _recursiveSelectMenuItemWithTitle:title identifier:identifier inMenu:[NSApp mainMenu]]) {

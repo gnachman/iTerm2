@@ -880,10 +880,6 @@ ITERM_WEAKLY_REFERENCEABLE
             [self class], self, (int)[self numberOfTabs], [self window]];
 }
 
-+ (BOOL)useElCapitanFullScreenLogic {
-    return [NSWindow instancesRespondToSelector:@selector(maxFullScreenContentSize)];
-}
-
 - (BOOL)tabBarVisibleOnTop {
     return ([self tabBarShouldBeVisible] &&
             [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
@@ -2515,8 +2511,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // 10.11 starts you off with a tiny little frame. I don't know why they do
     // that, but this fixes it.
-    if ([[self class] useElCapitanFullScreenLogic] &&
-        windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+    if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
         [[self window] setFrame:rect display:YES];
     }
 

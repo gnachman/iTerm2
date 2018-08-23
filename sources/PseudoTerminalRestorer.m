@@ -27,36 +27,7 @@ static BOOL gWaitingForFullScreen;
     return queuedBlocks.count > 0;
 }
 
-+ (BOOL)useElCapitanFullScreenLogic {
-    return [NSWindow instancesRespondToSelector:@selector(maxFullScreenContentSize)];
-}
-
 + (void)runQueuedBlocks {
-    if ([self useElCapitanFullScreenLogic]) {
-        [self runQueuedBlocks_10_11_andLater];
-    } else {
-        [self runQueuedBlocks_10_10_andEarlier];
-    }
-}
-
-// The windows must be open one iteration of mainloop after the application
-// finishes launching. Otherwise, on OS 10.7, non-lion-style fullscreen windows
-// open but the menu bar stays up.
-+ (void)runQueuedBlocks_10_10_andEarlier {
-    DLog(@"runQueuedBlocks (<=10.10) starting");
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0),
-                   dispatch_get_main_queue(),
-                   ^{
-                       for (VoidBlock block in queuedBlocks) {
-                           block();
-                       }
-                       [queuedBlocks release];
-                       queuedBlocks = nil;
-                   });
-}
-
-// 10.11 wants this to happen right away.
-+ (void)runQueuedBlocks_10_11_andLater {
     DLog(@"runQueuedBlocks (10.11+) starting");
     while (queuedBlocks.count) {
         if (gWaitingForFullScreen) {
@@ -166,7 +137,7 @@ static BOOL gWaitingForFullScreen;
             }
 
             DLog(@"Invoking completion handler");
-            if (![self useElCapitanFullScreenLogic] || !term.togglingLionFullScreen) {
+            if (!term.togglingLionFullScreen) {
                 DLog(@"In 10.10 or earlier, or 10.11 and a nonfullscreen window");
                 term.restoringWindow = YES;
                 completionHandler([term window], nil);

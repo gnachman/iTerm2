@@ -110,11 +110,7 @@
     Class WKWebViewConfigurationClass = NSClassFromString(@"WKWebViewConfiguration");
     WKWebViewConfiguration *configuration = [[[WKWebViewConfigurationClass alloc] init] autorelease];
 
-    ITERM_IGNORE_PARTIAL_BEGIN
-    if (IsElCapitanOrLater()) {
-        configuration.applicationNameForUserAgent = @"iTerm2";
-    }
-    ITERM_IGNORE_PARTIAL_END
+    configuration.applicationNameForUserAgent = @"iTerm2";
 
     WKPreferences *prefs = [[[NSClassFromString(@"WKPreferences") alloc] init] autorelease];
     prefs.javaEnabled = NO;
@@ -125,11 +121,7 @@
     WKUserContentController *userContentController =
         [[[NSClassFromString(@"WKUserContentController") alloc] init] autorelease];
     configuration.userContentController = userContentController;
-    ITERM_IGNORE_PARTIAL_BEGIN
-    if (IsElCapitanOrLater()) {
-        configuration.websiteDataStore = [NSClassFromString(@"WKWebsiteDataStore") defaultDataStore];
-    }
-    ITERM_IGNORE_PARTIAL_END
+    configuration.websiteDataStore = [NSClassFromString(@"WKWebsiteDataStore") defaultDataStore];
     WKWebView *webView = [[[WKWebViewClass alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
                                                    configuration:configuration] autorelease];
 
