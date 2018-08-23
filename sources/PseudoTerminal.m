@@ -7035,18 +7035,35 @@ ITERM_WEAKLY_REFERENCEABLE
     [self refreshTerminal:nil];
 }
 
-- (CGFloat)rootTerminalViewHeightOfTabBar:(iTermRootTerminalView *)sender {
+- (BOOL)shouldHaveTallTabBar {
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+        return NO;
+    }
     if (windowType_ != WINDOW_TYPE_COMPACT && savedWindowType_ != WINDOW_TYPE_COMPACT) {
-        return 0;
+        return NO;
     }
 
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (preferredStyle != TAB_STYLE_MINIMAL) {
+        return NO;
+    }
+    return YES;
+}
+
+- (CGFloat)rootTerminalViewHeightOfTabBar:(iTermRootTerminalView *)sender {
+    if ([self shouldHaveTallTabBar]) {
+        return 40;
+    } else {
+        return iTermTabBarControlViewDefaultHeight;
+    }
+}
+
+- (CGFloat)rootTerminalViewStoplightButtonsOffset:(iTermRootTerminalView *)sender {
+    if ([self shouldHaveTallTabBar]) {
+        return 7.5;
+    } else {
         return 0;
     }
-
-    // compact + minimal gives 36 pt tabs
-    return 36;
 }
 
 - (void)updateTabBarStyle {

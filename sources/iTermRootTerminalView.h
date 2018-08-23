@@ -34,6 +34,7 @@
 - (BOOL)enableStoplightHotbox;
 - (void)rootTerminalViewDidChangeEffectiveAppearance;
 - (CGFloat)rootTerminalViewHeightOfTabBar:(iTermRootTerminalView *)sender;
+- (CGFloat)rootTerminalViewStoplightButtonsOffset:(iTermRootTerminalView *)sender;
 @end
 
 @interface iTermRootTerminalView : SolidColorView

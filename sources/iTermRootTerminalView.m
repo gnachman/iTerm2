@@ -82,10 +82,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         NSRect tabBarFrame = self.bounds;
         tabBarFrame.size.height = _tabBarControl.height;
         self.tabBarControl = [[[iTermTabBarControlView alloc] initWithFrame:tabBarFrame] autorelease];
-        CGFloat customHeight = [delegate rootTerminalViewHeightOfTabBar:self];
-        if (customHeight > 0) {
-            self.tabBarControl.height = customHeight;
-        }
+        self.tabBarControl.height = [delegate rootTerminalViewHeightOfTabBar:self];
 
         _tabBarControl.itermTabBarDelegate = self;
 
@@ -165,8 +162,11 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 - (NSEdgeInsets)insetsForStoplightHotbox {
     if (![self.delegate enableStoplightHotbox]) {
-        return NSEdgeInsetsZero;
+        NSEdgeInsets insets = NSEdgeInsetsZero;
+        insets.bottom = -[self.delegate rootTerminalViewStoplightButtonsOffset:self];
+        return insets;
     }
+
     const CGFloat hotboxSideInset = (iTermStoplightHotboxWidth - iTermStandardButtonsViewWidth) / 2.0;
     const CGFloat hotboxVerticalInset = (iTermStoplightHotboxHeight - iTermStandardButtonsViewHeight) / 2.0;
     return NSEdgeInsetsMake(hotboxVerticalInset, hotboxSideInset, hotboxVerticalInset, hotboxSideInset);
@@ -246,6 +246,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
             [button setNeedsDisplay];
         });
     }
+    [self layoutSubviews];
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
@@ -430,13 +431,12 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
     BOOL showToolbeltInline = self.shouldShowToolbelt;
     NSWindow *thisWindow = _delegate.window;
+    self.tabBarControl.height = [_delegate rootTerminalViewHeightOfTabBar:self];
 
     if ([self.delegate enableStoplightHotbox]) {
-        if (_stoplightHotbox.hidden) {
-            _stoplightHotbox.hidden = NO;
-            _stoplightHotbox.alphaValue = 0;
-            _standardWindowButtonsView.alphaValue = 0;
-        }
+        _stoplightHotbox.hidden = NO;
+        _stoplightHotbox.alphaValue = 0;
+        _standardWindowButtonsView.alphaValue = 0;
         [_stoplightHotbox setFrameOrigin:NSMakePoint(0, self.frame.size.height - _stoplightHotbox.frame.size.height)];
     } else {
         _stoplightHotbox.hidden = YES;
