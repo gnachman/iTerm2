@@ -255,6 +255,7 @@ DEFINE_INT(maxSemanticHistoryPrefixOrSuffix, 2000, @"Semantic History: Maximum n
 DEFINE_STRING(pathsToIgnore, @"", @"Semantic History: Paths to ignore for Semantic History.\nSeparate paths with a comma. Any file under one of these paths will not be openable with Semantic History. It is wise to add network file systems to this list, since they can be very slow.");
 DEFINE_BOOL(showYellowMarkForJobStoppedBySignal, YES, @"Semantic History: Use a yellow for a Shell Integration prompt mark when the job is stopped by a signal.");
 DEFINE_BOOL(conservativeURLGuessing, NO, @"Semantic History: URLs must contain a scheme?\nEnable this to reduce the number of false positives that semantic history things are a URL");
+DEFINE_STRING(trailingPunctuationMarks, @"!?…)].\"';:,", @"Semantic History: Characters to ignore at the end of a URL");
 
 #pragma mark - Debugging
 DEFINE_BOOL(startDebugLoggingAutomatically, NO, @"Debugging: Start debug logging automatically when iTerm2 is launched.");
