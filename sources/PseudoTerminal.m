@@ -1319,24 +1319,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-// Convert an array ["x", "y", "z"] into a nicely formatted English string like
-// "x, y, and z".
-- (NSString *)prettyListOfStrings:(NSArray *)a
-{
-  if ([a count] < 2) {
-    return [a componentsJoinedByString:@", "];
-  }
-
-  NSMutableString *result = [NSMutableString string];
-  if ([a count] == 2) {
-    [result appendFormat:@"%@ and %@", [a objectAtIndex:0], [a lastObject]];
-  } else {
-    [result appendString:[[a subarrayWithRange:NSMakeRange(0, [a count] - 1)] componentsJoinedByString:@", "]];
-    [result appendFormat:@", and %@", [a lastObject]];
-  }
-  return result;
-}
-
 - (BOOL)confirmCloseForSessions:(NSArray *)sessions
                      identifier:(NSString*)identifier
                     genericName:(NSString *)genericName
@@ -1353,11 +1335,11 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([sortedNames count] == 1) {
         message = [NSString stringWithFormat:@"%@ is running %@.", identifier, [sortedNames objectAtIndex:0]];
     } else if ([sortedNames count] > 1 && [sortedNames count] <= 10) {
-        message = [NSString stringWithFormat:@"%@ is running the following jobs: %@.", identifier, [self prettyListOfStrings:sortedNames]];
+        message = [NSString stringWithFormat:@"%@ is running the following jobs: %@.", identifier, [sortedNames componentsJoinedWithOxfordComma]];
     } else if ([sortedNames count] > 10) {
         message = [NSString stringWithFormat:@"%@ is running the following jobs: %@, plus %ld %@.",
                    identifier,
-                   [self prettyListOfStrings:sortedNames],
+                   [sortedNames componentsJoinedWithOxfordComma],
                    (long)[sortedNames count] - 10,
                    [sortedNames count] == 11 ? @"other" : @"others"];
     } else {
