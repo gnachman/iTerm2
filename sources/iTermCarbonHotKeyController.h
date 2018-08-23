@@ -9,7 +9,7 @@
 @property(nonatomic, readonly) id target;
 @property(nonatomic, readonly) SEL selector;
 @property(nonatomic, readonly) NSDictionary *userData;
-@property(nonatomic, readonly) EventHotKeyRef eventHotKey;
+@property(nonatomic, assign) EventHotKeyRef eventHotKey;
 @property(nonatomic, readonly) EventHotKeyID hotKeyID;
 @property(nonatomic, readonly) iTermShortcut *shortcut;
 @end
