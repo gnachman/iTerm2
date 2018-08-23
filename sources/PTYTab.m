@@ -5029,6 +5029,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)bounceMetal:(NSNotification *)notification {
+    [self temporarilyDisableMetal];
+}
+
+- (void)temporarilyDisableMetal {
     if (@available(macOS 10.11, *)) {
         for (PTYSession *session in self.sessions) {
             session.useMetal = NO;

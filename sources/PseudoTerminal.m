@@ -4812,123 +4812,131 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self window] close];
 }
 
+- (NSImage *)imageFromSelectedTabView:(NSTabView *)aTabView
+                               offset:(NSSize *)offset
+                          tabViewItem:(NSTabViewItem *)tabViewItem {
+    NSView *tabRootView = [tabViewItem view];
+    NSRect tabFrame = [_contentView.tabBarControl frame];
+
+    NSRect contentFrame;
+    NSRect viewRect;
+    contentFrame = viewRect = [tabRootView frame];
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_LeftTab:
+            contentFrame.size.width += _contentView.leftTabBarWidth;
+            break;
+
+        case PSMTab_TopTab:
+        case PSMTab_BottomTab:
+            contentFrame.size.height += _contentView.tabBarControl.height;
+            break;
+    }
+
+    // Grabs whole tabview image.
+    NSImage *viewImage = [[[NSImage alloc] initWithSize:contentFrame.size] autorelease];
+    NSImage *tabViewImage = [[[NSImage alloc] init] autorelease];
+
+    NSBitmapImageRep *tabviewRep;
+
+    PTYTab *tab = tabViewItem.identifier;
+    [tab temporarilyDisableMetal];
+
+    tabviewRep = [tabRootView bitmapImageRepForCachingDisplayInRect:viewRect];
+    [tabRootView cacheDisplayInRect:viewRect toBitmapImageRep:tabviewRep];
+
+    [tabViewImage addRepresentation:tabviewRep];
+
+
+    [viewImage lockFocus];
+    BOOL isHorizontal = YES;
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_LeftTab:
+            viewRect.origin.x += _contentView.leftTabBarWidth;
+            viewRect.size.width -= _contentView.leftTabBarWidth;
+            isHorizontal = NO;
+            break;
+
+        case PSMTab_TopTab:
+            break;
+
+        case PSMTab_BottomTab:
+            viewRect.origin.y += _contentView.tabBarControl.height;
+            break;
+    }
+
+    [tabViewImage drawAtPoint:viewRect.origin
+                     fromRect:NSZeroRect
+                    operation:NSCompositingOperationSourceOver
+                     fraction:1.0];
+    [viewImage unlockFocus];
+
+    // Draw over where the tab bar would usually be.
+    [viewImage lockFocus];
+    [[NSColor windowBackgroundColor] set];
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
+        tabFrame.origin.y += viewRect.size.height;
+    }
+    NSRectFill(tabFrame);
+    // Draw the background flipped, which is actually the right way up
+    NSAffineTransform *transform = [NSAffineTransform transform];
+    [transform scaleXBy:1.0 yBy:-1.0];
+    [transform concat];
+    tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
+    PSMTabBarControl *control = (PSMTabBarControl *)[aTabView delegate];
+    [(id <PSMTabStyle>)[control style] drawBackgroundInRect:tabFrame
+                                                      color:nil
+                                                 horizontal:isHorizontal];
+    [transform invert];
+    [transform concat];
+
+    [viewImage unlockFocus];
+
+    offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
+        offset->height = _contentView.tabBarControl.height;
+    } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
+        offset->height = viewRect.size.height + _contentView.tabBarControl.height;
+    } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+        offset->height = 0;
+        offset->width = 0;
+    }
+
+    return viewImage;
+}
+
+- (NSImage *)imageFromNonSelectedTabViewItem:(NSTabViewItem *)tabViewItem
+                                 offset:(NSSize *)offset {
+    NSImage *viewImage = [[tabViewItem identifier] image:YES];
+
+    offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_LeftTab:
+            offset->width = _contentView.leftTabBarWidth;
+            offset->height = 0;
+            break;
+
+        case PSMTab_TopTab:
+            offset->height = _contentView.tabBarControl.height;
+            break;
+
+        case PSMTab_BottomTab:
+            offset->height = [viewImage size].height;
+            break;
+    }
+    return viewImage;
+}
+
 - (NSImage *)tabView:(NSTabView *)aTabView
     imageForTabViewItem:(NSTabViewItem *)tabViewItem
                  offset:(NSSize *)offset
-              styleMask:(unsigned int *)styleMask
-{
+              styleMask:(unsigned int *)styleMask {
+    *styleMask = NSWindowStyleMaskBorderless;
+
     NSImage *viewImage;
-
     if (tabViewItem == [aTabView selectedTabViewItem]) {
-        NSView *textview = [tabViewItem view];
-        NSRect tabFrame = [_contentView.tabBarControl frame];
-
-        NSRect contentFrame, viewRect;
-        contentFrame = viewRect = [textview frame];
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-            case PSMTab_LeftTab:
-                contentFrame.size.width += _contentView.leftTabBarWidth;
-                break;
-
-            case PSMTab_TopTab:
-            case PSMTab_BottomTab:
-                contentFrame.size.height += _contentView.tabBarControl.height;
-                break;
-        }
-
-        // Grabs whole tabview image.
-        viewImage = [[[NSImage alloc] initWithSize:contentFrame.size] autorelease];
-        NSImage *tabViewImage = [[[NSImage alloc] init] autorelease];
-
-        NSBitmapImageRep *tabviewRep;
-        
-        if (@available(macOS 10.14, *)) {
-            tabviewRep = [textview bitmapImageRepForCachingDisplayInRect:viewRect];
-            [textview cacheDisplayInRect:viewRect toBitmapImageRep:tabviewRep];
-        } else {
-            [textview lockFocus];
-            tabviewRep = [[[NSBitmapImageRep alloc] initWithFocusedViewRect:viewRect] autorelease];
-            [textview unlockFocus];
-        }
-        
-        [tabViewImage addRepresentation:tabviewRep];
-
-
-        [viewImage lockFocus];
-        BOOL isHorizontal = YES;
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-            case PSMTab_LeftTab:
-                viewRect.origin.x += _contentView.leftTabBarWidth;
-                viewRect.size.width -= _contentView.leftTabBarWidth;
-                isHorizontal = NO;
-                break;
-
-            case PSMTab_TopTab:
-                break;
-
-            case PSMTab_BottomTab:
-                viewRect.origin.y += _contentView.tabBarControl.height;
-                break;
-        }
-
-        [tabViewImage drawAtPoint:viewRect.origin
-                         fromRect:NSZeroRect
-                        operation:NSCompositingOperationSourceOver
-                         fraction:1.0];
-        [viewImage unlockFocus];
-
-        // Draw over where the tab bar would usually be.
-        [viewImage lockFocus];
-        [[NSColor windowBackgroundColor] set];
-        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
-            tabFrame.origin.y += viewRect.size.height;
-        }
-        NSRectFill(tabFrame);
-        // Draw the background flipped, which is actually the right way up
-        NSAffineTransform *transform = [NSAffineTransform transform];
-        [transform scaleXBy:1.0 yBy:-1.0];
-        [transform concat];
-        tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
-        PSMTabBarControl *control = (PSMTabBarControl *)[aTabView delegate];
-        [(id <PSMTabStyle>)[control style] drawBackgroundInRect:tabFrame
-                                                          color:nil
-                                                     horizontal:isHorizontal];
-        [transform invert];
-        [transform concat];
-
-        [viewImage unlockFocus];
-
-        offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
-        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
-            offset->height = _contentView.tabBarControl.height;
-        } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
-            offset->height = viewRect.size.height + _contentView.tabBarControl.height;
-        } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
-            offset->height = 0;
-            offset->width = 0;
-        }
-        *styleMask = NSWindowStyleMaskBorderless;
+        viewImage = [self imageFromSelectedTabView:aTabView offset:offset tabViewItem:tabViewItem];
     } else {
-        // grabs whole tabview image
-        viewImage = [[tabViewItem identifier] image:YES];
-
-        offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-            case PSMTab_LeftTab:
-                offset->width = _contentView.leftTabBarWidth;
-                offset->height = 0;
-                break;
-
-            case PSMTab_TopTab:
-                offset->height = _contentView.tabBarControl.height;
-                break;
-
-            case PSMTab_BottomTab:
-                offset->height = [viewImage size].height;
-                break;
-        }
-
-        *styleMask = NSWindowStyleMaskBorderless;
+        viewImage = [self imageFromNonSelectedTabViewItem:tabViewItem offset:offset];
     }
 
     return viewImage;
