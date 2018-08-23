@@ -82,6 +82,9 @@
 
 - (void)enumerateCoalescedObjectsWithComparator:(BOOL (^)(ObjectType obj1, ObjectType obj2))comparator
                                           block:(void (^)(ObjectType object, NSUInteger count))block;
+
+- (NSDictionary<id, NSArray<ObjectType> *> *)classify:(id (^)(ObjectType object))block;
+
 @end
 
 @interface NSMutableArray<ObjectType> (iTerm)

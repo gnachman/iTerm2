@@ -341,6 +341,23 @@
     }
 }
 
+- (NSDictionary *)classify:(id (^)(id))block {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    for (id object in self) {
+        id key = block(object);
+        if (!key) {
+            continue;
+        }
+        NSMutableArray *array = result[key];
+        if (!array) {
+            array = [NSMutableArray array];
+            result[key] = array;
+        }
+        [array addObject:object];
+    }
+    return result;
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)
