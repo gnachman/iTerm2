@@ -96,6 +96,7 @@
 - (ObjectType)maxWithBlock:(NSComparisonResult (^)(ObjectType obj1, ObjectType obj2))block;
 - (ObjectType)minWithBlock:(NSComparisonResult (^)(ObjectType obj1, ObjectType obj2))block;
 - (NSArray<ObjectType> *)it_arrayByDroppingLastN:(NSUInteger)n;
+- (NSArray *)countedInstancesStrings;
 
 @end
 

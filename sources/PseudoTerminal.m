@@ -1318,32 +1318,6 @@ ITERM_WEAKLY_REFERENCEABLE
         windowType_ = windowType;
     }
 }
-// Convert a lexicographically sorted array like ["a", "b", "b", "c"] into
-// ["a", "2 instances of \"b\"", "c"].
-- (NSArray *)uniqWithCounts:(NSArray *)a
-{
-  NSMutableArray *result = [NSMutableArray array];
-
-  for (int i = 0; i < [a count]; ) {
-    int c = 0;
-    NSString *thisValue = [a objectAtIndex:i];
-    int j;
-    for (j = i; j < [a count]; j++) {
-      if (![[a objectAtIndex:j] isEqualToString:thisValue]) {
-        break;
-      }
-      ++c;
-    }
-    if (c > 1) {
-      [result addObject:[NSString stringWithFormat:@"%d instances of \"%@\"", c, thisValue]];
-    } else {
-      [result addObject:thisValue];
-    }
-    i = j;
-  }
-
-  return result;
-}
 
 // Convert an array ["x", "y", "z"] into a nicely formatted English string like
 // "x, y, and z".
@@ -1370,12 +1344,12 @@ ITERM_WEAKLY_REFERENCEABLE
     NSMutableArray *names = [NSMutableArray array];
     for (PTYSession *aSession in sessions) {
         if (![aSession exited]) {
-            [names addObjectsFromArray:[aSession childJobNames]];
+            [names addObjectsFromArray:[[aSession childJobNames] arrayByRemovingObject:@"login"]];
         }
     }
     NSString *message;
     NSArray *sortedNames = [names sortedArrayUsingSelector:@selector(compare:)];
-    sortedNames = [self uniqWithCounts:sortedNames];
+    sortedNames = [names countedInstancesStrings];
     if ([sortedNames count] == 1) {
         message = [NSString stringWithFormat:@"%@ is running %@.", identifier, [sortedNames objectAtIndex:0]];
     } else if ([sortedNames count] > 1 && [sortedNames count] <= 10) {
