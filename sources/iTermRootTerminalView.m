@@ -14,6 +14,7 @@
 #import "iTermPreferences.h"
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
+#import "NSAppearance+iTerm.h"
 #import "PTYTabView.h"
 
 const CGFloat kHorizontalTabBarHeight = 24;
@@ -170,7 +171,12 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
             _divisionView.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
             [self addSubview:_divisionView];
         }
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
+            case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_COUNT:
+                assert(NO);
+                
             case TAB_STYLE_LIGHT:
             case TAB_STYLE_LIGHT_HIGH_CONTRAST:
                 _divisionView.color = self.window.isKeyWindow
