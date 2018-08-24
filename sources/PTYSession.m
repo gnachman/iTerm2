@@ -31,6 +31,7 @@
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyLabels.h"
+#import "iTermMetaFrustrationDetector.h"
 #import "iTermMetalGlue.h"
 #import "iTermMetalDriver.h"
 #import "iTermMenuOpener.h"
@@ -245,6 +246,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     iTermCoprocessDelegate,
     iTermEchoProbeDelegate,
     iTermHotKeyNavigableSession,
+    iTermMetaFrustrationDetector,
     iTermMetalGlueDelegate,
     iTermPasteHelperDelegate,
     iTermSessionNameControllerDelegate,
@@ -482,6 +484,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     iTermEchoProbe *_echoProbe;
     
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
+    iTermMetaFrustrationDetector *_metaFrustrationDetector;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -662,7 +665,9 @@ static NSString *const iTermSessionTitleSession = @"session";
         }
         _echoProbe = [[iTermEchoProbe alloc] init];
         _echoProbe.delegate = self;
-        
+        _metaFrustrationDetector = [[iTermMetaFrustrationDetector alloc] init];
+        _metaFrustrationDetector.delegate = self;
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:@"kCoprocessStatusChangeNotification"
@@ -804,6 +809,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_statusBarViewController release];
     [_echoProbe release];
     [_backgroundDrawingHelper release];
+    [_metaFrustrationDetector release];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -5963,6 +5969,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  toConnectionKey:key];
         }];
     }
+
+    if (accept) {
+        [_metaFrustrationDetector didSendKeyEvent:event];
+    }
     return accept;
 }
 
@@ -10284,6 +10294,83 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         return [NSColor blackColor];
     }
+}
+
+#pragma mark - iTermMetaFrustrationDetectorDelegate
+
+- (void)metaFrustrationDetectorDidDetectFrustrationForLeftOption {
+    [self maybeOfferToSetOptionAsEscForLeft:YES];
+}
+
+- (void)metaFrustrationDetectorDidDetectFrustrationForRightOption {
+    [self maybeOfferToSetOptionAsEscForLeft:NO];
+}
+
+- (void)maybeOfferToSetOptionAsEscForLeft:(BOOL)left {
+    if (self.isDivorced) {
+        // This gets gnarly. Let's be conservative.
+        return;
+    }
+    NSString *neverPromptUserDefaultsKey = @"NoSyncNeverPromptToChangeOption";
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:neverPromptUserDefaultsKey]) {
+        // User said never to ask.
+        return;
+    }
+
+    NSString *leftOrRight;
+    NSString *profileKey;
+    if (left) {
+        leftOrRight = @"left";
+        profileKey = KEY_OPTION_KEY_SENDS;
+    } else {
+        leftOrRight = @"right";
+        profileKey = KEY_RIGHT_OPTION_KEY_SENDS;
+    }
+
+    if ([iTermProfilePreferences integerForKey:profileKey inProfile:self.profile] != OPT_NORMAL) {
+        // There's already a non-default setting.
+        return;
+    }
+
+    NSArray<NSString *> *actions;
+    NSInteger thisProfile = 0;
+    NSInteger allProfiles = -1;
+    NSInteger stopAsking = -1;
+    if ([[[ProfileModel sharedInstance] bookmarks] count] == 1) {
+        actions = @[ @"Yes", @"Stop Asking" ];
+        stopAsking = 1;
+    } else {
+        actions = @[ @"Change This Profile", @"Change All Profiles", @"Stop Asking" ];
+        allProfiles = 1;
+        stopAsking = 2;
+    }
+
+    Profile *profileToChange = [[ProfileModel sharedInstance] bookmarkWithGuid:self.profile[KEY_GUID]];
+    if (!profileToChange) {
+        return;
+    }
+
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:[NSString stringWithFormat:@"You seem frustrated. Would you like the %@ option to key send esc+keystroke?", leftOrRight]
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:actions
+                                                completion:^(int selection) {
+                                                    if (selection < 0) {
+                                                        // Programmatic dismissal or clicked the x button.
+                                                        return;
+                                                    }
+                                                    if (selection == thisProfile) {
+                                                        [iTermProfilePreferences setInt:OPT_ESC forKey:profileKey inProfile:profileToChange model:[ProfileModel sharedInstance]];
+                                                    } else if (selection == allProfiles) {
+                                                        for (Profile *profile in [[[[ProfileModel sharedInstance] bookmarks] copy] autorelease]) {
+                                                            [iTermProfilePreferences setInt:OPT_ESC forKey:profileKey inProfile:profile model:[ProfileModel sharedInstance]];
+                                                        }
+                                                    } else {
+                                                        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:neverPromptUserDefaultsKey];
+                                                    }
+                                                }];
+    static NSString *const identifier = @"OfferToChangeOptionKeyToSendESC";
+    [self queueAnnouncement:announcement identifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
 }
 
 @end
