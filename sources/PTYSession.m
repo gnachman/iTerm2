@@ -7510,7 +7510,6 @@ ITERM_WEAKLY_REFERENCEABLE
     return _terminal.softAlternateScreenMode;
 }
 
-
 - (void)bury {
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
