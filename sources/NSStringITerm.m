@@ -749,7 +749,7 @@ int decode_utf8_char(const unsigned char *datap,
 
 - (NSString *)stringByRemovingTerminatingPunctuation {
     NSCharacterSet *punctuationCharacterSet = [NSCharacterSet characterSetWithCharactersInString:[iTermAdvancedSettingsModel trailingPunctuationMarks]];
-    NSRange range = [self rangeOfCharacterFromSet:punctuationCharacterSet options:NSBackwardsSearch];
+    NSRange range = [self rangeOfCharacterFromSet:punctuationCharacterSet options:(NSBackwardsSearch | NSAnchoredSearch)];
     if (range.length > 0 && range.location != NSNotFound) {
         return [self substringToIndex:range.location];
     } else {

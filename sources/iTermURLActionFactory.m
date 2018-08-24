@@ -83,6 +83,7 @@
     }
 
     action = [self urlActionForAnyStringSemanticHistoryAt:coord
+                                      respectHardNewlines:respectHardNewlines
                                          workingDirectory:workingDirectory
                                                     rules:rules
                                             textExtractor:extractor
@@ -106,6 +107,7 @@
     // lookup and fail. It'd be nice to fallback to an SCP file path.
     // See if we can conjure up a secure copy path.
     return [self urlActionWithSecureCopyAt:coord
+                       respectHardNewlines:respectHardNewlines
                                      rules:rules
                              textExtractor:extractor
                                pathFactory:pathFactory];
@@ -226,7 +228,7 @@
                                                    withRules:rules
                                               actionRequired:YES
                                                        range:&smartRange
-                                            ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
+                                            ignoringNewlines:!respectHardNewlines];
     NSArray *actions = [SmartSelectionController actionsInRule:smartMatch.rule];
     DLog(@"  Smart selection produces these actions: %@", actions);
     if (actions.count) {
@@ -250,6 +252,7 @@
 }
 
 + (URLAction *)urlActionForAnyStringSemanticHistoryAt:(VT100GridCoord)coord
+                                  respectHardNewlines:(BOOL)respectHardNewlines
                                      workingDirectory:(NSString *)workingDirectory
                                                 rules:(NSArray *)rules
                                         textExtractor:(iTermTextExtractor *)textExtractor
@@ -261,7 +264,7 @@
                                                        withRules:rules
                                                   actionRequired:NO
                                                            range:&smartRange
-                                                ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
+                                                ignoringNewlines:!respectHardNewlines];
         if (!VT100GridCoordEquals(smartRange.coordRange.start,
                                   smartRange.coordRange.end)) {
             NSString *name = smartMatch.components[0];
@@ -405,6 +408,7 @@
 }
 
 + (URLAction *)urlActionWithSecureCopyAt:(VT100GridCoord)coord
+                     respectHardNewlines:(BOOL)respectHardNewlines
                                    rules:(NSArray *)rules
                            textExtractor:(iTermTextExtractor *)textExtractor
                              pathFactory:(SCPPath *(^)(NSString *, int))pathFactory {
@@ -413,7 +417,7 @@
                                                    withRules:rules
                                               actionRequired:NO
                                                        range:&smartRange
-                                            ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
+                                            ignoringNewlines:!respectHardNewlines];
     if (smartMatch) {
         SCPPath *scpPath = pathFactory([smartMatch.components firstObject], coord.y);
         if (scpPath) {

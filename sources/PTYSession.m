@@ -7506,6 +7506,11 @@ ITERM_WEAKLY_REFERENCEABLE
     return insets;
 }
 
+- (BOOL)textViewInInteractiveApplication {
+    return _terminal.softAlternateScreenMode;
+}
+
+
 - (void)bury {
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
