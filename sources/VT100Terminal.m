@@ -325,6 +325,7 @@ static const int kMaxScreenRows = 4096;
     self.columnMode = NO;
     _reverseVideo = NO;
     _originMode = NO;
+    DLog(@"set morefix to no");
     _moreFix = NO;
     self.wraparoundMode = YES;
     self.reverseWraparoundMode = NO;
@@ -527,6 +528,7 @@ static const int kMaxScreenRows = 4096;
                 self.allowColumnMode = mode;
                 break;
             case 41:
+                DLog(@"set morefix to %@ because of decset 41", @(mode));
                 self.moreFix = mode;
                 break;
             case 45:
@@ -2754,6 +2756,7 @@ static const int kMaxScreenRows = 4096;
     self.reverseVideo = [dict[kTerminalStateReverseVideoKey] boolValue];
     self.originMode = [dict[kTerminalStateOriginModeKey] boolValue];
     self.moreFix = [dict[kTerminalStateMoreFixKey] boolValue];
+    DLog(@"set morefix to %@ by restoring dict", @(self.moreFix));
     self.wraparoundMode = [dict[kTerminalStateWraparoundModeKey] boolValue];
     self.reverseWraparoundMode = [dict[kTerminalStateReverseWraparoundModeKey] boolValue];
     self.isAnsi = [dict[kTerminalStateIsAnsiKey] boolValue];

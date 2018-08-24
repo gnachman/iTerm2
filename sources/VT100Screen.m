@@ -2448,31 +2448,53 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalAppendTabAtCursor:(BOOL)setBackgroundColors {
+    DLog(@"At start");
+    DLog(@"%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
+
     int rightMargin;
     if (currentGrid_.useScrollRegionCols) {
+        DLog(@"A scroll region is present");
         rightMargin = currentGrid_.rightMargin;
         if (currentGrid_.cursorX > rightMargin) {
             rightMargin = self.width - 1;
         }
     } else {
+        DLog(@"No scroll region");
         rightMargin = self.width - 1;
     }
+    DLog(@"right margin is %@", @(rightMargin));
+
+    DLog(@"morefix=%@, cursorX=%@, self.width=%@, wraparoundMode=%@",
+         @(terminal_.moreFix),
+         @(self.cursorX),
+         @(self.width),
+         @(terminal_.wraparoundMode));
 
     if (terminal_.moreFix && self.cursorX > self.width && terminal_.wraparoundMode) {
+        DLog(@"XXXXXXXXXXXXXXXX  All conditions satisfied. Add a newline");
         [self terminalLineFeed];
         [self terminalCarriageReturn];
     }
 
+    DLog(@"Looking for next tab stop");
     int nextTabStop = MIN(rightMargin, [self tabStopAfterColumn:currentGrid_.cursorX]);
     if (nextTabStop <= currentGrid_.cursorX) {
         // This happens when the cursor can't advance any farther.
         if ([iTermAdvancedSettingsModel tabsWrapAround]) {
+            DLog(@"Tabs can wrap around");
             nextTabStop = [self tabStopAfterColumn:currentGrid_.leftMargin];
+            DLog(@"Next tab stop at %@", @(nextTabStop));
+            DLog(@"%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
+            DLog(@"will soft wrap cursor to next line");
             [self softWrapCursorToNextLineScrollingIfNeeded];
+            DLog(@"%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
         } else {
+            DLog(@"All done, tabs don't wrap around.");
             return;
         }
     }
+
+    DLog(@"Check if it's all nulls");
     screen_char_t* aLine = [currentGrid_ screenCharsAtLineNumber:currentGrid_.cursorY];
     BOOL allNulls = YES;
     for (int i = currentGrid_.cursorX; i < nextTabStop; i++) {
@@ -2482,14 +2504,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
     }
     if (allNulls) {
+        DLog(@"It's all nulls");
         int i;
         screen_char_t filler;
         InitializeScreenChar(&filler, [terminal_ foregroundColorCode], [terminal_ backgroundColorCode]);
         filler.code = TAB_FILLER;
         for (i = currentGrid_.cursorX; i < nextTabStop - 1; i++) {
             if (setBackgroundColors) {
+                DLog(@"Set %@ to filler, including colors and all", @(i));
                 aLine[i] = filler;
             } else {
+                DLog(@"Set %@ to code=TAB_FILLER, not changing colors", @(i));
                 aLine[i].image = NO;
                 aLine[i].complexChar = NO;
                 aLine[i].code = TAB_FILLER;
@@ -2497,10 +2522,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
 
         if (setBackgroundColors) {
+            DLog(@"set code to tab at %@, plus tweak the colors and all", @(i));
             screen_char_t tab = filler;
             tab.code = '\t';
             aLine[i] = tab;
         } else {
+            DLog(@"set code to tab, plus reset image and complexchar at %@", @(i));
             aLine[i].image = NO;
             aLine[i].complexChar = NO;
             aLine[i].code = '\t';
