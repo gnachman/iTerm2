@@ -812,11 +812,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int used = [block rawSpaceUsed];
     NSMutableDictionary* intermediate = [NSMutableDictionary dictionaryWithCapacity:[resultRanges count] * 2];
     int prev = -1;
-    NSMutableString *logs = [NSMutableString string];
     for (NSNumber* positionNum in positionsArray) {
         int position = [positionNum intValue];
         if (position == prev) {
-            [logs appendFormat:@"Skip position %@ which equals previous position. ", positionNum];
             continue;
         }
         prev = position;
@@ -848,8 +846,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             } else {
                 assert(false);
             }
-        } else {
-            [logs appendFormat:@"Failed to find block for position %@. ", positionNum];
         }
     }
 
@@ -867,15 +863,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             xyrange->xEnd = endPoint.x;
             xyrange->yEnd = endPoint.y;
             [result addObject:xyrange];
-        } else {
-            ITCriticalError(NO,
-                            @"Failed to get intermediate for result range %@. start=%@ end=%@. resultRanges=%@. Logs: %@",
-                            rr,
-                            start,
-                            end,
-                            resultRanges,
-                            logs);
-            [result addObject:[NSNull null]];
         }
     }
 
