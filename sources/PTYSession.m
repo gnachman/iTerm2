@@ -10374,7 +10374,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                     }
                                                 }];
     static NSString *const identifier = @"OfferToChangeOptionKeyToSendESC";
-    [self queueAnnouncement:announcement identifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
+    [self queueAnnouncement:announcement identifier:identifier];
 }
 
 @end
