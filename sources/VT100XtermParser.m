@@ -231,6 +231,7 @@ typedef enum {
     headerToken.string = [[[NSString alloc] initWithData:data
                                                 encoding:encoding] autorelease];
     [self parseKeyValuePairInToken:headerToken];
+    [headerToken retain];
     CVectorAppend(vector, headerToken);
 }
 
@@ -241,6 +242,7 @@ typedef enum {
     token->type = XTERMCC_MULTITOKEN_BODY;
     token.string = [[[NSString alloc] initWithData:data
                                           encoding:encoding] autorelease];
+    [token retain];
     CVectorAppend(vector, token);
 }
 
