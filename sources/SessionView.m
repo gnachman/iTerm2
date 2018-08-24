@@ -879,6 +879,14 @@ static NSDate* lastResizeDate_;
     } else {
         [self drawAroundFrame:self.scrollview.frame dirtyRect:dirtyRect];
     }
+    if (@available(macOS 10.14, *)) {
+        return;
+    }
+    // 10.13 path: work around issue 6974
+    if (_useMetal && _scrollview.isLegacyScroller && [_scrollview.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {
+        [[NSColor colorWithWhite:20.0 / 255.0 alpha:1] set];
+        NSRectFill(NSMakeRect(self.frame.size.width - 15, 0, self.frame.size.height, self.frame.size.height));
+    }
 }
 
 - (void)drawAroundFrame:(NSRect)svFrame dirtyRect:(NSRect)dirtyRect {
