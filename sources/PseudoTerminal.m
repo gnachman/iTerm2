@@ -5309,14 +5309,32 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setBackgroundColor:(nullable NSColor *)backgroundColor {
+    NSAppearance *appearance = nil;
+    
     if (backgroundColor == nil && [iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
         switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
             case TAB_STYLE_LIGHT:
+                if (@available(macOS 10.14, *)) {
+                    appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+                }
+                break;
             case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                if (@available(macOS 10.14, *)) {
+                    appearance = [NSAppearance appearanceNamed:NSAppearanceNameAccessibilityHighContrastAqua];
+                }
                 break;
 
             case TAB_STYLE_DARK:
+                if (@available(macOS 10.14, *)) {
+                    appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+                }
+                backgroundColor = [PSMDarkTabStyle tabBarColor];
+                break;
+                
             case TAB_STYLE_DARK_HIGH_CONTRAST:
+                if (@available(macOS 10.14, *)) {
+                    appearance = [NSAppearance appearanceNamed:NSAppearanceNameAccessibilityHighContrastDarkAqua];
+                }
                 backgroundColor = [PSMDarkTabStyle tabBarColor];
                 break;
         }
@@ -5329,6 +5347,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // There's an opportunity for improvement here if there's a tab color and we know the
         // window isn't opaque we could set the titlebar's color, since that works again in 10.14.
         self.window.backgroundColor = [NSColor clearColor];
+        self.window.appearance = appearance;
     } else {
         [self.window setBackgroundColor:backgroundColor];
         if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
