@@ -5033,10 +5033,16 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
         }
     }
-    [self.window setBackgroundColor:backgroundColor];
     if (@available(macOS 10.14, *)) {
-        // The window appearance will do something sane. Don't mess with it.
+        // Sigh.
+        // In Mojave, the window background is visible when the contentView is transparent.
+        // This is generally a good thing because it means layers really work!
+        // But there's a bug that the window title shows a broken vibrancy effect (issue 6964).
+        // There's an opportunity for improvement here if there's a tab color and we know the
+        // window isn't opaque we could set the titlebar's color, since that works again in 10.14.
+        self.window.backgroundColor = [NSColor clearColor];
     } else {
+        [self.window setBackgroundColor:backgroundColor];
         if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
             self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
         } else {
