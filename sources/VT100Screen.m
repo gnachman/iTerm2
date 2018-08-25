@@ -2434,10 +2434,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)softWrapCursorToNextLineScrollingIfNeeded {
+    if (currentGrid_.rightMargin + 1 == currentGrid_.size.width) {
+        [self convertHardNewlineToSoftOnGridLine:currentGrid_.cursorY];
+    }
     if (currentGrid_.cursorY == currentGrid_.bottomMargin) {
-        if (currentGrid_.rightMargin + 1 == currentGrid_.size.width) {
-            [self convertHardNewlineToSoftOnGridLine:currentGrid_.cursorY];
-        }
         [self incrementOverflowBy:[currentGrid_ scrollUpIntoLineBuffer:linebuffer_
                                                    unlimitedScrollback:unlimitedScrollback_
                                                useScrollbackWithRegion:_appendToScrollbackWithStatusBar
