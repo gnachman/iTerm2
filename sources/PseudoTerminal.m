@@ -5322,10 +5322,14 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     [self.window setBackgroundColor:backgroundColor];
-    if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
-        self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+    if (@available(macOS 10.14, *)) {
+        // The window appearance will do something sane. Don't mess with it.
     } else {
-        self.window.appearance = nil;
+        if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
+            self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+        } else {
+            self.window.appearance = nil;
+        }
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermWindowAppearanceDidChange object:self.window];
 }
