@@ -5321,11 +5321,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
         }
     }
-    if (@available(macOS 10.14, *)) {
-        self.window.backgroundColor = [NSColor clearColor];
-    } else {
-        [self.window setBackgroundColor:backgroundColor];
-    }
+    [self.window setBackgroundColor:backgroundColor];
     if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
         self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
     } else {
