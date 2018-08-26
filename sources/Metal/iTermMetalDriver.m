@@ -140,7 +140,7 @@ typedef struct {
     MovingAverage *_currentDrawableTime;
     NSInteger _maxFramesInFlight;
 
-    // For client-driven calls through drawSynchronouslyInView/drawAsynchronouslyInView, this will
+    // For client-driven calls through drawAsynchronouslyInView, this will
     // be nonnil and holds the state needed by those calls. Will bet set to nil if the frame will
     // be drawn by reallyDrawInMTKView:.
     iTermMetalDriverAsyncContext *_context;
@@ -343,22 +343,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [view draw];
 
     return context;
-}
-
-- (BOOL)drawSynchronouslyInView:(MTKView *)view {
-    if (@available(macOS 10.14, *)) {
-        // See issue 6906
-        [view setNeedsDisplay:YES];
-        return YES;
-    }
-    if (!view || !view.delegate) {
-        return NO;
-    }
-    DLog(@"Start synchronous draw");
-    iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view];
-    dispatch_group_wait(context.group, DISPATCH_TIME_FOREVER);
-    DLog(@"Synchronous draw completed.");
-    return !context.aborted;
 }
 
 - (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion {

@@ -275,10 +275,6 @@ static NSDate* lastResizeDate_;
     _metalView.delegate = _driver;
 }
 
-- (BOOL)drawFrameSynchronously {
-    return [_driver drawSynchronouslyInView:_metalView];
-}
-
 - (void)removeMetalView NS_AVAILABLE_MAC(10_11) {
     _metalView.delegate = nil;
     [_metalView removeFromSuperview];

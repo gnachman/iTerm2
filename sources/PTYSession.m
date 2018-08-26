@@ -4980,46 +4980,35 @@ ITERM_WEAKLY_REFERENCEABLE
             }
 
             // Now that everything's hot we can draw a frame synchronously without the UI hiccupping.
-            [self drawMetalFrameSychronouslyAndShowMetalView];
+            [self showMetalViewImmediately];
         }];
     }
 }
 
-- (void)drawMetalFrameSychronouslyAndShowMetalView NS_AVAILABLE_MAC(10_11) {
+- (void)showMetalViewImmediately {
     if (!_useMetal) {
-        DLog(@"Giving up on ever doing a synchronous draw of %@ because useMetal is NO", self);
+        DLog(@"Declining to show metal view immediately in %@ because useMetal is NO", self);
         return;
     }
     if (_view.metalView.bounds.size.width == 0 || _view.metalView.bounds.size.height == 0) {
-        DLog(@"Giving up on ever doing a synchronous draw of %@ because the view's size is %@", self, NSStringFromSize(_view.metalView.bounds.size));
+        DLog(@"Declining to show metal view immediately in %@ because the view's size is %@", self, NSStringFromSize(_view.metalView.bounds.size));
         return;
     }
     if (_textview == nil) {
-        DLog(@"Giving up on ever doing a synchronous draw of %@ because the textview is nil", self);
+        DLog(@"Declining to show metal view immediately in %@ because the textview is nil", self);
         return;
     }
     if (_textview.dataSource == nil) {
-        DLog(@"Giving up on ever doing a synchronous draw of %@ because the textview's datasource is nil", self);
+        DLog(@"Declining to show metal view immediately in %@ because the textview's datasource is nil", self);
         return;
     }
     if (_screen.width == 0 || _screen.height == 0) {
-        DLog(@"Giving up on ever doing a synchronous draw of %@ because the screen's size is %@x%@. Screen is %@",
+        DLog(@"Declining to show metal view immediately in %@ because the screen's size is %@x%@. Screen is %@",
              self, _textview.dataSource, @(_screen.width), @(_screen.height));
         return;
     }
 
-    DLog(@"Begin synchronous draw for %@", self);
     [_view setNeedsDisplay:YES];
-    BOOL ok = [_view drawFrameSynchronously];
-    DLog(@"Finished synchronous draw with ok=%@ for %@", @(ok), self);
-    if (!ok) {
-        DLog(@"Failed to draw metal frame synchronously. Try again later.");
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self drawMetalFrameSychronouslyAndShowMetalView];
-        });
-        return;
-    }
-
     [self showMetalAndStopDrawingTextView];
     _view.metalView.enableSetNeedsDisplay = YES;
 }
