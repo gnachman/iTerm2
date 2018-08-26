@@ -56,6 +56,8 @@
 			</array>
 		</dict>
 	</array>
+        <key>NSCalendarsUsageDescription</key>
+        <string>An application in iTerm2 wants to use Calendar data.</string>
 	<key>NSServices</key>
 	<array>
 		<dict>
