@@ -5021,56 +5021,63 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setBackgroundColor:(nullable NSColor *)backgroundColor {
-    NSAppearance *appearance = nil;
-    
-    if (backgroundColor == nil && [iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
-            case TAB_STYLE_LIGHT:
-                if (@available(macOS 10.14, *)) {
-                    appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
-                }
-                break;
-            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-                if (@available(macOS 10.14, *)) {
-                    appearance = [NSAppearance appearanceNamed:NSAppearanceNameAccessibilityHighContrastAqua];
-                }
-                break;
-
-            case TAB_STYLE_DARK:
-                if (@available(macOS 10.14, *)) {
-                    appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
-                }
-                backgroundColor = [PSMDarkTabStyle tabBarColor];
-                break;
-                
-            case TAB_STYLE_DARK_HIGH_CONTRAST:
-                if (@available(macOS 10.14, *)) {
-                    appearance = [NSAppearance appearanceNamed:NSAppearanceNameAccessibilityHighContrastDarkAqua];
-                }
-                backgroundColor = [PSMDarkTabStyle tabBarColor];
-                break;
-        }
-    }
     if (@available(macOS 10.14, *)) {
-        // Sigh.
-        // In Mojave, the window background is visible when the contentView is transparent.
-        // This is generally a good thing because it means layers really work!
-        // But there's a bug that the window title shows a broken vibrancy effect (issue 6964).
-        // There's an opportunity for improvement here if there's a tab color and we know the
-        // window isn't opaque we could set the titlebar's color, since that works again in 10.14.
-        self.window.backgroundColor = [NSColor clearColor];
-        self.window.appearance = appearance;
+        [self setMojaveBackgroundColor:backgroundColor];
     } else {
-        [self.window setBackgroundColor:backgroundColor];
-        if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
-            self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
-        } else {
-            self.window.appearance = nil;
-        }
+        [self setLegacyBackgroundColor:backgroundColor];
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermWindowAppearanceDidChange object:self.window];
 }
 
+- (void)setMojaveBackgroundColor:(nullable NSColor *)backgroundColor NS_AVAILABLE_MAC(10_14) {
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_AUTOMATIC:
+            self.window.appearance = nil;
+            break;
+
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+            break;
+
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+            break;
+    }
+    // Sigh.
+    // In Mojave, the window background is visible when the contentView is transparent.
+    // This is generally a good thing because it means layers really work!
+    // But there's a bug that the window title shows a broken vibrancy effect (issue 6964).
+    // There's an opportunity for improvement here if there's a tab color and we know the
+    // window isn't opaque we could set the titlebar's color, since that works again in 10.14.
+    self.window.backgroundColor = [NSColor clearColor];
+}
+
+- (void)setLegacyBackgroundColor:(nullable NSColor *)backgroundColor {
+    if (backgroundColor == nil && [iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+            case TAB_STYLE_LIGHT:
+                break;
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                break;
+
+            case TAB_STYLE_DARK:
+                backgroundColor = [PSMDarkTabStyle tabBarColor];
+                break;
+
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+                backgroundColor = [PSMDarkTabStyle tabBarColor];
+                break;
+        }
+    }
+    [self.window setBackgroundColor:backgroundColor];
+    if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
+        self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
+    } else {
+        self.window.appearance = nil;
+    }
+}
 
 - (void)tabsDidReorder {
     TmuxController *controller = nil;
