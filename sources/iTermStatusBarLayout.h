@@ -11,6 +11,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSString *const iTermStatusBarLayoutKeyComponents;
+
 @class iTermStatusBarLayout;
 
 @protocol iTermStatusBarLayoutDelegate<NSObject>

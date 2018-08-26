@@ -55,11 +55,13 @@
 #import "iTermShortcut.h"
 #import "iTermShortcutInputView.h"
 #import "iTermStatusBarLayout.h"
+#import "iTermStatusBarLayout+tmux.h"
 #import "iTermStatusBarViewController.h"
 #import "iTermSwiftyString.h"
 #import "iTermSystemVersion.h"
 #import "iTermTextExtractor.h"
 #import "iTermThroughputEstimator.h"
+#import "iTermTmuxStatusBarMonitor.h"
 #import "iTermUpdateCadenceController.h"
 #import "iTermVariables.h"
 #import "iTermWarning.h"
@@ -485,6 +487,8 @@ static NSString *const iTermSessionTitleSession = @"session";
     
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
     iTermMetaFrustrationDetector *_metaFrustrationDetector;
+
+    iTermTmuxStatusBarMonitor *_tmuxStatusBarMonitor;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -810,7 +814,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_echoProbe release];
     [_backgroundDrawingHelper release];
     [_metaFrustrationDetector release];
-
+    [_tmuxStatusBarMonitor setActive:NO];
+    [_tmuxStatusBarMonitor release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -1318,7 +1323,7 @@ ITERM_WEAKLY_REFERENCEABLE
                          forObjectType:(iTermObjectType)objectType {
     DLog(@"Restoring session from arrangement");
 
-    Profile* theBookmark =
+    Profile *theBookmark =
         [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
     BOOL needDivorce = NO;
     BOOL missingProfile = NO;
@@ -2166,6 +2171,9 @@ ITERM_WEAKLY_REFERENCEABLE
             DLog(@"Last session in tab closed. Check if the client has changed size");
             [_tmuxController fitLayoutToWindows];
         }
+        _tmuxStatusBarMonitor.active = NO;
+        [_tmuxStatusBarMonitor release];
+        _tmuxStatusBarMonitor = nil;
     } else if (self.tmuxMode == TMUX_GATEWAY) {
         [_tmuxController detach];
         [_tmuxGateway release];
@@ -3742,6 +3750,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [_view invalidateStatusBar];
         }
     }
+    _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:aDict];
     _screen.appendToScrollbackWithStatusBar = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_WITH_STATUS_BAR
                                                                         inProfile:aDict];
     self.badgeFormat = [iTermProfilePreferences stringForKey:KEY_BADGE_FORMAT inProfile:aDict];
@@ -5295,6 +5304,13 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
             case TMUX_CLIENT:
                 name = @"client";
+                assert(!_tmuxStatusBarMonitor);
+                _tmuxStatusBarMonitor = [[iTermTmuxStatusBarMonitor alloc] initWithGateway:_tmuxController.gateway
+                                                                                     scope:self.variablesScope];
+                _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:self.profile];
+                if ([iTermStatusBarLayout shouldOverrideLayout:self.profile[KEY_STATUS_BAR_LAYOUT]]) {
+                    [self setSessionSpecificProfileValues:@{ KEY_STATUS_BAR_LAYOUT: [[iTermStatusBarLayout tmuxLayout] dictionaryValue] }];
+                }
                 break;
         }
         [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionTmuxRole];
@@ -5604,6 +5620,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 }
+
 - (void)tmuxUpdateLayoutForWindow:(int)windowId
                            layout:(NSString *)layout
                            zoomed:(NSNumber *)zoomed {
