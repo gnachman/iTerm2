@@ -253,6 +253,37 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 - (void)drawRect:(NSRect)dirtyRect {
     if (@available(macOS 10.14, *)) {
+        NSBezierPath *path = [NSBezierPath bezierPath];
+        static CGFloat inset = 0.5;
+        const CGFloat left = inset;
+        const CGFloat bottom = inset;
+        const CGFloat top = self.frame.size.height - inset;
+        const CGFloat right = self.frame.size.width - inset;
+
+        const BOOL haveLeft = self.delegate.haveLeftBorder;
+        const BOOL haveTop = self.delegate.haveTopBorder;
+        const BOOL haveRight = self.delegate.haveRightBorder;
+        const BOOL haveBottom = self.delegate.haveBottomBorder;
+
+        if (haveLeft) {
+            [path moveToPoint:NSMakePoint(left, bottom)];
+            [path lineToPoint:NSMakePoint(left, top)];
+        }
+        if (haveTop) {
+            [path moveToPoint:NSMakePoint(left, top)];
+            [path lineToPoint:NSMakePoint(right, top)];
+        }
+        if (haveRight) {
+            [path moveToPoint:NSMakePoint(right, top)];
+            [path lineToPoint:NSMakePoint(right, bottom)];
+        }
+        if (haveBottom) {
+            [path moveToPoint:NSMakePoint(right, bottom)];
+            [path lineToPoint:NSMakePoint(left, bottom)];
+        }
+        [[NSColor colorWithWhite:0.5 alpha:1] set];
+        [path stroke];
+
         return;
     }
     if (_useMetal) {
