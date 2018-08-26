@@ -134,7 +134,6 @@ static iTermController *gSharedInstance;
         _terminalWindows = [[NSMutableArray alloc] init];
         _restorableSessions = [[NSMutableArray alloc] init];
         _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
-        // Activate Growl. This loads the Growl framework and initializes it.
         [iTermNotificationController sharedInstance];
 
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self

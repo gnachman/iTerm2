@@ -143,14 +143,14 @@
                    type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_postNotifications
-                           key:KEY_BOOKMARK_GROWL_NOTIFICATIONS
+                           key:KEY_BOOKMARK_USER_NOTIFICATIONS
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
         }
-        BOOL sendNotifications = [self boolForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS];
+        BOOL sendNotifications = [self boolForKey:KEY_BOOKMARK_USER_NOTIFICATIONS];
         [strongSelf->_filterAlertsButton setEnabled:sendNotifications];
     };
 

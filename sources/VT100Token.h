@@ -170,7 +170,7 @@ typedef enum {
     STRICT_ANSI_MODE,
 
     // iTerm extension
-    ITERM_GROWL,
+    ITERM_USER_NOTIFICATION,
     DCS_TMUX_HOOK,  // Enter tmux mode
 
     // Wraps an escape code. The escape code is in csi.string.

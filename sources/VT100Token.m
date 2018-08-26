@@ -187,7 +187,7 @@
                           @(ANSICSI_CBT):                     @"ANSICSI_CBT",
                           @(ANSI_RIS):                        @"ANSI_RIS",
                           @(STRICT_ANSI_MODE):                @"STRICT_ANSI_MODE",
-                          @(ITERM_GROWL):                     @"ITERM_GROWL",
+                          @(ITERM_USER_NOTIFICATION):                     @"ITERM_USER_NOTIFICATION",
                           @(DCS_TMUX_HOOK):                   @"DCS_TMUX_HOOK",
                           @(TMUX_LINE):                       @"TMUX_LINE",
                           @(TMUX_EXIT):                       @"TMUX_EXIT",

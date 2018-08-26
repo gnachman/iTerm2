@@ -14,7 +14,7 @@
 #import "CoprocessTrigger.h"
 #import "DebugLogging.h"
 #import "FutureMethods.h"
-#import "GrowlTrigger.h"
+#import "iTermUserNotificationTrigger.h"
 #import "HighlightTrigger.h"
 #import "iTermSetTitleTrigger.h"
 #import "ITAddressBookMgr.h"
@@ -105,7 +105,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                              [BounceTrigger class],
                              [iTermRPCTrigger class],
                              [CaptureTrigger class],
-                             [GrowlTrigger class],
+                             [iTermUserNotificationTrigger class],
                              [iTermShellPromptTrigger class],
                              [iTermSetTitleTrigger class],
                              [SendTextTrigger class],

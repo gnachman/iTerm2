@@ -205,7 +205,6 @@
 + (BOOL)tabsWrapAround;
 + (BOOL)middleClickClosesTab;
 + (BOOL)disableMetalWhenIdle;
-+ (BOOL)disableGrowl;
 + (BOOL)proportionalScrollWheelReporting;
 + (BOOL)useModernScrollWheelAccumulator;
 + (BOOL)openUntitledFile;

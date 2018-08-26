@@ -1,16 +1,16 @@
 //
-//  GrowlTrigger.m
+//  iTermUserNotificationTrigger.m
 //  iTerm
 //
 //  Created by George Nachman on 9/23/11.
 //
 
-#import "GrowlTrigger.h"
+#import "iTermUserNotificationTrigger.h"
 #import "iTermNotificationController.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
 
-@implementation GrowlTrigger
+@implementation iTermUserNotificationTrigger
 
 + (NSString *)title
 {
@@ -39,7 +39,6 @@
         withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
                          [aSession name],
                          aSession.delegate.tabNumber]
-        andNotification:@"Customized Message"
         windowIndex:[aSession screenWindowIndex]
            tabIndex:[aSession screenTabIndex]
           viewIndex:[aSession screenViewIndex]];
