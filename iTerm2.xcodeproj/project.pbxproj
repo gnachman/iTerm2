@@ -9907,6 +9907,7 @@
 				PRODUCT_NAME = iTerm2;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
+				USE_HEADERMAP = NO;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = (
 					"-Wextra",
@@ -10535,6 +10536,7 @@
 				PRODUCT_NAME = iTerm2;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
+				USE_HEADERMAP = NO;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = (
 					"-Wextra",
@@ -11573,6 +11575,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = (
 					"-Wextra",
@@ -11641,6 +11644,7 @@
 				PRODUCT_NAME = iTerm2;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
+				USE_HEADERMAP = NO;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = (
 					"-Wextra",
