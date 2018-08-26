@@ -785,6 +785,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                 frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
             }];
             [_currentDrawableTime addValue:duration];
+            if (frameData.destinationDrawable == nil) {
+                DLog(@"YIKES! Failed to get a drawable. %@/%@", self, frameData);
+                return;
+            }
         }
 
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
@@ -794,6 +798,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                 frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
             }
         }];
+        if (frameData.renderPassDescriptor == nil) {
+            DLog(@"YIKES! Failed to get an RPD. %@/%@", self, frameData);
+            return;
+        }
     }
 }
 
