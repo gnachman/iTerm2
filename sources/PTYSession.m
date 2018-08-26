@@ -5314,14 +5314,21 @@ ITERM_WEAKLY_REFERENCEABLE
     self.tmuxMode = TMUX_GATEWAY;
     _tmuxGateway = [[TmuxGateway alloc] initWithDelegate:self dcsID:dcsID];
     ProfileModel *model;
-    if (_isDivorced) {
-        model = [ProfileModel sessionsInstance];
-    } else {
+    Profile *profile;
+    if ([iTermAdvancedSettingsModel tmuxUsesDedicatedProfile]) {
         model = [ProfileModel sharedInstance];
+        profile = [[ProfileModel sharedInstance] tmuxProfile];
+    } else {
+        if (_isDivorced) {
+            model = [ProfileModel sessionsInstance];
+        } else {
+            model = [ProfileModel sharedInstance];
+        }
+        profile = self.profile;
     }
     _tmuxController = [[TmuxController alloc] initWithGateway:_tmuxGateway
                                                    clientName:[self preferredTmuxClientName]
-                                                      profile:[iTermAdvancedSettingsModel tmuxUsesDedicatedProfile] ? [[ProfileModel sharedInstance] tmuxProfile] : self.profile
+                                                      profile:profile
                                                  profileModel:model];
     [self.variablesScope setValue:_tmuxController.clientName forVariableNamed:iTermVariableKeySessionTmuxClientName];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
