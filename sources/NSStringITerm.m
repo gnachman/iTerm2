@@ -734,7 +734,7 @@ int decode_utf8_char(const unsigned char *datap,
 
 - (NSString *)stringByRemovingTerminatingPunctuation {
     NSString *s = self;
-    NSArray *punctuationMarks = @[ @"!", @"?", @".", @",", @";", @":", @"...", @"…" ];
+    NSArray *punctuationMarks = @[ @"!", @"?", @".", @",", @";", @":", @"...", @"…", @"]" ];
     BOOL found;
     do {
         found = NO;
