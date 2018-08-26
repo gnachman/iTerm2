@@ -6683,13 +6683,21 @@ ITERM_WEAKLY_REFERENCEABLE
                                        localRect.origin.y * dy,
                                        localRect.size.width * dx,
                                        localRect.size.height * dy);
-        [image drawInRect:rect
-                 fromRect:sourceRect
-                operation:NSCompositingOperationSourceOver
-                 fraction:alpha
-           respectFlipped:YES
-                    hints:nil];
-
+        if (@available(macOS 10.14, *)) {
+            [image drawInRect:rect
+                     fromRect:sourceRect
+                    operation:NSCompositingOperationSourceOver
+                     fraction:alpha
+               respectFlipped:YES
+                        hints:nil];
+        } else {
+            [image drawInRect:rect
+                     fromRect:sourceRect
+                    operation:NSCompositingOperationCopy
+                     fraction:alpha
+               respectFlipped:YES
+                        hints:nil];
+        }
         if (blendDefaultBackground) {
             // Blend default background color over background image.
             [[[self processedBackgroundColor] colorWithAlphaComponent:1 - _textview.blend] set];
