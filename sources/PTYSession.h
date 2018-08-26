@@ -245,10 +245,10 @@ typedef enum {
 // Array of subprocessess names.
 @property(nonatomic, readonly) NSArray *childJobNames;
 
-// Is the session idle? Used by updateLabelAttributes to send a growl message when processing ends.
+// Is the session idle? Used by updateLabelAttributes to send a user notification when processing ends.
 @property(nonatomic, assign) BOOL havePostedIdleNotification;
 
-// Is there new output for the purposes of growl notifications? They run on a different schedule
+// Is there new output for the purposes of user notifications? They run on a different schedule
 // than tab colors.
 @property(nonatomic, assign) BOOL havePostedNewOutputNotification;
 
@@ -397,7 +397,7 @@ typedef enum {
 @property(nonatomic, readonly) NSString *currentCommand;
 
 // Session is not in foreground and notifications are enabled on the screen.
-@property(nonatomic, readonly) BOOL shouldPostGrowlNotification;
+@property(nonatomic, readonly) BOOL shouldPostUserNotification;
 
 @property(nonatomic, readonly) BOOL hasSelection;
 

@@ -1862,8 +1862,8 @@ static const int kMaxScreenRows = 4096;
             break;
         }
         // Our iTerm specific codes
-        case ITERM_GROWL:
-            [delegate_ terminalPostGrowlNotification:token.string];
+        case ITERM_USER_NOTIFICATION:
+            [delegate_ terminalPostUserNotification:token.string];
             break;
 
         case XTERMCC_MULTITOKEN_HEADER_SET_KVP:

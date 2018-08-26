@@ -164,7 +164,7 @@
 #define KEY_DISABLE_PRINTING                  @"Disable Printing"
 #define KEY_SCROLLBACK_WITH_STATUS_BAR        @"Scrollback With Status Bar"
 #define KEY_SCROLLBACK_IN_ALTERNATE_SCREEN    @"Scrollback in Alternate Screen"
-#define KEY_BOOKMARK_GROWL_NOTIFICATIONS      @"BM Growl"
+#define KEY_BOOKMARK_USER_NOTIFICATIONS      @"BM Growl"
 
 #define KEY_SEND_BELL_ALERT                   @"Send Bell Alert"
 #define KEY_SEND_IDLE_ALERT                   @"Send Idle Alert"

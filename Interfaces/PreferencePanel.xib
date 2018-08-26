@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14306.4" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.13.2" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14306.4"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.13.2"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -3281,10 +3281,10 @@ DQ
                         <outlet property="nextKeyView" destination="2390" id="5271"/>
                     </connections>
                 </button>
-                <button toolTip="Growl is used if it's available, otherwise Notification Center is used." id="2404">
+                <button id="2404">
                     <rect key="frame" x="19" y="176" width="258" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Send Growl/Notification Center alerts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2413">
+                    <buttonCell key="cell" type="check" title="Send Notification Center alerts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2413">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>

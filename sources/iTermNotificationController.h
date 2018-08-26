@@ -7,9 +7,7 @@
  **
  **  Project: iTerm
  **
- **  Description: Implements the delegate for notifications. When available
- **      Notification Center is used either as a fallback from Growl or
- **      directly (if the corresponding advanced setting is turned on).
+ **  Description: Implements the delegate for notifications using Notification Center.
  **
  **  Usage:
  **      In your class header file, add the following @class directive
@@ -34,8 +32,7 @@
  **      Example usage:
  **
  **          [gd notify: @"This is the title"
- **          withDescription: @"This is the description"
- **          andNotification: @"Bells"];
+ **          withDescription: @"This is the description"];
  **
  **  This program is free software; you can redistribute it and/or modify
  **  it under the terms of the GNU General Public License as published by
@@ -53,25 +50,18 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <Growl/Growl.h>
 
 @interface iTermNotificationController : NSObject <
-  GrowlApplicationBridgeDelegate,
   NSUserNotificationCenterDelegate>
 
 + (instancetype)sharedInstance;
 
-// Generate a message with no description and a Growl notification type
-// of "Miscellaneous".
+// Generate a message with no description.
 - (void)notify:(NSString *)title;
-
-// Generate a message with a Growl notification type of "Miscellaneous".
-- (void)notify:(NSString *)title withDescription:(NSString *)description;
 
 //  Generate a 'full' message with a specified notification type.
 - (void)notify:(NSString *)title
-    withDescription:(NSString *)description
-    andNotification:(NSString *)notification;
+    withDescription:(NSString *)description;
 
 // Generate a 'full' message with a specified notification type,
 // associated with a particular window/tab/view.
@@ -79,7 +69,6 @@
 // Returns YES if the notification was posted.
 - (BOOL)notify:(NSString *)title
     withDescription:(NSString *)description
-    andNotification:(NSString *)notification
         windowIndex:(int)windowIndex
            tabIndex:(int)tabIndex
           viewIndex:(int)viewIndex;
@@ -87,7 +76,6 @@
 // Adds the sticky argument.
 - (BOOL)notify:(NSString *)title
     withDescription:(NSString *)description
-    andNotification:(NSString *)notification
         windowIndex:(int)windowIndex
            tabIndex:(int)tabIndex
           viewIndex:(int)viewIndex

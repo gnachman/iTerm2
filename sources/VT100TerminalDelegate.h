@@ -229,8 +229,8 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // Restores the window/icon (depending on isWindow) title from a stack.
 - (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow;
 
-// Posts a message to Growl/Notiication center. Returns YES if the message was posted.
-- (BOOL)terminalPostGrowlNotification:(NSString *)message;
+// Posts a message to Notification center. Returns YES if the message was posted.
+- (BOOL)terminalPostUserNotification:(NSString *)message;
 
 // Enters Tmux mode.
 - (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID;

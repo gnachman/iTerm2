@@ -2677,13 +2677,12 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     [_shell killServerIfRunning];
-    if ([self shouldPostGrowlNotification] &&
+    if ([self shouldPostUserNotification] &&
         [iTermProfilePreferences boolForKey:KEY_SEND_SESSION_ENDED_ALERT inProfile:self.profile]) {
         [[iTermNotificationController sharedInstance] notify:@"Session Ended"
                                          withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                                                           [self name],
-                                                          [_delegate tabNumber]]
-                                         andNotification:@"Broken Pipes"];
+                                                          [_delegate tabNumber]]];
     }
 
     _exited = YES;
@@ -3073,8 +3072,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_shell hasCoprocess];
 }
 
-- (BOOL)shouldPostGrowlNotification {
-    if (!_screen.postGrowlNotifications) {
+- (BOOL)shouldPostUserNotification {
+    if (!_screen.postUserNotifications) {
         return NO;
     }
     if (![_delegate sessionBelongsToVisibleTab]) {
@@ -3142,13 +3141,12 @@ ITERM_WEAKLY_REFERENCEABLE
         [_delegate setBell:flag];
         if (_bell) {
             if ([_textview keyIsARepeat] == NO &&
-                [self shouldPostGrowlNotification] &&
+                [self shouldPostUserNotification] &&
                 [iTermProfilePreferences boolForKey:KEY_SEND_BELL_ALERT inProfile:self.profile]) {
                 [[iTermNotificationController sharedInstance] notify:@"Bell"
                                                  withDescription:[NSString stringWithFormat:@"Session %@ #%d just rang a bell!",
                                                                   [self name],
                                                                   [_delegate tabNumber]]
-                                                 andNotification:@"Bells"
                                                      windowIndex:[self screenWindowIndex]
                                                         tabIndex:[self screenTabIndex]
                                                        viewIndex:[self screenViewIndex]];
@@ -3428,7 +3426,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_screen setAudibleBell:![iTermProfilePreferences boolForKey:KEY_SILENCE_BELL inProfile:aDict]];
     [_screen setShowBellIndicator:[iTermProfilePreferences boolForKey:KEY_VISUAL_BELL inProfile:aDict]];
     [_screen setFlashBell:[iTermProfilePreferences boolForKey:KEY_FLASHING_BELL inProfile:aDict]];
-    [_screen setPostGrowlNotifications:[iTermProfilePreferences boolForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS inProfile:aDict]];
+    [_screen setPostUserNotifications:[iTermProfilePreferences boolForKey:KEY_BOOKMARK_USER_NOTIFICATIONS inProfile:aDict]];
     [_textview setBlinkAllowed:[iTermProfilePreferences boolForKey:KEY_BLINK_ALLOWED inProfile:aDict]];
     [_screen setCursorBlinks:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setBlinkingCursor:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
@@ -7902,7 +7900,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                              withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
                                                               [self name],
                                                               [_delegate tabNumber]]
-                                             andNotification:@"Mark Set"
                                                  windowIndex:[self screenWindowIndex]
                                                     tabIndex:[self screenTabIndex]
                                                    viewIndex:[self screenViewIndex]

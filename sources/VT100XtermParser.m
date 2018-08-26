@@ -200,7 +200,7 @@ typedef enum {
                @6: @(XTERMCC_PROPRIETARY_ETERM_EXT),
                @7: @(XTERMCC_PWD_URL),
                @8: @(XTERMCC_LINK),
-               @9: @(ITERM_GROWL),
+               @9: @(ITERM_USER_NOTIFICATION),
                @10: @(XTERMCC_TEXT_FOREGROUND_COLOR),
                @11: @(XTERMCC_TEXT_BACKGROUND_COLOR),
                // 50 is a nonstandard escape code implemented by Konsole.
