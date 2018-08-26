@@ -7,7 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 // This is for the args to CGSSetWindowBackgroundBlurRadiusFunction, which is used for window-blurring using undocumented APIs.
-#import "CGSInternal.h"
+#import <CGSInternal/CGSInternal.h>
 #import "iTermCPS.h"
 
 typedef CGError CGSSetWindowBackgroundBlurRadiusFunction(CGSConnectionID cid, CGSWindowID wid, NSUInteger blur);
