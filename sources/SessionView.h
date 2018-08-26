@@ -210,7 +210,6 @@
 
 - (void)setHoverURL:(NSString *)url;
 - (BOOL)hasHoverURL;
-- (BOOL)drawFrameSynchronously;
 - (void)reallyUpdateMetalViewFrame;
 - (void)invalidateStatusBar;
 
