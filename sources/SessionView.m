@@ -376,6 +376,7 @@ static NSDate* lastResizeDate_;
         frame.origin = NSMakePoint(horizontalPadding, verticalPadding);
         _hoverURLTextField.frame = frame;
     }
+    [self updateAnnouncementFrame];
 
     if (_useMetal) {
         [self updateMetalViewFrame];
@@ -839,6 +840,7 @@ static NSDate* lastResizeDate_;
     }
     [self setTitle:[_delegate sessionViewTitle]];
     [self updateScrollViewFrame];
+    [self updateAnnouncementFrame];
     return YES;
 }
 
@@ -991,6 +993,9 @@ static NSDate* lastResizeDate_;
     // Fix the origin
     rect = _currentAnnouncement.view.frame;
     rect.origin.y = self.frame.size.height - _currentAnnouncement.view.frame.size.height;
+    if (_showTitle) {
+        rect.origin.y -= kTitleHeight;
+    }
     _currentAnnouncement.view.frame = rect;
 }
 
