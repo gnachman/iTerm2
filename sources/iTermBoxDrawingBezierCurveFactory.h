@@ -15,5 +15,9 @@
                                                  cellSize:(NSSize)cellSize
                                                     scale:(CGFloat)scale
                                                     solid:(out BOOL *)solid;
-
++ (NSArray<NSBezierPath *> *)bezierPathsForBoxDrawingCode:(unichar)code
+                                                 cellSize:(NSSize)cellSize
+                                                    scale:(CGFloat)scale
+                                                    solid:(out BOOL *)solid
+                                                    debug:(BOOL)debug;
 @end

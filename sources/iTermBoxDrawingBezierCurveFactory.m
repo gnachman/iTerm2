@@ -8,6 +8,7 @@
 
 #import "iTermBoxDrawingBezierCurveFactory.h"
 
+#import "DebugLogging.h"wtf
 #import "iTermAdvancedSettingsModel.h"
 #import "charmaps.h"
 #import "NSArray+iTerm.h"
@@ -148,6 +149,10 @@
                                                  cellSize:(NSSize)cellSize
                                                     scale:(CGFloat)scale
                                                     solid:(out BOOL *)solid {
+    return [self bezierPathsForBoxDrawingCode:code cellSize:cellSize scale:scale solid:solid debug:NO];
+}
+
++ (NSArray<NSBezierPath *> *)bezierPathsForBoxDrawingCode:(unichar)code cellSize:(NSSize)cellSize scale:(CGFloat)scale solid:(out BOOL *)solid debug:(BOOL)debug {
     NSArray<NSBezierPath *> *solidBoxPaths = [self bezierPathsForSolidBoxesForCode:code
                                                                           cellSize:cellSize
                                                                              scale:scale];
@@ -172,6 +177,7 @@
     //
     // b        7
     NSString *components = nil;
+    BOOL wtf= NO;
     switch (code) {
         case iTermBoxDrawingCodeLightHorizontal:  // ─
             components = @"a4g4";
@@ -181,6 +187,7 @@
             break;
         case iTermBoxDrawingCodeLightVertical:  // │
             components = @"d1d7";
+            wtf = debug;
             break;
         case iTermBoxDrawingCodeHeavyVertical:  // ┃
             components = @"c1c7 e1e7";
@@ -588,6 +595,16 @@
     CGPoint (^makePoint)(CGFloat, CGFloat) = ^CGPoint(CGFloat x, CGFloat y) {
         return CGPointMake(centerPoint(x), centerPoint(y));
     };
+    if (wtf) {
+        DLog(@"code=%@ cellSize=%@ scale=%@", @(code), NSStringFromSize(cellSize), @(scale));
+        DLog(@"bytes=%s", bytes);
+        for (int i = 0; i < sizeof(xs)/ sizeof(*xs); i++) {
+            DLog(@"xs[%d]=%@", i, @(xs[i]));
+        }
+        for (int i = 0; i < sizeof(ys)/ sizeof(*ys); i++) {
+            DLog(@"ys[%d]=%@", i, @(ys[i]));
+        }
+    }
     while (i + 4 <= length) {
         int x1 = bytes[i++] - 'a';
         int y1 = bytes[i++] - '1';
@@ -595,10 +612,17 @@
         int y2 = bytes[i++] - '1';
 
         if (x1 != lastX || y1 != lastY) {
+            if (wtf) {
+                DLog(@"move to %@, %@", @(xs[x1]), @(ys[y1]));
+            }
+
             [path moveToPoint:makePoint((xs[x1]),
                                           (ys[y1]))];
         }
         if (i < length && isalpha(bytes[i])) {
+            if (wtf) {
+                DLog(@"CURVE to %@, %@", @(xs[x2]), @(ys[y2]));
+            }
             int cx1 = bytes[i++] - 'a';
             int cy1 = bytes[i++] - '1';
             int cx2 = bytes[i++] - 'a';

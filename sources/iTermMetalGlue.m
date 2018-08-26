@@ -1502,7 +1502,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         for (NSBezierPath *path in [iTermBoxDrawingBezierCurveFactory bezierPathsForBoxDrawingCode:code
                                                                                           cellSize:size
                                                                                              scale:scale
-                                                                                             solid:&solid]) {
+                                                                                             solid:&solid
+                                                                                             debug:YES]) {
             if (solid) {
                 [path fill];
             } else {
