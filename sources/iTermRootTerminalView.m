@@ -301,7 +301,6 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
             case TAB_STYLE_AUTOMATIC:
             case TAB_STYLE_MINIMAL:
-            case TAB_STYLE_COUNT:
                 assert(NO);
                 
             case TAB_STYLE_LIGHT:
