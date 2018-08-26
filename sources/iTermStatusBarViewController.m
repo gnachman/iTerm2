@@ -19,7 +19,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-static const CGFloat iTermStatusBarViewControllerMargin = 5;
+static const CGFloat iTermStatusBarViewControllerMargin = 15;
 static const CGFloat iTermStatusBarViewControllerTopMargin = 1;
 static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
 
