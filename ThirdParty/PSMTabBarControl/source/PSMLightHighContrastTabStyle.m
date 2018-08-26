@@ -26,6 +26,9 @@
 
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
     if (selected) {
+        if (@available(macOS 10.14, *)) {
+            return [NSColor windowBackgroundColor];
+        }
         if (self.tabBar.window.backgroundColor) {
             return self.tabBar.window.backgroundColor;
         } else {
