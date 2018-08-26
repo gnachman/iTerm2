@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14295.6" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14306.4" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14295.6"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14306.4"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -3532,7 +3532,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>
@@ -5009,10 +5009,10 @@ DQ
                             <items>
                                 <menuItem title="Automatic" state="on" tag="4" id="ZNW-QH-Lff"/>
                                 <menuItem title="Minimal" tag="5" id="pzb-ff-PHK"/>
-                                <menuItem isSeparatorItem="YES" id="Efu-Me-UrR"/>
+                                <menuItem isSeparatorItem="YES" tag="-1" id="Efu-Me-UrR"/>
                                 <menuItem title="Light" id="4kv-Gg-Pyp"/>
                                 <menuItem title="Dark" tag="1" id="jvn-mf-Qsy"/>
-                                <menuItem isSeparatorItem="YES" id="Nge-uR-XLf"/>
+                                <menuItem isSeparatorItem="YES" tag="-1" id="Nge-uR-XLf"/>
                                 <menuItem title="Light (High Contrast)" tag="2" id="O45-Gi-i9j"/>
                                 <menuItem title="Dark (High Contrast)" tag="3" id="fm1-QT-Lct"/>
                             </items>
@@ -5026,12 +5026,12 @@ DQ
                 <popUpButton verticalHuggingPriority="750" id="Cjh-dQ-HBQ">
                     <rect key="frame" x="144" y="220" width="191" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Top" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="7BM-xw-fbE" id="9o6-qH-zo0" userLabel="Tab Style">
+                    <popUpButtonCell key="cell" type="push" title="Top" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="7BM-xw-fbE" id="9o6-qH-zo0" userLabel="Tab Style">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="TGp-XX-gkr">
                             <items>
-                                <menuItem title="Top" id="7BM-xw-fbE">
+                                <menuItem title="Top" state="on" id="7BM-xw-fbE">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
                                 <menuItem title="Bottom" tag="1" id="kqT-50-xBs"/>
