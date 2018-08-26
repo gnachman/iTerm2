@@ -56,6 +56,7 @@ OSErr menuBarVisibilityChangedCallback(EventHandlerCallRef inHandlerRef, EventRe
                                                                selector:@selector(activeSpaceDidChangeNotification:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
                                                                  object:nil];
+        AppendPinnedDebugLogMessage(NSStringFromClass([self class]), @"Initialize menu bar observer");
     }
 
     return self;
@@ -75,6 +76,7 @@ OSErr menuBarVisibilityChangedCallback(EventHandlerCallRef inHandlerRef, EventRe
 
 - (void)activeSpaceDidChangeNotification:(NSNotification *)notification {
     [self scheduleCheck];
+    AppendPinnedDebugLogMessage(NSStringFromClass([self class]), @"Activate space changed. set menu bar visible to %@", @([NSMenu menuBarVisible]));
     DLog(@"Activate space changed. set menu bar visible to %@", @([NSMenu menuBarVisible]));
     _menuBarVisible = [NSMenu menuBarVisible];
 }
@@ -82,15 +84,19 @@ OSErr menuBarVisibilityChangedCallback(EventHandlerCallRef inHandlerRef, EventRe
 - (void)menuBarVisibilityDidChangeWithEvent:(EventRef)event {
     _menuBarVisible = (GetEventKind(event) != kEventMenuBarHidden);
     DLog(@"Menu bar visibility did change with event. set menu bar visible to %@", @(GetEventKind(event) != kEventMenuBarHidden));
+    AppendPinnedDebugLogMessage(NSStringFromClass([self class]), @"Menu bar visibility did change with event. set menu bar visible to %@", @(GetEventKind(event) != kEventMenuBarHidden));
     [self scheduleCheck];
 }
 
 - (void)checkForFullScreenChange:(NSTimer *)timer {
+    BOOL before = _currentDesktopHasFullScreenWindow;
     if (([self menuBarOffScreen] && [self isMenuBarAttachedToMainScreen])) {
         _currentDesktopHasFullScreenWindow = YES;
     } else {
         _currentDesktopHasFullScreenWindow = NO;
     }
+    AppendPinnedDebugLogMessage(NSStringFromClass([self class]), @"checkForFullScreenChange %@ -> %@ screenWithMenuBar.frame=%@ mainScreen=%@ screenWithMenuBar=%@", @(before), @(_currentDesktopHasFullScreenWindow),
+                                NSStringFromRect([self.screenWithMenuBar frame]), [NSScreen mainScreen], self.screenWithMenuBar);
 }
 
 - (BOOL)isMenuBarAttachedToMainScreen {
@@ -146,6 +152,10 @@ OSErr menuBarVisibilityChangedCallback(EventHandlerCallRef inHandlerRef, EventRe
 - (BOOL)menuBarOffScreen {
     const BOOL menuBarOnScreen = CGRectContainsPoint(self.expectedFrameOfVisibleMenuBar,
                                                      self.actualMenuBarFrame.origin);
+    AppendPinnedDebugLogMessage(NSStringFromClass([self class]), @"menuBarOffScreen: expected frame of visible menu bar = %@, actual menu bar origin = %@. menuBarOffScreen=%@",
+                                NSStringFromRect(self.expectedFrameOfVisibleMenuBar),
+                                NSStringFromPoint(self.actualMenuBarFrame.origin),
+                                @(!menuBarOnScreen));
     return !menuBarOnScreen;
 }
 
