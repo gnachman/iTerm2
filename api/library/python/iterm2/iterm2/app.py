@@ -4,7 +4,6 @@ This module is the starting point for getting access to windows and other applic
 """
 
 import iterm2.notifications
-import iterm2.profile
 import iterm2.rpc
 import iterm2.session
 import iterm2.tab
@@ -433,24 +432,6 @@ class App:
             await iterm2.notifications.async_subscribe_to_broadcast_domains_change_notification(
                 connection,
                 self._async_broadcast_domains_change))
-
-    async def async_list_profiles(self, guids=None, properties=["Guid", "Name"]):
-        """Fetches a list of profiles.
-
-        :param properties: Lists the properties to fetch. Pass None for all.
-        :param guids: Lists GUIDs to list. Pass None for all profiles.
-
-        :returns: If properties is a list, returns :class:`PartialProfile` with only the specified properties set. If properties is `None` then returns :class:`Profile`.
-        """
-        response = await iterm2.rpc.async_list_profiles(self.connection, guids, properties)
-        profiles = []
-        for responseProfile in response.list_profiles_response.profiles:
-            if properties is None:
-              profile = iterm2.profile.Profile(None, self.connection, responseProfile.properties)
-            else:
-              profile = iterm2.profile.PartialProfile(None, self.connection, responseProfile.properties)
-            profiles.append(profile)
-        return profiles
 
     async def async_register_rpc_handler(self, name, coro, timeout=None, defaults={}):
         """Register a script-defined RPC.

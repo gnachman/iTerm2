@@ -1497,6 +1497,22 @@ class Profile(WriteOnlyProfile):
     USE_CUSTOM_COMMAND_ENABLED = "Yes"
     USE_CUSTOM_COMMAND_DISABLED = "No"
 
+    @staticmethod
+    async def async_get(connection, guids=None):
+        """Fetches all profiles with the specified GUIDs.
+
+        :param guids: The profiles to get, or if `None` then all will be returned.
+
+        :returns: A list of :class:`Profile` objects.
+        """
+        response = await iterm2.rpc.async_list_profiles(connection, guids, None)
+        profiles = []
+        for responseProfile in response.list_profiles_response.profiles:
+            profile = Profile(None, connection, responseProfile.properties)
+            profiles.append(profile)
+        return profiles
+
+
     def __init__(self, session_id, connection, profile_property_list):
         props = {}
         for prop in profile_property_list:
@@ -2481,6 +2497,22 @@ class Color:
 
 class PartialProfile(Profile):
     """Represents a profile that has only a subset of fields available for reading."""
+
+    @staticmethod
+    async def async_get(connection, guids=None, properties=["Guid", "Name"]):
+        """Fetches a list of profiles.
+
+        :param properties: Lists the properties to fetch. Pass None for all.
+        :param guids: Lists GUIDs to list. Pass None for all profiles.
+
+        :returns: A list of :class:`PartialProfile` objects with only the specified properties set.
+        """
+        response = await iterm2.rpc.async_list_profiles(connection, guids, properties)
+        profiles = []
+        for responseProfile in response.list_profiles_response.profiles:
+            profile = iterm2.profile.PartialProfile(None, connection, responseProfile.properties)
+            profiles.append(profile)
+        return profiles
 
     def __init__(self, session_id, connection, profile_property_list):
         """Initializes a PartialProfile from a profile_property_list protobuf."""

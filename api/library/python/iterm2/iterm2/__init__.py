@@ -19,7 +19,7 @@ from iterm2.transaction import Transaction
 
 from iterm2.tab import Tab
 
-from iterm2.tmux import TmuxException, TmuxConnection, async_get_tmux_connections
+from iterm2.tmux import TmuxException, TmuxConnection, async_get_tmux_connections, async_get_tmux_connection_by_connection_id
 
 from iterm2.tool import async_register_web_view_tool
 
