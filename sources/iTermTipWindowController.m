@@ -15,6 +15,7 @@
 #import "iTermTipCardViewController.h"
 #import "iTermFlippedView.h"
 #import "NSView+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "SolidColorView.h"
 
 #import <QuartzCore/QuartzCore.h>
@@ -119,14 +120,14 @@ static const CGFloat kWindowWidth = 400;
 - (void)addButtonsToCard:(iTermTipCardViewController *)card expanded:(BOOL)expanded {
     if (_tip.url) {
         [card addActionWithTitle:kLearnMoreTitle
-                            icon:[[NSBundle bundleForClass:self.class] imageForResource:@"Navigate"]
+                            icon:[NSImage it_imageNamed:@"Navigate" forClass:self.class]
                            block:^(id sendingCard) {
                                [self openURL];
                            }];
     }
     [card addActionWithTitle:kDismissTipTitle
                     shortcut:@"⎋"
-                        icon:[[NSBundle bundleForClass:self.class] imageForResource:@"Dismiss"]
+                        icon:[NSImage it_imageNamed:@"Dismiss" forClass:self.class]
                        block:^(id sendingCard) {
                            [self dismiss];
                        }];
@@ -134,7 +135,7 @@ static const CGFloat kWindowWidth = 400;
     NSString *toggleTitle = expanded ? kFewerOptionsTitle : kMoreOptionsTitle;
     iTermTipCardActionButton *button =
         [card addActionWithTitle:toggleTitle
-                            icon:[[NSBundle bundleForClass:self.class] imageForResource:@"ChevronDown"]
+                            icon:[NSImage it_imageNamed:@"ChevronDown" forClass:self.class]
                            block:^(id sendingCard) {
                                [self toggleOptionsInCard:sendingCard];
                            }];
@@ -142,7 +143,7 @@ static const CGFloat kWindowWidth = 400;
 
     button =
         [card addActionWithTitle:kShowThisLaterTitle
-                            icon:[[NSBundle bundleForClass:self.class] imageForResource:@"Later"]
+                            icon:[NSImage it_imageNamed:@"Later" forClass:self.class]
                            block:^(id sendingCard) {
                                [self showThisLater];
                            }];
@@ -180,7 +181,7 @@ static const CGFloat kWindowWidth = 400;
     }
     button =
         [card addActionWithTitle:frequencyTitle
-                            icon:[[NSBundle bundleForClass:self.class] imageForResource:@"TipCalendar"]
+                            icon:[NSImage it_imageNamed:@"TipCalendar" forClass:self.class]
                            block:^(id sendingCard) {
                                [_delegate toggleTipFrequency];
                                iTermTipCardActionButton *theButton = [card actionWithTitle:kShowTipsWeeklyTitle];
@@ -203,7 +204,7 @@ static const CGFloat kWindowWidth = 400;
     }
     button =
         [card addActionWithTitle:enableOrDisableTitle
-                            icon:[[NSBundle bundleForClass:self.class] imageForResource:@"DisableTips"]
+                            icon:[NSImage it_imageNamed:@"DisableTips" forClass:self.class]
                            block:^(id sendingCard) {
                                if (![_delegate tipWindowTipsAreDisabled]) {
                                    [self disableTips];
@@ -220,7 +221,7 @@ static const CGFloat kWindowWidth = 400;
     if ([_delegate tipWindowTipAfterTipWithIdentifier:self.tip.identifier]) {
         button =
             [card addActionWithTitle:kShowNextTipTitle
-                                icon:[[NSBundle bundleForClass:self.class] imageForResource:@"NextTip"]
+                                icon:[NSImage it_imageNamed:@"NextTip" forClass:self.class]
                                block:^(id sendingCard) {
                                    [self showNextTip];
                                }];
@@ -231,7 +232,7 @@ static const CGFloat kWindowWidth = 400;
     if ([_delegate tipWindowTipBeforeTipWithIdentifier:self.tip.identifier]) {
         button =
             [card addActionWithTitle:kShowPreviousTipTitle
-                                icon:[[NSBundle bundleForClass:self.class] imageForResource:@"NextTip"]
+                                icon:[NSImage it_imageNamed:@"NextTip" forClass:self.class]
                                block:^(id sendingCard) {
                                    [self showPreviousTip];
                                }];

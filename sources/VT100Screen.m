@@ -24,6 +24,7 @@
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextView.h"
 #import "RegexKitLite.h"
@@ -3505,7 +3506,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     const BOOL isBroken = !image;
     if (isBroken) {
         DLog(@"Image is broken");
-        image = [iTermImage imageWithNativeImage:[[NSBundle bundleForClass:self.class] imageForResource:@"broken_image"]];
+        image = [iTermImage imageWithNativeImage:[NSImage it_imageNamed:@"broken_image" forClass:self.class]];
         assert(image);
     }
 

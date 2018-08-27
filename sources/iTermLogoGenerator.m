@@ -47,8 +47,8 @@ static NSMutableDictionary *gLogoCache;
     NSImage *image = [[[NSImage alloc] initWithSize:NSMakeSize(width, height)] autorelease];
     [image lockFocus];
 
-    NSImage *frame = [[NSBundle bundleForClass:self.class] imageForResource:@"LogoFrame.png"];
-    NSImage *shadow = [[NSBundle bundleForClass:self.class] imageForResource:@"LogoShadow.png"];
+    NSImage *frame = [NSImage it_imageNamed:@"LogoFrame.png" forClass:self.class];
+    NSImage *shadow = [NSImage it_imageNamed:@"LogoShadow.png" forClass:self.class];
 
     [_backgroundColor set];
     NSBezierPath *path = [NSBezierPath bezierPath];

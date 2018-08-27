@@ -40,6 +40,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSWindow+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
@@ -437,11 +438,11 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         });
 
         if ([iTermAdvancedSettingsModel statusBarIcon]) {
-            NSImage *image = [[NSBundle bundleForClass:self.class] imageForResource:@"StatusItem"];
+            NSImage *image = [NSImage it_imageNamed:@"StatusItem" forClass:self.class];
             self.statusBarItem = [[NSStatusBar systemStatusBar] statusItemWithLength:image.size.width];
             _statusBarItem.title = @"";
             _statusBarItem.image = image;
-            _statusBarItem.alternateImage = [[NSBundle bundleForClass:self.class] imageForResource:@"StatusItemAlt"];
+            _statusBarItem.alternateImage = [NSImage it_imageNamed:@"StatusItemAlt" forClass:self.class];
             _statusBarItem.highlightMode = YES;
 
             _statusBarItem.menu = [[self delegate] statusBarMenu];
