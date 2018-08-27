@@ -19,6 +19,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSView+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSWindow+PSM.h"
 #import "PreferencePanel.h"
@@ -204,7 +205,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 @synthesize lockedSession = lockedSession_;
 
 + (NSImage *)bellImage {
-    return [NSImage imageNamed:@"important"];
+    return [NSImage it_imageNamed:@"important" forClass:self.class];
 }
 
 + (NSImage *)imageForNewOutputWithAppearance:(NSAppearance *)appearance {
@@ -216,13 +217,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            return [NSImage imageNamed:@"NewOutput"];
+            return [NSImage it_imageNamed:@"NewOutput" forClass:self.class];
         case TAB_STYLE_DARK:
         case TAB_STYLE_DARK_HIGH_CONTRAST:
-            return [NSImage imageNamed:@"NewOutputForDarkTheme"];
+            return [NSImage it_imageNamed:@"NewOutputForDarkTheme" forClass:self.class];
     }
 
-    return [NSImage imageNamed:@"NewOutput"];
+    return [NSImage it_imageNamed:@"NewOutput" forClass:self.class];
 }
 
 + (NSImage *)idleImageWithAppearance:(NSAppearance *)appearance {
@@ -240,12 +241,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             assert(NO);
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            return [NSImage imageNamed:@"dead"];
+            return [NSImage it_imageNamed:@"dead" forClass:self.class];
         case TAB_STYLE_DARK:
         case TAB_STYLE_DARK_HIGH_CONTRAST:
-            return [NSImage imageNamed:@"DeadForDarkTheme"];
+            return [NSImage it_imageNamed:@"DeadForDarkTheme" forClass:self.class];
     }
-    return [NSImage imageNamed:@"dead"];
+    return [NSImage it_imageNamed:@"dead" forClass:self.class];
 }
 
 + (void)_recursiveRegisterSessionsInArrangement:(NSDictionary *)arrangement {

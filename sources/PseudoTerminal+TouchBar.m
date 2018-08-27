@@ -381,7 +381,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
         selector = @selector(statusTouchBarItemSelected:);
         label = @"Your Message Here";
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierAddMark]) {
-        image = [[NSImage imageNamed:@"Add Mark Touch Bar Icon"] imageWithColor:[NSColor labelColor]];
+        image = [[NSImage it_imageNamed:@"Add Mark Touch Bar Icon" forClass:self.class] imageWithColor:[NSColor labelColor]];
         selector = @selector(addMarkTouchBarItemSelected:);
         label = @"Add Mark";
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierNextMark]) {
@@ -405,7 +405,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
         item.popoverTouchBar = secondaryTouchBar;
         return item;
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierFunctionKeys]) {
-        image = [NSImage imageNamed:@"Touch Bar Function Keys"];
+        image = [NSImage it_imageNamed:@"Touch Bar Function Keys" forClass:self.class];
         NSPopoverTouchBarItem *item = [[[NSPopoverTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
         item.customizationLabel = @"Function Keys Popover";
         item.showsCloseButton = YES;
@@ -434,7 +434,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
         item.customizationLabel = label;
         if ([identifier isEqualToString:iTermTouchBarIdentifierManPage]) {
             button.title = @"";
-            button.image = [NSImage imageNamed:@"Man Page Touch Bar Icon"];
+            button.image = [NSImage it_imageNamed:@"Man Page Touch Bar Icon" forClass:self.class];
             button.imagePosition = NSImageOnly;
             button.enabled = NO;
         }

@@ -216,7 +216,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 
 - (NSAttributedString *)attributedStringWithImageNamed:(NSString *)imageName {
     NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
-    textAttachment.image = [NSImage imageNamed:imageName];
+    textAttachment.image = [NSImage it_imageNamed:imageName forClass:self.class];
     return [NSAttributedString attributedStringWithAttachment:textAttachment];
 }
 

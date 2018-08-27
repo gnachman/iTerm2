@@ -8,6 +8,7 @@
 
 #import "iTermMouseCursor.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "NSImage+iTerm.h"
 
 @interface NSCursor ()
 // This is an Apple private method that, when overridden, allows you to use
@@ -83,7 +84,7 @@ enum {
 - (instancetype)initWithType:(iTermMouseCursorType)cursorType {
     switch (cursorType) {
         case iTermMouseCursorTypeIBeamWithCircle:
-            self = [super initWithImage:[NSImage imageNamed:@"IBarCursorXMR"]
+            self = [super initWithImage:[NSImage it_imageNamed:@"IBarCursorXMR" forClass:self.class]
                                 hotSpot:NSMakePoint(4, 8)];
             if (self) {
                 _hasImage = YES;
@@ -97,7 +98,7 @@ enum {
                     _type = kIBeamCursor;
                 }
             } else {
-                self = [super initWithImage:[NSImage imageNamed:@"IBarCursor"]
+                self = [super initWithImage:[NSImage it_imageNamed:@"IBarCursor" forClass:self.class]
                                     hotSpot:NSMakePoint(4, 8)];
                 if (self) {
                     _hasImage = YES;

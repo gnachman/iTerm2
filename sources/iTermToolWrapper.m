@@ -10,6 +10,8 @@
 
 #import "iTermToolbeltView.h"
 
+#import "NSImage+iTerm.h"
+
 static const CGFloat kTitleHeight = 19;
 static const CGFloat kMargin = 4;  // Margin between title bar and content
 static const CGFloat kLeftMargin = 4;
@@ -57,7 +59,7 @@ static const CGFloat kCloseButtonLeftMargin = 5;
         [self addSubview:_title];
         [_title release];
 
-        NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
+        NSImage *closeImage = [NSImage it_imageNamed:@"closebutton" forClass:self.class];
         _closeButton = [[NSButton alloc] initWithFrame:NSMakeRect(kCloseButtonLeftMargin, 10, kButtonSize, kButtonSize)];
         [_closeButton setButtonType:NSMomentaryPushInButton];
         [_closeButton setImage:closeImage];

@@ -9,6 +9,7 @@
 #import "iTermShortcutInputView.h"
 #import "iTermKeyBindingMgr.h"
 #import "NSStringITerm.h"
+#import "NSImage+iTerm.h"
 
 @interface iTermShortcutInputView()
 @property(nonatomic, copy) NSString *hotkeyBeingRecorded;
@@ -46,9 +47,9 @@
 
 - (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
     if (backgroundStyle == NSBackgroundStyleLight) {
-        [_clearButton setImage:[NSImage imageNamed:@"Erase"]];
+        [_clearButton setImage:[NSImage it_imageNamed:@"Erase" forClass:self.class]];
     } else {
-        [_clearButton setImage:[NSImage imageNamed:@"EraseDarkBackground"]];
+        [_clearButton setImage:[NSImage it_imageNamed:@"EraseDarkBackground" forClass:self.class]];
     }
     _backgroundStyle = backgroundStyle;
     [self setNeedsDisplay:YES];
@@ -198,14 +199,14 @@
 
 - (void)addClearButton {
     NSSize size = self.bounds.size;
-    NSSize buttonSize = [[NSImage imageNamed:@"Erase"] size];
+    NSSize buttonSize = [[NSImage it_imageNamed:@"Erase" forClass:self.class] size];
 
     _clearButton = [[NSButton alloc] initWithFrame:NSMakeRect(size.width - buttonSize.width - 2,
                                                               (size.height - buttonSize.height) / 2.0,
                                                               buttonSize.width,
                                                               buttonSize.height)];
     [_clearButton setTarget:self];
-    [_clearButton setImage:[NSImage imageNamed:@"Erase"]];
+    [_clearButton setImage:[NSImage it_imageNamed:@"Erase" forClass:self.class]];
     [_clearButton setAction:@selector(clear:)];
     [_clearButton setBordered:NO];
     self.autoresizesSubviews = YES;

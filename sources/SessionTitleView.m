@@ -49,7 +49,7 @@ static const CGFloat kButtonSize = 17;
         const double kMargin = 5;
         double x = kMargin;
 
-        NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
+        NSImage *closeImage = [NSImage it_imageNamed:@"closebutton" forClass:self.class];
         closeButton_ = [[NoFirstResponderButton alloc] initWithFrame:NSMakeRect(x,
                                                                                 (frame.size.height - kButtonSize) / 2,
                                                                                 kButtonSize,
@@ -69,7 +69,7 @@ static const CGFloat kButtonSize = 17;
         // some of it is clipped.
         menuButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 14, 14)];
         menuButton_.bordered = NO;
-        menuButton_.image = [NSImage imageNamed:@"Hamburger"];
+        menuButton_.image = [NSImage it_imageNamed:@"Hamburger" forClass:self.class];
         menuButton_.imagePosition = NSImageOnly;
         menuButton_.target = self;
         menuButton_.action = @selector(openMenu:);

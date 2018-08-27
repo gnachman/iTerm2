@@ -106,11 +106,11 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
 @implementation iTermImageDecoderDriver
 
 - (NSString *)executable {
-    return [[NSBundle mainBundle] pathForResource:@"image_decoder" ofType:nil];
+    return [[NSBundle bundleForClass:self.class] pathForResource:@"image_decoder" ofType:nil];
 }
 
 - (NSString *)sandbox {
-    NSString *sandboxFileName = [[NSBundle mainBundle] pathForResource:@"image_decoder" ofType:@"sb"];
+    NSString *sandboxFileName = [[NSBundle bundleForClass:self.class] pathForResource:@"image_decoder" ofType:@"sb"];
     NSString *sandboxContents = [NSString stringWithContentsOfFile:sandboxFileName encoding:NSUTF8StringEncoding error:nil];
     NSString *executable = [self executable];
     if (!sandboxFileName || !sandboxContents || !executable) {

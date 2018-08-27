@@ -1,6 +1,7 @@
 #import "iTermOpenQuicklyItem.h"
 #import "iTermLogoGenerator.h"
 #import "iTermOpenQuicklyTableCellView.h"
+#import "NSImage+iTerm.h"
 
 @implementation iTermOpenQuicklyItem
 
@@ -17,20 +18,20 @@
 @implementation iTermOpenQuicklySessionItem
 
 - (instancetype)init {
-  self = [super init];
-  if (self) {
-    _logoGenerator = [[iTermLogoGenerator alloc] init];
-  }
-  return self;
+    self = [super init];
+    if (self) {
+        _logoGenerator = [[iTermLogoGenerator alloc] init];
+    }
+    return self;
 }
 
 - (void)dealloc {
-  [_logoGenerator release];
-  [super dealloc];
+    [_logoGenerator release];
+    [super dealloc];
 }
 
 - (NSImage *)icon {
-  return [_logoGenerator generatedImage];
+    return [_logoGenerator generatedImage];
 }
 
 @end
@@ -38,7 +39,7 @@
 @implementation iTermOpenQuicklyProfileItem
 
 - (NSImage *)icon {
-  return [NSImage imageNamed:@"new-tab"];
+    return [NSImage it_imageNamed:@"new-tab" forClass:self.class];
 }
 
 @end
@@ -46,7 +47,7 @@
 @implementation iTermOpenQuicklyChangeProfileItem
 
 - (NSImage *)icon {
-    return [NSImage imageNamed:@"ChangeProfile"];
+    return [NSImage it_imageNamed:@"ChangeProfile" forClass:self.class];
 }
 
 @end
@@ -76,7 +77,7 @@
 @implementation iTermOpenQuicklyArrangementItem
 
 - (NSImage *)icon {
-  return [NSImage imageNamed:@"restore-arrangement"];
+  return [NSImage it_imageNamed:@"restore-arrangement" forClass:self.class];
 }
 
 @end
@@ -84,7 +85,7 @@
 @implementation iTermOpenQuicklyHelpItem
 
 - (NSImage *)icon {
-    return [NSImage imageNamed:@"Info"];
+    return [NSImage it_imageNamed:@"Info" forClass:self.class];
 }
 
 @end
@@ -92,7 +93,7 @@
 @implementation iTermOpenQuicklyScriptItem
 
 - (NSImage *)icon {
-    return [NSImage imageNamed:@"ScriptIcon"];
+    return [NSImage it_imageNamed:@"ScriptIcon" forClass:self.class];
 }
 
 @end

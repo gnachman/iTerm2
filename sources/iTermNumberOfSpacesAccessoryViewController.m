@@ -16,7 +16,7 @@
 }
 
 - (instancetype)init {
-    return [super initWithNibName:@"NumberOfSpacesAccessoryView" bundle:nil];
+    return [super initWithNibName:@"NumberOfSpacesAccessoryView" bundle:[NSBundle bundleForClass:self.class]];
 }
 
 - (void)awakeFromNib {

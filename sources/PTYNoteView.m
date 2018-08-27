@@ -8,6 +8,7 @@
 
 #import "PTYNoteView.h"
 #import "iTermMouseCursor.h"
+#import "NSImage+iTerm.h"
 
 static const CGFloat kMinWidth = 50;
 static const CGFloat kMinHeight = 33;
@@ -39,7 +40,7 @@ const CGFloat kDragAreaSize = 5;
     self = [super initWithFrame:frame];
     if (self) {
         backgroundColor_ = [[self defaultBackgroundColor] retain];
-        NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
+        NSImage *closeImage = [NSImage it_imageNamed:@"closebutton" forClass:self.class];
         killButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, kButtonSize, kButtonSize)];
         [killButton_ setButtonType:NSMomentaryPushInButton];
         [killButton_ setImage:closeImage];
