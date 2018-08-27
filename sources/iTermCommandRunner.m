@@ -119,10 +119,19 @@
     [self readAndWait:_task];
 }
 
+- (dispatch_queue_t)queue {
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("com.iterm2.command-runner", DISPATCH_QUEUE_SERIAL);
+    });
+    return queue;
+}
+
 - (void)readAndWait:(NSTask *)task {
     NSPipe *pipe = _pipe;
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async(self.queue, ^{
         [task waitUntilExit];
         // This makes -availableData return immediately.
         pipe.fileHandleForReading.readabilityHandler = nil;
@@ -154,7 +163,9 @@
     }
 
     DLog(@"runCommand: Done reading. Wait");
-    dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+    static const NSTimeInterval timeoutSeconds = 1;
+    dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW,
+                                                timeoutSeconds * NSEC_PER_SEC));
 
     self.running = NO;
     if (self.completion) {
