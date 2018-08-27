@@ -24,6 +24,45 @@ class SavedArrangementException(Exception):
     pass
 
 class Window:
+    @staticmethod
+    async def async_create(connection, profile=None, command=None, profile_customizations=None):
+        """Creates a new window.
+
+        :param connection: A :class:`iterm2.Connection`.
+        :param profile: The name of the profile to use for the new window.
+        :param command: A command to run in lieu of the shell in the new session. Mutually exclusive with profile_customizations.
+        :param profile_customizations: LocalWriteOnlyProfile giving changes to make in profile. Mutually exclusive with command.
+
+        :returns: A new :class:`Window`.
+
+        :throws: CreateWindowException if something went wrong.
+        """
+        if command is not None:
+            p = profile.LocalWriteOnlyProfile()
+            p.set_use_custom_command(profile.Profile.USE_CUSTOM_COMMAND_ENABLED)
+            p.set_command(command)
+            custom_dict = p.values
+        elif profile_customizations is not None:
+            custom_dict = profile_customizations.values
+        else:
+            custom_dict = None
+
+        result = await iterm2.rpc.async_create_tab(
+            connection,
+            profile=profile,
+            window=None,
+            profile_customizations=custom_dict)
+        ctr = result.create_tab_response
+        if ctr.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
+            app = await iterm2.app.async_get_app(connection)
+            session = app.get_session_by_id(ctr.session_id)
+            window, _tab = app.get_tab_and_window_for_session(session)
+            return window
+        else:
+            raise CreateWindowException(
+                iterm2.api_pb2.CreateTabResponse.Status.Name(
+                    result.create_tab_response.status))
+
     """Represents an iTerm2 window."""
     def __init__(self, connection, window_id, tabs, frame, number):
         self.connection = connection

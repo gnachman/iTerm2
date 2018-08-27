@@ -19,7 +19,7 @@ starting point for developing your own custom escape sequence handler.
 	    print("Received a custom escape sequence")
 	    if notification.sender_identity == "shared-secret":
 		if notification.payload == "create-window":
-		    await app.async_create_window()
+		    await app.Window.async_create()
 
 	await iterm2.notifications.async_subscribe_to_custom_escape_sequence_notification(connection, on_custom_esc)
 

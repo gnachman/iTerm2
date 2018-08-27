@@ -31,7 +31,7 @@ get started:
             print("Received a custom escape sequence")
             if notification.sender_identity == "shared-secret":
                 if notification.payload == "create-window":
-                    await app.async_create_window()
+                    await iterm2.Window.async_create()
 
         await iterm2.notifications.async_subscribe_to_custom_escape_sequence_notification(connection, on_custom_esc)
 
@@ -120,7 +120,7 @@ Let's see what the callback does:
 
             if notification.sender_identity == "shared-secret":
                 if notification.payload == "create-window":
-                    await app.async_create_window()
+                    await iterm2.Window.async_create()
 
 First, it checks that the sender identity is correct. Next, it selects the
 action to perform based on the payload. This daemon only knows how to create
