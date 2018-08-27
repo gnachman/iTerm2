@@ -1,7 +1,7 @@
 George's Title Algorithm
 =========================
 
-This code combines user-defined variables from Shell Integration with a custom session title function. It demonstrates :meth:`App.async_register_session_title_provider`. The end result is a snazzy title that includes your git branch:
+This code combines user-defined variables from Shell Integration with a custom session title function. It demonstrates :meth:`iterm2.Registration.async_register_session_title_provider`. The end result is a snazzy title that includes your git branch:
 
 .. image:: georgesalgo.png
   :height: 32px
@@ -99,10 +99,11 @@ Next, install this script in `~/Library/Application Support/iTerm2/Scripts/AutoL
                      "profile_name": "session.profileName?",
                      "tmux_title":   "session.tmuxWindowTitle?",
                      "user_home":    "user.home?" }
-        await app.async_register_session_title_provider("georges_title",
-                                                        georges_title,
-                                                        display_name="George's Title Algorithm",
-                                                        defaults=defaults    await connection.async_dispatch_until_future(asyncio.Future())
+        await iterm2.Registration.async_register_session_title_provider(connection,
+                                                                        "georges_title",
+                                                                        georges_title,
+                                                                        display_name="George's Title Algorithm",
+                                                                        defaults=defaults    await connection.async_dispatch_until_future(asyncio.Future())
 
     iterm2.Connection().run(main)
 

@@ -23,9 +23,11 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    :caption: Class reference:
 
    app
+   arrangement
    connection
    notifications
    profile
+   registration
    session
    tab
    tmux

@@ -11,6 +11,8 @@ from iterm2.preferences import PreferenceKeys, async_get_preference
 
 from iterm2.profile import Profile, Color, PartialProfile, BadGUIDException, LocalWriteOnlyProfile
 
+from iterm2.registration import Registration
+
 from iterm2.session import SplitPaneException, Splitter, Session, InvalidSessionId
 
 from iterm2.statusbar import StatusBarComponent, CheckboxKnob, StringKnob, PositiveFloatingPointKnob, ColorKnob

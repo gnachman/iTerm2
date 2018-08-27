@@ -48,11 +48,12 @@ Here's an example:
         defaults = { "pwd": "session.path?",
                      "username": "session.username?",
                      "hostname": "session.hostname?" }
-        await app.async_register_rpc_handler("custom_title",
-                                             custom_title,
-                                             role=iterm2.RPC_ROLE_SESSION_TITLE,
-                                             defaults=defaults,
-                                             display_name="My Custom Title")
+        await iterm2.Registration.async_register_rpc_handler(connection,
+                                                             "custom_title",
+                                                             custom_title,
+                                                             role=iterm2.RPC_ROLE_SESSION_TITLE,
+                                                             defaults=defaults,
+                                                             display_name="My Custom Title")
 	await connection.async_dispatch_until_future(asyncio.Future())
 
     iterm2.run(main)
