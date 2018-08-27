@@ -25,6 +25,7 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    app
    arrangement
    connection
+   mainmenu
    notifications
    profile
    registration
