@@ -2,11 +2,10 @@
 
 import asyncio
 import iterm2
-import sys
 # This script was created with the "basic" environment which does not support adding dependencies
 # with pip.
 
-async def main(connection, argv):
+async def main(connection):
     app = await iterm2.async_get_app(connection)
 
     # This is an example of a callback function. In this template, on_custom_esc is called when a
@@ -27,5 +26,4 @@ async def main(connection, argv):
     # dispatch_until_future will raise an exception when its connection closes.
     await connection.async_dispatch_until_future(asyncio.Future())
 
-if __name__ == "__main__":
-    iterm2.Connection().run(main, sys.argv)
+iterm2.run(main)

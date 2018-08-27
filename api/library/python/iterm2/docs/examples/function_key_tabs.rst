@@ -9,9 +9,8 @@ The script makes it possible to select a tab by pressing a function key. F1 choo
 
     import asyncio
     import iterm2
-    import sys
 
-    async def main(connection, argv):
+    async def main(connection):
 	app = await iterm2.async_get_app(connection)
         # Keycodes for f1 through f10. See here for a list:
         # https://stackoverflow.com/questions/3202629/where-can-i-find-a-list-of-mac-virtual-key-codes
@@ -37,6 +36,5 @@ The script makes it possible to select a tab by pressing a function key. F1 choo
 	await iterm2.notifications.async_subscribe_to_keystroke_notification(connection, keystroke_handler, patterns_to_ignore=[patterns])
 	await connection.async_dispatch_until_future(asyncio.Future())
 
-    if __name__ == "__main__":
-	iterm2.Connection().run(main, sys.argv)
+    iterm2.run(main)
 

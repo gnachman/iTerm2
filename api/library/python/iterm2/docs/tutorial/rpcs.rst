@@ -15,10 +15,9 @@ This script shows a working example:
 
     import asyncio
     import iterm2
-    import sys
     import time
 
-    async def main(connection, argv):
+    async def main(connection):
 	app = await iterm2.async_get_app(connection)
 
 	async def clear_all_sessions():
@@ -32,8 +31,7 @@ This script shows a working example:
 
 	await connection.async_dispatch_until_future(asyncio.Future())
 
-    if __name__ == "__main__":
-	iterm2.Connection().run(main, sys.argv)
+    iterm2.run(main)
 
 A lot of this should look familiar from the :doc:`daemon` example. Let's focus
 on the parts we haven't seen before.

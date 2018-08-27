@@ -42,10 +42,9 @@ Then, replace `main.py` with:
     import aiohttp
     import asyncio
     import iterm2
-    import sys
     from aiohttp import web
 
-    async def main(connection, argv):
+    async def main(connection):
         app = await iterm2.async_get_app(connection)
 
         async def send_html(txt, request):
@@ -101,8 +100,7 @@ Then, replace `main.py` with:
         await iterm2.tool.async_register_web_view_tool(connection, "Targeted Input", "com.iterm2.example.targeted-input", False, "http://localhost:9999/")
         await connection.async_dispatch_until_future(asyncio.Future())
 
-    if __name__ == "__main__":
-        iterm2.Connection().run(main, sys.argv)
+    iterm2.run(main)
 
 Run the script and then open the "Targeted Input" tool. It will appear in the
 **Toolbelt** menu. Turn on broadcast input on a few sessions and hit the

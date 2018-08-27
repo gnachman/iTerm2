@@ -77,7 +77,7 @@ Next, install this script in `~/Library/Application Support/iTerm2/Scripts/AutoL
             return " ⎇ " + branch.rstrip()
         return ""
 
-    async def main(connection, argv):
+    async def main(connection):
         app = await iterm2.async_get_app(connection)
         localhome = os.environ.get("HOME")
         localhost = hostname_dash_f()
@@ -104,8 +104,7 @@ Next, install this script in `~/Library/Application Support/iTerm2/Scripts/AutoL
                                                         display_name="George's Title Algorithm",
                                                         defaults=defaults    await connection.async_dispatch_until_future(asyncio.Future())
 
-    if __name__ == "__main__":
-        iterm2.Connection().run(main, sys.argv)
+    iterm2.Connection().run(main)
 
 Finally, select *George's Title Algorithm* in **Prefs > Profiles > General > Title**.
 

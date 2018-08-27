@@ -23,9 +23,8 @@ get started:
 
     import asyncio
     import iterm2
-    import sys
 
-    async def main(connection, argv):
+    async def main(connection):
         app = await iterm2.async_get_app(connection)
 
         async def on_custom_esc(connection, notification):
@@ -38,8 +37,7 @@ get started:
 
         await connection.async_dispatch_until_future(asyncio.Future())
 
-    if __name__ == "__main__":
-        iterm2.Connection().run(main, sys.argv)
+    iterm2.run(main)
 
 Let's examine it line by line.
 
@@ -65,9 +63,8 @@ later.
 .. code-block:: python
 
     import iterm2
-    import sys
 
-    async def main(connection, argv):
+    async def main(connection):
         app = await iterm2.async_get_app(connection)
 
 This is the same stuff you saw in the first example.
