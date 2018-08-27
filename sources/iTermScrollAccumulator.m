@@ -79,10 +79,13 @@
     
     // Deltas will be accumulated into _accumulatedDeltaY.
     // If it is large (>1), return its integer part. This enables quick scroll, which feels like natural trackpad.
+    // If `delta * _accumulatedDeltaY < 0`, it means turnaround. Round delta to turn around quickly (fabs 0.5 is enough to move).
     // If it is not large enough, return 0 and keep accumulating.
     if (absAccumulatedDelta > 1) {
         roundDelta = _accumulatedDeltaY > 0 ? floor(_accumulatedDeltaY) : ceil(_accumulatedDeltaY);
         _accumulatedDeltaY -= roundDelta;
+    } else if (delta * _accumulatedDeltaY < 0) {
+        roundDelta = round(delta);
     } else {
         roundDelta = 0;
     }
