@@ -406,45 +406,6 @@ class App:
                 connection,
                 self._async_broadcast_domains_change))
 
-    async def async_select_menu_item(self, identifier):
-        """Selects a menu item.
-
-        :param identifier: A string. See list of identifiers in :doc:`menu_ids`
-
-        :throws MenuItemException: if something goes wrong.
-        """
-        response = await iterm2.rpc.async_menu_item(self.connection, identifier, False)
-        status = response.menu_item_response.status
-        if status != iterm2.api_pb2.MenuItemResponse.Status.Value("OK"):
-            raise MenuItemException(iterm2.api_pb2.MenuItemResponse.Status.Name(status))
-
-    class MenuItemState:
-        """Describes the current state of a menu item.
-
-        There are two properties:
-
-        `checked`: Is there a check mark next to the menu item?
-        `enabled`: Is the menu item selectable?
-        """
-        def __init__(self, checked, enabled):
-            self.checked = checked
-            self.enabled = enabled
-
-    async def async_get_menu_item_state(self, identifier):
-        """Queries a menu item for its state.
-
-        :param identifier: A string. See list of identifiers in :doc:`menu_ids`
-        :returns: :class:`App.MenuItemState`
-
-        :throws MenuItemException: if something goes wrong.
-        """
-        response = await iterm2.rpc.async_menu_item(self.connection, identifier, True)
-        status = response.menu_item_response.status
-        if status != iterm2.api_pb2.MenuItemResponse.Status.Value("OK"):
-            raise MenuItemException(iterm2.api_pb2.MenuItemResponse.Status.Name(status))
-        return iterm2.App.MenuItemState(response.menu_item_response.checked,
-                                        response.menu_item_response.enabled)
-
     async def async_set_variable(self, name, value):
         """
         Sets a user-defined variable in the application.
