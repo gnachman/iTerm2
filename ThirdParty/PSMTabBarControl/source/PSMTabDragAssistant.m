@@ -102,10 +102,20 @@
                                                       repeats:YES];
 }
 
+- (CGFloat)height {
+    if (self.sourceTabBar) {
+        return self.sourceTabBar.height;
+    } else if (self.destinationTabBar) {
+        return self.destinationTabBar.height;
+    } else {
+        return 24;
+    }
+}
+
 - (void)startAnimationWithOrientation:(PSMTabBarOrientation)orientation width:(CGFloat)width {
     if (_sineCurveWidths.count == 0) {
         [self addSineCurveWidthsWithOrientation:orientation
-                                           size:NSMakeSize(width, kPSMTabBarControlHeight)];
+                                           size:NSMakeSize(width, self.height)];
     }
     [self startAnimation];
 }
@@ -247,8 +257,8 @@
                                         [viewImage size].height - _dragWindowOffset.height);
 
                 if ([control orientation] == PSMTabBarHorizontalOrientation) {
-                    drawPoint.y += kPSMTabBarControlHeight - [tabImage size].height;
-                    _dragWindowOffset.height -= kPSMTabBarControlHeight - [tabImage size].height;
+                    drawPoint.y += self.height - [tabImage size].height;
+                    _dragWindowOffset.height -= self.height - [tabImage size].height;
                 } else {
                     drawPoint.x += [control frame].size.width - [tabImage size].width;
                 }
@@ -269,7 +279,7 @@
             }
 
             if (self.sourceTabBar.tabLocation == PSMTab_LeftTab) {
-                _dragWindowOffset.height += kPSMTabBarControlHeight;
+                _dragWindowOffset.height += self.height;
             } else if (!(styleMask & NSWindowStyleMaskTitled)) {
                 _dragWindowOffset.height += 22;
             }

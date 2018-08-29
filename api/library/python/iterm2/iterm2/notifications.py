@@ -236,7 +236,7 @@ async def async_subscribe_to_server_originated_rpc_notification(connection, call
     """
     Registers a callback to be run when the server wants to invoke an RPC.
 
-    You probably want to use :meth:`iterm2.App.async_register_rpc_handler`
+    You probably want to use :meth:`iterm2.Registration.async_register_rpc_handler`
     instead of this. It's a much higher level API.
 
     :param connection: A connected :class:`Connection`.

@@ -304,11 +304,6 @@ static BOOL sAuthenticated;
         DLog(@"Already authenticated");
         return;
     }
-    if (!NSClassFromString(@"LAContext") || !IsElCapitanOrLater()) {
-        DLog(@"OS is too old to check auth. Setting auth flag to YES");
-        sAuthenticated = YES;
-        return;
-    }
 
     if (@available(macOS 10.11, *)) {
         LAContext *myContext = [[[LAContext alloc] init] autorelease];
@@ -329,7 +324,7 @@ static BOOL sAuthenticated;
             return IsTouchBarAvailable();
 
         case LAPolicyDeviceOwnerAuthentication:
-            return IsElCapitanOrLater();
+            return YES;
 
         default:
             return NO;

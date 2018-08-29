@@ -546,11 +546,12 @@ static NSString *sPreviousVersion;
 // Migrates all pre-10.14 users now on 10.14 to automatic, since anything else looks bad.
 + (NSNumber *)computedTabStyle {
     NSNumber *value;
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyTabStyle];
+    if (value) {
+        return value;
+    }
     if (@available(macOS 10.14, *)) {
-        value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyTabStyle];
-        if (value) {
-            return value;
-        }
+        // New value is not set yet. This migrates all users to automatic.
         return @(TAB_STYLE_AUTOMATIC);
     }
     value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyTabStyle_Deprecated];

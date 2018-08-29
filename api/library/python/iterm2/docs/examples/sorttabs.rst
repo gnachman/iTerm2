@@ -9,10 +9,9 @@ This script sorts the tabs in all windows by the name of the current session.
 
     import asyncio
     import iterm2
-    import sys
     import time
 
-    async def main(connection, argv):
+    async def main(connection):
         app = await iterm2.async_get_app(connection)
         for window in app.terminal_windows:
             tabs = window.tabs
@@ -23,7 +22,6 @@ This script sorts the tabs in all windows by the name of the current session.
             sorted_tabs = sorted(tabs, key=tab_name)
             await window.async_set_tabs(sorted_tabs)
 
-    if __name__ == "__main__":
-        iterm2.Connection().run(main, sys.argv)
+    iterm2.run(main)
 
 

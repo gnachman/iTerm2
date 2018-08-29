@@ -38,9 +38,8 @@ Here's an example:
 
     import asyncio
     import iterm2
-    import sys
 
-    async def main(connection, argv):
+    async def main(connection):
         app = await iterm2.async_get_app(connection)
 
         async def custom_title(pwd, username, hostname):
@@ -49,15 +48,15 @@ Here's an example:
         defaults = { "pwd": "session.path?",
                      "username": "session.username?",
                      "hostname": "session.hostname?" }
-        await app.async_register_rpc_handler("custom_title",
-                                             custom_title,
-                                             role=iterm2.RPC_ROLE_SESSION_TITLE,
-                                             defaults=defaults,
-                                             display_name="My Custom Title")
+        await iterm2.Registration.async_register_rpc_handler(connection,
+                                                             "custom_title",
+                                                             custom_title,
+                                                             role=iterm2.RPC_ROLE_SESSION_TITLE,
+                                                             defaults=defaults,
+                                                             display_name="My Custom Title")
 	await connection.async_dispatch_until_future(asyncio.Future())
 
-    if __name__ == "__main__":
-	iterm2.Connection().run(main, sys.argv)
+    iterm2.run(main)
 
 As this script is a long-running daemon, you'll want to put it in the
 `AutoLaunch` folder. If a hook is not registered then it acts as though it

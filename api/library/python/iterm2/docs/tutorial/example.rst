@@ -8,9 +8,8 @@ Here's the example script that iTerm2 provides for you, minus some comments:
     #!/usr/bin/env python3
 
     import iterm2
-    import sys
 
-    async def main(connection, argv):
+    async def main(connection):
         app = await iterm2.async_get_app(connection)
         window = app.current_terminal_window
         if window is not None:
@@ -18,8 +17,7 @@ Here's the example script that iTerm2 provides for you, minus some comments:
         else:
             print("No current window")
 
-    if __name__ == "__main__":
-	iterm2.Connection().run(main, sys.argv)
+	iterm2.run(main)
 
 There's a lot going on here. Let's take it part by part.
 
@@ -35,28 +33,20 @@ The next part of the template script are the imports:
 .. code-block:: python
 
     import iterm2
-    import sys
 
 `iterm2` is a Python module (available on PyPI) that provides a nice interface
 to communicate with iTerm2. The underlying implementation uses Google protobuf
 and websockets. For most purposes, that is completely abstracted away.
 
-`sys` is imported so that the script can parse command-line arguments.
-
 .. code-block:: python
 
-    async def main(connection, argv):
+    async def main(connection):
 
 Your code goes inside `main`. The first argument is a `connection` that holds
 the link to a running iTerm2 process. `main` gets called only after a
 connection is established.  If the connection terminates (e.g., if you quit
 iTerm2) then any attempt to use it will raise an exception and terminate your
 script.
-
-The second argument, `argv`, gives the command-line arguments passed to the
-script. When you launch a script from iTerm2, it does not receive any
-arguments. But you can also run this script manually and pass it command-line
-arguments.
 
 The `async` keyword may be unfamiliar if you haven't used asyncio before. It
 signifies that this function can be interrupted, for example to perform a
@@ -123,14 +113,10 @@ script.
 
 .. code-block:: python
 
-    if __name__ == "__main__":
-	iterm2.Connection().run(main, sys.argv)
+	iterm2.run(main)
 
-The `if` statement is a bit of standard Python boilerplate; you can ignore it
-as its condition will always be `True`.
-
-The next line establishes a websocket connection to iTerm2 and then runs your
-`main` function, passing it `sys.argv` which holds the command-line arguments.
+This makes a connection to iTerm2 and invokes your `main` function in an
+asyncio event loop.
 
 Continue to the next section, :doc:`running`.
 

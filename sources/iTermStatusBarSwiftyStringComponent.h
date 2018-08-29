@@ -11,6 +11,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSString *const iTermStatusBarSwiftyStringComponentExpressionKey;
+
 // A status bar component showing a swifty string.
 @interface iTermStatusBarSwiftyStringComponent : iTermStatusBarTextComponent
 @end

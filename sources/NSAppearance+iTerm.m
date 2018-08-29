@@ -22,16 +22,20 @@
 }
 
 - (iTermPreferencesTabStyle)it_mojaveTabStyle:(iTermPreferencesTabStyle)tabStyle NS_AVAILABLE_MAC(10_14) {
-    if ([self.name isEqualToString:NSAppearanceNameDarkAqua]) {
+    NSString *name = [self bestMatchFromAppearancesWithNames:@[ NSAppearanceNameAqua,
+                                                                NSAppearanceNameDarkAqua,
+                                                                NSAppearanceNameAccessibilityHighContrastAqua,
+                                                                NSAppearanceNameAccessibilityHighContrastDarkAqua ] ];
+    if ([name isEqualToString:NSAppearanceNameDarkAqua]) {
         return TAB_STYLE_DARK;
     }
-    if ([self.name isEqualToString:NSAppearanceNameAqua]) {
+    if ([name isEqualToString:NSAppearanceNameAqua]) {
         return TAB_STYLE_LIGHT;
     }
-    if ([self.name isEqualToString:NSAppearanceNameAccessibilityHighContrastDarkAqua]) {
+    if ([name isEqualToString:NSAppearanceNameAccessibilityHighContrastDarkAqua]) {
         return TAB_STYLE_DARK_HIGH_CONTRAST;
     }
-    if ([self.name isEqualToString:NSAppearanceNameAccessibilityHighContrastAqua]) {
+    if ([name isEqualToString:NSAppearanceNameAccessibilityHighContrastAqua]) {
         return TAB_STYLE_LIGHT_HIGH_CONTRAST;
     }
     

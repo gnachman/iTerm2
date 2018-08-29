@@ -394,10 +394,6 @@ static NSDate* lastResizeDate_;
     _metalView.delegate = _driver;
 }
 
-- (BOOL)drawFrameSynchronously {
-    return [_driver drawSynchronouslyInView:_metalView];
-}
-
 - (void)removeMetalView NS_AVAILABLE_MAC(10_11) {
     _metalView.delegate = nil;
     [_metalView removeFromSuperview];
@@ -508,6 +504,7 @@ static NSDate* lastResizeDate_;
         frame.origin = NSMakePoint(horizontalPadding, verticalPadding);
         _hoverURLTextField.frame = frame;
     }
+    [self updateAnnouncementFrame];
 
     if (_useMetal) {
         [self updateMetalViewFrame];
@@ -879,6 +876,14 @@ static NSDate* lastResizeDate_;
     } else {
         [self drawAroundFrame:self.scrollview.frame dirtyRect:dirtyRect];
     }
+    if (@available(macOS 10.14, *)) {
+        return;
+    }
+    // 10.13 path: work around issue 6974
+    if (_useMetal && _scrollview.isLegacyScroller && [_scrollview.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {
+        [[NSColor colorWithWhite:20.0 / 255.0 alpha:1] set];
+        NSRectFill(NSMakeRect(self.frame.size.width - 15, 0, self.frame.size.height, self.frame.size.height));
+    }
 }
 
 - (void)drawAroundFrame:(NSRect)svFrame dirtyRect:(NSRect)dirtyRect {
@@ -1079,6 +1084,7 @@ static NSDate* lastResizeDate_;
     [self setTitle:[_delegate sessionViewTitle]];
     [self updateScrollViewFrame];
     [self invalidateStatusBar];
+    [self updateAnnouncementFrame];
     return YES;
 }
 
@@ -1332,6 +1338,9 @@ static NSDate* lastResizeDate_;
     // Fix the origin
     rect = _currentAnnouncement.view.frame;
     rect.origin.y = self.frame.size.height - _currentAnnouncement.view.frame.size.height;
+    if (_showTitle) {
+        rect.origin.y -= kTitleHeight;
+    }
     _currentAnnouncement.view.frame = rect;
 }
 

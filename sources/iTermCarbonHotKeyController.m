@@ -2,6 +2,7 @@
 
 #import "DebugLogging.h"
 #import "iTermShortcutInputView.h"
+#import "iTermTuple.h"
 #import "NSArray+iTerm.h"
 #import <AppKit/AppKit.h>
 
@@ -87,7 +88,9 @@
 @implementation iTermCarbonHotKeyController {
     UInt32 _nextHotKeyID;
     NSMutableArray<iTermHotKey *> *_hotKeys;
+    NSMutableArray<iTermHotKey *> *_suspendedHotKeys;
     EventHandlerRef _eventHandler;
+    BOOL _suspended;
 }
 
 + (instancetype)sharedInstance {
@@ -114,14 +117,79 @@
             return nil;
         }
 
+        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                               selector:@selector(sessionDidResignActive:)
+                                                                   name:NSWorkspaceSessionDidResignActiveNotification
+                                                                 object:nil];
+        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                               selector:@selector(sessionDidBecomeActive:)
+                                                                   name:NSWorkspaceSessionDidBecomeActiveNotification
+                                                                 object:nil];
         _hotKeys = [[NSMutableArray alloc] init];
+        _suspendedHotKeys = [[NSMutableArray alloc] init];
     }
     return self;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_hotKeys release];
+    [_suspendedHotKeys release];
     [super dealloc];
+}
+
+#pragma mark - Notifications
+
+- (void)sessionDidBecomeActive:(NSNotification *)notification {
+    assert(_suspended);
+    NSDictionary<iTermTuple<NSNumber *, NSNumber *> *, NSArray<iTermHotKey *> *> *hotkeysByShortcut =
+        [_suspendedHotKeys classifyWithBlock:^id(iTermHotKey *hotkey) {
+            return [iTermTuple tupleWithObject:@(hotkey.shortcut.keyCode) andObject:@(hotkey.shortcut.modifiers)];
+        }];
+    for (iTermTuple<NSNumber *, NSNumber *> *key in hotkeysByShortcut) {
+        NSArray<iTermHotKey *> *siblings = hotkeysByShortcut[key];
+        iTermHotKey *representative = siblings.firstObject;
+        EventHotKeyRef eventHotKey = NULL;
+        const UInt32 carbonModifiers = [NSEvent carbonModifiersForCocoaModifiers:representative.shortcut.modifiers];
+        OSStatus status = RegisterEventHotKey((UInt32)representative.shortcut.keyCode,
+                                              carbonModifiers,
+                                              representative.hotKeyID,
+                                              GetEventDispatcherTarget(),
+                                              0,
+                                              &eventHotKey);
+        if (status != noErr) {
+            ELog(@"Failed to register event hotkey when session resumed active: %@", @(status));
+        } else {
+            eventHotKey = NULL;
+        }
+        for (iTermHotKey *hotkey in siblings) {
+            hotkey.eventHotKey = eventHotKey;
+        }
+    }
+    [_hotKeys addObjectsFromArray:_suspendedHotKeys];
+    [_suspendedHotKeys removeAllObjects];
+    _suspended = NO;
+}
+
+- (void)sessionDidResignActive:(NSNotification *)notification {
+    assert(!_suspended);
+    NSDictionary<iTermTuple<NSNumber *, NSNumber *> *, NSArray<iTermHotKey *> *> *hotkeysByShortcut =
+        [_hotKeys classifyWithBlock:^id(iTermHotKey *hotkey) {
+            return [iTermTuple tupleWithObject:@(hotkey.shortcut.keyCode) andObject:@(hotkey.shortcut.modifiers)];
+        }];
+    for (iTermTuple<NSNumber *, NSNumber *> *key in hotkeysByShortcut) {
+        NSArray<iTermHotKey *> *siblings = hotkeysByShortcut[key];
+        iTermHotKey *representative = siblings.firstObject;
+        if (representative.eventHotKey != nil) {
+            UnregisterEventHotKey(representative.eventHotKey);
+        }
+        for (iTermHotKey *hotkey in siblings) {
+            hotkey.eventHotKey = nil;
+        }
+    }
+    [_suspendedHotKeys addObjectsFromArray:_hotKeys];
+    [_hotKeys removeAllObjects];
+    _suspended = YES;
 }
 
 #pragma mark - APIs
@@ -130,6 +198,7 @@
                            target:(id)target
                          selector:(SEL)selector
                          userData:(NSDictionary *)userData {
+    assert(!_suspended);
     DLog(@"Register %@ from\n%@", shortcut, [NSThread callStackSymbols]);
 
     EventHotKeyRef eventHotKey = NULL;
@@ -167,13 +236,14 @@
 }
 
 - (void)unregisterHotKey:(iTermHotKey *)hotKey {
+    assert(!_suspended);
     DLog(@"Unregister %@", hotKey);
     // Get the count before removing hotKey because that could free it.
     NSUInteger count = [[self hotKeysWithID:hotKey.hotKeyID] count];
     EventHotKeyRef eventHotKey = hotKey.eventHotKey;
     [_hotKeys removeObject:hotKey];
     DLog(@"Hotkeys are now:\n%@", _hotKeys);
-    if (count == 1) {
+    if (count == 1 && eventHotKey != nil) {
         UnregisterEventHotKey(eventHotKey);
     }
 }

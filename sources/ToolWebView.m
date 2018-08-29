@@ -28,12 +28,7 @@
             return nil;
         }
         if (configuration) {
-            // If you get here, it's OS 10.10 or newer.
-            ITERM_IGNORE_PARTIAL_BEGIN
-            if (IsElCapitanOrLater()) {
-                configuration.applicationNameForUserAgent = @"iTerm2";
-            }
-            ITERM_IGNORE_PARTIAL_END
+            configuration.applicationNameForUserAgent = @"iTerm2";
             WKPreferences *prefs = [[WKPreferences alloc] init];
             prefs.javaEnabled = NO;
             prefs.javaScriptEnabled = YES;
@@ -43,11 +38,7 @@
             WKUserContentController *userContentController =
                 [[WKUserContentController alloc] init];
             configuration.userContentController = userContentController;
-            ITERM_IGNORE_PARTIAL_BEGIN
-            if (IsElCapitanOrLater()) {
-                configuration.websiteDataStore = [WKWebsiteDataStore defaultDataStore];
-            }
-            ITERM_IGNORE_PARTIAL_END
+            configuration.websiteDataStore = [WKWebsiteDataStore defaultDataStore];
             WKWebView *webView = [[WKWebView alloc] initWithFrame:self.bounds
                                                     configuration:configuration];
             [self addSubview:webView];

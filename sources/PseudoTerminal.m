@@ -880,10 +880,6 @@ ITERM_WEAKLY_REFERENCEABLE
             [self class], self, (int)[self numberOfTabs], [self window]];
 }
 
-+ (BOOL)useElCapitanFullScreenLogic {
-    return [NSWindow instancesRespondToSelector:@selector(maxFullScreenContentSize)];
-}
-
 - (BOOL)tabBarVisibleOnTop {
     return ([self tabBarShouldBeVisible] &&
             [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
@@ -1322,50 +1318,6 @@ ITERM_WEAKLY_REFERENCEABLE
         windowType_ = windowType;
     }
 }
-// Convert a lexicographically sorted array like ["a", "b", "b", "c"] into
-// ["a", "2 instances of \"b\"", "c"].
-- (NSArray *)uniqWithCounts:(NSArray *)a
-{
-  NSMutableArray *result = [NSMutableArray array];
-
-  for (int i = 0; i < [a count]; ) {
-    int c = 0;
-    NSString *thisValue = [a objectAtIndex:i];
-    int j;
-    for (j = i; j < [a count]; j++) {
-      if (![[a objectAtIndex:j] isEqualToString:thisValue]) {
-        break;
-      }
-      ++c;
-    }
-    if (c > 1) {
-      [result addObject:[NSString stringWithFormat:@"%d instances of \"%@\"", c, thisValue]];
-    } else {
-      [result addObject:thisValue];
-    }
-    i = j;
-  }
-
-  return result;
-}
-
-// Convert an array ["x", "y", "z"] into a nicely formatted English string like
-// "x, y, and z".
-- (NSString *)prettyListOfStrings:(NSArray *)a
-{
-  if ([a count] < 2) {
-    return [a componentsJoinedByString:@", "];
-  }
-
-  NSMutableString *result = [NSMutableString string];
-  if ([a count] == 2) {
-    [result appendFormat:@"%@ and %@", [a objectAtIndex:0], [a lastObject]];
-  } else {
-    [result appendString:[[a subarrayWithRange:NSMakeRange(0, [a count] - 1)] componentsJoinedByString:@", "]];
-    [result appendFormat:@", and %@", [a lastObject]];
-  }
-  return result;
-}
 
 - (BOOL)confirmCloseForSessions:(NSArray *)sessions
                      identifier:(NSString*)identifier
@@ -1374,20 +1326,20 @@ ITERM_WEAKLY_REFERENCEABLE
     NSMutableArray *names = [NSMutableArray array];
     for (PTYSession *aSession in sessions) {
         if (![aSession exited]) {
-            [names addObjectsFromArray:[aSession childJobNames]];
+            [names addObjectsFromArray:[[aSession childJobNames] arrayByRemovingObject:@"login"]];
         }
     }
     NSString *message;
     NSArray *sortedNames = [names sortedArrayUsingSelector:@selector(compare:)];
-    sortedNames = [self uniqWithCounts:sortedNames];
+    sortedNames = [names countedInstancesStrings];
     if ([sortedNames count] == 1) {
         message = [NSString stringWithFormat:@"%@ is running %@.", identifier, [sortedNames objectAtIndex:0]];
     } else if ([sortedNames count] > 1 && [sortedNames count] <= 10) {
-        message = [NSString stringWithFormat:@"%@ is running the following jobs: %@.", identifier, [self prettyListOfStrings:sortedNames]];
+        message = [NSString stringWithFormat:@"%@ is running the following jobs: %@.", identifier, [sortedNames componentsJoinedWithOxfordComma]];
     } else if ([sortedNames count] > 10) {
         message = [NSString stringWithFormat:@"%@ is running the following jobs: %@, plus %ld %@.",
                    identifier,
-                   [self prettyListOfStrings:sortedNames],
+                   [sortedNames componentsJoinedWithOxfordComma],
                    (long)[sortedNames count] - 10,
                    [sortedNames count] == 11 ? @"other" : @"others"];
     } else {
@@ -2515,8 +2467,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // 10.11 starts you off with a tiny little frame. I don't know why they do
     // that, but this fixes it.
-    if ([[self class] useElCapitanFullScreenLogic] &&
-        windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+    if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
         [[self window] setFrame:rect display:YES];
     }
 
@@ -4040,7 +3991,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
                 case PSMTab_TopTab:
                 case PSMTab_BottomTab:
-                    contentSize.height -= kHorizontalTabBarHeight;
+                    contentSize.height -= _contentView.tabBarControl.height;
                     break;
             }
         }
@@ -4812,123 +4763,131 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self window] close];
 }
 
+- (NSImage *)imageFromSelectedTabView:(NSTabView *)aTabView
+                               offset:(NSSize *)offset
+                          tabViewItem:(NSTabViewItem *)tabViewItem {
+    NSView *tabRootView = [tabViewItem view];
+    NSRect tabFrame = [_contentView.tabBarControl frame];
+
+    NSRect contentFrame;
+    NSRect viewRect;
+    contentFrame = viewRect = [tabRootView frame];
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_LeftTab:
+            contentFrame.size.width += _contentView.leftTabBarWidth;
+            break;
+
+        case PSMTab_TopTab:
+        case PSMTab_BottomTab:
+            contentFrame.size.height += _contentView.tabBarControl.height;
+            break;
+    }
+
+    // Grabs whole tabview image.
+    NSImage *viewImage = [[[NSImage alloc] initWithSize:contentFrame.size] autorelease];
+    NSImage *tabViewImage = [[[NSImage alloc] init] autorelease];
+
+    NSBitmapImageRep *tabviewRep;
+
+    PTYTab *tab = tabViewItem.identifier;
+    [tab temporarilyDisableMetal];
+
+    tabviewRep = [tabRootView bitmapImageRepForCachingDisplayInRect:viewRect];
+    [tabRootView cacheDisplayInRect:viewRect toBitmapImageRep:tabviewRep];
+
+    [tabViewImage addRepresentation:tabviewRep];
+
+
+    [viewImage lockFocus];
+    BOOL isHorizontal = YES;
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_LeftTab:
+            viewRect.origin.x += _contentView.leftTabBarWidth;
+            viewRect.size.width -= _contentView.leftTabBarWidth;
+            isHorizontal = NO;
+            break;
+
+        case PSMTab_TopTab:
+            break;
+
+        case PSMTab_BottomTab:
+            viewRect.origin.y += _contentView.tabBarControl.height;
+            break;
+    }
+
+    [tabViewImage drawAtPoint:viewRect.origin
+                     fromRect:NSZeroRect
+                    operation:NSCompositingOperationSourceOver
+                     fraction:1.0];
+    [viewImage unlockFocus];
+
+    // Draw over where the tab bar would usually be.
+    [viewImage lockFocus];
+    [[NSColor windowBackgroundColor] set];
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
+        tabFrame.origin.y += viewRect.size.height;
+    }
+    NSRectFill(tabFrame);
+    // Draw the background flipped, which is actually the right way up
+    NSAffineTransform *transform = [NSAffineTransform transform];
+    [transform scaleXBy:1.0 yBy:-1.0];
+    [transform concat];
+    tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
+    PSMTabBarControl *control = (PSMTabBarControl *)[aTabView delegate];
+    [(id <PSMTabStyle>)[control style] drawBackgroundInRect:tabFrame
+                                                      color:nil
+                                                 horizontal:isHorizontal];
+    [transform invert];
+    [transform concat];
+
+    [viewImage unlockFocus];
+
+    offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
+        offset->height = _contentView.tabBarControl.height;
+    } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
+        offset->height = viewRect.size.height + _contentView.tabBarControl.height;
+    } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+        offset->height = 0;
+        offset->width = 0;
+    }
+
+    return viewImage;
+}
+
+- (NSImage *)imageFromNonSelectedTabViewItem:(NSTabViewItem *)tabViewItem
+                                 offset:(NSSize *)offset {
+    NSImage *viewImage = [[tabViewItem identifier] image:YES];
+
+    offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_LeftTab:
+            offset->width = _contentView.leftTabBarWidth;
+            offset->height = 0;
+            break;
+
+        case PSMTab_TopTab:
+            offset->height = _contentView.tabBarControl.height;
+            break;
+
+        case PSMTab_BottomTab:
+            offset->height = [viewImage size].height;
+            break;
+    }
+    return viewImage;
+}
+
 - (NSImage *)tabView:(NSTabView *)aTabView
     imageForTabViewItem:(NSTabViewItem *)tabViewItem
                  offset:(NSSize *)offset
-              styleMask:(unsigned int *)styleMask
-{
+              styleMask:(unsigned int *)styleMask {
+    *styleMask = NSWindowStyleMaskBorderless;
+
     NSImage *viewImage;
-
     if (tabViewItem == [aTabView selectedTabViewItem]) {
-        NSView *textview = [tabViewItem view];
-        NSRect tabFrame = [_contentView.tabBarControl frame];
-
-        NSRect contentFrame, viewRect;
-        contentFrame = viewRect = [textview frame];
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-            case PSMTab_LeftTab:
-                contentFrame.size.width += _contentView.leftTabBarWidth;
-                break;
-
-            case PSMTab_TopTab:
-            case PSMTab_BottomTab:
-                contentFrame.size.height += kHorizontalTabBarHeight;
-                break;
-        }
-
-        // Grabs whole tabview image.
-        viewImage = [[[NSImage alloc] initWithSize:contentFrame.size] autorelease];
-        NSImage *tabViewImage = [[[NSImage alloc] init] autorelease];
-
-        NSBitmapImageRep *tabviewRep;
-        
-        if (@available(macOS 10.14, *)) {
-            tabviewRep = [textview bitmapImageRepForCachingDisplayInRect:viewRect];
-            [textview cacheDisplayInRect:viewRect toBitmapImageRep:tabviewRep];
-        } else {
-            [textview lockFocus];
-            tabviewRep = [[[NSBitmapImageRep alloc] initWithFocusedViewRect:viewRect] autorelease];
-            [textview unlockFocus];
-        }
-        
-        [tabViewImage addRepresentation:tabviewRep];
-
-
-        [viewImage lockFocus];
-        BOOL isHorizontal = YES;
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-            case PSMTab_LeftTab:
-                viewRect.origin.x += _contentView.leftTabBarWidth;
-                viewRect.size.width -= _contentView.leftTabBarWidth;
-                isHorizontal = NO;
-                break;
-
-            case PSMTab_TopTab:
-                break;
-
-            case PSMTab_BottomTab:
-                viewRect.origin.y += kHorizontalTabBarHeight;
-                break;
-        }
-
-        [tabViewImage drawAtPoint:viewRect.origin
-                         fromRect:NSZeroRect
-                        operation:NSCompositingOperationSourceOver
-                         fraction:1.0];
-        [viewImage unlockFocus];
-
-        // Draw over where the tab bar would usually be.
-        [viewImage lockFocus];
-        [[NSColor windowBackgroundColor] set];
-        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
-            tabFrame.origin.y += viewRect.size.height;
-        }
-        NSRectFill(tabFrame);
-        // Draw the background flipped, which is actually the right way up
-        NSAffineTransform *transform = [NSAffineTransform transform];
-        [transform scaleXBy:1.0 yBy:-1.0];
-        [transform concat];
-        tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
-        PSMTabBarControl *control = (PSMTabBarControl *)[aTabView delegate];
-        [(id <PSMTabStyle>)[control style] drawBackgroundInRect:tabFrame
-                                                          color:nil
-                                                     horizontal:isHorizontal];
-        [transform invert];
-        [transform concat];
-
-        [viewImage unlockFocus];
-
-        offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
-        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
-            offset->height = kHorizontalTabBarHeight;
-        } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
-            offset->height = viewRect.size.height + kHorizontalTabBarHeight;
-        } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
-            offset->height = 0;
-            offset->width = 0;
-        }
-        *styleMask = NSWindowStyleMaskBorderless;
+        viewImage = [self imageFromSelectedTabView:aTabView offset:offset tabViewItem:tabViewItem];
     } else {
-        // grabs whole tabview image
-        viewImage = [[tabViewItem identifier] image:YES];
-
-        offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-            case PSMTab_LeftTab:
-                offset->width = _contentView.leftTabBarWidth;
-                offset->height = 0;
-                break;
-
-            case PSMTab_TopTab:
-                offset->height = kHorizontalTabBarHeight;
-                break;
-
-            case PSMTab_BottomTab:
-                offset->height = [viewImage size].height;
-                break;
-        }
-
-        *styleMask = NSWindowStyleMaskBorderless;
+        viewImage = [self imageFromNonSelectedTabViewItem:tabViewItem offset:offset];
     }
 
     return viewImage;
@@ -5350,31 +5309,63 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setBackgroundColor:(nullable NSColor *)backgroundColor {
+    if (@available(macOS 10.14, *)) {
+        [self setMojaveBackgroundColor:backgroundColor];
+    } else {
+        [self setLegacyBackgroundColor:backgroundColor];
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermWindowAppearanceDidChange object:self.window];
+}
+
+- (void)setMojaveBackgroundColor:(nullable NSColor *)backgroundColor NS_AVAILABLE_MAC(10_14) {
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_AUTOMATIC:
+            self.window.appearance = nil;
+            break;
+
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+            break;
+
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+            break;
+    }
+    // Sigh.
+    // In Mojave, the window background is visible when the contentView is transparent.
+    // This is generally a good thing because it means layers really work!
+    // But there's a bug that the window title shows a broken vibrancy effect (issue 6964).
+    // There's an opportunity for improvement here if there's a tab color and we know the
+    // window isn't opaque we could set the titlebar's color, since that works again in 10.14.
+    self.window.backgroundColor = [NSColor clearColor];
+}
+
+- (void)setLegacyBackgroundColor:(nullable NSColor *)backgroundColor {
     if (backgroundColor == nil && [iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
         switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
             case TAB_STYLE_LIGHT:
+                break;
             case TAB_STYLE_LIGHT_HIGH_CONTRAST:
                 break;
 
             case TAB_STYLE_DARK:
+                backgroundColor = [PSMDarkTabStyle tabBarColor];
+                break;
+
             case TAB_STYLE_DARK_HIGH_CONTRAST:
                 backgroundColor = [PSMDarkTabStyle tabBarColor];
                 break;
         }
     }
-    if (@available(macOS 10.14, *)) {
-        self.window.backgroundColor = [NSColor clearColor];
-    } else {
-        [self.window setBackgroundColor:backgroundColor];
-    }
+    [self.window setBackgroundColor:backgroundColor];
     if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
         self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
     } else {
         self.window.appearance = nil;
     }
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermWindowAppearanceDidChange object:self.window];
 }
-
 
 - (void)tabsDidReorder {
     TmuxController *controller = nil;
@@ -7027,6 +7018,37 @@ ITERM_WEAKLY_REFERENCEABLE
     [self refreshTerminal:nil];
 }
 
+- (BOOL)shouldHaveTallTabBar {
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+        return NO;
+    }
+    if (windowType_ != WINDOW_TYPE_COMPACT && savedWindowType_ != WINDOW_TYPE_COMPACT) {
+        return NO;
+    }
+
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (preferredStyle != TAB_STYLE_MINIMAL) {
+        return NO;
+    }
+    return YES;
+}
+
+- (CGFloat)rootTerminalViewHeightOfTabBar:(iTermRootTerminalView *)sender {
+    if ([self shouldHaveTallTabBar]) {
+        return 40;
+    } else {
+        return iTermTabBarControlViewDefaultHeight;
+    }
+}
+
+- (CGFloat)rootTerminalViewStoplightButtonsOffset:(iTermRootTerminalView *)sender {
+    if ([self shouldHaveTallTabBar]) {
+        return 7.5;
+    } else {
+        return 0;
+    }
+}
+
 - (void)updateTabBarStyle {
     id<PSMTabStyle> style;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
@@ -7213,7 +7235,7 @@ ITERM_WEAKLY_REFERENCEABLE
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_TopTab:
             case PSMTab_BottomTab:
-                contentSize.height += kHorizontalTabBarHeight;
+                contentSize.height += _contentView.tabBarControl.height;
                 break;
             case PSMTab_LeftTab:
                 contentSize.width += [self tabviewWidth];

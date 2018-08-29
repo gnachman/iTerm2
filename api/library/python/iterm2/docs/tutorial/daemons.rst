@@ -23,23 +23,21 @@ get started:
 
     import asyncio
     import iterm2
-    import sys
 
-    async def main(connection, argv):
+    async def main(connection):
         app = await iterm2.async_get_app(connection)
 
         async def on_custom_esc(connection, notification):
             print("Received a custom escape sequence")
             if notification.sender_identity == "shared-secret":
                 if notification.payload == "create-window":
-                    await app.async_create_window()
+                    await iterm2.Window.async_create()
 
         await iterm2.notifications.async_subscribe_to_custom_escape_sequence_notification(connection, on_custom_esc)
 
         await connection.async_dispatch_until_future(asyncio.Future())
 
-    if __name__ == "__main__":
-        iterm2.Connection().run(main, sys.argv)
+    iterm2.run(main)
 
 Let's examine it line by line.
 
@@ -65,9 +63,8 @@ later.
 .. code-block:: python
 
     import iterm2
-    import sys
 
-    async def main(connection, argv):
+    async def main(connection):
         app = await iterm2.async_get_app(connection)
 
 This is the same stuff you saw in the first example.
@@ -123,7 +120,7 @@ Let's see what the callback does:
 
             if notification.sender_identity == "shared-secret":
                 if notification.payload == "create-window":
-                    await app.async_create_window()
+                    await iterm2.Window.async_create()
 
 First, it checks that the sender identity is correct. Next, it selects the
 action to perform based on the payload. This daemon only knows how to create

@@ -27,7 +27,7 @@ iTerm2 > Check for Incompatible Software                                        
 iTerm2 > Check For Updates…                                                             `Check For Updates…`                                                          
 iTerm2 > Toggle Debug Logging                                                           `Toggle Debug Logging`                                                        
 iTerm2 > Copy Performance Stats                                                         `Copy Performance Stats`                                                      
-iTerm2 > Capture Metal Frame                                                            `Capture Metal Frame`                                                         
+iTerm2 > Capture GPU Frame                                                              `Capture Metal Frame`                                                         
 iTerm2 > Preferences...                                                                 `Preferences...`                                                              
 iTerm2 > Hide iTerm2                                                                    `Hide iTerm2`                                                                 
 iTerm2 > Hide Others                                                                    `Hide Others`                                                                 
@@ -130,6 +130,8 @@ Session > Reset                                                                 
 Session > Reset Character Set                                                           `Reset Character Set`                                                         
 Session > Log > Start                                                                   `Log.Start`                                                                   
 Session > Log > Stop                                                                    `Log.Stop`                                                                    
+Session > Log > Import Recording                                                        `Log.ImportRecording`                                                         
+Session > Log > Export Recording                                                        `Log.ExportRecording`                                                         
 Session > Bury Session                                                                  `Bury Session`                                                                
 Scripts > Manage > New Python Script                                                    `New Python Script`                                                           
 Scripts > Manage > Open Python REPL                                                     `Open Interactive Window`                                                     
@@ -145,6 +147,7 @@ Toolbelt > Show Toolbelt                                                        
 Toolbelt > Set Default Width                                                            `Set Default Width`                                                           
 Window > Minimize                                                                       `Minimize`                                                                    
 Window > Zoom                                                                           `Zoom`                                                                        
+Window > Edit Window Title                                                              `Edit Window Title`                                                           
 Window > Arrange Windows Horizontally                                                   `Arrange Windows Horizontally`                                                
 Window > Arrange Split Panes Evenly                                                     `Arrange Split Panes Evenly`                                                  
 Window > Exposé all Tabs                                                                `Exposé all Tabs`                                                             
@@ -174,6 +177,7 @@ Window > Bring All To Front                                                     
 Help > iTerm2 Help                                                                      `iTerm2 Help`                                                                 
 Help > Copy Mode Shortcuts                                                              `Copy Mode Shortcuts`                                                         
 Help > Open Source Licenses                                                             `Open Source Licenses`                                                        
+Help > GPU Renderer Availability                                                        `GPU Renderer Availability`                                                   
 ======================================================================================= ==============================================================================
 
 
@@ -195,7 +199,7 @@ iTerm2 > Check for Incompatible Software                                        
 iTerm2 > Check For Updates…                                                             `iTerm2.Check For Updates…`                                                        
 iTerm2 > Toggle Debug Logging                                                           `iTerm2.Toggle Debug Logging`                                                      
 iTerm2 > Copy Performance Stats                                                         `iTerm2.Copy Performance Stats`                                                    
-iTerm2 > Capture Metal Frame                                                            `iTerm2.Capture Metal Frame`                                                       
+iTerm2 > Capture GPU Frame                                                              `iTerm2.Capture GPU Frame`                                                         
 iTerm2 > Preferences...                                                                 `iTerm2.Preferences...`                                                            
 iTerm2 > Hide iTerm2                                                                    `iTerm2.Hide iTerm2`                                                               
 iTerm2 > Hide Others                                                                    `iTerm2.Hide Others`                                                               
@@ -298,6 +302,8 @@ Session > Reset                                                                 
 Session > Reset Character Set                                                           `Session.Reset Character Set`                                                      
 Session > Log > Start                                                                   `Session.Log.Start`                                                                
 Session > Log > Stop                                                                    `Session.Log.Stop`                                                                 
+Session > Log > Import Recording                                                        `Session.Log.Import Recording`                                                     
+Session > Log > Export Recording                                                        `Session.Log.Export Recording`                                                     
 Session > Bury Session                                                                  `Session.Bury Session`                                                             
 Scripts > Manage > New Python Script                                                    `Scripts.Manage.New Python Script`                                                 
 Scripts > Manage > Open Python REPL                                                     `Scripts.Manage.Open Python REPL`                                                  
@@ -313,6 +319,7 @@ Toolbelt > Show Toolbelt                                                        
 Toolbelt > Set Default Width                                                            `Toolbelt.Set Default Width`                                                       
 Window > Minimize                                                                       `Window.Minimize`                                                                  
 Window > Zoom                                                                           `Window.Zoom`                                                                      
+Window > Edit Window Title                                                              `Window.Edit Window Title`                                                         
 Window > Arrange Windows Horizontally                                                   `Window.Arrange Windows Horizontally`                                              
 Window > Arrange Split Panes Evenly                                                     `Window.Arrange Split Panes Evenly`                                                
 Window > Exposé all Tabs                                                                `Window.Exposé all Tabs`                                                           
@@ -342,6 +349,7 @@ Window > Bring All To Front                                                     
 Help > iTerm2 Help                                                                      `Help.iTerm2 Help`                                                                 
 Help > Copy Mode Shortcuts                                                              `Help.Copy Mode Shortcuts`                                                         
 Help > Open Source Licenses                                                             `Help.Open Source Licenses`                                                        
+Help > GPU Renderer Availability                                                        `Help.GPU Renderer Availability`                                                   
 ======================================================================================= ===================================================================================
 
 ----

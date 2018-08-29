@@ -300,3 +300,7 @@ class Connection:
             assert helper is not None
             if await helper(self, message):
                 break
+
+def run(coro):
+    """Convenience method to run an async function taking an :class:`iterm2.Connection` as an argument."""
+    Connection().run(coro)

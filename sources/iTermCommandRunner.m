@@ -68,7 +68,7 @@
 }
 
 - (void)run {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async(self.readingQueue, ^{
         [self runSynchronously];
     });
 }
@@ -78,7 +78,7 @@
         return;
     }
     NSTask *task = _task;
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async(self.readingQueue, ^{
         [self readAndWait:task];
     });
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -119,14 +119,37 @@
     [self readAndWait:_task];
 }
 
+- (dispatch_queue_t)readingQueue {
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("com.iterm2.crun-reading", DISPATCH_QUEUE_SERIAL);
+    });
+    return queue;
+}
+
+- (dispatch_queue_t)waitingQueue {
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("com.iterm2.crun-waiting", DISPATCH_QUEUE_SERIAL);
+    });
+    return queue;
+}
+
 - (void)readAndWait:(NSTask *)task {
     NSPipe *pipe = _pipe;
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    DLog(@"%@ readAndWait starting", task);
+    dispatch_async(self.waitingQueue, ^{
+        DLog(@"%@ readAndWait calling waitUntilExit", task);
         [task waitUntilExit];
+        DLog(@"%@ readAndWait waitUntilExit returned", task);
         // This makes -availableData return immediately.
         pipe.fileHandleForReading.readabilityHandler = nil;
+        DLog(@"%@ readAndWait signal sema", task);
         dispatch_semaphore_signal(sema);
+        DLog(@"%@ readAndWait done signaling sema", task);
     });
     NSFileHandle *readHandle = [_pipe fileHandleForReading];
     DLog(@"runCommand: Reading");
@@ -154,7 +177,10 @@
     }
 
     DLog(@"runCommand: Done reading. Wait");
+    DLog(@"%@ readAndWait wait on sema", task);
     dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+    DLog(@"%@ readAndWait done waiting on sema", task);
+    // When it times out the caller will terminate the task.
 
     self.running = NO;
     if (self.completion) {

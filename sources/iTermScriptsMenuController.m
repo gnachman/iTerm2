@@ -515,10 +515,26 @@ NS_ASSUME_NONNULL_BEGIN
     return template;
 }
 
+- (BOOL)path:(NSString *)possibleSuper isParentDirectoryOfPath:(NSString *)possibleSub {
+    if (possibleSub.length < possibleSuper.length) {
+        return NO;
+    }
+    if ([possibleSub isEqualToString:possibleSuper]) {
+        return YES;
+    }
+    return [self path:possibleSuper isParentDirectoryOfPath:[possibleSub stringByDeletingLastPathComponent]];
+}
+
 - (NSString *)folderForFullEnvironmentSavePanelURL:(NSURL *)url {
-    NSString *name = url.path.lastPathComponent;
-    NSString *folder = [[[NSFileManager defaultManager] scriptsPathWithoutSpaces] stringByAppendingPathComponent:name];
-    return folder;
+    NSString *scriptsRoot = [[[NSURL fileURLWithPath:[[NSFileManager defaultManager] scriptsPathWithoutSpaces]] URLByResolvingSymlinksInPath] path];
+    NSString *selectedPath = [url URLByResolvingSymlinksInPath].path;
+    if ([self path:scriptsRoot isParentDirectoryOfPath:selectedPath]) {
+        return selectedPath;
+    } else {
+        NSString *name = url.path.lastPathComponent;
+        NSString *folder = [scriptsRoot stringByAppendingPathComponent:name];
+        return folder;
+    }
 }
 
 - (NSString *)destinationTemplatePathForPicker:(iTermScriptTemplatePickerWindowController *)picker

@@ -12,7 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-static NSString *const iTermStatusBarLayoutKeyComponents = @"components";
+NSString *const iTermStatusBarLayoutKeyComponents = @"components";
 static NSString *const iTermStatusBarLayoutKeyConfiguration = @"configuration";
 static NSString *const iTermStatusBarLayoutKeyClass = @"class";
 

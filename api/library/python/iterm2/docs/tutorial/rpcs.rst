@@ -15,10 +15,9 @@ This script shows a working example:
 
     import asyncio
     import iterm2
-    import sys
     import time
 
-    async def main(connection, argv):
+    async def main(connection):
 	app = await iterm2.async_get_app(connection)
 
 	async def clear_all_sessions():
@@ -28,12 +27,11 @@ This script shows a working example:
 		    for session in tab.sessions:
 			await session.async_inject(code)
 
-	await app.async_register_rpc_handler("clear_all_sessions", clear_all_sessions)
+	await iterm2.Registration.async_register_rpc_handler(connection, "clear_all_sessions", clear_all_sessions)
 
 	await connection.async_dispatch_until_future(asyncio.Future())
 
-    if __name__ == "__main__":
-	iterm2.Connection().run(main, sys.argv)
+    iterm2.run(main)
 
 A lot of this should look familiar from the :doc:`daemon` example. Let's focus
 on the parts we haven't seen before.
@@ -42,7 +40,7 @@ This call registers the RPC:
 
 .. code-block:: python
 
-	await app.async_register_rpc_handler("clear_all_sessions", clear_all_sessions)
+	await iterm2.Registration.async_register_rpc_handler(connection, "clear_all_sessions", clear_all_sessions)
 
 The first argument gives the name of the RPC. To keep it simple, this example
 uses the same name as the function. The name you register with is the name you
@@ -160,7 +158,7 @@ Timeouts
 
 By default, iTerm2 stops waiting for a function's result after five seconds.
 The function continues to run until completion. You can pass an optional
-`timeout` parameter to `app.async_register_rpc_handler` to set your own timeout
+`timeout` parameter to `iterm2.Registration.async_register_rpc_handler` to set your own timeout
 value in seconds.
 
 Composition
@@ -182,9 +180,9 @@ example, which you can add to the `main` function of the previous example:
         session = app.current_terminal_window.current_tab.current_session
         await session.async_inject(bytes(str(s), encoding="utf-8"))
 
-    await app.async_register_rpc_handler("times", times)
-    await app.async_register_rpc_handler("add", add)
-    await app.async_register_rpc_handler("show", show)
+    await iterm2.Registration.async_register_rpc_handler(connection, "times", times)
+    await iterm2.Registration.async_register_rpc_handler(connection, "add", add)
+    await iterm2.Registration.async_register_rpc_handler(connection, "show", show)
 
 
 To compute 1+2*3 and inject it into the current session, use this invocation:

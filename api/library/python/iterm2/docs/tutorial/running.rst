@@ -72,7 +72,7 @@ Python interpreter.
 The REPL uses the `apython` script provided by aioconsole_ which extends Python
 so that you can use `await` without having to put it inside an `async`
 function. In other words, you don't need to write
-`iterm2.Connection().run(main, sys.argv)` to launch a `main` function when in
+`iterm2.run(main)` to launch a `main` function when in
 the REPL. Instead, a typical REPL session would begin with:
 
 .. code-block:: python

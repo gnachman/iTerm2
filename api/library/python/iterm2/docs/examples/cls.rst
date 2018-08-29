@@ -11,10 +11,9 @@ You can bind it to a keystroke in **Prefs > Keys** by selecting the action *Invo
 
     import asyncio
     import iterm2
-    import sys
     import time
 
-    async def main(connection, argv):
+    async def main(connection):
 	app = await iterm2.async_get_app(connection)
 
 	async def clear_all_sessions():
@@ -24,10 +23,9 @@ You can bind it to a keystroke in **Prefs > Keys** by selecting the action *Invo
 		    for session in tab.sessions:
 			await session.async_inject(code)
 
-	await app.async_register_rpc_handler("clear_all_sessions", clear_all_sessions)
+	await iterm2.Registration.async_register_rpc_handler(connection, "clear_all_sessions", clear_all_sessions)
 
 	await connection.async_dispatch_until_future(asyncio.Future())
 
-    if __name__ == "__main__":
-	iterm2.Connection().run(main, sys.argv)
+    iterm2.run(main)
 

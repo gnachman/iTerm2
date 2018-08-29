@@ -66,10 +66,16 @@
                 imageRect = [sessionView convertRect:imageRect fromView:view];
                 break;
         }
-        
+
+        NSCompositingOperation operation;
+        if (@available(macOS 10.14, *)) {
+            operation = NSCompositingOperationSourceOver;
+        } else {
+            operation = NSCompositingOperationCopy;
+        }
         [image drawInRect:drawRect
                  fromRect:sourceRect
-                operation:NSCompositingOperationSourceOver
+                operation:operation
                  fraction:alpha
            respectFlipped:YES
                     hints:nil];

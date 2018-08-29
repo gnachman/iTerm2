@@ -2435,10 +2435,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)softWrapCursorToNextLineScrollingIfNeeded {
+    if (currentGrid_.rightMargin + 1 == currentGrid_.size.width) {
+        [self convertHardNewlineToSoftOnGridLine:currentGrid_.cursorY];
+    }
     if (currentGrid_.cursorY == currentGrid_.bottomMargin) {
-        if (currentGrid_.rightMargin + 1 == currentGrid_.size.width) {
-            [self convertHardNewlineToSoftOnGridLine:currentGrid_.cursorY];
-        }
         [self incrementOverflowBy:[currentGrid_ scrollUpIntoLineBuffer:linebuffer_
                                                    unlimitedScrollback:unlimitedScrollback_
                                                useScrollbackWithRegion:_appendToScrollbackWithStatusBar
@@ -4897,11 +4897,8 @@ static void SwapInt(int *a, int *b) {
                 // Found a match in the text.
                 NSArray *allPositions = [linebuffer_ convertPositions:context.results
                                                             withWidth:currentGrid_.size.width];
-                const int numResults = context.results.count;
-                for (int k = 0; k < numResults; k++) {
-                    SearchResult* result = [[SearchResult alloc] init];
-
-                    XYRange* xyrange = [allPositions objectAtIndex:k];
+                for (XYRange *xyrange in allPositions) {
+                    SearchResult *result = [[[SearchResult alloc] init] autorelease];
 
                     result.startX = xyrange->xStart;
                     result.endX = xyrange->xEnd;
@@ -4909,7 +4906,7 @@ static void SwapInt(int *a, int *b) {
                     result.absEndY = xyrange->yEnd + [self totalScrollbackOverflow];
 
                     [results addObject:result];
-                    [result release];
+
                     if (!(context.options & FindMultipleResults)) {
                         assert([context.results count] == 1);
                         [context reset];

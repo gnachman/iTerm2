@@ -644,7 +644,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 }
 
 - (void)updateSelectedTitleComponentsForView:(NSPopUpButton *)titleSettings {
-    const iTermTitleComponents value = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS] ?: iTermTitleComponentsProfileName;
+    const iTermTitleComponents value = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
     NSString *currentInvocation = self.titleFunctionInvocation;
     NSString *customName = nil;

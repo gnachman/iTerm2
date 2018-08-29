@@ -4,7 +4,6 @@ This module is the starting point for getting access to windows and other applic
 """
 
 import iterm2.notifications
-import iterm2.profile
 import iterm2.rpc
 import iterm2.session
 import iterm2.tab
@@ -23,10 +22,6 @@ async def async_get_app(connection):
 
 class CreateWindowException(Exception):
     """A problem was encountered while creating a window."""
-    pass
-
-class SavedArrangementException(Exception):
-    """A problem was encountered while saving or restoring an arrangement."""
     pass
 
 class MenuItemException(Exception):
@@ -52,33 +47,6 @@ class BroadcastDomain:
     def sessions(self):
       """Returns the list of sessions belonging to a broadcast domain."""
       return list(map(lambda sid: self.__app.get_session_by_id(sid), self.__session_ids))
-
-async def generic_handle_rpc(coro, connection, notif):
-    rpc_notif = notif.server_originated_rpc_notification
-    params = {}
-    ok = False
-    try:
-        for arg in rpc_notif.rpc.arguments:
-            name = arg.name
-            if arg.HasField("json_value"):
-                # NOTE: This can throw an exception if there are control characters or other nasties.
-                value = json.loads(arg.json_value)
-                params[name] = value
-            else:
-                params[name] = None
-        result = await coro(**params)
-        ok = True
-    except KeyboardInterrupt as e:
-        raise e
-    except websockets.exceptions.ConnectionClosed as e:
-        raise e
-    except Exception as e:
-        tb = traceback.format_exc()
-        exception = { "reason": repr(e), "traceback": tb }
-        await iterm2.rpc.async_send_rpc_result(connection, rpc_notif.request_id, True, exception)
-
-    if ok:
-        await iterm2.rpc.async_send_rpc_result(connection, rpc_notif.request_id, False, result)
 
 class App:
     """Represents the application.
@@ -139,36 +107,6 @@ class App:
             False,
             False,
             activate_app_opts=opts)
-
-    async def async_save_window_arrangement(self, name):
-        """Save all windows as a new arrangement.
-
-        Replaces the arrangement with the given name if it already exists.
-
-        :param name: The name of the arrangement.
-
-        :throws: SavedArrangementException
-        """
-        result = await iterm2.rpc.async_save_arrangement(self.connection, name)
-        status = result.saved_arrangement_response.status
-        if status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-            raise SavedArrangementException(
-                iterm2.api_pb2.SavedArrangementResponse.Status.Name(
-                    result.saved_arrangement_response.status))
-
-    async def async_restore_window_arrangement(self, name):
-        """Restore a saved window arrangement.
-
-        :param name: The name of the arrangement to restore.
-
-        :throws: SavedArrangementException
-        """
-        result = await iterm2.rpc.async_restore_arrangement(self.connection, name)
-        status = result.saved_arrangement_response.status
-        if status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-            raise SavedArrangementException(
-                iterm2.api_pb2.SavedArrangementResponse.Status.Name(
-                    result.saved_arrangement_response.status))
 
     @staticmethod
     def _windows_from_list_sessions_response(connection, response):
@@ -444,42 +382,6 @@ class App:
                     return window, tab
         return None, None
 
-    async def async_create_window(self, profile=None, command=None, profile_customizations=None):
-        """Creates a new window.
-
-        :param profile: The name of the profile to use for the new window.
-        :param command: A command to run in lieu of the shell in the new session. Mutually exclusive with profile_customizations.
-        :param profile_customizations: LocalWriteOnlyProfile giving changes to make in profile. Mutually exclusive with command.
-
-        :returns: A new :class:`Window`.
-
-        :throws: CreateWindowException if something went wrong.
-        """
-        if command is not None:
-            p = profile.LocalWriteOnlyProfile()
-            p.set_use_custom_command(profile.Profile.USE_CUSTOM_COMMAND_ENABLED)
-            p.set_command(command)
-            custom_dict = p.values
-        elif profile_customizations is not None:
-            custom_dict = profile_customizations.values
-        else:
-            custom_dict = None
-
-        result = await iterm2.rpc.async_create_tab(
-            self.connection,
-            profile=profile,
-            window=None,
-            profile_customizations=custom_dict)
-        ctr = result.create_tab_response
-        if ctr.status == iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-            session = self.get_session_by_id(ctr.session_id)
-            window, _tab = self.get_tab_and_window_for_session(session)
-            return window
-        else:
-            raise CreateWindowException(
-                iterm2.api_pb2.CreateTabResponse.Status.Name(
-                    result.create_tab_response.status))
-
     async def _async_listen(self):
         """Subscribe to various notifications that keep this object's state current."""
         connection = self.connection
@@ -503,125 +405,6 @@ class App:
             await iterm2.notifications.async_subscribe_to_broadcast_domains_change_notification(
                 connection,
                 self._async_broadcast_domains_change))
-
-    async def async_list_profiles(self, guids=None, properties=["Guid", "Name"]):
-        """Fetches a list of profiles.
-
-        :param properties: Lists the properties to fetch. Pass None for all.
-        :param guids: Lists GUIDs to list. Pass None for all profiles.
-
-        :returns: If properties is a list, returns :class:`PartialProfile` with only the specified properties set. If properties is `None` then returns :class:`Profile`.
-        """
-        response = await iterm2.rpc.async_list_profiles(self.connection, guids, properties)
-        profiles = []
-        for responseProfile in response.list_profiles_response.profiles:
-            if properties is None:
-              profile = iterm2.profile.Profile(None, self.connection, responseProfile.properties)
-            else:
-              profile = iterm2.profile.PartialProfile(None, self.connection, responseProfile.properties)
-            profiles.append(profile)
-        return profiles
-
-    async def async_register_rpc_handler(self, name, coro, timeout=None, defaults={}):
-        """Register a script-defined RPC.
-
-        iTerm2 may be instructed to invoke a script-registered RPC, such as
-        through a key binding. Use this method to register one.
-
-        :param name: The RPC name. Combined with its arguments, this must be unique among all registered RPCs. It should consist of letters, numbers, and underscores and must begin with a letter.
-        :param coro: An async function. Its arguments are reflected upon to determine the RPC's signature. Only the names of the arguments are used. All arguments should be keyword arguments as any may be omitted at call time.
-        :param timeout: How long iTerm2 should wait before giving up on this function's ever returning. `None` means to use the default timeout.
-        :param defaults: Gives default values. Names correspond to argument names in `arguments`. Values are in-scope variables at the callsite.
-        """
-        args = inspect.signature(coro).parameters.keys()
-        async def handle_rpc(connection, notif):
-            await generic_handle_rpc(coro, connection, notif)
-        await iterm2.notifications.async_subscribe_to_server_originated_rpc_notification(self.connection, handle_rpc, name, args, timeout, defaults, iterm2.notifications.RPC_ROLE_GENERIC)
-
-    async def async_register_session_title_provider(self, name, coro, display_name, timeout=None, defaults={}):
-        """Register a script-defined RPC.
-
-        iTerm2 may be instructed to invoke a script-registered RPC, such as
-        through a key binding. Use this method to register one.
-
-        :param name: The RPC name. Combined with its arguments, this must be unique among all registered RPCs. It should consist of letters, numbers, and underscores and must begin with a letter.
-        :param coro: An async function. Its arguments are reflected upon to determine the RPC's signature. Only the names of the arguments are used. All arguments should be keyword arguments as any may be omitted at call time.
-        :param display_name: Gives the name of the function to show in preferences.
-        :param timeout: How long iTerm2 should wait before giving up on this function's ever returning. `None` means to use the default timeout.
-        :param defaults: Gives default values. Names correspond to argument names in `arguments`. Values are in-scope variables at the callsite.
-        """
-        async def handle_rpc(connection, notif):
-            await generic_handle_rpc(coro, connection, notif)
-        args = inspect.signature(coro).parameters.keys()
-        await iterm2.notifications.async_subscribe_to_server_originated_rpc_notification(self.connection, handle_rpc, name, args, timeout, defaults, iterm2.notifications.RPC_ROLE_SESSION_TITLE, display_name)
-
-    async def async_register_status_bar_component(self, component, coro, timeout=None, defaults={}):
-        """Registers a status bar component.
-
-        :param component: A :class:`StatusBarComponent`.
-        :param coro: An async function. Its arguments are reflected upon to determine the RPC's signature. Only the names of the arguments are used. All arguments should be keyword arguments as any may be omitted at call time. It should take a special argument named "knobs" that is a dictionary with configuration settings. It may return a string or a list of strings. If it returns a list of strings then the longest one that fits will be used.
-        :param timeout: How long iTerm2 should wait before giving up on this function's ever returning. `None` means to use the default timeout.
-        :param defaults: Gives default values. Names correspond to argument names in `arguments`. Values are in-scope variables of the session owning the status bar.
-        """
-        async def coro_wrapper(**kwargs):
-            if "knobs" in kwargs:
-                knobs_json = kwargs["knobs"]
-                kwargs["knobs"] = json.loads(knobs_json)
-            return await coro(**kwargs)
-
-        async def handle_rpc(connection, notif):
-            await generic_handle_rpc(coro_wrapper, connection, notif)
-
-        args = inspect.signature(coro).parameters.keys()
-        await iterm2.notifications.async_subscribe_to_server_originated_rpc_notification(
-                self.connection,
-                handle_rpc,
-                component.name,
-                args,
-                timeout,
-                defaults,
-                iterm2.notifications.RPC_ROLE_STATUS_BAR_COMPONENT,
-                None,
-                component)
-
-    async def async_select_menu_item(self, identifier):
-        """Selects a menu item.
-
-        :param identifier: A string. See list of identifiers in :doc:`menu_ids`
-
-        :throws MenuItemException: if something goes wrong.
-        """
-        response = await iterm2.rpc.async_menu_item(self.connection, identifier, False)
-        status = response.menu_item_response.status
-        if status != iterm2.api_pb2.MenuItemResponse.Status.Value("OK"):
-            raise MenuItemException(iterm2.api_pb2.MenuItemResponse.Status.Name(status))
-
-    class MenuItemState:
-        """Describes the current state of a menu item.
-
-        There are two properties:
-
-        `checked`: Is there a check mark next to the menu item?
-        `enabled`: Is the menu item selectable?
-        """
-        def __init__(self, checked, enabled):
-            self.checked = checked
-            self.enabled = enabled
-
-    async def async_get_menu_item_state(self, identifier):
-        """Queries a menu item for its state.
-
-        :param identifier: A string. See list of identifiers in :doc:`menu_ids`
-        :returns: :class:`App.MenuItemState`
-
-        :throws MenuItemException: if something goes wrong.
-        """
-        response = await iterm2.rpc.async_menu_item(self.connection, identifier, True)
-        status = response.menu_item_response.status
-        if status != iterm2.api_pb2.MenuItemResponse.Status.Value("OK"):
-            raise MenuItemException(iterm2.api_pb2.MenuItemResponse.Status.Name(status))
-        return iterm2.App.MenuItemState(response.menu_item_response.checked,
-                                        response.menu_item_response.enabled)
 
     async def async_set_variable(self, name, value):
         """

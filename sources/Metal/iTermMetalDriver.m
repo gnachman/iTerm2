@@ -144,7 +144,7 @@ typedef struct {
     MovingAverage *_currentDrawableTime;
     NSInteger _maxFramesInFlight;
 
-    // For client-driven calls through drawSynchronouslyInView/drawAsynchronouslyInView, this will
+    // For client-driven calls through drawAsynchronouslyInView, this will
     // be nonnil and holds the state needed by those calls. Will bet set to nil if the frame will
     // be drawn by reallyDrawInMTKView:.
     iTermMetalDriverAsyncContext *_context;
@@ -348,27 +348,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [view draw];
 
     return context;
-}
-
-- (BOOL)drawSynchronouslyInView:(MTKView *)view {
-    if (@available(macOS 10.14, *)) {
-        // See issue 6906
-        [view setNeedsDisplay:YES];
-        return YES;
-    }
-    if (!view || !view.delegate) {
-        return NO;
-    }
-    static _Atomic int count;
-    int thisCount = -atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
-
-    DLog(@"Start synchronous draw of %d", thisCount);
-    iTermMetalDriverAsyncContext *context = [self newContextForDrawInView:view count:-thisCount];
-    self.waitingOnSynchronousDraw = YES;
-    dispatch_group_wait(context.group, DISPATCH_TIME_FOREVER);
-    self.waitingOnSynchronousDraw = NO;
-    DLog(@"Synchronous draw completed of %d.", thisCount);
-    return !context.aborted;
 }
 
 - (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion {
@@ -785,6 +764,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                 frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
             }];
             [_currentDrawableTime addValue:duration];
+            if (frameData.destinationDrawable == nil) {
+                DLog(@"YIKES! Failed to get a drawable. %@/%@", self, frameData);
+                return;
+            }
         }
 
         [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetRenderPassDescriptor ofBlock:^{
@@ -794,6 +777,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                 frameData.renderPassDescriptor = view.currentRenderPassDescriptor;
             }
         }];
+        if (frameData.renderPassDescriptor == nil) {
+            DLog(@"YIKES! Failed to get an RPD. %@/%@", self, frameData);
+            return;
+        }
     }
 }
 

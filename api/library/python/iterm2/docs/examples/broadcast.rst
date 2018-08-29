@@ -15,9 +15,8 @@ This demonstrates:
 
     import asyncio
     import iterm2
-    import sys
 
-    async def main(connection, argv):
+    async def main(connection):
 	app = await iterm2.async_get_app(connection)
 
 	# Create four split panes and make the bottom left one active.
@@ -53,6 +52,5 @@ This demonstrates:
 		    if done:
 			break
 
-    if __name__ == "__main__":
-	iterm2.Connection().run(main, sys.argv)
+    iterm2.run(main)
 

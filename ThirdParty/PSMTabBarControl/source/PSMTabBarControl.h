@@ -15,8 +15,6 @@ extern NSString *const kPSMTabModifierKey;  // Key for user info dict in modifie
 extern NSString *const PSMTabDragDidEndNotification;
 extern NSString *const PSMTabDragDidBeginNotification;
 
-extern const CGFloat kPSMTabBarControlHeight;
-
 // internal cell border
 extern const CGFloat kSPMTabBarCellInternalXMargin;
 
@@ -213,6 +211,7 @@ enum {
 
 // Internal inset. Ensures nothing but background is drawn in this are.
 @property(nonatomic, assign) NSEdgeInsets insets;
+@property(nonatomic) CGFloat height;
 
 - (void)setTabColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
 - (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;

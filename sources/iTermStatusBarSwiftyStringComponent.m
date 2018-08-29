@@ -13,7 +13,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-static NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression";
+NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression";
 
 @implementation iTermStatusBarSwiftyStringComponent {
     iTermSwiftyString *_swiftyString;
