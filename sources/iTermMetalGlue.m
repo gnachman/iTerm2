@@ -1301,7 +1301,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                                                 emoji:(nonnull BOOL *)emoji {
     if (glyphKey->boxDrawing) {
         *emoji = NO;
-        iTermCharacterBitmap *bitmap = [self bitmapForBoxDrawingCode:glyphKey->code size:size scale:scale];
+        CGSize cellSize = _cellSize;
+        cellSize.width *= scale;
+        cellSize.height *= scale;
+        iTermCharacterBitmap *bitmap = [self bitmapForBoxDrawingCode:glyphKey->code glyphSize:size cellSize:cellSize scale:scale];
         return @{ @(iTermTextureMapMiddleCharacterPart): bitmap };
     }
 
@@ -1494,7 +1497,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 #pragma mark - Box Drawing
 
 - (iTermCharacterBitmap *)bitmapForBoxDrawingCode:(unichar)code
-                                             size:(CGSize)size
+                                        glyphSize:(CGSize)glyphSize
+                                         cellSize:(CGSize)cellSize
                                             scale:(CGFloat)scale {
     NSColor *backgroundColor;
     NSColor *foregroundColor;
@@ -1505,16 +1509,16 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         backgroundColor = [NSColor whiteColor];
         foregroundColor = [NSColor blackColor];
     }
-    NSMutableData *data = [NSImage argbDataForImageOfSize:size drawBlock:^(CGContextRef context) {
+    NSMutableData *data = [NSImage argbDataForImageOfSize:glyphSize drawBlock:^(CGContextRef context) {
         NSAffineTransform *transform = [NSAffineTransform transform];
         [transform concat];
         [backgroundColor set];
-        NSRectFill(NSMakeRect(0, 0, size.width, size.height));
+        NSRectFill(NSMakeRect(0, 0, glyphSize.width, glyphSize.height));
         [foregroundColor set];
 
         BOOL solid = NO;
         for (NSBezierPath *path in [iTermBoxDrawingBezierCurveFactory bezierPathsForBoxDrawingCode:code
-                                                                                          cellSize:size
+                                                                                          cellSize:cellSize
                                                                                              scale:scale
                                                                                              solid:&solid]) {
             if (solid) {
@@ -1528,7 +1532,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
     iTermCharacterBitmap *bitmap = [[iTermCharacterBitmap alloc] init];
     bitmap.data = data;
-    bitmap.size = size;
+    bitmap.size = glyphSize;
     return bitmap;
 }
 
