@@ -190,7 +190,10 @@ static id sAPIHelperInstance;
 + (instancetype)sharedInstance {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
+        // iTermLib Edit: No need for API in embeddable iTerm
+#ifndef ITERM_LIB
         sAPIHelperInstance = [[self alloc] initPrivate];
+#endif
     });
     return sAPIHelperInstance;
 }

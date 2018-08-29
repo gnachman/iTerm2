@@ -53,10 +53,15 @@
  */
 
 #import <Cocoa/Cocoa.h>
+
+#ifndef ITERM_LIB
 #import <Growl/Growl.h>
+#endif
 
 @interface iTermNotificationController : NSObject <
+#ifndef ITERM_LIB
   GrowlApplicationBridgeDelegate,
+#endif
   NSUserNotificationCenterDelegate>
 
 + (instancetype)sharedInstance;

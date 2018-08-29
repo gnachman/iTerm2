@@ -74,6 +74,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 + (iTermApplication *)sharedApplication {
+#ifdef ITERM_LIB
+    // Return the shared instance of iTermLibApplication instead of the regular NSApplication. This allows to use iTerm without needing to implement any methods in AppDelegate
+    return [NSClassFromString(@"iTermLibApplication") sharedApplication];
+#else
     __kindof NSApplication *sharedApplication = [super sharedApplication];
     assert([sharedApplication isKindOfClass:[iTermApplication class]]);
     static dispatch_once_t onceToken;
@@ -84,6 +88,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
                                context:(void *)iTermApplicationKVOKey];
     });
     return sharedApplication;
+#endif
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {

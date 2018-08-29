@@ -23,7 +23,9 @@
 #import "NSWorkspace+iTerm.h"
 #import "PTYTask.h"
 
+#ifndef ITERM_LIB
 @import Sparkle;
+#endif
 
 @implementation iTermAPIScriptLauncher
 
@@ -165,6 +167,9 @@
 }
 
 + (NSString *)bestPythonVersionAt:(NSString *)path {
+#ifdef ITERM_LIB
+    return nil;
+#else
     // TODO: This is convenient but I'm not sure it's technically correct for all possible Python
     // versions. But it'll do for three dotted numbers, which is the norm.
     SUStandardVersionComparator *comparator = [[SUStandardVersionComparator alloc] init];
@@ -186,6 +191,7 @@
         }
     }
     return best;
+#endif
 }
 
 + (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name {

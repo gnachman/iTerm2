@@ -1,3 +1,5 @@
+// iTermLib Edit: No scripting in embedded iTerm
+#ifndef ITERM_LIB
 @implementation THE_CLASS (Scripting)
 
 - (NSScriptObjectSpecifier *)objectSpecifier {
@@ -152,3 +154,4 @@
 }
 
 @end
+#endif

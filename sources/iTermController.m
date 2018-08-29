@@ -48,7 +48,9 @@
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYWindow.h"
+#ifndef ITERM_LIB
 #import "UKCrashReporter.h"
+#endif
 #import "VT100Screen.h"
 #import "WindowArrangements.h"
 #import "iTerm.h"
@@ -124,7 +126,9 @@ static iTermController *gSharedInstance;
     self = [super init];
 
     if (self) {
+#ifndef ITERM_LIB
         UKCrashReporterCheckForCrash();
+#endif
 
         // create the "~/Library/Application Support/iTerm2" directory if it does not exist
         [[NSFileManager defaultManager] applicationSupportDirectory];
@@ -1351,6 +1355,7 @@ static iTermController *gSharedInstance;
 }
 
 - (void)refreshSoftwareUpdateUserDefaults {
+#ifndef ITERM_LIB
     BOOL checkForTestReleases = [iTermPreferences boolForKey:kPreferenceKeyCheckForTestReleases];
     NSString *appCast = checkForTestReleases ?
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
@@ -1366,6 +1371,7 @@ static iTermController *gSharedInstance;
     // bd6a8df6e63b843f1f8aff79f40bd70907761a99.
     [[NSUserDefaults standardUserDefaults] setObject:@"iTerm"
                                               forKey:@"SUFeedAlternateAppNameKey"];
+#endif
 }
 
 - (BOOL)selectionRespectsSoftBoundaries {
@@ -1574,7 +1580,11 @@ static iTermController *gSharedInstance;
 
     // make sure this window is the key window
     if ([thePseudoTerminal windowInitialized] && [[thePseudoTerminal window] isKeyWindow] == NO) {
+        // iTermLib Edit: This may cause an infinite loop because we handle first responders and key windows differently than regular iTerm
+#ifndef ITERM_LIB
         [[thePseudoTerminal window] makeKeyAndOrderFront:self];
+#endif
+        
         if ([thePseudoTerminal fullScreen]) {
             [thePseudoTerminal hideMenuBar];
         }

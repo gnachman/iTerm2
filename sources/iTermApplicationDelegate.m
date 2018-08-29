@@ -110,7 +110,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifndef ITERM_LIB
 @import Sparkle;
+#endif
 
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
@@ -171,7 +173,11 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
     IBOutlet NSMenuItem *maximizePane;
+    
+#ifndef ITERM_LIB
     IBOutlet SUUpdater * suUpdater;
+#endif
+    
     IBOutlet NSMenuItem *_showTipOfTheDay;  // Here because we must remove it for older OS versions.
     BOOL secureInputDesired_;
     BOOL quittingBecauseLastWindowClosed_;
@@ -1126,10 +1132,13 @@ static BOOL hasBecomeActive = NO;
                                                            selector:@selector(workspaceSessionDidResignActive:)
                                                                name:NSWorkspaceSessionDidResignActiveNotification
                                                              object:nil];
+    
+#ifndef ITERM_LIB
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(sparkleWillRestartApp:)
                                                  name:SUUpdaterWillRestartNotification
                                                object:nil];
+#endif
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(processTypeDidChange:)
@@ -1206,11 +1215,13 @@ static BOOL hasBecomeActive = NO;
     _workspaceSessionActive = NO;
 }
 
+#ifndef ITERM_LIB
 - (void)sparkleWillRestartApp:(NSNotification *)notification {
     [NSApp invalidateRestorableState];
     [[NSApp windows] makeObjectsPerformSelector:@selector(invalidateRestorableState)];
     _sparkleRestarting = YES;
 }
+#endif
 
 - (void)itermDidDecodeWindowRestorableState:(NSNotification *)notification {
     if (!_orphansAdopted && [[iTermController sharedInstance] numberOfDecodesPending] == 0) {
@@ -1331,7 +1342,9 @@ static BOOL hasBecomeActive = NO;
                                 identifier:@"NoSyncVeryOldNightlyBuildWarning"
                                silenceable:kiTermWarningTypeSilencableForOneMonth];
         if (selection == kiTermWarningSelection1) {
+#ifndef ITERM_LIB
             [[SUUpdater sharedUpdater] checkForUpdates:nil];
+#endif
         }
     }
 }
@@ -1449,9 +1462,15 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (BOOL)version:(NSString *)version newerThan:(NSString *)otherVersion {
+    // iTermLib TODO
+    
+#ifdef ITERM_LIB
+    return NO;
+#else
     id<SUVersionComparison> comparator = [SUStandardVersionComparator defaultComparator];
     NSInteger result = [comparator compareVersion:version toVersion:otherVersion];
     return result == NSOrderedDescending;
+#endif
 }
 
 - (void)notifyAboutIncompatibleVersionOf:(NSString *)name url:(NSString *)urlString upgradeAvailable:(BOOL)upgradeAvailable {
@@ -1528,7 +1547,10 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)checkForUpdatesFromMenu:(id)sender {
+#ifndef ITERM_LIB
     [suUpdater checkForUpdates:(sender)];
+#endif
+    
     [[iTermPythonRuntimeDownloader sharedInstance] upgradeIfPossible];
 }
 

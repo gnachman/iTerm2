@@ -35,9 +35,10 @@
 #import "PTYSession.h"
 #import "PTYTab.h"
 
-#import <Growl/Growl.h>
-
+#ifndef ITERM_LIB
 static NSString *const kGrowlAppName = @"iTerm";
+#endif
+
 static NSString *const kDefaultNotification = @"Miscellaneous";
 
 @interface iTermNotificationController ()
@@ -58,6 +59,7 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
 - (instancetype)init {
     self = [super init];
     if (self) {
+#ifndef ITERM_LIB
         NSBundle *myBundle = [NSBundle bundleForClass:[iTermNotificationController class]];
         NSString *growlPath =
             [[myBundle privateFrameworksPath] stringByAppendingPathComponent:@"Growl.framework"];
@@ -70,6 +72,7 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
         }
 
         [self registrationDictionaryForGrowl];
+#endif
         
         // Register as delegate for notification center
         [[NSUserNotificationCenter defaultUserNotificationCenter] setDelegate:self];
@@ -130,17 +133,20 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
                      @"view": @(viewIndex) };
     }
 
+#ifndef ITERM_LIB
     if ([iTermAdvancedSettingsModel disableGrowl]) {
+#endif
         // Send to NSUserDefaults directly
         // The (BOOL)sticky parameter is ignored
-        NSUserNotification *notification = [[[NSUserNotification alloc] init] autorelease];
-        notification.title = title;
-        notification.informativeText = description;
-        notification.userInfo = context;
-        notification.soundName = NSUserNotificationDefaultSoundName;
-        DLog(@"Post notification %@", notification);
+        NSUserNotification *noti = [[[NSUserNotification alloc] init] autorelease];
+        noti.title = title;
+        noti.informativeText = description;
+        noti.userInfo = context;
+        noti.soundName = NSUserNotificationDefaultSoundName;
+        DLog(@"Post notification %@", noti);
         [[NSUserNotificationCenter defaultUserNotificationCenter]
-            deliverNotification:notification];
+            deliverNotification:noti];
+#ifndef ITERM_LIB
     } else {
         DLog(@"Post to growl");
         [GrowlApplicationBridge notifyWithTitle:title
@@ -151,14 +157,17 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
                                        isSticky:sticky
                                    clickContext:context];
     }
+#endif
 
     return YES;
 }
 
+#ifndef ITERM_LIB
 - (void)growlNotificationWasClicked:(id)clickContext {
     DLog(@"growlNotificationWasClicked");
     [self notificationWasClicked:clickContext];
 }
+#endif
 
 - (void)notificationWasClicked:(id)clickContext {
     DLog(@"notificationWasClicked:%@", clickContext);
@@ -187,6 +196,7 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
     [theSession reveal];
 }
 
+#ifndef ITERM_LIB
 - (NSDictionary *)registrationDictionaryForGrowl {
     NSArray *notifications = @[ @"Bells",
                                 @"Broken Pipes",
@@ -203,6 +213,7 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
 - (void)growlIsReady {
     NSLog(@"Growl is ready");
 }
+#endif
 
 #pragma mark Notifications Delegate Methods
 
