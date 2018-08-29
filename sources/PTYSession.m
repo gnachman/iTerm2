@@ -31,6 +31,7 @@
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyLabels.h"
+#import "iTermMetaFrustrationDetector.h"
 #import "iTermMetalGlue.h"
 #import "iTermMetalDriver.h"
 #import "iTermMenuOpener.h"
@@ -54,11 +55,13 @@
 #import "iTermShortcut.h"
 #import "iTermShortcutInputView.h"
 #import "iTermStatusBarLayout.h"
+#import "iTermStatusBarLayout+tmux.h"
 #import "iTermStatusBarViewController.h"
 #import "iTermSwiftyString.h"
 #import "iTermSystemVersion.h"
 #import "iTermTextExtractor.h"
 #import "iTermThroughputEstimator.h"
+#import "iTermTmuxStatusBarMonitor.h"
 #import "iTermUpdateCadenceController.h"
 #import "iTermVariables.h"
 #import "iTermWarning.h"
@@ -245,6 +248,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     iTermCoprocessDelegate,
     iTermEchoProbeDelegate,
     iTermHotKeyNavigableSession,
+    iTermMetaFrustrationDetector,
     iTermMetalGlueDelegate,
     iTermPasteHelperDelegate,
     iTermSessionNameControllerDelegate,
@@ -482,6 +486,9 @@ static NSString *const iTermSessionTitleSession = @"session";
     iTermEchoProbe *_echoProbe;
     
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
+    iTermMetaFrustrationDetector *_metaFrustrationDetector;
+
+    iTermTmuxStatusBarMonitor *_tmuxStatusBarMonitor;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -662,7 +669,9 @@ static NSString *const iTermSessionTitleSession = @"session";
         }
         _echoProbe = [[iTermEchoProbe alloc] init];
         _echoProbe.delegate = self;
-        
+        _metaFrustrationDetector = [[iTermMetaFrustrationDetector alloc] init];
+        _metaFrustrationDetector.delegate = self;
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:@"kCoprocessStatusChangeNotification"
@@ -804,7 +813,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_statusBarViewController release];
     [_echoProbe release];
     [_backgroundDrawingHelper release];
-
+    [_metaFrustrationDetector release];
+    [_tmuxStatusBarMonitor setActive:NO];
+    [_tmuxStatusBarMonitor release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -1312,7 +1323,7 @@ ITERM_WEAKLY_REFERENCEABLE
                          forObjectType:(iTermObjectType)objectType {
     DLog(@"Restoring session from arrangement");
 
-    Profile* theBookmark =
+    Profile *theBookmark =
         [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
     BOOL needDivorce = NO;
     BOOL missingProfile = NO;
@@ -2160,6 +2171,9 @@ ITERM_WEAKLY_REFERENCEABLE
             DLog(@"Last session in tab closed. Check if the client has changed size");
             [_tmuxController fitLayoutToWindows];
         }
+        _tmuxStatusBarMonitor.active = NO;
+        [_tmuxStatusBarMonitor release];
+        _tmuxStatusBarMonitor = nil;
     } else if (self.tmuxMode == TMUX_GATEWAY) {
         [_tmuxController detach];
         [_tmuxGateway release];
@@ -3182,8 +3196,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSArray *parts = [theName componentsSeparatedByString:@"\n"];
     NSString *title = parts.firstObject;
     NSString *identifier = nil;
-    // Only 10.12 and later support identifiers on menu items in interface builder.
-    if (IsSierraOrLater() && parts.count > 1) {
+    if (parts.count > 1) {
         identifier = parts[1];
     }
     if (![self _recursiveSelectMenuItemWithTitle:title identifier:identifier inMenu:[NSApp mainMenu]]) {
@@ -3737,6 +3750,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [_view invalidateStatusBar];
         }
     }
+    _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:aDict];
     _screen.appendToScrollbackWithStatusBar = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_WITH_STATUS_BAR
                                                                         inProfile:aDict];
     self.badgeFormat = [iTermProfilePreferences stringForKey:KEY_BADGE_FORMAT inProfile:aDict];
@@ -5088,46 +5102,35 @@ ITERM_WEAKLY_REFERENCEABLE
             }
 
             // Now that everything's hot we can draw a frame synchronously without the UI hiccupping.
-            [self drawMetalFrameSychronouslyAndShowMetalView];
+            [self showMetalViewImmediately];
         }];
     }
 }
 
-- (void)drawMetalFrameSychronouslyAndShowMetalView NS_AVAILABLE_MAC(10_11) {
+- (void)showMetalViewImmediately {
     if (!_useMetal) {
-        DLog(@"Giving up on ever doing a synchronous draw of %@ because useMetal is NO", self);
+        DLog(@"Declining to show metal view immediately in %@ because useMetal is NO", self);
         return;
     }
     if (_view.metalView.bounds.size.width == 0 || _view.metalView.bounds.size.height == 0) {
-        DLog(@"Giving up on ever doing a synchronous draw of %@ because the view's size is %@", self, NSStringFromSize(_view.metalView.bounds.size));
+        DLog(@"Declining to show metal view immediately in %@ because the view's size is %@", self, NSStringFromSize(_view.metalView.bounds.size));
         return;
     }
     if (_textview == nil) {
-        DLog(@"Giving up on ever doing a synchronous draw of %@ because the textview is nil", self);
+        DLog(@"Declining to show metal view immediately in %@ because the textview is nil", self);
         return;
     }
     if (_textview.dataSource == nil) {
-        DLog(@"Giving up on ever doing a synchronous draw of %@ because the textview's datasource is nil", self);
+        DLog(@"Declining to show metal view immediately in %@ because the textview's datasource is nil", self);
         return;
     }
     if (_screen.width == 0 || _screen.height == 0) {
-        DLog(@"Giving up on ever doing a synchronous draw of %@ because the screen's size is %@x%@. Screen is %@",
+        DLog(@"Declining to show metal view immediately in %@ because the screen's size is %@x%@. Screen is %@",
              self, _textview.dataSource, @(_screen.width), @(_screen.height));
         return;
     }
 
-    DLog(@"Begin synchronous draw for %@", self);
     [_view setNeedsDisplay:YES];
-    BOOL ok = [_view drawFrameSynchronously];
-    DLog(@"Finished synchronous draw with ok=%@ for %@", @(ok), self);
-    if (!ok) {
-        DLog(@"Failed to draw metal frame synchronously. Try again later.");
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self drawMetalFrameSychronouslyAndShowMetalView];
-        });
-        return;
-    }
-
     [self showMetalAndStopDrawingTextView];
     _view.metalView.enableSetNeedsDisplay = YES;
 }
@@ -5301,6 +5304,13 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
             case TMUX_CLIENT:
                 name = @"client";
+                assert(!_tmuxStatusBarMonitor);
+                _tmuxStatusBarMonitor = [[iTermTmuxStatusBarMonitor alloc] initWithGateway:_tmuxController.gateway
+                                                                                     scope:self.variablesScope];
+                _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:self.profile];
+                if ([iTermStatusBarLayout shouldOverrideLayout:self.profile[KEY_STATUS_BAR_LAYOUT]]) {
+                    [self setSessionSpecificProfileValues:@{ KEY_STATUS_BAR_LAYOUT: [[iTermStatusBarLayout tmuxLayout] dictionaryValue] }];
+                }
                 break;
         }
         [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionTmuxRole];
@@ -5320,14 +5330,21 @@ ITERM_WEAKLY_REFERENCEABLE
     self.tmuxMode = TMUX_GATEWAY;
     _tmuxGateway = [[TmuxGateway alloc] initWithDelegate:self dcsID:dcsID];
     ProfileModel *model;
-    if (_isDivorced) {
-        model = [ProfileModel sessionsInstance];
-    } else {
+    Profile *profile;
+    if ([iTermAdvancedSettingsModel tmuxUsesDedicatedProfile]) {
         model = [ProfileModel sharedInstance];
+        profile = [[ProfileModel sharedInstance] tmuxProfile];
+    } else {
+        if (_isDivorced) {
+            model = [ProfileModel sessionsInstance];
+        } else {
+            model = [ProfileModel sharedInstance];
+        }
+        profile = self.profile;
     }
     _tmuxController = [[TmuxController alloc] initWithGateway:_tmuxGateway
                                                    clientName:[self preferredTmuxClientName]
-                                                      profile:[iTermAdvancedSettingsModel tmuxUsesDedicatedProfile] ? [[ProfileModel sharedInstance] tmuxProfile] : self.profile
+                                                      profile:profile
                                                  profileModel:model];
     [self.variablesScope setValue:_tmuxController.clientName forVariableNamed:iTermVariableKeySessionTmuxClientName];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
@@ -5603,6 +5620,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 }
+
 - (void)tmuxUpdateLayoutForWindow:(int)windowId
                            layout:(NSString *)layout
                            zoomed:(NSNumber *)zoomed {
@@ -5962,6 +5980,10 @@ ITERM_WEAKLY_REFERENCEABLE
             [[iTermAPIHelper sharedInstance] postAPINotification:notification
                                                  toConnectionKey:key];
         }];
+    }
+
+    if (accept) {
+        [_metaFrustrationDetector didSendKeyEvent:event];
     }
     return accept;
 }
@@ -6847,7 +6869,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)paste:(id)sender {
     DLog(@"PTYSession paste:");
     
-    // Might not be called from a menu item so just use no flags in this case
+    // If this class is used in a non-iTerm2 app (as a library), we might not
+    // be called from a menu item so just use no flags in this case.
     [self pasteString:[PTYSession pasteboardString] flags:[sender isKindOfClass:NSMenuItem.class] ? [sender tag] : 0];
 }
 
@@ -7496,6 +7519,10 @@ ITERM_WEAKLY_REFERENCEABLE
     insets.right = containerSize.width - NSMaxX(innerFrame);
 
     return insets;
+}
+
+- (BOOL)textViewInInteractiveApplication {
+    return _terminal.softAlternateScreenMode;
 }
 
 - (void)bury {
@@ -10286,6 +10313,83 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         return [NSColor blackColor];
     }
+}
+
+#pragma mark - iTermMetaFrustrationDetectorDelegate
+
+- (void)metaFrustrationDetectorDidDetectFrustrationForLeftOption {
+    [self maybeOfferToSetOptionAsEscForLeft:YES];
+}
+
+- (void)metaFrustrationDetectorDidDetectFrustrationForRightOption {
+    [self maybeOfferToSetOptionAsEscForLeft:NO];
+}
+
+- (void)maybeOfferToSetOptionAsEscForLeft:(BOOL)left {
+    if (self.isDivorced) {
+        // This gets gnarly. Let's be conservative.
+        return;
+    }
+    NSString *neverPromptUserDefaultsKey = @"NoSyncNeverPromptToChangeOption";
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:neverPromptUserDefaultsKey]) {
+        // User said never to ask.
+        return;
+    }
+
+    NSString *leftOrRight;
+    NSString *profileKey;
+    if (left) {
+        leftOrRight = @"left";
+        profileKey = KEY_OPTION_KEY_SENDS;
+    } else {
+        leftOrRight = @"right";
+        profileKey = KEY_RIGHT_OPTION_KEY_SENDS;
+    }
+
+    if ([iTermProfilePreferences integerForKey:profileKey inProfile:self.profile] != OPT_NORMAL) {
+        // There's already a non-default setting.
+        return;
+    }
+
+    NSArray<NSString *> *actions;
+    NSInteger thisProfile = 0;
+    NSInteger allProfiles = -1;
+    NSInteger stopAsking = -1;
+    if ([[[ProfileModel sharedInstance] bookmarks] count] == 1) {
+        actions = @[ @"Yes", @"Stop Asking" ];
+        stopAsking = 1;
+    } else {
+        actions = @[ @"Change This Profile", @"Change All Profiles", @"Stop Asking" ];
+        allProfiles = 1;
+        stopAsking = 2;
+    }
+
+    Profile *profileToChange = [[ProfileModel sharedInstance] bookmarkWithGuid:self.profile[KEY_GUID]];
+    if (!profileToChange) {
+        return;
+    }
+
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:[NSString stringWithFormat:@"You seem frustrated. Would you like the %@ option to key send esc+keystroke?", leftOrRight]
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:actions
+                                                completion:^(int selection) {
+                                                    if (selection < 0) {
+                                                        // Programmatic dismissal or clicked the x button.
+                                                        return;
+                                                    }
+                                                    if (selection == thisProfile) {
+                                                        [iTermProfilePreferences setInt:OPT_ESC forKey:profileKey inProfile:profileToChange model:[ProfileModel sharedInstance]];
+                                                    } else if (selection == allProfiles) {
+                                                        for (Profile *profile in [[[[ProfileModel sharedInstance] bookmarks] copy] autorelease]) {
+                                                            [iTermProfilePreferences setInt:OPT_ESC forKey:profileKey inProfile:profile model:[ProfileModel sharedInstance]];
+                                                        }
+                                                    } else {
+                                                        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:neverPromptUserDefaultsKey];
+                                                    }
+                                                }];
+    static NSString *const identifier = @"OfferToChangeOptionKeyToSendESC";
+    [self queueAnnouncement:announcement identifier:identifier];
 }
 
 @end

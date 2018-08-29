@@ -758,13 +758,11 @@ static const int kDragThreshold = 3;
     [self setNeedsDisplay:YES];
 }
 
-- (BOOL)showTimestamps
-{
+- (BOOL)showTimestamps {
     return _drawingHelper.showTimestamps;
 }
 
-- (void)setShowTimestamps:(BOOL)value
-{
+- (void)setShowTimestamps:(BOOL)value {
     _drawingHelper.showTimestamps = value;
     [self setNeedsDisplay:YES];
 }
@@ -1793,7 +1791,7 @@ static const int kDragThreshold = 3;
         } else {
             action = [self urlActionForClickAtX:x
                                               y:y
-                         respectingHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
+                         respectingHardNewlines:![self ignoreHardNewlinesInURLs]];
             if (action) {
                 if ([iTermAdvancedSettingsModel enableUnderlineSemanticHistoryOnCmdHover]) {
                     _drawingHelper.underlinedRange = VT100GridAbsWindowedRangeFromRelative(action.range, [_dataSource totalScrollbackOverflow]);
@@ -2575,14 +2573,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             case kURLActionOpenExistingFile: {
                 NSString *extendedPrefix = [extractor wrappedStringAt:coord
                                                               forward:NO
-                                                  respectHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
+                                                  respectHardNewlines:![self ignoreHardNewlinesInURLs]
                                                              maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
                                                     continuationChars:nil
                                                   convertNullsToSpace:YES
                                                                coords:nil];
                 NSString *extendedSuffix = [extractor wrappedStringAt:coord
                                                               forward:YES
-                                                  respectHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
+                                                  respectHardNewlines:![self ignoreHardNewlinesInURLs]
                                                              maxChars:[iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix]
                                                     continuationChars:nil
                                                   convertNullsToSpace:YES
@@ -6213,7 +6211,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
     return [self urlActionForClickAtX:x
                                     y:y
-               respectingHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
+               respectingHardNewlines:![self ignoreHardNewlinesInURLs]];
+}
+
+- (BOOL)ignoreHardNewlinesInURLs {
+    if ([iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]) {
+        return YES;
+    }
+    return [self.delegate textViewInInteractiveApplication];
 }
 
 - (NSDragOperation)dragOperationForSender:(id<NSDraggingInfo>)sender {
