@@ -1994,12 +1994,17 @@ ITERM_WEAKLY_REFERENCEABLE
             env[@"LANG"] = lang;
         } else if ([self shouldSetCtype]){
             DLog(@"should set ctype...");
-            // Try just the encoding by itself, which might work.
-            NSString *encName = [self encodingName];
-            DLog(@"See if encoding %@ is supported...", encName);
-            if (encName && [self _localeIsSupported:encName]) {
-                DLog(@"Set LC_CTYPE=%@", encName);
-                env[@"LC_CTYPE"] = encName;
+            NSString *fallback = [iTermAdvancedSettingsModel fallbackLCCType];
+            if (fallback.length) {
+                env[@"LC_CTYPE"] = fallback;
+            } else {
+                // Try just the encoding by itself, which might work.
+                NSString *encName = [self encodingName];
+                DLog(@"See if encoding %@ is supported...", encName);
+                if (encName && [self _localeIsSupported:encName]) {
+                    DLog(@"Set LC_CTYPE=%@", encName);
+                    env[@"LC_CTYPE"] = encName;
+                }
             }
         }
     }
