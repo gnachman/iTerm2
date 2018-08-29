@@ -12,6 +12,9 @@
 #import "FontSizeEstimator.h"
 #import "iTermAdvancedSettingsModel.h"
 
+#undef DLog
+#define DLog NSLog
+ceL^vsPKqd@S*XX7sO11
 @implementation NSFont(PTYFontInfo)
 
 - (BOOL)it_fontIsOnLigatureBlacklist {
