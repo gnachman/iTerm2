@@ -8,31 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
-// The model posts this notification when it makes a change.
-extern NSString *const iTermAdvancedSettingsDidChange;
+extern BOOL gIntrospecting;
 
 @interface iTermAdvancedSettingsViewController : NSViewController <NSTableViewDataSource, NSTableViewDelegate>
-
-// Don't call these methods directly. Instead, go through iTermAdvancedSettingsModel.
-+ (BOOL)boolForIdentifier:(NSString*)identifier
-             defaultValue:(BOOL)defaultValue
-              description:(NSString*)description;
-
-+ (BOOL *)optionalBoolForIdentifier:(NSString *)identifier
-                       defaultValue:(BOOL *)defaultValue
-                        description:(NSString *)description;
-
-+ (int)intForIdentifier:(NSString *)identifier
-           defaultValue:(int)defaultValue
-            description:(NSString *)description;
-
-+ (double)floatForIdentifier:(NSString *)identifier
-                defaultValue:(double)defaultValue
-                 description:(NSString *)description;
-
-+ (NSString *)stringForIdentifier:(NSString *)identifier
-                     defaultValue:(NSString *)defaultValue
-                      description:(NSString *)description;
-
 
 @end

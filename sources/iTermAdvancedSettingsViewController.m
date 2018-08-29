@@ -12,21 +12,6 @@
 #import "NSMutableAttributedString+iTerm.h"
 #import <objc/runtime.h>
 
-NSString *const iTermAdvancedSettingsDidChange = @"iTermAdvancedSettingsDidChange";
-
-typedef enum {
-    kiTermAdvancedSettingTypeBoolean,
-    kiTermAdvancedSettingTypeInteger,
-    kiTermAdvancedSettingTypeFloat,
-    kiTermAdvancedSettingTypeString,
-    kiTermAdvancedSettingTypeOptionalBoolean
-} iTermAdvancedSettingType;
-
-static NSString *const kAdvancedSettingIdentifier = @"kAdvancedSettingIdentifier";
-static NSString *const kAdvancedSettingType = @"kAdvancedSettingType";
-static NSString *const kAdvancedSettingDefaultValue = @"kAdvancedSettingDefaultValue";
-static NSString *const kAdvancedSettingDescription = @"kAdvancedSettingDescription";
-
 @interface NSDictionary (AdvancedSettings)
 - (iTermAdvancedSettingType)advancedSettingType;
 - (NSComparisonResult)compareAdvancedSettingDicts:(NSDictionary *)other;
@@ -44,7 +29,6 @@ static NSString *const kAdvancedSettingDescription = @"kAdvancedSettingDescripti
 
 @end
 
-static BOOL gIntrospecting;
 static NSDictionary *gIntrospection;
 
 @implementation iTermAdvancedSettingsViewController {
@@ -54,117 +38,6 @@ static NSDictionary *gIntrospection;
     IBOutlet NSTableView *_tableView;
 
     NSArray *_filteredAdvancedSettings;
-}
-
-+ (BOOL)boolForIdentifier:(NSString *)identifier
-             defaultValue:(BOOL)defaultValue
-              description:(NSString *)description {
-    if (gIntrospecting) {
-        gIntrospection = @{ kAdvancedSettingIdentifier: identifier,
-                            kAdvancedSettingType: @(kiTermAdvancedSettingTypeBoolean),
-                            kAdvancedSettingDefaultValue: @(defaultValue),
-                            kAdvancedSettingDescription: description };
-        return defaultValue;
-    }
-
-    static BOOL testing;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        testing = [[NSApplication sharedApplication] isRunningUnitTests];
-    });
-    if (testing) {
-        NSDictionary *overrides = @{ @"RunJobsInServers": @NO };
-        if (overrides[identifier]) {
-            return [overrides[identifier] boolValue];
-        }
-    }
-
-    NSNumber *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
-    if (!value) {
-        return defaultValue;
-    } else {
-        return [value boolValue];
-    }
-}
-
-+ (BOOL *)optionalBoolForIdentifier:(NSString *)identifier
-                       defaultValue:(BOOL *)defaultValue
-                        description:(NSString *)description {
-    if (gIntrospecting) {
-        gIntrospection = @{ kAdvancedSettingIdentifier: identifier,
-                            kAdvancedSettingType: @(kiTermAdvancedSettingTypeOptionalBoolean),
-                            kAdvancedSettingDefaultValue: defaultValue ? @(*defaultValue) : [NSNull null],
-                            kAdvancedSettingDescription: description };
-        return defaultValue;
-    }
-
-    NSNumber *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
-    if (!value) {
-        return nil;
-    } else if (value.boolValue) {
-        static BOOL yes = YES;
-        return &yes;
-    } else {
-        static BOOL no = NO;
-        return &no;
-    }
-}
-
-+ (int)intForIdentifier:(NSString *)identifier
-           defaultValue:(int)defaultValue
-            description:(NSString *)description {
-    if (gIntrospecting) {
-        gIntrospection = @{ kAdvancedSettingIdentifier: identifier,
-                            kAdvancedSettingType: @(kiTermAdvancedSettingTypeInteger),
-                            kAdvancedSettingDefaultValue: @(defaultValue),
-                            kAdvancedSettingDescription: description };
-        return defaultValue;
-    }
-
-    NSNumber *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
-    if (!value) {
-        return defaultValue;
-    } else {
-        return [value intValue];
-    }
-}
-
-+ (double)floatForIdentifier:(NSString *)identifier
-                defaultValue:(double)defaultValue
-                 description:(NSString *)description {
-    if (gIntrospecting) {
-        gIntrospection = @{ kAdvancedSettingIdentifier: identifier,
-                            kAdvancedSettingType: @(kiTermAdvancedSettingTypeFloat),
-                            kAdvancedSettingDefaultValue: @(defaultValue),
-                            kAdvancedSettingDescription: description };
-        return defaultValue;
-    }
-
-    NSNumber *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
-    if (!value) {
-        return defaultValue;
-    } else {
-        return [value doubleValue];
-    }
-}
-
-+ (NSString *)stringForIdentifier:(NSString *)identifier
-                     defaultValue:(NSString *)defaultValue
-                      description:(NSString *)description {
-    if (gIntrospecting) {
-        gIntrospection = @{ kAdvancedSettingIdentifier: identifier,
-                            kAdvancedSettingType: @(kiTermAdvancedSettingTypeString),
-                            kAdvancedSettingDefaultValue: defaultValue,
-                            kAdvancedSettingDescription: description };
-        return defaultValue;
-    }
-
-    NSString *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
-    if (!value) {
-        return defaultValue;
-    } else {
-        return value;
-    }
 }
 
 + (NSDictionary *)settingsDictionary {
@@ -214,25 +87,9 @@ static NSDictionary *gIntrospection;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         settings = [NSMutableArray array];
-        NSArray *internalMethods = @[ @"initialize", @"load" ];
-        unsigned int methodCount = 0;
-        Method *methods = class_copyMethodList(object_getClass([iTermAdvancedSettingsModel class]), &methodCount);
-        gIntrospecting = YES;
-        for (int i = 0; i < methodCount; i++) {
-            SEL name = method_getName(methods[i]);
-            NSString *stringName = NSStringFromSelector(name);
-            // Ignore selectors ending with : because they are setters.
-            if (![internalMethods containsObject:stringName] &&
-                ![stringName hasSuffix:@":"] &&
-                ![stringName hasSuffix:@"UserDefaultsKey"]) {
-                [iTermAdvancedSettingsModel performSelector:name withObject:nil];
-                assert(gIntrospection != nil);
-                [settings addObject:gIntrospection];
-                gIntrospection = nil;
-            }
-        }
-        gIntrospecting = NO;
-        free(methods);
+        [iTermAdvancedSettingsModel enumerateDictionaries:^(NSDictionary *dict) {
+            [settings addObject:dict];
+        }];
     });
 
     return settings;

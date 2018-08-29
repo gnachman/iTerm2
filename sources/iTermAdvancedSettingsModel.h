@@ -10,6 +10,24 @@
 
 @interface iTermAdvancedSettingsModel : NSObject
 
+typedef enum {
+    kiTermAdvancedSettingTypeBoolean,
+    kiTermAdvancedSettingTypeInteger,
+    kiTermAdvancedSettingTypeFloat,
+    kiTermAdvancedSettingTypeString,
+    kiTermAdvancedSettingTypeOptionalBoolean
+} iTermAdvancedSettingType;
+
+extern NSString *const kAdvancedSettingIdentifier;
+extern NSString *const kAdvancedSettingType;
+extern NSString *const kAdvancedSettingDefaultValue;
+extern NSString *const kAdvancedSettingDescription;
+
+// The model posts this notification when it makes a change.
+extern NSString *const iTermAdvancedSettingsDidChange;
+
++ (void)enumerateDictionaries:(void (^)(NSDictionary *))block;
+
 + (BOOL)useUnevenTabs;
 + (int)minTabWidth;
 + (int)minCompactTabWidth;
