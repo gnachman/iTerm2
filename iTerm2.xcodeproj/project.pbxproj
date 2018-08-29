@@ -1264,6 +1264,8 @@
 		A6057C171883D12E004A60AF /* broken_image.png in Resources */ = {isa = PBXBuildFile; fileRef = A6057C161883D12E004A60AF /* broken_image.png */; };
 		A605D4B319CF796800D40343 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A605D4B419CF796F00D40343 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		A605D88E2136645100AF2FCE /* iTermMainThreadWatchdog.h in Headers */ = {isa = PBXBuildFile; fileRef = A605D88C2136645100AF2FCE /* iTermMainThreadWatchdog.h */; };
+		A605D88F2136645100AF2FCE /* iTermMainThreadWatchdog.m in Sources */ = {isa = PBXBuildFile; fileRef = A605D88D2136645100AF2FCE /* iTermMainThreadWatchdog.m */; };
 		A608F22120F07658008E8009 /* iTermImageMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3B411BD40E7C00B5629D /* iTermImageMark.m */; };
 		A608F22220F08369008E8009 /* VT100DCSParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E39E18C351F400450FA1 /* VT100DCSParser.m */; };
 		A6099B0518D6B0FD00081FA9 /* iTermWarning.h in Headers */ = {isa = PBXBuildFile; fileRef = A6099B0318D6B0FD00081FA9 /* iTermWarning.h */; };
@@ -3463,6 +3465,8 @@
 		A6057C0C187BC4C3004A60AF /* iTermShellHistoryController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermShellHistoryController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6057C0D187BC4C3004A60AF /* iTermShellHistoryController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShellHistoryController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6057C161883D12E004A60AF /* broken_image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = broken_image.png; path = images/broken_image.png; sourceTree = "<group>"; };
+		A605D88C2136645100AF2FCE /* iTermMainThreadWatchdog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMainThreadWatchdog.h; sourceTree = "<group>"; };
+		A605D88D2136645100AF2FCE /* iTermMainThreadWatchdog.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMainThreadWatchdog.m; sourceTree = "<group>"; };
 		A6099B0318D6B0FD00081FA9 /* iTermWarning.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermWarning.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6099B0418D6B0FD00081FA9 /* iTermWarning.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWarning.m; sourceTree = "<group>"; tabWidth = 4; };
 		A60BB37C1EB5149100D76C09 /* iTermCopyModeState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCopyModeState.h; sourceTree = "<group>"; };
@@ -5701,6 +5705,8 @@
 				A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */,
 				A6F385DC1FA55E2000739939 /* iTermSmartCursorColor.h */,
 				A6F385DD1FA55E2000739939 /* iTermSmartCursorColor.m */,
+				A605D88C2136645100AF2FCE /* iTermMainThreadWatchdog.h */,
+				A605D88D2136645100AF2FCE /* iTermMainThreadWatchdog.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -7547,6 +7553,7 @@
 				A62A1F761E711BC000363EE9 /* iTermHelpMessageViewController.h in Headers */,
 				A66719411DCE36C3000CE608 /* iTermSystemVersion.h in Headers */,
 				A66719421DCE36C3000CE608 /* iTermTip.h in Headers */,
+				A605D88E2136645100AF2FCE /* iTermMainThreadWatchdog.h in Headers */,
 				A66719431DCE36C3000CE608 /* iTermScriptingWindow.h in Headers */,
 				A60BB38E1EB6A08A00D76C09 /* iTermProcessCollection.h in Headers */,
 				A66F3CF71FED741E00AA2021 /* iTermTextRendererTransientState.h in Headers */,
@@ -9236,6 +9243,7 @@
 				A68400A71FF82424008D3EE2 /* iTermIndicatorRenderer.m in Sources */,
 				A68400B51FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
 				A6F385DF1FA55E2000739939 /* iTermSmartCursorColor.m in Sources */,
+				A605D88F2136645100AF2FCE /* iTermMainThreadWatchdog.m in Sources */,
 				A658882A201F06ED006F48DB /* iTermTexture.m in Sources */,
 				A6232E77202832A900EC0F98 /* iTermData.m in Sources */,
 				A66719651DCE3772000CE608 /* iTermHTTPConnection.m in Sources */,

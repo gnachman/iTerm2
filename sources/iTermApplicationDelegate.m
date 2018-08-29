@@ -47,6 +47,7 @@
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchServices.h"
 #import "iTermLSOF.h"
+#import "iTermMainThreadWatchdog.h"
 #import "iTermMenuBarObserver.h"
 #import "iTermMigrationHelper.h"
 #import "iTermModifierRemapper.h"
@@ -1148,6 +1149,7 @@ static BOOL hasBecomeActive = NO;
     } else {
         [self restoreBuriedSessionsState];
     }
+    [[iTermMainThreadWatchdog sharedInstance] schedule];
 }
 
 - (NSMenu *)statusBarMenu {
