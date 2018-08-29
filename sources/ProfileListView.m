@@ -73,11 +73,11 @@ static NSString *const iTermRegularForegroundColor = @"iTermRegularForegroundCol
         return;
     }
     switch (backgroundStyle) {
-        case NSBackgroundStyleDark:
+        case NSBackgroundStyleLight:
             self.textColor = [NSColor whiteColor];
             [self setAttributedTextColorsForKey:iTermRegularForegroundColor];
             break;
-        case NSBackgroundStyleLight:
+        case NSBackgroundStyleDark:
             [self setAttributedTextColorsForKey:iTermSelectedActiveForegroundColor];
             self.textColor = [NSColor blackColor];
             break;
@@ -621,9 +621,9 @@ const CGFloat kDefaultTagsWidth = 80;
         return [NSColor labelColor];
     }
     if ([self lightTheme]) {
-        return [NSColor whiteColor];
-    } else {
         return [NSColor blackColor];
+    } else {
+        return [NSColor whiteColor];
     }
 }
 
@@ -654,9 +654,9 @@ const CGFloat kDefaultTagsWidth = 80;
         return [NSColor selectedMenuItemTextColor];
     }
     if ([self lightTheme]) {
-        return [NSColor blackColor];
-    } else {
         return [NSColor whiteColor];
+    } else {
+        return [NSColor blackColor];
     }
 }
 
@@ -734,9 +734,14 @@ const CGFloat kDefaultTagsWidth = 80;
 - (NSAttributedString *)attributedStringForString:(NSString *)string selected:(BOOL)selected {
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+
+    NSColor *textColor = [self regularTextColor];
+    NSColor *selectedActiveTextColor = [self selectedActiveTextColor];
+
     NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]],
                                   NSParagraphStyleAttributeName: paragraphStyle,
-                                  NSForegroundColorAttributeName: (selected && [NSApp isActive] && self.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor blackColor] };
+                                  iTermSelectedActiveForegroundColor: selectedActiveTextColor,
+                                  iTermRegularForegroundColor: textColor };
     return [[[NSAttributedString alloc] initWithString:string attributes:attributes] autorelease];
 }
 
