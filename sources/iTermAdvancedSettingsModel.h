@@ -224,5 +224,6 @@
 + (BOOL)throttleMetalConcurrentFrames;
 + (double)fractionOfCharacterSelectingNextNeighbor;
 + (double)coloredSelectedTabOutlineStrength;
++ (NSString *)fallbackLCCType;
 
 @end
