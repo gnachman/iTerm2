@@ -28,37 +28,152 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 
 + (void)enumerateDictionaries:(void (^)(NSDictionary *))block;
 
-+ (BOOL)useUnevenTabs;
-+ (int)minTabWidth;
-+ (int)minCompactTabWidth;
-+ (int)optimumTabWidth;
+#pragma mark - Accessors
+
++ (BOOL)aboutToPasteTabsWithCancel;
++ (BOOL)acceptOSC7;
++ (double)activeUpdateCadence;
++ (int)adaptiveFrameRateThroughputThreshold;
++ (BOOL)addNewTabAtEndOfTabs;
++ (BOOL)aggressiveFocusFollowsMouse;
++ (BOOL)allowDragOfTabIntoNewWindow;
 + (BOOL)alternateMouseScroll;
-+ (NSString *)alternateMouseScrollStringForUp;
 + (NSString *)alternateMouseScrollStringForDown;
-+ (BOOL)traditionalVisualBell;
++ (NSString *)alternateMouseScrollStringForUp;
++ (BOOL)alwaysAcceptFirstMouse;
++ (BOOL)appendToExistingDebugLog;
++ (int)autocompleteMaxOptions;
++ (NSString *)autoLogFormat;
++ (NSString *)badgeFont;
++ (BOOL)badgeFontIsBold;
++ (double)badgeMaxHeightFraction;
++ (double)badgeMaxWidthFraction;
++ (int)badgeRightMargin;
++ (int)badgeTopMargin;
++ (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;
++ (double)coloredSelectedTabOutlineStrength;
++ (double)coloredUnselectedTabTextProminence;
++ (BOOL)conservativeURLGuessing;
++ (BOOL)copyWithStylesByDefault;
++ (BOOL)darkThemeHasBlackTitlebar;
++ (BOOL)detectPasswordInput;
++ (BOOL)disableAdaptiveFrameRateInInteractiveApps;
++ (BOOL)disableAppNap;
++ (BOOL)disableCustomBoxDrawing;
++ (BOOL)disableGrowl;
++ (BOOL)disableMetalWhenIdle;
++ (BOOL)disablePasswordManagerAnimations;
++ (BOOL)disablePotentiallyInsecureEscapeSequences;
++ (BOOL)disableWindowSizeSnap;
++ (BOOL)disallowCopyEmptyString;
++ (BOOL)dockIconTogglesWindow DEPRECATED_ATTRIBUTE;
++ (BOOL)doNotSetCtype;
++ (BOOL)doubleReportScrollWheel;
++ (NSString *)downloadsDirectory;
++ (BOOL)drawOutlineAroundCursor;
++ (BOOL)dwcLineCache;
++ (double)echoProbeDuration;
++ (BOOL)eliminateCloseButtons;
++ (BOOL)enableAPIServer;
++ (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
++ (BOOL)excludeBackgroundColorsFromCopiedStyle;
++ (BOOL)experimentalKeyHandling;
++ (NSString *)fallbackLCCType;
++ (double)findDelaySeconds;
+// Regular expression for finding URLs for Edit>Find>Find URLs
++ (NSString *)findUrlsRegex;
++ (BOOL)focusNewSplitPaneWithFocusFollowsMouse;
++ (BOOL)focusReportingEnabled;
++ (BOOL)fontChangeAffectsBroadcastingSessions;
++ (double)fractionOfCharacterSelectingNextNeighbor;
++ (BOOL)fullHeightCursor;
++ (BOOL)hideStuckTooltips;
++ (double)hotKeyDoubleTapMaxDelay;
++ (double)hotKeyDoubleTapMinDelay;
 + (double)hotkeyTermAnimationDuration;
 + (BOOL)hotkeyWindowFloatsAboveOtherWindows DEPRECATED_ATTRIBUTE;
-+ (NSString *)searchCommand;
-+ (BOOL)dockIconTogglesWindow DEPRECATED_ATTRIBUTE;
-+ (double)timeBetweenBlinks;
++ (double)idleTimeSeconds;
++ (BOOL)ignoreHardNewlinesInURLs;
++ (BOOL)includePasteHistoryInAdvancedPaste;
++ (BOOL)indicateBellsInDockBadgeLabel;
++ (BOOL)jiggleTTYSizeOnClearBuffer;
++ (BOOL)killJobsInServersOnQuit;
++ (BOOL)killSessionsOnLogout;
++ (BOOL)logDrawingPerformance;
++ (BOOL)logRestorableStateSize;
++ (BOOL)lowFiCombiningMarks;
++ (int)maximumBytesToProvideToServices;
++ (int)maxSemanticHistoryPrefixOrSuffix;
++ (double)metalSlowFrameRate;
++ (BOOL)middleClickClosesTab;
++ (int)minCompactTabWidth;
++ (int)minimumTabDragDistance;
++ (int)minimumWeightDifferenceForBoldFont;
++ (double)minRunningTime;
++ (int)minTabWidth;
++ (BOOL)navigatePanesInReadingOrder;
 + (BOOL)neverWarnAboutMeta;
 + (BOOL)neverWarnAboutOverrides;
 + (BOOL)neverWarnAboutPossibleOverrides;
-+ (BOOL)trimWhitespaceOnCopy;
-+ (int)autocompleteMaxOptions;
-+ (BOOL)noSyncNeverRemindPrefsChangesLostForUrl;
++ (BOOL)noSyncDoNotWarnBeforeMultilinePaste;
++ (NSString *)noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey;
++ (BOOL)noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt;
++ (NSString *)noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPromptUserDefaultsKey;
 + (BOOL)noSyncNeverRemindPrefsChangesLostForFile;
++ (BOOL)noSyncNeverRemindPrefsChangesLostForUrl;
++ (BOOL)noSyncReplaceProfileWarning;
++ (BOOL)noSyncSilenceAnnoyingBellAutomatically;
++ (BOOL)noSyncSuppressAnnyoingBellOffer;
++ (BOOL)noSyncSuppressBroadcastInputWarning;
++ (BOOL)noSyncSuppressCaptureOutputRequiresShellIntegrationWarning;
++ (BOOL)noSyncSuppressCaptureOutputToolNotVisibleWarning;
++ (BOOL)noSyncSuppressClipboardAccessDeniedWarning;
++ (BOOL)noSyncSuppressMissingProfileInArrangementWarning;
++ (BOOL)NoSyncSuppressRestartSessionConfirmationAlert;
++ (BOOL)noSyncTipsDisabled;
++ (int)numberOfLinesForAccessibility;
 + (BOOL)openFileInNewWindows;
-+ (double)minRunningTime;
-+ (double)updateScreenParamsDelay;
++ (BOOL)openFileOverridesSendText;
++ (BOOL)openNewWindowAtStartup;
++ (BOOL)openUntitledFile;
++ (int)optimumTabWidth;
++ (BOOL)optionIsMetaForSpecialChars;
++ (int)pasteHistoryMaxOptions;
++ (NSString *)pathsToIgnore;
++ (BOOL)performDictionaryLookupOnQuickLook;
++ (BOOL)pinchToChangeFontSizeDisabled;
++ (double)pointSizeOfTimeStamp;
++ (BOOL)preventEscapeSequenceFromClearingHistory;
++ (BOOL)profilesWindowJoinsActiveSpace;
++ (BOOL)promptForPasteWhenNotAtPrompt;
++ (BOOL)proportionalScrollWheelReporting;
 + (int)quickPasteBytesPerCall;
 + (double)quickPasteDelayBetweenCalls;
+// Remember window positions? If off, lets the OS pick the window position. Smart window placement takes precedence over this.
++ (BOOL)rememberWindowPositions;
++ (BOOL)requireCmdForDraggingText;
++ (BOOL)resetSGROnPrompt;
++ (BOOL)restoreWindowContents;
++ (BOOL)retinaInlineImages;
++ (BOOL)runJobsInServers;
++ (NSString *)searchCommand;
++ (BOOL)sensitiveScrollWheel;
++ (BOOL)serializeOpeningMultipleFullScreenWindows;
++ (void)setNoSyncDoNotWarnBeforeMultilinePaste:(BOOL)value;
++ (void)setNoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt:(BOOL)value;
++ (void)setNoSyncSuppressClipboardAccessDeniedWarning:(BOOL)value;
++ (void)setNoSyncSuppressMissingProfileInArrangementWarning:(BOOL)value;
++ (void)setPromptForPasteWhenNotAtPrompt:(BOOL)value;
++ (void)setSuppressRestartAnnouncement:(BOOL)value;
++ (void)setTimeBetweenTips:(double)time;
++ (double)shortLivedSessionDuration;
++ (BOOL)showBlockBoundaries;
++ (BOOL)showMetalFPSmeter;
++ (BOOL)showSessionRestoredBanner;
++ (BOOL)showYellowMarkForJobStoppedBySignal;
++ (double)slowFrameRate;
 + (int)slowPasteBytesPerCall;
 + (double)slowPasteDelayBetweenCalls;
-+ (int)pasteHistoryMaxOptions;
-+ (BOOL)pinchToChangeFontSizeDisabled;
-+ (BOOL)doNotSetCtype;
-
 // The cursor's background goes to the "most different" color from its neighbors if the difference
 // in brightness between the proposed background color and the neighbors' background color is less
 // than this threshold.
@@ -67,181 +182,46 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 // background. If the brightness difference is less than this value then the text color becomes
 // black or white.
 + (double)smartCursorColorFgThreshold;
-
-+ (BOOL)logDrawingPerformance;
-+ (BOOL)ignoreHardNewlinesInURLs;
-+ (BOOL)copyWithStylesByDefault;
-+ (NSString *)URLCharacterSet;
-+ (BOOL)addNewTabAtEndOfTabs;
-
-// Remember window positions? If off, lets the OS pick the window position. Smart window placement takes precedence over this.
-+ (BOOL)rememberWindowPositions;
-
-// Regular expression for finding URLs for Edit>Find>Find URLs
-+ (NSString *)findUrlsRegex;
-
-+ (BOOL)suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline;
-+ (BOOL)suppressMultilinePasteWarningWhenNotAtShellPrompt;
-+ (BOOL)noSyncSuppressBroadcastInputWarning;
-
-+ (BOOL)useSystemCursorWhenPossible;
-
-+ (double)echoProbeDuration;
-
-+ (BOOL)navigatePanesInReadingOrder;
-
-+ (BOOL)noSyncSuppressCaptureOutputRequiresShellIntegrationWarning;
-+ (BOOL)noSyncSuppressCaptureOutputToolNotVisibleWarning;
-+ (BOOL)noSyncSuppressAnnyoingBellOffer;
-+ (BOOL)noSyncSilenceAnnoyingBellAutomatically;
-
-+ (BOOL)disableAppNap;
-+ (double)idleTimeSeconds;
-
-+ (double)findDelaySeconds;
-+ (BOOL)optionIsMetaForSpecialChars;
-
 + (BOOL)startDebugLoggingAutomatically;
-+ (BOOL)appendToExistingDebugLog;
-+ (BOOL)aboutToPasteTabsWithCancel;
-
-+ (BOOL)alwaysAcceptFirstMouse;
-
-+ (BOOL)restoreWindowContents;
-+ (BOOL)tolerateUnrecognizedTmuxCommands;
-
-+ (int)maximumBytesToProvideToServices;
-
-+ (BOOL)disableWindowSizeSnap;
-+ (BOOL)eliminateCloseButtons;
-
-+ (BOOL)runJobsInServers;
-+ (BOOL)killJobsInServersOnQuit;
-
-+ (BOOL)noSyncDoNotWarnBeforeMultilinePaste;
-+ (NSString *)noSyncDoNotWarnBeforeMultilinePasteUserDefaultsKey;
-+ (void)setNoSyncDoNotWarnBeforeMultilinePaste:(BOOL)value;
-+ (BOOL)noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt;
-+ (NSString *)noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPromptUserDefaultsKey;
-+ (void)setNoSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPrompt:(BOOL)value;
-
-+ (BOOL)noSyncTipsDisabled;
-+ (int)numberOfLinesForAccessibility;
-
-+ (int)triggerRadius;
-+ (BOOL)useOpenDirectory;
-+ (BOOL)disallowCopyEmptyString;
-+ (BOOL)profilesWindowJoinsActiveSpace;
-
-+ (NSString *)badgeFont;
-+ (BOOL)badgeFontIsBold;
-+ (double)badgeMaxWidthFraction;
-+ (double)badgeMaxHeightFraction;
-+ (int)badgeRightMargin;
-+ (int)badgeTopMargin;
-+ (BOOL)noSyncReplaceProfileWarning;
-+ (BOOL)requireCmdForDraggingText;
-+ (double)tabAutoShowHoldTime;
-+ (BOOL)doubleReportScrollWheel;
++ (BOOL)statusBarIcon;
 + (BOOL)stealKeyFocus;
-+ (BOOL)allowDragOfTabIntoNewWindow;
-+ (BOOL)typingClearsSelection;
-+ (BOOL)focusReportingEnabled;
-
-+ (BOOL)tabTitlesUseSmartTruncation;
-+ (BOOL)serializeOpeningMultipleFullScreenWindows;
-+ (BOOL)disablePotentiallyInsecureEscapeSequences;
-+ (int)maxSemanticHistoryPrefixOrSuffix;
-+ (BOOL)performDictionaryLookupOnQuickLook;
-+ (NSString *)pathsToIgnore;
-+ (BOOL)jiggleTTYSizeOnClearBuffer;
-+ (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;
++ (BOOL)supportREPCode;
++ (BOOL)suppressMultilinePasteWarningWhenNotAtShellPrompt;
++ (BOOL)suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline;
 + (BOOL)suppressRestartAnnouncement;
-+ (BOOL)showSessionRestoredBanner;
-+ (void)setSuppressRestartAnnouncement:(BOOL)value;
-+ (BOOL)useAdaptiveFrameRate;
-+ (int)adaptiveFrameRateThroughputThreshold;
-+ (BOOL)includePasteHistoryInAdvancedPaste;
-+ (BOOL)experimentalKeyHandling;
-+ (double)hotKeyDoubleTapMaxDelay;
-+ (double)hotKeyDoubleTapMinDelay;
-+ (BOOL)hideStuckTooltips;
-+ (BOOL)indicateBellsInDockBadgeLabel;
++ (double)tabAutoShowHoldTime;
 + (double)tabFlashAnimationDuration;
-+ (NSString *)downloadsDirectory;
-+ (double)pointSizeOfTimeStamp;
-+ (BOOL)showYellowMarkForJobStoppedBySignal;
-+ (double)slowFrameRate;
-+ (double)timeBetweenTips;
-+ (void)setTimeBetweenTips:(double)time;
-+ (BOOL)openFileOverridesSendText;
++ (BOOL)tabsWrapAround;
++ (BOOL)tabTitlesUseSmartTruncation;
 + (int)terminalMargin;
 + (int)terminalVMargin;
-+ (BOOL)useColorfgbgFallback;
-+ (BOOL)promptForPasteWhenNotAtPrompt;
-+ (void)setPromptForPasteWhenNotAtPrompt:(BOOL)value;
-+ (BOOL)zeroWidthSpaceAdvancesCursor;
-+ (BOOL)darkThemeHasBlackTitlebar;
-+ (BOOL)fontChangeAffectsBroadcastingSessions;
-+ (BOOL)zippyTextDrawing;
-+ (BOOL)noSyncSuppressClipboardAccessDeniedWarning;
-+ (void)setNoSyncSuppressClipboardAccessDeniedWarning:(BOOL)value;
-+ (BOOL)noSyncSuppressMissingProfileInArrangementWarning;
-+ (void)setNoSyncSuppressMissingProfileInArrangementWarning:(BOOL)value;
-+ (BOOL)acceptOSC7;
-+ (BOOL)trackingRunloopForLiveResize;
-+ (BOOL)enableAPIServer;
-+ (double)shortLivedSessionDuration;
-+ (int)minimumTabDragDistance;
-+ (BOOL)useVirtualKeyCodesForDetectingDigits;
-+ (BOOL)excludeBackgroundColorsFromCopiedStyle;
-+ (BOOL)useGCDUpdateTimer;
-+ (BOOL)fullHeightCursor;
-+ (BOOL)drawOutlineAroundCursor;
-+ (double)underlineCursorOffset;
-+ (BOOL)logRestorableStateSize;
-+ (NSString *)autoLogFormat;
-+ (BOOL)killSessionsOnLogout;
-+ (BOOL)tmuxUsesDedicatedProfile;
-+ (BOOL)detectPasswordInput;
-+ (BOOL)disablePasswordManagerAnimations;
-+ (BOOL)focusNewSplitPaneWithFocusFollowsMouse;
-+ (BOOL)NoSyncSuppressRestartSessionConfirmationAlert;
-+ (NSString *)viewManPageCommand;
-+ (BOOL)preventEscapeSequenceFromClearingHistory;
-+ (BOOL)dwcLineCache;
-+ (BOOL)lowFiCombiningMarks;
-+ (CGFloat)verticalBarCursorWidth;
-+ (BOOL)statusBarIcon;
-+ (BOOL)wrapFocus;
-+ (BOOL)sensitiveScrollWheel;
-+ (BOOL)disableCustomBoxDrawing;
-+ (BOOL)useExperimentalFontMetrics;
-+ (BOOL)supportREPCode;
-+ (BOOL)showBlockBoundaries;
-+ (BOOL)showMetalFPSmeter;
-+ (BOOL)tabsWrapAround;
-+ (BOOL)middleClickClosesTab;
-+ (BOOL)disableMetalWhenIdle;
-+ (BOOL)proportionalScrollWheelReporting;
-+ (BOOL)useModernScrollWheelAccumulator;
-+ (BOOL)openUntitledFile;
-+ (BOOL)aggressiveFocusFollowsMouse;
-+ (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
-+ (BOOL)conservativeURLGuessing;
-+ (double)activeUpdateCadence;
-+ (BOOL)openNewWindowAtStartup;
-+ (BOOL)resetSGROnPrompt;
-
-+ (BOOL)retinaInlineImages;
-+ (double)timeToWaitForEmojiPanel;
-+ (BOOL)disableAdaptiveFrameRateInInteractiveApps;
-+ (int)minimumWeightDifferenceForBoldFont;
-+ (double)metalSlowFrameRate;
-+ (double)coloredUnselectedTabTextProminence;
 + (BOOL)throttleMetalConcurrentFrames;
-+ (double)fractionOfCharacterSelectingNextNeighbor;
-+ (double)coloredSelectedTabOutlineStrength;
-+ (NSString *)fallbackLCCType;
++ (double)timeBetweenBlinks;
++ (double)timeBetweenTips;
++ (double)timeToWaitForEmojiPanel;
++ (BOOL)tmuxUsesDedicatedProfile;
++ (BOOL)tolerateUnrecognizedTmuxCommands;
++ (BOOL)trackingRunloopForLiveResize;
++ (BOOL)traditionalVisualBell;
++ (int)triggerRadius;
++ (BOOL)trimWhitespaceOnCopy;
++ (BOOL)typingClearsSelection;
++ (double)underlineCursorOffset;
++ (double)updateScreenParamsDelay;
++ (NSString *)URLCharacterSet;
++ (BOOL)useAdaptiveFrameRate;
++ (BOOL)useColorfgbgFallback;
++ (BOOL)useExperimentalFontMetrics;
++ (BOOL)useGCDUpdateTimer;
++ (BOOL)useModernScrollWheelAccumulator;
++ (BOOL)useOpenDirectory;
++ (BOOL)useSystemCursorWhenPossible;
++ (BOOL)useUnevenTabs;
++ (BOOL)useVirtualKeyCodesForDetectingDigits;
++ (CGFloat)verticalBarCursorWidth;
++ (NSString *)viewManPageCommand;
++ (BOOL)wrapFocus;
++ (BOOL)zeroWidthSpaceAdvancesCursor;
++ (BOOL)zippyTextDrawing;
 
 @end
