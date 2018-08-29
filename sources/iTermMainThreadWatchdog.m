@@ -45,8 +45,8 @@
         DLog(@"running main thread block, signaling semaphore");
         dispatch_semaphore_signal(sema);
     });
-    if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC)) != 0) {
-        DLog(@"Have been wedged for a whole second");
+    if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC)) != 0) {
+        DLog(@"Have been wedged for too long");
         TurnOffDebugLoggingSilently();
         raise(SIGABRT);
         DLog(@"Shouldn't get here");
