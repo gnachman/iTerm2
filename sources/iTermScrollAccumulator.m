@@ -16,20 +16,11 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 
-// When scrolling ends if the magnitude of the accumulated value is more than 0 but less than this,
-// return 1 or -1.
-static const CGFloat iTermScrollAccumulatorRoundUpThreshold = 0.1;
 
 @implementation iTermScrollAccumulator {
     CGFloat _accumulatedDeltaY;
     BOOL _shouldAccumulate;
     CGFloat _lineHeight;
-
-    // 0: not initialized
-    // 1: last direction was a positive delta
-    // -1: last direction was a negative delta
-    // Gets reset to 0 when scrolling ends
-    NSInteger _lastDirection;
 }
 
 - (CGFloat)deltaYForEvent:(NSEvent *)event lineHeight:(CGFloat)lineHeight {
@@ -38,18 +29,11 @@ static const CGFloat iTermScrollAccumulatorRoundUpThreshold = 0.1;
         case NSEventTypeScrollWheel: {
             CGFloat result;
             result = [self accumulatedDeltaYForScrollEvent:event];
-            if (event.phase == NSEventPhaseEnded) {
-                _lastDirection = 0;
-            } else if (result > 0) {
-                _lastDirection = 1;
-            } else if (result < 0) {
-                _lastDirection = -1;
-            }
             DLog(@"deltaYForEvent:%@ lineHeight:%@ -> %@. deltaY=%@ scrollingDeltaY=%@ Accumulator <- %@",
                  event, @(lineHeight), @(result), @(event.deltaY), @(event.scrollingDeltaY), @(_accumulatedDeltaY));
             return result;
         }
-
+            
         default:
             return 0;
     }
@@ -92,33 +76,18 @@ static const CGFloat iTermScrollAccumulatorRoundUpThreshold = 0.1;
     _accumulatedDeltaY += delta;
     const CGFloat absAccumulatedDelta = fabs(_accumulatedDeltaY);
     int roundDelta;
-
-    if (absAccumulatedDelta > 0.5) {
-        // The rounded accumulated value will not be zero so consume it.
-        roundDelta = round(_accumulatedDeltaY);
+    
+    // Deltas will be accumulated into _accumulatedDeltaY.
+    // If it is large (>1), return its integer part. This enables quick scroll, which feels like natural trackpad.
+    // If `delta * _accumulatedDeltaY < 0`, it means turnaround. Round delta to turn around quickly (fabs 0.5 is enough to move).
+    // If it is not large enough, return 0 and keep accumulating.
+    if (absAccumulatedDelta > 1) {
+        roundDelta = RoundTowardZero(_accumulatedDeltaY);
         _accumulatedDeltaY -= roundDelta;
-    } else {
-        // Even if the accumulated value is near 0, the delta might not be (e.g., if you just
-        // changed directions) so return its rounded value. This will typically be 0, though.
+    } else if (delta * _accumulatedDeltaY < 0) {
         roundDelta = round(delta);
-    }
-
-    if ([self shouldEndAccumulatingForEvent:event]) {
-        if (roundDelta == 0 && absAccumulatedDelta > iTermScrollAccumulatorRoundUpThreshold) {
-            int proposedResult = _accumulatedDeltaY > 0 ? 1 : -1;
-
-            // Don't allow this to reverse direction. You could be getting all positive
-            // scrollingDeltaY's and have a negative accumulator (since an accumulator of
-            // 0.51 would round to 1, we would output a movement of 1 and drop the
-            // accumulator to -0.49). If you end in such a state. just stop instead of
-            // outputting a value that scrolls once in the wrong direction.
-            if (_lastDirection == 0 ||
-                (proposedResult > 0) == (_lastDirection > 0)) {
-                roundDelta = proposedResult;
-            } else {
-                roundDelta = 0;
-            }
-        }
+    } else {
+        roundDelta = 0;
     }
     return roundDelta;
 }
