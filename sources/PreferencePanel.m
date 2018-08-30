@@ -462,6 +462,7 @@ static PreferencePanel *gSessionsPreferencePanel;
         }
     } else {
         [self resizeWindowForTabViewItem:tabViewItem];
+        [_profilesViewController invalidateSavedSize];
     }
 }
 

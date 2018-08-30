@@ -461,6 +461,10 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     [window setFrame:frame display:YES animate:animated];
 }
 
+- (void)invalidateSavedSize {
+    _desiredFrame = NSZeroRect;
+}
+
 #pragma mark - Actions
 
 - (IBAction)removeProfile:(id)sender {
