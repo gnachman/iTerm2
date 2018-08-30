@@ -209,12 +209,19 @@
                                               NSUnitalicFontMask);
     NSFontTraitMask requiredTraits = ([fontManager traitsOfFont:font] & kImmutableTraits);
     DLog(@"Required traits: %x", (int)requiredTraits);
+    NSMutableArray<NSFont *> *fonts = [NSMutableArray array];
+    [fonts addObject:font];
     while (lastFont) {
         NSFont *heavierFont = [fontManager convertWeight:YES ofFont:lastFont];
         if (heavierFont == lastFont) {
             // This is how fontManager is documented to fail.
             return nil;
         }
+        if ([fonts containsObject:heavierFont]) {
+            DLog(@"  * cycle detected among fonts *\n%@", [fonts arrayByAddingObject:heavierFont]);
+            return nil;
+        }
+        [fonts addObject:heavierFont];
         NSInteger weight = [fontManager weightOfFont:heavierFont];
         DLog(@"  next bolder font is %@ with a weight of %@",  heavierFont, @(weight));
         NSFontTraitMask maskedTraits = ([fontManager traitsOfFont:heavierFont] & kImmutableTraits);
