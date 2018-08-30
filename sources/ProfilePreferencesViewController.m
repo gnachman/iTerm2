@@ -468,6 +468,10 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
 }
 
+- (void)invalidateSavedSize {
+    _desiredFrame = NSZeroRect;
+}
+
 #pragma mark - Actions
 
 - (IBAction)removeProfile:(id)sender {

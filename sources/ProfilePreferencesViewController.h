@@ -49,5 +49,6 @@ extern NSString *const kProfileSessionHotkeyDidChange;
 - (void)refresh;
 
 - (void)resizeWindowForCurrentTabAnimated:(BOOL)animated;
+- (void)invalidateSavedSize;
 
 @end
