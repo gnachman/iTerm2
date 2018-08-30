@@ -607,6 +607,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
         // Convert ranges of notes to their new coordinates and replace the interval tree.
         IntervalTree *replacementTree = [[IntervalTree alloc] init];
+        DLog(@"The interval tree contains %@ objects", @([[intervalTree_ allObjects] count]));
         for (id<IntervalTreeObject> note in [intervalTree_ allObjects]) {
             VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
             VT100GridCoordRange newRange;
@@ -1904,11 +1905,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             range.end = VT100GridCoordMake(self.width, line);
             DLog(@"Extending the previous directory to %@", VT100GridCoordRangeDescription(range));
             Interval *interval = [self intervalForGridCoordRange:range];
+
+            DLog(@"add interval: Working directory changed to %@. Add pwd at %@", workingDirectory, interval);
+            DLog(@"%@", [NSThread callStackSymbols]);
             [intervalTree_ addObject:previousWorkingDirectory withInterval:interval];
         } else {
             VT100GridCoordRange range;
             range = VT100GridCoordRangeMake(currentGrid_.cursorX, line, self.width, line);
-            DLog(@"Set range of %@ to %@", workingDirectory, VT100GridCoordRangeDescription(range));
+            DLog(@"add interval: Update range of pwd to %@ to %@", workingDirectory, VT100GridCoordRangeDescription(range));
             [intervalTree_ addObject:workingDirectoryObj
                         withInterval:[self intervalForGridCoordRange:range]];
         }
@@ -1921,6 +1925,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     remoteHostObj.hostname = host;
     remoteHostObj.username = user;
     VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
+    DLog(@"Host name changed to %@@%@. Add pwd at %@", user, host, [self intervalForGridCoordRange:range]);
+    DLog(@"%@", [NSThread callStackSymbols]);
     [intervalTree_ addObject:remoteHostObj
                 withInterval:[self intervalForGridCoordRange:range]];
     return remoteHostObj;
@@ -1991,6 +1997,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)addNote:(PTYNoteViewController *)note
         inRange:(VT100GridCoordRange)range {
+    DLog(@"Add annotation at %@", [self intervalForGridCoordRange:range]);
+    DLog(@"%@", [NSThread callStackSymbols]);
     [intervalTree_ addObject:note withInterval:[self intervalForGridCoordRange:range]];
     [currentGrid_ markCharsDirty:YES inRectFrom:range.start to:[self predecessorOfCoord:range.end]];
     note.delegate = self;
@@ -2047,6 +2055,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if ([mark isKindOfClass:[VT100ScreenMark class]]) {
         markCache_[@([self totalScrollbackOverflow] + range.end.y)] = mark;
     }
+    DLog(@"Add mark of class %@ at %@", markClass, [self intervalForGridCoordRange:range]);
+    DLog(@"%@", [NSThread callStackSymbols]);
     [intervalTree_ addObject:mark withInterval:[self intervalForGridCoordRange:range]];
     [delegate_ screenNeedsRedraw];
     return mark;
