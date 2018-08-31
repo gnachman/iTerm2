@@ -8,8 +8,8 @@
 #import <Cocoa/Cocoa.h>
 
 @interface iTermMenuBarObserver : NSObject
-@property (nonatomic, readonly) BOOL currentDesktopHasFullScreenWindow;
-@property (nonatomic, readonly) BOOL menuBarVisible;
+
+- (BOOL)menuBarVisibleOnScreen:(NSScreen *)screen;
 
 + (instancetype)sharedInstance;
 

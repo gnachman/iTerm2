@@ -3536,10 +3536,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self traditionalFullScreenFrameForScreen:self.window.screen];
 }
 
-- (BOOL)fullScreenWindowFrameShouldBeShiftedDownBelowMenuBar {
+- (BOOL)fullScreenWindowFrameShouldBeShiftedDownBelowMenuBarOnScreen:(NSScreen *)screen {
     const BOOL wantToHideMenuBar = [iTermPreferences boolForKey:kPreferenceKeyHideMenuBarInFullscreen];
     const BOOL canHideMenuBar = ![iTermPreferences boolForKey:kPreferenceKeyUIElement];
-    const BOOL menuBarIsHidden = ![[iTermMenuBarObserver sharedInstance] menuBarVisible];
+    const BOOL menuBarIsHidden = ![[iTermMenuBarObserver sharedInstance] menuBarVisibleOnScreen:screen];
     const BOOL canOverlapMenuBar = [self.window isKindOfClass:[iTermPanel class]];
 
     DLog(@"Checking if the fullscreen window frame should be shifted down below the menu bar. "
@@ -3568,7 +3568,7 @@ ITERM_WEAKLY_REFERENCEABLE
     frameMinusMenuBar.size.height -= [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
     BOOL menuBarIsVisible = NO;
 
-    if ([self fullScreenWindowFrameShouldBeShiftedDownBelowMenuBar]) {
+    if ([self fullScreenWindowFrameShouldBeShiftedDownBelowMenuBarOnScreen:screen]) {
         menuBarIsVisible = YES;
     }
     if (menuBarIsVisible) {
