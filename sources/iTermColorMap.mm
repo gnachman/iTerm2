@@ -196,7 +196,8 @@ const int kColorMapAnsiBrightModifier = 8;
 // default background color. It doesn't make sense to combine RGB values from different color
 // spaces. The effects are generally subtle.
 - (NSColor *)processedTextColorForTextColor:(NSColor *)textColor
-                        overBackgroundColor:(NSColor *)backgroundColor {
+                        overBackgroundColor:(NSColor *)backgroundColor
+                     disableMinimumContrast:(BOOL)disableMinimumContrast {
     if (!textColor) {
         return nil;
     }
@@ -207,7 +208,7 @@ const int kColorMapAnsiBrightModifier = 8;
     [backgroundColor getComponents:backgroundRgb];
 
     CGFloat contrastingRgb[4];
-    if (backgroundColor) {
+    if (backgroundColor && !disableMinimumContrast) {
         [NSColor getComponents:contrastingRgb
                  forComponents:textRgb
             withContrastAgainstComponents:backgroundRgb

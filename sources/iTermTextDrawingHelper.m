@@ -1584,7 +1584,8 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
                                             BOOL inUnderlinedRange,
                                             int index,
                                             iTermTextColorContext *context,
-                                            iTermBackgroundColorRun *colorRun) {
+                                            iTermBackgroundColorRun *colorRun,
+                                            BOOL isBoxDrawingCharacter) {
     NSColor *rawColor = nil;
     BOOL isMatch = NO;
     if (c->faint && colorRun && !context->backgroundColor) {
@@ -1660,7 +1661,8 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
     NSColor *result = nil;
     if (needsProcessing) {
         result = [context->colorMap processedTextColorForTextColor:rawColor
-                                               overBackgroundColor:context->backgroundColor];
+                                               overBackgroundColor:context->backgroundColor
+                                            disableMinimumContrast:isBoxDrawingCharacter];
     } else {
         result = rawColor;
     }
@@ -1748,6 +1750,11 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                                                                        _useNonAsciiFont,
                                                                        _asciiAntiAlias,
                                                                        _nonAsciiAntiAlias);
+    const BOOL isComplex = c->complexChar;
+    const unichar code = c->code;
+
+    attributes->boxDrawing = !isComplex && [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPaths] characterIsMember:code];
+
     if (forceTextColor) {
         attributes->foregroundColor = forceTextColor;
     } else {
@@ -1756,13 +1763,10 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
                                                                          inUnderlinedRange,
                                                                          i,
                                                                          textColorContext,
-                                                                         colorRun);
+                                                                         colorRun,
+                                                                         attributes->boxDrawing);
     }
 
-    const BOOL isComplex = c->complexChar;
-    const unichar code = c->code;
-
-    attributes->boxDrawing = !isComplex && [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPaths] characterIsMember:code];
     attributes->bold = c->bold;
 
     attributes->fakeBold = c->bold;  // default value
@@ -2736,7 +2740,8 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 
 - (NSColor *)defaultTextColor {
     return [_colorMap processedTextColorForTextColor:[_colorMap colorForKey:kColorMapForeground]
-                                 overBackgroundColor:[self defaultBackgroundColor]];
+                                 overBackgroundColor:[self defaultBackgroundColor]
+                              disableMinimumContrast:NO];
 }
 
 - (NSColor *)selectionColorForCurrentFocus {

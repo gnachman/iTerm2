@@ -91,7 +91,8 @@ extern const int kColorMap24bitBase;
 //    self.dimOnlyText) by self.dimmingAmount.
 // 4. Premultiply textColor's alpha with backgroundColor.
 - (NSColor *)processedTextColorForTextColor:(NSColor *)textColor
-                        overBackgroundColor:(NSColor*)backgroundColor;
+                        overBackgroundColor:(NSColor*)backgroundColor
+                     disableMinimumContrast:(BOOL)disableMinimumContrast;
 - (NSColor *)processedBackgroundColorForBackgroundColor:(NSColor *)color;
 - (vector_float4)fastProcessedBackgroundColorForBackgroundColor:(vector_float4)backgroundColor;
 - (NSColor *)colorByMutingColor:(NSColor *)color;

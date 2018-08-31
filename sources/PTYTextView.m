@@ -457,7 +457,8 @@ static const int kDragThreshold = 3;
 
 - (NSColor *)defaultTextColor {
     return [_colorMap processedTextColorForTextColor:[_colorMap colorForKey:kColorMapForeground]
-                                 overBackgroundColor:[self defaultBackgroundColor]];
+                                 overBackgroundColor:[self defaultBackgroundColor]
+                              disableMinimumContrast:NO];
 }
 
 - (NSColor *)selectionBackgroundColor {
@@ -467,7 +468,8 @@ static const int kDragThreshold = 3;
 
 - (NSColor *)selectedTextColor {
     return [_colorMap processedTextColorForTextColor:[_colorMap colorForKey:kColorMapSelectedText]
-                                 overBackgroundColor:[self selectionBackgroundColor]];
+                                 overBackgroundColor:[self selectionBackgroundColor]
+                              disableMinimumContrast:NO];
 }
 
 - (void)updateMarkedTextAttributes {

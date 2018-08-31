@@ -976,6 +976,13 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         attributes[x].backgroundColor.w = 1;
         attributes[x].annotation = annotated;
 
+        const BOOL characterIsDrawable = iTermTextDrawingHelperIsCharacterDrawable(&line[x],
+                                                                                   line[x].complexChar && (ScreenCharToStr(&line[x]) != nil),
+                                                                                   _blinkingItemsVisible,
+                                                                                   _blinkAllowed);
+        const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
+                                            !line[x].complexChar &&
+                                            [boxCharacterSet characterIsMember:line[x].code]);
         // Foreground colors
         // Build up a compact key describing all the inputs to a text color
         currentColorKey->isMatch = findMatch;
@@ -1007,7 +1014,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                          selected:selected
                                                         findMatch:findMatch
                                                 inUnderlinedRange:inUnderlinedRange && !annotated
-                                                            index:x];
+                                                            index:x
+                                                       boxDrawing:isBoxDrawingCharacter];
             attributes[x].foregroundColor = textColor;
             attributes[x].foregroundColor.w = 1;
         }
@@ -1048,14 +1056,11 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                 [imageRuns addObject:run];
             }
             glyphKeys[x].drawable = NO;
-        } else if (annotated || iTermTextDrawingHelperIsCharacterDrawable(&line[x],
-                                                                          line[x].complexChar && (ScreenCharToStr(&line[x]) != nil),
-                                                                          _blinkingItemsVisible,
-                                                                          _blinkAllowed)) {
+        } else if (annotated || characterIsDrawable) {
             lastDrawableGlyph = x;
             glyphKeys[x].code = line[x].code;
             glyphKeys[x].isComplex = line[x].complexChar;
-            glyphKeys[x].boxDrawing = !line[x].complexChar && [boxCharacterSet characterIsMember:line[x].code];
+            glyphKeys[x].boxDrawing = isBoxDrawingCharacter;
             glyphKeys[x].thinStrokes = [self useThinStrokesWithAttributes:&attributes[x]];
 
             const int boldBit = line[x].bold ? (1 << 0) : 0;
@@ -1401,7 +1406,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                               selected:(BOOL)selected
                              findMatch:(BOOL)findMatch
                      inUnderlinedRange:(BOOL)inUnderlinedRange
-                                 index:(int)index {
+                                 index:(int)index
+                            boxDrawing:(BOOL)isBoxDrawingCharacter {
     vector_float4 rawColor = { 0, 0, 0, 0 };
     iTermColorMap *colorMap = _colorMap;
     const BOOL needsProcessing = (colorMap.minimumContrast > 0.001 ||
@@ -1465,7 +1471,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     vector_float4 result;
     if (needsProcessing) {
         result = VectorForColor([_colorMap processedTextColorForTextColor:ColorForVector(rawColor)
-                                                      overBackgroundColor:ColorForVector(unprocessedBackgroundColor)]);
+                                                      overBackgroundColor:ColorForVector(unprocessedBackgroundColor)
+                                                   disableMinimumContrast:isBoxDrawingCharacter]);
     } else {
         result = rawColor;
     }
