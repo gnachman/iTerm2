@@ -296,6 +296,8 @@ static const CGFloat kWindowWidth = 400;
     // Animate in the window.
     [self present];
 
+    // iTermLib Edit: No hotkeys in embedded iTerm
+#ifndef ITERM_LIB
     if (!_hotKey) {
         NSString *characters = [NSString stringWithFormat:@"%c", 27];
         iTermShortcut *shortcut = [[[iTermShortcut alloc] initWithKeyCode:kVK_Escape
@@ -307,6 +309,7 @@ static const CGFloat kWindowWidth = 400;
                                                                          selector:@selector(dismissByKeyboard:)
                                                                          userData:nil] retain];
     }
+#endif
     return nil;
 }
 
@@ -360,11 +363,14 @@ static const CGFloat kWindowWidth = 400;
 #pragma mark - User Actions
 
 - (void)dismiss {
+    // iTermLib Edit: No hotkeys in embedded iTerm
+#ifndef ITERM_LIB
     if (_hotKey) {
         [[iTermCarbonHotKeyController sharedInstance] unregisterHotKey:_hotKey];
         [_hotKey release];
         _hotKey = nil;
     }
+#endif
     [self animateOut];
     [_delegate tipWindowDismissed];
 }

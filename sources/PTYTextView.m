@@ -542,6 +542,12 @@ static const int kDragThreshold = 3;
         [_altScreenMouseScrollInferer firstResponderDidChange];
         [self removeUnderline];
         [self placeFindCursorOnAutoHide];
+        
+        // iTermLib Edit: Required to actually get the cursor to "unfill"
+#ifdef ITERM_LIB
+        [self setNeedsDisplay:YES];
+#endif
+        
         DLog(@"resignFirstResponder %@", self);
         DLog(@"%@", [NSThread callStackSymbols]);
     } else {
@@ -1825,10 +1831,13 @@ static const int kDragThreshold = 3;
     [super flagsChanged:theEvent];
 }
 
+// iTermLib Edit: We want to handle swipes ourselves
+#ifndef ITERM_LIB
 - (void)swipeWithEvent:(NSEvent *)event
 {
     [pointer_ swipeWithEvent:event];
 }
+#endif
 
 // Uses an undocumented/deprecated API to receive key presses even when inactive.
 - (BOOL)stealKeyFocus {
@@ -4750,6 +4759,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
 
+    // iTermLib Edit: No splitting or moving of panes and sessions in embedded iTerm
+    
+#ifndef ITERM_LIB
     // Split pane options
     [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitTextViewVertically:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
@@ -4770,6 +4782,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
+#endif
 
     // Copy,  paste, and save
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Copy",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
@@ -4810,6 +4823,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
+    // iTermLib Edit: No editing of sessions in embedded iTerm
+#ifndef ITERM_LIB
     // Edit Session
     [theMenu addItemWithTitle:@"Edit Session..."
                        action:@selector(editTextViewSession:)
@@ -4818,6 +4833,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
+#endif
 
     // Toggle broadcast
     [theMenu addItemWithTitle:@"Toggle Broadcasting Input"
@@ -4825,6 +4841,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
+    // iTermLib Edit: No closing or restarting of sessions in embedded iTerm
+#ifndef ITERM_LIB
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
@@ -4836,17 +4854,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                        action:@selector(restartTextViewSession:)
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+#endif
 
     // Ask the delegate if there is anything to be added
     if ([[self delegate] respondsToSelector:@selector(menuForEvent:menu:)]) {
         [[self delegate] menuForEvent:nil menu:theMenu];
     }
 
+    // iTermLib Edit: No burying in embedded iTerm
+#ifndef ITERM_LIB
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
     [theMenu addItemWithTitle:@"Bury"
                        action:@selector(bury:)
                 keyEquivalent:@""];
+#endif
 
     return theMenu;
 }

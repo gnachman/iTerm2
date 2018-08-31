@@ -70,14 +70,25 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
     if (item.action == @selector(performMiniaturize:)) {
         // This makes borderless windows miniaturizable.
+        
+        // iTermLib Edit:
+#ifdef ITERM_LIB
+        return ![self.delegate anyFullScreen];
+#else
         return ![self.ptyDelegate anyFullScreen];
+#endif
     } else {
         return [super validateMenuItem:item];
     }
 }
 
 - (void)performMiniaturize:(nullable id)sender {
+    // iTermLib Edit:
+#ifdef ITERM_LIB
+    if ([self.delegate anyFullScreen]) {
+#else
     if ([self.ptyDelegate anyFullScreen]) {
+#endif
         [super performMiniaturize:sender];
     } else {
         // NSWindow's performMiniaturize gates miniaturization on the presence of a miniaturize button.

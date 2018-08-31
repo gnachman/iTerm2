@@ -1155,10 +1155,13 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self currentSession] changeFontSizeDirection:dir];
 }
 
+// iTermLib Edit: We want to handle swipes ourselves
+#ifndef ITERM_LIB
 - (void)swipeWithEvent:(NSEvent *)event
 {
     [[[self currentSession] textview] swipeWithEvent:event];
 }
+#endif
 
 - (void)selectSessionAtIndexAction:(id)sender
 {
@@ -7050,6 +7053,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateTabBarStyle {
+    // iTermLib Edit: Not required
+#ifndef ITERM_LIB
     id<PSMTabStyle> style;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (preferredStyle == TAB_STYLE_MINIMAL) {
@@ -7076,6 +7081,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_contentView.tabBarControl setStyle:style];
     [self updateTabColors];
+#endif
 }
 
 - (void)hideMenuBar {

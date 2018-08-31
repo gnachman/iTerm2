@@ -198,6 +198,8 @@
                            target:(id)target
                          selector:(SEL)selector
                          userData:(NSDictionary *)userData {
+    // iTermLib Edit: No hotkeys in embedded iTerm
+#ifndef ITERM_LIB
     assert(!_suspended);
     DLog(@"Register %@ from\n%@", shortcut, [NSThread callStackSymbols]);
 
@@ -233,9 +235,14 @@
     [_hotKeys addObject:hotkey];
     DLog(@"Hotkeys are now:\n%@", _hotKeys);
     return hotkey;
+#else
+    return nil;
+#endif
 }
 
 - (void)unregisterHotKey:(iTermHotKey *)hotKey {
+    // iTermLib Edit: No hotkeys in embedded iTerm
+#ifndef ITERM_LIB
     assert(!_suspended);
     DLog(@"Unregister %@", hotKey);
     // Get the count before removing hotKey because that could free it.
@@ -246,6 +253,7 @@
     if (count == 1 && eventHotKey != nil) {
         UnregisterEventHotKey(eventHotKey);
     }
+#endif
 }
 
 #pragma mark - Private Methods
