@@ -570,7 +570,6 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
           toScrollback:linebuffer_
         withUsedHeight:[primaryGrid_ numberOfLinesUsed]
              newHeight:newSize.height];
-    DLog(@"History after appending screen to scrollback:\n%@", [linebuffer_ debugString]);
 
     // Contains iTermSubSelection*s updated for the new screen size. Used
     // regardless of whether we were in the alt screen, as it's simply the set
@@ -644,7 +643,6 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [currentGrid_ restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
                             maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
-    DLog(@"After restoring screen from line buffer:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
 
     // If we're in the alternate screen, restore its contents from the temporary
     // linebuffer.
