@@ -444,7 +444,6 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     [self.temporaryDoubleBuffer reset];
 
     DLog(@"Resize session to %@", VT100GridSizeDescription(newSize));
-    DLog(@"Before:\n%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
     DLog(@"Cursor at %d,%d", currentGrid_.cursorX, currentGrid_.cursorY);
     if (commandStartX_ != -1) {
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
@@ -841,7 +840,6 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
     [self reloadMarkCache];
     [delegate_ screenSizeDidChange];
-    DLog(@"After:\n%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
     DLog(@"Cursor at %d,%d", currentGrid_.cursorX, currentGrid_.cursorY);
 }
 
