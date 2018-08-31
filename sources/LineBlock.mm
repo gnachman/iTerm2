@@ -6,6 +6,7 @@
 //
 //
 
+extern "C" {
 #import "LineBlock.h"
 
 #import "DebugLogging.h"
@@ -14,6 +15,8 @@
 #import "NSBundle+iTerm.h"
 #import "RegexKitLite.h"
 #import "iTermAdvancedSettingsModel.h"
+}
+#include <map>
 
 static BOOL gEnableDoubleWidthCharacterLineCache = NO;
 static BOOL gUseCachingNumberOfLines = NO;
@@ -64,6 +67,11 @@ void EnableDoubleWidthCharacterLineCache() {
     // This is -1 if the cache is invalid; otherwise it specifies the width for which
     // cached_numlines is correct.
     int cached_numlines_width;
+
+#if BETA
+    // Keys are (offset from raw_buffer, length to examine, width).
+    std::map<std::tuple<int, int, int>, int> _numberOfFullLinesCache;
+#endif
 }
 
 - (instancetype)init {
@@ -295,11 +303,47 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     }
 }
 
-int NumberOfFullLines(screen_char_t* buffer, int length, int width,
-                      BOOL mayHaveDoubleWidthCharacter)
-{
+- (int)numberOfFullLinesFromOffset:(int)offset
+                            length:(int)length
+                             width:(int)width {
+#if BETA
+    auto key = std::tuple<int, int, int>(offset, length, width);
+    int result;
+    auto insertResult = _numberOfFullLinesCache.insert(std::make_pair(key, -1));
+    auto it = insertResult.first;
+    auto wasInserted = insertResult.second;
+    if (wasInserted) {
+        result = iTermLineBlockNumberOfFullLinesImpl(raw_buffer + offset,
+                                                     length,
+                                                     width,
+                                                     _mayHaveDoubleWidthCharacter);
+        it->second = result;
+    } else {
+        result = it->second;
+    }
+
+    return result;
+#else
+    return iTermLineBlockNumberOfFullLinesImpl(raw_buffer + offset,
+                                               length,
+                                               width,
+                                               _mayHaveDoubleWidthCharacter);
+#endif
+}
+
+- (int)numberOfFullLinesFromBuffer:(screen_char_t *)buffer
+                            length:(int)length
+                             width:(int)width {
+    return [self numberOfFullLinesFromOffset:buffer - raw_buffer
+                                      length:length
+                                       width:width];
+}
+
+extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
+                                                   int length,
+                                                   int width,
+                                                   BOOL mayHaveDoubleWidthCharacter) {
     if (width > 1 && mayHaveDoubleWidthCharacter) {
-        // TODO: Use memoization here
         int fullLines = 0;
         for (int i = width; i < length; i += width) {
             if (buffer[i].code == DWC_RIGHT) {
@@ -331,8 +375,10 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
            partial:(BOOL)partial
              width:(int)width
          timestamp:(NSTimeInterval)timestamp
-      continuation:(screen_char_t)continuation
-{
+      continuation:(screen_char_t)continuation {
+#if BETA
+    _numberOfFullLinesCache.clear();
+#endif
     const int space_used = [self rawSpaceUsed];
     const int free_space = buffer_size - space_used - start_offset;
     if (length > free_space) {
@@ -365,10 +411,20 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
             int prev_cll = cll_entries > first_entry + 1 ? cumulative_line_lengths[cll_entries - 2] - start_offset : 0;
             int cll = cumulative_line_lengths[cll_entries - 1] - start_offset;
             int old_length = cll - prev_cll;
-            int oldnum = NumberOfFullLines(buffer_start + prev_cll, old_length, width,
-                                           _mayHaveDoubleWidthCharacter);
-            int newnum = NumberOfFullLines(buffer_start + prev_cll, old_length + length, width,
-                                           _mayHaveDoubleWidthCharacter);
+            int oldnum = [self numberOfFullLinesFromOffset:(buffer_start - raw_buffer) + prev_cll
+                                                    length:old_length
+                                                     width:width];
+            int newnum = [self numberOfFullLinesFromOffset:(buffer_start - raw_buffer) + prev_cll
+                                                    length:old_length + length
+                                                     width:width];
+#if BETA
+            int legacy_oldnum = iTermLineBlockNumberOfFullLinesImpl(buffer_start + prev_cll, old_length, width,
+                                                                    _mayHaveDoubleWidthCharacter);
+            int legacy_newnum = iTermLineBlockNumberOfFullLinesImpl(buffer_start + prev_cll, old_length + length, width,
+                                                                    _mayHaveDoubleWidthCharacter);
+            assert(legacy_oldnum == oldnum);
+            assert(legacy_newnum == newnum);
+#endif
             cached_numlines += newnum - oldnum;
         }
 
@@ -392,8 +448,15 @@ int NumberOfFullLines(screen_char_t* buffer, int length, int width,
         if (width != cached_numlines_width) {
             cached_numlines_width = -1;
         } else {
-            cached_numlines += NumberOfFullLines(buffer, length, width,
-                                                 _mayHaveDoubleWidthCharacter) + 1;
+            const int marginalLines = [self numberOfFullLinesFromOffset:space_used
+                                                                 length:length
+                                                                  width:width] + 1;
+            cached_numlines += marginalLines;
+#if BETA
+            const int legacy_marginalLines = iTermLineBlockNumberOfFullLinesImpl(buffer, length, width,
+                                                                                 _mayHaveDoubleWidthCharacter) + 1;
+            assert(marginalLines == legacy_marginalLines);
+#endif
         }
 #ifdef TEST_LINEBUFFER_SANITY
         [self checkAndResetCachedNumlines:"appendLine normal case" width: width];
@@ -523,10 +586,16 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     for (i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
         length = cll - prev;
-        int spans = NumberOfFullLines(buffer_start + prev,
-                                      length,
-                                      width,
-                                      _mayHaveDoubleWidthCharacter);
+        const int spans = [self numberOfFullLinesFromOffset:(buffer_start - raw_buffer) + prev
+                                                     length:length
+                                                      width:width];
+#if BETA
+        int legacy_spans = iTermLineBlockNumberOfFullLinesImpl(buffer_start + prev,
+                                                               length,
+                                                               width,
+                                                               _mayHaveDoubleWidthCharacter);
+        assert(spans == legacy_spans);
+#endif
         if (lineNum > spans) {
             // Consume the entire raw line and keep looking for more.
             int consume = spans + 1;
@@ -580,18 +649,30 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
                 metadata->number_of_wrapped_lines > 0) {
                 spans = metadata->number_of_wrapped_lines;
             } else {
-                spans = NumberOfFullLines(buffer_start + prev,
-                                          length,
-                                          width,
-                                          _mayHaveDoubleWidthCharacter);
+                spans = [self numberOfFullLinesFromOffset:(buffer_start - raw_buffer) + prev
+                                                   length:length
+                                                    width:width];
+#if BETA
+                int legacy_spans = iTermLineBlockNumberOfFullLinesImpl(buffer_start + prev,
+                                                                       length,
+                                                                       width,
+                                                                       _mayHaveDoubleWidthCharacter);
+                assert(spans == legacy_spans);
+#endif
                 metadata->number_of_wrapped_lines = spans;
                 metadata->width_for_number_of_wrapped_lines = width;
              }
         } else {
-            spans = NumberOfFullLines(buffer_start + prev,
-                                      length,
-                                      width,
-                                      _mayHaveDoubleWidthCharacter);
+            spans = [self numberOfFullLinesFromOffset:(buffer_start - raw_buffer) + prev
+                                               length:length
+                                                width:width];
+#if BETA
+            int legacy_spans = iTermLineBlockNumberOfFullLinesImpl(buffer_start + prev,
+                                                                   length,
+                                                                   width,
+                                                                   _mayHaveDoubleWidthCharacter);
+            assert(spans == legacy_spans);
+#endif
         }
         if (*lineNum > spans) {
             // Consume the entire raw line and keep looking for more.
@@ -669,10 +750,17 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     for (i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
         int length = cll - prev;
-        count += NumberOfFullLines(buffer_start + prev,
-                                   length,
-                                   width,
-                                   _mayHaveDoubleWidthCharacter) + 1;
+        const int marginalLines = [self numberOfFullLinesFromOffset:(buffer_start - raw_buffer) + prev
+                                                             length:length
+                                                              width:width] + 1;
+#if BETA
+        const int legacy_marginalLines = iTermLineBlockNumberOfFullLinesImpl(buffer_start + prev,
+                                                                             length,
+                                                                             width,
+                                                                             _mayHaveDoubleWidthCharacter) + 1;
+        assert(marginalLines == legacy_marginalLines);
+#endif
+        count += marginalLines;
         prev = cll;
     }
 
@@ -693,12 +781,14 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
              withLength:(int*)length
               upToWidth:(int)width
               timestamp:(NSTimeInterval *)timestampPtr
-           continuation:(screen_char_t *)continuationPtr
-{
+           continuation:(screen_char_t *)continuationPtr {
     if (cll_entries == first_entry) {
         // There is no last line to pop.
         return NO;
     }
+#if BETA
+    _numberOfFullLinesCache.clear();
+#endif
     int start;
     if (cll_entries == first_entry + 1) {
         start = 0;
@@ -719,11 +809,18 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
         // If the width is four and the last line is "0123456789" then return "89". It would
         // wrap as: 0123/4567/89. If there are double-width characters, this ensures they are
         // not split across lines when computing the wrapping.
+        const int numLines = [self numberOfFullLinesFromOffset:(buffer_start - raw_buffer) + start
+                                                        length:available_len
+                                                         width:width];
+#if BETA
+        const int legacy_numLines = iTermLineBlockNumberOfFullLinesImpl(buffer_start + start,
+                                                                        available_len,
+                                                                        width,
+                                                                        _mayHaveDoubleWidthCharacter);
+        assert(numLines == legacy_numLines);
+#endif
         int offset_from_start = OffsetOfWrappedLine(buffer_start + start,
-                                                    NumberOfFullLines(buffer_start + start,
-                                                                      available_len,
-                                                                      width,
-                                                                      _mayHaveDoubleWidthCharacter),
+                                                    numLines,
                                                     available_len,
                                                     width,
                                                     _mayHaveDoubleWidthCharacter);
@@ -800,8 +897,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     return raw_buffer + start;
 }
 
-- (void)changeBufferSize:(int)capacity
-{
+- (void)changeBufferSize:(int)capacity {
     NSAssert(capacity >= [self rawSpaceUsed], @"Truncating used space");
     capacity = MAX(1, capacity);
     raw_buffer = (screen_char_t*) realloc((void*) raw_buffer, sizeof(screen_char_t) * capacity);
@@ -825,14 +921,16 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     [self changeBufferSize: [self rawSpaceUsed]];
 }
 
-- (int)dropLines:(int)n withWidth:(int)width chars:(int *)charsDropped
-{
+- (int)dropLines:(int)n withWidth:(int)width chars:(int *)charsDropped {
     int orig_n = n;
     int prev = 0;
     int length;
     int i;
     *charsDropped = 0;
     int initialOffset = start_offset;
+#if BETA
+    _numberOfFullLinesCache.clear();
+#endif
     for (i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
         LineBlockMetadata *metadata = &metadata_[i];
@@ -840,10 +938,16 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
         // Get the number of full-length wrapped lines in this raw line. If there
         // were only single-width characters the formula would be:
         //     (length - 1) / width;
-        int spans = NumberOfFullLines(buffer_start + prev,
+        int spans = [self numberOfFullLinesFromOffset:(buffer_start - raw_buffer) + prev
+                                               length:length
+                                                width:width];
+#if BETA
+        const int legacy_spans = iTermLineBlockNumberOfFullLinesImpl(buffer_start + prev,
                                       length,
                                       width,
                                       _mayHaveDoubleWidthCharacter);
+        assert(spans == legacy_spans);
+#endif
         if (n > spans) {
             // Consume the entire raw line and keep looking for more.
             int consume = spans + 1;
@@ -979,7 +1083,7 @@ static int CoreSearch(NSString *needle,
                       unichar *charHaystack,
                       int *deltas,
                       int deltaOffset) {
-    int apiOptions = 0;
+    RKLRegexOptions apiOptions = RKLNoOptions;
     NSRange range;
     const BOOL regex = (mode == iTermFindModeCaseInsensitiveRegex ||
                         mode == iTermFindModeCaseSensitiveRegex);
@@ -989,7 +1093,7 @@ static int CoreSearch(NSString *needle,
             backwards = YES;
         }
         if (mode == iTermFindModeCaseInsensitiveRegex) {
-            apiOptions |= RKLCaseless;
+            apiOptions = static_cast<RKLRegexOptions>(apiOptions | RKLCaseless);
         }
 
         NSError* regexError = nil;
@@ -1074,7 +1178,7 @@ static int CoreSearch(NSString *needle,
     } else {
         // Substring (not regex)
         if (options & FindOptBackwards) {
-            apiOptions |= NSBackwardsSearch;
+            apiOptions = static_cast<RKLRegexOptions>(apiOptions | NSBackwardsSearch);
         }
         BOOL caseInsensitive = (mode == iTermFindModeCaseInsensitiveSubstring);
         if (mode == iTermFindModeSmartCaseSensitivity &&
@@ -1082,7 +1186,7 @@ static int CoreSearch(NSString *needle,
             caseInsensitive = YES;
         }
         if (caseInsensitive) {
-            apiOptions |= NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch;
+            apiOptions = static_cast<RKLRegexOptions>(apiOptions | NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch);
         }
         range = [haystack rangeOfString:needle options:apiOptions];
     }
@@ -1349,10 +1453,17 @@ static int Search(NSString* needle,
             // Get the number of full-width lines in the raw line. If there were
             // only single-width characters the formula would be:
             //     spans = (line_length - 1) / width;
-            int spans = NumberOfFullLines(raw_buffer + prev,
-                                          line_length,
-                                          width,
-                                          _mayHaveDoubleWidthCharacter);
+            int spans = [self numberOfFullLinesFromOffset:prev
+                                                   length:line_length
+                                                    width:width];
+#if BETA
+            const int legacy_spans = iTermLineBlockNumberOfFullLinesImpl(raw_buffer + prev,
+                                                                         line_length,
+                                                                         width,
+                                                                         _mayHaveDoubleWidthCharacter);
+            assert(spans == legacy_spans);
+#endif
+
             *y += spans + 1;
         } else {
             // The position we're searching for is in this (unwrapped) line.
@@ -1360,7 +1471,7 @@ static int Search(NSString* needle,
             int dwc_peek = 0;
 
             // If the position is the left half of a double width char then include the right half in
-            // the following call to NumberOfFullLines.
+            // the following call to iTermLineBlockNumberOfFullLinesImpl.
 
             if (bytes_to_consume_in_this_line < line_length &&
                 prev + bytes_to_consume_in_this_line + 1 < eol) {
@@ -1369,10 +1480,16 @@ static int Search(NSString* needle,
                     ++dwc_peek;
                 }
             }
-            int consume = NumberOfFullLines(raw_buffer + prev,
+            int consume = [self numberOfFullLinesFromOffset:prev
+                                                     length:MIN(line_length, bytes_to_consume_in_this_line + 1 + dwc_peek)
+                                                      width:width];
+#if BETA
+            const int legacy_consume = iTermLineBlockNumberOfFullLinesImpl(raw_buffer + prev,
                                             MIN(line_length, bytes_to_consume_in_this_line + 1 + dwc_peek),
                                             width,
                                             _mayHaveDoubleWidthCharacter);
+            assert(consume == legacy_consume);
+#endif
             *y += consume;
             if (consume > 0) {
                 // Offset from prev where the consume'th line begin.

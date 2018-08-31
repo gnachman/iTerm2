@@ -51,9 +51,11 @@
 // negative: abs(this many) bytes are illegal, should be replaced by one
 //   single replacement symbol.
 // zero: Unfinished sequence, input needs to grow.
+#ifndef __cplusplus
 int decode_utf8_char(const unsigned char * restrict datap,
                      int datalen,
                      int * restrict result);
+#endif
 
 @interface NSString (iTerm)
 
