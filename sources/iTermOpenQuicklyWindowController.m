@@ -303,7 +303,7 @@
             if (i == row) {
                 color = [NSColor whiteColor];
             } else {
-                color = [NSColor blackColor];
+                color = [self blackColor];
             }
         }
         item.view.textField.textColor = color;
