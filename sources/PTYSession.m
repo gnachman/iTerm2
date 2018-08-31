@@ -7525,6 +7525,69 @@ ITERM_WEAKLY_REFERENCEABLE
     return _terminal.softAlternateScreenMode;
 }
 
+- (BOOL)textViewTerminalStateForMenuItem:(NSMenuItem *)menuItem {
+    switch (menuItem.tag) {
+        case 1:
+            return _screen.showingAlternateScreen;
+
+        case 2:
+            return _terminal.reportFocus;
+            break;
+
+        case 3:
+            return _terminal.mouseMode != MOUSE_REPORTING_NONE;
+
+        case 4:
+            return _terminal.bracketedPasteMode;
+
+        case 5:
+            return _terminal.cursorMode;
+
+        case 6:
+            return _terminal.keypadMode;
+    }
+
+    return NO;
+}
+
+- (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem {
+    switch (menuItem.tag) {
+        case 1:
+            [_screen toggleAlternateScreen];
+            break;
+
+        case 2:
+            _terminal.reportFocus = !_terminal.reportFocus;
+            break;
+
+        case 3:
+            if (_terminal.mouseMode == MOUSE_REPORTING_NONE) {
+                _terminal.mouseMode = _terminal.previousMouseMode;
+            } else {
+                _terminal.mouseMode = MOUSE_REPORTING_NONE;
+            }
+            [_terminal.delegate terminalMouseModeDidChangeTo:_terminal.mouseMode];
+            break;
+
+        case 4:
+            _terminal.bracketedPasteMode = !_terminal.bracketedPasteMode;
+            break;
+
+        case 5:
+            _terminal.cursorMode = !_terminal.cursorMode;
+            break;
+
+        case 6:
+            [_terminal forceSetKeypadMode:!_terminal.keypadMode];
+            break;
+            
+    }
+}
+
+- (void)textViewResetTerminal {
+    [_terminal gentleReset];
+}
+
 - (void)bury {
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];

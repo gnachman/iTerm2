@@ -3256,6 +3256,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     commandStartX_ = commandStartY_ = -1;
 }
 
+- (void)toggleAlternateScreen {
+    if (self.showingAlternateScreen) {
+        [self terminalShowPrimaryBuffer];
+    } else {
+        [self terminalShowAltBuffer];
+    }
+}
+
 - (BOOL)terminalIsShowingAltBuffer {
     return [self showingAlternateScreen];
 }

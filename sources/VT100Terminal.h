@@ -38,6 +38,7 @@
 @property(nonatomic, assign) BOOL sendReceiveMode;
 @property(nonatomic, readonly) int charset;  // G0 through G3
 @property(nonatomic, assign) MouseMode mouseMode;
+@property(nonatomic, readonly) MouseMode previousMouseMode;  // will never equal NONE
 @property(nonatomic, assign) MouseFormat mouseFormat;
 
 // The current foreground/background color to display (they're swapped when reverseVideo is on).
@@ -50,6 +51,7 @@
 
 @property(nonatomic, assign) BOOL cursorMode;
 @property(nonatomic, assign) BOOL keypadMode;  // YES=application, NO=numeric
+- (void)forceSetKeypadMode:(BOOL)mode;  // ignores allowKeypadMode
 @property(nonatomic, assign) BOOL allowKeypadMode;
 
 // http://www.xfree86.org/current/ctlseqs.html#Bracketed%20Paste%20Mode
@@ -108,5 +110,7 @@
 
 // Reset colors, etc. Anything affected by SGR.
 - (void)resetGraphicRendition;
+
+- (void)gentleReset;
 
 @end

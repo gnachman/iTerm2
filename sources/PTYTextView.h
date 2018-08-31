@@ -201,6 +201,9 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (BOOL)textViewShouldDrawRect;
 - (void)textViewDidHighightMark;
 - (BOOL)textViewInInteractiveApplication;
+- (BOOL)textViewTerminalStateForMenuItem:(NSMenuItem *)menuItem;
+- (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem;
+- (void)textViewResetTerminal;
 
 @end
 

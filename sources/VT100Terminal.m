@@ -52,6 +52,7 @@ NSString *const kTerminalStateInsertModeKey = @"Insert Mode";
 NSString *const kTerminalStateSendReceiveModeKey = @"Send/Receive Mode";
 NSString *const kTerminalStateCharsetKey = @"Charset";
 NSString *const kTerminalStateMouseModeKey = @"Mouse Mode";
+NSString *const kTerminalStatePreviousMouseModeKey = @"Previous Mouse Mode";
 NSString *const kTerminalStateMouseFormatKey = @"Mouse Format";
 NSString *const kTerminalStateCursorModeKey = @"Cursor Mode";
 NSString *const kTerminalStateKeypadModeKey = @"Keypad Mode";
@@ -225,6 +226,7 @@ static const int kMaxScreenRows = 4096;
         graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
         graphicRendition_.bgColorMode = ColorModeAlternate;
         _mouseMode = MOUSE_REPORTING_NONE;
+        _previousMouseMode = MOUSE_REPORTING_NORMAL;
         _mouseFormat = MOUSE_FORMAT_XTERM;
 
         _allowKeypadMode = YES;
@@ -318,12 +320,8 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
-- (void)resetByUserRequest:(BOOL)userInitiated {
+- (void)commonReset {
     self.cursorMode = NO;
-    if (_columnMode) {
-        [delegate_ terminalSetWidth:80];
-    }
-    self.columnMode = NO;
     _reverseVideo = NO;
     _originMode = NO;
     _moreFix = NO;
@@ -354,11 +352,24 @@ static const int kMaxScreenRows = 4096;
         altSavedCursor_.lineDrawing[i] = NO;
     }
     [self resetSavedCursorPositions];
+    [delegate_ terminalShowPrimaryBuffer];
+    _softAlternateScreenMode = NO;
+}
+
+- (void)gentleReset {
+    [self commonReset];
+    [delegate_ terminalSetCursorVisible:YES];
+}
+
+- (void)resetByUserRequest:(BOOL)userInitiated {
+    if (_columnMode) {
+        [delegate_ terminalSetWidth:80];
+    }
+    self.columnMode = NO;
+    [self commonReset];
     if (userInitiated) {
         [_parser reset];
     }
-    [delegate_ terminalShowPrimaryBuffer];
-    _softAlternateScreenMode = NO;
     [delegate_ terminalResetPreservingPrompt:userInitiated];
 }
 
@@ -379,14 +390,16 @@ static const int kMaxScreenRows = 4096;
     _output.mouseFormat = mouseFormat;
 }
 
-- (void)setKeypadMode:(BOOL)mode
-{
-    _keypadMode = mode && self.allowKeypadMode;
+- (void)setKeypadMode:(BOOL)mode {
+    [self forceSetKeypadMode:(mode && self.allowKeypadMode)];
+}
+
+- (void)forceSetKeypadMode:(BOOL)mode {
+    _keypadMode = mode;
     _output.keypadMode = _keypadMode;
 }
 
-- (void)setAllowKeypadMode:(BOOL)allow
-{
+- (void)setAllowKeypadMode:(BOOL)allow {
     _allowKeypadMode = allow;
     if (!allow) {
         self.keypadMode = NO;
@@ -891,8 +904,10 @@ static const int kMaxScreenRows = 4096;
     return nil;
 }
 
-- (void)setMouseMode:(MouseMode)mode
-{
+- (void)setMouseMode:(MouseMode)mode {
+    if (_mouseMode != MOUSE_REPORTING_NONE) {
+        _previousMouseMode = self.mouseMode;
+    }
     _mouseMode = mode;
     [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
 }
@@ -2758,6 +2773,7 @@ static const int kMaxScreenRows = 4096;
            kTerminalStateSendReceiveModeKey: @(self.sendReceiveMode),
            kTerminalStateCharsetKey: @(self.charset),
            kTerminalStateMouseModeKey: @(self.mouseMode),
+           kTerminalStatePreviousMouseModeKey: @(_previousMouseMode),
            kTerminalStateMouseFormatKey: @(self.mouseFormat),
            kTerminalStateCursorModeKey: @(self.cursorMode),
            kTerminalStateKeypadModeKey: @(self.keypadMode),
@@ -2804,6 +2820,7 @@ static const int kMaxScreenRows = 4096;
     self.sendReceiveMode = [dict[kTerminalStateSendReceiveModeKey] boolValue];
     self.charset = [dict[kTerminalStateCharsetKey] intValue];
     self.mouseMode = [dict[kTerminalStateMouseModeKey] intValue];
+    _previousMouseMode = [dict[kTerminalStatePreviousMouseModeKey] ?: @(MOUSE_REPORTING_NORMAL) intValue];
     self.mouseFormat = [dict[kTerminalStateMouseFormatKey] intValue];
     self.cursorMode = [dict[kTerminalStateCursorModeKey] boolValue];
     self.keypadMode = [dict[kTerminalStateKeypadModeKey] boolValue];

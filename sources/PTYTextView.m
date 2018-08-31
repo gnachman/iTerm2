@@ -3751,11 +3751,47 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return [[NSPasteboard generalPasteboard] dataForFirstFile] != nil;
     }
 
+    if (item.action == @selector(terminalStateToggleAlternateScreen:) ||
+        item.action == @selector(terminalStateToggleFocusReporting:) ||
+        item.action == @selector(terminalStateToggleMouseReporting:) ||
+        item.action == @selector(terminalStateTogglePasteBracketing:) ||
+        item.action == @selector(terminalStateToggleApplicationCursor:) ||
+        item.action == @selector(terminalStateToggleApplicationKeypad:)) {
+        item.state = [self.delegate textViewTerminalStateForMenuItem:item] ? NSOnState : NSOffState;
+        return YES;
+    }
+    if (item.action == @selector(terminalStateReset:)) {
+        return YES;
+    }
+
     SEL theSel = [item action];
     if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
         return YES;
     }
     return NO;
+}
+
+- (IBAction)terminalStateToggleAlternateScreen:(id)sender {
+    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+}
+- (IBAction)terminalStateToggleFocusReporting:(id)sender {
+    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+}
+- (IBAction)terminalStateToggleMouseReporting:(id)sender {
+    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+}
+- (IBAction)terminalStateTogglePasteBracketing:(id)sender {
+    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+}
+- (IBAction)terminalStateToggleApplicationCursor:(id)sender {
+    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+}
+- (IBAction)terminalStateToggleApplicationKeypad:(id)sender {
+    [self.delegate textViewToggleTerminalStateForMenuItem:sender];
+}
+
+- (IBAction)terminalStateReset:(id)sender {
+    [self.delegate textViewResetTerminal];
 }
 
 - (BOOL)_haveShortSelection
