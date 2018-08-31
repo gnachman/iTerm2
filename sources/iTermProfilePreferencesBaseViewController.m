@@ -7,6 +7,7 @@
 //
 
 #import "iTermProfilePreferencesBaseViewController.h"
+#import "DebugLogging.h"
 #import "iTermProfilePreferences.h"
 
 @implementation iTermProfilePreferencesBaseViewController
@@ -41,10 +42,16 @@
 
 - (int)intForKey:(NSString *)key {
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
+    if ([key isEqualToString:@"Cursor Type"]) {
+        DLog(@"querying profile for cursor type. Profile is\n%@", profile);
+    }
     return [iTermProfilePreferences intForKey:key inProfile:profile];
 }
 
 - (void)setInt:(int)value forKey:(NSString *)key {
+    if ([key isEqualToString:@"Cursor Type"]) {
+        DLog(@"prefs is changing cursor type to %@", @(value));
+    }
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
     [iTermProfilePreferences setInt:value forKey:key inProfile:profile model:model];

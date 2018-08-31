@@ -3683,7 +3683,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_screen setCursorBlinks:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setBlinkingCursor:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setCursorType:[iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:aDict]];
-
+    DLog(@"session %@ with profile guid=%@ having cursor type %@ setting it to %@", self, self.profile[KEY_GUID], aDict[KEY_CURSOR_TYPE], @([iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:aDict]));
     PTYTab* currentTab = [[_delegate parentWindow] currentTab];
     if (currentTab == nil || [_delegate sessionBelongsToVisibleTab]) {
         [_delegate recheckBlur];

@@ -7,6 +7,7 @@
 //
 
 #import "iTermPreferencesBaseViewController.h"
+#import "DebugLogging.h"
 #import "iTermPreferences.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -156,26 +157,33 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 #pragma mark - APIs
 
 - (IBAction)settingChanged:(id)sender {
+    DLog(@"setting changed for sender %@", sender);
+
     PreferenceInfo *info = [self infoForControl:sender];
     assert(info);
 
     if (info.willChange) {
+        DLog(@"Invoking willChange block");
         info.willChange();
     }
 
     if (info.customSettingChangedHandler) {
+        DLog(@"Invoking custom setting changed handler. This is what should happen when you change the cursor type.");
         info.customSettingChangedHandler(sender);
     } else {
         switch (info.type) {
             case kPreferenceInfoTypeCheckbox:
+                DLog(@"is a checkbox");
                 [self setBool:([sender state] == NSOnState) forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeInvertedCheckbox:
+                DLog(@"is an inverted checkbox");
                 [self setBool:([sender state] == NSOffState) forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeIntegerTextField:
+                DLog(@"is a text field");
                 [self applyIntegerConstraints:info];
                 const int intValue = [sender separatorTolerantIntValue];
                 if (!info.deferUpdate) {
@@ -184,6 +192,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                 break;
 
             case kPreferenceInfoTypeDoubleTextField: {
+                DLog(@"is a numeric floating point text field");
                 NSScanner *scanner = [NSScanner localizedScannerWithString:[sender stringValue]];
                 double value;
                 if ([scanner scanDouble:&value]) {
@@ -201,36 +210,44 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
             }
 
             case kPreferenceInfoTypeUnsignedIntegerTextField:
+                DLog(@"is a numeric uint text field");
                 [self applyUnsignedIntegerConstraints:info];
                 [self setUnsignedInteger:[sender separatorTolerantUnsignedIntegerValue] forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeStringTextField:
+                DLog(@"is a string text field");
                 [self setString:[sender stringValue] forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeTokenField:
+                DLog(@"is a token field");
                 [self setObject:[sender objectValue] forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeMatrix:
             case kPreferenceInfoTypeRadioButton:
+                DLog(@"is a matrix or a radio buttion, dying");
                 assert(false);  // Must use a custom setting changed handler
 
             case kPreferenceInfoTypePopup:
+                DLog(@"is a popup");
                 [self setInt:[sender selectedTag] forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeUnsignedIntegerPopup:
+                DLog(@"is a uint popup");
                 assert([sender selectedTag]>=0);
                 [self setUnsignedInteger:[sender selectedTag] forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeSlider:
+                DLog(@"is a slider");
                 [self setFloat:[sender doubleValue] forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeColorWell:
+                DLog(@"is a color well");
                 [self setObject:[[sender color] dictionaryValue] forKey:info.key];
                 break;
 
@@ -238,13 +255,16 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                 assert(false);
         }
         if (info.onChange) {
+            DLog(@"invoking onChange handler");
             info.onChange();
         }
     }
     if (info.observer) {
+        DLog(@"invoking observer");
         info.observer();
     }
     if ([self shouldUpdateOtherPanels]) {
+        DLog(@"posting notif to update other panels");
         [[NSNotificationCenter defaultCenter] postNotificationName:kPreferenceDidChangeFromOtherPanel
                                                             object:self
                                                           userInfo:@{ kPreferenceDidChangeFromOtherPanelKeyUserInfoKey: info.key }];
@@ -289,16 +309,22 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {
+
+    DLog(@"in updateValueForInfo for key %@", info.key);
     if (_disableUpdates) {
+        DLog(@"updates are disabled, returning");
         return;
     }
     if (info.onUpdate) {
+        DLog(@"invoking custom onUpdate handler");
         if (info.onUpdate()) {
+            DLog(@"returning early because onUpdate returned YES");
             return;
         }
     }
     switch (info.type) {
         case kPreferenceInfoTypeCheckbox: {
+            DLog(@"is a checkbox");
             assert([info.control isKindOfClass:[NSButton class]]);
             NSButton *button = (NSButton *)info.control;
             button.state = [self boolForKey:info.key] ? NSOnState : NSOffState;
@@ -306,6 +332,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         }
 
         case kPreferenceInfoTypeInvertedCheckbox: {
+            DLog(@"is an inverted checkbox");
             assert([info.control isKindOfClass:[NSButton class]]);
             NSButton *button = (NSButton *)info.control;
             button.state = [self boolForKey:info.key] ? NSOffState : NSOnState;
@@ -313,6 +340,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         }
 
         case kPreferenceInfoTypeIntegerTextField: {
+            DLog(@"is an int text field");
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
             field.intValue = [self intForKey:info.key];
@@ -320,12 +348,14 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         }
 
         case kPreferenceInfoTypeUnsignedIntegerTextField: {
+            DLog(@"is a uint text field");
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
             field.stringValue = [NSString stringWithFormat:@"%lu", [self unsignedIntegerForKey:info.key]];
         }
 
         case kPreferenceInfoTypeDoubleTextField: {
+            DLog(@"is a double text field");
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
             field.doubleValue = [self doubleForKey:info.key];
@@ -333,6 +363,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         }
 
         case kPreferenceInfoTypeStringTextField: {
+            DLog(@"is a string text field");
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
             field.stringValue = [self stringForKey:info.key] ?: @"";
@@ -340,6 +371,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         }
 
         case kPreferenceInfoTypeTokenField: {
+            DLog(@"is a token field");
             assert([info.control isKindOfClass:[NSTokenField class]]);
             NSTokenField *field = (NSTokenField *)info.control;
             NSObject *object = [self objectForKey:info.key];;
@@ -349,6 +381,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         }
 
         case kPreferenceInfoTypePopup: {
+            DLog(@"is a popup");
             assert([info.control isKindOfClass:[NSPopUpButton class]]);
             NSPopUpButton *popup = (NSPopUpButton *)info.control;
             [popup selectItemWithTag:[self intForKey:info.key]];
@@ -356,6 +389,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         }
 
         case kPreferenceInfoTypeUnsignedIntegerPopup: {
+            DLog(@"is a uint popup");
             assert([info.control isKindOfClass:[NSPopUpButton class]]);
             NSPopUpButton *popup = (NSPopUpButton *)info.control;
             const NSUInteger value = [self unsignedIntegerForKey:info.key];
@@ -365,6 +399,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
         }
 
         case kPreferenceInfoTypeSlider: {
+            DLog(@"is a slider");
             assert([info.control isKindOfClass:[NSSlider class]]);
             NSSlider *slider = (NSSlider *)info.control;
             slider.doubleValue = [self floatForKey:info.key];
@@ -373,9 +408,11 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
         case kPreferenceInfoTypeMatrix:
         case kPreferenceInfoTypeRadioButton:
+            DLog(@"is a matrix or radio button, dying");
             assert(false);  // Must use onChange() only.
 
         case kPreferenceInfoTypeColorWell: {
+            DLog(@"is a color well");
             assert([info.control isKindOfClass:[CPKColorWell class]]);
             CPKColorWell *colorWell = (CPKColorWell *)info.control;
             NSDictionary *dict = (NSDictionary *)[self objectForKey:info.key];
@@ -390,6 +427,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
             assert(false);
     }
     if (info.observer) {
+        DLog(@"calling observer");
         info.observer();
     }
 }
@@ -567,12 +605,15 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
 
 - (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {
     NSString *key = notification.userInfo[kPreferenceDidChangeFromOtherPanelKeyUserInfoKey];
+    DLog(@"%@: prefs did change from other panel for key %@.", self, key);
     if (![_keys containsObject:key]) {
+        DLog(@"IDGAF, returning");
         return;
     }
     PreferenceInfo *info = [self infoForKey:key];
     assert(info);
     if (!info.deferUpdate) {
+        DLog(@"calling updateValueForInfo");
         [self updateValueForInfo:info];
     }
 }

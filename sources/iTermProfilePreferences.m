@@ -43,6 +43,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 }
 
 + (int)intForKey:(NSString *)key inProfile:(Profile *)profile {
+    if ([key isEqualToString:KEY_CURSOR_TYPE]) {
+        DLog(@"querying value of cursor type. user defaults has %@", [[NSUserDefaults standardUserDefaults] objectForKey:key]);
+    }
     return [[self objectForKey:key inProfile:profile] intValue];
 }
 
@@ -379,6 +382,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
            forKey:(NSString *)key
         inProfile:(Profile *)profile
             model:(ProfileModel *)model {
+    DLog(@"writing to profile %@: %@=%@", profile[KEY_GUID], key, object);
+
     [model setObject:object forKey:key inBookmark:profile];
     [model flush];
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
@@ -426,6 +431,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 + (id)computedObjectForKey:(NSString *)key inProfile:(Profile *)profile {
     id (^block)(Profile *) = [self computedObjectDictionary][key];
     if (block) {
+        if ([key isEqualToString:KEY_CURSOR_TYPE]) {
+            DLog(@"wtf, have a computed object for cursor type. %@", [self computedObjectDictionary]);
+        }
         return block(profile);
     } else {
         return nil;
@@ -435,6 +443,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 + (NSString *)uncomputedObjectForKey:(NSString *)key inProfile:(Profile *)profile {
     id object = profile[key];
     if (!object) {
+        if ([key isEqualToString:KEY_CURSOR_TYPE]) {
+            DLog(@"profile has no value for cursor type, using default.");
+        }
         object = [self defaultObjectForKey:key];
     }
     return object;

@@ -7,6 +7,8 @@
 //
 
 #import "ProfilesTextPreferencesViewController.h"
+
+#import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "iTermFontPanel.h"
@@ -84,12 +86,20 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     [self defineControl:_cursorType
                     key:KEY_CURSOR_TYPE
                    type:kPreferenceInfoTypeMatrix
-         settingChanged:^(id sender) { [self setInt:[[sender selectedCell] tag] forKey:KEY_CURSOR_TYPE]; }
+         settingChanged:^(id sender) {
+             NSCell *cell = [sender selectedCell];
+             DLog(@"Setting changed from %@. Set profile key to tag %@. selected cell is %@", sender, @([cell tag]), cell);
+             [self setInt:[[sender selectedCell] tag] forKey:KEY_CURSOR_TYPE];
+
+         }
                  update:^BOOL{
                      __strong __typeof(weakSelf) strongSelf = weakSelf;
                      if (!strongSelf) {
                          return NO;
                      }
+                     DLog(@"update block running");
+                     DLog(@"value in prefs is %@", @([self intForKey:KEY_CURSOR_TYPE]));
+                     DLog(@"%@", [NSThread callStackSymbols]);
                      [strongSelf->_cursorType selectCellWithTag:[self intForKey:KEY_CURSOR_TYPE]];
                      return YES;
                  }];
