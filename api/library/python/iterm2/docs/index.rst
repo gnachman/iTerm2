@@ -9,6 +9,10 @@ Python API
 iTerm2 offers a Python package which makes it easy to write Python scripts that
 control iTerm2 and extend its behavior.
 
+.. warning::
+
+   This is under active development. APIs will change without notice.
+
 **Getting Started**
 
 Start by following the :ref:`tutorial <tutorial-index>`, which gives a step-by-step guide to writing a
