@@ -3347,7 +3347,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab:
-            return NSEdgeInsetsMake(0, 69, 0, 0);
+            return NSEdgeInsetsMake(0, 75, 0, 0);
 
         case PSMTab_LeftTab:
             return NSEdgeInsetsMake(24, 0, 0, 0);

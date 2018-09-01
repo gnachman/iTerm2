@@ -25,7 +25,7 @@
 
 const CGFloat iTermStandardButtonsViewHeight = 25;
 const CGFloat iTermStandardButtonsViewWidth = 69;
-const CGFloat iTermStoplightHotboxWidth = iTermStandardButtonsViewWidth + 12;
+const CGFloat iTermStoplightHotboxWidth = iTermStandardButtonsViewWidth + 28;
 const CGFloat iTermStoplightHotboxHeight = iTermStandardButtonsViewHeight + 8;
 const CGFloat kDivisionViewHeight = 1;
 
@@ -165,6 +165,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 - (NSEdgeInsets)insetsForStoplightHotbox {
     if (![self.delegate enableStoplightHotbox]) {
         NSEdgeInsets insets = NSEdgeInsetsZero;
+        insets.left = insets.right = 6;
         insets.bottom = -[self.delegate rootTerminalViewStoplightButtonsOffset:self];
         return insets;
     }
@@ -186,7 +187,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     }
     NSRect frame = NSMakeRect(insets.left,
                               self.frame.size.height - height + insets.bottom + 1,
-                              x + stride * self.numberOfWindowButtons,
+                              iTermStandardButtonsViewWidth,
                               iTermStandardButtonsViewHeight);
     return frame;
 }
