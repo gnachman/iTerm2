@@ -1374,6 +1374,7 @@ static NSDate* lastResizeDate_;
 
         NSRect initialRect = finalRect;
         initialRect.origin.y += finalRect.size.height;
+        _title.hidden = YES;
         _currentAnnouncement.view.frame = initialRect;
 
         [_currentAnnouncement.view.animator setFrame:finalRect];
@@ -1381,6 +1382,8 @@ static NSDate* lastResizeDate_;
         _currentAnnouncement.view.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
         [_currentAnnouncement didBecomeVisible];
         [self addSubviewBelowFindView:_currentAnnouncement.view];
+    } else {
+        _title.hidden = NO;
     }
     [self.delegate sessionViewAnnouncementDidChange:self];
 }
