@@ -112,7 +112,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     return @{ NSParagraphStyleAttributeName: leftAlignStyle,
               NSFontAttributeName: self.font,
-              NSForegroundColorAttributeName: self.defaultTextColor };
+              NSForegroundColorAttributeName: self.textColor };
 }
 
 - (NSDictionary *)rightAttributes {
@@ -122,7 +122,7 @@ NS_ASSUME_NONNULL_BEGIN
     [rightAlignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
     return @{ NSParagraphStyleAttributeName: rightAlignStyle,
               NSFontAttributeName: self.font,
-              NSForegroundColorAttributeName: self.defaultTextColor };
+              NSForegroundColorAttributeName: self.textColor };
 }
 
 - (CGSize)rightSize {

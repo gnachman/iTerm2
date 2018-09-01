@@ -14,6 +14,8 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 
+static NSString *const iTermStatusBarGraphicComponentTextColorKey = @"graphic component text color";
+
 @implementation iTermStatusBarImageComponentView
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -48,7 +50,13 @@
     iTermStatusBarImageComponentView *_view;
 }
 
-- (NSColor *)defaultTextColor {
+- (NSColor *)textColor {
+    NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    NSColor *configuredColor = [knobValues[iTermStatusBarGraphicComponentTextColorKey] colorValue];
+    if (configuredColor) {
+        return configuredColor;
+    }
+
     NSColor *provided = [self.delegate statusBarComponentDefaultTextColor];
     if (provided) {
         return provided;
@@ -64,8 +72,17 @@
                                                    placeholder:nil
                                                   defaultValue:nil
                                                            key:iTermStatusBarSharedBackgroundColorKey];
-
-    return [@[ backgroundColorKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+    NSArray<iTermStatusBarComponentKnob *> *knobs = [@[ backgroundColorKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+    if (self.shouldHaveTextColorKnob) {
+        iTermStatusBarComponentKnob *textColorKnob =
+            [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Text Color"
+                                                              type:iTermStatusBarComponentKnobTypeColor
+                                                       placeholder:nil
+                                                      defaultValue:nil
+                                                               key:iTermStatusBarGraphicComponentTextColorKey];
+        knobs = [knobs arrayByAddingObject:textColorKnob];
+    }
+    return knobs;
 }
 
 - (iTermStatusBarImageComponentView *)newView {
@@ -192,6 +209,10 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
 
 @implementation iTermStatusBarSparklinesComponent {
     NSInteger _currentCount;
+}
+
+- (BOOL)shouldHaveTextColorKnob {
+    return YES;
 }
 
 - (NSColor *)lineColor {

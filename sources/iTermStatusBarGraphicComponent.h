@@ -19,7 +19,8 @@
 @property (nonatomic, readonly) iTermStatusBarImageComponentView *view;
 @property (nonatomic, readonly) id model;
 @property (nonatomic, strong) id preferredModel;
-@property (nonatomic, readonly) NSColor *defaultTextColor;
+@property (nonatomic, readonly) NSColor *textColor;
+@property (nonatomic, readonly) BOOL shouldHaveTextColorKnob;
 
 - (void)drawRect:(NSRect)rect;
 
