@@ -610,7 +610,7 @@ static NSMutableArray<NSNotification *> *sDelayedNotifications;
 
 + (NSString *)standardLoginCommand {
     return [NSString stringWithFormat:@"login -f%@p \"%@\"", [self hushlogin] ? @"q" : @"",
-            [NSUserName() stringWithEscapedShellCharactersIncludingNewlines:YES]]st;
+            [NSUserName() stringWithEscapedShellCharactersIncludingNewlines:YES]];
 }
 
 + (NSString*)bookmarkCommand:(Profile*)bookmark
