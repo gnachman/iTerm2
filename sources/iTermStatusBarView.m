@@ -19,16 +19,20 @@
     }
 
     __block CGFloat x = 1;
+    const CGFloat separatorTopBottomInset = 3;
     [_sections enumerateObjectsUsingBlock:^(iTermTuple<NSColor *, NSNumber *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
         CGFloat offset = tuple.secondObject.doubleValue;
 
         if (tuple.firstObject) {
             [tuple.firstObject set];
-            NSRectFill(NSMakeRect(x, 1, offset - x, dirtyRect.size.height - 1));
+            NSRectFill(NSMakeRect(x,
+                                  1,
+                                  offset - x,
+                                  dirtyRect.size.height - 1));
         }
 
         [[NSColor colorWithWhite:0 alpha:alpha] set];
-        NSRect rect = NSMakeRect(offset, 1, 1, dirtyRect.size.height - 1);
+        NSRect rect = NSMakeRect(offset, separatorTopBottomInset, 1, dirtyRect.size.height - separatorTopBottomInset * 2);
         NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 
         x = offset + 1;
