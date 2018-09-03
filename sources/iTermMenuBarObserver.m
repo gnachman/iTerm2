@@ -55,7 +55,7 @@ static const CGFloat iTermMenuBarHeight = 22;
         NSString *windowName = info[(id)kCGWindowName];
         return [windowName isEqualToString:@"Menubar"];
     }];
-    NSLog(@"menu bar infos:\n%@", menuBarInfos);
+    DLog(@"menu bar infos:\n%@", menuBarInfos);
     return menuBarInfos;
 }
 
