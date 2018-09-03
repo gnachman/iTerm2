@@ -26,7 +26,7 @@
                         <rect key="frame" x="1" y="1" width="608" height="180"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <collectionView ambiguous="YES" id="jZn-RM-fbW">
+                            <collectionView ambiguous="YES" id="jZn-RM-fbW" customClass="iTermNoFirstResponderCollectionView">
                                 <rect key="frame" x="0.0" y="0.0" width="608" height="180"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
                                 <collectionViewFlowLayout key="collectionViewLayout" minimumInteritemSpacing="10" minimumLineSpacing="10" id="nZX-TD-aQ0">
@@ -76,7 +76,7 @@
                         <rect key="frame" x="1" y="1" width="608" height="180"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <collectionView ambiguous="YES" selectable="YES" id="jgc-om-qSy">
+                            <collectionView ambiguous="YES" selectable="YES" id="jgc-om-qSy" customClass="iTermStatusBarSetupDestinationCollectionView">
                                 <rect key="frame" x="0.0" y="0.0" width="608" height="180"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
                                 <collectionViewFlowLayout key="collectionViewLayout" minimumInteritemSpacing="10" minimumLineSpacing="10" id="vyZ-Rc-eih">

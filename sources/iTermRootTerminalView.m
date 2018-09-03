@@ -176,8 +176,6 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 }
 
 - (NSRect)frameForStandardWindowButtons {
-    CGFloat x = self.leftInsetForWindowButtons;
-    const CGFloat stride = self.strideForWindowButtons;
     const NSEdgeInsets insets = [self insetsForStoplightHotbox];
     CGFloat height;
     if ([self.delegate enableStoplightHotbox]) {
