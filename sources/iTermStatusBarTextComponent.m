@@ -191,6 +191,10 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
     return number.doubleValue;
 }
 
+- (NSColor *)statusBarTextColor {
+    return [self textColor];
+}
+
 #pragma mark - iTermStatusBarComponent
 
 - (NSView *)statusBarComponentCreateView {

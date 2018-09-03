@@ -117,6 +117,10 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
     return [self.configuration isEqual:otherBase.configuration];
 }
 
+- (nullable NSColor *)statusBarTextColor {
+    return nil;
+}
+
 #pragma mark - iTermStatusBarComponent
 
 - (NSString *)statusBarComponentShortDescription {

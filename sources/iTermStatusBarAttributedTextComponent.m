@@ -273,6 +273,10 @@ NSString *const iTermStatusBarAttributedTextComponentTextColorKey = @"attributed
     view.frame = NSMakeRect(0, 0, width, view.frame.size.height);
 }
 
+- (NSColor *)statusBarTextColor {
+    return [self textColor];
+}
+
 - (void)save {
     NSAttributedString *attributedString = _measuringField.attributedStringValue;
     NSSize boxSize = [attributedString size];

@@ -65,6 +65,10 @@ static NSString *const iTermStatusBarGraphicComponentTextColorKey = @"graphic co
     }
 }
 
+- (NSColor *)statusBarTextColor {
+    return [self textColor];
+}
+
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *backgroundColorKnob =
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Background Color"

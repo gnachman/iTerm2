@@ -351,7 +351,7 @@ const CGFloat iTermStatusBarHeight = 22;
 
 - (void)updateColors {
     for (iTermStatusBarContainerView *view in _containerViews) {
-        view.iconImageView.contentTintColor = [self statusBarComponentDefaultTextColor];
+        view.iconImageView.contentTintColor = [view.component statusBarTextColor] ?: [self statusBarComponentDefaultTextColor];
         [view.component statusBarDefaultTextColorDidChange];
         [view setNeedsDisplay:YES];
     }

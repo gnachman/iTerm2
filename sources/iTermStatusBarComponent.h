@@ -122,4 +122,6 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 // Update colors if needed
 - (void)statusBarDefaultTextColorDidChange;
 
+- (NSColor *)statusBarTextColor;
+
 @end
