@@ -2951,8 +2951,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[iTermNotificationController sharedInstance] notify:@"Session Ended"
                                              withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                                                               [self name],
-                                                              [_delegate tabNumber]]
-                                             andNotification:@"Broken Pipes"];
+                                                              [_delegate tabNumber]]];
     }
 
     _exited = YES;
