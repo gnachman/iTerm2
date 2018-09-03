@@ -91,6 +91,7 @@
     }
     NSInteger selectedIndex = [selections.anyObject indexAtPosition:1];
     [self deleteItemAtIndex:selectedIndex];
+    _configureButton.enabled = NO;
 }
 
 - (void)deleteItemAtIndex:(NSInteger)index {
