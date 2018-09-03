@@ -14,7 +14,6 @@
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
 
-static const NSInteger iTermStatusBarMemoryUtilizationComponentMaximumNumberOfSamples = 60;
 static const CGFloat iTermMemoryUtilizationWidth = 120;
 
 NS_ASSUME_NONNULL_BEGIN
