@@ -268,8 +268,8 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
 
 - (void)drawBezierPath:(NSBezierPath *)bezierPath forTimeSeries:(NSInteger)timeSeriesIndex {
     if (self.numberOfTimeSeries == 1) {
-        NSGradient *gradient = [[NSGradient alloc] initWithColors:@[ [NSColor blackColor],
-                                                                     [NSColor colorWithRed:1 green:0.25 blue:0 alpha:1] ]];
+        NSGradient *gradient = [[NSGradient alloc] initWithColors:@[ [self statusBarTextColor],
+                                                                     [[self statusBarTextColor] colorWithAlphaComponent:0] ]];
         [gradient drawInBezierPath:bezierPath angle:90];
     } else if (self.numberOfTimeSeries == 2) {
         if (timeSeriesIndex == 0) {
