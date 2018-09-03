@@ -281,6 +281,7 @@
     }
     NSSize size = self.size;
     NSImage *image = [self copy];
+    image.template = NO;
     [image it_drawWithBlock:^{
         [tintColor set];
         NSRectFillUsingOperation(NSMakeRect(0, 0, size.width, size.height),

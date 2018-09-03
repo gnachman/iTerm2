@@ -8,6 +8,7 @@
 #import "iTermStatusBarContainerView.h"
 
 #import "NSDictionary+iTerm.h"
+#import "NSImageView+iTerm.h"
 #import "NSTimer+iTerm.h"
 
 const CGFloat iTermStatusBarViewControllerIconWidth = 17;
@@ -35,12 +36,9 @@ NS_ASSUME_NONNULL_BEGIN
         const BOOL hasIcon = (icon != nil);
         const CGFloat x = hasIcon ? iTermStatusBarViewControllerIconWidth : 0;
         if (hasIcon) {
-#warning TODO: Test this on macos 10.13
             icon.template = YES;
             _iconImageView = [NSImageView imageViewWithImage:icon];
-            if (@available(macOS 10.14, *)) {
-                _iconImageView.contentTintColor = [NSColor labelColor];
-            }
+            [_iconImageView it_setTintColor:[NSColor labelColor]];
             [_iconImageView sizeToFit];
             [self addSubview:_iconImageView];
             _iconImageView.layer.borderWidth =1;
