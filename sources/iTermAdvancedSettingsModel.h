@@ -60,7 +60,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (BOOL)disableAppNap;
 + (BOOL)disableCustomBoxDrawing;
-+ (BOOL)disableGrowl;
 + (BOOL)disableMetalWhenIdle;
 + (BOOL)disablePasswordManagerAnimations;
 + (BOOL)disablePotentiallyInsecureEscapeSequences;
