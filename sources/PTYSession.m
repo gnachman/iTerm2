@@ -1458,7 +1458,8 @@ ITERM_WEAKLY_REFERENCEABLE
     NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
     BOOL restoreContents = !tmuxPaneNumber && contents && [iTermAdvancedSettingsModel restoreWindowContents];
     BOOL attachedToServer = NO;
-    void (^runCommandBlock)(void (^)(BOOL)) = ^(void (^completion)(BOOL)) { completion(YES); };
+    typedef void (^iTermBooleanCompletionBlock)(BOOL ok);
+    void (^runCommandBlock)(iTermBooleanCompletionBlock) = ^(void (^completion)(BOOL)) { completion(YES); };
 
     if (!tmuxPaneNumber) {
         DLog(@"No tmux pane ID during session restoration");
@@ -1553,7 +1554,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 isUTF8Arg = @(aSession.isUTF8);
                 substitutionsArg = aSession.substitutions;
             }
-            runCommandBlock = ^(void (^completion)(BOOL)) {
+            runCommandBlock = ^(iTermBooleanCompletionBlock completion) {
                 iTermSessionFactory *factory = [[[iTermSessionFactory alloc] init] autorelease];
                 [factory attachOrLaunchCommandInSession:aSession
                                               canPrompt:NO
