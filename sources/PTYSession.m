@@ -31,6 +31,7 @@
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyLabels.h"
+#import "iTermLocalHostNameGuesser.h"
 #import "iTermMetaFrustrationDetector.h"
 #import "iTermMetalGlue.h"
 #import "iTermMetalDriver.h"
@@ -739,10 +740,6 @@ static NSString *const iTermSessionTitleSession = @"session";
     return self;
 }
 
-- (void)didFinishInitialization:(BOOL)ok {
-    [_pwdPoller poll];
-}
-
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
@@ -966,6 +963,25 @@ ITERM_WEAKLY_REFERENCEABLE
         [result appendString:@"🖥"];
     }
     return result;
+}
+
+- (void)didFinishInitialization:(BOOL)ok {
+    [_pwdPoller poll];
+    if ([self.variablesScope valueForVariableName:iTermVariableKeySessionUsername] == nil) {
+        [self.variablesScope setValue:NSUserName() forVariableNamed:iTermVariableKeySessionUsername];
+    }
+    if ([self.variablesScope valueForVariableName:iTermVariableKeySessionHostname] == nil) {
+        __weak __typeof(self) weakSelf = self;
+        [[iTermLocalHostNameGuesser sharedInstance] callBlockWhenReady:^(NSString * _Nonnull name) {
+            [weakSelf didGuessLocalHostName:name];
+        }];
+    }
+}
+
+- (void)didGuessLocalHostName:(NSString *)name {
+    if ([self.variablesScope valueForVariableName:iTermVariableKeySessionHostname] == nil) {
+        [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionHostname];
+    }
 }
 
 - (void)setGuid:(NSString *)guid {
@@ -5606,8 +5622,10 @@ ITERM_WEAKLY_REFERENCEABLE
         // perhaps other edge cases I haven't found--it used to be done every time before the
         // _currentHost ivar existed).
         _currentHost = [[_screen remoteHostOnLine:[_screen numberOfLines]] retain];
-        [self.variablesScope setValue:_currentHost.hostname forVariableNamed:iTermVariableKeySessionHostname];
-        [self.variablesScope setValue:_currentHost.username forVariableNamed:iTermVariableKeySessionUsername];
+        if (_currentHost) {
+            [self.variablesScope setValue:_currentHost.hostname forVariableNamed:iTermVariableKeySessionHostname];
+            [self.variablesScope setValue:_currentHost.username forVariableNamed:iTermVariableKeySessionUsername];
+        }
     }
     return _currentHost;
 }

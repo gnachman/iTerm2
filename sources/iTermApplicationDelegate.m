@@ -47,6 +47,7 @@
 #import "iTermHotKeyProfileBindingController.h"
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermLaunchServices.h"
+#import "iTermLocalHostNameGuesser.h"
 #import "iTermLSOF.h"
 #import "iTermMenuBarObserver.h"
 #import "iTermMigrationHelper.h"
@@ -1018,6 +1019,10 @@ static BOOL hasBecomeActive = NO;
     }
 
     [[iTermVariableScope globalsScope] setValue:@(getpid()) forVariableNamed:iTermVariableKeyApplicationPID];
+    [[iTermLocalHostNameGuesser sharedInstance] callBlockWhenReady:^(NSString *name) {
+        [[iTermVariableScope globalsScope] setValue:name forVariableNamed:iTermVariableKeyApplicationLocalhostName];
+    }];
+
     [PTYSession registerBuiltInFunctions];
     
     [iTermMigrationHelper migrateApplicationSupportDirectoryIfNeeded];

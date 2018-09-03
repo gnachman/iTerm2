@@ -19,6 +19,7 @@
 #import "iTermFindOnPageHelper.h"
 #import "iTermImageInfo.h"
 #import "iTermLaunchServices.h"
+#import "iTermLocalHostNameGuesser.h"
 #import "iTermMouseCursor.h"
 #import "iTermNSKeyBindingEmulator.h"
 #import "iTermPreferences.h"
@@ -2600,7 +2601,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
             case kURLActionOpenURL: {
                 NSURL *url = [NSURL URLWithUserSuppliedString:action.string];
-                if ([url.scheme isEqualToString:@"file"] && url.host.length > 0 && ![url.host isEqualToString:[VT100RemoteHost localHostName]]) {
+                if ([url.scheme isEqualToString:@"file"] &&
+                    url.host.length > 0 &&
+                    ![url.host isEqualToString:[[iTermLocalHostNameGuesser sharedInstance] name]]) {
                     SCPPath *path = [[[SCPPath alloc] init] autorelease];
                     path.path = url.path;
                     path.hostname = url.host;

@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 extern NSString *const iTermVariableKeyGlobalScopeName;
 
 extern NSString *const iTermVariableKeyApplicationPID;
+extern NSString *const iTermVariableKeyApplicationLocalhostName;
 
 extern NSString *const iTermVariableKeyTabTitleOverride;
 extern NSString *const iTermVariableKeyTabCurrentSession;

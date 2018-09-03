@@ -2139,6 +2139,8 @@
 		A6936B561D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B541D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m */; };
 		A6936B591D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A6936B571D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h */; };
 		A6936B5A1D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */; };
+		A695CA7F213DAA8500486440 /* iTermLocalHostNameGuesser.h in Headers */ = {isa = PBXBuildFile; fileRef = A695CA7D213DAA8500486440 /* iTermLocalHostNameGuesser.h */; };
+		A695CA80213DAA8500486440 /* iTermLocalHostNameGuesser.m in Sources */ = {isa = PBXBuildFile; fileRef = A695CA7E213DAA8500486440 /* iTermLocalHostNameGuesser.m */; };
 		A697100618D82E79007E901D /* iTermAdvancedSettingsViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100418D82E79007E901D /* iTermAdvancedSettingsViewController.h */; };
 		A697100B18D94CDA007E901D /* iTermAdvancedSettingsModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100918D94CDA007E901D /* iTermAdvancedSettingsModel.h */; };
 		A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A697101018DFA7D5007E901D /* closebutton@2x.png */; };
@@ -4560,6 +4562,8 @@
 		A6936B541D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAdditionalHotKeyTableCellView.m; sourceTree = "<group>"; };
 		A6936B571D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHotkeyPreferencesModel.h; sourceTree = "<group>"; };
 		A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotkeyPreferencesModel.m; sourceTree = "<group>"; };
+		A695CA7D213DAA8500486440 /* iTermLocalHostNameGuesser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLocalHostNameGuesser.h; sourceTree = "<group>"; };
+		A695CA7E213DAA8500486440 /* iTermLocalHostNameGuesser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLocalHostNameGuesser.m; sourceTree = "<group>"; };
 		A697100418D82E79007E901D /* iTermAdvancedSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermAdvancedSettingsViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A697100518D82E79007E901D /* iTermAdvancedSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAdvancedSettingsViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A697100918D94CDA007E901D /* iTermAdvancedSettingsModel.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermAdvancedSettingsModel.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -7339,6 +7343,8 @@
 				A6B1476321334D3900D0814F /* iTermTmuxStatusBarMonitor.m */,
 				A6047132213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h */,
 				A6047133213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m */,
+				A695CA7D213DAA8500486440 /* iTermLocalHostNameGuesser.h */,
+				A695CA7E213DAA8500486440 /* iTermLocalHostNameGuesser.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -8588,6 +8594,7 @@
 				A66719311DCE36C3000CE608 /* iTermHostRecordMO+Additions.h in Headers */,
 				A66719321DCE36C3000CE608 /* iTermAdditionalHotKeyObjectValue.h in Headers */,
 				A63935952103FD8B00A16D1C /* iTermMemoryUtilization.h in Headers */,
+				A695CA7F213DAA8500486440 /* iTermLocalHostNameGuesser.h in Headers */,
 				A6DBC03C2003479400F1466D /* iTermImageRenderer.h in Headers */,
 				A6F9EF3720850C41005530F7 /* iTermCompetentTableRowView.h in Headers */,
 				A68AC8F31F05C0860023A216 /* NSBundle+iTerm.h in Headers */,
@@ -10679,6 +10686,7 @@
 				53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */,
 				A63011A520E7ECC2008114B7 /* iTermStatusBarSetupKnobsViewController.m in Sources */,
 				A66719611DCE3772000CE608 /* iTermIPV4Address.m in Sources */,
+				A695CA80213DAA8500486440 /* iTermLocalHostNameGuesser.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

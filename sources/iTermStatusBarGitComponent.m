@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "iTermCommandRunner.h"
+#import "iTermLocalHostNameGuesser.h"
 #import "iTermVariables.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -31,6 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermGitPoller : NSObject
 @property (nonatomic) NSTimeInterval cadence;
 @property (nonatomic, copy) NSString *currentDirectory;
+@property (nonatomic) BOOL enabled;
 @property (nonatomic, readonly) iTermGitState *state;
 
 - (instancetype)initWithCadence:(NSTimeInterval)cadence
@@ -64,6 +66,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Private
 
+- (void)setEnabled:(BOOL)enabled {
+    if (enabled == _enabled) {
+        return;
+    }
+    _enabled = enabled;
+    if (!enabled) {
+        _update();
+    }
+}
+
 - (void)startTimer {
     [_timer invalidate];
     _timer = [NSTimer scheduledTimerWithTimeInterval:_cadence target:self selector:@selector(poll) userInfo:nil repeats:YES];
@@ -95,7 +107,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)poll {
-    if (_polling) {
+    if (_polling || !self.enabled) {
         return;
     }
     _polling = YES;
@@ -232,7 +244,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 }
 
 - (nullable NSAttributedString *)attributedStringValue {
-    if (!_gitPoller.state) {
+    if (!_gitPoller.state || !_gitPoller.enabled) {
         return nil;
     }
     static NSAttributedString *upImage;
@@ -285,22 +297,33 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     return [knobValues[iTermStatusBarGitComponentPollingIntervalKey] doubleValue] ?: 1;
 }
 
+- (void)updatePollerEnabled {
+    NSString *currentHostname = [_scope valueForVariableName:iTermVariableKeySessionHostname];
+    NSString *localhostName = [[iTermLocalHostNameGuesser sharedInstance] name];
+    DLog(@"git poller current hostname is %@, localhost is %@", currentHostname, localhostName);
+    _gitPoller.enabled = [localhostName isEqualToString:currentHostname];
+}
+
 - (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues {
     _gitPoller.cadence = [self cadenceInDictionary:knobValues];
     [super statusBarComponentSetKnobValues:knobValues];
 }
 
 - (NSSet<NSString *> *)statusBarComponentVariableDependencies {
-    return [NSSet setWithArray:@[ iTermVariableKeySessionPath ]];
+    return [NSSet setWithArray:@[ iTermVariableKeySessionPath, iTermVariableKeySessionHostname ]];
 }
 
 - (void)statusBarComponentSetVariableScope:(iTermVariableScope *)scope {
     _scope = scope;
+    [self updatePollerEnabled];
 }
 
 - (void)statusBarComponentVariablesDidChange:(NSSet<NSString *> *)variables {
     if ([variables containsObject:iTermVariableKeySessionPath]) {
         _gitPoller.currentDirectory = [_scope valueForVariableName:iTermVariableKeySessionPath];
+    }
+    if ([variables containsObject:iTermVariableKeySessionHostname]) {
+        [self updatePollerEnabled];
     }
 }
 
