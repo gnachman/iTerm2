@@ -19,8 +19,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-static const CGFloat iTermStatusBarViewControllerMargin = 5;
-static const CGFloat iTermStatusBarViewControllerTopMargin = 1;
+static const CGFloat iTermStatusBarViewControllerMargin = 10;
+static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
 static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
 
 // NOTE: SessionView's kTitleHeight must equal this value
@@ -71,7 +71,7 @@ const CGFloat iTermStatusBarHeight = 22;
     [_visibleContainerViews enumerateObjectsUsingBlock:
      ^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
          view.frame = NSMakeRect(view.desiredOrigin,
-                                 iTermStatusBarViewControllerTopMargin,
+                                 iTermStatusBarViewControllerBottomMargin,
                                  view.desiredWidth,
                                  iTermStatusBarViewControllerContainerHeight);
          [view.component statusBarComponentWidthDidChangeTo:view.desiredWidth];

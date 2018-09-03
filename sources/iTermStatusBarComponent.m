@@ -9,3 +9,11 @@
 #import "iTermStatusBarComponent.h"
 
 iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyKnobValues = @"knobs";
+
+@implementation NSFont(StatusBar)
+
++ (instancetype)it_statusBarFont {
+    return [NSFont fontWithName:@"Helvetica" size:12];
+}
+
+@end

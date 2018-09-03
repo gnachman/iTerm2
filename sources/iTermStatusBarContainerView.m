@@ -11,6 +11,7 @@
 #import "NSTimer+iTerm.h"
 
 const CGFloat iTermStatusBarViewControllerIconWidth = 16;
+static const CGFloat iTermStatusBarContainerViewIconBottomMargin = 1;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -44,7 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
             NSRect frame;
             frame.size = NSMakeSize(icon.size.width, icon.size.height);
             frame.origin.x = (area.size.width - frame.size.width) / 2.0;
-            frame.origin.y = (area.size.height - frame.size.height) / 2.0;
+            frame.origin.y = iTermStatusBarContainerViewIconBottomMargin + (area.size.height - frame.size.height) / 2.0;
             _iconImageView.frame = frame;
         }
         _view.frame = NSMakeRect(x, 0, self.frame.size.width - x, self.frame.size.height);

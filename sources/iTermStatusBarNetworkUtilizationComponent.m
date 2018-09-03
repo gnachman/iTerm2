@@ -110,7 +110,7 @@ NS_ASSUME_NONNULL_BEGIN
     CGFloat leftWidth = leftSize.width + margin;
     graphRect.origin.x += leftWidth;
     graphRect.size.width -= (leftWidth + rightWidth);
-    graphRect = NSInsetRect(graphRect, 0, [self.view retinaRound:-self.font.descender]);
+    graphRect = NSInsetRect(graphRect, 0, [self.view retinaRound:-self.font.descender] + self.statusBarComponentVerticalOffset);
 
     return graphRect;
 }
@@ -119,7 +119,7 @@ NS_ASSUME_NONNULL_BEGIN
     static NSFont *font;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        font = [NSFont fontWithName:@"Menlo" size:12];
+        font = [NSFont it_statusBarFont];
     });
     return font;
 }

@@ -35,6 +35,11 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 
 @end
 
+@interface NSFont(StatusBar)
++ (instancetype)it_statusBarFont;
+@end
+
+
 // The model for a object in a status bar.
 @protocol iTermStatusBarComponent<NSSecureCoding, NSObject>
 

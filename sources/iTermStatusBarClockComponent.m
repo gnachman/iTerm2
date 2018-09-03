@@ -19,7 +19,7 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
 }
 
 - (NSImage *)statusBarComponentIcon {
-    return [NSImage it_imageNamed:@"StatusBarImageClock" forClass:[self class]];
+    return [NSImage it_imageNamed:@"StatusBarIconClock" forClass:[self class]];
 }
 
 - (NSString *)statusBarComponentShortDescription {
