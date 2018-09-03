@@ -9,6 +9,7 @@
 
 #import "iTermVariables.h"
 #import "NSArray+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "iTermProcessCache.h"
 
@@ -17,6 +18,10 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermStatusBarJobComponent {
     NSArray<NSString *> *_cached;
     NSArray<NSString *> *_chain;
+}
+
+- (NSImage *)statusBarComponentIcon {
+    return [NSImage it_imageNamed:@"StatusBarIconJobs" forClass:[self class]];
 }
 
 - (NSString *)statusBarComponentShortDescription {

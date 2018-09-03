@@ -12,6 +12,7 @@
 #import "iTermsStatusBarComposerViewController.h"
 #import "iTermVariables.h"
 #import "NSArray+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "PTYSession.h"
 
 @interface iTermStatusBarComposerComponent() <iTermsStatusBarComposerViewControllerDelegate>
@@ -82,6 +83,10 @@
 
 
 #pragma mark - iTermStatusBarComponent
+
+- (nullable NSImage *)statusBarComponentIcon {
+    return [NSImage it_imageNamed:@"StatusBarIconComposer" forClass:[self class]];
+}
 
 - (NSView *)statusBarComponentCreateView {
     return self.viewController.view;

@@ -10,6 +10,7 @@
 #import "iTermMemoryUtilization.h"
 
 #import "NSDictionary+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
 
@@ -32,6 +33,10 @@ NS_ASSUME_NONNULL_BEGIN
         }];
     }
     return self;
+}
+
+- (NSImage *)statusBarComponentIcon {
+    return [NSImage it_imageNamed:@"StatusBarIconRAM" forClass:[self class]];
 }
 
 - (NSString *)statusBarComponentShortDescription {
@@ -134,7 +139,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSString *)rightText {
-    return @"RAM";
+    return @"";
 }
 
 - (void)drawRect:(NSRect)rect {

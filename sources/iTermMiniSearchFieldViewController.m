@@ -33,6 +33,14 @@
 @end
 
 @implementation iTermMiniSearchFieldView
+
+- (void)setFrame:(NSRect)frame {
+    [super setFrame:frame];
+}
+
+- (void)setFrameSize:(NSSize)newSize {
+    [super setFrameSize:newSize];
+}
 @end
 
 @implementation iTermMiniSearchFieldViewController {

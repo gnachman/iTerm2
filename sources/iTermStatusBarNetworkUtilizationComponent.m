@@ -11,6 +11,7 @@
 
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
 
@@ -35,6 +36,10 @@ NS_ASSUME_NONNULL_BEGIN
         }];
     }
     return self;
+}
+
+- (NSImage *)statusBarComponentIcon {
+    return [NSImage it_imageNamed:@"StatusBarIconNetwork" forClass:[self class]];
 }
 
 - (NSString *)statusBarComponentShortDescription {

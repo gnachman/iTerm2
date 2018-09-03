@@ -167,6 +167,10 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     return self;
 }
 
+- (NSImage *)statusBarComponentIcon {
+    return [NSImage it_imageNamed:@"StatusBarIconGitBranch" forClass:[self class]];
+}
+
 - (NSString *)statusBarComponentShortDescription {
     return @"git state";
 }
@@ -230,7 +234,6 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     if (!_gitPoller.state) {
         return nil;
     }
-    static NSAttributedString *branchImage;
     static NSAttributedString *upImage;
     static NSAttributedString *downImage;
     static NSAttributedString *cleanImage;
@@ -239,7 +242,6 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     static dispatch_once_t onceToken;
 
     dispatch_once(&onceToken, ^{
-        branchImage = [self attributedStringWithImageNamed:@"gitbranch"];
         upImage = [self attributedStringWithImageNamed:@"gitup"];
         downImage = [self attributedStringWithImageNamed:@"gitdown"];
         cleanImage = [self attributedStringWithImageNamed:@"gitclean"];
@@ -258,7 +260,6 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     NSAttributedString *downCount = _gitPoller.state.pullArrow.length ? [self attributedStringWithString:_gitPoller.state.pullArrow] : nil;
 
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
-    [result appendAttributedString:branchImage];
     [result appendAttributedString:branch];
     [result appendAttributedString:space];
 

@@ -46,6 +46,8 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration;
 
+- (NSImage *)statusBarComponentIcon;
+
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs;
 
 // NSString or NSAttributedString

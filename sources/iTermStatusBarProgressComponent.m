@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarProgressComponent.h"
 
+#import "NSImage+iTerm.h"
 #import "PasteViewController.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -39,6 +40,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 #pragma mark - iTermStatusBarComponent
+
+- (nullable NSImage *)statusBarComponentIcon {
+    return [NSImage it_imageNamed:@"StatusBarIconPaste" forClass:[self class]];
+}
+
 
 - (NSString *)statusBarComponentShortDescription {
     return @"Progress Indicator";

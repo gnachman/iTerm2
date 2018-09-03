@@ -9,6 +9,7 @@
 
 #import "iTermCPUUtilization.h"
 #import "NSDictionary+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
 
@@ -31,6 +32,10 @@ NS_ASSUME_NONNULL_BEGIN
         }];
     }
     return self;
+}
+
+- (NSImage *)statusBarComponentIcon {
+    return [NSImage it_imageNamed:@"StatusBarIconCPU" forClass:[self class]];
 }
 
 - (NSString *)statusBarComponentShortDescription {
@@ -146,11 +151,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSString *)leftText {
-    return [NSString stringWithFormat:@"%3d%%", self.currentEstimate];
+    return [NSString stringWithFormat:@"%d%%", self.currentEstimate];
 }
 
 - (NSString *)rightText {
-    return @"CPU";
+    return @"";
 }
 
 - (void)drawRect:(NSRect)rect {

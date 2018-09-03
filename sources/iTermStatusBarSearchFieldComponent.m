@@ -10,6 +10,7 @@
 #import "iTermMiniSearchFieldViewController.h"
 #import "iTermStatusBarSetupKnobsViewController.h"
 #import "NSDictionary+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN

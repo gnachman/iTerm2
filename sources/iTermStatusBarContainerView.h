@@ -11,6 +11,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern const CGFloat iTermStatusBarViewControllerIconWidth;
+
 @interface iTermStatusBarContainerView : NSView
 
 @property (nonatomic, readonly) id<iTermStatusBarComponent> component;

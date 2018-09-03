@@ -6,6 +6,8 @@
 //
 
 #import "iTermStatusBarClockComponent.h"
+
+#import "NSImage+iTerm.h"
 #import "NSDictionary+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -14,6 +16,10 @@ static NSString *const iTermStatusBarClockComponentFormatKey = @"format";
 
 @implementation iTermStatusBarClockComponent {
     NSDateFormatter *_dateFormatter;
+}
+
+- (NSImage *)statusBarComponentIcon {
+    return [NSImage it_imageNamed:@"StatusBarImageClock" forClass:[self class]];
 }
 
 - (NSString *)statusBarComponentShortDescription {

@@ -85,6 +85,10 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
     return [self initWithConfiguration:configuration];
 }
 
+- (nullable NSImage *)statusBarComponentIcon {
+    return nil;
+}
+
 - (id<iTermStatusBarComponentFactory>)statusBarComponentFactory {
     return [[iTermStatusBarBuiltInComponentFactory alloc] initWithClass:self.class];
 }

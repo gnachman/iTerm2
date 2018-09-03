@@ -10,6 +10,7 @@
 #import "iTermVariables.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
@@ -106,6 +107,10 @@ NS_ASSUME_NONNULL_BEGIN
     return [super initWithPath:@"session.hostname" configuration:configuration];
 }
 
+- (NSImage *)statusBarComponentIcon {
+    return [NSImage it_imageNamed:@"StatusBarIconHost" forClass:[self class]];
+}
+
 - (NSString *)statusBarComponentShortDescription {
     return @"Host Name";
 }
@@ -142,6 +147,10 @@ NS_ASSUME_NONNULL_BEGIN
     return [super initWithPath:@"session.username" configuration:configuration];
 }
 
+- (NSImage *)statusBarComponentIcon {
+    return [NSImage it_imageNamed:@"StatusBarIconUser" forClass:[self class]];
+}
+
 - (NSString *)statusBarComponentShortDescription {
     return @"User Name";
 }
@@ -175,6 +184,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration {
     return [super initWithPath:@"session.path" configuration:configuration];
+}
+
+- (NSImage *)statusBarComponentIcon {
+    return [NSImage it_imageNamed:@"StatusBarIconFolder" forClass:[self class]];
 }
 
 - (NSString *)statusBarComponentShortDescription {
