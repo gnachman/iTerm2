@@ -162,7 +162,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)update:(double)value {
     double available = [[iTermMemoryUtilization sharedInstance] availableMemory];
     [_samples addObject:@(value / available)];
-    while (_samples.count > iTermStatusBarMemoryUtilizationComponentMaximumNumberOfSamples) {
+    while (_samples.count > self.maximumNumberOfValues) {
         [_samples removeObjectAtIndex:0];
     }
 }

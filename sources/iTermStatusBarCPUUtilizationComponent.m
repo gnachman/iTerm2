@@ -13,7 +13,6 @@
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
 
-static const NSInteger iTermStatusBarCPUUtilizationComponentMaximumNumberOfSamples = 60;
 static const CGFloat iTermCPUUtilizationWidth = 120;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -175,7 +174,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)update:(double)value {
     [_samples addObject:@(value)];
-    while (_samples.count > iTermStatusBarCPUUtilizationComponentMaximumNumberOfSamples) {
+    while (_samples.count > self.maximumNumberOfValues) {
         [_samples removeObjectAtIndex:0];
     }
 }

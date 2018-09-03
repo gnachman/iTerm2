@@ -32,6 +32,7 @@
 @property (nonatomic, readonly) NSColor *lineColor;
 @property (nonatomic, readonly) NSInteger numberOfTimeSeries;
 @property (nonatomic, readonly) double ceiling;
+@property (nonatomic, readonly) NSInteger maximumNumberOfValues;
 
 - (void)invalidate;
 - (void)drawBezierPath:(NSBezierPath *)bezierPath

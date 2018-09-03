@@ -231,6 +231,10 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
     return 1.0;
 }
 
+- (NSInteger)maximumNumberOfValues {
+    return 60;
+}
+
 - (NSObject *)modelForWidth:(CGFloat)maximumWidth width:(out CGFloat *)preferredWidth {
     NSArray *model = self.values;
     if (model.count > maximumWidth) {
@@ -249,7 +253,7 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
     }
 
     // Draw baseline
-    [[NSColor colorWithWhite:0.5 alpha:1] set];
+    [[self statusBarTextColor] set];
     NSRectFill(NSMakeRect(NSMinX(rect), rect.origin.y + iTermStatusBarSparklineBottomMargin, NSWidth(rect), 1));
 
     if (self.numberOfTimeSeries == 1) {
@@ -268,37 +272,37 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
 
 - (void)drawBezierPath:(NSBezierPath *)bezierPath forTimeSeries:(NSInteger)timeSeriesIndex {
     if (self.numberOfTimeSeries == 1) {
-        NSGradient *gradient = [[NSGradient alloc] initWithColors:@[ [self statusBarTextColor],
-                                                                     [[self statusBarTextColor] colorWithAlphaComponent:0] ]];
-        [gradient drawInBezierPath:bezierPath angle:90];
+        [[self statusBarTextColor] set];
+        [bezierPath stroke];
     } else if (self.numberOfTimeSeries == 2) {
         if (timeSeriesIndex == 0) {
-            [[[NSColor blueColor] colorWithAlphaComponent:0.5] setFill];
+            [[[NSColor blueColor] colorWithAlphaComponent:0.5] set];
         } else {
-            [[[NSColor redColor] colorWithAlphaComponent:0.5] setFill];
+            [[[NSColor redColor] colorWithAlphaComponent:0.5] set];
         }
-        [bezierPath fill];
+        [bezierPath stroke];
     }
 }
 
 - (NSBezierPath *)bezierPathWithValues:(NSArray<NSNumber *> *)values
                                 inRect:(NSRect)rect {
-    const CGFloat numBars = values.count;
-    const CGFloat barWidth = MIN(1, rect.size.width / numBars);
+    const CGFloat barWidth = rect.size.width / self.maximumNumberOfValues;
+    if (barWidth == 0) {
+        return nil;
+    }
 
     CGFloat x = NSMaxX(rect) - values.count * barWidth;
-    const CGFloat y = iTermStatusBarSparklineBottomMargin + rect.origin.y;
+    const CGFloat y = iTermStatusBarSparklineBottomMargin + rect.origin.y + 0.5;
     NSBezierPath *path = [[NSBezierPath alloc] init];
-    const CGFloat x0 = x;
+    path.miterLimit = 1;
     [path moveToPoint:NSMakePoint(x, y)];
     const double ceiling = MAX(1, self.ceiling);
     for (NSNumber *n in values) {
         const CGFloat height = n.doubleValue * (rect.size.height - iTermStatusBarSparklineBottomMargin * 2) / ceiling;
-        [path lineToPoint:NSMakePoint(x, y + height)];
+        [path lineToPoint:NSMakePoint(x, y + height + 0.5)];
         x += barWidth;
     }
-    [path lineToPoint:NSMakePoint(x, y)];
-    [path lineToPoint:NSMakePoint(x0, y)];
+    [path lineToPoint:NSMakePoint(x, y + 0.5)];
     return path;
 }
 

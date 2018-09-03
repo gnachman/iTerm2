@@ -180,7 +180,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)updateWithDown:(double)down up:(double)up {
     [_samples addObject:@[ @(down), @(up) ]];
-    while (_samples.count > iTermStatusBarNetworkUtilizationComponentMaximumNumberOfSamples) {
+    while (_samples.count > self.maximumNumberOfValues) {
         [_samples removeObjectAtIndex:0];
     }
     _ceiling = [[[_samples flatMapWithBlock:^NSArray *(NSArray<NSNumber *> *anObject) {
