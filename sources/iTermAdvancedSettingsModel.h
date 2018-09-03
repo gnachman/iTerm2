@@ -239,8 +239,6 @@
 + (double)coloredUnselectedTabTextProminence;
 + (BOOL)throttleMetalConcurrentFrames;
 + (NSString *)trailingPunctuationMarks;
-+ (double)fractionOfCharacterSelectingNextNeighbor;
-+ (double)coloredSelectedTabOutlineStrength;
 + (NSString *)fallbackLCCType;
 
 @end
