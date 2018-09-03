@@ -78,6 +78,10 @@ NS_ASSUME_NONNULL_BEGIN
     return 0;
 }
 
+- (void)statusBarDefaultTextColorDidChange {
+    [_viewController updateLabelColor];
+}
+
 - (void)setRemainingLength:(int)remainingLength {
     _viewController.remainingLength = remainingLength;
 }

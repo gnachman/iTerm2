@@ -330,7 +330,7 @@ extern NSString *const iTermBroadcastDomainsDidChangeNotification;
 - (void)setupSession:(PTYSession *)aSession
             withSize:(NSSize *)size;
 
-- (NSColor *)accessoryTextColor;
+- (NSColor *)accessoryTextColorForMini:(BOOL)mini;
 
 // Update self.screen to reflect the currently preferred screen. In practice,
 // this changes self.screen to the screen with the cursor if the window is

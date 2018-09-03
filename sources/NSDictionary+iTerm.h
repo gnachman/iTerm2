@@ -13,6 +13,7 @@
 #import "VT100GridTypes.h"
 
 @class iTermTuple;
+@class NSAppearance;
 
 @interface NSDictionary<__covariant KeyType, __covariant ObjectType> (iTerm)
 
@@ -60,6 +61,8 @@
 - (NSDictionary<id, NSDictionary<KeyType, ObjectType> *> *)classifyWithBlock:(id (^NS_NOESCAPE)(KeyType key, ObjectType object))block;
 
 - (BOOL)it_writeToXMLPropertyListAt:(NSString *)path;
+
+- (NSDictionary *)it_attributesDictionaryWithAppearance:(NSAppearance *)appearance;
 
 @end
 

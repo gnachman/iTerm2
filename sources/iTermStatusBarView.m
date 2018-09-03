@@ -31,9 +31,11 @@
                                   dirtyRect.size.height - 1));
         }
 
-        [[NSColor colorWithWhite:0 alpha:alpha] set];
-        NSRect rect = NSMakeRect(offset, separatorTopBottomInset, 1, dirtyRect.size.height - separatorTopBottomInset * 2);
-        NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
+        if (self.shouldDrawSeparators) {
+            [[NSColor colorWithWhite:0 alpha:alpha] set];
+            NSRect rect = NSMakeRect(offset, separatorTopBottomInset, 1, dirtyRect.size.height - separatorTopBottomInset * 2);
+            NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
+        }
 
         x = offset + 1;
     }];

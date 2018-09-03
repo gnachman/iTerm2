@@ -14,6 +14,7 @@
 #import "iTermStatusBarSpringComponent.h"
 #import "iTermStatusBarView.h"
 #import "NSArray+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSTimer+iTerm.h"
 #import "NSView+iTerm.h"
 
@@ -344,7 +345,17 @@ const CGFloat iTermStatusBarHeight = 22;
         [updatedContainerViews addObject:view];
     }
     _containerViews = updatedContainerViews;
+    [self updateColors];
     [self.view setNeedsLayout:YES];
+}
+
+- (void)updateColors {
+    for (iTermStatusBarContainerView *view in _containerViews) {
+        view.iconImageView.contentTintColor = [self statusBarComponentDefaultTextColor];
+        [view.component statusBarDefaultTextColorDidChange];
+        [view setNeedsDisplay:YES];
+    }
+    [[iTermStatusBarView castFrom:self.view] setShouldDrawSeparators:[self.delegate statusBarShouldDrawSeparators]];
 }
 
 #pragma mark - iTermStatusBarLayoutDelegate

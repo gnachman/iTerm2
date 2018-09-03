@@ -12,5 +12,6 @@
 
 // color, x offset
 @property (nonatomic, copy) NSArray<iTermTuple<NSColor *, NSNumber *> *> *sections;
+@property (nonatomic) BOOL shouldDrawSeparators;
 
 @end

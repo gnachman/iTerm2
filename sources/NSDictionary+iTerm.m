@@ -319,6 +319,18 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
     return error == nil;
 }
 
+- (NSDictionary *)it_attributesDictionaryWithAppearance:(NSAppearance *)appearance {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    [self enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        if ([obj isKindOfClass:[NSColor class]]) {
+            result[key] = [obj it_colorWithAppearance:appearance];
+        } else {
+            result[key] = obj;
+        }
+    }];
+    return result;
+}
+
 @end
 
 @implementation NSDictionary(HotKey)

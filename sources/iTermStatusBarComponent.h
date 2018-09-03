@@ -119,4 +119,7 @@ static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared backgro
 // Vertical offset for components that don't center propertly
 - (CGFloat)statusBarComponentVerticalOffset;
 
+// Update colors if needed
+- (void)statusBarDefaultTextColorDidChange;
+
 @end

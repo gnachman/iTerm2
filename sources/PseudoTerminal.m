@@ -3960,6 +3960,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     _fullScreen = !_fullScreen;
+    [self didChangeAnyFullScreen];
     [_contentView.tabBarControl updateFlashing];
     togglingFullScreen_ = YES;
     _contentView.toolbeltWidth = savedToolbeltWidth;
@@ -4168,9 +4169,16 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateUseMetalInAllTabs];
 }
 
+- (void)didChangeAnyFullScreen {
+    for (PTYSession *session in self.allSessions) {
+        [session updateStatusBarStyle];
+    }
+}
+
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
     DLog(@"Window will enter lion fullscreen");
     togglingLionFullScreen_ = YES;
+    [self didChangeAnyFullScreen];
     [self updateUseMetalInAllTabs];
     [self repositionWidgets];
     [_contentView didChangeCompactness];
@@ -4184,6 +4192,7 @@ ITERM_WEAKLY_REFERENCEABLE
     togglingLionFullScreen_ = NO;
     _fullScreenRetryCount = 0;
     lionFullScreen_ = YES;
+    [self didChangeAnyFullScreen];
     [_contentView.tabBarControl setFlashing:YES];
     [_contentView updateToolbelt];
     // Set scrollbars appropriately
@@ -4245,7 +4254,8 @@ ITERM_WEAKLY_REFERENCEABLE
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
     lionFullScreen_ = NO;
-    
+    [self didChangeAnyFullScreen];
+
     DLog(@"Window did exit fullscreen. Set window type to %d", savedWindowType_);
     self.windowType = savedWindowType_;
 
@@ -5434,7 +5444,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (NSColor *)accessoryTextColor {
+- (NSColor *)accessoryTextColorForMini:(BOOL)mini {
+    if (mini) {
+        return [self.currentSession textColorForStatusBar];
+    }
     if ([_contentView.tabBarControl isHidden] && ![self anyFullScreen]) {
         return [NSColor blackColor];
     } else {
@@ -6991,6 +7004,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
             // In case dimming amount slider moved update the dimming amount.
             [[aSession view] updateDim];
+            [aSession updateStatusBarStyle];
         }
     }
 
@@ -7009,7 +7023,6 @@ ITERM_WEAKLY_REFERENCEABLE
             [self fitWindowToTabs];
         }
     }
-
     // If the theme changed from light to dark make sure split pane dividers redraw.
     [_contentView.tabView setNeedsDisplay:YES];
 }
@@ -8056,6 +8069,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
             }
         }
+        [session updateStatusBarStyle];
     }
     if (self.isHotKeyWindow) {
         iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];

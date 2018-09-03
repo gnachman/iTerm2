@@ -10,7 +10,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSTimer+iTerm.h"
 
-const CGFloat iTermStatusBarViewControllerIconWidth = 16;
+const CGFloat iTermStatusBarViewControllerIconWidth = 17;
 static const CGFloat iTermStatusBarContainerViewIconBottomMargin = 1;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -20,7 +20,6 @@ NS_ASSUME_NONNULL_BEGIN
     NSTimer *_timer;
     BOOL _needsUpdate;
     NSView *_view;
-    NSImageView *_iconImageView;
 }
 
 - (nullable instancetype)initWithComponent:(id<iTermStatusBarComponent>)component {
@@ -36,7 +35,12 @@ NS_ASSUME_NONNULL_BEGIN
         const BOOL hasIcon = (icon != nil);
         const CGFloat x = hasIcon ? iTermStatusBarViewControllerIconWidth : 0;
         if (hasIcon) {
+#warning TODO: Test this on macos 10.13
+            icon.template = YES;
             _iconImageView = [NSImageView imageViewWithImage:icon];
+            if (@available(macOS 10.14, *)) {
+                _iconImageView.contentTintColor = [NSColor labelColor];
+            }
             [_iconImageView sizeToFit];
             [self addSubview:_iconImageView];
             _iconImageView.layer.borderWidth =1;
@@ -44,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
             NSRect area = NSMakeRect(0, 0, iTermStatusBarViewControllerIconWidth, 21);
             NSRect frame;
             frame.size = NSMakeSize(icon.size.width, icon.size.height);
-            frame.origin.x = (area.size.width - frame.size.width) / 2.0;
+            frame.origin.x = 0;
             frame.origin.y = iTermStatusBarContainerViewIconBottomMargin + (area.size.height - frame.size.height) / 2.0;
             _iconImageView.frame = frame;
         }

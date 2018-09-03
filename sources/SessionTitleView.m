@@ -10,6 +10,7 @@
 #import "iTermPreferences.h"
 #import "iTermStatusBarViewController.h"
 #import "NSAppearance+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
 #import "PSMMinimalTabStyle.h"
@@ -153,12 +154,17 @@ static const CGFloat kButtonSize = 17;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    [[self.delegate sessionTitleViewBackgroundColor] set];
+    NSColor *color = [self.delegate sessionTitleViewBackgroundColor];
+    [color set];
     NSRectFill(dirtyRect);
 
     if (!self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
-        [[NSColor blackColor] set];
-        NSRectFill(NSMakeRect(dirtyRect.origin.x, 0, dirtyRect.size.width, 1));
+        if ([color perceivedBrightness] > 0.5) {
+            [[[NSColor blackColor] colorWithAlphaComponent:0.25] set];
+        } else {
+            [[[NSColor whiteColor] colorWithAlphaComponent:0.25] set];
+        }
+        NSRectFillUsingOperation(NSMakeRect(dirtyRect.origin.x, 0, dirtyRect.size.width, 1), NSCompositingOperationSourceOver);
     }
 
     [super drawRect:dirtyRect];

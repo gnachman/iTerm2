@@ -7446,6 +7446,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)textViewBackgroundColorDidChange {
     [_delegate sessionBackgroundColorDidChange:self];
     [_delegate sessionUpdateMetalAllowed];
+    [_statusBarViewController updateColors];
     [self.view setNeedsDisplay:YES];
 }
 
@@ -10366,7 +10367,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 #pragma mark - iTermStatusBarViewControllerDelegate
 
-- (NSColor *)statusBarDefaultTextColor {
+- (NSColor *)textColorForStatusBar {
     if (self.view.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
         return self.view.window.ptyWindow.it_terminalWindowDecorationTextColor;
     } else if (@available(macOS 10.14, *)) {
@@ -10376,6 +10377,18 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         return [NSColor blackColor];
     }
+}
+
+- (NSColor *)statusBarDefaultTextColor {
+    return [self textColorForStatusBar];
+}
+
+- (BOOL)statusBarShouldDrawSeparators {
+    return !self.view.window.ptyWindow.it_terminalWindowUseMinimalStyle;
+}
+
+- (void)updateStatusBarStyle {
+    [_statusBarViewController updateColors];
 }
 
 #pragma mark - iTermMetaFrustrationDetectorDelegate

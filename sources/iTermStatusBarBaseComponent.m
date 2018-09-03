@@ -222,6 +222,9 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
     return 1;
 }
 
+- (void)statusBarDefaultTextColorDidChange {
+}
+
 #pragma mark - NSSecureCoding
 
 + (BOOL)supportsSecureCoding {

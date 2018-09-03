@@ -9,6 +9,8 @@
 #import <Cocoa/Cocoa.h>
 #import <simd/simd.h>
 
+@class NSAppearance;
+
 // Keys of -dictionaryValue. Use -[NSDictionary colorVaue] to convert to color.
 extern NSString *const kEncodedColorDictionaryRedComponent;
 extern NSString *const kEncodedColorDictionaryGreenComponent;
@@ -81,4 +83,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 + (NSColor *)it_searchFieldBackgroundColor:(BOOL)selected
                                 appearance:(NSAppearance *)appearance;
 - (NSColor *)it_colorByDimmingByAmount:(double)dimmingAmount;
+
+- (NSColor *)it_colorWithAppearance:(NSAppearance *)appearance;
+
 @end

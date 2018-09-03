@@ -11,6 +11,9 @@
 #import "DebugLogging.h"
 #import "iTermPreferences.h"
 #import "NSAppearance+iTerm.h"
+#import "NSImage+iTerm.h"
+#import "NSView+iTerm.h"
+#import "SolidColorView.h"
 
 // Constants for converting RGB to luma.
 static const double kRedComponentBrightness = 0.30;
@@ -367,5 +370,45 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return [NSColor colorWithSRGBRed:r green:g blue:b alpha:1];
 }
 
+- (NSColor *)it_colorWithAppearance:(NSAppearance *)appearance {
+    if (@available(macOS 10.14, *)) {
+        if (self.type != NSColorTypeCatalog) {
+            return self;
+        }
+
+        static NSMutableDictionary *darkDict, *lightDict;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            darkDict = [[NSMutableDictionary alloc] init];
+            lightDict = [[NSMutableDictionary alloc] init];
+        });
+
+        NSMutableDictionary *dict;
+        NSString *closest = [appearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua, NSAppearanceNameAqua ]];
+        if ([closest isEqualToString:NSAppearanceNameDarkAqua]) {
+            dict = darkDict;
+        } else {
+            dict = lightDict;
+        }
+
+        NSColor *result = dict[self];
+        if (result) {
+            return result;
+        }
+
+        NSView *view = [[[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1) color:self] autorelease];
+        view.appearance = appearance;
+        NSImage *image = [view snapshot];
+
+        NSBitmapImageRep *imageRep = [[NSBitmapImageRep alloc] initWithData:[image TIFFRepresentation]];
+        result = [imageRep colorAtX:0 y:0];
+
+        dict[self] = result;
+        return result;
+    }
+
+#warning TODO: This should use the theme
+    return self;
+}
 
 @end

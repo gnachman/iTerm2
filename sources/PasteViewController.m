@@ -7,6 +7,8 @@
 //
 
 #import "PasteViewController.h"
+
+#import "NSColor+iTerm.h"
 #import "PasteContext.h"
 #import "PasteView.h"
 #import "PseudoTerminal.h"
@@ -30,7 +32,8 @@ static float kAnimationDuration = 0.25;
     self = [super initWithNibName:mini ? @"MiniPasteView" : @"PasteView" bundle:[NSBundle bundleForClass:self.class]];
     if (self) {
         [self view];
-
+        _mini = mini;
+        
         // Fix up frames because the view is flipped.
         for (NSView *view in [self.view subviews]) {
             NSRect frame = [view frame];
@@ -66,7 +69,17 @@ static float kAnimationDuration = 0.25;
 - (void)updateLabelColor {
     PseudoTerminal* term = [[self.view window] windowController];
     if ([term isKindOfClass:[PseudoTerminal class]]) {
-        _label.textColor = [term accessoryTextColor];
+        _label.textColor = [term accessoryTextColorForMini:self.mini];
+    }
+    if (@available(macOS 10.14, *)) {
+        if (!self.mini) {
+            return;
+        }
+        if (_label.textColor.perceivedBrightness > 0.5) {
+            progressIndicator_.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+        } else {
+            progressIndicator_.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+        }
     }
 }
 

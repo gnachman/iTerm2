@@ -457,6 +457,7 @@ typedef enum {
 @property(nonatomic) BOOL isSingleUseSession;
 @property(nonatomic) BOOL overrideGlobalDisableMetalWhenIdleSetting;
 @property(nonatomic, readonly) BOOL canProduceMetalFramecap;
+@property(nonatomic, readonly) NSColor *textColorForStatusBar;
 
 #pragma mark - methods
 
@@ -757,6 +758,7 @@ typedef enum {
 - (void)didInitializeSessionWithName:(NSString *)name;
 - (void)profileNameDidChangeTo:(NSString *)name;
 - (void)profileDidChangeToProfileWithName:(NSString *)name;
+- (void)updateStatusBarStyle;
 
 #pragma mark - API
 

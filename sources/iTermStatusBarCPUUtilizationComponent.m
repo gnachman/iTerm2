@@ -93,8 +93,8 @@ NS_ASSUME_NONNULL_BEGIN
     NSRect textRect = rect;
     textRect.size.height = rightSize.height;
     textRect.origin.y = (self.view.bounds.size.height - rightSize.height) / 2.0;
-    [left drawInRect:textRect withAttributes:self.leftAttributes];
-    [right drawInRect:textRect withAttributes:self.rightAttributes];
+    [left drawInRect:textRect withAttributes:[self.leftAttributes it_attributesDictionaryWithAppearance:self.view.effectiveAppearance]];
+    [right drawInRect:textRect withAttributes:[self.rightAttributes it_attributesDictionaryWithAppearance:self.view.effectiveAppearance]];
 }
 
 - (NSRect)graphRectForRect:(NSRect)rect

@@ -24,6 +24,7 @@ extern const CGFloat iTermStatusBarViewControllerIconWidth;
 @property (nonatomic, readonly) NSColor *backgroundColor;
 @property (nonatomic) CGFloat leftSeparatorOffset;
 @property (nonatomic) CGFloat rightSeparatorOffset;
+@property (nonatomic, strong, readonly) NSImageView *iconImageView;
 
 - (nullable instancetype)initWithComponent:(id<iTermStatusBarComponent>)component NS_DESIGNATED_INITIALIZER;
 

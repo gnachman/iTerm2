@@ -20,6 +20,7 @@
 
 @property(nonatomic, assign) id<PasteViewControllerDelegate> delegate;
 @property(nonatomic, assign) int remainingLength;
+@property(nonatomic, readonly) BOOL mini;
 
 - (instancetype)initWithContext:(PasteContext *)pasteContext_
                          length:(int)length
@@ -31,5 +32,6 @@
 - (IBAction)cancel:(id)sender;
 - (void)updateFrame;
 - (void)closeWithCompletion:(void (^)(void))completion;
+- (void)updateLabelColor;
 
 @end
