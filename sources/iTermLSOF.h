@@ -19,5 +19,8 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
 + (NSArray<NSNumber *> *)allPids;
 + (pid_t)ppidForPid:(pid_t)childPid;
 + (NSString *)nameOfProcessWithPid:(pid_t)thePid isForeground:(BOOL *)isForeground;
++ (NSString *)workingDirectoryOfProcess:(pid_t)pid;
++ (void)asyncWorkingDirectoryOfProcess:(pid_t)pid block:(void (^)(NSString *pwd))block;
++ (pid_t)pidOfFirstChildOf:(pid_t)parentPid;
 
 @end

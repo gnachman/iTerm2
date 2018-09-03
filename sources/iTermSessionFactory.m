@@ -140,6 +140,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
     if (!substitutions) {
         if (completion) {
+            [aSession didFinishInitialization:NO];
             completion(NO);
         }
         return NO;
@@ -172,11 +173,17 @@ NS_ASSUME_NONNULL_BEGIN
         isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
     }
 
+    void (^wrapper)(BOOL) = ^(BOOL ok) {
+        [aSession didFinishInitialization:ok];
+        if (completion) {
+            completion(ok);
+        }
+    };
     void (^block)(NSString *) = ^(NSString *result) {
         [windowController setName:result ?: @"" forSession:aSession];
         [self finishAttachingOrLaunchingSession:aSession
                                             cmd:cmd
-                                     completion:completion
+                                     completion:wrapper
                                     environment:environment
                                          isUTF8:isUTF8
                                serverConnection:serverConnection

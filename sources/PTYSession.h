@@ -494,6 +494,8 @@ typedef enum {
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initSynthetic:(BOOL)synthetic NS_DESIGNATED_INITIALIZER;
 
+- (void)didFinishInitialization:(BOOL)ok;
+
 // Jump to a particular point in time.
 - (long long)irSeekToAtLeast:(long long)timestamp;
 

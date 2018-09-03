@@ -2528,6 +2528,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [self linefeed];
     }
     [delegate_ screenTriggerableChangeDidOccur];
+    [delegate_ screenDidReceiveLineFeed];
 }
 
 - (void)terminalCursorLeft:(int)n

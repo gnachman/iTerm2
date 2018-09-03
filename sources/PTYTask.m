@@ -518,36 +518,7 @@ static void HandleSigChld(int n) {
         DLog(@"Want to use the kernel to get the working directory but pid = -1");
         return nil;
     }
-    DLog(@"Using OS magic to get the working directory");
-    struct proc_vnodepathinfo vpi;
-    int ret;
-
-    // This only works if the child process is owned by our uid
-    // Notably it seems to work (at least on 10.10) even if the process ID is
-    // not owned by us.
-    ret = iTermProcPidInfoWrapper(self.pid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
-    if (ret <= 0) {
-        // The child was probably owned by root (which is expected if it's
-        // a login shell. Use the cwd of its oldest child instead.
-        pid_t childPid = [self getFirstChildOfPid:self.pid];
-        if (childPid > 0) {
-            ret = iTermProcPidInfoWrapper(childPid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
-        }
-    }
-    if (ret <= 0) {
-        // An error occurred
-        DLog(@"Failed with error %d", ret);
-        return nil;
-    } else if (ret != sizeof(vpi)) {
-        // Now this is very bad...
-        DLog(@"Got a struct of the wrong size back");
-        return nil;
-    } else {
-        // All is good
-        NSString *dir = [NSString stringWithUTF8String:vpi.pvi_cdir.vip_path];
-        DLog(@"Result: %@", dir);
-        return dir;
-    }
+    return [iTermLSOF workingDirectoryOfProcess:self.pid];
 }
 
 - (BOOL)logging {
@@ -1313,56 +1284,8 @@ static void HandleSigChld(int n) {
 
 #pragma mark Process Tree
 
-// This is a stunningly brittle hack. Find the child of parentPid with the
-// oldest start time. This relies on undocumented APIs, but short of forking
-// ps, I can't see another way to do it.
 - (pid_t)getFirstChildOfPid:(pid_t)parentPid {
-    int numBytes;
-    numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
-    if (numBytes <= 0) {
-        return -1;
-    }
-
-    int* pids = (int*) malloc(numBytes + sizeof(int));
-    // Save a magic int at the end to be sure that the buffer isn't overrun.
-    const int PID_MAGIC = 0xdeadbeef;
-    int magicIndex = numBytes/sizeof(int);
-    pids[magicIndex] = PID_MAGIC;
-    numBytes = proc_listpids(PROC_ALL_PIDS, 0, pids, numBytes);
-    assert(pids[magicIndex] == PID_MAGIC);
-    if (numBytes <= 0) {
-        free(pids);
-        return -1;
-    }
-
-    int numPids = numBytes / sizeof(int);
-
-    long long oldestTime = 0;
-    pid_t oldestPid = -1;
-    for (int i = 0; i < numPids; ++i) {
-        struct proc_taskallinfo taskAllInfo;
-        int rc = iTermProcPidInfoWrapper(pids[i],
-                                         PROC_PIDTASKALLINFO,
-                                         0,
-                                         &taskAllInfo,
-                                         sizeof(taskAllInfo));
-        if (rc <= 0) {
-            continue;
-        }
-
-        pid_t ppid = taskAllInfo.pbsd.pbi_ppid;
-        if (ppid == parentPid) {
-            long long birthday = taskAllInfo.pbsd.pbi_start_tvsec * 1000000 + taskAllInfo.pbsd.pbi_start_tvusec;
-            if (birthday < oldestTime || oldestTime == 0) {
-                oldestTime = birthday;
-                oldestPid = pids[i];
-            }
-        }
-    }
-
-    assert(pids[magicIndex] == PID_MAGIC);
-    free(pids);
-    return oldestPid;
+    return [iTermLSOF pidOfFirstChildOf:parentPid];
 }
 
 #pragma mark - Notifications

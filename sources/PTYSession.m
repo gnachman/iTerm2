@@ -65,6 +65,7 @@
 #import "iTermUpdateCadenceController.h"
 #import "iTermVariables.h"
 #import "iTermWarning.h"
+#import "iTermWorkingDirectoryPoller.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
 #import "NSArray+iTerm.h"
@@ -255,7 +256,8 @@ static NSString *const iTermSessionTitleSession = @"session";
     iTermSessionViewDelegate,
     iTermStatusBarViewControllerDelegate,
     iTermUpdateCadenceControllerDelegate,
-    iTermVariablesDelegate>
+    iTermVariablesDelegate,
+    iTermWorkingDirectoryPollerDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, retain) TerminalFileUpload *upload;
@@ -489,6 +491,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     iTermMetaFrustrationDetector *_metaFrustrationDetector;
 
     iTermTmuxStatusBarMonitor *_tmuxStatusBarMonitor;
+    iTermWorkingDirectoryPoller *_pwdPoller;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -671,6 +674,8 @@ static NSString *const iTermSessionTitleSession = @"session";
         _echoProbe.delegate = self;
         _metaFrustrationDetector = [[iTermMetaFrustrationDetector alloc] init];
         _metaFrustrationDetector.delegate = self;
+        _pwdPoller = [[iTermWorkingDirectoryPoller alloc] init];
+        _pwdPoller.delegate = self;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
@@ -732,6 +737,10 @@ static NSString *const iTermSessionTitleSession = @"session";
         }
     }
     return self;
+}
+
+- (void)didFinishInitialization:(BOOL)ok {
+    [_pwdPoller poll];
 }
 
 ITERM_WEAKLY_REFERENCEABLE
@@ -828,6 +837,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_lastRemoteHost release];
     [_textview release];  // I'm not sure it's ever nonnil here
     [_currentMarkOrNotePosition release];
+    [_pwdPoller release];
 
     [super dealloc];
 }
@@ -1589,6 +1599,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                            tmuxDCSIdentifier:tmuxDCSIdentifier
                                               tmuxPaneNumber:tmuxPaneNumber
                                               missingProfile:missingProfile];
+        [aSession didFinishInitialization:YES];
     };
     runCommandBlock(finish);
 
@@ -5944,6 +5955,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
         _lastInput = [NSDate timeIntervalSinceReferenceDate];
+        [_pwdPoller userDidPressKey];
         if (_view.currentAnnouncement.dismissOnKeyDown) {
             [_view.currentAnnouncement dismiss];
             return NO;
@@ -9477,6 +9489,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self dismissAnnouncementWithIdentifier:kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier];
 }
 
+- (void)screenDidReceiveLineFeed {
+    [_pwdPoller didReceiveLineFeed];
+}
+
 #pragma mark - Announcements
 
 - (BOOL)hasAnnouncementWithIdentifier:(NSString *)identifier {
@@ -10466,6 +10482,31 @@ ITERM_WEAKLY_REFERENCEABLE
                                                 }];
     static NSString *const identifier = @"OfferToChangeOptionKeyToSendESC";
     [self queueAnnouncement:announcement identifier:identifier];
+}
+
+#pragma mark - iTermWorkingDirectoryPollerDelegate
+
+- (BOOL)workingDirectoryPollerShouldPoll {
+    if (_shellIntegrationEverUsed) {
+        DLog(@"Should not poll for working directory: shell integration used");
+        return NO;
+    }
+    if (_terminal.softAlternateScreenMode) {
+        DLog(@"Should not poll for working directory: soft alternate screen mode");
+    }
+    DLog(@"Should poll for working directory.");
+    return YES;
+}
+
+- (pid_t)workingDirectoryPollerProcessID {
+    return _shell.pid;;
+}
+
+- (void)workingDirectoryPollerDidFindWorkingDirectory:(NSString *)pwd {
+    if (_shellIntegrationEverUsed) {
+        return;
+    }
+    [self.variablesScope setValue:pwd forVariableNamed:iTermVariableKeySessionPath];
 }
 
 @end
