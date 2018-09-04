@@ -7,10 +7,14 @@
 
 #import "iTermStatusBarLayout+tmux.h"
 
+#import "ITAddressBookMgr.h"
+#import "iTermProfilePreferences.h"
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarSpringComponent.h"
 #import "iTermStatusBarSwiftyStringComponent.h"
 #import "iTermVariables.h"
+#import "NSDictionary+iTerm.h"
+#import "TmuxController.h"
 
 @implementation iTermStatusBarLayout (tmux)
 
@@ -19,7 +23,7 @@
     return @{ iTermStatusBarComponentConfigurationKeyKnobValues: @{ iTermStatusBarSwiftyStringComponentExpressionKey: interpolatedString } };
 }
 
-+ (instancetype)tmuxLayout {
++ (instancetype)tmuxLayoutWithController:(TmuxController *)controller {
     NSDictionary<iTermStatusBarComponentConfigurationKey, id> *leftConfiguration;
     NSDictionary<iTermStatusBarComponentConfigurationKey, id> *rightConfiguration;
 
@@ -30,7 +34,9 @@
     id<iTermStatusBarComponent> rightComponent = [[iTermStatusBarSwiftyStringComponent alloc] initWithConfiguration:rightConfiguration];
     id<iTermStatusBarComponent> springComponent = [[iTermStatusBarSpringComponent alloc] initWithConfiguration:@{}];
 
-    return [[self alloc] initWithComponents:@[ leftComponent, springComponent, rightComponent ]];
+    NSDictionary *colorDict = [iTermProfilePreferences objectForKey:KEY_STATUS_BAR_LAYOUT inProfile:controller.profile];
+    return [[self alloc] initWithComponents:@[ leftComponent, springComponent, rightComponent ]
+                             separatorColor:[colorDict colorValue]];
 }
 
 + (BOOL)shouldOverrideLayout:(NSDictionary *)layout {

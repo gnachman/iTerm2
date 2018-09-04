@@ -54,7 +54,9 @@ const CGFloat iTermStatusBarHeight = 22;
 }
 
 - (void)loadView {
-    self.view = [[iTermStatusBarView alloc] initWithFrame:NSZeroRect];
+    iTermStatusBarView *view = [[iTermStatusBarView alloc] initWithFrame:NSZeroRect];
+    view.separatorColor = _layout.separatorColor;
+    self.view = view;
 }
 
 - (void)viewDidLoad {
@@ -356,7 +358,7 @@ const CGFloat iTermStatusBarHeight = 22;
         [view.component statusBarDefaultTextColorDidChange];
         [view setNeedsDisplay:YES];
     }
-    [[iTermStatusBarView castFrom:self.view] setShouldDrawSeparators:[self.delegate statusBarShouldDrawSeparators]];
+    [[iTermStatusBarView castFrom:self.view] setSeparatorColor:[self.delegate statusBarSeparatorColor]];
 }
 
 #pragma mark - iTermStatusBarLayoutDelegate

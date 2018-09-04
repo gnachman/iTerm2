@@ -13,11 +13,6 @@
 - (void)drawRect:(NSRect)dirtyRect {
     [super drawRect:dirtyRect];
     
-    CGFloat alpha = 0.25;
-    if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
-        alpha = 0.1;
-    }
-
     __block CGFloat x = 1;
     const CGFloat separatorTopBottomInset = 3;
     [_sections enumerateObjectsUsingBlock:^(iTermTuple<NSColor *, NSNumber *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -31,8 +26,8 @@
                                   dirtyRect.size.height - 1));
         }
 
-        if (self.shouldDrawSeparators) {
-            [[NSColor colorWithWhite:0 alpha:alpha] set];
+        if (self.separatorColor) {
+            [self.separatorColor set];
             NSRect rect = NSMakeRect(offset, separatorTopBottomInset, 1, dirtyRect.size.height - separatorTopBottomInset * 2);
             NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
         }
@@ -40,9 +35,12 @@
         x = offset + 1;
     }];
     
-    [[NSColor colorWithWhite:0 alpha:alpha] set];
-    NSRect rect = NSMakeRect(0, 1, 1, dirtyRect.size.height - 1);
-    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
+    if (self.separatorColor) {
+        [self.separatorColor set];
+        [[NSColor colorWithWhite:0 alpha:0.1] set];
+        NSRect rect = NSMakeRect(0, 1, 1, dirtyRect.size.height - 1);
+        NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
+    }
 }
 
 @end

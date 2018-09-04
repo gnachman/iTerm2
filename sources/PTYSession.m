@@ -5340,7 +5340,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                                      scope:self.variablesScope];
                 _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:self.profile];
                 if ([iTermStatusBarLayout shouldOverrideLayout:self.profile[KEY_STATUS_BAR_LAYOUT]]) {
-                    [self setSessionSpecificProfileValues:@{ KEY_STATUS_BAR_LAYOUT: [[iTermStatusBarLayout tmuxLayout] dictionaryValue] }];
+                    [self setSessionSpecificProfileValues:@{ KEY_STATUS_BAR_LAYOUT: [[iTermStatusBarLayout tmuxLayoutWithController:_tmuxController] dictionaryValue] }];
                 }
                 break;
         }
@@ -8226,7 +8226,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
                                                                   [self name],
                                                                   [_delegate tabNumber]]
-                                                 andNotification:@"Mark Set"
                                                      windowIndex:[self screenWindowIndex]
                                                         tabIndex:[self screenTabIndex]
                                                        viewIndex:[self screenViewIndex]
@@ -10421,8 +10420,11 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self textColorForStatusBar];
 }
 
-- (BOOL)statusBarShouldDrawSeparators {
-    return !self.view.window.ptyWindow.it_terminalWindowUseMinimalStyle;
+- (NSColor *)statusBarSeparatorColor {
+    if (self.view.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
+        return nil;
+    }
+    return _statusBarViewController.layout.separatorColor;
 }
 
 - (void)updateStatusBarStyle {

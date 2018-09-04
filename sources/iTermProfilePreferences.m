@@ -12,6 +12,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermCursor.h"
 #import "iTermPreferences.h"
+#import "iTermStatusBarLayout.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
@@ -417,7 +418,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_UNICODE_NORMALIZATION: PROFILE_BLOCK(unicodeNormalizationForm),
                   KEY_UNICODE_VERSION: PROFILE_BLOCK(unicodeVersion),
                   KEY_TITLE_COMPONENTS: PROFILE_BLOCK(titleComponents),
-                  KEY_BACKGROUND_IMAGE_MODE: PROFILE_BLOCK(backgroundImageMode)
+                  KEY_BACKGROUND_IMAGE_MODE: PROFILE_BLOCK(backgroundImageMode),
+                  KEY_STATUS_BAR_LAYOUT: PROFILE_BLOCK(statusBarLayout)
                 };
     }
     return dict;
@@ -507,6 +509,13 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     }
     
     return @(iTermBackgroundImageModeStretch);
+}
+
++ (id)statusBarLayout:(Profile *)profile {
+    if (profile[KEY_STATUS_BAR_LAYOUT]) {
+        return profile[KEY_STATUS_BAR_LAYOUT];
+    }
+    return @{ iTermStatusBarLayoutKeySeparatorColor:[[NSColor colorWithRed:0 green:0 blue:0 alpha:0.25] dictionaryValue] };
 }
 
 + (id)titleComponents:(Profile *)profile {

@@ -17,6 +17,7 @@
 #import "iTermStatusBarGitComponent.h"
 #import "iTermStatusBarGraphicComponent.h"
 #import "iTermStatusBarJobComponent.h"
+#import "iTermStatusBarLayout.h"
 #import "iTermStatusBarMemoryUtilizationComponent.h"
 #import "iTermStatusBarNetworkUtilizationComponent.h"
 #import "iTermStatusBarRPCProvidedTextComponent.h"
@@ -31,6 +32,7 @@
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
+#import <ColorPicker/ColorPicker.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -42,6 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermStatusBarSetupViewController {
     IBOutlet NSCollectionView *_collectionView;
     IBOutlet iTermStatusBarSetupDestinationCollectionViewController *_destinationViewController;
+    IBOutlet CPKColorWell *_separatorColorWell;
     NSArray<iTermStatusBarSetupElement *> *_elements;
     NSDictionary *_initialLayout;
 }
@@ -100,7 +103,16 @@ NS_ASSUME_NONNULL_BEGIN
     [_collectionView setDraggingSourceOperationMask:NSDragOperationCopy forLocal:YES];
     _collectionView.selectable = YES;
 
-    [_destinationViewController setLayoutDictionary:_initialLayout];
+    iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithDictionary:_initialLayout];
+    [_destinationViewController setLayout:layout];
+
+    _separatorColorWell.color = layout.separatorColor;
+    _separatorColorWell.noColorAllowed = YES;
+    _separatorColorWell.alphaAllowed = YES;
+    _separatorColorWell.target = self;
+    _separatorColorWell.action = @selector(separatorColorDidChange:);
+    _separatorColorWell.continuous = YES;
+
     [super awakeFromNib];
 }
 
@@ -115,7 +127,10 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSDictionary *)layoutDictionary {
-    return _destinationViewController.layoutDictionary;
+    return [_destinationViewController layoutDictionaryWithSeparatorColor:_separatorColorWell.color];
+}
+
+- (IBAction)separatorColorDidChange:(id)sender {
 }
 
 - (IBAction)ok:(id)sender {

@@ -121,8 +121,7 @@
     [self.collectionView reloadData];
 }
 
-- (void)setLayoutDictionary:(NSDictionary *)layoutDictionary {
-    iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithDictionary:layoutDictionary];
+- (void)setLayout:(iTermStatusBarLayout *)layout {
     [layout.components enumerateObjectsUsingBlock:^(id<iTermStatusBarComponent>  _Nonnull component, NSUInteger idx, BOOL * _Nonnull stop) {
         [component statusBarComponentSetVariableScope:nil];
         iTermStatusBarSetupElement *element = [[iTermStatusBarSetupElement alloc] initWithComponent:component];
@@ -132,11 +131,12 @@
     [self.collectionView reloadData];
 }
 
-- (NSDictionary *)layoutDictionary {
+- (NSDictionary *)layoutDictionaryWithSeparatorColor:(NSColor *)separatorColor {
     NSArray<id<iTermStatusBarComponent>> *components = [_elements mapWithBlock:^id(iTermStatusBarSetupElement *element) {
         return element.component;
     }];
-    iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithComponents:components];
+    iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithComponents:components
+                                                                     separatorColor:separatorColor];
     return layout.dictionaryValue;
 }
 

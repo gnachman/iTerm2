@@ -12,6 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 extern NSString *const iTermStatusBarLayoutKeyComponents;
+extern NSString *const iTermStatusBarLayoutKeySeparatorColor;
 
 @class iTermStatusBarLayout;
 
@@ -25,8 +26,10 @@ extern NSString *const iTermStatusBarLayoutKeyComponents;
 
 @property (nonatomic, weak) id<iTermStatusBarLayoutDelegate> delegate;
 @property (nonatomic, strong) NSArray<id<iTermStatusBarComponent>> *components;
+@property (nullable, nonatomic, strong) NSColor *separatorColor;
 
-- (instancetype)initWithComponents:(NSArray<id<iTermStatusBarComponent>> *)components NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithComponents:(NSArray<id<iTermStatusBarComponent>> *)components
+                    separatorColor:(NSColor *)separatorColor NS_DESIGNATED_INITIALIZER;
 - (instancetype)initWithDictionary:(NSDictionary *)layout;
 
 - (NSDictionary *)dictionaryValue;

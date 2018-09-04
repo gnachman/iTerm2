@@ -9,9 +9,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class TmuxController;
+
 @interface iTermStatusBarLayout (tmux)
 
-+ (instancetype)tmuxLayout;
++ (instancetype)tmuxLayoutWithController:(TmuxController *)controller;
 + (BOOL)shouldOverrideLayout:(NSDictionary *)layout;
 
 @end
