@@ -48,10 +48,6 @@
     return @"ls -l -R";
 }
 
-- (CGFloat)statusBarComponentVerticalOffset {
-    return 0;
-}
-
 - (iTermsStatusBarComposerViewController *)viewController {
     if (!_viewController) {
         _viewController = [[iTermsStatusBarComposerViewController alloc] initWithNibName:@"iTermsStatusBarComposerViewController" bundle:[NSBundle bundleForClass:self.class]];

@@ -61,7 +61,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
     NSButton *button = [[NSButton alloc] initWithFrame:NSZeroRect];
     button.controlSize = NSControlSizeRegular;
     button.title = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarLabelKey];
-    NSColor *color = [self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarSharedBackgroundColorKey] colorValue];
+    NSColor *color = self.backgroundColor;
     button.bezelColor = color;
     [button setButtonType:NSButtonTypeMomentaryLight];
     button.bezelStyle = NSBezelStyleRounded;
@@ -73,7 +73,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
 
 - (NSColor *)backgroundColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue];
+    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [self statusBarBackgroundColor];
 }
 
 - (NSButton *)button {

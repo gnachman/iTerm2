@@ -180,7 +180,7 @@ NSString *const iTermStatusBarAttributedTextComponentTextColorKey = @"attributed
 
 - (NSColor *)backgroundColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue];
+    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [self statusBarBackgroundColor];
 }
 
 - (BOOL)shouldUpdateValue:(NSAttributedString *)proposed inField:(id<iTermTextFieldish>)textField {
@@ -256,7 +256,7 @@ NSString *const iTermStatusBarAttributedTextComponentTextColorKey = @"attributed
 }
 
 - (CGFloat)statusBarComponentVerticalOffset {
-    return 2.5;
+    return 1.5;
 }
 
 - (CGFloat)statusBarComponentPreferredWidth {

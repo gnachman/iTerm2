@@ -131,12 +131,12 @@
     [self.collectionView reloadData];
 }
 
-- (NSDictionary *)layoutDictionaryWithSeparatorColor:(NSColor *)separatorColor {
+- (NSDictionary *)layoutDictionaryWithAdvancedConfiguration:(iTermStatusBarAdvancedConfiguration *)advancedConfiguration {
     NSArray<id<iTermStatusBarComponent>> *components = [_elements mapWithBlock:^id(iTermStatusBarSetupElement *element) {
         return element.component;
     }];
     iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithComponents:components
-                                                                     separatorColor:separatorColor];
+                                                              advancedConfiguration:advancedConfiguration];
     return layout.dictionaryValue;
 }
 

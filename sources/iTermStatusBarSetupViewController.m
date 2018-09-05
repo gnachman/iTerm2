@@ -37,6 +37,21 @@
 NS_ASSUME_NONNULL_BEGIN
 
 
+@interface iTermStatusBarAdvancedConfigurationPanel : NSPanel
+@end
+
+@implementation iTermStatusBarAdvancedConfigurationPanel
+
+- (BOOL)canBecomeKeyWindow {
+    return YES;
+}
+
+- (BOOL)canBecomeMainWindow {
+    return YES;
+}
+
+@end
+
 @interface iTermStatusBarSetupViewController ()<NSCollectionViewDataSource, NSCollectionViewDelegateFlowLayout>
 
 @end
@@ -45,14 +60,16 @@ NS_ASSUME_NONNULL_BEGIN
     IBOutlet NSCollectionView *_collectionView;
     IBOutlet iTermStatusBarSetupDestinationCollectionViewController *_destinationViewController;
     IBOutlet CPKColorWell *_separatorColorWell;
+    IBOutlet CPKColorWell *_backgroundColorWell;
+    IBOutlet NSPanel *_advancedPanel;
     NSArray<iTermStatusBarSetupElement *> *_elements;
-    NSDictionary *_initialLayout;
+    iTermStatusBarLayout *_layout;
 }
 
 - (nullable instancetype)initWithLayoutDictionary:(NSDictionary *)layoutDictionary {
     self = [super initWithNibName:@"iTermStatusBarSetupViewController" bundle:[NSBundle bundleForClass:self.class]];
     if (self) {
-        _initialLayout = [layoutDictionary copy];
+        _layout = [[iTermStatusBarLayout alloc] initWithDictionary:layoutDictionary];
     }
     return self;
 }
@@ -103,17 +120,30 @@ NS_ASSUME_NONNULL_BEGIN
     [_collectionView setDraggingSourceOperationMask:NSDragOperationCopy forLocal:YES];
     _collectionView.selectable = YES;
 
-    iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithDictionary:_initialLayout];
-    [_destinationViewController setLayout:layout];
+    [_destinationViewController setLayout:_layout];
 
-    _separatorColorWell.color = layout.separatorColor;
-    _separatorColorWell.noColorAllowed = YES;
-    _separatorColorWell.alphaAllowed = YES;
-    _separatorColorWell.target = self;
-    _separatorColorWell.action = @selector(separatorColorDidChange:);
-    _separatorColorWell.continuous = YES;
+    [self initializeColorWell:_separatorColorWell
+                   withAction:@selector(noop:)
+                        color:_layout.advancedConfiguration.separatorColor
+                 alphaAllowed:YES];
+    [self initializeColorWell:_backgroundColorWell
+                   withAction:@selector(noop:)
+                        color:_layout.advancedConfiguration.backgroundColor
+                 alphaAllowed:NO];
 
     [super awakeFromNib];
+}
+
+- (void)initializeColorWell:(CPKColorWell *)colorWell
+                 withAction:(SEL)selector
+                      color:(NSColor *)color
+               alphaAllowed:(BOOL)alphaAllowed {
+    colorWell.color = color;
+    colorWell.noColorAllowed = YES;
+    colorWell.alphaAllowed = alphaAllowed;
+    colorWell.target = self;
+    colorWell.action = selector;
+    colorWell.continuous = YES;
 }
 
 - (void)viewDidLoad {
@@ -127,10 +157,10 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSDictionary *)layoutDictionary {
-    return [_destinationViewController layoutDictionaryWithSeparatorColor:_separatorColorWell.color];
+    return [_destinationViewController layoutDictionaryWithAdvancedConfiguration:_layout.advancedConfiguration];
 }
 
-- (IBAction)separatorColorDidChange:(id)sender {
+- (IBAction)noop:(id)sender {
 }
 
 - (IBAction)ok:(id)sender {
@@ -140,6 +170,22 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (IBAction)cancel:(id)sender {
     [self endSheet];
+}
+
+- (IBAction)advanced:(id)sender {
+    __weak __typeof(self) weakSelf = self;
+    [self.view.window beginSheet:_advancedPanel completionHandler:^(NSModalResponse returnCode) {
+        [weakSelf advancedPanelDidClose];
+    }];
+}
+
+- (IBAction)advancedOK:(id)sender {
+    [self.view.window endSheet:_advancedPanel];
+}
+
+- (void)advancedPanelDidClose {
+    _layout.advancedConfiguration.separatorColor = _separatorColorWell.color;
+    _layout.advancedConfiguration.backgroundColor = _backgroundColorWell.color;
 }
 
 - (void)endSheet {

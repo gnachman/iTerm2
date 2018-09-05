@@ -9,13 +9,14 @@
 #import "iTermStatusBarSetupElement.h"
 
 @class iTermStatusBarLayout;
+@class iTermStatusBarAdvancedConfiguration;
 
 @interface iTermStatusBarSetupDestinationCollectionViewController : NSViewController
 
 @property (nonatomic, copy) NSArray<iTermStatusBarSetupElement *> *elements;
 
 - (void)setLayout:(iTermStatusBarLayout *)layout;
-- (NSDictionary *)layoutDictionaryWithSeparatorColor:(NSColor *)separatorColor;
+- (NSDictionary *)layoutDictionaryWithAdvancedConfiguration:(iTermStatusBarAdvancedConfiguration *)advancedConfiguration;
 
 - (void)deleteSelected;
 

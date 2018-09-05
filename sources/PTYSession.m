@@ -10424,7 +10424,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.view.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
         return nil;
     }
-    return _statusBarViewController.layout.separatorColor;
+    return _statusBarViewController.layout.advancedConfiguration.separatorColor;
 }
 
 - (void)updateStatusBarStyle {

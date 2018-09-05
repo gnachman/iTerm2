@@ -515,7 +515,15 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     if (profile[KEY_STATUS_BAR_LAYOUT]) {
         return profile[KEY_STATUS_BAR_LAYOUT];
     }
-    return @{ iTermStatusBarLayoutKeySeparatorColor:[[NSColor colorWithRed:0 green:0 blue:0 alpha:0.25] dictionaryValue] };
+    static NSDictionary *defaultValue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        iTermStatusBarLayout *layout;
+        layout = [[iTermStatusBarLayout alloc] init];
+        layout.advancedConfiguration.separatorColor = [NSColor colorWithRed:0 green:0 blue:0 alpha:0.25];
+        defaultValue = layout.dictionaryValue;
+    });
+    return defaultValue;
 }
 
 + (id)titleComponents:(Profile *)profile {

@@ -22,7 +22,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 static const CGFloat iTermStatusBarViewControllerMargin = 10;
-static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
+static const CGFloat iTermStatusBarViewControllerBottomMargin = 1;
 static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
 
 // NOTE: SessionView's kTitleHeight must equal this value
@@ -55,7 +55,7 @@ const CGFloat iTermStatusBarHeight = 22;
 
 - (void)loadView {
     iTermStatusBarView *view = [[iTermStatusBarView alloc] initWithFrame:NSZeroRect];
-    view.separatorColor = _layout.separatorColor;
+    view.separatorColor = _layout.advancedConfiguration.separatorColor;
     self.view = view;
 }
 
@@ -99,7 +99,7 @@ const CGFloat iTermStatusBarHeight = 22;
     __block NSColor *lastColor = nil;
     __block NSNumber *lastFixedSpacerOffset = nil;
     __block iTermStatusBarContainerView *previousObject = nil;
-    view.sections = [[_visibleContainerViews flatMapWithBlock:^id(iTermStatusBarContainerView *anObject) {
+    view.separatorOffsets = [[_visibleContainerViews flatMapWithBlock:^id(iTermStatusBarContainerView *anObject) {
         const BOOL isSpring = [anObject.component isKindOfClass:[iTermStatusBarSpringComponent class]];
         const CGFloat margin = isSpring ? 0 : iTermStatusBarViewControllerMargin / 2.0;
         NSNumber *offset = @(anObject.desiredOrigin + anObject.desiredWidth + margin);
@@ -112,8 +112,7 @@ const CGFloat iTermStatusBarHeight = 22;
             previousObject.rightSeparatorOffset = lastFixedSpacerOffset.doubleValue;
             anObject.rightSeparatorOffset = offset.doubleValue;
             previousObject = anObject;
-            NSArray *result = @[ [iTermTuple tupleWithObject:lastColor andObject:lastFixedSpacerOffset],
-                                 [iTermTuple tupleWithObject:anObject.backgroundColor andObject:offset] ];
+            NSArray *result = @[ lastFixedSpacerOffset, offset ];
             lastFixedSpacerOffset = nil;
             lastColor = nil;
             return result;
@@ -122,12 +121,31 @@ const CGFloat iTermStatusBarHeight = 22;
             anObject.rightSeparatorOffset = offset.doubleValue;
             lastFixedSpacerOffset = nil;
             previousObject = anObject;
-            lastColor = nil;// anObject.backgroundColor;
-            return @[ [iTermTuple tupleWithObject:anObject.backgroundColor andObject:offset] ];
+            lastColor = anObject.backgroundColor;
+            return @[ offset ];
         }
-    }] uniqWithComparator:^BOOL(iTermTuple<NSColor *, NSNumber *> *obj1, iTermTuple<NSColor *, NSNumber *> *obj2) {
-        return [NSObject object:obj1.secondObject isEqualToObject:obj2.secondObject];
+    }] uniqWithComparator:^BOOL(NSNumber *obj1, NSNumber *obj2) {
+        return [obj1 isEqual:obj2];
     }];
+
+    lastColor = nil;
+    __block NSNumber *lastOffset = nil;
+    view.backgroundColors = [_visibleContainerViews mapWithBlock:^id(iTermStatusBarContainerView *containerView) {
+        NSColor *color = containerView.backgroundColor;
+        const BOOL isSpring = [containerView.component isKindOfClass:[iTermStatusBarSpringComponent class]];
+        const CGFloat margin = isSpring ? 0 : iTermStatusBarViewControllerMargin / 2.0;
+        NSNumber *offset = @(containerView.desiredOrigin + containerView.desiredWidth + margin + 0.5);
+        iTermTuple *result = nil;
+        if (lastColor) {
+            result = [iTermTuple tupleWithObject:lastColor andObject:lastOffset];
+        }
+        lastColor = color;
+        lastOffset = offset;
+        return result;
+    }];
+    if (lastColor) {
+        view.backgroundColors = [view.backgroundColors arrayByAddingObject:[iTermTuple tupleWithObject:lastColor andObject:lastOffset]];
+    }
 
     [view setNeedsDisplay:YES];
     DLog(@"--- end status bar layout ---");

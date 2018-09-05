@@ -9,6 +9,7 @@
 #import "iTermMetalClipView.h"
 #import "iTermMetalDeviceProvider.h"
 #import "iTermPreferences.h"
+#import "iTermStatusBarLayout.h"
 #import "iTermStatusBarSearchFieldComponent.h"
 #import "iTermStatusBarViewController.h"
 #import "NSAppearance+iTerm.h"
@@ -1315,6 +1316,12 @@ static NSDate* lastResizeDate_;
 }
 
 - (NSColor *)sessionTitleViewBackgroundColor {
+    if (!_showBottomStatusBar && _title.statusBarViewController) {
+        NSColor *color = _title.statusBarViewController.layout.advancedConfiguration.backgroundColor;
+        if (color) {
+            return color;
+        }
+    }
     return [self backgroundColorForDecorativeSubviews];
 }
 

@@ -13,6 +13,7 @@
 
 typedef NSString *iTermStatusBarComponentConfigurationKey NS_EXTENSIBLE_STRING_ENUM;
 extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyKnobValues;  // NSDictionary
+extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyLayoutAdvancedConfigurationDictionaryValue;  // NSDictionary
 
 // Knob key
 static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared background color";

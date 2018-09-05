@@ -12,7 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 extern NSString *const iTermStatusBarLayoutKeyComponents;
-extern NSString *const iTermStatusBarLayoutKeySeparatorColor;
+extern NSString *const iTermStatusBarLayoutKeyAdvancedConfiguration;
 
 @class iTermStatusBarLayout;
 
@@ -22,14 +22,24 @@ extern NSString *const iTermStatusBarLayoutKeySeparatorColor;
 
 @end
 
+@interface iTermStatusBarAdvancedConfiguration : NSObject<NSSecureCoding>
+@property (nullable, nonatomic, strong) NSColor *separatorColor;
+@property (nullable, nonatomic, strong) NSColor *backgroundColor;
+
++ (instancetype)advancedConfigurationFromDictionary:(NSDictionary *)dict;
+
+- (NSDictionary *)dictionaryValue;
+
+@end
+
 @interface iTermStatusBarLayout : NSObject<NSSecureCoding>
 
 @property (nonatomic, weak) id<iTermStatusBarLayoutDelegate> delegate;
 @property (nonatomic, strong) NSArray<id<iTermStatusBarComponent>> *components;
-@property (nullable, nonatomic, strong) NSColor *separatorColor;
+@property (nonatomic, readonly) iTermStatusBarAdvancedConfiguration *advancedConfiguration;
 
 - (instancetype)initWithComponents:(NSArray<id<iTermStatusBarComponent>> *)components
-                    separatorColor:(NSColor *)separatorColor NS_DESIGNATED_INITIALIZER;
+             advancedConfiguration:(iTermStatusBarAdvancedConfiguration *)advancedConfiguration NS_DESIGNATED_INITIALIZER;
 - (instancetype)initWithDictionary:(NSDictionary *)layout;
 
 - (NSDictionary *)dictionaryValue;

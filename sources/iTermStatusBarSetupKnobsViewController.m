@@ -68,7 +68,7 @@ static NSViewController<iTermStatusBarKnobViewController> *iTermNewViewControlle
             self->_maxControlOffset = MAX(self->_maxControlOffset, vc.controlOffset);
             return vc;
         }];
-        _size.width = _maxControlOffset + maxControlWidth + iTermStatusBarSetupPopoverMargin * 2;
+        _size.width = MAX(150, _maxControlOffset + maxControlWidth + iTermStatusBarSetupPopoverMargin * 2);
         if (_viewControllers.count >= 1) {
             _size.height += 5 * (_viewControllers.count - 1);
         }

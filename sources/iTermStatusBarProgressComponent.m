@@ -74,10 +74,6 @@ NS_ASSUME_NONNULL_BEGIN
     return _viewController.view;
 }
 
-- (CGFloat)statusBarComponentVerticalOffset {
-    return 0;
-}
-
 - (void)statusBarDefaultTextColorDidChange {
     [_viewController updateLabelColor];
 }

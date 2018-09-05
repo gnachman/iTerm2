@@ -11,7 +11,8 @@
 @interface iTermStatusBarView : NSView
 
 // color, x offset
-@property (nonatomic, copy) NSArray<iTermTuple<NSColor *, NSNumber *> *> *sections;
+@property (nonatomic, copy) NSArray<NSNumber *> *separatorOffsets;
+@property (nonatomic, copy) NSArray<iTermTuple<NSColor *, NSNumber *> *> *backgroundColors;
 @property (nonatomic) NSColor *separatorColor;
 
 @end

@@ -34,9 +34,10 @@
     id<iTermStatusBarComponent> rightComponent = [[iTermStatusBarSwiftyStringComponent alloc] initWithConfiguration:rightConfiguration];
     id<iTermStatusBarComponent> springComponent = [[iTermStatusBarSpringComponent alloc] initWithConfiguration:@{}];
 
-    NSDictionary *colorDict = [iTermProfilePreferences objectForKey:KEY_STATUS_BAR_LAYOUT inProfile:controller.profile];
-    return [[self alloc] initWithComponents:@[ leftComponent, springComponent, rightComponent ]
-                             separatorColor:[colorDict colorValue]];
+    NSDictionary *layoutDict = [iTermProfilePreferences objectForKey:KEY_STATUS_BAR_LAYOUT inProfile:controller.profile];
+    iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithDictionary:layoutDict];
+    layout.components = @[ leftComponent, springComponent, rightComponent ];
+    return layout;
 }
 
 + (BOOL)shouldOverrideLayout:(NSDictionary *)layout {

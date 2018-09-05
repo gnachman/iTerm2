@@ -102,7 +102,7 @@ static NSString *const iTermStatusBarGraphicComponentTextColorKey = @"graphic co
 
 - (NSColor *)backgroundColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue];
+    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [self statusBarBackgroundColor];
 }
 
 - (BOOL)shouldUpdateValue:(NSObject *)proposed {

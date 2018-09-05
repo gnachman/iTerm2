@@ -12,7 +12,6 @@
 NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermStatusBarSpringComponentSpringConstantKey";
-static NSString *const iTermStatusBarSpringColorKey = @"spring: color";
 
 @implementation iTermStatusBarSpringComponent {
     NSView *_view;
@@ -58,7 +57,7 @@ static NSString *const iTermStatusBarSpringColorKey = @"spring: color";
 
 - (NSColor *)color {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    return [knobValues[iTermStatusBarSpringColorKey] colorValue];
+    return [knobValues[iTermStatusBarSharedBackgroundColorKey] colorValue] ?: [self statusBarBackgroundColor];
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
@@ -73,7 +72,7 @@ static NSString *const iTermStatusBarSpringColorKey = @"spring: color";
                                                       type:iTermStatusBarComponentKnobTypeColor
                                                placeholder:nil
                                               defaultValue:nil
-                                                       key:iTermStatusBarSpringColorKey];
+                                                       key:iTermStatusBarSharedBackgroundColorKey];
     return @[ springConstantKnob, backgroundColorKnob ];
 }
 
