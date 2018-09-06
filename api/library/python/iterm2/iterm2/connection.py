@@ -245,8 +245,8 @@ class Connection:
 
         message_future = async_recv_dispatch()
         while not future.done():
-            # asyncio.wait is a truly bad API. AFAICT there's no way to find
-            # your Future in done because it is transmogrified into a Task.
+            # asyncio.wait is a tricky API. AFAICT there's no way to find
+            # if your Future is done because it is transmogrified into a Task.
             # Its absence in pending appears to imply its presence in done.
             done, pending = await asyncio.wait([future, message_future], return_when=asyncio.FIRST_COMPLETED)
             # There might be tasks in done with exception (e.g., if the connection was closed)
