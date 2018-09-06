@@ -259,7 +259,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         downImage = [self attributedStringWithImageNamed:@"gitdown"];
         cleanImage = [self attributedStringWithImageNamed:@"gitclean"];
         dirtyImage = [self attributedStringWithImageNamed:@"gitdirty"];
-        space = [self attributedStringWithString:@" "];
+        space = [self attributedStringWithString:@"\u2003\u2003"];
     });
 
     NSAttributedString *cleanDirtyImage = _gitPoller.state.dirty ? dirtyImage : cleanImage;
