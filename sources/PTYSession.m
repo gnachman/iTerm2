@@ -9514,6 +9514,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pwdPoller didReceiveLineFeed];
 }
 
+- (void)screenSoftAlternateScreenModeDidChange {
+    [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+}
+
 #pragma mark - Announcements
 
 - (BOOL)hasAnnouncementWithIdentifier:(NSString *)identifier {
@@ -10345,6 +10349,9 @@ ITERM_WEAKLY_REFERENCEABLE
 #pragma mark - iTermVariablesDelegate
 
 - (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames group:(dispatch_group_t)group {
+    if ([changedNames containsObject:iTermVariableKeySessionJobPid]) {
+        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+    }
     [_nameController variablesDidChange:changedNames];
     [_badgeSwiftyString variablesDidChange:changedNames];
     [_textview setBadgeLabel:[self badgeLabel]];

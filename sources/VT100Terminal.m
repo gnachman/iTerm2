@@ -142,6 +142,8 @@ typedef struct {
 
     // Code for the current hypertext link, or 0 if not in a hypertext link.
     unsigned short _currentURLCode;
+
+    BOOL _softAlternateScreenMode;
 }
 
 @synthesize delegate = delegate_;
@@ -313,6 +315,14 @@ static const int kMaxScreenRows = 4096;
     graphicRendition_.bgColorMode = (altsem ? ColorModeAlternate : ColorModeNormal);
 }
 
+- (void)setSoftAlternateScreenMode:(BOOL)softAlternateScreenMode {
+    if (softAlternateScreenMode == _softAlternateScreenMode) {
+        return;
+    }
+    _softAlternateScreenMode = softAlternateScreenMode;
+    [self.delegate terminalSoftAlternateScreenModeDidChange];
+}
+
 - (void)resetCharset {
     _charset = 0;
     for (int i = 0; i < NUM_CHARSETS; i++) {
@@ -353,7 +363,7 @@ static const int kMaxScreenRows = 4096;
     }
     [self resetSavedCursorPositions];
     [delegate_ terminalShowPrimaryBuffer];
-    _softAlternateScreenMode = NO;
+    self.softAlternateScreenMode = NO;
 }
 
 - (void)gentleReset {
@@ -563,7 +573,7 @@ static const int kMaxScreenRows = 4096;
                         [delegate_ terminalSetCursorY:y];
                     }
                 }
-                _softAlternateScreenMode = mode;
+                self.softAlternateScreenMode = mode;
                 break;
 
             case 69:
@@ -629,7 +639,7 @@ static const int kMaxScreenRows = 4096;
                         [self restoreCursor];
                     }
                 }
-                _softAlternateScreenMode = mode;
+                self.softAlternateScreenMode = mode;
                 break;
 
             case 2004:
@@ -2569,7 +2579,7 @@ static const int kMaxScreenRows = 4096;
     switch ([command characterAtIndex:0]) {
         case 'A':
             // Sequence marking the start of the command prompt (FTCS_PROMPT_START)
-            _softAlternateScreenMode = NO;  // We can reasonably assume alternate screen mode has ended if there's a prompt. Could be ssh dying, etc.
+            self.softAlternateScreenMode = NO;  // We can reasonably assume alternate screen mode has ended if there's a prompt. Could be ssh dying, etc.
             [delegate_ terminalPromptDidStart];
             break;
 

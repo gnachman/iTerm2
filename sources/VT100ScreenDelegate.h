@@ -253,5 +253,6 @@
 - (NSString *)screenValueOfVariableNamed:(NSString *)name;
 - (void)screenReportFocusWillChangeTo:(BOOL)reportFocus;
 - (void)screenDidReceiveLineFeed;
+- (void)screenSoftAlternateScreenModeDidChange;
 
 @end

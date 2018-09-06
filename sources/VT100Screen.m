@@ -4393,6 +4393,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self.delegate screenReportFocusWillChangeTo:reportFocus];
 }
 
+- (void)terminalSoftAlternateScreenModeDidChange {
+    [self.delegate screenSoftAlternateScreenModeDidChange];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {
