@@ -17,6 +17,7 @@ extern iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurat
 
 // Knob key
 static NSString *const iTermStatusBarSharedBackgroundColorKey = @"shared background color";
+static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 
 @protocol iTermStatusBarComponent;
 @class iTermVariableScope;

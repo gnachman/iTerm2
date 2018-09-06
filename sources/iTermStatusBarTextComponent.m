@@ -17,8 +17,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text color";
-
 @implementation iTermStatusBarTextComponent {
     NSTextField *_textField;
     NSTextField *_measuringField;
@@ -31,7 +29,7 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
                                                           type:iTermStatusBarComponentKnobTypeColor
                                                    placeholder:nil
                                                   defaultValue:nil
-                                                           key:iTermStatusBarTextComponentTextColorKey];
+                                                           key:iTermStatusBarSharedTextColorKey];
     iTermStatusBarComponentKnob *backgroundColorKnob =
         [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Background Color"
                                                           type:iTermStatusBarComponentKnobTypeColor
@@ -60,7 +58,7 @@ static NSString *const iTermStatusBarTextComponentTextColorKey = @"text: text co
 
 - (NSColor *)textColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    return [knobValues[iTermStatusBarTextComponentTextColorKey] colorValue] ?: [self.delegate statusBarComponentDefaultTextColor];
+    return [knobValues[iTermStatusBarSharedTextColorKey] colorValue] ?: ([self defaultTextColor] ?: [self.delegate statusBarComponentDefaultTextColor]);
 }
 
 - (NSColor *)backgroundColor {

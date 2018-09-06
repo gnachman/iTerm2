@@ -14,8 +14,6 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 
-static NSString *const iTermStatusBarGraphicComponentTextColorKey = @"graphic component text color";
-
 @implementation iTermStatusBarImageComponentView
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -52,9 +50,14 @@ static NSString *const iTermStatusBarGraphicComponentTextColorKey = @"graphic co
 
 - (NSColor *)textColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    NSColor *configuredColor = [knobValues[iTermStatusBarGraphicComponentTextColorKey] colorValue];
+    NSColor *configuredColor = [knobValues[iTermStatusBarSharedTextColorKey] colorValue];
     if (configuredColor) {
         return configuredColor;
+    }
+
+    NSColor *defaultTextColor = [self defaultTextColor];
+    if (defaultTextColor) {
+        return defaultTextColor;
     }
 
     NSColor *provided = [self.delegate statusBarComponentDefaultTextColor];
@@ -83,7 +86,7 @@ static NSString *const iTermStatusBarGraphicComponentTextColorKey = @"graphic co
                                                               type:iTermStatusBarComponentKnobTypeColor
                                                        placeholder:nil
                                                       defaultValue:nil
-                                                               key:iTermStatusBarGraphicComponentTextColorKey];
+                                                               key:iTermStatusBarSharedTextColorKey];
         knobs = [knobs arrayByAddingObject:textColorKnob];
     }
     return knobs;

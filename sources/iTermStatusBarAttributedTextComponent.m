@@ -20,8 +20,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NSString *const iTermStatusBarAttributedTextComponentTextColorKey = @"attributed text color";
-
 @protocol iTermTextFieldish<NSObject>
 @property (nonatomic, copy) NSAttributedString *attributedStringValue;
 @property (nonatomic, strong) NSColor *backgroundColor;
@@ -145,15 +143,20 @@ NSString *const iTermStatusBarAttributedTextComponentTextColorKey = @"attributed
                                                           type:iTermStatusBarComponentKnobTypeColor
                                                    placeholder:nil
                                                   defaultValue:nil
-                                                           key:iTermStatusBarAttributedTextComponentTextColorKey];
+                                                           key:iTermStatusBarSharedTextColorKey];
     return [@[ backgroundColorKnob, textColorKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
 }
 
 - (NSColor *)textColor {
     NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    NSColor *configuredColor = [knobValues[iTermStatusBarAttributedTextComponentTextColorKey] colorValue];
+    NSColor *configuredColor = [knobValues[iTermStatusBarSharedTextColorKey] colorValue];
     if (configuredColor) {
         return configuredColor;
+    }
+
+    NSColor *defaultTextColor = [self defaultTextColor];
+    if (defaultTextColor) {
+        return defaultTextColor;
     }
 
     NSColor *provided = [self.delegate statusBarComponentDefaultTextColor];

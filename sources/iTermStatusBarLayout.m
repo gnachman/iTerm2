@@ -27,6 +27,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
     iTermStatusBarAdvancedConfiguration *configuration = [[iTermStatusBarAdvancedConfiguration alloc] init];
     configuration.separatorColor = [dict[@"separator color"] colorValue];
     configuration.backgroundColor = [dict[@"background color"] colorValue];
+    configuration.defaultTextColor = [dict[@"default text color"] colorValue];
     return configuration;
 }
 
@@ -35,13 +36,15 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
     if (self) {
         self.separatorColor = [[aDecoder decodeObjectOfClass:[NSDictionary class] forKey:@"separator color"] colorValue];
         self.backgroundColor = [[aDecoder decodeObjectOfClass:[NSDictionary class] forKey:@"background color"] colorValue];
+        self.defaultTextColor = [[aDecoder decodeObjectOfClass:[NSDictionary class] forKey:@"default text color"] colorValue];
     }
     return self;
 }
 
 - (NSDictionary *)dictionaryValue {
     NSDictionary *dict = @{ @"separator color": [self.separatorColor dictionaryValue] ?: [NSNull null],
-                            @"background color": [self.backgroundColor dictionaryValue] ?: [NSNull null] };
+                            @"background color": [self.backgroundColor dictionaryValue] ?: [NSNull null],
+                            @"default text color": [self.defaultTextColor dictionaryValue] ?: [NSNull null] };
     return [dict dictionaryByRemovingNullValues];
 }
 
@@ -52,6 +55,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
 - (void)encodeWithCoder:(NSCoder *)aCoder {
     [aCoder encodeObject:[self.separatorColor dictionaryValue] forKey:@"separator color"];
     [aCoder encodeObject:[self.backgroundColor dictionaryValue] forKey:@"background color"];
+    [aCoder encodeObject:[self.defaultTextColor dictionaryValue] forKey:@"default text color"];
 }
 
 @end

@@ -9,8 +9,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-extern NSString *const iTermStatusBarAttributedTextComponentTextColorKey;
-
 // WARNING! This doesn't support most features of attributed strings. This uses
 // a terrible hack to work around an NSTextField bug.
 @interface iTermStatusBarAttributedTextComponent : iTermStatusBarBaseComponent

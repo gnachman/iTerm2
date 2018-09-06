@@ -25,6 +25,7 @@ extern NSString *const iTermStatusBarLayoutKeyAdvancedConfiguration;
 @interface iTermStatusBarAdvancedConfiguration : NSObject<NSSecureCoding>
 @property (nullable, nonatomic, strong) NSColor *separatorColor;
 @property (nullable, nonatomic, strong) NSColor *backgroundColor;
+@property (nullable, nonatomic, strong) NSColor *defaultTextColor;
 
 + (instancetype)advancedConfigurationFromDictionary:(NSDictionary *)dict;
 

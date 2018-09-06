@@ -75,7 +75,8 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
     self = [super init];
     if (self) {
         _configuration = [configuration copy];
-        _advancedConfiguration = [iTermStatusBarAdvancedConfiguration advancedConfigurationFromDictionary:configuration[iTermStatusBarLayoutKeyAdvancedConfiguration]];
+        _advancedConfiguration = [iTermStatusBarAdvancedConfiguration advancedConfigurationFromDictionary:configuration[iTermStatusBarComponentConfigurationKeyLayoutAdvancedConfigurationDictionaryValue]];
+        _defaultTextColor = _advancedConfiguration.defaultTextColor;
     }
     return self;
 }

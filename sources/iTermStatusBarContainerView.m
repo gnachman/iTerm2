@@ -28,7 +28,6 @@ NS_ASSUME_NONNULL_BEGIN
     if (self) {
         self.wantsLayer = YES;
         _component = component;
-        _dependencies = [component statusBarComponentVariableDependencies];
         _backgroundColor = [component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarSharedBackgroundColorKey] colorValue];
         _view = component.statusBarComponentCreateView;
         [self addSubview:_view];

@@ -61,6 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
     IBOutlet iTermStatusBarSetupDestinationCollectionViewController *_destinationViewController;
     IBOutlet CPKColorWell *_separatorColorWell;
     IBOutlet CPKColorWell *_backgroundColorWell;
+    IBOutlet CPKColorWell *_defaultTextColorWell;
     IBOutlet NSPanel *_advancedPanel;
     NSArray<iTermStatusBarSetupElement *> *_elements;
     iTermStatusBarLayout *_layout;
@@ -130,6 +131,10 @@ NS_ASSUME_NONNULL_BEGIN
                    withAction:@selector(noop:)
                         color:_layout.advancedConfiguration.backgroundColor
                  alphaAllowed:NO];
+    [self initializeColorWell:_defaultTextColorWell
+                   withAction:@selector(noop:)
+                        color:_layout.advancedConfiguration.defaultTextColor
+                 alphaAllowed:NO];
 
     [super awakeFromNib];
 }
@@ -186,6 +191,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)advancedPanelDidClose {
     _layout.advancedConfiguration.separatorColor = _separatorColorWell.color;
     _layout.advancedConfiguration.backgroundColor = _backgroundColorWell.color;
+    _layout.advancedConfiguration.defaultTextColor = _defaultTextColorWell.color;
 }
 
 - (void)endSheet {
