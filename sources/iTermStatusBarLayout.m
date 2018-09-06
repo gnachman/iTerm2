@@ -11,6 +11,8 @@
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSFont+iTerm.h"
+#import "NSStringITerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -23,11 +25,17 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
 
 @implementation iTermStatusBarAdvancedConfiguration
 
++ (NSFont *)defaultFont {
+    return [NSFont fontWithName:@"Helvetica" size:12];
+}
+
 + (instancetype)advancedConfigurationFromDictionary:(NSDictionary *)dict {
     iTermStatusBarAdvancedConfiguration *configuration = [[iTermStatusBarAdvancedConfiguration alloc] init];
     configuration.separatorColor = [dict[@"separator color"] colorValue];
     configuration.backgroundColor = [dict[@"background color"] colorValue];
     configuration.defaultTextColor = [dict[@"default text color"] colorValue];
+    configuration.font = [dict[@"font"] fontValue];
+
     return configuration;
 }
 
@@ -37,6 +45,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
         self.separatorColor = [[aDecoder decodeObjectOfClass:[NSDictionary class] forKey:@"separator color"] colorValue];
         self.backgroundColor = [[aDecoder decodeObjectOfClass:[NSDictionary class] forKey:@"background color"] colorValue];
         self.defaultTextColor = [[aDecoder decodeObjectOfClass:[NSDictionary class] forKey:@"default text color"] colorValue];
+        self.font = [[aDecoder decodeObjectOfClass:[NSString class] forKey:@"font"] fontValue];
     }
     return self;
 }
@@ -44,7 +53,8 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
 - (NSDictionary *)dictionaryValue {
     NSDictionary *dict = @{ @"separator color": [self.separatorColor dictionaryValue] ?: [NSNull null],
                             @"background color": [self.backgroundColor dictionaryValue] ?: [NSNull null],
-                            @"default text color": [self.defaultTextColor dictionaryValue] ?: [NSNull null] };
+                            @"default text color": [self.defaultTextColor dictionaryValue] ?: [NSNull null],
+                            @"font": [self.font stringValue] ?: [NSNull null] };
     return [dict dictionaryByRemovingNullValues];
 }
 
@@ -56,6 +66,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
     [aCoder encodeObject:[self.separatorColor dictionaryValue] forKey:@"separator color"];
     [aCoder encodeObject:[self.backgroundColor dictionaryValue] forKey:@"background color"];
     [aCoder encodeObject:[self.defaultTextColor dictionaryValue] forKey:@"default text color"];
+    [aCoder encodeObject:[self.font stringValue] forKey:@"font"];
 }
 
 @end

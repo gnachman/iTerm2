@@ -26,8 +26,10 @@ extern NSString *const iTermStatusBarLayoutKeyAdvancedConfiguration;
 @property (nullable, nonatomic, strong) NSColor *separatorColor;
 @property (nullable, nonatomic, strong) NSColor *backgroundColor;
 @property (nullable, nonatomic, strong) NSColor *defaultTextColor;
+@property (nullable, nonatomic, strong) NSFont *font;
 
 + (instancetype)advancedConfigurationFromDictionary:(NSDictionary *)dict;
++ (NSFont *)defaultFont;
 
 - (NSDictionary *)dictionaryValue;
 

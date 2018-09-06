@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSTextField *)newTextField {
     NSTextField *textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
-    textField.font = [NSFont it_statusBarFont];
+    textField.font = self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
     textField.drawsBackground = NO;
     textField.bordered = NO;
     textField.editable = NO;

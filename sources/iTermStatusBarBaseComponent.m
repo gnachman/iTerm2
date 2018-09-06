@@ -64,9 +64,7 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
 
 @end
 
-@implementation iTermStatusBarBaseComponent {
-    iTermStatusBarAdvancedConfiguration *_advancedConfiguration;
-}
+@implementation iTermStatusBarBaseComponent
 
 @synthesize configuration = _configuration;
 @synthesize delegate = _delegate;

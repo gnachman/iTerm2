@@ -62,7 +62,10 @@ NS_ASSUME_NONNULL_BEGIN
     IBOutlet CPKColorWell *_separatorColorWell;
     IBOutlet CPKColorWell *_backgroundColorWell;
     IBOutlet CPKColorWell *_defaultTextColorWell;
+    IBOutlet NSTextField *_fontLabel;
     IBOutlet NSPanel *_advancedPanel;
+    IBOutlet NSPopUpButton *_font;
+    IBOutlet NSPopUpButton *_fontSize;
     NSArray<iTermStatusBarSetupElement *> *_elements;
     iTermStatusBarLayout *_layout;
 }
@@ -123,6 +126,8 @@ NS_ASSUME_NONNULL_BEGIN
 
     [_destinationViewController setLayout:_layout];
 
+    NSFont *font = _layout.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
+    _fontLabel.stringValue = [NSString stringWithFormat:@"%@pt %@", @(font.pointSize), font.fontName];
     [self initializeColorWell:_separatorColorWell
                    withAction:@selector(noop:)
                         color:_layout.advancedConfiguration.separatorColor
@@ -168,6 +173,19 @@ NS_ASSUME_NONNULL_BEGIN
 - (IBAction)noop:(id)sender {
 }
 
+- (IBAction)openFontPanel:(id)sender {
+    _advancedPanel.nextResponder = self;
+    NSFontManager *fontManager = [NSFontManager sharedFontManager];
+    NSFontPanel *fontPanel = [fontManager fontPanel:YES];
+    [fontPanel orderFront:sender];
+}
+
+- (void)changeFont:(nullable id)sender {
+    NSFont *font = [sender convertFont:_layout.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont]];
+    _layout.advancedConfiguration.font = font;
+    _fontLabel.stringValue = [NSString stringWithFormat:@"%@pt %@", @(font.pointSize), font.fontName];
+}
+
 - (IBAction)ok:(id)sender {
     _ok = YES;
     [self endSheet];
@@ -188,7 +206,12 @@ NS_ASSUME_NONNULL_BEGIN
     [self.view.window endSheet:_advancedPanel];
 }
 
+
 - (void)advancedPanelDidClose {
+    NSFontManager *fontManager = [NSFontManager sharedFontManager];
+    NSFontPanel *fontPanel = [fontManager fontPanel:YES];
+    [fontPanel close];
+    
     _layout.advancedConfiguration.separatorColor = _separatorColorWell.color;
     _layout.advancedConfiguration.backgroundColor = _backgroundColorWell.color;
     _layout.advancedConfiguration.defaultTextColor = _defaultTextColorWell.color;

@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermStatusBarComponent.h"
+#import "iTermStatusBarLayout.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -21,6 +22,7 @@ extern NSString *const iTermStatusBarPriorityKey;
 @property (nonatomic, readonly) NSDictionary<iTermStatusBarComponentConfigurationKey, id> *configuration;
 @property (nonatomic, readonly) NSColor *statusBarBackgroundColor;
 @property (nonatomic, readonly) NSColor *defaultTextColor;
+@property (nonatomic, readonly) iTermStatusBarAdvancedConfiguration *advancedConfiguration;
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

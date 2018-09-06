@@ -111,12 +111,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSFont *)font {
-    static NSFont *font;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        font = [NSFont it_statusBarFont];
-    });
-    return font;
+    return self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
 }
 
 - (NSDictionary *)leftAttributes {

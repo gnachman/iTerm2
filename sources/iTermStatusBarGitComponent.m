@@ -237,7 +237,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 }
 
 - (NSAttributedString *)attributedStringWithString:(NSString *)string {
-    NSDictionary *attributes = @{ NSFontAttributeName: [NSFont it_statusBarFont],
+    NSDictionary *attributes = @{ NSFontAttributeName: self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont],
                                   NSForegroundColorAttributeName: [self textColor],
                                   NSParagraphStyleAttributeName: self.paragraphStyle };
     return [[NSAttributedString alloc] initWithString:string ?: @"" attributes:attributes];

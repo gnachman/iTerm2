@@ -11,10 +11,3 @@
 iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyKnobValues = @"knobs";
 iTermStatusBarComponentConfigurationKey iTermStatusBarComponentConfigurationKeyLayoutAdvancedConfigurationDictionaryValue = @"layout advanced configuration dictionary value";
 
-@implementation NSFont(StatusBar)
-
-+ (instancetype)it_statusBarFont {
-    return [NSFont fontWithName:@"Helvetica" size:12];
-}
-
-@end
