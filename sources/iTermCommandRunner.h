@@ -33,6 +33,8 @@
 
 - (void)run;
 - (void)runWithTimeout:(NSTimeInterval)timeout;
+- (void)write:(NSData *)data completion:(void (^)(size_t, int))completion;
+- (void)terminate;
 
 @end
 

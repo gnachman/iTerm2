@@ -11,5 +11,6 @@
 @interface NSDate (iTerm)
 
 + (BOOL)isAprilFools;
++ (NSTimeInterval)it_timeSinceBoot;
 
 @end

@@ -448,6 +448,17 @@
     }];
 }
 
+- (NSDictionary *)keyValuePairsWithBlock:(iTermTuple * (^)(id object))block {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    for (id object in self) {
+        iTermTuple *tuple = block(object);
+        if (tuple) {
+            result[tuple.firstObject] = tuple.secondObject;
+        }
+    }
+    return result;
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)

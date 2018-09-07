@@ -7,6 +7,7 @@
 //
 
 #import "NSDate+iTerm.h"
+#include <mach/mach_time.h>
 
 @implementation NSDate (iTerm)
 
@@ -25,6 +26,19 @@
     lastComputation = now;
   }
   return result;
+}
+
++ (NSTimeInterval)it_timeSinceBoot {
+    const int64_t elapsed = mach_absolute_time();
+    static dispatch_once_t onceToken;
+    static mach_timebase_info_data_t sTimebaseInfo;
+    dispatch_once(&onceToken, ^{
+        mach_timebase_info(&sTimebaseInfo);
+    });
+
+    const double nanoseconds = elapsed * sTimebaseInfo.numer / sTimebaseInfo.denom;
+    const double nanosPerSecond = 1000.0 * 1000.0 * 1000.0;
+    return nanoseconds / nanosPerSecond;
 }
 
 @end

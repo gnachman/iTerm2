@@ -17,6 +17,10 @@
 @implementation iTermCommandRunner {
     NSTask *_task;
     NSPipe *_pipe;
+    NSPipe *_inputPipe;
+    dispatch_queue_t _readingQueue;
+    dispatch_queue_t _writingQueue;
+    dispatch_queue_t _waitingQueue;
 }
 
 + (void)unzipURL:(NSURL *)zipURL
@@ -59,6 +63,10 @@
     if (self) {
         _task = [[NSTask alloc] init];
         _pipe = [[NSPipe alloc] init];
+        _inputPipe = [[NSPipe alloc] init];
+        _readingQueue = dispatch_queue_create("com.iterm2.crun-reading", DISPATCH_QUEUE_SERIAL);
+        _writingQueue = dispatch_queue_create("com.iterm2.crun-writing", DISPATCH_QUEUE_SERIAL);
+        _waitingQueue = dispatch_queue_create("com.iterm2.crun-waiting", DISPATCH_QUEUE_SERIAL);
 
         self.command = command;
         self.arguments = arguments;
@@ -68,7 +76,7 @@
 }
 
 - (void)run {
-    dispatch_async(self.readingQueue, ^{
+    dispatch_async(_readingQueue, ^{
         [self runSynchronously];
     });
 }
@@ -78,7 +86,7 @@
         return;
     }
     NSTask *task = _task;
-    dispatch_async(self.readingQueue, ^{
+    dispatch_async(_readingQueue, ^{
         [self readAndWait:task];
     });
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -89,7 +97,16 @@
     });
 }
 
+- (void)terminate {
+    @try {
+        [_task terminate];
+    } @catch (NSException *exception) {
+        DLog(@"terminate threw %@", exception);
+    }
+}
+
 - (BOOL)launchTask {
+    [_task setStandardInput:_inputPipe];
     [_task setStandardOutput:_pipe];
     [_task setStandardError:_pipe];
     _task.launchPath = self.command;
@@ -119,29 +136,11 @@
     [self readAndWait:_task];
 }
 
-- (dispatch_queue_t)readingQueue {
-    static dispatch_queue_t queue;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("com.iterm2.crun-reading", DISPATCH_QUEUE_SERIAL);
-    });
-    return queue;
-}
-
-- (dispatch_queue_t)waitingQueue {
-    static dispatch_queue_t queue;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("com.iterm2.crun-waiting", DISPATCH_QUEUE_SERIAL);
-    });
-    return queue;
-}
-
 - (void)readAndWait:(NSTask *)task {
     NSPipe *pipe = _pipe;
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     DLog(@"%@ readAndWait starting", task);
-    dispatch_async(self.waitingQueue, ^{
+    dispatch_async(_waitingQueue, ^{
         DLog(@"%@ readAndWait calling waitUntilExit", task);
         [task waitUntilExit];
         DLog(@"%@ readAndWait waitUntilExit returned", task);
@@ -188,6 +187,20 @@
             self.completion(task.terminationStatus);
         });
     }
+}
+
+- (void)write:(NSData *)data completion:(void (^)(size_t, int))completion {
+    int fd = [[_inputPipe fileHandleForWriting] fileDescriptor];
+    dispatch_data_t dispatchData = dispatch_data_create(data.bytes, data.length, _writingQueue, ^{
+        [data length];  // just ensure data is retained
+    });
+    dispatch_write(fd, dispatchData, _writingQueue, ^(dispatch_data_t  _Nullable data, int error) {
+        if (completion) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(data ? dispatch_data_get_size(data) : 0, error);
+            });
+        }
+    });
 }
 
 - (void)didReadData:(NSData *)inData {
