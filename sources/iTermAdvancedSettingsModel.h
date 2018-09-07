@@ -91,6 +91,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)hotKeyDoubleTapMaxDelay;
 + (double)hotKeyDoubleTapMinDelay;
 + (double)hotkeyTermAnimationDuration;
++ (BOOL)hotkeyWindowsExcludedFromCycling;
 + (BOOL)hotkeyWindowFloatsAboveOtherWindows DEPRECATED_ATTRIBUTE;
 + (double)idleTimeSeconds;
 + (BOOL)ignoreHardNewlinesInURLs;
