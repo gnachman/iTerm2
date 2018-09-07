@@ -3093,7 +3093,17 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
 
-    if (![iTermApplication sharedApplication].it_characterPanelIsOpen) {
+    BOOL shouldAutoHideHotkeyWindow = YES;
+    if (self.ptyWindow.it_openingSheet) {
+        shouldAutoHideHotkeyWindow = NO;
+        DLog(@"windowDidResignKey not auto-hiding hotkey window because a sheet is being opened.");
+    }
+    if ([iTermApplication sharedApplication].it_characterPanelIsOpen) {
+        shouldAutoHideHotkeyWindow = NO;
+        DLog(@"windowDidResignKey not auto-hiding hotkey window because the character panel is open.");
+    }
+
+    if (shouldAutoHideHotkeyWindow) {
         NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
         NSWindowController *newKeyWindowController = [[NSApp keyWindow] windowController];
         if (![siblings containsObject:newKeyWindowController]) {

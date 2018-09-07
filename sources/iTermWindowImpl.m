@@ -28,6 +28,8 @@ NS_ASSUME_NONNULL_BEGIN
     NSTimeInterval _timeOfLastWindowTitleChange;
 }
 
+@synthesize it_openingSheet;
+
 - (instancetype)initWithContentRect:(NSRect)contentRect
                           styleMask:(NSWindowStyleMask)aStyle
                             backing:(NSBackingStoreType)bufferingType
@@ -403,6 +405,12 @@ ITERM_WEAKLY_REFERENCEABLE
          NSStringFromRect(frameRect), @(flag),
          [NSThread callStackSymbols]);
     [super setFrame:frameRect display:flag];
+}
+
+- (void)beginSheet:(NSWindow *)sheetWindow completionHandler:(void (^ _Nullable)(NSModalResponse))handler {
+    self.it_openingSheet = self.it_openingSheet + 1;
+    [super beginSheet:sheetWindow completionHandler:handler];
+    self.it_openingSheet = self.it_openingSheet - 1;
 }
 
 NS_ASSUME_NONNULL_END

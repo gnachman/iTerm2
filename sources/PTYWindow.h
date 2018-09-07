@@ -61,6 +61,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 @property(nonatomic, readonly) NSString *windowIdentifier;
 @property(nonatomic, readonly) id<PTYWindowDelegateProtocol> ptyDelegate;
 @property(nonatomic, readonly) BOOL titleChangedRecently;
+@property(nonatomic) NSInteger it_openingSheet;
 
 - (void)smartLayout;
 - (void)setLayoutDone;
