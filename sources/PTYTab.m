@@ -977,6 +977,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     const CGFloat aTop = NSMinY(aRect);
     const CGFloat aBottom = NSMaxY(aRect);
+    const CGFloat safetyMargin = 1;
 
     return [self sessionsSatisfying:^BOOL(PTYSession *b) {
         if (b == aSession) {
@@ -994,8 +995,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         const CGFloat bLeft = after ? NSMinX(bRect) : -NSMaxX(bRect);
         const CGFloat aRight = after ? NSMaxX(aRect) : -NSMinX(aRect);
 
-        return (bBottom >= aTop &&
-                bTop < aBottom &&
+        return (bBottom >= aTop + safetyMargin &&
+                bTop + safetyMargin < aBottom &&
                 bLeft >= aRight);
     }];
 }
