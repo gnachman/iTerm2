@@ -129,7 +129,6 @@ typedef struct {
     int _total;
 
     // @synchronized(self)
-    int _framesInFlight;
     NSMutableArray *_currentFrames;
     NSTimeInterval _startTime;
     MovingAverage *_fpsMovingAverage;
@@ -356,7 +355,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (BOOL)reallyDrawInMTKView:(nonnull MTKView *)view startToStartTime:(NSTimeInterval)startToStartTime {
     @synchronized (self) {
-        [_inFlightHistogram addValue:_framesInFlight];
+        [_inFlightHistogram addValue:_currentFrames.count];
     }
     if (self.mainThreadState->rows == 0 || self.mainThreadState->columns == 0) {
         DLog(@"  abort: uninitialized");
@@ -374,7 +373,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     _total++;
     if (_total % 60 == 0) {
         @synchronized (self) {
-            DLog(@"fps=%f (%d in flight)", (_total - _dropped) / ([NSDate timeIntervalSinceReferenceDate] - _startTime), (int)_framesInFlight);
+            DLog(@"fps=%f (%d in flight)", (_total - _dropped) / ([NSDate timeIntervalSinceReferenceDate] - _startTime), (int)_currentFrames.count);
             DLog(@"%@", _currentFrames);
         }
     }
@@ -390,22 +389,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return NO;
     }
 
-    BOOL shouldDrop;
     @synchronized(self) {
-        shouldDrop = (_framesInFlight >= [self maximumNumberOfFramesInFlight]);
-        if (!shouldDrop) {
-            _framesInFlight++;
-        }
-    }
-    if (shouldDrop) {
-        DLog(@"  abort: busy (dropped %@%%, number in flight: %d)", @((_dropped * 100)/_total), (int)_framesInFlight);
-        @synchronized(self) {
+        const NSInteger framesInFlight = _currentFrames.count;
+        const BOOL shouldDrop = (framesInFlight >= [self maximumNumberOfFramesInFlight]);
+        if (shouldDrop) {
+            DLog(@"  abort: busy (dropped %@%%, number in flight: %d)", @((_dropped * 100)/_total), (int)framesInFlight);
             DLog(@"  current frames:\n%@", _currentFrames);
+            _dropped++;
+            self.needsDraw = YES;
+            return NO;
         }
-
-        _dropped++;
-        self.needsDraw = YES;
-        return NO;
     }
 
     if (self.captureDebugInfoForNextFrame) {
@@ -1651,11 +1644,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                        owner:_identifier];
 
     @synchronized(self) {
-        _framesInFlight--;
-        @synchronized(self) {
-            frameData.status = @"retired";
-            [_currentFrames removeObject:frameData];
-        }
+        frameData.status = @"retired";
+        [_currentFrames removeObject:frameData];
     }
     [self dispatchAsyncToPrivateQueue:^{
         [self scheduleDrawIfNeededInView:frameData.view];
