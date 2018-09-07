@@ -65,6 +65,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 @property(nonatomic, readonly) id<PTYWindowDelegateProtocol> ptyDelegate;
 @property(nonatomic, readonly) BOOL titleChangedRecently;
 @property(nonatomic, readonly) BOOL isCompact;
+@property(nonatomic) NSInteger it_openingSheet;
 
 - (NSColor *)it_terminalWindowDecorationBackgroundColor;
 - (NSColor *)it_terminalWindowDecorationTextColor;

@@ -30,6 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
     NSTimeInterval _timeOfLastWindowTitleChange;
 }
 
+@synthesize it_openingSheet;
+
 - (instancetype)initWithContentRect:(NSRect)contentRect
                           styleMask:(NSWindowStyleMask)aStyle
                             backing:(NSBackingStoreType)bufferingType
@@ -431,6 +433,12 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)it_terminalWindowUseMinimalStyle {
     return [self.ptyDelegate terminalWindowUseMinimalStyle];
+}
+
+- (void)beginSheet:(NSWindow *)sheetWindow completionHandler:(void (^ _Nullable)(NSModalResponse))handler {
+    self.it_openingSheet = self.it_openingSheet + 1;
+    [super beginSheet:sheetWindow completionHandler:handler];
+    self.it_openingSheet = self.it_openingSheet - 1;
 }
 
 NS_ASSUME_NONNULL_END
