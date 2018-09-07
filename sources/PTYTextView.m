@@ -2736,8 +2736,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     VT100GridCoord coord = VT100GridCoordMake(x, y);
     iTermImageInfo *imageInfo = [self imageInfoAtCoord:coord];
 
+    const BOOL clickedInExistingSelection = [_selection containsCoord:VT100GridCoordMake(x, y)];
     if (!imageInfo &&
-        ![_selection containsCoord:VT100GridCoordMake(x, y)]) {
+        !clickedInExistingSelection) {
         // Didn't click on selection.
         // Save the selection and do a smart selection. If we don't like the result, restore it.
         iTermSelection *savedSelection = [[_selection copy] autorelease];
@@ -2754,6 +2755,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else {
             self.savedSelectedText = text;
         }
+    } else if (clickedInExistingSelection && [self _haveShortSelection]) {
+        self.savedSelectedText = [self selectedText];
     }
     [self setNeedsDisplay:YES];
     NSMenu *contextMenu = [self menuAtCoord:coord];
