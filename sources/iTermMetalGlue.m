@@ -376,12 +376,13 @@ static NSColor *ColorForVector(vector_float4 v) {
         if (_timestampsEnabled) {
             [_dates addObject:[textView drawingHelperTimestampForLine:i]];
         }
-        iTermData *data = [iTermData dataOfLength:rowSize];
+        iTermData *data = [iTermScreenCharData dataOfLength:rowSize];
         screen_char_t *myBuffer = data.mutableBytes;
         screen_char_t *line = [screen getLineAtIndex:i withBuffer:myBuffer];
         if (line != myBuffer) {
             memcpy(myBuffer, line, rowSize);
         }
+        [data checkForOverrun];
         [_lines addObject:data];
 
         [_selectedIndexes addObject:[textView.selection selectedIndexesOnLine:i]];

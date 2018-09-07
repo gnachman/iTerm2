@@ -553,9 +553,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         iTermMetalRowData *rowData = [[iTermMetalRowData alloc] init];
         [frameData.rows addObject:rowData];
         rowData.y = y;
-        rowData.keysData = [iTermData dataOfLength:sizeof(iTermMetalGlyphKey) * columns];
-        rowData.attributesData = [iTermData dataOfLength:sizeof(iTermMetalGlyphAttributes) * columns];
-        rowData.backgroundColorRLEData = [iTermData dataOfLength:sizeof(iTermMetalBackgroundColorRLE) * columns];
+        rowData.keysData = [iTermGlyphKeyData dataOfLength:sizeof(iTermMetalGlyphKey) * columns];
+        rowData.attributesData = [iTermAttributesData dataOfLength:sizeof(iTermMetalGlyphAttributes) * columns];
+        rowData.backgroundColorRLEData = [iTermBackgroundColorRLEsData dataOfLength:sizeof(iTermMetalBackgroundColorRLE) * columns];
         rowData.line = [frameData.perFrameState lineForRow:y];
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         int drawableGlyphs = 0;
@@ -582,7 +582,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                  @(drawableGlyphs),
                                  @(rowData.keysData.length / sizeof(iTermMetalGlyphKey)));
         rowData.markStyle = markStyle;
-
+        [rowData.keysData checkForOverrun];
+        [rowData.attributesData checkForOverrun];
+        [rowData.backgroundColorRLEData checkForOverrun];
         [frameData.debugInfo addRowData:rowData];
     }
 

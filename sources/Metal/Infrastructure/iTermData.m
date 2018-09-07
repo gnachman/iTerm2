@@ -7,29 +7,31 @@
 
 #import "iTermData.h"
 
-static const unsigned char iTermDataMagic = 0x7b;
-
 @implementation iTermData {
+@protected
     NSUInteger _originalLength;
+    unsigned char _magic;
+    void *_mutableBytes;
+    NSUInteger _length;
 }
 
-+ (instancetype)dataOfLength:(NSUInteger)length {
-    iTermData *data = [[iTermData alloc] init];
-    if (data) {
+- (instancetype)initWithLength:(NSUInteger)length magic:(unsigned char)magic {
+    self = [super init];
+    if (self) {
+        _magic = magic;
         unsigned char *buffer = malloc(length + 1);;
-        buffer[length] = iTermDataMagic;
+        buffer[length] = magic;
 
-        data->_mutableBytes = buffer;
-        data->_length = length;
-        data->_originalLength = length;
+        _mutableBytes = buffer;
+        _length = length;
+        _originalLength = length;
     }
-    return data;
+    return self;
 }
 
 - (void)dealloc {
     if (_mutableBytes) {
-        unsigned char *buffer = _mutableBytes;
-        assert(buffer[_originalLength] == iTermDataMagic);
+        [self checkForOverrun];
         free(_mutableBytes);
     }
     _length = 0xdeadbeef;
@@ -40,6 +42,72 @@ static const unsigned char iTermDataMagic = 0x7b;
     _length = length;
 }
 
+- (void)checkForOverrun {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        assert(buffer[_originalLength] == _magic);
+    }
+}
+
 @end
 
 
+@implementation iTermScreenCharData : iTermData
+
++ (instancetype)dataOfLength:(NSUInteger)length {
+    return [[self alloc] initWithLength:length magic:0x70];
+}
+
+- (void)dealloc {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        assert(buffer[_originalLength] == 0x70);
+    }
+}
+
+@end
+
+@implementation iTermGlyphKeyData : iTermData
+
++ (instancetype)dataOfLength:(NSUInteger)length {
+    return [[self alloc] initWithLength:length magic:0x71];
+}
+
+- (void)dealloc {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        assert(buffer[_originalLength] == 0x71);
+    }
+}
+
+@end
+
+@implementation iTermAttributesData : iTermData
+
++ (instancetype)dataOfLength:(NSUInteger)length {
+    return [[self alloc] initWithLength:length magic:0x72];
+}
+
+- (void)dealloc {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        assert(buffer[_originalLength] == 0x72);
+    }
+}
+
+@end
+
+@implementation iTermBackgroundColorRLEsData : iTermData
+
++ (instancetype)dataOfLength:(NSUInteger)length {
+    return [[self alloc] initWithLength:length magic:0x73];
+}
+
+- (void)dealloc {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        assert(buffer[_originalLength] == 0x73);
+    }
+}
+
+@end
