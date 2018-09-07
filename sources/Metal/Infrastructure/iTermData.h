@@ -12,7 +12,22 @@
 @interface iTermData : NSObject
 @property (nonatomic, readonly) void *mutableBytes;
 @property (nonatomic) NSUInteger length;
-
-+ (instancetype)dataOfLength:(NSUInteger)length;
-
+- (void)checkForOverrun;
 @end
+
+@interface iTermScreenCharData : iTermData
++ (instancetype)dataOfLength:(NSUInteger)length;
+@end
+
+@interface iTermGlyphKeyData : iTermData
++ (instancetype)dataOfLength:(NSUInteger)length;
+@end
+
+@interface iTermAttributesData : iTermData
++ (instancetype)dataOfLength:(NSUInteger)length;
+@end
+
+@interface iTermBackgroundColorRLEsData : iTermData
++ (instancetype)dataOfLength:(NSUInteger)length;
+@end
+
