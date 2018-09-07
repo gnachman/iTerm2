@@ -149,7 +149,8 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                                                    @"Are you sure you want this?"
                                            actions:@[ @"Enable", @"Cancel" ]
                                         identifier:kWarnAboutAmbiguousWidth
-                                       silenceable:kiTermWarningTypePermanentlySilenceable];
+                                       silenceable:kiTermWarningTypePermanentlySilenceable
+                                            window:weakSelf.view.window];
             if (selection == kiTermWarningSelection0) {
                 [strongSelf setBool:YES forKey:KEY_AMBIGUOUS_DOUBLE_WIDTH];
             }

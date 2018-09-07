@@ -66,20 +66,23 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
                                    identifier:(NSString *)identifier
-                                  silenceable:(iTermWarningType)warningType;
-
-+ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
-                                      actions:(NSArray *)actions
-                                    accessory:(NSView *)accessory
-                                   identifier:(NSString *)identifier
-                                  silenceable:(iTermWarningType)warningType;
+                                  silenceable:(iTermWarningType)warningType
+                                       window:(NSWindow *)window;
 
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
                                     accessory:(NSView *)accessory
                                    identifier:(NSString *)identifier
                                   silenceable:(iTermWarningType)warningType
-                                      heading:(NSString *)heading;
+                                       window:(NSWindow *)window;
+
++ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
+                                      actions:(NSArray *)actions
+                                    accessory:(NSView *)accessory
+                                   identifier:(NSString *)identifier
+                                  silenceable:(iTermWarningType)warningType
+                                      heading:(NSString *)heading
+                                       window:(NSWindow *)window;
 
 // actionToSelectionMap gives the iTermWarningSelection that should be returned for each entry in
 // actions. It must be in 1:1 correspondence with actions. It is useful because it allows you to add
@@ -97,7 +100,8 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
                                     accessory:(NSView *)accessory
                                    identifier:(NSString *)identifier
                                   silenceable:(iTermWarningType)warningType
-                                      heading:(NSString *)heading;
+                                      heading:(NSString *)heading
+                                       window:(NSWindow *)window;
 
 // cancelLabel is the action name to treat like "Cancel". It won't be remembered.
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
@@ -107,7 +111,8 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
                                    identifier:(NSString *)identifier
                                   silenceable:(iTermWarningType)warningType
                                       heading:(NSString *)heading
-                                  cancelLabel:(NSString *)cancelLabel;
+                                  cancelLabel:(NSString *)cancelLabel
+                                       window:(NSWindow *)window;
 
 
 // If you prefer you can set the properties you care about and then invoke runModal.
@@ -142,6 +147,8 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 
 // If set then a "help" button is added to the alert box and this block is invoked when it is clicked.
 @property(nonatomic, copy) void (^showHelpBlock)(void);
+
+@property(nonatomic, retain) NSWindow *window;
 
 // Modally show the alert. Returns the selection.
 - (iTermWarningSelection)runModal;

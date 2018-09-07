@@ -342,7 +342,8 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                                                @"the same key combination in a global shortcut."
                                        actions:@[ @"OK", @"Cancel" ]
                                     identifier:@"NeverWarnAboutOverrides"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable]) {
+                                   silenceable:kiTermWarningTypePermanentlySilenceable
+                                        window:self.view.window]) {
         case kiTermWarningSelection1:
             return NO;
         default:
@@ -356,7 +357,8 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                                        @"systems. The \"+Esc\" option is recommended for most users."
                                actions:@[ @"OK" ]
                             identifier:@"NeverWarnAboutMeta"
-                           silenceable:kiTermWarningTypePermanentlySilenceable];
+                           silenceable:kiTermWarningTypePermanentlySilenceable
+                                window:self.view.window];
 }
 
 @end

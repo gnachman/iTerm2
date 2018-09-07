@@ -177,7 +177,8 @@
         if ([iTermWarning showWarningWithTitle:theTitle actions:@[ @"Overwrite",
                                                                    @"Discard Local Changes" ]
                                     identifier:nil
-                                   silenceable:kiTermWarningTypePersistent] == kiTermWarningSelection1) {
+                                   silenceable:kiTermWarningTypePersistent
+                                        window:nil] == kiTermWarningSelection1) {
             return;
         }
     }
@@ -309,7 +310,8 @@
             [iTermWarning showWarningWithTitle:theTitle
                                        actions:@[ @"OK" ]
                                     identifier:@"NoSyncNeverRemindPrefsChangesLostForUrl"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable];
+                                   silenceable:kiTermWarningTypePermanentlySilenceable
+                                        window:nil];
         } else {
             // Not a URL
             NSString *theTitle = [NSString stringWithFormat:
@@ -320,7 +322,8 @@
                 [iTermWarning showWarningWithTitle:theTitle
                                            actions:@[ @"Copy", @"Lose Changes" ]
                                         identifier:@"NoSyncNeverRemindPrefsChangesLostForFile"
-                                       silenceable:kiTermWarningTypePermanentlySilenceable];
+                                       silenceable:kiTermWarningTypePermanentlySilenceable
+                                            window:nil];
             if (selection == kiTermWarningSelection0) {
                 [self saveLocalUserDefaultsToRemotePrefs];
             }

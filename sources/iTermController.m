@@ -804,7 +804,8 @@ static iTermController *gSharedInstance;
         [iTermWarning showWarningWithTitle:theTitle
                                    actions:@[ @"OK", @"Cancel" ]
                                 identifier:@"AboutToOpenManyProfiles"
-                               silenceable:kiTermWarningTypePermanentlySilenceable];
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                    window:nil];
     switch (selection) {
         case kiTermWarningSelection0:
             return YES;

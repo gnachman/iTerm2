@@ -263,7 +263,8 @@ NS_ASSUME_NONNULL_BEGIN
         iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Open new script in %@?", app]
                                                                      actions:@[ @"OK", @"Show in Finder" ]
                                                                   identifier:@"NoSyncOpenNewPythonScriptInDefaultEditor"
-                                                                 silenceable:kiTermWarningTypePermanentlySilenceable];
+                                                                 silenceable:kiTermWarningTypePermanentlySilenceable
+                                                                      window:nil];
         if (selection == kiTermWarningSelection0) {
             [[NSWorkspace sharedWorkspace] openFile:destinationTemplatePath];
             return;

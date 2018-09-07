@@ -235,7 +235,8 @@ enum {
         [iTermWarning showWarningWithTitle:@"You must restart iTerm2 for this change to take effect."
                                    actions:@[ @"OK" ]
                                 identifier:nil
-                               silenceable:kiTermWarningTypePersistent];
+                               silenceable:kiTermWarningTypePersistent
+                                    window:weakSelf.view.window];
     };
 
 

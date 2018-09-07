@@ -109,7 +109,8 @@
                                                    @"even with a code of “0”. Are you sure you want this?"
                                            actions:@[ @"Enable Send Code", @"Cancel" ]
                                         identifier:kWarnAboutSendCodeWhenIdle
-                                       silenceable:kiTermWarningTypePermanentlySilenceable];
+                                       silenceable:kiTermWarningTypePermanentlySilenceable
+                                            window:weakSelf.view.window];
             if (selection == kiTermWarningSelection0) {
                 [strongSelf setBool:YES forKey:KEY_SEND_CODE_WHEN_IDLE];
             }
