@@ -1266,6 +1266,9 @@
 		53BBA0F8214236AC0074D061 /* iterm2_git_poll.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */; };
 		53BBA0F9214236AC0074D061 /* iterm2_git_poll.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */; };
 		53BBA0FA214236AC0074D061 /* iterm2_git_poll.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */; };
+		53AFFC931DD38F1500E6CEC6 /* ToolWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = 53AFFC911DD38F1500E6CEC6 /* ToolWebView.m */; };
+		53BBA0F5214205200074D061 /* NSAlert+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 53BBA0F3214205200074D061 /* NSAlert+iTerm.h */; };
+		53BBA0F6214205200074D061 /* NSAlert+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 53BBA0F4214205200074D061 /* NSAlert+iTerm.m */; };
 		53C166AA20C21FBB003B03AF /* iTermMigrationHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 53C166A820C21FBB003B03AF /* iTermMigrationHelper.h */; };
 		53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 53C166A920C21FBB003B03AF /* iTermMigrationHelper.m */; };
 		53E184F11FE32F2800DB78F3 /* iTermMetalBufferPool.h in Headers */ = {isa = PBXBuildFile; fileRef = 53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */; };
@@ -3963,6 +3966,8 @@
 		53AFFC901DD38F1500E6CEC6 /* ToolWebView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolWebView.h; sourceTree = "<group>"; };
 		53AFFC911DD38F1500E6CEC6 /* ToolWebView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolWebView.m; sourceTree = "<group>"; };
 		53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = iterm2_git_poll.sh; path = sources/iterm2_git_poll.sh; sourceTree = "<group>"; };
+		53BBA0F3214205200074D061 /* NSAlert+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAlert+iTerm.h"; sourceTree = "<group>"; };
+		53BBA0F4214205200074D061 /* NSAlert+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAlert+iTerm.m"; sourceTree = "<group>"; };
 		53C166A820C21FBB003B03AF /* iTermMigrationHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMigrationHelper.h; sourceTree = "<group>"; };
 		53C166A920C21FBB003B03AF /* iTermMigrationHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMigrationHelper.m; sourceTree = "<group>"; };
 		53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalBufferPool.h; sourceTree = "<group>"; };
@@ -6415,12 +6420,20 @@
 			isa = PBXGroup;
 			children = (
 				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
+				A621DDA6211D01D50095A399 /* NSAppearance+iTerm.h */,
+				A621DDA7211D01D50095A399 /* NSAppearance+iTerm.m */,
+				A667F3891B48AEF200705186 /* NSApplication+iTerm.h */,
+				A667F38A1B48AEF200705186 /* NSApplication+iTerm.m */,
 				A68A30CD186D1414007F550F /* NSArray+iTerm.m */,
 				1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */,
+				A68AC8F11F05C0860023A216 /* NSBundle+iTerm.h */,
+				A68AC8F21F05C0860023A216 /* NSBundle+iTerm.m */,
 				A6B3A7421AC89DED008E8D4E /* NSCharacterSet+iTerm.m */,
 				A6A13AA618C2D45900B241ED /* NSColor+iTerm.m */,
 				A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */,
 				A6E77FA01A2A8A5A009B1CB6 /* NSData+iTerm.m */,
+				1D300BA81BD9A8BB002043F7 /* NSDate+iTerm.h */,
+				1D300BA91BD9A8BB002043F7 /* NSDate+iTerm.m */,
 				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
 				A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */,
 				A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */,
@@ -6428,27 +6441,29 @@
 				1D67ABAA14285D6000D5DA4E /* NSFileManager+iTerm.m */,
 				A6A2698218FE48B200437DA9 /* NSFont+iTerm.m */,
 				A69B45B7197C60FB00F5444D /* NSImage+iTerm.m */,
+				A6EFF21A1D1CA9F800806EEF /* NSLocale+iTerm.h */,
+				A6EFF21B1D1CA9F800806EEF /* NSLocale+iTerm.m */,
 				A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */,
 				A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */,
 				A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */,
 				A68A30CE186D1414007F550F /* NSObject+iTerm.m */,
 				A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */,
 				1DF8006E18F34CAB00722B35 /* NSPopUpButton+iTerm.m */,
+				A6DBC04F20073CBA00F1466D /* NSResponder+iTerm.h */,
+				A6DBC05020073CBA00F1466D /* NSResponder+iTerm.m */,
 				A69B4576195F668500F5444D /* NSScreen+iTerm.m */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
 				1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */,
 				A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */,
-				A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */,
-				1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */,
-				A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */,
-				A667F3891B48AEF200705186 /* NSApplication+iTerm.h */,
-				A667F38A1B48AEF200705186 /* NSApplication+iTerm.m */,
-				1D300BA81BD9A8BB002043F7 /* NSDate+iTerm.h */,
-				1D300BA91BD9A8BB002043F7 /* NSDate+iTerm.m */,
+				A64AE5152084128500D02F06 /* NSThread+iTerm.h */,
+				A64AE5162084128500D02F06 /* NSThread+iTerm.m */,
 				A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */,
 				A60251671CCD3E5E009BABF1 /* NSURL+iTerm.m */,
-				A6EFF21A1D1CA9F800806EEF /* NSLocale+iTerm.h */,
-				A6EFF21B1D1CA9F800806EEF /* NSLocale+iTerm.m */,
+				A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */,
+				1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */,
+				A686F3601D32CD8100F08ED7 /* NSWindow+iTerm.h */,
+				A686F3611D32CD8100F08ED7 /* NSWindow+iTerm.m */,
+				A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */,
 				5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */,
 				5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */,
 				A686F3601D32CD8100F08ED7 /* NSWindow+iTerm.h */,
@@ -6465,6 +6480,8 @@
 				A621DDA7211D01D50095A399 /* NSAppearance+iTerm.m */,
 				A675271B213DB6E800035F2B /* NSImageView+iTerm.h */,
 				A675271C213DB6E800035F2B /* NSImageView+iTerm.m */,
+				53BBA0F3214205200074D061 /* NSAlert+iTerm.h */,
+				53BBA0F4214205200074D061 /* NSAlert+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -9081,6 +9098,7 @@
 				A69C93412121140100531438 /* iTermStatusBarLargeComposerViewController.h in Headers */,
 				5312269A20CB1D3A004831C6 /* iTermBuiltInFunctions.h in Headers */,
 				A66719471DCE36C3000CE608 /* NSTableColumn+iTerm.h in Headers */,
+				53BBA0F5214205200074D061 /* NSAlert+iTerm.h in Headers */,
 				A66719481DCE36C3000CE608 /* iTermAdditionalHotKeyTableCellView.h in Headers */,
 				A66719491DCE36C3000CE608 /* iTermHotkeyPreferencesWindowController.h in Headers */,
 				A639E1A02112CA33001696DE /* iTermEchoProbe.h in Headers */,
@@ -11281,6 +11299,7 @@
 				A66EF82D1EF59CFC0005891A /* iTermRateLimitedUpdate.m in Sources */,
 				A62EEDA720E025F300943DE3 /* iTermSetupPyParser.m in Sources */,
 				A6A4867920B67D3600493302 /* ProfilesGeneralPreferencesViewController.m in Sources */,
+				53BBA0F6214205200074D061 /* NSAlert+iTerm.m in Sources */,
 				A6A4867620B67B9D00493302 /* ProfilePreferencesViewController.m in Sources */,
 				A6A4866120B6763900493302 /* ArrangementPreviewView.m in Sources */,
 				535EA50120D0F15400FC81E0 /* iTermQuotedRecognizer.m in Sources */,

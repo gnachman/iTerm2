@@ -163,7 +163,8 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                                                    @"side of your menu bar."
                                            actions:@[ @"Exclude From Dock and App Switcher", @"Cancel" ]
                                         identifier:nil
-                                       silenceable:kiTermWarningTypePersistent];
+                                       silenceable:kiTermWarningTypePersistent
+                                            window:weakSelf.view.window];
             if (selection == kiTermWarningSelection0) {
                 [weakSelf setBool:YES forKey:kPreferenceKeyUIElement];
                 [weakSelf setBool:NO forKey:kPreferenceKeyHideMenuBarInFullscreen];

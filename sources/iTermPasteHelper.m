@@ -573,6 +573,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     warning.identifier = identifier;
     warning.warningType = kiTermWarningTypePermanentlySilenceable;
     warning.cancelLabel = @"Cancel";
+    warning.window = [[self.delegate pasteHelperViewForIndicator] window];
     [warning runModal];
     return result;
 }
@@ -587,7 +588,8 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                                        actions:@[ @"Paste with tabs", @"Cancel", @"Convert tabs to spaces" ]
                                      accessory:accessoryController.view
                                     identifier:@"AboutToPasteTabsWithCancel"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable];
+                                   silenceable:kiTermWarningTypePermanentlySilenceable
+                                        window:self.delegate.pasteHelperViewForIndicator.window];
         switch (selection) {
             case kiTermWarningSelection0:  // Paste with tabs
                 return kNumberOfSpacesPerTabNoConversion;

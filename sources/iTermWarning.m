@@ -2,6 +2,7 @@
 
 #import "DebugLogging.h"
 #import "iTermDisclosableView.h"
+#import "NSAlert+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
@@ -46,26 +47,30 @@ static BOOL gShowingWarning;
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
                                    identifier:(NSString *)identifier
-                                  silenceable:(iTermWarningType)warningType {
+                                  silenceable:(iTermWarningType)warningType
+                                       window:(NSWindow *)window {
     return [self showWarningWithTitle:title
                               actions:actions
                             accessory:nil
                            identifier:identifier
                           silenceable:warningType
-                              heading:nil];
+                              heading:nil
+                               window:window];
 }
 
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                   actions:(NSArray *)actions
                                     accessory:(NSView *)accessory
                                identifier:(NSString *)identifier
-                              silenceable:(iTermWarningType)warningType {
+                              silenceable:(iTermWarningType)warningType
+                                       window:(NSWindow *)window {
     return [self showWarningWithTitle:title
                               actions:actions
                             accessory:accessory
                            identifier:identifier
                           silenceable:warningType
-                              heading:nil];
+                              heading:nil
+                               window:window];
 }
 
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
@@ -73,31 +78,16 @@ static BOOL gShowingWarning;
                                     accessory:(NSView *)accessory
                                    identifier:(NSString *)identifier
                                   silenceable:(iTermWarningType)warningType
-                                      heading:(NSString *)heading {
+                                      heading:(NSString *)heading
+                                       window:(NSWindow *)window {
     return [self showWarningWithTitle:title
                               actions:actions
                         actionMapping:nil
                             accessory:accessory
                            identifier:identifier
                           silenceable:warningType
-                              heading:heading];
-}
-
-+ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
-                                      actions:(NSArray *)actions
-                                actionMapping:(NSArray<NSNumber *> *)actionToSelectionMap
-                                    accessory:(NSView *)accessory
-                                   identifier:(NSString *)identifier
-                                  silenceable:(iTermWarningType)warningType
-                                      heading:(NSString *)heading {
-    return [self showWarningWithTitle:title
-                              actions:actions
-                        actionMapping:actionToSelectionMap
-                            accessory:accessory
-                           identifier:identifier
-                          silenceable:warningType
                               heading:heading
-                          cancelLabel:kCancel];
+                               window:window];
 }
 
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
@@ -107,7 +97,27 @@ static BOOL gShowingWarning;
                                    identifier:(NSString *)identifier
                                   silenceable:(iTermWarningType)warningType
                                       heading:(NSString *)heading
-                                  cancelLabel:(NSString *)cancelLabel {
+                                       window:(NSWindow *)window {
+    return [self showWarningWithTitle:title
+                              actions:actions
+                        actionMapping:actionToSelectionMap
+                            accessory:accessory
+                           identifier:identifier
+                          silenceable:warningType
+                              heading:heading
+                          cancelLabel:kCancel
+                               window:window];
+}
+
++ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
+                                      actions:(NSArray *)actions
+                                actionMapping:(NSArray<NSNumber *> *)actionToSelectionMap
+                                    accessory:(NSView *)accessory
+                                   identifier:(NSString *)identifier
+                                  silenceable:(iTermWarningType)warningType
+                                      heading:(NSString *)heading
+                                  cancelLabel:(NSString *)cancelLabel
+                                       window:(NSWindow *)window {
     iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
     warning.title = title;
     warning.actionLabels = actions;
@@ -117,6 +127,7 @@ static BOOL gShowingWarning;
     warning.warningType = warningType;
     warning.heading = heading;
     warning.cancelLabel = cancelLabel;
+    warning.window = window;
     return [warning runModal];
 }
 
@@ -129,6 +140,7 @@ static BOOL gShowingWarning;
     [_heading release];
     [_cancelLabel release];
     [_showHelpBlock release];
+    [_window release];
     [super dealloc];
 }
 
@@ -233,7 +245,11 @@ static BOOL gShowingWarning;
         result = [gWarningHandler warningWouldShowAlert:alert identifier:_identifier];
     } else {
         gShowingWarning = YES;
-        result = [alert runModal];
+        if (self.window) {
+            result = [alert runSheetModalForWindow:self.window];
+        } else {
+            result = [alert runModal];
+        }
         gShowingWarning = NO;
     }
 

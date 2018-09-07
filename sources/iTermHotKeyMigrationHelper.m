@@ -94,7 +94,8 @@
         [iTermWarning showWarningWithTitle:title
                                    actions:@[ @"OK" ]
                                 identifier:nil
-                               silenceable:kiTermWarningTypePersistent];
+                               silenceable:kiTermWarningTypePersistent
+                                    window:nil];
     }
     return childrensNames.count > 0;
 }
@@ -123,7 +124,8 @@
                                                                accessory:nil
                                                               identifier:nil
                                                              silenceable:kiTermWarningTypePersistent
-                                                                 heading:@"Problem Updating Hotkey Window"];
+                                                                 heading:@"Problem Updating Hotkey Window"
+                                                                  window:nil];
     if (selection == update) {
         NSString *filename = profile[KEY_DYNAMIC_PROFILE_FILENAME];
         [replacementFile writeToFile:filename atomically:NO];

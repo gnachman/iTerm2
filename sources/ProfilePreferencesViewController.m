@@ -365,7 +365,8 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     if ([iTermWarning showWarningWithTitle:question
                                    actions:@[ @"Delete", @"Cancel" ]
                                 identifier:@"DeleteProfile"
-                               silenceable:kiTermWarningTypeTemporarilySilenceable] == kiTermWarningSelection0) {
+                               silenceable:kiTermWarningTypeTemporarilySilenceable
+                                    window:self.view.window] == kiTermWarningSelection0) {
         return YES;
     } else {
         return NO;
@@ -565,7 +566,8 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     if ([iTermWarning showWarningWithTitle:title
                                    actions:@[ @"Replace", @"Cancel" ]
                                  identifier:@"NoSyncReplaceProfileWarning"
-                               silenceable:kiTermWarningTypePermanentlySilenceable] == kiTermWarningSelection1) {
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                    window:self.view.window] == kiTermWarningSelection1) {
         return;
     }
 

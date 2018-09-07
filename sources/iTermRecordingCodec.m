@@ -33,7 +33,8 @@
                                  accessory:nil
                                 identifier:@"RecordingMalformed"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Could not read the file: its envelope was malformed."];
+                                   heading:@"Could not read the file: its envelope was malformed."
+                                    window:nil];
         return;
     }
 
@@ -42,7 +43,8 @@
         [iTermWarning showWarningWithTitle:@"Could not read the file: decompression failed."
                                    actions:@[ @"OK" ]
                                 identifier:@"RecordingMalformed"
-                               silenceable:kiTermWarningTypePersistent];
+                               silenceable:kiTermWarningTypePersistent
+                                    window:nil];
         return;
     }
 
@@ -51,7 +53,8 @@
         [iTermWarning showWarningWithTitle:@"Could not read the file: unarchiving decompressed data failed."
                                    actions:@[ @"OK" ]
                                 identifier:@"RecordingMalformed"
-                               silenceable:kiTermWarningTypePersistent];
+                               silenceable:kiTermWarningTypePersistent
+                                    window:nil];
         return;
     }
 
@@ -59,7 +62,8 @@
         [iTermWarning showWarningWithTitle:@"This recording is from a newer version of iTerm2 and cannot be replayed in this version."
                                    actions:@[ @"OK" ]
                                 identifier:@"RecordingMalformed"
-                               silenceable:kiTermWarningTypePersistent];
+                               silenceable:kiTermWarningTypePersistent
+                                    window:nil];
         return;
     }
 
@@ -69,7 +73,8 @@
         [iTermWarning showWarningWithTitle:@"This recording could not be loaded because it is missing critical information."
                                    actions:@[ @"OK" ]
                                 identifier:@"RecordingMalformed"
-                               silenceable:kiTermWarningTypePersistent];
+                               silenceable:kiTermWarningTypePersistent
+                                    window:nil];
         return;
     }
 
@@ -134,13 +139,15 @@
                                              accessory:nil
                                             identifier:@"ErrorSavingRecording"
                                            silenceable:kiTermWarningTypePersistent
-                                               heading:@"The recording could not be saved."];
+                                               heading:@"The recording could not be saved."
+                                                window:nil];
                 }
             } else {
                 [iTermWarning showWarningWithTitle:@"Error encoding recording."
                                            actions:@[ @"OK" ]
                                         identifier:@"ErrorSavingRecording"
-                                       silenceable:kiTermWarningTypePersistent];
+                                       silenceable:kiTermWarningTypePersistent
+                                            window:nil];
             }
         }
     }

@@ -297,7 +297,8 @@
                                        @"to a space with ^ Number Keys."
                                actions:@[ @"OK" ]
                             identifier:@"NeverWarnAboutSpaces"
-                           silenceable:kiTermWarningTypePermanentlySilenceable];
+                           silenceable:kiTermWarningTypePermanentlySilenceable
+                                window:self.view.window];
 }
 
 

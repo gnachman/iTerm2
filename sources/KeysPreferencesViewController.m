@@ -196,7 +196,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                                                                    accessory:nil
                                                                   identifier:@"NoSyncSuppressAddAnotherHotkeyProfileWarning"
                                                                  silenceable:kiTermWarningTypePersistent
-                                                                     heading:@"Add Another Hotkey Window Profile?"];
+                                                                     heading:@"Add Another Hotkey Window Profile?"
+                                                                      window:self.view.window];
         if (selection == cancel) {
             return;
         } else if (selection == edit) {
@@ -365,7 +366,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                                                @"Check your profiles’ keyboard settings if it doesn't work as expected."
                                        actions:@[ @"OK", @"Cancel" ]
                                     identifier:@"NeverWarnAboutPossibleOverrides"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable]) {
+                                   silenceable:kiTermWarningTypePermanentlySilenceable
+                                        window:self.view.window]) {
         case kiTermWarningSelection1:
             return NO;
         default:

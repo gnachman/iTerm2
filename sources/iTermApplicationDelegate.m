@@ -601,7 +601,8 @@ static BOOL hasBecomeActive = NO;
                     [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"OK to run “%@”?", filename]
                                                actions:@[ @"OK", @"Cancel" ]
                                             identifier:@"NoSyncConfirmRunOpenFile"
-                                           silenceable:kiTermWarningTypePermanentlySilenceable];
+                                           silenceable:kiTermWarningTypePermanentlySilenceable
+                                                window:nil];
                 if (selection != kiTermWarningSelection0) {
                     return YES;
                 }
@@ -1334,7 +1335,8 @@ static BOOL hasBecomeActive = NO;
         [iTermWarning showWarningWithTitle:@"This nightly build is over 30 days old. Consider updating soon: you may be suffering from awful bugs in blissful ignorance."
                                    actions:@[ @"I’ll Take My Chances", @"Update Now" ]
                                 identifier:@"NoSyncVeryOldNightlyBuildWarning"
-                               silenceable:kiTermWarningTypeSilencableForOneMonth];
+                               silenceable:kiTermWarningTypeSilencableForOneMonth
+                                    window:nil];
         if (selection == kiTermWarningSelection1) {
             [[SUUpdater sharedUpdater] checkForUpdates:nil];
         }
@@ -1555,7 +1557,8 @@ static BOOL hasBecomeActive = NO;
                                  accessory:nil
                                 identifier:nil
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Important Change"];
+                                   heading:@"Important Change"
+                                    window:nil];
     }
 
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveWarnedAboutPasteConfirmationChange];
@@ -2166,7 +2169,8 @@ static BOOL hasBecomeActive = NO;
                                                                    accessory:nil
                                                                   identifier:kPossiblyTmuxIdentifier
                                                                  silenceable:kiTermWarningTypePermanentlySilenceable
-                                                                     heading:heading];
+                                                                     heading:heading
+                                                                      window:[[[iTermController sharedInstance] currentTerminal] window]];
         *cancel = (selection == kiTermWarningSelection2);
         return (selection == kiTermWarningSelection0);
     } else {

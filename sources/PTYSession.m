@@ -2154,7 +2154,8 @@ ITERM_WEAKLY_REFERENCEABLE
         [iTermWarning showWarningWithTitle:theTitle
                                    actions:@[ @"OK" ]
                                 identifier:theKey
-                               silenceable:kiTermWarningTypePermanentlySilenceable];
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                    window:self.view.window];
     }
 }
 
@@ -9380,7 +9381,8 @@ ITERM_WEAKLY_REFERENCEABLE
             [iTermWarning showWarningWithTitle:@"It looks like you're not at a command prompt."
                                        actions:@[ @"Run Installer Anyway", @"Cancel" ]
                                     identifier:nil
-                                   silenceable:kiTermWarningTypePersistent];
+                                   silenceable:kiTermWarningTypePersistent
+                                        window:self.view.window];
         switch (selection) {
             case kiTermWarningSelection0:
                 [_textview installShellIntegration:nil];
@@ -10402,7 +10404,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 @"like what you're typing is echoed to the screen."
                                           actions:@[ @"Cancel", @"Enter Password" ]
                                        identifier:nil
-                                      silenceable:kiTermWarningTypePersistent] == kiTermWarningSelection1);
+                                      silenceable:kiTermWarningTypePersistent
+                                          warning:self.view.window] == kiTermWarningSelection1);
     if (ok) {
         [_echoProbe enterPassword];
     }

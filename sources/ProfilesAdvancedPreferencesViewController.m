@@ -278,7 +278,8 @@
                                            actions:@[ removeFromOtherAction,
                                                       @"Remove from This Profile" ]
                                         identifier:nil
-                                       silenceable:kiTermWarningTypePersistent]) {
+                                       silenceable:kiTermWarningTypePersistent
+                                            window:self.view.window]) {
             case kiTermWarningSelection0:
                 temp = [boundHosts mutableCopy];
                 [temp removeObject:anObject];

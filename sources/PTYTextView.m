@@ -3118,6 +3118,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     warning.identifier = @"NoSyncInstallUtilitiesPackage";
     warning.warningType = kiTermWarningTypePermanentlySilenceable;
     warning.cancelLabel = @"Cancel";
+    warning.window = self.window;
     warning.showHelpBlock = ^() {
         [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/utilities.html"]];
     };
@@ -3155,6 +3156,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     warning.identifier = @"NoSyncConfirmShellIntegrationCommand";
     warning.warningType = kiTermWarningTypePermanentlySilenceable;
     warning.cancelLabel = @"Cancel";
+    warning.window = self.window;
     [warning runModal];
 }
 

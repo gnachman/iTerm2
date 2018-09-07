@@ -1423,7 +1423,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                      accessory:nil
                                     identifier:@"ClosingTmuxTabKillsTmuxWindows"
                                    silenceable:kiTermWarningTypePermanentlySilenceable
-                                       heading:nil];
+                                       heading:nil
+                                        window:self.window];
         if (selection == kiTermWarningSelection1) {
             [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
         } else if (selection == kiTermWarningSelection0) {
@@ -1671,6 +1672,7 @@ ITERM_WEAKLY_REFERENCEABLE
         warning.warningActions = @[ ok, cancel ];
         warning.identifier = @"NoSyncSuppressRestartSessionConfirmationAlert";
         warning.warningType = kiTermWarningTypePermanentlySilenceable;
+        warning.window = self.window;
         [warning runModal];
     }
 }
@@ -2699,7 +2701,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 [iTermWarning showWarningWithTitle:title
                                            actions:@[ @"Hide", @"Detach tmux Session", @"Kill" ]
                                         identifier:@"ClosingTmuxWindowKillsTmuxWindows"
-                                       silenceable:kiTermWarningTypePermanentlySilenceable];
+                                       silenceable:kiTermWarningTypePermanentlySilenceable
+                                            window:self.window];
             // If there are tmux tabs, tell the tmux server to kill/hide the
             // window, but go ahead and close the window anyway because there
             // might be non-tmux tabs as well. This is a rare instance of
@@ -6734,7 +6737,8 @@ ITERM_WEAKLY_REFERENCEABLE
         if ([iTermWarning showWarningWithTitle:@"Keyboard input will be sent to multiple sessions."
                                        actions:@[ @"OK", @"Cancel" ]
                                     identifier:@"NoSyncSuppressBroadcastInputWarning"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable] == kiTermWarningSelection1) {
+                                   silenceable:kiTermWarningTypePermanentlySilenceable
+                                        window:self.window] == kiTermWarningSelection1) {
             return;
         }
     }

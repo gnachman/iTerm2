@@ -145,7 +145,8 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
                                                                    accessory:nil
                                                                   identifier:nil
                                                                  silenceable:kiTermWarningTypePersistent
-                                                                     heading:heading];
+                                                                     heading:heading
+                                                                      window:nil];
         switch (selection) {
             case kiTermWarningSelection0:
                 self.replaceOrAppend = kSavePanelReplaceOrAppendSelectionNotApplicable;

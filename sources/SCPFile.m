@@ -288,7 +288,8 @@ static NSError *SCPFileError(NSString *description) {
                                         identifier:kSecureCopyConnectionFailedWarning
                                        silenceable:kiTermWarningTypePermanentlySilenceable
                                            heading:@"Connection Failed"
-                                       cancelLabel:@"Help"];
+                                       cancelLabel:@"Help"
+                                            window:nil];
             if (selection == kiTermWarningSelection1) {
                 [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/troubleshoot-hostname"]];
             }
