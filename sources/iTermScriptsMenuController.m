@@ -528,24 +528,33 @@ NS_ASSUME_NONNULL_BEGIN
     return template;
 }
 
-- (BOOL)path:(NSString *)possibleSuper isParentDirectoryOfPath:(NSString *)possibleSub {
+- (NSString *)relativePathFrom:(NSString *)possibleSuper toPath:(NSString *)possibleSub {
+    return [self relativePathFrom:possibleSuper toPath:possibleSub relative:@""];
+}
+
+- (NSString *)relativePathFrom:(NSString *)possibleSuper toPath:(NSString *)possibleSub relative:(NSString *)relative {
     if (possibleSub.length < possibleSuper.length) {
-        return NO;
+        return nil;
     }
     if ([possibleSub isEqualToString:possibleSuper]) {
-        return YES;
+        return relative;
     }
-    return [self path:possibleSuper isParentDirectoryOfPath:[possibleSub stringByDeletingLastPathComponent]];
+    return [self relativePathFrom:possibleSuper
+                           toPath:[possibleSub stringByDeletingLastPathComponent]
+                         relative:[relative stringByAppendingPathComponent:possibleSub.lastPathComponent]];
 }
 
 - (NSString *)folderForFullEnvironmentSavePanelURL:(NSURL *)url {
-    NSString *scriptsRoot = [[[NSURL fileURLWithPath:[[NSFileManager defaultManager] scriptsPathWithoutSpaces]] URLByResolvingSymlinksInPath] path];
+    NSString *noSpacesScriptsRoot = [[NSFileManager defaultManager] scriptsPathWithoutSpaces];
+    NSString *scriptsRoot = [[[NSURL fileURLWithPath:noSpacesScriptsRoot] URLByResolvingSymlinksInPath] path];
     NSString *selectedPath = [url URLByResolvingSymlinksInPath].path;
-    if ([self path:scriptsRoot isParentDirectoryOfPath:selectedPath]) {
-        return selectedPath;
+    NSString *relative = [self relativePathFrom:scriptsRoot
+                                         toPath:selectedPath];
+    if (relative) {
+        return [noSpacesScriptsRoot stringByAppendingPathComponent:relative];
     } else {
         NSString *name = url.path.lastPathComponent;
-        NSString *folder = [scriptsRoot stringByAppendingPathComponent:name];
+        NSString *folder = [noSpacesScriptsRoot stringByAppendingPathComponent:name];
         return folder;
     }
 }
