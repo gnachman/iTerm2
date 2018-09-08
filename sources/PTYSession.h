@@ -208,7 +208,7 @@ typedef enum {
 - (void)sessionDuplicateTab;
 
 - (BOOL)sessionShouldAutoClose:(PTYSession *)session;
-- (void)sessionDidChangeJob:(PTYSession *)session;
+- (void)sessionDidChangeGraphic:(PTYSession *)session;
 
 @end
 
@@ -459,6 +459,7 @@ typedef enum {
 @property(nonatomic) BOOL overrideGlobalDisableMetalWhenIdleSetting;
 @property(nonatomic, readonly) BOOL canProduceMetalFramecap;
 @property(nonatomic, readonly) NSColor *textColorForStatusBar;
+@property(nonatomic, readonly) NSImage *tabGraphic;
 
 #pragma mark - methods
 

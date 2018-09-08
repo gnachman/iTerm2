@@ -25,6 +25,7 @@
 #import "iTermDisclosableView.h"
 #import "iTermEchoProbe.h"
 #import "iTermFindDriver.h"
+#import "iTermGraphicSource.h"
 #import "iTermNotificationController.h"
 #import "iTermHistogram.h"
 #import "iTermHotKeyController.h"
@@ -493,6 +494,8 @@ static NSString *const iTermSessionTitleSession = @"session";
 
     iTermTmuxStatusBarMonitor *_tmuxStatusBarMonitor;
     iTermWorkingDirectoryPoller *_pwdPoller;
+    
+    iTermGraphicSource *_graphicSource;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -677,6 +680,7 @@ static NSString *const iTermSessionTitleSession = @"session";
         _metaFrustrationDetector.delegate = self;
         _pwdPoller = [[iTermWorkingDirectoryPoller alloc] init];
         _pwdPoller.delegate = self;
+        _graphicSource = [[iTermGraphicSource alloc] init];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
@@ -835,7 +839,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview release];  // I'm not sure it's ever nonnil here
     [_currentMarkOrNotePosition release];
     [_pwdPoller release];
-
+    [_graphicSource release];
+    
     [super dealloc];
 }
 
@@ -3808,6 +3813,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self.tmuxController setTabColorString:tabColor ? [tabColor hexString] : iTermTmuxTabColorNone
                                  forWindowPane:self.tmuxPane];
     }
+    [self.delegate sessionDidChangeGraphic:self];
     [self.delegate sessionUpdateMetalAllowed];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
     [_nameController setNeedsUpdate];
@@ -3874,6 +3880,26 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)name {
     return [self.variablesScope valueForVariableName:iTermVariableKeySessionName] ?: [self.variablesScope valueForVariableName:iTermVariableKeySessionProfileName] ?: @"Untitled";
+}
+
+- (BOOL)shouldShowTabGraphic {
+    const iTermProfileIcon icon = [iTermProfilePreferences unsignedIntegerForKey:KEY_ICON inProfile:self.profile];
+    return icon != iTermProfileIconNone;
+}
+
+- (NSImage *)tabGraphic {
+    const iTermProfileIcon icon = [iTermProfilePreferences unsignedIntegerForKey:KEY_ICON inProfile:self.profile];
+    switch (icon) {
+        case iTermProfileIconNone:
+            return nil;
+            
+        case iTermProfileIconAutomatic:
+            [_graphicSource updateImageForProcessID:self.shell.pid enabled:[self shouldShowTabGraphic]];
+            return _graphicSource.image;
+    }
+
+    DLog(@"Unexpected icon setting %@", @(icon));
+    return nil;
 }
 
 - (NSString *)windowTitle {
@@ -10351,7 +10377,9 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames group:(dispatch_group_t)group {
     if ([changedNames containsObject:iTermVariableKeySessionJobPid]) {
         [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-        [self.delegate sessionDidChangeJob:self];
+        if ([_graphicSource updateImageForProcessID:self.shell.pid enabled:[self shouldShowTabGraphic]]) {
+            [self.delegate sessionDidChangeGraphic:self];
+        }
     }
     [_nameController variablesDidChange:changedNames];
     [_badgeSwiftyString variablesDidChange:changedNames];

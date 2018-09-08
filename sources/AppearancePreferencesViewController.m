@@ -26,9 +26,6 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     // Hide tab bar when there is only one session
     IBOutlet NSButton *_hideTab;
 
-    // Show tab icons
-    IBOutlet NSButton *_showTabIcons;
-    
     // Remove tab number from tabs.
     IBOutlet NSButton *_hideTabNumber;
 
@@ -121,11 +118,6 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
         [weakSelf postRefreshNotification];
         [weakSelf updateFlashTabsVisibility];
     };
-
-    info = [self defineControl:_showTabIcons
-                           key:kPreferenceKeyShowTabIcons
-                          type:kPreferenceInfoTypeCheckbox];
-    info.onChange = ^() { [weakSelf postRefreshNotification]; };
 
     info = [self defineControl:_hideTabNumber
                            key:kPreferenceKeyHideTabNumber

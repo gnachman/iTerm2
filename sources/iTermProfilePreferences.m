@@ -227,6 +227,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     if (!dict) {
         dict = @{ KEY_NAME: @"Default",
                   KEY_SHORTCUT: [NSNull null],
+                  KEY_ICON: @(iTermProfileIconNone),
                   KEY_TAGS: [NSNull null],
                   KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeLoginShellValue,
                   KEY_COMMAND_LINE: @"",

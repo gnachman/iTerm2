@@ -10,8 +10,9 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermGraphicSource : NSObject
+@property (nonatomic, readonly) NSImage *image;
 
-- (NSImage *)imageForSessionWithProcessID:(pid_t)pid;
+- (BOOL)updateImageForProcessID:(pid_t)pid enabled:(BOOL)enabled;
 
 @end
 

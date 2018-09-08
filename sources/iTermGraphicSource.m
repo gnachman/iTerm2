@@ -60,7 +60,19 @@ static NSDictionary *sGraphicIconMap;
     return self;
 }
 
-- (NSImage *)imageForSessionWithProcessID:(pid_t)pid {
+- (BOOL)updateImageForProcessID:(pid_t)pid enabled:(BOOL)enabled {
+    NSImage *image = [self imageForProcessID:pid enabled:enabled];
+    if (image == self.image) {
+        return NO;
+    }
+    _image = image;
+    return YES;
+}
+
+- (NSImage *)imageForProcessID:(pid_t)pid enabled:(BOOL)enabled {
+    if (!enabled) {
+        return nil;
+    }
     NSString *job = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:pid].name;
     if (!job) {
         return nil;

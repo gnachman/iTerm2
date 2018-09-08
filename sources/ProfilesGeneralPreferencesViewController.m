@@ -66,7 +66,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     iTermFunctionCallTextFieldDelegate *_badgeTextFieldDelegate;
     iTermFunctionCallTextFieldDelegate *_badgeTextForEditCurrentSessionFieldDelegate;
     IBOutlet NSPopUpButton *_titleSettingsForEditCurrentSession;
-
+    IBOutlet NSPopUpButton *_icon;
+    
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
     IBOutlet iTermShortcutInputView *_sessionHotkeyInputView;
@@ -132,12 +133,16 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         }
         [strongSelf->_profileDelegate profilesGeneralPreferencesNameDidEndEditing];
     };
+    
+    info = [self defineControl:_icon
+                    key:KEY_ICON
+                          type:kPreferenceInfoTypePopup];
 
     [self defineControl:_profileShortcut
                     key:KEY_SHORTCUT
                    type:kPreferenceInfoTypePopup
-         settingChanged:^(id sender) { [self setShortcutValueToSelectedItem]; }
-                 update:^BOOL { [self updateShortcutTitles]; return YES; }];
+         settingChanged:^(id sender) { [weakSelf setShortcutValueToSelectedItem]; }
+                 update:^BOOL { [weakSelf updateShortcutTitles]; return YES; }];
 
     [self defineControl:_tagsTokenField
                     key:KEY_TAGS
@@ -146,8 +151,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [self defineControl:_commandType
                     key:KEY_CUSTOM_COMMAND
                    type:kPreferenceInfoTypeMatrix
-         settingChanged:^(id sender) { [self commandTypeDidChange]; }
-                 update:^BOOL { [self updateCommandType]; return YES; }];
+         settingChanged:^(id sender) { [weakSelf commandTypeDidChange]; }
+                 update:^BOOL { [weakSelf updateCommandType]; return YES; }];
 
     info = [self defineControl:_customCommand
                            key:KEY_COMMAND_LINE
@@ -167,8 +172,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [self defineControl:_initialDirectoryType
                     key:KEY_CUSTOM_DIRECTORY
                    type:kPreferenceInfoTypeMatrix
-         settingChanged:^(id sender) { [self directoryTypeDidChange]; }
-                 update:^BOOL { [self updateDirectoryType]; return YES; }];
+         settingChanged:^(id sender) { [weakSelf directoryTypeDidChange]; }
+                 update:^BOOL { [weakSelf updateDirectoryType]; return YES; }];
 
     [self defineControl:_customDirectory
                     key:KEY_WORKING_DIRECTORY
@@ -195,7 +200,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [self defineControl:_titleSettings
                     key:KEY_TITLE_COMPONENTS
                    type:kPreferenceInfoTypePopup
-         settingChanged:^(id sender) { [self toggleSelectedTitleComponent]; }
+         settingChanged:^(id sender) { [weakSelf toggleSelectedTitleComponent]; }
                  update:^BOOL {
                      [self updateTitleSettingsMenu];
                      [self updateSelectedTitleComponents];
@@ -204,7 +209,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [self defineControl:_titleSettingsForEditCurrentSession
                     key:KEY_TITLE_COMPONENTS
                    type:kPreferenceInfoTypePopup
-         settingChanged:^(id sender) { [self toggleSelectedTitleComponent]; }
+         settingChanged:^(id sender) { [weakSelf toggleSelectedTitleComponent]; }
                  update:^BOOL {
                      [self updateTitleSettingsMenu];
                      [self updateSelectedTitleComponents];
