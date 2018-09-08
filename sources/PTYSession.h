@@ -208,6 +208,7 @@ typedef enum {
 - (void)sessionDuplicateTab;
 
 - (BOOL)sessionShouldAutoClose:(PTYSession *)session;
+- (void)sessionDidChangeJob:(PTYSession *)session;
 
 @end
 

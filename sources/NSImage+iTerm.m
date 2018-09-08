@@ -291,4 +291,21 @@
 
 }
 
+- (NSImage *)it_flippedImage {
+    const NSSize size = self.size;
+    NSAffineTransform *transform = [NSAffineTransform transform];
+    [transform scaleXBy:1 yBy:-1];
+    NSAffineTransform *center = [NSAffineTransform transform];
+    [center translateXBy:size.width / 2. yBy:size.height / 2.];
+    [transform appendTransform:center];
+    NSImage *image = [[NSImage alloc] initWithSize:size];
+    [image lockFocus];
+    [transform concat];
+    NSRect rect = NSMakeRect(0, 0, size.width, size.height);
+    NSPoint corner = NSMakePoint(-size.width / 2., -size.height / 2.);
+    [self drawAtPoint:corner fromRect:rect operation:NSCompositingOperationCopy fraction:1.0];
+    [image unlockFocus];
+    return image;
+}
+
 @end

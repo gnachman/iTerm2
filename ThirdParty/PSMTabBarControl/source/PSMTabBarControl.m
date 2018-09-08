@@ -31,6 +31,8 @@ const CGFloat kPSMMinimumTitleWidth = 30;
 const CGFloat kPSMTabBarIndicatorWidth = 16.0;
 const CGFloat kPSMTabBarIconWidth = 16.0;
 const CGFloat kPSMHideAnimationSteps = 2.0;
+const CGSize PSMTabBarGraphicSize = { 16.0, 16.0 };
+const CGFloat PSMTabBarGraphicMargin = 2;
 
 // Value used in _currentStep to indicate that resizing operation is not in progress
 const NSInteger kPSMIsNotBeingResized = -1;
@@ -1980,6 +1982,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminen
     PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
     cell.indicator.hidden = !isProcessing;
     cell.indicator.animate = isProcessing;
+}
+
+- (void)graphicDidChangeForTabWithIdentifier:(id)identifier {
+    PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
+    [self setNeedsDisplayInRect:cell.frame];
 }
 
 - (void)setIcon:(NSImage *)icon forTabWithIdentifier:(id)identifier {

@@ -49,5 +49,6 @@
 - (void)saveAsPNGTo:(NSString *)filename;
 
 - (NSImage *)it_imageWithTintColor:(NSColor *)tintColor;
+- (NSImage *)it_flippedImage;
 
 @end

@@ -8452,6 +8452,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)tabDidChangeGraphic:(PTYTab *)tab {
+    [_contentView.tabBarControl graphicDidChangeForTabWithIdentifier:tab];
+}
+
 - (void)tabDidChangeTmuxLayout:(PTYTab *)tab {
     [self setWindowTitle];
 }

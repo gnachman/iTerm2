@@ -1,0 +1,142 @@
+{
+  "bullhorn": [
+    "ping"
+  ],
+  "compile": [
+    "cc",
+    "ccache",
+    "clang",
+    "gcc",
+    "gmake",
+    "make",
+    "xcodebuild"
+  ],
+  "clojure": [
+    "lein",
+    "planck",
+    "lumo"
+  ],
+  "database": [
+    "mongodb",
+    "mongod",
+    "mongo",
+    "mysql",
+    "sqlite3"
+  ],
+  "docker": [
+    "docker-compose"
+  ],
+  "ethereum": [
+    "ethereum",
+    "geth",
+    "testrpc"
+  ],
+  "go": [
+    "go"
+  ],
+  "java": [
+    "java",
+    "javac"
+  ],
+  "git": [
+    "git",
+    "git-remote-ftp",
+    "git-remote-ftps",
+    "git-remote-http",
+    "git-remote-https"
+  ],
+  "heroku": [
+    "heroku"
+  ],
+  "http": [
+    "wget",
+    "http"
+  ],
+  "monitor": [
+    "htop",
+    "iftop",
+    "top"
+  ],
+  "nano": [
+    "nano"
+  ],
+  "nodejs": [
+    "node"
+  ],
+  "npm": [
+    "npm"
+  ],
+  "perl": [
+    "perl"
+  ],
+  "php": [
+    "php"
+  ],
+  "ruby": [
+    "irb",
+    "sidekiq",
+    "rake",
+    "ruby"
+  ],
+  "search": [
+    "grep",
+    "egrep",
+    "fgrep",
+    "search",
+    "find",
+    "lookup"
+  ],
+  "shell": [
+    "bash",
+    "fish",
+    "zsh",
+    "tcsh"
+  ],
+  "code": [
+    "pico",
+    "emacs"
+  ],
+  "read": [
+    "tail",
+    "less",
+    "more"
+  ],
+  "yarn": [
+    "yarn",
+    "yarnpkg"
+  ],
+  "zip": [
+    "unzip",
+    "zip",
+    "gzip",
+    "gunzip",
+    "gzcat",
+    "tar",
+    "gz",
+    "winzip",
+    "zar"
+  ],
+  "curl": [
+    "curl"
+  ],
+  "python": [
+    "Python",
+    "python",
+    "python2",
+    "python2.7",
+    "python3",
+    "python3.1",
+    "python3.2",
+    "python3.3",
+    "python3.4",
+    "python3.5",
+    "python3.6",
+    "python3.7",
+    "apython"
+  ],
+  "vim": [
+    "vi",
+    "vim",
+    "nvim"
+  ]
+}

@@ -5,6 +5,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermGraphicSource.h"
 #import "iTermNotificationController.h"
 #import "iTermPowerManager.h"
 #import "iTermPreferences.h"
@@ -195,6 +196,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     iTermSwiftyString *_tabTitleOverrideSwiftyString;
 
     NSInteger _numberOfSplitViewDragsInProgress;
+    
+    iTermGraphicSource *_graphicSource;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -369,6 +372,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab];
     [self.variablesScope setValue:_userVariables forVariableNamed:@"user"];
     _variables.delegate = self;
+    _graphicSource = [[iTermGraphicSource alloc] init];
 
     self.tmuxWindow = -1;
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -406,7 +410,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     root_ = nil;
     flexibleView_ = nil;
-
 }
 
 - (NSString *)description {
@@ -856,6 +859,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (int)tabNumber {
     return objectCount_;
+}
+
+- (NSImage *)psmTabGraphic {
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowTabIcons]) {
+        return nil;
+    }
+    return [_graphicSource imageForSessionWithProcessID:self.activeSession.shell.pid];
 }
 
 - (int)objectCount {
@@ -5188,6 +5198,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (BOOL)sessionShouldAutoClose:(PTYSession *)session {
     return _numberOfSplitViewDragsInProgress == 0;
+}
+
+- (void)sessionDidChangeJob:(PTYSession *)session {
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowTabIcons]) {
+        return;
+    }
+    if (session == self.activeSession) {
+        [self.delegate tabDidChangeGraphic:self];
+    }
 }
 
 @end

@@ -10351,6 +10351,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames group:(dispatch_group_t)group {
     if ([changedNames containsObject:iTermVariableKeySessionJobPid]) {
         [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+        [self.delegate sessionDidChangeJob:self];
     }
     [_nameController variablesDidChange:changedNames];
     [_badgeSwiftyString variablesDidChange:changedNames];

@@ -251,6 +251,18 @@
     return result;
 }
 
+- (NSRect)graphicRectForTabCell:(PSMTabBarCell *)cell x:(CGFloat)xOrigin {
+    NSRect cellFrame = [cell frame];
+    
+    CGFloat minX = xOrigin;
+    NSRect result;
+    result.size = PSMTabBarGraphicSize;
+    result.origin.x = minX;
+    result.origin.y = cellFrame.origin.y + floor((cellFrame.size.height - result.size.height) / 2.0) - 1;
+    
+    return result;
+}
+
 - (NSRect)indicatorRectForTabCell:(PSMTabBarCell *)cell {
     NSRect cellFrame = [cell frame];
 
@@ -430,11 +442,45 @@
         [truncatingTailParagraphStyle setAlignment:NSTextAlignmentLeft];
     }
 
-    NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize],
+    // graphic
+    NSImage *graphic = [(id)[[cell representedObject] identifier] psmTabGraphic];
+
+    NSFont *font = [NSFont systemFontOfSize:self.fontSize];
+    NSDictionary *attributes = @{ NSFontAttributeName: font,
                                   NSForegroundColorAttributeName: [self textColorForCell:cell],
                                   NSParagraphStyleAttributeName: truncatingTailParagraphStyle };
-    return [[[NSAttributedString alloc] initWithString:[cell stringValue]
-                                            attributes:attributes] autorelease];
+    NSAttributedString *textAttributedString = [[[NSAttributedString alloc] initWithString:[cell stringValue]
+                                                                                attributes:attributes] autorelease];
+    if (!graphic) {
+        return textAttributedString;
+    }
+    
+    NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
+    textAttachment.image = graphic;
+    textAttachment.bounds = NSMakeRect(0,
+                                       - (graphic.size.height - font.capHeight) / 2.0,
+                                       graphic.size.width,
+                                       graphic.size.height);
+    NSAttributedString *graphicAttributedString = [NSAttributedString attributedStringWithAttachment:textAttachment];
+
+    NSAttributedString *space = [[[NSAttributedString alloc] initWithString:@"\u2002"
+                                                                 attributes:attributes] autorelease];
+    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
+    [result appendAttributedString:graphicAttributedString];
+    [result appendAttributedString:space];
+    [result appendAttributedString:textAttributedString];
+    [result enumerateAttribute:NSAttachmentAttributeName
+                       inRange:NSMakeRange(0, result.length)
+                       options:0
+                    usingBlock:^(id  _Nullable attachment, NSRange range, BOOL * _Nonnull stop) {
+                        if ([attachment isKindOfClass:[NSTextAttachment class]]) {
+                            [result addAttribute:NSParagraphStyleAttributeName
+                                           value:truncatingTailParagraphStyle
+                                           range:range];
+                        }
+                    }];
+
+    return result;
 }
 
 - (CGFloat)fontSize {

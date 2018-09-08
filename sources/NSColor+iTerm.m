@@ -308,7 +308,16 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 }
 
 + (instancetype)colorFromHexString:(NSString *)hexString {
-    if (![hexString hasPrefix:@"#"] || hexString.length != 7) {
+    if (![hexString hasPrefix:@"#"]) {
+        return nil;
+    }
+    if (hexString.length == 4) {
+        NSString *first = [hexString substringWithRange:NSMakeRange(1, 1)];
+        NSString *second = [hexString substringWithRange:NSMakeRange(2, 1)];
+        NSString *third = [hexString substringWithRange:NSMakeRange(3, 1)];
+        hexString = [NSString stringWithFormat:@"#%@%@%@%@%@%@", first, first, second, second, third, third];
+    }
+    if (hexString.length != 7) {
         return nil;
     }
 

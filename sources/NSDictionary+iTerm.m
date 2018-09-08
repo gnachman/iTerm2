@@ -419,4 +419,13 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
     }];
 }
 
+- (void)it_addObject:(id)object toMutableArrayForKey:(id)key {
+    NSMutableArray *array = self[key];
+    if (!array) {
+        array = [NSMutableArray array];
+        self[key] = array;
+    }
+    [array addObject:object];
+}
+
 @end

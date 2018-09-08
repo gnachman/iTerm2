@@ -26,6 +26,8 @@ extern const CGFloat kPSMMinimumTitleWidth;
 extern const CGFloat kPSMTabBarIndicatorWidth;
 extern const CGFloat kPSMTabBarIconWidth;
 extern const CGFloat kPSMHideAnimationSteps;
+extern const CGSize PSMTabBarGraphicSize;
+extern const CGFloat PSMTabBarGraphicMargin;
 
 // Value used in _currentStep to indicate that resizing operation is not in progress
 extern const NSInteger kPSMIsNotBeingResized;
@@ -65,6 +67,7 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextP
 - (void)setIcon:(NSImage *)icon;
 - (int)objectCount;
 - (void)setObjectCount:(int)objectCount;
+- (NSImage *)psmTabGraphic;
 @end
 
 @protocol PSMTabBarControlDelegate<NSTabViewDelegate>
@@ -227,6 +230,7 @@ enum {
 - (void)setIsProcessing:(BOOL)isProcessing forTabWithIdentifier:(id)identifier;
 - (void)setIcon:(NSImage *)icon forTabWithIdentifier:(id)identifier;
 - (void)setObjectCount:(NSInteger)objectCount forTabWithIdentifier:(id)identifier;
+- (void)graphicDidChangeForTabWithIdentifier:(id)identifier;
 
 - (void)setTabsHaveCloseButtons:(BOOL)tabsHaveCloseButtons;
 
