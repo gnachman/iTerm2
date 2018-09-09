@@ -2024,6 +2024,9 @@ static BOOL hasBecomeActive = NO;
         if (!ok) {
             return;
         }
+        if (![iTermAPIHelper sharedInstance]) {
+            return;
+        }
         NSString *command = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithEscapedShellCharactersIncludingNewlines:YES];
         NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
         command = [command stringByAppendingFormat:@" --banner=\"`cat %@`\"", bannerURL.path];

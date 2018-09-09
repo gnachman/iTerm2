@@ -7,6 +7,7 @@
 
 #import "iTermPythonRuntimeDownloader.h"
 
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermCommandRunner.h"
 #import "iTermDisclosableView.h"
 #import "iTermNotificationController.h"
@@ -181,7 +182,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 
     if (shouldBeginDownload) {
         __block BOOL raiseOnCompletion = (!silent || !confirm);
-        NSURL *url = [NSURL URLWithString:@"https://iterm2.com/downloads/pyenv/manifest.json"];
+        NSURL *url = [NSURL URLWithString:[iTermAdvancedSettingsModel pythonRuntimeDownloadURL]];
         __weak __typeof(self) weakSelf = self;
         __block BOOL stillNeedsConfirmation = confirm;
         iTermManifestDownloadPhase *manifestPhase = [[iTermManifestDownloadPhase alloc] initWithURL:url nextPhaseFactory:^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *currentPhase) {
