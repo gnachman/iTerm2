@@ -57,13 +57,13 @@
         NSInteger level = 0;
         NSMutableSet<NSNumber *> *visitedPids = [NSMutableSet set];
         BOOL cycle = NO;
-        return [self deepestForegroundJob:&level visited:visitedPids cycle:&cycle];
+        return [self deepestForegroundJob:&level visited:visitedPids cycle:&cycle depth:0];
     }
     return _deepestForegroundJob;
 }
 
-- (iTermProcessInfo *)deepestForegroundJob:(NSInteger *)levelInOut visited:(NSMutableSet *)visited cycle:(BOOL *)cycle {
-    if ([visited containsObject:@(self.processID)]) {
+- (iTermProcessInfo *)deepestForegroundJob:(NSInteger *)levelInOut visited:(NSMutableSet *)visited cycle:(BOOL *)cycle depth:(NSInteger)depth {
+    if (depth > 50 || [visited containsObject:@(self.processID)]) {
         _haveDeepestForegroundJob = YES;
         _deepestForegroundJob = nil;
         *cycle = YES;
@@ -85,7 +85,7 @@
 
     for (iTermProcessInfo *child in _children) {
         NSInteger level = *levelInOut + 1;
-        iTermProcessInfo *candidate = [child deepestForegroundJob:&level visited:visited cycle:cycle];
+        iTermProcessInfo *candidate = [child deepestForegroundJob:&level visited:visited cycle:cycle depth:depth + 1];
         if (*cycle) {
             _haveDeepestForegroundJob = YES;
             _deepestForegroundJob = nil;
