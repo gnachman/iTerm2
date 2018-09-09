@@ -139,6 +139,14 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     _profilesListView.delegate = nil;
 }
 
+- (void)viewDidLayout {
+    [super viewDidLayout];
+    if (@available(macOS 10.14, *)) {
+        NSView *view = _tabView.subviews.lastObject;
+        [view setNeedsDisplay:YES];
+    }
+}
+
 #pragma mark - iTermPreferencesBaseViewController
 
 - (void)setPreferencePanel:(NSWindowController *)preferencePanel {
