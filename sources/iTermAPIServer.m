@@ -424,9 +424,12 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleGetBufferRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerGetBuffer:request.getBufferRequest
                           handler:^(ITMGetBufferResponse *getBufferResponse) {
+                              assert(!handled);
+                              handled = YES;
                               response.getBufferResponse = getBufferResponse;
                               [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
                           }];
@@ -435,8 +438,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleGetPromptRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerGetPrompt:request.getPromptRequest handler:^(ITMGetPromptResponse *getPromptResponse) {
+        assert(!handled);
+        handled = YES;
         response.getPromptResponse = getPromptResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -445,10 +451,13 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleNotificationRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerNotification:request.notificationRequest
                        connectionKey:webSocketConnection.guid
                              handler:^(ITMNotificationResponse *notificationResponse) {
+                                 assert(!handled);
+                                 handled = YES;
                                  response.notificationResponse = notificationResponse;
                                  [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
                              }];
@@ -457,10 +466,13 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleRegisterToolRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerRegisterTool:request.registerToolRequest
                         peerIdentity:webSocketConnection.peerIdentity
                              handler:^(ITMRegisterToolResponse *registerToolResponse) {
+                                 assert(!handled);
+                                 handled = YES;
                                  response.registerToolResponse = registerToolResponse;
                                  [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
                              }];
@@ -469,9 +481,12 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleSetProfilePropertyRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerSetProfileProperty:request.setProfilePropertyRequest
                                    handler:^(ITMSetProfilePropertyResponse *setProfilePropertyResponse) {
+                                       assert(!handled);
+                                       handled = YES;
                                        response.setProfilePropertyResponse = setProfilePropertyResponse;
                                        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
                                    }];
@@ -480,9 +495,12 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleGetProfilePropertyRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerGetProfileProperty:request.getProfilePropertyRequest
                                    handler:^(ITMGetProfilePropertyResponse *getProfilePropertyResponse) {
+                                       assert(!handled);
+                                       handled = YES;
                                        response.getProfilePropertyResponse = getProfilePropertyResponse;
                                        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
                                    }];
@@ -491,9 +509,12 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleListSessionsRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerListSessions:request.listSessionsRequest
                              handler:^(ITMListSessionsResponse *listSessionsResponse) {
+                                 assert(!handled);
+                                 handled = YES;
                                  response.listSessionsResponse = listSessionsResponse;
                                  [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
                              }];
@@ -502,8 +523,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleSendTextRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerSendText:request.sendTextRequest handler:^(ITMSendTextResponse *sendTextResponse) {
+        assert(!handled);
+        handled = YES;
         response.sendTextResponse = sendTextResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -512,8 +536,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleCreateTabRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerCreateTab:request.createTabRequest handler:^(ITMCreateTabResponse *createTabResponse) {
+        assert(!handled);
+        handled = YES;
         response.createTabResponse = createTabResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -522,8 +549,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleSplitPaneRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerSplitPane:request.splitPaneRequest handler:^(ITMSplitPaneResponse *splitPaneResponse) {
+        assert(!handled);
+        handled = YES;
         response.splitPaneResponse = splitPaneResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -532,8 +562,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleSetPropertyRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerSetProperty:request.setPropertyRequest handler:^(ITMSetPropertyResponse *setPropertyResponse) {
+        assert(!handled);
+        handled = YES;
         response.setPropertyResponse = setPropertyResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -542,8 +575,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleGetPropertyRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerGetProperty:request.getPropertyRequest handler:^(ITMGetPropertyResponse *getPropertyResponse) {
+        assert(!handled);
+        handled = YES;
         response.getPropertyResponse = getPropertyResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -552,8 +588,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleInjectRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerInject:request.injectRequest handler:^(ITMInjectResponse *injectResponse) {
+        assert(!handled);
+        handled = YES;
         response.injectResponse = injectResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -562,8 +601,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleActivateRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerActivate:request.activateRequest handler:^(ITMActivateResponse *activateResponse) {
+        assert(!handled);
+        handled = YES;
         response.activateResponse = activateResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -572,8 +614,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleVariableRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerVariable:request.variableRequest handler:^(ITMVariableResponse *variableResponse) {
+        assert(!handled);
+        handled = YES;
         response.variableResponse = variableResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -582,8 +627,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleSavedArrangementRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerSavedArrangement:request.savedArrangementRequest handler:^(ITMSavedArrangementResponse *savedArrangementResponse) {
+        assert(!handled);
+        handled = YES;
         response.savedArrangementResponse = savedArrangementResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -592,8 +640,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleFocusRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerFocus:request.focusRequest handler:^(ITMFocusResponse *focusResponse) {
+        assert(!handled);
+        handled = YES;
         response.focusResponse = focusResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -602,8 +653,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleListProfilesRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerListProfiles:request.listProfilesRequest handler:^(ITMListProfilesResponse *listProfilesResponse) {
+        assert(!handled);
+        handled = YES;
         response.listProfilesResponse = listProfilesResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -612,10 +666,13 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleServerOriginatedRpcResultRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerServerOriginatedRPCResult:request.serverOriginatedRpcResultRequest
                                     connectionKey:webSocketConnection.key
                                           handler:^(ITMServerOriginatedRPCResultResponse *listProfilesResponse) {
+                                              assert(!handled);
+                                              handled = YES;
         response.serverOriginatedRpcResultResponse = listProfilesResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -657,8 +714,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleRestartSessionRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerRestartSession:request.restartSessionRequest handler:^(ITMRestartSessionResponse *restartSessionResponse) {
+        assert(!handled);
+        handled = YES;
         response.restartSessionResponse = restartSessionResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -667,8 +727,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleMenuItemRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerMenuItem:request.menuItemRequest handler:^(ITMMenuItemResponse *menuItemResponse) {
+        assert(!handled);
+        handled = YES;
         response.menuItemResponse = menuItemResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -677,8 +740,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleSetTabLayoutRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerSetTabLayout:request.setTabLayoutRequest handler:^(ITMSetTabLayoutResponse *theResponse) {
+        assert(!handled);
+        handled = YES;
         response.setTabLayoutResponse = theResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -687,8 +753,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleGetBroadcastDomainsRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerGetBroadcastDomains:request.getBroadcastDomainsRequest handler:^(ITMGetBroadcastDomainsResponse *theResponse) {
+        assert(!handled);
+        handled = YES;
         response.getBroadcastDomainsResponse = theResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -697,8 +766,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleTmuxRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerTmuxRequest:request.tmuxRequest handler:^(ITMTmuxResponse *theResponse) {
+        assert(!handled);
+        handled = YES;
         response.tmuxResponse = theResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -707,8 +779,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handleReorderTabsRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
     
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerReorderTabsRequest:request.reorderTabsRequest handler:^(ITMReorderTabsResponse *theResponse) {
+        assert(!handled);
+        handled = YES;
         response.reorderTabsResponse = theResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
@@ -717,8 +792,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)handlePreferencesRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
+    __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
     [_delegate apiServerPreferencesRequest:request.preferencesRequest handler:^(ITMPreferencesResponse *theResponse) {
+        assert(!handled);
+        handled = YES;
         response.preferencesResponse = theResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
