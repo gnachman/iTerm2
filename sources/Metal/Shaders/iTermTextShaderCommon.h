@@ -25,6 +25,7 @@ typedef struct {
     int underlineStyle;  // should draw an underline? For some stupid reason the compiler won't let me set the type as iTermMetalGlyphAttributesUnderline
     float2 viewportSize;  // size of viewport in pixels. TODO: see if I can avoid passing this to fragment function.
     float scale;  // 2 for retina, 1 for non-retina
+    half power;
 } iTermTextVertexFunctionOutput;
 
 typedef struct {
@@ -43,6 +44,7 @@ typedef struct {
     float4 clipSpacePosition [[position]];  // In vector function is normalized. In fragment function is in pixels, with a half pixel offset since it refers to the center of the pixel.
     float2 textureCoordinate;
     half4 textColor;
+    half power;
 } iTermTextVertexFunctionOutputMonochrome;
 
 // Returns the weight in [0, 1] of underline for a pixel at `clipSpacePosition`.
