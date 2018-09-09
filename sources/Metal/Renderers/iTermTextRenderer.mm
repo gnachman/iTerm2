@@ -193,10 +193,16 @@ static BOOL gMonochromeText;
             }
         });
         // NOTE: The vertex and fragment function names get changed later. These aren't used but must be valid.
+        iTermMetalBlending *blending;
+        if (@available(macOS 10.14, *)) {
+            blending = [iTermMetalBlending backgroundColorCompositing];
+        } else {
+            blending = [[iTermMetalBlending alloc] init];
+        }
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
-                                                    vertexFunctionName:VertexFunctionName(false, true, false)
-                                                  fragmentFunctionName:FragmentFunctionName(false, true, false)
-                                                              blending:[[iTermMetalBlending alloc] init]
+                                                    vertexFunctionName:@"iTermTextVertexShader"
+                                                  fragmentFunctionName:@"iTermTextFragmentShaderWithBlendingEmoji"
+                                                              blending:blending
                                                         piuElementSize:sizeof(iTermTextPIU)
                                                    transientStateClass:[iTermTextRendererTransientState class]];
         _cellRenderer.formatterDelegate = self;
