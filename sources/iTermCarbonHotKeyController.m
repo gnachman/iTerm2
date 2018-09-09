@@ -172,7 +172,9 @@
 }
 
 - (void)sessionDidResignActive:(NSNotification *)notification {
-    assert(!_suspended);
+    if (_suspended) {
+        return;
+    }
     NSDictionary<iTermTuple<NSNumber *, NSNumber *> *, NSArray<iTermHotKey *> *> *hotkeysByShortcut =
         [_hotKeys classifyWithBlock:^id(iTermHotKey *hotkey) {
             return [iTermTuple tupleWithObject:@(hotkey.shortcut.keyCode) andObject:@(hotkey.shortcut.modifiers)];
