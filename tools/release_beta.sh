@@ -1,4 +1,6 @@
 #!/bin/bash
+set -x
+
 function die {
   echo $1
   exit
@@ -16,6 +18,11 @@ function SparkleSign {
     ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die SparkleSign
     echo "Signature is "
     cat /tmp/sig.txt
+    actualsize=$(wc -c < /tmp/sig.txt)
+    if (( $actualsize < 120)); then
+        die "signature file too small"
+    fi
+
     SIG=$(cat /tmp/sig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
     XML=$1
@@ -115,9 +122,9 @@ git checkout -- version.txt
 
 git tag v${VERSION}
 git commit -am ${VERSION}
-git push origin master
+git push origin HEAD
 git push --tags
 cd $SVNDIR
 git commit -am v${VERSION}
-git push origin master
+git push origin HEAD
 
