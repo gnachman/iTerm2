@@ -1603,6 +1603,7 @@ static id sAPIHelperInstance;
                 response.status = ITMGetPropertyResponse_Status_UnrecognizedName;
             }
             handler(response);
+            return;
         }
 
         case ITMGetPropertyRequest_Identifier_OneOfCase_SessionId: {
