@@ -19,9 +19,17 @@ class Size:
   def width(self):
     return self.__width
 
+  @width.setter
+  def width(self, value):
+    self.__width = value
+
   @property
   def height(self):
     return self.__height
+
+  @height.setter
+  def height(self, value):
+    self.__height = value
 
   @property
   def dict(self):
@@ -62,9 +70,17 @@ class Point:
   def x(self):
     return self.__x
 
+  @x.setter
+  def x(self, value):
+    self.__x = value
+
   @property
   def y(self):
     return self.__y
+
+  @y.setter
+  def y(self, value):
+    self.__y = value
 
   @property
   def dict(self):
@@ -92,9 +108,17 @@ class Frame:
   def origin(self):
     return self.__origin
 
+  @origin.setter
+  def origin(self, value):
+    self.__origin = value
+
   @property
   def size(self):
     return self.__size
+
+  @size.setter
+  def size(self, value):
+    self.__size = value
 
   def load_from_dict(self, dict):
     """Sets the frame's values from a dict representation."""
