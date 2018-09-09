@@ -107,6 +107,7 @@
     }
     NSColor *color = self.selectedColor ?: [NSColor clearColor];
     NSDraggingItem *dragItem = [[NSDraggingItem alloc] initWithPasteboardWriter:color];
+    dragItem.draggingFrame = self.frame;
     NSSize size = self.frame.size;
     if (size.width == 0 || size.height == 0) {
         return;
