@@ -291,8 +291,12 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
                                                                  textureSampler,
                                                                  dimensions->scale);
 
+    half4 recoloredTextColor = static_cast<half4>(in.textColor);
+    const half power = 3.0 - 2.0 * (0.3 * in.textColor.x + 0.59 * in.textColor.y + 0.11 * in.textColor.z);
+    recoloredTextColor.w *= pow(textureColor.w, power);
+
     // I could eke out a little speed by passing a half4 from the vector shader but this is so slow I'd rather not add the complexity.
-    return mix(textureColor * static_cast<half4>(in.textColor),
+    return mix(recoloredTextColor,
                in.underlineColor,
                underlineWeight);
 }
