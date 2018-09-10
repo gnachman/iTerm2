@@ -134,6 +134,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening"
 static NSString* TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
 static NSString* TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
 static NSString* TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW = @"Is Hotkey Window";
+static NSString* TERMINAL_ARRANGEMENT_INITIAL_PROFILE = @"Initial Profile";  // Optional
 
 static NSString* TERMINAL_GUID = @"TerminalGuid";
 static NSString* TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
@@ -439,6 +440,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     }
 }
 
++ (Profile *)expurgatedInitialProfile:(Profile *)profile {
+    // We don't care about almost all the keys in the profile, so don't waste space and privacy storing them.
+    return [profile ?: @{} dictionaryKeepingOnlyKeys:@[ KEY_CUSTOM_WINDOW_TITLE, KEY_USE_CUSTOM_WINDOW_TITLE ]];
+}
+
 - (instancetype)initWithWindowNibName:(NSString *)windowNibName {
     self = [super initWithWindowNibName:windowNibName];
     if (self) {
@@ -450,19 +456,22 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
-                             screen:(int)screenNumber {
+                             screen:(int)screenNumber
+                            profile:(Profile *)profile {
     return [self initWithSmartLayout:smartLayout
                           windowType:windowType
                      savedWindowType:savedWindowType
                               screen:screenNumber
-                    hotkeyWindowType:iTermHotkeyWindowTypeNone];
+                    hotkeyWindowType:iTermHotkeyWindowTypeNone
+                             profile:profile];
 }
 
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
                              screen:(int)screenNumber
-                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
+                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
+                            profile:(Profile *)profile {
     self = [self initWithWindowNibName:@"PseudoTerminal"];
     NSAssert(self, @"initWithWindowNibName returned nil");
     if (self) {
@@ -470,7 +479,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                        windowType:windowType
                                   savedWindowType:savedWindowType
                                            screen:screenNumber
-                                 hotkeyWindowType:hotkeyWindowType];
+                                 hotkeyWindowType:hotkeyWindowType
+                                          profile:profile];
     }
     return self;
 }
@@ -523,7 +533,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                  windowType:(iTermWindowType)windowType
                             savedWindowType:(iTermWindowType)savedWindowType
                                      screen:(int)screenNumber
-                           hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
+                           hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
+                                    profile:(Profile *)profile {
     DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d hotkeyWindowType:%@ ",
          self,
          smartLayout ? @"YES" : @"NO",
@@ -769,6 +780,12 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     }
     _shortcutAccessoryViewController.ordinal = number_ + 1;
 #endif
+
+    _initialProfile = [[PseudoTerminal expurgatedInitialProfile:profile] retain];
+    if ([iTermProfilePreferences boolForKey:KEY_USE_CUSTOM_WINDOW_TITLE inProfile:profile]) {
+        self.titleOverride = [iTermProfilePreferences stringForKey:KEY_CUSTOM_WINDOW_TITLE inProfile:profile];
+    }
+
     [[NSNotificationCenter defaultCenter] postNotificationName:kTerminalWindowControllerWasCreatedNotification object:self];
     DLog(@"Done initializing PseudoTerminal %@", self);
 }
@@ -873,6 +890,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_variables release];
     [_scope release];
     [_windowTitleOverrideSwiftyString release];
+    [_initialProfile release];
 
     [super dealloc];
 }
@@ -1080,7 +1098,8 @@ ITERM_WEAKLY_REFERENCEABLE
     term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                              windowType:newWindowType
                                         savedWindowType:savedWindowType
-                                                 screen:screen] autorelease];
+                                                 screen:screen
+                                                profile:self.initialProfile] autorelease];
     if (term == nil) {
         return nil;
     }
@@ -2194,7 +2213,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  windowType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN
                                             savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
                                                      screen:screenIndex
-                                           hotkeyWindowType:hotkeyWindowType] autorelease];
+                                           hotkeyWindowType:hotkeyWindowType
+                                                    profile:arrangement[TERMINAL_ARRANGEMENT_INITIAL_PROFILE]] autorelease];
 
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_X_ORIGIN] doubleValue];
@@ -2211,7 +2231,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  windowType:WINDOW_TYPE_LION_FULL_SCREEN
                                             savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
                                                      screen:screenIndex
-                                           hotkeyWindowType:hotkeyWindowType] autorelease];
+                                           hotkeyWindowType:hotkeyWindowType
+                                                    profile:arrangement[TERMINAL_ARRANGEMENT_INITIAL_PROFILE]] autorelease];
         [term delayedEnterFullscreen];
     } else {
         // Support legacy edge-spanning flag by adjusting the
@@ -2239,7 +2260,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                  windowType:windowType
                                             savedWindowType:windowType
                                                      screen:screenIndex
-                                           hotkeyWindowType:hotkeyWindowType] autorelease];
+                                           hotkeyWindowType:hotkeyWindowType
+                                                    profile:arrangement[TERMINAL_ARRANGEMENT_INITIAL_PROFILE]] autorelease];
 
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
@@ -2574,6 +2596,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self arrangementWithTabs:tabs includingContents:includeContents];
 }
 
+- (Profile *)expurgatedInitialProfile {
+    return [PseudoTerminal expurgatedInitialProfile:_initialProfile];
+}
+
 - (NSDictionary *)arrangementWithTabs:(NSArray<PTYTab *> *)tabs
                              includingContents:(BOOL)includeContents {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:7];
@@ -2609,6 +2635,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     result[TERMINAL_ARRANGEMENT_WINDOW_TYPE] = @([self lionFullScreen] ? WINDOW_TYPE_LION_FULL_SCREEN : windowType_);
     result[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] = @(savedWindowType_);
+    result[TERMINAL_ARRANGEMENT_INITIAL_PROFILE] = [self expurgatedInitialProfile];
     if (_hotkeyWindowType == iTermHotkeyWindowTypeNone) {
         result[TERMINAL_ARRANGEMENT_SCREEN_INDEX] = @([[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]);
     } else {

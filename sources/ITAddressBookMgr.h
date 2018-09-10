@@ -115,6 +115,8 @@
 #define KEY_COLUMNS                @"Columns"
 #define KEY_FULLSCREEN             @"Full Screen"  // DEPRECATED
 #define KEY_WINDOW_TYPE            @"Window Type"
+#define KEY_USE_CUSTOM_WINDOW_TITLE           @"Use Custom Window Title"
+#define KEY_CUSTOM_WINDOW_TITLE               @"Custom Window Title"
 #define KEY_SCREEN                 @"Screen"
 #define KEY_SPACE                  @"Space"
 #define KEY_NORMAL_FONT            @"Normal Font"
@@ -167,8 +169,7 @@
 #define KEY_DISABLE_PRINTING                  @"Disable Printing"
 #define KEY_SCROLLBACK_WITH_STATUS_BAR        @"Scrollback With Status Bar"
 #define KEY_SCROLLBACK_IN_ALTERNATE_SCREEN    @"Scrollback in Alternate Screen"
-#define KEY_BOOKMARK_USER_NOTIFICATIONS      @"BM Growl"
-
+#define KEY_BOOKMARK_USER_NOTIFICATIONS       @"BM Growl"
 #define KEY_SEND_BELL_ALERT                   @"Send Bell Alert"
 #define KEY_SEND_IDLE_ALERT                   @"Send Idle Alert"
 #define KEY_SEND_NEW_OUTPUT_ALERT             @"Send New Output Alert"

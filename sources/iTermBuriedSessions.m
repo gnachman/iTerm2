@@ -90,7 +90,8 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                  windowType:restorableSession.windowType
                                             savedWindowType:restorableSession.savedWindowType
-                                                     screen:restorableSession.screen] autorelease];
+                                                     screen:restorableSession.screen
+                                                    profile:nil] autorelease];
         if (term) {
             [[iTermController sharedInstance] addTerminalWindow:term];
             term.terminalGuid = restorableSession.terminalGuid;

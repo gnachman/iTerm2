@@ -94,6 +94,7 @@ extern NSString *const iTermBroadcastDomainsDidChangeNotification;
 
 @property(nonatomic, readonly) iTermSessionFactory *sessionFactory;
 @property(nonatomic, readonly) int number;
+@property(nonatomic, readonly) Profile *initialProfile;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
@@ -144,7 +145,8 @@ extern NSString *const iTermBroadcastDomainsDidChangeNotification;
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
-                             screen:(int)screenIndex;
+                             screen:(int)screenIndex
+                            profile:(Profile *)profile;
 
 // isHotkey indicates if this is a hotkey window, which receives special
 // treatment and must be unique.
@@ -152,7 +154,8 @@ extern NSString *const iTermBroadcastDomainsDidChangeNotification;
                          windowType:(iTermWindowType)windowType
                     savedWindowType:(iTermWindowType)savedWindowType
                              screen:(int)screenNumber
-                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType;
+                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
+                            profile:(Profile *)profile;
 
 // If a PseudoTerminal is created with -init (such as happens with AppleScript)
 // this must be called before it is used.
@@ -160,7 +163,8 @@ extern NSString *const iTermBroadcastDomainsDidChangeNotification;
                                  windowType:(iTermWindowType)windowType
                             savedWindowType:(iTermWindowType)savedWindowType
                                      screen:(int)screenNumber
-                                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType;
+                                   hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
+                                    profile:(Profile *)profile;
 
 - (PTYTab *)tabWithUniqueId:(int)uniqueId;
 

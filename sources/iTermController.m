@@ -983,7 +983,8 @@ static iTermController *gSharedInstance;
                                           windowType:windowType
                                      savedWindowType:windowType
                                               screen:[iTermProfilePreferences intForKey:KEY_SCREEN inProfile:profile]
-                                    hotkeyWindowType:iTermHotkeyWindowTypeNone] autorelease];
+                                    hotkeyWindowType:iTermHotkeyWindowTypeNone
+                                             profile:profile] autorelease];
     if ([iTermProfilePreferences boolForKey:KEY_HIDE_AFTER_OPENING inProfile:profile]) {
         [term hideAfterOpening];
     }
@@ -1199,14 +1200,16 @@ static iTermController *gSharedInstance;
                                            windowType:windowType
                                       savedWindowType:WINDOW_TYPE_NORMAL
                                                screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
-                                     hotkeyWindowType:hotkeyWindowType];
+                                     hotkeyWindowType:hotkeyWindowType
+                                              profile:aDict];
         } else {
             DLog(@"Create a new window controller");
             term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                      windowType:windowType
                                                 savedWindowType:windowType
                                                          screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
-                                               hotkeyWindowType:hotkeyWindowType] autorelease];
+                                               hotkeyWindowType:hotkeyWindowType
+                                                        profile:aDict] autorelease];
         }
         if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
             [term hideAfterOpening];

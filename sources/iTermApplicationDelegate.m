@@ -1892,7 +1892,8 @@ static BOOL hasBecomeActive = NO;
                         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                                  windowType:WINDOW_TYPE_NORMAL
                                                             savedWindowType:WINDOW_TYPE_NORMAL
-                                                                     screen:-1] autorelease];
+                                                                     screen:-1
+                                                                    profile:nil] autorelease];
                         if (term) {
                             [[iTermController sharedInstance] addTerminalWindow:term];
                             term.terminalGuid = restorableSession.terminalGuid;
@@ -1914,7 +1915,8 @@ static BOOL hasBecomeActive = NO;
                         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                                  windowType:WINDOW_TYPE_NORMAL
                                                             savedWindowType:WINDOW_TYPE_NORMAL
-                                                                     screen:-1] autorelease];
+                                                                     screen:-1
+                                                                    profile:nil] autorelease];
                         [[iTermController sharedInstance] addTerminalWindow:term];
                         term.terminalGuid = restorableSession.terminalGuid;
                         fitTermToTabs = YES;

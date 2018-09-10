@@ -209,6 +209,17 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
     return temp;
 }
 
+- (NSDictionary *)dictionaryKeepingOnlyKeys:(NSArray *)keys {
+    NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
+    for (id key in keys) {
+        id object = self[key];
+        if (object) {
+            dictionary[key] = object;
+        }
+    }
+    return dictionary;
+}
+
 - (NSData *)propertyListData {
     NSString *filename = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"DictionaryPropertyList" suffix:@"iTerm2"];
     [self writeToFile:filename atomically:NO];

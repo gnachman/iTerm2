@@ -9,9 +9,11 @@
 #import "ProfilesWindowPreferencesViewController.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
+#import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermImageWell.h"
 #import "iTermPreferences.h"
 #import "iTermSystemVersion.h"
+#import "iTermVariables.h"
 #import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
@@ -46,6 +48,9 @@
     IBOutlet NSButton *_transparencyAffectsOnlyDefaultBackgroundColor;
     IBOutlet NSButton *_openToolbelt;
     IBOutlet NSMenuItem *_compactWindowStyleMenuItem;
+    IBOutlet NSButton *_useCustomWindowTitle;
+    IBOutlet NSTextField *_customWindowTitle;
+    iTermFunctionCallTextFieldDelegate *_customWindowTitleDelegate;
 }
 
 - (void)dealloc {
@@ -149,6 +154,26 @@
     [self defineControl:_openToolbelt
                     key:KEY_OPEN_TOOLBELT
                    type:kPreferenceInfoTypeCheckbox];
+
+    info = [self defineControl:_useCustomWindowTitle
+                           key:KEY_USE_CUSTOM_WINDOW_TITLE
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^{
+        [weakSelf updateCustomWindowTitleEnabled];
+    };
+
+    _customWindowTitleDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:[iTermVariables recordedVariableNamesInContext:iTermVariablesSuggestionContextWindow]
+                                                                               passthrough:nil
+                                                                             functionsOnly:NO];
+    _customWindowTitle.delegate = _customWindowTitleDelegate;
+    [self defineControl:_customWindowTitle
+                    key:KEY_CUSTOM_WINDOW_TITLE
+                   type:kPreferenceInfoTypeStringTextField];
+    [self updateCustomWindowTitleEnabled];
+}
+
+- (void)updateCustomWindowTitleEnabled {
+    _customWindowTitle.enabled = [self boolForKey:KEY_USE_CUSTOM_WINDOW_TITLE];
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
@@ -184,6 +209,7 @@
 - (void)reloadProfile {
     [super reloadProfile];
     [self loadBackgroundImageWithFilename:[self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
+    [self updateCustomWindowTitleEnabled];
 }
 
 #pragma mark - Actions

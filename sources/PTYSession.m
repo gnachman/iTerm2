@@ -6057,7 +6057,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return self.variablesScope.functionCallSource;
 }
 
-+ (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)invocation origin:(NSString *)origin {
++ (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)invocation origin:(NSString *)origin window:(NSWindow *)window {
     NSString *message = [NSString stringWithFormat:@"Error running “%@”:\n%@",
                          invocation, error.localizedDescription];
     NSString *traceback = error.localizedFailureReason;
@@ -6074,7 +6074,8 @@ ITERM_WEAKLY_REFERENCEABLE
                              accessory:accessory
                             identifier:@"NoSyncFunctionCallError"
                            silenceable:kiTermWarningTypeTemporarilySilenceable
-                               heading:[NSString stringWithFormat:@"%@ Function Call Failed", origin]];
+                               heading:[NSString stringWithFormat:@"%@ Function Call Failed", origin]
+                                window:window];
 
 }
 
@@ -6094,7 +6095,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                    if (error) {
                                        [PTYSession reportFunctionCallError:error
                                                              forInvocation:invocation
-                                                                    origin:origin];
+                                                                    origin:origin
+                                                                    window:self.view.window];
                                    }
                                }];
 }
@@ -6174,7 +6176,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                            if (error) {
                                                [PTYSession reportFunctionCallError:error
                                                                      forInvocation:keyBindingText
-                                                                            origin:@"Key Binding"];
+                                                                            origin:@"Key Binding"
+                                                                            window:nil];
                                            }
                                        }];
             return YES;
@@ -10404,7 +10407,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                           actions:@[ @"Cancel", @"Enter Password" ]
                                        identifier:nil
                                       silenceable:kiTermWarningTypePersistent
-                                          warning:self.view.window] == kiTermWarningSelection1);
+                                           window:self.view.window] == kiTermWarningSelection1);
     if (ok) {
         [_echoProbe enterPassword];
     }
