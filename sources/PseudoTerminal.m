@@ -3379,8 +3379,19 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)enableStoplightHotbox {
-    return (windowType_ == WINDOW_TYPE_COMPACT &&
-            [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab);
+    if (windowType_ != WINDOW_TYPE_COMPACT) {
+        return NO;
+    }
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_BottomTab:
+            return YES;
+        case PSMTab_TopTab:
+            return NO;
+        case PSMTab_LeftTab:
+            return !self.tabBarShouldBeVisible;
+    }
+
+    return NO;
 }
 
 - (NSEdgeInsets)tabBarInsets {
