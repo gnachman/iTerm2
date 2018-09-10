@@ -10343,7 +10343,6 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)sessionNameControllerPresentationNameDidChangeTo:(NSString *)presentationName {
     [_delegate nameOfSession:self didChangeTo:presentationName];
     [self.view setTitle:presentationName];
-    [self setBell:NO];
 
     // get the session submenu to be rebuilt
     if ([[iTermController sharedInstance] currentTerminal] == [_delegate parentWindow]) {
