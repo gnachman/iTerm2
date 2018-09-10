@@ -35,23 +35,36 @@
 
 - (void)updateLabel {
     [self view];  // Ensure the label exists.
-    NSString *mods = [self modifiersString];
-    if (_ordinal == 0 || !mods) {
-        _label.stringValue = @"";
-    } else if (_ordinal >= 10) {
+    BOOL deemphasized;
+    NSString *string = [self.class stringForOrdinal:_ordinal deempahsized:&deemphasized];
+    if (!deemphasized) {
+        _label.stringValue = string;
+    } else {
         NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
         paragraphStyle.alignment = NSTextAlignmentRight;
         NSDictionary *attributes = @{ NSFontAttributeName: _label.font,
                                       NSForegroundColorAttributeName: [NSColor lightGrayColor],
                                       NSParagraphStyleAttributeName: paragraphStyle };
-        _label.attributedStringValue = [[[NSAttributedString alloc] initWithString:[@(_ordinal) stringValue]
+        _label.attributedStringValue = [[[NSAttributedString alloc] initWithString:string
                                                                         attributes:attributes] autorelease];
-    } else {
-        _label.stringValue = [NSString stringWithFormat:@"%@%d", mods, _ordinal];
     }
 }
 
-- (NSString *)modifiersString {
++ (NSString *)stringForOrdinal:(int)ordinal deempahsized:(out BOOL *)deemphasized {
+    NSString *mods = [self.class modifiersString];
+    if (ordinal == 0) {
+        *deemphasized = NO;
+        return @"";
+    } else if (ordinal >= 10 || !mods) {
+        *deemphasized = YES;
+        return [@(ordinal) stringValue];
+    } else {
+        *deemphasized = NO;
+        return [NSString stringWithFormat:@"%@%d", mods, ordinal];
+    }
+}
+
++ (NSString *)modifiersString {
     switch ([iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]) {
         case kPreferenceModifierTagNone:
             return nil;

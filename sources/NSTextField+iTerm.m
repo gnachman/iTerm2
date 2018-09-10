@@ -25,6 +25,18 @@
     return result;
 }
 
++ (instancetype)newLabelStyledTextField {
+    NSTextField *label = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 0, 22)];
+    label.editable = NO;
+    label.stringValue = @"";
+    label.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    label.bordered = NO;
+    label.bezeled = NO;
+    label.drawsBackground = NO;
+    [label sizeToFit];
+    return label;
+}
+
 - (BOOL)textFieldIsFirstResponder {
     BOOL inFocus = NO;
 

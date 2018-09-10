@@ -901,6 +901,22 @@ ITERM_WEAKLY_REFERENCEABLE
             ![self tabBarVisibleOnTop]);
 }
 
+- (BOOL)rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar {
+    if (self.anyFullScreen) {
+        return NO;
+    }
+    if (windowType_ != WINDOW_TYPE_COMPACT) {
+        return NO;
+    }
+    if (self.tabBarShouldBeVisible) {
+        return NO;
+    }
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] != PSMTab_TopTab) {
+        return NO;
+    }
+    return YES;
+}
+
 - (void)rootTerminalViewDidResizeContentArea {
     // Fixes an analog of issue 4323 that happens with left-side tabs. More
     // details in -toolbeltDidFinishGrowing.
@@ -1751,6 +1767,8 @@ ITERM_WEAKLY_REFERENCEABLE
         title = @"";
     }
 
+    NSString *titleExWindowNumber = title;
+
     if ([iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber]) {
         NSString *tmuxId = @"";
         if ([[self currentSession] isTmuxClient]) {
@@ -1769,42 +1787,51 @@ ITERM_WEAKLY_REFERENCEABLE
         }
 #endif
         title = [NSString stringWithFormat:@"%@%@%@", windowNumber, title, tmuxId];
+        titleExWindowNumber = [NSString stringWithFormat:@"%@%@", titleExWindowNumber, tmuxId];
+        [self.contentView windowNumberDidChangeTo:@(number_ + 1)];
+    } else {
+        [self.contentView windowNumberDidChangeTo:nil];
     }
     if ((self.numberOfTabs == 1) && (self.tabs.firstObject.state & kPTYTabBellState) && !self.tabBarShouldBeVisible) {
         title = [title stringByAppendingString:@" 🔔"];
+        titleExWindowNumber = [titleExWindowNumber stringByAppendingString:@" 🔔"];
     }
     if ((self.desiredTitle && [title isEqualToString:self.desiredTitle]) ||
         [title isEqualToString:self.window.title]) {
         return; // Title is already up to date
-    } else if (liveResize_) {
+    }
+
+    [self.contentView windowTitleDidChangeTo:titleExWindowNumber];
+
+    if (liveResize_) {
         // During a live resize this has to be done immediately because the runloop doesn't get
         // around to delayed performs until the live resize is done (bug 2812).
         self.window.title = title;
-    } else {
-        // In bug 2593, we see a crazy thing where setting the window title right
-        // after a window is created causes it to have the wrong background color.
-        // A delay of 0 doesn't fix it. I'm at wit's end here, so this will have to
-        // do until a better explanation comes along.
+        return;
+    }
+    // In bug 2593, we see a crazy thing where setting the window title right
+    // after a window is created causes it to have the wrong background color.
+    // A delay of 0 doesn't fix it. I'm at wit's end here, so this will have to
+    // do until a better explanation comes along.
 
-        // In bug 3957, we see that GNU screen is buggy and sends a crazy number of title changes.
-        // We want to coalesce them to avoid the title flickering like mad. Also, setting the title
-        // seems to be relatively slow, so we don't want to spend too much time doing that if the
-        // terminal goes nuts and sends lots of title-change sequences.
-        BOOL hadTimer = (self.desiredTitle != nil);
-        self.desiredTitle = title;
-        if (!hadTimer) {
-            if (!_windowWasJustCreated && ![self.ptyWindow titleChangedRecently]) {
-                // Unless the window was just created, set the title immediately. Issue 5876.
-                self.window.title = self.desiredTitle;
-            }
-            PseudoTerminal<iTermWeakReference> *weakSelf = self.weakSelf;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(iTermWindowTitleChangeMinimumInterval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                if (!(weakSelf.window.title == weakSelf.desiredTitle || [weakSelf.window.title isEqualToString:weakSelf.desiredTitle])) {
-                    weakSelf.window.title = weakSelf.desiredTitle;
-                }
-                weakSelf.desiredTitle = nil;
-            });
+    // In bug 3957, we see that GNU screen is buggy and sends a crazy number of title changes.
+    // We want to coalesce them to avoid the title flickering like mad. Also, setting the title
+    // seems to be relatively slow, so we don't want to spend too much time doing that if the
+    // terminal goes nuts and sends lots of title-change sequences.
+    BOOL hadTimer = (self.desiredTitle != nil);
+    self.desiredTitle = title;
+    if (!hadTimer) {
+        if (!_windowWasJustCreated && ![self.ptyWindow titleChangedRecently]) {
+            // Unless the window was just created, set the title immediately. Issue 5876.
+            self.window.title = self.desiredTitle;
         }
+        PseudoTerminal<iTermWeakReference> *weakSelf = self.weakSelf;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(iTermWindowTitleChangeMinimumInterval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            if (!(weakSelf.window.title == weakSelf.desiredTitle || [weakSelf.window.title isEqualToString:weakSelf.desiredTitle])) {
+                weakSelf.window.title = weakSelf.desiredTitle;
+            }
+            weakSelf.desiredTitle = nil;
+        });
     }
 }
 
@@ -2897,7 +2924,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self notifyTmuxOfTabChange];
 
     [self updateUseMetalInAllTabs];
-    [_contentView updateDivisionView];
+    [_contentView updateDivisionViewAndWindowNumberLabel];
 }
 
 - (void)makeCurrentSessionFirstResponder
@@ -3282,7 +3309,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [self updateUseMetalInAllTabs];
-    [_contentView updateDivisionView];
+    [_contentView updateDivisionViewAndWindowNumberLabel];
 }
 
 - (void)windowDidBecomeMain:(NSNotification *)notification {
@@ -3362,7 +3389,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab:
-            return NSEdgeInsetsMake(0, 75, 0, 0);
+            if ([self rootTerminalViewWindowNumberLabelShouldBeVisible]) {
+                return NSEdgeInsetsMake(0, 75 + iTermRootTerminalViewWindowNumberLabelMargin * 2 + iTermRootTerminalViewWindowNumberLabelWidth, 0, 0);
+            } else {
+                return NSEdgeInsetsMake(0, 75, 0, 0);
+            }
 
         case PSMTab_LeftTab:
             return NSEdgeInsetsMake(24, 0, 0, 0);
@@ -3375,10 +3406,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)tabBarAlwaysVisible {
-    if (![iTermPreferences boolForKey:kPreferenceKeyHideTabBar]) {
-        return YES;
-    }
-    return windowType_ == WINDOW_TYPE_COMPACT;
+    return ![iTermPreferences boolForKey:kPreferenceKeyHideTabBar];
 }
 
 - (BOOL)anyFullScreen
@@ -6948,6 +6976,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 #else
     [self setWindowTitle];
+    [_contentView layoutSubviews];
 #endif
 }
 
@@ -7041,6 +7070,34 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     // If the theme changed from light to dark make sure split pane dividers redraw.
     [_contentView.tabView setNeedsDisplay:YES];
+}
+
+- (BOOL)rootTerminalViewWindowNumberLabelShouldBeVisible {
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+        return !self.anyFullScreen;
+    }
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] != PSMTab_TopTab) {
+        return NO;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber]) {
+        return NO;
+    }
+    if (windowType_ == WINDOW_TYPE_COMPACT) {
+        return YES;
+    }
+    if (self.anyFullScreen) {
+        return self.tabBarShouldBeVisible;
+    }
+
+    return NO;
+}
+
+- (NSColor *)rootTerminalViewTabBarBackgroundColor {
+    return [_contentView.tabBarControl.style backgroundColorSelected:NO highlightAmount:0];
+}
+
+- (NSColor *)rootTerminalViewTabBarTextColor {
+    return [_contentView.tabBarControl.style textColorDefaultSelected:self.window.isKeyWindow];
 }
 
 - (void)rootTerminalViewDidChangeEffectiveAppearance {
@@ -7270,6 +7327,8 @@ ITERM_WEAKLY_REFERENCEABLE
                 contentSize.width += [self tabviewWidth];
                 break;
         }
+    } else if ([self rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
+        contentSize.height += [self rootTerminalViewHeightOfTabBar:_contentView];
     }
 
     // Add 1px border

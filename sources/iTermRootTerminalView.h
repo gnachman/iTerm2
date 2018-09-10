@@ -35,12 +35,19 @@
 - (void)rootTerminalViewDidChangeEffectiveAppearance;
 - (CGFloat)rootTerminalViewHeightOfTabBar:(iTermRootTerminalView *)sender;
 - (CGFloat)rootTerminalViewStoplightButtonsOffset:(iTermRootTerminalView *)sender;
+- (NSColor *)rootTerminalViewTabBarTextColor;
+- (NSColor *)rootTerminalViewTabBarBackgroundColor;
+- (BOOL)rootTerminalViewWindowNumberLabelShouldBeVisible;
+- (BOOL)rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar;
 @end
+
+extern const NSInteger iTermRootTerminalViewWindowNumberLabelMargin;
+extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 
 @interface iTermRootTerminalView : SolidColorView
 
 // TODO: Get rid of this
-@property(nonatomic, assign) id<iTermRootTerminalViewDelegate> delegate;
+@property(nonatomic, weak) id<iTermRootTerminalViewDelegate> delegate;
 
 // The tabview occupies almost the entire window. Each tab has an identifier
 // which is a PTYTab.
@@ -59,11 +66,11 @@
 @property(nonatomic, readonly) iTermToolbeltView *toolbelt;
 
 // Should the toolbelt be visible?
-@property(nonatomic, assign) BOOL shouldShowToolbelt;
+@property(nonatomic) BOOL shouldShowToolbelt;
 
 // How wide the toolbelt should be. User may drag it to change.
 // ALWAYS USE THE FLOOR OF THIS VALUE!
-@property(nonatomic, assign) CGFloat toolbeltWidth;
+@property(nonatomic) CGFloat toolbeltWidth;
 
 // TODO: Remove this
 @property(nonatomic, readonly) NSRect toolbeltFrame;
@@ -85,7 +92,7 @@
                      delegate:(id<iTermRootTerminalViewDelegate, iTermToolbeltViewDelegate>)delegate;  // TODO: This should hopefully go away
 
 // Update the division view's frame and set it visible/hidden per |shouldBeVisible|.
-- (void)updateDivisionView;
+- (void)updateDivisionViewAndWindowNumberLabel;
 
 // Perform a layout pass on the toolbelt, and hide/show it as needed.
 - (void)updateToolbelt;
@@ -105,5 +112,8 @@
 - (void)willShowTabBar;
 
 - (void)didChangeCompactness;
+
+- (void)windowTitleDidChangeTo:(NSString *)title;
+- (void)windowNumberDidChangeTo:(NSNumber *)number;
 
 @end
