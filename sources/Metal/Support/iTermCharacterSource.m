@@ -16,6 +16,8 @@
 #import "NSMutableData+iTerm.h"
 #import "NSStringITerm.h"
 
+#define ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT 0
+
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
 extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
@@ -204,7 +206,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
     unsigned char *source = (unsigned char *)CGBitmapContextGetData(_cgContext);
 
-    static BOOL saveBitmapsForDebugging = NO;
+#if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
     if (saveBitmapsForDebugging) {
         NSImage *image = [NSImage imageWithRawData:[NSData dataWithBytes:source length:bitmap.data.length]
                                               size:_partSize
@@ -212,8 +214,18 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                    samplesPerPixel:4
                                           hasAlpha:YES
                                     colorSpaceName:NSDeviceRGBColorSpace];
-        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/%@.png", _string]];
+        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/%@.%@.png", _string, @(part)]];
+
+        NSData *bigData = [NSData dataWithBytes:source length:_size.width*_size.height*4];
+        image = [NSImage imageWithRawData:bigData
+                                     size:_size
+                            bitsPerSample:8
+                          samplesPerPixel:4
+                                 hasAlpha:YES
+                           colorSpaceName:NSDeviceRGBColorSpace];
+        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/big-%@.png", _string]];
     }
+#endif
 
     if (@available(macOS 10.14, *)) {
         if (!_postprocessed && !_isEmoji) {
@@ -395,6 +407,17 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         }
     }
     CGContextFillRect(_cgContext, CGRectMake(0, 0, _size.width, _size.height));
+
+#if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
+    CGContextSetRGBStrokeColor(_cgContext, 1, 0, 0, 1);
+    for (int x = 0; x < self.maxParts; x++) {
+        for (int y = 0; y < self.maxParts; y++) {
+            CGContextStrokeRect(_cgContext, CGRectMake(x * _partSize.width,
+                                                       y * _partSize.height,
+                                                       _partSize.width, _partSize.height));
+        }
+    }
+#endif
 }
 
 - (void)drawRuns:(CFArrayRef)runs atOffset:(CGPoint)offset skew:(CGFloat)skew {
@@ -433,6 +456,17 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
             [self drawEmojiWithFont:runFont offset:offset buffer:buffer positions:positions length:length];
         } else {
             CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, _cgContext);
+#if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
+            CGContextSetRGBStrokeColor(_cgContext, 0, 0, 1, 1);
+            CGContextStrokeRect(_cgContext, CGRectMake(offset.x + positions[0].x,
+                                                       offset.y + positions[0].y,
+                                                       _partSize.width, _partSize.height));
+
+            CGContextSetRGBStrokeColor(_cgContext, 1, 0, 1, 1);
+            CGContextStrokeRect(_cgContext, CGRectMake(offset.x,
+                                                       offset.y,
+                                                       _partSize.width, _partSize.height));
+#endif
         }
     }
 }
