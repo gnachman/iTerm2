@@ -63,15 +63,7 @@ const CGFloat kEdgeWidth = 3;
     NSRect originalFrame = cellFrame;
     BOOL focused = ([controlView respondsToSelector:@selector(currentEditor)] &&
                     [(NSControl *)controlView currentEditor]);
-    NSColor *backgroundColor;
-    if (self.controlSize == NSControlSizeRegular) {
-        backgroundColor = [NSColor whiteColor];
-    } else {
-        backgroundColor = [NSColor it_searchFieldBackgroundColor:focused
-                                                      appearance:controlView.effectiveAppearance];
-    }
-    
-    [backgroundColor set];
+    [self.backgroundColor set];
 
     CGFloat xInset, yInset;
     if (focused) {

@@ -93,12 +93,6 @@ static const float kAnimationDuration = 0.2;
 }
 
 - (void)open {
-    if ([findBarTextField_.window.appearance.name isEqual:NSAppearanceNameVibrantDark]) {
-        findBarTextField_.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
-    } else {
-        findBarTextField_.appearance = nil;
-    }
-    
     [[self view] setFrame:[self collapsedFrame]];
     [[self view] setHidden:NO];
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];

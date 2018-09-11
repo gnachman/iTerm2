@@ -332,36 +332,6 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return [NSColor colorWithSRGBRed:red/255.0 green:green/255.0 blue:blue/255.0 alpha:1];
 }
 
-+ (NSColor *)it_searchFieldBackgroundColor:(BOOL)selected
-                                appearance:(NSAppearance *)appearance {
-    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    switch ([appearance it_tabStyle:preferredStyle]) {
-        case TAB_STYLE_LIGHT:
-            return [NSColor colorWithCalibratedHue:0
-                                        saturation:0
-                                        brightness:0.8
-                                             alpha:1];
-        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            return [NSColor colorWithCalibratedHue:0
-                                        saturation:0
-                                        brightness:1
-                                             alpha:1];
-        case TAB_STYLE_DARK:
-            return [NSColor colorWithCalibratedHue:0
-                                        saturation:0
-                                        brightness:0.4
-                                             alpha:1];
-        case TAB_STYLE_DARK_HIGH_CONTRAST:
-            return [NSColor colorWithCalibratedHue:0
-                                        saturation:0
-                                        brightness:0.25
-                                             alpha:1];
-        case TAB_STYLE_MINIMAL:
-        case TAB_STYLE_AUTOMATIC:
-            assert(NO);
-    }
-}
-
 - (NSColor *)it_colorByDimmingByAmount:(double)dimmingAmount {
     NSColor *color = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
     double r = [color redComponent];
