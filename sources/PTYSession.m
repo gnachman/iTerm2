@@ -3774,17 +3774,19 @@ ITERM_WEAKLY_REFERENCEABLE
         NSDictionary *existing = _statusBarViewController.layout.dictionaryValue;
         if (![NSObject object:existing isEqualToObject:layout]) {
             iTermStatusBarLayout *newLayout = [[[iTermStatusBarLayout alloc] initWithDictionary:layout] autorelease];
-            [_statusBarViewController release];
-            if (newLayout) {
-                _statusBarViewController =
+            if (![NSObject object:existing isEqualToObject:newLayout.dictionaryValue]) {
+                [_statusBarViewController release];
+                if (newLayout) {
+                    _statusBarViewController =
                     [[iTermStatusBarViewController alloc] initWithLayout:newLayout
                                                                    scope:self.variablesScope];
-                _statusBarViewController.delegate = self;
-            } else {
-                _statusBarViewController.delegate = nil;
-                _statusBarViewController = nil;
+                    _statusBarViewController.delegate = self;
+                } else {
+                    _statusBarViewController.delegate = nil;
+                    _statusBarViewController = nil;
+                }
+                [_view invalidateStatusBar];
             }
-            [_view invalidateStatusBar];
         }
     }
     _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:aDict];
