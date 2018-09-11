@@ -91,6 +91,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     iTermColorMap *_colorMap;
     PTYFontInfo *_asciiFont;
     PTYFontInfo *_nonAsciiFont;
+    CGFloat _baselineOffset;
     BOOL _useBoldFont;
     BOOL _useItalicFont;
     BOOL _useNonAsciiFont;
@@ -331,6 +332,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     const long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
     _firstVisibleAbsoluteLineNumber = _visibleRange.start.y + totalScrollbackOverflow;
     _lastVisibleAbsoluteLineNumber = _visibleRange.end.y + totalScrollbackOverflow;
+    _baselineOffset = drawingHelper.baselineOffset;
 }
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -1335,7 +1337,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         [[iTermCharacterSource alloc] initWithCharacter:CharToStr(glyphKey->code, glyphKey->isComplex)
                                                    font:font
                                                    size:size
-                                         baselineOffset:fontInfo.baselineOffset
+                                         baselineOffset:_baselineOffset
                                                   scale:scale
                                          useThinStrokes:glyphKey->thinStrokes
                                                fakeBold:fakeBold
