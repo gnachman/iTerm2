@@ -97,10 +97,9 @@ const CGFloat kEdgeWidth = 3;
     }
 }
 
-- (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView
-{
+- (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
     NSRect originalFrame = cellFrame;
-    [[NSColor whiteColor] set];
+    [self.backgroundColor set];
 
     BOOL focused = ([controlView respondsToSelector:@selector(currentEditor)] &&
                     [(NSControl *)controlView currentEditor]);
@@ -358,12 +357,6 @@ const CGFloat kEdgeWidth = 3;
 }
 
 - (void)open {
-    if ([findBarTextField_.window.appearance.name isEqual:NSAppearanceNameVibrantDark]) {
-        findBarTextField_.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantLight];
-    } else {
-        findBarTextField_.appearance = nil;
-    }
-
     if (savedState_) {
         [self restoreState];
         findBarTextField_.stringValue = state_.string;
