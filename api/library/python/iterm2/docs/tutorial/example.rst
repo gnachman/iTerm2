@@ -17,7 +17,7 @@ Here's the example script that iTerm2 provides for you, minus some comments:
         else:
             print("No current window")
 
-	iterm2.run(main)
+    iterm2.run(main)
 
 There's a lot going on here. Let's take it part by part.
 
