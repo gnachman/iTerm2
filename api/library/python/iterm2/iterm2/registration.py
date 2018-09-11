@@ -1,6 +1,10 @@
 """Defines interfaces for registering functions."""
+import inspect
 import iterm2.notifications
 import iterm2.rpc
+import json
+import traceback
+import websockets
 
 async def generic_handle_rpc(coro, connection, notif):
     rpc_notif = notif.server_originated_rpc_notification

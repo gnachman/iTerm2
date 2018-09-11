@@ -9,10 +9,7 @@ import iterm2.session
 import iterm2.tab
 import iterm2.window
 
-import inspect
 import json
-import traceback
-import websockets
 
 async def async_get_app(connection):
     """Returns the app singleton, creating it if needed."""
