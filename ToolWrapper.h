@@ -35,7 +35,7 @@
 }
 
 @property (nonatomic, copy) NSString *name;
-@property (nonatomic, readonly) __weak NSView *container;
+@property (nonatomic, readonly) NSView *container;
 @property (nonatomic, assign) PseudoTerminal *term;
 @property (nonatomic, assign) id<ToolWrapperDelegate> delegate;
 

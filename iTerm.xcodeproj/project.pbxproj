@@ -64,7 +64,6 @@
 		1D2F3B3E1516BA470044C337 /* iTermFontPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */; };
 		1D31BC65142D33CA001F7ECB /* TriggerController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D31BC63142D33CA001F7ECB /* TriggerController.h */; };
 		1D31BC66142D33CA001F7ECB /* TriggerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D31BC64142D33CA001F7ECB /* TriggerController.m */; };
-		1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = F6E2DED70AE2F67200D20B3B /* Sparkle.framework */; };
 		1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D36155312CBF33E00803EA9 /* ScreenChar.h */; };
 		1D36155612CBF33E00803EA9 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
 		1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D395912134E75B5005A8021 /* SmartSelectionRules.plist */; };
@@ -415,7 +414,6 @@
 		DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
 		F6CDC4E70AE6D3E2005E7D4F /* folder.png in Resources */ = {isa = PBXBuildFile; fileRef = F6CDC4E60AE6D3E2005E7D4F /* folder.png */; };
-		F6E2DEDA0AE2F67200D20B3B /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F6E2DED70AE2F67200D20B3B /* Sparkle.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -425,7 +423,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */,
 				5ECE4AE814513F05002A9CC2 /* Growl.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -835,7 +832,6 @@
 		F6C9AFEF0EA70D0200D318A8 /* sort.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = sort.png; path = images/sort.png; sourceTree = "<group>"; };
 		F6CDC4E60AE6D3E2005E7D4F /* folder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = folder.png; path = images/folder.png; sourceTree = "<group>"; };
 		F6DA0AFC0AF066EE0098EFEB /* edit.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = edit.png; path = images/edit.png; sourceTree = "<group>"; };
-		F6E2DED70AE2F67200D20B3B /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
 		F6E708B50A9D0EA400D0C4EF /* NSBezierPath_AMShading.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = NSBezierPath_AMShading.h; sourceTree = "<group>"; };
 		F6E708B60A9D0EA400D0C4EF /* NSBezierPath_AMShading.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = NSBezierPath_AMShading.m; sourceTree = "<group>"; };
 		F6E708B70A9D0EA400D0C4EF /* PSMTabDragAssistant.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabDragAssistant.h; sourceTree = "<group>"; };
@@ -846,7 +842,7 @@
 		FB094A14033D58AE01F955DB /* addressbook.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = addressbook.png; path = images/addressbook.png; sourceTree = "<group>"; };
 		FB094A16033D58B601F955DB /* close.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = close.png; path = images/close.png; sourceTree = "<group>"; };
 		FB094A18033D58BD01F955DB /* new.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = new.png; path = images/new.png; sourceTree = "<group>"; };
-		FB151F2603648AB401F955DB /* iTerm.strings */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.strings; name = iTerm.strings; path = English.lproj/iTerm.strings; sourceTree = "<group>"; };
+		FB151F2603648AB401F955DB /* iTerm.strings */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = iTerm.strings; path = English.lproj/iTerm.strings; sourceTree = "<group>"; };
 		FB47BCC403686CAC01F955DB /* exec.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = exec.png; path = images/exec.png; sourceTree = "<group>"; };
 		FB754C5F036EFC5301F955DB /* config.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = config.png; path = images/config.png; sourceTree = "<group>"; };
 		FB896717038D935801F955DB /* newwin.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = newwin.png; path = images/newwin.png; sourceTree = "<group>"; };
@@ -862,7 +858,6 @@
 			files = (
 				A6AA395E18275EF200A19BD5 /* ScriptingBridge.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
-				F6E2DEDA0AE2F67200D20B3B /* Sparkle.framework in Frameworks */,
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
 				1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */,
 				1DF0897113DBAF4C00A52AD8 /* Quartz.framework in Frameworks */,
@@ -1165,7 +1160,6 @@
 			children = (
 				1DA7894714AC19F500C8FBD9 /* Growl */,
 				5ECE4AC41451343E002A9CC2 /* Growl.framework */,
-				F6E2DED70AE2F67200D20B3B /* Sparkle.framework */,
 				0464AB2F006CD2EC7F000001 /* AppKit.framework */,
 			);
 			name = "External Frameworks and Libraries";
@@ -1718,6 +1712,11 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0450;
+				TargetAttributes = {
+					874206460564169600CFC3F1 = {
+						ProvisioningStyle = Manual;
+					};
+				};
 			};
 			buildConfigurationList = BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -2130,14 +2129,12 @@
 		1809E7AE1665DA140069C439 /* LegacyDeployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					i386,
-					x86_64,
-					ppc,
-				);
-				CODE_SIGN_IDENTITY = "Don't Code Sign";
+				ARCHS = "$(ARCHS_STANDARD)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
@@ -2170,8 +2167,9 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx10.6;
-				VALID_ARCHS = "ppc i386 x86_64";
+				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -2197,10 +2195,12 @@
 		1809E7B11665E2CB0069C439 /* Nightly */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				CODE_SIGN_IDENTITY = "Don't Code Sign";
+				ARCHS = "$(ARCHS_STANDARD)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
@@ -2233,8 +2233,9 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx10.6;
-				VALID_ARCHS = "i386 x86_64";
+				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -2264,14 +2265,12 @@
 		1D3BD8A31688FBC0006CCF37 /* Leopard Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					x86_64,
-					i386,
-					ppc,
-				);
-				CODE_SIGN_IDENTITY = "Don't Code Sign";
+				ARCHS = "$(ARCHS_STANDARD)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
@@ -2305,8 +2304,9 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "ppc i386 x86_64";
+				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -2316,10 +2316,13 @@
 		BB024D36096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
@@ -2353,9 +2356,10 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
-				VALID_ARCHS = "ppc i386 x86_64";
+				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
@@ -2365,10 +2369,12 @@
 		BB024D37096EE4080021E793 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				CODE_SIGN_IDENTITY = "Don't Code Sign";
+				ARCHS = "$(ARCHS_STANDARD)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
@@ -2401,8 +2407,9 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
-				VALID_ARCHS = "i386 x86_64";
+				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -2412,12 +2419,11 @@
 		BB024D38096EE4080021E793 /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					x86_64,
-					i386,
-					ppc,
-				);
+				ARCHS = "$(ARCHS_STANDARD)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
@@ -2451,10 +2457,11 @@
 				);
 				OTHER_REZFLAGS = "";
 				PRODUCT_NAME = iTerm;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				REZ_EXECUTABLE = YES;
 				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
-				VALID_ARCHS = "ppc i386 x86_64";
+				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 			};

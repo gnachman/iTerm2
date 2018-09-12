@@ -21,10 +21,10 @@
     int totalLength_;
     int remainingLength_;
     PasteContext *pasteContext_;
-    __weak id<PasteViewControllerDelegate> delegate_;
+    id<PasteViewControllerDelegate> delegate_;
 }
 
-@property (nonatomic, assign) __weak id<PasteViewControllerDelegate> delegate;
+@property (nonatomic, assign) id<PasteViewControllerDelegate> delegate;
 
 - (id)initWithContext:(PasteContext *)pasteContext_
                length:(int)length;

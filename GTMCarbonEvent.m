@@ -95,8 +95,8 @@
 //
 - (id)initWithClass:(UInt32)inClass kind:(UInt32)kind {
   if ((self = [super init])) {
-    verify_noerr(CreateEvent(kCFAllocatorDefault, inClass, kind,
-                             0, kEventAttributeNone, &event_));
+    CreateEvent(kCFAllocatorDefault, inClass, kind,
+                             0, kEventAttributeNone, &event_);
   }
   return self;
 }
@@ -196,7 +196,7 @@
 //    time - the time you want associated with the event
 //
 - (void)setTime:(EventTime)eventTime {
-  verify_noerr(SetEventTime(event_, eventTime));
+  SetEventTime(event_, eventTime);
 }
 
 
@@ -253,7 +253,7 @@
 //  Post event to current queue with standard priority.
 //
 - (void)postToCurrentQueue {
-  verify_noerr([self postToQueue:GetCurrentEventQueue()
+  ([self postToQueue:GetCurrentEventQueue()
                         priority:kEventPriorityStandard]);
 }
 
@@ -261,7 +261,7 @@
 //  Post event to main queue with standard priority.
 //
 - (void)postToMainQueue {
-  verify_noerr([self postToQueue:GetMainEventQueue()
+  ([self postToQueue:GetMainEventQueue()
                         priority:kEventPriorityStandard]);
 }
 
@@ -279,7 +279,7 @@
                      type:(EventParamType)type
                      size:(ByteCount)size
                      data:(const void *)data {
-  verify_noerr(SetEventParameter(event_, name, type, size, data));
+  (SetEventParameter(event_, name, type, size, data));
 }
 
 
@@ -318,7 +318,7 @@
 - (ByteCount)sizeOfParameterNamed:(EventParamName)name
                              type:(EventParamType)type {
   ByteCount size = 0;
-  verify_noerr(GetEventParameter(event_, name, type, NULL, 0, &size, NULL));
+  (GetEventParameter(event_, name, type, NULL, 0, &size, NULL));
   return size;
 }
 
@@ -368,7 +368,7 @@ const OSType kGTMCarbonFrameworkSignature = 'GTM ';
 //   count - the number of EventTypeSpecs in events.
 //
 - (void)registerForEvents:(const EventTypeSpec *)events count:(size_t)count {
-  verify_noerr(AddEventTypesToHandler([self eventHandler], count, events));
+  (AddEventTypesToHandler([self eventHandler], count, events));
 }
 
 // Causes the event handler to stop listening for |events|.
@@ -378,7 +378,7 @@ const OSType kGTMCarbonFrameworkSignature = 'GTM ';
 //   count - the number of EventTypeSpecs in events.
 //
 - (void)unregisterForEvents:(const EventTypeSpec *)events count:(size_t)count {
-  verify_noerr(RemoveEventTypesFromHandler([self eventHandler], count, events));
+  (RemoveEventTypesFromHandler([self eventHandler], count, events));
 }
 
 // To be overridden by subclasses to respond to events. All subclasses should
@@ -394,9 +394,9 @@ const OSType kGTMCarbonFrameworkSignature = 'GTM ';
 - (OSStatus)handleEvent:(GTMCarbonEvent *)event
                 handler:(EventHandlerCallRef)handler {
   OSStatus status = eventNotHandledErr;
-  require(event, CantUseParams);
-  require(handler, CantUseParams);
-  require([event event], CantUseParams);
+    if (!event || !handler || !event.event) {
+        goto CantUseParams;
+    }
   status = CallNextEventHandler(handler, [event event]);
 CantUseParams:
   return status;
@@ -456,7 +456,7 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
     if ( sHandlerProc == NULL ) {
       sHandlerProc = NewEventHandlerUPP(EventHandler);
     }
-    verify_noerr(InstallEventHandler([self eventTarget],
+    (InstallEventHandler([self eventTarget],
                                      sHandlerProc, 0,
                                      NULL, self, &eventHandler_));
   }
@@ -579,14 +579,15 @@ GTMOBJECT_SINGLETON_BOILERPLATE(GTMCarbonEventDispatcherHandler,
                                              action:selector
                                            userInfo:userInfo
                                         whenPressed:onKeyDown] autorelease];
-  require(newKey, CantCreateKey);
-  require_noerr_action(RegisterEventHotKey((UInt32)keyCode,
+    if (!newKey) {
+        goto CantCreateKey;
+    }
+  RegisterEventHotKey((UInt32)keyCode,
                                            GTMCocoaToCarbonKeyModifiers(cocoaModifiers),
                                            keyID,
                                            [self eventTarget],
                                            0,
-                                           &theRef),
-                       CantRegisterHotKey, newKey = nil);
+                      &theRef);
   [newKey setHotKeyRef:theRef];
   [hotkeys_ addObject:newKey];
 
@@ -599,10 +600,8 @@ CantCreateKey:
 //  Arguments:
 //    keyRef - the EventHotKeyRef to unregister
 - (void)unregisterHotKey:(GTMCarbonHotKey *)keyRef {
-  check([hotkeys_ containsObject:keyRef]);
   [[keyRef retain] autorelease];
   [hotkeys_ removeObject:keyRef];
-  verify_noerr(UnregisterEventHotKey([keyRef hotKeyRef]));
 }
 
 // A hotkey has been hit. See if it is one of ours, and if so fire it.

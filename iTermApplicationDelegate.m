@@ -1502,6 +1502,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     NSDirectoryEnumerator *directoryEnumerator = [[NSFileManager defaultManager] enumeratorAtPath: [SCRIPT_DIRECTORY stringByExpandingTildeInPath]];
     NSString *file;
 
+    NSMutableArray *files = [NSMutableArray array];
     while ((file = [directoryEnumerator nextObject])) {
         if ([[NSWorkspace sharedWorkspace] isFilePackageAtPath:[NSString stringWithFormat:@"%@/%@",
                                                                 [SCRIPT_DIRECTORY stringByExpandingTildeInPath],
@@ -1510,14 +1511,18 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
         }
         if ([[file pathExtension] isEqualToString: @"scpt"] ||
             [[file pathExtension] isEqualToString: @"app"] ) {
-            NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle:file
-                                                                action:@selector(launchScript:)
-                                                         keyEquivalent:@""];
-            [scriptItem setTarget:[iTermController sharedInstance]];
-            [scriptMenu addItem:scriptItem];
-            count++;
-            [scriptItem release];
+            [files addObject:file];
         }
+    }
+    [files sortUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+    for (file in files) {
+        NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle:file
+                                                            action:@selector(launchScript:)
+                                                     keyEquivalent:@""];
+        [scriptItem setTarget:[iTermController sharedInstance]];
+        [scriptMenu addItem:scriptItem];
+        count++;
+        [scriptItem release];
     }
     if (count > 0) {
             [scriptMenu addItem:[NSMenuItem separatorItem]];

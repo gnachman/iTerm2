@@ -235,7 +235,7 @@ GTM_EXTERN NSUInteger GTMCarbonToCocoaKeyModifiers(UInt32 inCarbonModifiers);
   // handler we are wrapping
   // lazily created in the eventHandler method
   EventHandlerRef eventHandler_;
-  __weak id delegate_;  // Our delegate
+  id delegate_;  // Our delegate
   // Does our delegate respond to the gtm_eventHandler:receivedEvent:handler:
   // selector? Cached for performance reasons.
   BOOL delegateRespondsToHandleEvent_;
