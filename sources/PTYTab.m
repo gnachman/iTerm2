@@ -2,6 +2,7 @@
 #import "FakeWindow.h"
 #import "IntervalMap.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAPIHelper.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
@@ -5188,6 +5189,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames
             group:(dispatch_group_t)group {
     [_tabTitleOverrideSwiftyString variablesDidChange:changedNames];
+#warning TODO: Don't post a notif if the variable isn't in my scope
+    for (NSString *name in changedNames) {
+        id userInfo = iTermVariableDidChangeNotificationUserInfo(ITMVariableScope_Tab,
+                                                                 [@(self.uniqueId) stringValue],
+                                                                 name,
+                                                                 [variables discouragedValueForVariableName:name]);
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermVariableDidChangeNotification
+                                                            object:nil
+                                                          userInfo:userInfo];
+    }
 }
 
 - (BOOL)sessionShouldAutoClose:(PTYSession *)session {

@@ -4,6 +4,7 @@ This module provides functions that let you subscribe and unsubscribe from notif
 posts notifications when some event of interest (for example, a keystroke) occurs. By subscribing to
 a notifications your async callback will be run when the event occurs.
 """
+import enum
 import iterm2.api_pb2
 import iterm2.connection
 import iterm2.rpc
@@ -18,6 +19,12 @@ MODIFIER_COMMAND = iterm2.api_pb2.Modifiers.Value("COMMAND")
 MODIFIER_SHIFT = iterm2.api_pb2.Modifiers.Value("SHIFT")
 MODIFIER_FUNCTION = iterm2.api_pb2.Modifiers.Value("FUNCTION")
 MODIFIER_NUMPAD = iterm2.api_pb2.Modifiers.Value("NUMPAD")
+
+class VariableScopes(enum.Enum):
+    SESSION = iterm2.api_pb2.VariableScope.Value("SESSION")
+    TAB = iterm2.api_pb2.VariableScope.Value("TAB")
+    WINDOW = iterm2.api_pb2.VariableScope.Value("WINDOW")
+    APP = iterm2.api_pb2.VariableScope.Value("APP")
 
 def _get_handlers():
     """Returns the registered notification handlers.
@@ -284,6 +291,32 @@ async def async_subscribe_to_server_originated_rpc_notification(connection, call
         callback,
         rpc_registration_request=rpc_registration_request)
 
+async def async_subscribe_to_variable_change_notification(connection, callback, scope, name, identifier):
+    """
+    Registers a callback to be invoked when a variable changes.
+
+    :param connection: A connected :class:`Connection`.
+    :param callback: A coroutine taking two arguments: an :class:`Connection` and iterm2.api_pb2.VariableChangedNotification.
+    :param scope: A :class:`VariableScopes` enumerated value.
+    :param name: The name of the variable, a string.
+    :param identifier: The identifier of the object (window, tab, or session) being monitored, or None for app.
+    """
+    # TODO: Support identifiers of "all"
+    request = iterm2.api_pb2.VariableMonitorRequest()
+    request.name = name
+    request.scope = scope
+    request.identifier = identifier
+    key = (scope, identifier, name, iterm2.api_pb2.NOTIFY_ON_VARIABLE_CHANGE)
+    return await _async_subscribe(
+        connection,
+        True,
+        iterm2.api_pb2.NOTIFY_ON_VARIABLE_CHANGE,
+        callback,
+        session=None,
+        variable_monitor_request=request,
+        key=key)
+
+
 ## Private --------------------------------------------------------------------
 
 def _string_rpc_registration_request(rpc):
@@ -293,7 +326,7 @@ def _string_rpc_registration_request(rpc):
     args = sorted(map(lambda x: x.name, rpc.arguments))
     return rpc.name + "(" + ",".join(args) + ")"
 
-async def _async_subscribe(connection, subscribe, notification_type, callback, session=None, rpc_registration_request=None, keystroke_monitor_request=None):
+async def _async_subscribe(connection, subscribe, notification_type, callback, session=None, rpc_registration_request=None, keystroke_monitor_request=None, variable_monitor_request=None, key=None):
     _register_helper_if_needed()
     transformed_session = session if session is not None else "all"
     response = await iterm2.rpc.async_notification_request(
@@ -302,14 +335,18 @@ async def _async_subscribe(connection, subscribe, notification_type, callback, s
         notification_type,
         transformed_session,
         rpc_registration_request,
-        keystroke_monitor_request)
+        keystroke_monitor_request,
+        variable_monitor_request)
     status = response.notification_response.status
     status_ok = (status == iterm2.api_pb2.NotificationResponse.Status.Value("OK"))
 
     if subscribe:
         already = (status == iterm2.api_pb2.NotificationResponse.Status.Value("ALREADY_SUBSCRIBED"))
         if status_ok or already:
-            _register_notification_handler(session, _string_rpc_registration_request(rpc_registration_request), notification_type, callback)
+            if key:
+                _register_notification_handler_impl(key, callback)
+            else:
+                _register_notification_handler(session, _string_rpc_registration_request(rpc_registration_request), notification_type, callback)
             return ((session, notification_type), callback)
     else:
         # Unsubscribe
@@ -374,6 +411,12 @@ def _get_handler_key_from_notification(notification):
         key = (None, iterm2.api_pb2.NOTIFY_ON_SERVER_ORIGINATED_RPC, _string_rpc_registration_request(notification.server_originated_rpc_notification.rpc))
     elif notification.HasField('broadcast_domains_changed'):
         key = (None, iterm2.api_pb2.NOTIFY_ON_BROADCAST_CHANGE)
+    elif notification.HasField('variable_changed_notification'):
+        key = (notification.variable_changed_notification.scope,
+               notification.variable_changed_notification.identifier,
+               notification.variable_changed_notification.name,
+               iterm2.api_pb2.NOTIFY_ON_VARIABLE_CHANGE)
+        notification = notification.variable_changed_notification
     return key, notification
 
 def _get_notification_handlers(message):
@@ -396,7 +439,9 @@ def _register_notification_handler(session, rpc_registration_request, notificati
         key = (session, notification_type)
     else:
         key = (session, notification_type, rpc_registration_request)
+    _register_notification_handler_impl(key, coro)
 
+def _register_notification_handler_impl(key, coro):
     if key in _get_handlers():
         _get_handlers()[key].append(coro)
     else:

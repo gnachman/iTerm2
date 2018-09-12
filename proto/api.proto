@@ -590,6 +590,7 @@ enum NotificationType {
   NOTIFY_ON_PROMPT = 3;
   NOTIFY_ON_LOCATION_CHANGE = 4;
   NOTIFY_ON_CUSTOM_ESCAPE_SEQUENCE = 5;
+  NOTIFY_ON_VARIABLE_CHANGE = 12;
 
   // Notifications that ignore the `session` parameter.
   NOTIFY_ON_NEW_SESSION = 6;
@@ -631,9 +632,24 @@ message KeystrokeMonitorRequest {
   repeated KeystrokePattern patterns_to_ignore = 1;
 }
 
+enum VariableScope {
+  SESSION = 1;
+  TAB = 2;
+  WINDOW = 3;
+  APP = 4;
+}
+
+message VariableMonitorRequest {
+  optional string name = 1;
+  optional VariableScope scope = 2;
+  optional string identifier = 3;  // Session, Window, or Tab identifier.
+}
+
 message NotificationRequest {
   // See documentation on session IDs. NOTIFY_ON_NEW_SESSION, NOTIFY_ON_TERMINATE_SESSION, and
   // NOTIFY_ON_LAYOUT_CHANGE do not use the session ID and are posted on all such events.
+  //
+  // NOTE: This is not used for NOTIFY_ON_VARIABLE_CHANGE.
   optional string session = 1;
 
   // Set to true to subscribe, false to unsubscribe.
@@ -645,6 +661,7 @@ message NotificationRequest {
   oneof arguments {
     RPCRegistrationRequest rpc_registration_request = 4;  // For NOTIFY_ON_SERVER_ORIGINATED_RPC
     KeystrokeMonitorRequest keystroke_monitor_request = 5;
+    VariableMonitorRequest variable_monitor_request = 6;
   }
 }
 
@@ -672,6 +689,14 @@ message Notification {
   optional FocusChangedNotification focus_changed_notification = 9;
   optional ServerOriginatedRPCNotification server_originated_rpc_notification = 10;
   optional BroadcastDomainsChangedNotification broadcast_domains_changed = 11;
+  optional VariableChangedNotification variable_changed_notification = 12;
+}
+
+message VariableChangedNotification {
+  optional VariableScope scope = 1;
+  optional string identifier = 2;  // unset if app scope, otherwise is session, window, or tab ID
+  optional string name = 3;
+  optional string json_new_value = 4;  // Will be "null" if unset.
 }
 
 message BroadcastDomainsChangedNotification {

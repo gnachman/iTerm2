@@ -140,6 +140,8 @@ CF_EXTERN_C_BEGIN
 @class ITMTmuxResponse_SetWindowVisible;
 @class ITMTransactionRequest;
 @class ITMTransactionResponse;
+@class ITMVariableChangedNotification;
+@class ITMVariableMonitorRequest;
 @class ITMVariableRequest;
 @class ITMVariableRequest_Set;
 @class ITMVariableResponse;
@@ -155,6 +157,7 @@ typedef GPB_ENUM(ITMNotificationType) {
   ITMNotificationType_NotifyOnPrompt = 3,
   ITMNotificationType_NotifyOnLocationChange = 4,
   ITMNotificationType_NotifyOnCustomEscapeSequence = 5,
+  ITMNotificationType_NotifyOnVariableChange = 12,
 
   /** Notifications that ignore the `session` parameter. */
   ITMNotificationType_NotifyOnNewSession = 6,
@@ -191,6 +194,23 @@ GPBEnumDescriptor *ITMModifiers_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMModifiers_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMVariableScope
+
+typedef GPB_ENUM(ITMVariableScope) {
+  ITMVariableScope_Session = 1,
+  ITMVariableScope_Tab = 2,
+  ITMVariableScope_Window = 3,
+  ITMVariableScope_App = 4,
+};
+
+GPBEnumDescriptor *ITMVariableScope_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMVariableScope_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMPreferencesResponse_Result_SetPreferenceResult_Status
 
@@ -2437,6 +2457,30 @@ typedef GPB_ENUM(ITMKeystrokeMonitorRequest_FieldNumber) {
 
 @end
 
+#pragma mark - ITMVariableMonitorRequest
+
+typedef GPB_ENUM(ITMVariableMonitorRequest_FieldNumber) {
+  ITMVariableMonitorRequest_FieldNumber_Name = 1,
+  ITMVariableMonitorRequest_FieldNumber_Scope = 2,
+  ITMVariableMonitorRequest_FieldNumber_Identifier = 3,
+};
+
+@interface ITMVariableMonitorRequest : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+/** Test to see if @c name has been set. */
+@property(nonatomic, readwrite) BOOL hasName;
+
+@property(nonatomic, readwrite) ITMVariableScope scope;
+
+@property(nonatomic, readwrite) BOOL hasScope;
+/** Window, or Tab identifier. Session ID is provided in NotificationRequest if needed. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *identifier;
+/** Test to see if @c identifier has been set. */
+@property(nonatomic, readwrite) BOOL hasIdentifier;
+
+@end
+
 #pragma mark - ITMNotificationRequest
 
 typedef GPB_ENUM(ITMNotificationRequest_FieldNumber) {
@@ -2445,12 +2489,14 @@ typedef GPB_ENUM(ITMNotificationRequest_FieldNumber) {
   ITMNotificationRequest_FieldNumber_NotificationType = 3,
   ITMNotificationRequest_FieldNumber_RpcRegistrationRequest = 4,
   ITMNotificationRequest_FieldNumber_KeystrokeMonitorRequest = 5,
+  ITMNotificationRequest_FieldNumber_VariableMonitorRequest = 6,
 };
 
 typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
   ITMNotificationRequest_Arguments_OneOfCase_GPBUnsetOneOfCase = 0,
   ITMNotificationRequest_Arguments_OneOfCase_RpcRegistrationRequest = 4,
   ITMNotificationRequest_Arguments_OneOfCase_KeystrokeMonitorRequest = 5,
+  ITMNotificationRequest_Arguments_OneOfCase_VariableMonitorRequest = 6,
 };
 
 @interface ITMNotificationRequest : GPBMessage
@@ -2477,6 +2523,8 @@ typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMRPCRegistrationRequest *rpcRegistrationRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMKeystrokeMonitorRequest *keystrokeMonitorRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMVariableMonitorRequest *variableMonitorRequest;
 
 @end
 
@@ -2512,6 +2560,7 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
   ITMNotification_FieldNumber_FocusChangedNotification = 9,
   ITMNotification_FieldNumber_ServerOriginatedRpcNotification = 10,
   ITMNotification_FieldNumber_BroadcastDomainsChanged = 11,
+  ITMNotification_FieldNumber_VariableChangedNotification = 12,
 };
 
 @interface ITMNotification : GPBMessage
@@ -2559,6 +2608,40 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMBroadcastDomainsChangedNotification *broadcastDomainsChanged;
 /** Test to see if @c broadcastDomainsChanged has been set. */
 @property(nonatomic, readwrite) BOOL hasBroadcastDomainsChanged;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMVariableChangedNotification *variableChangedNotification;
+/** Test to see if @c variableChangedNotification has been set. */
+@property(nonatomic, readwrite) BOOL hasVariableChangedNotification;
+
+@end
+
+#pragma mark - ITMVariableChangedNotification
+
+typedef GPB_ENUM(ITMVariableChangedNotification_FieldNumber) {
+  ITMVariableChangedNotification_FieldNumber_Scope = 1,
+  ITMVariableChangedNotification_FieldNumber_Identifier = 2,
+  ITMVariableChangedNotification_FieldNumber_Name = 3,
+  ITMVariableChangedNotification_FieldNumber_JsonNewValue = 4,
+};
+
+@interface ITMVariableChangedNotification : GPBMessage
+
+@property(nonatomic, readwrite) ITMVariableScope scope;
+
+@property(nonatomic, readwrite) BOOL hasScope;
+/** unset if app scope, otherwise is session, window, or tab ID */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *identifier;
+/** Test to see if @c identifier has been set. */
+@property(nonatomic, readwrite) BOOL hasIdentifier;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+/** Test to see if @c name has been set. */
+@property(nonatomic, readwrite) BOOL hasName;
+
+/** Will be "null" if unset. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *jsonNewValue;
+/** Test to see if @c jsonNewValue has been set. */
+@property(nonatomic, readwrite) BOOL hasJsonNewValue;
 
 @end
 

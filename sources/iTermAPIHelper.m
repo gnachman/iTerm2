@@ -40,6 +40,7 @@
 NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";
 NSString *const iTermAPIRegisteredFunctionsDidChangeNotification = @"iTermAPIRegisteredFunctionsDidChangeNotification";
 NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPIDidRegisterSessionTitleFunctionNotification";
+NSString *const iTermVariableDidChangeNotification = @"iTermVariableDidChangeNotification";
 
 const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode = 100;
 const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
@@ -47,6 +48,16 @@ const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
 NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection = @"iTermAPIHelperFunctionCallErrorUserInfoKeyConnection";;
 
 static id sAPIHelperInstance;
+
+id iTermVariableDidChangeNotificationUserInfo(ITMVariableScope scope,
+                                              NSString *identifier,
+                                              NSString *name,
+                                              id newValue) {
+    return [@{ @"scope": @(scope),
+               @"id": identifier ?: [NSNull null],
+               @"name": name,
+               @"newValue": newValue ?: [NSNull null] } dictionaryByRemovingNullValues];
+}
 
 @interface iTermAllSessionsSubscription : NSObject
 @property (nonatomic, strong) ITMNotificationRequest *request;
@@ -177,6 +188,10 @@ static id sAPIHelperInstance;
     NSMutableDictionary<id, ITMNotificationRequest *> *_layoutChangeSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_focusChangeSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_broadcastDomainChangeSubscriptions;
+    NSMutableDictionary<id, NSMutableArray<ITMNotificationRequest *> *> *_appVariableSubscriptions;
+    NSMutableDictionary<id, NSMutableArray<ITMNotificationRequest *> *> *_tabVariableSubscriptions;
+    NSMutableDictionary<id, NSMutableArray<ITMNotificationRequest *> *> *_windowVariableSubscriptions;
+    NSMutableDictionary<id, NSMutableArray<ITMNotificationRequest *> *> *_sessionVariableSubscriptions;
     // signature -> ( connection, request )
     NSMutableDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *_serverOriginatedRPCSubscriptions;
     NSMutableArray<iTermAllSessionsSubscription *> *_allSessionsSubscriptions;
@@ -281,6 +296,10 @@ static id sAPIHelperInstance;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(broadcastDomainsDidChange:)
                                                      name:iTermBroadcastDomainsDidChangeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(variableDidChange:)
+                                                     name:iTermVariableDidChangeNotification
                                                    object:nil];
     }
     return self;
@@ -896,13 +915,7 @@ static id sAPIHelperInstance;
     return request.rpcRegistrationRequest.it_valid;
 }
 
-- (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
-                                            connectionKey:(NSString *)connectionKey {
-    ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
-    if (!request.hasSubscribe) {
-        response.status = ITMNotificationResponse_Status_RequestMalformed;
-        return response;
-    }
+- (void)createSubscriptionDictionariesIfNeeded {
     if (!_newSessionSubscriptions) {
         _newSessionSubscriptions = [[NSMutableDictionary alloc] init];
         _terminateSessionSubscriptions = [[NSMutableDictionary alloc] init];
@@ -910,7 +923,112 @@ static id sAPIHelperInstance;
         _focusChangeSubscriptions = [[NSMutableDictionary alloc] init];
         _serverOriginatedRPCSubscriptions = [[NSMutableDictionary alloc] init];
         _broadcastDomainChangeSubscriptions = [[NSMutableDictionary alloc] init];
+        _appVariableSubscriptions = [[NSMutableDictionary alloc] init];
+        _tabVariableSubscriptions = [[NSMutableDictionary alloc] init];
+        _windowVariableSubscriptions = [[NSMutableDictionary alloc] init];
+        _sessionVariableSubscriptions = [[NSMutableDictionary alloc] init];
     }
+}
+
+- (NSMutableDictionary<id, NSMutableArray<ITMNotificationRequest *> *> *)subscriptionsForVariableChangeScope:(ITMVariableScope)scope {
+    switch (scope) {
+        case ITMVariableScope_App:
+            return _appVariableSubscriptions;
+        case ITMVariableScope_Tab:
+            return _tabVariableSubscriptions;
+        case ITMVariableScope_Window:
+            return _windowVariableSubscriptions;
+        case ITMVariableScope_Session:
+            return _sessionVariableSubscriptions;
+    }
+    return nil;
+}
+
+- (ITMNotificationResponse *)handleVariableChangeNotificationRequest:(ITMNotificationRequest *)request
+                                                       connectionKey:(NSString *)connectionKey {
+    ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
+    if (!request.hasSubscribe) {
+        response.status = ITMNotificationResponse_Status_RequestMalformed;
+        return response;
+    }
+    NSMutableDictionary<id, NSMutableArray<ITMNotificationRequest *> *> *subscriptions =
+        [self subscriptionsForVariableChangeScope:request.variableMonitorRequest.scope];
+    NSMutableArray *array = subscriptions[connectionKey];
+    const NSInteger index = [array indexOfObjectPassingTest:^BOOL(ITMNotificationRequest *_Nonnull sub,
+                                                                  NSUInteger idx,
+                                                                  BOOL * _Nonnull stop) {
+        return ([NSObject object:sub.variableMonitorRequest isEqualToObject:request.variableMonitorRequest]);
+    }];
+    if (request.subscribe) {
+        if (array != nil && index != NSNotFound) {
+            response.status = ITMNotificationResponse_Status_AlreadySubscribed;
+            return response;
+        }
+        [subscriptions it_addObject:request toMutableArrayForKey:connectionKey];
+    } else {
+        if (index == NSNotFound) {
+            response.status = ITMNotificationResponse_Status_NotSubscribed;
+            return response;
+        }
+        [array removeObjectAtIndex:index];
+    }
+    response.status = ITMNotificationResponse_Status_Ok;
+    return response;
+}
+
+// The scope is assumed to match.
+- (BOOL)shouldPostVariableChangeNotification:(ITMNotification *)notification
+                              toSubscription:(ITMNotificationRequest *)sub {
+    if (![notification.variableChangedNotification.name isEqualToString:sub.variableMonitorRequest.name]) {
+        return NO;
+    }
+    return [NSObject object:notification.variableChangedNotification.identifier
+            isEqualToObject:sub.variableMonitorRequest.identifier];
+}
+
+- (void)variableDidChange:(NSNotification *)notification {
+    ITMVariableScope scope = [notification.userInfo[@"scope"] intValue];
+    NSString *identifier = notification.userInfo[@"id"];
+    NSString *name = notification.userInfo[@"name"];
+    id newValue = notification.userInfo[@"newValue"];
+
+    [self variableDidChangeWithScope:scope identifier:identifier name:name newValue:newValue];
+}
+
+- (void)variableDidChangeWithScope:(ITMVariableScope)scope
+                        identifier:(NSString *)identifier
+                              name:(NSString *)variableName
+                          newValue:(id)newValue {
+    NSMutableDictionary<id, NSMutableArray<ITMNotificationRequest *> *> *subscriptions =
+        [self subscriptionsForVariableChangeScope:scope];
+    if (subscriptions.count == 0) {
+        return;
+    }
+    ITMNotification *notification = [[ITMNotification alloc] init];
+    notification.variableChangedNotification.scope = scope;
+    if (identifier != nil) {
+        notification.variableChangedNotification.identifier = identifier;
+    }
+    notification.variableChangedNotification.name = variableName;
+    notification.variableChangedNotification.jsonNewValue = [NSJSONSerialization it_jsonStringForObject:newValue];
+    [subscriptions enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, NSMutableArray<ITMNotificationRequest *> * _Nonnull varSubs, BOOL * _Nonnull outerStop) {
+        [varSubs enumerateObjectsUsingBlock:^(ITMNotificationRequest * _Nonnull sub, NSUInteger idx, BOOL * _Nonnull stop) {
+            if ([self shouldPostVariableChangeNotification:notification toSubscription:sub]) {
+                [self postAPINotification:notification toConnectionKey:key];
+                *stop = YES;
+            }
+        }];
+    }];
+}
+
+- (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
+                                            connectionKey:(NSString *)connectionKey {
+    ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
+    if (!request.hasSubscribe) {
+        response.status = ITMNotificationResponse_Status_RequestMalformed;
+        return response;
+    }
+    [self createSubscriptionDictionariesIfNeeded];
     NSMutableDictionary<id, ITMNotificationRequest *> *subscriptions;
     if (request.notificationType == ITMNotificationType_NotifyOnNewSession) {
         subscriptions = _newSessionSubscriptions;
@@ -1031,6 +1149,11 @@ static id sAPIHelperInstance;
 - (void)apiServerNotification:(ITMNotificationRequest *)request
                 connectionKey:(NSString *)connectionKey
                       handler:(void (^)(ITMNotificationResponse *))handler {
+    if (request.notificationType == ITMNotificationType_NotifyOnVariableChange) {
+        handler([self handleVariableChangeNotificationRequest:request
+                                                connectionKey:connectionKey]);
+        return;
+    }
     if (request.notificationType == ITMNotificationType_NotifyOnNewSession ||
         request.notificationType == ITMNotificationType_NotifyOnTerminateSession ||
         request.notificationType == ITMNotificationType_NotifyOnLayoutChange ||

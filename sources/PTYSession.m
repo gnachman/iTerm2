@@ -1338,7 +1338,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (missingProfile) {
         iTermAnnouncementViewController *announcement = [aSession announcementForMissingProfileInArrangement:arrangement];
-        [aSession queueAnnouncement:announcement identifier:@"ThisProfileNoLongerExists"];
+        if (announcement) {
+            [aSession queueAnnouncement:announcement identifier:@"ThisProfileNoLongerExists"];
+        }
     }
 
     NSString *path = [aSession.screen workingDirectoryOnLine:aSession.screen.numberOfScrollbackLines + aSession.screen.cursorY - 1];
@@ -1699,6 +1701,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _terminal.delegate = _screen;
     [_shell setDelegate:self];
     [self.variablesScope setValue:_shell.tty forVariableNamed:iTermVariableKeySessionTTY];
+    [self.variablesScope setValue:@(_terminal.mouseMode) forVariableNamed:iTermVariableKeySessionMouseReportingMode];
 
     // initialize the screen
     // TODO: Shouldn't this take the scrollbar into account?
@@ -8162,6 +8165,8 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)screenMouseModeDidChange {
     [_textview updateCursor:nil];
     [_textview updateTrackingAreas];
+    [self.variablesScope setValue:@(_terminal.mouseMode)
+                 forVariableNamed:iTermVariableKeySessionMouseReportingMode];
 }
 
 - (void)screenFlashImage:(NSString *)identifier {
@@ -10261,6 +10266,7 @@ ITERM_WEAKLY_REFERENCEABLE
             subscriptions = _customEscapeSequenceNotifications;
             break;
 
+        case ITMNotificationType_NotifyOnVariableChange:  // Gets special handling before this method is called
         case ITMNotificationType_NotifyOnNewSession:
         case ITMNotificationType_NotifyOnTerminateSession:
         case ITMNotificationType_NotifyOnLayoutChange:
@@ -10391,6 +10397,16 @@ ITERM_WEAKLY_REFERENCEABLE
     [_badgeSwiftyString variablesDidChange:changedNames];
     [_textview setBadgeLabel:[self badgeLabel]];
     [_statusBarViewController variablesDidChange:changedNames];
+#warning TODO: Don't post notifications when the variable is not within my scope
+    for (NSString *name in changedNames) {
+        id userInfo = iTermVariableDidChangeNotificationUserInfo(ITMVariableScope_Session,
+                                                                 self.guid,
+                                                                 name,
+                                                                 [variables discouragedValueForVariableName:name]);
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermVariableDidChangeNotification
+                                                            object:nil
+                                                          userInfo:userInfo];
+    }
 }
 
 #pragma mark - iTermEchoProbeDelegate

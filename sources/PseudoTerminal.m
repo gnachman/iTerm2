@@ -13,6 +13,7 @@
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
+#import "iTermAPIHelper.h"
 #import "iTermAboutWindow.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementView.h"
@@ -8701,6 +8702,16 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames group:(dispatch_group_t)group {
     [self.windowTitleOverrideSwiftyString variablesDidChange:changedNames];
+#warning TODO: Don't post a notif if the variable isn't in my scope
+    for (NSString *name in changedNames) {
+        id userInfo = iTermVariableDidChangeNotificationUserInfo(ITMVariableScope_App,
+                                                                 self.terminalGuid,
+                                                                 name,
+                                                                 [variables discouragedValueForVariableName:name]);
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermVariableDidChangeNotification
+                                                            object:nil
+                                                          userInfo:userInfo];
+    }
 }
 
 #pragma mark - PSMMinimalTabStyleDelegate

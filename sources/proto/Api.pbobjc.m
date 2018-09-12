@@ -52,17 +52,18 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
     static const char *valueNames =
         "NotifyOnKeystroke\000NotifyOnScreenUpdate\000N"
         "otifyOnPrompt\000NotifyOnLocationChange\000Not"
-        "ifyOnCustomEscapeSequence\000NotifyOnNewSes"
-        "sion\000NotifyOnTerminateSession\000NotifyOnLa"
-        "youtChange\000NotifyOnFocusChange\000NotifyOnS"
-        "erverOriginatedRpc\000NotifyOnBroadcastChan"
-        "ge\000";
+        "ifyOnCustomEscapeSequence\000NotifyOnVariab"
+        "leChange\000NotifyOnNewSession\000NotifyOnTerm"
+        "inateSession\000NotifyOnLayoutChange\000Notify"
+        "OnFocusChange\000NotifyOnServerOriginatedRp"
+        "c\000NotifyOnBroadcastChange\000";
     static const int32_t values[] = {
         ITMNotificationType_NotifyOnKeystroke,
         ITMNotificationType_NotifyOnScreenUpdate,
         ITMNotificationType_NotifyOnPrompt,
         ITMNotificationType_NotifyOnLocationChange,
         ITMNotificationType_NotifyOnCustomEscapeSequence,
+        ITMNotificationType_NotifyOnVariableChange,
         ITMNotificationType_NotifyOnNewSession,
         ITMNotificationType_NotifyOnTerminateSession,
         ITMNotificationType_NotifyOnLayoutChange,
@@ -90,6 +91,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
     case ITMNotificationType_NotifyOnPrompt:
     case ITMNotificationType_NotifyOnLocationChange:
     case ITMNotificationType_NotifyOnCustomEscapeSequence:
+    case ITMNotificationType_NotifyOnVariableChange:
     case ITMNotificationType_NotifyOnNewSession:
     case ITMNotificationType_NotifyOnTerminateSession:
     case ITMNotificationType_NotifyOnLayoutChange:
@@ -139,6 +141,44 @@ BOOL ITMModifiers_IsValidValue(int32_t value__) {
     case ITMModifiers_Shift:
     case ITMModifiers_Function:
     case ITMModifiers_Numpad:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - Enum ITMVariableScope
+
+GPBEnumDescriptor *ITMVariableScope_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Session\000Tab\000Window\000App\000";
+    static const int32_t values[] = {
+        ITMVariableScope_Session,
+        ITMVariableScope_Tab,
+        ITMVariableScope_Window,
+        ITMVariableScope_App,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMVariableScope)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMVariableScope_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMVariableScope_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMVariableScope_Session:
+    case ITMVariableScope_Tab:
+    case ITMVariableScope_Window:
+    case ITMVariableScope_App:
       return YES;
     default:
       return NO;
@@ -5218,6 +5258,74 @@ typedef struct ITMKeystrokeMonitorRequest__storage_ {
 
 @end
 
+#pragma mark - ITMVariableMonitorRequest
+
+@implementation ITMVariableMonitorRequest
+
+@dynamic hasName, name;
+@dynamic hasScope, scope;
+@dynamic hasIdentifier, identifier;
+
+typedef struct ITMVariableMonitorRequest__storage_ {
+  uint32_t _has_storage_[1];
+  ITMVariableScope scope;
+  NSString *name;
+  NSString *identifier;
+} ITMVariableMonitorRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescriptionWithDefault fields[] = {
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "name",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMVariableMonitorRequest_FieldNumber_Name,
+        .core.hasIndex = 0,
+        .core.offset = (uint32_t)offsetof(ITMVariableMonitorRequest__storage_, name),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+      {
+        .defaultValue.valueEnum = ITMVariableScope_Session,
+        .core.name = "scope",
+        .core.dataTypeSpecific.enumDescFunc = ITMVariableScope_EnumDescriptor,
+        .core.number = ITMVariableMonitorRequest_FieldNumber_Scope,
+        .core.hasIndex = 1,
+        .core.offset = (uint32_t)offsetof(ITMVariableMonitorRequest__storage_, scope),
+        .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .core.dataType = GPBDataTypeEnum,
+      },
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "identifier",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMVariableMonitorRequest_FieldNumber_Identifier,
+        .core.hasIndex = 2,
+        .core.offset = (uint32_t)offsetof(ITMVariableMonitorRequest__storage_, identifier),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMVariableMonitorRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
+                                   storageSize:sizeof(ITMVariableMonitorRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMNotificationRequest
 
 @implementation ITMNotificationRequest
@@ -5228,6 +5336,7 @@ typedef struct ITMKeystrokeMonitorRequest__storage_ {
 @dynamic hasNotificationType, notificationType;
 @dynamic rpcRegistrationRequest;
 @dynamic keystrokeMonitorRequest;
+@dynamic variableMonitorRequest;
 
 typedef struct ITMNotificationRequest__storage_ {
   uint32_t _has_storage_[2];
@@ -5235,6 +5344,7 @@ typedef struct ITMNotificationRequest__storage_ {
   NSString *session;
   ITMRPCRegistrationRequest *rpcRegistrationRequest;
   ITMKeystrokeMonitorRequest *keystrokeMonitorRequest;
+  ITMVariableMonitorRequest *variableMonitorRequest;
 } ITMNotificationRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -5290,6 +5400,16 @@ typedef struct ITMNotificationRequest__storage_ {
         .core.number = ITMNotificationRequest_FieldNumber_KeystrokeMonitorRequest,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, keystrokeMonitorRequest),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeMessage,
+      },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "variableMonitorRequest",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMVariableMonitorRequest),
+        .core.number = ITMNotificationRequest_FieldNumber_VariableMonitorRequest,
+        .core.hasIndex = -1,
+        .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, variableMonitorRequest),
         .core.flags = GPBFieldOptional,
         .core.dataType = GPBDataTypeMessage,
       },
@@ -5423,6 +5543,7 @@ BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value__) {
 @dynamic hasFocusChangedNotification, focusChangedNotification;
 @dynamic hasServerOriginatedRpcNotification, serverOriginatedRpcNotification;
 @dynamic hasBroadcastDomainsChanged, broadcastDomainsChanged;
+@dynamic hasVariableChangedNotification, variableChangedNotification;
 
 typedef struct ITMNotification__storage_ {
   uint32_t _has_storage_[1];
@@ -5437,6 +5558,7 @@ typedef struct ITMNotification__storage_ {
   ITMFocusChangedNotification *focusChangedNotification;
   ITMServerOriginatedRPCNotification *serverOriginatedRpcNotification;
   ITMBroadcastDomainsChangedNotification *broadcastDomainsChanged;
+  ITMVariableChangedNotification *variableChangedNotification;
 } ITMNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -5544,6 +5666,15 @@ typedef struct ITMNotification__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "variableChangedNotification",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMVariableChangedNotification),
+        .number = ITMNotification_FieldNumber_VariableChangedNotification,
+        .hasIndex = 11,
+        .offset = (uint32_t)offsetof(ITMNotification__storage_, variableChangedNotification),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMNotification class]
@@ -5553,6 +5684,86 @@ typedef struct ITMNotification__storage_ {
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMNotification__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMVariableChangedNotification
+
+@implementation ITMVariableChangedNotification
+
+@dynamic hasScope, scope;
+@dynamic hasIdentifier, identifier;
+@dynamic hasName, name;
+@dynamic hasJsonNewValue, jsonNewValue;
+
+typedef struct ITMVariableChangedNotification__storage_ {
+  uint32_t _has_storage_[1];
+  ITMVariableScope scope;
+  NSString *identifier;
+  NSString *name;
+  NSString *jsonNewValue;
+} ITMVariableChangedNotification__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescriptionWithDefault fields[] = {
+      {
+        .defaultValue.valueEnum = ITMVariableScope_Session,
+        .core.name = "scope",
+        .core.dataTypeSpecific.enumDescFunc = ITMVariableScope_EnumDescriptor,
+        .core.number = ITMVariableChangedNotification_FieldNumber_Scope,
+        .core.hasIndex = 0,
+        .core.offset = (uint32_t)offsetof(ITMVariableChangedNotification__storage_, scope),
+        .core.flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .core.dataType = GPBDataTypeEnum,
+      },
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "identifier",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMVariableChangedNotification_FieldNumber_Identifier,
+        .core.hasIndex = 1,
+        .core.offset = (uint32_t)offsetof(ITMVariableChangedNotification__storage_, identifier),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "name",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMVariableChangedNotification_FieldNumber_Name,
+        .core.hasIndex = 2,
+        .core.offset = (uint32_t)offsetof(ITMVariableChangedNotification__storage_, name),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+      {
+        .defaultValue.valueString = nil,
+        .core.name = "jsonNewValue",
+        .core.dataTypeSpecific.className = NULL,
+        .core.number = ITMVariableChangedNotification_FieldNumber_JsonNewValue,
+        .core.hasIndex = 3,
+        .core.offset = (uint32_t)offsetof(ITMVariableChangedNotification__storage_, jsonNewValue),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMVariableChangedNotification class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
+                                   storageSize:sizeof(ITMVariableChangedNotification__storage_)
+                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }
