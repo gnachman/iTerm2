@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarContainerView.h"
 
+#import "DebugLogging.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImageView+iTerm.h"
 #import "NSTimer+iTerm.h"

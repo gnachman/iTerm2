@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarRPCProvidedTextComponent.h"
 
+#import "DebugLogging.h"
 #import "iTermAPIHelper.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptHistory.h"
