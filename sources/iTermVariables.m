@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermTuple.h"
+#import "iTermVariableReference.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
@@ -67,7 +68,8 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     __weak iTermVariables *_parent;
     NSString *_parentName;
     iTermVariablesSuggestionContext _context;
-
+    NSMutableDictionary<NSString *, NSPointerArray *> *_resolvedLinks;
+    NSMutableDictionary<NSString *, NSPointerArray *> *_unresolvedLinks;
 }
 
 + (instancetype)globalInstance {
@@ -225,7 +227,9 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     if (self) {
         _context = context;
         _values = [NSMutableDictionary dictionary];
-        
+        _resolvedLinks = [NSMutableDictionary dictionary];
+        _unresolvedLinks = [NSMutableDictionary dictionary];
+
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             [iTermVariables recordBuiltInVariables];
@@ -303,7 +307,94 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     return [NSJSONSerialization it_jsonStringForObject:obj] ?: @"";
 }
 
+- (void)addLinkToReference:(iTermVariableReference *)reference
+                      path:(NSString *)path {
+    NSArray<NSString *> *parts = [path componentsSeparatedByString:@"."];
+    id value = _values[parts.firstObject];
+    if (value) {
+        [self addWeakReferenceToLinkTable:_resolvedLinks toObject:reference forKey:parts.firstObject];
+        iTermVariables *sub = [iTermVariables castFrom:value];
+        if (sub && parts.count > 1) {
+            [sub addLinkToReference:reference path:[[parts subarrayFromIndex:1] componentsJoinedByString:@"."]];
+        }
+    } else {
+        [self addWeakReferenceToLinkTable:_unresolvedLinks toObject:reference forKey:parts.firstObject];
+    }
+}
+
+- (void)removeLinkToReference:(iTermVariableReference *)reference
+                         path:(NSString *)path {
+    [self removeWeakReferenceFromLinkTable:_resolvedLinks toObject:reference forKey:path];
+    [self removeWeakReferenceFromLinkTable:_unresolvedLinks toObject:reference forKey:path];
+}
+
 #pragma mark - Private
+
+- (void)didChangeNonterminalValueWithPath:(NSString *)name {
+    NSArray<iTermVariableReference *> *refs = [self strongArrayFromWeakArray:_resolvedLinks[name]];
+    [_resolvedLinks removeObjectForKey:name];
+    for (iTermVariableReference *ref in refs) {
+        [ref invalidate];
+    }
+
+    refs = [self strongArrayFromWeakArray:_unresolvedLinks[name]];
+    [_unresolvedLinks removeObjectForKey:name];
+    for (iTermVariableReference *ref in refs) {
+        [ref invalidate];
+    }
+}
+
+- (void)didChangeTerminalValueWithPath:(NSString *)name {
+    NSArray<iTermVariableReference *> *refs = [self strongArrayFromWeakArray:_resolvedLinks[name]];
+    for (iTermVariableReference *ref in refs) {
+        [ref valueDidChange];
+    }
+
+    refs = [self strongArrayFromWeakArray:_unresolvedLinks[name]];
+    [_unresolvedLinks removeObjectForKey:name];
+    for (iTermVariableReference *ref in refs) {
+        [ref invalidate];
+    }
+}
+
+- (NSArray *)strongArrayFromWeakArray:(NSPointerArray *)weakArray {
+    NSMutableArray *result = [NSMutableArray array];
+    for (NSInteger i = 0; i < weakArray.count; i++) {
+        void *pointer = [weakArray pointerAtIndex:i];
+        if (!pointer) {
+            continue;
+        }
+        [result addObject:(__bridge id _Nonnull)(pointer)];
+    }
+    return result;
+}
+
+- (void)addWeakReferenceToLinkTable:(NSMutableDictionary<NSString *, NSPointerArray *> *)linkTable
+                           toObject:(iTermVariableReference *)reference
+                             forKey:(NSString *)localPath {
+    NSPointerArray *array = linkTable[localPath];
+    if (!array) {
+        array = [NSPointerArray weakObjectsPointerArray];
+        linkTable[localPath] = array;
+    }
+    [array addPointer:(__bridge void * _Nullable)(reference)];
+}
+
+- (void)removeWeakReferenceFromLinkTable:(NSMutableDictionary<NSString *, NSPointerArray *> *)linkTable
+                                toObject:(iTermVariableReference *)reference
+                                  forKey:(NSString *)localPath {
+    NSPointerArray *array = linkTable[localPath];
+    for (NSInteger i = (NSInteger)array.count - 1; i >= 0; i--) {
+        void *pointer = [array pointerAtIndex:i];
+        if (pointer == (__bridge void *)(reference)) {
+            [array removePointerAtIndex:i];
+        }
+    }
+    [array compact];
+    if (array.count == 0) {
+        [linkTable removeObjectForKey:localPath];
+    }
+}
 
 - (iTermVariables *)setValue:(id)value forVariableNamed:(NSString *)name withSideEffects:(BOOL)sideEffects {
     assert(name.length > 0);
@@ -332,13 +423,26 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     if (value && ![NSNull castFrom:value]) {
         if ([value isKindOfClass:[iTermVariables class]]) {
             _values[name] = value;
+            [self didChangeNonterminalValueWithPath:name];
         } else {
             DLog(@"Set variable %@ = %@ (%@)", name, value, self);
+            const BOOL wasVariables = [_values[name] isKindOfClass:[iTermVariables class]];
             _values[name] = [value copy];
+            if (wasVariables) {
+                [self didChangeNonterminalValueWithPath:name];
+            } else {
+                [self didChangeTerminalValueWithPath:name];
+            }
         }
     } else {
         DLog(@"Unset variable %@ (%@)", name, self);
+        const BOOL wasVariables = [_values[name] isKindOfClass:[iTermVariables class]];
         [_values removeObjectForKey:name];
+        if (wasVariables) {
+            [self didChangeNonterminalValueWithPath:name];
+        } else {
+            [self didChangeTerminalValueWithPath:name];
+        }
     }
 
     [self batchNotifyOwnerForMutationsByDepth:@[ [iTermTriple tripleWithObject:@1 andObject:self object:name] ]];
@@ -588,6 +692,14 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
         return NO;
     }
     return [owner setValue:value forVariableNamed:stripped];
+}
+
+- (void)addLinksToReference:(iTermVariableReference *)reference {
+    NSArray<NSString *> *parts = [reference.path componentsSeparatedByString:@"."];
+    NSString *tail;
+    iTermVariables *variables = [self ownerForKey:parts.firstObject stripped:&tail];
+    assert(variables != nil);
+    [variables addLinkToReference:reference path:tail];
 }
 
 @end
