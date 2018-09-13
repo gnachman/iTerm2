@@ -236,6 +236,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
      }
                                completion:
      ^(id value, NSError *error, NSSet<NSString *> *missingFunctions) {
+         DLog(@"evaluation of %@ completed with value %@ error %@", self.invocation, value, error);
          if (error) {
              [weakSelf handleEvaluationError:error missingFunctions:missingFunctions];
              return;

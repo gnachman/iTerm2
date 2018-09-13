@@ -33,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
         [self addSubview:_view];
         NSImage *icon = component.statusBarComponentIcon;
         const BOOL hasIcon = (icon != nil);
-        const CGFloat x = hasIcon ? iTermStatusBarViewControllerIconWidth : 0;
+        const CGFloat x = self.minX;
         if (hasIcon) {
             icon.template = YES;
             _iconImageView = [NSImageView imageViewWithImage:icon];
@@ -49,7 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
             frame.origin.y = iTermStatusBarContainerViewIconBottomMargin + (area.size.height - frame.size.height) / 2.0;
             _iconImageView.frame = frame;
         }
-        _view.frame = NSMakeRect(x, 0, self.frame.size.width - x, self.frame.size.height);
+        _view.frame = NSMakeRect(x, 0, self.preferredWidthForComponentView, self.frame.size.height);
         _timer = [NSTimer scheduledWeakTimerWithTimeInterval:_component.statusBarComponentUpdateCadence
                                                       target:self
                                                     selector:@selector(reevaluateTimer:)
@@ -62,6 +62,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)dealloc {
     [_timer invalidate];
+}
+
+- (CGFloat)minX {
+    NSImage *icon = _component.statusBarComponentIcon;
+    const BOOL hasIcon = (icon != nil);
+    return hasIcon ? iTermStatusBarViewControllerIconWidth : 0;
+
+}
+
+- (CGFloat)preferredWidthForComponentView {
+    return self.frame.size.width - self.minX;
 }
 
 - (NSString *)description {
@@ -98,6 +109,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
+    [self layoutSubviews];
+}
+
+- (void)layoutSubviews {
     CGFloat width = self.frame.size.width;
     CGFloat x = 0;
     if (self.component.statusBarComponentIcon) {
@@ -108,11 +123,11 @@ NS_ASSUME_NONNULL_BEGIN
     [self.component statusBarComponentSizeView:_view toFitWidth:width];
     const CGFloat viewHeight = _view.frame.size.height;
     const CGFloat myHeight = self.frame.size.height;
-    const CGFloat myWidth = width;
     const CGFloat viewWidth = _view.frame.size.width;
-    _view.frame = NSMakeRect(x + (myWidth - viewWidth) / 2,
+    DLog(@"set frame of view %@ for component %@ width to %@", _view, self.component, @(viewWidth));
+    _view.frame = NSMakeRect(self.minX,
                              (myHeight - viewHeight) / 2 + _component.statusBarComponentVerticalOffset,
-                             viewWidth,
+                             self.preferredWidthForComponentView,
                              viewHeight);
 }
 

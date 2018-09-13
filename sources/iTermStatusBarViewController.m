@@ -78,6 +78,7 @@ const CGFloat iTermStatusBarHeight = 22;
                                  iTermStatusBarViewControllerBottomMargin,
                                  view.desiredWidth,
                                  iTermStatusBarViewControllerContainerHeight);
+         [view layoutSubviews];
          [view.component statusBarComponentWidthDidChangeTo:view.desiredWidth];
          view.rightSeparatorOffset = -1;
      }];
