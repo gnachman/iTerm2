@@ -98,14 +98,18 @@ typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
 
 @end
 
+@class iTermVariableRecordingScope;
+
 // Represents the variables that are visible from a particular callsite. Each
 // set of variables except one (that of the most local scope) must have a name.
 // Variables are searched for one matching the name.
-@interface iTermVariableScope : NSObject
+@interface iTermVariableScope : NSObject<NSCopying>
 @property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *dictionaryWithStringValues;
 @property (nonatomic, readonly) id (^functionCallSource)(NSString *);
+@property (nonatomic) BOOL neverReturnNil;
 
 + (instancetype)globalsScope;
+- (iTermVariableRecordingScope *)recordingCopy;
 
 - (void)addVariables:(iTermVariables *)variables toScopeNamed:(nullable NSString *)scopeName;
 - (id)valueForVariableName:(NSString *)name;
@@ -121,6 +125,14 @@ typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
 - (void)setValue:(nullable id)value forKey:(NSString *)key NS_UNAVAILABLE;
 - (void)setValuesForKeysWithDictionary:(NSDictionary<NSString *, id> *)keyedValues NS_UNAVAILABLE;
 - (void)addLinksToReference:(iTermVariableReference *)reference;
+
+@end
+
+@interface iTermVariableRecordingScope : iTermVariableScope
+@property (nonatomic, readonly) NSArray<iTermVariableReference *> *recordedReferences;
+
+- (instancetype)initWithScope:(iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
 
 @end
 

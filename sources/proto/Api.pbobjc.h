@@ -544,6 +544,7 @@ typedef GPB_ENUM(ITMNotificationResponse_Status) {
   ITMNotificationResponse_Status_NotSubscribed = 3,
   ITMNotificationResponse_Status_AlreadySubscribed = 4,
   ITMNotificationResponse_Status_DuplicateServerOriginatedRpc = 5,
+  ITMNotificationResponse_Status_InvalidIdentifier = 6,
 };
 
 GPBEnumDescriptor *ITMNotificationResponse_Status_EnumDescriptor(void);
@@ -2474,7 +2475,7 @@ typedef GPB_ENUM(ITMVariableMonitorRequest_FieldNumber) {
 @property(nonatomic, readwrite) ITMVariableScope scope;
 
 @property(nonatomic, readwrite) BOOL hasScope;
-/** Window, or Tab identifier. Session ID is provided in NotificationRequest if needed. */
+/** Session, Window, or Tab identifier. */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *identifier;
 /** Test to see if @c identifier has been set. */
 @property(nonatomic, readwrite) BOOL hasIdentifier;
@@ -2504,6 +2505,8 @@ typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
 /**
  * See documentation on session IDs. NOTIFY_ON_NEW_SESSION, NOTIFY_ON_TERMINATE_SESSION, and
  * NOTIFY_ON_LAYOUT_CHANGE do not use the session ID and are posted on all such events.
+ *
+ * NOTE: This is not used for NOTIFY_ON_VARIABLE_CHANGE.
  **/
 @property(nonatomic, readwrite, copy, null_resettable) NSString *session;
 /** Test to see if @c session has been set. */

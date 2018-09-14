@@ -12,6 +12,7 @@
 @interface iTermStatusBarRPCProvidedTextComponent : iTermStatusBarTextComponent
 
 - (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest
+                                      scope:(iTermVariableScope *)scope
                                       knobs:(NSDictionary *)knobs;
 
 @end

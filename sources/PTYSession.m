@@ -790,7 +790,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_announcements release];
     [self recycleQueuedTokens];
     [_queuedTokens release];
-    [_badgeFormat release];
     [_variables release];
     [_sessionVariables release];
     [_userVariables release];
@@ -3831,12 +3830,16 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     __weak __typeof(self) weakSelf = self;
     _badgeSwiftyString = [[iTermSwiftyString alloc] initWithString:badgeFormat
-                                                            source:[self functionCallSource]
-                                                           mutates:[NSSet set]
+                                                             scope:self.variablesScope
                                                           observer:^(NSString * _Nonnull newValue) {
                                                               [weakSelf updateBadgeLabel:newValue];
                                                           }];
 
+}
+
+- (NSString *)badgeFormat {
+#warning TODO: Test this
+    return _badgeSwiftyString.swiftyString;
 }
 
 - (void)updateBadgeLabel {
@@ -6054,14 +6057,6 @@ ITERM_WEAKLY_REFERENCEABLE
     return accept;
 }
 
-+ (id (^)(NSString *))functionCallSource {
-    return [[iTermVariableScope globalsScope] functionCallSource];
-}
-
-- (id (^)(NSString *))functionCallSource {
-    return self.variablesScope.functionCallSource;
-}
-
 + (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)invocation origin:(NSString *)origin window:(NSWindow *)window {
     NSString *message = [NSString stringWithFormat:@"Error running “%@”:\n%@",
                          invocation, error.localizedDescription];
@@ -6085,17 +6080,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)invokeFunctionCall:(NSString *)invocation
-              extraContext:(NSDictionary *)extraContext
+                     scope:(iTermVariableScope *)scope
                     origin:(NSString *)origin {
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:[[NSDate distantFuture] timeIntervalSinceNow]
-                                   source:^id(NSString *key) {
-                                       id value = extraContext[key];
-                                       if (value) {
-                                           return value;
-                                       }
-                                       return [self functionCallSource](key);
-                                   }
+                                    scope:scope
                                completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
                                    if (error) {
                                        [PTYSession reportFunctionCallError:error
@@ -6176,7 +6165,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
             [iTermScriptFunctionCall callFunction:keyBindingText
                                           timeout:[[NSDate distantFuture] timeIntervalSinceNow]
-                                           source:[self functionCallSource]
+                                            scope:[iTermVariableScope globalsScope]
                                        completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
                                            if (error) {
                                                [PTYSession reportFunctionCallError:error
@@ -6473,7 +6462,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [self setXtermMouseReporting:![self xtermMouseReporting]];
             break;
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
-            [self invokeFunctionCall:keyBindingText extraContext:nil origin:@"Key Binding"];
+            [self invokeFunctionCall:keyBindingText scope:self.variablesScope origin:@"Key Binding"];
             break;
         case KEY_ACTION_DUPLICATE_TAB:
             [self.delegate sessionDuplicateTab];
@@ -10380,8 +10369,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return descriptor;
 }
 
-- (id (^)(NSString *))sessionNameControllerVariableSource {
-    return [self functionCallSource];
+- (iTermVariableScope *)sessionNameControllerScope {
+    return self.variablesScope;
 }
 
 #pragma mark - iTermVariablesDelegate
@@ -10393,20 +10382,11 @@ ITERM_WEAKLY_REFERENCEABLE
             [self.delegate sessionDidChangeGraphic:self];
         }
     }
-    [_nameController variablesDidChange:changedNames];
-    [_badgeSwiftyString variablesDidChange:changedNames];
+#warning TODO: test session name and badge with interpolated strings.
+#warning TODO: Change the badge to use variable references.
     [_textview setBadgeLabel:[self badgeLabel]];
+#warning TODO: get rid of this
     [_statusBarViewController variablesDidChange:changedNames];
-#warning TODO: Don't post notifications when the variable is not within my scope
-    for (NSString *name in changedNames) {
-        id userInfo = iTermVariableDidChangeNotificationUserInfo(ITMVariableScope_Session,
-                                                                 self.guid,
-                                                                 name,
-                                                                 [variables discouragedValueForVariableName:name]);
-        [[NSNotificationCenter defaultCenter] postNotificationName:iTermVariableDidChangeNotification
-                                                            object:nil
-                                                          userInfo:userInfo];
-    }
 }
 
 #pragma mark - iTermEchoProbeDelegate

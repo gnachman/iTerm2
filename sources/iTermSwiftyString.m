@@ -10,6 +10,8 @@
 #import "iTermAPIHelper.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptHistory.h"
+#import "iTermVariableReference.h"
+#import "iTermVariables.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
@@ -21,19 +23,20 @@
 @end
 
 @implementation iTermSwiftyString {
-    NSSet<NSString *> *_mutations;
     NSMutableSet<NSString *> *_missingFunctions;
+    iTermVariableScope *_scope;
+    NSArray<iTermVariableReference *> *_refs;
+    BOOL _observing;
 }
 
 - (instancetype)initWithString:(NSString *)swiftyString
-                        source:(id  _Nonnull (^)(NSString * _Nonnull))source
-                       mutates:(NSSet<NSString *> *)mutates
+                        scope:(iTermVariableScope *)scope
                       observer:(void (^)(NSString * _Nonnull))observer {
     self = [super init];
     if (self) {
         _swiftyString = [swiftyString copy];
-        _source = [source copy];
-        _mutations = [mutates copy];
+        _scope = scope;
+        _refs = [NSMutableArray array];
         _observer = [observer copy];
         _missingFunctions = [NSMutableSet set];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -61,7 +64,9 @@
         return;
     }
     _evaluatedString = [evaluatedString copy];
+    _observing = YES;
     self.observer(_evaluatedString);
+    _observing = NO;
 }
 
 - (void)evaluateSynchronously:(BOOL)synchronously {
@@ -84,15 +89,11 @@
 }
 
 - (void)evaluateSynchronously:(BOOL)synchronously completion:(void (^)(NSString *))completion {
-    NSMutableSet<NSString *> *dependencies = [NSMutableSet set];
+    iTermVariableRecordingScope *scope = [_scope recordingCopy];
     __weak __typeof(self) weakSelf = self;
     [iTermScriptFunctionCall evaluateString:_swiftyString
                                     timeout:synchronously ? 0 : 30
-                                     source:
-     ^id(NSString *name) {
-         [dependencies addObject:name];
-         return weakSelf.source(name);
-     }
+                                      scope:scope
                                  completion:
      ^(NSString *result, NSError *error, NSSet<NSString *> *missing) {
          __strong __typeof(self) strongSelf = weakSelf;
@@ -118,18 +119,20 @@
          }
          completion(result);
      }];
-    _dependencies = [self dependenciesByAddingAllParentPaths:dependencies];
+    _refs = [scope recordedReferences];
+    for (iTermVariableReference *ref in _refs) {
+        ref.onChangeBlock = ^{
+            [weakSelf dependencyDidChange];
+        };
+    }
 }
 
-- (NSSet<NSString *> *)dependenciesByAddingAllParentPaths:(NSSet<NSString *> *)deps {
-    return [NSSet setWithArray:[deps.allObjects flatMapWithBlock:^NSArray *(NSString *path) {
-        NSArray<NSString *> *parts = [path componentsSeparatedByString:@"."];
-        return [[NSArray sequenceWithRange:NSMakeRange(1, parts.count)] mapWithBlock:^id(NSNumber *length) {
-            return [[parts subarrayWithRange:NSMakeRange(0, length.unsignedIntegerValue)] componentsJoinedByString:@"."];
-        }];
-    }]];
+- (void)dependencyDidChange {
+    if (!_observing) {
+        [self setNeedsReevaluation];
+    }
+    
 }
-
 - (void)setNeedsReevaluation {
     self.needsReevaluation = YES;
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -153,14 +156,6 @@
     [self evaluateSynchronously:NO];
 }
 
-- (void)variablesDidChange:(NSSet<NSString *> *)names {
-    NSMutableSet<NSString *> *santizedNames = [names mutableCopy];
-    [santizedNames minusSet:_mutations];
-    if ([santizedNames intersectsSet:_dependencies]) {
-        [self setNeedsReevaluation];
-    }
-}
-
 #pragma mark - Notifications
 
 - (void)registeredFunctionsDidChange:(NSNotification *)notification {
@@ -182,10 +177,7 @@
 
 - (instancetype)initWithString:(NSString *)swiftyString {
     self = [super initWithString:@""
-                          source:^id _Nonnull(NSString * _Nonnull name) {
-                              return @"";
-                          }
-                         mutates:[NSSet set]
+                           scope:nil
                         observer:^(NSString * _Nonnull newValue) {}];
     if (self) {
         _string = [swiftyString copy];

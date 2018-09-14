@@ -36,7 +36,7 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
     BOOL _needsUpdate;
     NSInteger _count;
     NSInteger _appliedCount;
-    NSSet<NSString *> *_dependencies;
+    NSArray<iTermVariableReference *> *_refs;
 }
 
 - (instancetype)init {
@@ -73,20 +73,18 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
     [self.delegate sessionNameControllerDidChangeWindowTitle];
 }
 
-- (void)variablesDidChange:(NSSet<NSString *> *)names {
-    if ([names intersectsSet:_dependencies]) {
-        [self setNeedsReevaluation];
-    }
-}
-
 // Synchronous evaluation updates _dependencies with all paths occurring in the title format.
 - (void)evaluateInvocationSynchronously:(BOOL)sync
                              completion:(void (^)(NSString *presentationName))completion {
     __weak __typeof(self) weakSelf = self;
-    id (^source)(NSString *) = self.delegate.sessionNameControllerVariableSource;
-    NSMutableSet *dependencies;
+    iTermVariableScope *scope;
+    iTermVariableRecordingScope *recordingScope;  // either nil or equal to scope
     if (sync) {
-        dependencies = [NSMutableSet set];
+        recordingScope = [self.delegate.sessionNameControllerScope recordingCopy];
+        scope.neverReturnNil = YES;
+        scope = recordingScope;
+    } else {
+        scope = self.delegate.sessionNameControllerScope;
     }
     NSString *invocation = self.delegate.sessionNameControllerInvocation;
     if (!invocation) {
@@ -96,14 +94,7 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
     }
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:sync ? 0 : 30
-                                   source:^id(NSString *path) {
-                                       [dependencies addObject:path];
-                                       if (source) {
-                                           return source(path);
-                                       } else {
-                                           return @"";
-                                       }
-                                   }
+                                    scope:scope
                                completion:
      ^(NSString *possiblyEmptyResult, NSError *error, NSSet<NSString *> *missing) {
          if (error) {
@@ -142,11 +133,14 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
          }
          completion(result);
      }];
-    if (sync) {
+    if (recordingScope) {
         // Add tmux variables we use for adding formatting.
-        _dependencies = [dependencies setByAddingObjectsFromArray:@[ iTermVariableKeySessionTmuxClientName,
-                                                                     iTermVariableKeySessionTmuxRole,
-                                                                     iTermVariableKeySessionTmuxWindowTitle ]];
+        for (NSString *tmuxVariableName in @[ iTermVariableKeySessionTmuxClientName,
+                                              iTermVariableKeySessionTmuxRole,
+                                              iTermVariableKeySessionTmuxWindowTitle ]) {
+            [scope valueForVariableName:tmuxVariableName];
+        }
+        _refs = recordingScope.recordedReferences;
     }
 }
 
@@ -200,7 +194,8 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
         // initialize lazily
         _iconTitleStack = [[NSMutableArray alloc] init];
     }
-    NSString *title = [self.delegate sessionNameControllerVariableSource](iTermVariableKeySessionIconName);
+    iTermVariableScope *scope = [self.delegate sessionNameControllerScope];
+    NSString *title = [scope valueForVariableName:iTermVariableKeySessionIconName];
     if (!title) {
         // if current icon title is nil, treat it as an empty string.
         title = @"";
@@ -225,7 +220,8 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
 #pragma mark - Private
 
 - (NSString *)windowNameFromVariable {
-    return [self.delegate sessionNameControllerVariableSource](iTermVariableKeySessionWindowName);
+    iTermVariableScope *scope = [self.delegate sessionNameControllerScope];
+    return [scope valueForVariableName:iTermVariableKeySessionWindowName];
 }
 
 - (NSString *)formattedName:(NSString *)base {

@@ -121,4 +121,23 @@
     XCTAssertEqualObjects(actual, @123);
 }
 
+- (void)testShadow {
+    iTermVariables *vars = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession] autorelease];
+    iTermVariableScope *scope1 = [[[iTermVariableScope alloc] init] autorelease];
+    [scope1 addVariables:vars toScopeNamed:nil];
+    [scope1 setValue:@123 forVariableNamed:@"v"];
+
+    iTermVariableScope *scope2 = [[scope1 copy] autorelease];
+    iTermVariables *vars2 = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession] autorelease];
+    [scope2 addVariables:vars2 toScopeNamed:nil];
+    [scope2 setValue:@234 forVariableNamed:@"v"];
+
+    XCTAssertEqualObjects(@123, [scope1 valueForVariableName:@"v"]);
+    XCTAssertEqualObjects(@123, [vars discouragedValueForVariableName:@"v"]);
+    
+    XCTAssertEqualObjects(@234, [scope2 valueForVariableName:@"v"]);
+    XCTAssertEqualObjects(@234, [vars2 discouragedValueForVariableName:@"v"]);
+}
+
 @end
+

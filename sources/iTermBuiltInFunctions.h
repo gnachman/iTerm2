@@ -43,7 +43,7 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 
 - (void)callFunctionWithName:(NSString *)name
                   parameters:(NSDictionary<NSString *, id> *)parameters
-                      source:(id (^)(NSString *))source
+                       scope:(iTermVariableScope *)scope
                   completion:(iTermBuiltInFunctionCompletionBlock)completion;
 
 - (NSError *)undeclaredIdentifierError:(NSString *)identifier;

@@ -12,11 +12,6 @@
 extern NSString *const iTermRemoveAPIServerSubscriptionsNotification;
 extern NSString *const iTermAPIRegisteredFunctionsDidChangeNotification;
 extern NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification;
-extern NSString *const iTermVariableDidChangeNotification;
-extern id iTermVariableDidChangeNotificationUserInfo(ITMVariableScope scope,
-                                                     NSString *identifier,
-                                                     NSString *name,
-                                                     id newValue);
 
 extern const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode;
 extern const NSInteger iTermAPIHelperFunctionCallOtherErrorCode;
