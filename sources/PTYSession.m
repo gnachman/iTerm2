@@ -3791,6 +3791,10 @@ ITERM_WEAKLY_REFERENCEABLE
                 [_view invalidateStatusBar];
             }
         }
+    } else {
+        [_statusBarViewController release];
+        _statusBarViewController = nil;
+        [_view invalidateStatusBar];
     }
     _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:aDict];
     _screen.appendToScrollbackWithStatusBar = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_WITH_STATUS_BAR
