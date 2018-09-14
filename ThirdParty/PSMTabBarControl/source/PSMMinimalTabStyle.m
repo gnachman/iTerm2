@@ -121,7 +121,7 @@
                                tabBarControl:(PSMTabBarControl *)bar {
     if (self.anyTabHasColor) {
         const CGFloat brightness = [self tabColorBrightness:cell];
-        NSRect rect = NSInsetRect(cell.frame, 0, 1.5);
+        NSRect rect = NSInsetRect(cell.frame, 0, 0.5);
         NSBezierPath *path;
         
         NSColor *outerColor;
@@ -416,5 +416,15 @@
     [[self outlineColor] set];
     [path stroke];
 }
+
+- (NSColor *)cellBackgroundColorForTabColor:(NSColor *)tabColor
+                                   selected:(BOOL)selected {
+    CGFloat alpha = selected ? 1 : 0.5;
+    if (![self.tabBar.window isKeyWindow]) {
+        alpha *= 0.5;
+    }
+    return [tabColor colorWithAlphaComponent:alpha];
+}
+
 
 @end

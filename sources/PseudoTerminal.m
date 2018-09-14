@@ -7133,11 +7133,35 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSColor *)rootTerminalViewTabBarBackgroundColor {
+    // This is only called if there is 1 tab and the tab bar is not shown and we're drawing
+    // the background of the fake title bar.
+    if (self.currentSession.tabColor) {
+        return self.currentSession.tabColor;
+    }
     return [_contentView.tabBarControl.style backgroundColorSelected:NO highlightAmount:0];
 }
 
-- (NSColor *)rootTerminalViewTabBarTextColor {
+- (NSColor *)rootTerminalViewTabBarTextColorForWindowNumber {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (preferredStyle != TAB_STYLE_MINIMAL && self.tabBarShouldBeVisible) {
+        // The window number will be displayed over the system titlebar color.
+        return [NSColor labelColor];
+    }
+    
+    if (self.currentSession.tabColor &&
+        [self.tabView indexOfTabViewItem:self.tabView.selectedTabViewItem] == 0) {
+        // The window number will be displayed over the tab color.
+        // Use text color of first tab when the first tab is selected.
+        return [_contentView.tabBarControl.style textColorForCell:_contentView.tabBarControl.cells.firstObject];
+    }
+    
+    // The window number will be displayed over the tabbar color.
     return [_contentView.tabBarControl.style textColorDefaultSelected:self.window.isKeyWindow];
+}
+
+- (NSColor *)rootTerminalViewTabBarTextColorForTitle {
+    // This is only called for compact windows. Minimal is irrelevant.
+    return [_contentView.tabBarControl.style textColorForCell:_contentView.tabBarControl.cells.firstObject];
 }
 
 - (void)rootTerminalViewDidChangeEffectiveAppearance {

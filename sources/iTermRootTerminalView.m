@@ -420,8 +420,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         [_divisionView removeFromSuperview];
         _divisionView = nil;
     }
-    _windowNumberLabel.textColor = [self.delegate rootTerminalViewTabBarTextColor];
-    _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColor];
+    _windowNumberLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForWindowNumber];
+    _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
 }
 
 #pragma mark - Toolbelt
@@ -684,8 +684,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     NSWindow *thisWindow = _delegate.window;
     self.tabBarControl.height = [_delegate rootTerminalViewHeightOfTabBar:self];
 
-    _windowNumberLabel.textColor = [_delegate rootTerminalViewTabBarTextColor];
-    _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColor];
+    _windowNumberLabel.textColor = [_delegate rootTerminalViewTabBarTextColorForWindowNumber];
+    _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
 
     if ([self.delegate enableStoplightHotbox]) {
         _stoplightHotbox.hidden = NO;
