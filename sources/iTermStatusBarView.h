@@ -14,5 +14,7 @@
 @property (nonatomic, copy) NSArray<NSNumber *> *separatorOffsets;
 @property (nonatomic, copy) NSArray<iTermTuple<NSColor *, NSNumber *> *> *backgroundColors;
 @property (nonatomic) NSColor *separatorColor;
+@property (nonatomic) NSColor *backgroundColor;
+@property (nonatomic) CGFloat verticalOffset;
 
 @end

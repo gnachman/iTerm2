@@ -56,6 +56,7 @@ const CGFloat iTermStatusBarHeight = 22;
 - (void)loadView {
     iTermStatusBarView *view = [[iTermStatusBarView alloc] initWithFrame:NSZeroRect];
     view.separatorColor = _layout.advancedConfiguration.separatorColor;
+    view.backgroundColor = _layout.advancedConfiguration.backgroundColor;
     self.view = view;
 }
 
@@ -137,9 +138,7 @@ const CGFloat iTermStatusBarHeight = 22;
         const CGFloat margin = isSpring ? 0 : iTermStatusBarViewControllerMargin / 2.0;
         NSNumber *offset = @(containerView.desiredOrigin + containerView.desiredWidth + margin + 0.5);
         iTermTuple *result = nil;
-        if (lastColor) {
-            result = [iTermTuple tupleWithObject:lastColor andObject:lastOffset];
-        }
+        result = [iTermTuple tupleWithObject:lastColor andObject:lastOffset];
         lastColor = color;
         lastOffset = offset;
         return result;
@@ -184,7 +183,7 @@ const CGFloat iTermStatusBarHeight = 22;
 - (void)updateMargins:(NSArray<iTermStatusBarContainerView *> *)views {
     __block BOOL foundMargin = NO;
     [views enumerateObjectsUsingBlock:^(iTermStatusBarContainerView * _Nonnull view, NSUInteger idx, BOOL * _Nonnull stop) {
-        const BOOL hasMargins = (idx > 0 || !view.component.statusBarComponentIcon) && view.component.statusBarComponentHasMargins;
+        const BOOL hasMargins = view.component.statusBarComponentHasMargins;
         if (hasMargins) {
             view.leftMargin = iTermStatusBarViewControllerMargin / 2 + 1;
         } else {
@@ -378,6 +377,7 @@ const CGFloat iTermStatusBarHeight = 22;
         [view setNeedsDisplay:YES];
     }
     [[iTermStatusBarView castFrom:self.view] setSeparatorColor:[self.delegate statusBarSeparatorColor]];
+    [[iTermStatusBarView castFrom:self.view] setBackgroundColor:[self.delegate statusBarBackgroundColor]];
 }
 
 #pragma mark - iTermStatusBarLayoutDelegate

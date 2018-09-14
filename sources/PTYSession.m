@@ -10486,6 +10486,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return _statusBarViewController.layout.advancedConfiguration.separatorColor;
 }
 
+- (NSColor *)statusBarBackgroundColor {
+    return _statusBarViewController.layout.advancedConfiguration.backgroundColor;
+}
+
 - (void)updateStatusBarStyle {
     [_statusBarViewController updateColors];
 }

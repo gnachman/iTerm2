@@ -30,21 +30,26 @@
     CGFloat lastX = 0;
     CGFloat x = 0;
     for (iTermTuple<NSColor *, NSNumber *> *tuple in self.backgroundColors) {
+        x = tuple.secondObject.doubleValue;
         if (tuple.firstObject) {
             [tuple.firstObject set];
-            x = tuple.secondObject.doubleValue;
             NSRectFill(NSMakeRect(lastX,
-                                  1,
+                                  self.verticalOffset,
                                   x - lastX,
-                                  dirtyRect.size.height - 1));
-            lastX = x;
+                                  dirtyRect.size.height - self.verticalOffset));
         }
+        lastX = x;
     }
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
     [super drawRect:dirtyRect];
-    
+
+    if (self.backgroundColor) {
+        [self.backgroundColor set];
+        NSRectFill(dirtyRect);
+    }
+
     [self drawBackgroundColorsInRect:dirtyRect];
     [self drawSeparatorsInRect:dirtyRect];
 

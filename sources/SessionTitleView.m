@@ -134,7 +134,7 @@ static const CGFloat kButtonSize = 17;
         const CGFloat margin = 5;
         const CGFloat minX = NSMaxX(closeButton_.frame) + margin;
         _statusBarViewController.view.frame = NSMakeRect(minX,
-                                                         0,
+                                                         1,
                                                          NSMinX(menuButton_.frame) - margin - minX,
                                                          self.frame.size.height);
         label_.hidden = YES;
