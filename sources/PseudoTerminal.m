@@ -181,7 +181,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
 @property(nonatomic, retain) NSString *titleOverride;
 @property(nonatomic, readonly) iTermVariables *variables;
-@property(nonatomic, readonly) iTermVariableScope *scope;
 @property(nonatomic, readonly) iTermSwiftyString *windowTitleOverrideSwiftyString;
 @end
 
@@ -2319,11 +2318,7 @@ ITERM_WEAKLY_REFERENCEABLE
     __weak __typeof(self) weakSelf = self;
     _windowTitleOverrideSwiftyString =
     [[iTermSwiftyString alloc] initWithString:titleOverride
-                                       source:
-     ^id _Nonnull(NSString * _Nonnull name) {
-         return [weakSelf.scope valueForVariableName:name];
-     }
-                                      mutates:[NSSet setWithObject:iTermVariableKeyWindowTitleOverride]
+                                        scope:self.scope
                                      observer:
      ^(NSString * _Nonnull newValue) {
          [weakSelf.scope setValue:newValue forVariableNamed:iTermVariableKeyWindowTitleOverride];
@@ -8725,17 +8720,6 @@ ITERM_WEAKLY_REFERENCEABLE
 #pragma mark - iTermVariablesDelegate
 
 - (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames group:(dispatch_group_t)group {
-    [self.windowTitleOverrideSwiftyString variablesDidChange:changedNames];
-#warning TODO: Don't post a notif if the variable isn't in my scope
-    for (NSString *name in changedNames) {
-        id userInfo = iTermVariableDidChangeNotificationUserInfo(ITMVariableScope_App,
-                                                                 self.terminalGuid,
-                                                                 name,
-                                                                 [variables discouragedValueForVariableName:name]);
-        [[NSNotificationCenter defaultCenter] postNotificationName:iTermVariableDidChangeNotification
-                                                            object:nil
-                                                          userInfo:userInfo];
-    }
 }
 
 #pragma mark - PSMMinimalTabStyleDelegate

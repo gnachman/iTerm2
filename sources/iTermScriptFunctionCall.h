@@ -7,6 +7,8 @@
 
 #import <Foundation/Foundation.h>
 
+@class iTermVariableScope;
+
 @interface iTermScriptFunctionCall : NSObject
 
 @property (nonatomic, readonly) NSString *signature;
@@ -55,13 +57,13 @@
 // functions will evaluate to empty string.
 + (void)evaluateExpression:(NSString *)invocation
                    timeout:(NSTimeInterval)timeout
-                    source:(id (^)(NSString *))source
+                     scope:(iTermVariableScope *)scope
                 completion:(void (^)(id, NSError *, NSSet<NSString *> *missingFunctionSignatures))completion;
 
 // Like evaluateExpression but only accepts a function call at the top level.
 + (void)callFunction:(NSString *)invocation
              timeout:(NSTimeInterval)timeout
-              source:(id (^)(NSString *))source
+               scope:(iTermVariableScope *)scope
           completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
 
 // Evaluate a string with embedded function calls like a swift string with \(expression)s in it.
@@ -69,7 +71,7 @@
 // use iTermSwiftyString instead.
 + (void)evaluateString:(NSString *)string
                timeout:(NSTimeInterval)timeout
-                source:(id (^)(NSString *))source
+                 scope:(iTermVariableScope *)scope
             completion:(void (^)(NSString *result,
                                  NSError *error,
                                  NSSet<NSString *> *missingFunctionSignatures))completion;

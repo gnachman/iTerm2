@@ -4048,11 +4048,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     __weak __typeof(self) weakSelf = self;
     _tabTitleOverrideSwiftyString =
         [[iTermSwiftyString alloc] initWithString:titleOverride
-                                           source:
-         ^id _Nonnull(NSString * _Nonnull name) {
-             return [weakSelf valueForVariable:name];
-         }
-                                          mutates:[NSSet setWithObject:iTermVariableKeyTabTitleOverride]
+                                            scope:self.variablesScope
                                          observer:
          ^(NSString * _Nonnull newValue) {
              [weakSelf.variablesScope setValue:newValue forVariableNamed:iTermVariableKeyTabTitleOverride];
@@ -5188,17 +5184,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames
             group:(dispatch_group_t)group {
-    [_tabTitleOverrideSwiftyString variablesDidChange:changedNames];
-#warning TODO: Don't post a notif if the variable isn't in my scope
-    for (NSString *name in changedNames) {
-        id userInfo = iTermVariableDidChangeNotificationUserInfo(ITMVariableScope_Tab,
-                                                                 [@(self.uniqueId) stringValue],
-                                                                 name,
-                                                                 [variables discouragedValueForVariableName:name]);
-        [[NSNotificationCenter defaultCenter] postNotificationName:iTermVariableDidChangeNotification
-                                                            object:nil
-                                                          userInfo:userInfo];
-    }
+#warning Test tab title override with interpolated string
 }
 
 - (BOOL)sessionShouldAutoClose:(PTYSession *)session {

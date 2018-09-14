@@ -55,12 +55,15 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
         [captureRangeArray addObject:@[ @(capturedRanges[i].location), @(capturedRanges[i].length) ]];
     }
 
-    NSDictionary *context = @{ iTermRPCTriggerPathCapturedStrings: captureStringArray,
-                               iTermRPCTriggerPathCapturedRanges: captureRangeArray,
-                               iTermRPCTriggerPathInput: stringLine.stringValue ?: @"",
-                               iTermRPCTriggerPathLineNumber: @(lineNumber) };
-
-    [aSession invokeFunctionCall:invocation extraContext:context origin:@"Trigger"];
+    NSDictionary *temporaryVariables = @{ iTermRPCTriggerPathCapturedStrings: captureStringArray,
+                                          iTermRPCTriggerPathCapturedRanges: captureRangeArray,
+                                          iTermRPCTriggerPathInput: stringLine.stringValue ?: @"",
+                                          iTermRPCTriggerPathLineNumber: @(lineNumber) };
+    iTermVariableScope *scope = [aSession.variablesScope copy];
+    iTermVariables *variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone];
+    [scope addVariables:variables toScopeNamed:nil];
+    [scope setValuesFromDictionary:temporaryVariables];
+    [aSession invokeFunctionCall:invocation scope:scope origin:@"Trigger"];
 
     return YES;
 }

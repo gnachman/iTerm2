@@ -463,9 +463,6 @@ typedef enum {
 
 #pragma mark - methods
 
-+ (id (^)(NSString *))functionCallSource;
-- (id (^)(NSString *))functionCallSource;
-
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
              replacingProfileWithGUID:(NSString *)badGuid
                           withProfile:(Profile *)goodProfile;
@@ -776,7 +773,7 @@ typedef enum {
 // Run a script-side function. Can include composition, references to variables.
 // origin is used to show why the function was called and goes in the error's title. e.g., "Trigger".
 - (void)invokeFunctionCall:(NSString *)invocation
-              extraContext:(NSDictionary *)extraContext
+                     scope:(iTermVariableScope *)scope
                     origin:(NSString *)origin;
 
 #pragma mark - Testing utilities

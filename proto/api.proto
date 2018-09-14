@@ -673,6 +673,7 @@ message NotificationResponse {
     NOT_SUBSCRIBED = 3;
     ALREADY_SUBSCRIBED = 4;
     DUPLICATE_SERVER_ORIGINATED_RPC = 5;
+    INVALID_IDENTIFIER = 6;
   }
   optional Status status = 1;
 }

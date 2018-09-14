@@ -193,7 +193,7 @@ NS_ASSUME_NONNULL_BEGIN
     if ([iTermAdvancedSettingsModel evaluateSwiftyStrings]) {
         [iTermScriptFunctionCall evaluateString:name
                                         timeout:[iTermAdvancedSettingsModel timeoutForStringEvaluation]
-                                         source:aSession.functionCallSource
+                                          scope:aSession.variablesScope
                                      completion:^(NSString *result, NSError *error, NSSet<NSString *> *missing) {
                                          block(result ?: @"");
                                      }];

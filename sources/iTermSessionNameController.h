@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
+@class iTermVariableScope;
 @class Profile;
 
 @interface iTermSessionFormattingDescriptor : NSObject
@@ -22,7 +23,7 @@
 - (void)sessionNameControllerPresentationNameDidChangeTo:(NSString *)newName;
 - (void)sessionNameControllerDidChangeWindowTitle;
 - (iTermSessionFormattingDescriptor *)sessionNameControllerFormattingDescriptor;
-- (id (^)(NSString *))sessionNameControllerVariableSource;
+- (iTermVariableScope *)sessionNameControllerScope;
 - (NSString *)sessionNameControllerInvocation;
 
 @end
@@ -43,8 +44,6 @@
 - (NSString *)popWindowTitle;
 - (void)pushIconTitle;
 - (NSString *)popIconTitle;
-
-- (void)variablesDidChange:(NSSet<NSString *> *)names;
 
 // Forces a synchronous eval followed by an async.
 - (void)setNeedsUpdate;

@@ -13,6 +13,7 @@
 #import "iTermScriptFunctionCall.h"
 #import "iTermSwiftyStringParser.h"
 #import "iTermSwiftyStringRecognizer.h"
+#import "iTermVariables.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
@@ -73,7 +74,7 @@
     @protected
     CPTokeniser *_tokenizer;
     CPParser *_parser;
-    id (^_source)(NSString *);
+    iTermVariableScope *_scope;
     NSError *_error;
     NSString *_input;
     iTermGrammarProcessor *_grammarProcessor;
@@ -246,7 +247,7 @@
                                }
                                iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
                                NSString *path = syntaxTree.children[0];
-                               id value = strongSelf->_source(path);
+                               id value = [strongSelf->_scope valueForVariableName:path];
                                expression.string = [NSString castFrom:value];
                                expression.number = [NSNumber castFrom:value];
                                if (!expression.string && !expression.number) {
@@ -265,7 +266,7 @@
                                }
                                iTermParsedExpression *expression = [[iTermParsedExpression alloc] init];
                                NSString *path = syntaxTree.children[0];
-                               id value = strongSelf->_source(path);
+                               id value = [strongSelf->_scope valueForVariableName:path];
                                expression.string = [NSString castFrom:value];
                                expression.number = [NSNumber castFrom:value];
                                expression.optional = YES;
@@ -293,7 +294,7 @@
 
                                    iTermFunctionCallParser *parser = [[iTermFunctionCallParser alloc] initWithStart:@"expression"];
                                    iTermParsedExpression *expression = [parser parse:substring
-                                                                              source:strongSelf->_source];
+                                                                               scope:strongSelf->_scope];
                                    [interpolatedParts addObject:expression];
                                    if (expression.error) {
                                        *stop = YES;
@@ -372,9 +373,9 @@
     return result;
 }
 
-- (iTermParsedExpression *)parse:(NSString *)invocation source:(id (^)(NSString *))source {
+- (iTermParsedExpression *)parse:(NSString *)invocation scope:(iTermVariableScope *)scope {
     _input = [invocation copy];
-    _source = [source copy];
+    _scope = scope;
     CPTokenStream *tokenStream = [_tokenizer tokenise:invocation];
     iTermParsedExpression *expression = (iTermParsedExpression *)[_parser parse:tokenStream];
     if (expression) {

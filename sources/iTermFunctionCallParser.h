@@ -9,6 +9,7 @@
 #import <CoreParse/CoreParse.h>
 
 @class iTermScriptFunctionCall;
+@class iTermVariableScope;
 
 @interface iTermParsedExpression : NSObject
 // Only one property will be set.
@@ -34,6 +35,6 @@
 // Start gives root grammar rule name.
 - (id)initWithStart:(NSString *)start NS_DESIGNATED_INITIALIZER;
 
-- (iTermParsedExpression *)parse:(NSString *)invocation source:(id (^)(NSString *))source;
+- (iTermParsedExpression *)parse:(NSString *)invocation scope:(iTermVariableScope *)scope;
 
 @end

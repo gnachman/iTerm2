@@ -9,12 +9,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermVariableScope;
+
 // Represents a string with interpolated components like:
 //   foo\(f())bar
 // Nested interpolation is supported.
 // Any variables referenced will be recorded as dependencies and the value will be
-// reevaluated when any of them change. The owner is responsible for calling
-// variablesDidChange:. The observer is invoked when the evaluated string changes.
+// reevaluated when any of them change. The observer is invoked when the evaluated string changes.
 //
 // If you just need a one-time evaluation (synchronous or async) use
 // +[iTermScriptFunctionCall evaluateString:timeout:source:completion:].
@@ -29,11 +30,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSSet<NSString *> *dependencies;
 
 - (instancetype)initWithString:(NSString *)swiftyString
-                        source:(id (^)(NSString *name))source
-                       mutates:(NSSet<NSString *> *)mutates
+                         scope:(nullable iTermVariableScope *)scope
                       observer:(void (^)(NSString *newValue))observer NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
-- (void)variablesDidChange:(NSSet<NSString *> *)names;
 - (void)invalidate;
 
 @end
@@ -44,8 +43,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithString:(NSString *)swiftyString NS_DESIGNATED_INITIALIZER;
 - (instancetype)initWithString:(NSString *)swiftyString
-                        source:(id (^)(NSString *name))source
-                       mutates:(NSSet<NSString *> *)mutates
+                         scope:(nullable iTermVariableScope *)scope
                       observer:(void (^)(NSString *newValue))observer NS_UNAVAILABLE;
 
 @end

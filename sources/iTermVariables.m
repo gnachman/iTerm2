@@ -606,7 +606,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
 }
 
 - (void)addVariables:(iTermVariables *)variables toScopeNamed:(nullable NSString *)scopeName {
-    [_frames addObject:[iTermTuple tupleWithObject:scopeName andObject:variables]];
+    [_frames insertObject:[iTermTuple tupleWithObject:scopeName andObject:variables] atIndex:0];
 }
 
 - (void)enumerateVariables:(void (^)(NSString * _Nonnull, iTermVariables * _Nonnull))block {
@@ -685,7 +685,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     return changed;
 }
 
-- (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name {
+- (BOOL)nsetValue:(nullable id)value forVariableNamed:(NSString *)name {
     NSString *stripped = nil;
     iTermVariables *owner = [self ownerForKey:name stripped:&stripped];
     if (!owner) {
@@ -702,6 +702,56 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     [variables addLinkToReference:reference path:tail];
 }
 
+- (iTermVariableRecordingScope *)recordingCopy {
+    iTermVariableRecordingScope *theCopy = [[iTermVariableRecordingScope alloc] initWithScope:self];
+    [_frames enumerateObjectsUsingBlock:^(iTermTuple<NSString *,iTermVariables *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
+        [theCopy addVariables:tuple.secondObject toScopeNamed:tuple.firstObject];
+    }];
+    return theCopy;
+}
+
+- (id)copyWithZone:(nullable NSZone *)zone {
+    iTermVariableScope *theCopy = [[self.class alloc] init];
+    [_frames enumerateObjectsUsingBlock:^(iTermTuple<NSString *,iTermVariables *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
+        [theCopy addVariables:tuple.secondObject toScopeNamed:tuple.firstObject];
+    }];
+    return theCopy;
+}
+
+@end
+
+@implementation iTermVariableRecordingScope {
+    NSMutableSet<NSString *> *_names;
+    iTermVariableScope *_scope;
+}
+
+- (instancetype)initWithScope:(iTermVariableScope *)scope {
+    self = [super init];
+    if (self) {
+        _scope = scope;
+    }
+    return self;
+}
+
+- (id)valueForVariableName:(NSString *)name {
+    if (!_names) {
+        _names = [NSMutableSet set];
+    }
+
+    [_names addObject:name];
+    id value = [super valueForVariableName:name];
+    if (self.neverReturnNil) {
+        return value ?: @"";
+    } else {
+        return value;
+    }
+}
+
+- (NSArray<iTermVariableReference *> *)recordedReferences {
+    return [_names.allObjects mapWithBlock:^id(NSString *path) {
+        return [[iTermVariableReference alloc] initWithPath:path scope:self->_scope];
+    }];
+}
 @end
 
 NS_ASSUME_NONNULL_END

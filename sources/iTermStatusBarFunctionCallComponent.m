@@ -125,9 +125,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
     __weak __typeof(self) weakSelf = self;
     [iTermScriptFunctionCall callFunction:invocation
                                   timeout:timeout
-                                   source:^id(NSString *name) {
-                                       return [weakSelf.scope valueForVariableName:name] ?: @"";
-                                   }
+                                    scope:weakSelf.scope
                                completion:^(id value, NSError *error, NSSet<NSString *> *dependencies) {}];
 }
 

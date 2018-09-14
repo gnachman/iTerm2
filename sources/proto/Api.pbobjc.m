@@ -5492,7 +5492,7 @@ GPBEnumDescriptor *ITMNotificationResponse_Status_EnumDescriptor(void) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000RequestMalformed\000NotS"
         "ubscribed\000AlreadySubscribed\000DuplicateSer"
-        "verOriginatedRpc\000";
+        "verOriginatedRpc\000InvalidIdentifier\000";
     static const int32_t values[] = {
         ITMNotificationResponse_Status_Ok,
         ITMNotificationResponse_Status_SessionNotFound,
@@ -5500,6 +5500,7 @@ GPBEnumDescriptor *ITMNotificationResponse_Status_EnumDescriptor(void) {
         ITMNotificationResponse_Status_NotSubscribed,
         ITMNotificationResponse_Status_AlreadySubscribed,
         ITMNotificationResponse_Status_DuplicateServerOriginatedRpc,
+        ITMNotificationResponse_Status_InvalidIdentifier,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMNotificationResponse_Status)
@@ -5522,6 +5523,7 @@ BOOL ITMNotificationResponse_Status_IsValidValue(int32_t value__) {
     case ITMNotificationResponse_Status_NotSubscribed:
     case ITMNotificationResponse_Status_AlreadySubscribed:
     case ITMNotificationResponse_Status_DuplicateServerOriginatedRpc:
+    case ITMNotificationResponse_Status_InvalidIdentifier:
       return YES;
     default:
       return NO;

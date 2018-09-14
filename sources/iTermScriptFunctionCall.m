@@ -13,6 +13,7 @@
 #import "iTermFunctionCallParser.h"
 #import "iTermScriptHistory.h"
 #import "iTermTruncatedQuotedRecognizer.h"
+#import "iTermVariables.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
@@ -64,23 +65,23 @@
 
 + (void)evaluateExpression:(NSString *)expressionString
                    timeout:(NSTimeInterval)timeout
-                    source:(id (^)(NSString *))source
+                     scope:(iTermVariableScope *)scope
                 completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     iTermParsedExpression *parsedExpression =
         [[iTermFunctionCallParser expressionParser] parse:expressionString
-                                                   source:source];
+                                                    scope:scope];
     [self evaluateParsedExpression:parsedExpression
                            timeout:timeout
-                            source:source
+                             scope:scope
                         completion:completion];
 }
 
 + (void)callFunction:(NSString *)invocation
              timeout:(NSTimeInterval)timeout
-              source:(id (^)(NSString *))source
+               scope:(iTermVariableScope *)scope
           completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     iTermParsedExpression *expression = [[iTermFunctionCallParser callParser] parse:invocation
-                                                                             source:source];
+                                                                              scope:scope];
     if (expression.string || expression.number) {
         NSString *reason = @"Expected a function call, not a literal";
         completion(nil,
@@ -97,14 +98,14 @@
 
     [self performFunctionCall:expression.functionCall
                fromInvocation:invocation
-                       source:source
+                        scope:scope
                       timeout:timeout
                    completion:completion];
 }
 
 + (void)evaluateString:(NSString *)string
                timeout:(NSTimeInterval)timeout
-                source:(id (^)(NSString *))source
+                 scope:(iTermVariableScope *)scope
             completion:(void (^)(NSString *,
                                  NSError *,
                                  NSSet<NSString *> *missingFunctionSignatures))completion {
@@ -121,7 +122,7 @@
             [parts addObject:@""];
             [self evaluateExpression:substring
                              timeout:timeout
-                              source:source
+                               scope:scope
                           completion:
              ^(id output, NSError *error, NSSet<NSString *> *missingFuncs) {
                  if (output) {
@@ -166,7 +167,7 @@
 
 + (void)evaluateInterpolatedStringParts:(NSArray *)interpolatedStringParts
                                 timeout:(NSTimeInterval)timeout
-                                 source:(id (^)(NSString *))source
+                                  scope:(iTermVariableScope *)scope
                              completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     dispatch_group_t group = NULL;
     __block NSError *firstError = nil;
@@ -191,7 +192,7 @@
             }
             [self evaluateParsedExpression:obj
                                    timeout:timeout
-                                    source:source
+                                     scope:scope
                                 completion:
              ^(id value, NSError *error, NSSet<NSString *> *missingFuncs) {
                  [missingFunctionSignatures unionSet:missingFuncs];
@@ -222,7 +223,7 @@
 
 + (void)evaluateParsedExpression:(iTermParsedExpression *)expression
                          timeout:(NSTimeInterval)timeout
-                          source:(id (^)(NSString *))source
+                           scope:(iTermVariableScope *)scope
                       completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     if (expression.string) {
         completion(expression.string, nil, nil);
@@ -239,7 +240,7 @@
     if (expression.interpolatedStringParts) {
         [self evaluateInterpolatedStringParts:expression.interpolatedStringParts
                                       timeout:timeout
-                                       source:source
+                                        scope:scope
                                    completion:completion];
         return;
     } else {
@@ -247,7 +248,7 @@
 
         [self performFunctionCall:expression.functionCall
                    fromInvocation:expression.functionCall.description
-                           source:source
+                            scope:scope
                           timeout:timeout
                        completion:completion];
     }
@@ -257,7 +258,7 @@
 
 + (void)performFunctionCall:(iTermScriptFunctionCall *)functionCall
              fromInvocation:(NSString *)invocation
-                     source:(id (^)(NSString *))source
+                      scope:(iTermVariableScope *)scope
                     timeout:(NSTimeInterval)timeout
                  completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     __block NSTimer *timer = nil;
@@ -280,7 +281,7 @@
             completion(nil, error, nil);
         }];
     }
-    [functionCall callWithSource:source synchronous:(timeout == 0) completion:^(id output, NSError *error) {
+    [functionCall callWithScope:scope synchronous:(timeout == 0) completion:^(id output, NSError *error) {
         if (timeout > 0) {
             // Not synchronous
             if (timer == nil) {
@@ -306,27 +307,28 @@
     }
 }
 
-- (void)callWithSource:(id (^)(NSString *))source
-           synchronous:(BOOL)synchronous
-            completion:(void (^)(id, NSError *))completion {
+- (void)callWithScope:(iTermVariableScope *)scope
+          synchronous:(BOOL)synchronous
+           completion:(void (^)(id, NSError *))completion {
     if (_depError) {
         completion(nil, self->_depError);
     } else {
         dispatch_group_t group = dispatch_group_create();
-        [self resolveDependenciesWithSource:source
-                                synchronous:synchronous
-                                      group:group];
+        [self resolveDependenciesWithScope:scope
+                               synchronous:synchronous
+                                     group:group];
         void (^onResolved)(void) = ^{
             if (self->_depError) {
                 completion(nil, self->_depError);
                 return;
             }
             if (self.isBuiltinFunction) {
-                [self callBuiltinFunctionWithSource:source completion:completion];
+                [self callBuiltinFunctionWithScope:scope completion:completion];
                 return;
             }
             if (synchronous) {
-                // This is useful because it causes source to be called for all depended-upon
+#warning TODO
+                // This is useful because it causes the scope to be called for all depended-upon
                 // variables even if the function can't be executed. This makes it possible for
                 // the session name controller to build up its set of dependencies.
                 completion(nil, nil);
@@ -352,12 +354,12 @@
                                                               arguments:_parameters.allKeys];
 }
 
-- (void)callBuiltinFunctionWithSource:(id (^)(NSString *))source
+- (void)callBuiltinFunctionWithScope:(iTermVariableScope *)scope
                            completion:(void (^)(id, NSError *))completion {
     iTermBuiltInFunctions *bif = [iTermBuiltInFunctions sharedInstance];
     [bif callFunctionWithName:_name
                    parameters:_parameters
-                       source:source
+                        scope:scope
                    completion:completion];
 }
 
@@ -381,7 +383,7 @@
                            userInfo:userInfo];
 }
 
-- (void)resolveDependenciesWithSource:(id (^)(NSString *))source
+- (void)resolveDependenciesWithScope:(iTermVariableScope *)scope
                           synchronous:(BOOL)synchronous
                                 group:(dispatch_group_t)group {
     [_dependencies enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, iTermScriptFunctionCall * _Nonnull call, BOOL * _Nonnull stop) {
@@ -390,7 +392,7 @@
             return;
         }
         dispatch_group_enter(group);
-        [call callWithSource:source synchronous:synchronous completion:^(id result, NSError *error) {
+        [call callWithScope:scope synchronous:synchronous completion:^(id result, NSError *error) {
             if (error) {
                 self->_depError = [self errorForDependentCall:call thatFailedWithError:error];
             } else {
