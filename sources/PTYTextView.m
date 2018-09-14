@@ -358,6 +358,17 @@ static const int kDragThreshold = 3;
 // For Metal
 - (void)setNeedsDisplay:(BOOL)needsDisplay {
     [super setNeedsDisplay:needsDisplay];
+
+    static dispatch_once_t onceToken;
+    static BOOL log;
+    dispatch_once(&onceToken, ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            log = YES;
+        });
+    });
+    if (log) {
+        DLog(@"setNeedsDisplay:%@ %@\n%@", @(needsDisplay), self, [NSThread callStackSymbols]);
+    }
     if (needsDisplay) {
         [_delegate textViewNeedsDisplayInRect:self.bounds];
     }
@@ -366,6 +377,16 @@ static const int kDragThreshold = 3;
 // For Metal
 - (void)setNeedsDisplayInRect:(NSRect)invalidRect {
     [super setNeedsDisplayInRect:invalidRect];
+    static dispatch_once_t onceToken;
+    static BOOL log;
+    dispatch_once(&onceToken, ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            log = YES;
+        });
+    });
+    if (log) {
+        DLog(@"setNeedsDisplayInRect:%@ %@\n%@", NSStringFromRect(invalidRect), self, [NSThread callStackSymbols]);
+    }
     [_delegate textViewNeedsDisplayInRect:invalidRect];
 }
 
