@@ -11,6 +11,9 @@ This script is a long-running daemon since the registered function gets called w
 
 .. code-block:: python
 
+    import asyncio
+    import iterm2
+
     async def main(connection):
         app=await iterm2.async_get_app(connection)
 
