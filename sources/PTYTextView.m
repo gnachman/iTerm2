@@ -634,10 +634,9 @@ static const int kDragThreshold = 3;
 }
 
 
-- (void)setUseBrightBold:(BOOL)flag
-{
-    _useBrightBold = flag;
-    _drawingHelper.useBrightBold = flag;
+- (void)setUseBoldColor:(BOOL)flag {
+    _useBoldColor = flag;
+    _drawingHelper.useBoldColor = flag;
     [self setNeedsDisplay:YES];
 }
 
@@ -7077,7 +7076,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     if (isBackgroundForDefault) {
                         return kColorMapBackground;
                     } else {
-                        if (isBold && self.useBrightBold) {
+                        if (isBold && self.useBoldColor) {
                             return kColorMapBold;
                         } else {
                             return kColorMapForeground;
@@ -7092,7 +7091,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // display setting (esc[1m) as "bold or bright". We make it a
             // preference.
             if (isBold &&
-                self.useBrightBold &&
+                self.useBoldColor &&
                 (theIndex < 8) &&
                 !isBackground) { // Only colors 0-7 can be made "bright".
                 theIndex |= 8;  // set "bright" bit.

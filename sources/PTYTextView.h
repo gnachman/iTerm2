@@ -254,8 +254,8 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 @property(nonatomic, assign) BOOL asciiLigatures;
 @property(nonatomic, assign) BOOL nonAsciiLigatures;
 
-// Use a bright version of the text color for bold text?
-@property(nonatomic, assign) BOOL useBrightBold;
+// Use a bright version of the text color for bold text, and use specified bold color?
+@property(nonatomic, assign) BOOL useBoldColor;
 
 // Ok to render italic text as italics?
 @property(nonatomic, assign) BOOL useItalicFont;

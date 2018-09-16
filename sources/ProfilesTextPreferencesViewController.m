@@ -31,7 +31,6 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSMatrix *_cursorType;
     IBOutlet NSButton *_blinkingCursor;
     IBOutlet NSButton *_useBoldFont;
-    IBOutlet NSButton *_useBrightBold;  // Bold text in bright colors
     IBOutlet NSButton *_blinkAllowed;
     IBOutlet NSButton *_useItalicFont;
     IBOutlet NSButton *_ambiguousIsDoubleWidth;
@@ -105,10 +104,6 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     [self defineControl:_thinStrokes
                     key:KEY_THIN_STROKES
                    type:kPreferenceInfoTypePopup];
-
-    [self defineControl:_useBrightBold
-                    key:KEY_USE_BRIGHT_BOLD
-                   type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_blinkAllowed
                     key:KEY_BLINK_ALLOWED

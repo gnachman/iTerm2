@@ -96,7 +96,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     BOOL _useItalicFont;
     BOOL _useNonAsciiFont;
     BOOL _reverseVideo;
-    BOOL _useBrightBold;
+    BOOL _useBoldColor;
     BOOL _isFrontTextView;
     vector_float4 _unfocusedSelectionColor;
     CGFloat _transparencyAlpha;
@@ -344,7 +344,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     _useItalicFont = textView.useItalicFont;
     _useNonAsciiFont = textView.useNonAsciiFont;
     _reverseVideo = textView.dataSource.terminal.reverseVideo;
-    _useBrightBold = textView.useBrightBold;
+    _useBoldColor = textView.useBoldColor;
     _thinStrokes = textView.thinStrokes;
     _isRetina = drawingHelper.isRetina;
     _isInKeyWindow = [textView isInKeyWindow];
@@ -1259,7 +1259,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                     if (isBackgroundForDefault) {
                         return kColorMapBackground;
                     } else {
-                        if (isBold && _useBrightBold) {
+                        if (isBold && _useBoldColor) {
                             return kColorMapBold;
                         } else {
                             return kColorMapForeground;
@@ -1274,7 +1274,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             // display setting (esc[1m) as "bold or bright". We make it a
             // preference.
             if (isBold &&
-                _useBrightBold &&
+                _useBoldColor &&
                 (theIndex < 8) &&
                 !isBackground) { // Only colors 0-7 can be made "bright".
                 theIndex |= 8;  // set "bright" bit.

@@ -1800,7 +1800,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [self doGoldenTestForInput:@"x\e[1mx"
                           name:NSStringFromSelector(_cmd)
                           hook:nil
-              profileOverrides:@{ KEY_USE_BRIGHT_BOLD: @YES }
+              profileOverrides:@{ KEY_USE_BOLD_COLOR: @YES }
                   createGolden:NO
                           size:VT100GridSizeMake(4, 2)];
 }
@@ -1810,7 +1810,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     [self doGoldenTestForInput:@"x\e[1mx"
                           name:NSStringFromSelector(_cmd)
                           hook:nil
-              profileOverrides:@{ KEY_USE_BRIGHT_BOLD: @NO }
+              profileOverrides:@{ KEY_USE_BOLD_COLOR: @NO }
                   createGolden:NO
                           size:VT100GridSizeMake(4, 2)];
 }
@@ -2201,7 +2201,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                   helper.antiAliasedShift = 0.5;
                               };
                           }
-              profileOverrides:@{ KEY_USE_BRIGHT_BOLD: @NO }
+              profileOverrides:@{ KEY_USE_BOLD_COLOR: @NO }
                   createGolden:NO
                           size:VT100GridSizeMake(4, 2)];
 }
@@ -2215,7 +2215,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                   helper.antiAliasedShift = 0;
                               };
                           }
-              profileOverrides:@{ KEY_USE_BRIGHT_BOLD: @NO }
+              profileOverrides:@{ KEY_USE_BOLD_COLOR: @NO }
                   createGolden:NO
                           size:VT100GridSizeMake(4, 2)];
 }

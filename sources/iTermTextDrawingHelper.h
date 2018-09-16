@@ -155,8 +155,8 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 // Should a box cursor be drawn filled in?
 @property(nonatomic, assign) BOOL shouldDrawFilledInCursor;
 
-// Does bold text render as the bright version of a dim ansi color?
-@property(nonatomic, assign) BOOL useBrightBold;
+// Does bold text render as the bright version of a dim ansi color, and also use specified bold color?
+@property(nonatomic, assign) BOOL useBoldColor;
 
 // Is this the current text view of the "front" terminal window?
 // TODO: This might be the same as textViewIsActiveSession.

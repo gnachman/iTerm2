@@ -38,6 +38,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet CPKColorWell *_ansi15Color;
     IBOutlet CPKColorWell *_foregroundColor;
     IBOutlet CPKColorWell *_backgroundColor;
+    IBOutlet NSButton *_useBrightBold;  // Respect bold
     IBOutlet CPKColorWell *_boldColor;
     IBOutlet CPKColorWell *_linkColor;
     IBOutlet CPKColorWell *_selectionColor;
@@ -170,6 +171,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                     key:KEY_USE_CURSOR_GUIDE
                    type:kPreferenceInfoTypeCheckbox];
 
+    info = [self defineControl:_useBrightBold
+                           key:KEY_USE_BOLD_COLOR
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{ [weakSelf updateColorControlsEnabled]; };
+
     [self maybeWarnAboutExcessiveContrast];
     [self updateColorControlsEnabled];
 }
@@ -190,6 +196,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     _cursorColor.enabled = shouldEnableCursorColor;
     _cursorTextColor.enabled = shouldEnableCursorColor;
+    _boldColor.enabled = [self boolForKey:KEY_USE_BOLD_COLOR];
     _cursorColorLabel.labelEnabled = shouldEnableCursorColor;
     _cursorTextColorLabel.labelEnabled = shouldEnableCursorColor;
 

@@ -77,6 +77,7 @@
 #define KEY_FOREGROUND_COLOR       @"Foreground Color"
 #define KEY_BACKGROUND_COLOR       @"Background Color"
 #define KEY_BOLD_COLOR             @"Bold Color"
+#define KEY_USE_BOLD_COLOR         @"Use Bright Bold"  // Means "use the specified bold color, and also use the bright version of dark ansi colors".
 #define KEY_LINK_COLOR             @"Link Color"
 #define KEY_SELECTION_COLOR        @"Selection Color"
 #define KEY_SELECTED_TEXT_COLOR    @"Selected Text Color"
@@ -129,7 +130,6 @@
 #define KEY_DISABLE_BOLD           @"Disable Bold"  // DEPRECATED
 #define KEY_USE_BOLD_FONT          @"Use Bold Font"
 #define KEY_THIN_STROKES           @"Thin Strokes"
-#define KEY_USE_BRIGHT_BOLD        @"Use Bright Bold"
 #define KEY_USE_ITALIC_FONT        @"Use Italic Font"
 #define KEY_TRANSPARENCY           @"Transparency"
 #define KEY_BLEND                  @"Blend"
