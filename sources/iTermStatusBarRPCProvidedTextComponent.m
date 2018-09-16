@@ -44,7 +44,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     self = [super init];
     if (self) {
         _registrationRequest = registrationRequest;
-    }
+   }
     return self;
 }
 
@@ -86,8 +86,10 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     return [knobs copy];
 }
 
-- (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs {
+- (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs
+                                               scope:(iTermVariableScope *)scope {
     return [[iTermStatusBarRPCProvidedTextComponent alloc] initWithRegistrationRequest:_registrationRequest
+                                                                                 scope:scope
                                                                                  knobs:knobs];
 }
 
@@ -104,20 +106,22 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
                                       scope:(iTermVariableScope *)scope
                                       knobs:(NSDictionary *)knobs {
     return [self initWithConfiguration:@{ iTermStatusBarRPCRegistrationRequestKey: registrationRequest.data,
-                                          iTermStatusBarComponentConfigurationKeyKnobValues: knobs }];
+                                          iTermStatusBarComponentConfigurationKeyKnobValues: knobs }
+                                 scope:scope];
 }
 
-- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration {
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
+                                scope:(nullable iTermVariableScope *)realScope {
     NSData *data = configuration[iTermStatusBarRPCRegistrationRequestKey];;
     ITMRPCRegistrationRequest *registrationRequest = [[ITMRPCRegistrationRequest alloc] initWithData:data
                                                                                                error:nil];
     if (!registrationRequest) {
         return nil;
     }
-    self = [super initWithConfiguration:configuration];
+    self = [super initWithConfiguration:configuration scope:realScope];
     if (self) {
         _registrationRequest = registrationRequest;
-        iTermVariableRecordingScope *scope = [[iTermVariableRecordingScope alloc] initWithScope:scope];
+        iTermVariableRecordingScope *scope = [[iTermVariableRecordingScope alloc] initWithScope:self.scope];
         scope.neverReturnNil = YES;
         [iTermScriptFunctionCall callFunction:self.invocation
                                       timeout:0
@@ -130,6 +134,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
                 [weakSelf updateWithKnobValues:weakSelf.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
             };
         }];
+        [self updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(registeredFunctionsDidChange:)
                                                      name:iTermAPIRegisteredFunctionsDidChangeNotification
@@ -197,22 +202,6 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     return YES;
 }
 
-- (NSSet<NSString *> *)statusBarComponentVariableDependencies {
-    NSArray *paths = [_registrationRequest.defaultsArray mapWithBlock:^id(ITMRPCRegistrationRequest_RPCArgument *anObject) {
-        return anObject.path;
-    }];
-    return [NSSet setWithArray:paths];
-}
-
-- (void)statusBarComponentSetVariableScope:(iTermVariableScope *)scope {
-    [super statusBarComponentSetVariableScope:scope];
-    [self updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
-}
-
-- (void)statusBarComponentUpdate {
-    [self updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
-}
-
 - (nullable NSArray<NSString *> *)stringVariants {
     return _variants ?: @[ @"" ];
 }
@@ -220,9 +209,13 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 - (void)updateWithKnobValues:(NSDictionary<NSString *, id> *)knobValues {
     __weak __typeof(self) weakSelf = self;
     iTermVariableScope *scope = [self.scope copy];
-    iTermVariables *variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone];
+    // Create a temporary frame to shadow __knobs in the scope. This avoids mutating a scope we don't own.
+    iTermVariables *variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
+                                                                  owner:self];
     [scope addVariables:variables toScopeNamed:nil];
-    [scope setValue:weakSelf.configuration[iTermStatusBarComponentConfigurationKeyKnobValues] ?: @{} forVariableNamed:@"__knobs"];
+    NSDictionary *knobsDict = weakSelf.configuration[iTermStatusBarComponentConfigurationKeyKnobValues] ?: @{};
+    NSString *jsonKnobs = [NSJSONSerialization it_jsonStringForObject:knobsDict];
+    [scope setValue:jsonKnobs forVariableNamed:@"__knobs"];
     [iTermScriptFunctionCall callFunction:self.invocation
                                   timeout:_registrationRequest.timeout ?: [[NSDate distantFuture] timeIntervalSinceNow]
                                     scope:scope

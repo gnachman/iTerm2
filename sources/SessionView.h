@@ -135,6 +135,7 @@
 
 - (iTermStatusBarViewController *)sessionViewStatusBarViewController;
 
+- (iTermVariableScope *)sessionViewScope;
 @end
 
 @interface SessionView : NSView <SessionTitleViewDelegate>

@@ -23,19 +23,24 @@
     return @{ iTermStatusBarComponentConfigurationKeyKnobValues: @{ iTermStatusBarSwiftyStringComponentExpressionKey: interpolatedString } };
 }
 
-+ (instancetype)tmuxLayoutWithController:(TmuxController *)controller {
++ (instancetype)tmuxLayoutWithController:(TmuxController *)controller
+                                   scope:(iTermVariableScope *)scope {
     NSDictionary<iTermStatusBarComponentConfigurationKey, id> *leftConfiguration;
     NSDictionary<iTermStatusBarComponentConfigurationKey, id> *rightConfiguration;
 
     leftConfiguration = [self tmux_configurationWithInterpolatedStringExpression:iTermVariableKeySessionTmuxStatusLeft];
     rightConfiguration = [self tmux_configurationWithInterpolatedStringExpression:iTermVariableKeySessionTmuxStatusRight];
 
-    id<iTermStatusBarComponent> leftComponent = [[iTermStatusBarSwiftyStringComponent alloc] initWithConfiguration:leftConfiguration];
-    id<iTermStatusBarComponent> rightComponent = [[iTermStatusBarSwiftyStringComponent alloc] initWithConfiguration:rightConfiguration];
-    id<iTermStatusBarComponent> springComponent = [[iTermStatusBarSpringComponent alloc] initWithConfiguration:@{}];
+    id<iTermStatusBarComponent> leftComponent = [[iTermStatusBarSwiftyStringComponent alloc] initWithConfiguration:leftConfiguration
+                                                                                                             scope:scope];
+    id<iTermStatusBarComponent> rightComponent = [[iTermStatusBarSwiftyStringComponent alloc] initWithConfiguration:rightConfiguration
+                                                                                                              scope:scope];
+    id<iTermStatusBarComponent> springComponent = [[iTermStatusBarSpringComponent alloc] initWithConfiguration:@{}
+                                                                                                         scope:scope];
 
     NSDictionary *layoutDict = [iTermProfilePreferences objectForKey:KEY_STATUS_BAR_LAYOUT inProfile:controller.profile];
-    iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithDictionary:layoutDict];
+    iTermStatusBarLayout *layout = [[iTermStatusBarLayout alloc] initWithDictionary:layoutDict
+                                                                              scope:scope];
     layout.components = @[ leftComponent, springComponent, rightComponent ];
     return layout;
 }

@@ -113,7 +113,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     SetWithGrainDim(!isVertical, dest, value);
 }
 
-@interface PTYTab()<iTermVariablesDelegate>
+@interface PTYTab()
 @property(nonatomic, strong) NSMapTable<SessionView *, PTYSession *> *viewToSessionMap;
 @end
 
@@ -366,10 +366,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                           capacity:1];
     _tabNumberForItermSessionId = -1;
     hiddenLiveViews_ = [[NSMutableArray alloc] init];
-    _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab];
-    _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab];
+    _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab
+                                                   owner:self];
+    _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab
+                                                       owner:self];
     [self.variablesScope setValue:_userVariables forVariableNamed:@"user"];
-    _variables.delegate = self;
 
     self.tmuxWindow = -1;
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -5178,13 +5179,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)sessionDuplicateTab {
     [parentWindow_ createDuplicateOfTab:self];
-}
-
-#pragma mark - iTermVariablesDelegate
-
-- (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames
-            group:(dispatch_group_t)group {
-#warning Test tab title override with interpolated string
 }
 
 - (BOOL)sessionShouldAutoClose:(PTYSession *)session {

@@ -274,7 +274,8 @@ static NSDate* lastResizeDate_;
                                          iTermStatusBarSearchComponentIsTemporaryKey: @YES };
                 NSDictionary *configuration = @{ iTermStatusBarComponentConfigurationKeyKnobValues: knobs};
                 iTermStatusBarSearchFieldComponent *component =
-                    [[iTermStatusBarSearchFieldComponent alloc] initWithConfiguration:configuration];
+                    [[iTermStatusBarSearchFieldComponent alloc] initWithConfiguration:configuration
+                                                                                scope:self.delegate.sessionViewScope];
                 _temporaryStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:component.statusBarComponentSearchViewController];
                 _temporaryStatusBarFindDriver.delegate = _dropDownFindDriver.delegate;
                 component.statusBarComponentSearchViewController.driver = _temporaryStatusBarFindDriver;

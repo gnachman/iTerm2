@@ -24,8 +24,9 @@ NS_ASSUME_NONNULL_BEGIN
     double _ceiling;
 }
 
-- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration {
-    self = [super initWithConfiguration:configuration];
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
+                                scope:(nullable iTermVariableScope *)scope {
+    self = [super initWithConfiguration:configuration scope:scope];
     if (self) {
         _ceiling = 1;
         _samples = [NSMutableArray array];

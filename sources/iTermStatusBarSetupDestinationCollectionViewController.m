@@ -123,7 +123,6 @@
 
 - (void)setLayout:(iTermStatusBarLayout *)layout {
     [layout.components enumerateObjectsUsingBlock:^(id<iTermStatusBarComponent>  _Nonnull component, NSUInteger idx, BOOL * _Nonnull stop) {
-        [component statusBarComponentSetVariableScope:nil];
         iTermStatusBarSetupElement *element = [[iTermStatusBarSetupElement alloc] initWithComponent:component];
         element.delegate = self;
         [self->_elements addObject:element];

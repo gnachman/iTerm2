@@ -46,9 +46,6 @@ const CGFloat iTermStatusBarHeight = 22;
     if (self) {
         _scope = scope;
         _layout = layout;
-        for (id<iTermStatusBarComponent> component in layout.components) {
-            [component statusBarComponentSetVariableScope:scope];
-        }
     }
     return self;
 }
@@ -161,15 +158,6 @@ const CGFloat iTermStatusBarHeight = 22;
     _temporaryRightComponent = temporaryRightComponent;
     [self updateViews];
     [self.view layoutSubtreeIfNeeded];
-}
-
-- (void)variablesDidChange:(NSSet<NSString *> *)names {
-    [_layout.components enumerateObjectsUsingBlock:^(id<iTermStatusBarComponent> _Nonnull component, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSSet<NSString *> *dependencies = [component statusBarComponentVariableDependencies];
-        if ([dependencies intersectsSet:names]) {
-            [component statusBarComponentVariablesDidChange:names];
-        }
-    }];
 }
 
 - (NSViewController<iTermFindViewController> *)searchViewController {

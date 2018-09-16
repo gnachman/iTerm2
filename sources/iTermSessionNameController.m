@@ -13,6 +13,7 @@
 #import "iTermProfilePreferences.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptHistory.h"
+#import "iTermVariableReference.h"
 #import "iTermVariables.h"
 #import "NSObject+iTerm.h"
 
@@ -140,7 +141,15 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
                                               iTermVariableKeySessionTmuxWindowTitle ]) {
             [scope valueForVariableName:tmuxVariableName];
         }
+        for (iTermVariableReference *ref in _refs) {
+            [ref removeAllLinks];
+        }
         _refs = recordingScope.recordedReferences;
+        for (iTermVariableReference *ref in _refs) {
+            ref.onChangeBlock = ^{
+                [weakSelf setNeedsReevaluation];
+            };
+        }
     }
 }
 

@@ -42,8 +42,10 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
     }
     return self;
 }
-- (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs {
-    return [[_class alloc] initWithConfiguration:@{iTermStatusBarComponentConfigurationKeyKnobValues: knobs}];
+- (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs
+                                               scope:(iTermVariableScope *)scope {
+    return [[_class alloc] initWithConfiguration:@{iTermStatusBarComponentConfigurationKeyKnobValues: knobs}
+                                           scope:scope];
 }
 
 - (void)encodeWithCoder:(NSCoder *)aCoder {
@@ -69,9 +71,11 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
 @synthesize configuration = _configuration;
 @synthesize delegate = _delegate;
 
-- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration {
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
+                                scope:(nullable iTermVariableScope *)scope {
     self = [super init];
     if (self) {
+        _scope = scope;
         _configuration = [configuration copy];
         _advancedConfiguration = [iTermStatusBarAdvancedConfiguration advancedConfigurationFromDictionary:configuration[iTermStatusBarComponentConfigurationKeyLayoutAdvancedConfigurationDictionaryValue]];
         _defaultTextColor = _advancedConfiguration.defaultTextColor;
@@ -85,7 +89,8 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
     if (!configuration) {
         return nil;
     }
-    return [self initWithConfiguration:configuration];
+    return [self initWithConfiguration:configuration
+                                 scope:nil];
 }
 
 - (nullable NSImage *)statusBarComponentIcon {
@@ -193,23 +198,11 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
     return 5;
 }
 
-- (NSSet<NSString *> *)statusBarComponentVariableDependencies {
-    return [NSSet set];
-}
-
 - (NSTimeInterval)statusBarComponentUpdateCadence {
     return INFINITY;
 }
 
 - (void)statusBarComponentUpdate {
-}
-
-- (void)statusBarComponentVariablesDidChange:(NSSet<NSString *> *)variables {
-    [self statusBarComponentUpdate];
-}
-
-- (void)statusBarComponentSetVariableScope:(iTermVariableScope *)scope {
-    _scope = scope;
 }
 
 - (CGFloat)statusBarComponentSpringConstant {

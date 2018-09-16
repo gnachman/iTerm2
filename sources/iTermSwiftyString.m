@@ -64,6 +64,7 @@
         return;
     }
     _evaluatedString = [evaluatedString copy];
+    assert(!_observing);
     _observing = YES;
     self.observer(_evaluatedString);
     _observing = NO;

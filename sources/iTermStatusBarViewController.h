@@ -42,7 +42,6 @@ extern const CGFloat iTermStatusBarHeight;
 - (instancetype)initWithNibName:(nullable NSNibName)nibNameOrNil bundle:(nullable NSBundle *)nibBundleOrNil NS_UNAVAILABLE;
 - (nullable instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
 
-- (void)variablesDidChange:(NSSet<NSString *> *)names;
 - (void)updateColors;
 
 @end

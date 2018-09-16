@@ -75,7 +75,8 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
     NSMutableArray<id<iTermStatusBarComponent>> *_components;
 }
 
-+ (NSArray<id<iTermStatusBarComponent>> *)componentsArrayFromDictionary:(NSDictionary *)dictionary {
++ (NSArray<id<iTermStatusBarComponent>> *)componentsArrayFromDictionary:(NSDictionary *)dictionary
+                                                                  scope:(iTermVariableScope *)scope {
     NSMutableArray<id<iTermStatusBarComponent>> *result = [NSMutableArray array];
     for (NSDictionary *dict in dictionary[iTermStatusBarLayoutKeyComponents]) {
         NSString *className = dict[iTermStatusBarLayoutKeyClass];
@@ -91,14 +92,17 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
         }
         configuration = [configuration dictionaryBySettingObject:dictionary[iTermStatusBarLayoutKeyAdvancedConfiguration] ?: @{}
                                                           forKey:iTermStatusBarComponentConfigurationKeyLayoutAdvancedConfigurationDictionaryValue];
-        id<iTermStatusBarComponent> component = [[theClass alloc] initWithConfiguration:configuration];
+        id<iTermStatusBarComponent> component = [[theClass alloc] initWithConfiguration:configuration
+                                                                                  scope:scope];
         [result addObject:component];
     }
     return result;
 }
 
-- (instancetype)initWithDictionary:(NSDictionary *)layout {
-    return [self initWithComponents:[iTermStatusBarLayout componentsArrayFromDictionary:layout]
+- (instancetype)initWithDictionary:(NSDictionary *)layout
+                             scope:(nullable iTermVariableScope *)scope {
+    return [self initWithComponents:[iTermStatusBarLayout componentsArrayFromDictionary:layout
+                                                                                  scope:scope]
                       advancedConfiguration:[iTermStatusBarAdvancedConfiguration advancedConfigurationFromDictionary:layout[iTermStatusBarLayoutKeyAdvancedConfiguration]]];
 }
 
@@ -112,8 +116,8 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
     return self;
 }
 
-- (instancetype)init {
-    return [self initWithDictionary:@{}];
+- (instancetype)initWithScope:(nullable iTermVariableScope *)scope {
+    return [self initWithDictionary:@{} scope:scope];
 }
 
 - (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {

@@ -73,7 +73,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithLayoutDictionary:(NSDictionary *)layoutDictionary {
     self = [super initWithNibName:@"iTermStatusBarSetupViewController" bundle:[NSBundle bundleForClass:self.class]];
     if (self) {
-        _layout = [[iTermStatusBarLayout alloc] initWithDictionary:layoutDictionary];
+        _layout = [[iTermStatusBarLayout alloc] initWithDictionary:layoutDictionary
+                                                             scope:nil];
     }
     return self;
 }

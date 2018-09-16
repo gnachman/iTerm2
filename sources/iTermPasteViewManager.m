@@ -56,7 +56,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)showInStatusBar:(iTermStatusBarViewController *)statusBar {
     NSDictionary *knobs = @{ iTermStatusBarPriorityKey: @(INFINITY) };
     NSDictionary *configuration = @{ iTermStatusBarComponentConfigurationKeyKnobValues: knobs};
-    _component = [[iTermStatusBarProgressComponent alloc] initWithConfiguration:configuration];
+    _component = [[iTermStatusBarProgressComponent alloc] initWithConfiguration:configuration
+                                                                          scope:self.delegate.pasteViewManagerScope];
     _component.progressDelegate = self;
     _component.pasteContext = self.pasteContext;
     _component.bufferLength = self.bufferLength;

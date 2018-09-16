@@ -20,7 +20,8 @@ static NSString *const iTermStatusBarSpringComponentSpringConstantKey = @"iTermS
 + (instancetype)springComponentWithCompressionResistance:(double)compressionResistance {
     NSDictionary *knobs = @{ iTermStatusBarSpringComponentSpringConstantKey: @(compressionResistance) };
     NSDictionary *configuration = @{ iTermStatusBarComponentConfigurationKeyKnobValues: knobs };
-    return [[iTermStatusBarSpringComponent alloc] initWithConfiguration:configuration];
+    return [[iTermStatusBarSpringComponent alloc] initWithConfiguration:configuration
+                                                                  scope:nil];
 }
 
 - (id)statusBarComponentExemplar {

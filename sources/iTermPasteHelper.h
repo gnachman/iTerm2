@@ -13,6 +13,7 @@ extern const int kNumberOfSpacesPerTabCancel;
 extern const int kNumberOfSpacesPerTabNoConversion;
 
 @class iTermStatusBarViewController;
+@class iTermVariableScope;
 
 @protocol iTermPasteHelperDelegate <NSObject>
 
@@ -42,6 +43,8 @@ extern const int kNumberOfSpacesPerTabNoConversion;
 
 // Paste view did appear/disappear
 - (void)pasteHelperPasteViewVisibilityDidChange;
+
+- (iTermVariableScope *)pasteHelperScope;
 
 @end
 

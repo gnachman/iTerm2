@@ -65,6 +65,7 @@
 #import "iTermThroughputEstimator.h"
 #import "iTermTmuxStatusBarMonitor.h"
 #import "iTermUpdateCadenceController.h"
+#import "iTermVariableReference.h"
 #import "iTermVariables.h"
 #import "iTermWarning.h"
 #import "iTermWorkingDirectoryPoller.h"
@@ -258,7 +259,6 @@ static NSString *const iTermSessionTitleSession = @"session";
     iTermSessionViewDelegate,
     iTermStatusBarViewControllerDelegate,
     iTermUpdateCadenceControllerDelegate,
-    iTermVariablesDelegate,
     iTermWorkingDirectoryPollerDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
@@ -496,6 +496,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     iTermWorkingDirectoryPoller *_pwdPoller;
     
     iTermGraphicSource *_graphicSource;
+    iTermVariableReference *_jobPidRef;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -630,10 +631,13 @@ static NSString *const iTermSessionTitleSession = @"session";
         _guid = [[NSString uuid] retain];
         [[PTYSession sessionMap] setObject:self forKey:_guid];
 
-        _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession];
-        _sessionVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone];
+        _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession
+                                                       owner:self];
+        _sessionVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
+                                                              owner:self];
         [self.variablesScope setValue:_sessionVariables forVariableNamed:@"session"];
-        _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone];
+        _userVariables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
+                                                           owner:self];
         [self.variablesScope setValue:_userVariables forVariableNamed:@"user"];
 
         _creationDate = [[NSDate date] retain];
@@ -643,7 +647,12 @@ static NSString *const iTermSessionTitleSession = @"session";
                      forVariableNamed:iTermVariableKeySessionCreationTimeString];
         [self.variablesScope setValue:[@(_autoLogId) stringValue] forVariableNamed:iTermVariableKeySessionAutoLogID];
         [self.variablesScope setValue:_guid forVariableNamed:iTermVariableKeySessionID];
-        _variables.delegate = self;
+        _jobPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionJobPid
+                                                            scope:self.variablesScope];
+        __weak __typeof(self) weakSelf;
+        _jobPidRef.onChangeBlock = ^{
+            [weakSelf jobPidDidChange];
+        };
 
         _tmuxSecureLogging = NO;
         _tailFindContext = [[FindContext alloc] init];
@@ -681,7 +690,6 @@ static NSString *const iTermSessionTitleSession = @"session";
         _pwdPoller = [[iTermWorkingDirectoryPoller alloc] init];
         _pwdPoller.delegate = self;
         _graphicSource = [[iTermGraphicSource alloc] init];
-
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:@"kCoprocessStatusChangeNotification"
@@ -839,7 +847,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_currentMarkOrNotePosition release];
     [_pwdPoller release];
     [_graphicSource release];
-    
+    [_jobPidRef release];
+
     [super dealloc];
 }
 
@@ -3775,7 +3784,8 @@ ITERM_WEAKLY_REFERENCEABLE
         NSDictionary *layout = [iTermProfilePreferences objectForKey:KEY_STATUS_BAR_LAYOUT inProfile:aDict];
         NSDictionary *existing = _statusBarViewController.layout.dictionaryValue;
         if (![NSObject object:existing isEqualToObject:layout]) {
-            iTermStatusBarLayout *newLayout = [[[iTermStatusBarLayout alloc] initWithDictionary:layout] autorelease];
+            iTermStatusBarLayout *newLayout = [[[iTermStatusBarLayout alloc] initWithDictionary:layout
+                                                                                          scope:self.variablesScope] autorelease];
             if (![NSObject object:existing isEqualToObject:newLayout.dictionaryValue]) {
                 [_statusBarViewController release];
                 if (newLayout) {
@@ -3842,7 +3852,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)badgeFormat {
-#warning TODO: Test this
     return _badgeSwiftyString.swiftyString;
 }
 
@@ -5379,7 +5388,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                                      scope:self.variablesScope];
                 _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:self.profile];
                 if ([iTermStatusBarLayout shouldOverrideLayout:self.profile[KEY_STATUS_BAR_LAYOUT]]) {
-                    [self setSessionSpecificProfileValues:@{ KEY_STATUS_BAR_LAYOUT: [[iTermStatusBarLayout tmuxLayoutWithController:_tmuxController] dictionaryValue] }];
+                    [self setSessionSpecificProfileValues:@{ KEY_STATUS_BAR_LAYOUT: [[iTermStatusBarLayout tmuxLayoutWithController:_tmuxController scope:nil] dictionaryValue] }];
                 }
                 break;
         }
@@ -9697,6 +9706,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (iTermVariableScope *)pasteHelperScope {
+    return self.variablesScope;
+}
+
 #pragma mark - iTermAutomaticProfileSwitcherDelegate
 
 - (iTermSavedProfile *)automaticProfileSwitcherCurrentSavedProfile {
@@ -10022,6 +10035,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)sessionViewDidChangeHoverURLVisible:(BOOL)visible {
     [self.delegate sessionUpdateMetalAllowed];
+}
+
+- (iTermVariableScope *)sessionViewScope {
+    return self.variablesScope;
 }
 
 #pragma mark - iTermCoprocessDelegate
@@ -10377,20 +10394,13 @@ ITERM_WEAKLY_REFERENCEABLE
     return self.variablesScope;
 }
 
-#pragma mark - iTermVariablesDelegate
+#pragma mark - Variable Change Handlers
 
-- (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames group:(dispatch_group_t)group {
-    if ([changedNames containsObject:iTermVariableKeySessionJobPid]) {
-        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-        if ([_graphicSource updateImageForProcessID:self.shell.pid enabled:[self shouldShowTabGraphic]]) {
-            [self.delegate sessionDidChangeGraphic:self];
-        }
+- (void)jobPidDidChange {
+    [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+    if ([_graphicSource updateImageForProcessID:self.shell.pid enabled:[self shouldShowTabGraphic]]) {
+        [self.delegate sessionDidChangeGraphic:self];
     }
-#warning TODO: test session name and badge with interpolated strings.
-#warning TODO: Change the badge to use variable references.
-    [_textview setBadgeLabel:[self badgeLabel]];
-#warning TODO: get rid of this
-    [_statusBarViewController variablesDidChange:changedNames];
 }
 
 #pragma mark - iTermEchoProbeDelegate

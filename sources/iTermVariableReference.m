@@ -45,6 +45,10 @@
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p path=%@ numlinks=%@>", NSStringFromClass(self.class), self, _path, @(_links.count)];
+}
+
 - (id)value {
     return [_scope valueForVariableName:_path];
 }

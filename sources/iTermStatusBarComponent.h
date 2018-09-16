@@ -31,7 +31,8 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 
 @protocol iTermStatusBarComponentFactory<NSCoding, NSCopying, NSObject>
 
-- (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs;
+- (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs
+                                               scope:(iTermVariableScope *)scope;
 - (NSString *)componentDescription;
 - (NSDictionary *)defaultKnobs;
 
@@ -46,7 +47,8 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 
 + (NSDictionary *)statusBarComponentDefaultKnobs;
 
-- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration;
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
+                                scope:(iTermVariableScope *)scope;
 
 - (NSImage *)statusBarComponentIcon;
 
@@ -86,20 +88,11 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 // Decides which components are removed first when space lacks.
 - (double)statusBarComponentPriority;
 
-// Which variables (in the session context) this component's contents depend on.
-- (NSSet<NSString *> *)statusBarComponentVariableDependencies;
-
 // The time interval between updates. Use distantFuture if you don't need updates.
 - (NSTimeInterval)statusBarComponentUpdateCadence;
 
 // Should update the contents of the component.
 - (void)statusBarComponentUpdate;
-
-// Called when depended-upon variables changed.
-- (void)statusBarComponentVariablesDidChange:(NSSet<NSString *> *)variables;
-
-// Sets the scope for variable evaluations.
-- (void)statusBarComponentSetVariableScope:(iTermVariableScope *)scope;
 
 // Updates knob values
 - (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues;

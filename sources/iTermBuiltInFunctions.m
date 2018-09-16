@@ -7,6 +7,8 @@
 
 #import "iTermBuiltInFunctions.h"
 
+#import "iTermVariableReference.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 
 NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSString *> *argumentNames) {

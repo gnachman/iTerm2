@@ -163,7 +163,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     PTYTabDelegate,
     iTermRootTerminalViewDelegate,
     iTermToolbeltViewDelegate,
-    iTermVariablesDelegate,
     NSComboBoxDelegate,
     PSMMinimalTabStyleDelegate>
 
@@ -2332,8 +2331,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (iTermVariables *)variables {
     if (!_variables) {
-        _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextWindow];
-        _variables.delegate = self;
+        _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextWindow
+                                                       owner:self];
     }
     return _variables;
 }
@@ -8715,11 +8714,6 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([[self superclass] instancesRespondToSelector:_cmd]) {
         [super controlTextDidChange:aNotification];
     }
-}
-
-#pragma mark - iTermVariablesDelegate
-
-- (void)variables:(iTermVariables *)variables didChangeValuesForNames:(NSSet<NSString *> *)changedNames group:(dispatch_group_t)group {
 }
 
 #pragma mark - PSMMinimalTabStyleDelegate

@@ -32,7 +32,6 @@ extern const CGFloat iTermStatusBarViewControllerIconWidth;
 - (nullable instancetype)initWithCoder:(NSCoder *)decoder NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)variablesDidChange:(NSSet<NSString *> *)paths;
 - (void)layoutSubviews;
 
 @end

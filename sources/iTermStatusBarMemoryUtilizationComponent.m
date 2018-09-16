@@ -22,8 +22,9 @@ NS_ASSUME_NONNULL_BEGIN
     NSMutableArray<NSNumber *> *_samples;
 }
 
-- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration {
-    self = [super initWithConfiguration:configuration];
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
+                                scope:(nullable iTermVariableScope *)scope {
+    self = [super initWithConfiguration:configuration scope:scope];
     if (self) {
         _samples = [NSMutableArray array];
         __weak __typeof(self) weakSelf = self;

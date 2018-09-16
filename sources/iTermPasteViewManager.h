@@ -11,11 +11,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermStatusBarViewController;
 @class PasteContext;
+@class iTermVariableScope;
 
 @protocol iTermPasteViewManagerDelegate<NSObject>
 
 - (void)pasteViewManagerDropDownPasteViewVisibilityDidChange;
 - (void)pasteViewManagerUserDidCancel;
+- (iTermVariableScope *)pasteViewManagerScope;
 
 @end
 

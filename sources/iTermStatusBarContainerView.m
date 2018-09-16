@@ -18,21 +18,24 @@ static const CGFloat iTermStatusBarContainerViewIconBottomMargin = 1;
 NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermStatusBarContainerView {
-    NSSet<NSString *> *_dependencies;
     NSTimer *_timer;
     BOOL _needsUpdate;
     NSView *_view;
 }
 
 - (nullable instancetype)initWithComponent:(id<iTermStatusBarComponent>)component {
-    self = [super initWithFrame:NSMakeRect(0, 0, 200, 21)];
+    CGFloat preferredWidth = MAX(1, [component statusBarComponentMinimumWidth]);
+    NSImage *icon = component.statusBarComponentIcon;
+    if (icon) {
+        preferredWidth += iTermStatusBarViewControllerIconWidth;
+    }
+    self = [super initWithFrame:NSMakeRect(0, 0, preferredWidth, 21)];
     if (self) {
         self.wantsLayer = YES;
         _component = component;
         _backgroundColor = [component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues][iTermStatusBarSharedBackgroundColorKey] colorValue];
         _view = component.statusBarComponentCreateView;
         [self addSubview:_view];
-        NSImage *icon = component.statusBarComponentIcon;
         const BOOL hasIcon = (icon != nil);
         const CGFloat x = self.minX;
         if (hasIcon) {
@@ -82,12 +85,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)reevaluateTimer:(NSTimer *)timer {
     [self setNeedsUpdate];
-}
-
-- (void)variablesDidChange:(NSSet<NSString *> *)paths {
-    if ([paths intersectsSet:_dependencies]) {
-        [self setNeedsUpdate];
-    }
 }
 
 - (void)setNeedsUpdate {

@@ -32,7 +32,8 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
 
 - (instancetype)initWithComponentFactory:(id<iTermStatusBarComponentFactory>)factory
                                    knobs:(NSDictionary *)knobs {
-    return [self initWithComponent:[factory newComponentWithKnobs:knobs]];
+    return [self initWithComponent:[factory newComponentWithKnobs:knobs
+                                                            scope:nil]];
 }
 
 - (NSString *)description {
@@ -47,7 +48,8 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
 
 - (id)copyWithZone:(nullable NSZone *)zone {
     NSDictionary *knobs = _component.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
-    return [[iTermStatusBarSetupElement alloc] initWithComponent:[_component.statusBarComponentFactory newComponentWithKnobs:knobs]];
+    return [[iTermStatusBarSetupElement alloc] initWithComponent:[_component.statusBarComponentFactory newComponentWithKnobs:knobs
+                                                                                                                       scope:nil]];
 }
 
 #pragma mark - NSCoding

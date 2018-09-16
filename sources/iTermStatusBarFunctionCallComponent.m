@@ -92,11 +92,15 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
 }
 
 - (CGFloat)statusBarComponentMinimumWidth {
-    return _button.frame.size.width;
+    return self.button.frame.size.width;
 }
 
 - (NSString *)statusBarComponentShortDescription {
     return @"Call Script Function";
+}
+
+- (BOOL)statusBarComponentCanStretch {
+    return NO;
 }
 
 - (NSString *)statusBarComponentDetailedDescription {

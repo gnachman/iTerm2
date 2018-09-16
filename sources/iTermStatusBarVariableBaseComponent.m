@@ -8,6 +8,7 @@
 #import "iTermStatusBarVariableBaseComponent.h"
 
 #import "iTermVariables.h"
+#import "iTermVariableReference.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -18,21 +19,39 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermStatusBarVariableBaseComponent {
     NSString *_path;
+    iTermVariableReference *_ref;
 }
 
-- (instancetype)initWithPath:(NSString *)path
-               configuration:(NSDictionary *)configuration {
-    NSDictionary *knobValueOverrides = @{ @"path": path };
+- (instancetype)initWithPath:(nullable NSString *)path
+               configuration:(NSDictionary *)configuration
+                       scope:(iTermVariableScope *)scope {
     NSMutableDictionary *mergedConfiguration = [configuration ?: @{} mutableCopy];
-    NSDictionary *knobValues = [mergedConfiguration[iTermStatusBarComponentConfigurationKeyKnobValues] ?: @{} mutableCopy];
-    knobValues = [knobValues dictionaryByMergingDictionary:knobValueOverrides];
-    mergedConfiguration[iTermStatusBarComponentConfigurationKeyKnobValues] = knobValues;
+
+    if (path) {
+        NSDictionary *knobValueOverrides = @{ @"path": path };
+        NSDictionary *knobValues = [mergedConfiguration[iTermStatusBarComponentConfigurationKeyKnobValues] ?: @{} mutableCopy];
+        knobValues = [knobValues dictionaryByMergingDictionary:knobValueOverrides];
+        mergedConfiguration[iTermStatusBarComponentConfigurationKeyKnobValues] = knobValues;
+    }
     
-    self = [super initWithConfiguration:mergedConfiguration];
+    self = [super initWithConfiguration:mergedConfiguration scope:scope];
     if (self) {
         _path = path;
+        if (path) {
+            _ref = [[iTermVariableReference alloc] initWithPath:path scope:scope];
+            __weak __typeof(self) weakSelf = self;
+            _ref.onChangeBlock = ^{
+                [weakSelf updateTextFieldIfNeeded];
+            };
+        }
+        [self updateTextFieldIfNeeded];
     }
     return self;
+}
+
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
+                                scope:(nullable iTermVariableScope *)scope {
+    return [self initWithPath:nil configuration:configuration scope:scope];
 }
 
 - (NSString *)statusBarComponentShortDescription {
@@ -60,19 +79,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable NSArray<NSString *> *)stringVariants {
     return [self variantsOf:self.cached ?: @""];
-}
-
-- (NSSet<NSString *> *)statusBarComponentVariableDependencies {
-    return [NSSet setWithObject:_path];
-}
-
-- (void)statusBarComponentVariablesDidChange:(NSSet<NSString *> *)variables {
-    [self updateTextFieldIfNeeded];
-}
-
-- (void)statusBarComponentSetVariableScope:(iTermVariableScope *)scope {
-    [super statusBarComponentSetVariableScope:scope];
-    [self updateTextFieldIfNeeded];
 }
 
 - (void)updateTextFieldIfNeeded {
@@ -103,8 +109,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermStatusBarHostnameComponent
 
-- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration {
-    return [super initWithPath:@"session.hostname" configuration:configuration];
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
+                                scope:(nullable iTermVariableScope *)scope {
+    return [super initWithPath:@"session.hostname" configuration:configuration scope:scope];
 }
 
 - (NSImage *)statusBarComponentIcon {
@@ -143,8 +150,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermStatusBarUsernameComponent
 
-- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration {
-    return [super initWithPath:@"session.username" configuration:configuration];
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
+                                scope:(nullable iTermVariableScope *)scope {
+    return [super initWithPath:@"session.username" configuration:configuration scope:scope];
 }
 
 - (NSImage *)statusBarComponentIcon {
@@ -182,8 +190,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermStatusBarWorkingDirectoryComponent
 
-- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration {
-    return [super initWithPath:@"session.path" configuration:configuration];
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
+                                scope:(nullable iTermVariableScope *)scope {
+    return [super initWithPath:@"session.path" configuration:configuration scope:scope];
 }
 
 - (NSImage *)statusBarComponentIcon {

@@ -43,7 +43,10 @@ extern NSString *const iTermStatusBarLayoutKeyAdvancedConfiguration;
 
 - (instancetype)initWithComponents:(NSArray<id<iTermStatusBarComponent>> *)components
              advancedConfiguration:(iTermStatusBarAdvancedConfiguration *)advancedConfiguration NS_DESIGNATED_INITIALIZER;
-- (instancetype)initWithDictionary:(NSDictionary *)layout;
+- (instancetype)initWithDictionary:(NSDictionary *)layout
+                             scope:(nullable iTermVariableScope *)scope;
+- (instancetype)initWithScope:(nullable iTermVariableScope *)scope;
+- (instancetype)init NS_UNAVAILABLE;
 
 - (NSDictionary *)dictionaryValue;
 

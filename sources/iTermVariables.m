@@ -76,7 +76,8 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextApp];
+        instance = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextApp
+                                                     owner:NSApp];
     });
     return instance;
 }
@@ -222,9 +223,10 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     }
 }
 
-- (instancetype)initWithContext:(iTermVariablesSuggestionContext)context {
+- (instancetype)initWithContext:(iTermVariablesSuggestionContext)context owner:(nonnull id)owner {
     self = [super init];
     if (self) {
+        _owner = owner;
         _context = context;
         _values = [NSMutableDictionary dictionary];
         _resolvedLinks = [NSMutableDictionary dictionary];
@@ -239,15 +241,10 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p delegate=%@>", self.class, self, self.delegate];
+    return [NSString stringWithFormat:@"<%@: %p owner=%@>", self.class, self, self.owner];
 }
 
 #pragma mark - APIs
-
-- (void)setDelegate:(nullable id<iTermVariablesDelegate>)delegate {
-    _delegate = delegate;
-    DLog(@"Update delegate of %@", self);
-}
 
 - (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name {
     iTermVariables *owner = [self setValue:value forVariableNamed:name withSideEffects:YES];
@@ -269,7 +266,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
         return NO;
     }
 
-    [self batchNotifyOwnerForMutationsByDepth:mutations];
+    [self didReferenceVariables:mutations];
     return YES;
 }
 
@@ -313,6 +310,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     id value = _values[parts.firstObject];
     if (value) {
         [self addWeakReferenceToLinkTable:_resolvedLinks toObject:reference forKey:parts.firstObject];
+        [reference addLinkToVariables:self localPath:parts.firstObject];
         iTermVariables *sub = [iTermVariables castFrom:value];
         if (sub && parts.count > 1) {
             [sub addLinkToReference:reference path:[[parts subarrayFromIndex:1] componentsJoinedByString:@"."]];
@@ -445,17 +443,17 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
         }
     }
 
-    [self batchNotifyOwnerForMutationsByDepth:@[ [iTermTriple tripleWithObject:@1 andObject:self object:name] ]];
+    [self didReferenceVariables:@[ [iTermTriple tripleWithObject:@1 andObject:self object:name] ]];
     return self;
 }
 
-- (void)batchNotifyOwnerForMutationsByDepth:(NSArray<iTermVariablesDepthOwnerNamesTriple *> *)mutations {
-    dispatch_group_t group = dispatch_group_create();
-    dispatch_group_enter(group);
+// TODO: This is way more complex than it needs to be. It used to batch notify owners of changes but
+// I removed the delegate interface. I don't think the batching logic is needed any more, but this
+// commit is already too large.
+- (void)didReferenceVariables:(NSArray<iTermVariablesDepthOwnerNamesTriple *> *)mutations {
     [self enumerateMutationsByOwnersByDepth:mutations block:^(iTermVariables *owner, NSSet<NSString *> *nameSet) {
-        [owner notifyDelegateChainOfChangedNames:nameSet group:group];
+        [owner recordUseOfVariables:nameSet];
     }];
-    dispatch_group_leave(group);
 }
 
 - (void)enumerateMutationsByOwnersByDepth:(NSArray<iTermVariablesDepthOwnerNamesTriple *> *)mutations
@@ -500,8 +498,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     }];
 }
 
-- (void)notifyDelegateChainOfChangedNames:(NSSet<NSString *> *)names
-                                    group:(dispatch_group_t)group {
+- (void)recordUseOfVariables:(NSSet<NSString *> *)names {
     if (_context != iTermVariablesSuggestionContextNone) {
         [names enumerateObjectsUsingBlock:^(NSString * _Nonnull name, BOOL * _Nonnull stop) {
             if (![self->_values[name] isKindOfClass:[iTermVariables class]]) {
@@ -510,9 +507,8 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
         }];
     }
 
-    [self.delegate variables:self didChangeValuesForNames:names group:group];
     if (_parent && _parentName) {
-        [_parent notifyDelegateChainOfChangedNames:[self namesByPrependingParentName:names] group:group];
+        [_parent recordUseOfVariables:[self namesByPrependingParentName:names]];
     }
 }
 
@@ -583,6 +579,9 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
 
 @implementation iTermVariableScope {
     NSMutableArray<iTermTuple<NSString *, iTermVariables *> *> *_frames;
+    // References to paths without an owner. This normally only happens when a session is being
+    // shut down (e.g, tab.currentSession is assigned to nil)
+    NSPointerArray *_danglingReferences;
 }
 
 + (instancetype)globalsScope {
@@ -595,18 +594,14 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     self = [super init];
     if (self) {
         _frames = [NSMutableArray array];
+        _danglingReferences = [NSPointerArray weakObjectsPointerArray];
     }
     return self;
 }
 
-- (id (^)(NSString *))functionCallSource {
-    return ^id (NSString *name) {
-        return [self valueForVariableName:name];
-    };
-}
-
 - (void)addVariables:(iTermVariables *)variables toScopeNamed:(nullable NSString *)scopeName {
     [_frames insertObject:[iTermTuple tupleWithObject:scopeName andObject:variables] atIndex:0];
+    [self resolveDanglingReferences];
 }
 
 - (void)enumerateVariables:(void (^)(NSString * _Nonnull, iTermVariables * _Nonnull))block {
@@ -682,23 +677,48 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
             changed = YES;
         }
     }];
+    if ([dict.allValues anyWithBlock:^BOOL(id anObject) {
+        return [anObject isKindOfClass:[iTermVariables class]];
+    }]) {
+        [self resolveDanglingReferences];
+    }
     return changed;
 }
 
-- (BOOL)nsetValue:(nullable id)value forVariableNamed:(NSString *)name {
+- (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name {
     NSString *stripped = nil;
     iTermVariables *owner = [self ownerForKey:name stripped:&stripped];
     if (!owner) {
         return NO;
     }
-    return [owner setValue:value forVariableNamed:stripped];
+    const BOOL result = [owner setValue:value forVariableNamed:stripped];
+    if ([value isKindOfClass:[iTermVariables class]]) {
+        [self resolveDanglingReferences];
+    }
+    return result;
+}
+
+- (void)resolveDanglingReferences {
+    NSPointerArray *refs = _danglingReferences;
+    if (refs.count == 0) {
+        return;
+    }
+    _danglingReferences = [NSPointerArray weakObjectsPointerArray];
+    for (NSInteger i = 0; i < refs.count; i++) {
+        iTermVariableReference *ref = [_danglingReferences pointerAtIndex:i];
+        if (ref) {
+            [self addLinksToReference:ref];
+        }
+    }
 }
 
 - (void)addLinksToReference:(iTermVariableReference *)reference {
-    NSArray<NSString *> *parts = [reference.path componentsSeparatedByString:@"."];
     NSString *tail;
-    iTermVariables *variables = [self ownerForKey:parts.firstObject stripped:&tail];
-    assert(variables != nil);
+    iTermVariables *variables = [self ownerForKey:reference.path stripped:&tail];
+    if (!variables) {
+        [_danglingReferences addPointer:(__bridge void * _Nullable)(reference)];
+        return;
+    }
     [variables addLinkToReference:reference path:tail];
 }
 

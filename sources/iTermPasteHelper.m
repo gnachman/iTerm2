@@ -626,6 +626,10 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     [self dequeueEvents];
 }
 
+- (iTermVariableScope *)pasteViewManagerScope {
+    return [self.delegate pasteHelperScope];
+}
+
 #pragma mark - Testing
 
 - (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti

@@ -60,7 +60,8 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
                                           iTermRPCTriggerPathInput: stringLine.stringValue ?: @"",
                                           iTermRPCTriggerPathLineNumber: @(lineNumber) };
     iTermVariableScope *scope = [aSession.variablesScope copy];
-    iTermVariables *variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone];
+    iTermVariables *variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
+                                                                  owner:self];
     [scope addVariables:variables toScopeNamed:nil];
     [scope setValuesFromDictionary:temporaryVariables];
     [aSession invokeFunctionCall:invocation scope:scope origin:@"Trigger"];

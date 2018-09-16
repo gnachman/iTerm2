@@ -12,12 +12,34 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "iTermProcessCache.h"
+#import "iTermVariableReference.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermStatusBarJobComponent {
     NSArray<NSString *> *_cached;
     NSArray<NSString *> *_chain;
+    iTermVariableReference *_jobPidRef;
+    iTermVariableReference *_childPidRef;
+
+}
+
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
+                                scope:(nullable iTermVariableScope *)scope {
+    self = [super initWithConfiguration:configuration scope:scope];
+    if (self) {
+        __weak __typeof(self) weakSelf = self;
+        _jobPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionJobPid scope:scope];
+        _jobPidRef.onChangeBlock = ^{
+            [weakSelf updateTextFieldIfNeeded];
+        };
+
+        _childPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionChildPid scope:scope];
+        _childPidRef.onChangeBlock = ^{
+            [weakSelf updateTextFieldIfNeeded];
+        };
+    }
+    return self;
 }
 
 - (NSImage *)statusBarComponentIcon {
@@ -42,15 +64,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable NSArray<NSString *> *)stringVariants {
     return _cached ?: @[ @"" ];
-}
-
-- (NSSet<NSString *> *)statusBarComponentVariableDependencies {
-    return [NSSet setWithArray:@[ iTermVariableKeySessionJobPid,
-                                  iTermVariableKeySessionChildPid ]];
-}
-
-- (NSTimeInterval)statusBarComponentUpdateCadence {
-    return 1;
 }
 
 - (void)updateTextFieldIfNeeded {

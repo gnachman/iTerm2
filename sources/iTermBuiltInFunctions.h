@@ -24,7 +24,7 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 
 - (instancetype)initWithName:(NSString *)name
                    arguments:(NSDictionary<NSString *, Class> *)argumentsAndTypes
-               defaultValues:(NSDictionary<NSString *, NSString *> *)defaultValues
+               defaultValues:(NSDictionary<NSString *, NSString *> *)defaultValues  // arg name -> variable name
                      context:(iTermVariablesSuggestionContext)context
                        block:(iTermBuiltInFunctionsExecutionBlock)block NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

@@ -16,7 +16,7 @@
 @implementation iTermVariablesTest
 
 - (void)testWriteThenRead {
-    iTermVariables *vars = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession] autorelease];
+    iTermVariables *vars = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession owner:self] autorelease];
     iTermVariableScope *scope = [[[iTermVariableScope alloc] init] autorelease];
     [scope addVariables:vars toScopeNamed:nil];
     [scope setValue:@123 forVariableNamed:@"v"];
@@ -24,7 +24,7 @@
 }
 
 - (void)testReferenceProducesValue {
-    iTermVariables *vars = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession] autorelease];
+    iTermVariables *vars = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession owner:self] autorelease];
     iTermVariableScope *scope = [[[iTermVariableScope alloc] init] autorelease];
     [scope addVariables:vars toScopeNamed:nil];
     [scope setValue:@123 forVariableNamed:@"v"];
@@ -41,7 +41,7 @@
 }
 
 - (void)testReferenceCanSetValue {
-    iTermVariables *vars = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession] autorelease];
+    iTermVariables *vars = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession owner:self] autorelease];
     iTermVariableScope *scope = [[[iTermVariableScope alloc] init] autorelease];
     [scope addVariables:vars toScopeNamed:nil];
     [scope setValue:@123 forVariableNamed:@"v"];
@@ -54,7 +54,7 @@
 }
 
 - (void)testLateResolution {
-    iTermVariables *vars = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession] autorelease];
+    iTermVariables *vars = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession owner:self] autorelease];
     iTermVariableScope *scope = [[[iTermVariableScope alloc] init] autorelease];
     [scope addVariables:vars toScopeNamed:nil];
 
@@ -70,15 +70,15 @@
 }
 
 - (void)testChangeOfIntermediate {
-    iTermVariables *tab = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab] autorelease];
+    iTermVariables *tab = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab owner:self] autorelease];
     iTermVariableScope *tabScope = [[[iTermVariableScope alloc] init] autorelease];
     [tabScope addVariables:tab toScopeNamed:nil];
 
-    iTermVariables *session1 = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession] autorelease];
+    iTermVariables *session1 = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession owner:self] autorelease];
     iTermVariableScope *session1Scope = [[[iTermVariableScope alloc] init] autorelease];
     [session1Scope addVariables:session1 toScopeNamed:nil];
 
-    iTermVariables *session2 = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession] autorelease];
+    iTermVariables *session2 = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession owner:self] autorelease];
     iTermVariableScope *session2Scope = [[[iTermVariableScope alloc] init] autorelease];
     [session2Scope addVariables:session2 toScopeNamed:nil];
 
@@ -101,11 +101,11 @@
 }
 
 - (void)testLateIntermediateResolution {
-    iTermVariables *tab = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab] autorelease];
+    iTermVariables *tab = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab owner:self] autorelease];
     iTermVariableScope *tabScope = [[[iTermVariableScope alloc] init] autorelease];
     [tabScope addVariables:tab toScopeNamed:nil];
 
-    iTermVariables *session1 = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession] autorelease];
+    iTermVariables *session1 = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession owner:self] autorelease];
     iTermVariableScope *session1Scope = [[[iTermVariableScope alloc] init] autorelease];
     [session1Scope addVariables:session1 toScopeNamed:nil];
     [session1Scope setValue:@123 forVariableNamed:@"n"];
@@ -122,13 +122,13 @@
 }
 
 - (void)testShadow {
-    iTermVariables *vars = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession] autorelease];
+    iTermVariables *vars = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession owner:self] autorelease];
     iTermVariableScope *scope1 = [[[iTermVariableScope alloc] init] autorelease];
     [scope1 addVariables:vars toScopeNamed:nil];
     [scope1 setValue:@123 forVariableNamed:@"v"];
 
     iTermVariableScope *scope2 = [[scope1 copy] autorelease];
-    iTermVariables *vars2 = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession] autorelease];
+    iTermVariables *vars2 = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession owner:self] autorelease];
     [scope2 addVariables:vars2 toScopeNamed:nil];
     [scope2 setValue:@234 forVariableNamed:@"v"];
 

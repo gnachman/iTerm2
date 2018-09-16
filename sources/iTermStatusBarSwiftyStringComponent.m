@@ -20,6 +20,15 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
     NSString *_value;
 }
 
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
+                                scope:(nullable iTermVariableScope *)scope {
+    self = [super initWithConfiguration:configuration scope:scope];
+    if (self) {
+        [self updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
+    }
+    return self;
+}
+
 - (NSString *)statusBarComponentShortDescription {
     return @"Interpolated String";
 }
@@ -58,11 +67,6 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
 
 - (NSSet<NSString *> *)statusBarComponentVariableDependencies {
     return _swiftyString.dependencies;
-}
-
-- (void)statusBarComponentSetVariableScope:(iTermVariableScope *)scope {
-    [super statusBarComponentSetVariableScope:scope];
-    [self updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
 }
 
 - (void)setStringValue:(NSString *)value {

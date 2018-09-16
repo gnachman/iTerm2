@@ -24,7 +24,8 @@ extern NSString *const iTermStatusBarPriorityKey;
 @property (nonatomic, readonly) NSColor *defaultTextColor;
 @property (nonatomic, readonly) iTermStatusBarAdvancedConfiguration *advancedConfiguration;
 
-- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
+                                scope:(nullable iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 @end

@@ -73,11 +73,6 @@
     return [NSSet setWithObject:iTermVariableKeySessionHostname];
 }
 
-- (void)statusBarComponentVariablesDidChange:(NSSet<NSString *> *)variables {
-    [self.viewController reloadData];
-}
-
-
 #pragma mark - iTermStatusBarComponent
 
 - (nullable NSImage *)statusBarComponentIcon {
