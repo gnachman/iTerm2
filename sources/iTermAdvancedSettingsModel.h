@@ -230,6 +230,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)URLCharacterSet;
 + (BOOL)useAdaptiveFrameRate;
 + (BOOL)useColorfgbgFallback;
++ (BOOL)useDivorcedProfileToSplit;
 + (BOOL)useExperimentalFontMetrics;
 + (BOOL)useGCDUpdateTimer;
 

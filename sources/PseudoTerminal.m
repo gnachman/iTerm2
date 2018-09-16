@@ -6409,14 +6409,20 @@ ITERM_WEAKLY_REFERENCEABLE
     return newSession;
 }
 
-- (Profile*)_bookmarkToSplit
-{
-    Profile* theBookmark = nil;
+- (Profile *)profileForSplittingCurrentSession {
+    Profile *theBookmark = nil;
+    PTYSession *sourceSession = self.currentSession;
+
+    if ([iTermAdvancedSettingsModel useDivorcedProfileToSplit]) {
+        if (sourceSession.isDivorced) {
+            // NOTE: This counts on splitVertically:before:profile:targetSession: rewriting the GUID.
+            return self.currentSession.profile;
+        }
+    }
 
     // Get the bookmark this session was originally created with. But look it up from its GUID because
     // it might have changed since it was copied into originalProfile when the bookmark was
     // first created.
-    PTYSession *sourceSession = self.currentSession;
     Profile* originalBookmark = [sourceSession originalProfile];
     if (originalBookmark && [originalBookmark objectForKey:KEY_GUID]) {
         theBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[originalBookmark objectForKey:KEY_GUID]];
@@ -6444,14 +6450,14 @@ ITERM_WEAKLY_REFERENCEABLE
 - (IBAction)splitVertically:(id)sender
 {
     [self splitVertically:YES
-             withBookmark:[self _bookmarkToSplit]
+             withBookmark:[self profileForSplittingCurrentSession]
             targetSession:[[self currentTab] activeSession]];
 }
 
 - (IBAction)splitHorizontally:(id)sender
 {
     [self splitVertically:NO
-             withBookmark:[self _bookmarkToSplit]
+             withBookmark:[self gi]
             targetSession:[[self currentTab] activeSession]];
 }
 
