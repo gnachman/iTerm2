@@ -10,9 +10,9 @@
 #import "DebugLogging.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSWindow+iTerm.h"
 
 static const CGFloat kMargin = 8;
-NSString *const iTermWindowAppearanceDidChange = @"iTermWindowAppearanceDidChange";
 
 @interface iTermAnnouncementInternalView : NSView
 @end

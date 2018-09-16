@@ -56,6 +56,7 @@
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
+#import "NSWindow+iTerm.h"
 #import "NSWindow+PSM.h"
 #import "NSWorkspace+iTerm.h"
 #import "PasteboardHistory.h"

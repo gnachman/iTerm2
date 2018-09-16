@@ -18,6 +18,7 @@
 #import "NSStringITerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSWindow+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 
@@ -82,6 +83,9 @@ static const CGFloat kHelpMargin = 5;
         [scrollView_ setHasHorizontalScroller:NO];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [scrollView_ setBorderType:NSBezelBorder];
+        if (@available(macOS 10.14, *)) { } else {
+            scrollView_.drawsBackground = NO;
+        }
 
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
         NSTableColumn *col;

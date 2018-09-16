@@ -9,6 +9,8 @@
 #import "NSWindow+iTerm.h"
 #import "PTYWindow.h"
 
+NSString *const iTermWindowAppearanceDidChange = @"iTermWindowAppearanceDidChange";
+
 @implementation NSWindow(iTerm)
 
 - (BOOL)isFullScreen {

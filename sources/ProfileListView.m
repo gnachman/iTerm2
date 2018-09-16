@@ -38,6 +38,7 @@
 #import "ProfileTagsView.h"
 #import "iTermSearchField.h"
 #import "NSView+RecursiveDescription.h"
+#import "NSWindow+iTerm.h"
 
 #define kProfileTableViewDataType @"iTerm2ProfileGuid"
 
@@ -242,6 +243,10 @@ const CGFloat kDefaultTagsWidth = 80;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(dataChangeNotification:)
                                                      name:kReloadAddressBookNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowAppearanceDidChange:)
+                                                     name:iTermWindowAppearanceDidChange
                                                    object:nil];
 
         // Tags view -------------------------------------------------------------------------------
@@ -1087,6 +1092,10 @@ const CGFloat kDefaultTagsWidth = 80;
     [self performSelector:@selector(reloadData)
                withObject:nil
                afterDelay:0];
+}
+
+- (void)windowAppearanceDidChange:(NSNotification *)notification {
+    [tableView_ reloadData];
 }
 
 - (void)onDoubleClick:(id)sender

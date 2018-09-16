@@ -31,8 +31,6 @@ extern NSString *const iTermDidDecodeWindowRestorableStateNotification;
 
 extern NSString *const iTermTabDidChangePositionInWindowNotification;
 
-extern NSString *const iTermWindowAppearanceDidChange;
-
 extern NSString *const iTermSelectedTabDidChange;
 
 // This class is 1:1 with windows. It controls the tabs, the window's fulscreen
