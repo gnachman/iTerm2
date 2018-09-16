@@ -3422,7 +3422,7 @@ ITERM_WEAKLY_REFERENCEABLE
     self.asciiLigatures = [iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES inProfile:aDict];
     self.nonAsciiLigatures = [iTermProfilePreferences boolForKey:KEY_NON_ASCII_LIGATURES inProfile:aDict];
 
-    [_textview setUseBrightBold:[iTermProfilePreferences boolForKey:KEY_USE_BRIGHT_BOLD
+    [_textview setUseBoldColor:[iTermProfilePreferences boolForKey:KEY_USE_BOLD_COLOR
                                                           inProfile:aDict]];
 
     // Italic - this default has changed from NO to YES as of 1/30/15
