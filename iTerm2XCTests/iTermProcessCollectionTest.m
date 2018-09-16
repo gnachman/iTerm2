@@ -18,12 +18,13 @@
 - (void)testBasic {
     iTermProcessCollection *collection = [[iTermProcessCollection alloc] init];
     // ? -> a -> b+
-    [collection addProcessWithName:@"a" processID:2 parentProcessID:1 isForegroundJob:NO];
-    [collection addProcessWithName:@"b" processID:3 parentProcessID:2 isForegroundJob:YES];
+    [collection addProcessWithProcessID:2 parentProcessID:1];
+    iTermProcessInfo *info3 = [collection addProcessWithProcessID:3 parentProcessID:2];
+    [info3 privateSetIsForegroundJob];
 
     // ? -> x -> y+
-    [collection addProcessWithName:@"x" processID:10 parentProcessID:9 isForegroundJob:NO];
-    [collection addProcessWithName:@"y" processID:11 parentProcessID:10 isForegroundJob:YES];
+    [collection addProcessWithProcessID:10 parentProcessID:9];
+    [[collection addProcessWithProcessID:11 parentProcessID:10] privateSetIsForegroundJob];
 
     [collection commit];
 
@@ -35,20 +36,29 @@
     XCTAssertEqual(actual, 11);
 }
 
+- (void)inCollection:(iTermProcessCollection *)collection
+addProcessWithProcessID:(pid_t)pid
+     parentProcessID:(pid_t)parentPid
+     isForegroundJob:(BOOL)isForegroundJob {
+    iTermProcessInfo *info = [collection addProcessWithProcessID:pid parentProcessID:parentPid];
+    if (isForegroundJob) {
+        [info privateSetIsForegroundJob];
+    }
+}
 - (void)testMultipleChildren {
     // ? -> a -> b
     //        -> c -> d+
     //        -> e -> f -> g+
 
     iTermProcessCollection *collection = [[iTermProcessCollection alloc] init];
-    const int a=1, b=2, c=3, d=4, e=5, f=6, g=8;
-    [collection addProcessWithName:@"a" processID:a parentProcessID:0 isForegroundJob:NO];
-    [collection addProcessWithName:@"b" processID:b parentProcessID:a isForegroundJob:NO];
-    [collection addProcessWithName:@"c" processID:c parentProcessID:a isForegroundJob:NO];
-    [collection addProcessWithName:@"d" processID:d parentProcessID:c isForegroundJob:YES];
-    [collection addProcessWithName:@"e" processID:e parentProcessID:a isForegroundJob:NO];
-    [collection addProcessWithName:@"f" processID:f parentProcessID:e isForegroundJob:NO];
-    [collection addProcessWithName:@"g" processID:g parentProcessID:f isForegroundJob:YES];
+    const pid_t a=1, b=2, c=3, d=4, e=5, f=6, g=8;
+    [self inCollection:collection addProcessWithProcessID:a parentProcessID:0 isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:b parentProcessID:a isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:c parentProcessID:a isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:d parentProcessID:c isForegroundJob:YES];
+    [self inCollection:collection addProcessWithProcessID:e parentProcessID:a isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:f parentProcessID:e isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:g parentProcessID:f isForegroundJob:YES];
 
     [collection commit];
 
@@ -71,14 +81,14 @@
 
 - (void)testNoForegroundJob {
     iTermProcessCollection *collection = [[iTermProcessCollection alloc] init];
-    const int a=1, b=2, c=3, d=4, e=5, f=6, g=8;
-    [collection addProcessWithName:@"a" processID:a parentProcessID:0 isForegroundJob:NO];
-    [collection addProcessWithName:@"b" processID:b parentProcessID:a isForegroundJob:NO];
-    [collection addProcessWithName:@"c" processID:c parentProcessID:a isForegroundJob:NO];
-    [collection addProcessWithName:@"d" processID:d parentProcessID:c isForegroundJob:NO];
-    [collection addProcessWithName:@"e" processID:e parentProcessID:a isForegroundJob:NO];
-    [collection addProcessWithName:@"f" processID:f parentProcessID:e isForegroundJob:NO];
-    [collection addProcessWithName:@"g" processID:g parentProcessID:f isForegroundJob:NO];
+    const pid_t a=1, b=2, c=3, d=4, e=5, f=6, g=8;
+    [self inCollection:collection addProcessWithProcessID:a parentProcessID:0 isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:b parentProcessID:a isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:c parentProcessID:a isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:d parentProcessID:c isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:e parentProcessID:a isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:f parentProcessID:e isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:g parentProcessID:f isForegroundJob:NO];
 
     [collection commit];
 
@@ -96,14 +106,14 @@
     //  |                      |
     //  +----------------------+
 
-    const int a=1, b=2, c=3, d=4, e=5, f=6, g=8;
-    [collection addProcessWithName:@"a" processID:a parentProcessID:g isForegroundJob:NO];
-    [collection addProcessWithName:@"b" processID:b parentProcessID:a isForegroundJob:NO];
-    [collection addProcessWithName:@"c" processID:c parentProcessID:a isForegroundJob:NO];
-    [collection addProcessWithName:@"d" processID:d parentProcessID:c isForegroundJob:YES];
-    [collection addProcessWithName:@"e" processID:e parentProcessID:a isForegroundJob:NO];
-    [collection addProcessWithName:@"f" processID:f parentProcessID:e isForegroundJob:NO];
-    [collection addProcessWithName:@"g" processID:g parentProcessID:f isForegroundJob:YES];
+    const pid_t a=1, b=2, c=3, d=4, e=5, f=6, g=8;
+    [self inCollection:collection addProcessWithProcessID:a parentProcessID:g isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:b parentProcessID:a isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:c parentProcessID:a isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:d parentProcessID:c isForegroundJob:YES];
+    [self inCollection:collection addProcessWithProcessID:e parentProcessID:a isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:f parentProcessID:e isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:g parentProcessID:f isForegroundJob:YES];
 
     [collection commit];
 
@@ -126,11 +136,11 @@
 
 - (void)testMultipleForegroundJobs {
     // a -> b+ -> c+
-    const int a = 1, b = 2, c = 3;
+    const pid_t a = 1, b = 2, c = 3;
     iTermProcessCollection *collection = [[iTermProcessCollection alloc] init];
-    [collection addProcessWithName:@"a" processID:a parentProcessID:0 isForegroundJob:NO];
-    [collection addProcessWithName:@"b" processID:b parentProcessID:a isForegroundJob:YES];
-    [collection addProcessWithName:@"c" processID:c parentProcessID:b isForegroundJob:YES];
+    [self inCollection:collection addProcessWithProcessID:a parentProcessID:0 isForegroundJob:NO];
+    [self inCollection:collection addProcessWithProcessID:b parentProcessID:a isForegroundJob:YES];
+    [self inCollection:collection addProcessWithProcessID:c parentProcessID:b isForegroundJob:YES];
     [collection commit];
     int actual;
     actual = [[[collection infoForProcessID:a] deepestForegroundJob] processID];

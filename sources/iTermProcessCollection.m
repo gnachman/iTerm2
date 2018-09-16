@@ -23,6 +23,7 @@
     NSString *_name;
     NSNumber *_isForegroundJob;
     dispatch_once_t _once;
+    NSNumber *_testValueForForegroundJob;
 }
 
 - (instancetype)initWithPid:(pid_t)processID
@@ -129,6 +130,9 @@
 }
 
 - (BOOL)isForegroundJob {
+    if (_testValueForForegroundJob) {
+        return [_testValueForForegroundJob boolValue];
+    }
     [self doSlowLookup];
     return self.isForegroundJobValue.boolValue;
 }
@@ -142,6 +146,10 @@
     dispatch_async(queue, ^{
         [self doSlowLookup];
     });
+}
+
+- (void)privateSetIsForegroundJob {
+    _testValueForForegroundJob = @YES;
 }
 
 @end

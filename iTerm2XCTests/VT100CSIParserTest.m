@@ -300,7 +300,6 @@
 // This test is here to remind you to write a test when implementing support for a new CSI code.
 - (void)testUnsupportedCodes {
     char *unsupported[] = {
-        "I",
         "?J",
         "?K",
         "?1;1;1S",

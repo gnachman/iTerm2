@@ -705,9 +705,12 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     }
     _danglingReferences = [NSPointerArray weakObjectsPointerArray];
     for (NSInteger i = 0; i < refs.count; i++) {
-        iTermVariableReference *ref = [_danglingReferences pointerAtIndex:i];
+        iTermVariableReference *ref = [refs pointerAtIndex:i];
         if (ref) {
             [self addLinksToReference:ref];
+            if (ref.value) {
+                [ref valueDidChange];
+            }
         }
     }
 }

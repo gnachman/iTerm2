@@ -63,6 +63,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     NSMutableString *_script;
 }
 
+@synthesize textViewEdgeInsets;
+
 - (void)setUp {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -198,8 +200,8 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return nil;
 }
 
-- (BOOL)setUseSavedGridIfAvailable:(BOOL)use {
-    return NO;
+- (PTYTextViewSynchronousUpdateState *)setUseSavedGridIfAvailable:(BOOL)use {
+    return nil;
 }
 
 - (void)textViewInvalidateRestorableState {
@@ -758,7 +760,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     } else {
         NSImage *golden = [[NSImage alloc] initWithContentsOfFile:goldenName];
         if (!golden) {
-            golden = [[NSBundle bundleForClass:self.class] imageForResource:[self shortNameForGolden:name]];
+            golden = [[NSBundle mainBundle] imageForResource:[self shortNameForGolden:name]];
         }
         XCTAssertNotNil(golden, @"Failed to load golden image with name %@, short name %@", goldenName, [self shortNameForGolden:name]);
         NSData *goldenData = [golden rawPixelsInRGBColorSpace];
@@ -2487,6 +2489,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                  fromClass:[NSUserDefaults class]
                                  withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
+                                      [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
                                       // When
                                       [_textView selectAll:nil];
                                       NSString *selectedText = [_textView selectedText];
@@ -2510,6 +2513,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                  fromClass:[NSUserDefaults class]
                                  withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
+                                      [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
                                       // When
                                       [_textView selectAll:nil];
                                       NSString *selectedText = [_textView selectedText];
@@ -2533,6 +2537,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                  fromClass:[NSUserDefaults class]
                                  withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
+                                      [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
                                       // When
                                       [_textView selectAll:nil];
                                       NSAttributedString *selectedAttributedText = [_textView selectedTextAttributed:YES
@@ -2568,6 +2573,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                                  fromClass:[NSUserDefaults class]
                                  withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
+                                      [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
                                       // When
                                       [_textView selectAll:nil];
                                       NSString *selectedText = [_textView selectedTextAttributed:NO cappedAtSize:0 minimumLineNumber:1];
@@ -2638,7 +2644,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewDidFindDirtyRects {
 }
 
-- (BOOL)backgroundImageMode {
+- (iTermBackgroundImageMode)backgroundImageMode {
     return iTermBackgroundImageModeStretch;
 }
 
@@ -2676,6 +2682,20 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 }
 
 - (void)textViewShowHoverURL:(NSString *)url {
+}
+
+- (BOOL)textViewInInteractiveApplication {
+    return NO;
+}
+
+- (void)textViewResetTerminal {
+}
+
+- (BOOL)textViewTerminalStateForMenuItem:(NSMenuItem *)menuItem {
+    return NO;
+}
+
+- (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem {
 }
 
 @end

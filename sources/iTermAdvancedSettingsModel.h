@@ -27,6 +27,9 @@ extern NSString *const kAdvancedSettingDescription;
 extern NSString *const iTermAdvancedSettingsDidChange;
 
 + (void)enumerateDictionaries:(void (^)(NSDictionary *))block;
++ (void)loadAdvancedSettingsFromUserDefaults;
+
+#pragma mark - Accessors
 
 + (BOOL)aboutToPasteTabsWithCancel;
 + (BOOL)acceptOSC7;

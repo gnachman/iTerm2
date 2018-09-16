@@ -324,6 +324,7 @@ static const double kFloatingPointTolerance = 0.00001;
                                  fromClass:[NSUserDefaults class]
                                  withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
+                                      [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
                                       [self doMultilineWarningTestWithOverride:YES];
                                   }];
 }
@@ -517,7 +518,7 @@ static const double kFloatingPointTolerance = 0.00001;
                 isUpload:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
-    [_helper enqueueEvent:[NSEvent keyEventWithType:NSKeyDown
+    [_helper enqueueEvent:[NSEvent keyEventWithType:NSEventTypeKeyDown
                                            location:NSZeroPoint
                                       modifierFlags:0
                                           timestamp:[NSDate timeIntervalSinceReferenceDate]
@@ -576,6 +577,16 @@ static const double kFloatingPointTolerance = 0.00001;
 
 - (void)pasteHelperPasteViewVisibilityDidChange {
 }
+
+- (iTermVariableScope *)pasteHelperScope {
+    return nil;
+}
+
+
+- (iTermStatusBarViewController *)pasteHelperStatusBarViewController {
+    return nil;
+}
+
 
 #pragma mark - iTermWarningHandler
 

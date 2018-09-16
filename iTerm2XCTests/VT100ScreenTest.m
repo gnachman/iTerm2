@@ -891,6 +891,23 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenDidClearScrollbackBuffer:(VT100Screen *)screen {
 }
 
+- (CGFloat)screenBackingScaleFactor {
+    return 2;
+}
+
+
+- (void)screenDidReceiveLineFeed {
+}
+
+
+- (void)screenReportFocusWillChangeTo:(BOOL)reportFocus {
+}
+
+
+- (void)screenSoftAlternateScreenModeDidChange {
+}
+
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
@@ -3400,10 +3417,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [screen setMaxScrollbackLines:20];
 
-//    // Should come back as joblessName test
-//    syncTitle_ = YES;
     [screen terminalSetWindowTitle:@"test"];
-    XCTAssert([windowTitle_ isEqualToString:@"joblessName: test"]);
+    XCTAssertEqualObjects(windowTitle_, @"test");
 
 //    // Should come back as just test2
 //    syncTitle_ = NO;
@@ -3443,9 +3458,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert([entry[1] isKindOfClass:[NSNull class]]);
 
 //    // Test icon title, which is the same, but does not log the pwd.
-//    syncTitle_ = YES;
     [screen terminalSetIconTitle:@"test3"];
-    XCTAssert([name_ isEqualToString:@"joblessName: test3"]);
+    XCTAssertEqualObjects(name_, @"test3");
 
 //    syncTitle_ = NO;
     [screen terminalSetIconTitle:@"test4"];

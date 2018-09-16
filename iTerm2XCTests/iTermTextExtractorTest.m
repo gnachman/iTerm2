@@ -7,6 +7,7 @@
 //
 
 #import <XCTest/XCTest.h>
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermFakeUserDefaults.h"
 #import "iTermPreferences.h"
 #import "iTermSelectorSwizzler.h"
@@ -124,6 +125,7 @@ static const NSInteger kUnicodeVersion = 9;
                                  fromClass:[NSUserDefaults class]
                                  withBlock:^ id { return fakeDefaults; }
                                   forBlock:^{
+                                      [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
                                       VT100GridWindowedRange range;
                                       for (int i = 0; i < line.length; i++) {
                                           range = [extractor rangeForWordAt:VT100GridCoordMake(i, 0)

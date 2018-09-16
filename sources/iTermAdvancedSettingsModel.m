@@ -140,7 +140,8 @@ static id sAdvancedSetting_##name; \
 } \
 + (NSString *)load_##name { \
     NSString *key = [self name##UserDefaultsKey]; \
-    sAdvancedSetting_##name = [[NSUserDefaults standardUserDefaults] objectForKey:key] ?: inverseTransformation(default); \
+    id valueFromUserDefaults = [[NSUserDefaults standardUserDefaults] objectForKey:key]; \
+    sAdvancedSetting_##name = valueFromUserDefaults ?: inverseTransformation(default); \
     return key; \
 } \
 + (podtype)name { \
@@ -551,5 +552,14 @@ DEFINE_STRING(pythonRuntimeDownloadURL, @"https://iterm2.com/downloads/pyenv/man
     }
 }
 
++ (void)loadAdvancedSettingsFromUserDefaults {
+    [self enumerateMethods:^(Method method, SEL selector) {
+        NSString *name = NSStringFromSelector(selector);
+        if ([name hasPrefix:@"load_"]) {
+            NSString *(*impl)(id, SEL) = (NSString *(*)(id, SEL))method_getImplementation(method);
+            impl(self, selector);
+        }
+    }];
+}
 
 @end

@@ -56,10 +56,13 @@ typedef enum {
                     // Output range up to but not including \(
                     if (i - 1 - start >= 0) {
                         if (block) {
-                            BOOL stop = NO;
-                            block(index, [_string substringWithRange:NSMakeRange(start, i - 1 - start)], YES, &stop);
-                            if (stop) {
-                                return i;
+                            const NSRange range = NSMakeRange(start, i - 1 - start);
+                            if (range.length > 0) {
+                                BOOL stop = NO;
+                                block(index, [_string substringWithRange:range], YES, &stop);
+                                if (stop) {
+                                    return i;
+                                }
                             }
                         }
                         index = i + 1;

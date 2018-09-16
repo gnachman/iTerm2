@@ -22,6 +22,8 @@
 
 - (void)resolveAsynchronously;
 
+// This is to be used by tests
+- (void)privateSetIsForegroundJob;
 @end
 
 @interface iTermProcessCollection : NSObject

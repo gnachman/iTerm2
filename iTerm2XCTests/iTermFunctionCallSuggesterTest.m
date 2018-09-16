@@ -10,6 +10,7 @@
 #import "iTermFunctionCallParser.h"
 #import "iTermParsedExpression+Tests.h"
 #import "iTermScriptFunctionCall+Private.h"
+#import "iTermVariables.h"
 
 @interface iTermFunctionCallParser(Testing)
 - (instancetype)initPrivate;
@@ -49,10 +50,11 @@
 
 - (void)testParseFunctionCallWithStringLiteral {
     NSString *code = @"func(x: \"foo\")";
+    iTermVariableScope *scope = [[[iTermVariableScope alloc] init] autorelease];
+    [scope addVariables:[[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone owner:self] autorelease]
+           toScopeNamed:nil];
     iTermParsedExpression *actual = [_parser parse:code
-                                            source:^id(NSString *name) {
-                                                return @"value";
-                                            }];
+                                             scope:scope];
     iTermParsedExpression *expected = [[iTermParsedExpression alloc] init];
     expected.functionCall = [[iTermScriptFunctionCall alloc] init];
     expected.functionCall.name = @"func";
@@ -62,11 +64,13 @@
 }
 
 - (void)testParseFunctionCallWithSwiftyString {
+    iTermVariableScope *scope = [[[iTermVariableScope alloc] init] autorelease];
+    [scope addVariables:[[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone owner:self] autorelease]
+           toScopeNamed:nil];
+    [scope setValue:@"value" forVariableNamed:@"path"];
     NSString *code = @"func(x: \"foo\\(path)bar\")";
     iTermParsedExpression *actual = [_parser parse:code
-                                            source:^id(NSString *name) {
-                                                return @"value";
-                                            }];
+                                             scope:scope];
     iTermParsedExpression *expected = [[iTermParsedExpression alloc] init];
     expected.functionCall = [[iTermScriptFunctionCall alloc] init];
     expected.functionCall.name = @"func";
@@ -82,11 +86,14 @@
     //                     s: "Hello \(     ), how are you?"
     //                                 world
 
+    iTermVariableScope *scope = [[[iTermVariableScope alloc] init] autorelease];
+    [scope addVariables:[[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone owner:self] autorelease]
+           toScopeNamed:nil];
+    [scope setValue:@"WORLD" forVariableNamed:@"world"];
+
     NSString *code = @"func(x: \"foo\\(inner(s: \"Hello \\(world), how are you?\"))bar\")";
     iTermParsedExpression *actual = [_parser parse:code
-                                            source:^id(NSString *name) {
-                                                return [name uppercaseString];
-                                            }];
+                                             scope:scope];
     iTermParsedExpression *innerCall = [[iTermParsedExpression alloc] init];
     innerCall.functionCall = [[iTermScriptFunctionCall alloc] init];
     innerCall.functionCall.name = @"inner";
