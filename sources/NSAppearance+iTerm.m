@@ -16,21 +16,27 @@
             return tabStyle;
         } else {
             const BOOL dark = [self.name isEqualToString:NSAppearanceNameVibrantDark];
+            DLog(@"self.name=%@ dark=%@ tabStyle=%@", self.name, @(dark), @(tabStyle));
             switch (tabStyle) {
-                case TAB_STYLE_DARK:
                 case TAB_STYLE_LIGHT:
-                    return dark ? TAB_STYLE_DARK : TAB_STYLE_LIGHT;
-
-                case TAB_STYLE_DARK_HIGH_CONTRAST:
+                    if (dark) {
+                        return TAB_STYLE_DARK;
+                    }
+                    break;
                 case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-                    return dark ? TAB_STYLE_DARK_HIGH_CONTRAST : TAB_STYLE_LIGHT_HIGH_CONTRAST;
+                    if (dark) {
+                        return TAB_STYLE_DARK_HIGH_CONTRAST;
+                    }
+                    break;
 
+                case TAB_STYLE_DARK:
+                case TAB_STYLE_DARK_HIGH_CONTRAST:
                 case TAB_STYLE_AUTOMATIC:
                 case TAB_STYLE_MINIMAL:
-                case TAB_STYLE_COUNT:
-                    // shouldn't happen
-                    return TAB_STYLE_LIGHT;
+                    break;
             }
+
+            return tabStyle;
         }
     }
     if (@available(macOS 10.14, *)) {

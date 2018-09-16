@@ -7202,7 +7202,24 @@ ITERM_WEAKLY_REFERENCEABLE
         style = [[[PSMMinimalTabStyle alloc] init] autorelease];
         [(PSMMinimalTabStyle *)style setDelegate:self];
     } else {
-        switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
+        iTermPreferencesTabStyle tabStyle = preferredStyle;
+        switch (preferredStyle) {
+            case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_MINIMAL:
+                // 10.14 path
+                tabStyle = [self.window.effectiveAppearance it_tabStyle:preferredStyle];
+
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+                // Use the stated style. it_tabStyle assumes you want a style based on the current
+                // appearance but this is the one case where that is not true.
+                // If there is only one tab and it has a dark tab color the style will be adjusted
+                // later in the call to updateTabColors.
+                break;
+        }
+        switch (tabStyle) {
             case TAB_STYLE_AUTOMATIC:
             case TAB_STYLE_MINIMAL:
                 assert(NO);
