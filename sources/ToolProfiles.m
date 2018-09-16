@@ -94,6 +94,10 @@ static const CGFloat kInnerMargin = 5;
     [listView_ reloadData];
 }
 
+- (void)windowBackgroundColorDidChange {
+    [listView_ reloadData];
+}
+
 - (void)relayout {
     NSRect frame = self.frame;
     listView_.frame = NSMakeRect(kMargin, 0, frame.size.width - kMargin * 2, frame.size.height - kPopupHeight - kVerticalMargin);

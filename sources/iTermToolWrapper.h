@@ -51,6 +51,7 @@
 - (instancetype)initWithFrame:(NSRect)frame URL:(NSURL *)url identifier:(NSString *)identifier;
 - (void)relayout;
 - (void)shutdown;
+- (void)windowBackgroundColorDidChange;
 @end
 
 @interface NSView (ToolWrapper)

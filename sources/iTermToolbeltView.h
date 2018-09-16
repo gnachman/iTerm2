@@ -56,5 +56,6 @@ extern NSString *const kToolbeltShouldHide;
 #pragma mark - Testing
 
 - (id<ToolbeltTool>)toolWithName:(NSString *)name;
+- (void)windowBackgroundColorDidChange;
 
 @end

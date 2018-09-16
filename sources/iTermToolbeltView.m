@@ -325,6 +325,13 @@ static NSString *const kDynamicToolURL = @"URL";
     return (ToolCapturedOutputView *)wrapper.tool;
 }
 
+- (void)windowBackgroundColorDidChange {
+    for (iTermToolWrapper *wrapper in _tools.allValues) {
+        if ([wrapper.tool respondsToSelector:@selector(windowBackgroundColorDidChange)]) {
+            [wrapper.tool windowBackgroundColorDidChange];
+        }
+    }
+}
 #pragma mark - Testing APIs
 
 - (id<ToolbeltTool>)toolWithName:(NSString *)name {

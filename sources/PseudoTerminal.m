@@ -5453,6 +5453,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         self.window.appearance = nil;
     }
+    [_contentView.toolbelt windowBackgroundColorDidChange];
 }
 
 - (void)tabsDidReorder {

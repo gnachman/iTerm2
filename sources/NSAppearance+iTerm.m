@@ -12,7 +12,26 @@
 
 - (iTermPreferencesTabStyle)it_tabStyle:(iTermPreferencesTabStyle)tabStyle {
     if (tabStyle != TAB_STYLE_AUTOMATIC && tabStyle != TAB_STYLE_MINIMAL) {
-        return tabStyle;
+        if (@available(macOS 10.14, *)) {
+            return tabStyle;
+        } else {
+            const BOOL dark = [self.name isEqualToString:NSAppearanceNameVibrantDark];
+            switch (tabStyle) {
+                case TAB_STYLE_DARK:
+                case TAB_STYLE_LIGHT:
+                    return dark ? TAB_STYLE_DARK : TAB_STYLE_LIGHT;
+
+                case TAB_STYLE_DARK_HIGH_CONTRAST:
+                case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                    return dark ? TAB_STYLE_DARK_HIGH_CONTRAST : TAB_STYLE_LIGHT_HIGH_CONTRAST;
+
+                case TAB_STYLE_AUTOMATIC:
+                case TAB_STYLE_MINIMAL:
+                case TAB_STYLE_COUNT:
+                    // shouldn't happen
+                    return TAB_STYLE_LIGHT;
+            }
+        }
     }
     if (@available(macOS 10.14, *)) {
         return [self it_mojaveTabStyle:tabStyle];
