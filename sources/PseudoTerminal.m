@@ -7109,6 +7109,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)rootTerminalViewWindowNumberLabelShouldBeVisible {
+    if (@available(macOS 10.14, *)) { } else {
+        return NO;
+    }
     if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
         return !self.anyFullScreen;
     }
@@ -7120,9 +7123,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (windowType_ == WINDOW_TYPE_COMPACT) {
         return YES;
-    }
-    if (self.anyFullScreen) {
-        return self.tabBarShouldBeVisible;
     }
 
     return NO;
