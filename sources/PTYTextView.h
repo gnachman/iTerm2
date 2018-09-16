@@ -415,6 +415,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Copy the current selection to the pasteboard.
 - (void)copy:(id)sender;
+- (void)copyBase64Decoded:(id)sender;
 
 // Copy the current selection to the pasteboard, preserving style.
 - (IBAction)copyWithStyles:(id)sender;

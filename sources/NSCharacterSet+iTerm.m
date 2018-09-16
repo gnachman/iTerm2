@@ -1166,4 +1166,16 @@
     return urlChars;
 }
 
++ (NSCharacterSet *)it_base64PlusWhitespaceCharacterSet {
+    static NSMutableCharacterSet *characterSet;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        characterSet = [[NSMutableCharacterSet alloc] init];
+        [characterSet addCharactersInRange:NSMakeRange('A', 26)];
+        [characterSet addCharactersInRange:NSMakeRange('a', 26)];
+        [characterSet addCharactersInRange:NSMakeRange('0', 10)];
+        [characterSet addCharactersInString:@"+/= \r\n\t"];
+    });
+    return characterSet;
+}
 @end

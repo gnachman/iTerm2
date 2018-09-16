@@ -3562,6 +3562,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[PasteboardHistory sharedInstance] save:[copyAttributedString string]];
 }
 
+- (IBAction)copyBase64Decoded:(id)sender {
+    DLog(@"-[PTYTextView copy:] called");
+    NSString *selectedText = [self selectedText];
+
+    DLog(@"Have selected text of length %d. selection=%@", (int)[selectedText length], _selection);
+    if (selectedText.length) {
+        NSData *data = [NSData dataWithBase64EncodedString:selectedText];
+        if (data) {
+            DLog(@"Copy data of length %@", @(data.length));
+            NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+            [pboard declareTypes:@[ NSFileContentsPboardType ] owner:self];
+            [pboard setData:data forType:NSFileContentsPboardType];
+
+            NSString *decodedString = [[NSString alloc] initWithData:data encoding:[_delegate textViewEncoding]];
+            if (decodedString) {
+                DLog(@"Data decoded to a string so save it to history");
+                [[PasteboardHistory sharedInstance] save:decodedString];
+            }
+        }
+    }
+}
+
 // Returns a dictionary to pass to NSAttributedString.
 - (NSDictionary *)charAttributes:(screen_char_t)c
 {
@@ -3711,6 +3733,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return YES;
     }
 
+    if ([item action]==@selector(copyBase64Decoded:)) {
+        if (![_selection hasSelection]) {
+            return NO;
+        }
+        if (![self haveReasonablyShortSelection]) {
+            return YES;
+        }
+        NSString *selectedText = [self selectedText];
+        NSCharacterSet *characterSet = [[NSCharacterSet it_base64PlusWhitespaceCharacterSet] invertedSet];
+        const NSRange rangeOfIllegalCharacter = [selectedText rangeOfCharacterFromSet:characterSet];
+        return rangeOfIllegalCharacter.location == NSNotFound;
+    }
     if ([item action]==@selector(mail:) ||
         [item action]==@selector(browse:) ||
         [item action]==@selector(searchInBrowser:) ||
@@ -3807,6 +3841,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int width = [_dataSource width];
     return [_selection hasSelection] && [_selection length] <= width;
 }
+
+- (BOOL)haveReasonablyShortSelection {
+    return [_selection hasSelection] && [_selection length] < 1024;
+}
+
 
 - (NSDictionary<NSNumber *, NSString *> *)smartSelectionActionSelectorDictionary {
     // The selector's name must begin with contextMenuAction to

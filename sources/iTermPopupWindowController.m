@@ -156,6 +156,10 @@
     [self.popupWindow.owningWindow.firstResponder tryToPerform:_cmd with:sender];
 }
 
+- (void)copyBase64Decoded:(id)sender {
+    [self.popupWindow.owningWindow.firstResponder tryToPerform:_cmd with:sender];
+}
+
 - (void)copyWithStyles:(id)sender {
     [self.popupWindow.owningWindow.firstResponder tryToPerform:_cmd with:sender];
 }

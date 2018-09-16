@@ -23,5 +23,6 @@
 
 + (NSCharacterSet *)urlCharacterSet;
 + (NSCharacterSet *)filenameCharacterSet;
++ (NSCharacterSet *)it_base64PlusWhitespaceCharacterSet;
 
 @end
