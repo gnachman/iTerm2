@@ -72,6 +72,10 @@ static const CGFloat kInnerMargin = 5;
         }
         [self addSubview:popup_];
         [popup_ setAutoresizingMask:NSViewMinYMargin | NSViewWidthSizable];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(refreshTerminal:)
+                                                     name:kRefreshTerminalNotification
+                                                   object:nil];
 
         [popup_ bind:@"enabled" toObject:listView_ withKeyPath:@"hasSelection" options:nil];
 
@@ -79,11 +83,15 @@ static const CGFloat kInnerMargin = 5;
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [popup_ unbind:@"enabled"];
     [_openButton unbind:@"enabled"];
     [super dealloc];
+}
+
+- (void)refreshTerminal:(NSNotification *)notification {
+    [listView_ reloadData];
 }
 
 - (void)relayout {

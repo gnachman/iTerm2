@@ -244,10 +244,6 @@ const CGFloat kDefaultTagsWidth = 80;
                                                  selector:@selector(dataChangeNotification:)
                                                      name:kReloadAddressBookNotification
                                                    object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(windowAppearanceDidChange:)
-                                                     name:iTermWindowAppearanceDidChange
-                                                   object:nil];
 
         // Tags view -------------------------------------------------------------------------------
         NSRect tagsViewFrame = NSMakeRect(0, 0, kTagsViewWidth, splitViewFrame.size.height);
@@ -1092,10 +1088,6 @@ const CGFloat kDefaultTagsWidth = 80;
     [self performSelector:@selector(reloadData)
                withObject:nil
                afterDelay:0];
-}
-
-- (void)windowAppearanceDidChange:(NSNotification *)notification {
-    [tableView_ reloadData];
 }
 
 - (void)onDoubleClick:(id)sender
