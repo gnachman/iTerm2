@@ -34,6 +34,9 @@ static const CGFloat kInnerMargin = 5;
         [listView_ disableArrowHandler];
         [listView_ allowMultipleSelections];
         [listView_.tableView setHeaderView:nil];
+        if (@available(macOS 10.14, *)) { } else {
+            listView_.tableView.enclosingScrollView.drawsBackground = NO;
+        }
 
         [self addSubview:listView_];
         [listView_ release];

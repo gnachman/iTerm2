@@ -8,6 +8,7 @@
 
 #import "ToolNotes.h"
 #import "NSFileManager+iTerm.h"
+#import "NSWindow+iTerm.h"
 #import "PTYWindow.h"
 #import "PseudoTerminal.h"
 
@@ -41,7 +42,10 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
         [scrollview setHasVerticalScroller:YES];
         [scrollview setHasHorizontalScroller:NO];
         [scrollview setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-
+        if (@available(macOS 10.14, *)) { } else {
+            scrollview.drawsBackground = NO;
+        }
+        
         NSSize contentSize = [scrollview contentSize];
         textView_ = [[iTermUnformattedTextView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
         [textView_ setAllowsUndo:YES];

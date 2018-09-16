@@ -47,7 +47,10 @@ static const CGFloat kMargin = 4;
         [scrollView_ setBorderType:NSBezelBorder];
         NSSize contentSize = [scrollView_ contentSize];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-
+        if (@available(macOS 10.14, *)) { } else {
+            scrollView_.drawsBackground = NO;
+        }
+        
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
         NSTableColumn *col;
         col = [[[NSTableColumn alloc] initWithIdentifier:@"contents"] autorelease];

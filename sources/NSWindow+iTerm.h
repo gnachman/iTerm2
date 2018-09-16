@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+extern NSString *const iTermWindowAppearanceDidChange;
+
 @interface NSWindow(iTerm)
 
 // Is window Lion fullscreen?

@@ -33,8 +33,6 @@ extern NSString *const iTermDidDecodeWindowRestorableStateNotification;
 
 extern NSString *const iTermTabDidChangePositionInWindowNotification;
 
-extern NSString *const iTermWindowAppearanceDidChange;
-
 extern NSString *const iTermSelectedTabDidChange;
 
 extern NSString *const iTermBroadcastDomainsDidChangeNotification;
