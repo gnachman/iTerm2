@@ -6457,7 +6457,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (IBAction)splitHorizontally:(id)sender
 {
     [self splitVertically:NO
-             withBookmark:[self gi]
+             withBookmark:[self profileForSplittingCurrentSession]
             targetSession:[[self currentTab] activeSession]];
 }
 
