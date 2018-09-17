@@ -7187,7 +7187,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (CGFloat)rootTerminalViewHeightOfTabBar:(iTermRootTerminalView *)sender {
     if ([self shouldHaveTallTabBar]) {
-        return 40;
+        return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
     } else {
         return iTermTabBarControlViewDefaultHeight;
     }
@@ -7195,7 +7195,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (CGFloat)rootTerminalViewStoplightButtonsOffset:(iTermRootTerminalView *)sender {
     if ([self shouldHaveTallTabBar]) {
-        return 7.5;
+        return ([iTermAdvancedSettingsModel compactMinimalTabBarHeight] - 25) / 2.0;
     } else {
         return 0;
     }
