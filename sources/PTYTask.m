@@ -865,7 +865,7 @@ static void HandleSigChld(int n) {
         char buffer[PATH_MAX + 1];
         iTermFileDescriptorSocketPath(buffer, sizeof(buffer), thePid);
         [[iTermOrphanServerAdopter sharedInstance] removePath:[NSString stringWithUTF8String:buffer]];
-
+        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
         return YES;
     }
 }
