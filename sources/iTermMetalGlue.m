@@ -83,7 +83,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     vector_float4 _lastUnprocessedColor;
     BOOL _havePreviousForegroundColor;
     vector_float4 _previousForegroundColor;
-    NSMutableArray<iTermData *> *_lines;
+    NSMutableArray<iTermData *> *_screenCharLines;
     NSMutableArray<NSDate *> *_dates;
     NSMutableArray<NSIndexSet *> *_selectedIndexes;
     NSMutableDictionary<NSNumber *, NSData *> *_matches;
@@ -289,7 +289,7 @@ static NSColor *ColorForVector(vector_float4 v) {
 
     // Copy lines from model. Always use these for consistency. I should also copy the color map
     // and any other data dependencies.
-    _lines = [NSMutableArray array];
+    _screenCharLines = [NSMutableArray array];
     _dates = [NSMutableArray array];
     _markStyles = [NSMutableArray array];
     _selectedIndexes = [NSMutableArray array];
@@ -385,7 +385,7 @@ static NSColor *ColorForVector(vector_float4 v) {
             memcpy(myBuffer, line, rowSize);
         }
         [data checkForOverrun];
-        [_lines addObject:data];
+        [_screenCharLines addObject:data];
 
         [_selectedIndexes addObject:[textView.selection selectedIndexesOnLine:i]];
         NSData *findMatches = [drawingHelper.delegate drawingHelperMatchesOnLine:i];
@@ -448,64 +448,68 @@ static NSColor *ColorForVector(vector_float4 v) {
         _cursorInfo.cursorVisible = YES;
         _cursorInfo.type = drawingHelper.cursorType;
         _cursorInfo.cursorColor = [self backgroundColorForCursor];
-        const screen_char_t *line = (screen_char_t *)_lines[_cursorInfo.coord.y].mutableBytes;
-        screen_char_t screenChar = line[_cursorInfo.coord.x];
-        if (screenChar.code) {
-            if (screenChar.code == DWC_RIGHT) {
-                _cursorInfo.doubleWidth = NO;
-            } else {
-                const int column = _cursorInfo.coord.x;
-                _cursorInfo.doubleWidth = (column < _gridSize.width - 1) && (line[column + 1].code == DWC_RIGHT);
-            }
-        } else {
-            _cursorInfo.doubleWidth = NO;
-        }
-
-        if (_cursorInfo.type == CURSOR_BOX) {
-            _cursorInfo.shouldDrawText = YES;
-            const BOOL focused = ((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor);
-
-
-            iTermSmartCursorColor *smartCursorColor = nil;
-            if (drawingHelper.useSmartCursorColor) {
-                smartCursorColor = [[iTermSmartCursorColor alloc] init];
-                smartCursorColor.delegate = self;
-            }
-
-            if (!focused) {
-                _cursorInfo.shouldDrawText = NO;
-                _cursorInfo.frameOnly = YES;
-            } else if (smartCursorColor) {
-                _cursorInfo.textColor = [self fastCursorColorForCharacter:screenChar
-                                                           wantBackground:YES
-                                                                    muted:NO];
-                _cursorInfo.cursorColor = [smartCursorColor backgroundColorForCharacter:screenChar];
-                NSColor *regularTextColor = [NSColor colorWithRed:_cursorInfo.textColor.x
-                                                            green:_cursorInfo.textColor.y
-                                                             blue:_cursorInfo.textColor.z
-                                                            alpha:_cursorInfo.textColor.w];
-                NSColor *smartTextColor = [smartCursorColor textColorForCharacter:screenChar
-                                                                 regularTextColor:regularTextColor
-                                                             smartBackgroundColor:_cursorInfo.cursorColor];
-                CGFloat components[4];
-                [smartTextColor getComponents:components];
-                _cursorInfo.textColor = simd_make_float4(components[0],
-                                                         components[1],
-                                                         components[2],
-                                                         components[3]);
-            } else {
-                if (_reverseVideo) {
-                    _cursorInfo.textColor = [_colorMap fastColorForKey:kColorMapBackground];
+        {
+            iTermData *lineData = _screenCharLines[_cursorInfo.coord.y];
+            const screen_char_t *const line = (const screen_char_t *const)lineData.bytes;
+            const screen_char_t screenChar = line[_cursorInfo.coord.x];
+            if (screenChar.code) {
+                if (screenChar.code == DWC_RIGHT) {
+                    _cursorInfo.doubleWidth = NO;
                 } else {
-                    _cursorInfo.textColor = [self colorForCode:ALTSEM_CURSOR
-                                                         green:0
-                                                          blue:0
-                                                     colorMode:ColorModeAlternate
-                                                          bold:NO
-                                                         faint:NO
-                                                  isBackground:NO];
+                    const int column = _cursorInfo.coord.x;
+                    _cursorInfo.doubleWidth = (column < _gridSize.width - 1) && (line[column + 1].code == DWC_RIGHT);
+                }
+            } else {
+                _cursorInfo.doubleWidth = NO;
+            }
+
+            if (_cursorInfo.type == CURSOR_BOX) {
+                _cursorInfo.shouldDrawText = YES;
+                const BOOL focused = ((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor);
+
+
+                iTermSmartCursorColor *smartCursorColor = nil;
+                if (drawingHelper.useSmartCursorColor) {
+                    smartCursorColor = [[iTermSmartCursorColor alloc] init];
+                    smartCursorColor.delegate = self;
+                }
+
+                if (!focused) {
+                    _cursorInfo.shouldDrawText = NO;
+                    _cursorInfo.frameOnly = YES;
+                } else if (smartCursorColor) {
+                    _cursorInfo.textColor = [self fastCursorColorForCharacter:screenChar
+                                                               wantBackground:YES
+                                                                        muted:NO];
+                    _cursorInfo.cursorColor = [smartCursorColor backgroundColorForCharacter:screenChar];
+                    NSColor *regularTextColor = [NSColor colorWithRed:_cursorInfo.textColor.x
+                                                                green:_cursorInfo.textColor.y
+                                                                 blue:_cursorInfo.textColor.z
+                                                                alpha:_cursorInfo.textColor.w];
+                    NSColor *smartTextColor = [smartCursorColor textColorForCharacter:screenChar
+                                                                     regularTextColor:regularTextColor
+                                                                 smartBackgroundColor:_cursorInfo.cursorColor];
+                    CGFloat components[4];
+                    [smartTextColor getComponents:components];
+                    _cursorInfo.textColor = simd_make_float4(components[0],
+                                                             components[1],
+                                                             components[2],
+                                                             components[3]);
+                } else {
+                    if (_reverseVideo) {
+                        _cursorInfo.textColor = [_colorMap fastColorForKey:kColorMapBackground];
+                    } else {
+                        _cursorInfo.textColor = [self colorForCode:ALTSEM_CURSOR
+                                                             green:0
+                                                              blue:0
+                                                         colorMode:ColorModeAlternate
+                                                              bold:NO
+                                                             faint:NO
+                                                      isBackground:NO];
+                    }
                 }
             }
+            [lineData checkForOverrun];
         }
     } else {
         _cursorInfo.cursorVisible = NO;
@@ -703,12 +707,13 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     BOOL foundStart = NO;
     _imeInfo = [[iTermMetalIMEInfo alloc] init];
     for (int i = 0; i < len; i++) {
-        if (coord.y >= 0 && coord.y < _lines.count) {
+        if (coord.y >= 0 && coord.y < _screenCharLines.count) {
             if (i == cursorIndex) {
                 foundCursor = YES;
                 _imeInfo.cursorCoord = coord;
             }
-            screen_char_t *line = (screen_char_t *)_lines[coord.y].mutableBytes;
+            const iTermData *lineData = _screenCharLines[coord.y];
+            screen_char_t *line = (screen_char_t *)lineData.mutableBytes;
             screen_char_t c = buf[i];
             c.foregroundColor = iTermIMEColor.x * 255;
             c.fgGreen = iTermIMEColor.y * 255;
@@ -735,8 +740,11 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                     foundStart = YES;
                     [_imeInfo setRangeStart:coord];
                 }
+                const NSInteger offset = coord.x * sizeof(screen_char_t);
+                assert(offset < (NSInteger)lineData.length);
                 line[coord.x] = c;
             }
+            [lineData checkForOverrun];
 
         }
         justWrapped = NO;
@@ -890,7 +898,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     if (_timestampsEnabled) {
         *datePtr = _dates[row];
     }
-    screen_char_t *line = (screen_char_t *)_lines[row].mutableBytes;
+    const iTermData *lineData = _screenCharLines[row];
+    const screen_char_t *const line = (const screen_char_t *const)lineData.bytes;
     NSIndexSet *selectedIndexes = _selectedIndexes[row];
     NSData *findMatches = _matches[@(row)];
     iTermTextColorKey keys[2];
@@ -1110,6 +1119,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             attributes[_cursorInfo.coord.x].foregroundColor.w = 1;
         }
     }
+    [lineData checkForOverrun];
 }
 
 - (BOOL)useThinStrokesWithAttributes:(iTermMetalGlyphAttributes *)attributes {
@@ -1387,7 +1397,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 - (void)setDebugString:(NSString *)debugString {
-    screen_char_t *line = _lines[0].mutableBytes;
+    iTermData *data = _screenCharLines[0];
+    screen_char_t *line = data.mutableBytes;
     for (int i = 0, o = MAX(0, _gridSize.width - (int)debugString.length);
          i < debugString.length && o < _gridSize.width;
          i++, o++) {
@@ -1398,15 +1409,16 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                   gridSize:_gridSize];
         line[o].code = [debugString characterAtIndex:i];
     }
+    [data checkForOverrun];
 }
 
-- (iTermData *)lineForRow:(int)y {
-    return _lines[y];
+- (const iTermData *const)lineForRow:(int)y {
+    return _screenCharLines[y];
 }
 
 #pragma mark - Color
 
-- (vector_float4)textColorForCharacter:(screen_char_t *)c
+- (vector_float4)textColorForCharacter:(const screen_char_t *const)c
                                   line:(int)line
                        backgroundColor:(vector_float4)unprocessedBackgroundColor
                               selected:(BOOL)selected
@@ -1541,10 +1553,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 - (iTermCursorNeighbors)cursorNeighbors {
     return [iTermSmartCursorColor neighborsForCursorAtCoord:_cursorInfo.coord
                                                    gridSize:_gridSize
-                                                 lineSource:^screen_char_t *(int y) {
+                                                 lineSource:^const screen_char_t *(int y) {
                                                      const int i = y + self->_numberOfScrollbackLines - self->_visibleRange.start.y;
-                                                     if (i >= 0 && i < self->_lines.count) {
-                                                         return (screen_char_t *)self->_lines[i].mutableBytes;
+                                                     if (i >= 0 && i < self->_screenCharLines.count) {
+                                                         return (const screen_char_t *)self->_screenCharLines[i].bytes;
                                                      } else {
                                                          return nil;
                                                      }

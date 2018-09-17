@@ -37,7 +37,7 @@
 
     @autoreleasepool {
         NSMutableString *glyphKeysString = [NSMutableString string];
-        iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)_keysData.mutableBytes;
+        const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)_keysData.bytes;
         for (int i = 0; i < _keysData.length / sizeof(iTermMetalGlyphKey); i++) {
             NSString *glyphKey = iTermMetalGlyphKeyDescription(&glyphKeys[i]);
             [glyphKeysString appendFormat:@"%4d: %@\n", i, glyphKey];
@@ -66,8 +66,8 @@
 
     @autoreleasepool {
         NSMutableString *lineString = [NSMutableString string];
-        screen_char_t *line = (screen_char_t *)_line.mutableBytes;
-        for (int i = 0; i < _line.length / sizeof(screen_char_t); i++) {
+        const screen_char_t *const line = (screen_char_t *)_lineData.mutableBytes;
+        for (int i = 0; i < _lineData.length / sizeof(screen_char_t); i++) {
             screen_char_t c = line[i];
             [lineString appendFormat:@"%4d: %@\n", i, [self formatChar:c]];
         }

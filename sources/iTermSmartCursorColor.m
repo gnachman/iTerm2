@@ -15,7 +15,7 @@
 
 + (iTermCursorNeighbors)neighborsForCursorAtCoord:(VT100GridCoord)cursorCoord
                                          gridSize:(VT100GridSize)gridSize
-                                       lineSource:(screen_char_t *(^)(int))lineSource {
+                                       lineSource:(const screen_char_t *(^)(int))lineSource {
     iTermCursorNeighbors neighbors;
     memset(&neighbors, 0, sizeof(neighbors));
     NSArray *coords = @[ @[ @0,    @(-1) ],     // Above
@@ -23,13 +23,14 @@
                          @[ @1,    @0    ],     // Right
                          @[ @0,    @1    ] ];   // Below
     int prevY = -2;
-    screen_char_t *theLine = nil;
 
     for (NSArray *tuple in coords) {
         int dx = [tuple[0] intValue];
         int dy = [tuple[1] intValue];
         int x = cursorCoord.x + dx;
         int y = cursorCoord.y + dy;
+
+        const screen_char_t *theLine = nil;
 
         if (y != prevY) {
             if (y >= 0 && y < gridSize.height) {

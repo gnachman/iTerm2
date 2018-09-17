@@ -144,13 +144,11 @@ NSString* ComplexCharToStr(int key)
     return [complexCharMap objectForKey:[NSNumber numberWithInt:key]];
 }
 
-NSString* ScreenCharToStr(screen_char_t* sct)
-{
+NSString *ScreenCharToStr(const screen_char_t *const sct) {
     return CharToStr(sct->code, sct->complexChar);
 }
 
-NSString* CharToStr(unichar code, BOOL isComplex)
-{
+NSString *CharToStr(unichar code, BOOL isComplex) {
     if (code == UNICODE_REPLACEMENT_CHAR) {
         return ReplacementString();
     }

@@ -7,20 +7,25 @@
 
 #import "iTermData.h"
 
+static const unsigned char iTermDataGuardRegionValue[64] = {
+    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,
+    0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
+    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F,
+    0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xaA, 0xaB, 0xaC, 0xaD, 0xaE, 0xaF
+};
+
 @implementation iTermData {
 @protected
     NSUInteger _originalLength;
-    unsigned char _magic;
     void *_mutableBytes;
     NSUInteger _length;
 }
 
-- (instancetype)initWithLength:(NSUInteger)length magic:(unsigned char)magic {
+- (instancetype)initWithLength:(NSUInteger)length {
     self = [super init];
     if (self) {
-        _magic = magic;
-        unsigned char *buffer = malloc(length + 1);;
-        buffer[length] = magic;
+        unsigned char *buffer = malloc(length + sizeof(iTermDataGuardRegionValue));
+        memmove(buffer + length, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
 
         _mutableBytes = buffer;
         _length = length;
@@ -37,6 +42,10 @@
     _length = 0xdeadbeef;
 }
 
+- (const unsigned char *)bytes {
+    return _mutableBytes;
+}
+
 - (void)setLength:(NSUInteger)length {
     assert(length <= _originalLength);
     _length = length;
@@ -45,7 +54,8 @@
 - (void)checkForOverrun {
     if (_mutableBytes) {
         unsigned char *buffer = _mutableBytes;
-        assert(buffer[_originalLength] == _magic);
+        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        assert(comparisonResult == 0);
     }
 }
 
@@ -55,14 +65,7 @@
 @implementation iTermScreenCharData : iTermData
 
 + (instancetype)dataOfLength:(NSUInteger)length {
-    return [[self alloc] initWithLength:length magic:0x70];
-}
-
-- (void)dealloc {
-    if (_mutableBytes) {
-        unsigned char *buffer = _mutableBytes;
-        assert(buffer[_originalLength] == 0x70);
-    }
+    return [[self alloc] initWithLength:length];
 }
 
 @end
@@ -70,14 +73,7 @@
 @implementation iTermGlyphKeyData : iTermData
 
 + (instancetype)dataOfLength:(NSUInteger)length {
-    return [[self alloc] initWithLength:length magic:0x71];
-}
-
-- (void)dealloc {
-    if (_mutableBytes) {
-        unsigned char *buffer = _mutableBytes;
-        assert(buffer[_originalLength] == 0x71);
-    }
+    return [[self alloc] initWithLength:length];
 }
 
 @end
@@ -85,14 +81,7 @@
 @implementation iTermAttributesData : iTermData
 
 + (instancetype)dataOfLength:(NSUInteger)length {
-    return [[self alloc] initWithLength:length magic:0x72];
-}
-
-- (void)dealloc {
-    if (_mutableBytes) {
-        unsigned char *buffer = _mutableBytes;
-        assert(buffer[_originalLength] == 0x72);
-    }
+    return [[self alloc] initWithLength:length];
 }
 
 @end
@@ -100,14 +89,7 @@
 @implementation iTermBackgroundColorRLEsData : iTermData
 
 + (instancetype)dataOfLength:(NSUInteger)length {
-    return [[self alloc] initWithLength:length magic:0x73];
-}
-
-- (void)dealloc {
-    if (_mutableBytes) {
-        unsigned char *buffer = _mutableBytes;
-        assert(buffer[_originalLength] == 0x73);
-    }
+    return [[self alloc] initWithLength:length];
 }
 
 @end

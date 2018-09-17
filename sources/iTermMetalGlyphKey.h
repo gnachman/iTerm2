@@ -36,7 +36,7 @@ typedef struct {
     BOOL annotation;  // affects underline color
 } iTermMetalGlyphAttributes;
 
-NS_INLINE NSString *iTermMetalGlyphKeyDescription(iTermMetalGlyphKey *key) {
+NS_INLINE NSString *iTermMetalGlyphKeyDescription(const iTermMetalGlyphKey *key) {
     if (!key->drawable) {
         return @"not drawable";
     }
