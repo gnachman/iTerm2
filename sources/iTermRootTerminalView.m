@@ -212,14 +212,17 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 }
 
 - (NSRect)frameForWindowNumberLabel {
+    [_windowNumberLabel sizeToFit];
     const NSRect standardButtonsFrame = [self frameForStandardWindowButtons];
     const CGFloat tabBarHeight = _tabBarControl.height;
     const CGFloat windowNumberHeight = _windowNumberLabel.frame.size.height;
     const CGFloat baselineOffset = -_windowNumberLabel.font.descender;
     const CGFloat capHeight = _windowNumberLabel.font.capHeight;
     const CGFloat myHeight = self.frame.size.height;
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    const CGFloat shift = (preferredStyle == TAB_STYLE_MINIMAL) ? 0 : 1;
     return NSMakeRect(NSMaxX(standardButtonsFrame) + iTermRootTerminalViewWindowNumberLabelMargin,
-                      myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset,
+                      myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset - shift,
                       iTermRootTerminalViewWindowNumberLabelWidth,
                       windowNumberHeight);
 }
@@ -420,6 +423,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         [_divisionView removeFromSuperview];
         _divisionView = nil;
     }
+
     _windowNumberLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForWindowNumber];
     _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
 }
@@ -527,6 +531,15 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 - (void)removeLeftTabBarDragHandle {
     [self.leftTabBarDragHandle removeFromSuperview];
     self.leftTabBarDragHandle = nil;
+}
+
+- (void)updateWindowNumberFont {
+    const iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (preferredStyle == TAB_STYLE_MINIMAL) {
+        _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    } else {
+        _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+    }
 }
 
 - (void)layoutSubviewsWithHiddenTabBarForWindow:(NSWindow *)thisWindow {
@@ -686,6 +699,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
     _windowNumberLabel.textColor = [_delegate rootTerminalViewTabBarTextColorForWindowNumber];
     _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
+    [self updateWindowNumberFont];
 
     if ([self.delegate enableStoplightHotbox]) {
         _stoplightHotbox.hidden = NO;
