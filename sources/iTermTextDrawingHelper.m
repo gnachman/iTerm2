@@ -2795,7 +2795,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 - (iTermCursorNeighbors)cursorNeighbors {
     return [iTermSmartCursorColor neighborsForCursorAtCoord:_cursorCoord
                                                    gridSize:_gridSize
-                                                 lineSource:^screen_char_t *(int y) {
+                                                 lineSource:^const screen_char_t *(int y) {
                                                      return [_delegate drawingHelperLineAtScreenIndex:y];
                                                  }];
 }

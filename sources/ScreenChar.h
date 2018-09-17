@@ -331,7 +331,7 @@ NSString* ComplexCharToStr(int key);
 
 // Return a string with the contents of a screen char, which may or may not
 // be complex.
-NSString* ScreenCharToStr(screen_char_t* sct);
+NSString* ScreenCharToStr(const screen_char_t *const sct);
 NSString* CharToStr(unichar code, BOOL isComplex);
 
 // Performs the appropriate normalization.

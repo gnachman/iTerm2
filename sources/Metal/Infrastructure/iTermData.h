@@ -11,6 +11,7 @@
 // set the length to a smaller value safe in the knowledge that it won't get realloced.
 @interface iTermData : NSObject
 @property (nonatomic, readonly) void *mutableBytes;
+@property (nonatomic, readonly) const unsigned char *bytes;
 @property (nonatomic) NSUInteger length;
 - (void)checkForOverrun;
 @end

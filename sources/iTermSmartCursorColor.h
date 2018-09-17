@@ -34,7 +34,7 @@ typedef struct {
 
 + (iTermCursorNeighbors)neighborsForCursorAtCoord:(VT100GridCoord)cursorCoord
                                          gridSize:(VT100GridSize)gridSize
-                                       lineSource:(screen_char_t *(^)(int))lineSource;
+                                       lineSource:(const screen_char_t *(^)(int))lineSource;
 
 - (NSColor *)backgroundColorForCharacter:(screen_char_t)screenChar;
 

@@ -60,7 +60,7 @@ inline bool operator<(const int &origin, const iTermMetalBackgroundColorRLE &oth
 
 typedef struct iTermMetalBackgroundColorRLE iTermMetalBackgroundColorRLE;
 
-NS_INLINE NSString *iTermMetalBackgroundColorRLEDescription(iTermMetalBackgroundColorRLE *c) {
+NS_INLINE NSString *iTermMetalBackgroundColorRLEDescription(const iTermMetalBackgroundColorRLE *c) {
     return [NSString stringWithFormat:@"color=(%0.2f, %0.2f, %0.2f, %0.2f) origin=%d count=%d",
             c->color.x,
             c->color.y,

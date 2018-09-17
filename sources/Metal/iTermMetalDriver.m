@@ -498,6 +498,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqBuildRowData ofBlock:^{
         [self addRowDataToFrameData:frameData];
     }];
+    for (iTermMetalRowData *rowData in frameData.rows) {
+        [rowData.lineData checkForOverrun];
+    }
 
     // If we're rendering to an intermediate texture because there's something complicated
     // behind text and we need to use the fancy subpixel antialiasing algorithm, create it now.
@@ -523,6 +526,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqUpdateRenderers ofBlock:^{
         [self updateRenderersForNewFrameData:frameData];
     }];
+    for (iTermMetalRowData *rowData in frameData.rows) {
+        [rowData.lineData checkForOverrun];
+    }
 
     // Create each renderer's transient state, which its per-frame object.
     __block id<MTLCommandBuffer> commandBuffer;
@@ -531,6 +537,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         frameData.commandBuffer = commandBuffer;
         [self createTransientStatesWithFrameData:frameData view:view commandBuffer:commandBuffer];
     }];
+    for (iTermMetalRowData *rowData in frameData.rows) {
+        [rowData.lineData checkForOverrun];
+    }
 
     // Copy state from frame data to transient states
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqPopulateTransientStates ofBlock:^{
@@ -553,6 +562,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [self enequeueDrawCallsForFrameData:frameData
                               commandBuffer:commandBuffer];
     }];
+    for (iTermMetalRowData *rowData in frameData.rows) {
+        [rowData.lineData checkForOverrun];
+    }
 }
 
 - (void)addRowDataToFrameData:(iTermMetalFrameData *)frameData {
@@ -565,7 +577,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         rowData.keysData = [iTermGlyphKeyData dataOfLength:sizeof(iTermMetalGlyphKey) * columns];
         rowData.attributesData = [iTermAttributesData dataOfLength:sizeof(iTermMetalGlyphAttributes) * columns];
         rowData.backgroundColorRLEData = [iTermBackgroundColorRLEsData dataOfLength:sizeof(iTermMetalBackgroundColorRLE) * columns];
-        rowData.line = [frameData.perFrameState lineForRow:y];
+        rowData.lineData = [frameData.perFrameState lineForRow:y];
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         int drawableGlyphs = 0;
         int rles = 0;
@@ -595,6 +607,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [rowData.attributesData checkForOverrun];
         [rowData.backgroundColorRLEData checkForOverrun];
         [frameData.debugInfo addRowData:rowData];
+        [rowData.lineData checkForOverrun];
     }
 
     // On average, this will be true if there are more than 16 unique color combinations.
@@ -994,6 +1007,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                                                                cursorInfo.cursorColor.greenComponent,
                                                                                cursorInfo.cursorColor.blueComponent,
                                                                                1);
+        [rowWithCursor.attributesData checkForOverrun];
     }
 
     if (cursorInfo.copyMode) {
@@ -1133,6 +1147,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                                                                     emoji:emoji];
                                }];
         }
+        [rowData.keysData checkForOverrun];
     }];
     if (!_backgroundColorRenderer.rendererDisabled) {
         BOOL (^comparator)(iTermMetalRowData *obj1, iTermMetalRowData *obj2) = ^BOOL(iTermMetalRowData *obj1, iTermMetalRowData *obj2) {

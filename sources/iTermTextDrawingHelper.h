@@ -331,7 +331,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 
 @end
 
-NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(screen_char_t *c,
+NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *const c,
                                                          BOOL isStringifiable,
                                                          BOOL blinkingItemsVisible,
                                                          BOOL blinkAllowed) {

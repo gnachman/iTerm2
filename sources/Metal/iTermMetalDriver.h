@@ -109,7 +109,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (void)setDebugString:(NSString *)debugString;
 
-- (iTermData *)lineForRow:(int)y;
+- (const iTermData *const)lineForRow:(int)y;
 
 @end
 

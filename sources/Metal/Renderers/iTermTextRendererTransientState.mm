@@ -161,7 +161,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
     @autoreleasepool {
         NSMutableString *s = [NSMutableString string];
         [_backgroundColorRLEDataArray enumerateObjectsUsingBlock:^(iTermData * _Nonnull data, NSUInteger idx, BOOL * _Nonnull stop) {
-            iTermMetalBackgroundColorRLE *rle = (iTermMetalBackgroundColorRLE *)data.mutableBytes;
+            const iTermMetalBackgroundColorRLE *rle = (const iTermMetalBackgroundColorRLE *)data.bytes;
             [s appendFormat:@"%4d: %@\n", (int)idx, iTermMetalBackgroundColorRLEDescription(rle)];
         }];
         [s writeToURL:[folder URLByAppendingPathComponent:@"backgroundColors.txt"] atomically:NO encoding:NSUTF8StringEncoding error:nil];
@@ -453,7 +453,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
             // Set fields in piu
             if (fixup.y >= 0 && fixup.y < numRows && fixup.x >= 0 && fixup.x < width) {
                 iTermData *data = _backgroundColorRLEDataArray[fixup.y];
-                const iTermMetalBackgroundColorRLE *backgroundRLEs = (iTermMetalBackgroundColorRLE *)data.mutableBytes;
+                const iTermMetalBackgroundColorRLE *backgroundRLEs = (iTermMetalBackgroundColorRLE *)data.bytes;
                 // find RLE for index fixup.x
                 const int rleCount = data.length / sizeof(iTermMetalBackgroundColorRLE);
                 // Use upper bound. Consider the following:
@@ -471,6 +471,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                 if (_colorModels) {
                     piu.colorModelIndex = GetColorModelIndexForPIU(self, &piu);
                 }
+                [data checkForOverrun];
             } else {
                 // Offscreen
                 piu.backgroundColor = _defaultBackgroundColor;
@@ -689,8 +690,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     //DLog(@"BEGIN setGlyphKeysData for %@", self);
     ITDebugAssert(row == _backgroundColorRLEDataArray.count);
     [_backgroundColorRLEDataArray addObject:backgroundColorRLEData];
-    const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.mutableBytes;
-    const iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)attributesData.mutableBytes;
+    const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.bytes;
+    const iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)attributesData.bytes;
     vector_float2 reciprocalAsciiAtlasSize = 1.0 / _asciiTextureGroup.atlasSize;
     CGSize glyphSize = self.cellConfiguration.glyphSize;
     const float cellHeight = self.cellConfiguration.cellSize.height;
@@ -803,6 +804,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
         }
     }
     //DLog(@"END setGlyphKeysData for %@", self);
+    [glyphKeysData checkForOverrun];
+    [attributesData checkForOverrun];
 }
 
 static vector_int3 SlowGetColorModelIndexForPIU(iTermTextRendererTransientState *self, iTermTextPIU *piu) {

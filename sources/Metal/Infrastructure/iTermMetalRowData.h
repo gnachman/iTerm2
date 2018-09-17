@@ -26,7 +26,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) iTermData *backgroundColorRLEData;
 
 // screen_char_t
-@property (nonatomic, strong) iTermData *line;
+@property (nonatomic, strong) const iTermData *const lineData;
 
 @property (nonatomic) int numberOfBackgroundRLEs;
 
