@@ -470,6 +470,10 @@ class KeystrokePattern:
         """
         return self.__required_modifiers
 
+    @required_modifiers.setter
+    def required_modifiers(self, value):
+        self.__required_modifiers = value
+
     @property
     def forbidden_modifiers(self):
         """List of modifiers whose presence prevents the pattern from being matched.
@@ -478,15 +482,27 @@ class KeystrokePattern:
         """
         return self.__forbidden_modifiers
 
+    @forbidden_modifiers.setter
+    def forbidden_modifiers(self, value):
+        self.__forbidden_modifiers = value
+
     @property
     def keycodes(self):
         """List of numeric keycodes that match the pattern. Values are numbers."""
         return self.__keycodes
 
+    @keycodes.setter
+    def keycodes(self, value):
+        self.__keycodes = value
+
     @property
     def characters(self):
         """List of characters that match the pattern. Values are strings (typically one character-long strings)."""
         return self.__characters
+
+    @characters.setter
+    def characters(self, value):
+        self.__characters = value
 
     @property
     def characters_ignoring_modifiers(self):
@@ -496,6 +512,10 @@ class KeystrokePattern:
 
         Values are strings (typically one character-long strings)."""
         return self.__characters_ignoring_modifiers
+
+    @characters_ignoring_modifiers.setter
+    def characters_ignoring_modifiers(self, value):
+        self.__characters_ignoring_modifiers = value
 
     def to_proto(self):
         proto = iterm2.api_pb2.KeystrokePattern()
