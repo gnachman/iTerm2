@@ -188,6 +188,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+
 @implementation iTermStatusBarWorkingDirectoryComponent
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
@@ -195,8 +196,21 @@ NS_ASSUME_NONNULL_BEGIN
     return [super initWithPath:@"session.path" configuration:configuration scope:scope];
 }
 
+- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+    return [self.minMaxWidthKnobs arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+}
+
 - (NSImage *)statusBarComponentIcon {
     return [NSImage it_imageNamed:@"StatusBarIconFolder" forClass:[self class]];
+}
+
+- (CGFloat)statusBarComponentPreferredWidth {
+    return [self clampedWidth:[super statusBarComponentPreferredWidth]];
+}
+
++ (NSDictionary *)statusBarComponentDefaultKnobs {
+    NSDictionary *fromSuper = [super statusBarComponentDefaultKnobs];
+    return [fromSuper dictionaryByMergingDictionary:self.defaultMinMaxWidthKnobValues];
 }
 
 - (NSString *)statusBarComponentShortDescription {

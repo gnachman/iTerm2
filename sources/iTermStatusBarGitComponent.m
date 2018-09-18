@@ -70,18 +70,30 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+    NSArray<iTermStatusBarComponentKnob *> *knobs;
+
     iTermStatusBarComponentKnob *formatKnob =
     [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Polling Interval (seconds):"
                                                       type:iTermStatusBarComponentKnobTypeDouble
                                                placeholder:nil
                                               defaultValue:@(iTermStatusBarGitComponentDefaultCadence)
                                                        key:iTermStatusBarGitComponentPollingIntervalKey];
-    return [@[ formatKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+
+    knobs = @[ formatKnob ];
+    knobs = [knobs arrayByAddingObjectsFromArray:self.minMaxWidthKnobs];
+    knobs = [knobs arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+    return knobs;
 }
 
 + (NSDictionary *)statusBarComponentDefaultKnobs {
-    NSDictionary *fromSuper = [super statusBarComponentDefaultKnobs];
-    return [fromSuper dictionaryByMergingDictionary:@{ iTermStatusBarGitComponentPollingIntervalKey: @(iTermStatusBarGitComponentDefaultCadence) }];
+    NSDictionary *knobs = [super statusBarComponentDefaultKnobs];
+    knobs = [knobs dictionaryByMergingDictionary:@{ iTermStatusBarGitComponentPollingIntervalKey: @(iTermStatusBarGitComponentDefaultCadence) }];
+    knobs = [knobs dictionaryByMergingDictionary:self.defaultMinMaxWidthKnobValues];
+    return knobs;
+}
+
+- (CGFloat)statusBarComponentPreferredWidth {
+    return [self clampedWidth:[super statusBarComponentPreferredWidth]];
 }
 
 - (id)statusBarComponentExemplar {

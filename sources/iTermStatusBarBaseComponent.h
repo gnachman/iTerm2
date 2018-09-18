@@ -15,6 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Knob key taking a number.
 extern NSString *const iTermStatusBarPriorityKey;
+extern NSString *const iTermStatusBarMaximumWidthKey;
+extern NSString *const iTermStatusBarMinimumWidthKey;
 
 @interface iTermStatusBarBaseComponent : NSObject<iTermStatusBarComponent>
 
@@ -27,6 +29,11 @@ extern NSString *const iTermStatusBarPriorityKey;
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
                                 scope:(nullable iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
+
+- (NSArray<iTermStatusBarComponentKnob *> *)minMaxWidthKnobs;
+// Clamp width to min/max knobs' values.
+- (CGFloat)clampedWidth:(CGFloat)width;
++ (NSDictionary *)defaultMinMaxWidthKnobValues;
 
 @end
 

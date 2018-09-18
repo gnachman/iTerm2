@@ -9,6 +9,7 @@
 
 #import "iTermVariables.h"
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "iTermProcessCache.h"
@@ -40,6 +41,19 @@ NS_ASSUME_NONNULL_BEGIN
         };
     }
     return self;
+}
+
+- (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
+    return [self.minMaxWidthKnobs arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
+}
+
++ (NSDictionary *)statusBarComponentDefaultKnobs {
+    NSDictionary *fromSuper = [super statusBarComponentDefaultKnobs];
+    return [fromSuper dictionaryByMergingDictionary:self.defaultMinMaxWidthKnobValues];
+}
+
+- (CGFloat)statusBarComponentPreferredWidth {
+    return [self clampedWidth:[super statusBarComponentPreferredWidth]];
 }
 
 - (NSImage *)statusBarComponentIcon {

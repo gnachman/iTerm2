@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const iTermStatusBarCompressionResistanceKey = @"base: compression resistance";
 NSString *const iTermStatusBarPriorityKey = @"base: priority";
+NSString *const iTermStatusBarMaximumWidthKey = @"maxwidth";
+NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
 
 @implementation iTermStatusBarBuiltInComponentFactory {
     Class _class;
@@ -131,6 +133,36 @@ NSString *const iTermStatusBarPriorityKey = @"base: priority";
 
 - (NSColor *)statusBarBackgroundColor {
     return _advancedConfiguration.backgroundColor;
+}
+
+- (NSArray<iTermStatusBarComponentKnob *> *)minMaxWidthKnobs {
+    iTermStatusBarComponentKnob *maxWidthKnob =
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Maximum Width:"
+                                                      type:iTermStatusBarComponentKnobTypeDouble
+                                               placeholder:@""
+                                              defaultValue:@(INFINITY)
+                                                       key:iTermStatusBarMaximumWidthKey];
+    iTermStatusBarComponentKnob *minWidthKnob =
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Minimum Width:"
+                                                      type:iTermStatusBarComponentKnobTypeDouble
+                                               placeholder:@""
+                                              defaultValue:0
+                                                       key:iTermStatusBarMinimumWidthKey];
+    return @[minWidthKnob, maxWidthKnob];
+}
+
+- (CGFloat)clampedWidth:(CGFloat)width {
+    NSDictionary *knobValues = self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues];
+    CGFloat max = [knobValues[iTermStatusBarMaximumWidthKey] ?: @(INFINITY) doubleValue];
+    CGFloat min = [knobValues[iTermStatusBarMinimumWidthKey] ?: @0 doubleValue];
+    return MIN(max,
+               MAX(min,
+                   width));
+}
+
++ (NSDictionary *)defaultMinMaxWidthKnobValues {
+    return @{ iTermStatusBarMaximumWidthKey: @(INFINITY),
+              iTermStatusBarMinimumWidthKey: @0 };
 }
 
 #pragma mark - iTermStatusBarComponent
