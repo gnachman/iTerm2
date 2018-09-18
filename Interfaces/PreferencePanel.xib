@@ -4427,9 +4427,9 @@ DQ
                     </connections>
                 </button>
                 <button id="4757">
-                    <rect key="frame" x="18" y="293" width="269" height="18"/>
+                    <rect key="frame" x="18" y="293" width="293" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Confirm &quot;Quit iTerm2 (⌘Q)&quot; command" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4758">
+                    <buttonCell key="cell" type="check" title="Confirm &quot;Quit iTerm2 (⌘Q)&quot; if windows open" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4758">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
