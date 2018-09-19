@@ -2884,6 +2884,10 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSRect)visibleFrameForScreen:(NSScreen *)screen {
     if ([[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats]) {
         DLog(@"visibleFrameForScreen: floating hotkey window gets frameExceptMenuBar");
+        const BOOL menuBarIsHidden = ![[iTermMenuBarObserver sharedInstance] menuBarVisibleOnScreen:screen];
+        if (menuBarIsHidden) {
+            return screen.frame;
+        }
         return screen.frameExceptMenuBar;
     }
 
