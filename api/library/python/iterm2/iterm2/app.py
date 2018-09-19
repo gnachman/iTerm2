@@ -421,6 +421,19 @@ class App:
         if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
 
+    async def async_get_theme(self):
+        """
+        Gets attributes the current theme.
+
+        The automatic and minimal themes will always include "dark" or "light".
+
+        On macOS 10.14, the light or dark attribute may be inferred from the system setting.
+
+        :returns: An array of one or more strings from the set: light, dark, automatic, minimal, highContrast.
+        """
+        s = await self.async_get_variable("effectiveTheme")
+        return s.split(" ")
+
     async def async_get_variable(self, name):
         """
         Fetches an application variable.

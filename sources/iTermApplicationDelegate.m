@@ -88,6 +88,7 @@
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSUserDefaults+iTerm.h"
 #import "NSWindow+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PFMoveApplication.h"
@@ -1005,6 +1006,60 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
+- (NSString *)effectiveTheme {
+    BOOL dark = NO;
+    BOOL light = NO;
+    BOOL highContrast = NO;
+    BOOL minimal = NO;
+
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_DARK:
+            dark = YES;
+            break;
+
+        case TAB_STYLE_LIGHT:
+            light = YES;
+            break;
+            
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            dark = YES;
+            highContrast = YES;
+            break;
+
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            light = YES;
+            highContrast = YES;
+            break;
+
+        case TAB_STYLE_MINIMAL:
+            minimal = YES;
+            // fall through
+
+        case TAB_STYLE_AUTOMATIC: {
+            NSString *systemMode = [[NSUserDefaults standardUserDefaults] stringForKey:@"AppleInterfaceStyle"];
+            if ([systemMode isEqual:@"Dark"]) {
+                dark = YES;
+            } else {
+                light = YES;
+            }
+            break;
+        }
+    }
+    NSMutableArray *array = [NSMutableArray array];
+    if (dark) {
+        [array addObject:@"dark"];
+    } else if (light) {
+        [array addObject:@"light"];
+    }
+    if (highContrast) {
+        [array addObject:@"highContrast"];
+    }
+    if (minimal) {
+        [array addObject:@"minimal"];
+    }
+    return [array componentsJoinedByString:@" "];
+}
+
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     [iTermMenuBarObserver sharedInstance];
     // Cleanly crash on uncaught exceptions, such as during actions.
@@ -1020,6 +1075,19 @@ static BOOL hasBecomeActive = NO;
     }
 
     [[iTermVariableScope globalsScope] setValue:@(getpid()) forVariableNamed:iTermVariableKeyApplicationPID];
+    [[iTermVariableScope globalsScope] setValue:[self effectiveTheme]
+                               forVariableNamed:iTermVariableKeyApplicationEffectiveTheme];
+    void (^themeDidChange)(id _Nonnull) = ^(id _Nonnull newValue) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[iTermVariableScope globalsScope] setValue:[self effectiveTheme]
+                                       forVariableNamed:iTermVariableKeyApplicationEffectiveTheme];
+        });
+    };
+    [[NSUserDefaults standardUserDefaults] it_addObserverForKey:@"AppleInterfaceStyle"
+                                                          block:themeDidChange];
+    [[NSUserDefaults standardUserDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
+                                                          block:themeDidChange];
+
     [[iTermLocalHostNameGuesser sharedInstance] callBlockWhenReady:^(NSString *name) {
         [[iTermVariableScope globalsScope] setValue:name forVariableNamed:iTermVariableKeyApplicationLocalhostName];
     }];

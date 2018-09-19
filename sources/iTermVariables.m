@@ -24,6 +24,7 @@ NSString *const iTermVariableKeyGlobalScopeName = @"iterm2";
 
 NSString *const iTermVariableKeyApplicationPID = @"pid";
 NSString *const iTermVariableKeyApplicationLocalhostName = @"localhostName";
+NSString *const iTermVariableKeyApplicationEffectiveTheme = @"effectiveTheme";
 
 NSString *const iTermVariableKeyTabTitleOverride = @"titleOverride";
 NSString *const iTermVariableKeyTabCurrentSession = @"currentSession";
@@ -131,6 +132,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     // App context
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationPID inContext:iTermVariablesSuggestionContextApp];
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationLocalhostName inContext:iTermVariablesSuggestionContextApp];
+    [self recordUseOfVariableNamed:iTermVariableKeyApplicationEffectiveTheme inContext:iTermVariablesSuggestionContextApp];
 }
 
 + (NSMutableDictionary<NSNumber *, NSMutableSet<NSString *> *> *)mutableRecordedNames {
