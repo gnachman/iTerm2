@@ -16,30 +16,12 @@
         return TAB_STYLE_LIGHT;
     }
     if (tabStyle != TAB_STYLE_AUTOMATIC) {
-        if (@available(macOS 10.14, *)) {
-            return tabStyle;
-        } else {
-            const BOOL dark = [self.name isEqualToString:NSAppearanceNameVibrantDark];
-            switch (tabStyle) {
-                case TAB_STYLE_DARK:
-                case TAB_STYLE_LIGHT:
-                    return dark ? TAB_STYLE_DARK : TAB_STYLE_LIGHT;
-
-                case TAB_STYLE_DARK_HIGH_CONTRAST:
-                case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-                    return dark ? TAB_STYLE_DARK_HIGH_CONTRAST : TAB_STYLE_LIGHT_HIGH_CONTRAST;
-
-                case TAB_STYLE_COUNT:
-                    // shouldn't happen
-                    return TAB_STYLE_LIGHT;
-            }
-        }
+        return tabStyle;
     }
     if (@available(macOS 10.14, *)) {
         return [self it_mojaveTabStyle:tabStyle];
-    } else {
-        return TAB_STYLE_LIGHT;
     }
+    return TAB_STYLE_LIGHT;
 }
 
 - (iTermPreferencesTabStyle)it_mojaveTabStyle:(iTermPreferencesTabStyle)tabStyle NS_AVAILABLE_MAC(10_14) {
