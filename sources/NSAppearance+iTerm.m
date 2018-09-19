@@ -41,9 +41,8 @@
     }
     if (@available(macOS 10.14, *)) {
         return [self it_mojaveTabStyle:tabStyle];
-    } else {
-        return TAB_STYLE_LIGHT;
     }
+    return TAB_STYLE_LIGHT;
 }
 
 - (iTermPreferencesTabStyle)it_mojaveTabStyle:(iTermPreferencesTabStyle)tabStyle NS_AVAILABLE_MAC(10_14) {

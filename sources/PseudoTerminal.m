@@ -5439,24 +5439,41 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setLegacyBackgroundColor:(nullable NSColor *)backgroundColor {
-    if (backgroundColor == nil && [iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
+    BOOL darkAppearance = NO;
+    [self.window setBackgroundColor:backgroundColor];
+    if (@available(macOS 10.13, *)) {
         switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
             case TAB_STYLE_LIGHT:
-                break;
-            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:  // fall through
+                darkAppearance = NO;
                 break;
 
             case TAB_STYLE_DARK:
-                backgroundColor = [PSMDarkTabStyle tabBarColor];
-                break;
-
-            case TAB_STYLE_DARK_HIGH_CONTRAST:
-                backgroundColor = [PSMDarkTabStyle tabBarColor];
+            case TAB_STYLE_DARK_HIGH_CONTRAST:  // fall through
+                darkAppearance = YES;
                 break;
         }
+    } else {  // 10.12 branch
+        // Preserve 10.12 behavior. It can change the window title bar color so the appearance
+        // is important to keep the title legible. This adds the weird behavior of making the
+        // toolbar look buggy when there's a single tab with no visible tabbar and a dark tab
+        // color. It's likely 10.12 support will be dropped before I have time to fix this, alas.
+        if (backgroundColor == nil && [iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
+            switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+                case TAB_STYLE_LIGHT:
+                case TAB_STYLE_LIGHT_HIGH_CONTRAST:  // fall through
+                    break;
+
+                case TAB_STYLE_DARK:
+                case TAB_STYLE_DARK_HIGH_CONTRAST:  // fall through
+                    backgroundColor = [PSMDarkTabStyle tabBarColor];
+                    darkAppearance = YES;
+                    break;
+            }
+        }
+        darkAppearance = (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5);
     }
-    [self.window setBackgroundColor:backgroundColor];
-    if (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5) {
+    if (darkAppearance) {
         self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
     } else {
         self.window.appearance = nil;
