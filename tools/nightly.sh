@@ -42,6 +42,8 @@ CASK_DATE=$(echo -n $COMPACTDATE | sed -e 's/-nightly//')
 CASK_VERSION=$(cat version.txt | sed -e "s/%(extra)s/$CASK_DATE/")
 CASK_VERSION=$(echo $CASK_VERSION | sed -e "s/\\./_/g")
 
+git tag "v$COMPACTDATE"
+git push --tags
 cd build/Nightly
 
 # For the purposes of auto-update, the app's folder must be named iTerm.app since Sparkle won't accept a name change.
@@ -56,3 +58,8 @@ cask-repair --cask-version $CASK_VERSION iterm2-nightly
 scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/nightly/iTerm2-${NAME}.zip || die "scp zip"
 ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@iterm2.com "./newnightly.sh iTerm2-${NAME}.zip" || die "ssh"
 scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/source/appcasts/nightly_changes.txt $SVNDIR/source/appcasts/nightly.xml gnachman@iterm2.com:iterm2.com/appcasts/ || die "scp appcasts"
+
+cd $SVNDIR
+git add source/appcasts/nightly.xml source/appcasts/nightly_changes.txt
+git commit -m "${NAME}"
+
