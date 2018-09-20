@@ -9,6 +9,7 @@ typedef enum iTermVertexInputIndex {
     iTermVertexInputIndexPerInstanceUniforms,
     iTermVertexInputIndexOffset,
     iTermVertexInputIndexCursorDescription,
+    iTermVertexInputMojaveVertexTextInfo
 } iTermVertexInputIndex;
 
 typedef enum iTermTextureIndex {
@@ -103,5 +104,16 @@ typedef struct {
     float underlineThickness;  // Thickness of underline in pixels
     float scale;  // 2 for retina, 1 for non retina
 } iTermTextureDimensions;
+
+typedef struct {
+    vector_uint2 viewportSize;
+
+    // Used to adjust the alpha channel. Defines a function f(x)=c+m*b where
+    // f(x) is the alpha value to output, x is the alpha value of a pixel, and
+    // b is the perceived brightness of the text color. c is powerConstant,
+    // m is powerMultiplier.
+    float powerConstant;
+    float powerMultiplier;
+} iTermVertexInputMojaveVertexTextInfoStruct;
 
 #endif

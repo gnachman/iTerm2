@@ -317,6 +317,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
     return [@[ @"text.newQuad",
                @"text.newPIU",
                @"text.newDims",
+               @"text.info",
                @"text.subpixel",
                @"text.draw" ] objectAtIndex:i];
 }

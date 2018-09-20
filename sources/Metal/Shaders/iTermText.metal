@@ -8,6 +8,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
                       constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
                       constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                       constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
+                      constant iTermVertexInputMojaveVertexTextInfoStruct *textInfo  [[ buffer(iTermVertexInputMojaveVertexTextInfo) ]],
                       device iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                       unsigned int iid [[instance_id]]) {
     iTermTextVertexFunctionOutput out;
@@ -31,7 +32,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.cellOffset = perInstanceUniforms[iid].offset.xy + offset[0];
     out.underlineStyle = perInstanceUniforms[iid].underlineStyle;
     out.underlineColor = static_cast<half4>(perInstanceUniforms[iid].underlineColor);
-    out.power = 3.0 - 2.0 * (0.3 * out.textColor.x + 0.59 * out.textColor.y + 0.11 * out.textColor.z);
+    out.power = textInfo->powerConstant + textInfo->powerMultiplier * (0.3 * out.textColor.x + 0.59 * out.textColor.y + 0.11 * out.textColor.z);
 
     return out;
 }
@@ -91,6 +92,7 @@ iTermTextVertexShaderMonochrome(uint vertexID [[ vertex_id ]],
                                 constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
                                 constant iTermVertex *vertexArray [[ buffer(iTermVertexInputIndexVertices) ]],
                                 constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
+                                constant iTermVertexInputMojaveVertexTextInfoStruct *textInfo [[ buffer(iTermVertexInputMojaveVertexTextInfo) ]],
                                 device iTermTextPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                                 unsigned int iid [[instance_id]]) {
     iTermTextVertexFunctionOutputMonochrome out;
@@ -105,7 +107,7 @@ iTermTextVertexShaderMonochrome(uint vertexID [[ vertex_id ]],
 
     out.textureCoordinate = vertexArray[vertexID].textureCoordinate + perInstanceUniforms[iid].textureOffset;
     out.textColor = static_cast<half4>(perInstanceUniforms[iid].textColor);
-    out.power = 3.0 - 2.0 * (0.3 * out.textColor.x + 0.59 * out.textColor.y + 0.11 * out.textColor.z);
+    out.power = textInfo->powerConstant + textInfo->powerMultiplier * (0.3 * out.textColor.x + 0.59 * out.textColor.y + 0.11 * out.textColor.z);
 
     return out;
 }
