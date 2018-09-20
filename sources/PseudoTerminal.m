@@ -420,7 +420,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
             return mask | NSWindowStyleMaskBorderless | NSWindowStyleMaskResizable;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            return mask | NSWindowStyleMaskBorderless;
+            if (@available(macOS 10.13, *)) {
+                return mask | NSWindowStyleMaskBorderless | NSWindowStyleMaskMiniaturizable;
+            } else {
+                return mask | NSWindowStyleMaskBorderless;
+            }
 
         case WINDOW_TYPE_COMPACT:
             return (mask |
