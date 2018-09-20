@@ -76,6 +76,7 @@ static BOOL gMonochromeText;
     iTermMetalBufferPool *_emptyBuffers;
     iTermMetalBufferPool *_verticesPool;
     iTermMetalBufferPool *_dimensionsPool;
+    iTermMetalBufferPool *_textInfoPool;
     iTermMetalMixedSizeBufferPool *_piuPool;
     iTermMetalMixedSizeBufferPool *_subpixelModelPool NS_DEPRECATED_MAC(10_12, 10_14);
 }
@@ -211,6 +212,7 @@ static BOOL gMonochromeText;
         _emptyBuffers = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:1];
         _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
         _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextureDimensions)];
+        _textInfoPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertexInputMojaveVertexTextInfoStruct)];
 
         // Allow the pool to reserve up to this many bytes. Work backward to find the largest number
         // of buffers we are OK with keeping permanently allocated. By having enough characters on
@@ -424,6 +426,24 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                                                      label:@"Draw more text"];
 }
 
+- (id<MTLBuffer>)textInfoBufferForTransientState:(iTermTextRendererTransientState *)tState {
+    iTermVertexInputMojaveVertexTextInfoStruct textInfo;
+    float power;
+    if (tState.cellConfiguration.scale == 2.0) {
+        power = 3;
+    } else {
+        // See issue 7032 for how this was arrived at
+        power = 2.0;
+    }
+    textInfo.powerConstant = power;
+    textInfo.powerMultiplier = -(power - 1.0);
+    id<MTLBuffer> buffer = [self->_textInfoPool requestBufferFromContext:tState.poolContext
+                                                               withBytes:&textInfo
+                                                          checkIfChanged:YES];
+    buffer.label = @"Text info";
+    return buffer;
+}
+
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalCellRendererTransientState *)transientState {
     iTermTextRendererTransientState *tState = transientState;
@@ -467,6 +487,10 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                                 poolContext:tState.poolContext];
         }];
 
+        __block id<MTLBuffer> textInfoBuffer;
+        [tState measureTimeForStat:iTermTextRendererStatNewTextInfo ofBlock:^{
+            textInfoBuffer = [self textInfoBufferForTransientState:tState];
+        }];
         __block id<MTLBuffer> piuBuffer;
         [tState measureTimeForStat:iTermTextRendererStatNewPIU ofBlock:^{
             piuBuffer = [self piuBufferForPIUs:pius tState:tState instances:instances];
@@ -527,6 +551,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                                        numberOfVertices:6
                                            numberOfPIUs:instances
                                           vertexBuffers:@{ @(iTermVertexInputIndexVertices): vertexBuffer,
+                                                           @(iTermVertexInputMojaveVertexTextInfo): textInfoBuffer,
                                                            @(iTermVertexInputIndexPerInstanceUniforms): piuBuffer,
                                                            @(iTermVertexInputIndexOffset): tState.offsetBuffer }
                                         fragmentBuffers:fragmentBuffers
