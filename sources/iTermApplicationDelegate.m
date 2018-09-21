@@ -36,6 +36,7 @@
 #import "iTermAppHotKeyProvider.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermBuriedSessions.h"
+#import "iTermCharacterSource.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
@@ -1123,7 +1124,162 @@ static BOOL hasBecomeActive = NO;
     [self openUntitledFileBecameSafe];
 }
 
+- (void)doit {
+    NSFont *font = [NSFont fontWithName:@"Source Code Pro" size:11];
+    NSMutableString *log = [NSMutableString string];
+    NSMutableArray *keys = [NSMutableArray array];
+    for (int rl = 4; rl <= 10; rl++) {
+        for (int gl = 4; gl <= 10; gl++) {
+            [keys addObject:[NSString stringWithFormat:@"r%dg%d", rl*10, gl*10]];
+        }
+    }
+    [log appendFormat:@"red,count,%@\n", [keys componentsJoinedByString:@","]];
+    NSCountedSet *uniques = [NSCountedSet set];
+    for (int i = 'a'; i <= 'z'; i++) {
+        // { whitelevel -> {tuple(x,y) -> alpha} }
+        NSMutableDictionary<NSNumber *,
+        NSMutableDictionary<iTermTuple<NSNumber *, NSNumber *> *,
+        NSNumber *> *> *map = [NSMutableDictionary dictionary];
+        NSMutableDictionary<iTermTuple<NSNumber *, NSNumber *> *, NSNumber *> *points = [NSMutableDictionary dictionary];
+        for (int rl = 4; rl <= 10; rl++) {
+            for (int gl = 4; gl <= 10; gl++) {
+                int w = rl*10+gl;
+                iTermCharacterSource *characterSource =
+                [[iTermCharacterSource alloc] initWithCharacter:[NSString stringWithLongCharacter:i]
+                                                           font:font
+                                                           size:NSMakeSize(20, 28)
+                                                 baselineOffset:-3
+                                                          scale:2
+                                                 useThinStrokes:NO
+                                                       fakeBold:NO
+                                                     fakeItalic:NO
+                                                    antialiased:YES
+                                                         radius:0];
+                CGFloat redComponent = rl / 10.0;
+                CGFloat greenComponent = gl / 10.0;
+                characterSource.forcedColor = [NSColor colorWithSRGBRed:redComponent green:greenComponent blue:0 alpha:1];
+                //            if (w == 6) {
+                //                characterSource.filename = @"/tmp/red_w6a.png";
+                //            } else if (w == 7) {
+                //                characterSource.filename = @"/tmp/red_w7a.png";
+                //            }
+                NSMutableDictionary *wdict = map[@(w)];
+                if (!wdict) {
+                    wdict = [NSMutableDictionary dictionary];
+                    map[@(w)] = wdict;
+                }
+                characterSource.d = ^(int x, int y, unsigned char a) {
+                    iTermTuple *point = [iTermTuple tupleWithObject:@(x) andObject:@(y)];
+                    wdict[point] = @(a);
+                    points[point] = @(MAX(points[point].intValue, a));
+                };
+                [characterSource bitmapForPart:12];
+            }
+        }
+        for (iTermTuple<NSNumber *, NSNumber *> *point in points.allKeys) {
+            NSMutableArray *values = [NSMutableArray array];
+            for (NSNumber *whitelevel in [map.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
+                NSDictionary *pointToAlpha = map[whitelevel];
+                NSNumber *alpha = pointToAlpha[point];
+                [values addObject:[NSString stringWithFormat:@"%d",alpha.intValue]];
+            }
+            [uniques addObject:values];
+        }
+    }
+    for (NSArray *values in uniques) {
+        [log appendFormat:@"%d,%@\n", (int)[uniques countForObject:values], [values componentsJoinedByString:@","]];
+    }
+    [log writeToFile:@"/tmp/mojave2.csv" atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    NSLog(@"done");
+}
+    
+- (void)yellowCurve {
+    NSFont *font = [NSFont fontWithName:@"Source Code Pro" size:11];
+
+    for (int i = 'a'; i <= 'z'; i++) {
+        // { whitelevel -> {tuple(x,y) -> alpha} }
+        NSMutableDictionary<NSNumber *,
+                            NSMutableDictionary<iTermTuple<NSNumber *, NSNumber *> *,
+                                                NSNumber *> *> *map = [NSMutableDictionary dictionary];
+        NSMutableDictionary<iTermTuple<NSNumber *, NSNumber *> *, NSNumber *> *points = [NSMutableDictionary dictionary];
+        for (int w = 0; w <= 10; w++) {
+            CGFloat fw = (CGFloat)w / 10.0;
+            iTermCharacterSource *characterSource =
+            [[iTermCharacterSource alloc] initWithCharacter:[NSString stringWithLongCharacter:i]
+                                                       font:font
+                                                       size:NSMakeSize(20, 28)
+                                             baselineOffset:-3
+                                                      scale:2
+                                             useThinStrokes:NO
+                                                   fakeBold:NO
+                                                 fakeItalic:NO
+                                                antialiased:YES
+                                                     radius:0];
+            characterSource.forcedColor = [NSColor colorWithSRGBRed:fw green:fw blue:0 alpha:1];
+            if (w == 6) {
+                characterSource.filename = @"/tmp/red_w6a.png";
+            } else if (w == 7) {
+                characterSource.filename = @"/tmp/red_w7a.png";
+            }
+            NSMutableDictionary *wdict = map[@(w)];
+            if (!wdict) {
+                wdict = [NSMutableDictionary dictionary];
+                map[@(w)] = wdict;
+            }
+            characterSource.d = ^(int x, int y, unsigned char a) {
+                iTermTuple *point = [iTermTuple tupleWithObject:@(x) andObject:@(y)];
+                wdict[point] = @(a);
+                if (w == 0 || w == 10) {
+                    NSNumber *sum = points[point] ?: @0;
+                    NSInteger ss = sum.integerValue;
+                    NSInteger margin = a;
+                    if (w == 10) {
+                        margin *= 1000;
+                    }
+                    ss += margin;
+                    sum = @(ss);
+                    points[point] = sum;
+                }
+                
+                NSDictionary *lastMap = map[@(w-1)];
+                NSNumber *lastAlpha = lastMap[point];
+                if (w > 0 && lastAlpha.integerValue > a + 2) {
+//                    NSLog(@"wtf");
+                }
+            };
+            [characterSource bitmapForPart:12];
+        }
+
+//        NSLog(@"Character: %c", (char)i);
+        NSArray<iTermTuple<NSNumber *, NSNumber *> *> *orderedPoints = [points.allKeys sortedArrayUsingComparator:^NSComparisonResult(iTermTuple<NSNumber *, NSNumber *> *  _Nonnull p1, iTermTuple<NSNumber *, NSNumber *> *  _Nonnull p2) {
+            NSNumber *n1 = points[p1];
+            NSNumber *n2 = points[p2];
+            return [n1 compare:n2];
+        }];
+        for (iTermTuple<NSNumber *, NSNumber *> *point in orderedPoints) {
+            if (points[point].integerValue == 0) {
+                continue;
+            }
+            NSMutableArray *values = [NSMutableArray array];
+            for (NSNumber *whitelevel in [map.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
+                NSDictionary *pointToAlpha = map[whitelevel];
+                NSNumber *alpha = pointToAlpha[point];
+                NSString *s;
+                if (alpha) {
+                    s = [NSString stringWithFormat:@"%3d", alpha.intValue];
+                } else {
+                    s = @"   ";
+                }
+                [values addObject:s];
+            }
+            NSLog(@"y,%@", [values componentsJoinedByString:@" "]);
+        }
+    }
+    NSLog(@"done");
+}
+     
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    [self doit];
     [self warnAboutChangeToDefaultPasteBehavior];
     if (IsTouchBarAvailable()) {
         if (@available(macOS 10.12.2, *)) {

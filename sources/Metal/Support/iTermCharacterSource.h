@@ -14,6 +14,9 @@
 @property (nonatomic, readonly) BOOL isEmoji;
 @property (nonatomic, readonly) CGRect frame;
 @property (nonatomic, readonly) NSArray<NSNumber *> *parts;
+@property (nonatomic, copy) void (^d)(int x, int y, unsigned char a);
+@property (nonatomic, strong) NSColor *forcedColor;
+@property (nonatomic, copy) NSString *filename;
 
 // Using conservative settings (bold, italic, thick strokes, antialiased)
 // returns the frame that contains all characters in the range. This is useful

@@ -205,17 +205,54 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     bitmap.size = _partSize;
 
     unsigned char *source = (unsigned char *)CGBitmapContextGetData(_cgContext);
+    if (@available(macOS 10.14, *)) {
+        if (!_postprocessed && !_isEmoji) {
+            // Copy red channel to alpha channel
+            // Rendering over transparent looks bad. So we render white over black and then tweak the
+            // alpha channel.
+//            if ([_string isEqualToString:@"x"]) {
+//                NSLog(@"Font: %@", _font);
+                for (int y = 0; y < _size.height; y++) {
+                    NSMutableString *line = [NSMutableString string];
+                    for (int x = 0; x < _size.width; x++) {
+                        const int i = x * 4 + (y * _size.width * 4);
+//                        const unsigned char r = source[i];
+//                        const unsigned char g = source[i+1];
+//                        const unsigned char b = source[i+2];
+                        const unsigned char a = source[i+3];
+//                        [line appendFormat:@"%3d ", (int)a];
+                        if (self.d) {
+                            self.d(x, y, a);
+                        }
+                        /*
+                        if (x == 5 && y == 22 && self.filename) {
+                            NSLog(@"for %@ alpha is %@", self.filename, @(a));
+                            source[i] = 0xff;
+                            source[i+1] = 0;
+                            source[i+2] = 0;
+                            source[i+3] = 0xff;
+                        }
+                         */
+                    }
+//                    NSLog(@"%@", line);
+                }
+//                NSLog(@"\n--End--\n");
+//            }
 
-#if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
+//            for (int i = 0 ; i < _size.height * _size.width * 4; i += 4) {
+//                source[i + 3] = 128;
+//                source[i + 0] = 128;
+//                source[i + 1] = 0;
+//                source[i + 2] = 0;
+//            }
+
+            _postprocessed = YES;
+        }
+    }
+    
+    BOOL saveBitmapsForDebugging = self.filename != nil; // [_string isEqualToString:@"x"];
     if (saveBitmapsForDebugging) {
-        NSImage *image = [NSImage imageWithRawData:[NSData dataWithBytes:source length:bitmap.data.length]
-                                              size:_partSize
-                                     bitsPerSample:8
-                                   samplesPerPixel:4
-                                          hasAlpha:YES
-                                    colorSpaceName:NSDeviceRGBColorSpace];
-        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/%@.%@.png", _string, @(part)]];
-
+        NSImage *image;
         NSData *bigData = [NSData dataWithBytes:source length:_size.width*_size.height*4];
         image = [NSImage imageWithRawData:bigData
                                      size:_size
@@ -223,23 +260,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                           samplesPerPixel:4
                                  hasAlpha:YES
                            colorSpaceName:NSDeviceRGBColorSpace];
-        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/big-%@.png", _string]];
-    }
-#endif
-
-    if (@available(macOS 10.14, *)) {
-        if (!_postprocessed && !_isEmoji) {
-            // Copy red channel to alpha channel
-            // Rendering over transparent looks bad. So we render white over black and then tweak the
-            // alpha channel.
-            for (int i = 0 ; i < _size.height * _size.width * 4; i += 4) {
-                source[i + 3] = source[i];
-                source[i + 0] = 255;
-                source[i + 1] = 255;
-                source[i + 2] = 255;
-            }
-            _postprocessed = YES;
-        }
+        [image saveAsPNGTo:self.filename];
     }
 
     char *dest = (char *)bitmap.data.mutableBytes;
@@ -397,7 +418,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         if (_isEmoji) {
             CGContextSetRGBFillColor(_cgContext, 0, 0, 0, 0);
         } else {
-            CGContextSetRGBFillColor(_cgContext, 0, 0, 0, 1);
+            CGContextSetRGBFillColor(_cgContext, 0, 0, 0, 0);
         }
     } else {
         if (_isEmoji) {
@@ -473,7 +494,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 - (NSColor *)textColor {
     if (@available(macOS 10.14, *)) {
-        return [NSColor whiteColor];
+//        return [NSColor colorWithSRGBRed:0.875 green:0 blue:0 alpha:1];
+        return self.forcedColor ?: [NSColor whiteColor];
     } else {
         return [NSColor blackColor];
     }

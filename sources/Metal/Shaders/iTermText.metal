@@ -231,10 +231,8 @@ iTermTextFragmentShaderMonochrome(iTermTextVertexFunctionOutputMonochrome in [[s
                                      min_filter::linear);
 
     half4 textureColor = texture.sample(textureSampler, in.textureCoordinate);
-    // These values were arrived at experimentally.
-    // They're not a perfect match for how the system recolors glyphs but it's close.
     half4 result = in.textColor;
-    result.w *= pow(textureColor.w, in.power);
+    result.w = textureColor.w;
     return result;
 }
 
@@ -294,8 +292,7 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
                                                                  textureSampler,
                                                                  dimensions->scale);
 
-    half4 recoloredTextColor = static_cast<half4>(in.textColor);
-    recoloredTextColor.w *= pow(textureColor.w, in.power);
+    half4 recoloredTextColor = static_cast<half4>(in.textColor) * textureColor;
 
     // I could eke out a little speed by passing a half4 from the vector shader but this is so slow I'd rather not add the complexity.
     return mix(recoloredTextColor,
