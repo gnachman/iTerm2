@@ -303,6 +303,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setAlphaValue:(CGFloat)alphaValue {
+    DLog(@"set alpha to %@ from %@", @(alphaValue), [NSThread callStackSymbols]);
     DLog(@"Invalidate cached occlusion: %@ %p", NSStringFromSelector(_cmd), self);
     [[iTermWindowOcclusionChangeMonitor sharedInstance] invalidateCachedOcclusion];
     [super setAlphaValue:alphaValue];
