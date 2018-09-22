@@ -72,6 +72,9 @@ extern NSString *const iTermAPIServerConnectionClosed;
                             handler:(void (^)(ITMReorderTabsResponse *))response;
 - (void)apiServerPreferencesRequest:(ITMPreferencesRequest *)request
                             handler:(void (^)(ITMPreferencesResponse *))response;
+- (void)apiServerColorPresetRequest:(ITMColorPresetRequest *)request
+                            handler:(void (^)(ITMColorPresetResponse *))response;
+
 @end
 
 @interface iTermAPIServer : NSObject

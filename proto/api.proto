@@ -42,6 +42,7 @@ message ClientOriginatedMessage {
     TmuxRequest tmux_request = 124;
     ReorderTabsRequest reorder_tabs_request = 125;
     PreferencesRequest preferences_request = 126;
+    ColorPresetRequest color_preset_request = 127;
   }
 }
 
@@ -81,10 +82,53 @@ message ServerOriginatedMessage {
     TmuxResponse tmux_response = 124;
     ReorderTabsResponse reorder_tabs_response = 125;
     PreferencesResponse preferences_response = 126;
+    ColorPresetResponse color_preset_response = 127;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
   }
+}
+
+message ColorPresetRequest {
+  message ListPresets {
+  }
+  message GetPreset {
+    optional string name = 1;
+  }
+  oneof request {
+    ListPresets list_presets = 1;
+    GetPreset get_preset = 2;
+  }
+}
+
+message ColorPresetResponse {
+  message ListPresets {
+    repeated string name = 1;
+  }
+
+  message GetPreset {
+    message ColorSetting {
+      optional float red = 1;
+      optional float green = 2;
+      optional float blue = 3;
+      optional float alpha = 4;
+      optional string color_space = 5;
+      optional string key = 6;
+    }
+    repeated ColorSetting color_settings = 1;
+  }
+
+  oneof response {
+    ListPresets list_presets = 1;
+    GetPreset get_preset = 2;
+  }
+
+  enum Status {
+    OK = 0;
+    PRESET_NOT_FOUND = 1;
+    REQUEST_MALFORMED = 2;
+  }
+  optional Status status = 3;
 }
 
 message PreferencesRequest {

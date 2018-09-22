@@ -17,6 +17,8 @@
 
 @interface NSDictionary<__covariant KeyType, __covariant ObjectType> (iTerm)
 
++ (CGFloat)defaultAlphaForColorPresetKey:(NSString *)key;
+
 + (NSDictionary *)dictionaryWithGridCoord:(VT100GridCoord)coord;
 - (VT100GridCoord)gridCoord;
 
@@ -42,8 +44,9 @@
 - (NSColor *)colorValue;
 - (BOOL)isColorValue;
 
-// If the dict doesn't have an alpha component, use |alpha|.
-- (NSColor *)colorValueWithDefaultAlpha:(CGFloat)alpha;
+// Uses the key to choose the default alpha value.
+- (NSColor *)colorValueForKey:(NSString *)key;
+
 
 - (NSDictionary *)dictionaryByRemovingNullValues;
 - (NSDictionary *)dictionaryBySettingObject:(ObjectType)object forKey:(KeyType)key;

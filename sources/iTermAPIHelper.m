@@ -13,6 +13,7 @@
 #import "iTermAPIAuthorizationController.h"
 #import "iTermBuriedSessions.h"
 #import "iTermBuiltInFunctions.h"
+#import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
 #import "iTermLSOF.h"
@@ -23,6 +24,7 @@
 #import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
@@ -2619,6 +2621,75 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     [[ProfileModel sharedInstance] setDefaultByGuid:guid];
     result.status = ITMPreferencesResponse_Result_SetDefaultProfileResult_Status_Ok;
     return result;
+}
+
+- (void)apiServerColorPresetRequest:(ITMColorPresetRequest *)request handler:(void (^)(ITMColorPresetResponse *))response {
+    switch (request.requestOneOfCase) {
+        case ITMColorPresetRequest_Request_OneOfCase_GetPreset:
+            [self handleGetPreset:request.getPreset completion:response];
+            return;
+
+        case ITMColorPresetRequest_Request_OneOfCase_ListPresets:
+            [self handleListPresets:request.listPresets completion:response];
+            return;
+
+        case ITMColorPresetRequest_Request_OneOfCase_GPBUnsetOneOfCase:
+            break;
+    }
+    ITMColorPresetResponse *message = [[ITMColorPresetResponse alloc] init];
+    message.status = ITMColorPresetResponse_Status_RequestMalformed;
+    response(message);
+}
+
+- (void)handleGetPreset:(ITMColorPresetRequest_GetPreset *)request completion:(void (^)(ITMColorPresetResponse *))completion {
+    ITMColorPresetResponse *message = [[ITMColorPresetResponse alloc] init];
+    iTermColorPreset *preset = [iTermColorPresets presetWithName:request.name];
+    if (!preset) {
+        message.status = ITMColorPresetResponse_Status_PresetNotFound;
+        completion(message);
+        return;
+    }
+
+    for (NSString *key in preset) {
+        ITMColorPresetResponse_GetPreset_ColorSetting *colorSetting = [self colorSettingForDictionary:preset[key] key:key];
+        [message.getPreset.colorSettingsArray addObject:colorSetting];
+    }
+    message.status = ITMColorPresetResponse_Status_Ok;
+    completion(message);
+}
+
+- (ITMColorPresetResponse_GetPreset_ColorSetting *)colorSettingForDictionary:(iTermColorDictionary *)dict key:(NSString *)key {
+    ITMColorPresetResponse_GetPreset_ColorSetting *setting = [[ITMColorPresetResponse_GetPreset_ColorSetting alloc] init];
+    setting.key = key;
+    NSNumber *obj;
+    obj = dict[kEncodedColorDictionaryRedComponent];
+    if (obj) {
+        setting.red = [obj doubleValue];
+    }
+    obj = dict[kEncodedColorDictionaryGreenComponent];
+    if (obj) {
+        setting.green = [obj doubleValue];
+    }
+    obj = dict[kEncodedColorDictionaryBlueComponent];
+    if (obj) {
+        setting.blue = [obj doubleValue];
+    }
+    obj = dict[kEncodedColorDictionaryAlphaComponent] ?: @([NSDictionary defaultAlphaForColorPresetKey:key]);
+    setting.alpha = [obj doubleValue];
+
+    NSString *colorSpace = dict[kEncodedColorDictionaryColorSpace] ?: kEncodedColorDictionaryCalibratedColorSpace;
+    setting.colorSpace = colorSpace;
+    
+    return setting;
+}
+
+- (void)handleListPresets:(ITMColorPresetRequest_ListPresets *)request completion:(void (^)(ITMColorPresetResponse *))completion {
+    ITMColorPresetResponse *message = [[ITMColorPresetResponse alloc] init];
+    for (NSString *name in [iTermColorPresets allColorPresets]) {
+        [message.listPresets.nameArray addObject:name];
+    }
+    message.status = ITMColorPresetResponse_Status_Ok;
+    completion(message);
 }
 
 @end

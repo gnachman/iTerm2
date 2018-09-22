@@ -8,7 +8,8 @@ extern NSString *const kRebuildColorPresetsMenuNotification;
 @class Profile;
 @class ProfileModel;
 
-typedef NSDictionary<NSString *, NSNumber *> iTermColorDictionary;
+// Values are numbers for components or a string for the color space
+typedef NSDictionary<NSString *, id> iTermColorDictionary;
 typedef NSDictionary<NSString *, iTermColorDictionary *> iTermColorPreset;
 typedef NSDictionary<NSString *, iTermColorPreset *> iTermColorPresetDictionary;
 

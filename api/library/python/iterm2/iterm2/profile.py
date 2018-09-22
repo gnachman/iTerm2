@@ -1,4 +1,5 @@
 """Provides classes for representing, querying, and modifying iTerm2 profiles."""
+import asyncio
 import enum
 import iterm2.rpc
 import json
@@ -758,12 +759,14 @@ class WriteOnlyProfile:
                 "null",
                 self._guids_for_set())
         else:
+            print("await setting a color")
             await iterm2.rpc.async_set_profile_property(
                 self.connection,
                 self.session_id,
                 key,
                 value.get_dict(),
                 self._guids_for_set())
+            print("did set a color")
 
     def _guids_for_set(self):
         if self.session_id is None:
@@ -771,6 +774,19 @@ class WriteOnlyProfile:
             return [self.__guid]
         else:
             return self.session_id
+
+    async def async_set_color_preset(self, preset):
+        """Sets the color preset.
+
+        :param preset: A :class:`iterm2.ColorPreset`.
+        """
+        futures = []
+        for value in preset.values:
+            coro = self._async_color_set(value.key, Color(value.red * 255, value.green * 255, value.blue * 255, value.alpha * 255, value.colorSpace))
+            future = asyncio.ensure_future(coro)
+            futures.append(future)
+        await self.connection.async_gather(futures)
+
 
     async def async_set_foreground_color(self, value):
         """Sets the foreground color.
