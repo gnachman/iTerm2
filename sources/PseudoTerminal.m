@@ -5440,7 +5440,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setLegacyBackgroundColor:(nullable NSColor *)backgroundColor {
     BOOL darkAppearance = NO;
-    [self.window setBackgroundColor:backgroundColor];
     if (@available(macOS 10.13, *)) {
         switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
             case TAB_STYLE_LIGHT:
@@ -5473,6 +5472,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         darkAppearance = (backgroundColor != nil && backgroundColor.perceivedBrightness < 0.5);
     }
+    [self.window setBackgroundColor:backgroundColor];
     if (darkAppearance) {
         self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
     } else {
