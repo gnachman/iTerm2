@@ -33,6 +33,13 @@ CF_EXTERN_C_BEGIN
 @class ITMBroadcastDomain;
 @class ITMBroadcastDomainsChangedNotification;
 @class ITMCodePointsPerCell;
+@class ITMColorPresetRequest;
+@class ITMColorPresetRequest_GetPreset;
+@class ITMColorPresetRequest_ListPresets;
+@class ITMColorPresetResponse;
+@class ITMColorPresetResponse_GetPreset;
+@class ITMColorPresetResponse_GetPreset_ColorSetting;
+@class ITMColorPresetResponse_ListPresets;
 @class ITMCoord;
 @class ITMCoordRange;
 @class ITMCreateTabRequest;
@@ -211,6 +218,22 @@ GPBEnumDescriptor *ITMVariableScope_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMVariableScope_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMColorPresetResponse_Status
+
+typedef GPB_ENUM(ITMColorPresetResponse_Status) {
+  ITMColorPresetResponse_Status_Ok = 0,
+  ITMColorPresetResponse_Status_PresetNotFound = 1,
+  ITMColorPresetResponse_Status_RequestMalformed = 2,
+};
+
+GPBEnumDescriptor *ITMColorPresetResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMColorPresetResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMPreferencesResponse_Result_SetPreferenceResult_Status
 
@@ -803,6 +826,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_TmuxRequest = 124,
   ITMClientOriginatedMessage_FieldNumber_ReorderTabsRequest = 125,
   ITMClientOriginatedMessage_FieldNumber_PreferencesRequest = 126,
+  ITMClientOriginatedMessage_FieldNumber_ColorPresetRequest = 127,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -834,6 +858,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_TmuxRequest = 124,
   ITMClientOriginatedMessage_Submessage_OneOfCase_ReorderTabsRequest = 125,
   ITMClientOriginatedMessage_Submessage_OneOfCase_PreferencesRequest = 126,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_ColorPresetRequest = 127,
 };
 
 /**
@@ -901,6 +926,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMPreferencesRequest *preferencesRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMColorPresetRequest *colorPresetRequest;
+
 @end
 
 /**
@@ -940,6 +967,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_TmuxResponse = 124,
   ITMServerOriginatedMessage_FieldNumber_ReorderTabsResponse = 125,
   ITMServerOriginatedMessage_FieldNumber_PreferencesResponse = 126,
+  ITMServerOriginatedMessage_FieldNumber_ColorPresetResponse = 127,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -973,6 +1001,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_TmuxResponse = 124,
   ITMServerOriginatedMessage_Submessage_OneOfCase_ReorderTabsResponse = 125,
   ITMServerOriginatedMessage_Submessage_OneOfCase_PreferencesResponse = 126,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_ColorPresetResponse = 127,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -1045,6 +1074,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMPreferencesResponse *preferencesResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMColorPresetResponse *colorPresetResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 
@@ -1054,6 +1085,149 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
  * Clears whatever value was set for the oneof 'submessage'.
  **/
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
+
+#pragma mark - ITMColorPresetRequest
+
+typedef GPB_ENUM(ITMColorPresetRequest_FieldNumber) {
+  ITMColorPresetRequest_FieldNumber_ListPresets = 1,
+  ITMColorPresetRequest_FieldNumber_GetPreset = 2,
+};
+
+typedef GPB_ENUM(ITMColorPresetRequest_Request_OneOfCase) {
+  ITMColorPresetRequest_Request_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMColorPresetRequest_Request_OneOfCase_ListPresets = 1,
+  ITMColorPresetRequest_Request_OneOfCase_GetPreset = 2,
+};
+
+@interface ITMColorPresetRequest : GPBMessage
+
+@property(nonatomic, readonly) ITMColorPresetRequest_Request_OneOfCase requestOneOfCase;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMColorPresetRequest_ListPresets *listPresets;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMColorPresetRequest_GetPreset *getPreset;
+
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'request'.
+ **/
+void ITMColorPresetRequest_ClearRequestOneOfCase(ITMColorPresetRequest *message);
+
+#pragma mark - ITMColorPresetRequest_ListPresets
+
+@interface ITMColorPresetRequest_ListPresets : GPBMessage
+
+@end
+
+#pragma mark - ITMColorPresetRequest_GetPreset
+
+typedef GPB_ENUM(ITMColorPresetRequest_GetPreset_FieldNumber) {
+  ITMColorPresetRequest_GetPreset_FieldNumber_Name = 1,
+};
+
+@interface ITMColorPresetRequest_GetPreset : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+/** Test to see if @c name has been set. */
+@property(nonatomic, readwrite) BOOL hasName;
+
+@end
+
+#pragma mark - ITMColorPresetResponse
+
+typedef GPB_ENUM(ITMColorPresetResponse_FieldNumber) {
+  ITMColorPresetResponse_FieldNumber_ListPresets = 1,
+  ITMColorPresetResponse_FieldNumber_GetPreset = 2,
+  ITMColorPresetResponse_FieldNumber_Status = 3,
+};
+
+typedef GPB_ENUM(ITMColorPresetResponse_Response_OneOfCase) {
+  ITMColorPresetResponse_Response_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMColorPresetResponse_Response_OneOfCase_ListPresets = 1,
+  ITMColorPresetResponse_Response_OneOfCase_GetPreset = 2,
+};
+
+@interface ITMColorPresetResponse : GPBMessage
+
+@property(nonatomic, readonly) ITMColorPresetResponse_Response_OneOfCase responseOneOfCase;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMColorPresetResponse_ListPresets *listPresets;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMColorPresetResponse_GetPreset *getPreset;
+
+@property(nonatomic, readwrite) ITMColorPresetResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'response'.
+ **/
+void ITMColorPresetResponse_ClearResponseOneOfCase(ITMColorPresetResponse *message);
+
+#pragma mark - ITMColorPresetResponse_ListPresets
+
+typedef GPB_ENUM(ITMColorPresetResponse_ListPresets_FieldNumber) {
+  ITMColorPresetResponse_ListPresets_FieldNumber_NameArray = 1,
+};
+
+@interface ITMColorPresetResponse_ListPresets : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *nameArray;
+/** The number of items in @c nameArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger nameArray_Count;
+
+@end
+
+#pragma mark - ITMColorPresetResponse_GetPreset
+
+typedef GPB_ENUM(ITMColorPresetResponse_GetPreset_FieldNumber) {
+  ITMColorPresetResponse_GetPreset_FieldNumber_ColorSettingsArray = 1,
+};
+
+@interface ITMColorPresetResponse_GetPreset : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMColorPresetResponse_GetPreset_ColorSetting*> *colorSettingsArray;
+/** The number of items in @c colorSettingsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger colorSettingsArray_Count;
+
+@end
+
+#pragma mark - ITMColorPresetResponse_GetPreset_ColorSetting
+
+typedef GPB_ENUM(ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber) {
+  ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Red = 1,
+  ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Green = 2,
+  ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Blue = 3,
+  ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Alpha = 4,
+  ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_ColorSpace = 5,
+  ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Key = 6,
+};
+
+@interface ITMColorPresetResponse_GetPreset_ColorSetting : GPBMessage
+
+@property(nonatomic, readwrite) float red;
+
+@property(nonatomic, readwrite) BOOL hasRed;
+@property(nonatomic, readwrite) float green;
+
+@property(nonatomic, readwrite) BOOL hasGreen;
+@property(nonatomic, readwrite) float blue;
+
+@property(nonatomic, readwrite) BOOL hasBlue;
+@property(nonatomic, readwrite) float alpha;
+
+@property(nonatomic, readwrite) BOOL hasAlpha;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *colorSpace;
+/** Test to see if @c colorSpace has been set. */
+@property(nonatomic, readwrite) BOOL hasColorSpace;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *key;
+/** Test to see if @c key has been set. */
+@property(nonatomic, readwrite) BOOL hasKey;
+
+@end
 
 #pragma mark - ITMPreferencesRequest
 

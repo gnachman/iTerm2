@@ -523,6 +523,21 @@ async def async_get_preference(connection, key):
     request.preferences_request.requests.extend([my_request])
     return await _async_call(connection, request)
 
+async def async_list_color_presets(connection):
+    """Gets a list of color preset names."""
+    request = _alloc_request()
+    request.color_preset_request.SetInParent()
+    request.color_preset_request.list_presets.SetInParent()
+    return await _async_call(connection, request)
+
+async def async_get_color_preset(connection, name):
+    """Gets the content of a color preset by name."""
+    request = _alloc_request()
+    request.color_preset_request.SetInParent()
+    request.color_preset_request.get_preset.SetInParent()
+    request.color_preset_request.get_preset.name = name
+    return await _async_call(connection, request)
+
 ## Private --------------------------------------------------------------------
 
 def _alloc_id():

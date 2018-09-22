@@ -3670,7 +3670,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     self.cursorGuideColor = [[iTermProfilePreferences objectForKey:KEY_CURSOR_GUIDE_COLOR
-                                                         inProfile:aDict] colorValueWithDefaultAlpha:0.25];
+                                                         inProfile:aDict] colorValueForKey:KEY_CURSOR_GUIDE_COLOR];
     if (!_cursorGuideSettingHasChanged) {
         _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
                                                                   inProfile:aDict];

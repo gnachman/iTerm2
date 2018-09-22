@@ -93,8 +93,12 @@ class Connection:
         # wants to handle the just-received message. If one is found, the
         # mesasge is placed in its future. Otherwise, it dispatches it itself.
         # Notifications always get dispatched by the "first" receiver, while
-        # subsequent receivers should only dispatch API responses.
+        # subsequent receivers should only dispatch API responses. Note that any
+        # receiver may be promoted to "first receiver" status when all its predecessors
+        # are done.
         self.__receivers = []
+        # True while a receiver is awaiting the websocket.
+        self.__awaiting_websocket = False
 
     def run(self, coro, *args):
         """
@@ -110,6 +114,9 @@ class Connection:
             """Wrapper around the user-provided coroutine that passes it argv."""
             await self.async_connect(coro, *args)
         loop = asyncio.get_event_loop()
+        # This keeps you from pulling your hair out. The downside is uncertain, but
+        # I do know that pulling my hair out hurts.
+        loop.set_debug(True)
         loop.run_until_complete(async_main(loop))
 
 
@@ -151,23 +158,55 @@ class Connection:
 
         Returns: a protocol buffer message of type iterm2.api_pb2.ServerOriginatedMessage.
         """
+        # This future will be set with either a message or None. None means it's this
+        # receiver's turn to start awaiting the websocket.
         my_future = asyncio.Future()
         my_receiver = (matchFunc, my_future)
         self.__receivers.append(my_receiver)
 
-        if len(self.__receivers) == 1:
-            while not my_future.done():
-                data = await self.websocket.recv()
-                message = iterm2.api_pb2.ServerOriginatedMessage()
-                message.ParseFromString(data)
-
-                future = self._get_receiver_future(message)
-                future.set_result(message)
-            return future.result()
+        if not self.__awaiting_websocket:
+            # This one must await the websocket
+            return await self._async_block_on_websocket_and_dispatch(my_future)
         else:
-            while not my_future.done():
-                message = await my_future
-                return message
+            # Someone else is already awaiting the websocket, so I must get in line.
+            # Either another receiver will get the message I'm waiting for and hand
+            # it to my future or I will become first in line and begin awaiting the
+            # websocket.
+            return await self._async_wait_my_turn(my_future, matchFunc)
+
+    async def _async_wait_my_turn(self, my_future, matchFunc):
+        """Wait for a message to be received, but do not await the websocket.
+
+        Another receiver is awaiting the websocket. My future will get a result when
+        it's time to do something."""
+        while not my_future.done():
+            message = await my_future
+            if message is None:
+                assert(not self.__awaiting_websocket)
+                # I'm now first in the queue because the receiver before me, which
+                # had been blocking on the websocket, has now finished.
+                return await self.async_recv_message(matchFunc)
+            return message
+
+    async def _async_block_on_websocket_and_dispatch(self, my_future):
+        """Reads messages from the websockets and assigns them to receivers.
+
+        Returns when my own message is received. In that case, the next in line
+        (if any) gets notified that they must begin awaiting the websocket."""
+        while not my_future.done():
+            self.__awaiting_websocket = True
+            data = await self.websocket.recv()
+            self.__awaiting_websocket = False
+
+            message = iterm2.api_pb2.ServerOriginatedMessage()
+            message.ParseFromString(data)
+
+            future = self._get_receiver_future(message)
+            future.set_result(message)
+        if self.__receivers:
+            self.__receivers[0][1].set_result(None)
+            del self.__receivers[0]
+        return future.result()
 
     async def async_connect(self, coro, *args):
         """
@@ -262,6 +301,32 @@ class Connection:
                 break
             if message_future not in pending:
                 message_future = async_recv_dispatch()
+
+    async def async_gather(self, aws):
+        """Like asyncio.gather, but allows RPCs to complete."""
+        async def async_recv_dispatch():
+            while True:
+                message = await self.async_recv_message()
+                await self._async_dispatch(message)
+
+        message_future = asyncio.ensure_future(async_recv_dispatch())
+        remaining = list(aws) + [message_future]
+        while len(remaining) > 1:
+            done, pending = await asyncio.wait(
+                    remaining,
+                    return_when=asyncio.FIRST_COMPLETED)
+            for task in done:
+                exc = None
+                try:
+                    exc = task.exception()
+                except:
+                    pass
+                if exc:
+                    for future in pending:
+                        pending.cancel()
+                    raise exc
+            remaining = list(pending)
+        message_future.cancel()
 
 
     def _begin_deferring(self):

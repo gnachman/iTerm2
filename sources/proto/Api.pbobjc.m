@@ -218,6 +218,7 @@ BOOL ITMVariableScope_IsValidValue(int32_t value__) {
 @dynamic tmuxRequest;
 @dynamic reorderTabsRequest;
 @dynamic preferencesRequest;
+@dynamic colorPresetRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -248,6 +249,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMTmuxRequest *tmuxRequest;
   ITMReorderTabsRequest *reorderTabsRequest;
   ITMPreferencesRequest *preferencesRequest;
+  ITMColorPresetRequest *colorPresetRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -509,6 +511,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "colorPresetRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_ColorPresetRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, colorPresetRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -571,6 +582,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic tmuxResponse;
 @dynamic reorderTabsResponse;
 @dynamic preferencesResponse;
+@dynamic colorPresetResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -603,6 +615,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMTmuxResponse *tmuxResponse;
   ITMReorderTabsResponse *reorderTabsResponse;
   ITMPreferencesResponse *preferencesResponse;
+  ITMColorPresetResponse *colorPresetResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -875,6 +888,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "colorPresetResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_ColorPresetResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, colorPresetResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
@@ -911,6 +933,447 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMColorPresetRequest
+
+@implementation ITMColorPresetRequest
+
+@dynamic requestOneOfCase;
+@dynamic listPresets;
+@dynamic getPreset;
+
+typedef struct ITMColorPresetRequest__storage_ {
+  uint32_t _has_storage_[2];
+  ITMColorPresetRequest_ListPresets *listPresets;
+  ITMColorPresetRequest_GetPreset *getPreset;
+} ITMColorPresetRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "listPresets",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetRequest_ListPresets),
+        .number = ITMColorPresetRequest_FieldNumber_ListPresets,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMColorPresetRequest__storage_, listPresets),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "getPreset",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetRequest_GetPreset),
+        .number = ITMColorPresetRequest_FieldNumber_GetPreset,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMColorPresetRequest__storage_, getPreset),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMColorPresetRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMColorPresetRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    static const char *oneofs[] = {
+      "request",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+void ITMColorPresetRequest_ClearRequestOneOfCase(ITMColorPresetRequest *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
+#pragma mark - ITMColorPresetRequest_ListPresets
+
+@implementation ITMColorPresetRequest_ListPresets
+
+
+typedef struct ITMColorPresetRequest_ListPresets__storage_ {
+  uint32_t _has_storage_[1];
+} ITMColorPresetRequest_ListPresets__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMColorPresetRequest_ListPresets class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:NULL
+                                    fieldCount:0
+                                   storageSize:sizeof(ITMColorPresetRequest_ListPresets__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMColorPresetRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMColorPresetRequest_GetPreset
+
+@implementation ITMColorPresetRequest_GetPreset
+
+@dynamic hasName, name;
+
+typedef struct ITMColorPresetRequest_GetPreset__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *name;
+} ITMColorPresetRequest_GetPreset__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "name",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMColorPresetRequest_GetPreset_FieldNumber_Name,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMColorPresetRequest_GetPreset__storage_, name),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMColorPresetRequest_GetPreset class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMColorPresetRequest_GetPreset__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMColorPresetRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMColorPresetResponse
+
+@implementation ITMColorPresetResponse
+
+@dynamic responseOneOfCase;
+@dynamic listPresets;
+@dynamic getPreset;
+@dynamic hasStatus, status;
+
+typedef struct ITMColorPresetResponse__storage_ {
+  uint32_t _has_storage_[2];
+  ITMColorPresetResponse_Status status;
+  ITMColorPresetResponse_ListPresets *listPresets;
+  ITMColorPresetResponse_GetPreset *getPreset;
+} ITMColorPresetResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "listPresets",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetResponse_ListPresets),
+        .number = ITMColorPresetResponse_FieldNumber_ListPresets,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMColorPresetResponse__storage_, listPresets),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "getPreset",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetResponse_GetPreset),
+        .number = ITMColorPresetResponse_FieldNumber_GetPreset,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMColorPresetResponse__storage_, getPreset),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMColorPresetResponse_Status_EnumDescriptor,
+        .number = ITMColorPresetResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMColorPresetResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMColorPresetResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMColorPresetResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    static const char *oneofs[] = {
+      "response",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+void ITMColorPresetResponse_ClearResponseOneOfCase(ITMColorPresetResponse *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
+#pragma mark - Enum ITMColorPresetResponse_Status
+
+GPBEnumDescriptor *ITMColorPresetResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000PresetNotFound\000RequestMalformed\000";
+    static const int32_t values[] = {
+        ITMColorPresetResponse_Status_Ok,
+        ITMColorPresetResponse_Status_PresetNotFound,
+        ITMColorPresetResponse_Status_RequestMalformed,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMColorPresetResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMColorPresetResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMColorPresetResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMColorPresetResponse_Status_Ok:
+    case ITMColorPresetResponse_Status_PresetNotFound:
+    case ITMColorPresetResponse_Status_RequestMalformed:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - ITMColorPresetResponse_ListPresets
+
+@implementation ITMColorPresetResponse_ListPresets
+
+@dynamic nameArray, nameArray_Count;
+
+typedef struct ITMColorPresetResponse_ListPresets__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *nameArray;
+} ITMColorPresetResponse_ListPresets__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "nameArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMColorPresetResponse_ListPresets_FieldNumber_NameArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMColorPresetResponse_ListPresets__storage_, nameArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMColorPresetResponse_ListPresets class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMColorPresetResponse_ListPresets__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMColorPresetResponse)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMColorPresetResponse_GetPreset
+
+@implementation ITMColorPresetResponse_GetPreset
+
+@dynamic colorSettingsArray, colorSettingsArray_Count;
+
+typedef struct ITMColorPresetResponse_GetPreset__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *colorSettingsArray;
+} ITMColorPresetResponse_GetPreset__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "colorSettingsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetResponse_GetPreset_ColorSetting),
+        .number = ITMColorPresetResponse_GetPreset_FieldNumber_ColorSettingsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset__storage_, colorSettingsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMColorPresetResponse_GetPreset class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMColorPresetResponse_GetPreset__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMColorPresetResponse)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMColorPresetResponse_GetPreset_ColorSetting
+
+@implementation ITMColorPresetResponse_GetPreset_ColorSetting
+
+@dynamic hasRed, red;
+@dynamic hasGreen, green;
+@dynamic hasBlue, blue;
+@dynamic hasAlpha, alpha;
+@dynamic hasColorSpace, colorSpace;
+@dynamic hasKey, key;
+
+typedef struct ITMColorPresetResponse_GetPreset_ColorSetting__storage_ {
+  uint32_t _has_storage_[1];
+  float red;
+  float green;
+  float blue;
+  float alpha;
+  NSString *colorSpace;
+  NSString *key;
+} ITMColorPresetResponse_GetPreset_ColorSetting__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "red",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Red,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_, red),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeFloat,
+      },
+      {
+        .name = "green",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Green,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_, green),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeFloat,
+      },
+      {
+        .name = "blue",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Blue,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_, blue),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeFloat,
+      },
+      {
+        .name = "alpha",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Alpha,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_, alpha),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeFloat,
+      },
+      {
+        .name = "colorSpace",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_ColorSpace,
+        .hasIndex = 4,
+        .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_, colorSpace),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "key",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Key,
+        .hasIndex = 5,
+        .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_, key),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMColorPresetResponse_GetPreset_ColorSetting class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMColorPresetResponse_GetPreset)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMPreferencesRequest
 
 @implementation ITMPreferencesRequest
