@@ -41,6 +41,7 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    tool
    transaction
    util
+   variables
    window
 
 ----

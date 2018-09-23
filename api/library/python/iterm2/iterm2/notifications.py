@@ -8,6 +8,7 @@ import enum
 import iterm2.api_pb2
 import iterm2.connection
 import iterm2.rpc
+import iterm2.variables
 
 RPC_ROLE_GENERIC = iterm2.api_pb2.RPCRegistrationRequest.Role.Value("GENERIC")
 RPC_ROLE_SESSION_TITLE = iterm2.api_pb2.RPCRegistrationRequest.Role.Value("SESSION_TITLE")
@@ -19,12 +20,6 @@ MODIFIER_COMMAND = iterm2.api_pb2.Modifiers.Value("COMMAND")
 MODIFIER_SHIFT = iterm2.api_pb2.Modifiers.Value("SHIFT")
 MODIFIER_FUNCTION = iterm2.api_pb2.Modifiers.Value("FUNCTION")
 MODIFIER_NUMPAD = iterm2.api_pb2.Modifiers.Value("NUMPAD")
-
-class VariableScopes(enum.Enum):
-    SESSION = iterm2.api_pb2.VariableScope.Value("SESSION")
-    TAB = iterm2.api_pb2.VariableScope.Value("TAB")
-    WINDOW = iterm2.api_pb2.VariableScope.Value("WINDOW")
-    APP = iterm2.api_pb2.VariableScope.Value("APP")
 
 def _get_handlers():
     """Returns the registered notification handlers.
@@ -305,8 +300,11 @@ async def async_subscribe_to_variable_change_notification(connection, callback, 
     request = iterm2.api_pb2.VariableMonitorRequest()
     request.name = name
     request.scope = scope
-    request.identifier = identifier
-    key = (scope, identifier, name, iterm2.api_pb2.NOTIFY_ON_VARIABLE_CHANGE)
+    if identifier is not None:
+        request.identifier = identifier
+    else:
+        request.identifier = ""
+    key = (scope, request.identifier, name, iterm2.api_pb2.NOTIFY_ON_VARIABLE_CHANGE)
     return await _async_subscribe(
         connection,
         True,

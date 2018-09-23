@@ -195,18 +195,27 @@ class Connection:
         (if any) gets notified that they must begin awaiting the websocket."""
         while not my_future.done():
             self.__awaiting_websocket = True
-            data = await self.websocket.recv()
-            self.__awaiting_websocket = False
+            try:
+                data = await self.websocket.recv()
+            except asyncio.CancelledError:
+                del self.__receivers[0]
+                self._wake_next_receiver_if_needed()
+                raise
+            finally:
+                self.__awaiting_websocket = False
 
             message = iterm2.api_pb2.ServerOriginatedMessage()
             message.ParseFromString(data)
 
             future = self._get_receiver_future(message)
             future.set_result(message)
+        self._wake_next_receiver_if_needed()
+        return future.result()
+
+    def _wake_next_receiver_if_needed(self):
         if self.__receivers:
             self.__receivers[0][1].set_result(None)
             del self.__receivers[0]
-        return future.result()
 
     async def async_connect(self, coro, *args):
         """
