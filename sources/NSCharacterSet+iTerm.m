@@ -1160,6 +1160,7 @@
         NSString *chars = [iTermAdvancedSettingsModel URLCharacterSet];
         urlChars = [[NSMutableCharacterSet characterSetWithCharactersInString:chars] retain];
         [urlChars formUnionWithCharacterSet:[NSCharacterSet idnCharacters]];
+        [urlChars removeCharactersInString:[iTermAdvancedSettingsModel URLCharacterSetExclusions]];
         [urlChars retain];
     });
 

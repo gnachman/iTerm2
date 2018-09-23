@@ -229,6 +229,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)underlineCursorOffset;
 + (double)updateScreenParamsDelay;
 + (NSString *)URLCharacterSet;
++ (NSString *)URLCharacterSetExclusions;
 + (BOOL)useAdaptiveFrameRate;
 + (BOOL)useColorfgbgFallback;
 + (BOOL)useDivorcedProfileToSplit;
