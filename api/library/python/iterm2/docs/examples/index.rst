@@ -15,6 +15,7 @@ Here are a collection of working scripts for you to crib from.
 * :doc:`sorttabs`
 * :doc:`statusbar`
 * :doc:`mousemode`
+* :doc:`theme`
 * :doc:`tmux`
 
 ----
