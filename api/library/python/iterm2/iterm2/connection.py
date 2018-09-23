@@ -100,7 +100,13 @@ class Connection:
         # True while a receiver is awaiting the websocket.
         self.__awaiting_websocket = False
 
-    def run(self, coro, *args):
+    def run_until_complete(self, coro):
+        self.run(False, coro)
+
+    def run_forever(self, coro):
+        self.run(True, coro)
+
+    def run(self, forever, coro):
         """
         Convenience method to start a program.
 
@@ -108,15 +114,25 @@ class Connection:
         passed in coroutine. Exceptions will be caught and printed to stdout.
 
         :param coro: A coroutine (async function) to run after connecting.
-        :param args: Passed to coro after its first argument (this connection).
         """
+        async def wrapper(connection):
+            async def dispatch_forever():
+                while True:
+                    message = await self.async_recv_message()
+                    await self._async_dispatch(message)
+            asyncio.ensure_future(dispatch_forever())
+            await coro(connection)
+            if forever:
+                await asyncio.wait([asyncio.Future()], return_when=asyncio.FIRST_COMPLETED)
+
         async def async_main(_loop):
             """Wrapper around the user-provided coroutine that passes it argv."""
-            await self.async_connect(coro, *args)
+            await self.async_connect(wrapper)
         loop = asyncio.get_event_loop()
         # This keeps you from pulling your hair out. The downside is uncertain, but
         # I do know that pulling my hair out hurts.
         loop.set_debug(True)
+        self.loop = loop
         loop.run_until_complete(async_main(loop))
 
 
@@ -158,34 +174,34 @@ class Connection:
 
         Returns: a protocol buffer message of type iterm2.api_pb2.ServerOriginatedMessage.
         """
-        # This future will be set with either a message or None. None means it's this
-        # receiver's turn to start awaiting the websocket.
-        my_future = asyncio.Future()
-        my_receiver = (matchFunc, my_future)
-        self.__receivers.append(my_receiver)
+        while True:
+            # This future will be set with either a message or None. None means it's this
+            # receiver's turn to start awaiting the websocket.
+            my_future = asyncio.Future()
+            my_receiver = (matchFunc, my_future)
+            self.__receivers.append(my_receiver)
 
-        if not self.__awaiting_websocket:
-            # This one must await the websocket
-            return await self._async_block_on_websocket_and_dispatch(my_future)
-        else:
-            # Someone else is already awaiting the websocket, so I must get in line.
-            # Either another receiver will get the message I'm waiting for and hand
-            # it to my future or I will become first in line and begin awaiting the
-            # websocket.
-            return await self._async_wait_my_turn(my_future, matchFunc)
+            if not self.__awaiting_websocket:
+                # This one must await the websocket
+                return await self._async_block_on_websocket_and_dispatch(my_future)
+            else:
+                # Someone else is already awaiting the websocket, so I must get in line.
+                # Either another receiver will get the message I'm waiting for and hand
+                # it to my future or I will become first in line and begin awaiting the
+                # websocket.
+                message = await self._async_wait_my_turn(my_future, matchFunc)
+                if message is not None:
+                    return message
 
     async def _async_wait_my_turn(self, my_future, matchFunc):
         """Wait for a message to be received, but do not await the websocket.
 
         Another receiver is awaiting the websocket. My future will get a result when
-        it's time to do something."""
+        it's time to do something.
+
+        Returns None if it needs to be removed from receivers and re-added."""
         while not my_future.done():
             message = await my_future
-            if message is None:
-                assert(not self.__awaiting_websocket)
-                # I'm now first in the queue because the receiver before me, which
-                # had been blocking on the websocket, has now finished.
-                return await self.async_recv_message(matchFunc)
             return message
 
     async def _async_block_on_websocket_and_dispatch(self, my_future):
@@ -214,10 +230,11 @@ class Connection:
 
     def _wake_next_receiver_if_needed(self):
         if self.__receivers:
-            self.__receivers[0][1].set_result(None)
+            next_receiver = self.__receivers[0]
             del self.__receivers[0]
+            next_receiver[1].set_result(None)
 
-    async def async_connect(self, coro, *args):
+    async def async_connect(self, coro):
         """
         Establishes a websocket connection.
 
@@ -231,12 +248,11 @@ class Connection:
         of this program with its entry in the scripting console.
 
         coro: A coroutine to run once connected.
-        args: Passed to coro after its first argument (this connection)
         """
         async with websockets.connect(_uri(), extra_headers=_headers(), subprotocols=_subprotocols()) as websocket:
             self.websocket = websocket
             try:
-                await coro(self, *args)
+                await coro(self)
             except Exception as _err:
                 traceback.print_exc()
                 sys.exit(1)
@@ -372,9 +388,17 @@ class Connection:
         """
         for helper in Connection.helpers:
             assert helper is not None
-            if await helper(self, message):
-                break
+            try:
+                if await helper(self, message):
+                    break
+            except Exception:
+                raise
 
-def run(coro):
+
+def run_until_complete(coro):
     """Convenience method to run an async function taking an :class:`iterm2.Connection` as an argument."""
-    Connection().run(coro)
+    Connection().run_until_complete(coro)
+
+def run_forever(coro):
+    """Convenience method to run an async function taking an :class:`iterm2.Connection` as an argument."""
+    Connection().run_forever(coro)

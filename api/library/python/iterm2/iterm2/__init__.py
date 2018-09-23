@@ -37,7 +37,7 @@ from iterm2.window import CreateTabException, SetPropertyException, GetPropertyE
 
 from iterm2._version import __version__
 
-from iterm2.connection import Connection, run
+from iterm2.connection import Connection, run_until_complete, run_forever
 
 from iterm2.rpc import RPCException
 
