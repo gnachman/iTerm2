@@ -87,7 +87,8 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)drawRect:(NSRect)dirtyRect width:(out nullable CGFloat *)widthOut {
-    if (self.drawsBackground) {
+    const BOOL reallyDraw = (dirtyRect.size.width > 0 && dirtyRect.size.height > 0);
+    if (self.drawsBackground && reallyDraw) {
         [self.backgroundColor set];
         NSRectFill(dirtyRect);
     }
@@ -101,7 +102,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                 [self drawString:[self->_attributedStringValue.string substringWithRange:range]
                                                       attributes:attrs
                                                            point:CGPointMake(x, 0)
-                                                      reallyDraw:dirtyRect.size.width > 0 && dirtyRect.size.height > 0
+                                                      reallyDraw:reallyDraw
                                                            width:&width];
                                                 x += width;
                                        }];
