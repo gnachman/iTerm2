@@ -30,18 +30,18 @@ Python so that it can find the packages the script depends on (such as the
 `iterm2` package).
 
 The standard iTerm2 Python installation is at
-`~/Library/ApplicationSupport/iTerm2/iterm2env/versions/3.6.5/bin/python3`.
+`~/Library/ApplicationSupport/iTerm2/iterm2env/versions/3.7.0/bin/python3`.
 This is the so-called "Basic" environment.
 
 If you create a script with the "Full Environment" its instance of Python
 will be in
-`~/Library/ApplicationSupport/iTerm2/Scripts/YourScript/iterm2env/versions/3.6.5/bin/python3`.
+`~/Library/ApplicationSupport/iTerm2/Scripts/YourScript/iterm2env/versions/3.7.0/bin/python3`.
 
 Internally, iTerm2 runs a basic script by invoking:
 
 .. code-block:: python
 
-    ~/Library/ApplicationSupport/iTerm2/iterm2env/versions/3.6.5/bin/python3 YourScript.py
+    ~/Library/ApplicationSupport/iTerm2/iterm2env/versions/3.7.0/bin/python3 YourScript.py
 
 
 Scripts are stored in `$HOME/Library/ApplicationSupport/iTerm2/Scripts`.

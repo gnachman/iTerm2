@@ -25,8 +25,6 @@ get started:
     import iterm2
 
     async def main(connection):
-        app = await iterm2.async_get_app(connection)
-
         async def on_custom_esc(connection, notification):
             print("Received a custom escape sequence")
             if notification.sender_identity == "shared-secret":
@@ -35,9 +33,7 @@ get started:
 
         await iterm2.notifications.async_subscribe_to_custom_escape_sequence_notification(connection, on_custom_esc)
 
-        await connection.async_dispatch_until_future(asyncio.Future())
-
-    iterm2.run(main)
+    iterm2.run_forever(main)
 
 Let's examine it line by line.
 
@@ -56,18 +52,7 @@ The next part of the template script are the imports:
 
 The `iterm2` module is based on the Python :py:mod:`asyncio` framework. For
 simple scripts, you don't need to know about it at all, but as you do more
-complex things it will become more important. This script uses an
-:py:class:`asyncio.Future` to get it to run indefinitely, which you'll see
-later.
-
-.. code-block:: python
-
-    import iterm2
-
-    async def main(connection):
-        app = await iterm2.async_get_app(connection)
-
-This is the same stuff you saw in the first example.
+complex things it will become more important.
 
 .. code-block:: python
 
@@ -136,15 +121,16 @@ sequence notifications:
 That's all you have to do to request that `on_custom_esc` be called any time a
 custom escape sequence is received in any session.
 
-The last thing the script needs to do is to keep running indefinitely:
-
-.. code-block:: python
-
-    await connection.async_dispatch_until_future(asyncio.Future())
-
 This tells the `connection` to handle incoming messages until the passed-in
 future has its result set. The future will never have its result set, so the
 script will run until iTerm2 terminates.
+
+.. code-block:: python
+
+    iterm2.run_forever(main)
+
+This starts the script and keeps it running even after `main` returns so it can
+continue to process custom control sequences until iTerm2 terminates.
 
 Continue to the next section, :doc:`rpcs`.
 

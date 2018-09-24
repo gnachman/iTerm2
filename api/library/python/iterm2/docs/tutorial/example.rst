@@ -17,7 +17,7 @@ Here's the example script that iTerm2 provides for you, minus some comments:
         else:
             print("No current window")
 
-    iterm2.run(main)
+    iterm2.run_until_complete(main)
 
 There's a lot going on here. Let's take it part by part.
 
@@ -63,9 +63,9 @@ notifications from iTerm2. We'll see more about that later.
         app = await iterm2.async_get_app(connection)
 
 The purpose of this line is to get a reference to the :class:`iterm2.App`
-object, which is useful for most things you'll want to do in a simple script.
-It is a singleton that provides access to iTerm2's global state, such as its
-windows.
+object, which is useful for many things you'll want to do in a simple script.
+It is a singleton that provides access to iTerm2's windows, and in turn their
+tabs and sessions.
 
 Note the use of `await`. Any function that's defined as `async`, which most
 functions in the iTerm2 API are, must be called with `await`. It means it might
@@ -113,10 +113,10 @@ script.
 
 .. code-block:: python
 
-	iterm2.run(main)
+	iterm2.run_until_complete(main)
 
 This makes a connection to iTerm2 and invokes your `main` function in an
-asyncio event loop.
+asyncio event loop. When `main` returns the program terminates.
 
 Continue to the next section, :doc:`running`.
 

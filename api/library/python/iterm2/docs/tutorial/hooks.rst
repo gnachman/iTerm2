@@ -40,8 +40,6 @@ Here's an example:
     import iterm2
 
     async def main(connection):
-        app = await iterm2.async_get_app(connection)
-
         async def custom_title(pwd, username, hostname):
             return "😀 {}@{}:{} 😀".format(pwd, username, hostname)
 
@@ -56,7 +54,7 @@ Here's an example:
                                                              display_name="My Custom Title")
 	await connection.async_dispatch_until_future(asyncio.Future())
 
-    iterm2.run(main)
+    iterm2.run_forever(main)
 
 As this script is a long-running daemon, you'll want to put it in the
 `AutoLaunch` folder. If a hook is not registered then it acts as though it
