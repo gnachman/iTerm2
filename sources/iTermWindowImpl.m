@@ -87,12 +87,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p frame=%@ title=%@ alpha=%f isMain=%d isKey=%d isVisible=%d delegate=%p>",
+    return [NSString stringWithFormat:@"<%@: %p frame=%@ title=%@ alpha=%f backgroundColor=%@ isMain=%d isKey=%d isVisible=%d delegate=%p>",
             [self class],
             self,
             [NSValue valueWithRect:self.frame],
             self.title,
             self.alphaValue,
+            self.backgroundColor,
             (int)self.isMainWindow,
             (int)self.isKeyWindow,
             (int)self.isVisible,
