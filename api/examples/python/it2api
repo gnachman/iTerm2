@@ -273,12 +273,8 @@ async def set_window_property(connection, args):
     print("bad window ID")
   else:
     if args.name == "frame":
-      frame = iterm2.api_pb2.Frame()
       parts = args.value.split(",")
-      frame.origin.x = int(parts[0])
-      frame.origin.y = int(parts[1])
-      frame.size.width = int(parts[2])
-      frame.size.height = int(parts[3])
+      frame = iterm2.Frame(iterm2.Point(int(parts[0]), int(parts[1])), iterm2.Size(int(parts[2]), int(parts[3])))
       await w.async_set_frame(frame)
     elif args.name == "fullscreen":
       await w.async_set_fullscreen(connection, args.value == "true")

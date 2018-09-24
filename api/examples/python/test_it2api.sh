@@ -37,7 +37,6 @@ WIDTH="${BASH_REMATCH[2]}"
 HEIGHT="${BASH_REMATCH[3]}"
 
 expect_contains "split-pane" "Session" "$OUTPUT"
-set -x
 expect_contains "get-prompt" "working_directory: \"$HOME\"" "$($PYTHON it2api get-prompt $FIRST_SESSION_ID)" 
 expect_nothing "set-profile-property" "$($PYTHON it2api set-profile-property $SESSION_ID ansi_0_color '(255,255,255,255 sRGB)')"
 expect_contains "get-profile-property" "(255,255,255,255 sRGB)" "$($PYTHON it2api get-profile-property $SESSION_ID ansi_0_color)"
@@ -59,9 +58,9 @@ expect_contains "activate+show-focus" "$FIRST_SESSION_ID" "$($PYTHON it2api show
 # Can't really test this since I can't deactivate it
 expect_nothing "activate-app" "$($PYTHON it2api activate session $FIRST_SESSION_ID)"
 
-expect_nothing set-variable "$($PYTHON it2api set-variable $SESSION_ID user.foo 123)"
-expect_contains get-variable 123 "$($PYTHON it2api get-variable $SESSION_ID user.foo)"
-expect_contains list-variables user.foo "$($PYTHON it2api list-variables $SESSION_ID)"
+expect_nothing set-variable "$($PYTHON it2api set-variable --session $SESSION_ID user.foo 123)"
+expect_contains get-variable 123 "$($PYTHON it2api get-variable --session $SESSION_ID user.foo)"
+expect_contains list-variables user.foo "$($PYTHON it2api list-variables --session $SESSION_ID)"
 
 expect_nothing "initialize preset" "$($PYTHON it2api set-color-preset Default "Dark Background")"
 expect_contains set-prset-initialized 0,0,0,255 "$($PYTHON it2api get-profile-property $FIRST_SESSION_ID background_color)"
