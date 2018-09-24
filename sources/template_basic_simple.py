@@ -11,8 +11,7 @@ async def main(connection):
     if window is not None:
         await window.async_create_tab()
     else:
-        # You can view this message in the script console. Open the script console before running
-        # the script.
+        # You can view this message in the script console.
         print("No current window")
 
-iterm2.run(main)
+iterm2.run_until_complete(main)
