@@ -1,6 +1,24 @@
 #import "iTermTextShaderCommon.h"
 #import <metal_math>
 
+static half4 iTermAlphaVectorForTextColor(half4 textColor) {
+    constexpr half4 blackVector = half4(0, 0, 1, 0);
+    constexpr half4 redVector = half4(0, 1, 0, 0);
+    constexpr half4 greenVector = half4(1, 0, 0, 0);
+    constexpr half4 yellowVector = half4(0, 0, 0, 1);
+
+    // https://gitlab.com/gnachman/iterm2/wikis/macOS-Mojave-Regression-Challenge
+    if (textColor.x + textColor.y > 1.5) {
+        return yellowVector;
+    } else if (textColor.y > 0.75) {
+        return greenVector;
+    } else if (textColor.x > 0.75) {
+        return redVector;
+    } else {
+        return blackVector;
+    }
+}
+
 // Slow path: taken for all underlined code paths and all solid background code paths (because they aren't used
 // and I don't want to spend time testing dead code right now).
 vertex iTermTextVertexFunctionOutput
@@ -31,8 +49,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.cellOffset = perInstanceUniforms[iid].offset.xy + offset[0];
     out.underlineStyle = perInstanceUniforms[iid].underlineStyle;
     out.underlineColor = static_cast<half4>(perInstanceUniforms[iid].underlineColor);
-    out.power = 3.0 - 2.0 * (0.3 * out.textColor.x + 0.59 * out.textColor.y + 0.11 * out.textColor.z);
-
+    out.alphaVector = iTermAlphaVectorForTextColor(static_cast<half4>(out.textColor));
     return out;
 }
 
@@ -105,7 +122,7 @@ iTermTextVertexShaderMonochrome(uint vertexID [[ vertex_id ]],
 
     out.textureCoordinate = vertexArray[vertexID].textureCoordinate + perInstanceUniforms[iid].textureOffset;
     out.textColor = static_cast<half4>(perInstanceUniforms[iid].textColor);
-    out.power = 3.0 - 2.0 * (0.3 * out.textColor.x + 0.59 * out.textColor.y + 0.11 * out.textColor.z);
+    out.alphaVector = iTermAlphaVectorForTextColor(static_cast<half4>(out.textColor));
 
     return out;
 }
@@ -229,10 +246,8 @@ iTermTextFragmentShaderMonochrome(iTermTextVertexFunctionOutputMonochrome in [[s
                                      min_filter::linear);
 
     half4 textureColor = texture.sample(textureSampler, in.textureCoordinate);
-    // These values were arrived at experimentally.
-    // They're not a perfect match for how the system recolors glyphs but it's close.
     half4 result = in.textColor;
-    result.w *= pow(textureColor.w, in.power);
+    result.w = dot(textureColor, in.alphaVector);
     return result;
 }
 
@@ -293,7 +308,7 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
                                                                  dimensions->scale);
 
     half4 recoloredTextColor = static_cast<half4>(in.textColor);
-    recoloredTextColor.w *= pow(textureColor.w, in.power);
+    recoloredTextColor.w = dot(textureColor, in.alphaVector);
 
     // I could eke out a little speed by passing a half4 from the vector shader but this is so slow I'd rather not add the complexity.
     return mix(recoloredTextColor,
