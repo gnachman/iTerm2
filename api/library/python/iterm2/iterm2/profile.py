@@ -779,12 +779,11 @@ class WriteOnlyProfile:
 
         :param preset: A :class:`iterm2.ColorPreset`.
         """
-        futures = []
+        coros = []
         for value in preset.values:
             coro = self._async_color_set(value.key, iterm2.color.Color(value.red * 255, value.green * 255, value.blue * 255, value.alpha * 255, value.color_space))
-            future = asyncio.ensure_future(coro)
-            futures.append(future)
-        await self.connection.async_gather(futures)
+            coros.append(coro)
+        await asyncio.gather(*coros)
 
 
     async def async_set_foreground_color(self, value):

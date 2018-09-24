@@ -327,33 +327,6 @@ class Connection:
             if message_future not in pending:
                 message_future = async_recv_dispatch()
 
-    async def async_gather(self, aws):
-        """Like asyncio.gather, but allows RPCs to complete."""
-        async def async_recv_dispatch():
-            while True:
-                message = await self.async_recv_message()
-                await self._async_dispatch(message)
-
-        message_future = asyncio.ensure_future(async_recv_dispatch())
-        remaining = list(aws) + [message_future]
-        while len(remaining) > 1:
-            done, pending = await asyncio.wait(
-                    remaining,
-                    return_when=asyncio.FIRST_COMPLETED)
-            for task in done:
-                exc = None
-                try:
-                    exc = task.exception()
-                except:
-                    pass
-                if exc:
-                    for future in pending:
-                        pending.cancel()
-                    raise exc
-            remaining = list(pending)
-        message_future.cancel()
-
-
     def _begin_deferring(self):
         """
         Enter a mode where incoming notifications are added to an array to be
