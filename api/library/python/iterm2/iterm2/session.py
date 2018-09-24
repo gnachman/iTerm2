@@ -305,7 +305,7 @@ class Session:
             self.connection,
             async_on_keystroke,
             self.__session_id)
-        await self.connection.async_dispatch_until_future(future)
+        await future
         await iterm2.notifications.async_unsubscribe(self.connection, token)
         return future.result()
 
@@ -325,7 +325,7 @@ class Session:
             self.connection,
             async_on_update,
             self.__session_id)
-        await self.connection.async_dispatch_until_future(future)
+        await future
         await iterm2.notifications.async_unsubscribe(self.connection, token)
         return future.result
 
@@ -569,7 +569,7 @@ class Session:
             :returns: A list of iterm2.api_pb2.KeystrokeNotification objects.
             """
             self.future = asyncio.Future()
-            await self.connection.async_dispatch_until_future(self.future)
+            await self.future
             result = self.future.result()
             self.future = None
             return result
@@ -619,7 +619,7 @@ class Session:
             """
             future = asyncio.Future()
             self.future = future
-            await self.connection.async_dispatch_until_future(self.future)
+            await self.future
             self.future = None
 
             if self.want_contents:

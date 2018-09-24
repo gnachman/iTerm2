@@ -1,5 +1,5 @@
 #!/bin/bash
-PYTHON=~/Library/ApplicationSupport/iTerm2/iterm2env/versions/3.6.5/bin/python3.6
+PYTHON=~/Library/ApplicationSupport/iTerm2/iterm2env/versions/3.7.0/bin/python3.7
 
 function expect_contains() {
     echo -n "$1: "
@@ -37,6 +37,7 @@ WIDTH="${BASH_REMATCH[2]}"
 HEIGHT="${BASH_REMATCH[3]}"
 
 expect_contains "split-pane" "Session" "$OUTPUT"
+set -x
 expect_contains "get-prompt" "working_directory: \"$HOME\"" "$($PYTHON it2api get-prompt $FIRST_SESSION_ID)" 
 expect_nothing "set-profile-property" "$($PYTHON it2api set-profile-property $SESSION_ID ansi_0_color '(255,255,255,255 sRGB)')"
 expect_contains "get-profile-property" "(255,255,255,255 sRGB)" "$($PYTHON it2api get-profile-property $SESSION_ID ansi_0_color)"
@@ -61,6 +62,11 @@ expect_nothing "activate-app" "$($PYTHON it2api activate session $FIRST_SESSION_
 expect_nothing set-variable "$($PYTHON it2api set-variable $SESSION_ID user.foo 123)"
 expect_contains get-variable 123 "$($PYTHON it2api get-variable $SESSION_ID user.foo)"
 expect_contains list-variables user.foo "$($PYTHON it2api list-variables $SESSION_ID)"
+
+expect_nothing "initialize preset" "$($PYTHON it2api set-color-preset Default "Dark Background")"
+expect_contains set-prset-initialized 0,0,0,255 "$($PYTHON it2api get-profile-property $FIRST_SESSION_ID background_color)"
+expect_nothing "initialize preset" "$($PYTHON it2api set-color-preset Default "Light Background")"
+expect_contains set-prset-initialized 255,255,255,255 "$($PYTHON it2api get-profile-property $FIRST_SESSION_ID background_color)"
 
 # Missing tests:
 # saved-arrangement

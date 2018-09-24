@@ -40,7 +40,7 @@ async def create_tab(connection, args):
       print("bad window id {}".format(window_id))
       sys.exit(1)
   else:
-    window = await a.async_create_window(profile=args.profile, command=args.command)
+    window = await iterm2.Window.async_create(connection, profile=args.profile, command=args.command)
     tab = window.tabs[0]
   session = tab.sessions[0]
   print(session.pretty_str())

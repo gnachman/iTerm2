@@ -154,8 +154,6 @@ class Connection:
             if matchFunc and matchFunc(message):
                 return i
         # This says that the first receiver always gets the message if no other receiver can handle it.
-        # That means that async_dispatch_for_duration or async_dispatch_until_future won't work if
-        # async_recv_message is already running.
         return 0
 
     def _get_receiver_future(self, message):
@@ -282,51 +280,6 @@ class Connection:
                 return message
             else:
                 self._defer(message)
-
-    async def async_dispatch_for_duration(self, duration):
-        """
-        Handle incoming messages for a fixed duration of time.
-
-        This is typically used when you wish to receive notifications for a fixed period of time.
-
-        :param duration: The minimum time to run while waiting for incoming messages.
-        """
-        async def sleep():
-            await asyncio.sleep(duration)
-        await self.async_dispatch_until_future(asyncio.Task(sleep()))
-
-    async def async_dispatch_until_future(self, future):
-        """
-        Handle incoming messages until a future has a result.
-
-        This is used when you wish to receive notifications indefinitely, or until
-        some condition satisfied by reciving a notification is reached.
-
-        :param future: An asyncio.Future that will get a result.
-        """
-        async def async_recv_dispatch():
-            message = await self.async_recv_message()
-            await self._async_dispatch(message)
-
-        message_future = async_recv_dispatch()
-        while not future.done():
-            # asyncio.wait is a tricky API. AFAICT there's no way to find
-            # if your Future is done because it is transmogrified into a Task.
-            # Its absence in pending appears to imply its presence in done.
-            done, pending = await asyncio.wait([future, message_future], return_when=asyncio.FIRST_COMPLETED)
-            # There might be tasks in done with exception (e.g., if the connection was closed)
-            for task in done:
-                exc = None
-                try:
-                    exc = task.exception()
-                except:
-                    pass
-                if exc:
-                    raise exc
-            if future not in pending:
-                break
-            if message_future not in pending:
-                message_future = async_recv_dispatch()
 
     def _begin_deferring(self):
         """
