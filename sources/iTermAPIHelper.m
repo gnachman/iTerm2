@@ -1883,6 +1883,7 @@ static id sAPIHelperInstance;
         [tab setActiveSession:session];
         response.status = ITMActivateResponse_Status_Ok;
         handler(response);
+        return;
     }
 
     if (request.selectTab) {

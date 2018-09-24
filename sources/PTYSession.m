@@ -10244,7 +10244,7 @@ ITERM_WEAKLY_REFERENCEABLE
         response.outputRange.end.y = _screen.currentGrid.cursor.y + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
     }
 
-    response.workingDirectory = [_screen workingDirectoryOnLine:[_screen coordRangeForInterval:mark.entry.interval].end.y];
+    response.workingDirectory = self.currentLocalWorkingDirectory;
     response.command = mark.command ?: self.currentCommand;
     response.status = ITMGetPromptResponse_Status_Ok;
     return response;
