@@ -39,10 +39,10 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     BOOL _postprocessed NS_AVAILABLE_MAC(10_14);
     
     CGSize _partSize;
-    CTLineRef _lineRef;
-    CGContextRef _cgContext;
+    CTLineRef _lineRefs[4];
+    CGContextRef _cgContexts[4];
 
-    NSAttributedString *_attributedString;
+    NSAttributedString *_attributedStrings[4];
     NSImage *_image;
     NSMutableData *_glyphsData;
     NSMutableData *_positionsBuffer;
@@ -53,6 +53,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     
     // If true then _isEmoji is valid.
     BOOL _haveTestedForEmoji;
+    NSInteger _nextIterationToDrawBackgroundFor;
+    NSInteger _numberOfIterationsNeeded;
 }
 
 + (CGColorSpaceRef)colorSpace {
@@ -165,20 +167,25 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         _fakeBold = fakeBold;
         _fakeItalic = fakeItalic;
 
-        _attributedString = [[NSAttributedString alloc] initWithString:string attributes:self.attributes];
-        _lineRef = CTLineCreateWithAttributedString((CFAttributedStringRef)_attributedString);
-        _cgContext = [iTermCharacterSource newBitmapContextOfSize:_size];
+        for (int i = 0; i < 4; i++) {
+            _attributedStrings[i] = [[NSAttributedString alloc] initWithString:string attributes:[self attributesForIteration:i]];
+            _lineRefs[i] = CTLineCreateWithAttributedString((CFAttributedStringRef)_attributedStrings[i]);
+            _cgContexts[i] = [iTermCharacterSource newBitmapContextOfSize:_size];
+        }
         _antialiased = antialiased;
     }
     return self;
 }
 
 - (void)dealloc {
-    if (_lineRef) {
-        CFRelease(_lineRef);
-    }
-    if (_cgContext) {
-        CGContextRelease(_cgContext);
+    for (NSInteger i = 0; i < 4; i++) {
+        CGContextRef context = _cgContexts[i];
+        if (context) {
+            CGContextRelease(context);
+        }
+        if (_lineRefs[i]) {
+            CFRelease(_lineRefs[i]);
+        }
     }
     if (_imageRef) {
         CGImageRelease(_imageRef);
@@ -187,6 +194,23 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 - (int)maxParts {
     return _radius * 2 + 1;
+}
+
+// Dumps the alpha channel of data, which has dimensions of _size.
+- (void)logStringRepresentationOfAlphaChannelOfBitmapDataBytes:(unsigned char *)data {
+    for (int y = 0; y < _size.height; y++) {
+        NSMutableString *line = [NSMutableString string];
+        int width = _size.width;
+        for (int x = 0; x < width; x++) {
+            int offset = y * width * 4 + x*4 + 3;
+            if (data[offset]) {
+                [line appendString:@"X"];
+            } else {
+                [line appendString:@" "];
+            }
+        }
+        NSLog(@"%@", line);
+    }
 }
 
 #pragma mark - APIs
@@ -204,11 +228,33 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     bitmap.data = [NSMutableData uninitializedDataWithLength:length];
     bitmap.size = _partSize;
 
-    unsigned char *source = (unsigned char *)CGBitmapContextGetData(_cgContext);
+    const unsigned char *bitmapBytes = NULL;
+    if (@available(macOS 10.14, *)) {
+        if (!_postprocessed && !_isEmoji) {
+            unsigned char *data[4];
+            for (int i = 0; i < 4; i++) {
+                data[i] = (unsigned char *)CGBitmapContextGetData(_cgContexts[i]);
+            }
+            unsigned char *destination = data[0];
+
+            // i indexes into the array of pixels, always to the red value.
+            for (int i = 0 ; i < _size.height * _size.width * 4; i += 4) {
+                // j indexes a destination color component and a source bitmap.
+                for (int j = 0; j < 4; j++) {
+                    destination[i + j] = data[j][i + 3];
+                }
+            }
+            _postprocessed = YES;
+            bitmapBytes = data[0];
+        }
+    }
+    if (!bitmapBytes) {
+        bitmapBytes = (const unsigned char *)CGBitmapContextGetData(_cgContexts[0]);
+    }
 
 #if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
     if (saveBitmapsForDebugging) {
-        NSImage *image = [NSImage imageWithRawData:[NSData dataWithBytes:source length:bitmap.data.length]
+        NSImage *image = [NSImage imageWithRawData:[NSData dataWithBytes:bitmapBytes length:bitmap.data.length]
                                               size:_partSize
                                      bitsPerSample:8
                                    samplesPerPixel:4
@@ -216,7 +262,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                     colorSpaceName:NSDeviceRGBColorSpace];
         [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/%@.%@.png", _string, @(part)]];
 
-        NSData *bigData = [NSData dataWithBytes:source length:_size.width*_size.height*4];
+        NSData *bigData = [NSData dataWithBytes:bitmapBytes length:_size.width*_size.height*4];
         image = [NSImage imageWithRawData:bigData
                                      size:_size
                             bitsPerSample:8
@@ -227,21 +273,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
 #endif
 
-    if (@available(macOS 10.14, *)) {
-        if (!_postprocessed && !_isEmoji) {
-            // Copy red channel to alpha channel
-            // Rendering over transparent looks bad. So we render white over black and then tweak the
-            // alpha channel.
-            for (int i = 0 ; i < _size.height * _size.width * 4; i += 4) {
-                source[i + 3] = source[i];
-                source[i + 0] = 255;
-                source[i + 1] = 255;
-                source[i + 2] = 255;
-            }
-            _postprocessed = YES;
-        }
-    }
-
     char *dest = (char *)bitmap.data.mutableBytes;
 
     // Flip vertically and copy. The vertical flip is for historical reasons
@@ -250,7 +281,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     size_t destOffset = (_partSize.height - 1) * destRowSize;
     size_t sourceOffset = (dx * 4 * _partSize.width) + (dy * _partSize.height * sourceRowSize);
     for (int i = 0; i < _partSize.height; i++) {
-        memcpy(dest + destOffset, source + sourceOffset, destRowSize);
+        memcpy(dest + destOffset, bitmapBytes + sourceOffset, destRowSize);
         sourceOffset += sourceRowSize;
         destOffset -= destRowSize;
     }
@@ -287,25 +318,17 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     return [result copy];
 }
 
-- (NSImage *)newImageWithOffset:(CGPoint)offset {
-    if (!_imageRef) {
-        _imageRef = CGBitmapContextCreateImage(_cgContext);
-    }
-    CGImageRef part = CGImageCreateWithImageInRect(_imageRef,
-                                                   CGRectMake(offset.x,
-                                                              offset.y,
-                                                              _partSize.width,
-                                                              _partSize.height));
-    NSImage *image = [[NSImage alloc] initWithCGImage:part size:_partSize];
-    CGImageRelease(part);
-    return image;
-}
-
 - (void)drawIfNeeded {
     if (!_haveDrawn) {
-        const int radius = _radius;
-        [self drawWithOffset:CGPointMake(_partSize.width * radius,
-                                         _partSize.height * radius)];
+        NSInteger iteration = 0;
+        do {
+            const int radius = _radius;
+            // This has the side-effect of setting _numberOfIterationsNeeded
+            [self drawWithOffset:CGPointMake(_partSize.width * radius,
+                                             _partSize.height * radius)
+                       iteration:iteration];
+            iteration += 1;
+        } while (iteration < _numberOfIterationsNeeded);
     }
 }
 
@@ -331,7 +354,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
     CGContextRef cgContext = [iTermCharacterSource onePixelContext];
 
-    CGRect frame = CTLineGetImageBounds(_lineRef, cgContext);
+    CGRect frame = CTLineGetImageBounds(_lineRefs[0], cgContext);
     const int radius = _radius;
     frame.origin.y -= _baselineOffset;
     frame.origin.x *= _scale;
@@ -370,58 +393,98 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 #pragma mark Drawing
 
-- (void)drawWithOffset:(CGPoint)offset {
-    CFArrayRef runs = CTLineGetGlyphRuns(_lineRef);
-    CGContextSetShouldAntialias(_cgContext, _antialiased);
-
+- (void)drawWithOffset:(CGPoint)offset iteration:(NSInteger)iteration {
+    CFArrayRef runs = CTLineGetGlyphRuns(_lineRefs[iteration]);
     const CGFloat skew = _fakeItalic ? iTermFakeItalicSkew : 0;
-
-    if (_useThinStrokes) {
-        CGContextSetShouldSmoothFonts(_cgContext, YES);
-        // This seems to be available at least on 10.8 and later. The only reference to it is in
-        // WebKit. This causes text to render just a little lighter, which looks nicer.
-        CGContextSetFontSmoothingStyle(_cgContext, 16);
-    }
-
     const CGFloat ty = offset.y - _baselineOffset * _scale;
 
-    [self drawRuns:runs atOffset:CGPointMake(offset.x, ty) skew:skew];
+    [self drawRuns:runs atOffset:CGPointMake(offset.x, ty) skew:skew iteration:iteration];
     if (_fakeBold) {
-        [self drawRuns:runs atOffset:CGPointMake(offset.x + self.fakeBoldShift * _scale, ty) skew:skew];
+        [self drawRuns:runs atOffset:CGPointMake(offset.x + self.fakeBoldShift * _scale, ty)
+                  skew:skew
+             iteration:iteration];
     }
     _haveDrawn = YES;
 }
 
-- (void)fillBackground {
+- (void)fillBackgroundForIteration:(NSInteger)iteration {
     if (@available(macOS 10.14, *)) {
-        if (_isEmoji) {
-            CGContextSetRGBFillColor(_cgContext, 0, 0, 0, 0);
-        } else {
-            CGContextSetRGBFillColor(_cgContext, 0, 0, 0, 1);
-        }
+        CGContextSetRGBFillColor(_cgContexts[iteration], 0, 0, 0, 0);
     } else {
         if (_isEmoji) {
-            CGContextSetRGBFillColor(_cgContext, 1, 1, 1, 0);
+            CGContextSetRGBFillColor(_cgContexts[iteration], 1, 1, 1, 0);
         } else {
-            CGContextSetRGBFillColor(_cgContext, 1, 1, 1, 1);
+            CGContextSetRGBFillColor(_cgContexts[iteration], 1, 1, 1, 1);
         }
     }
-    CGContextFillRect(_cgContext, CGRectMake(0, 0, _size.width, _size.height));
+    CGContextFillRect(_cgContexts[iteration], CGRectMake(0, 0, _size.width, _size.height));
 
 #if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
-    CGContextSetRGBStrokeColor(_cgContext, 1, 0, 0, 1);
+    CGContextSetRGBStrokeColor(_cgContexts[iteration], 1, 0, 0, 1);
     for (int x = 0; x < self.maxParts; x++) {
         for (int y = 0; y < self.maxParts; y++) {
-            CGContextStrokeRect(_cgContext, CGRectMake(x * _partSize.width,
-                                                       y * _partSize.height,
-                                                       _partSize.width, _partSize.height));
+            CGContextStrokeRect(_cgContexts[iteration], CGRectMake(x * _partSize.width,
+                                                                   y * _partSize.height,
+                                                                   _partSize.width, _partSize.height));
         }
     }
 #endif
 }
 
-- (void)drawRuns:(CFArrayRef)runs atOffset:(CGPoint)offset skew:(CGFloat)skew {
-    BOOL haveSetTextMatrix = NO;
+// Initializes a bunch of state that depends on knowing the font.
+- (void)initializeStateIfNeededWithFont:(CTFontRef)runFont {
+    if (_haveTestedForEmoji) {
+        return;
+    }
+
+    // About to render the first glyph, emoji or not, for this string.
+    // This is our chance to discover if it's emoji. Chrome does the
+    // same trick.
+    _haveTestedForEmoji = YES;
+    NSString *fontName = CFBridgingRelease(CTFontCopyFamilyName(runFont));
+    _isEmoji = ([fontName isEqualToString:@"AppleColorEmoji"] ||
+                [fontName isEqualToString:@"Apple Color Emoji"]);
+    _numberOfIterationsNeeded = 1;
+    if (!_isEmoji) {
+        if (@available(macOS 10.14, *)) {
+            _numberOfIterationsNeeded = 4;
+        }
+    }
+    for (int i = 0; i < _numberOfIterationsNeeded; i++) {
+        _cgContexts[i] = [iTermCharacterSource newBitmapContextOfSize:_size];
+    }
+}
+
+- (void)drawBackgroundIfNeededForIteration:(NSInteger)iteration {
+    if (iteration >= _nextIterationToDrawBackgroundFor) {
+        _nextIterationToDrawBackgroundFor = iteration;
+        [self fillBackgroundForIteration:iteration];
+    }
+}
+
+- (void)setTextColorForIteration:(NSInteger)iteration {
+    assert(_cgContexts[iteration]);
+    CGColorRef color = [[self textColorForIteration:iteration] CGColor];
+    CGContextSetFillColorWithColor(_cgContexts[iteration], color);
+    CGContextSetStrokeColorWithColor(_cgContexts[iteration], color);
+}
+
+// Per-iteration initialization. Only call this once per iteration.
+- (void)initializeIteration:(NSInteger)iteration offset:(CGPoint)offset skew:(CGFloat)skew {
+    CGContextSetShouldAntialias(_cgContexts[iteration], _antialiased);
+    if (_useThinStrokes) {
+        CGContextSetShouldSmoothFonts(_cgContexts[iteration], YES);
+        // This seems to be available at least on 10.8 and later. The only reference to it is in
+        // WebKit. This causes text to render just a little lighter, which looks nicer.
+        CGContextSetFontSmoothingStyle(_cgContexts[iteration], 16);
+    }
+    [self initializeTextMatrixInContext:_cgContexts[iteration]
+                               withSkew:skew
+                                 offset:offset];
+}
+
+- (void)drawRuns:(CFArrayRef)runs atOffset:(CGPoint)offset skew:(CGFloat)skew iteration:(NSInteger)iteration {
+    BOOL haveInitializedThisIteration = NO;
 
     for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
         CTRunRef run = CFArrayGetValueAtIndex(runs, j);
@@ -430,67 +493,68 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         CGPoint *positions = [self positionsInRun:run length:length];
         CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
 
-        if (!_haveTestedForEmoji) {
-            // About to render the first glyph, emoji or not, for this string.
-            // This is our chance to discover if it's emoji. Chrome does the
-            // same trick.
-            _haveTestedForEmoji = YES;
-            NSString *fontName = CFBridgingRelease(CTFontCopyFamilyName(runFont));
-            _isEmoji = ([fontName isEqualToString:@"AppleColorEmoji"] ||
-                        [fontName isEqualToString:@"Apple Color Emoji"]);
-
-            // Now that we know we can do the setup operations that depend on
-            // knowing if it's emoji.
-            [self fillBackground];
-            CGContextSetFillColorWithColor(_cgContext, [self.textColor CGColor]);
-            CGContextSetStrokeColorWithColor(_cgContext, [self.textColor CGColor]);
-        }
-        if (!haveSetTextMatrix) {
-            [self initializeTextMatrixInContext:_cgContext
-                                       withSkew:skew
-                                         offset:offset];
-            haveSetTextMatrix = YES;
+        [self initializeStateIfNeededWithFont:runFont];
+        [self drawBackgroundIfNeededForIteration:iteration];
+        [self setTextColorForIteration:iteration];
+        if (!haveInitializedThisIteration) {
+            [self initializeIteration:iteration offset:offset skew:skew];
+            haveInitializedThisIteration = YES;
         }
 
         if (_isEmoji) {
-            [self drawEmojiWithFont:runFont offset:offset buffer:buffer positions:positions length:length];
+            [self drawEmojiWithFont:runFont
+                             offset:offset
+                             buffer:buffer
+                          positions:positions
+                             length:length
+                          iteration:iteration];
         } else {
-            CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, _cgContext);
+            CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, _cgContexts[iteration]);
 #if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
-            CGContextSetRGBStrokeColor(_cgContext, 0, 0, 1, 1);
-            CGContextStrokeRect(_cgContext, CGRectMake(offset.x + positions[0].x,
-                                                       offset.y + positions[0].y,
-                                                       _partSize.width, _partSize.height));
+            CGContextSetRGBStrokeColor(_cgContexts[iteration], 0, 0, 1, 1);
+            CGContextStrokeRect(_cgContexts[iteration], CGRectMake(offset.x + positions[0].x,
+                                                                   offset.y + positions[0].y,
+                                                                   _partSize.width, _partSize.height));
 
-            CGContextSetRGBStrokeColor(_cgContext, 1, 0, 1, 1);
-            CGContextStrokeRect(_cgContext, CGRectMake(offset.x,
-                                                       offset.y,
-                                                       _partSize.width, _partSize.height));
+            CGContextSetRGBStrokeColor(_cgContexts[iteration], 1, 0, 1, 1);
+            CGContextStrokeRect(_cgContexts[iteration], CGRectMake(offset.x,
+                                                                   offset.y,
+                                                                   _partSize.width, _partSize.height));
 #endif
         }
     }
 }
 
-- (NSColor *)textColor {
+- (NSColor *)textColorForIteration:(NSInteger)iteration {
     if (@available(macOS 10.14, *)) {
-        return [NSColor whiteColor];
-    } else {
-        return [NSColor blackColor];
+        switch (iteration) {
+            case 0:
+                return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:1];
+            case 1:
+                return [NSColor colorWithSRGBRed:1 green:0 blue:0 alpha:1];
+            case 2:
+                return [NSColor colorWithSRGBRed:0 green:1 blue:0 alpha:1];
+            case 3:
+                return [NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1];
+        }
+        assert(NO);
     }
+    return [NSColor blackColor];
 }
 
 - (void)drawEmojiWithFont:(CTFontRef)runFont
                    offset:(CGPoint)offset
                    buffer:(const CGGlyph *)buffer
                 positions:(CGPoint *)positions
-                   length:(size_t)length {
-    CGContextSaveGState(_cgContext);
+                   length:(size_t)length
+                iteration:(NSInteger)iteration {
+    CGContextSaveGState(_cgContexts[iteration]);
     // You have to use the CTM with emoji. CGContextSetTextMatrix doesn't work.
-    [self initializeCTMWithFont:runFont offset:offset];
+    [self initializeCTMWithFont:runFont offset:offset iteration:iteration];
 
-    CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, _cgContext);
+    CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, _cgContexts[iteration]);
 
-    CGContextRestoreGState(_cgContext);
+    CGContextRestoreGState(_cgContexts[iteration]);
 }
 
 #pragma mark Core Text Helpers
@@ -525,13 +589,13 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
 }
 
-- (void)initializeCTMWithFont:(CTFontRef)runFont offset:(CGPoint)offset {
-    CGContextConcatCTM(_cgContext, CTFontGetMatrix(runFont));
-    CGContextTranslateCTM(_cgContext, offset.x, offset.y);
-    CGContextScaleCTM(_cgContext, _scale, _scale);
+- (void)initializeCTMWithFont:(CTFontRef)runFont offset:(CGPoint)offset iteration:(NSInteger)iteration {
+    CGContextConcatCTM(_cgContexts[iteration], CTFontGetMatrix(runFont));
+    CGContextTranslateCTM(_cgContexts[iteration], offset.x, offset.y);
+    CGContextScaleCTM(_cgContexts[iteration], _scale, _scale);
 }
 
-- (NSDictionary *)attributes {
+- (NSDictionary *)attributesForIteration:(NSInteger)iteration {
     static NSMutableParagraphStyle *paragraphStyle;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -541,7 +605,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         paragraphStyle.baseWritingDirection = NSWritingDirectionLeftToRight;
     });
     return @{ (NSString *)kCTLigatureAttributeName: @0,
-              (NSString *)kCTForegroundColorAttributeName: (id)[self.textColor CGColor],
+              (NSString *)kCTForegroundColorAttributeName: (id)[self textColorForIteration:iteration],
               NSFontAttributeName: _font,
               NSParagraphStyleAttributeName: paragraphStyle };
 }
