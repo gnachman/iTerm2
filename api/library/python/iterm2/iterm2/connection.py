@@ -120,10 +120,11 @@ class Connection:
                 while True:
                     message = await self.async_recv_message()
                     await self._async_dispatch(message)
-            asyncio.ensure_future(dispatch_forever())
+            dispatch_forever_task = asyncio.ensure_future(dispatch_forever())
             await coro(connection)
             if forever:
                 await asyncio.wait([asyncio.Future()], return_when=asyncio.FIRST_COMPLETED)
+            dispatch_forever_task.cancel()
 
         async def async_main(_loop):
             """Wrapper around the user-provided coroutine that passes it argv."""
