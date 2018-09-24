@@ -461,6 +461,19 @@ async def sort_tabs(connection, args):
     sorted_tabs = sorted(tabs, key=tab_name)
     await w.async_set_tabs(sorted_tabs)
 
+async def list_color_presets(connection, args):
+  presets = await iterm2.ColorPreset.async_get_list(connection)
+  for preset in presets:
+    print(preset)
+
+async def set_color_preset(connection, args):
+  preset = await iterm2.ColorPreset.async_get(connection, args.preset)
+  profiles = await iterm2.PartialProfile.async_get(connection)
+  for partial in profiles:
+    if partial.name == args.profile:
+      profile = await partial.async_get_full_profile()
+      await profile.async_set_color_preset(preset)
+
 def make_parser():
   parser = argparse.ArgumentParser(description='iTerm2 CLI')
   subparsers = parser.add_subparsers(help='Commands')
@@ -598,6 +611,14 @@ def make_parser():
   sort_tabs_parser = subparsers.add_parser("sort-tabs", help="Sort tabs alphabetically by name")
   sort_tabs_parser.set_defaults(func=sort_tabs)
 
+  list_color_presets_parser = subparsers.add_parser("list-color-presets", help="Lists names of color presets")
+  list_color_presets_parser.set_defaults(func=list_color_presets)
+
+  set_color_preset_parser = subparsers.add_parser("set-color-preset", help="Lists names of color presets")
+  set_color_preset_parser.add_argument("profile", type=str, help="Profile name")
+  set_color_preset_parser.add_argument("preset", type=str, help="Color preset name")
+  set_color_preset_parser.set_defaults(func=set_color_preset)
+
   return parser
 
 def main(argv):
@@ -616,7 +637,7 @@ def main(argv):
       print(traceback.format_exc())
 
   c = iterm2.connection.Connection()
-  c.run(wrapper)
+  c.run_until_complete(wrapper)
 
 if __name__ == "__main__":
   try:
