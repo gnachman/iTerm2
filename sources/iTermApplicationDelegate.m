@@ -686,7 +686,6 @@ static BOOL hasBecomeActive = NO;
 
     // Display prompt if we need to
     if (!quittingBecauseLastWindowClosed_ &&  // cmd-q
-        [terminals count] > 0 &&  // there are terminal windows
         [iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit]) {  // preference is to prompt on quit cmd
         [reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEnabled]];
     }
