@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14295.6" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.13.2" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14295.6"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.13.2"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -837,46 +837,46 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" id="7tI-ug-IYb">
                                     <items>
-                                        <menuItem title="Alternate Screen" tag="1" id="n7j-J8-y3V">
+                                        <menuItem title="Alternate Screen" tag="1" identifier="Alternate Screen" id="n7j-J8-y3V">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleAlternateScreen:" target="-1" id="Wvu-gV-nkX"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="7kW-Nx-k6m"/>
-                                        <menuItem title="Focus Reporting" tag="2" id="2Ek-PE-o7F">
+                                        <menuItem title="Focus Reporting" tag="2" identifier="Focus Reporting" id="2Ek-PE-o7F">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleFocusReporting:" target="-1" id="EMX-TB-2cQ"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Mouse Reporting" tag="3" id="Lbh-lI-2tO">
+                                        <menuItem title="Mouse Reporting" tag="3" identifier="Mouse Reporting" id="Lbh-lI-2tO">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleMouseReporting:" target="-1" id="xZ2-Nv-hGN"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Paste Bracketing" tag="4" id="FNV-7O-Feh" userLabel="Application Cursor Keys">
+                                        <menuItem title="Paste Bracketing" tag="4" identifier="Paste Bracketing" id="FNV-7O-Feh" userLabel="Application Cursor Keys">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateTogglePasteBracketing:" target="-1" id="6Hi-mv-9nA"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="sol-8N-Vnq"/>
-                                        <menuItem title="Application Cursor" tag="5" id="6d3-xQ-NPR" userLabel="Application Cursor Keys">
+                                        <menuItem title="Application Cursor" tag="5" identifier="Application Cursor" id="6d3-xQ-NPR" userLabel="Application Cursor Keys">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleApplicationCursor:" target="-1" id="Xmp-n6-Y6S"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Application Keypad" tag="6" id="xWN-I8-ExG">
+                                        <menuItem title="Application Keypad" tag="6" identifier="Application Keypad" id="xWN-I8-ExG">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateToggleApplicationKeypad:" target="-1" id="vqM-de-PE3"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="JGI-zr-cwU"/>
-                                        <menuItem title="Reset" id="Hb6-C9-aDf" userLabel="Application Cursor Keys">
+                                        <menuItem title="Reset" identifier="Reset Terminal State" id="Hb6-C9-aDf" userLabel="Application Cursor Keys">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="terminalStateReset:" target="-1" id="kp5-e3-wFY"/>

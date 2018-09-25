@@ -7,6 +7,7 @@ import iterm2.connection
 import iterm2.notifications
 import iterm2.profile
 import iterm2.rpc
+import iterm2.screen
 import iterm2.util
 
 import json
@@ -239,11 +240,12 @@ class Session:
 
           async with session.get_screen_streamer() as streamer:
             while condition():
-              handle_screen_update(streamer.async_get())
+              contents = await streamer.async_get()
+              do_something(contents)
 
-        :returns: A :class:`Session.ScreenStreamer`.
+        :returns: A :class:`ScreenStreamer`.
         """
-        return self.ScreenStreamer(self.connection, self.__session_id, want_contents=want_contents)
+        return iterm2.screen.ScreenStreamer(self.connection, self.__session_id, want_contents=want_contents)
 
     async def async_send_text(self, text, suppress_broadcast=False):
         """
@@ -578,55 +580,6 @@ class Session:
             await iterm2.notifications.async_unsubscribe(self.connection, self.token)
             return self.buffer
 
-    class ScreenStreamer:
-        """An asyncio context manager for monitoring the screen contents.
-
-        Don't create this yourself. Use Session.get_screen_streamer() instead. See
-        its docstring for more info."""
-        def __init__(self, connection, session_id, want_contents=True):
-            self.connection = connection
-            self.session_id = session_id
-            self.want_contents = want_contents
-            self.future = None
-            self.token = None
-
-        async def __aenter__(self):
-            async def async_on_update(_connection, message):
-                """Called on screen update. Saves the update message."""
-                future = self.future
-                if future is None:
-                    # Ignore reentrant calls
-                    return
-
-                self.future = None
-                if future is not None and not future.done():
-                    future.set_result(message)
-
-            self.token = await iterm2.notifications.async_subscribe_to_screen_update_notification(
-                self.connection,
-                async_on_update,
-                self.session_id)
-            return self
-
-        async def __aexit__(self, exc_type, exc, _tb):
-            await iterm2.notifications.async_unsubscribe(self.connection, self.token)
-
-        async def async_get(self):
-            """
-            Gets the screen contents, waiting until they change if needed.
-
-            :returns: An iterm2.api_pb2.GetBufferResponse.
-            """
-            future = asyncio.Future()
-            self.future = future
-            await self.future
-            self.future = None
-
-            if self.want_contents:
-                result = await iterm2.rpc.async_get_buffer_with_screen_contents(
-                    self.connection,
-                    self.session_id)
-                return result
 
 class InvalidSessionId(Exception):
     """The specified session ID is not allowed in this method."""

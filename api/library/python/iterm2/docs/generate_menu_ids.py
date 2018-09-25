@@ -16,6 +16,8 @@ def search_container(path, container, f):
             search_container(this_path, menu.find("items"), f)
         else:
             name = " > ".join(this_path)
+            if "identifier" not in item.attrib:
+                print("Bogus item: {}".format(item.attrib))
             identifier = item.attrib["identifier"]
             f(".".join(this_path), name, identifier)
 
@@ -25,11 +27,7 @@ def prologue():
 Menu Item Identifiers
 ---------------------
 
-To refer to a menu item you must use its unique identifier. The kind of identifier you use depends on the version of macOS you have.
-
-For macOS 10.12 and newer, identifiers are stable and do not change over time.
-
-On older versions of macOS, you use `Title Paths`_. A title path is a concatenation of menu item titles. This is because of a limitation imposed by the OS.
+To refer to a menu item you must use its unique identifier. This table shows the identifier for each menu item.
 
 ----------
 
@@ -37,21 +35,6 @@ On older versions of macOS, you use `Title Paths`_. A title path is a concatenat
 ^^^^^^^^^^^
 Identifiers
 ^^^^^^^^^^^
-
-Use these identifiers for macOS 10.12 and newer:
-
-""")
-
-def titlepath_prologue():
-    print("""
-
-----------
-
-^^^^^^^^^^^
-Title Paths
-^^^^^^^^^^^
-
-Use these title paths for macOS 10.11 and earlier:
 
 """)
 
@@ -66,7 +49,7 @@ Indices and tables
 * :ref:`search`
 """)
 
-def make_rst(items, mapper, idname):
+def make_rst(items, idname):
     """
     Outputs a table formatted like this:
 
@@ -81,15 +64,13 @@ def make_rst(items, mapper, idname):
     """
     longest_name = 0
     longest_identifier = 0
-    def measure(_titlepath, _name, _identifier):
-        t = mapper(_titlepath, _name, _identifier) 
-        name, identifier = t
+    def measure(_titlepath, name, identifier):
         nonlocal longest_name
         nonlocal longest_identifier
         longest_name = max(longest_name, len(name))
         longest_identifier = max(longest_identifier, len(identifier))
     search_container([], items, measure)
-    
+
     divider = "{} {}".format("=" * longest_name, "=" * longest_identifier)
     print(divider)
     fmt = "%-{}s %-{}s".format(longest_name, longest_identifier)
@@ -99,9 +80,7 @@ def make_rst(items, mapper, idname):
     def escape(s):
         return s.replace("'", "\\'").replace("*", "\\*").replace("`", "\\`")
 
-    def rst(_titlepath, _name, _identifier):
-        t = mapper(_titlepath, _name, _identifier) 
-        name, identifier = t
+    def rst(_titlepath, name, identifier):
         ticked_identifier = "`{}`".format(escape(identifier))
         print(fmt % (escape(name), ticked_identifier))
     search_container([], items, rst)
@@ -115,9 +94,7 @@ def items():
 
 def main():
     prologue()
-    make_rst(items(), lambda t, n, i: (n, i), "Identifier")
-    titlepath_prologue()
-    make_rst(items(), lambda t, n, i: (n, t), "Title Path")
+    make_rst(items(), "Identifier")
     epilogue()
 
 if __name__ == "__main__":

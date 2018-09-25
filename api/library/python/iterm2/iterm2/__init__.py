@@ -7,7 +7,7 @@ from iterm2.arrangement import SavedArrangementException, Arrangement
 
 from iterm2.color import Color
 
-from iterm2.colorpresets import ColorPreset, ListPresetsException
+from iterm2.colorpresets import ColorPreset, ListPresetsException, GetPresetException
 
 from iterm2.mainmenu import MenuItemState, MainMenu
 
@@ -18,6 +18,8 @@ from iterm2.preferences import PreferenceKeys, async_get_preference
 from iterm2.profile import Profile, PartialProfile, BadGUIDException, LocalWriteOnlyProfile
 
 from iterm2.registration import Registration
+
+from iterm2.screen import ScreenStreamer, LineContents, ScreenContents
 
 from iterm2.session import SplitPaneException, Splitter, Session, InvalidSessionId
 

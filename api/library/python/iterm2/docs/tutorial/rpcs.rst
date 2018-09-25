@@ -29,7 +29,7 @@ This script shows a working example:
 
     iterm2.run_forever(main)
 
-A lot of this should look familiar from the :doc:`daemon` example. Let's focus
+A lot of this should look familiar from the :doc:`daemons` example. Let's focus
 on the parts we haven't seen before.
 
 This call registers the RPC:

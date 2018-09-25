@@ -35,6 +35,7 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    notifications
    profile
    registration
+   screen
    session
    tab
    tmux

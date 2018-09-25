@@ -2,11 +2,7 @@
 Menu Item Identifiers
 ---------------------
 
-To refer to a menu item you must use its unique identifier. The kind of identifier you use depends on the version of macOS you have.
-
-For macOS 10.12 and newer, identifiers are stable and do not change over time.
-
-On older versions of macOS, you use `Title Paths`_. A title path is a concatenation of menu item titles. This is because of a limitation imposed by the OS.
+To refer to a menu item you must use its unique identifier. This table shows the identifier for each menu item.
 
 ----------
 
@@ -14,8 +10,6 @@ On older versions of macOS, you use `Title Paths`_. A title path is a concatenat
 ^^^^^^^^^^^
 Identifiers
 ^^^^^^^^^^^
-
-Use these identifiers for macOS 10.12 and newer:
 
 
 ======================================================================================= ==============================================================================
@@ -132,6 +126,13 @@ Session > Log > Start                                                           
 Session > Log > Stop                                                                    `Log.Stop`                                                                    
 Session > Log > Import Recording                                                        `Log.ImportRecording`                                                         
 Session > Log > Export Recording                                                        `Log.ExportRecording`                                                         
+Session > Terminal State > Alternate Screen                                             `Alternate Screen`                                                            
+Session > Terminal State > Focus Reporting                                              `Focus Reporting`                                                             
+Session > Terminal State > Mouse Reporting                                              `Mouse Reporting`                                                             
+Session > Terminal State > Paste Bracketing                                             `Paste Bracketing`                                                            
+Session > Terminal State > Application Cursor                                           `Application Cursor`                                                          
+Session > Terminal State > Application Keypad                                           `Application Keypad`                                                          
+Session > Terminal State > Reset                                                        `Reset Terminal State`                                                        
 Session > Bury Session                                                                  `Bury Session`                                                                
 Scripts > Manage > New Python Script                                                    `New Python Script`                                                           
 Scripts > Manage > Open Python REPL                                                     `Open Interactive Window`                                                     
@@ -179,178 +180,6 @@ Help > Copy Mode Shortcuts                                                      
 Help > Open Source Licenses                                                             `Open Source Licenses`                                                        
 Help > GPU Renderer Availability                                                        `GPU Renderer Availability`                                                   
 ======================================================================================= ==============================================================================
-
-
-----------
-
-^^^^^^^^^^^
-Title Paths
-^^^^^^^^^^^
-
-Use these title paths for macOS 10.11 and earlier:
-
-
-======================================================================================= ===================================================================================
-Menu Item                                                                               Title Path                                                                         
-======================================================================================= ===================================================================================
-iTerm2 > About iTerm2                                                                   `iTerm2.About iTerm2`                                                              
-iTerm2 > Show Tip of the Day                                                            `iTerm2.Show Tip of the Day`                                                       
-iTerm2 > Check for Incompatible Software                                                `iTerm2.Check for Incompatible Software`                                           
-iTerm2 > Check For Updates…                                                             `iTerm2.Check For Updates…`                                                        
-iTerm2 > Toggle Debug Logging                                                           `iTerm2.Toggle Debug Logging`                                                      
-iTerm2 > Copy Performance Stats                                                         `iTerm2.Copy Performance Stats`                                                    
-iTerm2 > Capture GPU Frame                                                              `iTerm2.Capture GPU Frame`                                                         
-iTerm2 > Preferences...                                                                 `iTerm2.Preferences...`                                                            
-iTerm2 > Hide iTerm2                                                                    `iTerm2.Hide iTerm2`                                                               
-iTerm2 > Hide Others                                                                    `iTerm2.Hide Others`                                                               
-iTerm2 > Show All                                                                       `iTerm2.Show All`                                                                  
-iTerm2 > Secure Keyboard Entry                                                          `iTerm2.Secure Keyboard Entry`                                                     
-iTerm2 > Make iTerm2 Default Term                                                       `iTerm2.Make iTerm2 Default Term`                                                  
-iTerm2 > Make Terminal Default Term                                                     `iTerm2.Make Terminal Default Term`                                                
-iTerm2 > Install Shell Integration                                                      `iTerm2.Install Shell Integration`                                                 
-iTerm2 > Quit iTerm2                                                                    `iTerm2.Quit iTerm2`                                                               
-Shell > New Window                                                                      `Shell.New Window`                                                                 
-Shell > New Tab                                                                         `Shell.New Tab`                                                                    
-Shell > New Tab with Current Profile                                                    `Shell.New Tab with Current Profile`                                               
-Shell > Duplicate Tab                                                                   `Shell.Duplicate Tab`                                                              
-Shell > Split Vertically with Current Profile                                           `Shell.Split Vertically with Current Profile`                                      
-Shell > Split Horizontally with Current Profile                                         `Shell.Split Horizontally with Current Profile`                                    
-Shell > Split Horizontally…                                                             `Shell.Split Horizontally…`                                                        
-Shell > Split Vertically…                                                               `Shell.Split Vertically…`                                                          
-Shell > Save Selected Text…                                                             `Shell.Save Selected Text…`                                                        
-Shell > Close                                                                           `Shell.Close`                                                                      
-Shell > Close Terminal Window                                                           `Shell.Close Terminal Window`                                                      
-Shell > Close All Panes in Tab                                                          `Shell.Close All Panes in Tab`                                                     
-Shell > Broadcast Input > Send Input to Current Session Only                            `Shell.Broadcast Input.Send Input to Current Session Only`                         
-Shell > Broadcast Input > Broadcast Input to All Panes in All Tabs                      `Shell.Broadcast Input.Broadcast Input to All Panes in All Tabs`                   
-Shell > Broadcast Input > Broadcast Input to All Panes in Current Tab                   `Shell.Broadcast Input.Broadcast Input to All Panes in Current Tab`                
-Shell > Broadcast Input > Toggle Broadcast Input to Current Session                     `Shell.Broadcast Input.Toggle Broadcast Input to Current Session`                  
-Shell > Broadcast Input > Show Background Pattern Indicator                             `Shell.Broadcast Input.Show Background Pattern Indicator`                          
-Shell > tmux > Detach                                                                   `Shell.tmux.Detach`                                                                
-Shell > tmux > New Tmux Window                                                          `Shell.tmux.New Tmux Window`                                                       
-Shell > tmux > New Tmux Tab                                                             `Shell.tmux.New Tmux Tab`                                                          
-Shell > tmux > Dashboard                                                                `Shell.tmux.Dashboard`                                                             
-Shell > Page Setup...                                                                   `Shell.Page Setup...`                                                              
-Shell > Print > Screen                                                                  `Shell.Print.Screen`                                                               
-Shell > Print > Selection                                                               `Shell.Print.Selection`                                                            
-Shell > Print > Buffer                                                                  `Shell.Print.Buffer`                                                               
-Edit > Undo                                                                             `Edit.Undo`                                                                        
-Edit > Redo                                                                             `Edit.Redo`                                                                        
-Edit > Cut                                                                              `Edit.Cut`                                                                         
-Edit > Copy                                                                             `Edit.Copy`                                                                        
-Edit > Copy with Styles                                                                 `Edit.Copy with Styles`                                                            
-Edit > Copy Mode                                                                        `Edit.Copy Mode`                                                                   
-Edit > Paste                                                                            `Edit.Paste`                                                                       
-Edit > Paste Special > Advanced Paste…                                                  `Edit.Paste Special.Advanced Paste…`                                               
-Edit > Paste Special > Paste Selection                                                  `Edit.Paste Special.Paste Selection`                                               
-Edit > Paste Special > Paste File Base64-Encoded                                        `Edit.Paste Special.Paste File Base64-Encoded`                                     
-Edit > Paste Special > Paste Slowly                                                     `Edit.Paste Special.Paste Slowly`                                                  
-Edit > Paste Special > Paste Faster                                                     `Edit.Paste Special.Paste Faster`                                                  
-Edit > Paste Special > Paste Slowly Faster                                              `Edit.Paste Special.Paste Slowly Faster`                                           
-Edit > Paste Special > Paste Slower                                                     `Edit.Paste Special.Paste Slower`                                                  
-Edit > Paste Special > Paste Slowly Slower                                              `Edit.Paste Special.Paste Slowly Slower`                                           
-Edit > Paste Special > Warn Before Multi-Line Paste                                     `Edit.Paste Special.Warn Before Multi-Line Paste`                                  
-Edit > Paste Special > Limit Multi-Line Paste Warning to Shell Prompt                   `Edit.Paste Special.Limit Multi-Line Paste Warning to Shell Prompt`                
-Edit > Paste Special > Warn Before Pasting One Line Ending in a Newline at Shell Prompt `Edit.Paste Special.Warn Before Pasting One Line Ending in a Newline at Shell Prompt`
-Edit > Open Selection                                                                   `Edit.Open Selection`                                                              
-Edit > Select All                                                                       `Edit.Select All`                                                                  
-Edit > Selection Respects Soft Boundaries                                               `Edit.Selection Respects Soft Boundaries`                                          
-Edit > Select Output of Last Command                                                    `Edit.Select Output of Last Command`                                               
-Edit > Select Current Command                                                           `Edit.Select Current Command`                                                      
-Edit > Find > Find...                                                                   `Edit.Find.Find...`                                                                
-Edit > Find > Find Next                                                                 `Edit.Find.Find Next`                                                              
-Edit > Find > Find Previous                                                             `Edit.Find.Find Previous`                                                          
-Edit > Find > Use Selection for Find                                                    `Edit.Find.Use Selection for Find`                                                 
-Edit > Find > Jump to Selection                                                         `Edit.Find.Jump to Selection`                                                      
-Edit > Find > Find URLs                                                                 `Edit.Find.Find URLs`                                                              
-Edit > Marks and Annotations > Set Mark                                                 `Edit.Marks and Annotations.Set Mark`                                              
-Edit > Marks and Annotations > Add Annotation at Cursor                                 `Edit.Marks and Annotations.Add Annotation at Cursor`                              
-Edit > Marks and Annotations > Jump to Mark                                             `Edit.Marks and Annotations.Jump to Mark`                                          
-Edit > Marks and Annotations > Previous Mark/Annotation                                 `Edit.Marks and Annotations.Previous Mark/Annotation`                              
-Edit > Marks and Annotations > Next Mark/Annotation                                     `Edit.Marks and Annotations.Next Mark/Annotation`                                  
-Edit > Marks and Annotations > Alerts > Alert on Next Mark                              `Edit.Marks and Annotations.Alerts.Alert on Next Mark`                             
-Edit > Marks and Annotations > Alerts > Show Modal Alert Box                            `Edit.Marks and Annotations.Alerts.Show Modal Alert Box`                           
-Edit > Marks and Annotations > Alerts > Post Notification                               `Edit.Marks and Annotations.Alerts.Post Notification`                              
-Edit > Clear Buffer                                                                     `Edit.Clear Buffer`                                                                
-Edit > Clear Scrollback Buffer                                                          `Edit.Clear Scrollback Buffer`                                                     
-View > Show Tabs in Fullscreen                                                          `View.Show Tabs in Fullscreen`                                                     
-View > Toggle Full Screen                                                               `View.Toggle Full Screen`                                                          
-View > Use Transparency                                                                 `View.Use Transparency`                                                            
-View > Zoom In on Selection                                                             `View.Zoom In on Selection`                                                        
-View > Zoom Out                                                                         `View.Zoom Out`                                                                    
-View > Find Cursor                                                                      `View.Find Cursor`                                                                 
-View > Show Cursor Guide                                                                `View.Show Cursor Guide`                                                           
-View > Show Timestamps                                                                  `View.Show Timestamps`                                                             
-View > Show Annotations                                                                 `View.Show Annotations`                                                            
-View > Auto Command Completion                                                          `View.Auto Command Completion`                                                     
-View > Open Quickly                                                                     `View.Open Quickly`                                                                
-View > Maximize Active Pane                                                             `View.Maximize Active Pane`                                                        
-View > Make Text Bigger                                                                 `View.Make Text Bigger`                                                            
-View > Make Text Normal Size                                                            `View.Make Text Normal Size`                                                       
-View > Restore Text and Session Size                                                    `View.Restore Text and Session Size`                                               
-View > Make Text Smaller                                                                `View.Make Text Smaller`                                                           
-View > Start Instant Replay                                                             `View.Start Instant Replay`                                                        
-Session > Edit Session…                                                                 `Session.Edit Session…`                                                            
-Session > Run Coprocess…                                                                `Session.Run Coprocess…`                                                           
-Session > Stop Coprocess                                                                `Session.Stop Coprocess`                                                           
-Session > Restart Session                                                               `Session.Restart Session`                                                          
-Session > Open Autocomplete…                                                            `Session.Open Autocomplete…`                                                       
-Session > Open Command History…                                                         `Session.Open Command History…`                                                    
-Session > Open Recent Directories…                                                      `Session.Open Recent Directories…`                                                 
-Session > Open Paste History…                                                           `Session.Open Paste History…`                                                      
-Session > Reset                                                                         `Session.Reset`                                                                    
-Session > Reset Character Set                                                           `Session.Reset Character Set`                                                      
-Session > Log > Start                                                                   `Session.Log.Start`                                                                
-Session > Log > Stop                                                                    `Session.Log.Stop`                                                                 
-Session > Log > Import Recording                                                        `Session.Log.Import Recording`                                                     
-Session > Log > Export Recording                                                        `Session.Log.Export Recording`                                                     
-Session > Bury Session                                                                  `Session.Bury Session`                                                             
-Scripts > Manage > New Python Script                                                    `Scripts.Manage.New Python Script`                                                 
-Scripts > Manage > Open Python REPL                                                     `Scripts.Manage.Open Python REPL`                                                  
-Scripts > Manage > Install Python Runtime                                               `Scripts.Manage.Install Python Runtime`                                            
-Scripts > Manage > Reveal Scripts in Finder                                             `Scripts.Manage.Reveal Scripts in Finder`                                          
-Scripts > Manage > Import                                                               `Scripts.Manage.Import`                                                            
-Scripts > Manage > Export                                                               `Scripts.Manage.Export`                                                            
-Scripts > Manage > Console                                                              `Scripts.Manage.Console`                                                           
-Profiles > Open Profiles…                                                               `Profiles.Open Profiles…`                                                          
-Profiles > Press Option for New Window                                                  `Profiles.Press Option for New Window`                                             
-Profiles > Open In New Window                                                           `Profiles.Open In New Window`                                                      
-Toolbelt > Show Toolbelt                                                                `Toolbelt.Show Toolbelt`                                                           
-Toolbelt > Set Default Width                                                            `Toolbelt.Set Default Width`                                                       
-Window > Minimize                                                                       `Window.Minimize`                                                                  
-Window > Zoom                                                                           `Window.Zoom`                                                                      
-Window > Edit Window Title                                                              `Window.Edit Window Title`                                                         
-Window > Arrange Windows Horizontally                                                   `Window.Arrange Windows Horizontally`                                              
-Window > Arrange Split Panes Evenly                                                     `Window.Arrange Split Panes Evenly`                                                
-Window > Exposé all Tabs                                                                `Window.Exposé all Tabs`                                                           
-Window > Save Window Arrangement                                                        `Window.Save Window Arrangement`                                                   
-Window > Save Current Window as Arrangement                                             `Window.Save Current Window as Arrangement`                                        
-Window > Select Split Pane > Select Pane Above                                          `Window.Select Split Pane.Select Pane Above`                                       
-Window > Select Split Pane > Select Pane Below                                          `Window.Select Split Pane.Select Pane Below`                                       
-Window > Select Split Pane > Select Pane Left                                           `Window.Select Split Pane.Select Pane Left`                                        
-Window > Select Split Pane > Select Pane Right                                          `Window.Select Split Pane.Select Pane Right`                                       
-Window > Select Split Pane > Next Pane                                                  `Window.Select Split Pane.Next Pane`                                               
-Window > Select Split Pane > Previous Pane                                              `Window.Select Split Pane.Previous Pane`                                           
-Window > Resize Split Pane > Move Divider Up                                            `Window.Resize Split Pane.Move Divider Up`                                         
-Window > Resize Split Pane > Move Divider Down                                          `Window.Resize Split Pane.Move Divider Down`                                       
-Window > Resize Split Pane > Move Divider Left                                          `Window.Resize Split Pane.Move Divider Left`                                       
-Window > Resize Split Pane > Move Divider Right                                         `Window.Resize Split Pane.Move Divider Right`                                      
-Window > Resize Window > Decrease Height                                                `Window.Resize Window.Decrease Height`                                             
-Window > Resize Window > Increase Height                                                `Window.Resize Window.Increase Height`                                             
-Window > Resize Window > Decrease Width                                                 `Window.Resize Window.Decrease Width`                                              
-Window > Resize Window > Increase Width                                                 `Window.Resize Window.Increase Width`                                              
-Window > Select Next Tab                                                                `Window.Select Next Tab`                                                           
-Window > Select Previous Tab                                                            `Window.Select Previous Tab`                                                       
-Window > Move Tab Left                                                                  `Window.Move Tab Left`                                                             
-Window > Move Tab Right                                                                 `Window.Move Tab Right`                                                            
-Window > Password Manager                                                               `Window.Password Manager`                                                          
-Window > Pin Hotkey Window                                                              `Window.Pin Hotkey Window`                                                         
-Window > Bring All To Front                                                             `Window.Bring All To Front`                                                        
-Help > iTerm2 Help                                                                      `Help.iTerm2 Help`                                                                 
-Help > Copy Mode Shortcuts                                                              `Help.Copy Mode Shortcuts`                                                         
-Help > Open Source Licenses                                                             `Help.Open Source Licenses`                                                        
-Help > GPU Renderer Availability                                                        `Help.GPU Renderer Availability`                                                   
-======================================================================================= ===================================================================================
 
 ----
 
