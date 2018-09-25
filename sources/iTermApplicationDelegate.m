@@ -261,6 +261,14 @@ static BOOL hasBecomeActive = NO;
                                                  selector:@selector(currentSessionDidChange)
                                                      name:kCurrentSessionDidChange
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidChangeKeyStatus:)
+                                                     name:NSWindowDidBecomeKeyNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidChangeKeyStatus:)
+                                                     name:NSWindowDidResignKeyNotification
+                                                   object:nil];
 
         [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self
                                                            andSelector:@selector(getUrl:withReplyEvent:)
@@ -2390,6 +2398,10 @@ static BOOL hasBecomeActive = NO;
             [quickLookController takeControl];
         }
     }
+}
+
+- (void)windowDidChangeKeyStatus:(NSNotification *)notification {
+    DLog(@"%@:\n%@", notification.name, [NSThread callStackSymbols]);
 }
 
 @end
