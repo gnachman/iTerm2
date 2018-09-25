@@ -14,6 +14,13 @@ test -f "$PRIVKEY" || die "Set PRIVKEY environment variable to point at a valid 
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
     ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die SparkleSign
+    echo "Signature is "
+    cat /tmp/sig.txt
+    actualsize=$(wc -c < /tmp/sig.txt)
+    if (( $actualsize < 63)); then
+        die "signature file too small"
+    fi
+
     SIG=$(cat /tmp/sig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
     XML=$1
@@ -52,8 +59,23 @@ function Build {
   rm -rf iTerm.app
   mv iTerm2.app iTerm.app
 
-  zip -ry iTerm2-${NAME}.zip iTerm.app
+  ZIPNAME=iTerm2-${NAME}.zip
+  zip -ry $ZIPNAME iTerm.app
  
+  echo Finna staple...
+  # This command came from where all good Apple documentation comes from, which is Twitter.
+  # From https://twitter.com/rosyna/status/1004418504408252416?lang=en
+  xcrun altool --eval-app --primary-bundle-id com.googlecode.iterm2 -u apple@georgester.com -f $ZIPNAME
+  echo Now wait a long time. Paste the UUID into the command below to get progress.
+  echo xcrun altool --eval-info UUID -u apple@georgester.com
+  echo "Press return when it's good"
+  read xxx
+
+  xcrun stapler staple iTerm.app || die "Stapling failed"
+  rm $ZIPNAME
+  zip -ry $ZIPNAME iTerm.app
+
+
   # Update the list of changes
   vi $SVNDIR/source/appcasts/full_changes.txt
  
@@ -101,10 +123,9 @@ Build $BUILDTYPE "" "OS 10.12+" "This is the recommended build for most users." 
 git checkout -- version.txt
 #set -x
 
-
 git tag v${VERSION}
 git commit -am ${VERSION}
-git push origin master
+git push origin release_3.2
 git push --tags
 cd $SVNDIR
 git commit -am v${VERSION}
