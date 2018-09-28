@@ -15,6 +15,7 @@
 #import "iTermBackgroundDrawingHelper.h"
 #import "iTermBuriedSessions.h"
 #import "iTermBuiltInFunctions.h"
+#import "iTermCacheableImage.h"
 #import "iTermCarbonHotKeyController.h"
 #import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
@@ -497,6 +498,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     
     iTermGraphicSource *_graphicSource;
     iTermVariableReference *_jobPidRef;
+    iTermCacheableImage *_customIcon;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -848,6 +850,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pwdPoller release];
     [_graphicSource release];
     [_jobPidRef release];
+    [_customIcon release];
 
     [super dealloc];
 }
@@ -3918,10 +3921,21 @@ ITERM_WEAKLY_REFERENCEABLE
         case iTermProfileIconAutomatic:
             [_graphicSource updateImageForProcessID:self.shell.pid enabled:[self shouldShowTabGraphic]];
             return _graphicSource.image;
+
+        case iTermProfileIconCustom:
+            return [self customIconImage];
     }
 
     DLog(@"Unexpected icon setting %@", @(icon));
     return nil;
+}
+
+- (NSImage *)customIconImage {
+    if (!_customIcon) {
+        _customIcon = [[iTermCacheableImage alloc] init];
+    }
+    NSString *path = [iTermProfilePreferences stringForKey:KEY_ICON_PATH inProfile:self.profile];
+    return [_customIcon imageAtPath:path ofSize:NSMakeSize(16, 16) flipped:YES];
 }
 
 - (NSString *)windowTitle {

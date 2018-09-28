@@ -50,5 +50,6 @@
 
 - (NSImage *)it_imageWithTintColor:(NSColor *)tintColor;
 - (NSImage *)it_flippedImage;
+- (NSImage *)it_imageOfSize:(NSSize)size;
 
 @end

@@ -54,6 +54,7 @@
 #define KEY_DISPLAY_PROFILE             @"Display Profile"  // Deprecated
 #define KEY_SHORTCUT                    @"Shortcut"
 #define KEY_ICON                        @"Icon"  // Number with iTermProfileIcon enum
+#define KEY_ICON_PATH                   @"Custom Icon Path"
 #define KEY_BONJOUR_GROUP               @"Bonjour Group"  // Deprecated
 #define KEY_BONJOUR_SERVICE             @"Bonjour Service"  // Deprecated
 #define KEY_BONJOUR_SERVICE_ADDRESS     @"Bonjour Service Address"  // Deprecated
@@ -331,6 +332,7 @@ typedef NS_OPTIONS(NSUInteger, iTermTitleComponents) {
 typedef NS_ENUM(NSUInteger, iTermProfileIcon) {
     iTermProfileIconNone = 0,
     iTermProfileIconAutomatic = 1,
+    iTermProfileIconCustom = 2
 };
 
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>

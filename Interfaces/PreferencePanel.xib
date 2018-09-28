@@ -1405,6 +1405,7 @@ DQ
                 <outlet property="_editAdvancedConfigButton" destination="5975" id="Xww-uf-BMr"/>
                 <outlet property="_editCurrentSessionView" destination="IUK-Yc-d7G" id="6ba-10-vJC"/>
                 <outlet property="_icon" destination="PFt-ce-pWw" id="c3d-ut-Tk1"/>
+                <outlet property="_imageWell" destination="CNi-xf-qcd" id="ta5-Ti-xEy"/>
                 <outlet property="_initialDirectoryType" destination="2190" id="LYF-0C-gAo"/>
                 <outlet property="_profileNameField" destination="2133" id="6VF-gN-bGW"/>
                 <outlet property="_profileNameFieldForEditCurrentSession" destination="12133" id="5Kd-KE-2zg"/>
@@ -1993,7 +1994,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <popUpButton verticalHuggingPriority="750" id="PFt-ce-pWw">
-                    <rect key="frame" x="144" y="331" width="398" height="26"/>
+                    <rect key="frame" x="144" y="331" width="267" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="No Icon" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="9aT-V8-QXb" id="rEM-cS-sAI">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -2002,6 +2003,7 @@ DQ
                             <items>
                                 <menuItem title="No Icon" state="on" id="9aT-V8-QXb"/>
                                 <menuItem title="Built-in Icon for Current App" tag="1" id="BmX-zj-6vo"/>
+                                <menuItem title="Custom" tag="2" id="eat-RV-XIJ"/>
                             </items>
                         </menu>
                     </popUpButtonCell>
@@ -2017,6 +2019,14 @@ DQ
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                 </button>
+                <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" id="CNi-xf-qcd" customClass="iTermImageWell">
+                    <rect key="frame" x="413" y="334" width="23" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" imageFrameStyle="photo" id="pKz-Ch-jE2"/>
+                    <connections>
+                        <outlet property="delegate" destination="dVg-Ac-SiZ" id="eoD-2Y-HxJ"/>
+                    </connections>
+                </imageView>
             </subviews>
             <accessibility identifier="prefsProfilesGeneral"/>
             <point key="canvasLocation" x="977.5" y="-816"/>

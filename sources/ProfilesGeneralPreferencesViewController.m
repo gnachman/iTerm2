@@ -11,6 +11,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermAPIHelper.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
+#import "iTermImageWell.h"
 #import "iTermLaunchServices.h"
 #import "iTermProfilePreferences.h"
 #import "iTermShortcutInputView.h"
@@ -34,7 +35,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 
 static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfilePreferencesUpdateSessionName";
 
-@interface ProfilesGeneralPreferencesViewController () <iTermShortcutInputViewDelegate, NSMenuDelegate, ProfileListViewDelegate>
+@interface ProfilesGeneralPreferencesViewController () <iTermImageWellDelegate, iTermShortcutInputViewDelegate, NSMenuDelegate, ProfileListViewDelegate>
 @end
 
 @implementation ProfilesGeneralPreferencesViewController {
@@ -67,7 +68,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     iTermFunctionCallTextFieldDelegate *_badgeTextForEditCurrentSessionFieldDelegate;
     IBOutlet NSPopUpButton *_titleSettingsForEditCurrentSession;
     IBOutlet NSPopUpButton *_icon;
-    
+    IBOutlet NSImageView *_imageWell;
+
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
     IBOutlet iTermShortcutInputView *_sessionHotkeyInputView;
@@ -135,8 +137,16 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     };
     
     info = [self defineControl:_icon
-                    key:KEY_ICON
+                           key:KEY_ICON
                           type:kPreferenceInfoTypePopup];
+    info.onChange = ^{
+        [weakSelf iconDidChange];
+    };
+    info.observer = ^{
+        [weakSelf updateImageWell];
+    };
+    [self updateImageWell];
+    [self updateImageWellHidden];
 
     [self defineControl:_profileShortcut
                     key:KEY_SHORTCUT
@@ -224,6 +234,56 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                  name:iTermProfilePreferencesUpdateSessionName
                                                object:nil];
     [self updateEditAdvancedConfigButton];
+}
+
+// User interacted with it
+- (void)iconDidChange {
+    const iTermProfileIcon icon = [self unsignedIntegerForKey:KEY_ICON];
+    if (icon == iTermProfileIconCustom && _imageWell.image == nil) {
+        [self openFilePicker];
+    }
+}
+
+- (void)updateImageWell {
+    NSString *iconPath = [self stringForKey:KEY_ICON_PATH];
+    _imageWell.image = iconPath ? [[NSImage alloc] initWithContentsOfFile:iconPath] : nil;
+}
+
+- (void)openFilePicker {
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.canChooseDirectories = NO;
+    panel.canChooseFiles = YES;
+    panel.allowsMultipleSelection = NO;
+    [panel setAllowedFileTypes:[NSImage imageTypes]];
+
+    void (^completion)(NSInteger) = ^(NSInteger result) {
+        if (result == NSFileHandlingPanelOKButton) {
+            NSURL *url = [[panel URLs] objectAtIndex:0];
+            if (![self loadIconWithFilename:url.path]) {
+                NSBeep();
+            }
+        }
+        if (self->_imageWell.image == nil) {
+            [self setUnsignedInteger:iTermProfileIconNone forKey:KEY_ICON];
+        }
+        [self updateImageWellHidden];
+    };
+
+    [panel beginSheetModalForWindow:self.view.window completionHandler:completion];
+}
+
+- (BOOL)loadIconWithFilename:(NSString *)path {
+    NSImage *image = [[NSImage alloc] initWithContentsOfFile:path];
+    if (image) {
+        [self setString:path forKey:KEY_ICON_PATH];
+    }
+    _imageWell.image = image;
+    return image != nil;
+}
+
+- (void)updateImageWellHidden {
+    _imageWell.hidden = ([self unsignedIntegerForKey:KEY_ICON] != iTermProfileIconCustom ||
+                         _imageWell.image == nil);
 }
 
 - (void)windowWillClose {
@@ -760,6 +820,16 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [self settingChanged:_profileNameFieldForEditCurrentSession];
         _profileNameChangePending = NO;
     }
+}
+
+#pragma mark - iTermImageWellDelegate
+
+- (void)imageWellDidClick:(iTermImageWell *)imageWell {
+    [self openFilePicker];
+}
+
+- (void)imageWellDidPerformDropOperation:(iTermImageWell *)imageWell filename:(NSString *)filename {
+    [self loadIconWithFilename:filename];
 }
 
 @end

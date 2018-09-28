@@ -308,4 +308,18 @@
     return image;
 }
 
+- (NSImage *)it_imageOfSize:(NSSize)newSize {
+    if (!self.isValid) {
+        return nil;
+    }
+
+    return [NSImage imageOfSize:newSize drawBlock:^{
+        [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
+        [self drawInRect:NSMakeRect(0, 0, newSize.width, newSize.height)
+                fromRect:NSMakeRect(0, 0, self.size.width, self.size.height)
+               operation:NSCompositingOperationCopy
+                fraction:1];
+    }];
+}
+
 @end

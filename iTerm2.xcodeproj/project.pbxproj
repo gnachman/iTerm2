@@ -1215,6 +1215,8 @@
 		530AB8C420B5284A00D2AA08 /* iTermFocusReportingTextField.h in Headers */ = {isa = PBXBuildFile; fileRef = 530AB8C220B5284A00D2AA08 /* iTermFocusReportingTextField.h */; };
 		5312269A20CB1D3A004831C6 /* iTermBuiltInFunctions.h in Headers */ = {isa = PBXBuildFile; fileRef = 5312269820CB1D3A004831C6 /* iTermBuiltInFunctions.h */; };
 		5312269B20CB1D3A004831C6 /* iTermBuiltInFunctions.m in Sources */ = {isa = PBXBuildFile; fileRef = 5312269920CB1D3A004831C6 /* iTermBuiltInFunctions.m */; };
+		532F942B215DFEF600D509E4 /* iTermCacheableImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 532F9429215DFEF600D509E4 /* iTermCacheableImage.h */; };
+		532F942C215DFEF600D509E4 /* iTermCacheableImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 532F942A215DFEF600D509E4 /* iTermCacheableImage.m */; };
 		5337A315203E065300024BEA /* iTermPowerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 5337A313203E065300024BEA /* iTermPowerManager.h */; };
 		5337A316203E065300024BEA /* iTermPowerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5337A314203E065300024BEA /* iTermPowerManager.m */; };
 		533BDAC320DB5CE100E26F0A /* NSObject+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30CE186D1414007F550F /* NSObject+iTerm.m */; };
@@ -3922,6 +3924,8 @@
 		530AB8C320B5284A00D2AA08 /* iTermFocusReportingTextField.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFocusReportingTextField.m; sourceTree = "<group>"; };
 		5312269820CB1D3A004831C6 /* iTermBuiltInFunctions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBuiltInFunctions.h; sourceTree = "<group>"; };
 		5312269920CB1D3A004831C6 /* iTermBuiltInFunctions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBuiltInFunctions.m; sourceTree = "<group>"; };
+		532F9429215DFEF600D509E4 /* iTermCacheableImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCacheableImage.h; sourceTree = "<group>"; };
+		532F942A215DFEF600D509E4 /* iTermCacheableImage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCacheableImage.m; sourceTree = "<group>"; };
 		5337A313203E065300024BEA /* iTermPowerManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPowerManager.h; sourceTree = "<group>"; };
 		5337A314203E065300024BEA /* iTermPowerManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPowerManager.m; sourceTree = "<group>"; };
 		534690231C94FE8000B7E4E9 /* overflowImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overflowImage.png; sourceTree = "<group>"; };
@@ -7695,6 +7699,8 @@
 				A67F61FC214397CD0093940A /* iTermGraphicSource.m */,
 				A6BC9B1C214A2AE900F50C09 /* iTermVariableReference.h */,
 				A6BC9B1D214A2AE900F50C09 /* iTermVariableReference.m */,
+				532F9429215DFEF600D509E4 /* iTermCacheableImage.h */,
+				532F942A215DFEF600D509E4 /* iTermCacheableImage.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -9052,6 +9058,7 @@
 				A6047134213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h in Headers */,
 				A66719331DCE36C3000CE608 /* iTermWebSocketFrame.h in Headers */,
 				A66719341DCE36C3000CE608 /* iTermQuickLookController.h in Headers */,
+				532F942B215DFEF600D509E4 /* iTermCacheableImage.h in Headers */,
 				A65429AF20C492F000CE71B1 /* iTermParameterPanelWindowController.h in Headers */,
 				535EA50420D1869800FC81E0 /* iTermSwiftyStringParser.h in Headers */,
 				A66719351DCE36C3000CE608 /* iTermClearView.h in Headers */,
@@ -11253,6 +11260,7 @@
 				A67960D01F81FCBB008A42BC /* iTermBackgroundColorRenderer.mm in Sources */,
 				A6DBC0391FF9B30000F1466D /* iTermTexturePool.m in Sources */,
 				A6A4865E20B6758D00493302 /* iTermPreferencesBaseViewController.m in Sources */,
+				532F942C215DFEF600D509E4 /* iTermCacheableImage.m in Sources */,
 				A6614C7D210AE7350001EAA3 /* iTermPasteViewManager.m in Sources */,
 				A66F52B62105AC5B00571168 /* iTermStatusBarGitComponent.m in Sources */,
 				A66F3CF81FED741E00AA2021 /* iTermTextRendererTransientState.mm in Sources */,
