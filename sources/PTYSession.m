@@ -4047,6 +4047,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_textview setTransparency:transparency];
     [self useTransparencyDidChange];
+    [self.view setNeedsDisplay:YES];
 }
 
 - (float)blend {
