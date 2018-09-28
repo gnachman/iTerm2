@@ -639,7 +639,14 @@ static NSDate* lastResizeDate_;
     if (_useMetal && _metalView.alphaValue == 1) {
         [self drawAroundFrame:_metalView.frame dirtyRect:dirtyRect];
     } else {
-        [self drawAroundFrame:self.scrollview.frame dirtyRect:dirtyRect];
+        NSRect frame = self.scrollview.frame;
+        if (@available(macOS 10.14, *)) {
+            // work around issue 7101. Draw a window background colored area under the legacy scroller.
+            if (_scrollview.isLegacyScroller) {
+                frame.size.width -= 15;
+            }
+        }
+        [self drawAroundFrame:frame dirtyRect:dirtyRect];
     }
     if (@available(macOS 10.14, *)) {
         return;
