@@ -197,7 +197,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 // Dumps the alpha channel of data, which has dimensions of _size.
-- (void)logStringRepresentationOfAlphaChannelOfBitmapDataBytes:(unsigned char *data)data {
+- (void)logStringRepresentationOfAlphaChannelOfBitmapDataBytes:(unsigned char *)data {
     for (int y = 0; y < _size.height; y++) {
         NSMutableString *line = [NSMutableString string];
         int width = _size.width;
