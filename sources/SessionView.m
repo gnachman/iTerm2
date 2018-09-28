@@ -879,7 +879,8 @@ static NSDate* lastResizeDate_;
         NSRect frame = self.scrollview.frame;
         if (@available(macOS 10.14, *)) {
             // work around issue 7101. Draw a window background colored area under the legacy scroller.
-            if (_scrollview.isLegacyScroller) {
+            if (_scrollview.isLegacyScroller &&
+                ![iTermPreferences boolForKey:kPreferenceKeyHideScrollbar]) {
                 frame.size.width -= 15;
             }
         }
@@ -889,7 +890,10 @@ static NSDate* lastResizeDate_;
         return;
     }
     // 10.13 path: work around issue 6974
-    if (_useMetal && _scrollview.isLegacyScroller && [_scrollview.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {
+    if (_useMetal &&
+        _scrollview.isLegacyScroller &&
+        ![iTermPreferences boolForKey:kPreferenceKeyHideScrollbar] &&
+        [_scrollview.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {
         [[NSColor colorWithWhite:20.0 / 255.0 alpha:1] set];
         NSRectFill(NSMakeRect(self.frame.size.width - 15, 0, self.frame.size.height, self.frame.size.height));
     }
