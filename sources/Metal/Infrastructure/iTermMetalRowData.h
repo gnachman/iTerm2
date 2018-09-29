@@ -17,10 +17,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) int y;
 
 // iTermMetalGlyphKey
-@property (nonatomic, strong) iTermData *keysData;
+@property (nonatomic, strong) iTermGlyphKeyData *keysData;
 
 // iTermMetalGlyphAttributes
-@property (nonatomic, strong) iTermData *attributesData;
+@property (nonatomic, strong) iTermAttributesData *attributesData;
 
 // iTermMetalBackgroundColorRLE
 @property (nonatomic, strong) iTermData *backgroundColorRLEData;

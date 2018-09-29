@@ -25,9 +25,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) vector_float4 defaultBackgroundColor;
 @property (nonatomic) BOOL disableIndividualColorModels NS_DEPRECATED_MAC(10_12, 10_14);
 
-- (void)setGlyphKeysData:(iTermData *)glyphKeysData
+- (void)setGlyphKeysData:(iTermGlyphKeyData*)glyphKeysData
                    count:(int)count
-          attributesData:(iTermData *)attributesData
+          attributesData:(iTermAttributesData *)attributesData
                      row:(int)row
   backgroundColorRLEData:(iTermData *)backgroundColorData  // array of iTermMetalBackgroundColorRLE background colors.
        markedRangeOnLine:(NSRange)markedRangeOnLine
