@@ -11,6 +11,7 @@
 #import "iTermCharacterBitmap.h"
 #import "iTermCharacterParts.h"
 #import "iTermCharacterSource.h"
+#import "iTermData.h"
 #import "iTermTextureArray.h"
 #import "NSImage+iTerm.h"
 #import "NSMutableData+iTerm.h"
@@ -55,6 +56,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     BOOL _haveTestedForEmoji;
     NSInteger _nextIterationToDrawBackgroundFor;
     NSInteger _numberOfIterationsNeeded;
+    iTermBitmapData *_postprocessedData;
 }
 
 + (CGColorSpaceRef)colorSpace {
@@ -215,6 +217,31 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 #pragma mark - APIs
 
+- (void)performPostProcessing {
+    _postprocessedData = [iTermBitmapData dataOfLength:_size.width * 4 * _size.height];
+    unsigned char *destination = _postprocessedData.mutableBytes;
+
+    unsigned char *data[4];
+    for (int i = 0; i < 4; i++) {
+        data[i] = (unsigned char *)CGBitmapContextGetData(_cgContexts[i]);
+
+        // Sanity checks to ensure we don't traipse off the end of the allocated region.
+        const size_t bytesPerRow = CGBitmapContextGetBytesPerRow(_cgContexts[i]);
+        assert(bytesPerRow >= _size.width * 4);
+        const size_t height = CGBitmapContextGetHeight(_cgContexts[i]);
+        assert(height >= _size.height);
+    }
+
+    // i indexes into the array of pixels, always to the red value.
+    for (int i = 0 ; i < _size.height * _size.width * 4; i += 4) {
+        // j indexes a destination color component and a source bitmap.
+        for (int j = 0; j < 4; j++) {
+            destination[i + j] = data[j][i + 3];
+        }
+    }
+    _postprocessed = YES;
+}
+
 - (iTermCharacterBitmap *)bitmapForPart:(int)part {
     [self drawIfNeeded];
     const int radius = _radius;
@@ -224,36 +251,12 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     const size_t destRowSize = _partSize.width * 4;
     const NSUInteger length = destRowSize * _partSize.height;
 
-    iTermCharacterBitmap *bitmap = [[iTermCharacterBitmap alloc] init];
-    bitmap.data = [NSMutableData uninitializedDataWithLength:length];
-    bitmap.size = _partSize;
-
-    const unsigned char *bitmapBytes = NULL;
     if (@available(macOS 10.14, *)) {
         if (!_postprocessed && !_isEmoji) {
-            unsigned char *data[4];
-            for (int i = 0; i < 4; i++) {
-                data[i] = (unsigned char *)CGBitmapContextGetData(_cgContexts[i]);
-
-                // Sanity checks to ensure we don't traipse off the end of the allocated region.
-                const size_t bytesPerRow = CGBitmapContextGetBytesPerRow(_cgContexts[i]);
-                assert(bytesPerRow >= _size.width * 4);
-                const size_t height = CGBitmapContextGetHeight(_cgContexts[i]);
-                assert(height >= _size.height);
-            }
-            unsigned char *destination = data[0];
-
-            // i indexes into the array of pixels, always to the red value.
-            for (int i = 0 ; i < _size.height * _size.width * 4; i += 4) {
-                // j indexes a destination color component and a source bitmap.
-                for (int j = 0; j < 4; j++) {
-                    destination[i + j] = data[j][i + 3];
-                }
-            }
-            _postprocessed = YES;
-            bitmapBytes = data[0];
+            [self performPostProcessing];
         }
     }
+    const unsigned char *bitmapBytes = _postprocessedData.bytes;
     if (!bitmapBytes) {
         bitmapBytes = (const unsigned char *)CGBitmapContextGetData(_cgContexts[0]);
     }
@@ -278,6 +281,10 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/big-%@.png", _string]];
     }
 #endif
+
+    iTermCharacterBitmap *bitmap = [[iTermCharacterBitmap alloc] init];
+    bitmap.data = [NSMutableData uninitializedDataWithLength:length];
+    bitmap.size = _partSize;
 
     char *dest = (char *)bitmap.data.mutableBytes;
 
