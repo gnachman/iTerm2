@@ -32,6 +32,9 @@ namespace iTerm2 {
                 _openPage->release(this);
                 _openPage = NULL;
             }
+            for (auto page : _allPages) {
+                page->release(this);
+            }
             for (auto it = _pages.begin(); it != _pages.end(); it++) {
                 std::vector<const GlyphEntry *> *vector = it->second;
                 for (auto glyph_entry : *vector) {
