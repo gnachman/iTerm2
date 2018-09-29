@@ -40,3 +40,8 @@
 - (void)checkForOverrun;
 @end
 
+@interface iTermBitmapData : iTermData
++ (instancetype)dataOfLength:(NSUInteger)length;
+- (void)checkForOverrun;
+@end
+

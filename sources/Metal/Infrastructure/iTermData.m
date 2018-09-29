@@ -148,3 +148,18 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
     }
 }
 @end
+
+@implementation iTermBitmapData : iTermData
++ (instancetype)dataOfLength:(NSUInteger)length {
+    return [[self alloc] initWithLength:length];
+}
+
+- (void)checkForOverrun {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        assert(comparisonResult == 0);
+    }
+}
+@end
+
