@@ -276,17 +276,16 @@ static BOOL gMonochromeText;
 
 - (void)initializeTransientState:(iTermTextRendererTransientState *)tState
                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    const CGSize currentSize = tState.cellConfiguration.glyphSize;
     if (_texturePageCollectionSharedPointer != NULL) {
         const vector_uint2 &oldSize = _texturePageCollectionSharedPointer.object->get_cell_size();
-        CGSize newSize = tState.cellConfiguration.cellSize;
-        if (oldSize.x != newSize.width || oldSize.y != newSize.height) {
+        if (oldSize.x != currentSize.width || oldSize.y != currentSize.height) {
             _texturePageCollectionSharedPointer = nil;
         }
     }
     if (!_texturePageCollectionSharedPointer) {
         iTerm2::TexturePageCollection *collection = new iTerm2::TexturePageCollection(_cellRenderer.device,
-                                                                                      simd_make_uint2(tState.cellConfiguration.glyphSize.width,
-                                                                                                      tState.cellConfiguration.glyphSize.height),
+                                                                                      simd_make_uint2(currentSize.width, currentSize.height),
                                                                                       iTermTextAtlasCapacity,
                                                                                       iTermTextRendererMaximumNumberOfTexturePages);
         _texturePageCollectionSharedPointer = [[iTermTexturePageCollectionSharedPointer alloc] initWithObject:collection];
