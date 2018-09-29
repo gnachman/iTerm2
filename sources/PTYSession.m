@@ -4775,7 +4775,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self metalAllowed:nil];
 }
 
-- (BOOL)metalAllowed:(out NSString **)reason {
+- (BOOL)metalAllowed:(out iTermMetalUnavailableReason *)reason {
     static dispatch_once_t onceToken;
     static BOOL machineSupportsMetal;
     dispatch_once(&onceToken, ^{
@@ -4785,37 +4785,37 @@ ITERM_WEAKLY_REFERENCEABLE
     });
     if (!machineSupportsMetal) {
         if (reason) {
-            *reason = @"no usable GPU found on this machine.";
+            *reason = iTermMetalUnavailableReasonNoGPU;
         }
         return NO;
     }
     if (![iTermPreferences boolForKey:kPreferenceKeyUseMetal]) {
         if (reason) {
-            *reason = @"GPU Renderer is disabled in Preferences > General.";
+            *reason = iTermMetalUnavailableReasonDisabled;
         }
         return NO;
     }
     if ([self ligaturesEnabledInEitherFont]) {
         if (reason) {
-            *reason = @"ligatures are enabled. You can disable them in Prefs>Profiles>Text>Use ligatures.";
+            *reason = iTermMetalUnavailableReasonLigatures;
         }
         return NO;
     }
     if (_metalDeviceChanging) {
         if (reason) {
-            *reason = @"the GPU renderer is initializing. It should be ready soon.";
+            *reason = iTermMetalUnavailableReasonInitializing;
         }
         return NO;
     }
     if (![self metalViewSizeIsLegal]) {
         if (reason) {
-            *reason = @"the session is too large or too small.";
+            *reason = iTermMetalUnavailableReasonInvalidSize;
         }
         return NO;
     }
     if (!_textview) {
         if (reason) {
-            *reason = @"the session is initializing.";
+            *reason = iTermMetalUnavailableReasonSessionInitializing;
         }
         return NO;
     }
@@ -4833,7 +4833,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (_textview.transparencyAlpha < 1) {
 #if !ENABLE_TRANSPARENT_METAL_WINDOWS
             if (reason) {
-                *reason = @"transparent windows not supported. You can change window transparency in Prefs>Profiles>Window>Transparency";
+                *reason = iTermMetalUnavailableReasonTransparency;
             }
             return NO;
 #endif
@@ -4845,7 +4845,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // Mojave fixed compositing of views over MTKView and removed subpixel antialiasing making blending of text easier.
         if ([_textview verticalSpacing] < 1) {
             if (reason) {
-                *reason = @"the font's vertical spacing set to less than 100%. You can change it in Prefs>Profiles>Text>Change Font.";
+                *reason = iTermMetalUnavailableReasonVerticalSpacing;
             }
             // Metal cuts off the tops of letters when line height reduced
             return NO;
@@ -4863,37 +4863,37 @@ ITERM_WEAKLY_REFERENCEABLE
                                 [iTermAdvancedSettingsModel terminalMargin] >= 1);  // Smaller margins break rounded window corners
         if (!(hasSquareCorners || marginsOk)) {
             if (reason) {
-                *reason = @"terminal window margins are too small. You can edit them in Prefs>Advanced.";
+                *reason = iTermMetalUnavailableReasonMarginSize;
             }
             return NO;
         }
         if ([PTYNoteViewController anyNoteVisible]) {
             if (reason) {
-                *reason = @"annotations are open. Find the session with visible annotations and close them with View>Show Annotations.";
+                *reason = iTermMetalUnavailableReasonAnnotations;
             }
             return NO;
         }
         if (_view.findViewController.isVisible) {
             if (reason) {
-                *reason = @"the find panel is open.";
+                *reason = iTermMetalUnavailableReasonFindPanel;
             }
             return NO;
         }
         if (_pasteHelper.pasteViewIsVisible) {
             if (reason) {
-                *reason = @"the paste progress indicator is open.";
+                *reason = iTermMetalUnavailableReasonPasteIndicator;
             }
             return NO;
         }
         if (_view.currentAnnouncement) {
             if (reason) {
-                *reason = @"an announcement (yellow bar) is visible.";
+            *reason = iTermMetalUnavailableReasonAnnouncement;
             }
             return NO;
         }
         if (_view.hasHoverURL) {
             if (reason) {
-                *reason = @"a URL preview is visible.";
+                *reason = iTermMetalUnavailableReasonURLPreview;
             }
             return NO;
         }

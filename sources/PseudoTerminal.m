@@ -8335,10 +8335,10 @@ ITERM_WEAKLY_REFERENCEABLE
     _contentView.useMetal = useMetal;
 }
 
-- (BOOL)tabCanUseMetal:(PTYTab *)tab reason:(out NSString **)reason {
+- (BOOL)tabCanUseMetal:(PTYTab *)tab reason:(out iTermMetalUnavailableReason *)reason {
     if (_contentView.tabBarControl.flashing) {
         if (reason) {
-            *reason = @"the tab bar is temporarily visible.";
+            *reason = iTermMetalUnavailableReasonTabBarTemporarilyVisible;
             return NO;
         }
     }
