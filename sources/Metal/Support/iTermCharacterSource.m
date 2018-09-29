@@ -234,6 +234,12 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
             unsigned char *data[4];
             for (int i = 0; i < 4; i++) {
                 data[i] = (unsigned char *)CGBitmapContextGetData(_cgContexts[i]);
+
+                // Sanity checks to ensure we don't traipse off the end of the allocated region.
+                const size_t bytesPerRow = CGBitmapContextGetBytesPerRow(_cgContexts[i]);
+                assert(bytesPerRow >= _size.width * 4);
+                const size_t height = CGBitmapContextGetHeight(_cgContexts[i]);
+                assert(height >= _size.height);
             }
             unsigned char *destination = data[0];
 
