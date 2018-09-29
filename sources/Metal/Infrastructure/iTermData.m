@@ -50,7 +50,6 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
     assert(length <= _originalLength);
     _length = length;
 }
-
 - (void)checkForOverrun {
     if (_mutableBytes) {
         unsigned char *buffer = _mutableBytes;
@@ -68,6 +67,13 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
     return [[self alloc] initWithLength:length];
 }
 
+- (void)checkForOverrun {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        assert(comparisonResult == 0);
+    }
+}
 @end
 
 @implementation iTermGlyphKeyData : iTermData
@@ -76,6 +82,27 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
     return [[self alloc] initWithLength:length];
 }
 
+- (void)checkForOverrun {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        assert(comparisonResult == 0);
+    }
+}
+- (void)checkForOverrun1 {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        assert(comparisonResult == 0);
+    }
+}
+- (void)checkForOverrun2 {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        assert(comparisonResult == 0);
+    }
+}
 @end
 
 @implementation iTermAttributesData : iTermData
@@ -84,6 +111,27 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
     return [[self alloc] initWithLength:length];
 }
 
+- (void)checkForOverrun {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        assert(comparisonResult == 0);
+    }
+}
+- (void)checkForOverrun1 {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        assert(comparisonResult == 0);
+    }
+}
+- (void)checkForOverrun2 {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        assert(comparisonResult == 0);
+    }
+}
 @end
 
 @implementation iTermBackgroundColorRLEsData : iTermData
@@ -92,4 +140,11 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
     return [[self alloc] initWithLength:length];
 }
 
+- (void)checkForOverrun {
+    if (_mutableBytes) {
+        unsigned char *buffer = _mutableBytes;
+        const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
+        assert(comparisonResult == 0);
+    }
+}
 @end

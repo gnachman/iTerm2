@@ -680,9 +680,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
             !glyphKey.boxDrawing);
 }
 
-- (void)setGlyphKeysData:(iTermData *)glyphKeysData
+- (void)setGlyphKeysData:(iTermGlyphKeyData *)glyphKeysData
                    count:(int)count
-          attributesData:(iTermData *)attributesData
+          attributesData:(iTermAttributesData *)attributesData
                      row:(int)row
   backgroundColorRLEData:(nonnull iTermData *)backgroundColorRLEData
        markedRangeOnLine:(NSRange)markedRangeOnLine
@@ -726,6 +726,8 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                  asciiAttrs:asciiAttrs
                                  attributes:attributes
                               inMarkedRange:inMarkedRange];
+            [glyphKeysData checkForOverrun1];
+            [attributesData checkForOverrun1];
         } else {
             // Non-ASCII slower path
             const iTerm2::GlyphKey glyphKey(&glyphKeys[x]);
@@ -803,10 +805,10 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                 }
             }
         }
+        [glyphKeysData checkForOverrun2];
+        [attributesData checkForOverrun2];
     }
     //DLog(@"END setGlyphKeysData for %@", self);
-    [glyphKeysData checkForOverrun];
-    [attributesData checkForOverrun];
 }
 
 static vector_int3 SlowGetColorModelIndexForPIU(iTermTextRendererTransientState *self, iTermTextPIU *piu) {
