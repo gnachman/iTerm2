@@ -370,7 +370,7 @@ static NSColor *ColorForVector(vector_float4 v) {
 - (void)loadLinesWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                           textView:(PTYTextView *)textView
                             screen:(VT100Screen *)screen {
-    const int width = _visibleRange.end.x - _visibleRange.start.x;
+    const int width = _gridSize.width;
     const BOOL allowOtherMarkStyle = [iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal];
     const long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
     const size_t rowSize = sizeof(screen_char_t) * (width + 1);
