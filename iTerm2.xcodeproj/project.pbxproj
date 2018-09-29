@@ -4876,6 +4876,7 @@
 		A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotkeyPreferencesModel.m; sourceTree = "<group>"; };
 		A695CA7D213DAA8500486440 /* iTermLocalHostNameGuesser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLocalHostNameGuesser.h; sourceTree = "<group>"; };
 		A695CA7E213DAA8500486440 /* iTermLocalHostNameGuesser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLocalHostNameGuesser.m; sourceTree = "<group>"; };
+		A696AB3921603A3F000023C3 /* iTermMetalUnavailableReason.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalUnavailableReason.h; sourceTree = "<group>"; };
 		A697100418D82E79007E901D /* iTermAdvancedSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermAdvancedSettingsViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A697100518D82E79007E901D /* iTermAdvancedSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAdvancedSettingsViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A697100918D94CDA007E901D /* iTermAdvancedSettingsModel.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermAdvancedSettingsModel.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -5851,6 +5852,7 @@
 				1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */,
 				A6AC5D1F1E9036D70097C0A7 /* iTermURLMark.h */,
 				A6AC5D201E9036D70097C0A7 /* iTermURLMark.m */,
+				A696AB3921603A3F000023C3 /* iTermMetalUnavailableReason.h */,
 			);
 			name = Headers;
 			path = sources/;

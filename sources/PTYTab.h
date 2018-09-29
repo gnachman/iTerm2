@@ -78,7 +78,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 @property (nonatomic, readonly) NSString *evaluatedTitleOverride;
 
 @property (nonatomic, readonly) iTermVariableScope *variablesScope;
-@property(nonatomic, readonly) NSString *metalUnavailableReason;
+@property(nonatomic, readonly) iTermMetalUnavailableReason metalUnavailableReason;
 
 // Save the contents of all sessions. Used during window restoration so that if
 // the sessions are later restored from a saved arrangement during startup

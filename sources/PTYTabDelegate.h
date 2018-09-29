@@ -6,9 +6,11 @@
 //
 //
 
+#import "iTermMetalUnavailableReason.h"
+
 @class NSImage;
-@class PTYTab;
 @class PTYSession;
+@class PTYTab;
 
 // States
 typedef NS_OPTIONS(NSUInteger, PTYTabState) {
@@ -36,8 +38,8 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState;
 - (void)tabDidChangeTmuxLayout:(PTYTab *)tab;
 - (void)tab:(PTYTab *)tab didSetMetalEnabled:(BOOL)useMetal;
-- (BOOL)tabCanUseMetal:(PTYTab *)tab reason:(out NSString **)reason;
 - (void)tabSessionDidChangeBackgroundColor:(PTYTab *)tab;
 - (void)tabDidChangeGraphic:(PTYTab *)tab;
+- (BOOL)tabCanUseMetal:(PTYTab *)tab reason:(out iTermMetalUnavailableReason *)reason;
 
 @end

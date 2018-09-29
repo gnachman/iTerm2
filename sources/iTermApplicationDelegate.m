@@ -2179,13 +2179,64 @@ static BOOL hasBecomeActive = NO;
     [[TmuxDashboardController sharedInstance] showWindow:nil];
 }
 
+- (NSString *)gpuUnavailableStringForReason:(iTermMetalUnavailableReason)reason {
+    switch (reason) {
+        case iTermMetalUnavailableReasonNone:
+            return nil;
+        case iTermMetalUnavailableReasonNoGPU:
+            return @"no usable GPU found on this machine.";
+        case iTermMetalUnavailableReasonDisabled:
+            return @"GPU Renderer is disabled in Preferences > General.";
+        case iTermMetalUnavailableReasonLigatures:
+            return @"ligatures are enabled. You can disable them in Prefs>Profiles>Text>Use ligatures.";
+        case iTermMetalUnavailableReasonInitializing:
+            return @"the GPU renderer is initializing. It should be ready soon.";
+        case iTermMetalUnavailableReasonInvalidSize:
+            return @"the session is too large or too small.";
+        case iTermMetalUnavailableReasonSessionInitializing:
+            return @"the session is initializing.";
+        case iTermMetalUnavailableReasonTransparency:
+            return @"transparent windows not supported. You can change window transparency in Prefs>Profiles>Window>Transparency";
+        case iTermMetalUnavailableReasonVerticalSpacing:
+            return @"the font's vertical spacing set to less than 100%. You can change it in Prefs>Profiles>Text>Change Font.";
+        case iTermMetalUnavailableReasonMarginSize:
+            return @"terminal window margins are too small. You can edit them in Prefs>Advanced.";
+        case iTermMetalUnavailableReasonAnnotations:
+            return @"annotations are open. Find the session with visible annotations and close them with View>Show Annotations.";
+        case iTermMetalUnavailableReasonFindPanel:
+            return @"the find panel is open.";
+        case iTermMetalUnavailableReasonPasteIndicator:
+            return @"the paste progress indicator is open.";
+        case iTermMetalUnavailableReasonAnnouncement:
+            return @"an announcement (yellow bar) is visible.";
+        case iTermMetalUnavailableReasonURLPreview:
+            return @"a URL preview is visible.";
+        case iTermMetalUnavailableReasonWindowResizing:
+            return @"the window is being resized.";
+        case iTermMetalUnavailableReasonDisconnectedFromPower:
+            return @"the computer is not connected to power. You can enable GPU rendering while disconnected from power in Prefs>General>Advanced GPU Settings.";
+        case iTermMetalUnavailableReasonIdle:
+            return @"the session is idle. You can enable Metal while idle in Prefs>Advanced.";
+        case iTermMetalUnavailableReasonTooManyPanesReason:
+            return @"This tab has too many split panes";
+        case iTermMetalUnavailableReasonNoFocus:
+            return @"the window does not have keyboard focus.";
+        case iTermMetalUnavailableReasonTabInactive:
+            return @"this tab is not active.";
+        case iTermMetalUnavailableReasonTabBarTemporarilyVisible:
+            return @"the tab bar is temporarily visible.";
+    }
+
+    return @"of an internal error. Please file a bug report!";
+}
+
 - (IBAction)gpuRendererAvailability:(id)sender {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"GPU Renderer Availability";
     PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
     PTYSession *session = [term currentSession];
     PTYTab *tab = [term tabForSession:session];
-    NSString *reason = tab.metalUnavailableReason;
+    NSString *reason = [self gpuUnavailableStringForReason:tab.metalUnavailableReason];
     if (reason) {
         alert.informativeText = [NSString stringWithFormat:@"GPU rendering is off in the current session because %@", reason];
     } else {
