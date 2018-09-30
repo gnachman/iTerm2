@@ -135,6 +135,7 @@
     "apython"
   ],
   "vim": [
+    "Vim",
     "vi",
     "vim",
     "nvim"
