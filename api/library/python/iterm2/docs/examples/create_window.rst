@@ -23,9 +23,7 @@ starting point for developing your own custom escape sequence handler.
 
 	await iterm2.notifications.async_subscribe_to_custom_escape_sequence_notification(connection, on_custom_esc)
 
-	await connection.async_dispatch_until_future(asyncio.Future())
-
-    iterm2.run(main)
+    iterm2.run_forever(main)
 
 To run the script, use:
 

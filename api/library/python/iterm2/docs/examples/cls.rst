@@ -25,7 +25,5 @@ You can bind it to a keystroke in **Prefs > Keys** by selecting the action *Invo
 
 	await iterm2.Registration.async_register_rpc_handler(connection, "clear_all_sessions", clear_all_sessions)
 
-	await connection.async_dispatch_until_future(asyncio.Future())
-
-    iterm2.run(main)
+    iterm2.run_forever(main)
 

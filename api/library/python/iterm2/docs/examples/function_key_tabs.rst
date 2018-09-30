@@ -34,7 +34,6 @@ The script makes it possible to select a tab by pressing a function key. F1 choo
 	patterns.keycodes.extend(keycodes)
 
 	await iterm2.notifications.async_subscribe_to_keystroke_notification(connection, keystroke_handler, patterns_to_ignore=[patterns])
-	await connection.async_dispatch_until_future(asyncio.Future())
 
-    iterm2.run(main)
+    iterm2.run_forever(main)
 

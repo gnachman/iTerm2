@@ -19,8 +19,6 @@ folder.
     import iterm2
 
     async def main(connection):
-        app=await iterm2.async_get_app(connection)
-
         component = iterm2.StatusBarComponent(
             "MouseMode",
             "Mouse Mode",
@@ -45,10 +43,6 @@ folder.
         # Register the component.
         await iterm2.Registration.async_register_status_bar_component(connection, component, coro, defaults=defaults)
 
-        # Wait forever
-        future = asyncio.Future()
-        await connection.async_dispatch_until_future(future)
-
-    iterm2.run(main)
+    iterm2.run_forever(main)
 
 

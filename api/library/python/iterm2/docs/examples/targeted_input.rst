@@ -98,9 +98,8 @@ Then, replace `main.py` with:
 
         # Register a custom toolbelt tool that shows the web pages served by the server in this script.
         await iterm2.tool.async_register_web_view_tool(connection, "Targeted Input", "com.iterm2.example.targeted-input", False, "http://localhost:9999/")
-        await connection.async_dispatch_until_future(asyncio.Future())
 
-    iterm2.run(main)
+    iterm2.run_forever(main)
 
 Run the script and then open the "Targeted Input" tool. It will appear in the
 **Toolbelt** menu. Turn on broadcast input on a few sessions and hit the

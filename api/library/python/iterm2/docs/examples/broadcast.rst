@@ -52,5 +52,5 @@ This demonstrates:
 		    if done:
 			break
 
-    iterm2.run(main)
+    iterm2.run_until_complete(main)
 

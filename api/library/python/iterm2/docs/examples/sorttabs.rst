@@ -22,6 +22,6 @@ This script sorts the tabs in all windows by the name of the current session.
             sorted_tabs = sorted(tabs, key=tab_name)
             await window.async_set_tabs(sorted_tabs)
 
-    iterm2.run(main)
+    iterm2.run_until_complete(main)
 
 
