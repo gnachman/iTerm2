@@ -1,16 +1,16 @@
 //
-//  iTermUserNotificationTrigger.m
+//  GrowlTrigger.m
 //  iTerm
 //
 //  Created by George Nachman on 9/23/11.
 //
 
-#import "iTermUserNotificationTrigger.h"
+#import "GrowlTrigger.h"
 #import "iTermNotificationController.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
 
-@implementation iTermUserNotificationTrigger
+@implementation GrowlTrigger
 
 + (NSString *)title
 {

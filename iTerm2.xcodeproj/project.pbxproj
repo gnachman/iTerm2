@@ -783,7 +783,7 @@
 		1D6ED8FA19AEA20D005A7799 /* TriggerController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D31BC63142D33CA001F7ECB /* TriggerController.h */; };
 		1D6ED8FB19AEA20D005A7799 /* iTermProfilePreferencesBaseViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713A118F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.h */; };
 		1D6ED8FC19AEA20D005A7799 /* Trigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCBFC142D7BA60016228A /* Trigger.h */; };
-		1D6ED8FD19AEA20D005A7799 /* iTermUserNotificationTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC02142D7E570016228A /* iTermUserNotificationTrigger.h */; };
+		1D6ED8FD19AEA20D005A7799 /* GrowlTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC02142D7E570016228A /* GrowlTrigger.h */; };
 		1D6ED8FE19AEA20D005A7799 /* BounceTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC08142D7F300016228A /* BounceTrigger.h */; };
 		1D6ED8FF19AEA20D005A7799 /* VT100DCSParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E39D18C351F400450FA1 /* VT100DCSParser.h */; };
 		1D6ED90019AEA20D005A7799 /* PTYTab+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D5655C719AD2B1A001C460B /* PTYTab+Scripting.h */; };
@@ -1048,7 +1048,7 @@
 		1D9A55B8180FA92100B42CE9 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D9A55B9180FA93000B42CE9 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D94EAC712D641D3008225A9 /* AddressBook.framework */; };
 		1D9DCBFE142D7BA60016228A /* Trigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCBFC142D7BA60016228A /* Trigger.h */; };
-		1D9DCC04142D7E570016228A /* iTermUserNotificationTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC02142D7E570016228A /* iTermUserNotificationTrigger.h */; };
+		1D9DCC04142D7E570016228A /* GrowlTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC02142D7E570016228A /* GrowlTrigger.h */; };
 		1D9DCC0A142D7F300016228A /* BounceTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC08142D7F300016228A /* BounceTrigger.h */; };
 		1D9DCC0E142D7F5F0016228A /* BellTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC0C142D7F5F0016228A /* BellTrigger.h */; };
 		1D9DCC12142D7F970016228A /* ScriptTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC10142D7F970016228A /* ScriptTrigger.h */; };
@@ -2373,7 +2373,7 @@
 		A6C763AD1B45C52B00E3C992 /* BounceTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC09142D7F300016228A /* BounceTrigger.m */; };
 		A6C763AE1B45C52B00E3C992 /* CaptureTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83951192E95EB0037E548 /* CaptureTrigger.m */; };
 		A6C763AF1B45C52B00E3C992 /* CoprocessTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DDD91142E5AC600275650 /* CoprocessTrigger.m */; };
-		A6C763B01B45C52B00E3C992 /* iTermUserNotificationTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC03142D7E570016228A /* iTermUserNotificationTrigger.m */; };
+		A6C763B01B45C52B00E3C992 /* GrowlTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC03142D7E570016228A /* GrowlTrigger.m */; };
 		A6C763B11B45C52B00E3C992 /* HighlightTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3BBD6A14759D6C00FAB389 /* HighlightTrigger.m */; };
 		A6C763B21B45C52B00E3C992 /* MarkTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D891E42190724DB0053C4BB /* MarkTrigger.m */; };
 		A6C763B31B45C52B00E3C992 /* PasswordTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DABA03219253FEA00A228D8 /* PasswordTrigger.m */; };
@@ -3104,8 +3104,8 @@
 		1D9A5522180FA46100B42CE9 /* iTermTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermTests.h; path = iTermTests/iTermTests.h; sourceTree = "<group>"; };
 		1D9DCBFC142D7BA60016228A /* Trigger.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = Trigger.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D9DCBFD142D7BA60016228A /* Trigger.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = Trigger.m; sourceTree = "<group>"; tabWidth = 4; };
-		1D9DCC02142D7E570016228A /* iTermUserNotificationTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermUserNotificationTrigger.h; sourceTree = "<group>"; tabWidth = 4; };
-		1D9DCC03142D7E570016228A /* iTermUserNotificationTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermUserNotificationTrigger.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D9DCC02142D7E570016228A /* GrowlTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = GrowlTrigger.h; sourceTree = "<group>"; tabWidth = 4; };
+		1D9DCC03142D7E570016228A /* GrowlTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = GrowlTrigger.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D9DCC08142D7F300016228A /* BounceTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = BounceTrigger.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D9DCC09142D7F300016228A /* BounceTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = BounceTrigger.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D9DCC0C142D7F5F0016228A /* BellTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = BellTrigger.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -4633,7 +4633,7 @@
 				1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */,
 				A6E7137818F1D70D008D94DD /* GeneralPreferencesViewController.h */,
 				1DAED28612E9395E005E49ED /* GlobalSearch.h */,
-				1D9DCC02142D7E570016228A /* iTermUserNotificationTrigger.h */,
+				1D9DCC02142D7E570016228A /* GrowlTrigger.h */,
 				1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */,
 				1DB9D8F0183FE9EF0029F0B5 /* iTermHotKeyController.h */,
 				1D7B9A671491D82F003A2A22 /* IntervalMap.h */,
@@ -5367,7 +5367,7 @@
 				1D9DCC09142D7F300016228A /* BounceTrigger.m */,
 				1DB83951192E95EB0037E548 /* CaptureTrigger.m */,
 				1D9DDD91142E5AC600275650 /* CoprocessTrigger.m */,
-				1D9DCC03142D7E570016228A /* iTermUserNotificationTrigger.m */,
+				1D9DCC03142D7E570016228A /* GrowlTrigger.m */,
 				1D3BBD6A14759D6C00FAB389 /* HighlightTrigger.m */,
 				1D891E42190724DB0053C4BB /* MarkTrigger.m */,
 				1DABA03219253FEA00A228D8 /* PasswordTrigger.m */,
@@ -6942,7 +6942,7 @@
 				1D6ED8FA19AEA20D005A7799 /* TriggerController.h in Headers */,
 				1D6ED8FB19AEA20D005A7799 /* iTermProfilePreferencesBaseViewController.h in Headers */,
 				1D6ED8FC19AEA20D005A7799 /* Trigger.h in Headers */,
-				1D6ED8FD19AEA20D005A7799 /* iTermUserNotificationTrigger.h in Headers */,
+				1D6ED8FD19AEA20D005A7799 /* GrowlTrigger.h in Headers */,
 				1D6ED8FE19AEA20D005A7799 /* BounceTrigger.h in Headers */,
 				1D6ED8FF19AEA20D005A7799 /* VT100DCSParser.h in Headers */,
 				1D6ED90019AEA20D005A7799 /* PTYTab+Scripting.h in Headers */,
@@ -7301,7 +7301,7 @@
 				A6E713A318F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.h in Headers */,
 				A61ABBBB1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */,
 				1D9DCBFE142D7BA60016228A /* Trigger.h in Headers */,
-				1D9DCC04142D7E570016228A /* iTermUserNotificationTrigger.h in Headers */,
+				1D9DCC04142D7E570016228A /* GrowlTrigger.h in Headers */,
 				1D9DCC0A142D7F300016228A /* BounceTrigger.h in Headers */,
 				A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */,
 				A647E39F18C351F400450FA1 /* VT100DCSParser.h in Headers */,
@@ -9392,7 +9392,7 @@
 				A6C763DA1B45C6DD00E3C992 /* NSWindow+PSM.m in Sources */,
 				A6C763121B45C52B00E3C992 /* iTermImageInfo.m in Sources */,
 				A6C763DB1B45C6DD00E3C992 /* PSMDarkTabStyle.m in Sources */,
-				A6C763B01B45C52B00E3C992 /* iTermUserNotificationTrigger.m in Sources */,
+				A6C763B01B45C52B00E3C992 /* GrowlTrigger.m in Sources */,
 				A6C762D11B45C52B00E3C992 /* iTermSemanticHistoryController.m in Sources */,
 				5370F2EA1C7895F800874C0F /* QLPreviewPanel+iTerm.m in Sources */,
 				A6CEC10F1DCE8146009F4FD2 /* GPBRootObject.m in Sources */,
