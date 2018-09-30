@@ -598,12 +598,17 @@ static BOOL hasBecomeActive = NO;
         }
 
         PseudoTerminal *term = [self terminalToOpenFileIn];
-        [controller launchBookmark:bookmark inTerminal:term];
+        DLog(@"application:openFile: launching new session in window %@", term);
+        PTYSession *session = [controller launchBookmark:bookmark inTerminal:term];
+        term = (id)session.delegate.realParentWindow;
 
-        // If term is a hotkey window, reveal it.
-        iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
-        if (profileHotkey) {
-            [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
+        if (term) {
+            // If term is a hotkey window, reveal it.
+            iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
+            if (profileHotkey) {
+                DLog(@"application:openFile: revealing hotkey window");
+                [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
+            }
         }
     }
     return YES;
@@ -858,7 +863,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {
-    DLog(@"application:didDecodeRestorableState:");
+    DLog(@"application:didDecodeRestorableState: starting");
     if (self.isApplescriptTestApp) {
         DLog(@"Is applescript test app");
         return;
@@ -902,6 +907,7 @@ static BOOL hasBecomeActive = NO;
         NSString *log = [dict sizeInfo];
         [log writeToFile:[NSString stringWithFormat:@"/tmp/statesize.app-%p.txt", self] atomically:NO encoding:NSUTF8StringEncoding error:nil];
     }
+    DLog(@"application:didDecodeRestorableState: finished");
 }
 
 - (void)applicationDidResignActive:(NSNotification *)aNotification {
