@@ -3752,6 +3752,7 @@ ITERM_WEAKLY_REFERENCEABLE
     for (PTYSession* aSession in [self allSessions]) {
         [aSession useTransparencyDidChange];
         [[aSession view] setNeedsDisplay:YES];
+        [[aSession textview] setNeedsDisplay:YES];
     }
     [[self currentTab] recheckBlur];
 }
