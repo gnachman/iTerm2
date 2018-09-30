@@ -127,7 +127,7 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
                  result = @"🐞";
              }
          } else if (result.length == 0) {
-             result = @"🖥";
+             result = @" ";
          }
          if (!sync) {
              [weakSelf didEvaluateInvocationWithResult:result];

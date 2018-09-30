@@ -976,7 +976,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (!result.length) {
-        [result appendString:@"🖥"];
+        [result appendString:@" "];
     }
     return result;
 }

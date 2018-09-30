@@ -571,7 +571,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateTabTitleForCurrentSessionName:(NSString *)newName {
-    NSString *value = (self.evaluatedTitleOverride ?: newName) ?: @"🖥";
+    NSString *value = (self.evaluatedTitleOverride ?: newName) ?: @" ";
     [tabViewItem_ setLabel:value];  // PSM uses bindings to bind the label to its title
     [self.realParentWindow tabTitleDidChange:self];
 }
