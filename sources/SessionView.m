@@ -520,7 +520,6 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)reallyUpdateMetalViewFrame {
-    [_delegate sessionViewHideMetalViewUntilNextFrame];
     NSRect frame = _scrollview.contentView.frame;
     if (self.showBottomStatusBar) {
         frame.origin.y += iTermStatusBarHeight;

@@ -5173,7 +5173,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // up a new metal driver. This frame will never be seen since PTYTextView is still visible.
         DLog(@"Begin async draw for %@", self);
         [_view.driver drawAsynchronouslyInView:_view.metalView completion:^(BOOL ok) {
-            if (!_useMetal) {
+            if (!_useMetal || _exited) {
                 return;
             }
 
@@ -5212,7 +5212,10 @@ ITERM_WEAKLY_REFERENCEABLE
              self, _textview.dataSource, @(_screen.width), @(_screen.height));
         return;
     }
+    [self reallyShowMetalViewImmediately];
+}
 
+- (void)reallyShowMetalViewImmediately {
     [_view setNeedsDisplay:YES];
     [self showMetalAndStopDrawingTextView];
     _view.metalView.enableSetNeedsDisplay = YES;
@@ -9926,16 +9929,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.delegate sessionUpdateMetalAllowed];
 }
 
-- (void)sessionViewHideMetalViewUntilNextFrame {
-    if (@available(macOS 10.11, *)) {
-        if (!_useMetal) {
-            return;
-        }
-        id token = [self temporarilyDisableMetal];
-        [self drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
-    }
-}
-
 - (id)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11) {
     assert(_useMetal);
     _wrapper.useMetal = NO;
@@ -9970,6 +9963,10 @@ ITERM_WEAKLY_REFERENCEABLE
             DLog(@"Token %@ is gone, not proceeding.", token);
             return;
         }
+        if (_exited) {
+            DLog(@"Returning because the session is dead");
+            return;
+        }
         if (!_useMetal) {
             DLog(@"Returning because useMetal is off");
             return;
@@ -9994,12 +9991,11 @@ ITERM_WEAKLY_REFERENCEABLE
         [_metalDisabledTokens removeObject:token];
         DLog(@"Remove temporarily disablement. Tokens are now %@", _metalDisabledTokens);
         if (_metalDisabledTokens.count == 0 && _useMetal) {
-            _wrapper.useMetal = YES;
-            _textview.suppressDrawing = YES;
-            _view.metalView.alphaValue = 1;
+            [self reallyShowMetalViewImmediately];
         }
     }];
 }
+
 
 - (void)sessionViewNeedsMetalFrameUpdate {
     if (@available(macOS 10.11, *)) {
