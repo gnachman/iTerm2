@@ -33,7 +33,7 @@ Dep:
 
 Beta:
 	cp plists/release-iTerm2.plist plists/iTerm2.plist
-        cp plists/iTerm2.entitlements .
+	cp plists/iTerm2.entitlements .
 	xcodebuild -parallelizeTargets -target iTerm2 -configuration Beta && \
 	chmod -R go+rX build/Beta
 
@@ -80,7 +80,7 @@ canary:
 
 release:
 	cp plists/release-iTerm2.plist plists/iTerm2.plist
-        cp plists/iTerm2.entitlements .
+	cp plists/iTerm2.entitlements .
 	make Deployment
 
 preview:
