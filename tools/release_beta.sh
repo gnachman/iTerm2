@@ -50,9 +50,15 @@ function Build {
   SUMMARY=$3
   DESCRIPTION=$4
   SPARKLE_PREFIX=$5
+
+  # Sign the pre-built binaries from Sparkle
+  CSID='H7V7XYVQ7D'
+  codesign -s "$CSID" "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/MacOS/fileop"
+  codesign -s "$CSID" "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/MacOS/Autoupdate"
+
   codesign --verify --verbose "build/$BUILDTYPE/iTerm2.app" || die "Signature not verified"
   codesign -dv --verbose=4 "build/$BUILDTYPE/iTerm2.app" > /tmp/signature 2>&1
-  cat /tmp/signature | fgrep 'Authority=Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)' || die "Not signed with the right certificate"
+  cat /tmp/signature | fgrep "Authority=Developer ID Application: GEORGE NACHMAN ($CSID)" || die "Not signed with the right certificate"
   pushd "build/$BUILDTYPE"
  
   # Create the zip file
