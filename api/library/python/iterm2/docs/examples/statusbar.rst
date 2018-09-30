@@ -15,8 +15,6 @@ This script is a long-running daemon since the registered function gets called w
     import iterm2
 
     async def main(connection):
-        app=await iterm2.async_get_app(connection)
-
         # Define the configuration knobs:
         vl = "variable_length_demo"
         knobs = [iterm2.CheckboxKnob("Variable-Length Demo", False, vl)]
@@ -53,9 +51,5 @@ This script is a long-running daemon since the registered function gets called w
         # Register the component.
         await iterm2.Registration.async_register_status_bar_component(connection, component, coro, defaults=defaults)
 
-        # Wait forever
-        future = asyncio.Future()
-        await connection.async_dispatch_until_future(future)
-
-    iterm2.run(main)
+    iterm2.run_forever(main)
 
