@@ -390,7 +390,6 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)reallyUpdateMetalViewFrame {
-    [_delegate sessionViewHideMetalViewUntilNextFrame];
     _metalView.frame = [self frameByInsettingForMetal:_scrollview.contentView.frame];
     [_driver mtkView:_metalView drawableSizeWillChange:_metalView.drawableSize];
 }

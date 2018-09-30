@@ -121,8 +121,6 @@
 // Announcement shown, changed, or removed.
 - (void)sessionViewAnnouncementDidChange:(SessionView *)sessionView;
 
-- (void)sessionViewHideMetalViewUntilNextFrame;
-
 - (void)sessionViewUserScrollDidChange:(BOOL)userScroll;
 
 - (void)sessionViewDidChangeHoverURLVisible:(BOOL)visible;
