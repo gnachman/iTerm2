@@ -84,6 +84,8 @@
 			</array>
 		</dict>
 	</array>
+        <key>NSAppleEventsUsageDescription</key>
+        <string>An application in iTerm2 wants to use AppleScript.</string>
         <key>NSCalendarsUsageDescription</key>
         <string>An application in iTerm2 wants to use Calendar data.</string>
 	<key>NSServices</key>
