@@ -651,7 +651,7 @@ static NSString *const iTermSessionTitleSession = @"session";
         [self.variablesScope setValue:_guid forVariableNamed:iTermVariableKeySessionID];
         _jobPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionJobPid
                                                             scope:self.variablesScope];
-        __weak __typeof(self) weakSelf;
+        __weak __typeof(self) weakSelf = self;
         _jobPidRef.onChangeBlock = ^{
             [weakSelf jobPidDidChange];
         };
