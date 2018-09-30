@@ -33,6 +33,11 @@ NSString * const kTriggerPartialLineKey = @"partial";
 + (Trigger *)triggerFromDict:(NSDictionary *)dict
 {
     NSString *className = [dict objectForKey:kTriggerActionKey];
+    if ([className isEqualToString:@"iTermUserNotificationTrigger"]) {
+        // I foolishly renamed the class in 3.2.1, which broke everyone's triggers. It got renamed
+        // back in 3.2.2. If someoen created a new trigger in 3.2.1 it would have the bogus name.
+        className = @"GrowlTrigger";
+    }
     Class class = NSClassFromString(className);
     Trigger *trigger = [[[class alloc] init] autorelease];
     trigger.regex = dict[kTriggerRegexKey];
