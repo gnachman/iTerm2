@@ -143,6 +143,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         [self updateToolbelt];
 
         _windowNumberLabel = [NSTextField newLabelStyledTextField];
+        _windowNumberLabel.alphaValue = 0.75;
         _windowNumberLabel.hidden = YES;
         [self addSubview:_windowNumberLabel];
 
