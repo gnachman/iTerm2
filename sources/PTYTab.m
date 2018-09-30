@@ -3843,16 +3843,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     beforeFrame.size.width += movement.width;
     beforeFrame.size.height += movement.height;
 
-    NSView *after = subviews[splitterIndex + 1];
-    NSRect afterFrame = after.frame;
-    afterFrame.size.width -= movement.width;
-    afterFrame.size.height -= movement.height;
-    afterFrame.origin.x -= movement.width;
-    afterFrame.origin.y -= movement.height;
-
     // See if any constraint would be violated.
-    CGFloat proposed = [self _positionOfDivider:splitterIndex inSplitView:split];
-    proposed += (horizontally ? movement.width : movement.height);
+    const CGFloat proposed = horizontally ? NSMaxX(beforeFrame) : NSMaxY(beforeFrame);
 
     CGFloat constraint = [self splitView:split
                   constrainMinCoordinate:proposed
@@ -3861,10 +3853,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return NULL;
     }
 
-    proposed = [self _positionOfDivider:splitterIndex inSplitView:split];
-    proposed += (horizontally ? movement.width : movement.height);
-    proposed -= [split dividerThickness];
-    constraint = [self splitView:split constrainMaxCoordinate:proposed ofSubviewAt:splitterIndex];
+    const CGFloat proposedMinusDivider = proposed - split.dividerThickness;
+    constraint = [self splitView:split constrainMaxCoordinate:proposedMinusDivider ofSubviewAt:splitterIndex];
     if (constraint < proposed) {
         return NULL;
     }
@@ -3872,9 +3862,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // It would be ok to move the divider. Return a block that updates views' frames.
     void (^block)(void) = ^void() {
         [self splitView:split draggingWillBeginOfSplit:splitterIndex];
-        before.frame = beforeFrame;
-        after.frame = afterFrame;
+        [split setPosition:proposed ofDividerAtIndex:splitterIndex];
         [self splitView:split draggingDidEndOfSplit:splitterIndex pixels:movement];
+        [split adjustSubviews];
         [split setNeedsDisplay:YES];
     };
     return [block copy];
