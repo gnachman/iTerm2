@@ -18,6 +18,8 @@
 	<string>1.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>iTerm2 can control other applications with AppleScript.</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 </dict>
