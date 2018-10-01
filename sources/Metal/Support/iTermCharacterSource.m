@@ -28,6 +28,99 @@ static const CGFloat iTermCharacterSourceAntialiasedRetinaFakeBoldShiftPoints = 
 static const CGFloat iTermCharacterSourceAntialiasedNonretinaFakeBoldShiftPoints = 0;
 static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
+@interface iTermBitmapContextPool : NSObject
++ (instancetype)sharedInstance;
+- (CGContextRef)allocateBitmapContextOfSize:(CGSize)size;
+- (void)deallocateBitmapContext:(CGContextRef)context;
+@end
+
+@implementation iTermBitmapContextPool {
+    CGSize _size;
+    NSMutableArray *_array;
+}
+
++ (instancetype)sharedInstance {
+    NSMutableDictionary *threadDict = [[NSThread currentThread] threadDictionary];
+    NSString *key = @"iTermBitmapContextPool";
+    id instance = threadDict[key];
+    if (instance) {
+        return instance;
+    }
+
+    instance = [[self alloc] init];
+    threadDict[key] = instance;
+    return instance;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _array = [[NSMutableArray alloc] init];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [self releaseAllContexts];
+}
+
+- (void)releaseAllContexts {
+    [_array enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        CGContextRef context = (__bridge CGContextRef)(obj);
+        CGContextRelease(context);
+    }];
+    [_array removeAllObjects];
+}
+
++ (CGColorSpaceRef)colorSpace {
+    static dispatch_once_t onceToken;
+    static CGColorSpaceRef colorSpace;
+    dispatch_once(&onceToken, ^{
+        colorSpace = CGColorSpaceCreateDeviceRGB();
+    });
+    return colorSpace;
+}
+
+- (CGContextRef)allocateBitmapContextOfSize:(CGSize)size {
+    CGContextRef context = [self internalAllocateBitmapContextOfSize:size];
+    CGContextSaveGState(context);
+    return context;
+}
+
+- (void)deallocateBitmapContext:(CGContextRef)context {
+    CGSize size = CGSizeMake(CGBitmapContextGetWidth(context),
+                             CGBitmapContextGetHeight(context));
+    if (!CGSizeEqualToSize(size, _size)) {
+        CGContextRelease(context);
+        return;
+    }
+    
+    CGContextRestoreGState(context);
+    [_array addObject:(__bridge id _Nonnull)(context)];
+}
+
+- (CGContextRef)internalAllocateBitmapContextOfSize:(CGSize)size {
+    if (!CGSizeEqualToSize(size, _size)) {
+        [self releaseAllContexts];
+        _size = size;
+    }
+    if (_array.count) {
+        CGContextRef first = (__bridge CGContextRef)(_array.firstObject);
+        [_array removeObjectAtIndex:0];
+        return first;
+    }
+    
+    CGContextRef context = CGBitmapContextCreate(NULL,
+                                                 size.width,
+                                                 size.height,
+                                                 8,
+                                                 size.width * 4,
+                                                 [iTermBitmapContextPool colorSpace],
+                                                 kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
+    return context;
+}
+@end
+
 @implementation iTermCharacterSource {
     NSString *_string;
     NSFont *_font;
@@ -60,25 +153,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     iTermBitmapData *_postprocessedData;
 }
 
-+ (CGColorSpaceRef)colorSpace {
-    static dispatch_once_t onceToken;
-    static CGColorSpaceRef colorSpace;
-    dispatch_once(&onceToken, ^{
-        colorSpace = CGColorSpaceCreateDeviceRGB();
-    });
-    return colorSpace;
-}
-
 + (CGContextRef)newBitmapContextOfSize:(CGSize)size {
-    // In order to get subpixel antialiasing you have to use premultiplied first and byte order 32 host.
-    // This influences the choice of pixel format for the textures containing glyphs.
-    return CGBitmapContextCreate(NULL,
-                                 size.width,
-                                 size.height,
-                                 8,
-                                 size.width * 4,
-                                 [iTermCharacterSource colorSpace],
-                                 kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
+    return [[iTermBitmapContextPool sharedInstance] allocateBitmapContextOfSize:size];
 }
 
 + (CGContextRef)onePixelContext {
@@ -184,7 +260,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     for (NSInteger i = 0; i < 4; i++) {
         CGContextRef context = _cgContexts[i];
         if (context) {
-            CGContextRelease(context);
+            [[iTermBitmapContextPool sharedInstance] deallocateBitmapContext:context];
+            _cgContexts[i] = NULL;
         }
         if (_lineRefs[i]) {
             CFRelease(_lineRefs[i]);
@@ -491,6 +568,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         // This seems to be available at least on 10.8 and later. The only reference to it is in
         // WebKit. This causes text to render just a little lighter, which looks nicer.
         CGContextSetFontSmoothingStyle(_cgContexts[iteration], 16);
+    } else {
+        CGContextSetShouldSmoothFonts(_cgContexts[iteration], NO);
     }
     [self initializeTextMatrixInContext:_cgContexts[iteration]
                                withSkew:skew
@@ -600,6 +679,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                                              skew * _scale, _scale,
                                                              offset.x,      offset.y);
         CGContextSetTextMatrix(cgContext, textMatrix);
+    } else {
+        CGContextSetTextMatrix(cgContext, CGAffineTransformIdentity);
     }
 }
 
