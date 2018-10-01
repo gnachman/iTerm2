@@ -187,7 +187,7 @@ static BOOL gMonochromeText;
     if (self) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            if (@available(macOS 10.14, *)) {
+            if (iTermTextIsMonochrome()) {
                 gMonochromeText = YES;
             } else {
                 gMonochromeText = NO;
@@ -195,7 +195,7 @@ static BOOL gMonochromeText;
         });
         // NOTE: The vertex and fragment function names get changed later. These aren't used but must be valid.
         iTermMetalBlending *blending;
-        if (@available(macOS 10.14, *)) {
+        if (iTermTextIsMonochrome()) {
             blending = [iTermMetalBlending backgroundColorCompositing];
         } else {
             blending = [[iTermMetalBlending alloc] init];
@@ -225,7 +225,7 @@ static BOOL gMonochromeText;
                                                                 capacity:(maxInstances / capacity) * iTermMetalDriverMaximumNumberOfFramesInFlight
                                                                     name:@"text PIU"];
 
-        if (@available(macOS 10.14, *)) {} else {
+        if (iTermTextIsMonochrome()) {} else {
             _subpixelModelPool = [[iTermMetalMixedSizeBufferPool alloc] initWithDevice:device
                                                                               capacity:512
                                                                                   name:@"subpixel PIU"];
@@ -451,7 +451,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
     const float scale = tState.cellConfiguration.scale;
     
     bool blending;
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         blending = false;
     } else {
         blending = tState.cellConfiguration.usingIntermediatePass || tState.disableIndividualColorModels;
@@ -464,7 +464,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
     __block id<MTLBuffer> previousTextureDimensionsBuffer = nil;
 
     __block id<MTLBuffer> subpixelModelsBuffer NS_DEPRECATED_MAC(10_12, 10_14);
-    if (@available(macOS 10.14, *)) {} {
+    if (iTermTextIsMonochrome()) {} {
         [tState measureTimeForStat:iTermTextRendererStatSubpixelModel ofBlock:^{
             subpixelModelsBuffer = [self subpixelModelsForState:tState];
         }];
@@ -496,7 +496,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
         }];
 
         NSDictionary *textures;
-        if (@available(macOS 10.14, *)) {
+        if (iTermTextIsMonochrome()) {
             textures = @{ @(iTermTextureIndexPrimary): texture };
         } else {
             textures = @{ @(iTermTextureIndexPrimary): texture,
@@ -539,7 +539,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
             self->_cellRenderer.vertexFunctionName = VertexFunctionName(underlined, blending, emoji);
             tState.pipelineState = [self->_cellRenderer pipelineState];
             NSDictionary *fragmentBuffers;
-            if (@available(macOS 10.14, *)) {
+            if (iTermTextIsMonochrome()) {
                 fragmentBuffers = @{ @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer };
             } else {
                 fragmentBuffers = @{ @(iTermFragmentBufferIndexColorModels): subpixelModelsBuffer,
@@ -558,7 +558,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
         }];
     }
                  copyBlock:^{
-                     if (@available(macOS 10.14, *)) {
+                     if (iTermTextIsMonochrome()) {
                          // We don't write to a temporary texture on 10.14.
                          return;
                      } else {
@@ -584,7 +584,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
 }
 
 - (void)writeDebugInfoToFolder:(NSURL *)folder {
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         return;
     }
     NSMutableData *data = [NSMutableData data];

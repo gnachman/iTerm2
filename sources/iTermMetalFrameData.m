@@ -8,6 +8,7 @@
 #import "iTermMetalFrameData.h"
 
 #import "DebugLogging.h"
+#import "FutureMethods.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHistogram.h"
 #import "iTermMetalCellRenderer.h"
@@ -330,8 +331,10 @@ static NSInteger gNextFrameDataNumber;
     }
 #endif
     if (@available(macOS 10.14, *)) {
-        if (self.postmultipliedRenderPassDescriptor) {
-            [self.fullSizeTexturePool returnTexture:self.postmultipliedRenderPassDescriptor.colorAttachments[0].texture];
+        if (iTermTextIsMonochromeOnMojave()) {
+            if (self.postmultipliedRenderPassDescriptor) {
+                [self.fullSizeTexturePool returnTexture:self.postmultipliedRenderPassDescriptor.colorAttachments[0].texture];
+            }
         }
     }
     double duration;
