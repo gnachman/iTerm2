@@ -28,6 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
     double _cachedTotalOcclusion;
 
     NSTimeInterval _timeOfLastWindowTitleChange;
+    BOOL _needsInvalidateShadow;
 }
 
 @synthesize it_openingSheet;
@@ -447,6 +448,14 @@ ITERM_WEAKLY_REFERENCEABLE
     self.it_openingSheet = self.it_openingSheet + 1;
     [super beginSheet:sheetWindow completionHandler:handler];
     self.it_openingSheet = self.it_openingSheet - 1;
+}
+
+- (void)it_setNeedsInvalidateShadow {
+    _needsInvalidateShadow = YES;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        _needsInvalidateShadow = NO;
+        [self invalidateShadow];
+    });
 }
 
 NS_ASSUME_NONNULL_END

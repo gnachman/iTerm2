@@ -422,6 +422,7 @@ DEFINE_BOOL(darkThemeHasBlackTitlebar, YES, SECTION_WINDOWS @"Dark themes give t
 DEFINE_BOOL(fontChangeAffectsBroadcastingSessions, NO, SECTION_WINDOWS @"Should growing or shrinking the font in a session that's broadcasting input affect all session that broadcast input?\nThis only applies to changing the font size with Make Text Bigger, Make Text Normal Size, and Make Text Smaller");
 DEFINE_BOOL(serializeOpeningMultipleFullScreenWindows, YES, SECTION_WINDOWS @"When opening multiple fullscreen windows, enter fullscreen one window at a time.");
 DEFINE_BOOL(trackingRunloopForLiveResize, YES, SECTION_WINDOWS @"Use a tracking runloop for live resizing.\nThis allows the terminal to redraw during a resizing drag.");
+DEFINE_BOOL(invalidateShadowAfterEachDraw, YES, SECTION_WINDOWS @"Invalidate shadow after each draw to prevent ghosting.");
 
 #pragma mark tmux
 
