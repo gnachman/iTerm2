@@ -5,6 +5,7 @@
 //  Created by George Nachman on 12/22/17.
 //
 
+#import "FutureMethods.h"
 #import "iTermTextRendererTransientState.h"
 #import "iTermTextRendererTransientState+Private.h"
 #import "iTermPIUArray.h"
@@ -296,7 +297,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
                    @(_defaultBackgroundColor.y),
                    @(_defaultBackgroundColor.z),
                    @(_defaultBackgroundColor.w)];
-    if (@available(macOS 10.14, *)) {} else {
+    if (iTermTextIsMonochrome()) {} else {
         s = [s stringByAppendingFormat:@"\ndisableIndividualColorModels=%@", @(_disableIndividualColorModels)];
     }
     [s writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
@@ -558,7 +559,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
     }
 
     iTermTextPIU *piu;
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         // There is only a center part for ASCII on Mojave because the glyph size is increased to contain the largest ASCII glyph.
         piu = iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[outerPIUIndex][asciiAttrs].get_next(),
                                                           code,

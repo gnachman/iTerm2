@@ -858,7 +858,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 - (vector_float4)processedDefaultBackgroundColor {
     float alpha;
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         alpha = _backgroundImage ? 1 - _backgroundImageBlending : _transparencyAlpha;
     } else {
         alpha = _backgroundImage ? 1 - _backgroundImageBlending : 1;
@@ -915,7 +915,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     vector_float4 lastUnprocessedBackgroundColor = simd_make_float4(0, 0, 0, 0);
     BOOL lastSelected = NO;
     float alpha;
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         alpha = _transparencyAlpha;
     } else {
         alpha = 1;
@@ -1337,7 +1337,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     assert(font);
 
     int radius = iTermTextureMapMaxCharacterParts / 2;
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         if (isAscii) {
             // These are always guaranteed to fit in a single part.
             radius = 0;
@@ -1517,7 +1517,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                             scale:(CGFloat)scale {
     NSColor *backgroundColor = [NSColor whiteColor];
     NSColor *foregroundColor = [NSColor blackColor];
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         backgroundColor = [NSColor clearColor];
         foregroundColor = [NSColor whiteColor];
     }

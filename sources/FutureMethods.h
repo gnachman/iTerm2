@@ -31,6 +31,27 @@ CPSStealKeyFocusFunction *GetCPSStealKeyFocusFunction(void);
 // Returns a function pointer to CPSReleaseKeyFocus(), or nil.
 CPSReleaseKeyFocusFunction *GetCPSReleaseKeyFocusFunction(void);
 
+NS_INLINE BOOL iTermTextIsMonochromeOnMojave(void) NS_AVAILABLE_MAC(10_14) {
+    static dispatch_once_t onceToken;
+    static BOOL subpixelAAEnabled;
+    dispatch_once(&onceToken, ^{
+        NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:@"CGFontRenderingFontSmoothingDisabled"];
+        if (!number) {
+            subpixelAAEnabled = NO;
+        } else {
+            subpixelAAEnabled = !number.boolValue;
+        }
+    });
+    return !subpixelAAEnabled;
+}
+
+NS_INLINE BOOL iTermTextIsMonochrome(void) {
+    if (@available(macOS 10.14, *)) {
+        return iTermTextIsMonochromeOnMojave();
+    }
+    return NO;
+}
+
 @interface NSOpenPanel (Utility)
 - (NSArray *)legacyFilenames;
 @end

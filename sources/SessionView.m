@@ -242,7 +242,7 @@ static NSDate* lastResizeDate_;
     _metalView = [[MTKView alloc] initWithFrame:_scrollview.contentView.frame
                                          device:[self metalDevice]];
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         _metalView.layer.opaque = NO;
     } else {
         _metalView.layer.opaque = YES;

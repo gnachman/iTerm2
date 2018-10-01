@@ -4821,15 +4821,17 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (_textview.transparencyAlpha < 1) {
         if (@available(macOS 10.14, *)) {
-            // View compositing works in Mojave but not at all before it.
+            if (iTermTextIsMonochrome()) {
+                // View compositing works in Mojave but not at all before it.
 #if !ENABLE_TRANSPARENT_METAL_WINDOWS
-            return NO;
+                return NO;
 #endif
-            return YES;
+                return YES;
+            }
         }
         return NO;
     }
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         if (_textview.transparencyAlpha < 1) {
 #if !ENABLE_TRANSPARENT_METAL_WINDOWS
             if (reason) {
@@ -5055,7 +5057,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)updateMetalDriver NS_AVAILABLE_MAC(10_11) {
     const CGSize cellSize = CGSizeMake(_textview.charWidth, _textview.lineHeight);
     CGSize glyphSize;
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         // Mojave can use a glyph size larger than cell size because compositing is trivial without subpixel AA.
         NSRect rect = [iTermCharacterSource boundingRectForCharactersInRange:NSMakeRange(32, 127-32)
                                                                         font:_textview.font
