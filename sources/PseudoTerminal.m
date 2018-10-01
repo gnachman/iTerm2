@@ -174,6 +174,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 @end
 
 @implementation PseudoTerminal {
+    NSTimer *_shadowTimer;
     NSPoint preferredOrigin_;
 
 
@@ -653,10 +654,14 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     [self setWindow:myWindow];
     [myWindow release];
 
-    // This had been in iTerm2 for years and was removed, but I can't tell why. Issue 3833 reveals
-    // that it is still needed, at least on OS 10.9.
-    if ([myWindow respondsToSelector:@selector(_setContentHasShadow:)]) {
-        [myWindow _setContentHasShadow:NO];
+    if (@available(macOS 10.14, *)) {
+        // This doesn't work on 10.14. See it_setNeedsInvalidateShadow for a saner approach.
+    } else {
+        // This had been in iTerm2 for years and was removed, but I can't tell why. Issue 3833 reveals
+        // that it is still needed, at least on OS 10.9.
+        if ([myWindow respondsToSelector:@selector(_setContentHasShadow:)]) {
+            [myWindow _setContentHasShadow:NO];
+        }
     }
 
     _fullScreen = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
