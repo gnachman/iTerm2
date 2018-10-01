@@ -5148,6 +5148,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (useMetal == _useMetal) {
             return;
         }
+        DLog(@"setUseMetal:%@ %@", @(useMetal), self);
         _useMetal = useMetal;
         // The metalview's alpha will initially be 0. Once it has drawn a frame we'll swap what is visible.
         [self setUseMetal:useMetal dataSource:_metalGlue];
@@ -5170,24 +5171,37 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)renderTwoMetalFramesAndShowMetalView NS_AVAILABLE_MAC(10_11) {
+    // The first frame will be slow to draw. The second frame will be very
+    // recent to minimize jitter. For reasons I haven't understood yet it seems
+    // the first frame is sometimes transparent. I haven't seen that issue with
+    // the second frame yet.
+    [self renderMetalFramesAndShowMetalView:2];
+}
+
+- (void)renderMetalFramesAndShowMetalView:(NSInteger)count {
     if (_useMetal) {
-        // First draw asynchronously since it takes a long time (200 ms on my old mbp) to spin
-        // up a new metal driver. This frame will never be seen since PTYTextView is still visible.
-        DLog(@"Begin async draw for %@", self);
+        DLog(@"Begin async draw %@ for %@", @(count), self);
         [_view.driver drawAsynchronouslyInView:_view.metalView completion:^(BOOL ok) {
             if (!_useMetal || _exited) {
+                DLog(@"Finished async draw but metal off/exited for %@", self);
                 return;
             }
 
             if (!ok) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self renderTwoMetalFramesAndShowMetalView];
+                DLog(@"Finished async draw NOT OK for %@", self);
+                // Wait 10ms to avoid burning CPU if it failed because it's slow to draw the first frame.
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.01 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [self renderMetalFramesAndShowMetalView:count];
                 });
                 return;
             }
 
-            // Now that everything's hot we can draw a frame synchronously without the UI hiccupping.
-            [self showMetalViewImmediately];
+            if (count <= 1) {
+                DLog(@"Finished async draw ok for %@", self);
+                [self showMetalViewImmediately];
+            } else {
+                [self renderMetalFramesAndShowMetalView:count - 1];
+            }
         }];
     }
 }
@@ -5218,6 +5232,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)reallyShowMetalViewImmediately {
+    DLog(@"reallyShowMetalViewImmediately");
     [_view setNeedsDisplay:YES];
     [self showMetalAndStopDrawingTextView];
     _view.metalView.enableSetNeedsDisplay = YES;
@@ -9938,23 +9953,25 @@ ITERM_WEAKLY_REFERENCEABLE
     _view.metalView.alphaValue = 0;
     id token = @(_nextMetalDisabledToken++);
     [_metalDisabledTokens addObject:token];
+    DLog(@"temporarilyDisableMetal return new token=%@ %@", token, self);
     return token;
 }
 
 - (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token NS_AVAILABLE_MAC(10_11) {
+    DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal %@", token);
     if (!_useMetal) {
         DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal returning earily because useMetal is off");
         return;
     }
     if ([_metalDisabledTokens containsObject:token]) {
-        DLog(@"Found token %@", token);
+        DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Found token %@", token);
         if (_metalDisabledTokens.count > 1) {
             [_metalDisabledTokens removeObject:token];
-            DLog(@"There are still other tokens remaining: %@", _metalDisabledTokens);
+            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: There are still other tokens remaining: %@", _metalDisabledTokens);
             return;
         }
     } else {
-        DLog(@"Bogus token %@", token);
+        DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Bogus token %@", token);
         return;
     }
 
@@ -9962,26 +9979,26 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view.driver drawAsynchronouslyInView:_view.metalView completion:^(BOOL ok) {
         DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal drawAsynchronouslyInView finished wtih ok=%@", @(ok));
         if (![_metalDisabledTokens containsObject:token]) {
-            DLog(@"Token %@ is gone, not proceeding.", token);
+            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Token %@ is gone, not proceeding.", token);
             return;
         }
         if (_exited) {
-            DLog(@"Returning because the session is dead");
+            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Returning because the session is dead");
             return;
         }
         if (!_useMetal) {
-            DLog(@"Returning because useMetal is off");
+            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Returning because useMetal is off");
             return;
         }
         if (!ok) {
-            DLog(@"Schedule drawFrameAndRemoveTemporarilyDisablementOfMetal to run after a spin of the mainloop");
+            DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Schedule drawFrameAndRemoveTemporarilyDisablementOfMetal to run after a spin of the mainloop");
             if (!_delegate) {
                 [self setUseMetal:NO];
                 return;
             }
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (![_metalDisabledTokens containsObject:token]) {
-                    DLog(@"[after a spin of the runloop] Token %@ is gone, not proceeding.", token);
+                    DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: [after a spin of the runloop] Token %@ is gone, not proceeding.", token);
                     return;
                 }
                 [self drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
@@ -9991,7 +10008,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         assert([_metalDisabledTokens containsObject:token]);
         [_metalDisabledTokens removeObject:token];
-        DLog(@"Remove temporarily disablement. Tokens are now %@", _metalDisabledTokens);
+        DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal: Remove temporarily disablement. Tokens are now %@", _metalDisabledTokens);
         if (_metalDisabledTokens.count == 0 && _useMetal) {
             [self reallyShowMetalViewImmediately];
         }
@@ -10000,8 +10017,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 
 - (void)sessionViewNeedsMetalFrameUpdate {
+    DLog(@"sessionViewNeedsMetalFrameUpdate %@", self);
     if (@available(macOS 10.11, *)) {
         if (_metalFrameChangePending) {
+            DLog(@"sessionViewNeedsMetalFrameUpdate frame change pending, return");
             return;
         }
 
@@ -10009,8 +10028,10 @@ ITERM_WEAKLY_REFERENCEABLE
         id token = [self temporarilyDisableMetal];
         [self.textview setNeedsDisplay:YES];
         dispatch_async(dispatch_get_main_queue(), ^{
+            DLog(@"sessionViewNeedsMetalFrameUpdate %@ in dispatch_async", self);
             _metalFrameChangePending = NO;
             [_view reallyUpdateMetalViewFrame];
+            DLog(@"sessionViewNeedsMetalFrameUpdate will draw farme and remove disablement");
             [self drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:token];
         });
     }
@@ -10021,11 +10042,13 @@ ITERM_WEAKLY_REFERENCEABLE
         if (_metalDeviceChanging) {
             return;
         }
+        DLog(@"sessionViewRecreateMetalView metalDeviceChanging<-YES");
         _metalDeviceChanging = YES;
         [self.textview setNeedsDisplay:YES];
         [_delegate sessionUpdateMetalAllowed];
         dispatch_async(dispatch_get_main_queue(), ^{
             _metalDeviceChanging = NO;
+            DLog(@"sessionViewRecreateMetalView metalDeviceChanging<-NO");
             [_delegate sessionUpdateMetalAllowed];
         });
     }
