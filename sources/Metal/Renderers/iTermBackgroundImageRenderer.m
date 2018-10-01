@@ -1,6 +1,7 @@
 #import "iTermBackgroundImageRenderer.h"
 
 #import "ITAddressBookMgr.h"
+#import "FutureMethods.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermShaderTypes.h"
 
@@ -48,7 +49,9 @@ NS_ASSUME_NONNULL_BEGIN
                                                            blending:nil
                                                 transientStateClass:[iTermBackgroundImageRendererTransientState class]];
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
-        _alphaPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(float)];
+        if (iTermTextIsMonochrome()) {
+            _alphaPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(float)];
+        }
 #endif
     }
     return self;

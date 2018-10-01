@@ -5027,7 +5027,9 @@ ITERM_WEAKLY_REFERENCEABLE
         BOOL transparencyAllowed = NO;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
         if (@available(macOS 10.14, *)) {
-            transparencyAllowed = YES;
+            if (iTermTextIsMonochrome()) {
+                transparencyAllowed = YES;
+            }
         }
 #endif
         if (!transparencyAllowed && _textview.transparencyAlpha < 1) {
@@ -5240,7 +5242,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)updateMetalDriver NS_AVAILABLE_MAC(10_11) {
     const CGSize cellSize = CGSizeMake(_textview.charWidth, _textview.lineHeight);
     CGSize glyphSize;
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         // Mojave can use a glyph size larger than cell size because compositing is trivial without subpixel AA.
         NSRect rect = [iTermCharacterSource boundingRectForCharactersInRange:NSMakeRange(32, 127-32)
                                                                         font:_textview.font

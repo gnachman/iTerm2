@@ -1,5 +1,6 @@
 #import "iTermBackgroundColorRenderer.h"
 
+#import "FutureMethods.h"
 #import "iTermPIUArray.h"
 #import "iTermTextRenderer.h"
 
@@ -58,7 +59,7 @@
     self = [super init];
     if (self) {
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
-        if (@available(macOS 10.14, *)) {
+        if (iTermTextIsMonochrome()) {
             _nonblendingRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                         vertexFunctionName:@"iTermBackgroundColorVertexShader"
                                                       fragmentFunctionName:@"iTermBackgroundColorFragmentShader"
@@ -101,7 +102,7 @@
 
 - (iTermMetalCellRenderer *)rendererForConfiguration:(iTermCellRenderConfiguration *)configuration {
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         if (configuration.hasBackgroundImage) {
             return _compositeOverRenderer;
         } else {

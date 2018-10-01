@@ -4,6 +4,7 @@
 #import "iTermMetalDriver.h"
 
 #import "DebugLogging.h"
+#import "FutureMethods.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermASCIITexture.h"
 #import "iTermBackgroundImageRenderer.h"
@@ -181,12 +182,14 @@ typedef struct {
         _keyCursorRenderer = [iTermCursorRenderer newKeyCursorRendererWithDevice:device];
         _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:device];
 #if ENABLE_USE_TEMPORARY_TEXTURE
-        if (@available(macOS 10.14, *)) {} else {
+        if (iTermTextIsMonochrome()) {} else {
             _copyToDrawableRenderer = [[iTermCopyToDrawableRenderer alloc] initWithDevice:device];
         }
 #endif
         if (@available(macOS 10.14, *)) {
-            _premultiplyAlphaRenderer = [[iTermPremultiplyAlphaRenderer alloc] initWithDevice:device];
+            if (iTermTextIsMonochromeOnMojave()) {
+                _premultiplyAlphaRenderer = [[iTermPremultiplyAlphaRenderer alloc] initWithDevice:device];
+            }
         }
 
         _commandQueue = [device newCommandQueue];
@@ -511,11 +514,13 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
     if (frameData.perFrameState.transparencyAlpha < 1) {
         if (@available(macOS 10.14, *)) {
-            [frameData createpostmultipliedRenderPassDescriptor];
+            if (iTermTextIsMonochromeOnMojave()) {
+                [frameData createpostmultipliedRenderPassDescriptor];
+            }
         }
     }
 #if ENABLE_USE_TEMPORARY_TEXTURE
-    if (@available(macOS 10.14, *)) {} else {
+    if (iTermTextIsMonochrome()) {} else {
         [frameData createTemporaryRenderPassDescriptor];
     }
 #endif
@@ -616,7 +621,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 - (BOOL)shouldCreateIntermediateRenderPassDescriptor:(iTermMetalFrameData *)frameData {
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         return NO;
     }
     if (!_backgroundImageRenderer.rendererDisabled && [frameData.perFrameState metalBackgroundImageGetMode:NULL]) {
@@ -644,8 +649,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self updateBackgroundImageRendererForFrameData:frameData];
     [self updateCopyBackgroundRendererForFrameData:frameData];
     if (@available(macOS 10.14, *)) {
-        if (frameData.postmultipliedRenderPassDescriptor) {
-            [self updatePremultiplyAlphaRendererForFrameData:frameData];
+        if (iTermTextIsMonochromeOnMojave()) {
+            if (frameData.postmultipliedRenderPassDescriptor) {
+                [self updatePremultiplyAlphaRendererForFrameData:frameData];
+            }
         }
     }
     [self updateBadgeRendererForFrameData:frameData];
@@ -706,8 +713,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self populateMarginRendererTransientStateWithFrameData:frameData];
     [self populateCopyBackgroundRendererTransientStateWithFrameData:frameData];
     if (@available(macOS 10.14, *)) {
-        if (frameData.postmultipliedRenderPassDescriptor) {
-            [self populatePremultiplyAlphaTransientStateWithFrameData:frameData];
+        if (iTermTextIsMonochromeOnMojave()) {
+            if (frameData.postmultipliedRenderPassDescriptor) {
+                [self populatePremultiplyAlphaTransientStateWithFrameData:frameData];
+            }
         }
     }
     [self populateCursorRendererTransientStateWithFrameData:frameData];
@@ -903,7 +912,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
     _copyBackgroundRenderer.enabled = (frameData.intermediateRenderPassDescriptor != nil);
 #if ENABLE_USE_TEMPORARY_TEXTURE
-    if (@available(macOS 10.14, *)) {} else {
+    if (iTermTextIsMonochrome()) {} else {
         _copyToDrawableRenderer.enabled = YES;
     }
 #endif
@@ -1394,7 +1403,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     const int pass = frameData.currentPass;
 
     BOOL useTemporaryTexture;
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         useTemporaryTexture = NO;
     } else {
 #if ENABLE_USE_TEMPORARY_TEXTURE
@@ -1422,13 +1431,15 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
         BOOL premultiply = NO;
         if (@available(macOS 10.14, *)) {
-            if (frameData.postmultipliedRenderPassDescriptor) {
-                assert(pass >= 0 && pass <= 2);
-                descriptors =
+            if (iTermTextIsMonochromeOnMojave()) {
+                if (frameData.postmultipliedRenderPassDescriptor) {
+                    assert(pass >= 0 && pass <= 2);
+                    descriptors =
                     @[ frameData.intermediateRenderPassDescriptor ?: frameData.postmultipliedRenderPassDescriptor,
                        frameData.postmultipliedRenderPassDescriptor,
                        frameData.renderPassDescriptor ];
-                premultiply = YES;
+                    premultiply = YES;
+                }
             }
         }
         if (!premultiply) {
@@ -1634,15 +1645,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 - (void)finishDrawingWithCommandBuffer:(id<MTLCommandBuffer>)commandBuffer
                              frameData:(iTermMetalFrameData *)frameData {
-    BOOL shouldCopyToDrawable;
-    if (@available(macOS 10.14, *)) {
-        shouldCopyToDrawable = (frameData.postmultipliedRenderPassDescriptor != nil);
-    } else {
 #if ENABLE_USE_TEMPORARY_TEXTURE
-        shouldCopyToDrawable = YES;
+    BOOL shouldCopyToDrawable = YES;
 #else
-        shouldCopyToDrawable = NO;
+    BOOL shouldCopyToDrawable = NO;
 #endif
+
+    if (@available(macOS 10.14, *)) {
+        if (iTermTextIsMonochromeOnMojave()) {
+            shouldCopyToDrawable = (frameData.postmultipliedRenderPassDescriptor != nil);
+        }
     }
     
 #if ENABLE_DEFER_CURRENT_DRAWABLE
@@ -1656,11 +1668,12 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         }
     }
 #endif
+
     if (shouldCopyToDrawable) {
         // Copy to the drawable
         frameData.currentPass = 2;
         [frameData.renderEncoder endEncoding];
-        if (@available(macOS 10.14, *)) {
+        if (iTermTextIsMonochrome()) {
             [self updateRenderEncoderForCurrentPass:frameData label:@"Premultiply Alpha"];
             [self drawRenderer:_premultiplyAlphaRenderer
                      frameData:frameData
@@ -1812,7 +1825,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                          _flashRenderer ];
 
     BOOL useTemporaryTexture;
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         useTemporaryTexture = NO;
     } else {
 #if ENABLE_USE_TEMPORARY_TEXTURE
@@ -1825,7 +1838,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     if (useTemporaryTexture) {
         return [shared arrayByAddingObject:_copyToDrawableRenderer];
     } else {
-        if (@available(macOS 10.14, *)) {
+        if (iTermTextIsMonochrome()) {
             return [shared arrayByAddingObject:_premultiplyAlphaRenderer];
         }
         return shared;

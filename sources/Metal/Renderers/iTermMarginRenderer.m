@@ -7,6 +7,7 @@
 
 #import "iTermMarginRenderer.h"
 
+#import "FutureMethods.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermShaderTypes.h"
 
@@ -29,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
     self = [super init];
     if (self) {
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
-        if (@available(macOS 10.14, *)) {
+        if (iTermTextIsMonochrome()) {
             _nonblendingRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                                vertexFunctionName:@"iTermMarginVertexShader"
                                                              fragmentFunctionName:@"iTermMarginFragmentShader"
@@ -62,7 +63,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (iTermMetalCellRenderer *)rendererForConfiguration:(iTermCellRenderConfiguration *)configuration {
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         if (configuration.hasBackgroundImage) {
             return _compositeOverRenderer;
         } else {

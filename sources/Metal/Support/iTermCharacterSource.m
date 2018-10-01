@@ -8,6 +8,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "DebugLogging.h"
+#import "FutureMethods.h"
 #import "iTermCharacterBitmap.h"
 #import "iTermCharacterParts.h"
 #import "iTermCharacterSource.h"
@@ -251,7 +252,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     const size_t destRowSize = _partSize.width * 4;
     const NSUInteger length = destRowSize * _partSize.height;
 
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         if (!_postprocessed && !_isEmoji) {
             [self performPostProcessing];
         }
@@ -421,7 +422,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 - (void)fillBackgroundForIteration:(NSInteger)iteration {
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         CGContextSetRGBFillColor(_cgContexts[iteration], 0, 0, 0, 0);
     } else {
         if (_isEmoji) {
@@ -459,7 +460,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                 [fontName isEqualToString:@"Apple Color Emoji"]);
     _numberOfIterationsNeeded = 1;
     if (!_isEmoji) {
-        if (@available(macOS 10.14, *)) {
+        if (iTermTextIsMonochrome()) {
             _numberOfIterationsNeeded = 4;
         }
     }
@@ -539,7 +540,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 - (NSColor *)textColorForIteration:(NSInteger)iteration {
-    if (@available(macOS 10.14, *)) {
+    if (iTermTextIsMonochrome()) {
         switch (iteration) {
             case 0:
                 return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:1];
