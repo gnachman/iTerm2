@@ -54,6 +54,21 @@ function Build {
 
   zip -ry iTerm2-${NAME}.zip iTerm.app
  
+  # This is so far from working it's ridiculous. Wait to hear back on my radar.
+
+# # This command came from where all good Apple documentation comes from, which is Twitter.
+# # From https://twitter.com/rosyna/status/1004418504408252416?lang=en
+# xcrun altool --eval-app --primary-bundle-id com.googlecode.iterm2 -u apple@georgester.com -f $ZIPNAME
+# echo Now wait a long time. Paste the UUID into the command below to get progress.
+# echo xcrun altool --eval-info UUID -u apple@georgester.com
+# echo "Press return when it's good"
+# read xxx
+
+# xcrun stapler staple iTerm.app || die "Stapling failed"
+# rm $ZIPNAME
+# zip -ry $ZIPNAME iTerm.app
+
+
   # Update the list of changes
   vi $SVNDIR/source/appcasts/full_changes.txt
  
@@ -104,9 +119,9 @@ git checkout -- version.txt
 
 git tag v${VERSION}
 git commit -am ${VERSION}
-git push origin master
+git push origin HEAD
 git push --tags
 cd $SVNDIR
 git commit -am v${VERSION}
-git push origin master
+git push origin HEAD
 
