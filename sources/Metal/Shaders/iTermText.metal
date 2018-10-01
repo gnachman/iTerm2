@@ -7,12 +7,15 @@ static half4 iTermAlphaVectorForTextColor(half4 textColor) {
     constexpr half4 greenVector = half4(1, 0, 0, 0);
     constexpr half4 yellowVector = half4(0, 0, 0, 1);
 
+    // Low thresholds bias toward heavier text for mid-tones.
+    constexpr half threshold = 0.6;
+
     // https://gitlab.com/gnachman/iterm2/wikis/macOS-Mojave-Regression-Challenge
-    if (textColor.x + textColor.y > 1.5) {
+    if (textColor.x + textColor.y > threshold * 2) {
         return yellowVector;
-    } else if (textColor.y > 0.75) {
+    } else if (textColor.y > threshold) {
         return greenVector;
-    } else if (textColor.x > 0.75) {
+    } else if (textColor.x > threshold) {
         return redVector;
     } else {
         return blackVector;
