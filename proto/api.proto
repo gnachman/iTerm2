@@ -1289,7 +1289,7 @@ message LineContents {
   // of a line, but it is possible.
   //
   // The ñ is composed of the letter n and a combining tilde (U+0303) (indicated in our example
-  // as ~), while í is composed of the leter i and a combining acute accent (U+0301) (indicated in
+  // as ~), while í is composed of the letter i and a combining acute accent (U+0301) (indicated in
   // our example as ').
   //
   // To map code points in `text` to screen positions, `code_points_per_cell`
