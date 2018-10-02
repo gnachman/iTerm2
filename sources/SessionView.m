@@ -1016,7 +1016,7 @@ static NSDate* lastResizeDate_;
         _hoverURLTextField = nil;
         [_delegate sessionViewDidChangeHoverURLVisible:NO];
     } else {
-        // _hoveurlView != nil && url != nil
+        // _hoverurlView != nil && url != nil
         [_hoverURLTextField setStringValue:url];
     }
 
