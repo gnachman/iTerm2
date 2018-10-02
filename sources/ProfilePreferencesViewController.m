@@ -522,7 +522,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     newDict[KEY_SHORTCUT] = @"";
     NSString* guid = [ProfileModel freshGuid];
     newDict[KEY_GUID] = guid;
-    [newDict removeObjectForKey:KEY_DEFAULT_BOOKMARK];  // remove depreated attribute with side effects
+    [newDict removeObjectForKey:KEY_DEFAULT_BOOKMARK];  // remove deprecated attribute with side effects
     newDict[KEY_TAGS] = @[];
     newDict[KEY_BOUND_HOSTS] = @[];
     if ([[ProfileModel sharedInstance] bookmark:newDict hasTag:@"bonjour"]) {

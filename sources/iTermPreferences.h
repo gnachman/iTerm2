@@ -86,7 +86,7 @@ extern NSString *const kPreferenceKeyPreferIntegratedGPU;
 extern NSString *const kPreferenceKeyMetalMaximizeThroughput;
 
 // Appearance
-extern NSString *const kPreferenceKeyTabStyle_Depcreated;
+extern NSString *const kPreferenceKeyTabStyle_Deprecated;
 extern NSString *const kPreferenceKeyTabStyle;
 extern NSString *const kPreferenceKeyTabPosition;
 extern NSString *const kPreferenceKeyStatusBarPosition;
