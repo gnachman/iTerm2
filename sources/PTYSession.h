@@ -595,7 +595,7 @@ typedef enum {
 - (void)setMinimumContrast:(float)value;
 
 // Returns the frame size for a scrollview that perfectly contains the contents
-// of this session based on rows/cols, and taking into acount the presence of
+// of this session based on rows/cols, and taking into account the presence of
 // a scrollbar.
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle;
 
