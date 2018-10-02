@@ -2075,7 +2075,7 @@ static const int kDragThreshold = 3;
         !cmdPressed &&
         [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
         // Clicking in an inactive pane with focus follows mouse makes it active.
-        // Becuase of how FFM works, this would only happen if another app were key.
+        // Because of how FFM works, this would only happen if another app were key.
         // See issue 3163.
         DLog(@"Click on inactive pane with focus follows mouse");
         _mouseDownWasFirstMouse = YES;

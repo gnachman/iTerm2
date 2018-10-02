@@ -2804,7 +2804,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)windowShouldClose:(NSNotification *)aNotification
 {
-    // This counts as an interaction beacuse it is only called when the user initiates the closing of the window (as opposed to a session dying on you).
+    // This counts as an interaction because it is only called when the user initiates the closing of the window (as opposed to a session dying on you).
     iTermApplicationDelegate *appDelegate = [iTermApplication.sharedApplication delegate];
     [appDelegate userDidInteractWithASession];
 

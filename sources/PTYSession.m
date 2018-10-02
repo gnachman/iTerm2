@@ -1714,7 +1714,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case PROMPT_EX_JOBS: {
             if (self.isTmuxClient) {
-                return [iTermPromptOnCloseReason tmuxClientsAlwaysPromptBecaseJobsAreNotExposed];
+                return [iTermPromptOnCloseReason tmuxClientsAlwaysPromptBecauseJobsAreNotExposed];
             }
             NSMutableArray<NSString *> *blockingJobs = [NSMutableArray array];
             NSArray *jobsThatDontRequirePrompting = [_profile objectForKey:KEY_JOBS];
