@@ -14,7 +14,7 @@
 
 @end
 
-// Tries to guess when the user is frustratedly scrolling with the mouse wheel in alternate
+// Tries to guess when the user is frustratingly scrolling with the mouse wheel in alternate
 // screen mode.
 @interface iTermAltScreenMouseScrollInferer : NSObject
 
