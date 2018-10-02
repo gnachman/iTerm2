@@ -1231,18 +1231,27 @@ typedef struct iTermTextColorContext {
     const BOOL useThinStrokes = [self useThinStrokesAgainstBackgroundColor:backgroundColor
                                                            foregroundColor:color];
     BOOL shouldSmooth = useThinStrokes;
-    if (@available(macOS 10.14, *)) {
-        // This is a major wtf. Why is this backwards on 10.14?
-        shouldSmooth = !shouldSmooth;
+    int style = -1;
+    if (iTermTextIsMonochrome()) {
+        shouldSmooth = NO;
+    } else if (@available(macOS 10.14, *)) {
+        // User enabled subpixel AA
+        shouldSmooth = YES;
     }
     if (shouldSmooth) {
-        CGContextSetShouldSmoothFonts(ctx, YES);
+        if (useThinStrokes) {
+            style = 16;
+        } else {
+            style = 0;
+        }
+    }
+    CGContextSetShouldSmoothFonts(ctx, shouldSmooth);
+    if (style >= 0) {
         // This seems to be available at least on 10.8 and later. The only reference to it is in
         // WebKit. This causes text to render just a little lighter, which looks nicer.
+        // It does not work in Mojave without subpixel AA.
         savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
-        CGContextSetFontSmoothingStyle(ctx, 16);
-    } else if (@available(macOS 10.14, *)) {
-        CGContextSetShouldSmoothFonts(ctx, NO);
+        CGContextSetFontSmoothingStyle(ctx, style);
     }
 
     size_t numCodes = cheapString.length;
@@ -1287,7 +1296,7 @@ typedef struct iTermTextColorContext {
     NSFrameRect(NSMakeRect(point.x + positions[0], point.y, positions[length - 1] - positions[0] + _cellSize.width, _cellSize.height));
 #endif
 
-    if (useThinStrokes) {
+    if (style >= 0) {
         CGContextSetFontSmoothingStyle(ctx, savedFontSmoothingStyle);
     }
     if (CGColorGetAlpha(color) < 1) {

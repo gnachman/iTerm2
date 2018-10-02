@@ -563,19 +563,30 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 // Per-iteration initialization. Only call this once per iteration.
 - (void)initializeIteration:(NSInteger)iteration offset:(CGPoint)offset skew:(CGFloat)skew {
     CGContextSetShouldAntialias(_cgContexts[iteration], _antialiased);
+
     BOOL shouldSmooth = _useThinStrokes;
-    if (@available(macOS 10.14, *)) {
-        // This is a major wtf. Why is this backwards on 10.14?
-        shouldSmooth = !shouldSmooth;
+    int style = -1;
+    if (iTermTextIsMonochrome()) {
+        shouldSmooth = NO;
+    } else if (@available(macOS 10.14, *)) {
+        // User enabled subpixel AA
+        shouldSmooth = YES;
     }
     if (shouldSmooth) {
-        CGContextSetShouldSmoothFonts(_cgContexts[iteration], YES);
-        // This seems to be available at least on 10.8 and later. The only reference to it is in
-        // WebKit. This causes text to render just a little lighter, which looks nicer.
-        CGContextSetFontSmoothingStyle(_cgContexts[iteration], 16);
-    } else {
-        CGContextSetShouldSmoothFonts(_cgContexts[iteration], NO);
+        if (_useThinStrokes) {
+            // This seems to be available at least on 10.8 and later. The only reference to it is in
+            // WebKit. This causes text to render just a little lighter, which looks nicer.
+            // It does not work in Mojave without subpixel AA.
+            style = 16;
+        } else {
+            style = 0;
+        }
     }
+    CGContextSetShouldSmoothFonts(_cgContexts[iteration], shouldSmooth);
+    if (style >= 0) {
+        CGContextSetFontSmoothingStyle(_cgContexts[iteration], style);
+    }
+
     [self initializeTextMatrixInContext:_cgContexts[iteration]
                                withSkew:skew
                                  offset:offset];
