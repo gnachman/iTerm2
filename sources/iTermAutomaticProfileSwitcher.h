@@ -50,7 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDictionary *)savedState;
 
-// Call this when the hsotname, username, or path changes.
+// Call this when the hostname, username, or path changes.
 - (void)setHostname:(nullable NSString *)hostname
            username:(nullable NSString *)username
                path:(nullable NSString *)path;

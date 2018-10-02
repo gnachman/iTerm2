@@ -98,7 +98,7 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 // Find directories on a given host sorted by frecency.
 - (NSArray *)directoriesSortedByScoreOnHost:(VT100RemoteHost *)host;
 
-// Are there any directories known for this hsot?
+// Are there any directories known for this host?
 - (BOOL)haveDirectoriesForHost:(VT100RemoteHost *)host;
 
 #pragma mark - Testing
