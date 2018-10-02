@@ -6828,7 +6828,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // Update the wrapper's size, which in turn updates textview's size.
         frame.size.height = desiredHeight + [iTermAdvancedSettingsModel terminalVMargin];  // The wrapper is always larger by VMARGIN.
         _wrapper.frame = frame;
-#if 0
+#if 1
         NSAccessibilityPostNotification(_textview,
                                         NSAccessibilityRowCountChangedNotification);
 #endif
