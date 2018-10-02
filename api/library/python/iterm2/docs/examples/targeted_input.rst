@@ -10,7 +10,7 @@ This script demonstrates a few things:
 * Running a web server in the script process
 * Registering a custom toolbelt tool
 * Using broadcast domains
-* Scripts with external dependenices
+* Scripts with external dependencies
 
 The web server provides the user interface that allows you to enter the text to
 send to each session. The web page is rendered in a custom toolbelt tool the
