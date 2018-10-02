@@ -567,8 +567,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #endif
 
     [frameData enqueueDrawCallsWithBlock:^{
-        [self enequeueDrawCallsForFrameData:frameData
-                              commandBuffer:commandBuffer];
+        [self enqueueDrawCallsForFrameData:frameData
+                             commandBuffer:commandBuffer];
     }];
     for (iTermMetalRowData *rowData in frameData.rows) {
         [rowData.lineData checkForOverrun];
@@ -790,9 +790,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
-- (void)enequeueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
-                        commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    DLog(@"  enequeueDrawCallsForFrameData %@", frameData);
+- (void)enqueueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
+                       commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    DLog(@"  enqueueDrawCallsForFrameData %@", frameData);
 
     NSString *firstLabel;
     if (frameData.intermediateRenderPassDescriptor) {

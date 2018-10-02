@@ -19,7 +19,7 @@ extern const int kNumberOfSpacesPerTabNoConversion;
 
 - (void)pasteHelperWriteString:(NSString *)string;
 
-// Handle a key-down event that was previously enequeued.
+// Handle a key-down event that was previously enqueued.
 - (void)pasteHelperKeyDown:(NSEvent *)event;
 
 // Indicates if pastes should be bracketed with a special escape sequence.
