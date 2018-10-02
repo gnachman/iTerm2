@@ -13,6 +13,7 @@ Here are a collection of working scripts for you to crib from.
 * :doc:`targeted_input`
 * :doc:`broadcast`
 * :doc:`sorttabs`
+* :doc:`mrutabs`
 * :doc:`statusbar`
 * :doc:`mousemode`
 * :doc:`theme`
