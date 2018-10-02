@@ -46,6 +46,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSButton *_unicodeVersion9;
     IBOutlet NSButton *_asciiLigatures;
     IBOutlet NSButton *_nonAsciiLigatures;
+    IBOutlet NSButton *_subpixelAA;
 
     // Labels indicating current font. Not registered as controls.
     IBOutlet NSTextField *_normalFontDescription;
@@ -324,11 +325,24 @@ static NSInteger kNonAsciiFontButtonTag = 1;
         _nonAsciiLigatures.enabled = YES;
     }
 
-    if (iTermTextIsMonochrome()) {
-        _thinStrokes.enabled = NO;
-        [_thinStrokesLabel setLabelEnabled:NO];
-    }
+    [self updateThinStrokesEnabled];
     [self updateWarnings];
+}
+
+- (void)updateThinStrokesEnabled {
+    if (@available(macOS 10.14, *)) {
+        if (iTermTextIsMonochrome()) {
+            _thinStrokes.enabled = NO;
+            [_thinStrokesLabel setLabelEnabled:NO];
+            _subpixelAA.state = NSOffState;
+        } else {
+            _subpixelAA.state = NSOnState;
+        }
+        _subpixelAA.enabled = YES;
+    } else {
+        _subpixelAA.state = NSOnState;
+        _subpixelAA.enabled = NO;
+    }
 }
 
 - (void)updateWarnings {
@@ -342,6 +356,20 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 - (IBAction)openFontPicker:(id)sender {
     _fontPickerIsForNonAsciiFont = ([sender tag] == kNonAsciiFontButtonTag);
     [self showFontPanel];
+}
+
+- (IBAction)didToggleSubpixelAntiAliasing:(id)sender {
+    NSString *const key = @"CGFontRenderingFontSmoothingDisabled";
+    if (_subpixelAA.state == NSOffState) {
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+    } else {
+        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:key];
+    }
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Subpixel Anti Aliasing";
+    alert.informativeText = @"This change will affect all profiles. You must restart iTerm2 for this change to take effect. After restarting, changes to Thin Strokes will also take effect.";
+    [alert runModal];
+    [self updateWarnings];
 }
 
 #pragma mark - NSFontPanel and NSFontManager
