@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Add scrolling delta to the accumulator if needed and return the number of lines to scroll by.
 - (CGFloat)deltaYForEvent:(NSEvent *)event lineHeight:(CGFloat)lineHeight;
 
-// Legacy algorithm, to be kept around until the new algoirthm has been validated.
+// Legacy algorithm, to be kept around until the new algorithm has been validated.
 - (CGFloat)legacyDeltaYForEvent:(NSEvent *)theEvent lineHeight:(CGFloat)lineHeight;
 
 // Resets the internal accumulator to 0.
