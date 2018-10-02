@@ -20,8 +20,4 @@ async def main(connection):
     # watches for custom escape sequences.
     await iterm2.notifications.async_subscribe_to_custom_escape_sequence_notification(connection, on_custom_esc)
 
-    # Wait for messages indefinitely. This program will terminate when iTerm2 exits because
-    # dispatch_until_future will raise an exception when its connection closes.
-    await asyncio.wait([asyncio.Future()], return_when=asyncio.FIRST_COMPLETED)
-
-iterm2.run_until_complete(main)
+iterm2.run_forever(main)
