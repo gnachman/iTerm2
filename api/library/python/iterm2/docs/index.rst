@@ -31,6 +31,7 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    color
    colorpresets
    connection
+   focus
    mainmenu
    notifications
    profile

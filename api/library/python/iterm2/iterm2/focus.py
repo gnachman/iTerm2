@@ -10,6 +10,7 @@ class FocusUpdateApplicationActive:
 
     @property
     def application_active(self):
+        """:returns: `True` if the application is active or `False` if not."""
         return self.__application_active
 
 class FocusUpdateWindowChanged:
@@ -37,6 +38,7 @@ class FocusUpdateWindowChanged:
 
     @property
     def window_id(self):
+        """:returns: the window ID of the window that changed."""
         return self.__window_id
 
     @property
@@ -158,6 +160,16 @@ class FocusMonitor:
         When focus changes, returns an update.
 
         :returns: A :class:`FocusUpdate` object.
+
+        Example:
+
+        .. code-block:: python
+
+            async with iterm2.FocusMonitor(connection) as monitor:
+                while True:
+                    update = await monitor.async_get_next_update()
+                    if update.selected_tab_changed:
+                        print("The active tab is now {}".format(update.selected_tab_changed.tab_id))
         """
         if self.__queue:
             print("async_get_next_update: return early with 1st value from queue")
