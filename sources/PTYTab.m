@@ -1621,10 +1621,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)arrangeSplitPanesEvenly {
-    [self arrangeSplitPanesEventlyInSplitView:root_];
+    [self arrangeSplitPanesEvenlyInSplitView:root_];
 }
 
-- (void)arrangeSplitPanesEventlyInSplitView:(NSSplitView *)splitView {
+- (void)arrangeSplitPanesEvenlyInSplitView:(NSSplitView *)splitView {
     if (self.isTmuxTab) {
         [self arrangeTmuxSplitPanesEvenly];
         return;
@@ -1649,7 +1649,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         view.frame = frame;
         NSSplitView *child = [NSSplitView castFrom:view];
         if (child) {
-            [self arrangeSplitPanesEventlyInSplitView:child];
+            [self arrangeSplitPanesEvenlyInSplitView:child];
         }
         offset += size;
         offset += splitView.dividerThickness;
