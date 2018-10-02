@@ -12,6 +12,7 @@
 #import "iTermOrphanServerAdopter.h"
 #import <OpenDirectory/OpenDirectory.h>
 
+#include "iTermLSOF.h"
 #include "iTermFileDescriptorClient.h"
 #include "iTermFileDescriptorServer.h"
 #include "iTermFileDescriptorSocketPath.h"

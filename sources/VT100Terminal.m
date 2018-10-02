@@ -261,11 +261,13 @@ static const int kMaxScreenRows = 4096;
     _encoding = encoding;
     _parser.encoding = encoding;
 }
+#if 0
 - (void)setTermType:(NSString *)termtype
 {
     // Completely unnecessary, the user can control this from the shell.
     return;
 }
+#endif
 
 - (void)setAnswerBackString:(NSString *)s {
     s = [s stringByExpandingVimSpecialCharacters];
@@ -2174,10 +2176,10 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeXtermSetKvp:(VT100Token *)token {
+#if 0
     if (!token.string) {
         return;
     }
-return;
     NSArray *kvp = [self keyValuePairInToken:token];
     NSString *key = kvp[0];
     NSString *value = kvp[1];
@@ -2342,6 +2344,7 @@ return;
             }
         }
     }
+#endif
 }
 
 - (void)executeXtermSetPalette:(VT100Token *)token {

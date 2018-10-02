@@ -2873,13 +2873,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                      inTerminal:(NSWindowController<iTermWindowController> *)term
                          zoomed:(BOOL)zoomed
                         profile:(Profile *)profile {
-    NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
+  //  NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
   //  BOOL haveMultipleSessions = ([theChildren count] > 1);
-    BOOL showTitles = NO;
+   // BOOL showTitles = NO;
         // [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles] && (zoomed || haveMultipleSessions);
     // Begin by decorating the tree with pixel sizes.
     [PTYTab _recursiveSetSizesInTmuxParseTree:parseTree
-                                   showTitles:showTitles
+                                   showTitles:NO
                                      bookmark:profile
                                    inTerminal:term];
 }

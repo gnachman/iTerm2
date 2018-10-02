@@ -13,10 +13,10 @@
 @property(nonatomic, assign) BOOL noColorAllowed;
 
 // Called just before popover opens.
-@property(nonatomic, copy) void (^willOpenPopover)();
+@property(nonatomic, copy) void (^willOpenPopover)(void);
 
 // Called just before popover closes.
-@property(nonatomic, copy) void (^willClosePopover)();
+@property(nonatomic, copy) void (^willClosePopover)(void);
 
 // Override these methods to customize how the popover is presented. Normally it is presented from
 // the color well's frame.

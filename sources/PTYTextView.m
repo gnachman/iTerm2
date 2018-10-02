@@ -6221,10 +6221,10 @@ return;
 - (NSDragOperation)dragOperationForSender:(id<NSDraggingInfo>)sender
                        numberOfValidItems:(int *)numberOfValidItemsPtr {
     NSPasteboard *pb = [sender draggingPasteboard];
-    NSArray *types = [pb types];
+//    NSArray *types = [pb types];
     NSPoint windowDropPoint = [sender draggingLocation];
     NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
-    int dropLine = dropPoint.y / _lineHeight;
+//    int dropLine = dropPoint.y / _lineHeight;
 #if 0
     SCPPath *dropScpPath = [_dataSource scpPathForFile:@"" onLine:dropLine];
 
@@ -6960,16 +6960,22 @@ return;
     PTYScroller *scroller = (PTYScroller *)self.enclosingScrollView.verticalScroller;
     scroller.userScroll = YES;
 }
-
+    
+#if 0
+    - (CGFloat)lineHeight { 
+        return CGFLOAT_MIN;
+    }
+#endif
+    
 #pragma mark - Color
-
-- (NSColor*)colorForCode:(int)theIndex
-                   green:(int)green
-                    blue:(int)blue
-               colorMode:(ColorMode)theMode
-                    bold:(BOOL)isBold
-                   faint:(BOOL)isFaint
-            isBackground:(BOOL)isBackground {
+    
+    - (NSColor*)colorForCode:(int)theIndex
+green:(int)green
+blue:(int)blue
+colorMode:(ColorMode)theMode
+bold:(BOOL)isBold
+faint:(BOOL)isFaint
+isBackground:(BOOL)isBackground {
     iTermColorMapKey key = [self colorMapKeyForCode:theIndex
                                               green:green
                                                blue:blue
@@ -6988,17 +6994,17 @@ return;
     }
     return color;
 }
-
-- (BOOL)charBlinks:(screen_char_t)sct {
-    return self.blinkAllowed && sct.blink;
-}
-
-- (iTermColorMapKey)colorMapKeyForCode:(int)theIndex
-                                 green:(int)green
-                                  blue:(int)blue
-                             colorMode:(ColorMode)theMode
-                                  bold:(BOOL)isBold
-                          isBackground:(BOOL)isBackground {
+    
+    - (BOOL)charBlinks:(screen_char_t)sct {
+        return self.blinkAllowed && sct.blink;
+    }
+    
+    - (iTermColorMapKey)colorMapKeyForCode:(int)theIndex
+green:(int)green
+blue:(int)blue
+colorMode:(ColorMode)theMode
+bold:(BOOL)isBold
+isBackground:(BOOL)isBackground {
     BOOL isBackgroundForDefault = isBackground;
     switch (theMode) {
         case ColorModeAlternate:
@@ -7043,66 +7049,66 @@ return;
                 theIndex |= 8;  // set "bright" bit.
             }
             return kColorMap8bitBase + (theIndex & 0xff);
-
+            
         case ColorModeInvalid:
             return kColorMapInvalid;
     }
     NSAssert(ok, @"Bogus color mode %d", (int)theMode);
     return kColorMapInvalid;
 }
-
+    
 #pragma mark - iTermTextDrawingHelperDelegate
-
-- (void)drawingHelperDrawBackgroundImageInRect:(NSRect)rect
-                        blendDefaultBackground:(BOOL)blend {
+    
+    - (void)drawingHelperDrawBackgroundImageInRect:(NSRect)rect
+blendDefaultBackground:(BOOL)blend {
     [_delegate textViewDrawBackgroundImageInView:self viewRect:rect blendDefaultBackground:blend];
 }
-
-- (VT100ScreenMark *)drawingHelperMarkOnLine:(int)line {
-    return [_dataSource markOnLine:line];
-}
-
-- (screen_char_t *)drawingHelperLineAtIndex:(int)line {
-    return [_dataSource getLineAtIndex:line];
-}
-
-- (screen_char_t *)drawingHelperLineAtScreenIndex:(int)line {
-    return [_dataSource getLineAtScreenIndex:line];
-}
-
-- (screen_char_t *)drawingHelperCopyLineAtIndex:(int)line toBuffer:(screen_char_t *)buffer {
-    return [_dataSource getLineAtIndex:line withBuffer:buffer];
-}
-
-- (iTermTextExtractor *)drawingHelperTextExtractor {
-    return [[[iTermTextExtractor alloc] initWithDataSource:_dataSource] autorelease];
-}
-
-- (NSArray *)drawingHelperCharactersWithNotesOnLine:(int)line {
-    return [_dataSource charactersWithNotesOnLine:line];
-}
-
-- (void)drawingHelperUpdateFindCursorView {
-    if ([self isFindingCursor]) {
-        NSPoint cp = [self cursorCenterInFindCursorWindowCoords];
-        if (!NSEqualPoints(_findCursorView.cursorPosition, cp)) {
-            _findCursorView.cursorPosition = cp;
-            [_findCursorView setNeedsDisplay:YES];
+    
+    - (VT100ScreenMark *)drawingHelperMarkOnLine:(int)line {
+        return [_dataSource markOnLine:line];
+    }
+    
+    - (screen_char_t *)drawingHelperLineAtIndex:(int)line {
+        return [_dataSource getLineAtIndex:line];
+    }
+    
+    - (screen_char_t *)drawingHelperLineAtScreenIndex:(int)line {
+        return [_dataSource getLineAtScreenIndex:line];
+    }
+    
+    - (screen_char_t *)drawingHelperCopyLineAtIndex:(int)line toBuffer:(screen_char_t *)buffer {
+        return [_dataSource getLineAtIndex:line withBuffer:buffer];
+    }
+    
+    - (iTermTextExtractor *)drawingHelperTextExtractor {
+        return [[[iTermTextExtractor alloc] initWithDataSource:_dataSource] autorelease];
+    }
+    
+    - (NSArray *)drawingHelperCharactersWithNotesOnLine:(int)line {
+        return [_dataSource charactersWithNotesOnLine:line];
+    }
+    
+    - (void)drawingHelperUpdateFindCursorView {
+        if ([self isFindingCursor]) {
+            NSPoint cp = [self cursorCenterInFindCursorWindowCoords];
+            if (!NSEqualPoints(_findCursorView.cursorPosition, cp)) {
+                _findCursorView.cursorPosition = cp;
+                [_findCursorView setNeedsDisplay:YES];
+            }
         }
     }
-}
-
-- (NSDate *)drawingHelperTimestampForLine:(int)line {
-    return [self.dataSource timestampForLine:line];
-}
-
-- (NSColor *)drawingHelperColorForCode:(int)theIndex
-                                 green:(int)green
-                                  blue:(int)blue
-                             colorMode:(ColorMode)theMode
-                                  bold:(BOOL)isBold
-                                 faint:(BOOL)isFaint
-                          isBackground:(BOOL)isBackground {
+    
+    - (NSDate *)drawingHelperTimestampForLine:(int)line {
+        return [self.dataSource timestampForLine:line];
+    }
+    
+    - (NSColor *)drawingHelperColorForCode:(int)theIndex
+green:(int)green
+blue:(int)blue
+colorMode:(ColorMode)theMode
+bold:(BOOL)isBold
+faint:(BOOL)isFaint
+isBackground:(BOOL)isBackground {
     return [self colorForCode:theIndex
                         green:green
                          blue:blue
@@ -7111,244 +7117,378 @@ return;
                         faint:isFaint
                  isBackground:isBackground];
 }
-
-- (PTYFontInfo *)drawingHelperFontForChar:(UniChar)ch
-                                isComplex:(BOOL)complex
-                               renderBold:(BOOL *)renderBold
-                             renderItalic:(BOOL *)renderItalic {
+    
+    - (PTYFontInfo *)drawingHelperFontForChar:(UniChar)ch
+isComplex:(BOOL)complex
+renderBold:(BOOL *)renderBold
+renderItalic:(BOOL *)renderItalic {
     return [self getFontForChar:ch
                       isComplex:complex
                      renderBold:renderBold
                    renderItalic:renderItalic];
 }
-
-- (NSData *)drawingHelperMatchesOnLine:(int)line {
-    return _findOnPageHelper.highlightMap[@(line + _dataSource.totalScrollbackOverflow)];
-}
-
-- (void)drawingHelperDidFindRunOfAnimatedCellsStartingAt:(VT100GridCoord)coord
-                                                ofLength:(int)length {
+    
+    - (NSData *)drawingHelperMatchesOnLine:(int)line {
+        return _findOnPageHelper.highlightMap[@(line + _dataSource.totalScrollbackOverflow)];
+    }
+    
+    - (void)drawingHelperDidFindRunOfAnimatedCellsStartingAt:(VT100GridCoord)coord
+ofLength:(int)length {
     [_dataSource setRangeOfCharsAnimated:NSMakeRange(coord.x, length) onLine:coord.y];
 }
-
-- (NSString *)drawingHelperLabelForDropTargetOnLine:(int)line {
-    SCPPath *scpFile = [_dataSource scpPathForFile:@"" onLine:line];
-    if (!scpFile) {
+    
+    - (NSString *)drawingHelperLabelForDropTargetOnLine:(int)line {
+        SCPPath *scpFile = [_dataSource scpPathForFile:@"" onLine:line];
+        if (!scpFile) {
+            return nil;
+        }
+        return [NSString stringWithFormat:@"%@@%@:%@", scpFile.username, scpFile.hostname, scpFile.path];
+    }
+    
+#pragma mark - Accessibility
+    
+#if 0
+    - (BOOL)accessibilityIsIgnored {
+        return NO;
+    }
+    
+    - (NSArray *)accessibilityAttributeNames {
+        // return [_accessibilityHelper accessibilityAttributeNames];
         return nil;
     }
-    return [NSString stringWithFormat:@"%@@%@:%@", scpFile.username, scpFile.hostname, scpFile.path];
-}
-
-#pragma mark - Accessibility
-
-- (BOOL)accessibilityIsIgnored {
-    return NO;
-}
-
-- (NSArray *)accessibilityAttributeNames {
-    // return [_accessibilityHelper accessibilityAttributeNames];
-    return nil;
-}
-
-- (NSArray *)accessibilityParameterizedAttributeNames {
-    return NULL; // [_accessibilityHelper accessibilityParameterizedAttributeNames];
-}
-
-- (id)accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter {
-#if 0
-    BOOL handled;
-    id result = [_accessibilityHelper accessibilityAttributeValue:attribute
-                                                     forParameter:parameter
-                                                          handled:&handled];
-    if (!handled) {
-        result = [super accessibilityAttributeValue:attribute forParameter:parameter];
-    }
-    return result;
-#endif
-   return nil;
-}
-
-- (BOOL)accessibilityIsAttributeSettable:(NSString *)attribute {
-#if 0
-    BOOL handled;
-    BOOL result = [_accessibilityHelper accessibilityIsAttributeSettable:attribute handled:&handled];
-    if (!handled) {
-        result = [super accessibilityIsAttributeSettable:attribute];
-    }
-    return result;
-#endif
-    return FALSE;
-}
-
-- (void)accessibilitySetValue:(id)value forAttribute:(NSString *)attribute {
-#if 0
-    BOOL handled;
-    [_accessibilityHelper accessibilitySetValue:value forAttribute:attribute handled:&handled];
-    if (!handled) {
-        [super accessibilitySetValue:value forAttribute:attribute];
-    }
-#endif
-}
-
-- (id)accessibilityAttributeValue:(NSString *)attribute {
-#if 0
-    BOOL handled;
-    id result = [_accessibilityHelper accessibilityAttributeValue:attribute handled:&handled];
-    if (!handled) {
-        result = [super accessibilityAttributeValue:attribute];
-    }
-    return result;
-#endif
-    return 0;
-}
-
-#pragma mark - Accessibility Helper Delegate
-
-- (int)accessibilityHelperAccessibilityLineNumberForLineNumber:(int)actualLineNumber {
-    int numberOfLines = [_dataSource numberOfLines];
-    int offset = MAX(0, numberOfLines - [iTermAdvancedSettingsModel numberOfLinesForAccessibility]);
-    return actualLineNumber - offset;
-}
-
-- (int)accessibilityHelperLineNumberForAccessibilityLineNumber:(int)accessibilityLineNumber {
-    int numberOfLines = [_dataSource numberOfLines];
-    int offset = MAX(0, numberOfLines - [iTermAdvancedSettingsModel numberOfLinesForAccessibility]);
-    return accessibilityLineNumber + offset;
-}
-
-- (VT100GridCoord)accessibilityHelperCoordForPoint:(NSPoint)screenPosition {
-    NSRect screenRect = NSMakeRect(screenPosition.x,
-                                   screenPosition.y,
-                                   0,
-                                   0);
-    NSRect windowRect = [self.window convertRectFromScreen:screenRect];
-    NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView:nil];
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    int x = (locationInTextView.x - [iTermAdvancedSettingsModel terminalMargin] - visibleRect.origin.x) / _charWidth;
-    int y = locationInTextView.y / _lineHeight;
-    return VT100GridCoordMake(x, [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
-}
-
-- (NSRect)accessibilityHelperFrameForCoordRange:(VT100GridCoordRange)coordRange {
-#if 0
-    coordRange.start.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
-    coordRange.end.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
-    NSRect result = NSMakeRect(MAX(0, floor(coordRange.start.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin])),
-                               MAX(0, coordRange.start.y * _lineHeight),
-                               MAX(0, (coordRange.end.x - coordRange.start.x) * _charWidth),
-                               MAX(0, (coordRange.end.y - coordRange.start.y + 1) * _lineHeight));
-    result = [self convertRect:result toView:nil];
-    result = [self.window convertRectToScreen:result];
-    return result;
-#endif
-    return NSMakeRect(0,0,0,0);
-}
-
-- (VT100GridCoord)accessibilityHelperCursorCoord {
-    return VT100GridCoordMake([_dataSource cursorX] - 1, 0);
-#if 0
-    int y = [_dataSource numberOfLines] - [_dataSource height] + [_dataSource cursorY] - 1;
-    return VT100GridCoordMake([_dataSource cursorX] - 1,
-                              [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
-#endif
-}
-
-- (void)accessibilityHelperSetSelectedRange:(VT100GridCoordRange)coordRange {
-#if 0
-    coordRange.start.y =
-        [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
-    coordRange.end.y =
-        [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
-    [_selection clearSelection];
-    [_selection beginSelectionAt:coordRange.start
-                            mode:kiTermSelectionModeCharacter
-                          resume:NO
-                          append:NO];
-    [_selection moveSelectionEndpointTo:coordRange.end];
-    [_selection endLiveSelection];
-#endif
-}
-
-- (VT100GridCoordRange)accessibilityRangeOfCursor {
-#if 0
-    VT100GridCoord coord = [self accessibilityHelperCursorCoord];
-    return VT100GridCoordRangeMake(coord.x, coord.y, coord.x, coord.y);
-#endif
-    return VT100GridCoordRangeMake(0,0,0,0);
-}
-
-- (VT100GridCoordRange)accessibilityHelperSelectedRange {
-    return VT100GridCoordRangeMake(0,0,0,0);
-#if 0
-    iTermSubSelection *sub = _selection.allSubSelections.lastObject;
     
-    if (!sub) {
-        return [self accessibilityRangeOfCursor];
+    - (NSArray *)accessibilityParameterizedAttributeNames {
+        return NULL; // [_accessibilityHelper accessibilityParameterizedAttributeNames];
     }
-
-    VT100GridCoordRange coordRange = sub.range.coordRange;
-    int minY = _dataSource.numberOfLines - _dataSource.height;
-    if (coordRange.start.y < minY) {
-        coordRange.start.y = 0;
-        coordRange.start.x = 0;
-    } else {
-        coordRange.start.y -= minY;
-    }
-    if (coordRange.end.y < minY) {
-        return [self accessibilityRangeOfCursor];
-    } else {
-        coordRange.end.y -= minY;
-    }
-    return coordRange;
-#endif
-}
-
-- (NSString *)accessibilityHelperSelectedText {
-return NULL;
+    
+    - (id)accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter {
 #if 0
-    return [self selectedTextAttributed:NO
-                           cappedAtSize:0
-                      minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]];
+        BOOL handled;
+        id result = [_accessibilityHelper accessibilityAttributeValue:attribute
+                                                         forParameter:parameter
+                                                              handled:&handled];
+        if (!handled) {
+            result = [super accessibilityAttributeValue:attribute forParameter:parameter];
+        }
+        return result;
 #endif
-}
+        return nil;
+    }
+    
+    - (BOOL)accessibilityIsAttributeSettable:(NSString *)attribute {
+#if 0
+        BOOL handled;
+        BOOL result = [_accessibilityHelper accessibilityIsAttributeSettable:attribute handled:&handled];
+        if (!handled) {
+            result = [super accessibilityIsAttributeSettable:attribute];
+        }
+        return result;
+#endif
+        return FALSE;
+    }
+    
+    - (void)accessibilitySetValue:(id)value forAttribute:(NSString *)attribute {
+#if 0
+        BOOL handled;
+        [_accessibilityHelper accessibilitySetValue:value forAttribute:attribute handled:&handled];
+        if (!handled) {
+            [super accessibilitySetValue:value forAttribute:attribute];
+        }
+#endif
+    }
+    
+    - (id)accessibilityAttributeValue:(NSString *)attribute {
+#if 0
+        BOOL handled;
+        id result = [_accessibilityHelper accessibilityAttributeValue:attribute handled:&handled];
+        if (!handled) {
+            result = [super accessibilityAttributeValue:attribute];
+        }
+        return result;
+#endif
+        return 0;
+    }
+    
+#pragma mark - Accessibility Helper Delegate
+    
+    - (int)accessibilityHelperAccessibilityLineNumberForLineNumber:(int)actualLineNumber {
+        int numberOfLines = [_dataSource numberOfLines];
+        int offset = MAX(0, numberOfLines - [iTermAdvancedSettingsModel numberOfLinesForAccessibility]);
+        return actualLineNumber - offset;
+    }
+    
+    - (int)accessibilityHelperLineNumberForAccessibilityLineNumber:(int)accessibilityLineNumber {
+        int numberOfLines = [_dataSource numberOfLines];
+        int offset = MAX(0, numberOfLines - [iTermAdvancedSettingsModel numberOfLinesForAccessibility]);
+        return accessibilityLineNumber + offset;
+    }
+#endif
+#if 0
 
-- (NSURL *)accessibilityHelperCurrentDocumentURL {
-    return NULL; //return [_delegate textViewCurrentLocation];
-}
+    - (VT100GridCoord)accessibilityHelperCoordForPoint:(NSPoint)screenPosition {
+        NSRect screenRect = NSMakeRect(screenPosition.x,
+                                       screenPosition.y,
+                                       0,
+                                       0);
+        NSRect windowRect = [self.window convertRectFromScreen:screenRect];
+        NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView:nil];
+        NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+        int x = (locationInTextView.x - [iTermAdvancedSettingsModel terminalMargin] - visibleRect.origin.x) / _charWidth;
+        int y = locationInTextView.y / _lineHeight;
+        return VT100GridCoordMake(x, [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
+    }
+#endif
 
-- (screen_char_t *)accessibilityHelperLineAtIndex:(int)accessibilityIndex {
-    return NULL; // return [_dataSource getLineAtIndex:[self accessibilityHelperLineNumberForAccessibilityLineNumber:accessibilityIndex]];
-}
-
-- (int)accessibilityHelperWidth {
-    return 0; // return [_dataSource width];
-}
-
-- (int)accessibilityHelperNumberOfLines {
-return 0;
-    // return MIN([iTermAdvancedSettingsModel numberOfLinesForAccessibility], [_dataSource numberOfLines]);
-}
-
+    - (NSRect)accessibilityHelperFrameForCoordRange:(VT100GridCoordRange)coordRange {
+#if 0
+        coordRange.start.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
+        coordRange.end.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
+        NSRect result = NSMakeRect(MAX(0, floor(coordRange.start.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin])),
+                                   MAX(0, coordRange.start.y * _lineHeight),
+                                   MAX(0, (coordRange.end.x - coordRange.start.x) * _charWidth),
+                                   MAX(0, (coordRange.end.y - coordRange.start.y + 1) * _lineHeight));
+        result = [self convertRect:result toView:nil];
+        result = [self.window convertRectToScreen:result];
+        return result;
+#endif
+        return NSMakeRect(0,0,0,0);
+    }
+    
+    - (VT100GridCoord)accessibilityHelperCursorCoord {
+        return VT100GridCoordMake([_dataSource cursorX] - 1, 0);
+#if 0
+        int y = [_dataSource numberOfLines] - [_dataSource height] + [_dataSource cursorY] - 1;
+        return VT100GridCoordMake([_dataSource cursorX] - 1,
+                                  [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
+#endif
+    }
+    
+    - (void)accessibilityHelperSetSelectedRange:(VT100GridCoordRange)coordRange {
+#if 0
+        coordRange.start.y =
+        [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
+        coordRange.end.y =
+        [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
+        [_selection clearSelection];
+        [_selection beginSelectionAt:coordRange.start
+                                mode:kiTermSelectionModeCharacter
+                              resume:NO
+                              append:NO];
+        [_selection moveSelectionEndpointTo:coordRange.end];
+        [_selection endLiveSelection];
+#endif
+    }
+    
+    - (VT100GridCoordRange)accessibilityRangeOfCursor {
+#if 0
+        VT100GridCoord coord = [self accessibilityHelperCursorCoord];
+        return VT100GridCoordRangeMake(coord.x, coord.y, coord.x, coord.y);
+#endif
+        return VT100GridCoordRangeMake(0,0,0,0);
+    }
+    
+    - (VT100GridCoordRange)accessibilityHelperSelectedRange {
+        return VT100GridCoordRangeMake(0,0,0,0);
+#if 0
+        iTermSubSelection *sub = _selection.allSubSelections.lastObject;
+        
+        if (!sub) {
+            return [self accessibilityRangeOfCursor];
+        }
+        
+        VT100GridCoordRange coordRange = sub.range.coordRange;
+        int minY = _dataSource.numberOfLines - _dataSource.height;
+        if (coordRange.start.y < minY) {
+            coordRange.start.y = 0;
+            coordRange.start.x = 0;
+        } else {
+            coordRange.start.y -= minY;
+        }
+        if (coordRange.end.y < minY) {
+            return [self accessibilityRangeOfCursor];
+        } else {
+            coordRange.end.y -= minY;
+        }
+        return coordRange;
+#endif
+    }
+    
+    - (NSString *)accessibilityHelperSelectedText {
+        return NULL;
+#if 0
+        return [self selectedTextAttributed:NO
+                               cappedAtSize:0
+                          minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]];
+#endif
+    }
+    
+    - (NSURL *)accessibilityHelperCurrentDocumentURL {
+        return NULL; //return [_delegate textViewCurrentLocation];
+    }
+    
+    - (screen_char_t *)accessibilityHelperLineAtIndex:(int)accessibilityIndex {
+        return NULL; // return [_dataSource getLineAtIndex:[self accessibilityHelperLineNumberForAccessibilityLineNumber:accessibilityIndex]];
+    }
+    
+    - (int)accessibilityHelperWidth {
+        return 0; // return [_dataSource width];
+    }
+    
+    - (int)accessibilityHelperNumberOfLines {
+        return 0;
+        // return MIN([iTermAdvancedSettingsModel numberOfLinesForAccessibility], [_dataSource numberOfLines]);
+    }
+    
 #pragma mark - NSMenuDelegate
-
-- (void)menuDidClose:(NSMenu *)menu {
-    self.savedSelectedText = nil;
-}
-
+    
+    - (void)menuDidClose:(NSMenu *)menu {
+        self.savedSelectedText = nil;
+    }
+    
 #pragma mark - iTermAltScreenMouseScrollInfererDelegate
-
-- (void)altScreenMouseScrollInfererDidInferScrollingIntent:(BOOL)isTrying {
-    [_delegate textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:isTrying];
-}
-
+    
+    - (void)altScreenMouseScrollInfererDidInferScrollingIntent:(BOOL)isTrying {
+        [_delegate textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:isTrying];
+    }
+    
 #pragma mark - NSPopoverDelegate
-
-- (void)popoverDidClose:(NSNotification *)notification {
-    NSPopover *popover = notification.object;
-    iTermWebViewWrapperViewController *viewController = (iTermWebViewWrapperViewController *)popover.contentViewController;
-    [viewController terminateWebView];
-
-}
+    
+    - (void)popoverDidClose:(NSNotification *)notification {
+        NSPopover *popover = notification.object;
+        iTermWebViewWrapperViewController *viewController = (iTermWebViewWrapperViewController *)popover.contentViewController;
+        [viewController terminateWebView];
+        
+    }
+   
+    - (nullable id)animationForKey:(nonnull NSAnimatablePropertyKey)key { 
+        return nil;
+    }
+    
+    - (nonnull instancetype)animator { 
+        return (void*)1; // XXX
+    }
+#if 0
+    + (nullable id)defaultAnimationForKey:(nonnull NSAnimatablePropertyKey)key { 
+        <#code#>
+    }
+    
+    - (NSRect)accessibilityFrame { 
+        <#code#>
+    }
+    
+    - (nullable id)accessibilityParent { 
+        <#code#>
+    }
+    
+    - (nullable NSAttributedString *)accessibilityAttributedStringForRange:(NSRange)range { 
+        <#code#>
+    }
+    
+    - (nullable id)accessibilityCellForColumn:(NSInteger)column row:(NSInteger)row { 
+        <#code#>
+    }
+    
+    - (NSRect)accessibilityFrameForRange:(NSRange)range { 
+        <#code#>
+    }
+    
+    - (NSPoint)accessibilityLayoutPointForScreenPoint:(NSPoint)point { 
+        <#code#>
+    }
+    
+    - (NSSize)accessibilityLayoutSizeForScreenSize:(NSSize)size { 
+        return NSSizeFromString("0,0");
+    }
+    
+    - (NSInteger)accessibilityLineForIndex:(NSInteger)index { 
+        return @0;
+    }
+    
+    - (BOOL)accessibilityPerformCancel { 
+        <#code#>
+    }
+    
+    - (BOOL)accessibilityPerformConfirm { 
+        <#code#>
+    }
+    
+    - (BOOL)accessibilityPerformDecrement { 
+        <#code#>
+    }
+    
+    - (BOOL)accessibilityPerformDelete { 
+        <#code#>
+    }
+    
+    - (BOOL)accessibilityPerformIncrement { 
+        <#code#>
+    }
+    
+    - (BOOL)accessibilityPerformPick { 
+        <#code#>
+    }
+    
+    - (BOOL)accessibilityPerformPress { 
+        <#code#>
+    }
+    
+    - (BOOL)accessibilityPerformRaise { 
+        <#code#>
+    }
+    
+    - (BOOL)accessibilityPerformShowAlternateUI { 
+        <#code#>
+    }
+    
+    - (BOOL)accessibilityPerformShowDefaultUI { 
+        <#code#>
+    }
+    
+    - (BOOL)accessibilityPerformShowMenu { 
+        <#code#>
+    }
+    
+    - (nullable NSData *)accessibilityRTFForRange:(NSRange)range { 
+        <#code#>
+    }
+    
+    - (NSRange)accessibilityRangeForIndex:(NSInteger)index { 
+        <#code#>
+    }
+    
+    - (NSRange)accessibilityRangeForLine:(NSInteger)line { 
+        <#code#>
+    }
+    
+    - (NSRange)accessibilityRangeForPosition:(NSPoint)point { 
+        <#code#>
+    }
+    
+    - (NSPoint)accessibilityScreenPointForLayoutPoint:(NSPoint)point { 
+        <#code#>
+    }
+    
+    - (NSSize)accessibilityScreenSizeForLayoutSize:(NSSize)size { 
+        <#code#>
+    }
+    
+    - (nullable NSString *)accessibilityStringForRange:(NSRange)range { 
+        <#code#>
+    }
+    
+    - (NSRange)accessibilityStyleRangeForIndex:(NSInteger)index { 
+        <#code#>
+    }
+    
+    - (BOOL)isAccessibilitySelectorAllowed:(nonnull SEL)selector { 
+        <#code#>
+    }
+#endif
+    - (void)encodeWithCoder:(nonnull NSCoder *)aCoder { 
+        
+    }
+    
+    
 
 @end
 

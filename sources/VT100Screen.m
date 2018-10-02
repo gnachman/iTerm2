@@ -3152,6 +3152,26 @@ return;
     return currentGrid_ == altGrid_;
 }
 
+- (NSIndexSet *)animatedLines { 
+    return nil;
+}
+
+
+- (VT100RemoteHost *)remoteHostOnLine:(int)line { 
+    return nil;
+}
+
+
+- (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line { 
+    return nil;
+}
+
+#if 0
+- (VT100Terminal *)terminal { 
+    return nil;
+}
+#endif
+
 - (void)hideOnScreenNotesAndTruncateSpanners
 {
     int screenOrigin = [self numberOfScrollbackLines];

@@ -68,6 +68,7 @@
 #import "iTerm.h"
 #import "iTermProcessCollection.h"
 #include <libproc.h>
+#include "iTermLSOF.h"
 #include <sys/sysctl.h>
 
 // Singleton of this class.

@@ -214,6 +214,7 @@ return;
 }
 
 - (void)showTipForKey:(NSString *)tipKey {
+#if 0
 return;
     NSDictionary *tipDictionary = _tips[tipKey];
     [self willShowTipWithIdentifier:tipKey];
@@ -223,6 +224,7 @@ return;
     controller.delegate = self;
     // Cause it to load and become visible.
     [controller showTipWindow];
+#endif
 }
 
 - (void)willShowTipWithIdentifier:(NSString *)tipKey {

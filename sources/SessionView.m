@@ -551,7 +551,7 @@ static NSDate* lastResizeDate_;
 }
 
 #pragma mark NSDraggingSource protocol
-
+#if 0
 - (void)draggedImage:(NSImage *)draggedImage movedTo:(NSPoint)screenPoint {
     [[NSCursor closedHandCursor] set];
 }
@@ -571,6 +571,7 @@ static NSDate* lastResizeDate_;
         [[MovePaneController sharedInstance] dropInSession:nil half:kNoHalf atPoint:aPoint];
     }
 }
+#endif
 
 #pragma mark NSDraggingDestination protocol
 

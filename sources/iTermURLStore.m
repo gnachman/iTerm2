@@ -154,11 +154,11 @@
             XLog(@"Bogus key not a URL: %@", url);
             return;
         }
-        _store[key] = obj;
+        self->_store[key] = obj;
 
         unsigned short truncated = [iTermURLStore truncatedCodeForCode:obj.integerValue];
-        _reverseStore[@(truncated)] = @{ @"url": url, @"params": key[@"params"] ?: @"" };
-        _nextCode = MAX(_nextCode, obj.integerValue + 1);
+        self->_reverseStore[@(truncated)] = @{ @"url": url, @"params": key[@"params"] ?: @"" };
+        self->_nextCode = MAX(self->_nextCode, obj.integerValue + 1);
     }];
 
     @try {

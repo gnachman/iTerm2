@@ -228,7 +228,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
 }
 
 + (struct proc_fdinfo *)newFileDescriptorsForProcess:(pid_t)pid count:(int *)count {
-    size_t maxSize = [self maximumNumberOfFileDescriptorsForProcess:pid] * sizeof(struct proc_fdinfo);
+    int maxSize = (int)[self maximumNumberOfFileDescriptorsForProcess:pid] * sizeof(struct proc_fdinfo);
     if (maxSize == 0) {
         return NULL;
     }

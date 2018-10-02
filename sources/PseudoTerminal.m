@@ -875,11 +875,13 @@ ITERM_WEAKLY_REFERENCEABLE
     // window doesn't have a title bar but also isn't borderless we also check
     // if we're in fullscreen.
 return NO;
+#if 0
     return ([iTermPreferences boolForKey:kPreferenceKeyEnableDivisionView] &&
             !togglingFullScreen_ &&
             (self.window.styleMask & NSTitledWindowMask) &&
             ![self anyFullScreen] &&
             ![self tabBarVisibleOnTop]);
+#endif
 }
 
 - (void)rootTerminalViewDidResizeContentArea {
@@ -3479,6 +3481,7 @@ return NO;
 
 - (void)delayedEnterFullscreen
 {
+#if 0
     if (windowType_ == WINDOW_TYPE_LION_FULL_SCREEN && NO) { // [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
         if (![[[iTermController sharedInstance] keyTerminalWindow] lionFullScreen]) {
             // call enter(Traditional)FullScreenMode instead of toggle... because
@@ -3489,7 +3492,9 @@ return NO;
                        withObject:nil
                        afterDelay:0];
         }
-    } else if (!_fullScreen) {
+    } else
+#endif
+    if (!_fullScreen) {
         [self performSelector:@selector(enterTraditionalFullScreenMode)
                    withObject:nil
                    afterDelay:0];

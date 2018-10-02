@@ -38,6 +38,7 @@
     if (_fd >= 0) {
         close(_fd);
     }
+    [super dealloc];
 }
 
 - (void)setReuseAddr:(BOOL)reuse {

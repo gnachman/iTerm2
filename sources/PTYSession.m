@@ -160,7 +160,6 @@ static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED = @"Shell
 static NSString *const SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK = @"Alert on Next Mark";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_COMMANDS = @"Commands";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Array of strings
-static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100RemoteHost
 static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY = @"Last Directory";  // NSString
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY_IS_REMOTE = @"Last Directory Is Remote";  // BOOL
@@ -186,8 +185,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 static NSString *const kVariableKeySessionName = @"session.name";
 static NSString *const kVariableKeySessionColumns = @"session.columns";
 static NSString *const kVariableKeySessionRows = @"session.rows";
-static NSString *const kVariableKeySessionHostname = @"session.hostname";
-static NSString *const kVariableKeySessionUsername = @"session.username";
 static NSString *const kVariableKeySessionPath = @"session.path";
 static NSString *const kVariableKeySessionLastCommand = @"session.lastCommand";
 static NSString *const kVariableKeySessionTTY = @"session.tty";
@@ -3075,6 +3072,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (flag != _bell) {
         _bell = flag;
         [_delegate setBell:flag];
+#if 0
         if (false && _bell) {
             if ([_textview keyIsARepeat] == NO &&
                 [self shouldPostGrowlNotification] &&
@@ -3089,6 +3087,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                        viewIndex:[self screenViewIndex]];
             }
         }
+#endif
     }
 }
 
@@ -6822,6 +6821,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // Grow or shrink the height of the frame if the number of lines in the data
 // source + IME has changed.
 - (void)textViewResizeFrameIfNeeded {
+return;
     // Check if the frame size needs to grow or shrink.
     NSRect frame = [_textview frame];
     const CGFloat desiredHeight = _textview.desiredHeight;
@@ -6829,9 +6829,10 @@ ITERM_WEAKLY_REFERENCEABLE
         // Update the wrapper's size, which in turn updates textview's size.
         frame.size.height = desiredHeight + [iTermAdvancedSettingsModel terminalVMargin];  // The wrapper is always larger by VMARGIN.
         _wrapper.frame = frame;
-
+#if 0
         NSAccessibilityPostNotification(_textview,
                                         NSAccessibilityRowCountChangedNotification);
+#endif
     }
 }
 
