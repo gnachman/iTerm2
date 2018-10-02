@@ -6174,7 +6174,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
 
-    // We limit the esarch to 10 lines in each direction.
+    // We limit the search to 10 lines in each direction.
     // See how high the lines of pipes go
     int minY = MAX(0, yi - 10);
     int maxY = MIN(h - 1, yi + 10);
