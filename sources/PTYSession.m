@@ -8551,8 +8551,7 @@ return;
 
 - (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory {
     VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
-    BOOL isSame = ([directory isEqualToString:_lastDirectory] &&
-                   [remoteHost isEqualToRemoteHost:_lastRemoteHost]);
+    BOOL isSame = ([directory isEqualToString:_lastDirectory]);
     [[iTermShellHistoryController sharedInstance] recordUseOfPath:directory
                                                            onHost:[_screen remoteHostOnLine:line]
                                                          isChange:!isSame];

@@ -970,6 +970,7 @@ static const int kDragThreshold = 3;
     point = rect.origin;
     point.y += deltaY;
     [scrollView.documentView scrollPoint:point];
+    [self setNeedsDisplay: TRUE];
 }
 
 - (CGFloat)pageScrollHeight {
@@ -1701,6 +1702,7 @@ static const int kDragThreshold = 3;
     } else if (![self reportMouseEvent:event]) {
         [super scrollWheel:event];
     }
+    [self setNeedsDisplay:YES];
 }
 
 - (BOOL)setCursor:(NSCursor *)cursor {
