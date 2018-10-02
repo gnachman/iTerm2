@@ -136,7 +136,7 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // String used as a user defaults key to remember the user's preference.
 @property(nonatomic, copy) NSString *identifier;
 
-// What kind of suppression options are availble.
+// What kind of suppression options are available.
 @property(nonatomic, assign) iTermWarningType warningType;
 
 // Optional. Changes the bold heading on the warning.

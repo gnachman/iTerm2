@@ -21,7 +21,7 @@ use Getopt::Long qw(:config no_permute pass_through require_order);
 use IO::Handle;
 use MIME::Base64;
 
-# Use the faster Image::Size if avaialbe to calculate an image's size.
+# Use the faster Image::Size if available to calculate an image's size.
 BEGIN {
     eval "require Image::Size";
 }
