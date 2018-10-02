@@ -11,7 +11,7 @@ deal of control.
 Scripts generally take one of two forms:
 
 * "Simple" scripts that perform a series of actions, such as creating windows, and then terminate.
-* "Long-running daemons" that stay running indefintely while observing notifications or performing some action periodically.
+* "Long-running daemons" that stay running indefinitely while observing notifications or performing some action periodically.
 
 Creating a New Script
 ---------------------
