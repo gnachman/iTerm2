@@ -155,7 +155,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 - (int)digitKeyForEvent:(NSEvent *)event {
-    if ([iTermAdvancedSettingsModel useVirtualKeyCodesForDetectingDigits]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyEmulateUSKeyboard]) {
         switch (event.keyCode) {
             case kVK_ANSI_1:
             case kVK_ANSI_Keypad1:

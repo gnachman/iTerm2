@@ -247,7 +247,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)useOpenDirectory;
 + (BOOL)useSystemCursorWhenPossible;
 + (BOOL)useUnevenTabs;
-+ (BOOL)useVirtualKeyCodesForDetectingDigits;
 + (CGFloat)verticalBarCursorWidth;
 + (NSString *)viewManPageCommand;
 + (BOOL)wrapFocus;
