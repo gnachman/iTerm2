@@ -5375,7 +5375,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_pbtext release];
         _pbtext = nil;
 
-        // In case it was the find pasteboard that chagned
+        // In case it was the find pasteboard that changed
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
                                                             object:nil
                                                           userInfo:nil];
