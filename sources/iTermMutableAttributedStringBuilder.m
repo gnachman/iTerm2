@@ -96,6 +96,7 @@
         iTermCheapAttributedString *cheap = [[iTermCheapAttributedString alloc] init];
         cheap.characterData = _characterData;
         cheap.attributes = _attributes;
+        [_attributedString release];
         _attributedString = cheap;
         return;
     } else if ([_attributedString isKindOfClass:[iTermCheapAttributedString class]]) {
