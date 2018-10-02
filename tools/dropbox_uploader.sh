@@ -704,7 +704,7 @@ function db_upload_dir
     local DIR_SRC=$(normalize_path "$1")
     local DIR_DST=$(normalize_path "$2")
 
-    #Creatig remote directory
+    #Creating remote directory
     db_mkdir "$DIR_DST"
 
     for file in "$DIR_SRC/"*; do
