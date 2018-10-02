@@ -1,7 +1,7 @@
 This test should be run on an 80-column wide screen.
 0         1         2         3         4         5         6         7
 01234567890123456789012345678901234567890123456789012345678901234567890123456789
-Here are some DWCs: ０１２３４５６７８９ Follwed by regular text.
+Here are some DWCs: ０１２３４５６７８９ Followed by regular text.
 Here is a long line with a DWC that doesn't span followed by text: xxxxxxxxxxx０abc
 Here is a long line with a DWC that wants to span lines: xxxxxxxxxxxxxxxxxxxxxx０abc
 Here are two lines of DWCs, both with a DWC spanning a line:
