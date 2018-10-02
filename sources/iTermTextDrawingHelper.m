@@ -1231,12 +1231,19 @@ typedef struct iTermTextColorContext {
     const CGFloat *components = CGColorGetComponents(color);
     const BOOL useThinStrokes = [self useThinStrokesAgainstBackgroundColor:backgroundColor
                                                            foregroundColor:color];
-    if (useThinStrokes) {
+    BOOL shouldSmooth = useThinStrokes;
+    if (@available(macOS 10.14, *)) {
+        // This is a major wtf. Why is this backwards on 10.14?
+        shouldSmooth = !shouldSmooth;
+    }
+    if (shouldSmooth) {
         CGContextSetShouldSmoothFonts(ctx, YES);
         // This seems to be available at least on 10.8 and later. The only reference to it is in
         // WebKit. This causes text to render just a little lighter, which looks nicer.
         savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
         CGContextSetFontSmoothingStyle(ctx, 16);
+    } else if (@available(macOS 10.14, *)) {
+        CGContextSetShouldSmoothFonts(ctx, NO);
     }
 
     size_t numCodes = cheapString.length;
