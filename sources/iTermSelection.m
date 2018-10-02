@@ -636,7 +636,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
                                                    MAX(range.coordRange.start.y,
                                                        range.coordRange.end.y));
     } else if ([self coord:range.coordRange.end isBeforeCoord:range.coordRange.start]) {
-        // For all other kinds of selection, the coorinate pair for each of
+        // For all other kinds of selection, the coordinate pair for each of
         // start and end must remain together, but start should precede end in
         // reading order.
         range.coordRange = VT100GridCoordRangeMake(range.coordRange.end.x,
