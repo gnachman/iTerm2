@@ -639,7 +639,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [tabViewItem_ setLabel:[[self activeSession] name]];
         if ([realParentWindow_ currentTab] == self) {
             // If you set a textview in a non-current tab to the first responder and
-            // then close that tab, it crashes with NSTextInput caling
+            // then close that tab, it crashes with NSTextInput calling
             // -[PTYTextView respondsToSelector:] on a deallocated instance of the
             // first responder. This kind of hacky workaround keeps us from making
             // a invisible textview the first responder.
