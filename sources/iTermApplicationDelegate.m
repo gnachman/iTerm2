@@ -661,7 +661,7 @@ static BOOL hasBecomeActive = NO;
     if (!quittingBecauseLastWindowClosed_ &&  // cmd-q
         [terminals count] > 0 &&  // there are terminal windows
         [iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit]) {  // preference is to prompt on quit cmd
-        [reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEnabled]];
+        //[reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEnabled]];
     }
     quittingBecauseLastWindowClosed_ = NO;
     if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] && numSessions > 1) {
@@ -690,6 +690,7 @@ static BOOL hasBecomeActive = NO;
         alert.informativeText = message;
         [alert addButtonWithTitle:@"OK"];
         [alert addButtonWithTitle:@"Cancel"];
+#if 0
         iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
                                                                                prompt:@"Details"
                                                                               message:[NSString stringWithFormat:@"You are being prompted because:\n\n%@",
@@ -698,8 +699,8 @@ static BOOL hasBecomeActive = NO;
         accessory.requestLayout = ^{
             [alert layout];
         };
-        alert.accessoryView = accessory;
-
+      //  alert.accessoryView = accessory;
+#endif
         if ([alert runModal] != NSAlertFirstButtonReturn) {
             DLog(@"User declined to quit");
             return NSTerminateCancel;
