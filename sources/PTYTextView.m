@@ -29,7 +29,6 @@
 #import "iTermShellHistoryController.h"
 #import "iTermTextDrawingHelper.h"
 #import "iTermTextExtractor.h"
-#import "iTermTextViewAccessibilityHelper.h"
 #import "iTermURLActionFactory.h"
 #import "iTermURLStore.h"
 #import "iTermWebViewWrapperViewController.h"
@@ -104,7 +103,6 @@ static const int kDragThreshold = 3;
 
 @interface PTYTextView () <
     iTermAltScreenMouseScrollInfererDelegate,
-    iTermTextViewAccessibilityHelperDelegate,
     iTermTextDrawingHelperDelegate,
     iTermFindCursorViewDelegate,
     iTermFindOnPageHelperDelegate,
@@ -237,7 +235,6 @@ static const int kDragThreshold = 3;
     BOOL _showStripesWhenBroadcastingInput;
 
     iTermFindOnPageHelper *_findOnPageHelper;
-    iTermTextViewAccessibilityHelper *_accessibilityHelper;
     iTermBadgeLabel *_badgeLabel;
 
     NSPoint _mouseLocationToRefuseFirstResponderAt;
@@ -340,9 +337,6 @@ static const int kDragThreshold = 3;
         _findOnPageHelper = [[iTermFindOnPageHelper alloc] init];
         _findOnPageHelper.delegate = self;
 
-        _accessibilityHelper = [[iTermTextViewAccessibilityHelper alloc] init];
-        _accessibilityHelper.delegate = self;
-
         _badgeLabel = [[iTermBadgeLabel alloc] init];
         _keyBindingEmulator = [[iTermNSKeyBindingEmulator alloc] init];
         
@@ -398,7 +392,6 @@ static const int kDragThreshold = 3;
     [_drawingHook release];
     _drawingHelper.delegate = nil;
     [_drawingHelper release];
-    [_accessibilityHelper release];
     [_badgeLabel release];
     [_quickLookController close];
     [_quickLookController release];
@@ -7153,14 +7146,16 @@ return;
 }
 
 - (NSArray *)accessibilityAttributeNames {
-    return [_accessibilityHelper accessibilityAttributeNames];
+    // return [_accessibilityHelper accessibilityAttributeNames];
+    return nil;
 }
 
 - (NSArray *)accessibilityParameterizedAttributeNames {
-    return [_accessibilityHelper accessibilityParameterizedAttributeNames];
+    return NULL; // [_accessibilityHelper accessibilityParameterizedAttributeNames];
 }
 
 - (id)accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter {
+#if 0
     BOOL handled;
     id result = [_accessibilityHelper accessibilityAttributeValue:attribute
                                                      forParameter:parameter
@@ -7169,32 +7164,42 @@ return;
         result = [super accessibilityAttributeValue:attribute forParameter:parameter];
     }
     return result;
+#endif
+   return nil;
 }
 
 - (BOOL)accessibilityIsAttributeSettable:(NSString *)attribute {
+#if 0
     BOOL handled;
     BOOL result = [_accessibilityHelper accessibilityIsAttributeSettable:attribute handled:&handled];
     if (!handled) {
         result = [super accessibilityIsAttributeSettable:attribute];
     }
     return result;
+#endif
+    return FALSE;
 }
 
 - (void)accessibilitySetValue:(id)value forAttribute:(NSString *)attribute {
+#if 0
     BOOL handled;
     [_accessibilityHelper accessibilitySetValue:value forAttribute:attribute handled:&handled];
     if (!handled) {
         [super accessibilitySetValue:value forAttribute:attribute];
     }
+#endif
 }
 
 - (id)accessibilityAttributeValue:(NSString *)attribute {
+#if 0
     BOOL handled;
     id result = [_accessibilityHelper accessibilityAttributeValue:attribute handled:&handled];
     if (!handled) {
         result = [super accessibilityAttributeValue:attribute];
     }
     return result;
+#endif
+    return 0;
 }
 
 #pragma mark - Accessibility Helper Delegate
@@ -7225,6 +7230,7 @@ return;
 }
 
 - (NSRect)accessibilityHelperFrameForCoordRange:(VT100GridCoordRange)coordRange {
+#if 0
     coordRange.start.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
     coordRange.end.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
     NSRect result = NSMakeRect(MAX(0, floor(coordRange.start.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin])),
@@ -7234,15 +7240,21 @@ return;
     result = [self convertRect:result toView:nil];
     result = [self.window convertRectToScreen:result];
     return result;
+#endif
+    return NSMakeRect(0,0,0,0);
 }
 
 - (VT100GridCoord)accessibilityHelperCursorCoord {
+    return VT100GridCoordMake([_dataSource cursorX] - 1, 0);
+#if 0
     int y = [_dataSource numberOfLines] - [_dataSource height] + [_dataSource cursorY] - 1;
     return VT100GridCoordMake([_dataSource cursorX] - 1,
                               [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
+#endif
 }
 
 - (void)accessibilityHelperSetSelectedRange:(VT100GridCoordRange)coordRange {
+#if 0
     coordRange.start.y =
         [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
     coordRange.end.y =
@@ -7254,14 +7266,20 @@ return;
                           append:NO];
     [_selection moveSelectionEndpointTo:coordRange.end];
     [_selection endLiveSelection];
+#endif
 }
 
 - (VT100GridCoordRange)accessibilityRangeOfCursor {
+#if 0
     VT100GridCoord coord = [self accessibilityHelperCursorCoord];
     return VT100GridCoordRangeMake(coord.x, coord.y, coord.x, coord.y);
+#endif
+    return VT100GridCoordRangeMake(0,0,0,0);
 }
 
 - (VT100GridCoordRange)accessibilityHelperSelectedRange {
+    return VT100GridCoordRangeMake(0,0,0,0);
+#if 0
     iTermSubSelection *sub = _selection.allSubSelections.lastObject;
     
     if (!sub) {
@@ -7282,29 +7300,33 @@ return;
         coordRange.end.y -= minY;
     }
     return coordRange;
+#endif
 }
 
 - (NSString *)accessibilityHelperSelectedText {
+return NULL;
+#if 0
     return [self selectedTextAttributed:NO
                            cappedAtSize:0
                       minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]];
+#endif
 }
 
 - (NSURL *)accessibilityHelperCurrentDocumentURL {
-    return [_delegate textViewCurrentLocation];
+    return NULL; //return [_delegate textViewCurrentLocation];
 }
 
 - (screen_char_t *)accessibilityHelperLineAtIndex:(int)accessibilityIndex {
-    return [_dataSource getLineAtIndex:[self accessibilityHelperLineNumberForAccessibilityLineNumber:accessibilityIndex]];
+    return NULL; // return [_dataSource getLineAtIndex:[self accessibilityHelperLineNumberForAccessibilityLineNumber:accessibilityIndex]];
 }
 
 - (int)accessibilityHelperWidth {
-    return [_dataSource width];
+    return 0; // return [_dataSource width];
 }
 
 - (int)accessibilityHelperNumberOfLines {
-    return MIN([iTermAdvancedSettingsModel numberOfLinesForAccessibility],
-               [_dataSource numberOfLines]);
+return 0;
+    // return MIN([iTermAdvancedSettingsModel numberOfLinesForAccessibility], [_dataSource numberOfLines]);
 }
 
 #pragma mark - NSMenuDelegate

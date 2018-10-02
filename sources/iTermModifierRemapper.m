@@ -90,7 +90,7 @@
     
     if (![_keyDown isEnabled]) {
         DLog(@"The event tap is NOT enabled");
-        [self requestAccessibilityPermission];
+     //   [self requestAccessibilityPermission];
     }
 }
 
@@ -100,6 +100,7 @@
 }
 
 - (void)requestAccessibilityPermission {
+#if 0
     DLog(@"Requesting accessibility permission");
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -109,6 +110,7 @@
             return;
         }
     });
+#endif
 }
 
 - (NSString *)accessibilityMessageForModifier {
