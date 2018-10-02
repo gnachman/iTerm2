@@ -1923,6 +1923,8 @@
 		A699BAE618C8394700D425A7 /* CVector.h in Headers */ = {isa = PBXBuildFile; fileRef = A699BAE418C8394700D425A7 /* CVector.h */; };
 		A69A15731D7FD78200A9E7EF /* TipCalendar.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A15711D7FD78200A9E7EF /* TipCalendar.png */; };
 		A69A15741D7FD78200A9E7EF /* TipCalendar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A15721D7FD78200A9E7EF /* TipCalendar@2x.png */; };
+		A69A260B21640F3F0091C16D /* iTermFlexibleView.h in Headers */ = {isa = PBXBuildFile; fileRef = A69A260921640F3F0091C16D /* iTermFlexibleView.h */; };
+		A69A260C21640F3F0091C16D /* iTermFlexibleView.m in Sources */ = {isa = PBXBuildFile; fileRef = A69A260A21640F3F0091C16D /* iTermFlexibleView.m */; };
 		A69B4577195F668500F5444D /* NSScreen+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B4575195F668500F5444D /* NSScreen+iTerm.h */; };
 		A69B457B1967B03B00F5444D /* BrokenPipeDivider.png in Resources */ = {isa = PBXBuildFile; fileRef = A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */; };
 		A69B457C1967B04300F5444D /* BrokenPipeDivider.png in Resources */ = {isa = PBXBuildFile; fileRef = A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */; };
@@ -4023,6 +4025,8 @@
 		A699BAE418C8394700D425A7 /* CVector.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = CVector.h; sourceTree = "<group>"; tabWidth = 4; };
 		A69A15711D7FD78200A9E7EF /* TipCalendar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TipCalendar.png; path = images/TipCalendar.png; sourceTree = "<group>"; };
 		A69A15721D7FD78200A9E7EF /* TipCalendar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "TipCalendar@2x.png"; path = "images/TipCalendar@2x.png"; sourceTree = "<group>"; };
+		A69A260921640F3F0091C16D /* iTermFlexibleView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFlexibleView.h; sourceTree = "<group>"; };
+		A69A260A21640F3F0091C16D /* iTermFlexibleView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFlexibleView.m; sourceTree = "<group>"; };
 		A69B4575195F668500F5444D /* NSScreen+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSScreen+iTerm.h"; sourceTree = "<group>"; };
 		A69B4576195F668500F5444D /* NSScreen+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSScreen+iTerm.m"; sourceTree = "<group>"; };
 		A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BrokenPipeDivider.png; path = images/BrokenPipeDivider.png; sourceTree = "<group>"; };
@@ -5709,6 +5713,8 @@
 				A685D9FC1E5B6EFC0091C3A7 /* PseudoTerminal+Private.h */,
 				A6F385DC1FA55E2000739939 /* iTermSmartCursorColor.h */,
 				A6F385DD1FA55E2000739939 /* iTermSmartCursorColor.m */,
+				A69A260921640F3F0091C16D /* iTermFlexibleView.h */,
+				A69A260A21640F3F0091C16D /* iTermFlexibleView.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -7519,6 +7525,7 @@
 				A6E5D20F1FA3C57900EDD002 /* iTermMetalFrameData.h in Headers */,
 				A667192A1DCE36C3000CE608 /* iTermRecentDirectoryMO+Additions.h in Headers */,
 				A667192B1DCE36C3000CE608 /* iTermRoundedCornerScrollView.h in Headers */,
+				A69A260B21640F3F0091C16D /* iTermFlexibleView.h in Headers */,
 				A667192C1DCE36C3000CE608 /* iTermPreciseTimer.h in Headers */,
 				A68400BC1FF98101008D3EE2 /* iTermTimestampsRenderer.h in Headers */,
 				A667192D1DCE36C3000CE608 /* iTermBadgeLabel.h in Headers */,
@@ -9278,6 +9285,7 @@
 				A62A1F721E6E724B00363EE9 /* iTermMenuOpener.m in Sources */,
 				A65EC0301F31800300AC0A6B /* iTermUpdateCadenceController.m in Sources */,
 				A6A4866D20B679E700493302 /* iTermProfilePreferencesBaseViewController.m in Sources */,
+				A69A260C21640F3F0091C16D /* iTermFlexibleView.m in Sources */,
 				A60C034F20881E5F00FE2F1F /* iTermAPIHelper.m in Sources */,
 				533BDAC320DB5CE100E26F0A /* NSObject+iTerm.m in Sources */,
 				530AB8BD20B3D3D000D2AA08 /* iTermWindowHacks.m in Sources */,
