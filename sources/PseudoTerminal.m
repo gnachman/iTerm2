@@ -9051,7 +9051,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.currentSession.quickLookController endPreviewPanelControl:panel];
 }
 
-#pragma mark - NSCombobBoxDelegate
+#pragma mark - NSComboBoxDelegate
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     if ([aNotification object] == coprocessCommand_) {
