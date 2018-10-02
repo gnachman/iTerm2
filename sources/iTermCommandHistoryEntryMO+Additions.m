@@ -8,7 +8,7 @@
 
 #import "iTermCommandHistoryEntryMO+Additions.h"
 
-#import "iTermCommandHistoryCommandUseMO+Addtions.h"
+#import "iTermCommandHistoryCommandUseMO+Additions.h"
 #import "iTermCommandHistoryCommandUseMO.h"
 #import "iTermCommandHistoryEntryMO.h"
 

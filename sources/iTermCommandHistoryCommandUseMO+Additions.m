@@ -6,7 +6,7 @@
 //
 //
 
-#import "iTermCommandHistoryCommandUseMO+Addtions.h"
+#import "iTermCommandHistoryCommandUseMO+Additions.h"
 #import "iTermCommandHistoryCommandUseMO.h"
 #import "NSObject+iTerm.h"
 #import "VT100ScreenMark.h"

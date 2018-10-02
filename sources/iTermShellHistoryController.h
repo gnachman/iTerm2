@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "iTermCommandHistoryCommandUseMO+Addtions.h"
+#import "iTermCommandHistoryCommandUseMO+Additions.h"
 #import "iTermRecentDirectoryMO.h"
 
 extern NSString *const kCommandHistoryDidChangeNotificationName;
