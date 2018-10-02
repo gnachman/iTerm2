@@ -563,7 +563,12 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 // Per-iteration initialization. Only call this once per iteration.
 - (void)initializeIteration:(NSInteger)iteration offset:(CGPoint)offset skew:(CGFloat)skew {
     CGContextSetShouldAntialias(_cgContexts[iteration], _antialiased);
-    if (_useThinStrokes) {
+    BOOL shouldSmooth = _useThinStrokes;
+    if (@available(macOS 10.14, *)) {
+        // This is a major wtf. Why is this backwards on 10.14?
+        shouldSmooth = !shouldSmooth;
+    }
+    if (shouldSmooth) {
         CGContextSetShouldSmoothFonts(_cgContexts[iteration], YES);
         // This seems to be available at least on 10.8 and later. The only reference to it is in
         // WebKit. This causes text to render just a little lighter, which looks nicer.
