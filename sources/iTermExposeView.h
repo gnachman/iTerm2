@@ -11,7 +11,7 @@
 
 @class iTermExposeGridView;
 @class iTermExposeTabView;
-@class PTYSEssion;
+@class PTYSession;
 
 @interface iTermExposeView : NSView <GlobalSearchDelegate>
 

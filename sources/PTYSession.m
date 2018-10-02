@@ -1247,7 +1247,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     if (needDivorce) {
-        // Keep it from stepping on an existing sesion with the same guid. Assign a fresh GUID.
+        // Keep it from stepping on an existing session with the same guid. Assign a fresh GUID.
         // Set the ORIGINAL_GUID to an existing guid from which this profile originated if possible.
         NSString *originalGuid = nil;
         NSString *recordedGuid = arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID];
