@@ -14,6 +14,7 @@
 @implementation iTermAboutWindowController {
     IBOutlet NSTextView *_dynamicText;
     IBOutlet NSTextView *_patronsTextView;
+    IBOutlet NSTextField *_titleText;
 }
 
 + (instancetype)sharedInstance {
@@ -30,13 +31,12 @@
     if (self) {
 #if 0
         NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
-        NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n",
-                                   myDict[(NSString *)kCFBundleVersionKey]];
+        NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n", myDict[(NSString *)kCFBundleVersionKey]];
 #endif
-        NSString *versionString = [NSString stringWithFormat: @"Version " THERM_VERSION "\niTerm2 fork by pancake\n\n"];
-
-        NSAttributedString *webAString = [self attributedStringWithLinkToURL:@"https://github.com/trufae/Therm"
-                                                                       title:@"Home Page\n"];
+     
+        NSString *versionString = [NSString stringWithFormat:@"iTerm2 fork by pancake\n\n"];
+        [_titleText setStringValue: @"Therm " THERM_VERSION];
+        NSAttributedString *webAString = [self attributedStringWithLinkToURL:@"https://github.com/trufae/Therm" title:@"\visit Github\n"];
         NSAttributedString *bugsAString =
                 [self attributedStringWithLinkToURL:@"https://github.com/trufae/Therm/issues"
                                               title:@"Report a bug\n"];
@@ -45,19 +45,33 @@
         [self window];
 
         [_dynamicText setLinkTextAttributes:self.linkTextViewAttributes];
-        [[_dynamicText textStorage] deleteCharactersInRange:NSMakeRange(0, [[_dynamicText textStorage] length])];
-        [[_dynamicText textStorage] appendAttributedString:[[[NSAttributedString alloc] initWithString:versionString] autorelease]];
-        [[_dynamicText textStorage] appendAttributedString:webAString];
-        [[_dynamicText textStorage] appendAttributedString:bugsAString];
+        NSTextStorage *ts = [_dynamicText textStorage];
+        
+        [ts deleteCharactersInRange:NSMakeRange(0, [ts length])];
+       // NSFont *font = [NSFont fontWithName:@"Palatino-Roman" size:14.0];
+        NSColor *color = [NSColor grayColor];
+       // NSDictionary *asa = [NSDictionary dictionaryWithObject: font forKey: NSFontAttributeName];
+        NSDictionary *asa = [NSDictionary dictionaryWithObject: color forKey: NSForegroundColorAttributeName];
+
+     //   NSAttributedString *as = [[[NSAttributedString alloc] initWithString:versionString] autorelease];
+        NSAttributedString *as = [[NSAttributedString alloc] initWithString: versionString attributes:asa];
+        
+        //                          alloc] initWithString:versionString] autorelease];
+
+        [ts appendAttributedString: as];
+        [ts appendAttributedString: webAString];
+       // [[_dynamicText textStorage] appendAttributedString:bugsAString];
         [_dynamicText setAlignment:NSCenterTextAlignment
                              range:NSMakeRange(0, [[_dynamicText textStorage] length])];
+        [_titleText setStringValue: [@"Therm v" stringByAppendingString: @THERM_VERSION]];
     }
     return self;
 }
 
 - (NSDictionary *)linkTextViewAttributes {
+    NSColor *linkColor = [NSColor grayColor];
     return @{ NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
-              NSForegroundColorAttributeName: [NSColor blueColor],
+              NSForegroundColorAttributeName: linkColor,
               NSCursorAttributeName: [NSCursor pointingHandCursor] };
 }
 
