@@ -33,16 +33,16 @@
                             renderBold:(BOOL *)renderBold
                           renderItalic:(BOOL *)renderItalic;
 
-// Returns a new autorelased PTYFontInfo with a bold version of this font (or
+// Returns a new autoreleased PTYFontInfo with a bold version of this font (or
 // nil if none is available).
 - (PTYFontInfo *)computedBoldVersion;
 
-// Returns a new autorelased PTYFontInfo with a bold version of this font (or
+// Returns a new autoreleased PTYFontInfo with a bold version of this font (or
 // nil if none is available).
 - (PTYFontInfo *)computedItalicVersion;
 
 
-// Returns a new autorelased PTYFontInfo with a bold and italic version of this font (or nil if none
+// Returns a new autoreleased PTYFontInfo with a bold and italic version of this font (or nil if none
 // is available).
 - (PTYFontInfo *)computedBoldItalicVersion;
 
