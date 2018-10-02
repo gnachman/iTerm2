@@ -108,7 +108,7 @@ static const double kInterBellQuietPeriod = 0.1;
     // line number gives a unique line number that won't be reused when the linebuffer overflows.
     long long cumulativeScrollbackOverflow_;
 
-    // When set, strings, newlines, and linefeeds are appened to printBuffer_. When ANSICSI_PRINT
+    // When set, strings, newlines, and linefeeds are appended to printBuffer_. When ANSICSI_PRINT
     // with code 4 is received, it's sent for printing.
     BOOL collectInputForPrinting_;
     NSMutableString *printBuffer_;
