@@ -95,7 +95,7 @@
     XCTAssert([token.string isEqualToString:@"title"]);
 }
 
-- (void)testFailOnEmbddedEscapePlusCharacter {
+- (void)testFailOnEmbeddedEscapePlusCharacter {
     VT100Token *token = [self tokenForDataWithFormat:@"%c]0;ti%cc", VT100CC_ESC, VT100CC_ESC];
     XCTAssert(token->type == VT100_NOTSUPPORT);
 }
