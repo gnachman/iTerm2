@@ -8425,7 +8425,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-// These two methods are delecate because -closeTab: won't remove the tab from
+// These two methods are delicate because -closeTab: won't remove the tab from
 // the -tabs array immediately for tmux tabs.
 - (void)closeOtherTabs:(id)sender
 {
