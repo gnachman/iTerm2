@@ -197,7 +197,7 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // Either miniaturizes or unminiaturizes, depending on |mini|.
 - (void)terminalMiniaturize:(BOOL)mini;
 
-// Either raises or iconfies, depending on |raise|.
+// Either raises or iconifies, depending on |raise|.
 - (void)terminalRaise:(BOOL)raise;
 
 // Scroll the screen's scroll region up by |n| lines.
