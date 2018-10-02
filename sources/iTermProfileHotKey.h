@@ -19,7 +19,7 @@
 
 @property(nonatomic, readonly) Profile *profile;
 
-// Is the window level floating? May not be a floating panel if it doesn't meet all the critieria
+// Is the window level floating? May not be a floating panel if it doesn't meet all the criteria
 // to be a panel (must join all spaces).
 @property(nonatomic, readonly) BOOL floats;
 
