@@ -3772,7 +3772,7 @@ ITERM_WEAKLY_REFERENCEABLE
          self.window.screen);
     if (canonicalize && !_inWindowDidChangeScreen) {
         // Nicolas reported a bug where canonicalizeWindowFrame moved the window causing this to
-        // be called re-entrantly, and eventually the stack overflowed. If we insist the window should
+        // be called reentrantly, and eventually the stack overflowed. If we insist the window should
         // be on screen A and the OS insists it should be on screen B, we'll never agree, so just
         // try once.
         _inWindowDidChangeScreen = YES;
