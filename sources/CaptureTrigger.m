@@ -19,8 +19,8 @@
 #import "VT100ScreenMark.h"
 
 // This one cannot be suppressed.
-static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier =
-    @"NoSyncTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier";
+static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
+    @"NoSyncTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier";
 
 static NSString *const kSuppressCaptureOutputRequiresShellIntegrationWarning =
     @"NoSyncSuppressCaptureOutputRequiresShellIntegrationWarning";
@@ -141,7 +141,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
                                                    withActions:@[ @"Install", @"Silence Warning" ]
                                                     completion:completion];
     [aSession queueAnnouncement:announcement
-                     identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];
+                     identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier];
 }
 
 - (void)activateOnOutput:(CapturedOutput *)capturedOutput inSession:(PTYSession *)session {
@@ -158,7 +158,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
                                                         completion:^(int selection) { }];
         announcement.timeout = 2;
         [session queueAnnouncement:announcement
-                        identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];
+                        identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier];
     }
     [session takeFocus];
 }
