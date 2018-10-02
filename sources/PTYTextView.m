@@ -1507,7 +1507,7 @@ static const int kDragThreshold = 3;
         DLog(@"PTYTextView keyDown send to IME");
 
         // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
-        // wrong instnace of PTYTextView. We work around the issue by using a global variable to
+        // wrong instance of PTYTextView. We work around the issue by using a global variable to
         // track the instance of PTYTextView that is currently handling a key event and rerouting
         // calls as needed in -insertText and -doCommandBySelector.
         gCurrentKeyEventTextView = [[self retain] autorelease];
