@@ -259,7 +259,7 @@ static const CGFloat kWindowWidth = 400;
     }
 }
 
-// Action button titles that are collapsable. These must appear adjacently and last.
+// Action button titles that are collapsible. These must appear adjacently and last.
 - (NSArray *)collapsingTitles {
     return @[ kShowThisLaterTitle,
               kShareTitle,

@@ -4101,7 +4101,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     _currentPromptRange.start = coord;
     _currentPromptRange.end = coord;
 
-    // FinalTerm uses this to define the start of a collapsable region. That would be a nightmare
+    // FinalTerm uses this to define the start of a collapsible region. That would be a nightmare
     // to add to iTerm, and our answer to this is marks, which already existed anyway.
     [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
     if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
