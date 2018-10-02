@@ -621,7 +621,7 @@ static NSError *SCPFileError(NSString *description) {
             case NMSSHKnownHostStatusFailure:
                 title = [NSString stringWithFormat:@"Problem connecting to %@", session.host];
                 message = [NSString stringWithFormat:@"Could not read the known_hosts file.\n"
-                                                     @"As a result, the autenticity of host '%@' can't be established."
+                                                     @"As a result, the authenticity of host '%@' can't be established."
                                                      @"DSA key fingerprint is %@. Connect anyway?",
                            session.host, fingerprint];
                 break;
