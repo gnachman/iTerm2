@@ -258,7 +258,7 @@
 
     [values addObject:[modifiedFilenames componentsJoinedByString:@" "]];
     if (filenames.count > 1) {
-        [labels addObject:@"Multile file names"];
+        [labels addObject:@"Multiple file names"];
     } else if (filenames.count == 1) {
         [labels addObject:@"File name"];
     }

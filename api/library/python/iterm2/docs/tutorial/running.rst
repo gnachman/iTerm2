@@ -17,7 +17,7 @@ included:
 
 * Any file ending in `.py`. These correspond to "basic" scripts.
 * Any folder having an `itermenv` folder within it. These correspond to "full environment" scripts.
-* Applescript files, which are not the concern of this document.
+* AppleScript files, which are not the concern of this document.
 
 To run a script from the menu, simply select it and it will run.
 

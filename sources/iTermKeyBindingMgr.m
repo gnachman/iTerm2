@@ -1116,7 +1116,7 @@ exit:
     CGEventFlags orMask = 0;
 
     // flags contains both device-dependent flags and device-independent flags.
-    // The device-indepdendent flags are named kCGEventFlagMaskXXX or NX_xxxMASK
+    // The device-independent flags are named kCGEventFlagMaskXXX or NX_xxxMASK
     // The device-dependent flags are named NX_DEVICExxxKEYMASK
     // Device-independent flags do not indicate leftness or rightness.
     // Device-dependent flags do.

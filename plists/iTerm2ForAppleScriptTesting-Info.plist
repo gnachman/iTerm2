@@ -124,7 +124,7 @@
 		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
-	<string>iTerm2ForApplescriptTesting</string>
+	<string>iTerm2ForAppleScriptTesting</string>
 	<key>CFBundleGetInfoString</key>
 	<string>unknown</string>
 	<key>CFBundleHelpBookFolder</key>
@@ -138,7 +138,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>iTerm2 for Applescript Testing</string>
+	<string>iTerm2 for AppleScript Testing</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

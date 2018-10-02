@@ -140,7 +140,7 @@
             // set a code of 0, thinking it will keep their ssh sessions alive. While it does, it
             // will also fill your prompt with ^@ characters, if you're lucky. If you're not at your
             // prompt it could do basically anything. It's useful for people working with awful
-            // outdated networking equipment who know what they're doing so I'm not kiling it.
+            // outdated networking equipment who know what they're doing so I'm not killing it.
             // If you came here because you want to keep your ssh sessions alive, look into enabling
             // KeepAlive on your ssh client. Put this in your ~/.ssh/config:
             // Host *

@@ -458,7 +458,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 - (void)windowNumberDidChangeTo:(NSNumber *)number {
     _windowNumber = number;
     BOOL deemphasized;
-    _windowNumberLabel.stringValue = [iTermWindowShortcutLabelTitlebarAccessoryViewController stringForOrdinal:number.intValue deempahsized:&deemphasized];
+    _windowNumberLabel.stringValue = [iTermWindowShortcutLabelTitlebarAccessoryViewController stringForOrdinal:number.intValue deemphasized:&deemphasized];
 }
 
 #pragma mark - Division View

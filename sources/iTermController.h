@@ -93,7 +93,7 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 - (int)allocateWindowNumber;
 
 - (void)saveWindowArrangement:(BOOL)allWindows;
-- (void)saveWindowArrangmentForAllWindows:(BOOL)allWindows name:(NSString *)name;
+- (void)saveWindowArrangementForAllWindows:(BOOL)allWindows name:(NSString *)name;
 - (void)saveWindowArrangementForWindow:(PseudoTerminal *)currentTerminal name:(NSString *)name;
 
 - (void)loadWindowArrangementWithName:(NSString *)theName;

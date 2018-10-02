@@ -169,7 +169,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)toggleFullScreen:(nullable id)sender {
     if (![[self ptyDelegate] lionFullScreen]  &&
-        ![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
+        ![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen]) {
         // The user must have clicked on the toolbar arrow, but the pref is set
         // to use traditional fullscreen.
         [(id<PTYWindowDelegateProtocol>)[self delegate] toggleTraditionalFullScreenMode];
@@ -363,7 +363,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         // This loop iterates over each window in front of this one and measures
         // how much of it intersects each part of this one (a part is one 9th of
-        // the window, as divded into a 3x3 grid). For each part, an occlusion
+        // the window, as divided into a 3x3 grid). For each part, an occlusion
         // fraction is tracked, which is the fraction of that part which is covered
         // by another window. It's approximate because it's the maximum occlusion
         // for that part by all other windows, so it could be too low (if two

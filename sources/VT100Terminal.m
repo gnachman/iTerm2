@@ -542,7 +542,7 @@ static const int kMaxScreenRows = 4096;
                 break;
             case 20:
                 // This used to be the setter for "line mode", but it wasn't used and it's not
-                // supported by xterm. Seemed to have somethign to do with CR vs LF.
+                // supported by xterm. Seemed to have something to do with CR vs LF.
                 break;
             case 25:
                 [delegate_ terminalSetCursorVisible:mode];
@@ -582,7 +582,7 @@ static const int kMaxScreenRows = 4096;
 
             case 1000:
             // case 1001:
-            // TODO: MOUSE_REPORTING_HILITE not implemented.
+            // TODO: MOUSE_REPORTING_HIGHLIGHT not implemented.
             case 1002:
             case 1003:
                 if (mode) {
@@ -770,8 +770,8 @@ static const int kMaxScreenRows = 4096;
                                 graphicRendition_.fgBlue = subs[4];
                                 graphicRendition_.fgColorMode = ColorMode24bit;
                             } else {
-                                // Misinterpration compliant.
-                                // CSI 38:2:R:G:B m  <- misinterpration compliant
+                                // Misinterpretation compliant.
+                                // CSI 38:2:R:G:B m  <- misinterpretation compliant
                                 graphicRendition_.fgColorCode = subs[1];
                                 graphicRendition_.fgGreen = subs[2];
                                 graphicRendition_.fgBlue = subs[3];
@@ -950,7 +950,7 @@ static const int kMaxScreenRows = 4096;
                 [delegate_ terminalSendReport:[self.output reportiTerm2Version]];
                 break;
 
-            case 0: // Response from VT100 -- Ready, No malfuctions detected
+            case 0: // Response from VT100 -- Ready, No malfunctions detected
             default:
                 break;
         }
@@ -1996,7 +1996,7 @@ static const int kMaxScreenRows = 4096;
         }
 
         case XTERMCC_PROPRIETARY_ETERM_EXT:
-            [self executeXtermProprietaryExtermExtension:token];
+            [self executeXtermProprietaryEtermExtension:token];
             break;
 
         case XTERMCC_PWD_URL:
@@ -2499,7 +2499,7 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
-- (void)executeXtermProprietaryExtermExtension:(VT100Token *)token {
+- (void)executeXtermProprietaryEtermExtension:(VT100Token *)token {
     NSString* argument = token.string;
     NSArray* parts = [argument componentsSeparatedByString:@";"];
     NSString* func = nil;
@@ -2640,7 +2640,7 @@ static const int kMaxScreenRows = 4096;
 
         case 'G':
             // Update progress bar.
-            // First argument: perecentage
+            // First argument: percentage
             // Second argument: title
             if (args.count == 1) {
                 [delegate_ terminalProgressDidFinish];

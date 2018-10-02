@@ -258,7 +258,7 @@ const CGFloat iTermStatusBarHeight = 21;
         }
 
         const NSInteger numberBefore = views.count;
-        // Remove satisifed views.
+        // Remove satisfied views.
         views = [views filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *view) {
             double preferredWidth = view.component.statusBarComponentPreferredWidth;
             if (view.component.statusBarComponentIcon) {
@@ -407,7 +407,7 @@ const CGFloat iTermStatusBarHeight = 21;
 - (void)statusBarComponentPreferredSizeDidChange:(id<iTermStatusBarComponent>)component {
     DLog(@"Preferred size did change for %@", component);
     if (_updating) {
-        DLog(@"Igoring size change because am updating");
+        DLog(@"Ignoring size change because am updating");
         return;
     }
     [self.view setNeedsLayout:YES];

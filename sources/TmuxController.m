@@ -145,7 +145,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // top of its header file)
     NSMutableDictionary *_windowOpenerOptions;
     BOOL _manualOpenRequested;
-    BOOL _haveOpenendInitialWindows;
+    BOOL _haveOpenedInitialWindows;
     Profile *_profile;
     ProfileModel *_profileModel;
     // Maps the window ID of an about to be opened window to a completion block to invoke when it opens.
@@ -1608,7 +1608,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [hiddenWindows_ removeAllObjects];
     if ([response length] > 0) {
         NSArray *windowIds = [response componentsSeparatedByString:@","];
-        NSLog(@"getHiddneWindowsResponse: Add these window IDS to hidden: %@", windowIds);
+        NSLog(@"getHiddenWindowsResponse: Add these window IDS to hidden: %@", windowIds);
         for (NSString *wid in windowIds) {
             [hiddenWindows_ addObject:[NSNumber numberWithInt:[wid intValue]]];
         }
@@ -1835,9 +1835,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)sendInitialWindowsOpenedNotificationIfNeeded {
-    if (!_haveOpenendInitialWindows) {
+    if (!_haveOpenedInitialWindows) {
         [gateway_.delegate tmuxDidOpenInitialWindows];
-        _haveOpenendInitialWindows = YES;
+        _haveOpenedInitialWindows = YES;
     }
 }
 

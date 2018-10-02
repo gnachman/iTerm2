@@ -220,7 +220,7 @@
 
 /* Error */
 "Out of memory" = "Out of memory";
-"New sesssion cannot be created. Try smaller buffer sizes." = "New sesssion cannot be created. Try smaller buffer sizes.";
+"New session cannot be created. Try smaller buffer sizes." = "New session cannot be created. Try smaller buffer sizes.";
 
 /* Security Warnings */
 "Bad User Shell" = "Bad User Shell";

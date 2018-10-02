@@ -96,7 +96,7 @@
         }
         NSString *fullName = [path stringByAppendingPathComponent:file];
         if (![self loadDynamicProfilesFromFile:fullName intoArray:newProfiles guids:guids]) {
-            XLog(@"Igoring dynamic profiles in malformed file %@ and continuing.", fullName);
+            XLog(@"Ignoring dynamic profiles in malformed file %@ and continuing.", fullName);
         }
     }
 

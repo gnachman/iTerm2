@@ -41,7 +41,7 @@
     // with one bit per cell indicating whether that cell is a match.
     NSMutableDictionary *_highlightMap;
 
-    // True if the last search was forward, flase if backward.
+    // True if the last search was forward, false if backward.
     BOOL _searchingForward;
 
     // Offset value for last search.

@@ -347,7 +347,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
         } else {
             scrubber = (NSScrubber *)self.tabsTouchBarItem.view;
         }
-        // Reload the scrubber after a spin of the runloop bacause it gets laid out tighter after the
+        // Reload the scrubber after a spin of the runloop because it gets laid out tighter after the
         // rest of the toolbar is created. If we reloadData now then it jumps the first time we change
         // tabs.
         dispatch_async(dispatch_get_main_queue(), ^{

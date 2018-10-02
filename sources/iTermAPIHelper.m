@@ -2110,7 +2110,7 @@ static id sAPIHelperInstance;
 
         [[iTermController sharedInstance] saveWindowArrangementForWindow:term name:name];
     } else {
-        [[iTermController sharedInstance] saveWindowArrangmentForAllWindows:YES name:name];
+        [[iTermController sharedInstance] saveWindowArrangementForAllWindows:YES name:name];
     }
     response.status = ITMSavedArrangementResponse_Status_Ok;
     handler(response);

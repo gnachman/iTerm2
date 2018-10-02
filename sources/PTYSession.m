@@ -20,7 +20,7 @@
 #import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
 #import "iTermColorPresets.h"
-#import "iTermCommandHistoryCommandUseMO+Addtions.h"
+#import "iTermCommandHistoryCommandUseMO+Additions.h"
 #import "iTermController.h"
 #import "iTermCopyModeState.h"
 #import "iTermDisclosableView.h"
@@ -225,7 +225,7 @@ static NSMutableDictionary *gRegisteredSessionContents;
 static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 // Grace period to avoid failing to write anti-idle code when timer runs just before when the code
-// shuold be sent.
+// should be sent.
 static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 // Limit for number of entries in self.directories, self.commands, self.hosts.
@@ -375,7 +375,7 @@ static const NSUInteger kMaxHosts = 100;
     // In order to correctly draw a tiled background image, we must first draw
     // it into an image the size of the session view, and then blit from it
     // onto the background of whichever view needs a background. This ensures
-    // the tesselation is consistent.
+    // the tessellation is consistent.
     NSImage *_patternedImage;
 
     // Mouse reporting state
@@ -434,7 +434,7 @@ static const NSUInteger kMaxHosts = 100;
     NSString *_missingSavedArrangementProfileGUID;
 
     // The containing window is in the midst of a live resize. The update timer
-    // runs in the common modes runlooup in this case. That's not acceptable
+    // runs in the common modes runloop in this case. That's not acceptable
     // for normal use for reasons that Apple leaves up to your imagination (it
     // doesn't fire while you hold down a key, for example), but it does fire
     // during live resize (unlike the default runloops).
@@ -999,10 +999,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (![iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning]) {
         NSString *notice;
         NSArray<NSString *> *actions = @[ @"Don't Warn Again" ];
-        NSString *savedArranagementName = [[iTermController sharedInstance] savedArrangementNameBeingRestored];
+        NSString *savedArrangementName = [[iTermController sharedInstance] savedArrangementNameBeingRestored];
         if ([[ProfileModel sharedInstance] bookmarkWithName:missingProfileName]) {
             notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists. A profile with that name happens to exist.", missingProfileName];
-            if (savedArranagementName) {
+            if (savedArrangementName) {
                 actions = [actions arrayByAddingObject:@"Repair Saved Arrangement"];
             }
         } else {
@@ -1021,7 +1021,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                             } else if (selection == 1) {
                                                                 // Repair
                                                                 Profile *similarlyNamedProfile = [[ProfileModel sharedInstance] bookmarkWithName:missingProfileName];
-                                                                [[iTermController sharedInstance] repairSavedArrangementNamed:savedArranagementName
+                                                                [[iTermController sharedInstance] repairSavedArrangementNamed:savedArrangementName
                                                                                                          replacingMissingGUID:thisProfile[KEY_GUID]
                                                                                                                      withGUID:similarlyNamedProfile[KEY_GUID]];
                                                                 [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidRepairSavedArrangement
@@ -1247,7 +1247,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     if (needDivorce) {
-        // Keep it from stepping on an existing sesion with the same guid. Assign a fresh GUID.
+        // Keep it from stepping on an existing session with the same guid. Assign a fresh GUID.
         // Set the ORIGINAL_GUID to an existing guid from which this profile originated if possible.
         NSString *originalGuid = nil;
         NSString *recordedGuid = arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID];
@@ -1714,7 +1714,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
         case PROMPT_EX_JOBS: {
             if (self.isTmuxClient) {
-                return [iTermPromptOnCloseReason tmuxClientsAlwaysPromptBecaseJobsAreNotExposed];
+                return [iTermPromptOnCloseReason tmuxClientsAlwaysPromptBecauseJobsAreNotExposed];
             }
             NSMutableArray<NSString *> *blockingJobs = [NSMutableArray array];
             NSArray *jobsThatDontRequirePrompting = [_profile objectForKey:KEY_JOBS];
@@ -2018,7 +2018,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)_maybeWarnAboutShortLivedSessions
 {
-    if ([iTermApplication.sharedApplication delegate].isApplescriptTestApp) {
+    if ([iTermApplication.sharedApplication delegate].isAppleScriptTestApp) {
         // The applescript test driver doesn't care about short-lived sessions.
         return;
     }
@@ -2242,7 +2242,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // This does not handle tmux properly. Any writing to tmux should happen in a
-// caller. It does handle braodcasting to other sessions.
+// caller. It does handle broadcasting to other sessions.
 - (void)writeTaskImpl:(NSString *)string
              encoding:(NSStringEncoding)optionalEncoding
         forceEncoding:(BOOL)forceEncoding
@@ -3576,7 +3576,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                       inProfile:aDict]];
 
     // Color scheme
-    // ansiColosMatchingForeground:andBackground:inBookmark does an equality comparison, so
+    // ansiColorsMatchingForeground:andBackground:inBookmark does an equality comparison, so
     // iTermProfilePreferences is not used here.
     [self setColorFgBgVariable:[self ansiColorsMatchingForeground:aDict[KEY_FOREGROUND_COLOR]
                                                     andBackground:aDict[KEY_BACKGROUND_COLOR]
@@ -5375,7 +5375,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_pbtext release];
         _pbtext = nil;
 
-        // In case it was the find pasteboard that chagned
+        // In case it was the find pasteboard that changed
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
                                                             object:nil
                                                           userInfo:nil];
@@ -6046,7 +6046,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    // All necessary conditions are statisifed. Now find one that is sufficient.
+    // All necessary conditions are satisifed. Now find one that is sufficient.
     for (NSInteger i = 0; i < pattern.keycodesArray_Count; i++) {
         if (event.keyCode == [pattern.keycodesArray valueAtIndex:i]) {
             return YES;
@@ -7335,7 +7335,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     return YES;
 
                 case MOUSE_REPORTING_NONE:
-                case MOUSE_REPORTING_HILITE:
+                case MOUSE_REPORTING_HIGHLIGHT:
                     break;
             }
             break;
@@ -7359,7 +7359,7 @@ ITERM_WEAKLY_REFERENCEABLE
                         return YES;
 
                     case MOUSE_REPORTING_NONE:
-                    case MOUSE_REPORTING_HILITE:
+                    case MOUSE_REPORTING_HIGHLIGHT:
                         break;
                 }
             }
@@ -7399,7 +7399,7 @@ ITERM_WEAKLY_REFERENCEABLE
                         return YES;
 
                     case MOUSE_REPORTING_NONE:
-                    case MOUSE_REPORTING_HILITE:
+                    case MOUSE_REPORTING_HIGHLIGHT:
                         break;
                 }
             }
@@ -7439,7 +7439,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     return YES;
 
                 case MOUSE_REPORTING_NONE:
-                case MOUSE_REPORTING_HILITE:
+                case MOUSE_REPORTING_HIGHLIGHT:
                     break;
             }
             break;
@@ -7681,7 +7681,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)textViewDidHighightMark {
+- (void)textViewDidHighlightMark {
     if (self.useMetal) {
         [_textview setNeedsDisplay:YES];
     }
@@ -8545,7 +8545,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview.window makeFirstResponder:_textview];
 }
 
-// Stop pasting (despited the name)
+// Stop pasting (despite the name)
 - (void)screenCopyBufferToPasteboard {
     if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         [self setPasteboard:nil];
@@ -9340,7 +9340,7 @@ ITERM_WEAKLY_REFERENCEABLE
                         _bellRate = nil;
                         switch (selection) {
                             case -2:  // Dismiss programmatically
-                                DLog(@"Dismiss programatically");
+                                DLog(@"Dismiss programmatically");
                                 break;
 
                             case -1: // No
@@ -9385,7 +9385,7 @@ ITERM_WEAKLY_REFERENCEABLE
                         _bellRate = nil;
                         switch (selection) {
                             case -2:  // Dismiss programmatically
-                                DLog(@"Dismiss programatically");
+                                DLog(@"Dismiss programmatically");
                                 break;
 
                             case -1: // No
@@ -10080,7 +10080,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token NS_AVAILABLE_MAC(10_11) {
     DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal %@", token);
     if (!_useMetal) {
-        DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal returning earily because useMetal is off");
+        DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal returning early because useMetal is off");
         return;
     }
     if ([_metalDisabledTokens containsObject:token]) {

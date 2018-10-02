@@ -105,7 +105,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Convert a string of hex values (an even number of [0-9A-Fa-f]) into data.
 - (NSData *)dataFromHexValues;
 
-// Always returns a non-null vaule, but it may contain replacement chars for
+// Always returns a non-null value, but it may contain replacement chars for
 // malformed utf-8 sequences.
 - (NSString *)initWithUTF8DataIgnoringErrors:(NSData *)data;
 
@@ -167,7 +167,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Compose/Decompose UTF8 string without normalization
 
-// This is better than -precomposedStringWithCanonicalMapping because it preserves compatability
+// This is better than -precomposedStringWithCanonicalMapping because it preserves compatibility
 // equivalence. It's most relevant when two canonically equivalent characters have different widths
 // (one is half-width while the other is ambiguous width). The difference is in the following
 // ranges: 2000-2FFF, F900-FAFF, 2F800-2FAFF. See issue 2872.
@@ -183,7 +183,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (iTermTuple *)keyValuePair;
 
 - (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars;
-- (NSString *)stringByPerformingSubstitutions:(NSDictionary *)substituions;
+- (NSString *)stringByPerformingSubstitutions:(NSDictionary *)substitutions;
 
 // Returns self repeated |n| times.
 - (NSString *)stringRepeatedTimes:(int)n;
@@ -235,11 +235,11 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // 1.0010 -> 1.001
 - (NSString *)stringByCompactingFloatingPointString;
 
-// A fast, non-cryto-quality hash.
+// A fast, non-crypto-quality hash.
 - (NSUInteger)hashWithDJB2;
 
 - (NSUInteger)firstCharacter;
-// Is this a phrase enclosed in qutoation marks?
+// Is this a phrase enclosed in quotation marks?
 - (BOOL)isInQuotationMarks;
 
 // Stick punctuation (should be a comma or a period) at the end, placing it

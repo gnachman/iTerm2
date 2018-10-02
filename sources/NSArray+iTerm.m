@@ -123,7 +123,7 @@
     return max;
 }
 
-- (NSArray *)mininumsWithComparator:(NSComparisonResult (^)(id, id))comparator {
+- (NSArray *)minimumsWithComparator:(NSComparisonResult (^)(id, id))comparator {
     id min = nil;
     for (id object in self) {
         if (min == nil || comparator(min, object) == NSOrderedDescending) {

@@ -3,7 +3,7 @@
 #@ Released under the terms of the GNU General Public License V2
 #@ See the file COPYING for the full license
 # Originally from http://cfajohnson.com/shell/listing1.txt
-# Hacked to be completley different by George Nachman
+# Hacked to be completely different by George Nachman
 
 read_bytes()
 {

@@ -505,7 +505,7 @@ typedef struct iTermTextColorContext {
                                         run->bgColorMode == ColorModeAlternate);
         // When set in preferences, applies alpha only to the defaultBackground
         // color, useful for keeping Powerline segments opacity(background)
-        // consistent with their seperator glyphs opacity(foreground).
+        // consistent with their separator glyphs opacity(foreground).
         if (_transparencyAffectsOnlyDefaultBackgroundColor && !defaultBackground) {
             alpha = 1;
         }
@@ -1713,7 +1713,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     }
 
     if (likely(!imageAttributes && !previousImageAttributes)) {
-        // Not an image cell. Try to quicly check if the attributes are the same, which is the normal case.
+        // Not an image cell. Try to quickly check if the attributes are the same, which is the normal case.
         if (likely(!memcmp(previousAttributes, newAttributes, sizeof(*previousAttributes)))) {
             // Identical, byte-for-byte
             *combinedAttributesChanged = NO;

@@ -55,7 +55,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
     NSManagedObjectContext *_managedObjectContext;
     iTermDirectoryTree *_tree;
 
-    // Prevents notifications from being posted durinig initialization since that causes deadlock in
+    // Prevents notifications from being posted during initialization since that causes deadlock in
     // -sharedInstance.
     BOOL _initializing;
 

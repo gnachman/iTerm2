@@ -291,7 +291,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Begin instant replay on a session.
 - (void)replaySession:(PTYSession *)oldSession;
 
-// End instant replay, subbing in a live sesssion for the fake IR session.
+// End instant replay, subbing in a live session for the fake IR session.
 - (void)showLiveSession:(PTYSession*)liveSession
               inPlaceOf:(PTYSession*)replaySession;
 

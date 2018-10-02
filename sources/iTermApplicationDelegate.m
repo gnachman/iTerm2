@@ -397,7 +397,7 @@ static BOOL hasBecomeActive = NO;
 
 #pragma mark - APIs
 
-- (BOOL)isApplescriptTestApp {
+- (BOOL)isAppleScriptTestApp {
     return [[[NSBundle mainBundle] bundleIdentifier] containsString:@"applescript"];
 }
 
@@ -781,7 +781,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication {
-    if ([self isApplescriptTestApp]) {
+    if ([self isAppleScriptTestApp]) {
         // Don't want to do this for applescript testing so we have a blank slate.
         return NO;
     }
@@ -898,7 +898,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {
     DLog(@"application:didDecodeRestorableState: starting");
-    if (self.isApplescriptTestApp) {
+    if (self.isAppleScriptTestApp) {
         DLog(@"Is applescript test app");
         return;
     }
@@ -1181,7 +1181,7 @@ static BOOL hasBecomeActive = NO;
     CFPreferencesSetAppValue(CFSTR("NSQuotedKeystrokeBinding"),
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
-    // This is off by default, but would wreack havoc if set globally.
+    // This is off by default, but would wreak havoc if set globally.
     CFPreferencesSetAppValue(CFSTR("NSRepeatCountBinding"),
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
@@ -1244,7 +1244,7 @@ static BOOL hasBecomeActive = NO;
                                                object:nil];
 
     if ([iTermAdvancedSettingsModel runJobsInServers] &&
-        !self.isApplescriptTestApp) {
+        !self.isAppleScriptTestApp) {
         [PseudoTerminalRestorer setRestorationCompletionBlock:^{
             [self restoreBuriedSessionsState];
             if ([[iTermController sharedInstance] numberOfDecodesPending] == 0) {
@@ -1432,7 +1432,7 @@ static BOOL hasBecomeActive = NO;
         [iTermWarning showWarningWithTitle:@"This nightly build is over 30 days old. Consider updating soon: you may be suffering from awful bugs in blissful ignorance."
                                    actions:@[ @"I’ll Take My Chances", @"Update Now" ]
                                 identifier:@"NoSyncVeryOldNightlyBuildWarning"
-                               silenceable:kiTermWarningTypeSilencableForOneMonth
+                               silenceable:kiTermWarningTypeSilenceableForOneMonth
                                     window:nil];
         if (selection == kiTermWarningSelection1) {
             [[SUUpdater sharedUpdater] checkForUpdates:nil];
@@ -1454,7 +1454,7 @@ static BOOL hasBecomeActive = NO;
 
     // Check if we have an autolaunch script to execute. Do it only once, i.e. at application launch.
     BOOL ranAutoLaunchScripts = NO;
-    if (![self isApplescriptTestApp] &&
+    if (![self isAppleScriptTestApp] &&
         ![[NSApplication sharedApplication] isRunningUnitTests]) {
         ranAutoLaunchScripts = [self.scriptsMenuController runAutoLaunchScriptsIfNeeded];
     }
@@ -1477,7 +1477,7 @@ static BOOL hasBecomeActive = NO;
                ![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] &&
                ![PseudoTerminalRestorer willOpenWindows] &&
                [[[iTermController sharedInstance] terminals] count] == 0 &&
-               ![self isApplescriptTestApp] &&
+               ![self isAppleScriptTestApp] &&
                [[[iTermHotKeyController sharedInstance] profileHotKeys] count] == 0 &&
                [[[iTermBuriedSessions sharedInstance] buriedSessions] count] == 0) {
         [self newWindow:nil];
@@ -1623,7 +1623,7 @@ static BOOL hasBecomeActive = NO;
     if (![self notifyAboutIncompatibleSoftware]) {
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
         alert.messageText = @"No Incompatible Software Detected";
-        alert.informativeText = @"No third-party software that is known to be incompatible with iTerm2’s new Applescript interfaces was found.";
+        alert.informativeText = @"No third-party software that is known to be incompatible with iTerm2’s new AppleScript interfaces was found.";
         [alert addButtonWithTitle:@"OK"];
         [alert runModal];
     }
@@ -1944,7 +1944,7 @@ static BOOL hasBecomeActive = NO;
                     DLog(@"Restore a single session");
                     term = [controller terminalWithGuid:restorableSession.terminalGuid];
                     if (term) {
-                        DLog(@"resuse an existing window");
+                        DLog(@"reuse an existing window");
                         // Reuse an existing window
                         tab = [term tabWithUniqueId:restorableSession.tabUniqueId];
                         if (tab) {

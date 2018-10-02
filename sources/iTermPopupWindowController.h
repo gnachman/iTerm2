@@ -36,7 +36,7 @@
                              tablePtr:(NSTableView**)table
                                 model:(PopupModel*)model;
 
-// Programatically close the window.
+// Programmatically close the window.
 - (void)closePopupWindow;
 
 // Call this after initWithWindowNibName:tablePtr:model: if table was nil.

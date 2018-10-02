@@ -156,7 +156,7 @@
 }
 
 + (void)didFailToLaunchScript:(NSString *)filename withException:(NSException *)e {
-    ELog(@"Expection occurred %@", e);
+    ELog(@"Exception occurred %@", e);
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"Error running script";
     alert.informativeText = [NSString stringWithFormat:@"Script at \"%@\" failed.\n\n%@",

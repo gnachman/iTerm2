@@ -3,7 +3,7 @@ This is a thai character with a latin acute accent:
 ะ́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́
 Here it is in a table. The columns should line up in vi with LC_CTYPE=UTF-8
 Mark       UTF-8            UTF-16      CODES
-́        | CC 81          | 0301      | COMBINING ACCUTE ACCENT
+́        | CC 81          | 0301      | COMBINING ACUTE ACCENT
 ะ        | E0 B8 B0       | 0E30      | THAI CHARACTER SARA A
 ะ́        | E0 B8 B0 CC 81 | 0E30 0301 | THAI CHARACTER SARA A + COMBINING ACUTE ACCENT
 A        | 41             | 0041      | LATIN CAPITAL LETTER A

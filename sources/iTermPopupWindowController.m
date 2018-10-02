@@ -22,7 +22,7 @@
     // Results currently being displayed.
     PopupModel* model_;
 
-    // All candidate results, including those not matching filter. Subclass-owend.
+    // All candidate results, including those not matching filter. Subclass-owned.
     PopupModel* unfilteredModel_;
 
     // Timer to set clearFilterOnNextKeyDown_.

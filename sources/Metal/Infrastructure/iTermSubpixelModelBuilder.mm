@@ -216,8 +216,8 @@ static NSString *const iTermSubpixelModelString = @"O";
     return self;
 }
 
-- (iTermSubpixelModel *)modelForForegoundColor:(float)foregroundComponent
-                               backgroundColor:(float)backgroundComponent {
+- (iTermSubpixelModel *)modelForForegroundColor:(float)foregroundComponent
+                                backgroundColor:(float)backgroundComponent {
     @synchronized (self) {
         NSUInteger key = [iTermSubpixelModel keyForForegroundColor:foregroundComponent
                                                backgroundColor:backgroundComponent];
@@ -257,7 +257,7 @@ static NSString *const iTermSubpixelModelString = @"O";
 }
 
 - (void)writeDebugDataToFolder:(NSString *)folder
-                foregoundColor:(float)foregroundComponent
+               foregroundColor:(float)foregroundComponent
                backgroundColor:(float)backgroundComponent {
     NSData *imageData = [iTermSubpixelModelBuilder dataForImageWithForegroundColor:simd_make_float4(foregroundComponent,
                                                                                                     foregroundComponent,

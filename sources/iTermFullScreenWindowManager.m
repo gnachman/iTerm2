@@ -107,7 +107,7 @@
     }
 }
 
-// Returns YES if the window is already in theh queue. Removes it if its `enterFullScreen` equals `ifEntering`.
+// Returns YES if the window is already in the queue. Removes it if its `enterFullScreen` equals `ifEntering`.
 - (BOOL)haveTransitionWithWindow:(NSWindow *)window removeIfEntering:(BOOL)ifEntering {
     NSInteger index = [_queue indexOfObjectPassingTest:^BOOL(iTermFullScreenTransition * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         return obj.window.weaklyReferencedObject == window;

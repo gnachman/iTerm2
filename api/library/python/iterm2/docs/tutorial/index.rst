@@ -4,14 +4,14 @@
 Python API Introduction
 =======================
 
-The iTerm2 Python API is a replacement for the Applescript API that preceded
+The iTerm2 Python API is a replacement for the AppleScript API that preceded
 it. It offers a more powerful set of APIs that give the script writer a great
 deal of control.
 
 Scripts generally take one of two forms:
 
 * "Simple" scripts that perform a series of actions, such as creating windows, and then terminate.
-* "Long-running daemons" that stay running indefintely while observing notifications or performing some action periodically.
+* "Long-running daemons" that stay running indefinitely while observing notifications or performing some action periodically.
 
 Creating a New Script
 ---------------------

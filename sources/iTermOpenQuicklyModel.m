@@ -554,11 +554,11 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
 // limit: Upper bound for the returned score.
 - (double)scoreUsingMatcher:(iTermMinimumSubsequenceMatcher *)matcher
                   documents:(NSArray *)documents
-                 multiplier:(double)multipler
+                 multiplier:(double)multiplier
                        name:(NSString *)name
                    features:(NSMutableArray *)features
                       limit:(double)limit {
-    if (multipler == 0) {
+    if (multiplier == 0) {
         // Feature is disabled. In the future, we might let users tweak multipliers.
         return 0;
     }
@@ -596,7 +596,7 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
             bestFeature = document;
             bestIndexSet = [indexSet copy];
         }
-        score += value * multipler;
+        score += value * multiplier;
         if (score > limit) {
             break;
         }

@@ -477,7 +477,7 @@ message SavedArrangementRequest {
     // Restore an existing arrangement with the given name
     RESTORE = 0;
 
-    // Save windows to a new arrangment with the given name
+    // Save windows to a new arrangement with the given name
     SAVE = 1;
   }
   optional Action action = 2;
@@ -1009,7 +1009,7 @@ message GetPromptRequest {
   optional string session = 1;
 }
 
-// Reponds with metadata about the current shell prompt, if possible.
+// Responds with metadata about the current shell prompt, if possible.
 message GetPromptResponse {
   enum Status {
     OK = 0;
@@ -1289,7 +1289,7 @@ message LineContents {
   // of a line, but it is possible.
   //
   // The ñ is composed of the letter n and a combining tilde (U+0303) (indicated in our example
-  // as ~), while í is composed of the leter i and a combining acute accent (U+0301) (indicated in
+  // as ~), while í is composed of the letter i and a combining acute accent (U+0301) (indicated in
   // our example as ').
   //
   // To map code points in `text` to screen positions, `code_points_per_cell`

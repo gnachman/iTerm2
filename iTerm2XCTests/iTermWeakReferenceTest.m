@@ -139,12 +139,12 @@ ITERM_WEAKLY_REFERENCEABLE
     XCTAssertEqual([ref number], 1234);
 }
 
-- (void)testProxyRaisesExceptionOnNonexistantMethods {
+- (void)testProxyRaisesExceptionOnNonexistentMethods {
     iTerm2FakeObject *fakeObject = [[[iTerm2FakeObject alloc] init] autorelease];
     iTerm2FakeObject *ref = [fakeObject weakSelf];
     BOOL ok = NO;
     @try {
-        [ref performSelector:@selector(testProxyRaisesExceptionOnNonexistantMethods)
+        [ref performSelector:@selector(testProxyRaisesExceptionOnNonexistentMethods)
                   withObject:nil];
     }
     @catch (NSException *e) {
@@ -193,7 +193,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // Give everyone time to wait...
         usleep(1000);
 
-        // Fire the startign pistol
+        // Fire the starting pistol
         dispatch_group_leave(startGroup);
 
         // Wait for the blocks to finish running.

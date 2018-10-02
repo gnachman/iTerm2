@@ -220,7 +220,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
     }
 
     DLog(@"Adding run loop source.");
-    // Get the CFRunLoop primitive for the Carbon Main Event Loop, and add the new event souce
+    // Get the CFRunLoop primitive for the Carbon Main Event Loop, and add the new event source
     CFRunLoopAddSource(CFRunLoopGetCurrent(),
                        _eventSource,
                        kCFRunLoopCommonModes);

@@ -3,7 +3,7 @@
 @class iTermLogoGenerator;
 @class iTermOpenQuicklyTableCellView;
 
-// Represents and item in the Open Quicky table.
+// Represents and item in the Open Quickly table.
 @interface iTermOpenQuicklyItem : NSObject
 
 // Globally unique identifier for represented object.

@@ -93,9 +93,9 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
         if (!strongSelf) {
             return;
         }
-        [weakSelf ensureUniqunessOfModifierForButton:strongSelf->_switchPaneModifierButton
-                                           inButtons:@[ strongSelf->_switchTabModifierButton,
-                                                        strongSelf->_switchWindowModifierButton ]];
+        [weakSelf ensureUniquenessOfModifierForButton:strongSelf->_switchPaneModifierButton
+                                            inButtons:@[ strongSelf->_switchTabModifierButton,
+                                                         strongSelf->_switchWindowModifierButton ]];
         [weakSelf postModifierChangedNotification];
     };
 
@@ -107,9 +107,9 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
         if (!strongSelf) {
             return;
         }
-        [weakSelf ensureUniqunessOfModifierForButton:strongSelf->_switchTabModifierButton
-                                           inButtons:@[ strongSelf->_switchPaneModifierButton,
-                                                        strongSelf->_switchWindowModifierButton ]];
+        [weakSelf ensureUniquenessOfModifierForButton:strongSelf->_switchTabModifierButton
+                                            inButtons:@[ strongSelf->_switchPaneModifierButton,
+                                                         strongSelf->_switchWindowModifierButton ]];
         [weakSelf postModifierChangedNotification];
     };
 
@@ -121,9 +121,9 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
         if (!strongSelf) {
             return;
         }
-        [weakSelf ensureUniqunessOfModifierForButton:strongSelf->_switchWindowModifierButton
-                                           inButtons:@[ strongSelf->_switchTabModifierButton,
-                                                        strongSelf->_switchPaneModifierButton ]];
+        [weakSelf ensureUniquenessOfModifierForButton:strongSelf->_switchWindowModifierButton
+                                            inButtons:@[ strongSelf->_switchTabModifierButton,
+                                                         strongSelf->_switchPaneModifierButton ]];
         [weakSelf postModifierChangedNotification];
     };
 
@@ -161,8 +161,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     _horizontalLine.hidden = !_shortcutOverloaded.hidden;
 }
 
-- (void)ensureUniqunessOfModifierForButton:(NSPopUpButton *)buttonThatChanged
-                                 inButtons:(NSArray *)buttons {
+- (void)ensureUniquenessOfModifierForButton:(NSPopUpButton *)buttonThatChanged
+                                  inButtons:(NSArray *)buttons {
     if (buttonThatChanged.selectedTag == kPreferenceModifierTagNone) {
         return;
     }

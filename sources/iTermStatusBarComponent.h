@@ -108,7 +108,7 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 // Does the view have margins between it and adjacent views
 - (BOOL)statusBarComponentHasMargins;
 
-// Vertical offset for components that don't center propertly
+// Vertical offset for components that don't center properly
 - (CGFloat)statusBarComponentVerticalOffset;
 
 // Update colors if needed

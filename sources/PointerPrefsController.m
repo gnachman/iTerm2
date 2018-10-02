@@ -104,7 +104,7 @@ typedef enum {
 + (NSString *)localizedNumClicks:(int)n;
 + (NSString *)localizedButtonNameForButtonNumber:(int)n;
 + (NSString *)localizedGestureNameForGestureIdentifier:(NSString *)ident;
-+ (NSString *)localizedModifers:(int)keyMods;
++ (NSString *)localizedModifiers:(int)keyMods;
 + (NSDictionary *)localizedActionMap;
 + (NSString *)localizedActionForDict:(NSDictionary *)dict;
 + (NSString *)localizedActionForKey:(NSString *)key;
@@ -377,7 +377,7 @@ typedef enum {
     }
 }
 
-+ (NSString *)localizedModifers:(int)keyMods {
++ (NSString *)localizedModifiers:(int)keyMods {
     return [NSString stringForModifiersWithMask:keyMods];
 }
 
@@ -706,7 +706,7 @@ typedef enum {
 {
     NSString *button = [PointerPrefsController localizedButtonNameForButtonNumber:buttonNumber];
     NSString *numClicks = [PointerPrefsController localizedNumClicks:clicks];
-    NSString *modifiers = [PointerPrefsController localizedModifers:modFlags];
+    NSString *modifiers = [PointerPrefsController localizedModifiers:modFlags];
     if ([modifiers length]) {
         modifiers = [modifiers stringByAppendingString:@" + "];
     }
@@ -758,7 +758,7 @@ typedef enum {
         if (isButton) {
             return [PointerPrefsController localizedButtonKey:key];
         } else {
-            NSString *modifiers = [PointerPrefsController localizedModifers:[PointerPrefsController modifiersForKey:key]];
+            NSString *modifiers = [PointerPrefsController localizedModifiers:[PointerPrefsController modifiersForKey:key]];
             if ([modifiers length]) {
                 modifiers = [modifiers stringByAppendingString:@" + "];
             }

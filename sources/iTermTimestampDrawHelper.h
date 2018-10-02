@@ -16,7 +16,7 @@ extern const CGFloat iTermTimestampGradientWidth;
 // Gets updated after each -drawTimestampWithDate:line:. Does not include gradient width.
 @property (nonatomic, readonly) CGFloat maximumWidth;
 
-// Inclues gradient and right margin
+// Includes gradient and right margin
 @property (nonatomic, readonly) CGFloat suggestedWidth;
 
 - (instancetype)initWithBackgroundColor:(NSColor *)backgroundColor

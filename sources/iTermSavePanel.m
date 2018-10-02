@@ -17,7 +17,7 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
 @interface iTermSavePanel () <NSOpenSavePanelDelegate>
 @property(nonatomic, copy) NSString *filename;  // Just the filename.
 @property(nonatomic, copy) NSString *path;  // Full path.
-@property(nonatomic, assign) iTermSavePanelReplaceorAppend replaceOrAppend;
+@property(nonatomic, assign) iTermSavePanelReplaceOrAppend replaceOrAppend;
 @end
 
 @implementation iTermSavePanel {

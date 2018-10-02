@@ -180,7 +180,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 // Should the cursor guide be shown?
 @property(nonatomic, assign) BOOL highlightCursorLine;
 
-// Mimimum contrast level, 0-1.
+// Minimum contrast level, 0-1.
 @property(nonatomic, assign) double minimumContrast;
 
 // Should the non-ascii font be used?
@@ -365,7 +365,7 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *co
 
         }
     } else {
-        // Chatacter hidden because of blinking.
+        // Character hidden because of blinking.
         return NO;
     }
 }

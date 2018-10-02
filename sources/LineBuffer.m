@@ -57,7 +57,7 @@ static const NSInteger kUnicodeVersion = 9;
     // An array of LineBlock*s.
     iTermLineBlockArray *_lineBlocks;
 
-    // The default storage for a LineBlock (some may be larger to accomodate very long lines).
+    // The default storage for a LineBlock (some may be larger to accommodate very long lines).
     int block_size;
 
     // If a cursor size is saved, this gives its offset from the start of its line.
@@ -108,7 +108,7 @@ static const NSInteger kUnicodeVersion = 9;
     num_dropped_blocks = 0;
 }
 
-// The designated initializer. We prefer not to explose the notion of block sizes to
+// The designated initializer. We prefer not to expose the notion of block sizes to
 // clients, so this is internal.
 - (LineBuffer*)initWithBlockSize:(int)bs
 {

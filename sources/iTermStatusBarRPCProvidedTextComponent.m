@@ -277,7 +277,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     [super statusBarComponentSetKnobValues:knobValues];
 }
 
-- (void)registeredFunctionsDidChange:(NSNotification *)notifiation {
+- (void)registeredFunctionsDidChange:(NSNotification *)notification {
     NSArray<NSString *> *registered = [_missingFunctions.allObjects filteredArrayUsingBlock:^BOOL(NSString *signature) {
         return [[iTermAPIHelper sharedInstance] haveRegisteredFunctionWithSignature:signature];
     }];

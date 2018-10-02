@@ -209,7 +209,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
             [tabViewItem setView:sizeRememberingView];
         } else {
-            // Replce the filler view with the real one which isn't in the view
+            // Replace the filler view with the real one which isn't in the view
             // hierarchy in the .xib file which was done to make it easier for
             // views' sizes to differ.
             [tabViewItem setView:view];
@@ -522,7 +522,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     newDict[KEY_SHORTCUT] = @"";
     NSString* guid = [ProfileModel freshGuid];
     newDict[KEY_GUID] = guid;
-    [newDict removeObjectForKey:KEY_DEFAULT_BOOKMARK];  // remove depreated attribute with side effects
+    [newDict removeObjectForKey:KEY_DEFAULT_BOOKMARK];  // remove deprecated attribute with side effects
     newDict[KEY_TAGS] = @[];
     newDict[KEY_BOUND_HOSTS] = @[];
     if ([[ProfileModel sharedInstance] bookmark:newDict hasTag:@"bonjour"]) {

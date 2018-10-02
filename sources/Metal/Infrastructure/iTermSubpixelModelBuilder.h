@@ -34,11 +34,11 @@ NS_CLASS_DEPRECATED_MAC(10_12, 10_14)
 
 + (instancetype)sharedInstance;
 
-- (iTermSubpixelModel *)modelForForegoundColor:(float)foregroundComponent
-                               backgroundColor:(float)backgroundComponent;
+- (iTermSubpixelModel *)modelForForegroundColor:(float)foregroundComponent
+                                backgroundColor:(float)backgroundComponent;
 
 - (void)writeDebugDataToFolder:(NSString *)folder
-                foregoundColor:(float)foregroundComponent
+               foregroundColor:(float)foregroundComponent
                backgroundColor:(float)backgroundComponent;
 
 @end

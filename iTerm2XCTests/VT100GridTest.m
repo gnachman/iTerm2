@@ -2349,7 +2349,7 @@ do { \
                                     expectLineBuffer:@""
                                        expectDropped:0];
 
-    //  insert long string without wrapraround
+    //  insert long string without wraparound
     insertMode_ = YES;
     wraparoundMode_ = NO;
     [self doAppendCharsAtCursorTestWithInitialBuffer:@"abcdtuvw+\n"

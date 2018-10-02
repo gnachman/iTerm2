@@ -23,7 +23,7 @@
 
 @interface ProfileTableRow (KeyValueCoding)
 // We need ascending order to sort default before not-default so we can't use
-// anything senible like BOOL or "Yes"/"No" because they'd sort wrong.
+// anything sensible like BOOL or "Yes"/"No" because they'd sort wrong.
 typedef NS_ENUM(NSInteger, BookmarkRowIsDefault) {
     IsDefault = 1,
     IsNotDefault = 2

@@ -38,7 +38,7 @@
 #define KEY_NEW_BOOKMARKS               @"New Bookmarks"
 
 #pragma mark - Profile-level keys
-// IMPORATANT: If you add keys, also modify doCopyFrom in PreferencePanel.m.
+// IMPORTANT: If you add keys, also modify doCopyFrom in PreferencePanel.m.
 
 #define KEY_CHILDREN                    @"Children"  // Deprecated
 #define KEY_NAME                        @"Name"

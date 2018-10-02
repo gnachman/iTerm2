@@ -4,8 +4,8 @@
 //
 //  Created by George Nachman on 10/16/13.
 //
-//  This test driver was used before XCTest was mature. It hangs around stll because Applescript
-//  tests aren't compatible with XCTest (they fail to get the path to the iTerm2ForApplescript
+//  This test driver was used before XCTest was mature. It hangs around stll because AppleScript
+//  tests aren't compatible with XCTest (they fail to get the path to the iTerm2ForAppleScript
 //  app).
 
 #import "iTermTests.h"

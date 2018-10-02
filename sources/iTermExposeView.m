@@ -60,7 +60,7 @@
     double dh = prevSearchHeight_ - rect.size.height;
     rect.origin.y -= dh;
     rect.size.height += dh;
-    //NSLog(@"Serach frame: %lf,%lf %lfx%lf", rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
+    //NSLog(@"Search frame: %lf,%lf %lfx%lf", rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
     return rect;
 }
 

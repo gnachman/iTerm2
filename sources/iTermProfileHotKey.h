@@ -19,7 +19,7 @@
 
 @property(nonatomic, readonly) Profile *profile;
 
-// Is the window level floating? May not be a floating panel if it doesn't meet all the critieria
+// Is the window level floating? May not be a floating panel if it doesn't meet all the criteria
 // to be a panel (must join all spaces).
 @property(nonatomic, readonly) BOOL floats;
 
@@ -27,7 +27,7 @@
 @property(nonatomic, readonly) BOOL rollingIn;
 @property(nonatomic, readonly) BOOL rollingOut;
 
-// A rollout is cancellable after the window has animated out but before previously active app becomes active.
+// A rollout is cancelable after the window has animated out but before previously active app becomes active.
 @property(nonatomic, readonly) BOOL rollOutCancelable;
 
 @property(nonatomic, assign) BOOL autoHides;
@@ -37,7 +37,7 @@
 
 // When the pressing of a hotkey causes a new window to be created, the window controller is stored
 // here temporarily before the window is fully created. This is used for finding siblings of such a
-// partially formed window so that when it becomes key its sibilings don't get hidden.
+// partially formed window so that when it becomes key its siblings don't get hidden.
 @property(nonatomic, readonly) NSWindowController *windowControllerBeingBorn;
 
 // You may only set the window controller if there is not a weakly referenced object.

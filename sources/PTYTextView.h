@@ -199,7 +199,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (NSImage *)textViewBackgroundImage;
 - (iTermBackgroundImageMode)backgroundImageMode;
 - (BOOL)textViewShouldDrawRect;
-- (void)textViewDidHighightMark;
+- (void)textViewDidHighlightMark;
 - (BOOL)textViewInInteractiveApplication;
 - (BOOL)textViewTerminalStateForMenuItem:(NSMenuItem *)menuItem;
 - (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem;
@@ -402,7 +402,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
                              y:(int)y
                             to:(VT100GridWindowedRange *)range
               ignoringNewlines:(BOOL)ignoringNewlines
-                actionRequired:(BOOL)actionRequred
+                actionRequired:(BOOL)actionRequired
                respectDividers:(BOOL)respectDividers;
 
 // Returns range modified by removing nulls (and possibly spaces) from its ends.

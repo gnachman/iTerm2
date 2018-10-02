@@ -247,7 +247,7 @@ static iTermController *gSharedInstance;
 }
 
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux {
-    DLog(@"newWindow:%@ posiblyTmux:%@", sender, @(possiblyTmux));
+    DLog(@"newWindow:%@ possiblyTmux:%@", sender, @(possiblyTmux));
     if (possiblyTmux &&
         _frontTerminalWindowController &&
         [[_frontTerminalWindowController currentSession] isTmuxClient]) {
@@ -388,10 +388,10 @@ static iTermController *gSharedInstance;
     if (!name) {
         return;
     }
-    [self saveWindowArrangmentForAllWindows:allWindows name:name];
+    [self saveWindowArrangementForAllWindows:allWindows name:name];
 }
 
-- (void)saveWindowArrangmentForAllWindows:(BOOL)allWindows name:(NSString *)name {
+- (void)saveWindowArrangementForAllWindows:(BOOL)allWindows name:(NSString *)name {
     if (allWindows) {
         NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
         for (PseudoTerminal *terminal in _terminalWindows) {
@@ -944,7 +944,7 @@ static iTermController *gSharedInstance;
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
         int windowType = [[aDict objectForKey:KEY_WINDOW_TYPE] intValue];
         if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
-            [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
+            [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen]) {
             return WINDOW_TYPE_LION_FULL_SCREEN;
         } else {
             return windowType;

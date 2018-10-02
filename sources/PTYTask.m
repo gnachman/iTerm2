@@ -187,7 +187,7 @@ static void MyLoginTTY(int master, int slave, int serverSocketFd, int deadMansPi
     int inuse[3 * kNumFileDescriptorsToDup] = {
        0, 1, 2, 3,  // FDs get duped to the lowest numbers so reserve them
        master, slave, serverSocketFd, deadMansPipeWriteEnd,  // FDs to get duped, which mustn't be overwritten
-       -1, -1, -1, -1 };  // Space for temp values to ensure they don't get resused
+       -1, -1, -1, -1 };  // Space for temp values to ensure they don't get reused
     int inuseCount = 2 * kNumFileDescriptorsToDup;
 
     // File descriptors get dup2()ed to temporary numbers first to avoid stepping on each other or
@@ -465,7 +465,7 @@ static void HandleSigChld(int n) {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"PTYTask(child pid %d, server-child pid %d, fildes %d)",
+    return [NSString stringWithFormat:@"PTYTask(child pid %d, server-child pid %d, filedesc %d)",
               _serverChildPid, _serverPid, fd];
 }
 
@@ -618,7 +618,7 @@ static void HandleSigChld(int n) {
 
 // Get the name of this task's current job. It is quite approximate! Any
 // arbitrary tty-controller in the tty's pgid that has this task as an ancestor
-// may be chosen. This function also implements a chache to avoid doing the
+// may be chosen. This function also implements a cache to avoid doing the
 // potentially expensive system calls too often.
 - (NSString *)currentJob:(BOOL)forceRefresh pid:(pid_t *)pid {
     iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:self.pid];

@@ -212,7 +212,7 @@ static BOOL gShowingWarning;
             alert.suppressionButton.title = @"Remember my choice for ten minutes";
         }
         alert.showsSuppressionButton = YES;
-    } else if (_warningType == kiTermWarningTypeSilencableForOneMonth) {
+    } else if (_warningType == kiTermWarningTypeSilenceableForOneMonth) {
         assert(_identifier);
         if (numNonCancelActions == 1) {
             alert.suppressionButton.title = @"Suppress this message for 30 days";
@@ -283,7 +283,7 @@ static BOOL gShowingWarning;
             NSString *theKey = [self.class temporarySilenceKeyForIdentifier:_identifier];
             [userDefaults setDouble:[NSDate timeIntervalSinceReferenceDate] + kTemporarySilenceTime
                              forKey:theKey];
-        } else if (_warningType == kiTermWarningTypeSilencableForOneMonth) {
+        } else if (_warningType == kiTermWarningTypeSilenceableForOneMonth) {
             NSString *theKey = [self.class temporarySilenceKeyForIdentifier:_identifier];
             [userDefaults setDouble:[NSDate timeIntervalSinceReferenceDate] + kOneMonthTime
                              forKey:theKey];

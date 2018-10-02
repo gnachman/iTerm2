@@ -21,7 +21,7 @@ use Getopt::Long qw(:config no_permute pass_through require_order);
 use IO::Handle;
 use MIME::Base64;
 
-# Use the faster Image::Size if avaialbe to calculate an image's size.
+# Use the faster Image::Size if available to calculate an image's size.
 BEGIN {
     eval "require Image::Size";
 }
@@ -67,7 +67,7 @@ sub write_image {
 my $php = which('php');
 my $phpcmd = q/$a = getimagesize("$argv[1]"); if ($a==FALSE) exit(1); else { echo $a[0] . "x" .$a[1]; exit(0); }/;
 
-# grab --width and --height comamnd line options if they exist
+# grab --width and --height command line options if they exist
 my $result = GetOptions (
     "height=s" => \$imgparams{'height'},
     "width=s" => \$imgparams{'width'},
@@ -123,7 +123,7 @@ while (@ARGV) {
 sub do_ls_cmd {
     my $file = shift;
 
-    # Get the image dimensions to suppliement the image and ls output.
+    # Get the image dimensions to supplement the image and ls output.
     # Use Image::Size when available (non-stock), otherwise use PHP fallback method.
     my $dims;
     if (-e $file and -r $file) {

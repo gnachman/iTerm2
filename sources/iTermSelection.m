@@ -27,7 +27,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     return sub;
 }
 
-+ (instancetype)subSelectinWithDictionary:(NSDictionary *)dict {
++ (instancetype)subSelectionWithDictionary:(NSDictionary *)dict {
     return [self subSelectionWithRange:[dict[kiTermSubSelectionRange] gridWindowedRange]
                                   mode:[dict[kiTermSubSelectionMode] intValue]];
 }
@@ -636,7 +636,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
                                                    MAX(range.coordRange.start.y,
                                                        range.coordRange.end.y));
     } else if ([self coord:range.coordRange.end isBeforeCoord:range.coordRange.start]) {
-        // For all other kinds of selection, the coorinate pair for each of
+        // For all other kinds of selection, the coordinate pair for each of
         // start and end must remain together, but start should precede end in
         // reading order.
         range.coordRange = VT100GridCoordRangeMake(range.coordRange.end.x,
@@ -1062,7 +1062,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     NSArray<NSDictionary *> *subs = dict[kSelectionSubSelectionsKey];
     NSMutableArray<iTermSubSelection *> *subSelectionsToAdd = [NSMutableArray array];
     for (NSDictionary *subDict in subs) {
-        iTermSubSelection *sub = [iTermSubSelection subSelectinWithDictionary:subDict];
+        iTermSubSelection *sub = [iTermSubSelection subSelectionWithDictionary:subDict];
         if (sub) {
             [subSelectionsToAdd addObject:sub];
         }

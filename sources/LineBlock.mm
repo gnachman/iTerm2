@@ -656,7 +656,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             *lineNum -= consume;
             ITBetaAssert(*lineNum >= 0, @"Negative lines after consuming spans");
         } else {  // *lineNum <= spans
-            // We found the raw line that inclues the wrapped line we're searching for.
+            // We found the raw line that includes the wrapped line we're searching for.
             // eat up *lineNum many width-sized wrapped lines from this start of the current full line
             int offset;
             if (gEnableDoubleWidthCharacterLineCache) {
@@ -905,7 +905,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             int consume = spans + 1;
             n -= consume;
         } else {  // n <= spans
-            // We found the raw line that inclues the wrapped line we're searching for.
+            // We found the raw line that includes the wrapped line we're searching for.
             // Set offset to the offset into the raw line where the nth wrapped
             // line begins.
             int offset = OffsetOfWrappedLine(buffer_start + prev,
@@ -1206,7 +1206,7 @@ static int Search(NSString* needle,
         // accept is one whose leftmost position is at the leftmost position of
         // the previous result.
         //
-        // Example: Consider a previosu search of [jump]
+        // Example: Consider a previous search of [jump]
         //  The quick brown fox jumps over the lazy dog.
         //                      ^^^^
         // The search is then extended to [jumps]. We want to return:

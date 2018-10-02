@@ -206,7 +206,7 @@
                              filename,
                              lines];
     [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Copy to Pasteboad"];
+    [alert addButtonWithTitle:@"Copy to Pasteboard"];
     if ([alert runModal] == NSAlertSecondButtonReturn) {
         NSPasteboard *pasteBoard = [NSPasteboard generalPasteboard];
         [pasteBoard declareTypes:@[ NSStringPboardType ] owner:self];

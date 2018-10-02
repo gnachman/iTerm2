@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-// A table view that calls interperetKeyEvents: on keyDown:.
+// A table view that calls interpretKeyEvents: on keyDown:.
 @interface iTermKeyboardNavigatableTableView : NSTableView
 
 @end

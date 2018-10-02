@@ -130,7 +130,7 @@ extern int kVT100ScreenMinRows;
 // Load a frame from a dvr decoder.
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
 
-// Save the position of the end of the scrollback buffer without the screen appeneded.
+// Save the position of the end of the scrollback buffer without the screen appended.
 - (void)storeLastPositionInLineBufferAsFindContextSavedPosition;
 
 // Restore the saved position into a passed-in find context (see saveFindContextAbsPos and

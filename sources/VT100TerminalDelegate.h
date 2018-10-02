@@ -12,7 +12,7 @@
 typedef NS_ENUM(NSInteger, MouseMode) {
     MOUSE_REPORTING_NONE = -1,
     MOUSE_REPORTING_NORMAL = 0,
-    MOUSE_REPORTING_HILITE = 1,
+    MOUSE_REPORTING_HIGHLIGHT = 1,
     MOUSE_REPORTING_BUTTON_MOTION = 2,
     MOUSE_REPORTING_ALL_MOTION = 3,
 };
@@ -198,7 +198,7 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // Either miniaturizes or unminiaturizes, depending on |mini|.
 - (void)terminalMiniaturize:(BOOL)mini;
 
-// Either raises or iconfies, depending on |raise|.
+// Either raises or iconifies, depending on |raise|.
 - (void)terminalRaise:(BOOL)raise;
 
 // Scroll the screen's scroll region up by |n| lines.

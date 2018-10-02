@@ -67,7 +67,7 @@
 #define EOL_SOFT 1 // Soft line break (a long line was wrapped)
 #define EOL_DWC  2 // Double-width character wrapped to next line
 
-#define ONECHAR_UNKNOWN ('?')   // Relacement character for encodings other than utf-8.
+#define ONECHAR_UNKNOWN ('?')   // Replacement character for encodings other than utf-8.
 
 // Alternate semantics definitions
 // Default foreground/background color
@@ -157,7 +157,7 @@ typedef struct screen_char_t
     unsigned int foregroundColorMode : 2;
     unsigned int backgroundColorMode : 2;
 
-    // If set, the 'code' field does not give a utf-16 value but is intead a
+    // If set, the 'code' field does not give a utf-16 value but is instead a
     // key into a string table of more complex chars (combined, surrogate pairs,
     // etc.). Valid 'code' values for a complex char are in [1, 0xefff] and will
     // be recycled as needed.

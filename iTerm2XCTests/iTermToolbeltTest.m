@@ -149,7 +149,7 @@
     }
 }
 
-#pragma mark - General Testse
+#pragma mark - General Tests
 
 - (void)testToolbeltIsVisible {
     // Ensure the toolbelt is visible.

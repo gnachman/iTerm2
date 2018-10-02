@@ -26,7 +26,7 @@ enum {
 
     kBlackHighlight = 1000,
     kDarkGrayHighlight,
-    kLighGrayHighlight,
+    kLightGrayHighlight,
     kWhiteHighlight,
     kGrayHighlight,
     kRedHighlight,
@@ -41,7 +41,7 @@ enum {
 
     kBlackBackgroundHighlight = 2000,
     kDarkGrayBackgroundHighlight,
-    kLighGrayBackgroundHighlight,
+    kLightGrayBackgroundHighlight,
     kWhiteBackgroundHighlight,
     kGrayBackgroundHighlight,
     kRedBackgroundHighlight,
@@ -101,7 +101,7 @@ enum {
             @"Dark Gray Foreground",  [NSNumber numberWithInt:(int)kDarkGrayHighlight],
             @"Gray Foreground",  [NSNumber numberWithInt:(int)kGrayHighlight],
             @"Green Foreground",  [NSNumber numberWithInt:(int)kGreenHighlight],
-            @"Light Gray Foreground",  [NSNumber numberWithInt:(int)kLighGrayHighlight],
+            @"Light Gray Foreground",  [NSNumber numberWithInt:(int)kLightGrayHighlight],
             @"Magenta Foreground",  [NSNumber numberWithInt:(int)kMagentaHighlight],
             @"Orange Foreground",  [NSNumber numberWithInt:(int)kOrangeHighlight],
             @"Purple Foreground",  [NSNumber numberWithInt:(int)kPurpleHighlight],
@@ -116,7 +116,7 @@ enum {
             @"Dark Gray Background",  [NSNumber numberWithInt:(int)kDarkGrayBackgroundHighlight],
             @"Gray Background",  [NSNumber numberWithInt:(int)kGrayBackgroundHighlight],
             @"Green Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
-            @"Light Gray Background",  [NSNumber numberWithInt:(int)kLighGrayBackgroundHighlight],
+            @"Light Gray Background",  [NSNumber numberWithInt:(int)kLightGrayBackgroundHighlight],
             @"Magenta Background",  [NSNumber numberWithInt:(int)kMagentaBackgroundHighlight],
             @"Orange Background",  [NSNumber numberWithInt:(int)kOrangeBackgroundHighlight],
             @"Purple Background",  [NSNumber numberWithInt:(int)kPurpleBackgroundHighlight],
@@ -146,7 +146,7 @@ enum {
                         @"Dark Gray Foreground",  [NSNumber numberWithInt:(int)kDarkGrayHighlight],
                         @"Gray Foreground",  [NSNumber numberWithInt:(int)kGrayHighlight],
                         @"Green Foreground",  [NSNumber numberWithInt:(int)kGreenHighlight],
-                        @"Light Gray Foreground",  [NSNumber numberWithInt:(int)kLighGrayHighlight],
+                        @"Light Gray Foreground",  [NSNumber numberWithInt:(int)kLightGrayHighlight],
                         @"Magenta Foreground",  [NSNumber numberWithInt:(int)kMagentaHighlight],
                         @"Orange Foreground",  [NSNumber numberWithInt:(int)kOrangeHighlight],
                         @"Purple Foreground",  [NSNumber numberWithInt:(int)kPurpleHighlight],
@@ -163,7 +163,7 @@ enum {
                         @"Gray Background",  [NSNumber numberWithInt:(int)kDarkGrayBackgroundHighlight],
                         @"Gray Background",  [NSNumber numberWithInt:(int)kGrayBackgroundHighlight],
                         @"Green Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
-                        @"Light Gray Background",  [NSNumber numberWithInt:(int)kLighGrayBackgroundHighlight],
+                        @"Light Gray Background",  [NSNumber numberWithInt:(int)kLightGrayBackgroundHighlight],
                         @"Magenta Background",  [NSNumber numberWithInt:(int)kMagentaBackgroundHighlight],
                         @"Orange Background",  [NSNumber numberWithInt:(int)kOrangeBackgroundHighlight],
                         @"Purple Background",  [NSNumber numberWithInt:(int)kPurpleBackgroundHighlight],
@@ -339,7 +339,7 @@ enum {
         case kDarkGrayHighlight:
             return [self dictionaryWithForegroundColor:[NSColor darkGrayColor]];
 
-        case kLighGrayHighlight:
+        case kLightGrayHighlight:
             return [self dictionaryWithForegroundColor:[NSColor lightGrayColor]];
 
         case kWhiteHighlight:
@@ -381,7 +381,7 @@ enum {
         case kDarkGrayBackgroundHighlight:
             return [self dictionaryWithBackgroundColor:[NSColor darkGrayColor]];
 
-        case kLighGrayBackgroundHighlight:
+        case kLightGrayBackgroundHighlight:
             return [self dictionaryWithBackgroundColor:[NSColor lightGrayColor]];
 
         case kWhiteBackgroundHighlight:

@@ -74,7 +74,7 @@
 }
 
 - (void)dismiss {
-    DLog(@"Dismiss announcment %@ from\n%@", self, [NSThread callStackSymbols]);
+    DLog(@"Dismiss announcement %@ from\n%@", self, [NSThread callStackSymbols]);
     if (!_dismissing) {
         _dismissing = YES;
         _visible = NO;

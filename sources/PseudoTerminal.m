@@ -304,7 +304,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL exitingLionFullscreen_;
 
     // If positive, then any window resizing that happens is driven by tmux and
-    // shoudn't be reported back to tmux as a user-originated resize.
+    // shouldn't be reported back to tmux as a user-originated resize.
     int tmuxOriginatedResizeInProgress_;
 
     BOOL liveResize_;
@@ -370,7 +370,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // has not yet been called.
     BOOL _expectingDecodeOfRestorableState;
 
-    // Used to prevent infinite re-entrancy in windowDidChangeScreen:.
+    // Used to prevent infinite reentrancy in windowDidChangeScreen:.
     BOOL _inWindowDidChangeScreen;
 
     iTermPasswordManagerWindowController *_passwordManagerWindowController;
@@ -2437,7 +2437,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (IBAction)editWindowTitle:(id)sender {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"Set Window Title";
-    alert.informativeText = @"If this is empty, the window takes the active session’s title. Variables and function calls enclosed in \\(…) will replaced with their evalution.";
+    alert.informativeText = @"If this is empty, the window takes the active session’s title. Variables and function calls enclosed in \\(…) will replaced with their evaluation.";
     NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 400, 24 * 3)] autorelease];
     iTermFunctionCallTextFieldDelegate *delegate;
     delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:[iTermVariables recordedVariableNamesInContext:iTermVariablesSuggestionContextWindow]
@@ -2804,7 +2804,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)windowShouldClose:(NSNotification *)aNotification
 {
-    // This counts as an interaction beacuse it is only called when the user initiates the closing of the window (as opposed to a session dying on you).
+    // This counts as an interaction because it is only called when the user initiates the closing of the window (as opposed to a session dying on you).
     iTermApplicationDelegate *appDelegate = [iTermApplication.sharedApplication delegate];
     [appDelegate userDidInteractWithASession];
 
@@ -3772,7 +3772,7 @@ ITERM_WEAKLY_REFERENCEABLE
          self.window.screen);
     if (canonicalize && !_inWindowDidChangeScreen) {
         // Nicolas reported a bug where canonicalizeWindowFrame moved the window causing this to
-        // be called re-entrantly, and eventually the stack overflowed. If we insist the window should
+        // be called reentrantly, and eventually the stack overflowed. If we insist the window should
         // be on screen A and the OS insists it should be on screen B, we'll never agree, so just
         // try once.
         _inWindowDidChangeScreen = YES;
@@ -3980,7 +3980,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([self lionFullScreen] ||
         (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
          !self.isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
-         [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren])) {
+         [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen])) {
         [[self ptyWindow] toggleFullScreen:self];
         return;
     }
@@ -3991,7 +3991,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)delayedEnterFullscreen
 {
     if (windowType_ == WINDOW_TYPE_LION_FULL_SCREEN &&
-        [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
+        [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen]) {
         if (![[[iTermController sharedInstance] keyTerminalWindow] lionFullScreen]) {
             // call enter(Traditional)FullScreenMode instead of toggle... because
             // when doing a lion resume, the window may be toggled immediately
@@ -5566,7 +5566,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYTab *tab = tabViewItem.identifier;
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"Set Tab Title";
-    alert.informativeText = @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will replaced with their evalution.";
+    alert.informativeText = @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will replaced with their evaluation.";
     NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 400, 24 * 3)] autorelease];
     iTermFunctionCallTextFieldDelegate *delegate;
     delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:[iTermVariables recordedVariableNamesInContext:iTermVariablesSuggestionContextTab]
@@ -6446,7 +6446,7 @@ ITERM_WEAKLY_REFERENCEABLE
     for (NSString *theKey in sessionMap) {
         PTYSession *session = sessionMap[theKey];
         DLog(@"Revive %@", session);
-        assert([session revive]);  // TODO: This isn't guarantted
+        assert([session revive]);  // TODO: This isn't guaranteed
     }
 
     [self insertTab:tab atIndex:[self indexForTabWithPredecessors:predecessors]];
@@ -7359,7 +7359,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // If updatePaneTitles caused any session to change dimensions, then tell tmux
     // controllers that our capacity has changed.
     if (needResize) {
-        DLog(@"refrshTerminal needs resize");
+        DLog(@"refreshTerminal needs resize");
         NSArray *tmuxControllers = [self uniqueTmuxControllers];
         for (TmuxController *c in tmuxControllers) {
             [c windowDidResize:self];
@@ -8425,7 +8425,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-// These two methods are delecate because -closeTab: won't remove the tab from
+// These two methods are delicate because -closeTab: won't remove the tab from
 // the -tabs array immediately for tmux tabs.
 - (void)closeOtherTabs:(id)sender
 {
@@ -9051,7 +9051,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.currentSession.quickLookController endPreviewPanelControl:panel];
 }
 
-#pragma mark - NSCombobBoxDelegate
+#pragma mark - NSComboBoxDelegate
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     if ([aNotification object] == coprocessCommand_) {

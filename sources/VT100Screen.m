@@ -108,7 +108,7 @@ static const double kInterBellQuietPeriod = 0.1;
     // line number gives a unique line number that won't be reused when the linebuffer overflows.
     long long cumulativeScrollbackOverflow_;
 
-    // When set, strings, newlines, and linefeeds are appened to printBuffer_. When ANSICSI_PRINT
+    // When set, strings, newlines, and linefeeds are appended to printBuffer_. When ANSICSI_PRINT
     // with code 4 is received, it's sent for printing.
     BOOL collectInputForPrinting_;
     NSMutableString *printBuffer_;
@@ -174,7 +174,7 @@ static NSString *const kInlineFileHeight = @"height";  // NSNumber
 static NSString *const kInlineFileHeightUnits = @"height units"; // NSNumber of VT100TerminalUnits
 static NSString *const kInlineFilePreserveAspectRatio = @"preserve aspect ratio";  // NSNumber bool
 static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutableString
-static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
+static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 @synthesize terminal = terminal_;
 @synthesize audibleBell = audibleBell_;
@@ -1044,7 +1044,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         // it'll get truncated and the display is hopelessly messed up, so
         // while this is not the true start of the command it's better than not
         // recording a start, which would break alt-click to move the cursor.
-        // The user will probably cancel the command or press ^L to redrasw.
+        // The user will probably cancel the command or press ^L to redraw.
         newCommandStart = VT100GridCoordMake(commandStartX_, 0);
 
         // Abort the current command.
@@ -1152,7 +1152,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     }
 
     // If a graphics character set was selected then translate buffer
-    // characters into graphics charaters.
+    // characters into graphics characters.
     if (charsetUsesLineDrawingMode_[[terminal_ charset]]) {
         ConvertCharsToGraphicsCharset(buffer, len);
     }
@@ -3693,7 +3693,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                           kInlineFileHeightUnits: @(heightUnits),
                           kInlineFilePreserveAspectRatio: @(preserveAspectRatio),
                           kInlineFileBase64String: [NSMutableString string],
-                          kInilineFileInset: [NSValue futureValueWithEdgeInsets:inset] } retain];
+                          kInlineFileInset: [NSValue futureValueWithEdgeInsets:inset] } retain];
 }
 
 - (void)appendImageAtCursorWithName:(NSString *)name
@@ -3871,7 +3871,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                    height:[inlineFileInfo_[kInlineFileHeight] intValue]
                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
                       preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
-                                    inset:[inlineFileInfo_[kInilineFileInset] futureEdgeInsetsValue]
+                                    inset:[inlineFileInfo_[kInlineFileInset] futureEdgeInsetsValue]
                                     image:nil
                                      data:data];
         [inlineFileInfo_ release];
@@ -4101,7 +4101,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     _currentPromptRange.start = coord;
     _currentPromptRange.end = coord;
 
-    // FinalTerm uses this to define the start of a collapsable region. That would be a nightmare
+    // FinalTerm uses this to define the start of a collapsible region. That would be a nightmare
     // to add to iTerm, and our answer to this is marks, which already existed anyway.
     [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
     if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {

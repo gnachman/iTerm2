@@ -23,7 +23,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 @protocol iTermSelectionDelegate <NSObject>
 
 - (void)selectionDidChange:(iTermSelection *)selection;
-// Returns range of (parenthesized phrase) startin or ending at coord, or
+// Returns range of (parenthesized phrase) starting or ending at coord, or
 // -1,-1,-1,-1 if none.
 - (VT100GridWindowedRange)selectionRangeForParentheticalAt:(VT100GridCoord)coord;
 
@@ -123,7 +123,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 
 // Start a new selection, erasing the old one. Enters live selection.
 // Set |resume| to continue the previous live selection in a new mode.
-// Set |append| to create a new (possibly discontinuous) selection rathern than replacing the
+// Set |append| to create a new (possibly discontinuous) selection rather than replacing the
 // existing set of subselections.
 // Start a new selection, erasing the old one. Enters live selection.
 - (void)beginSelectionAt:(VT100GridCoord)coord

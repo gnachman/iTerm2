@@ -219,7 +219,7 @@
 // Returns a rect describing the current scroll region. Takes useScrollRegionCols into account.
 - (VT100GridRect)scrollRegionRect;
 
-// If a DWC is presetn at (offset, lineNumber), then both its cells are erased. They're replaced
+// If a DWC is present at (offset, lineNumber), then both its cells are erased. They're replaced
 // with c (normally -defaultChar). If there's a DWC_SKIP + EOL_DWC on the preceding line
 // when offset==0 then those are converted to a null and EOL_HARD. Returns true if a DWC was erased.
 - (BOOL)erasePossibleDoubleWidthCharInLineNumber:(int)lineNumber

@@ -215,7 +215,7 @@ static NSError *SCPFileError(NSString *description) {
 }
 
 // This runs in a thread
-- (NSString *)filenameByExpandingMetasyntaticVariables:(NSString *)filename {
+- (NSString *)filenameByExpandingMetasyntacticVariables:(NSString *)filename {
     filename = [filename stringByExpandingTildeInPath];
     NSDictionary *substitutions =
         @{ @"%d": _homeDirectory,
@@ -360,7 +360,7 @@ static NSError *SCPFileError(NSString *description) {
                 }
                 NSFileManager *fileManager = [NSFileManager defaultManager];
                 for (NSString *keyPath in keyPaths) {
-                    keyPath = [self filenameByExpandingMetasyntaticVariables:keyPath];
+                    keyPath = [self filenameByExpandingMetasyntacticVariables:keyPath];
                     if (![fileManager fileExistsAtPath:keyPath]) {
                         XLog(@"No key file at %@", keyPath);
                         continue;
@@ -621,7 +621,7 @@ static NSError *SCPFileError(NSString *description) {
             case NMSSHKnownHostStatusFailure:
                 title = [NSString stringWithFormat:@"Problem connecting to %@", session.host];
                 message = [NSString stringWithFormat:@"Could not read the known_hosts file.\n"
-                                                     @"As a result, the autenticity of host '%@' can't be established."
+                                                     @"As a result, the authenticity of host '%@' can't be established."
                                                      @"DSA key fingerprint is %@. Connect anyway?",
                            session.host, fingerprint];
                 break;

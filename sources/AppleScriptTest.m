@@ -14,7 +14,7 @@
 #import "iTerm2GeneratedScriptingBridge.h"
 #import "NSStringITerm.h"
 
-static NSString *const kTestAppName = @"iTerm2ForApplescriptTesting.app";
+static NSString *const kTestAppName = @"iTerm2ForAppleScriptTesting.app";
 static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
 
 @implementation AppleScriptTest
@@ -54,7 +54,7 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
 }
 
 - (void)killTestApp {
-    // Find all running instances of iTerm2ForApplescriptTesting
+    // Find all running instances of iTerm2ForAppleScriptTesting
     NSArray *pids = [self processIdsForTestApp];
 
     // Kill them.
@@ -80,7 +80,7 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
     } else {
         // For some reason the scripting bridge test produces an app that doesn't show up in
         // runningApplications.
-        system("killall -9 iTerm2ForApplescriptTesting");
+        system("killall -9 iTerm2ForAppleScriptTesting");
     }
 }
 

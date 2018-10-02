@@ -38,7 +38,7 @@ const int kColorAreaOffsetY = 10;
 const int kColorAreaDistanceX = 18;
 const int kColorAreaDimension = 12;
 const int kColorAreaBorder = 1;
-const int kDefaulColorOffset = 2;
+const int kDefaultColorOffset = 2;
 const int kDefaultColorDimension = 8;
 const int kDefaultColorStokeWidth = 2;
 const int kMenuFontSize = 14;
@@ -128,9 +128,9 @@ enum {
     [color set];
     CGFloat savedWidth = [NSBezierPath defaultLineWidth];
     [NSBezierPath setDefaultLineWidth:kDefaultColorStokeWidth];
-    float defaultX0 = kColorAreaOffsetX + kDefaulColorOffset;
+    float defaultX0 = kColorAreaOffsetX + kDefaultColorOffset;
     float defaultX1 = defaultX0 + kDefaultColorDimension;
-    float defaultY0 = kColorAreaOffsetY + kDefaulColorOffset;
+    float defaultY0 = kColorAreaOffsetY + kDefaultColorOffset;
     float defaultY1 = defaultY0 + kDefaultColorDimension;
     [NSBezierPath strokeLineFromPoint:NSMakePoint(defaultX0, defaultY0)
                               toPoint:NSMakePoint(defaultX1, defaultY1)];

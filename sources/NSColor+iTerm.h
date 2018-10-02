@@ -11,7 +11,7 @@
 
 @class NSAppearance;
 
-// Keys of -dictionaryValue. Use -[NSDictionary colorVaue] to convert to color.
+// Keys of -dictionaryValue. Use -[NSDictionary colorValue] to convert to color.
 extern NSString *const kEncodedColorDictionaryRedComponent;
 extern NSString *const kEncodedColorDictionaryGreenComponent;
 extern NSString *const kEncodedColorDictionaryBlueComponent;

@@ -10,7 +10,7 @@ typedef NS_ENUM(NSInteger, iTermWarningType) {
     kiTermWarningTypePersistent,
     kiTermWarningTypePermanentlySilenceable,
     kiTermWarningTypeTemporarilySilenceable,  // 10 minutes
-    kiTermWarningTypeSilencableForOneMonth  // 30 days
+    kiTermWarningTypeSilenceableForOneMonth  // 30 days
 };
 
 typedef NS_ENUM(NSInteger, iTermWarningSelection) {
@@ -22,7 +22,7 @@ typedef NS_ENUM(NSInteger, iTermWarningSelection) {
 
 typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 
-// Encpasulates a label and an optional block that's called when the action is
+// Encapsulates a label and an optional block that's called when the action is
 // selected.
 @interface iTermWarningAction : NSObject
 
@@ -92,7 +92,7 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // would store a value of kiTermWarningSelection1. If you then change actions to [ "Hide", "Cancel", "Kill" ],
 // you want Kill to still be iTermWarningSelection1, even though Cancel is in the second position,
 // so the saved preference will be respected. In that case, you'd use an actionToSelectionMap of
-// [ kiTermWawrningSelection0, kiTermWarningSelection2, kItermWarningSelection1 ], which has the
+// [ kiTermWarningSelection0, kiTermWarningSelection2, kItermWarningSelection1 ], which has the
 // effect of making Cancel return Selection2 even though it's in the second position.
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
@@ -136,7 +136,7 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // String used as a user defaults key to remember the user's preference.
 @property(nonatomic, copy) NSString *identifier;
 
-// What kind of suppression options are availble.
+// What kind of suppression options are available.
 @property(nonatomic, assign) iTermWarningType warningType;
 
 // Optional. Changes the bold heading on the warning.

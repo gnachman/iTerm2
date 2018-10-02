@@ -357,7 +357,7 @@ enum {
                    type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_lionStyleFullscreen
-                    key:kPreferenceKeyLionStyleFullscren
+                    key:kPreferenceKeyLionStyleFullscreen
                    type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_openTmuxWindows

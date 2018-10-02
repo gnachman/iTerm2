@@ -171,7 +171,7 @@ typedef struct {
 #pragma mark - Private
 
 - (NSImage *)patternedImageForViewOfSize:(NSSize)size {
-    // If there is a tiled background image, tesselate _backgroundImage onto
+    // If there is a tiled background image, tessellate _backgroundImage onto
     // _patternedImage, which will be the source for future background image
     // drawing operations.
     if (!_patternedImage || !NSEqualSizes(_patternedImage.size, size)) {

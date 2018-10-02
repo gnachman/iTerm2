@@ -14,7 +14,7 @@ typedef NS_OPTIONS(NSInteger, iTermSavePanelOptions) {
     kSavePanelOptionAppendOrReplace = (1 << 0)
 };
 
-typedef NS_ENUM(NSInteger, iTermSavePanelReplaceorAppend) {
+typedef NS_ENUM(NSInteger, iTermSavePanelReplaceOrAppend) {
     kSavePanelReplaceOrAppendSelectionNotApplicable,  // No existing file or option not specified.
     kSavePanelReplaceOrAppendSelectionReplace,
     kSavePanelReplaceOrAppendSelectionAppend,
@@ -23,7 +23,7 @@ typedef NS_ENUM(NSInteger, iTermSavePanelReplaceorAppend) {
 @interface iTermSavePanel : NSObject
 
 // valid only if options includes kSavePanelOptionAppendOrReplace
-@property(nonatomic, readonly) iTermSavePanelReplaceorAppend replaceOrAppend;
+@property(nonatomic, readonly) iTermSavePanelReplaceOrAppend replaceOrAppend;
 
 // Path the user selected.
 @property(nonatomic, readonly) NSString *path;

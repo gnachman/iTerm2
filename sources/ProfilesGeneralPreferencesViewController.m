@@ -77,7 +77,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     IBOutlet NSView *_editCurrentSessionView;
     IBOutlet NSButton *_copySettingsToProfile;
-    IBOutlet NSButton *_copyProfleToSession;
+    IBOutlet NSButton *_copyProfileToSession;
     IBOutlet NSPopUpButton *_titleSettings;
     IBOutlet NSButton *_customTitleHelp;
 
@@ -354,7 +354,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 }
 
 - (void)updateTitleSettingsMenuForView:(NSPopUpButton *)titleSettings {
-    // First remove any programatically added items
+    // First remove any programmatically added items
     NSIndexSet *indexSet = [titleSettings.menu.itemArray indexesOfObjectsPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         return obj.tag == -1;
     }];
@@ -785,7 +785,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (void)profileTableSelectionDidChange:(id)profileTable {
     [_copySettingsToProfile setEnabled:[_profiles hasSelection]];
-    [_copyProfleToSession setEnabled:[_profiles hasSelection]];
+    [_copyProfileToSession setEnabled:[_profiles hasSelection]];
 }
 
 - (void)profileTableRowSelected:(id)profileTable {

@@ -76,7 +76,7 @@ extern NSString *const kPreferenceKeyCharactersConsideredPartOfAWordForSelection
 extern NSString *const kPreferenceKeySmartWindowPlacement;
 extern NSString *const kPreferenceKeyAdjustWindowForFontSizeChange;
 extern NSString *const kPreferenceKeyMaximizeVerticallyOnly;
-extern NSString *const kPreferenceKeyLionStyleFullscren;
+extern NSString *const kPreferenceKeyLionStyleFullscreen;
 extern NSString *const kPreferenceKeyOpenTmuxWindowsIn;
 extern NSString *const kPreferenceKeyTmuxDashboardLimit;
 extern NSString *const kPreferenceKeyAutoHideTmuxClientSession;
@@ -86,7 +86,7 @@ extern NSString *const kPreferenceKeyPreferIntegratedGPU;
 extern NSString *const kPreferenceKeyMetalMaximizeThroughput;
 
 // Appearance
-extern NSString *const kPreferenceKeyTabStyle_Depcreated;
+extern NSString *const kPreferenceKeyTabStyle_Deprecated;
 extern NSString *const kPreferenceKeyTabStyle;
 extern NSString *const kPreferenceKeyTabPosition;
 extern NSString *const kPreferenceKeyStatusBarPosition;

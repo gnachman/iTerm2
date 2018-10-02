@@ -123,7 +123,7 @@ static NSString *const iTermMetalBufferPoolContextStackKey = @"iTermMetalBufferP
         id<MTLBuffer> buffer;
         id<MTLBuffer> bestMatch = [[[_buffers filteredArrayUsingBlock:^BOOL(id<MTLBuffer> buffer) {
             return buffer.length > size;
-        }] mininumsWithComparator:^NSComparisonResult(id<MTLBuffer> a, id<MTLBuffer> b) {
+        }] minimumsWithComparator:^NSComparisonResult(id<MTLBuffer> a, id<MTLBuffer> b) {
             return [@(a.length) compare:@(b.length)];
         }] firstObject];
         if (bestMatch != nil) {

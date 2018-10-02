@@ -71,7 +71,7 @@
 @end
 
 // A handy way of describing the essential parts of a hotkey, as far as being a uniquely registered
-// keystroke goes. Does not include any inessental information could is not related to the
+// keystroke goes. Does not include any nonessential information could is not related to the
 // bare-metal mechanics of a keypress. The modifier flags should be masked before the creation of
 // the dictionary.
 typedef NSDictionary iTermHotKeyDescriptor;

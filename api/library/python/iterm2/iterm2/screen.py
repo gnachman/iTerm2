@@ -77,14 +77,14 @@ class ScreenContents:
 
     @property
     def cursor_coord(self):
-        """Returns the locaiton of the cursor.
+        """Returns the location of the cursor.
 
         :returns: A :class:`iterm2.Point`"""
         return iterm2.util.Point(self.__proto.cursor.x, self.__proto.cursor.y)
 
     @property
     def number_of_lines_above_screen(self):
-        """Returns the number of lines before the screen including scrollback history and lines lost from the head of scrolllback history.
+        """Returns the number of lines before the screen including scrollback history and lines lost from the head of scrollback history.
 
         :returns: The number of lines ever received before the top line of the screen."""
         return self.__proto.num_lines_above_screen

@@ -144,7 +144,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         iTermShortcutInputView *shortcutView = (iTermShortcutInputView *)firstResponder;
         if (shortcutView) {
             if (event.keyCode == iTermBogusVirtualKeyCode) {
-                // You can't register a carbon hotkey for these so just ignore them when listining for a shortcut.
+                // You can't register a carbon hotkey for these so just ignore them when listening for a shortcut.
                 return YES;
             }
             [shortcutView handleShortcutEvent:event];

@@ -1213,7 +1213,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                         colorKey->bgColorMode == ColorModeAlternate);
         // When set in preferences, applies alpha only to the defaultBackground
         // color, useful for keeping Powerline segments opacity(background)
-        // consistent with their seperator glyphs opacity(foreground).
+        // consistent with their separator glyphs opacity(foreground).
         if (_transparencyAffectsOnlyDefaultBackgroundColor && !defaultBackground) {
             alpha = 1;
         }

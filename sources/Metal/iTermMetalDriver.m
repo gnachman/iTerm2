@@ -326,7 +326,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 
     const CGFloat slowEnoughToDowngradeThreshold = 0.002;
-    const CGFloat fastEnoughToUpgradeTreshold = 0.0005;
+    const CGFloat fastEnoughToUpgradeThreshold = 0.0005;
     if (_currentDrawableTime.numberOfMeasurements > 5 &&
         _maxFramesInFlight > 1 &&
         _currentDrawableTime.value > slowEnoughToDowngradeThreshold) {
@@ -339,7 +339,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [_currentDrawableTime reset];
     } else if (_currentDrawableTime.numberOfMeasurements > 10 &&
                _maxFramesInFlight < iTermMetalDriverMaximumNumberOfFramesInFlight &&
-               _currentDrawableTime.value < fastEnoughToUpgradeTreshold) {
+               _currentDrawableTime.value < fastEnoughToUpgradeThreshold) {
         DLog(@"Moving average of currentDrawable latency of %0.2fms with %@ measurements with mff of %@ is low. Increase mff to %@",
               _currentDrawableTime.value * 1000,
               @(_currentDrawableTime.numberOfMeasurements),
@@ -567,8 +567,8 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 #endif
 
     [frameData enqueueDrawCallsWithBlock:^{
-        [self enequeueDrawCallsForFrameData:frameData
-                              commandBuffer:commandBuffer];
+        [self enqueueDrawCallsForFrameData:frameData
+                             commandBuffer:commandBuffer];
     }];
     for (iTermMetalRowData *rowData in frameData.rows) {
         [rowData.lineData checkForOverrun];
@@ -790,9 +790,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 }
 
-- (void)enequeueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
-                        commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
-    DLog(@"  enequeueDrawCallsForFrameData %@", frameData);
+- (void)enqueueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
+                       commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    DLog(@"  enqueueDrawCallsForFrameData %@", frameData);
 
     NSString *firstLabel;
     if (frameData.intermediateRenderPassDescriptor) {
@@ -1092,7 +1092,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             rowData.y <= imeInfo.markedRange.end.y) {
             // This line contains at least part of the marked range
             if (rowData.y == imeInfo.markedRange.start.y) {
-                // Makred range starts on this line
+                // Marked range starts on this line
                 if (rowData.y == imeInfo.markedRange.end.y) {
                     // Marked range starts and ends on this line.
                     markedRangeOnLine = NSMakeRange(imeInfo.markedRange.start.x,
@@ -1291,7 +1291,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 // frameData's renderEncoder must have just had -endEncoding called on it at this point.
-// It will be left in the same staate.
+// It will be left in the same state.
 - (void)copyOffscreenTextureToDrawableInFrameData:(iTermMetalFrameData *)frameData {
     [self copyToDrawableFromTexture:frameData.destinationTexture
            withRenderPassDescriptor:frameData.debugRealRenderPassDescriptor

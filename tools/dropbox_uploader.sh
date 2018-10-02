@@ -497,7 +497,7 @@ function db_upload
 }
 
 #Generic upload wrapper around db_chunked_upload_file and db_simple_upload_file
-#The final upload function will be choosen based on the file size
+#The final upload function will be chosen based on the file size
 #$1 = Local source file
 #$2 = Remote destination file
 function db_upload_file
@@ -704,7 +704,7 @@ function db_upload_dir
     local DIR_SRC=$(normalize_path "$1")
     local DIR_DST=$(normalize_path "$2")
 
-    #Creatig remote directory
+    #Creating remote directory
     db_mkdir "$DIR_DST"
 
     for file in "$DIR_SRC/"*; do
@@ -1511,7 +1511,7 @@ function db_sha_local
 #CHECKING FOR AUTH FILE
 if [[ -e $CONFIG_FILE ]]; then
 
-    #Loading data... and change old format config if necesary.
+    #Loading data... and change old format config if necessary.
     source "$CONFIG_FILE" 2>/dev/null || {
         sed -i'' 's/:/=/' "$CONFIG_FILE" && source "$CONFIG_FILE" 2>/dev/null
     }

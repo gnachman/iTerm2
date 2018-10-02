@@ -39,7 +39,7 @@ const int kMaxResultContextWords = 4;
     // Context for searches while populating unfilteredModel.
     FindContext *findContext_;
 
-    // Timer for doing asynch seraches for prefix.
+    // Timer for doing async searches for prefix.
     NSTimer* populateTimer_;
 
     // Cursor location to begin next search.
