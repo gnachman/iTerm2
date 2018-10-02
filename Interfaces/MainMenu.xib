@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14113" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -624,28 +624,6 @@ DQ
                             <menuItem isSeparatorItem="YES" id="849">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Save Window Arrangement" keyEquivalent="S" identifier="Save Window Arrangement" id="1205">
-                                <connections>
-                                    <action selector="saveWindowArrangement:" target="201" id="1206"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Save Current Window as Arrangement" alternate="YES" keyEquivalent="S" identifier="Save Current Window as Arrangement" id="D5Y-FD-IWK">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="saveCurrentWindowAsArrangement:" target="201" id="FAg-xE-xg0"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Restore Window Arrangement" id="1280">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <menu key="submenu" title="Restore Window Arrangement" id="1281"/>
-                            </menuItem>
-                            <menuItem title="Restore Window Arrangement as Tabs" id="z6V-EJ-Ntf" userLabel="Restore Window Arrangement as Tabs">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <menu key="submenu" title="Restore Window Arrangement as Tabs" id="fEX-7N-c8a"/>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="1204">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
                             <menuItem title="Select Split Pane" id="1209">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Select Split Pane" id="1210">
@@ -781,9 +759,6 @@ DQ
                             <menuItem isSeparatorItem="YES" id="1405">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem isSeparatorItem="YES" id="zl8-Q7-4RO">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
                             <menuItem title="Pin Hotkey Window" keyEquivalent="-" identifier="Pin Hotkey Window" id="Kd2-6A-mAn">
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                 <connections>
@@ -829,8 +804,6 @@ DQ
                 <outlet property="sendInputNormally" destination="1268" id="1276"/>
                 <outlet property="sendInputToAllPanes" destination="1266" id="1279"/>
                 <outlet property="sendInputToAllSessions" destination="1264" id="1278"/>
-                <outlet property="windowArrangementsAsTabs_" destination="z6V-EJ-Ntf" id="wse-Wc-WVw"/>
-                <outlet property="windowArrangements_" destination="1280" id="1285"/>
             </connections>
         </customObject>
         <customObject id="266" userLabel="Font Manager" customClass="NSFontManager"/>

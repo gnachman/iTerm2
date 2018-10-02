@@ -1720,16 +1720,19 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)showPrefWindow:(id)sender {
     [[PreferencePanel sharedInstance] run];
-    [[[PreferencePanel sharedInstance] window] makeKeyAndOrderFront:self];
+    NSWindow *window = [[PreferencePanel sharedInstance] window];
+    [window makeKeyAndOrderFront:self];
+    [window setLevel:NSFloatingWindowLevel];
 }
 
 - (IBAction)showAndOrderFrontRegardlessPrefWindow:(id)sender {
     [self showPrefWindow:sender];
-    [[[PreferencePanel sharedInstance] window] orderFrontRegardless];
+    NSWindow *window = [[PreferencePanel sharedInstance] window];
+    [window orderFrontRegardless];
+    [window setLevel:NSFloatingWindowLevel];
 }
 
-- (IBAction)showBookmarkWindow:(id)sender
-{
+- (IBAction)showBookmarkWindow:(id)sender {
     [[iTermProfilesWindowController sharedInstance] showWindow:sender];
 }
 
