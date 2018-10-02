@@ -3576,7 +3576,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                       inProfile:aDict]];
 
     // Color scheme
-    // ansiColosMatchingForeground:andBackground:inBookmark does an equality comparison, so
+    // ansiColorsMatchingForeground:andBackground:inBookmark does an equality comparison, so
     // iTermProfilePreferences is not used here.
     [self setColorFgBgVariable:[self ansiColorsMatchingForeground:aDict[KEY_FOREGROUND_COLOR]
                                                     andBackground:aDict[KEY_BACKGROUND_COLOR]
