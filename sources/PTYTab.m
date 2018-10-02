@@ -1852,7 +1852,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 // Take the cross-grain size of the first subview.
                 size.height = subviewSize.height;
             } else if ((int)size.height != (int)subviewSize.height) {
-                // There's a discripancy in cross-grain sizes among subviews.
+                // There's a discrepancy in cross-grain sizes among subviews.
                 if (subviewContainsLock) {
                     // Prefer the locked subview.
                     size.height = subviewSize.height;
@@ -1870,7 +1870,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 // Take the cross-grain size of the first subview.
                 size.width = subviewSize.width;
             } else if ((int)size.width != (int)subviewSize.width) {
-                // There's a discripancy in cross-grain sizes among subviews.
+                // There's a discrepancy in cross-grain sizes among subviews.
                 if (subviewContainsLock) {
                     // Prefer the locked subview.
                     size.width = subviewSize.width;
@@ -1940,7 +1940,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 // Take the cross-grain size of the first subview.
                 size.width = subviewSize.width;
             } else if ((int)size.width != (int)subviewSize.width) {
-                // There's a discripancy in cross-grain sizes among subviews.
+                // There's a discrepancy in cross-grain sizes among subviews.
                 size.width = MAX(size.width, subviewSize.width);
             }
         }
