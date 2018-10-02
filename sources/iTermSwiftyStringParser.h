@@ -9,7 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-// NOTE: This supports nested inline expressions. Callbacks are only inovked for topmost literals
+// NOTE: This supports nested inline expressions. Callbacks are only invoked for topmost literals
 // and expressions. So a string like:
 //
 // A\(B("C\(D("E"))"))
