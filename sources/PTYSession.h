@@ -365,7 +365,7 @@ typedef enum {
 @property(nonatomic) BOOL useMetal;
 
 // Has this session's bookmark been divorced from the profile in the ProfileModel? Changes
-// in this bookmark may happen indepentendly of the persistent bookmark.
+// in this bookmark may happen independently of the persistent bookmark.
 // You should usually not assign to this; instead use divorceAddressBookEntryFromPreferences.
 @property(nonatomic, assign) BOOL isDivorced;
 
