@@ -618,7 +618,7 @@ static void HandleSigChld(int n) {
 
 // Get the name of this task's current job. It is quite approximate! Any
 // arbitrary tty-controller in the tty's pgid that has this task as an ancestor
-// may be chosen. This function also implements a chache to avoid doing the
+// may be chosen. This function also implements a cache to avoid doing the
 // potentially expensive system calls too often.
 - (NSString *)currentJob:(BOOL)forceRefresh pid:(pid_t *)pid {
     iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:self.pid];
