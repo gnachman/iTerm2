@@ -6446,7 +6446,7 @@ ITERM_WEAKLY_REFERENCEABLE
     for (NSString *theKey in sessionMap) {
         PTYSession *session = sessionMap[theKey];
         DLog(@"Revive %@", session);
-        assert([session revive]);  // TODO: This isn't guarantted
+        assert([session revive]);  // TODO: This isn't guaranteed
     }
 
     [self insertTab:tab atIndex:[self indexForTabWithPredecessors:predecessors]];
