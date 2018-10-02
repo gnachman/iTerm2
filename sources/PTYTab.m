@@ -6,6 +6,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermFlexibleView.h"
 #import "iTermNotificationController.h"
 #import "iTermPowerManager.h"
 #import "iTermPreferences.h"
@@ -147,7 +148,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // If there is a flexible root view, this is set and is the tabview's view.
     // Otherwise it is nil.
-    SolidColorView *flexibleView_;
+    iTermFlexibleView *flexibleView_;
 
     // The root of a tree of split views whose leaves are SessionViews. The root is the view of the
     // NSTabViewItem.
@@ -807,6 +808,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         // Set flexible view's color to the default background color for tmux tabs.
         NSColor *bgColor;
         bgColor = [ITAddressBookMgr decodeColor:self.tmuxController.profile[KEY_BACKGROUND_COLOR]];
+        if ([self.delegate tabShouldUseTransparency:self]) {
+            CGFloat alpha = [iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:self.tmuxController.profile];
+            if (alpha < 1) {
+                bgColor = [bgColor colorWithAlphaComponent:alpha];
+            }
+        }
         [flexibleView_ setColor:bgColor];
     } else {
         // Fullscreen, overly large flexible view, or exact size flex view.
@@ -2573,8 +2580,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)enableFlexibleView {
     assert(!flexibleView_);
     // Interpose a vew between the tab and the root so the root can be smaller than the tab.
-    flexibleView_ = [[SolidColorView alloc] initWithFrame:root_.frame
-                                                    color:[self flexibleViewColor]];
+    flexibleView_ = [[iTermFlexibleView alloc] initWithFrame:root_.frame
+                                                       color:[self flexibleViewColor]];
     [flexibleView_ setFlipped:YES];
     tabView_ = flexibleView_;
     [root_ setAutoresizingMask:NSViewMaxXMargin | NSViewMaxYMargin];

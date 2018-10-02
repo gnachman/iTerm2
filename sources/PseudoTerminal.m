@@ -8691,6 +8691,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return YES;
 }
 
+- (BOOL)tabShouldUseTransparency:(PTYTab *)tab {
+    return self.useTransparency;
+}
+
 - (void)currentSessionWordAtCursorDidBecome:(NSString *)word {
     if (word == _previousTouchBarWord || [word isEqualToString:_previousTouchBarWord]) {
         return;
