@@ -284,7 +284,7 @@ NS_INLINE vector_int3 GetColorModelIndexForPIU(iTermTextRendererTransientState *
         for (auto i : *_colorModelIndexes) {
             const iTermColorComponentPair p = i.first;
             [[iTermSubpixelModelBuilder sharedInstance] writeDebugDataToFolder:folder.path
-                                                                foregoundColor:p.first / 255.0
+                                                               foregroundColor:p.first / 255.0
                                                                backgroundColor:p.second / 255.0];
         }
     }
@@ -841,8 +841,8 @@ static vector_int3 SlowGetColorModelIndexForPIU(iTermTextRendererTransientState 
 
 - (int)allocateColorModelForColorPair:(iTermColorComponentPair)colorPair {
     int i = _colorModelIndexes->size();
-    iTermSubpixelModel *model = [[iTermSubpixelModelBuilder sharedInstance] modelForForegoundColor:colorPair.first / 255.0
-                                                                                   backgroundColor:colorPair.second / 255.0];
+    iTermSubpixelModel *model = [[iTermSubpixelModelBuilder sharedInstance] modelForForegroundColor:colorPair.first / 255.0
+                                                                                    backgroundColor:colorPair.second / 255.0];
     [_colorModels appendData:model.table];
     (*_colorModelIndexes)[colorPair] = i;
     return i;
