@@ -1923,12 +1923,6 @@ return;
     }
 }
 
-#if 0
-- (VT100RemoteHost *)remoteHostOnLine:(int)line {
-    return (VT100RemoteHost *)[self objectOnOrBeforeLine:line ofClass:[VT100RemoteHost class]];
-}
-#endif
-
 - (NSString *)workingDirectoryOnLine:(int)line {
 #if 0
     VT100WorkingDirectory *workingDirectory =
@@ -3246,13 +3240,15 @@ return;
         return;
     }
     NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:NO] autorelease];
-    NSString *host = components.host;
-    NSString *user = components.user;
     NSString *path = components.path;
 
+#if 0
+    NSString *host = components.host;
+    NSString *user = components.user;
     if (host || user) {
         [self setHost:host user:user];
     }
+#endif
     [self terminalCurrentDirectoryDidChangeTo:path];
     [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
 }

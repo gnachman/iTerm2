@@ -180,7 +180,6 @@ extern int kVT100ScreenMinRows;
 
 - (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line;
 - (NSString *)workingDirectoryOnLine:(int)line;
-- (VT100RemoteHost *)remoteHostOnLine:(int)line;
 - (VT100ScreenMark *)lastCommandMark;  // last mark representing a command
 
 - (NSDictionary *)contentsDictionary;

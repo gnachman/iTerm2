@@ -155,6 +155,7 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 }
 
 - (void)showTip {
+#if 0
 return;
     if (_showingTip) {
         return;
@@ -170,6 +171,7 @@ return;
     if (key) {  // Key should always be non-nil, but better be safe.
         [self showTipForKey:key];
     }
+#endif
 }
 
 - (BOOL)haveShownTipRecently {

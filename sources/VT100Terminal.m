@@ -2015,7 +2015,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeFileCommandWithValue:(NSString *)value {
-return;
+#if 0
     // Takes semicolon-delimited arguments.
     // File=<arg>;<arg>;...;<arg>
     // <arg> is one of:
@@ -2092,6 +2092,7 @@ return;
         [delegate_ terminalWillReceiveFileNamed:name ofSize:[dict[@"size"] intValue]];
     }
     receivingFile_ = YES;
+#endif
 }
 
 - (NSArray *)keyValuePairInToken:(VT100Token *)token {

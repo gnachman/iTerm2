@@ -120,12 +120,12 @@ static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL ranAutoLaunchScript = NO;
 static BOOL hasBecomeActive = NO;
 
-static NSString *const kBundlesWithAPIAccessSettingKey = @"NoSyncBundlesWithAPIAccessSettings";
-static NSString *const kAPIAccessAllowed = @"allowed";
-static NSString *const kAPIAccessDate = @"date";
-static NSString *const kAPINextConfirmationDate = @"next confirmation";
-static NSString *const kAPIAccessLocalizedName = @"app name";
-static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
+// static NSString *const kBundlesWithAPIAccessSettingKey = @"NoSyncBundlesWithAPIAccessSettings";
+// static NSString *const kAPIAccessAllowed = @"allowed";
+// static NSString *const kAPIAccessDate = @"date";
+// static NSString *const kAPINextConfirmationDate = @"next confirmation";
+// static NSString *const kAPIAccessLocalizedName = @"app name";
+// static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 
 
 @interface iTermApplicationDelegate ()
@@ -1133,8 +1133,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)sessionCreated:(NSNotification *)notification {
-    PTYSession *session = notification.object;
     /*
+    PTYSession *session = notification.object;
     [_newSessionSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.newSessionNotification = [[[ITMNewSessionNotification alloc] init] autorelease];
@@ -1161,8 +1161,8 @@ static const NSTimeInterval kOneMonth = 30 * 24 * 60 * 60;
 }
 
 - (void)sessionDidTerminate:(NSNotification *)notification {
-    PTYSession *session = notification.object;
     /*
+    PTYSession *session = notification.object;
     [_terminateSessionSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.terminateSessionNotification = [[[ITMTerminateSessionNotification alloc] init] autorelease];
