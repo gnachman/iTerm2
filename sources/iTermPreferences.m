@@ -94,6 +94,8 @@ NSString *const kPreferenceKeyRightCommandRemapping = @"RightCommand";
 NSString *const kPreferenceKeySwitchPaneModifier = @"SwitchPaneModifier";
 NSString *const kPreferenceKeySwitchTabModifier = @"SwitchTabModifier";
 NSString *const kPreferenceKeySwitchWindowModifier = @"SwitchWindowModifier";
+NSString *const kPreferenceKeyEmulateUSKeyboard = @"UseVirtualKeyCodesForDetectingDigits";
+
 NSString *const kPreferenceKeyHotkeyEnabled = @"Hotkey";
 NSString *const kPreferenceKeyHotKeyCode = @"HotkeyCode";
 NSString *const kPreferenceKeyHotkeyCharacter = @"HotkeyChar";  // Nonzero if hotkey char is set.
@@ -271,6 +273,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeySwitchPaneModifier: @(kPreferenceModifierTagNone),
                   kPreferenceKeySwitchTabModifier: @(kPreferencesModifierTagEitherCommand),
                   kPreferenceKeySwitchWindowModifier: @(kPreferencesModifierTagCommandAndOption),
+                  kPreferenceKeyEmulateUSKeyboard: @NO,
                   kPreferenceKeyHotkeyEnabled: @NO,
                   kPreferenceKeyHotKeyCode: @0,
                   kPreferenceKeyHotkeyCharacter: @0,

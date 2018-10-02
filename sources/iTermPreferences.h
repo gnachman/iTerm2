@@ -117,6 +117,7 @@ extern NSString *const kPreferenceKeyRightCommandRemapping;
 extern NSString *const kPreferenceKeySwitchPaneModifier;
 extern NSString *const kPreferenceKeySwitchTabModifier;
 extern NSString *const kPreferenceKeySwitchWindowModifier;
+extern NSString *const kPreferenceKeyEmulateUSKeyboard;  // See issue 6994
 
 extern NSString *const kPreferenceKeyHotkeyEnabled;
 extern NSString *const kPreferenceKeyHotKeyCode;

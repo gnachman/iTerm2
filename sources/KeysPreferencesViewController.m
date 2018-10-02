@@ -45,6 +45,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     IBOutlet NSTextField *_hotkeyField;
     IBOutlet NSTextField *_hotkeyLabel;
     IBOutlet NSButton *_configureHotKeyWindow;
+    IBOutlet NSButton *_emulateUSKeyboard;
 
     iTermHotkeyPreferencesWindowController *_hotkeyPanel;
 }
@@ -133,6 +134,10 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     info.onChange = ^() { [weakSelf hotkeyEnabledDidChange]; };
     info.observer = ^() { [weakSelf updateHotkeyViews]; };
     [self updateDuplicateWarning];
+
+    [self defineControl:_emulateUSKeyboard
+                    key:kPreferenceKeyEmulateUSKeyboard
+                   type:kPreferenceInfoTypeCheckbox];
 }
 
 - (void)viewWillAppear {
@@ -327,6 +332,13 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 
 - (IBAction)configureHotKeyWindow:(id)sender {
     [self generateHotkeyWindowProfile];
+}
+
+- (IBAction)emulateUsKeyboardHelp:(id)sender {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Emulate US Keyboard";
+    alert.informativeText = @"Some keyboard layouts (such as AZERTY) require a modifier to press a number key. This causes problems for switching to a window, tab, or split pane by pressing modifier+number: you might need other modifiers or conflicting modifiers. When “Emulate US Keyboard” is enabled, you can press the configured modifier plus the key on the top row that corresponds to a number key on a US keyboard. For example, on AZERTY, the & key would act as the 1 key.";
+    [alert runModal];
 }
 
 #pragma mark - iTermShortcutInputViewDelegate
