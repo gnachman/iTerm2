@@ -73,7 +73,8 @@
                              kPreferenceKeyCustomFolder,
                              @"Secure Input",
                              @"moveToApplicationsFolderAlertSuppress",
-                             @"iTerm Version" ];
+                             @"iTerm Version",
+                             @"CGFontRenderingFontSmoothingDisabled" ];
     return ![exemptKeys containsObject:key] &&
             ![key hasPrefix:@"NS"] &&
             ![key hasPrefix:@"SU"] &&
