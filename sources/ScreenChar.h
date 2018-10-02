@@ -157,7 +157,7 @@ typedef struct screen_char_t
     unsigned int foregroundColorMode : 2;
     unsigned int backgroundColorMode : 2;
 
-    // If set, the 'code' field does not give a utf-16 value but is intead a
+    // If set, the 'code' field does not give a utf-16 value but is instead a
     // key into a string table of more complex chars (combined, surrogate pairs,
     // etc.). Valid 'code' values for a complex char are in [1, 0xefff] and will
     // be recycled as needed.
