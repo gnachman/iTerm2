@@ -27,7 +27,7 @@
 @property(nonatomic, readonly) BOOL rollingIn;
 @property(nonatomic, readonly) BOOL rollingOut;
 
-// A rollout is cancellable after the window has animated out but before previously active app becomes active.
+// A rollout is cancelable after the window has animated out but before previously active app becomes active.
 @property(nonatomic, readonly) BOOL rollOutCancelable;
 
 @property(nonatomic, assign) BOOL autoHides;
