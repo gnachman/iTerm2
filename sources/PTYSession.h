@@ -165,7 +165,7 @@ typedef enum {
 // The tmux window title changed.
 - (void)sessionDidChangeTmuxWindowNameTo:(NSString *)newName;
 
-// Returns the objectSpecifier of the tab (used to identify a tab for Applescript).
+// Returns the objectSpecifier of the tab (used to identify a tab for AppleScript).
 - (NSScriptObjectSpecifier *)objectSpecifier;
 
 // Returns the tmux window ID of the containing tab. -1 if not tmux.

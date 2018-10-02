@@ -2018,7 +2018,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)_maybeWarnAboutShortLivedSessions
 {
-    if ([iTermApplication.sharedApplication delegate].isApplescriptTestApp) {
+    if ([iTermApplication.sharedApplication delegate].isAppleScriptTestApp) {
         // The applescript test driver doesn't care about short-lived sessions.
         return;
     }

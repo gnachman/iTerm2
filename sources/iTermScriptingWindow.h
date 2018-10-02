@@ -9,8 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "PTYWindow.h"
 
-// This wraps iTermWindow and iTermPanel so that Applescript thinks they have
-// the same class. That makes Applescript, which is a dumpster fire, happy.
+// This wraps iTermWindow and iTermPanel so that AppleScript thinks they have
+// the same class. That makes AppleScript, which is a dumpster fire, happy.
 // This uses a combination of brute force and objc runtime cleverness.
 @interface iTermScriptingWindow : NSObject
 

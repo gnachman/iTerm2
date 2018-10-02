@@ -253,7 +253,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         } else {
             // This isn't as good as opening "code -g" because it always opens a new instance
             // of the app but it's the OS-sanctioned way of running VSCode.  We can't
-            // use Applescript because it won't open the file to a particular line number.
+            // use AppleScript because it won't open the file to a particular line number.
             [self launchAppWithBundleIdentifier:kVSCodeIdentifier path:path];
         }
     }
@@ -283,7 +283,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         } else {
             // This isn't as good as opening "subl" because it always opens a new instance
             // of the app but it's the OS-sanctioned way of running Sublimetext.  We can't
-            // use Applescript because it won't open the file to a particular line number.
+            // use AppleScript because it won't open the file to a particular line number.
             [self launchAppWithBundleIdentifier:bundleId path:path];
         }
     }
