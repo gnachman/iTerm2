@@ -681,7 +681,7 @@ static NSDate* lastResizeDate_;
         // Avoid infinite recursion. Not quite sure why this happens, but a call
         // to [_title mouseDown:] or [super mouseDown:] will sometimes (after a
         // few steps through the OS) bring you back here. It only happens
-        // consistently when dragging the pane title bar, but it happens inconsitently
+        // consistently when dragging the pane title bar, but it happens inconsistently
         // with clicks in the title bar too.
         return;
     }
