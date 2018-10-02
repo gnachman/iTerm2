@@ -1152,7 +1152,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     }
 
     // If a graphics character set was selected then translate buffer
-    // characters into graphics charaters.
+    // characters into graphics characters.
     if (charsetUsesLineDrawingMode_[[terminal_ charset]]) {
         ConvertCharsToGraphicsCharset(buffer, len);
     }

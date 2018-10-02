@@ -365,7 +365,7 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *co
 
         }
     } else {
-        // Chatacter hidden because of blinking.
+        // Character hidden because of blinking.
         return NO;
     }
 }
