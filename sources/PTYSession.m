@@ -999,10 +999,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (![iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning]) {
         NSString *notice;
         NSArray<NSString *> *actions = @[ @"Don't Warn Again" ];
-        NSString *savedArranagementName = [[iTermController sharedInstance] savedArrangementNameBeingRestored];
+        NSString *savedArrangementName = [[iTermController sharedInstance] savedArrangementNameBeingRestored];
         if ([[ProfileModel sharedInstance] bookmarkWithName:missingProfileName]) {
             notice = [NSString stringWithFormat:@"This session's profile, “%@”, no longer exists. A profile with that name happens to exist.", missingProfileName];
-            if (savedArranagementName) {
+            if (savedArrangementName) {
                 actions = [actions arrayByAddingObject:@"Repair Saved Arrangement"];
             }
         } else {
@@ -1021,7 +1021,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                             } else if (selection == 1) {
                                                                 // Repair
                                                                 Profile *similarlyNamedProfile = [[ProfileModel sharedInstance] bookmarkWithName:missingProfileName];
-                                                                [[iTermController sharedInstance] repairSavedArrangementNamed:savedArranagementName
+                                                                [[iTermController sharedInstance] repairSavedArrangementNamed:savedArrangementName
                                                                                                          replacingMissingGUID:thisProfile[KEY_GUID]
                                                                                                                      withGUID:similarlyNamedProfile[KEY_GUID]];
                                                                 [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidRepairSavedArrangement

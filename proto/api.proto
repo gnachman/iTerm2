@@ -477,7 +477,7 @@ message SavedArrangementRequest {
     // Restore an existing arrangement with the given name
     RESTORE = 0;
 
-    // Save windows to a new arrangment with the given name
+    // Save windows to a new arrangement with the given name
     SAVE = 1;
   }
   optional Action action = 2;

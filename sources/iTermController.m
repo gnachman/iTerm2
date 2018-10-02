@@ -388,10 +388,10 @@ static iTermController *gSharedInstance;
     if (!name) {
         return;
     }
-    [self saveWindowArrangmentForAllWindows:allWindows name:name];
+    [self saveWindowArrangementForAllWindows:allWindows name:name];
 }
 
-- (void)saveWindowArrangmentForAllWindows:(BOOL)allWindows name:(NSString *)name {
+- (void)saveWindowArrangementForAllWindows:(BOOL)allWindows name:(NSString *)name {
     if (allWindows) {
         NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
         for (PseudoTerminal *terminal in _terminalWindows) {
