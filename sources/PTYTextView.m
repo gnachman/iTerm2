@@ -9,7 +9,7 @@
 #import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
-#import "iTermAltScreenMouseScrollInferer.h"
+#import "iTermAltScreenMouseScrollInferrer.h"
 #import "iTermBadgeLabel.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
@@ -112,7 +112,7 @@ static const int kDragThreshold = 3;
 @end
 
 @interface PTYTextView () <
-    iTermAltScreenMouseScrollInfererDelegate,
+    iTermAltScreenMouseScrollInferrerDelegate,
     iTermTextViewAccessibilityHelperDelegate,
     iTermFindCursorViewDelegate,
     iTermFindOnPageHelperDelegate,
@@ -245,7 +245,7 @@ static const int kDragThreshold = 3;
     iTermNSKeyBindingEmulator *_keyBindingEmulator;
 
     // Detects when the user is trying to scroll in alt screen with the scroll wheel.
-    iTermAltScreenMouseScrollInferer *_altScreenMouseScrollInferer;
+    iTermAltScreenMouseScrollInferrer *_altScreenMouseScrollInferrer;
 
     NSEvent *_eventBeingHandled;
 
@@ -350,8 +350,8 @@ static const int kDragThreshold = 3;
         _badgeLabel = [[iTermBadgeLabel alloc] init];
         _keyBindingEmulator = [[iTermNSKeyBindingEmulator alloc] init];
 
-        _altScreenMouseScrollInferer = [[iTermAltScreenMouseScrollInferer alloc] init];
-        _altScreenMouseScrollInferer.delegate = self;
+        _altScreenMouseScrollInferrer = [[iTermAltScreenMouseScrollInferrer alloc] init];
+        _altScreenMouseScrollInferrer.delegate = self;
         [self refuseFirstResponderAtCurrentMouseLocation];
 
         _scrollAccumulator = [[iTermScrollAccumulator alloc] init];
@@ -424,7 +424,7 @@ static const int kDragThreshold = 3;
     [_quickLookController release];
     [_savedSelectedText release];
     [_keyBindingEmulator release];
-    [_altScreenMouseScrollInferer release];
+    [_altScreenMouseScrollInferrer release];
     [_highlightedRows release];
     [_scrollAccumulator release];
     [_shadowRateLimit release];
@@ -544,7 +544,7 @@ static const int kDragThreshold = 3;
 
 - (BOOL)resignFirstResponder {
     if (!self.it_shouldIgnoreFirstResponderChanges) {
-        [_altScreenMouseScrollInferer firstResponderDidChange];
+        [_altScreenMouseScrollInferrer firstResponderDidChange];
         [self removeUnderline];
         [self placeFindCursorOnAutoHide];
         DLog(@"resignFirstResponder %@", self);
@@ -557,7 +557,7 @@ static const int kDragThreshold = 3;
 
 - (BOOL)becomeFirstResponder {
     if (!self.it_shouldIgnoreFirstResponderChanges) {
-        [_altScreenMouseScrollInferer firstResponderDidChange];
+        [_altScreenMouseScrollInferrer firstResponderDidChange];
         [_delegate textViewDidBecomeFirstResponder];
         DLog(@"becomeFirstResponder %@", self);
         DLog(@"%@", [NSThread callStackSymbols]);
@@ -1360,7 +1360,7 @@ static const int kDragThreshold = 3;
 // * "special" keys, like Enter which go through doCommandBySelector
 // * Repeated special keys
 - (void)keyDown:(NSEvent *)event {
-    [_altScreenMouseScrollInferer keyDown:event];
+    [_altScreenMouseScrollInferrer keyDown:event];
     if (![_delegate textViewShouldAcceptKeyDownEvent:event]) {
         return;
     }
@@ -1576,7 +1576,7 @@ static const int kDragThreshold = 3;
 
 // TODO: disable other, right mouse for inactive panes
 - (void)otherMouseDown:(NSEvent *)event {
-    [_altScreenMouseScrollInferer nonScrollWheelEvent:event];
+    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     [self reportMouseEvent:event];
 
     [pointer_ mouseDown:event
@@ -1586,7 +1586,7 @@ static const int kDragThreshold = 3;
 
 - (void)otherMouseUp:(NSEvent *)event
 {
-    [_altScreenMouseScrollInferer nonScrollWheelEvent:event];
+    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([self reportMouseEvent:event]) {
         return;
     }
@@ -1601,7 +1601,7 @@ static const int kDragThreshold = 3;
 
 - (void)otherMouseDragged:(NSEvent *)event
 {
-    [_altScreenMouseScrollInferer nonScrollWheelEvent:event];
+    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([self reportMouseEvent:event]) {
         return;
     }
@@ -1609,7 +1609,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)rightMouseDown:(NSEvent*)event {
-    [_altScreenMouseScrollInferer nonScrollWheelEvent:event];
+    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([threeFingerTapGestureRecognizer_ rightMouseDown:event]) {
         DLog(@"Cancel right mouse down");
         return;
@@ -1627,7 +1627,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)rightMouseUp:(NSEvent *)event {
-    [_altScreenMouseScrollInferer nonScrollWheelEvent:event];
+    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([threeFingerTapGestureRecognizer_ rightMouseUp:event]) {
         return;
     }
@@ -1643,7 +1643,7 @@ static const int kDragThreshold = 3;
 
 - (void)rightMouseDragged:(NSEvent *)event
 {
-    [_altScreenMouseScrollInferer nonScrollWheelEvent:event];
+    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([self reportMouseEvent:event]) {
         return;
     }
@@ -1677,7 +1677,7 @@ static const int kDragThreshold = 3;
     if (alternateMouseScroll || upString.length || downString.length) {
         return YES;
     } else {
-        [_altScreenMouseScrollInferer scrollWheel:event];
+        [_altScreenMouseScrollInferrer scrollWheel:event];
         return NO;
     }
 }
@@ -2011,7 +2011,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)mouseDown:(NSEvent *)event {
-    [_altScreenMouseScrollInferer nonScrollWheelEvent:event];
+    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([threeFingerTapGestureRecognizer_ mouseDown:event]) {
         return;
     }
@@ -2268,7 +2268,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)mouseUp:(NSEvent *)event {
-    [_altScreenMouseScrollInferer nonScrollWheelEvent:event];
+    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([threeFingerTapGestureRecognizer_ mouseUp:event]) {
         return;
     }
@@ -2449,7 +2449,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseDragged:(NSEvent *)event
 {
-    [_altScreenMouseScrollInferer nonScrollWheelEvent:event];
+    [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     DLog(@"mouseDragged");
     if (_mouseDownIsThreeFingerClick) {
         DLog(@"is three finger click");
@@ -7442,9 +7442,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     self.savedSelectedText = nil;
 }
 
-#pragma mark - iTermAltScreenMouseScrollInfererDelegate
+#pragma mark - iTermAltScreenMouseScrollInferrerDelegate
 
-- (void)altScreenMouseScrollInfererDidInferScrollingIntent:(BOOL)isTrying {
+- (void)altScreenMouseScrollInferrerDidInferScrollingIntent:(BOOL)isTrying {
     [_delegate textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:isTrying];
 }
 

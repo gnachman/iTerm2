@@ -1,5 +1,5 @@
 //
-//  iTermAltScreenMouseScrollInferer.h
+//  iTermAltScreenMouseScrollInferrer.h
 //  iTerm2
 //
 //  Created by George Nachman on 3/9/16.
@@ -8,17 +8,17 @@
 
 #import <Cocoa/Cocoa.h>
 
-@protocol iTermAltScreenMouseScrollInfererDelegate <NSObject>
+@protocol iTermAltScreenMouseScrollInferrerDelegate <NSObject>
 
-- (void)altScreenMouseScrollInfererDidInferScrollingIntent:(BOOL)isTrying;
+- (void)altScreenMouseScrollInferrerDidInferScrollingIntent:(BOOL)isTrying;
 
 @end
 
 // Tries to guess when the user is frustratingly scrolling with the mouse wheel in alternate
 // screen mode.
-@interface iTermAltScreenMouseScrollInferer : NSObject
+@interface iTermAltScreenMouseScrollInferrer : NSObject
 
-@property(nonatomic, assign) id<iTermAltScreenMouseScrollInfererDelegate> delegate;
+@property(nonatomic, assign) id<iTermAltScreenMouseScrollInferrerDelegate> delegate;
 
 - (void)firstResponderDidChange;
 - (void)keyDown:(NSEvent *)event;

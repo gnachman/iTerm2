@@ -1,34 +1,34 @@
 //
-//  iTermAltScreenMouseScrollInferer.m
+//  iTermAltScreenMouseScrollInferrer.m
 //  iTerm2
 //
 //  Created by George Nachman on 3/9/16.
 //
 //
 
-#import "iTermAltScreenMouseScrollInferer.h"
+#import "iTermAltScreenMouseScrollInferrer.h"
 
-typedef NS_ENUM(NSInteger, iTermAltScreenMouseScrollInfererState) {
-    iTermAltScreenMouseScrollInfererStateInitial,
-    iTermAltScreenMouseScrollInfererStateScrolledUp,
-    iTermAltScreenMouseScrollInfererStateScrolledDown,
-    iTermAltScreenMouseScrollInfererStateFrustration
+typedef NS_ENUM(NSInteger, iTermAltScreenMouseScrollInferrerState) {
+    iTermAltScreenMouseScrollInferrerStateInitial,
+    iTermAltScreenMouseScrollInferrerStateScrolledUp,
+    iTermAltScreenMouseScrollInferrerStateScrolledDown,
+    iTermAltScreenMouseScrollInferrerStateFrustration
 };
-@implementation iTermAltScreenMouseScrollInferer {
-    iTermAltScreenMouseScrollInfererState _state;
+@implementation iTermAltScreenMouseScrollInferrer {
+    iTermAltScreenMouseScrollInferrerState _state;
     BOOL _haveInferred;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _state = iTermAltScreenMouseScrollInfererStateInitial;
+        _state = iTermAltScreenMouseScrollInferrerStateInitial;
     }
     return self;
 }
 
 - (void)firstResponderDidChange {
-    self.state = iTermAltScreenMouseScrollInfererStateInitial;
+    self.state = iTermAltScreenMouseScrollInferrerStateInitial;
 }
 
 - (unichar)arrowKeyInEvent:(NSEvent *)theEvent {
@@ -43,65 +43,65 @@ typedef NS_ENUM(NSInteger, iTermAltScreenMouseScrollInfererState) {
 
 - (void)keyDown:(NSEvent *)theEvent {
     switch (_state) {
-        case iTermAltScreenMouseScrollInfererStateFrustration: {
+        case iTermAltScreenMouseScrollInferrerStateFrustration: {
             unichar arrowKey = [self arrowKeyInEvent:theEvent];
             if (arrowKey != NSDownArrowFunctionKey && arrowKey != NSUpArrowFunctionKey) {
-                self.state = iTermAltScreenMouseScrollInfererStateInitial;
+                self.state = iTermAltScreenMouseScrollInferrerStateInitial;
             }
             break;
         }
 
-        case iTermAltScreenMouseScrollInfererStateInitial:
+        case iTermAltScreenMouseScrollInferrerStateInitial:
             break;
 
-        case iTermAltScreenMouseScrollInfererStateScrolledDown: {
+        case iTermAltScreenMouseScrollInferrerStateScrolledDown: {
             unichar arrowKey = [self arrowKeyInEvent:theEvent];
             if (arrowKey == NSDownArrowFunctionKey || arrowKey == NSUpArrowFunctionKey) {
                 // User may have scrolled down and then pressed down arrow, or scrolled up +
                 // been annoyed + scrolled back down + pressed arrow key.
-                self.state = iTermAltScreenMouseScrollInfererStateFrustration;
+                self.state = iTermAltScreenMouseScrollInferrerStateFrustration;
             } else {
-                self.state = iTermAltScreenMouseScrollInfererStateInitial;
+                self.state = iTermAltScreenMouseScrollInferrerStateInitial;
             }
             break;
         }
 
-        case iTermAltScreenMouseScrollInfererStateScrolledUp:
+        case iTermAltScreenMouseScrollInferrerStateScrolledUp:
             if ([self arrowKeyInEvent:theEvent] == NSUpArrowFunctionKey) {
                 // User scrolled up + was frustrated + pressed up arrow key.
-                self.state = iTermAltScreenMouseScrollInfererStateFrustration;
+                self.state = iTermAltScreenMouseScrollInferrerStateFrustration;
             } else {
-                self.state = iTermAltScreenMouseScrollInfererStateInitial;
+                self.state = iTermAltScreenMouseScrollInferrerStateInitial;
             }
             break;
     }
 }
 
 - (void)nonScrollWheelEvent:(NSEvent *)event {
-    self.state = iTermAltScreenMouseScrollInfererStateInitial;
+    self.state = iTermAltScreenMouseScrollInferrerStateInitial;
 }
 
 - (void)scrollWheel:(NSEvent *)event {
-    if (_state != iTermAltScreenMouseScrollInfererStateFrustration) {
+    if (_state != iTermAltScreenMouseScrollInferrerStateFrustration) {
         if (event.scrollingDeltaY > 0) {
-            self.state = iTermAltScreenMouseScrollInfererStateScrolledUp;
+            self.state = iTermAltScreenMouseScrollInferrerStateScrolledUp;
         } else if (event.scrollingDeltaY < 0) {
-            self.state = iTermAltScreenMouseScrollInfererStateScrolledDown;
+            self.state = iTermAltScreenMouseScrollInferrerStateScrolledDown;
         } else if (event.scrollingDeltaX != 0) {
-            self.state = iTermAltScreenMouseScrollInfererStateInitial;
+            self.state = iTermAltScreenMouseScrollInferrerStateInitial;
         }
     }
 }
 
-- (void)setState:(iTermAltScreenMouseScrollInfererState)newState {
+- (void)setState:(iTermAltScreenMouseScrollInferrerState)newState {
     if (newState == _state) {
         return;
     }
-    if (_state == iTermAltScreenMouseScrollInfererStateFrustration) {
+    if (_state == iTermAltScreenMouseScrollInferrerStateFrustration) {
         // Exit frustration
-        [_delegate altScreenMouseScrollInfererDidInferScrollingIntent:NO];
+        [_delegate altScreenMouseScrollInferrerDidInferScrollingIntent:NO];
     }
-    if (newState == iTermAltScreenMouseScrollInfererStateFrustration) {
+    if (newState == iTermAltScreenMouseScrollInferrerStateFrustration) {
         if (_haveInferred) {
             // Don't want to enter frustration state more than once because it'll cause extra
             // cancellations.
@@ -109,7 +109,7 @@ typedef NS_ENUM(NSInteger, iTermAltScreenMouseScrollInfererState) {
         }
         // Enter frustration
         _haveInferred = YES;
-        [_delegate altScreenMouseScrollInfererDidInferScrollingIntent:YES];
+        [_delegate altScreenMouseScrollInferrerDidInferScrollingIntent:YES];
     }
     _state = newState;
 }
