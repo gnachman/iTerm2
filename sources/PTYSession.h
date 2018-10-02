@@ -69,7 +69,7 @@ typedef enum {
     TMUX_CLIENT  // Session mirrors a tmux virtual window
 } PTYSessionTmuxMode;
 
-// This is implemented by a view that coontains a collection of sessions, nominally a tab.
+// This is implemented by a view that contains a collection of sessions, nominally a tab.
 @protocol PTYSessionDelegate<NSObject>
 
 // Return the window controller for this session. This is the "real" one, not a
