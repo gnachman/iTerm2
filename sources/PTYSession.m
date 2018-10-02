@@ -8545,7 +8545,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview.window makeFirstResponder:_textview];
 }
 
-// Stop pasting (despited the name)
+// Stop pasting (despite the name)
 - (void)screenCopyBufferToPasteboard {
     if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         [self setPasteboard:nil];
