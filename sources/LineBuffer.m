@@ -108,7 +108,7 @@ static const NSInteger kUnicodeVersion = 9;
     num_dropped_blocks = 0;
 }
 
-// The designated initializer. We prefer not to explose the notion of block sizes to
+// The designated initializer. We prefer not to expose the notion of block sizes to
 // clients, so this is internal.
 - (LineBuffer*)initWithBlockSize:(int)bs
 {
