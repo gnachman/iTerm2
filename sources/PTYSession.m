@@ -2611,11 +2611,13 @@ ITERM_WEAKLY_REFERENCEABLE
     [_shell killServerIfRunning];
     if ([self shouldPostGrowlNotification] &&
         [iTermProfilePreferences boolForKey:KEY_SEND_SESSION_ENDED_ALERT inProfile:self.profile]) {
+#if 0
         [[iTermGrowlDelegate sharedInstance] growlNotify:@"Session Ended"
                                          withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                                                           [self name],
                                                           [_delegate tabNumber]]
                                          andNotification:@"Broken Pipes"];
+#endif
     }
 
     _exited = YES;
@@ -8574,7 +8576,7 @@ return NO;
 
 - (NSString *)shellIntegrationUpgradeUserDefaultsKeyForHost:(VT100RemoteHost *)host {
     return [NSString stringWithFormat:@"SuppressShellIntegrationUpgradeAnnouncementForHost_%@@%@",
-            "nobody", "nowhere"]; // host.username, host.hostname];
+            @"nobody", @"nowhere"]; // host.username, host.hostname];
 }
 
 - (void)tryToRunShellIntegrationInstallerWithPromptCheck:(BOOL)promptCheck {

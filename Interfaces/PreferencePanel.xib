@@ -3601,7 +3601,7 @@ DQ
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="fn0-X1-OtH">
-                    <rect key="frame" x="446" y="353" width="55" height="17"/>
+                    <rect key="frame" x="446" y="353" width="69" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="seconds" id="vCA-Gp-FvI">
                         <font key="font" metaFont="system"/>
@@ -3653,7 +3653,7 @@ DQ
                     </textFieldCell>
                 </textField>
             </subviews>
-            <point key="canvasLocation" x="1581" y="807"/>
+            <point key="canvasLocation" x="1580.5" y="807"/>
         </customView>
         <customView id="M5G-Dw-0HO" userLabel="Prefs - Profiles - Keys" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="657" height="438"/>

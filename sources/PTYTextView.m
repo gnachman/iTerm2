@@ -6228,8 +6228,8 @@ return;
                        numberOfValidItems:(int *)numberOfValidItemsPtr {
     NSPasteboard *pb = [sender draggingPasteboard];
 //    NSArray *types = [pb types];
-    NSPoint windowDropPoint = [sender draggingLocation];
-    NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
+  //  NSPoint windowDropPoint = [sender draggingLocation];
+   // NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
 //    int dropLine = dropPoint.y / _lineHeight;
 #if 0
     SCPPath *dropScpPath = [_dataSource scpPathForFile:@"" onLine:dropLine];

@@ -135,7 +135,7 @@
 + (int)maxSemanticHistoryPrefixOrSuffix;
 + (BOOL)performDictionaryLookupOnQuickLook;
 + (NSString *)pathsToIgnore;
-+ (BOOL)jiggleTTYSizeOnClearBuffer;
+// + (BOOL)jiggleTTYSizeOnClearBuffer;
 + (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;
 + (BOOL)suppressRestartAnnouncement;
 + (BOOL)showSessionRestoredBanner;

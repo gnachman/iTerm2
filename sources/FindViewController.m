@@ -72,6 +72,7 @@ const CGFloat kEdgeWidth = 1;
     return self;
 }
 
+#if 0
 - (instancetype)initImageCell:(NSImage *)image {
     self = [super initImageCell:image];
     if (self) {
@@ -79,6 +80,7 @@ const CGFloat kEdgeWidth = 1;
     }
     return self;
 }
+#endif
 
 - (void)setFraction:(CGFloat)fraction {
     if (fraction == 1.0 && _fraction < 1.0) {
