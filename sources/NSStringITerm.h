@@ -235,7 +235,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // 1.0010 -> 1.001
 - (NSString *)stringByCompactingFloatingPointString;
 
-// A fast, non-cryto-quality hash.
+// A fast, non-crypto-quality hash.
 - (NSUInteger)hashWithDJB2;
 
 - (NSUInteger)firstCharacter;
