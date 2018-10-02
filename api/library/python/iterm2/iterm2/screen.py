@@ -120,9 +120,7 @@ class ScreenStreamer:
         """
         future = asyncio.Future()
         self.future = future
-        print("screen streamer awaiting")
         await self.future
-        print("screen streamer future is ready")
         self.future = None
 
         if self.want_contents:
