@@ -22,7 +22,7 @@ typedef NS_ENUM(NSInteger, iTermWarningSelection) {
 
 typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 
-// Encpasulates a label and an optional block that's called when the action is
+// Encapsulates a label and an optional block that's called when the action is
 // selected.
 @interface iTermWarningAction : NSObject
 
