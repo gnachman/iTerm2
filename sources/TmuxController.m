@@ -1608,7 +1608,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [hiddenWindows_ removeAllObjects];
     if ([response length] > 0) {
         NSArray *windowIds = [response componentsSeparatedByString:@","];
-        NSLog(@"getHiddneWindowsResponse: Add these window IDS to hidden: %@", windowIds);
+        NSLog(@"getHiddenWindowsResponse: Add these window IDS to hidden: %@", windowIds);
         for (NSString *wid in windowIds) {
             [hiddenWindows_ addObject:[NSNumber numberWithInt:[wid intValue]]];
         }
