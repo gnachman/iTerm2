@@ -133,7 +133,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                margins.top)
                            vertices:v];
 
-    // Botom
+    // Bottom
     v = [self appendVerticesForQuad:CGRectMake(0,
                                                size.height - margins.bottom,
                                                size.width,
