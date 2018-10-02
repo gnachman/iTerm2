@@ -2242,7 +2242,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // This does not handle tmux properly. Any writing to tmux should happen in a
-// caller. It does handle braodcasting to other sessions.
+// caller. It does handle broadcasting to other sessions.
 - (void)writeTaskImpl:(NSString *)string
              encoding:(NSStringEncoding)optionalEncoding
         forceEncoding:(BOOL)forceEncoding
