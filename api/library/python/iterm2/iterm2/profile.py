@@ -1093,7 +1093,7 @@ class WriteOnlyProfile:
         return await self._async_simple_set("Blur Radius", value)
 
     async def async_set_background_image_mode(self, value):
-        """Sets how the background iamge is draw.
+        """Sets how the background image is draw.
 
         :param value: A `BackgroundImageMode`"""
         return await self._async_simple_set("Background Image Mode", value)
