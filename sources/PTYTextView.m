@@ -867,6 +867,9 @@ static const int kDragThreshold = 3;
 
 // Update accessibility, to be called periodically.
 - (void)refreshAccessibility {
+//    [self refresh];
+ //   [self setNeedsDisplay:YES];
+#if 0
     NSAccessibilityPostNotification(self, NSAccessibilityValueChangedNotification);
     long long absCursorY = ([_dataSource cursorY] + [_dataSource numberOfLines] +
                             [_dataSource totalScrollbackOverflow] - [_dataSource height]);
@@ -889,6 +892,7 @@ static const int kDragThreshold = 3;
             UAZoomChangeFocus(&viewRect, &selectedRect, kUAZoomFocusTypeInsertionPoint);
         }
     }
+#endif
 }
 
 // This is called periodically. It updates the frame size, scrolls if needed, ensures selections
@@ -921,7 +925,7 @@ static const int kDragThreshold = 3;
     }
 
     // Update accessibility.
-    [self refreshAccessibility];
+    // [self refreshAccessibility];
 
     if ([[self subviews] count]) {
         // TODO: Why update notes not in this textview?
@@ -7222,8 +7226,6 @@ ofLength:(int)length {
         int offset = MAX(0, numberOfLines - [iTermAdvancedSettingsModel numberOfLinesForAccessibility]);
         return accessibilityLineNumber + offset;
     }
-#endif
-#if 0
 
     - (VT100GridCoord)accessibilityHelperCoordForPoint:(NSPoint)screenPosition {
         NSRect screenRect = NSMakeRect(screenPosition.x,
@@ -7237,10 +7239,7 @@ ofLength:(int)length {
         int y = locationInTextView.y / _lineHeight;
         return VT100GridCoordMake(x, [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
     }
-#endif
-
     - (NSRect)accessibilityHelperFrameForCoordRange:(VT100GridCoordRange)coordRange {
-#if 0
         coordRange.start.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
         coordRange.end.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
         NSRect result = NSMakeRect(MAX(0, floor(coordRange.start.x * _charWidth + [iTermAdvancedSettingsModel terminalMargin])),
@@ -7250,21 +7249,17 @@ ofLength:(int)length {
         result = [self convertRect:result toView:nil];
         result = [self.window convertRectToScreen:result];
         return result;
-#endif
         return NSMakeRect(0,0,0,0);
     }
     
     - (VT100GridCoord)accessibilityHelperCursorCoord {
         return VT100GridCoordMake([_dataSource cursorX] - 1, 0);
-#if 0
         int y = [_dataSource numberOfLines] - [_dataSource height] + [_dataSource cursorY] - 1;
         return VT100GridCoordMake([_dataSource cursorX] - 1,
                                   [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
-#endif
     }
     
     - (void)accessibilityHelperSetSelectedRange:(VT100GridCoordRange)coordRange {
-#if 0
         coordRange.start.y =
         [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
         coordRange.end.y =
@@ -7276,20 +7271,18 @@ ofLength:(int)length {
                               append:NO];
         [_selection moveSelectionEndpointTo:coordRange.end];
         [_selection endLiveSelection];
-#endif
     }
     
     - (VT100GridCoordRange)accessibilityRangeOfCursor {
-#if 0
         VT100GridCoord coord = [self accessibilityHelperCursorCoord];
         return VT100GridCoordRangeMake(coord.x, coord.y, coord.x, coord.y);
-#endif
         return VT100GridCoordRangeMake(0,0,0,0);
     }
+#endif
     
+#if 0
     - (VT100GridCoordRange)accessibilityHelperSelectedRange {
         return VT100GridCoordRangeMake(0,0,0,0);
-#if 0
         iTermSubSelection *sub = _selection.allSubSelections.lastObject;
         
         if (!sub) {
@@ -7310,16 +7303,15 @@ ofLength:(int)length {
             coordRange.end.y -= minY;
         }
         return coordRange;
-#endif
     }
+#endif
     
+#if 0
     - (NSString *)accessibilityHelperSelectedText {
         return NULL;
-#if 0
         return [self selectedTextAttributed:NO
                                cappedAtSize:0
                           minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]];
-#endif
     }
     
     - (NSURL *)accessibilityHelperCurrentDocumentURL {
@@ -7338,6 +7330,7 @@ ofLength:(int)length {
         return 0;
         // return MIN([iTermAdvancedSettingsModel numberOfLinesForAccessibility], [_dataSource numberOfLines]);
     }
+#endif
     
 #pragma mark - NSMenuDelegate
     
