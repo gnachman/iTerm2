@@ -6821,7 +6821,6 @@ ITERM_WEAKLY_REFERENCEABLE
 // Grow or shrink the height of the frame if the number of lines in the data
 // source + IME has changed.
 - (void)textViewResizeFrameIfNeeded {
-return;
     // Check if the frame size needs to grow or shrink.
     NSRect frame = [_textview frame];
     const CGFloat desiredHeight = _textview.desiredHeight;
