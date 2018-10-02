@@ -84,6 +84,13 @@ class Connection:
         # that would be a notification.
         self.__receivers = []
 
+    def _collect_garbage(self):
+        """Asyncio seems to want you to keep a reference to a task that's begin
+        run with ensure_future. If you don't, it says "task was destroyed but
+        it is still pending". So, ok, we'll keep references around until we
+        don't need to any more."""
+        self.__tasks = list(filter(lambda t: not t.done(), self.__tasks))
+
     def run_until_complete(self, coro):
         self.run(False, coro)
 
@@ -103,9 +110,11 @@ class Connection:
 
         async def wrapper(connection):
             async def dispatch_forever():
+                self.__tasks = []
                 try:
                     while True:
                         data = await self.websocket.recv()
+                        self._collect_garbage()
 
                         message = iterm2.api_pb2.ServerOriginatedMessage()
                         message.ParseFromString(data)
@@ -116,11 +125,12 @@ class Connection:
                         # Otherwise we might never get the chance.
                         if future is None:
                             # May be a notification.
-                            asyncio.ensure_future(self._async_dispatch_to_helper(message))
+                            self.__tasks.append(asyncio.ensure_future(self._async_dispatch_to_helper(message)))
                         else:
                             # Is the response to an RPC that is being awaited.
                             def setResult():
-                                future.set_result(message)
+                                if not future.done():
+                                    future.set_result(message)
                             loop.call_soon(setResult)
                 except:
                     # I'm not quite sure why this is necessary, but if we don't
