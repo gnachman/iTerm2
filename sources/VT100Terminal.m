@@ -1996,7 +1996,7 @@ static const int kMaxScreenRows = 4096;
         }
 
         case XTERMCC_PROPRIETARY_ETERM_EXT:
-            [self executeXtermProprietaryExtermExtension:token];
+            [self executeXtermProprietaryXtermExtension:token];
             break;
 
         case XTERMCC_PWD_URL:
@@ -2497,7 +2497,7 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
-- (void)executeXtermProprietaryExtermExtension:(VT100Token *)token {
+- (void)executeXtermProprietaryXtermExtension:(VT100Token *)token {
     NSString* argument = token.string;
     NSArray* parts = [argument componentsSeparatedByString:@";"];
     NSString* func = nil;
