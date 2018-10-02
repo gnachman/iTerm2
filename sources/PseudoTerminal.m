@@ -370,7 +370,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // has not yet been called.
     BOOL _expectingDecodeOfRestorableState;
 
-    // Used to prevent infinite re-entrancy in windowDidChangeScreen:.
+    // Used to prevent infinite reentrancy in windowDidChangeScreen:.
     BOOL _inWindowDidChangeScreen;
 
     iTermPasswordManagerWindowController *_passwordManagerWindowController;
