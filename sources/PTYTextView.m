@@ -6954,7 +6954,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[self superview] setNeedsDisplay:YES];
 }
 
-#pragma mark - iTermInidcatorsHelperDelegate
+#pragma mark - iTermIndicatorsHelperDelegate
 
 - (NSColor *)indicatorFullScreenFlashColor {
     return [self defaultTextColor];
