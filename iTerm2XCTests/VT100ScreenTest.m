@@ -356,7 +356,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                 break;
 
             default:
-                XCTAssert(false);  // bogus continution mark
+                XCTAssert(false);  // bogus continuation mark
         }
     }
     return screen;
