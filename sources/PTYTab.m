@@ -4136,7 +4136,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 // Prevent any session from becoming smaller than its minimum size because of
-// a divder's movement.
+// a divider's movement.
 - (CGFloat)splitView:(NSSplitView *)splitView constrainMinCoordinate:(CGFloat)proposedMin ofSubviewAt:(NSInteger)dividerIndex {
     if (tmuxOriginatedResizeInProgress_) {
         // Whoever's doing the resizing is responsible for making everything
