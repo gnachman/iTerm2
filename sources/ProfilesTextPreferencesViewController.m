@@ -14,6 +14,7 @@
 #import "iTermWarning.h"
 #import "NSFont+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 #import "PTYFontInfo.h"
 
@@ -41,6 +42,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSButton *_asciiAntiAliased;
     IBOutlet NSButton *_nonasciiAntiAliased;
     IBOutlet NSPopUpButton *_thinStrokes;
+    IBOutlet NSTextField *_thinStrokesLabel;
     IBOutlet NSButton *_unicodeVersion9;
     IBOutlet NSButton *_asciiLigatures;
     IBOutlet NSButton *_nonAsciiLigatures;
@@ -288,6 +290,10 @@ static NSInteger kNonAsciiFontButtonTag = 1;
         _nonAsciiLigatures.enabled = YES;
     }
 
+    if (iTermTextIsMonochrome()) {
+        _thinStrokes.enabled = NO;
+        [_thinStrokesLabel setLabelEnabled:NO];
+    }
     [self updateWarnings];
 }
 

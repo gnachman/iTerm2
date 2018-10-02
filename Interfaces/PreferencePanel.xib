@@ -1464,7 +1464,7 @@ DQ
                 <outlet property="view" destination="SCN-fS-hNB" id="yvb-17-eJa"/>
             </connections>
         </customObject>
-        <customObject id="lhd-u6-xr5" customClass="ProfilesTextPreferencesViewController">
+        <customObject id="lhd-u6-xr5" userLabel="Prefs&gt;Profiles&gt;Text View Controller" customClass="ProfilesTextPreferencesViewController">
             <connections>
                 <outlet property="_ambiguousIsDoubleWidth" destination="5126" id="Eee-f8-fvr"/>
                 <outlet property="_asciiAntiAliased" destination="4782" id="P5t-r0-fdU"/>
@@ -1483,6 +1483,7 @@ DQ
                 <outlet property="_normalFontWantsAntialiasing" destination="QMj-Rf-IwZ" id="uPi-s4-g9d"/>
                 <outlet property="_normalization" destination="XDS-1Z-hVv" id="QUB-dq-OEO"/>
                 <outlet property="_thinStrokes" destination="bp3-dc-JQV" id="RVt-pO-7Rz"/>
+                <outlet property="_thinStrokesLabel" destination="8oY-ax-IVW" id="ydV-bn-481"/>
                 <outlet property="_unicodeVersion9" destination="jlZ-SF-XtE" id="Bab-Vl-8IB"/>
                 <outlet property="_useBoldFont" destination="4765" id="GP4-9X-n4Z"/>
                 <outlet property="_useItalicFont" destination="6400" id="OEO-Lb-9mF"/>
