@@ -1787,7 +1787,7 @@ static const int kDragThreshold = 3;
     return _drawingHelper.underlinedRange.coordRange.start.x >= 0;
 }
 
-// Reset underlined chars indicating cmd-clicakble url.
+// Reset underlined chars indicating cmd-clickable url.
 - (void)removeUnderline {
     if (![self hasUnderline]) {
         return;
@@ -1797,7 +1797,7 @@ static const int kDragThreshold = 3;
     [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
 }
 
-// Update range of underlined chars indicating cmd-clicakble url.
+// Update range of underlined chars indicating cmd-clickable url.
 - (URLAction *)updateUnderlinedURLs:(NSEvent *)event {
     URLAction *action = nil;
     if (([event modifierFlags] & NSEventModifierFlagCommand) && (self.window.isKeyWindow ||
