@@ -36,7 +36,7 @@
 - (void)updateLabel {
     [self view];  // Ensure the label exists.
     BOOL deemphasized;
-    NSString *string = [self.class stringForOrdinal:_ordinal deempahsized:&deemphasized];
+    NSString *string = [self.class stringForOrdinal:_ordinal deemphasized:&deemphasized];
     if (!deemphasized) {
         _label.stringValue = string;
     } else {
@@ -50,7 +50,7 @@
     }
 }
 
-+ (NSString *)stringForOrdinal:(int)ordinal deempahsized:(out BOOL *)deemphasized {
++ (NSString *)stringForOrdinal:(int)ordinal deemphasized:(out BOOL *)deemphasized {
     NSString *mods = [self.class modifiersString];
     if (ordinal == 0) {
         *deemphasized = NO;
