@@ -1177,6 +1177,33 @@ typedef struct iTermTextColorContext {
     }
 }
 
+- (int)setSmoothingWithContext:(CGContextRef)ctx savedFontSmoothingStyle:(int *)savedFontSmoothingStyle useThinStrokes:(BOOL)useThinStrokes {
+    BOOL shouldSmooth = useThinStrokes;
+    int style = -1;
+    if (iTermTextIsMonochrome()) {
+        shouldSmooth = NO;
+    } else if (@available(macOS 10.14, *)) {
+        // User enabled subpixel AA
+        shouldSmooth = YES;
+    }
+    if (shouldSmooth) {
+        if (useThinStrokes) {
+            style = 16;
+        } else {
+            style = 0;
+        }
+    }
+    CGContextSetShouldSmoothFonts(ctx, shouldSmooth);
+    if (style >= 0) {
+        // This seems to be available at least on 10.8 and later. The only reference to it is in
+        // WebKit. This causes text to render just a little lighter, which looks nicer.
+        // It does not work in Mojave without subpixel AA.
+        *savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
+        CGContextSetFontSmoothingStyle(ctx, style);
+    }
+    return style;
+}
+
 // Just like drawTextOnlyAttributedString but 2-3x faster. Uses
 // CGContextShowGlyphsAtPositions instead of CTFontDrawGlyphs.
 - (int)drawFastPathString:(iTermCheapAttributedString *)cheapString
@@ -1227,33 +1254,11 @@ typedef struct iTermTextColorContext {
 
     CGContextSetShouldAntialias(ctx, antiAlias);
 
-    int savedFontSmoothingStyle = 0;
     const CGFloat *components = CGColorGetComponents(color);
     const BOOL useThinStrokes = [self useThinStrokesAgainstBackgroundColor:backgroundColor
                                                            foregroundColor:color];
-    BOOL shouldSmooth = useThinStrokes;
-    int style = -1;
-    if (iTermTextIsMonochrome()) {
-        shouldSmooth = NO;
-    } else if (@available(macOS 10.14, *)) {
-        // User enabled subpixel AA
-        shouldSmooth = YES;
-    }
-    if (shouldSmooth) {
-        if (useThinStrokes) {
-            style = 16;
-        } else {
-            style = 0;
-        }
-    }
-    CGContextSetShouldSmoothFonts(ctx, shouldSmooth);
-    if (style >= 0) {
-        // This seems to be available at least on 10.8 and later. The only reference to it is in
-        // WebKit. This causes text to render just a little lighter, which looks nicer.
-        // It does not work in Mojave without subpixel AA.
-        savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
-        CGContextSetFontSmoothingStyle(ctx, style);
-    }
+    int savedFontSmoothingStyle = 0;
+    int style = [self setSmoothingWithContext:ctx savedFontSmoothingStyle:&savedFontSmoothingStyle useThinStrokes:useThinStrokes];
 
     size_t numCodes = cheapString.length;
     size_t length = numCodes;
@@ -1391,16 +1396,10 @@ typedef struct iTermTextColorContext {
         c = 0.2;
     }
 
-    int savedFontSmoothingStyle = 0;
     BOOL useThinStrokes = [self useThinStrokesAgainstBackgroundColor:backgroundColor
                                                      foregroundColor:cgColor];
-    if (useThinStrokes) {
-        CGContextSetShouldSmoothFonts(cgContext, YES);
-        // This seems to be available at least on 10.8 and later. The only reference to it is in
-        // WebKit. This causes text to render just a little lighter, which looks nicer.
-        savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(cgContext);
-        CGContextSetFontSmoothingStyle(cgContext, 16);
-    }
+    int savedFontSmoothingStyle = 0;
+    int style = [self setSmoothingWithContext:cgContext savedFontSmoothingStyle:&savedFontSmoothingStyle useThinStrokes:useThinStrokes];
 
     const CGFloat ty = origin.y + _baselineOffset + _cellSize.height;
     CGAffineTransform textMatrix = CGAffineTransformMake(1.0, 0.0,
@@ -1477,7 +1476,7 @@ typedef struct iTermTextColorContext {
     }
 
 
-    if (useThinStrokes) {
+    if (style >= 0) {
         CGContextSetFontSmoothingStyle(cgContext, savedFontSmoothingStyle);
     }
 
