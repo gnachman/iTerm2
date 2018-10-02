@@ -520,7 +520,7 @@ DEFINE_BOOL(supportREPCode, YES, SECTION_EXPERIMENTAL @"Enable support for REP (
 
 DEFINE_BOOL(showMetalFPSmeter, NO, SECTION_EXPERIMENTAL @"Show FPS meter\nRequires Metal renderer");
 
-// TODO: Turn this back on by default in a few days. Let's see if it is responsible for the spike in nightly build crasehs starting with the 3-12-2018 build.
+// TODO: Turn this back on by default in a few days. Let's see if it is responsible for the spike in nightly build crashes starting with the 3-12-2018 build.
 // The number of crashes fell off a cliff starting with the 3/18 build (usually 0, never more than 2/day, while it had been at 47 on the 3/15 build). I'm switching the default back to YES for the 4/18 build to see if the number climbs.
 DEFINE_BOOL(disableMetalWhenIdle, NO, SECTION_EXPERIMENTAL @"Disable metal renderer when idle to save CPU utilization?\nRequires Metal renderer");
 
