@@ -41,13 +41,13 @@
                             <rect key="frame" x="0.0" y="0.0" width="165" height="92"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <textView editable="NO" drawsBackground="NO" importsGraphics="NO" verticallyResizable="YES" usesFontPanel="YES" usesRuler="YES" smartInsertDelete="YES" id="syc-QG-1mF">
+                                <textView editable="NO" drawsBackground="NO" importsGraphics="NO" horizontallyResizable="YES" verticallyResizable="NO" usesFontPanel="YES" usesRuler="YES" smartInsertDelete="YES" id="syc-QG-1mF">
                                     <rect key="frame" x="0.0" y="0.0" width="165" height="92"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     <size key="minSize" width="165" height="92"/>
-                                    <size key="maxSize" width="364" height="10000000"/>
+                                    <size key="maxSize" width="400" height="10000000"/>
                                     <color key="insertionPointColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                 </textView>
                             </subviews>

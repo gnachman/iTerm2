@@ -36,13 +36,18 @@
      
         NSString *versionString = [NSString stringWithFormat:@"iTerm2 fork by pancake\n\n"];
         [_titleText setStringValue: @"Therm " THERM_VERSION];
-        NSAttributedString *webAString = [self attributedStringWithLinkToURL:@"https://github.com/trufae/Therm" title:@"\visit Github\n"];
+        NSAttributedString *webAString = [self attributedStringWithLinkToURL:@"https://github.com/trufae/Therm" title:@"\nvisit Github\n"];
+        
+#if 0
         NSAttributedString *bugsAString =
                 [self attributedStringWithLinkToURL:@"https://github.com/trufae/Therm/issues"
                                               title:@"Report a bug\n"];
 
         // Force IBOutlets to be bound by creating window.
         [self window];
+        
+#endif
+        [[self window] setLevel:NSFloatingWindowLevel];
 
         [_dynamicText setLinkTextAttributes:self.linkTextViewAttributes];
         NSTextStorage *ts = [_dynamicText textStorage];
