@@ -307,7 +307,7 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
         name = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2."
                                                                    suffix:suffix];
     } else {
-        // Empty extension case. Try to guess the exetnsion.
+        // Empty extension case. Try to guess the extension.
         NSString *extension = [NSImage extensionForUniformType:self.imageType];
         if (extension) {
             extension = [@"." stringByAppendingString:extension];
