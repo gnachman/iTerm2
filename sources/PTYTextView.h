@@ -199,7 +199,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (NSImage *)textViewBackgroundImage;
 - (iTermBackgroundImageMode)backgroundImageMode;
 - (BOOL)textViewShouldDrawRect;
-- (void)textViewDidHighightMark;
+- (void)textViewDidHighlightMark;
 - (BOOL)textViewInInteractiveApplication;
 - (BOOL)textViewTerminalStateForMenuItem:(NSMenuItem *)menuItem;
 - (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem;

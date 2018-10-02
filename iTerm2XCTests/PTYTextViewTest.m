@@ -2664,7 +2664,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return NO;
 }
 
-- (void)textViewDidHighightMark {
+- (void)textViewDidHighlightMark {
 }
 
 - (void)textViewDidSelectPasswordPrompt {

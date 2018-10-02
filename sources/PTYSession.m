@@ -7335,7 +7335,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     return YES;
 
                 case MOUSE_REPORTING_NONE:
-                case MOUSE_REPORTING_HILITE:
+                case MOUSE_REPORTING_HIGHLIGHT:
                     break;
             }
             break;
@@ -7359,7 +7359,7 @@ ITERM_WEAKLY_REFERENCEABLE
                         return YES;
 
                     case MOUSE_REPORTING_NONE:
-                    case MOUSE_REPORTING_HILITE:
+                    case MOUSE_REPORTING_HIGHLIGHT:
                         break;
                 }
             }
@@ -7399,7 +7399,7 @@ ITERM_WEAKLY_REFERENCEABLE
                         return YES;
 
                     case MOUSE_REPORTING_NONE:
-                    case MOUSE_REPORTING_HILITE:
+                    case MOUSE_REPORTING_HIGHLIGHT:
                         break;
                 }
             }
@@ -7439,7 +7439,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     return YES;
 
                 case MOUSE_REPORTING_NONE:
-                case MOUSE_REPORTING_HILITE:
+                case MOUSE_REPORTING_HIGHLIGHT:
                     break;
             }
             break;
@@ -7681,7 +7681,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)textViewDidHighightMark {
+- (void)textViewDidHighlightMark {
     if (self.useMetal) {
         [_textview setNeedsDisplay:YES];
     }

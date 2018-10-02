@@ -1571,7 +1571,7 @@ static const int kDragThreshold = 3;
     MouseMode mouseMode = [[_dataSource terminal] mouseMode];
     return ([_delegate xtermMouseReporting] &&
             mouseMode != MOUSE_REPORTING_NONE &&
-            mouseMode != MOUSE_REPORTING_HILITE);
+            mouseMode != MOUSE_REPORTING_HIGHLIGHT);
 }
 
 // TODO: disable other, right mouse for inactive panes
@@ -5734,7 +5734,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     iTermHighlightedRow *entry = [[iTermHighlightedRow alloc] initWithAbsoluteLineNumber:_dataSource.totalScrollbackOverflow + line
                                                                                  success:!hasErrorCode];
     [_highlightedRows addObject:entry];
-    [_delegate textViewDidHighightMark];
+    [_delegate textViewDidHighlightMark];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(duration * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self removeHighlightedRow:entry];
         [entry release];

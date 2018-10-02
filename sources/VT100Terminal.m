@@ -582,7 +582,7 @@ static const int kMaxScreenRows = 4096;
 
             case 1000:
             // case 1001:
-            // TODO: MOUSE_REPORTING_HILITE not implemented.
+            // TODO: MOUSE_REPORTING_HIGHLIGHT not implemented.
             case 1002:
             case 1003:
                 if (mode) {
