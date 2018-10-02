@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 // This is a hack to draw attributed strings because NSTextField randomly shifts the baseline up
-// one point when using an attributed string. When Appkit is dead and buried I'll revisit this.
+// one point when using an attributed string. When AppKit is dead and buried I'll revisit this.
 @interface iTermAttributedStringView : NSView<iTermTextFieldish>
 @property (nonatomic, copy) NSAttributedString *attributedStringValue;
 @property (nonatomic, strong) NSColor *backgroundColor;
