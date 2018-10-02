@@ -15,7 +15,6 @@
                 <outlet property="_appearanceTabViewItem" destination="4439" id="Hau-Oo-c18"/>
                 <outlet property="_appearanceToolbarItem" destination="5889" id="3e8-bj-Pgh"/>
                 <outlet property="_arrangementsTabViewItem" destination="5417" id="Zhy-fF-7su"/>
-                <outlet property="_arrangementsToolbarItem" destination="5890" id="2RT-x5-vvx"/>
                 <outlet property="_bookmarksTabViewItem" destination="1945" id="Byu-Qr-6Jc"/>
                 <outlet property="_bookmarksToolbarItem" destination="5886" id="2yS-fU-fSr"/>
                 <outlet property="_generalPreferencesViewController" destination="9Se-ld-UJa" id="ebT-z7-cAn"/>
@@ -574,7 +573,7 @@ Gw
                     </tabView>
                 </subviews>
             </view>
-            <toolbar key="toolbar" implicitIdentifier="D08B01BC-1A7C-42DC-B326-C2E53519AB95" autosavesConfiguration="NO" allowsUserCustomization="NO" displayMode="iconAndLabel" sizeMode="regular" id="5885">
+            <toolbar key="toolbar" implicitIdentifier="D08B01BC-1A7C-42DC-B326-C2E53519AB95" autosavesConfiguration="NO" allowsUserCustomization="NO" displayMode="iconOnly" sizeMode="regular" id="5885">
                 <allowedToolbarItems>
                     <toolbarItem implicitItemIdentifier="45D9C222-64ED-4B5F-89E3-E9862F727A2B" label="General" paletteLabel="General" tag="-1" image="PrefsGeneral" selectable="YES" id="5887">
                         <nil key="toolTip"/>
@@ -603,12 +602,6 @@ Gw
                     <toolbarItem implicitItemIdentifier="1DFE8A74-36A5-440E-BBB1-67A1D8C0368B" label="Pointer" paletteLabel="Pointer" tag="-1" image="PrefsMouse" selectable="YES" id="6056">
                         <connections>
                             <action selector="showMouseTabView:" target="-2" id="6058"/>
-                        </connections>
-                    </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="E909A2CE-74E7-4BCC-B139-A2EDCEDC7A5A" label="Arrangements" paletteLabel="Arrangements" tag="-1" image="PrefsArrangements" selectable="YES" id="5890">
-                        <nil key="toolTip"/>
-                        <connections>
-                            <action selector="showArrangementsTabView:" target="-2" id="5894"/>
                         </connections>
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="3F832EA9-FDDD-4862-94BF-B3813E2AD10B" label="Advanced" paletteLabel="Advanced" tag="-1" image="PrefsAdvanced" selectable="YES" id="gtg-rw-6h8">
@@ -5790,7 +5783,6 @@ DQ
         <image name="NSRemoveTemplate" width="11" height="11"/>
         <image name="PrefsAdvanced" width="32" height="32"/>
         <image name="PrefsAppearance" width="32" height="32"/>
-        <image name="PrefsArrangements" width="32" height="32"/>
         <image name="PrefsGeneral" width="32" height="32"/>
         <image name="PrefsKeyboard" width="32" height="32"/>
         <image name="PrefsMouse" width="32" height="32"/>

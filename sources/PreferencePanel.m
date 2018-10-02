@@ -188,7 +188,7 @@ static PreferencePanel *gSessionsPreferencePanel;
     _globalTabViewItem.view = _generalPreferencesViewController.view;
     _appearanceTabViewItem.view = _appearancePreferencesViewController.view;
     _keyboardTabViewItem.view = _keysViewController.view;
-    _arrangementsTabViewItem.view = arrangements_.view;
+   // _arrangementsTabViewItem.view = arrangements_.view;
     _mouseTabViewItem.view = _pointerViewController.view;
     _advancedTabViewItem.view = _advancedViewController.view;
 
@@ -386,7 +386,6 @@ static PreferencePanel *gSessionsPreferencePanel;
               [_appearanceToolbarItem itemIdentifier],
               [_bookmarksToolbarItem itemIdentifier],
               [_keyboardToolbarItem itemIdentifier],
-              [_arrangementsToolbarItem itemIdentifier],
               [_mouseToolbarItem itemIdentifier],
               [_advancedToolbarItem itemIdentifier] ];
 }
@@ -396,7 +395,6 @@ static PreferencePanel *gSessionsPreferencePanel;
               [_appearanceToolbarItem itemIdentifier]: _appearanceToolbarItem,
               [_bookmarksToolbarItem itemIdentifier]: _bookmarksToolbarItem,
               [_keyboardToolbarItem itemIdentifier]: _keyboardToolbarItem,
-              [_arrangementsToolbarItem itemIdentifier]: _arrangementsToolbarItem,
               [_mouseToolbarItem itemIdentifier]: _mouseToolbarItem,
               [_advancedToolbarItem itemIdentifier]: _advancedToolbarItem };
 }

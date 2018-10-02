@@ -152,7 +152,7 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *sendInputToAllPanes;
     IBOutlet NSMenuItem *sendInputNormally;
     IBOutlet NSMenuItem *irPrev;
-    IBOutlet NSMenuItem *windowArrangements_;
+   // IBOutlet NSMenuItem *windowArrangements_;
     IBOutlet NSMenuItem *windowArrangementsAsTabs_;
     IBOutlet NSMenu *_buriedSessions;
 
@@ -1000,7 +1000,7 @@ static BOOL hasBecomeActive = NO;
             }
         });
     }
-    [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
+   // [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
     [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES];
 
     // register for services
@@ -1117,7 +1117,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)windowArrangementsDidChange:(id)sender {
-    [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
+  //  [self updateRestoreWindowArrangementsMenu:windowArrangements_ asTabs:NO];
     [self updateRestoreWindowArrangementsMenu:windowArrangementsAsTabs_ asTabs:YES];
 }
 
