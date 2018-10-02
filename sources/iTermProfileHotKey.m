@@ -474,8 +474,8 @@ static NSString *const kArrangement = @"Arrangement";
             case WINDOW_TYPE_BOTTOM:
             case WINDOW_TYPE_BOTTOM_PARTIAL: {
                 iTermAnimationDirection inDirection = [self animateInDirectionForWindowType:self.windowController.windowType];
-                iTermAnimationDirection outDireciton = iTermAnimationDirectionOpposite(inDirection);
-                [self rollOutAnimatingInDirection:outDireciton];
+                iTermAnimationDirection outDirection = iTermAnimationDirectionOpposite(inDirection);
+                [self rollOutAnimatingInDirection:outDirection];
                 break;
             }
 
