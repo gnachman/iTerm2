@@ -3980,7 +3980,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([self lionFullScreen] ||
         (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
          !self.isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
-         [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren])) {
+         [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen])) {
         [[self ptyWindow] toggleFullScreen:self];
         return;
     }
@@ -3991,7 +3991,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)delayedEnterFullscreen
 {
     if (windowType_ == WINDOW_TYPE_LION_FULL_SCREEN &&
-        [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
+        [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscreen]) {
         if (![[[iTermController sharedInstance] keyTerminalWindow] lionFullScreen]) {
             // call enter(Traditional)FullScreenMode instead of toggle... because
             // when doing a lion resume, the window may be toggled immediately
