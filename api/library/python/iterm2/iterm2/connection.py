@@ -123,7 +123,7 @@ class Connection:
             dispatch_forever_task = asyncio.ensure_future(dispatch_forever())
             await coro(connection)
             if forever:
-                await asyncio.wait([asyncio.Future()], return_when=asyncio.FIRST_COMPLETED)
+                await dispatch_forever_task
             dispatch_forever_task.cancel()
 
         async def async_main(_loop):
