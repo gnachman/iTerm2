@@ -497,7 +497,7 @@ function db_upload
 }
 
 #Generic upload wrapper around db_chunked_upload_file and db_simple_upload_file
-#The final upload function will be choosen based on the file size
+#The final upload function will be chosen based on the file size
 #$1 = Local source file
 #$2 = Remote destination file
 function db_upload_file
