@@ -143,7 +143,7 @@ typedef enum {
     XTERMCC_PASTE64,
     XTERMCC_FINAL_TERM,
 
-    // If a sequence is split into mutiple tokens, the first will be one of the above whose name
+    // If a sequence is split into multiple tokens, the first will be one of the above whose name
     // includes MULTITOKEN_HEADER, then zero or more of these, and then XTERMCC_MULTITOKEN_END.
     XTERMCC_MULTITOKEN_BODY,
     XTERMCC_MULTITOKEN_END,
