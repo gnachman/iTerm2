@@ -48,7 +48,7 @@ extern BOOL gDebugLogging;
 
 
 // I use a variadic macro here because of an apparent compiler bug in XCode 4.2 that thinks a
-// variadaic objc call as an argument is not a single value.
+// variadic objc call as an argument is not a single value.
 #define DebugLog(args...) DebugLogImpl(__FILE__, __LINE__, __FUNCTION__, args)
 
 //#define GENERAL_VERBOSE_LOGGING
