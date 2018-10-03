@@ -123,7 +123,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
               kiTermIndicatorCopyMode ];
 }
 
-- (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect))block {
+- (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect))block {
     NSArray *sequentialIdentifiers = [iTermIndicatorsHelper sequentiaIndicatorlIdentifiers];
     const CGFloat vmargin = [iTermAdvancedSettingsModel terminalVMargin];
     const CGFloat kIndicatorTopMargin = MAX(5, vmargin);
@@ -138,12 +138,14 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             NSImage *image = indicator.image;
 
             block(identifier, image, NSMakeRect(point.x, point.y, image.size.width, image.size.height));
-            [image drawInRect:NSMakeRect(point.x, point.y, image.size.width, image.size.height)
-                     fromRect:NSMakeRect(0, 0, image.size.width, image.size.height)
-                    operation:NSCompositingOperationSourceOver
-                     fraction:0.5
-               respectFlipped:YES
-                        hints:nil];
+            if (shouldDraw) {
+                [image drawInRect:NSMakeRect(point.x, point.y, image.size.width, image.size.height)
+                         fromRect:NSMakeRect(0, 0, image.size.width, image.size.height)
+                        operation:NSCompositingOperationSourceOver
+                         fraction:0.5
+                   respectFlipped:YES
+                            hints:nil];
+            }
         }
     }
 }
@@ -169,7 +171,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     DLog(@"drawInFrame %@", NSStringFromRect(frame));
 
     // Draw top-right indicators.
-    [self enumerateTopRightIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect frame) {
+    [self enumerateTopRightIndicatorsInFrame:frame andDraw:YES block:^(NSString *identifier, NSImage *image, NSRect frame) {
         [image drawInRect:frame
                  fromRect:NSMakeRect(0, 0, image.size.width, image.size.height)
                 operation:NSCompositingOperationSourceOver

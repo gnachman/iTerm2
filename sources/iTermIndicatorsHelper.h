@@ -47,7 +47,7 @@ extern CGFloat kiTermIndicatorStandardHeight;
 // Use this with Metal
 - (void)didDraw;
 
-- (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect))block;
+- (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect))block;
 - (void)enumerateCenterIndicatorsInFrame:(NSRect)frame block:(void (^)(NSString *, NSImage *, NSRect, CGFloat))block;
 
 @end
