@@ -1085,7 +1085,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }];
     } else {
         sessions = [self sessionsInProjectionOfSession:session verticalDirection:verticalDir after:!after];
-        NSArray<PTYSession *> *wraparounds = [sessions mininumsWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
+        NSArray<PTYSession *> *wraparounds = [sessions minimumsWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
             NSRect aRect = [self->root_ convertRect:a.view.frame fromView:a.view.superview];
             NSRect bRect = [self->root_ convertRect:b.view.frame fromView:b.view.superview];
             if (verticalDir) {
