@@ -84,7 +84,7 @@ class ScreenContents:
 
     @property
     def number_of_lines_above_screen(self):
-        """Returns the number of lines before the screen including scrollback history and lines lost from the head of scrolllback history.
+        """Returns the number of lines before the screen including scrollback history and lines lost from the head of scrollback history.
 
         :returns: The number of lines ever received before the top line of the screen."""
         return self.__proto.num_lines_above_screen
