@@ -185,7 +185,7 @@
 // requested index.
 + (NSMutableDictionary*)removeMappingAtIndex:(int)rowIndex inDictionary:(NSDictionary*)dict;
 
-// Removes a touichbar item form a profile. Does not sync it back to user defaults.
+// Removes a touchbar item form a profile. Does not sync it back to user defaults.
 + (void)removeTouchBarItemWithKey:(NSString *)key inMutableProfile:(MutableProfile *)profile;
 
 // load an xml plist with the given filename, and return it in dictionary
