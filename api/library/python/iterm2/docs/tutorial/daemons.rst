@@ -65,7 +65,7 @@ sequence.
 A custom escape sequence is a special escape sequence that performs a
 user-defined action. In contradistinction to a standard escape sequence, such
 as those that position the cursor or change the current color, a custom escape
-sequence is propritary to iTerm2. When one is received, iTerm2 sends a
+sequence is proprietary to iTerm2. When one is received, iTerm2 sends a
 notification to any script that has subscribed to custom escape sequence
 notifications. The `iterm2` python module invokes the script's registered
 callback, which in this case is `on_custom_esc`.
