@@ -651,7 +651,7 @@ static NSColor *ColorForVector(vector_float4 v) {
         vmargin = [iTermAdvancedSettingsModel terminalVMargin];
     }
     NSRect frame = NSMakeRect(0, vmargin, textView.visibleRect.size.width, textView.visibleRect.size.height);
-    [textView.indicatorsHelper enumerateTopRightIndicatorsInFrame:frame block:^(NSString *identifier, NSImage *image, NSRect rect) {
+    [textView.indicatorsHelper enumerateTopRightIndicatorsInFrame:frame andDraw:NO block:^(NSString *identifier, NSImage *image, NSRect rect) {
         rect.origin.y = frame.size.height - NSMaxY(rect);
         iTermIndicatorDescriptor *indicator = [[iTermIndicatorDescriptor alloc] init];
         indicator.identifier = identifier;
