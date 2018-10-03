@@ -13,6 +13,7 @@
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
 #import "NSFont+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
@@ -235,8 +236,9 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
 - (void)updateNonAsciiFontViewVisibility {
     _nonAsciiFontView.hidden = ![self boolForKey:KEY_USE_NONASCII_FONT];
-    ((iTermSizeRememberingView *)self.view).originalSize = self.myPreferredContentSize;
-    [self.delegate profilePreferencesContentViewSizeDidChange:(iTermSizeRememberingView *)self.view];
+    iTermSizeRememberingView *view = [iTermSizeRememberingView castFrom:self.view];
+    view.originalSize = [self myPreferredContentSize];
+    [self.delegate profilePreferencesContentViewSizeDidChange:view];
 }
 
 - (NSSize)myPreferredContentSize {

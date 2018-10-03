@@ -193,7 +193,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
         NSView *view = tuple[1];
 
         // Maximum allowed height for a tab view item. Taller ones get a scroll view.
-        static const CGFloat kMaxHeight = 438;
+        static const CGFloat kMaxHeight = 440;
         if (view.frame.size.height > kMaxHeight) {
             // If the view is too tall, wrap it in a scroll view.
             NSRect theFrame = NSMakeRect(0, 0, view.frame.size.width, kMaxHeight);
