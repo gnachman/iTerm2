@@ -4835,6 +4835,7 @@ return NO;
     float alpha = 1.0 - [[self currentSession] transparency];
     backgroundColor = [[_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapBackground]] colorWithAlphaComponent:alpha];
     self.window.titlebarAppearsTransparent = YES;
+    // XXX seems like alpha is ignored in mojave :?
     [self.window setBackgroundColor:backgroundColor];
 }
 

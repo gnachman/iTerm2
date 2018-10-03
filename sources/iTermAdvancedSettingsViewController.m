@@ -260,10 +260,10 @@ static NSDictionary *gIntrospection;
 
 - (void)awakeFromNib {
     [_tableView setFloatsGroupRows:YES];
-    [_tableView setGridColor:[NSColor clearColor]];
-    [_tableView setGridStyleMask:NSTableViewGridNone];
+  //  [_tableView setGridColor:[NSColor clearColor]];
+ //   [_tableView setGridStyleMask:NSTableViewGridNone];
     [_tableView setIntercellSpacing:NSMakeSize(0, 0)];
-    [_tableView setBackgroundColor:[NSColor whiteColor]];
+  //  [_tableView setBackgroundColor:[NSColor whiteColor]];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(advancedSettingsDidChange:)
@@ -281,7 +281,7 @@ static NSDictionary *gIntrospection;
                                                                      attributes:spacerAttributes] autorelease];
     NSDictionary *attributes =
         @{ NSFontAttributeName: bold ? [NSFont boldSystemFontOfSize:size] : [NSFont systemFontOfSize:size],
-           NSForegroundColorAttributeName: (selected && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor blackColor] };
+           NSForegroundColorAttributeName: (selected && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor whiteColor] };
     NSAttributedString *title = [[[NSAttributedString alloc] initWithString:string
                                                                  attributes:attributes] autorelease];
     NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
@@ -313,7 +313,7 @@ static NSDictionary *gIntrospection;
               row:(NSInteger)row {
     NSArray *settings = [self filteredAdvancedSettings];
     id obj = settings[row];
-    [cell setBackgroundColor:[NSColor whiteColor]];
+   // [cell setBackgroundColor:[NSColor whiteColor]];
     if ([obj isKindOfClass:[NSString class]]) {
         [cell setDrawsBackground:YES];
     } else {
