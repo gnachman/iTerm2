@@ -145,9 +145,9 @@ const NSInteger kLongMaximumWordLength = 100000;
                                   return foundWord;
                               }
                           }
-                           eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                           eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
                                return [self shouldStopEnumeratingWithCode:code
-                                                                 numNulls:numPreceedingNulls
+                                                                 numNulls:numPrecedingNulls
                                                   windowTouchesLeftMargin:windowTouchesLeftMargin
                                                  windowTouchesRightMargin:windowTouchesRightMargin
                                                          ignoringNewlines:NO];
@@ -181,9 +181,9 @@ const NSInteger kLongMaximumWordLength = 100000;
                                    }
 
                                }
-                                eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                                eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
                                     return [self shouldStopEnumeratingWithCode:code
-                                                                      numNulls:numPreceedingNulls
+                                                                      numNulls:numPrecedingNulls
                                                        windowTouchesLeftMargin:windowTouchesLeftMargin
                                                       windowTouchesRightMargin:windowTouchesRightMargin
                                                               ignoringNewlines:NO];
@@ -252,7 +252,7 @@ const NSInteger kLongMaximumWordLength = 100000;
         } else {
             return YES;
         }
-    } eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+    } eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
         return YES;
     }];
     return result;
@@ -347,9 +347,9 @@ const NSInteger kLongMaximumWordLength = 100000;
                           }
                           return !isInWord;
                       }
-                       eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                       eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
                            return [self shouldStopEnumeratingWithCode:code
-                                                             numNulls:numPreceedingNulls
+                                                             numNulls:numPrecedingNulls
                                               windowTouchesLeftMargin:windowTouchesLeftMargin
                                              windowTouchesRightMargin:windowTouchesRightMargin
                                                      ignoringNewlines:NO];
@@ -391,9 +391,9 @@ const NSInteger kLongMaximumWordLength = 100000;
                                    }
                                    return !isInWord;
                                }
-                                eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                                eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
                                     return [self shouldStopEnumeratingWithCode:code
-                                                                      numNulls:numPreceedingNulls
+                                                                      numNulls:numPrecedingNulls
                                                        windowTouchesLeftMargin:windowTouchesLeftMargin
                                                       windowTouchesRightMargin:windowTouchesRightMargin
                                                               ignoringNewlines:NO];
@@ -1111,9 +1111,9 @@ const NSInteger kLongMaximumWordLength = 100000;
                                    }
                                    return NO;
                                }
-                                eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                                eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
                                     return [self shouldStopEnumeratingWithCode:code
-                                                                      numNulls:numPreceedingNulls
+                                                                      numNulls:numPrecedingNulls
                                                        windowTouchesLeftMargin:(_logicalWindow.location == 0)
                                                       windowTouchesRightMargin:xLimit == trueWidth
                                                               ignoringNewlines:ignoringNewlines];
@@ -1150,9 +1150,9 @@ const NSInteger kLongMaximumWordLength = 100000;
                           }
                           return NO;
                       }
-                       eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                       eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
                            return [self shouldStopEnumeratingWithCode:code
-                                                             numNulls:numPreceedingNulls
+                                                             numNulls:numPrecedingNulls
                                               windowTouchesLeftMargin:(_logicalWindow.location == 0)
                                              windowTouchesRightMargin:xLimit == trueWidth
                                                      ignoringNewlines:ignoringNewlines];
@@ -1210,7 +1210,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                               return YES;
                           }
                       }
-                       eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                       eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
                            return (code == EOL_HARD);
                        }];
     return result;
@@ -1325,7 +1325,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                           }
                           return NO;
                       }
-                       eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                       eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
                            BOOL ignore = (!copiedImage && !lineContainsNonImage && lineContainsImage);
                            copiedImage = lineContainsNonImage = lineContainsImage = NO;
                            if (ignore) {
@@ -1340,12 +1340,12 @@ const NSInteger kLongMaximumWordLength = 100000;
                            // If there is no text after this, insert a hard line break.
                            BOOL shouldAppendNewline = YES;
                            if (pad) {
-                               for (int i = 0; i < numPreceedingNulls; i++) {
+                               for (int i = 0; i < numPrecedingNulls; i++) {
                                    VT100GridCoord coord =
-                                      VT100GridCoordMake(right - numPreceedingNulls + i, line);
+                                      VT100GridCoordMake(right - numPrecedingNulls + i, line);
                                    appendString(@" ", [self defaultChar], coord);
                                }
-                           } else if (numPreceedingNulls > 0) {
+                           } else if (numPrecedingNulls > 0) {
                                switch (nullPolicy) {
                                    case kiTermTextExtractorNullPolicyFromLastToEnd:
                                        [result deleteCharactersInRange:NSMakeRange(0, [result length])];
@@ -1443,7 +1443,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                                   return NO;
                               }
                           }
-                           eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                           eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
                                return NO;
                            }];
         if (!foundNonWhitespace) {
@@ -1472,7 +1472,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                                        haveSeenCharacter = YES;
                                        return result;
                                    }
-                                    eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                                    eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
                                         if (trailing == iTermTextExtractorTrimTrailingWhitespaceOneLine) {
                                             BOOL result = haveSeenCharacter || haveSeenNewline;
                                             haveSeenNewline = YES;
@@ -1674,7 +1674,7 @@ const NSInteger kLongMaximumWordLength = 100000;
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
                     charBlock:(BOOL (^)(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord))charBlock
-                     eolBlock:(BOOL (^)(unichar code, int numPreceedingNulls, int line))eolBlock {
+                     eolBlock:(BOOL (^)(unichar code, int numPrecedingNulls, int line))eolBlock {
     int width = [_dataSource width];
     int startx = VT100GridWindowedRangeStart(range).x;
     int endx = range.columnWindow.length ? range.columnWindow.location + range.columnWindow.length
@@ -1740,7 +1740,7 @@ const NSInteger kLongMaximumWordLength = 100000;
 
 - (void)enumerateInReverseCharsInRange:(VT100GridWindowedRange)range
                              charBlock:(BOOL (^)(screen_char_t theChar, VT100GridCoord coord))charBlock
-                              eolBlock:(BOOL (^)(unichar code, int numPreceedingNulls, int line))eolBlock {
+                              eolBlock:(BOOL (^)(unichar code, int numPrecedingNulls, int line))eolBlock {
     int xLimit = range.columnWindow.length == 0 ? [_dataSource width] :
         (range.columnWindow.location + range.columnWindow.length);
     int initialX = MIN(xLimit - 1, range.coordRange.end.x - 1);
