@@ -1181,7 +1181,7 @@ static BOOL hasBecomeActive = NO;
     CFPreferencesSetAppValue(CFSTR("NSQuotedKeystrokeBinding"),
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
-    // This is off by default, but would wreack havoc if set globally.
+    // This is off by default, but would wreak havoc if set globally.
     CFPreferencesSetAppValue(CFSTR("NSRepeatCountBinding"),
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
