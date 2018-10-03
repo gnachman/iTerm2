@@ -98,11 +98,11 @@
 - (void)initializeTransientState:(iTermMarkRendererTransientState *)tState {
     const CGFloat scale = tState.configuration.scale;
 
-    CGRect leftMarignRect = CGRectMake(0,
+    CGRect leftMarginRect = CGRectMake(0,
                                        0,
                                        ([iTermAdvancedSettingsModel terminalMargin] - 1) * scale,
                                        tState.cellConfiguration.cellSize.height);
-    CGRect markRect = [iTermTextDrawingHelper frameForMarkContainedInRect:leftMarignRect
+    CGRect markRect = [iTermTextDrawingHelper frameForMarkContainedInRect:leftMarginRect
                                                                  cellSize:tState.cellConfiguration.cellSize
                                                    cellSizeWithoutSpacing:tState.cellConfiguration.cellSizeWithoutSpacing
                                                                     scale:scale];
