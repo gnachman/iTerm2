@@ -434,7 +434,7 @@ static const NSUInteger kMaxHosts = 100;
     NSString *_missingSavedArrangementProfileGUID;
 
     // The containing window is in the midst of a live resize. The update timer
-    // runs in the common modes runlooup in this case. That's not acceptable
+    // runs in the common modes runloop in this case. That's not acceptable
     // for normal use for reasons that Apple leaves up to your imagination (it
     // doesn't fire while you hold down a key, for example), but it does fire
     // during live resize (unlike the default runloops).
