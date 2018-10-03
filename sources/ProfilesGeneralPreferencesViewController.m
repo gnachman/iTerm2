@@ -354,7 +354,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 }
 
 - (void)updateTitleSettingsMenuForView:(NSPopUpButton *)titleSettings {
-    // First remove any programatically added items
+    // First remove any programmatically added items
     NSIndexSet *indexSet = [titleSettings.menu.itemArray indexesOfObjectsPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         return obj.tag == -1;
     }];

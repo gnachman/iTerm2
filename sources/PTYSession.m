@@ -9337,7 +9337,7 @@ ITERM_WEAKLY_REFERENCEABLE
                         _bellRate = nil;
                         switch (selection) {
                             case -2:  // Dismiss programmatically
-                                DLog(@"Dismiss programatically");
+                                DLog(@"Dismiss programmatically");
                                 break;
 
                             case -1: // No
@@ -9382,7 +9382,7 @@ ITERM_WEAKLY_REFERENCEABLE
                         _bellRate = nil;
                         switch (selection) {
                             case -2:  // Dismiss programmatically
-                                DLog(@"Dismiss programatically");
+                                DLog(@"Dismiss programmatically");
                                 break;
 
                             case -1: // No

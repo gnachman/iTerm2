@@ -62,7 +62,7 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 // the damage.
 @property(nonatomic, copy) void (^willChange)(void);
 
-// Called before a control's value is changed programatically (e.g., when a different profile is
+// Called before a control's value is changed programmatically (e.g., when a different profile is
 // selected). If it returns YES, the normal path is not taken, and the block is responsible for
 // updating the control to reflect the user preference.
 // This is normally used on popups and matrixes to update the control to reflect the
