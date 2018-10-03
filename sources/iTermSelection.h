@@ -23,7 +23,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 @protocol iTermSelectionDelegate <NSObject>
 
 - (void)selectionDidChange:(iTermSelection *)selection;
-// Returns range of (parenthesized phrase) startin or ending at coord, or
+// Returns range of (parenthesized phrase) starting or ending at coord, or
 // -1,-1,-1,-1 if none.
 - (VT100GridWindowedRange)selectionRangeForParentheticalAt:(VT100GridCoord)coord;
 

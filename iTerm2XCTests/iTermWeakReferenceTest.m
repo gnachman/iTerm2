@@ -193,7 +193,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // Give everyone time to wait...
         usleep(1000);
 
-        // Fire the startign pistol
+        // Fire the starting pistol
         dispatch_group_leave(startGroup);
 
         // Wait for the blocks to finish running.
