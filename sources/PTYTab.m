@@ -2400,10 +2400,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
-+ (__kindof NSView *)_recusiveRestoreSplitters:(NSDictionary<NSString *, id> *)arrangement
-                                     fromIdMap:(NSDictionary<NSNumber *, SessionView *> *)idMap
-                                    sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
-                               revivedSessions:(NSMutableArray<PTYSession *> *)revivedSessions {
++ (__kindof NSView *)_recursiveRestoreSplitters:(NSDictionary<NSString *, id> *)arrangement
+                                      fromIdMap:(NSDictionary<NSNumber *, SessionView *> *)idMap
+                                     sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
+                                revivedSessions:(NSMutableArray<PTYSession *> *)revivedSessions {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SPLIITER_FRAME]];
         NSSplitView *splitter = [[PTYSplitView alloc] initWithFrame:frame];
@@ -2414,10 +2414,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
         NSArray<NSDictionary *> *subviews = [arrangement objectForKey:SUBVIEWS];
         for (NSDictionary *subArrangement in subviews) {
-            NSView* subView = [PTYTab _recusiveRestoreSplitters:subArrangement
-                                                      fromIdMap:idMap
-                                                     sessionMap:sessionMap
-                                                revivedSessions:revivedSessions];
+            NSView* subView = [PTYTab _recursiveRestoreSplitters:subArrangement
+                                                       fromIdMap:idMap
+                                                      sessionMap:sessionMap
+                                                 revivedSessions:revivedSessions];
             if (subView) {
                 [splitter addSubview:subView];
             }
@@ -2627,10 +2627,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     PTYTab *theTab;
     NSMutableArray<PTYSession *> *revivedSessions = [NSMutableArray array];
     // Build a tree with splitters and SessionViews but no PTYSessions.
-    NSSplitView *newRoot = (NSSplitView *)[PTYTab _recusiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
-                                                                  fromIdMap:viewMap
-                                                                 sessionMap:sessionMap
-                                                            revivedSessions:revivedSessions];
+    NSSplitView *newRoot = (NSSplitView *)[PTYTab _recursiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
+                                                                   fromIdMap:viewMap
+                                                                  sessionMap:sessionMap
+                                                             revivedSessions:revivedSessions];
 
     // Create a tab.
     theTab = [[PTYTab alloc] initWithRoot:newRoot sessions:nil];
@@ -3478,10 +3478,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         idMap[@([aSession tmuxPane])] = aSession.view;
     }
     NSArray *preexistingPanes = [[idMap allKeys] copy];
-    NSSplitView *newRoot = (NSSplitView *)[PTYTab _recusiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
-                                                                  fromIdMap:idMap
-                                                                 sessionMap:nil
-                                                            revivedSessions:nil];
+    NSSplitView *newRoot = (NSSplitView *)[PTYTab _recursiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
+                                                                   fromIdMap:idMap
+                                                                  sessionMap:nil
+                                                             revivedSessions:nil];
     // Instantiate sessions in the skeleton view tree.
     iTermObjectType objectType;
     if ([realParentWindow_ numberOfTabs] == 0) {
@@ -3752,10 +3752,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [formerlyMaximizedSessionView setFrameSize:savedSize_];
 
     // Build a tree with splitters and SessionViews/PTYSessions from idMap.
-    NSSplitView *newRoot = [PTYTab _recusiveRestoreSplitters:[savedArrangement_ objectForKey:TAB_ARRANGEMENT_ROOT]
-                                                   fromIdMap:idMap_
-                                                  sessionMap:nil
-                                             revivedSessions:nil];
+    NSSplitView *newRoot = [PTYTab _recursiveRestoreSplitters:[savedArrangement_ objectForKey:TAB_ARRANGEMENT_ROOT]
+                                                    fromIdMap:idMap_
+                                                   sessionMap:nil
+                                              revivedSessions:nil];
     [PTYTab _recursiveSetDelegateIn:newRoot to:self];
 
     // Create a tab.
