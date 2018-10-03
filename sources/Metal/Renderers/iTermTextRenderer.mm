@@ -258,7 +258,7 @@ static BOOL gMonochromeText;
 - (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForCellConfiguration:(iTermCellRenderConfiguration *)configuration
                                                                                    commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
     if (!CGSizeEqualToSize(configuration.cellSize, _cellSizeForQuadCache)) {
-        // All quads depend on cell size. No point keeping usesless entries in the cache.
+        // All quads depend on cell size. No point keeping useless entries in the cache.
         [_quadCache removeAllObjects];
         _cellSizeForQuadCache = configuration.cellSize;
     }
