@@ -375,7 +375,7 @@ static const NSUInteger kMaxHosts = 100;
     // In order to correctly draw a tiled background image, we must first draw
     // it into an image the size of the session view, and then blit from it
     // onto the background of whichever view needs a background. This ensures
-    // the tesselation is consistent.
+    // the tessellation is consistent.
     NSImage *_patternedImage;
 
     // Mouse reporting state
