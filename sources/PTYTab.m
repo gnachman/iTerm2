@@ -56,7 +56,7 @@ static NSString* TAB_ARRANGEMENT_VIEW_TYPE = @"View Type";
 static NSString* VIEW_TYPE_SPLITTER = @"Splitter";
 static NSString* VIEW_TYPE_SESSIONVIEW = @"SessionView";
 static NSString* SPLITTER_IS_VERTICAL = @"isVertical";
-static NSString* TAB_ARRANGEMENT_SPLIITER_FRAME = @"frame";
+static NSString* TAB_ARRANGEMENT_SPLITTER_FRAME = @"frame";
 static NSString* TAB_ARRANGEMENT_SESSIONVIEW_FRAME = @"frame";
 static NSString* TAB_WIDTH = @"width";
 static NSString* TAB_HEIGHT = @"height";
@@ -2327,7 +2327,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if ([view isKindOfClass:[NSSplitView class]]) {
         NSSplitView* splitView = (NSSplitView*)view;
         [result setObject:VIEW_TYPE_SPLITTER forKey:TAB_ARRANGEMENT_VIEW_TYPE];
-        [result setObject:[PTYTab frameToDict:[view frame]] forKey:TAB_ARRANGEMENT_SPLIITER_FRAME];
+        [result setObject:[PTYTab frameToDict:[view frame]] forKey:TAB_ARRANGEMENT_SPLITTER_FRAME];
         [result setObject:[NSNumber numberWithBool:[splitView isVertical]] forKey:SPLITTER_IS_VERTICAL];
         NSMutableArray *subviews = [NSMutableArray arrayWithCapacity:[[splitView subviews] count]];
         for (NSView *subview in [splitView subviews]) {
@@ -2405,7 +2405,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                      sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
                                 revivedSessions:(NSMutableArray<PTYSession *> *)revivedSessions {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
-        NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SPLIITER_FRAME]];
+        NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SPLITTER_FRAME]];
         NSSplitView *splitter = [[PTYSplitView alloc] initWithFrame:frame];
         if (USE_THIN_SPLITTERS) {
             [splitter setDividerStyle:NSSplitViewDividerStyleThin];
@@ -2937,7 +2937,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             frame.origin = origin;
             frame.size.width = [[parseTree objectForKey:kLayoutDictPixelWidthKey] intValue];
             frame.size.height = [[parseTree objectForKey:kLayoutDictPixelHeightKey] intValue];
-            [dict setObject:[PTYTab frameToDict:frame] forKey:TAB_ARRANGEMENT_SPLIITER_FRAME];
+            [dict setObject:[PTYTab frameToDict:frame] forKey:TAB_ARRANGEMENT_SPLITTER_FRAME];
 
             NSMutableArray *subviews = [NSMutableArray array];
             NSArray *children = [parseTree objectForKey:kLayoutDictChildrenKey];
@@ -3336,7 +3336,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     assert(arrangement);
     [view setNeedsDisplay:YES];
     if ([view isKindOfClass:[NSSplitView class]]) {
-        NSDictionary *frameDict = [arrangement objectForKey:TAB_ARRANGEMENT_SPLIITER_FRAME];
+        NSDictionary *frameDict = [arrangement objectForKey:TAB_ARRANGEMENT_SPLITTER_FRAME];
         NSRect frame = [PTYTab dictToFrame:frameDict];
         [view setFrame:frame];
 
