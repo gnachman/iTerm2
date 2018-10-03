@@ -184,7 +184,6 @@ static const CGFloat kButtonSize = 17;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-return;
 #if 0
     NSColor *tabColor = delegate_.tabColor;
     if (tabColor) {
@@ -230,9 +229,8 @@ return;
 
     [[NSColor blackColor] set];
     NSRectFill(NSMakeRect(dirtyRect.origin.x, 0, dirtyRect.size.width, 1));
-
-    [super drawRect:dirtyRect];
 #endif
+    [super drawRect:dirtyRect];
 }
 
 - (void)setTitle:(NSString *)title {
