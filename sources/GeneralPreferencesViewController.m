@@ -217,6 +217,7 @@ enum {
         [[NSUserDefaults standardUserDefaults] setObject:value
                                                   forKey:@"NoSyncNeverRemindPrefsChangesLostForFile_selection"];
     };
+#if 0
 
     // Called on programmatic change (e.g., selecting a different profile. Returns YES to avoid
     // normal code path.
@@ -233,7 +234,6 @@ enum {
         return YES;
     };
     info.onUpdate();
-
     // ---------------------------------------------------------------------------------------------
     info = [self defineControl:_prefsCustomFolder
                            key:kPreferenceKeyCustomFolder
@@ -246,6 +246,7 @@ enum {
         [self updateRemotePrefsViews];
     };
     [self updateRemotePrefsViews];
+#endif
 
     // ---------------------------------------------------------------------------------------------
     [self defineControl:_selectionCopiesText
@@ -344,6 +345,8 @@ enum {
 }
 
 - (void)loadPrefsFromCustomFolderDidChange {
+#if 0
+// Disable remote preferences
     BOOL shouldLoadRemotePrefs = [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
     [self updateRemotePrefsViews];
     if (shouldLoadRemotePrefs) {
@@ -365,6 +368,7 @@ enum {
         }
     }
     [self updateRemotePrefsViews];
+#endif
 }
 
 - (BOOL)choosePrefsCustomFolder {
