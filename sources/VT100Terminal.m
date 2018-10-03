@@ -770,8 +770,8 @@ static const int kMaxScreenRows = 4096;
                                 graphicRendition_.fgBlue = subs[4];
                                 graphicRendition_.fgColorMode = ColorMode24bit;
                             } else {
-                                // Misinterpration compliant.
-                                // CSI 38:2:R:G:B m  <- misinterpration compliant
+                                // Misinterpretation compliant.
+                                // CSI 38:2:R:G:B m  <- misinterpretation compliant
                                 graphicRendition_.fgColorCode = subs[1];
                                 graphicRendition_.fgGreen = subs[2];
                                 graphicRendition_.fgBlue = subs[3];
