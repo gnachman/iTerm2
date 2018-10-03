@@ -209,7 +209,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
             [tabViewItem setView:sizeRememberingView];
         } else {
-            // Replce the filler view with the real one which isn't in the view
+            // Replace the filler view with the real one which isn't in the view
             // hierarchy in the .xib file which was done to make it easier for
             // views' sizes to differ.
             [tabViewItem setView:view];
