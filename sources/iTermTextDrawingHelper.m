@@ -1713,7 +1713,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     }
 
     if (likely(!imageAttributes && !previousImageAttributes)) {
-        // Not an image cell. Try to quicly check if the attributes are the same, which is the normal case.
+        // Not an image cell. Try to quickly check if the attributes are the same, which is the normal case.
         if (likely(!memcmp(previousAttributes, newAttributes, sizeof(*previousAttributes)))) {
             // Identical, byte-for-byte
             *combinedAttributesChanged = NO;
