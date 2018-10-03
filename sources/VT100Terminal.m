@@ -950,7 +950,7 @@ static const int kMaxScreenRows = 4096;
                 [delegate_ terminalSendReport:[self.output reportiTerm2Version]];
                 break;
 
-            case 0: // Response from VT100 -- Ready, No malfuctions detected
+            case 0: // Response from VT100 -- Ready, No malfunctions detected
             default:
                 break;
         }
