@@ -122,7 +122,7 @@ static inline id iTermAdvancedSettingsModelInverseTransformString(NSString *valu
 
 // name: A token uniquely identifying the property. It is the same as the name of the method to fetch its value.
 // podtype: The data type. For example, BOOL or NSString *
-// type: The iTermAdvancedSettingTyep enum value
+// type: The iTermAdvancedSettingType enum value
 // default: The default value, such as YES or @"foo". Nonnil.
 // transformation: Name of a function (as a token) that converts podtype to id
 // inverseTransformation: Name of a function (as a token) that converts id to podtype
