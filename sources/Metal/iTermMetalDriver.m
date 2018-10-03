@@ -1291,7 +1291,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 }
 
 // frameData's renderEncoder must have just had -endEncoding called on it at this point.
-// It will be left in the same staate.
+// It will be left in the same state.
 - (void)copyOffscreenTextureToDrawableInFrameData:(iTermMetalFrameData *)frameData {
     [self copyToDrawableFromTexture:frameData.destinationTexture
            withRenderPassDescriptor:frameData.debugRealRenderPassDescriptor
