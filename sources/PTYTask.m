@@ -187,7 +187,7 @@ static void MyLoginTTY(int master, int slave, int serverSocketFd, int deadMansPi
     int inuse[3 * kNumFileDescriptorsToDup] = {
        0, 1, 2, 3,  // FDs get duped to the lowest numbers so reserve them
        master, slave, serverSocketFd, deadMansPipeWriteEnd,  // FDs to get duped, which mustn't be overwritten
-       -1, -1, -1, -1 };  // Space for temp values to ensure they don't get resused
+       -1, -1, -1, -1 };  // Space for temp values to ensure they don't get reused
     int inuseCount = 2 * kNumFileDescriptorsToDup;
 
     // File descriptors get dup2()ed to temporary numbers first to avoid stepping on each other or

@@ -1944,7 +1944,7 @@ static BOOL hasBecomeActive = NO;
                     DLog(@"Restore a single session");
                     term = [controller terminalWithGuid:restorableSession.terminalGuid];
                     if (term) {
-                        DLog(@"resuse an existing window");
+                        DLog(@"reuse an existing window");
                         // Reuse an existing window
                         tab = [term tabWithUniqueId:restorableSession.tabUniqueId];
                         if (tab) {
