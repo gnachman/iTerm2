@@ -448,7 +448,7 @@ DEFINE_BOOL(noSyncNeverRemindPrefsChangesLostForUrl, NO, SECTION_WARNINGS @"Supp
 DEFINE_BOOL(noSyncNeverRemindPrefsChangesLostForFile, NO, SECTION_WARNINGS @"Suppress changed-setting warning when prefs are loaded from a custom folder.");
 DEFINE_BOOL(noSyncSuppressAnnyoingBellOffer, NO, SECTION_WARNINGS @"Suppress offer to silence bell when it rings too much.");
 
-DEFINE_BOOL(suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline, NO, SECTION_WARNINGS @"Suppress warning about multi-line paste when pasting a single line ending with a newline.\nThis supresses all multi-line paste warnings when a single line is being pasted.");
+DEFINE_BOOL(suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline, NO, SECTION_WARNINGS @"Suppress warning about multi-line paste when pasting a single line ending with a newline.\nThis suppresses all multi-line paste warnings when a single line is being pasted.");
 DEFINE_BOOL(suppressMultilinePasteWarningWhenNotAtShellPrompt, NO, SECTION_WARNINGS @"Suppress warning about multi-line paste when not at prompt.\nRequires Shell Integration to be installed.");
 DEFINE_BOOL(noSyncSuppressBroadcastInputWarning, NO, SECTION_WARNINGS @"Suppress warning about broadcasting input.");
 DEFINE_BOOL(noSyncSuppressCaptureOutputRequiresShellIntegrationWarning, NO,
