@@ -1437,6 +1437,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
     return [super beginDraggingSessionWithItems:items event:event source:source];
 }
 
+#if 0
 - (NSDragOperation)draggingSourceOperationMaskForLocal:(BOOL)isLocal
 {
     return (isLocal ? NSDragOperationMove : NSDragOperationNone);
@@ -1446,6 +1447,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
 {
     return YES;
 }
+#endif
 
 - (void)draggingSession:(NSDraggingSession *)session willBeginAtPoint:(NSPoint)screenPoint {
     [[PSMTabDragAssistant sharedDragAssistant] draggingBeganAt:screenPoint];

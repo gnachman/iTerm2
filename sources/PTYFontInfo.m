@@ -123,8 +123,8 @@
     NSLayoutManager *layoutManager = [[[NSLayoutManager alloc] init] autorelease];
     NSTextContainer *textContainer = [[[NSTextContainer alloc] init] autorelease];
     [layoutManager addTextContainer:textContainer];
-    NSDictionary *attributes = @{ NSFontNameAttribute: font_,
-                                  NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle) };
+    // NSDictionary *attributes = @{ NSFontNameAttribute: font_,
+    //                              NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle) };
     // NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:@"M" attributes:attributes] autorelease];
     // NSTextStorage *textStorage = [[NSTextStorage alloc] initWithAttributedString:attributedString];
     // [textStorage addLayoutManager:layoutManager];

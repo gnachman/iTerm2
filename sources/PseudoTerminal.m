@@ -5944,6 +5944,9 @@ return NO;
     int width = [[[self currentSession] textview] charWidth] * 4;
     [[self currentTab] moveCurrentSessionDividerBy:width
                                       horizontally:YES];
+    [[self window] toggleFullScreen:nil];
+    [[self window] toggleFullScreen:nil];
+
 }
 
 - (IBAction)movePaneDividerLeft:(id)sender
@@ -5951,6 +5954,10 @@ return NO;
     int width = [[[self currentSession] textview] charWidth] * 4;
     [[self currentTab] moveCurrentSessionDividerBy:-width
                                       horizontally:YES];
+    [[[iTermController sharedInstance] currentTerminal] decreaseWidth:nil];
+    [[self window] toggleFullScreen:nil];
+    [[self window] toggleFullScreen:nil];
+
 }
 
 - (IBAction)movePaneDividerDown:(id)sender
@@ -5958,6 +5965,8 @@ return NO;
     int height = [[[self currentSession] textview] lineHeight] * 2;
     [[self currentTab] moveCurrentSessionDividerBy:height
                                       horizontally:NO];
+    [[self window] toggleFullScreen:nil];
+    [[self window] toggleFullScreen:nil];
 }
 
 - (IBAction)movePaneDividerUp:(id)sender
@@ -5965,6 +5974,8 @@ return NO;
     int height = [[[self currentSession] textview] lineHeight] * 2;
     [[self currentTab] moveCurrentSessionDividerBy:-height
                                       horizontally:NO];
+    [[self window] toggleFullScreen:nil];
+    [[self window] toggleFullScreen:nil];
 }
 
 - (void)swapPaneLeft
