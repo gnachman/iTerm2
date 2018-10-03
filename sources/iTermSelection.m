@@ -27,7 +27,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     return sub;
 }
 
-+ (instancetype)subSelectinWithDictionary:(NSDictionary *)dict {
++ (instancetype)subSelectionWithDictionary:(NSDictionary *)dict {
     return [self subSelectionWithRange:[dict[kiTermSubSelectionRange] gridWindowedRange]
                                   mode:[dict[kiTermSubSelectionMode] intValue]];
 }
@@ -1062,7 +1062,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     NSArray<NSDictionary *> *subs = dict[kSelectionSubSelectionsKey];
     NSMutableArray<iTermSubSelection *> *subSelectionsToAdd = [NSMutableArray array];
     for (NSDictionary *subDict in subs) {
-        iTermSubSelection *sub = [iTermSubSelection subSelectinWithDictionary:subDict];
+        iTermSubSelection *sub = [iTermSubSelection subSelectionWithDictionary:subDict];
         if (sub) {
             [subSelectionsToAdd addObject:sub];
         }
