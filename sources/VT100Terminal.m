@@ -2638,7 +2638,7 @@ static const int kMaxScreenRows = 4096;
 
         case 'G':
             // Update progress bar.
-            // First argument: perecentage
+            // First argument: percentage
             // Second argument: title
             if (args.count == 1) {
                 [delegate_ terminalProgressDidFinish];
