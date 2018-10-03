@@ -326,7 +326,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     }
 
     const CGFloat slowEnoughToDowngradeThreshold = 0.002;
-    const CGFloat fastEnoughToUpgradeTreshold = 0.0005;
+    const CGFloat fastEnoughToUpgradeThreshold = 0.0005;
     if (_currentDrawableTime.numberOfMeasurements > 5 &&
         _maxFramesInFlight > 1 &&
         _currentDrawableTime.value > slowEnoughToDowngradeThreshold) {
@@ -339,7 +339,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [_currentDrawableTime reset];
     } else if (_currentDrawableTime.numberOfMeasurements > 10 &&
                _maxFramesInFlight < iTermMetalDriverMaximumNumberOfFramesInFlight &&
-               _currentDrawableTime.value < fastEnoughToUpgradeTreshold) {
+               _currentDrawableTime.value < fastEnoughToUpgradeThreshold) {
         DLog(@"Moving average of currentDrawable latency of %0.2fms with %@ measurements with mff of %@ is low. Increase mff to %@",
               _currentDrawableTime.value * 1000,
               @(_currentDrawableTime.numberOfMeasurements),
