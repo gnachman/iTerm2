@@ -106,7 +106,7 @@ typedef enum {
 - (void)updateLabelAttributes;
 
 // End the session (calling terminate normally or killing/hiding a tmux
-// session), and closes the tab if neeed.
+// session), and closes the tab if needed.
 - (void)closeSession:(PTYSession *)session;
 
 // Sets whether the bell indicator should show.
