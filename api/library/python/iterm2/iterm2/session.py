@@ -232,7 +232,7 @@ class Session:
 
     def get_screen_streamer(self, want_contents=True):
         """
-        Provides a nice interface for receiving updates to the screne.
+        Provides a nice interface for receiving updates to the screen.
 
         The screen is the mutable part of a session (its last lines, excluding
         scrollback history).
