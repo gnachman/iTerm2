@@ -1206,7 +1206,7 @@ static int Search(NSString* needle,
         // accept is one whose leftmost position is at the leftmost position of
         // the previous result.
         //
-        // Example: Consider a previosu search of [jump]
+        // Example: Consider a previous search of [jump]
         //  The quick brown fox jumps over the lazy dog.
         //                      ^^^^
         // The search is then extended to [jumps]. We want to return:
