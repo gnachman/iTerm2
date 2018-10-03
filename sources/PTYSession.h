@@ -405,7 +405,7 @@ typedef enum {
 
 @property(nonatomic, assign) BOOL highlightCursorLine;
 
-// Used to help remember total ordering on views while one is maximzied
+// Used to help remember total ordering on views while one is maximized
 @property(nonatomic, assign) NSPoint savedRootRelativeOrigin;
 
 // The computed label
