@@ -225,7 +225,7 @@ static NSMutableDictionary *gRegisteredSessionContents;
 static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 // Grace period to avoid failing to write anti-idle code when timer runs just before when the code
-// shuold be sent.
+// should be sent.
 static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
 // Limit for number of entries in self.directories, self.commands, self.hosts.

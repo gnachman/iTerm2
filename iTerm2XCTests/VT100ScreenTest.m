@@ -2660,7 +2660,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert([selection_ firstRange].coordRange.start.x == 1);
 
     screen.saveToScrollbackInAlternateScreen = NO;
-    // scrollback overflow should be 0 and selection shoudn't be insane
+    // scrollback overflow should be 0 and selection shouldn't be insane
     [self setSelectionRange:VT100GridCoordRangeMake(1, 5, 2, 5)];
     [screen terminalLineFeed];
     XCTAssert([screen scrollbackOverflow] == 0);

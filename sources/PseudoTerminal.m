@@ -304,7 +304,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL exitingLionFullscreen_;
 
     // If positive, then any window resizing that happens is driven by tmux and
-    // shoudn't be reported back to tmux as a user-originated resize.
+    // shouldn't be reported back to tmux as a user-originated resize.
     int tmuxOriginatedResizeInProgress_;
 
     BOOL liveResize_;
