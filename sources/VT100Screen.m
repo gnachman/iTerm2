@@ -174,7 +174,7 @@ static NSString *const kInlineFileHeight = @"height";  // NSNumber
 static NSString *const kInlineFileHeightUnits = @"height units"; // NSNumber of VT100TerminalUnits
 static NSString *const kInlineFilePreserveAspectRatio = @"preserve aspect ratio";  // NSNumber bool
 static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutableString
-static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
+static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
 @synthesize terminal = terminal_;
 @synthesize audibleBell = audibleBell_;
@@ -3693,7 +3693,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                           kInlineFileHeightUnits: @(heightUnits),
                           kInlineFilePreserveAspectRatio: @(preserveAspectRatio),
                           kInlineFileBase64String: [NSMutableString string],
-                          kInilineFileInset: [NSValue futureValueWithEdgeInsets:inset] } retain];
+                          kInlineFileInset: [NSValue futureValueWithEdgeInsets:inset] } retain];
 }
 
 - (void)appendImageAtCursorWithName:(NSString *)name
@@ -3871,7 +3871,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                    height:[inlineFileInfo_[kInlineFileHeight] intValue]
                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
                       preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
-                                    inset:[inlineFileInfo_[kInilineFileInset] futureEdgeInsetsValue]
+                                    inset:[inlineFileInfo_[kInlineFileInset] futureEdgeInsetsValue]
                                     image:nil
                                      data:data];
         [inlineFileInfo_ release];
