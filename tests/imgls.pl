@@ -123,7 +123,7 @@ while (@ARGV) {
 sub do_ls_cmd {
     my $file = shift;
 
-    # Get the image dimensions to suppliement the image and ls output.
+    # Get the image dimensions to supplement the image and ls output.
     # Use Image::Size when available (non-stock), otherwise use PHP fallback method.
     my $dims;
     if (-e $file and -r $file) {
