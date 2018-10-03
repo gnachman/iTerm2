@@ -183,7 +183,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (iTermTuple *)keyValuePair;
 
 - (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars;
-- (NSString *)stringByPerformingSubstitutions:(NSDictionary *)substituions;
+- (NSString *)stringByPerformingSubstitutions:(NSDictionary *)substitutions;
 
 // Returns self repeated |n| times.
 - (NSString *)stringRepeatedTimes:(int)n;
