@@ -247,7 +247,7 @@ static iTermController *gSharedInstance;
 }
 
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux {
-    DLog(@"newWindow:%@ posiblyTmux:%@", sender, @(possiblyTmux));
+    DLog(@"newWindow:%@ possiblyTmux:%@", sender, @(possiblyTmux));
     if (possiblyTmux &&
         _frontTerminalWindowController &&
         [[_frontTerminalWindowController currentSession] isTmuxClient]) {
