@@ -58,7 +58,7 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-return;
+#if 0
     NSRect frame = [self frame];
     [[NSGraphicsContext currentContext] saveGraphicsState];
     [[NSGraphicsContext currentContext] setShouldAntialias:YES];
@@ -72,6 +72,7 @@ return;
       [path fill];
     }
     [[NSGraphicsContext currentContext] restoreGraphicsState];
+#endif
 }
 
 @end

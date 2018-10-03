@@ -280,8 +280,8 @@ static NSDictionary *gIntrospection;
     NSAttributedString *topSpacer = [[[NSAttributedString alloc] initWithString:@"\n"
                                                                      attributes:spacerAttributes] autorelease];
     NSDictionary *attributes =
-        @{ NSFontAttributeName: bold ? [NSFont boldSystemFontOfSize:size] : [NSFont systemFontOfSize:size],
-           NSForegroundColorAttributeName: (selected && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor whiteColor] };
+    @{ NSFontAttributeName: bold ? [NSFont boldSystemFontOfSize:size] : [NSFont systemFontOfSize:size] };
+    //,           NSForegroundColorAttributeName: (selected && self.view.window.isKeyWindow) ? [NSColor whiteColor] : [NSColor whiteColor] };
     NSAttributedString *title = [[[NSAttributedString alloc] initWithString:string
                                                                  attributes:attributes] autorelease];
     NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];

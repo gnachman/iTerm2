@@ -31,7 +31,7 @@ typedef NS_OPTIONS(NSInteger, CPKMainViewControllerOptions) {
                  alphaAllowed:(BOOL)alphaAllowed DEPRECATED_ATTRIBUTE;
 
 - (instancetype)initWithBlock:(void (^)(NSColor *))block
-         useSystemColorPicker:(void (^)())useSystemColorPickerBlock
+         useSystemColorPicker:(void (^)(void))useSystemColorPickerBlock
                         color:(NSColor *)color
                       options:(CPKMainViewControllerOptions)options;
 
