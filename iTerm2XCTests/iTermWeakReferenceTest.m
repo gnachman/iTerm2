@@ -139,12 +139,12 @@ ITERM_WEAKLY_REFERENCEABLE
     XCTAssertEqual([ref number], 1234);
 }
 
-- (void)testProxyRaisesExceptionOnNonexistantMethods {
+- (void)testProxyRaisesExceptionOnNonexistentMethods {
     iTerm2FakeObject *fakeObject = [[[iTerm2FakeObject alloc] init] autorelease];
     iTerm2FakeObject *ref = [fakeObject weakSelf];
     BOOL ok = NO;
     @try {
-        [ref performSelector:@selector(testProxyRaisesExceptionOnNonexistantMethods)
+        [ref performSelector:@selector(testProxyRaisesExceptionOnNonexistentMethods)
                   withObject:nil];
     }
     @catch (NSException *e) {

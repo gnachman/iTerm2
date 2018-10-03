@@ -317,7 +317,7 @@ error:
                     [currentCommand_[kCommandString] hasPrefix:@"new-window"] &&
                     [currentCommand_[kCommandString] containsString:@"-c"] &&
                     [self.maximumServerVersion compare:@2.1] != NSOrderedAscending) {
-                    [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nTmux 2.1 and earlier will refuse to create a new window pane with a nonexistant initial working directory.\n\nInfo:\n%@",
+                    [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nTmux 2.1 and earlier will refuse to create a new window pane with a nonexistent initial working directory.\n\nInfo:\n%@",
                                                  currentCommandResponse_, currentCommand_]];
                 } else {
                     [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nInfo:\n%@", currentCommandResponse_, currentCommand_]];
