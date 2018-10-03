@@ -31,7 +31,7 @@
 @end
 
 @implementation iTermOpenQuicklyWindowController {
-    // Text field where quries are entered
+    // Text field where queries are entered
     IBOutlet iTermOpenQuicklyTextField *_textField;
 
     // Table that shows search results
