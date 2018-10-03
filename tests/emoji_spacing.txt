@@ -1,4 +1,4 @@
-]1337;UnicodeVersion=0These will overlap if your terminal is in unicode 8 mode after restting the unicode version to the default:
+]1337;UnicodeVersion=0These will overlap if your terminal is in unicode 8 mode after resetting the unicode version to the default:
 ⌚⌚
 ]1337;UnicodeVersion=8These will overlap if your terminal is in unicode 8 mode after sending UnicodeVersion=8:
 ⌚⌚
