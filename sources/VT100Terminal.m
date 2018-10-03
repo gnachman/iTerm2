@@ -542,7 +542,7 @@ static const int kMaxScreenRows = 4096;
                 break;
             case 20:
                 // This used to be the setter for "line mode", but it wasn't used and it's not
-                // supported by xterm. Seemed to have somethign to do with CR vs LF.
+                // supported by xterm. Seemed to have something to do with CR vs LF.
                 break;
             case 25:
                 [delegate_ terminalSetCursorVisible:mode];
