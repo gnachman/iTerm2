@@ -1044,7 +1044,7 @@ static NSString *const kInlineFileInset = @"inset";  // NSValue of NSEdgeInsets
         // it'll get truncated and the display is hopelessly messed up, so
         // while this is not the true start of the command it's better than not
         // recording a start, which would break alt-click to move the cursor.
-        // The user will probably cancel the command or press ^L to redrasw.
+        // The user will probably cancel the command or press ^L to redraw.
         newCommandStart = VT100GridCoordMake(commandStartX_, 0);
 
         // Abort the current command.
