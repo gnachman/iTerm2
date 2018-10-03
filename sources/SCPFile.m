@@ -215,7 +215,7 @@ static NSError *SCPFileError(NSString *description) {
 }
 
 // This runs in a thread
-- (NSString *)filenameByExpandingMetasyntaticVariables:(NSString *)filename {
+- (NSString *)filenameByExpandingMetasyntacticVariables:(NSString *)filename {
     filename = [filename stringByExpandingTildeInPath];
     NSDictionary *substitutions =
         @{ @"%d": _homeDirectory,
@@ -360,7 +360,7 @@ static NSError *SCPFileError(NSString *description) {
                 }
                 NSFileManager *fileManager = [NSFileManager defaultManager];
                 for (NSString *keyPath in keyPaths) {
-                    keyPath = [self filenameByExpandingMetasyntaticVariables:keyPath];
+                    keyPath = [self filenameByExpandingMetasyntacticVariables:keyPath];
                     if (![fileManager fileExistsAtPath:keyPath]) {
                         XLog(@"No key file at %@", keyPath);
                         continue;
