@@ -6046,7 +6046,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    // All necessary conditions are statisifed. Now find one that is sufficient.
+    // All necessary conditions are satisifed. Now find one that is sufficient.
     for (NSInteger i = 0; i < pattern.keycodesArray_Count; i++) {
         if (event.keyCode == [pattern.keycodesArray valueAtIndex:i]) {
             return YES;
