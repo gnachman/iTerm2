@@ -1552,7 +1552,7 @@ static const int kDragThreshold = 3;
     return (_keyIsARepeat);
 }
 
-// WARNING: This indicates if mouse reporting is a possiblity. -terminalWantsMouseReports indicates
+// WARNING: This indicates if mouse reporting is a possibility. -terminalWantsMouseReports indicates
 // if the reporting mode would cause any action to be taken if this returns YES. They should be used
 // in conjunction most of the time.
 - (BOOL)xtermMouseReporting {
