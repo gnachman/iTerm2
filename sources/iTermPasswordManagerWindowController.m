@@ -424,14 +424,14 @@ static BOOL sAuthenticated;
 }
 
 - (NSString *)selectedPassword {
-    DLog(@"selectedPassowrd");
+    DLog(@"selectedPassword");
     if (!sAuthenticated) {
-        DLog(@"selectedPassowrd: return nil, not authenticated");
+        DLog(@"selectedPassword: return nil, not authenticated");
         return nil;
     }
     NSInteger index = [_tableView selectedRow];
     if (index < 0) {
-        DLog(@"selectedPassowrd: return nil, negative index");
+        DLog(@"selectedPassword: return nil, negative index");
         return nil;
     }
     NSError *error = nil;
@@ -439,7 +439,7 @@ static BOOL sAuthenticated;
                                                      account:_accounts[index]
                                                        error:&error];
     if (error) {
-        DLog(@"selectedPassowrd: return nil, keychain gave error %@", error);
+        DLog(@"selectedPassword: return nil, keychain gave error %@", error);
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             NSAlert *alert = [[[NSAlert alloc] init] autorelease];
@@ -449,7 +449,7 @@ static BOOL sAuthenticated;
         });
         return nil;
     } else {
-        DLog(@"selectedPassowrd: return nonnil password");
+        DLog(@"selectedPassword: return nonnil password");
         return password ?: @"";
     }
 }
