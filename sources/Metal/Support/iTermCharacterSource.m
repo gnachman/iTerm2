@@ -568,7 +568,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     int style = -1;
     if (iTermTextIsMonochrome()) {
         shouldSmooth = NO;
-    } else if (@available(macOS 10.14, *)) {
+    } else {
         // User enabled subpixel AA
         shouldSmooth = YES;
     }

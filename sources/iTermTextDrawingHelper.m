@@ -1181,7 +1181,7 @@ typedef struct iTermTextColorContext {
     int style = -1;
     if (iTermTextIsMonochrome()) {
         shouldSmooth = NO;
-    } else if (@available(macOS 10.14, *)) {
+    } else {
         // User enabled subpixel AA
         shouldSmooth = YES;
     }
@@ -1192,7 +1192,6 @@ typedef struct iTermTextColorContext {
             style = 0;
         }
     }
-    CGContextSetShouldSmoothFonts(ctx, shouldSmooth);
     if (style >= 0) {
         // This seems to be available at least on 10.8 and later. The only reference to it is in
         // WebKit. This causes text to render just a little lighter, which looks nicer.
