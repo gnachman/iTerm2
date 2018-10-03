@@ -1432,7 +1432,7 @@ static BOOL hasBecomeActive = NO;
         [iTermWarning showWarningWithTitle:@"This nightly build is over 30 days old. Consider updating soon: you may be suffering from awful bugs in blissful ignorance."
                                    actions:@[ @"I’ll Take My Chances", @"Update Now" ]
                                 identifier:@"NoSyncVeryOldNightlyBuildWarning"
-                               silenceable:kiTermWarningTypeSilencableForOneMonth
+                               silenceable:kiTermWarningTypeSilenceableForOneMonth
                                     window:nil];
         if (selection == kiTermWarningSelection1) {
             [[SUUpdater sharedUpdater] checkForUpdates:nil];
