@@ -317,12 +317,9 @@ static const double kFloatingPointTolerance = 0.00001;
 }
 
 - (void)testMultilineWarningWithOverride {
-    iTermFakeUserDefaults *fakeDefaults = [[[iTermFakeUserDefaults alloc] init] autorelease];
-    [fakeDefaults setFakeObject:@YES forKey:@"PromptForPasteWhenNotAtPrompt"];
-    [fakeDefaults setFakeObject:@YES forKey:@"PromptForPasteWhenNotAtPrompt"];
-    [iTermSelectorSwizzler swizzleSelector:@selector(standardUserDefaults)
-                                 fromClass:[NSUserDefaults class]
-                                 withBlock:^ id { return fakeDefaults; }
+    [iTermSelectorSwizzler swizzleSelector:@selector(promptForPasteWhenNotAtPrompt)
+                                 fromClass:[iTermAdvancedSettingsModel class]
+                                 withBlock:^ BOOL { return YES; }
                                   forBlock:^{
                                       [iTermAdvancedSettingsModel loadAdvancedSettingsFromUserDefaults];
                                       [self doMultilineWarningTestWithOverride:YES];

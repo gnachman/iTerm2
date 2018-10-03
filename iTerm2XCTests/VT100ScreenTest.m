@@ -1952,8 +1952,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"ł"]);
 
     XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"🖕🏾"]);
-    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"g"]);
-    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"🏾"]);  // Skin tone modifier only combines with certain emoji
+    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"g\U0001F3FE"]);
     XCTAssert(line[i++].code == 0);
 }
 
