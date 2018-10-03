@@ -176,7 +176,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return nil;
 }
 
-- (BOOL)activationModiferPressIsDoubleTap {
+- (BOOL)activationModifierPressIsDoubleTap {
     NSTimeInterval time = [NSDate timeIntervalSinceReferenceDate];
     DLog(@"You pressed the modifier key. dt=%@", @(time - _lastModifierTapTime));
     const NSTimeInterval kMaxTimeBetweenTaps = [iTermAdvancedSettingsModel hotKeyDoubleTapMaxDelay];
@@ -188,7 +188,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)handleActivationModifierPress {
-    if ([self activationModiferPressIsDoubleTap]) {
+    if ([self activationModifierPressIsDoubleTap]) {
         NSArray *siblings = [[[iTermFlagsChangedEventTap sharedInstance] observers] mapWithBlock:^id(iTermWeakReference<id<iTermEventTapObserver>> *anObject) {
             if (![anObject.weaklyReferencedObject isKindOfClass:[self class]]) {
                 return nil;

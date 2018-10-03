@@ -113,7 +113,7 @@ static struct {
     }
 }
 
-// Return the modifer mask for a special character.
+// Return the modifier mask for a special character.
 + (NSUInteger)flagsForSpecialCharacter:(unichar)c {
     for (int i = 0; i < sizeof(gModifiers) / sizeof(gModifiers[0]); i++) {
         if (gModifiers[i].c == c) {
