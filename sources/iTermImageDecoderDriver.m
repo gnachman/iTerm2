@@ -234,7 +234,7 @@ static void ExecImageDecoder(char *executable, char *sandbox, int jsonFD, int co
         default: {
             // parent
 
-            // Get rid of resouces only needed by the child.
+            // Get rid of resources only needed by the child.
             free(utf8Executable);
             free(sandbox);
             close(jsonFDs[1]);
