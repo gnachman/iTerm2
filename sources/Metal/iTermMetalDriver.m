@@ -1092,7 +1092,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
             rowData.y <= imeInfo.markedRange.end.y) {
             // This line contains at least part of the marked range
             if (rowData.y == imeInfo.markedRange.start.y) {
-                // Makred range starts on this line
+                // Marked range starts on this line
                 if (rowData.y == imeInfo.markedRange.end.y) {
                     // Marked range starts and ends on this line.
                     markedRangeOnLine = NSMakeRange(imeInfo.markedRange.start.x,
