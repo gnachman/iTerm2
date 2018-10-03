@@ -37,7 +37,7 @@
 
 // When the pressing of a hotkey causes a new window to be created, the window controller is stored
 // here temporarily before the window is fully created. This is used for finding siblings of such a
-// partially formed window so that when it becomes key its sibilings don't get hidden.
+// partially formed window so that when it becomes key its siblings don't get hidden.
 @property(nonatomic, readonly) NSWindowController *windowControllerBeingBorn;
 
 // You may only set the window controller if there is not a weakly referenced object.
