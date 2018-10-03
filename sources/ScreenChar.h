@@ -67,7 +67,7 @@
 #define EOL_SOFT 1 // Soft line break (a long line was wrapped)
 #define EOL_DWC  2 // Double-width character wrapped to next line
 
-#define ONECHAR_UNKNOWN ('?')   // Relacement character for encodings other than utf-8.
+#define ONECHAR_UNKNOWN ('?')   // Replacement character for encodings other than utf-8.
 
 // Alternate semantics definitions
 // Default foreground/background color
