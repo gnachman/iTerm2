@@ -37,7 +37,7 @@ void SampleNeighbors(float2 textureSize,
     result[7] = texture.sample(textureSampler, clamp(textureCoordinate + float2( pixel.x,  pixel.y), minTextureCoord, maxTextureCoord));
 }
 
-// Sample eight neigbors of textureCoordinate and returns a value with the minimum components from all of them.
+// Sample eight neighbors of textureCoordinate and returns a value with the minimum components from all of them.
 half4 GetMinimumColorComponentsOfNeighbors(float2 textureSize,
                                            float2 textureOffset,
                                            float2 textureCoordinate,
