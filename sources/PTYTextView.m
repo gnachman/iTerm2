@@ -1281,7 +1281,7 @@ static const int kDragThreshold = 3;
                              y:(int)y
                             to:(VT100GridWindowedRange *)rangePtr
               ignoringNewlines:(BOOL)ignoringNewlines
-                actionRequired:(BOOL)actionRequred
+                actionRequired:(BOOL)actionRequired
                respectDividers:(BOOL)respectDividers {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     VT100GridCoord coord = VT100GridCoordMake(x, y);
@@ -1290,7 +1290,7 @@ static const int kDragThreshold = 3;
     }
     return [extractor smartSelectionAt:coord
                              withRules:_smartSelectionRules
-                        actionRequired:actionRequred
+                        actionRequired:actionRequired
                                  range:rangePtr
                       ignoringNewlines:ignoringNewlines];
 }
