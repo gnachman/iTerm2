@@ -465,7 +465,7 @@ static void HandleSigChld(int n) {
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"PTYTask(child pid %d, server-child pid %d, fildes %d)",
+    return [NSString stringWithFormat:@"PTYTask(child pid %d, server-child pid %d, filedesc %d)",
               _serverChildPid, _serverPid, fd];
 }
 
