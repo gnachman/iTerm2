@@ -7359,7 +7359,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // If updatePaneTitles caused any session to change dimensions, then tell tmux
     // controllers that our capacity has changed.
     if (needResize) {
-        DLog(@"refrshTerminal needs resize");
+        DLog(@"refreshTerminal needs resize");
         NSArray *tmuxControllers = [self uniqueTmuxControllers];
         for (TmuxController *c in tmuxControllers) {
             [c windowDidResize:self];
