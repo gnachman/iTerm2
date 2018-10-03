@@ -229,7 +229,7 @@ typedef struct {
 @property(nonatomic, retain) NSString *kvpKey;
 @property(nonatomic, retain) NSString *kvpValue;
 
-// For VT100CSI_ codes that take paramters.
+// For VT100CSI_ codes that take parameters.
 @property(nonatomic, readonly) CSIParam *csi;
 
 // Is this an ascii string?

@@ -192,7 +192,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                     // A parameter substring is a sequence of digits with colon separators.
                     // The data structure we use treats each parameter string up to the first
                     // colon (if any) as the parameter, and parts after the first colon as
-                    // sub-parameters. That doesn't really make sense if a paramater string
+                    // sub-parameters. That doesn't really make sense if a parameter string
                     // starts with a colon, which is allowed but not defined in the spec.
                     // Since that never should happen in practice, we'll just ignore a parameter
                     // string that starts with a colon.

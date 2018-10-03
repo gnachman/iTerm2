@@ -138,7 +138,7 @@
 }
 
 - (void)testIntermediateByte {
-    // DECSCUSR with paraemter 3 (set cursor to "blink underline"), which has an intermediate byte
+    // DECSCUSR with parameter 3 (set cursor to "blink underline"), which has an intermediate byte
     // of the space character.
     VT100Token *token = [self tokenForDataWithFormat:@"%c[3 q", VT100CC_ESC];
     XCTAssert(token->type == VT100CSI_DECSCUSR);
