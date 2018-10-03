@@ -2880,6 +2880,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSRect)screenFrameForEdgeSpanningWindows:(NSScreen *)screen {
     if ([[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats]) {
+        const BOOL menuBarIsHidden = ![[iTermMenuBarObserver sharedInstance] menuBarVisibleOnScreen:screen];
+        if (menuBarIsHidden) {
+            return screen.frame;
+        }
         return screen.frameExceptMenuBar;
     } else {
         return [screen visibleFrameIgnoringHiddenDock];
