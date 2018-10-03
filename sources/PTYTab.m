@@ -85,7 +85,7 @@ static void SwapPoint(NSPoint* point) {
     point->y = temp.x;
 }
 
-// The "grain" runs perpindicular to the splitters. An example with isVertical==YES:
+// The "grain" runs perpendicular to the splitters. An example with isVertical==YES:
 // +----------------+
 // |     |     |    |
 // |     |     |    |
@@ -3206,7 +3206,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 {
     // The minimum size of a splitter is determined thus:
     // Keep an interval map M: [min, max) -> count
-    // Where intervals are in the space perpindicular to the size we're measuring.
+    // Where intervals are in the space perpendicular to the size we're measuring.
     // Increment [min, max) by the number of splitters.
     // If a subview is a splitter, recurse
     // If a subview is a sessionview, add its number of rows/cols based on pixels
