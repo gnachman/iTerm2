@@ -1511,7 +1511,7 @@ function db_sha_local
 #CHECKING FOR AUTH FILE
 if [[ -e $CONFIG_FILE ]]; then
 
-    #Loading data... and change old format config if necesary.
+    #Loading data... and change old format config if necessary.
     source "$CONFIG_FILE" 2>/dev/null || {
         sed -i'' 's/:/=/' "$CONFIG_FILE" && source "$CONFIG_FILE" 2>/dev/null
     }
