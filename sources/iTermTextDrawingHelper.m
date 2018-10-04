@@ -1193,6 +1193,7 @@ typedef struct iTermTextColorContext {
             style = 0;
         }
     }
+    CGContextSetShouldSmoothFonts(ctx, shouldSmooth);
     if (style >= 0) {
         // This seems to be available at least on 10.8 and later. The only reference to it is in
         // WebKit. This causes text to render just a little lighter, which looks nicer.
