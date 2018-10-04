@@ -332,16 +332,13 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 - (void)updateThinStrokesEnabled {
     if (@available(macOS 10.14, *)) {
         if (iTermTextIsMonochrome()) {
-            _thinStrokes.enabled = NO;
-            [_thinStrokesLabel setLabelEnabled:NO];
             _subpixelAA.state = NSOffState;
         } else {
             _subpixelAA.state = NSOnState;
         }
         _subpixelAA.enabled = YES;
     } else {
-        _subpixelAA.state = NSOnState;
-        _subpixelAA.enabled = NO;
+        _subpixelAA.hidden = YES;
     }
 }
 
@@ -367,7 +364,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     }
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"Subpixel Anti Aliasing";
-    alert.informativeText = @"This change will affect all profiles. You must restart iTerm2 for this change to take effect. After restarting, changes to Thin Strokes will also take effect.";
+    alert.informativeText = @"This change will affect all profiles. You must restart iTerm2 for this change to take effect.";
     [alert runModal];
     [self updateWarnings];
 }

@@ -580,7 +580,11 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     BOOL shouldSmooth = _useThinStrokes;
     int style = -1;
     if (iTermTextIsMonochrome()) {
-        shouldSmooth = NO;
+        if (_useThinStrokes) {
+            shouldSmooth = NO;
+        } else {
+            shouldSmooth = YES;
+        }
     } else {
         // User enabled subpixel AA
         shouldSmooth = YES;
