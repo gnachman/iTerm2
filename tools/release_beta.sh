@@ -14,6 +14,14 @@ test -f "$PRIVKEY" || die "Set PRIVKEY environment variable to point at a valid 
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
     ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die SparkleSign
+
+    echo "Signature is "
+    cat /tmp/sig.txt
+    actualsize=$(wc -c < /tmp/sig.txt)
+    if (( $actualsize < 60)); then
+        die "signature file too small"
+    fi
+
     SIG=$(cat /tmp/sig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
     XML=$1
