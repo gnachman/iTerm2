@@ -501,12 +501,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
           atOffset:CGPointMake(offset.x, ty)
               skew:skew
          iteration:iteration];
-    if (_fakeBold) {
-        [self drawRuns:runs
-              atOffset:CGPointMake(offset.x + self.fakeBoldShift * _scale, ty)
-                  skew:skew
-             iteration:iteration];
-    }
     _haveDrawn = YES;
 }
 
@@ -625,8 +619,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
 
         [self initializeStateIfNeededWithFont:runFont];
-        CGContextRef context = [self contextForIteration:iteration]
-        ;        [self drawBackgroundIfNeededForIteration:iteration
+        CGContextRef context = [self contextForIteration:iteration];
+        [self drawBackgroundIfNeededForIteration:iteration
                                          context:context];
         [self setTextColorForIteration:iteration
                                context:context];
@@ -648,6 +642,15 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                             context:context];
         } else {
             CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, context);
+            
+            if (_fakeBold) {
+                [self initializeTextMatrixInContext:context
+                                           withSkew:skew
+                                             offset:CGPointMake(offset.x + self.fakeBoldShift * _scale,
+                                                                offset.y)];
+                CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, context);
+            }
+
 #if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
             CGContextSetRGBStrokeColor(_contexts[iteration], 0, 0, 1, 1);
             CGContextStrokeRect(_contexts[iteration], CGRectMake(offset.x + positions[0].x,
