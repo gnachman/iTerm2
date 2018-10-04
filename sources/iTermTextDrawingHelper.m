@@ -1180,7 +1180,11 @@ typedef struct iTermTextColorContext {
     BOOL shouldSmooth = useThinStrokes;
     int style = -1;
     if (iTermTextIsMonochrome()) {
-        shouldSmooth = NO;
+        if (useThinStrokes) {
+            shouldSmooth = NO;
+        } else {
+            shouldSmooth = YES;
+        }
     } else {
         // User enabled subpixel AA
         shouldSmooth = YES;
