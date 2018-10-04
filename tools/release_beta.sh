@@ -19,7 +19,7 @@ function SparkleSign {
     echo "Signature is "
     cat /tmp/sig.txt
     actualsize=$(wc -c < /tmp/sig.txt)
-    if (( $actualsize < 63)); then
+    if (( $actualsize < 60)); then
         die "signature file too small"
     fi
 
