@@ -383,7 +383,7 @@ DEFINE_STRING(URLCharacterSetExclusions, @"¬", SECTION_SEMANTIC_HISTORY @"Chara
 DEFINE_INT(maxSemanticHistoryPrefixOrSuffix, 2000, SECTION_SEMANTIC_HISTORY @"Maximum number of bytes of text before and after click location to take into account.\nThis also limits the size of the \\3 and \\4 substitutions.");
 DEFINE_STRING(pathsToIgnore, @"", SECTION_SEMANTIC_HISTORY @"Paths to ignore for Semantic History.\nSeparate paths with a comma. Any file under one of these paths will not be openable with Semantic History. It is wise to add network file systems to this list, since they can be very slow.");
 DEFINE_BOOL(showYellowMarkForJobStoppedBySignal, YES, SECTION_SEMANTIC_HISTORY @"Use a yellow for a Shell Integration prompt mark when the job is stopped by a signal.");
-DEFINE_BOOL(conservativeURLGuessing, NO, SECTION_SEMANTIC_HISTORY @"URLs must contain a scheme?\nEnable this to reduce the number of false positives that semantic history things are a URL");
+DEFINE_BOOL(conservativeURLGuessing, NO, SECTION_SEMANTIC_HISTORY @"URLs must contain a scheme?\nEnable this to reduce the number of false positives that semantic history thinks are a URL");
 DEFINE_STRING(trailingPunctuationMarks, @"!?…)].\"';:,", SECTION_SEMANTIC_HISTORY @"Characters to ignore at the end of a URL");
 
 #pragma mark - Debugging
