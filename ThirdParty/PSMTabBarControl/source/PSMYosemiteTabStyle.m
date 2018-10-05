@@ -387,11 +387,25 @@
 }
 
 - (NSColor *)textColorDefaultSelected:(BOOL)selected {
-    if (selected) {
-        return [NSColor blackColor];
+    CGFloat value;
+    if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+        value = 0;
     } else {
-        return [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+        if (selected) {
+            if (@available(macOS 10.14, *)) {
+                value = 189;
+            } else {
+                value = 0;
+            }
+        } else {
+            if (@available(macOS 10.14, *)) {
+                value = 164;
+            } else {
+                value = 100;
+            }
+        }
     }
+    return [NSColor colorWithSRGBRed:value/255.0 green:value/255.0 blue:value/255.0 alpha:1];
 }
 
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell {
@@ -520,7 +534,8 @@
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
     if (selected) {
         if (@available(macOS 10.14, *)) {
-            return [NSColor windowBackgroundColor];
+            const CGFloat value = 246.0 / 255.0;
+            return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
         }
         if (_tabBar.window.backgroundColor) {
             return _tabBar.window.backgroundColor;
@@ -533,7 +548,11 @@
             value = 190/255.0 - highlightAmount * 0.048;
         } else {
             // Make inactive windows' background color lighter
-            value = 236/255.0 - highlightAmount * 0.048;
+            if (@available(macOS 10.14, *)) {
+                value = 221/255.0 - highlightAmount * 0.048;
+            } else {
+                value = 236/255.0 - highlightAmount * 0.048;
+            }
         }
         return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
     }

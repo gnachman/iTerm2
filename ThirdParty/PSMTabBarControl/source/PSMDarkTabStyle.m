@@ -25,8 +25,15 @@
 }
 
 - (NSColor *)textColorDefaultSelected:(BOOL)selected {
-    const CGFloat lightness = selected ? 0.80 : 0.60;
-    return [NSColor colorWithCalibratedWhite:lightness alpha:1.00];
+    CGFloat value = selected ? 0.80 : 0.60;
+    if (@available(macOS 10.14, *)) {
+        if (self.tabBar.window.isKeyWindow && [NSApp isActive]) {
+            value = selected ? 1.0 : 0.65;
+        } else {
+            value = selected ? 0.45 : 0.37;
+        }
+    }
+    return [NSColor colorWithCalibratedWhite:value alpha:1.00];
 }
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
