@@ -507,7 +507,7 @@ DEFINE_BOOL(useModernScrollWheelAccumulator, NO, SECTION_EXPERIMENTAL @"Use mode
 DEFINE_BOOL(resetSGROnPrompt, YES, SECTION_EXPERIMENTAL @"Reset colors at shell prompt?\nUses shell integration to detect a shell prompt and, if enabled, resets colors to their defaults.");
 DEFINE_BOOL(retinaInlineImages, YES, SECTION_EXPERIMENTAL @"Show inline images at Retina resolution.");
 DEFINE_BOOL(throttleMetalConcurrentFrames, YES, SECTION_EXPERIMENTAL @"Reduce number of frames in flight when GPU can't produce drawables quickly.");
-DEFINE_BOOL(invalidateShadowAfterEachDraw, YES, SECTION_WINDOWS @"Invalidate shadow after each draw to prevent ghosting.");
+DEFINE_FLOAT(invalidateShadowTimesPerSecond, 15, SECTION_WINDOWS @"How many times per second to update the shadow of transparent windows to prevent ghosting.\nThis works around a macOS Mojave bug that leaves a ghost of past window contents behind in transparent windows. It hurts performance to do it frequently, especially in large windows. Set to 0 to disable.");
 
 + (void)initialize {
     if (self == [iTermAdvancedSettingsModel self]) {
