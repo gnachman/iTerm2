@@ -119,6 +119,16 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)enableBlur:(double)radius {
+    if ([iTermAdvancedSettingsModel mojaveVisualEffectView]) {
+        if (blurRadius_ > 0) {
+            [self reallySetBlur:0];
+        }
+        return;
+    }
+    [self reallySetBlur:radius];
+}
+
+- (void)reallySetBlur:(double)radius {
     const double kEpsilon = 0.001;
     if (blurFilter && fabs(blurRadius_ - radius) < kEpsilon) {
         return;

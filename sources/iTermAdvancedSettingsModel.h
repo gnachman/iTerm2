@@ -111,6 +111,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)minimumWeightDifferenceForBoldFont;
 + (double)minRunningTime;
 + (int)minTabWidth;
++ (BOOL)mojaveVisualEffectView;
 + (BOOL)navigatePanesInReadingOrder;
 + (BOOL)neverWarnAboutMeta;
 + (BOOL)neverWarnAboutOverrides;

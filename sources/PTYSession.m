@@ -3835,6 +3835,9 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         });
     }
+    if ([iTermAdvancedSettingsModel mojaveVisualEffectView]) {
+        _view.visualEffectView.hidden = (_textview.transparencyAlpha == 1);
+    }
 }
 
 - (float)transparency

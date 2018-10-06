@@ -508,6 +508,7 @@ DEFINE_BOOL(resetSGROnPrompt, YES, SECTION_EXPERIMENTAL @"Reset colors at shell 
 DEFINE_BOOL(retinaInlineImages, YES, SECTION_EXPERIMENTAL @"Show inline images at Retina resolution.");
 DEFINE_BOOL(throttleMetalConcurrentFrames, YES, SECTION_EXPERIMENTAL @"Reduce number of frames in flight when GPU can't produce drawables quickly.");
 DEFINE_FLOAT(invalidateShadowTimesPerSecond, 15, SECTION_WINDOWS @"How many times per second to update the shadow of transparent windows to prevent ghosting.\nThis works around a macOS Mojave bug that leaves a ghost of past window contents behind in transparent windows. It hurts performance to do it frequently, especially in large windows. Set to 0 to disable.");
+DEFINE_BOOL(mojaveVisualEffectView, NO, SECTION_EXPERIMENTAL @"Use a visual effect view for transparent windows in Mojave?");
 
 + (void)initialize {
     if (self == [iTermAdvancedSettingsModel self]) {

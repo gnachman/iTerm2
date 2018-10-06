@@ -140,6 +140,16 @@ static NSDate* lastResizeDate_;
 
         _scrollview.contentView.copiesOnScroll = NO;
 
+        if (@available(macOS 10.14, *)) {
+            _visualEffectView = [[NSVisualEffectView alloc] init];
+            _visualEffectView.material = NSVisualEffectMaterialFullScreenUI;
+            _visualEffectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+            _visualEffectView.state = NSVisualEffectStateActive;
+            _visualEffectView.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+            _visualEffectView.hidden = YES;
+            [self addSubviewBelowFindView:_visualEffectView];
+        }
+
         // assign the main view
         [self addSubviewBelowFindView:_scrollview];
 
@@ -325,6 +335,10 @@ static NSDate* lastResizeDate_;
             return;
         }
     }
+    if ([aView isKindOfClass:[NSVisualEffectView class]]) {
+        [self addSubview:aView positioned:NSWindowBelow relativeTo:self.subviews[0]];
+        return;
+    }
     if (_findView.view) {
         [self addSubview:aView positioned:NSWindowBelow relativeTo:[_findView view]];
     } else {
@@ -381,6 +395,7 @@ static NSDate* lastResizeDate_;
     if (_useMetal) {
         [self updateMetalViewFrame];
     }
+    _visualEffectView.frame = self.bounds;
 }
 
 - (void)updateMetalViewFrame {
