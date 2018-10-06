@@ -15,6 +15,7 @@
 #import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSView+iTerm.h"
+#import "NSView+RecursiveDescription.h"
 #import "MovePaneController.h"
 #import "NSResponder+iTerm.h"
 #import "PSMMinimalTabStyle.h"
@@ -458,7 +459,10 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)updateLayout {
+    DLog(@"PTYSession begin updateLayout. delegate=%@\n%@", _delegate, [NSThread callStackSymbols]);
+    DLog(@"Before:\n%@", [self iterm_recursiveDescription]);
     if ([_delegate sessionViewShouldUpdateSubviewsFramesAutomatically]) {
+        DLog(@"Automatically updating subview frames");
         if (self.showTitle) {
             [self updateTitleFrame];
         } else {
@@ -469,6 +473,7 @@ static NSDate* lastResizeDate_;
             [self updateBottomStatusBarFrame];
         }
     } else {
+        DLog(@"Keep everything top aligned.");
         // Don't resize anything but do keep it all top-aligned.
         if (self.showTitle) {
             NSRect aRect = [self frame];
@@ -511,9 +516,11 @@ static NSDate* lastResizeDate_;
     if (_useMetal) {
         [self updateMetalViewFrame];
     }
+    DLog(@"After:\n%@", [self iterm_recursiveDescription]);
 }
 
 - (void)updateMetalViewFrame {
+    DLog(@"update metalView frame");
     // The metal view looks awful while resizing because it insists on scaling
     // its contents. Just switch off the metal renderer until it catches up.
     [_delegate sessionViewNeedsMetalFrameUpdate];
@@ -1232,6 +1239,7 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)updateTitleFrame {
+    DLog(@"Update title frame");
     NSRect aRect = [self frame];
     if (_showTitle) {
         [_title setFrame:NSMakeRect(0,
@@ -1261,6 +1269,7 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)updateFindViewFrame {
+    DLog(@"update findview frame");
     NSRect aRect = self.frame;
     NSView *findView = _dropDownFindViewController.view;
     [_dropDownFindViewController setFrameOrigin:NSMakePoint(aRect.size.width - [findView frame].size.width - 30,
@@ -1268,11 +1277,14 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)updateScrollViewFrame {
+    DLog(@"update scrollview frame");
     CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
     CGFloat bottomStatusBarHeight = _showBottomStatusBar ? iTermStatusBarHeight : 0;
     NSSize proposedSize = NSMakeSize(self.frame.size.width,
                                      self.frame.size.height - titleHeight - bottomStatusBarHeight);
     NSSize size = [_delegate sessionViewScrollViewWillResize:proposedSize];
+    DLog(@"titleHeight=%@ bottomStatusBarHeight=%@ proposedSize=%@ size=%@ rect=%@",
+         @(titleHeight), @(bottomStatusBarHeight), NSStringFromSize(proposedSize), NSStringFromSize(size));
     NSRect rect = NSMakeRect(0,
                              bottomStatusBarHeight + proposedSize.height - size.height,
                              size.width,

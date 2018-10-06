@@ -9897,6 +9897,8 @@ ITERM_WEAKLY_REFERENCEABLE
         NSSize idealSize = [self idealScrollViewSizeWithStyle:_view.scrollview.scrollerStyle];
         NSSize maximumSize = NSMakeSize(idealSize.width + _textview.charWidth - 1,
                                         idealSize.height + _textview.lineHeight - 1);
+        DLog(@"is a tmux client, so tweaking the proposed size. idealSize=%@ maximumSize=%@",
+             NSStringFromSize(idealSize), NSStringFromSize(maximumSize));
         return NSMakeSize(MIN(proposedSize.width, maximumSize.width),
                           MIN(proposedSize.height, maximumSize.height));
     } else {
