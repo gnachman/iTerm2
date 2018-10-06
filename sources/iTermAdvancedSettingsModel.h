@@ -101,7 +101,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)ignoreHardNewlinesInURLs;
 + (BOOL)includePasteHistoryInAdvancedPaste;
 + (BOOL)indicateBellsInDockBadgeLabel;
-+ (BOOL)invalidateShadowAfterEachDraw;
++ (double)invalidateShadowTimesPerSecond;
 + (BOOL)jiggleTTYSizeOnClearBuffer;
 + (BOOL)killJobsInServersOnQuit;
 + (BOOL)killSessionsOnLogout;

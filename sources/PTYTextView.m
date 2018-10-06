@@ -1185,12 +1185,13 @@ static const int kDragThreshold = 3;
 
 - (void)maybeInvalidateWindowShadow {
     if (@available(macOS 10.14, *)) {
-        if ([iTermAdvancedSettingsModel invalidateShadowAfterEachDraw]) {
+        const double invalidateFPS = [iTermAdvancedSettingsModel invalidateShadowTimesPerSecond];
+        if (invalidateFPS > 0) {
             if (self.transparencyAlpha < 1) {
                 if ([self.window conformsToProtocol:@protocol(PTYWindow)]) {
                     if (_shadowRateLimit == nil) {
                         _shadowRateLimit = [[iTermRateLimitedUpdate alloc] init];
-                        _shadowRateLimit.minimumInterval = 1;
+                        _shadowRateLimit.minimumInterval = 1.0 / invalidateFPS;
                     }
                     id<PTYWindow> ptyWindow = (id<PTYWindow>)self.window;
                     [_shadowRateLimit performRateLimitedBlock:^{
