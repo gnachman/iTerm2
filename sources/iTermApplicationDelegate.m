@@ -557,7 +557,6 @@ static BOOL hasBecomeActive = NO;
         }
         return YES;
     }
-    NSLog(@"Quiet launch");
     quiet_ = YES;
     if ([filename isEqualToString:[[NSFileManager defaultManager] versionNumberFilename]]) {
         return YES;
