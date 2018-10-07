@@ -449,7 +449,8 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
     tState.vertexBuffer.label = @"Text vertex buffer";
     tState.offsetBuffer.label = @"Offset";
     const float scale = tState.cellConfiguration.scale;
-    
+    const simd_float2 cellSize = simd_make_float2(frameData.cellConfiguration.cellSize.width,
+                                                  frameData.cellConfiguration.cellSize.height);
     bool blending;
     if (iTermTextIsMonochrome()) {
         blending = false;
@@ -511,7 +512,8 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
         [tState measureTimeForStat:iTermTextRendererStatNewDims ofBlock:^{
             iTermTextureDimensions textureDimensions = {
                 .textureSize = simd_make_float2(textureSize.x, textureSize.y),
-                .cellSize = simd_make_float2(glyphSize.x, glyphSize.y),
+                .glyphSize = simd_make_float2(glyphSize.x, glyphSize.y),
+                .cellSize = cellSize,
                 .underlineOffset = MAX(underlineThickness, glyphSize.y - (underlineDescriptor.offset * scale)),
                 .underlineThickness = underlineThickness,
                 .scale = scale,

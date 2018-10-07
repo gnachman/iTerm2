@@ -99,7 +99,8 @@ typedef struct {
 
 typedef struct {
     vector_float2 textureSize;  // Size of texture atlas in pixels
-    vector_float2 cellSize;  // Size of a cell within the atlas in pixels
+    vector_float2 glyphSize;  // Size of a glyph within the atlas in pixels
+    vector_float2 cellSize;  // Size of a cell
     float underlineOffset;  // Distance from bottom of cell to underline in pixels
     float underlineThickness;  // Thickness of underline in pixels
     float scale;  // 2 for retina, 1 for non retina
