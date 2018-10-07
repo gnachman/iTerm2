@@ -729,11 +729,9 @@ static id sAPIHelperInstance;
                 return result;
             }
         } else if (item.identifier && [identifier isEqualToString:item.identifier]) {
-            NSLog(@"Found it");
             return item;
         }
     }
-    NSLog(@"Didn't find it");
     return nil;
 }
 
