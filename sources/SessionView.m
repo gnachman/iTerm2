@@ -1283,12 +1283,13 @@ static NSDate* lastResizeDate_;
     NSSize proposedSize = NSMakeSize(self.frame.size.width,
                                      self.frame.size.height - titleHeight - bottomStatusBarHeight);
     NSSize size = [_delegate sessionViewScrollViewWillResize:proposedSize];
-    DLog(@"titleHeight=%@ bottomStatusBarHeight=%@ proposedSize=%@ size=%@ rect=%@",
-         @(titleHeight), @(bottomStatusBarHeight), NSStringFromSize(proposedSize), NSStringFromSize(size));
     NSRect rect = NSMakeRect(0,
                              bottomStatusBarHeight + proposedSize.height - size.height,
                              size.width,
                              size.height);
+    DLog(@"titleHeight=%@ bottomStatusBarHeight=%@ proposedSize=%@ size=%@ rect=%@",
+         @(titleHeight), @(bottomStatusBarHeight), NSStringFromSize(proposedSize), NSStringFromSize(size),
+         NSStringFromRect(rect));
     [self scrollview].frame = rect;
 
     rect.origin = NSZeroPoint;
