@@ -21,10 +21,6 @@ class CreateWindowException(Exception):
     """A problem was encountered while creating a window."""
     pass
 
-class MenuItemException(Exception):
-    """A problem was encountered while selecting a menu item."""
-    pass
-
 class BroadcastDomain:
     """Broadcast domains describe how keyboard input is broadcast.
 
