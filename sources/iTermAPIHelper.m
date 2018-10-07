@@ -1794,7 +1794,8 @@ static id sAPIHelperInstance;
         NSDictionary *dict =
             @{ @"overflow": @(session.screen.totalScrollbackOverflow),
                @"grid": @(session.screen.currentGrid.size.height),
-               @"history": @(session.screen.numberOfScrollbackLines) };
+               @"history": @(session.screen.numberOfScrollbackLines),
+               @"first_visible": @(session.textview.firstVisibleAbsoluteLineNumber) };
         return [NSJSONSerialization it_jsonStringForObject:dict];
     };
     NSDictionary<NSString *, GetSessionPropertyBlock> *handlers =
@@ -2297,6 +2298,7 @@ static id sAPIHelperInstance;
         handler(response);
         return;
     }
+    [menuItem.menu update];
     if (!menuItem.enabled && !request.queryOnly) {
         response.status = ITMMenuItemResponse_Status_Disabled;
         handler(response);

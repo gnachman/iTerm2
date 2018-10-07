@@ -6045,6 +6045,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return VT100GridRangeMake(start, MAX(0, end - start));
 }
 
+- (long long)firstVisibleAbsoluteLineNumber {
+    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    long long firstVisibleLine = visibleRect.origin.y / _lineHeight;
+    return firstVisibleLine + _dataSource.totalScrollbackOverflow;
+}
+
 - (void)scrollLineNumberRangeIntoView:(VT100GridRange)range {
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
     int firstVisibleLine = visibleRect.origin.y / _lineHeight;
