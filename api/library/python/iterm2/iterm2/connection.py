@@ -73,6 +73,7 @@ class Connection:
         connection = Connection()
         cookie, key = _cookie_and_key()
         connection.websocket = await websockets.connect(_uri(), extra_headers=_headers(), subprotocols=_subprotocols())
+        connection.__dispatch_forever_future = asyncio.ensure_future(connection._async_dispatch_forever(connection, asyncio.get_event_loop()))
         return connection
 
     def __init__(self):
@@ -97,6 +98,36 @@ class Connection:
     def run_forever(self, coro):
         self.run(True, coro)
 
+    async def _async_dispatch_forever(self, connection, loop):
+        """Read messages from websocket and call helpers or message responders."""
+        self.__tasks = []
+        try:
+            while True:
+                data = await self.websocket.recv()
+                self._collect_garbage()
+
+                message = iterm2.api_pb2.ServerOriginatedMessage()
+                message.ParseFromString(data)
+
+                future = self._get_receiver_future(message)
+                # Note that however we decide to handle this message,
+                # it must be done *after* we await on the websocket.
+                # Otherwise we might never get the chance.
+                if future is None:
+                    # May be a notification.
+                    self.__tasks.append(asyncio.ensure_future(self._async_dispatch_to_helper(message)))
+                else:
+                    # Is the response to an RPC that is being awaited.
+                    def setResult():
+                        if not future.done():
+                            future.set_result(message)
+                    loop.call_soon(setResult)
+        except:
+            # I'm not quite sure why this is necessary, but if we don't
+            # catch and re-raise the exception it gets swallowed.
+            traceback.print_exc()
+            raise
+
     def run(self, forever, coro):
         """
         Convenience method to start a program.
@@ -108,51 +139,18 @@ class Connection:
         """
         loop = asyncio.get_event_loop()
 
-        async def wrapper(connection):
-            async def dispatch_forever():
-                self.__tasks = []
-                try:
-                    while True:
-                        data = await self.websocket.recv()
-                        self._collect_garbage()
-
-                        message = iterm2.api_pb2.ServerOriginatedMessage()
-                        message.ParseFromString(data)
-
-                        future = self._get_receiver_future(message)
-                        # Note that however we decide to handle this message,
-                        # it must be done *after* we await on the websocket.
-                        # Otherwise we might never get the chance.
-                        if future is None:
-                            # May be a notification.
-                            self.__tasks.append(asyncio.ensure_future(self._async_dispatch_to_helper(message)))
-                        else:
-                            # Is the response to an RPC that is being awaited.
-                            def setResult():
-                                if not future.done():
-                                    future.set_result(message)
-                            loop.call_soon(setResult)
-                except:
-                    # I'm not quite sure why this is necessary, but if we don't
-                    # catch and re-raise the exception it gets swallowed.
-                    traceback.print_exc()
-                    raise
-
-            dispatch_forever_task = asyncio.ensure_future(dispatch_forever())
+        async def async_main(connection):
+            dispatch_forever_task = asyncio.ensure_future(self._async_dispatch_forever(connection, loop))
             await coro(connection)
             if forever:
                 await dispatch_forever_task
             dispatch_forever_task.cancel()
 
-        async def async_main(_loop):
-            """Wrapper around the user-provided coroutine that passes it argv."""
-            await self.async_connect(wrapper)
-
         # This keeps you from pulling your hair out. The downside is uncertain, but
         # I do know that pulling my hair out hurts.
         loop.set_debug(True)
         self.loop = loop
-        loop.run_until_complete(async_main(loop))
+        loop.run_until_complete(self.async_connect(async_main))
 
 
     async def async_send_message(self, message):
