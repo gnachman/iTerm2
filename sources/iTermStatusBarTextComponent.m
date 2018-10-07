@@ -40,9 +40,13 @@ NS_ASSUME_NONNULL_BEGIN
     return [@[ textColorKnob, backgroundColorKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
 }
 
+- (NSFont *)font {
+    return self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
+}
+
 - (NSTextField *)newTextField {
     NSTextField *textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
-    textField.font = self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
+    textField.font = [self font];
     textField.drawsBackground = NO;
     textField.bordered = NO;
     textField.editable = NO;
@@ -191,6 +195,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSColor *)statusBarTextColor {
     return [self textColor];
+}
+
+- (CGFloat)statusBarComponentVerticalOffset {
+    const CGFloat containerHeight = _textField.superview.bounds.size.height;
+    const CGFloat capHeight = _textField.font.capHeight;
+    const CGFloat descender = _textField.font.descender - _textField.font.leading;  // negative (distance from bottom of bounding box to baseline)
+    const CGFloat frameY = (containerHeight - _textField.frame.size.height) / 2;
+    const CGFloat origin = containerHeight / 2.0 - frameY + descender - capHeight / 2.0;
+    return origin;
 }
 
 #pragma mark - iTermStatusBarComponent

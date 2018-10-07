@@ -92,7 +92,7 @@ NS_ASSUME_NONNULL_BEGIN
                rightSize:(CGSize)rightSize {
     NSRect textRect = rect;
     textRect.size.height = rightSize.height;
-    textRect.origin.y = (self.view.bounds.size.height - rightSize.height) / 2.0;
+    textRect.origin.y = [self textOffset];
     [left drawInRect:textRect withAttributes:[self.leftAttributes it_attributesDictionaryWithAppearance:self.view.effectiveAppearance]];
     [right drawInRect:textRect withAttributes:[self.rightAttributes it_attributesDictionaryWithAppearance:self.view.effectiveAppearance]];
 }
@@ -134,6 +134,16 @@ NS_ASSUME_NONNULL_BEGIN
     return @{ NSParagraphStyleAttributeName: rightAlignStyle,
               NSFontAttributeName: self.font,
               NSForegroundColorAttributeName: self.textColor };
+}
+
+- (CGFloat)textOffset {
+    NSFont *font = self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
+    const CGFloat containerHeight = self.view.superview.bounds.size.height;
+    const CGFloat capHeight = font.capHeight;
+    const CGFloat descender = font.descender - font.leading;  // negative (distance from bottom of bounding box to baseline)
+    const CGFloat frameY = (containerHeight - self.view.frame.size.height) / 2;
+    const CGFloat origin = containerHeight / 2.0 - frameY + descender - capHeight / 2.0;
+    return origin;
 }
 
 - (NSSize)leftSize {

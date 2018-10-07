@@ -22,11 +22,10 @@
 NS_ASSUME_NONNULL_BEGIN
 
 static const CGFloat iTermStatusBarViewControllerMargin = 10;
-static const CGFloat iTermStatusBarViewControllerBottomMargin = 1;
+static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
 static const CGFloat iTermStatusBarViewControllerContainerHeight = 21;
 
-// NOTE: SessionView's kTitleHeight must equal this value
-const CGFloat iTermStatusBarHeight = 22;
+const CGFloat iTermStatusBarHeight = 21;
 
 @interface iTermStatusBarViewController ()<
     iTermStatusBarComponentDelegate,

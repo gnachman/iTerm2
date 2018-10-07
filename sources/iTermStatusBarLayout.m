@@ -26,7 +26,7 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
 @implementation iTermStatusBarAdvancedConfiguration
 
 + (NSFont *)defaultFont {
-    return [NSFont fontWithName:@"Helvetica" size:12];
+    return [NSFont systemFontOfSize:12];
 }
 
 + (instancetype)advancedConfigurationFromDictionary:(NSDictionary *)dict {

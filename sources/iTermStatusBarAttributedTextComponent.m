@@ -260,7 +260,13 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (CGFloat)statusBarComponentVerticalOffset {
-    return 1.5;
+    NSFont *font = self.advancedConfiguration.font ?: [iTermStatusBarAdvancedConfiguration defaultFont];
+    const CGFloat containerHeight = _textField.superview.bounds.size.height;
+    const CGFloat capHeight = font.capHeight;
+    const CGFloat descender = font.descender - font.leading;  // negative (distance from bottom of bounding box to baseline)
+    const CGFloat frameY = (containerHeight - _attributedStringView.frame.size.height) / 2;
+    const CGFloat origin = containerHeight / 2.0 - frameY + descender - capHeight / 2.0;
+    return origin;
 }
 
 - (CGFloat)statusBarComponentPreferredWidth {
