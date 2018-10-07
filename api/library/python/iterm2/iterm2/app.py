@@ -175,6 +175,7 @@ class App:
 
         :returns: A :class:`Session` or None.
         """
+        assert session_id
         return self._search_for_session_id(session_id)
 
     def get_tab_by_id(self, tab_id):
