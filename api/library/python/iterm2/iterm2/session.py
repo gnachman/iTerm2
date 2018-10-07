@@ -8,6 +8,7 @@ import iterm2.notifications
 import iterm2.profile
 import iterm2.rpc
 import iterm2.screen
+import iterm2.selection
 import iterm2.util
 
 import json
@@ -534,6 +535,45 @@ class Session:
         if status != iterm2.api_pb2.SetPropertyResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(iterm2.api_pb2.SetPropertyResponse.Status.Name(status))
         return response
+
+    async def async_get_selection(self):
+        """
+        :returns: The :class:`iterm2.Selection` of this session.
+
+        :throws: :class:`RPCException` if something goes wrong.
+        """
+        response = await iterm2.rpc.async_get_selection(self.connection, self.session_id)
+        status = response.selection_response.status
+        if status != iterm2.api_pb2.SelectionResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.SelectionResponse.Status.Name(status))
+        subs = []
+        for subProto in response.selection_response.get_selection_response.selection.sub_selections:
+            start = iterm2.util.Point(
+                    subProto.windowed_coord_range.coord_range.start.x,
+                    subProto.windowed_coord_range.coord_range.start.y)
+            end = iterm2.util.Point(
+                    subProto.windowed_coord_range.coord_range.end.x,
+                    subProto.windowed_coord_range.coord_range.end.y)
+            coordRange = iterm2.util.CoordRange(start, end)
+            windowRange = iterm2.util.Range(
+                    subProto.windowed_coord_range.columns.location,
+                    subProto.windowed_coord_range.columns.length)
+            windowedCoordRange = iterm2.util.WindowedCoordRange(coordRange, windowRange)
+
+            sub = iterm2.SubSelection(windowedCoordRange, iterm2.selection.SelectionMode.fromProtoValue(subProto.selection_mode))
+            subs.append(sub)
+        return iterm2.Selection(subs)
+
+    async def async_set_selection(self, selection):
+        """
+        :param selection: The :class:`iterm2.Selection` to set on this session.
+
+        :throws: :class:`RPCException` if something goes wrong.
+        """
+        response = await iterm2.rpc.async_set_selection(self.connection, self.session_id, selection)
+        status = response.selection_response.status
+        if status != iterm2.api_pb2.SelectionResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.SelectionResponse.Status.Name(status))
 
     class KeystrokeReader:
         """An asyncio context manager for reading keystrokes.

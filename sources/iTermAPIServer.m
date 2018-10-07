@@ -815,6 +815,19 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
+- (void)handleSelectionRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+    ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
+
+    __block BOOL handled = NO;
+    __weak __typeof(self) weakSelf = self;
+    [_delegate apiServerSelectionRequest:request.selectionRequest handler:^(ITMSelectionResponse *theResponse) {
+        assert(!handled);
+        handled = YES;
+        response.selectionResponse = theResponse;
+        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
+    }];
+}
+
 
 // Runs on main queue, either in or not in a transaction.
 - (void)dispatchRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
@@ -944,6 +957,10 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
         case ITMClientOriginatedMessage_Submessage_OneOfCase_ColorPresetRequest:
             [self handleColorPresetRequest:request connection:webSocketConnection];
+            break;
+
+        case ITMClientOriginatedMessage_Submessage_OneOfCase_SelectionRequest:
+            [self handleSelectionRequest:request connection:webSocketConnection];
             break;
     }
 }

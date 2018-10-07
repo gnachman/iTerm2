@@ -1,5 +1,6 @@
 """Provides handy functions."""
 import json
+import iterm2.api_pb2
 
 class Size:
   """Describes a 2D size.
@@ -97,6 +98,13 @@ class Point:
     """Returns a JSON representation of the point."""
     return json.dumps(self.dict)
 
+  @property
+  def proto(self):
+      p = iterm2.api_pb2.Coord()
+      p.x = self.x
+      p.y = self.y
+      return p
+
 class Frame:
   """Describes a bounding rectangle. 0,0 is the bottom left coordinate."""
   def __init__(self, origin=Point(0, 0), size=Size(0, 0)):
@@ -171,3 +179,83 @@ def point_str(point):
         return "[Undefined]"
     return "(%s, %s)" % (point.x,
                           point.y)
+
+class CoordRange:
+    """Describes a range of contiguous cells.
+
+    :param start: A :class:`Point` giving the start point.
+    :param end: A :class:`Point` giving the first point after the start point not in the range."""
+    def __init__(self, start, end):
+        self.__start = start
+        self.__end = end
+
+    @property
+    def start(self):
+        """:returns: The start :class:`Point`."""
+        return self.__start
+
+    @property
+    def end(self):
+        """:returns: The first :class:`Point` after `self.start` not in the range."""
+        return self.__end
+
+    @property
+    def proto(self):
+        p = iterm2.api_pb2.CoordRange()
+        p.start.CopyFrom(self.start.proto)
+        p.end.CopyFrom(self.end.proto)
+        return p
+
+class Range:
+    """Describes a range of integers.
+
+    :param location: The first value in the range.
+    :param length: The number of values in the range."""
+    def __init__(self, location, length):
+        self.__location = location
+        self.__length = length
+
+    @property
+    def location(self):
+        """:returns: The first location of the range."""
+        return self.__location
+
+    @property
+    def length(self):
+        """:returns: The length of the range."""
+        return self.__length
+
+    @property
+    def proto(self):
+        p = iterm2.api_pb2.Range()
+        p.location = self.location
+        p.length = self.length
+        return p
+
+class WindowedCoordRange:
+    """Describes a range of coordinates, optionally constrained to a continugous range of columns.
+
+    :param coordRange: The :class:`CoordRange` of cells.
+    :param windowRange: The :class:`Range` of columns, or (0, 0) if unwindowed.
+    """
+    def __init__(self, coordRange, windowRange=Range(0, 0)):
+        self.__coordRange = coordRange
+        self.__windowRange = windowRange
+
+    @property
+    def coordRange(self):
+        """:returns: The range of coordinates, a :class:`CoordRange`."""
+        return self.__coordRange
+
+    @property
+    def windowRange(self):
+        """:returns: The range of columns, a :class:`WindowRange`, or an empty range if unconstrained."""
+        return self.__windowRange
+
+    @property
+    def proto(self):
+        p = iterm2.api_pb2.WindowedCoordRange()
+        p.coord_range.CopyFrom(self.coordRange.proto)
+        p.columns.CopyFrom(self.windowRange.proto)
+        return p
+

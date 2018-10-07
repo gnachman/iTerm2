@@ -43,6 +43,7 @@ message ClientOriginatedMessage {
     ReorderTabsRequest reorder_tabs_request = 125;
     PreferencesRequest preferences_request = 126;
     ColorPresetRequest color_preset_request = 127;
+    SelectionRequest selection_request = 128;
   }
 }
 
@@ -83,9 +84,67 @@ message ServerOriginatedMessage {
     ReorderTabsResponse reorder_tabs_response = 125;
     PreferencesResponse preferences_response = 126;
     ColorPresetResponse color_preset_response = 127;
+    SelectionResponse selection_response = 128;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
+  }
+}
+
+message WindowedCoordRange {
+  optional CoordRange coord_range = 1;
+  optional Range columns = 2;
+}
+
+enum SelectionMode {
+  CHARACTER = 0;
+  WORD = 1;
+  LINE = 2;
+  SMART = 3;
+  BOX = 4;
+  WHOLE_LINE = 5;
+}
+
+message SubSelection {
+  optional WindowedCoordRange windowed_coord_range = 1;
+  optional SelectionMode selection_mode = 2;
+
+}
+
+message Selection {
+  repeated SubSelection sub_selections = 1;
+}
+
+message SelectionRequest {
+  message GetSelectionRequest {
+    optional string session_id = 1;
+  }
+  message SetSelectionRequest {
+    optional string session_id = 1;
+    optional Selection selection = 2;
+  }
+  oneof request {
+    GetSelectionRequest get_selection_request = 1;
+    SetSelectionRequest set_selection_request = 2;
+  }
+}
+
+message SelectionResponse {
+  enum Status {
+    OK = 0;
+    INVALID_SESSION = 1;
+    INVALID_RANGE = 2;
+    REQUEST_MALFORMED = 3;
+  }
+  optional Status status = 1;
+  message GetSelectionResponse {
+    optional Selection selection = 2;
+  }
+  message SetSelectionResponse {
+  }
+  oneof response {
+    GetSelectionResponse get_selection_response = 2;
+    SetSelectionResponse set_selection_response = 3;
   }
 }
 

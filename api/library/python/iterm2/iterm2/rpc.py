@@ -3,6 +3,7 @@ import json
 
 import iterm2.api_pb2
 import iterm2.connection
+import iterm2.selection
 
 ACTIVATE_RAISE_ALL_WINDOWS = 1
 ACTIVATE_IGNORING_OTHER_APPS = 2
@@ -536,6 +537,21 @@ async def async_get_color_preset(connection, name):
     request.color_preset_request.SetInParent()
     request.color_preset_request.get_preset.SetInParent()
     request.color_preset_request.get_preset.name = name
+    return await _async_call(connection, request)
+
+async def async_get_selection(connection, session_id):
+    request = _alloc_request()
+    request.selection_request.get_selection_request.SetInParent()
+    request.selection_request.get_selection_request.session_id = session_id
+    return await _async_call(connection, request)
+
+async def async_set_selection(connection, session_id, selection):
+    request = _alloc_request()
+    request.selection_request.set_selection_request.SetInParent()
+    request.selection_request.set_selection_request.session_id = session_id
+    request.selection_request.set_selection_request.selection.SetInParent()
+    for sub in selection.subSelections:
+        request.selection_request.set_selection_request.selection.sub_selections.extend([sub.proto])
     return await _async_call(connection, request)
 
 ## Private --------------------------------------------------------------------

@@ -19,6 +19,7 @@
 #import "iTermLSOF.h"
 #import "iTermProfilePreferences.h"
 #import "iTermPythonArgumentParser.h"
+#import "iTermSelection.h"
 #import "iTermVariableReference.h"
 #import "iTermVariables.h"
 #import "iTermWarning.h"
@@ -2691,6 +2692,144 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     }
     message.status = ITMColorPresetResponse_Status_Ok;
     completion(message);
+}
+
+- (void)apiServerSelectionRequest:(ITMSelectionRequest *)request handler:(void (^)(ITMSelectionResponse *))completion {
+    switch (request.requestOneOfCase) {
+        case ITMSelectionRequest_Request_OneOfCase_GetSelectionRequest:
+            [self handleGetSelectionRequest:request.getSelectionRequest completion:completion];
+            return;
+
+        case ITMSelectionRequest_Request_OneOfCase_SetSelectionRequest:
+            [self handleSetSelectionRequest:request.setSelectionRequest completion:completion];
+            return;
+
+        case ITMSelectionRequest_Request_OneOfCase_GPBUnsetOneOfCase:
+            break;
+    }
+
+    ITMSelectionResponse *response = [[ITMSelectionResponse alloc] init];
+    response.status = ITMSelectionResponse_Status_RequestMalformed;
+    completion(response);
+}
+
+- (void)handleGetSelectionRequest:(ITMSelectionRequest_GetSelectionRequest *)request
+                       completion:(void (^)(ITMSelectionResponse *))completion {
+    PTYSession *session = [self sessionForAPIIdentifier:request.sessionId includeBuriedSessions:YES];
+    ITMSelectionResponse *response = [[ITMSelectionResponse alloc] init];
+    if (!session) {
+        response.status = ITMSelectionResponse_Status_RequestMalformed;
+        completion(response);
+        return;
+    }
+
+    iTermSelection *selection = session.textview.selection;
+    const NSInteger absoluteOffset = session.screen.totalScrollbackOverflow;
+    for (iTermSubSelection *sub in selection.allSubSelections) {
+        ITMSubSelection *subProto = [[ITMSubSelection alloc] init];
+        subProto.windowedCoordRange.coordRange.start.x = sub.range.coordRange.start.x;
+        subProto.windowedCoordRange.coordRange.start.y = absoluteOffset + sub.range.coordRange.start.y;
+        subProto.windowedCoordRange.coordRange.end.x = sub.range.coordRange.end.x;
+        subProto.windowedCoordRange.coordRange.end.y = absoluteOffset + sub.range.coordRange.end.y;
+        if (sub.range.columnWindow.length > 0) {
+            subProto.windowedCoordRange.columns.location = sub.range.columnWindow.location;
+            subProto.windowedCoordRange.columns.length = sub.range.columnWindow.length;
+        }
+        switch (sub.selectionMode) {
+            case kiTermSelectionModeWholeLine:
+                subProto.selectionMode = ITMSelectionMode_WholeLine;
+                break;
+            case kiTermSelectionModeCharacter:
+                subProto.selectionMode = ITMSelectionMode_Character;
+                break;
+            case kiTermSelectionModeSmart:
+                subProto.selectionMode = ITMSelectionMode_Smart;
+                break;
+            case kiTermSelectionModeWord:
+                subProto.selectionMode = ITMSelectionMode_Word;
+                break;
+            case kiTermSelectionModeLine:
+                subProto.selectionMode = ITMSelectionMode_Line;
+                break;
+            case kiTermSelectionModeBox:
+                subProto.selectionMode = ITMSelectionMode_Box;
+                break;
+        }
+        [response.getSelectionResponse.selection.subSelectionsArray addObject:subProto];
+    }
+    response.status = ITMSelectionResponse_Status_Ok;
+    completion(response);
+}
+
+- (void)handleSetSelectionRequest:(ITMSelectionRequest_SetSelectionRequest *)request
+                       completion:(void (^)(ITMSelectionResponse *))completion {
+    PTYSession *session = [self sessionForAPIIdentifier:request.sessionId includeBuriedSessions:YES];
+    ITMSelectionResponse *response = [[ITMSelectionResponse alloc] init];
+    if (!session) {
+        response.status = ITMSelectionResponse_Status_RequestMalformed;
+        completion(response);
+        return;
+    }
+
+    const NSInteger absoluteOffset = session.screen.totalScrollbackOverflow;
+    const NSInteger width = session.screen.width;
+    NSArray<iTermSubSelection *> *subSelections = [request.selection.subSelectionsArray mapWithBlock:^id(ITMSubSelection *subProto) {
+        if (subProto.windowedCoordRange.coordRange.end.x > width ||
+            subProto.windowedCoordRange.columns.length < 0 ||
+            subProto.windowedCoordRange.columns.location + subProto.windowedCoordRange.columns.length > width ||
+            subProto.windowedCoordRange.coordRange.start.x < 0 ||
+            subProto.windowedCoordRange.columns.location < 0 ||
+            subProto.windowedCoordRange.coordRange.start.y < 0 ||
+            subProto.windowedCoordRange.coordRange.end.y < 0) {
+            return nil;
+        }
+        VT100GridCoordRange coordRange = VT100GridCoordRangeMake(subProto.windowedCoordRange.coordRange.start.x,
+                                                                 MAX(0, subProto.windowedCoordRange.coordRange.start.y - absoluteOffset),
+                                                                 subProto.windowedCoordRange.coordRange.end.x,
+                                                                 MAX(0, subProto.windowedCoordRange.coordRange.end.y - absoluteOffset));
+        VT100GridWindowedRange range = VT100GridWindowedRangeMake(coordRange,
+                                                                  subProto.windowedCoordRange.columns.location,
+                                                                  subProto.windowedCoordRange.columns.length);
+        iTermSelectionMode mode = NSNotFound;
+        switch (subProto.selectionMode) {
+            case ITMSelectionMode_Box:
+                mode = kiTermSelectionModeBox;
+                break;
+            case ITMSelectionMode_Line:
+                mode = kiTermSelectionModeLine;
+                break;
+            case ITMSelectionMode_Word:
+                mode = kiTermSelectionModeWord;
+                break;
+            case ITMSelectionMode_Smart:
+                mode = kiTermSelectionModeSmart;
+                break;
+            case ITMSelectionMode_Character:
+                mode = kiTermSelectionModeCharacter;
+                break;
+            case ITMSelectionMode_WholeLine:
+                mode = kiTermSelectionModeWholeLine;
+                break;
+        }
+        if (mode == NSNotFound) {
+            return nil;
+        }
+        iTermSubSelection *sub = [iTermSubSelection subSelectionWithRange:range mode:mode];
+        return sub;
+    }];
+
+    if (subSelections.count < request.selection.subSelectionsArray.count) {
+        response.status = ITMSelectionResponse_Status_RequestMalformed;
+        completion(response);
+        return;
+    }
+
+    [session.textview.selection endLiveSelection];
+    [session.textview.selection clearSelection];
+    [session.textview.selection addSubSelections:subSelections];
+
+    response.status = ITMSelectionResponse_Status_Ok;
+    completion(response);
 }
 
 @end

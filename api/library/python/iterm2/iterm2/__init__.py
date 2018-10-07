@@ -23,6 +23,8 @@ from iterm2.registration import Registration
 
 from iterm2.screen import ScreenStreamer, LineContents, ScreenContents
 
+from iterm2.selection import SelectionMode, SubSelection, Selection
+
 from iterm2.session import SplitPaneException, Splitter, Session, InvalidSessionId
 
 from iterm2.statusbar import StatusBarComponent, CheckboxKnob, StringKnob, PositiveFloatingPointKnob, ColorKnob
@@ -35,7 +37,7 @@ from iterm2.tmux import TmuxException, TmuxConnection, async_get_tmux_connection
 
 from iterm2.tool import async_register_web_view_tool
 
-from iterm2.util import frame_str, size_str, Size, Point, Frame
+from iterm2.util import frame_str, size_str, Size, Point, Frame, CoordRange, Range, WindowedCoordRange
 
 from iterm2.window import CreateTabException, SetPropertyException, GetPropertyException, SavedArrangementException, Window
 
