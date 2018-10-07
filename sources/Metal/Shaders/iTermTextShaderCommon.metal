@@ -14,7 +14,7 @@ using namespace metal;
 void SampleNeighbors(float2 textureSize,
                      float2 textureOffset,
                      float2 textureCoordinate,
-                     float2 cellSize,
+                     float2 glyphSize,
                      float scale,
                      texture2d<half> texture,
                      sampler textureSampler,
@@ -25,7 +25,7 @@ void SampleNeighbors(float2 textureSize,
     // so they are offset by a half pixel and will sample their neighbors. I'm
     // not 100% sure what's going on here, but it's definitely required.
     const float2 minTextureCoord = textureOffset + pixel;
-    const float2 maxTextureCoord = minTextureCoord + (cellSize / textureSize) - (scale * pixel.x * 2);
+    const float2 maxTextureCoord = minTextureCoord + (glyphSize / textureSize) - (scale * pixel.x * 2);
 
     result[0] = texture.sample(textureSampler, clamp(textureCoordinate + float2(-pixel.x, -pixel.y), minTextureCoord, maxTextureCoord));
     result[1] = texture.sample(textureSampler, clamp(textureCoordinate + float2(       0, -pixel.y), minTextureCoord, maxTextureCoord));
@@ -41,7 +41,7 @@ void SampleNeighbors(float2 textureSize,
 half4 GetMinimumColorComponentsOfNeighbors(float2 textureSize,
                                            float2 textureOffset,
                                            float2 textureCoordinate,
-                                           float2 cellSize,
+                                           float2 glyphSize,
                                            float scale,
                                            texture2d<half> texture,
                                            sampler textureSampler) {
@@ -49,7 +49,7 @@ half4 GetMinimumColorComponentsOfNeighbors(float2 textureSize,
     SampleNeighbors(textureSize,
                     textureOffset,
                     textureCoordinate,
-                    cellSize,
+                    glyphSize,
                     scale,
                     texture,
                     textureSampler,
@@ -70,7 +70,7 @@ half4 GetMinimumColorComponentsOfNeighbors(float2 textureSize,
 half4 GetMaximumColorComponentsOfNeighbors(float2 textureSize,
                                            float2 textureOffset,
                                            float2 textureCoordinate,
-                                           float2 cellSize,
+                                           float2 glyphSize,
                                            float scale,
                                            texture2d<half> texture,
                                            sampler textureSampler) {
@@ -78,7 +78,7 @@ half4 GetMaximumColorComponentsOfNeighbors(float2 textureSize,
     SampleNeighbors(textureSize,
                     textureOffset,
                     textureCoordinate,
-                    cellSize,
+                    glyphSize,
                     scale,
                     texture,
                     textureSampler,
@@ -180,6 +180,7 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
                                        float2 textureSize,
                                        float2 textureOffset,
                                        float2 textureCoordinate,
+                                       float2 glyphSize,
                                        float2 cellSize,
                                        texture2d<half> texture,
                                        sampler textureSampler,
@@ -194,11 +195,14 @@ float ComputeWeightOfUnderlineInverted(int underlineStyle,  // iTermMetalGlyphAt
     if (weight == 0) {
         return 0;
     }
+    if (clipSpacePosition.x >= cellOffset.x + cellSize.x) {
+        return 0;
+    }
 
     half4 mask = GetMinimumColorComponentsOfNeighbors(textureSize,
                                                       textureOffset,
                                                       textureCoordinate,
-                                                      cellSize,
+                                                      glyphSize,
                                                       scale,
                                                       texture,
                                                       textureSampler);
@@ -223,6 +227,7 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
                                       float2 textureSize,
                                       float2 textureOffset,
                                       float2 textureCoordinate,
+                                      float2 glyphSize,
                                       float2 cellSize,
                                       texture2d<half> texture,
                                       sampler textureSampler,
@@ -237,11 +242,13 @@ float ComputeWeightOfUnderlineRegular(int underlineStyle,  // iTermMetalGlyphAtt
     if (weight == 0) {
         return 0;
     }
-
+    if (clipSpacePosition.x >= cellOffset.x + cellSize.x) {
+        return 0;
+    }
     half maxAlpha = GetMaximumColorComponentsOfNeighbors(textureSize,
                                                          textureOffset,
                                                          textureCoordinate,
-                                                         cellSize,
+                                                         glyphSize,
                                                          scale,
                                                          texture,
                                                          textureSampler).w;
