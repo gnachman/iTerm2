@@ -289,13 +289,16 @@ async def async_set_property(connection, name, json_value, window_id=None, sessi
     request.set_property_request.json_value = json_value
     return await _async_call(connection, request)
 
-async def async_get_property(connection, name, window_id=None):
+async def async_get_property(connection, name, window_id=None, session_id=None):
     """
-    Gets a property of an object (currently only of a window).
+    Gets a property of a window or session.
     """
     request = _alloc_request()
     request.get_property_request.SetInParent()
-    request.get_property_request.window_id = window_id
+    if window_id:
+        request.get_property_request.window_id = window_id
+    elif session_id:
+        request.get_property_request.session_id = session_id
     request.get_property_request.name = name
     return await _async_call(connection, request)
 

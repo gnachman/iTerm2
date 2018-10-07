@@ -538,6 +538,14 @@ message GetPropertyRequest {
     string window_id = 1;
     string session_id = 3;  // Does not accept "all". Accepts "active".
   }
+  // For sessions:
+  // "grid_size" -> { "width": number, "height": number }
+  // "buried" -> boolean
+  // "number_of_lines" -> { "overflow": number, "grid": number, "history": number }
+  //
+  // For windows:
+  // "frame" -> { "origin": { "x": number, "y": number }, "size": { "width": number, "height": number } }
+  // "fullscreen" -> boolean
   optional string name = 2;
 }
 

@@ -575,6 +575,19 @@ class Session:
         if status != iterm2.api_pb2.SelectionResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(iterm2.api_pb2.SelectionResponse.Status.Name(status))
 
+    async def async_get_number_of_lines(self):
+        """
+        Fetches the number of lines that are visible, in history, and that have been removed after history became full.
+
+        :returns: A 3-tuple of numbers: `(height of visible area, number of lines in scrollback buffer, number of lines lost to overflow)`
+        """
+        response = await iterm2.rpc.async_get_property(self.connection, "number_of_lines", session_id=self.session_id)
+        status = response.get_property_response.status
+        if status != iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.GetPropertyResponse.Status.Name(status))
+        dict = json.loads(response.get_property_response.json_value)
+        return (dict["grid"], dict["history"], dict["overflow"] )
+
     class KeystrokeReader:
         """An asyncio context manager for reading keystrokes.
 

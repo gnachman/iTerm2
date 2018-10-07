@@ -1790,10 +1790,17 @@ static id sAPIHelperInstance;
         BOOL isBuried = [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:session];
         return [NSJSONSerialization it_jsonStringForObject:@(isBuried)];
     };
-
+    GetSessionPropertyBlock getNumberOfLines = ^NSString * {
+        NSDictionary *dict =
+            @{ @"overflow": @(session.screen.totalScrollbackOverflow),
+               @"grid": @(session.screen.currentGrid.size.height),
+               @"history": @(session.screen.numberOfScrollbackLines) };
+        return [NSJSONSerialization it_jsonStringForObject:dict];
+    };
     NSDictionary<NSString *, GetSessionPropertyBlock> *handlers =
         @{ @"grid_size": getGridSize,
            @"buried": getBuried,
+           @"number_of_lines": getNumberOfLines,
          };
 
     GetSessionPropertyBlock block = handlers[name];
