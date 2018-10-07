@@ -216,6 +216,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)timeBetweenBlinks;
 + (double)timeBetweenTips;
 + (void)setTimeBetweenTips:(double)time;
++ (BOOL)synergyModifierRemappingEnabled;
 + (double)timeoutForStringEvaluation;
 + (double)timeToWaitForEmojiPanel;
 + (BOOL)tmuxUsesDedicatedProfile;

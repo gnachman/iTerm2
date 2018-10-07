@@ -74,6 +74,7 @@
 #import "ITAddressBookMgr.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermHotKeyController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermModifierRemapper.h"
@@ -1109,7 +1110,7 @@ exit:
 
 + (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent {
     // This function copied from cmd-key happy. See copyright notice at top.
-    const CGEventFlags flags = CGEventGetFlags(cgEvent);
+    CGEventFlags flags = CGEventGetFlags(cgEvent);
     DLog(@"Performing remapping. On input CGEventFlags=%@", @(flags));
     CGEventFlags andMask = -1;
     CGEventFlags orMask = 0;
@@ -1121,43 +1122,72 @@ exit:
     // Device-dependent flags do.
     // Generally, you get both sets of flags. But this does not have to be the case if an event
     // is synthesized, as seen in issue 5207 where Flycut does not set the device-dependent flags.
-    if ((flags & kCGEventFlagMaskCommand) && (flags & (NX_DEVICELCMDKEYMASK | NX_DEVICERCMDKEYMASK))) {
-        andMask &= ~kCGEventFlagMaskCommand;
-        if (flags & NX_DEVICELCMDKEYMASK) {
-            andMask &= ~NX_DEVICELCMDKEYMASK;
-            orMask |= [self _cgMaskForLeftCommandKey];
-            orMask |= [self _nxMaskForLeftCommandKey];
+    // If the event lacks device-specific flags we'll add them when synergyModifierRemappingEnabled
+    // is on. Otherwise, we don't remap them.
+    if (flags & kCGEventFlagMaskCommand) {
+        BOOL hasDeviceIndependentFlagsForCommandKey = ((flags & (NX_DEVICELCMDKEYMASK | NX_DEVICERCMDKEYMASK)) != 0);
+        if (!hasDeviceIndependentFlagsForCommandKey) {
+            if ([iTermAdvancedSettingsModel synergyModifierRemappingEnabled]) {
+                flags |= NX_DEVICELCMDKEYMASK;
+                hasDeviceIndependentFlagsForCommandKey = YES;
+            }
         }
-        if (flags & NX_DEVICERCMDKEYMASK) {
-            andMask &= ~NX_DEVICERCMDKEYMASK;
-            orMask |= [self _cgMaskForRightCommandKey];
-            orMask |= [self _nxMaskForRightCommandKey];
-        }
-    }
-    if ((flags & kCGEventFlagMaskAlternate) && (flags & (NX_DEVICELALTKEYMASK | NX_DEVICERALTKEYMASK))) {
-        andMask &= ~kCGEventFlagMaskAlternate;
-        if (flags & NX_DEVICELALTKEYMASK) {
-            andMask &= ~NX_DEVICELALTKEYMASK;
-            orMask |= [self _cgMaskForLeftAlternateKey];
-            orMask |= [self _nxMaskForLeftAlternateKey];
-        }
-        if (flags & NX_DEVICERALTKEYMASK) {
-            andMask &= ~NX_DEVICERALTKEYMASK;
-            orMask |= [self _cgMaskForRightAlternateKey];
-            orMask |= [self _nxMaskForRightAlternateKey];
+        if (hasDeviceIndependentFlagsForCommandKey) {
+            andMask &= ~kCGEventFlagMaskCommand;
+            if (flags & NX_DEVICELCMDKEYMASK) {
+                andMask &= ~NX_DEVICELCMDKEYMASK;
+                orMask |= [self _cgMaskForLeftCommandKey];
+                orMask |= [self _nxMaskForLeftCommandKey];
+            }
+            if (flags & NX_DEVICERCMDKEYMASK) {
+                andMask &= ~NX_DEVICERCMDKEYMASK;
+                orMask |= [self _cgMaskForRightCommandKey];
+                orMask |= [self _nxMaskForRightCommandKey];
+            }
         }
     }
-    if ((flags & kCGEventFlagMaskControl) && (flags & (NX_DEVICELCTLKEYMASK | NX_DEVICERCTLKEYMASK))) {
-        andMask &= ~kCGEventFlagMaskControl;
-        if (flags & NX_DEVICELCTLKEYMASK) {
-            andMask &= ~NX_DEVICELCTLKEYMASK;
-            orMask |= [self _cgMaskForLeftControlKey];
-            orMask |= [self _nxMaskForLeftControlKey];
+    if (flags & kCGEventFlagMaskAlternate) {
+        BOOL hasDeviceIndependentFlagsForOptionKey = ((flags & (NX_DEVICELALTKEYMASK | NX_DEVICERALTKEYMASK)) != 0);
+        if (!hasDeviceIndependentFlagsForOptionKey) {
+            if ([iTermAdvancedSettingsModel synergyModifierRemappingEnabled]) {
+                flags |= NX_DEVICELALTKEYMASK;
+                hasDeviceIndependentFlagsForOptionKey = YES;
+            }
         }
-        if (flags & NX_DEVICERCTLKEYMASK) {
-            andMask &= ~NX_DEVICERCTLKEYMASK;
-            orMask |= [self _cgMaskForRightControlKey];
-            orMask |= [self _nxMaskForRightControlKey];
+        if (hasDeviceIndependentFlagsForOptionKey) {
+            andMask &= ~kCGEventFlagMaskAlternate;
+            if (flags & NX_DEVICELALTKEYMASK) {
+                andMask &= ~NX_DEVICELALTKEYMASK;
+                orMask |= [self _cgMaskForLeftAlternateKey];
+                orMask |= [self _nxMaskForLeftAlternateKey];
+            }
+            if (flags & NX_DEVICERALTKEYMASK) {
+                andMask &= ~NX_DEVICERALTKEYMASK;
+                orMask |= [self _cgMaskForRightAlternateKey];
+                orMask |= [self _nxMaskForRightAlternateKey];
+            }
+        }
+    }
+    if (flags & kCGEventFlagMaskControl) {
+        BOOL hasDeviceIndependentFlagsForControlKey = ((flags & (NX_DEVICELCTLKEYMASK | NX_DEVICERCTLKEYMASK)) != 0);
+        if (!hasDeviceIndependentFlagsForControlKey) {
+            if ([iTermAdvancedSettingsModel synergyModifierRemappingEnabled]) {
+                flags |= NX_DEVICELCTLKEYMASK;
+                hasDeviceIndependentFlagsForControlKey = YES;
+            }
+        }
+        if (hasDeviceIndependentFlagsForControlKey) {
+            andMask &= ~kCGEventFlagMaskControl;
+            if (flags & NX_DEVICELCTLKEYMASK) {
+                andMask &= ~NX_DEVICELCTLKEYMASK;
+                orMask |= [self _cgMaskForLeftControlKey];
+                orMask |= [self _nxMaskForLeftControlKey];
+            }
+            if (flags & NX_DEVICERCTLKEYMASK) {
+                andMask &= ~NX_DEVICERCTLKEYMASK;
+                orMask |= [self _cgMaskForRightControlKey];
+                orMask |= [self _nxMaskForRightControlKey];
+            }
         }
     }
     DLog(@"On output CGEventFlags=%@", @((flags & andMask) | orMask));
