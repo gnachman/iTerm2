@@ -555,10 +555,10 @@ class Session:
                     subProto.windowed_coord_range.coord_range.end.x,
                     subProto.windowed_coord_range.coord_range.end.y)
             coordRange = iterm2.util.CoordRange(start, end)
-            windowRange = iterm2.util.Range(
+            columnRange = iterm2.util.Range(
                     subProto.windowed_coord_range.columns.location,
                     subProto.windowed_coord_range.columns.length)
-            windowedCoordRange = iterm2.util.WindowedCoordRange(coordRange, windowRange)
+            windowedCoordRange = iterm2.util.WindowedCoordRange(coordRange, columnRange)
 
             sub = iterm2.SubSelection(windowedCoordRange, iterm2.selection.SelectionMode.fromProtoValue(subProto.selection_mode))
             subs.append(sub)

@@ -114,18 +114,34 @@ class Frame:
 
   @property
   def origin(self):
+    """The top-left coordinate.
+
+    :returns: A :class:`Point`.
+    """
     return self.__origin
 
   @origin.setter
   def origin(self, value):
+    """Sets the top-left coordinate.
+
+    :param value: A :class:`Point`.
+    """
     self.__origin = value
 
   @property
   def size(self):
+    """The size.
+
+    :returns: A :class:`Size`.
+    """
     return self.__size
 
   @size.setter
   def size(self, value):
+    """Sets the size.
+
+    :param value: A :class:`Size`.
+    """
     self.__size = value
 
   def load_from_dict(self, dict):
@@ -236,11 +252,14 @@ class WindowedCoordRange:
     """Describes a range of coordinates, optionally constrained to a continugous range of columns.
 
     :param coordRange: The :class:`CoordRange` of cells.
-    :param windowRange: The :class:`Range` of columns, or (0, 0) if unwindowed.
+    :param columnRange: The :class:`Range` of columns, or None if unwindowed.
     """
-    def __init__(self, coordRange, windowRange=Range(0, 0)):
+    def __init__(self, coordRange, columnRange=None):
         self.__coordRange = coordRange
-        self.__windowRange = windowRange
+        if columnRange:
+            self.__columnRange = columnRange
+        else:
+            self.__columnRange = Range(0, 0)
 
     @property
     def coordRange(self):
@@ -248,14 +267,14 @@ class WindowedCoordRange:
         return self.__coordRange
 
     @property
-    def windowRange(self):
-        """:returns: The range of columns, a :class:`WindowRange`, or an empty range if unconstrained."""
-        return self.__windowRange
+    def columnRange(self):
+        """:returns: The range of columns, a :class:`Range`, or an empty range if unconstrained."""
+        return self.__columnRange
 
     @property
     def proto(self):
         p = iterm2.api_pb2.WindowedCoordRange()
         p.coord_range.CopyFrom(self.coordRange.proto)
-        p.columns.CopyFrom(self.windowRange.proto)
+        p.columns.CopyFrom(self.columnRange.proto)
         return p
 

@@ -37,6 +37,7 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    profile
    registration
    screen
+   selection
    session
    tab
    tmux
