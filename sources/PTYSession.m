@@ -1079,7 +1079,13 @@ ITERM_WEAKLY_REFERENCEABLE
     for (NSUInteger i = 0; i < rangeOfLines.length; i++) {
         int row = rangeOfLines.location + i;
         screen_char_t *theLine = [source.screen getLineAtIndex:row];
-        [_screen appendScreenChars:theLine length:width continuation:theLine[width]];
+        if (i + 1 == rangeOfLines.length) {
+            screen_char_t continuation = { 0 };
+            continuation.code = EOL_SOFT;
+            [_screen appendScreenChars:theLine length:width continuation:continuation];
+        } else {
+            [_screen appendScreenChars:theLine length:width continuation:theLine[width]];
+        }
     }
 }
 
