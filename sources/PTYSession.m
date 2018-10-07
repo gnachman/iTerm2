@@ -1378,9 +1378,12 @@ ITERM_WEAKLY_REFERENCEABLE
         }
 
         theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
-        needDivorce = YES;
+        if (theBookmark) {
+            needDivorce = YES;
+        } else {
+            theBookmark = [[ProfileModel sharedInstance] defaultBookmark];
+        }
     }
-
     PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     aSession.view = sessionView;
 
