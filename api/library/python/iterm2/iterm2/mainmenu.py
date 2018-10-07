@@ -37,7 +37,7 @@ class MainMenu:
         """Queries a menu item for its state.
 
         :param identifier: A string. See list of identifiers in :doc:`menu_ids`
-        :returns: :class:`App.MenuItemState`
+        :returns: :class:`MenuItemState`
 
         :throws MenuItemException: if something goes wrong.
         """
