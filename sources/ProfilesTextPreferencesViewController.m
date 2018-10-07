@@ -62,6 +62,8 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
     // This view is added to the font panel.
     IBOutlet NSView *_displayFontAccessoryView;
+    IBOutlet NSTextField *_horizontalSpacingAccessoryTextField;
+    IBOutlet NSTextField *_verticalSpacingAccessoryTextField;
 
     CGFloat _heightWithNonAsciiControls;
     CGFloat _heightWithoutNonAsciiControls;
@@ -183,13 +185,19 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                  }];
 
 
-    [self defineControl:_horizontalSpacing
-                    key:KEY_HORIZONTAL_SPACING
-                   type:kPreferenceInfoTypeSlider];
+    info = [self defineControl:_horizontalSpacing
+                           key:KEY_HORIZONTAL_SPACING
+                          type:kPreferenceInfoTypeSlider];
+    info.observer = ^{
+        [weakSelf fontAccessorySliderDidChange];
+    };
 
-    [self defineControl:_verticalSpacing
-                    key:KEY_VERTICAL_SPACING
-                   type:kPreferenceInfoTypeSlider];
+    info = [self defineControl:_verticalSpacing
+                           key:KEY_VERTICAL_SPACING
+                          type:kPreferenceInfoTypeSlider];
+    info.observer = ^{
+        [weakSelf fontAccessorySliderDidChange];
+    };
 
     info = [self defineControl:_useNonAsciiFont
                            key:KEY_USE_NONASCII_FONT
@@ -208,6 +216,32 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
     [self updateFontsDescriptions];
     [self updateNonAsciiFontViewVisibility];
+}
+
+- (void)fontAccessorySliderDidChange {
+    _horizontalSpacingAccessoryTextField.intValue = _horizontalSpacing.doubleValue * 100;
+    _verticalSpacingAccessoryTextField.intValue = _verticalSpacing.doubleValue * 100;
+}
+
+- (void)controlTextDidEndEditing:(NSNotification *)notification {
+    NSTextField *control = [notification object];
+    NSString *key = nil;
+    NSSlider *slider;
+    if (control == _horizontalSpacingAccessoryTextField) {
+        key = KEY_HORIZONTAL_SPACING;
+        slider = _horizontalSpacing;
+    } else if (control == _verticalSpacingAccessoryTextField) {
+        key = KEY_VERTICAL_SPACING;
+        slider = _verticalSpacing;
+    }
+    if (key) {
+        const int clamped = MIN(MAX(control.intValue, 50), 200);
+        const double value = clamped / 100.0;
+        [self setFloat:value forKey:key];
+        slider.doubleValue = value;
+        control.intValue = clamped;
+    }
+    [super controlTextDidEndEditing:notification];
 }
 
 - (void)unicodeVersionDidChange {
