@@ -3767,6 +3767,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[aSession textview] setNeedsDisplay:YES];
     }
     [[self currentTab] recheckBlur];
+    [self updateTabColors];  // Updates the window's background color as a side-effect
 }
 
 - (IBAction)toggleUseTransparency:(id)sender
@@ -5432,6 +5433,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermWindowAppearanceDidChange object:self.window];
 }
 
+- (BOOL)anyPaneIsTransparent {
+    return [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *session) {
+        return session.textview.transparencyAlpha < 1;
+    }];
+}
+
 - (void)setMojaveBackgroundColor:(nullable NSColor *)backgroundColor NS_AVAILABLE_MAC(10_14) {
     switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
         case TAB_STYLE_AUTOMATIC:
@@ -5448,13 +5455,8 @@ ITERM_WEAKLY_REFERENCEABLE
             self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
             break;
     }
-    // Sigh.
-    // In Mojave, the window background is visible when the contentView is transparent.
-    // This is generally a good thing because it means layers really work!
-    // But there's a bug that the window title shows a broken vibrancy effect (issue 6964).
-    // There's an opportunity for improvement here if there's a tab color and we know the
-    // window isn't opaque we could set the titlebar's color, since that works again in 10.14.
-    self.window.backgroundColor = [NSColor clearColor];
+    self.window.backgroundColor = self.anyPaneIsTransparent ? [NSColor clearColor] : [NSColor windowBackgroundColor];
+    self.window.titlebarAppearsTransparent = NO;  // Keep it from showing content from other windows behind it. Issue 7108.
 }
 
 - (void)setLegacyBackgroundColor:(nullable NSColor *)backgroundColor {
