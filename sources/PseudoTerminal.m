@@ -3531,6 +3531,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [[aSession textview] setNeedsDisplay:YES];
     }
     [[self currentTab] recheckBlur];
+    [self updateTabColors];  // Updates the window's background color as a side-effect
 }
 
 - (IBAction)toggleUseTransparency:(id)sender
@@ -5057,6 +5058,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermWindowAppearanceDidChange object:self.window];
 }
 
+- (BOOL)anyPaneIsTransparent {
+    return [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *session) {
+        return session.textview.transparencyAlpha < 1;
+    }];
+}
+
 - (void)setMojaveBackgroundColor:(nullable NSColor *)backgroundColor NS_AVAILABLE_MAC(10_14) {
     switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
         case TAB_STYLE_AUTOMATIC:
@@ -5073,7 +5080,7 @@ ITERM_WEAKLY_REFERENCEABLE
             self.window.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
             break;
     }
-    self.window.backgroundColor = [NSColor clearColor];
+    self.window.backgroundColor = self.anyPaneIsTransparent ? [NSColor clearColor] : [NSColor windowBackgroundColor];
     self.window.titlebarAppearsTransparent = NO;  // Keep it from showing content from other windows behind it. Issue 7108.
 }
 
