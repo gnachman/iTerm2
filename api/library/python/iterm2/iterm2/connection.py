@@ -98,6 +98,15 @@ class Connection:
     def run_forever(self, coro):
         self.run(True, coro)
 
+    def set_message_in_future(self, loop, message, future):
+        assert future is not None
+        # Is the response to an RPC that is being awaited.
+        def setResult():
+            assert future is not None
+            if not future.done():
+                future.set_result(message)
+        loop.call_soon(setResult)
+
     async def _async_dispatch_forever(self, connection, loop):
         """Read messages from websocket and call helpers or message responders."""
         self.__tasks = []
@@ -117,11 +126,10 @@ class Connection:
                     # May be a notification.
                     self.__tasks.append(asyncio.ensure_future(self._async_dispatch_to_helper(message)))
                 else:
-                    # Is the response to an RPC that is being awaited.
-                    def setResult():
-                        if not future.done():
-                            future.set_result(message)
-                    loop.call_soon(setResult)
+                    self.set_message_in_future(loop, message, future)
+        except concurrent.futures._base.CancelledError:
+            # Presumably a run_until_complete script
+            pass
         except:
             # I'm not quite sure why this is necessary, but if we don't
             # catch and re-raise the exception it gets swallowed.
