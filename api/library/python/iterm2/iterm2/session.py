@@ -347,23 +347,23 @@ class Session:
         else:
             raise iterm2.rpc.RPCException(iterm2.api_pb2.GetBufferResponse.Status.Name(status))
 
-    async def async_get_buffer_lines(self, trailing_lines):
+    async def async_get_screen_contents(self, windowedCoordRange):
         """
         Fetches the last lines of the session, reaching into history if needed.
 
-        :param trailing_lines: The number of lines to fetch.
+        :param windowedCooordRange: A :class:`iterm2.util.WindowedCoordRange` describing the range to fetch.
 
-        :returns: The buffer contents, an iterm2.api_pb2.GetBufferResponse
+        :returns: The buffer contents, a :class:`iterm2.screen.ScreenContents`.
 
         :throws: :class:`RPCException` if something goes wrong.
         """
-        response = await iterm2.rpc.async_get_buffer_lines(
+        response = await iterm2.rpc.async_get_screen_contents(
             self.connection,
-            trailing_lines,
-            self.__session_id)
+            self.__session_id,
+            windowedCoordRange)
         status = response.get_buffer_response.status
         if status == iterm2.api_pb2.GetBufferResponse.Status.Value("OK"):
-            return response.get_buffer_response
+            return iterm2.screen.ScreenContents(response.get_buffer_response)
         else:
             raise iterm2.rpc.RPCException(iterm2.api_pb2.GetBufferResponse.Status.Name(status))
 
@@ -560,9 +560,19 @@ class Session:
                     subProto.windowed_coord_range.columns.length)
             windowedCoordRange = iterm2.util.WindowedCoordRange(coordRange, columnRange)
 
-            sub = iterm2.SubSelection(windowedCoordRange, iterm2.selection.SelectionMode.fromProtoValue(subProto.selection_mode))
+            sub = iterm2.SubSelection(
+                    windowedCoordRange,
+                    iterm2.selection.SelectionMode.fromProtoValue(
+                        subProto.selection_mode),
+                    subProto.connected)
             subs.append(sub)
         return iterm2.Selection(subs)
+
+    async def async_get_selection_text(self, selection):
+        return await selection.async_get_string(
+                self.connection,
+                self.session_id,
+                self.grid_size.width)
 
     async def async_set_selection(self, selection):
         """
@@ -662,10 +672,10 @@ class ProxySession(Session):
             raise InvalidSessionId()
         return await super(ProxySession, self).async_get_screen_contents()
 
-    async def async_get_buffer_lines(self, trailing_lines):
+    async def async_get_screen_contents(self):
         if self.__session_id == "all":
             raise InvalidSessionId()
-        return await super(ProxySession, self).async_get_buffer_lines(trailing_lines)
+        return await super(ProxySession, self).async_get_screen_contents(trailing_lines)
 
     async def async_get_prompt(self):
         if self.__session_id == "all":

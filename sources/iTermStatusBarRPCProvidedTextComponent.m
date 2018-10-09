@@ -156,6 +156,22 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
                                      defaults:[defaults arrayByAddingObject:knobs]];
 }
 
+- (NSString *)statusBarComponentIdentifier {
+    // Old (prerelease) ones did not have a unique identifier so assign one to prevent disaster.
+    return _registrationRequest.statusBarComponentAttributes.uniqueIdentifier ?: [[NSUUID UUID] UUIDString];
+}
+
+- (NSTextField *)newTextField {
+    NSTextField *textField = [super newTextField];
+    NSClickGestureRecognizer *recognizer = [[NSClickGestureRecognizer alloc] init];
+    recognizer.buttonMask = 1;
+    recognizer.numberOfClicksRequired = 1;
+    recognizer.target = self;
+    recognizer.action = @selector(onClick:);
+    [textField addGestureRecognizer:recognizer];
+    return textField;
+}
+
 - (id<iTermStatusBarComponentFactory>)statusBarComponentFactory {
     return [[iTermStatusBarRPCComponentFactory alloc] initWithRegistrationRequest:_registrationRequest];
 }
@@ -278,6 +294,21 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     } else {
         return INFINITY;
     }
+}
+
+- (void)onClick:(id)sender {
+    NSString *sessionId = [self.scope valueForVariableName:iTermVariableKeySessionID];
+    NSString *identifier = [[self.statusBarComponentIdentifier stringByReplacingOccurrencesOfString:@"." withString:@"_"] stringByReplacingOccurrencesOfString:@"-" withString:@"_"];
+    NSString *func = [NSString stringWithFormat:@"__%@__on_click(session_id: \"%@\")", identifier, sessionId];
+    [iTermScriptFunctionCall callFunction:func
+                                  timeout:30
+                                    scope:self.scope
+                               completion:^(id result, NSError *error, NSSet<NSString *> *mutations) {
+                                   if (error) {
+                                       NSString *message = [NSString stringWithFormat:@"Error in onclick handler: %@\n%@", error.localizedDescription, error.localizedFailureReason];
+                                       [[iTermScriptHistoryEntry globalEntry] addOutput:message];
+                                   }
+                               }];
 }
 
 @end

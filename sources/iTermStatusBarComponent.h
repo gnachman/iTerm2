@@ -44,6 +44,7 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 @property (nonatomic, readonly) NSDictionary<iTermStatusBarComponentConfigurationKey, id> *configuration;
 @property (nonatomic, weak) id<iTermStatusBarComponentDelegate> delegate;
 @property (nonatomic, readonly) id<iTermStatusBarComponentFactory> statusBarComponentFactory;
+@property (nonatomic, readonly) NSString *statusBarComponentIdentifier;
 
 + (NSDictionary *)statusBarComponentDefaultKnobs;
 
@@ -113,5 +114,7 @@ static NSString *const iTermStatusBarSharedTextColorKey = @"shared text color";
 - (void)statusBarDefaultTextColorDidChange;
 
 - (NSColor *)statusBarTextColor;
+
+- (void)statusBarComponentOpenPopoverWithHTML:(NSString *)html ofSize:(NSSize)size;
 
 @end

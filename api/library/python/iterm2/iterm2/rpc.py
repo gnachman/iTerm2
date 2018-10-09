@@ -155,20 +155,20 @@ async def async_get_buffer_with_screen_contents(connection, session=None):
     request.get_buffer_request.line_range.screen_contents_only = True
     return await _async_call(connection, request)
 
-async def async_get_buffer_lines(connection, trailing_lines, session=None):
+async def async_get_screen_contents(connection, session, windowedCoordRange):
     """
-    Gets the last lines of text from a session
+    Gets screen contents.
 
     connection: A connected iterm2.Connection.
-    trailing_lines: The number of lines to fetch (Int)
     session: Session ID
+    windowedCoordRange: The range of characters to fetch.
 
     Returns: iterm2.api_pb2.ServerOriginatedMessage
     """
     request = _alloc_request()
     if session is not None:
         request.get_buffer_request.session = session
-    request.get_buffer_request.line_range.trailing_lines = trailing_lines
+    request.get_buffer_request.line_range.windowed_coord_range.CopyFrom(windowedCoordRange.proto)
     return await _async_call(connection, request)
 
 async def async_get_prompt(connection, session=None):
@@ -555,6 +555,15 @@ async def async_set_selection(connection, session_id, selection):
     request.selection_request.set_selection_request.selection.SetInParent()
     for sub in selection.subSelections:
         request.selection_request.set_selection_request.selection.sub_selections.extend([sub.proto])
+    return await _async_call(connection, request)
+
+async def async_open_status_bar_component_popover(connection, identifier, session_id, html, size):
+    request = _alloc_request()
+    request.status_bar_component_request.SetInParent()
+    request.status_bar_component_request.identifier = identifier
+    request.status_bar_component_request.open_popover.session_id = session_id
+    request.status_bar_component_request.open_popover.html = html
+    request.status_bar_component_request.open_popover.size.CopyFrom(size.proto)
     return await _async_call(connection, request)
 
 ## Private --------------------------------------------------------------------

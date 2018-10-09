@@ -3298,7 +3298,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
         if (cap != 0) {
             iTermTextExtractor *extractor =
-                [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+            [iTermTextExtractor textExtractorWithDataSource:_dataSource];
             id content = [extractor contentInRange:range
                                  attributeProvider:attributeProvider
                                         nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal

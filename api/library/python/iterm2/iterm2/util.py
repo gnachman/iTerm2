@@ -53,6 +53,13 @@ class Size:
     """
     return json.dumps(self.dict)
 
+  @property
+  def proto(self):
+      p = iterm2.api_pb2.Size()
+      p.width = self.width
+      p.height = self.height
+      return p
+
 class Point:
   """Describes a 2D coordinate.
 
@@ -66,6 +73,9 @@ class Point:
     """
     self.__x = x
     self.__y = y
+
+  def __repr__(self):
+    return "({}, {})".format(self.x, self.y)
 
   @property
   def x(self):
@@ -104,6 +114,14 @@ class Point:
       p.x = self.x
       p.y = self.y
       return p
+
+  def __eq__(self, other):
+    if isinstance(other, Point):
+        return self.x == other.x and self.y == other.y
+    return NotImplemented
+
+  def __hash__(self):
+    return hash(tuple(sorted(self.__dict__.items())))
 
 class Frame:
   """Describes a bounding rectangle. 0,0 is the bottom left coordinate."""
@@ -196,6 +214,18 @@ def point_str(point):
     return "(%s, %s)" % (point.x,
                           point.y)
 
+def distance(a, b, gridWidth):
+    aPos = a.y;
+    aPos *= gridWidth;
+    aPos += a.x;
+
+    bPos = b.y;
+    bPos *= gridWidth;
+    bPos += b.x;
+
+    return abs(aPos - bPos);
+
+
 class CoordRange:
     """Describes a range of contiguous cells.
 
@@ -204,6 +234,9 @@ class CoordRange:
     def __init__(self, start, end):
         self.__start = start
         self.__end = end
+
+    def __repr__(self):
+        return "CoordRange({} to {})".format(self.start, self.end)
 
     @property
     def start(self):
@@ -222,6 +255,9 @@ class CoordRange:
         p.end.CopyFrom(self.end.proto)
         return p
 
+    def length(self, width):
+        return distance(self.start, self.end, width)
+
 class Range:
     """Describes a range of integers.
 
@@ -230,6 +266,9 @@ class Range:
     def __init__(self, location, length):
         self.__location = location
         self.__length = length
+
+    def __repr__(self):
+        return "[{}, {})".format(self.location, self.location + self.length)
 
     @property
     def location(self):
@@ -242,11 +281,19 @@ class Range:
         return self.__length
 
     @property
+    def max(self):
+      return self.location + self.length
+
+    @property
     def proto(self):
         p = iterm2.api_pb2.Range()
         p.location = self.location
         p.length = self.length
         return p
+
+    @property
+    def toSet(self):
+        return set(range(self.location, self.location + self.length))
 
 class WindowedCoordRange:
     """Describes a range of coordinates, optionally constrained to a continugous range of columns.
@@ -260,6 +307,9 @@ class WindowedCoordRange:
             self.__columnRange = columnRange
         else:
             self.__columnRange = Range(0, 0)
+
+    def __repr__(self):
+        return "WindowedCoordRange(coordRange={} cols={})".format(self.coordRange, self.columnRange)
 
     @property
     def coordRange(self):
@@ -277,4 +327,34 @@ class WindowedCoordRange:
         p.coord_range.CopyFrom(self.coordRange.proto)
         p.columns.CopyFrom(self.columnRange.proto)
         return p
+
+    @property
+    def start(self):
+        x, y = self.coordRange.start.x, self.coordRange.start.y;
+        if self.columnRange.length:
+            x = min(max(x, self.columnRange.location),
+                          self.columnRange.location + self.columnRange.length)
+        return Point(x, y)
+
+    @property
+    def end(self):
+        x, y = self.coordRange.end.x, self.coordRange.end.y
+        if self.hasWindow:
+            x = min(self.coordRange.end.x, self.right + 1)
+        return Point(x, y)
+
+    @property
+    def right(self):
+        return self.__columnRange.location + self.__coordRange.coolumnRange.length
+
+    @property
+    def left(self):
+        if self.hasWindow:
+            return self.__columnRange.location
+        else:
+            return 0
+
+    @property
+    def hasWindow(self):
+        return self.__columnRange.length > 0
 

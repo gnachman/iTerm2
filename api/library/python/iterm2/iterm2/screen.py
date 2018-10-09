@@ -47,14 +47,24 @@ class ScreenContents:
         self.__proto = proto
 
     @property
-    def first_line(self):
+    def windowed_coord_range(self):
         """The line number of the first line in this object."""
-        return self.__proto.range.location
+        return iterm2.util.WindowedCoordRange(
+                iterm2.util.CoordRange(
+                    iterm2.util.Point(
+                        self.__proto.windowed_coord_range.coord_range.start.x,
+                        self.__proto.windowed_coord_range.coord_range.start.y),
+                    iterm2.util.Point(
+                        self.__proto.windowed_coord_range.coord_range.end.x,
+                        self.__proto.windowed_coord_range.coord_range.end.y)),
+                iterm2.util.Range(
+                    self.__proto.windowed_coord_range.columns.location,
+                    self.__proto.windowed_coord_range.columns.length))
 
     @property
     def number_of_lines(self):
         """The number of lines in this object."""
-        return self.__proto.range.length
+        return self.__proto.windowed_coord_range.coord_range.end.y - self.__proto.windowed_coord_range.coord_range.start.y + 1
 
     def line(self, index):
         """Returns the LineContents at the given index.

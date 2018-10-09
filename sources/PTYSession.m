@@ -487,7 +487,6 @@ static NSString *const iTermSessionTitleSession = @"session";
     iTermVariables *_sessionVariables;
     iTermVariables *_userVariables;
     iTermSwiftyString *_badgeSwiftyString;
-    iTermStatusBarViewController *_statusBarViewController;
     iTermEchoProbe *_echoProbe;
     
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
@@ -10178,7 +10177,15 @@ ITERM_WEAKLY_REFERENCEABLE
     return string;
 }
 
-- (NSRange)rangeFromLineRange:(ITMLineRange *)lineRange {
+- (VT100GridAbsWindowedRange)absoluteWindowedCoordRangeFromLineRange:(ITMLineRange *)lineRange {
+    if (lineRange.hasWindowedCoordRange) {
+        return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(lineRange.windowedCoordRange.coordRange.start.x,
+                                                                        lineRange.windowedCoordRange.coordRange.start.y,
+                                                                        lineRange.windowedCoordRange.coordRange.end.x,
+                                                                        lineRange.windowedCoordRange.coordRange.end.y),
+                                             lineRange.windowedCoordRange.columns.location,
+                                             lineRange.windowedCoordRange.columns.length);
+    }
     int n = 0;
     if (lineRange.hasScreenContentsOnly) {
         n++;
@@ -10187,7 +10194,7 @@ ITERM_WEAKLY_REFERENCEABLE
         n++;
     }
     if (n != 1) {
-        return NSMakeRange(NSNotFound, 0);
+        return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), -1, -1);
     }
 
     NSRange range;
@@ -10202,33 +10209,29 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         range = NSMakeRange(NSNotFound, 0);
     }
-    return range;
+    return VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, range.location, 0, range.length + 1), 0, 0);
 }
 
 - (ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request {
     ITMGetBufferResponse *response = [[[ITMGetBufferResponse alloc] init] autorelease];
 
-    NSRange lineRange = [self rangeFromLineRange:request.lineRange];
-    if (lineRange.location == NSNotFound) {
+    const VT100GridAbsWindowedRange windowedRange = [self absoluteWindowedCoordRangeFromLineRange:request.lineRange];
+    if (windowedRange.coordRange.start.x < 0) {
         response.status = ITMGetBufferResponse_Status_InvalidLineRange;
         return nil;
     }
 
-    response.range = [[[ITMRange alloc] init] autorelease];
-    response.range.location = lineRange.location;
-    response.range.length = lineRange.length;
-
-    int width = _screen.width;
-    for (int64_t i = 0; i < lineRange.length; i++) {
-        int64_t y = lineRange.location + i;
+    const VT100GridWindowedRange range = VT100GridWindowedRangeFromVT100GridAbsWindowedRange(windowedRange, _screen.totalScrollbackOverflow);
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
+    __block int firstIndex = -1;
+    __block int lastIndex = -1;
+    __block screen_char_t *line = nil;
+    BOOL (^handleEol)(unichar, int, int) = ^BOOL(unichar code, int numPreceedingNulls, int linenumber) {
         ITMLineContents *lineContents = [[[ITMLineContents alloc] init] autorelease];
-        screen_char_t *line = [_screen getLineAtIndex:y - _screen.totalScrollbackOverflow];
-        int lineLength = width;
-        while (lineLength > 0 && line[lineLength - 1].code == 0 && !line[lineLength - 1].complexChar) {
-            --lineLength;
-        }
-        lineContents.text = [self stringForLine:line length:lineLength cppsArray:lineContents.codePointsPerCellArray];
-        switch (line[_screen.width].code) {
+        lineContents.text = [self stringForLine:line + firstIndex
+                                         length:lastIndex - firstIndex
+                                      cppsArray:lineContents.codePointsPerCellArray];
+        switch (code) {
             case EOL_HARD:
                 lineContents.continuation = ITMLineContents_Continuation_ContinuationHardEol;
                 break;
@@ -10239,14 +10242,38 @@ ITERM_WEAKLY_REFERENCEABLE
                 break;
         }
         [response.contentsArray addObject:lineContents];
+        firstIndex = lastIndex = -1;
+        line = nil;
+        return NO;
+    };
+    [extractor enumerateCharsInRange:range
+                           charBlock:^BOOL(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord) {
+                               line = currentLine;
+                               if (firstIndex < 0) {
+                                   firstIndex = coord.x;
+                               }
+                               lastIndex = coord.x + 1;
+                               line = currentLine;
+                               return NO;
+                           }
+                            eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                                return handleEol(code, numPreceedingNulls, line);
+                            }];
+    if (line) {
+        handleEol(EOL_SOFT, 0, 0);
     }
-    response.numLinesAboveScreen = _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
-
     response.cursor = [[[ITMCoord alloc] init] autorelease];
     response.cursor.x = _screen.currentGrid.cursor.x;
-    response.cursor.y = _screen.currentGrid.cursor.y + response.numLinesAboveScreen;
+    response.cursor.y = _screen.currentGrid.cursor.y + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
 
     response.status = ITMGetBufferResponse_Status_Ok;
+    response.windowedCoordRange.coordRange.start.x = windowedRange.coordRange.start.x;
+    response.windowedCoordRange.coordRange.start.y = windowedRange.coordRange.start.y;
+    response.windowedCoordRange.coordRange.end.x = windowedRange.coordRange.end.x;
+    response.windowedCoordRange.coordRange.end.y = windowedRange.coordRange.end.y;
+    response.windowedCoordRange.columns.location = windowedRange.columnWindow.location;
+    response.windowedCoordRange.columns.length = windowedRange.columnWindow.length;
+
     return response;
 }
 

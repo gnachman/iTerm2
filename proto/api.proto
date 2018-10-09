@@ -44,6 +44,7 @@ message ClientOriginatedMessage {
     PreferencesRequest preferences_request = 126;
     ColorPresetRequest color_preset_request = 127;
     SelectionRequest selection_request = 128;
+    StatusBarComponentRequest status_bar_component_request = 129;
   }
 }
 
@@ -85,10 +86,33 @@ message ServerOriginatedMessage {
     PreferencesResponse preferences_response = 126;
     ColorPresetResponse color_preset_response = 127;
     SelectionResponse selection_response = 128;
+    StatusBarComponentResponse status_bar_component_response = 129;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
   }
+}
+
+message StatusBarComponentRequest {
+  message OpenPopover {
+    optional string session_id = 1;
+    optional string html = 2;  // HTML to show in a popover that opens from the component.
+    optional Size size = 3;  // Size in points of the content area of the popover.
+  }
+  oneof request {
+    OpenPopover open_popover = 1;
+  }
+  optional string identifier = 2;  // ID of statusbar component
+}
+
+message StatusBarComponentResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    REQUEST_MALFORMED = 2;
+    INVALID_IDENTIFIER = 3;
+  }
+  optional Status status = 1;
 }
 
 message WindowedCoordRange {
@@ -108,7 +132,7 @@ enum SelectionMode {
 message SubSelection {
   optional WindowedCoordRange windowed_coord_range = 1;
   optional SelectionMode selection_mode = 2;
-
+  optional bool connected = 3;
 }
 
 message Selection {
@@ -674,6 +698,10 @@ message RPCRegistrationRequest {
 
     optional string exemplar = 4;
     optional float update_cadence = 5;
+
+    // Identifies this component uniquely. Must not conflict with other components.
+    // Use a backwards domain name identifying yourself and the feature, like "com.example.featurename"
+    optional string unique_identifier = 6;
   }
 
   oneof RoleSpecificAttributes {
@@ -932,7 +960,7 @@ message GetBufferResponse {
   optional Status status = 1 [default = OK];
 
   // Which lines were returned
-  optional Range range = 2;
+  optional Range range = 2 [deprecated=true];
 
   // Those lines' contents.
   repeated LineContents contents = 3;
@@ -942,7 +970,10 @@ message GetBufferResponse {
   // The number of lines (including lines lost from the head of scrollback history) that precede
   // the screen. Subtract this from cursor.y to get the cursor's position on the screen when it
   // is scrolled to the bottom.
-  optional int64 num_lines_above_screen = 5;
+  optional int64 num_lines_above_screen = 5 [deprecated=true];
+
+  // The returned range
+  optional WindowedCoordRange windowed_coord_range = 6;
 }
 
 // Requests metadata about the current shell prompt.
@@ -1178,6 +1209,8 @@ message LineRange {
   // Return the last `trailing lines` of the buffer, which could go back into
   // scrollback history.
   optional int32 trailing_lines = 2;
+
+  optional WindowedCoordRange windowed_coord_range = 3;
 }
 
 // Describes a range of values.

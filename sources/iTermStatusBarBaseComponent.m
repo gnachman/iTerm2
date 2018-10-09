@@ -7,10 +7,14 @@
 
 #import "iTermStatusBarBaseComponent.h"
 
+#import "iTermPreferences.h"
 #import "iTermStatusBarLayout.h"
 #import "iTermStatusBarSetupKnobsViewController.h"
+#import "iTermWebViewWrapperViewController.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+
+#import <WebKit/WebKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -68,6 +72,9 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
 
 @end
 
+@interface iTermStatusBarBaseComponent()<NSPopoverDelegate>
+@end
+
 @implementation iTermStatusBarBaseComponent
 
 @synthesize configuration = _configuration;
@@ -93,6 +100,10 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
     }
     return [self initWithConfiguration:configuration
                                  scope:nil];
+}
+
+- (NSString *)statusBarComponentIdentifier {
+    return [NSString stringWithFormat:@"com.iterm2.%@", NSStringFromClass(self.class)];
 }
 
 - (nullable NSImage *)statusBarComponentIcon {
@@ -260,6 +271,34 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
 - (void)statusBarDefaultTextColorDidChange {
 }
 
+- (void)statusBarComponentOpenPopoverWithHTML:(NSString *)html ofSize:(NSSize)size {
+    WKWebView *webView = [[iTermWebViewFactory sharedInstance] webView];
+    if (!webView) {
+        return;
+    }
+    [webView loadHTMLString:html baseURL:nil];
+    NSPopover *popover = [[NSPopover alloc] init];
+    NSViewController *viewController = [[iTermWebViewWrapperViewController alloc] initWithWebView:webView
+                                                                                        backupURL:nil];
+    popover.contentViewController = viewController;
+    popover.contentSize = viewController.view.frame.size;
+    NSView *view = self.statusBarComponentCreateView;
+    popover.behavior = NSPopoverBehaviorSemitransient;
+    popover.delegate = self;
+    NSRectEdge preferredEdge = NSRectEdgeMinY;
+    switch ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition]) {
+        case iTermStatusBarPositionTop:
+            preferredEdge = NSRectEdgeMaxY;
+            break;
+        case iTermStatusBarPositionBottom:
+            preferredEdge = NSRectEdgeMinY;
+            break;
+    }
+    [popover showRelativeToRect:view.bounds
+                         ofView:view
+                  preferredEdge:preferredEdge];
+}
+
 #pragma mark - NSSecureCoding
 
 + (BOOL)supportsSecureCoding {
@@ -270,6 +309,14 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
     [aCoder encodeObject:_configuration forKey:@"configuration"];
 }
 
+#pragma mark - NSPopoverDelegate
+
+- (void)popoverDidClose:(NSNotification *)notification {
+    NSPopover *popover = notification.object;
+    iTermWebViewWrapperViewController *viewController = (iTermWebViewWrapperViewController *)popover.contentViewController;
+    [viewController terminateWebView];
+
+}
 @end
 
 NS_ASSUME_NONNULL_END

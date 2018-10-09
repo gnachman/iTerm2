@@ -37,6 +37,7 @@ extern NSString *const PTYSessionRevivedNotification;
 @class CapturedOutput;
 @class FakeWindow;
 @class iTermAnnouncementViewController;
+@class iTermStatusBarViewController;
 @class iTermVariables;
 @class iTermVariableScope;
 @class PTYTab;
@@ -461,6 +462,7 @@ typedef enum {
 @property(nonatomic, readonly) BOOL canProduceMetalFramecap;
 @property(nonatomic, readonly) NSColor *textColorForStatusBar;
 @property(nonatomic, readonly) NSImage *tabGraphic;
+@property(nonatomic, readonly) iTermStatusBarViewController *statusBarViewController;
 
 #pragma mark - methods
 

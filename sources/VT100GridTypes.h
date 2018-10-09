@@ -40,21 +40,21 @@ typedef struct {
 
 typedef struct {
   VT100GridCoord start;
-  VT100GridCoord end;
+  VT100GridCoord end;  // inclusive of y, half-open on x
 } VT100GridCoordRange;
 
 typedef struct {
     VT100GridAbsCoord start;
-    VT100GridAbsCoord end;
+    VT100GridAbsCoord end;  // inclusive of y, half-open on x
 } VT100GridAbsCoordRange;
 
 typedef struct {
-    VT100GridCoordRange coordRange;
+    VT100GridCoordRange coordRange;  // inclusive of y, half-open on x
     VT100GridRange columnWindow;
 } VT100GridWindowedRange;
 
 typedef struct {
-    VT100GridAbsCoordRange coordRange;
+    VT100GridAbsCoordRange coordRange;  // inclusive of y, half-open on x
     VT100GridRange columnWindow;
 } VT100GridAbsWindowedRange;
 
@@ -289,6 +289,19 @@ NS_INLINE VT100GridAbsWindowedRange VT100GridAbsWindowedRangeFromRelative(VT100G
                                                           range.coordRange.end.y + scrollbackOffset);
     windowedRange.columnWindow = range.columnWindow;
     return windowedRange;
+}
+
+NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeFromVT100GridAbsWindowedRange(VT100GridAbsWindowedRange source,
+                                                                                     long long totalScrollbackOverflow) {
+    const long long minY = source.coordRange.start.y;
+    const long long maxY = source.coordRange.end.y;
+    VT100GridWindowedRange result = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(source.coordRange.start.x,
+                                                                                       MAX(0, (int)(minY - totalScrollbackOverflow)),
+                                                                                       source.coordRange.end.x,
+                                                                                       MAX(0, (int)(maxY - totalScrollbackOverflow))),
+                                                               source.columnWindow.location,
+                                                               source.columnWindow.length);
+    return result;
 }
 
 NS_INLINE NSString *VT100GridCoordDescription(VT100GridCoord c) {

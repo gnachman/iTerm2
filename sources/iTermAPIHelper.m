@@ -20,6 +20,8 @@
 #import "iTermProfilePreferences.h"
 #import "iTermPythonArgumentParser.h"
 #import "iTermSelection.h"
+#import "iTermStatusBarComponent.h"
+#import "iTermStatusBarViewController.h"
 #import "iTermVariableReference.h"
 #import "iTermVariables.h"
 #import "iTermWarning.h"
@@ -2738,6 +2740,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         subProto.windowedCoordRange.coordRange.start.y = absoluteOffset + sub.range.coordRange.start.y;
         subProto.windowedCoordRange.coordRange.end.x = sub.range.coordRange.end.x;
         subProto.windowedCoordRange.coordRange.end.y = absoluteOffset + sub.range.coordRange.end.y;
+        subProto.connected = sub.connected;
         if (sub.range.columnWindow.length > 0) {
             subProto.windowedCoordRange.columns.location = sub.range.columnWindow.location;
             subProto.windowedCoordRange.columns.length = sub.range.columnWindow.length;
@@ -2837,6 +2840,46 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
 
     response.status = ITMSelectionResponse_Status_Ok;
     completion(response);
+}
+
+- (void)apiServerStatusBarComponentRequest:(ITMStatusBarComponentRequest *)request
+                                   handler:(void (^)(ITMStatusBarComponentResponse *))completion {
+    switch (request.requestOneOfCase) {
+        case ITMStatusBarComponentRequest_Request_OneOfCase_OpenPopover:
+            [self handleOpenStatusBarPopoverRequest:request.openPopover
+                                         identifier:request.identifier
+                                         completion:completion];
+            return;
+        case ITMStatusBarComponentRequest_Request_OneOfCase_GPBUnsetOneOfCase:
+            break;
+    }
+    ITMStatusBarComponentResponse *response = [[ITMStatusBarComponentResponse alloc] init];
+    response.status = ITMStatusBarComponentResponse_Status_RequestMalformed;
+    completion(response);
+}
+
+- (void)handleOpenStatusBarPopoverRequest:(ITMStatusBarComponentRequest_OpenPopover *)request
+                               identifier:(NSString *)identifier
+                               completion:(void (^)(ITMStatusBarComponentResponse *))completion {
+    ITMStatusBarComponentResponse *response = [[ITMStatusBarComponentResponse alloc] init];
+    PTYSession *session = [self sessionForAPIIdentifier:request.sessionId includeBuriedSessions:YES];
+    if (!session) {
+        response.status = ITMStatusBarComponentResponse_Status_SessionNotFound;
+        completion(response);
+        return;
+    }
+
+    id<iTermStatusBarComponent> component = [session.statusBarViewController componentWithIdentifier:identifier];
+    if (!component) {
+        response.status = ITMStatusBarComponentResponse_Status_InvalidIdentifier;
+        completion(response);
+        return;
+    }
+    [component statusBarComponentOpenPopoverWithHTML:request.html ofSize:NSMakeSize(request.size.width, request.size.height)];
+
+    response.status = ITMStatusBarComponentResponse_Status_Ok;
+    completion(response);
+    return;
 }
 
 @end

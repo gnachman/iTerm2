@@ -367,6 +367,12 @@ const CGFloat iTermStatusBarHeight = 21;
     [[iTermStatusBarView castFrom:self.view] setBackgroundColor:[self.delegate statusBarBackgroundColor]];
 }
 
+- (nullable id<iTermStatusBarComponent>)componentWithIdentifier:(NSString *)identifier {
+    return [_containerViews objectPassingTest:^BOOL(iTermStatusBarContainerView *element, NSUInteger index, BOOL *stop) {
+        return [element.component.statusBarComponentIdentifier isEqual:identifier];
+    }].component;
+}
+
 #pragma mark - iTermStatusBarLayoutDelegate
 
 - (void)statusBarLayoutDidChange:(iTermStatusBarLayout *)layout {

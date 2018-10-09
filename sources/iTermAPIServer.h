@@ -76,6 +76,8 @@ extern NSString *const iTermAPIServerConnectionClosed;
                             handler:(void (^)(ITMColorPresetResponse *))response;
 - (void)apiServerSelectionRequest:(ITMSelectionRequest *)request
                           handler:(void (^)(ITMSelectionResponse *))response;
+- (void)apiServerStatusBarComponentRequest:(ITMStatusBarComponentRequest *)request
+                                   handler:(void (^)(ITMStatusBarComponentResponse *))response;
 
 @end
 
