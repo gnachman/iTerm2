@@ -39,6 +39,7 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    screen
    selection
    session
+   statusbar
    tab
    tmux
    tool

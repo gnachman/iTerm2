@@ -11,7 +11,6 @@ This script is a long-running daemon since the registered function gets called w
 
 .. code-block:: python
 
-    import asyncio
     import iterm2
 
     async def main(connection):
@@ -49,7 +48,7 @@ This script is a long-running daemon since the registered function gets called w
                      "cols": "session.columns" }
 
         # Register the component.
-        await iterm2.Registration.async_register_status_bar_component(connection, component, coro, defaults=defaults)
+        await component.async_register(connection, coro, defaults=defaults)
 
     iterm2.run_forever(main)
 

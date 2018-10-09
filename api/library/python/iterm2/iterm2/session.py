@@ -538,7 +538,7 @@ class Session:
 
     async def async_get_selection(self):
         """
-        :returns: The :class:`iterm2.Selection` of this session.
+        :returns: The :class:`iterm2.selection.Selection` of this session, giving the areas that are selected.
 
         :throws: :class:`RPCException` if something goes wrong.
         """
@@ -569,6 +569,11 @@ class Session:
         return iterm2.Selection(subs)
 
     async def async_get_selection_text(self, selection):
+        """Fetches the text within a selection region.
+
+        :param selection: A :class:`iterm2.selection.Selection` defining a region in the session.
+
+        :returns: A string with the selection's contents. Discontiguous selections are combined with newlines."""
         return await selection.async_get_string(
                 self.connection,
                 self.session_id,
@@ -576,7 +581,7 @@ class Session:
 
     async def async_set_selection(self, selection):
         """
-        :param selection: The :class:`iterm2.Selection` to set on this session.
+        :param selection: The :class:`iterm2.selection.Selection` to set on this session.
 
         :throws: :class:`RPCException` if something goes wrong.
         """

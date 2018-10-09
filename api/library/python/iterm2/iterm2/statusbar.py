@@ -121,6 +121,12 @@ class StatusBarComponent:
         self.__on_click = coro
 
     async def async_open_popover(self, session_id, html, size):
+        """Open a popover with a webview.
+
+        :param session_id: The session identifier.
+        :param html: A string containing HTML to show.
+        :param size: The desired size of the popover, a :class:`iterm2.util.Size`.
+        """
         await iterm2.rpc.async_open_status_bar_component_popover(
                 self.__connection,
                 self.__identifier,
