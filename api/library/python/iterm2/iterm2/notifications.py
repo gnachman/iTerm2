@@ -367,8 +367,9 @@ async def _async_dispatch_helper(connection, message):
     if not handlers and message.notification.HasField('server_originated_rpc_notification'):
         # If we get an RPC we haven't registered for handle the error because
         # otherwise it has to time out. If you get here there is probably a bug.
-        exception = { "reason": "No such function: {}".format(_string_rpc_registration_request(message.notification.server_originated_rpc_notification.rpc)) }
-        await iterm2.rpc.async_send_rpc_result(connection, rpc_notif.request_id, True, exception)
+        key, _sub_notification = _get_handler_key_from_notification(message.notification)
+        exception = { "reason": "No such function: {} (key was {})".format(_string_rpc_registration_request(message.notification.server_originated_rpc_notification.rpc), key) }
+        await iterm2.rpc.async_send_rpc_result(connection, message.notification.server_originated_rpc_notification.request_id, True, exception)
 
     return bool(handlers)
 
