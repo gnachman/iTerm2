@@ -267,6 +267,7 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 - (void)run {
+    [NSApp activateIgnoringOtherApps:YES];
     [self window];
     [_generalPreferencesViewController updateEnabledState];
     [_profilesViewController selectFirstProfileIfNecessary];
