@@ -48,6 +48,7 @@
 #import "iTermWarning.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "MovePaneController.h"
+#import "NSAlert+iTerm.h"
 #import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
@@ -1297,7 +1298,7 @@ ITERM_WEAKLY_REFERENCEABLE
     alert.informativeText = message;
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
-    return ([alert runModal] == NSAlertFirstButtonReturn);
+    return [alert runSheetModalForWindow:self.window] == NSAlertFirstButtonReturn;
 }
 
 - (BOOL)confirmCloseTab:(PTYTab *)aTab suppressConfirmation:(BOOL)suppressConfirmation {
