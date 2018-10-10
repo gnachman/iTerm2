@@ -7800,38 +7800,54 @@ ITERM_WEAKLY_REFERENCEABLE
     [file download];
 }
 
-- (NSString*)_getLocale
-{
-    NSString* theLocale = nil;
-    NSString* languageCode = [[NSLocale currentLocale] objectForKey:NSLocaleLanguageCode];
-    NSString* countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
-    DLog(@"getLocale: languageCode=%@, countryCode=%@", languageCode, countryCode);
+- (NSString *)localeForLanguage:(NSString *)languageCode
+                        country:(NSString *)countryCode {
+    DLog(@"localeForLanguage:country: languageCode=%@, countryCode=%@", languageCode, countryCode);
     if (languageCode && countryCode) {
-        theLocale = [NSString stringWithFormat:@"%@_%@", languageCode, countryCode];
-        DLog(@"Return combined language/country locale %@", theLocale);
+        return [NSString stringWithFormat:@"%@_%@", languageCode, countryCode];
+    } else if (languageCode) {
+        return languageCode;
     } else {
-        NSString *localeId = [[NSLocale currentLocale] localeIdentifier];
-        DLog(@"Return local identifier of %@", localeId);
-        return localeId;
+        return [[NSLocale currentLocale] localeIdentifier];
     }
-    return theLocale;
 }
 
-- (NSString*)_lang
-{
-    NSString* theLocale = [self _getLocale];
-    NSString* encoding = [self encodingName];
-    DLog(@"locale=%@, encoding=%@", theLocale, encoding);
-    if (encoding && theLocale) {
-        NSString* result = [NSString stringWithFormat:@"%@.%@", theLocale, encoding];
-        DLog(@"Tentative locale is %@", result);
-        if ([self _localeIsSupported:result]) {
-            DLog(@"Locale is supported");
-            return result;
-        } else {
-            DLog(@"Locale is NOT supported");
-            return nil;
+- (NSArray<NSString *>*)possibleLocales {
+    NSString* countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
+    NSString* languageCode = nil;
+    if (@available(macOS 10.14, *)) {
+        NSArray *options = [[NSLocale preferredLanguages] mapWithBlock:^id(NSString *mostPreferredLanguage) {
+            NSUInteger index = [mostPreferredLanguage rangeOfString:@"-" options:NSBackwardsSearch].location;
+            if (index == NSNotFound) {
+                return nil;
+            }
+            return [self localeForLanguage:[mostPreferredLanguage substringToIndex:index] country:countryCode];
+        }];
+        if (options.count > 0) {
+            return options;
         }
+    }
+    // 10.13 code path. On 10.14 the language is always en.
+    languageCode = [[NSLocale currentLocale] objectForKey:NSLocaleLanguageCode];
+    NSString *theLocale = [self localeForLanguage:languageCode country:countryCode];
+    DLog(@"Taking legacy code path and returning locale of %@", theLocale);
+    return theLocale ? @[ theLocale ] : nil;
+}
+
+- (NSString*)_lang {
+    NSArray<NSString *> *possibleLocales = [self possibleLocales];
+    NSString *encoding = [self encodingName];
+    DLog(@"locale candidates=%@, encoding=%@", possibleLocales, encoding);
+    if (encoding && possibleLocales.count) {
+        NSArray<NSString *> *candidatesWithEncoding = [possibleLocales mapWithBlock:^id(NSString *locale) {
+            return [NSString stringWithFormat:@"%@.%@", locale, encoding];
+        }];
+        DLog(@"Locale candidates with encoding are %@", candidatesWithEncoding);
+        NSString *result = [candidatesWithEncoding objectPassingTest:^BOOL(NSString *locale, NSUInteger index, BOOL *stop) {
+            return [self _localeIsSupported:locale];
+        }];
+        DLog(@"First supported locale is %@", result);
+        return result;
     } else {
         DLog(@"No locale or encoding, returning nil language");
         return nil;
