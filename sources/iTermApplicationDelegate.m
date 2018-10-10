@@ -1450,7 +1450,7 @@ static BOOL hasBecomeActive = NO;
 
     if ([iTermPreferences boolForKey:kPreferenceKeyOpenBookmark]) {
         // Open bookmarks window at startup.
-        [self showBookmarkWindow:nil];
+        [[iTermProfilesWindowController sharedInstance] showWindow:nil];
     }
 
     if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
@@ -1865,8 +1865,8 @@ static BOOL hasBecomeActive = NO;
     [[[PreferencePanel sharedInstance] window] orderFrontRegardless];
 }
 
-- (IBAction)showBookmarkWindow:(id)sender
-{
+- (IBAction)showBookmarkWindow:(id)sender {
+    [NSApp activateIgnoringOtherApps:YES];
     [[iTermProfilesWindowController sharedInstance] showWindow:sender];
 }
 
