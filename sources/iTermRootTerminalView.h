@@ -40,6 +40,7 @@
 - (NSColor *)rootTerminalViewTabBarBackgroundColor;
 - (BOOL)rootTerminalViewWindowNumberLabelShouldBeVisible;
 - (BOOL)rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar;
+- (NSImage *)rootTerminalViewCurrentTabIcon;
 @end
 
 extern const NSInteger iTermRootTerminalViewWindowNumberLabelMargin;
@@ -116,5 +117,6 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 
 - (void)windowTitleDidChangeTo:(NSString *)title;
 - (void)windowNumberDidChangeTo:(NSNumber *)number;
+- (void)setWindowTitleIcon:(NSImage *)icon;
 
 @end

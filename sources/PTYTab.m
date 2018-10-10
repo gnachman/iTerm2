@@ -5182,9 +5182,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return _numberOfSplitViewDragsInProgress == 0;
 }
 
-- (void)sessionDidChangeGraphic:(PTYSession *)session {
+- (void)sessionDidChangeGraphic:(PTYSession *)session shouldShow:(BOOL)shouldShow image:(NSImage *)image {
     if (session == self.activeSession) {
-        [self.delegate tabDidChangeGraphic:self];
+        [self.delegate tabDidChangeGraphic:self
+                                shouldShow:shouldShow
+                                     image:image];
     }
 }
 

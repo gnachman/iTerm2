@@ -210,7 +210,9 @@ typedef enum {
 - (void)sessionDuplicateTab;
 
 - (BOOL)sessionShouldAutoClose:(PTYSession *)session;
-- (void)sessionDidChangeGraphic:(PTYSession *)session;
+- (void)sessionDidChangeGraphic:(PTYSession *)session
+                     shouldShow:(BOOL)shouldShow
+                          image:(NSImage *)image;
 
 @end
 
@@ -463,6 +465,7 @@ typedef enum {
 @property(nonatomic, readonly) NSColor *textColorForStatusBar;
 @property(nonatomic, readonly) NSImage *tabGraphic;
 @property(nonatomic, readonly) iTermStatusBarViewController *statusBarViewController;
+@property(nonatomic, readonly) BOOL shouldShowTabGraphic;
 
 #pragma mark - methods
 

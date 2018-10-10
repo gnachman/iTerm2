@@ -372,7 +372,40 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 - (void)windowTitleDidChangeTo:(NSString *)title {
     _windowTitle = [title copy];
-    _windowTitleLabel.stringValue = title;
+
+    [self setWindowTitleLabelToString:_windowTitle icon:[self.delegate rootTerminalViewCurrentTabIcon]];
+}
+
+- (void)setWindowTitleLabelToString:(NSString *)title icon:(NSImage *)icon {
+    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+    paragraphStyle.alignment = NSTextAlignmentCenter;
+    paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+    NSDictionary *attributes = @{ NSFontAttributeName: _windowTitleLabel.font,
+                                  NSForegroundColorAttributeName: _windowTitleLabel.textColor,
+                                  NSParagraphStyleAttributeName: paragraphStyle };
+    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:title
+                                                                           attributes:attributes];
+    if (icon) {
+        NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
+        textAttachment.image = icon;
+        NSFont *font = _windowTitleLabel.font;
+        const CGFloat lineHeight = ceilf(font.capHeight);
+        textAttachment.bounds = NSMakeRect(0,
+                                           - (icon.size.height - lineHeight) / 2.0,
+                                           icon.size.width,
+                                           icon.size.height);
+        NSMutableAttributedString *iconAttributedString = [[NSAttributedString attributedStringWithAttachment:textAttachment] mutableCopy];
+        [iconAttributedString addAttribute:NSParagraphStyleAttributeName value:paragraphStyle range:NSMakeRange(0, iconAttributedString.length)];
+        [iconAttributedString appendAttributedString:[[NSAttributedString alloc] initWithString:@" " attributes:attributes]];
+        [iconAttributedString appendAttributedString:attributedString];
+        _windowTitleLabel.attributedStringValue = iconAttributedString;
+    } else {
+        _windowTitleLabel.stringValue = title;
+    }
+}
+
+- (void)setWindowTitleIcon:(NSImage *)icon {
+    [self setWindowTitleLabelToString:_windowTitle icon:icon];
 }
 
 - (void)windowNumberDidChangeTo:(NSNumber *)number {

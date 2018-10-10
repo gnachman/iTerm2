@@ -3843,7 +3843,9 @@ ITERM_WEAKLY_REFERENCEABLE
         [self.tmuxController setTabColorString:tabColor ? [tabColor hexString] : iTermTmuxTabColorNone
                                  forWindowPane:self.tmuxPane];
     }
-    [self.delegate sessionDidChangeGraphic:self];
+    [self.delegate sessionDidChangeGraphic:self
+                                shouldShow:[self shouldShowTabGraphicForProfile:aDict]
+                                     image:[self tabGraphicForProfile:aDict]];
     [self.delegate sessionUpdateMetalAllowed];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
     [_nameController setNeedsUpdate];
@@ -3916,22 +3918,30 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)shouldShowTabGraphic {
-    const iTermProfileIcon icon = [iTermProfilePreferences unsignedIntegerForKey:KEY_ICON inProfile:self.profile];
+    return [self shouldShowTabGraphicForProfile:self.profile];
+}
+
+- (BOOL)shouldShowTabGraphicForProfile:(Profile *)profile {
+    const iTermProfileIcon icon = [iTermProfilePreferences unsignedIntegerForKey:KEY_ICON inProfile:profile];
     return icon != iTermProfileIconNone;
 }
 
 - (NSImage *)tabGraphic {
-    const iTermProfileIcon icon = [iTermProfilePreferences unsignedIntegerForKey:KEY_ICON inProfile:self.profile];
+    return [self tabGraphicForProfile:self.profile];
+}
+
+- (NSImage *)tabGraphicForProfile:(Profile *)profile {
+    const iTermProfileIcon icon = [iTermProfilePreferences unsignedIntegerForKey:KEY_ICON inProfile:profile];
     switch (icon) {
         case iTermProfileIconNone:
             return nil;
             
         case iTermProfileIconAutomatic:
-            [_graphicSource updateImageForProcessID:self.shell.pid enabled:[self shouldShowTabGraphic]];
+            [_graphicSource updateImageForProcessID:self.shell.pid enabled:[self shouldShowTabGraphicForProfile:profile]];
             return _graphicSource.image;
 
         case iTermProfileIconCustom:
-            return [self customIconImage];
+            return [self customIconImageForProfile:profile];
     }
 
     DLog(@"Unexpected icon setting %@", @(icon));
@@ -3939,10 +3949,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSImage *)customIconImage {
+    return [self customIconImageForProfile:self.profile];
+}
+
+- (NSImage *)customIconImageForProfile:(Profile *)profile {
     if (!_customIcon) {
         _customIcon = [[iTermCacheableImage alloc] init];
     }
-    NSString *path = [iTermProfilePreferences stringForKey:KEY_ICON_PATH inProfile:self.profile];
+    NSString *path = [iTermProfilePreferences stringForKey:KEY_ICON_PATH inProfile:profile];
     return [_customIcon imageAtPath:path ofSize:NSMakeSize(16, 16) flipped:YES];
 }
 
@@ -10462,7 +10476,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)jobPidDidChange {
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
     if ([_graphicSource updateImageForProcessID:self.shell.pid enabled:[self shouldShowTabGraphic]]) {
-        [self.delegate sessionDidChangeGraphic:self];
+        [self.delegate sessionDidChangeGraphic:self shouldShow:self.shouldShowTabGraphic image:self.tabGraphic];
     }
 }
 

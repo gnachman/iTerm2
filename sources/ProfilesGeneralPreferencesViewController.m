@@ -241,6 +241,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     const iTermProfileIcon icon = [self unsignedIntegerForKey:KEY_ICON];
     if (icon == iTermProfileIconCustom && _imageWell.image == nil) {
         [self openFilePicker];
+        _imageWell.hidden = NO;
+    } else if (icon != iTermProfileIconCustom) {
+        _imageWell.hidden = YES;
+    } else {
+        _imageWell.hidden = NO;
     }
 }
 

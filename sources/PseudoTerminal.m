@@ -7234,6 +7234,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (NSImage *)rootTerminalViewCurrentTabIcon {
+    return self.currentSession.shouldShowTabGraphic ? self.currentSession.tabGraphic : nil;
+}
+
 - (void)updateTabBarStyle {
     id<PSMTabStyle> style;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
@@ -8641,8 +8645,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)tabDidChangeGraphic:(PTYTab *)tab {
+- (void)tabDidChangeGraphic:(PTYTab *)tab shouldShow:(BOOL)shouldShow image:(NSImage *)image {
     [_contentView.tabBarControl graphicDidChangeForTabWithIdentifier:tab];
+    [_contentView setWindowTitleIcon:shouldShow ? image : nil];
 }
 
 - (void)tabDidChangeTmuxLayout:(PTYTab *)tab {
