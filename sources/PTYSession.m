@@ -2035,7 +2035,10 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
     }
-
+    if ([iTermAdvancedSettingsModel shouldSetLCTerminal]) {
+        env[@"LC_TERMINAL"] = @"iTerm2";
+        env[@"LC_TERMINAL_VERSION"] = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+    }
     if (env[PWD_ENVNAME] == nil) {
         // Set "PWD"
         env[PWD_ENVNAME] = [PWD_ENVVALUE stringByExpandingTildeInPath];

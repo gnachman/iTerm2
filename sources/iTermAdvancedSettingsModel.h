@@ -178,6 +178,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)sensitiveScrollWheel;
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
 + (double)shortLivedSessionDuration;
++ (BOOL)shouldSetLCTerminal;
 + (BOOL)showBlockBoundaries;
 + (BOOL)showMetalFPSmeter;
 + (BOOL)showSessionRestoredBanner;
