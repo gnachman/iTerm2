@@ -162,6 +162,15 @@ extern BOOL gDebugLogging;
 #define ITConservativeBetaAssert(condition, args...)
 #endif
 
+#define ITAssertWithMessage(condition, args...) \
+    do { \
+        if (!(condition)) { \
+            DLog(@"Crashing because %s from:\n%@", #condition, [NSThread callStackSymbols]); \
+            ELog(args); \
+            __assert_rtn(__func__, __FILE__, __LINE__, [[NSString stringWithFormat:@#condition ": " args] UTF8String]); \
+        } \
+    } while (0)
+
 void ToggleDebugLogging(void);
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 void LogForNextCrash(const char *file, int line, const char *function, NSString* value, BOOL force);

@@ -48,6 +48,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
 
     instance = [[self alloc] init];
+    ITAssertWithMessage(instance, @"-[iTermBitmapContextPool init] returned nil");
     threadDict[key] = instance;
     return instance;
 }
@@ -77,14 +78,14 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     static CGColorSpaceRef colorSpace;
     dispatch_once(&onceToken, ^{
         colorSpace = CGColorSpaceCreateDeviceRGB();
-        assert(colorSpace);
+        ITAssertWithMessage(colorSpace, @"Colorspace is %@", colorSpace);
     });
     return colorSpace;
 }
 
 - (CGContextRef)allocateBitmapContextOfSize:(CGSize)size {
     CGContextRef context = [self internalAllocateBitmapContextOfSize:size];
-    assert(context);
+    ITAssertWithMessage(context, @"nil context with size %@", NSStringFromSize(size));
     CGContextSaveGState(context);
     return context;
 }
@@ -109,12 +110,12 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     if (_array.count) {
         CGContextRef first = (__bridge CGContextRef)(_array.firstObject);
         [_array removeObjectAtIndex:0];
-        assert(first);
+        ITAssertWithMessage(first, @"first array element is nil. Array length is now %@", @(_array.count));
         return first;
     }
-    assert(size.width > 0);
-    assert(size.width * 4 > 0);
-    assert(size.height > 0);
+    ITAssertWithMessage(size.width > 0, @"size is %@", NSStringFromSize(size));
+    ITAssertWithMessage(size.width * 4 > 0, @"size is %@", NSStringFromSize(size));
+    ITAssertWithMessage(size.height > 0, @"size is %@", NSStringFromSize(size));
     CGContextRef context = CGBitmapContextCreate(NULL,
                                                  size.width,
                                                  size.height,
@@ -122,7 +123,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                                  size.width * 4,
                                                  [iTermBitmapContextPool colorSpace],
                                                  kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
-    assert(context);
+    ITAssertWithMessage(context, @"nil CGContextRef. size is %@. colorspace is %@", NSStringFromSize(size), [iTermBitmapContextPool colorSpace]);
     return context;
 }
 @end
@@ -232,9 +233,10 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                        fakeItalic:(BOOL)fakeItalic
                       antialiased:(BOOL)antialiased
                            radius:(int)radius {
-    ITDebugAssert(font);
-    ITDebugAssert(size.width > 0 && size.height > 0);
-    ITDebugAssert(scale > 0);
+    assert(font);
+    assert(size.width > 0);
+    assert(size.height > 0);
+    assert(scale > 0);
 
     if (string.length == 0) {
         return nil;
@@ -282,10 +284,10 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 - (CGContextRef)contextForIteration:(NSInteger)iteration {
-    assert(iteration >= 0 && iteration < 4);
-    assert(iteration < _numberOfIterationsNeeded);
+    ITAssertWithMessage(iteration >= 0 && iteration < 4, @"requested iteration %@ out of %@", @(iteration), @(_numberOfIterationsNeeded));
+    ITAssertWithMessage(iteration < _numberOfIterationsNeeded, @"requested iteration %@ out of %@", @(iteration), @(_numberOfIterationsNeeded));
     CGContextRef context = _contexts[iteration];
-    assert(context);
+    ITAssertWithMessage(context, @"nil context for iteration %@/%@", @(iteration), @(_numberOfIterationsNeeded));
     return context;
 }
 
@@ -323,9 +325,9 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
         // Sanity checks to ensure we don't traipse off the end of the allocated region.
         const size_t bytesPerRow = CGBitmapContextGetBytesPerRow(context);
-        assert(bytesPerRow >= _size.width * 4);
+        ITAssertWithMessage(bytesPerRow >= _size.width * 4, @"bytesPerRow is %@ too big for size %@", @(bytesPerRow), NSStringFromSize(_size));
         const size_t height = CGBitmapContextGetHeight(context);
-        assert(height >= _size.height);
+        ITAssertWithMessage(height >= _size.height, @"bitmap height is %@ for context %@, too big for size %@", @(height), context, NSStringFromSize(_size));
     }
 
     // i indexes into the array of pixels, always to the red value.
@@ -561,7 +563,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
     for (int i = 0; i < _numberOfIterationsNeeded; i++) {
         _contexts[i] = [iTermCharacterSource newBitmapContextOfSize:_size];
-        assert(_contexts[i]);
+        ITAssertWithMessage(_contexts[i], @"context %@/%@ is null for size %@", @(i), @(_numberOfIterationsNeeded), NSStringFromSize(_size));
     }
 }
 
@@ -575,7 +577,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 - (void)setTextColorForIteration:(NSInteger)iteration context:(CGContextRef)context {
-    assert(context);
+    ITAssertWithMessage(context, @"nil context for iteration %@/%@", @(iteration), @(_numberOfIterationsNeeded));
     CGColorRef color = [[self textColorForIteration:iteration] CGColor];
     CGContextSetFillColorWithColor(context, color);
     CGContextSetStrokeColorWithColor(context, color);
@@ -693,7 +695,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
             case 3:
                 return [NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1];
         }
-        assert(NO);
+        ITAssertWithMessage(NO, @"bogus iteration %@", @(iteration));
     }
     return [NSColor blackColor];
 }
