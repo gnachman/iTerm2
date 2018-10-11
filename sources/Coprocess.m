@@ -154,6 +154,9 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
 }
 
 + (BOOL)shouldIgnoreErrorsFromCommand:(NSString *)command {
+    if (!command) {
+        return YES;
+    }
     return ([[[NSUserDefaults standardUserDefaults] objectForKey:iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey] containsObject:command]);
 }
 

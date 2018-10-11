@@ -9705,6 +9705,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([Coprocess shouldIgnoreErrorsFromCommand:coprocess.command]) {
         return;
     }
+    NSString *command = [[coprocess.command copy] autorelease];
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:[NSString stringWithFormat:@"Coprocess “%@” terminated with output on stderr.", coprocess.command]
                                                      style:kiTermAnnouncementViewStyleWarning
@@ -9715,7 +9716,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         [errors writeToFile:filename atomically:NO encoding:NSUTF8StringEncoding error:nil];
                                                         [[NSWorkspace sharedWorkspace] openFile:filename];
                                                     } else if (selection == 1) {
-                                                        [Coprocess setSilentlyIgnoreErrors:YES fromCommand:coprocess.command];
+                                                        [Coprocess setSilentlyIgnoreErrors:YES fromCommand:command];
                                                     }
                                                 }];
     [self queueAnnouncement:announcement identifier:[[NSUUID UUID] UUIDString]];
