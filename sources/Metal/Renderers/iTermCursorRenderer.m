@@ -353,16 +353,25 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
-    const CGFloat width = [iTermAdvancedSettingsModel verticalBarCursorWidth];
+    const CGFloat width = [self barCursorWidth];
     tState.vertexBuffer =
         [_cellRenderer newQuadOfSize:CGSizeMake(tState.configuration.scale * width,
                                                 tState.cellConfiguration.cellSize.height)
                          poolContext:tState.poolContext];
 }
 
+- (CGFloat)barCursorWidth {
+    return [iTermAdvancedSettingsModel verticalBarCursorWidth];
+}
+
 @end
 
 @implementation iTermIMECursorRenderer
+
+- (CGFloat)barCursorWidth {
+    return 2;
+}
+
 @end
 
 @implementation iTermBlockCursorRenderer
