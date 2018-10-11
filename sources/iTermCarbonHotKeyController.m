@@ -141,7 +141,9 @@
 #pragma mark - Notifications
 
 - (void)sessionDidBecomeActive:(NSNotification *)notification {
-    assert(_suspended);
+    if (!_suspended) {
+        return;
+    }
     NSDictionary<iTermTuple<NSNumber *, NSNumber *> *, NSArray<iTermHotKey *> *> *hotkeysByShortcut =
         [_suspendedHotKeys classifyWithBlock:^id(iTermHotKey *hotkey) {
             return [iTermTuple tupleWithObject:@(hotkey.shortcut.keyCode) andObject:@(hotkey.shortcut.modifiers)];
