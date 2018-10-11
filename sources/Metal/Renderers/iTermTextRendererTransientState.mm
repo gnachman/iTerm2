@@ -553,8 +553,6 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
     vector_float4 textColor = attributes[x].foregroundColor;
     if (inMarkedRange) {
         // Marked range gets a yellow underline.
-        underlineColor = iTermIMEColor;
-        textColor = iTermIMEColor;
         underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
     }
 
@@ -770,8 +768,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                     piu->underlineColor = iTermAnnotationUnderlineColor;
                 } else if (inMarkedRange) {
                     piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-                    piu->underlineColor = iTermIMEColor;
-                    piu->textColor = iTermIMEColor;
+                    piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
                 } else {
                     piu->underlineStyle = attributes[x].underlineStyle;
                     piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 1 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;

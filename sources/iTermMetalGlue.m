@@ -705,6 +705,19 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     BOOL foundCursor = NO;
     BOOL justWrapped = NO;
     BOOL foundStart = NO;
+    if (coord.x == gridWidth) {
+        coord.x = 0;
+        coord.y++;
+        justWrapped = YES;
+    }
+    
+    // If the screen contents are getting moved up to make room for a multi-row IME line, clear out the lines at the bottom it adds.
+    for (int i = 0; i < numberOfIMELines; i++) {
+        const int y = _screenCharLines.count - i - 1;
+        const iTermData *lineData = _screenCharLines[y];
+        screen_char_t *line = (screen_char_t *)lineData.mutableBytes;
+        memset(line, 0, sizeof(screen_char_t) * gridWidth);
+    }
     _imeInfo = [[iTermMetalIMEInfo alloc] init];
     for (int i = 0; i < len; i++) {
         if (coord.y >= 0 && coord.y < _screenCharLines.count) {
@@ -715,10 +728,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             const iTermData *lineData = _screenCharLines[coord.y];
             screen_char_t *line = (screen_char_t *)lineData.mutableBytes;
             screen_char_t c = buf[i];
-            c.foregroundColor = iTermIMEColor.x * 255;
-            c.fgGreen = iTermIMEColor.y * 255;
-            c.fgBlue = iTermIMEColor.z * 255;
-            c.foregroundColorMode = ColorMode24bit;
+            c.foregroundColor = ALTSEM_DEFAULT;
+            c.fgGreen = 0;
+            c.fgBlue = 0;
+            c.foregroundColorMode = ColorModeAlternate;
 
             c.backgroundColor = ALTSEM_DEFAULT;
             c.bgGreen = 0;
@@ -729,8 +742,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
             if (i + 1 < len &&
                 coord.x == gridWidth -1 &&
-                line[i+1].code == DWC_RIGHT &&
-                !line[i+1].complexChar) {
+                buf[i+1].code == DWC_RIGHT &&
+                !buf[i+1].complexChar) {
                 // Bump DWC to start of next line instead of splitting it
                 c.code = ' ';
                 c.complexChar = NO;
