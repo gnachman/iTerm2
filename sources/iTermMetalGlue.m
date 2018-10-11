@@ -356,7 +356,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     _blinkingItemsVisible = drawingHelper.blinkingItemsVisible;
     _inputMethodMarkedRange = drawingHelper.inputMethodMarkedRange;
     _asciiAntialias = drawingHelper.asciiAntiAlias;
-    _nonasciiAntialias = drawingHelper.nonAsciiAntiAlias;
+    _nonasciiAntialias = _useNonAsciiFont ? drawingHelper.nonAsciiAntiAlias : _asciiAntialias;
     _showBroadcastStripes = drawingHelper.showStripes;
     _processedDefaultBackgroundColor = [drawingHelper defaultBackgroundColor];
     _timestampsEnabled = drawingHelper.showTimestamps;
