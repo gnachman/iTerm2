@@ -77,12 +77,14 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     static CGColorSpaceRef colorSpace;
     dispatch_once(&onceToken, ^{
         colorSpace = CGColorSpaceCreateDeviceRGB();
+        assert(colorSpace);
     });
     return colorSpace;
 }
 
 - (CGContextRef)allocateBitmapContextOfSize:(CGSize)size {
     CGContextRef context = [self internalAllocateBitmapContextOfSize:size];
+    assert(context);
     CGContextSaveGState(context);
     return context;
 }
@@ -107,9 +109,12 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     if (_array.count) {
         CGContextRef first = (__bridge CGContextRef)(_array.firstObject);
         [_array removeObjectAtIndex:0];
+        assert(first);
         return first;
     }
-    
+    assert(size.width > 0);
+    assert(size.width * 4 > 0);
+    assert(size.height > 0);
     CGContextRef context = CGBitmapContextCreate(NULL,
                                                  size.width,
                                                  size.height,
@@ -117,6 +122,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                                  size.width * 4,
                                                  [iTermBitmapContextPool colorSpace],
                                                  kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
+    assert(context);
     return context;
 }
 @end
@@ -154,7 +160,9 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 + (CGContextRef)newBitmapContextOfSize:(CGSize)size {
-    return [[iTermBitmapContextPool sharedInstance] allocateBitmapContextOfSize:size];
+    iTermBitmapContextPool *pool = [iTermBitmapContextPool sharedInstance];
+    assert(pool);
+    return [pool allocateBitmapContextOfSize:size];
 }
 
 + (CGContextRef)onePixelContext {
@@ -274,6 +282,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 - (CGContextRef)contextForIteration:(NSInteger)iteration {
+    assert(iteration >= 0 && iteration < 4);
+    assert(iteration < _numberOfIterationsNeeded);
     CGContextRef context = _contexts[iteration];
     assert(context);
     return context;
@@ -551,6 +561,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
     for (int i = 0; i < _numberOfIterationsNeeded; i++) {
         _contexts[i] = [iTermCharacterSource newBitmapContextOfSize:_size];
+        assert(_contexts[i]);
     }
 }
 
