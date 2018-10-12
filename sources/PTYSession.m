@@ -2015,7 +2015,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!_profile[KEY_SET_LOCALE_VARS] ||
         [_profile[KEY_SET_LOCALE_VARS] boolValue]) {
         DLog(@"Setting locale vars...");
-        NSString *lang = [self _lang];
+        NSString *lang = [self valueForLanguageEnvironmentVariable];
         if (lang) {
             DLog(@"set LANG=%@", lang);
             env[@"LANG"] = lang;
@@ -7812,46 +7812,48 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (NSArray<NSString *>*)possibleLocales {
-    NSString* countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
-    NSString* languageCode = nil;
-    if (@available(macOS 10.14, *)) {
-        NSArray *options = [[NSLocale preferredLanguages] mapWithBlock:^id(NSString *mostPreferredLanguage) {
-            NSUInteger index = [mostPreferredLanguage rangeOfString:@"-" options:NSBackwardsSearch].location;
-            if (index == NSNotFound) {
-                return nil;
-            }
-            return [self localeForLanguage:[mostPreferredLanguage substringToIndex:index] country:countryCode];
-        }];
-        if (options.count > 0) {
-            return options;
+- (NSString *)valueForLanguageEnvironmentVariable {
+    DLog(@"Looking for a locale...");
+    NSArray<NSString *> *languageCodes = [[NSLocale preferredLanguages] mapWithBlock:^id(NSString *language) {
+        DLog(@"Found preferred language: %@", language);
+        NSUInteger index = [language rangeOfString:@"-" options:0].location;
+        if (index == NSNotFound) {
+            return language;
+        } else {
+            return [language substringToIndex:index];
         }
-    }
-    // 10.13 code path. On 10.14 the language is always en.
-    languageCode = [[NSLocale currentLocale] objectForKey:NSLocaleLanguageCode];
-    NSString *theLocale = [self localeForLanguage:languageCode country:countryCode];
-    DLog(@"Taking legacy code path and returning locale of %@", theLocale);
-    return theLocale ? @[ theLocale ] : nil;
-}
+    }];
+    DLog(@"Preferred languages are: %@", languageCodes);
 
-- (NSString*)_lang {
-    NSArray<NSString *> *possibleLocales = [self possibleLocales];
-    NSString *encoding = [self encodingName];
-    DLog(@"locale candidates=%@, encoding=%@", possibleLocales, encoding);
-    if (encoding && possibleLocales.count) {
-        NSArray<NSString *> *candidatesWithEncoding = [possibleLocales mapWithBlock:^id(NSString *locale) {
-            return [NSString stringWithFormat:@"%@.%@", locale, encoding];
+    NSString *const countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
+    NSArray<NSString *> *languagePlusCountryCodes = @[];
+    if (countryCode) {
+        languagePlusCountryCodes = [languageCodes mapWithBlock:^id(NSString *language) {
+            return [self localeForLanguage:language country:countryCode];
         }];
-        DLog(@"Locale candidates with encoding are %@", candidatesWithEncoding);
-        NSString *result = [candidatesWithEncoding objectPassingTest:^BOOL(NSString *locale, NSUInteger index, BOOL *stop) {
-            return [self _localeIsSupported:locale];
-        }];
-        DLog(@"First supported locale is %@", result);
-        return result;
-    } else {
-        DLog(@"No locale or encoding, returning nil language");
-        return nil;
     }
+    DLog(@"Country code is %@. Combos are %@", countryCode, languagePlusCountryCodes);
+
+    NSString *encoding = [self encodingName];
+    NSArray<NSString *> *languageCountryEncoding = @[];
+    if (encoding) {
+        languageCountryEncoding = [languagePlusCountryCodes mapWithBlock:^id(NSString *languageCountry) {
+            return [NSString stringWithFormat:@"%@.%@", languageCountry, encoding];
+        }];
+    }
+    DLog(@"Encoding is %@. Combos are %@", encoding, languageCountryEncoding);
+
+    NSArray<NSString *> *candidates = [@[ languageCountryEncoding, languagePlusCountryCodes, languageCodes ] flattenedArray];
+    DLog(@"Candidates are: %@", candidates);
+    for (NSString *candidate in candidates) {
+        DLog(@"Check if %@ is supported", candidate);
+        if ([self _localeIsSupported:candidate]) {
+            DLog(@"YES. Using %@", candidate);
+            return candidate;
+        }
+        DLog(@"No");
+    }
+    return nil;
 }
 
 - (void)setDvrFrame {

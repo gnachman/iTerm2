@@ -21,6 +21,8 @@
 - (NSArray *)mapWithBlock:(id (^)(ObjectType anObject))block;
 - (NSArray *)flatMapWithBlock:(NSArray *(^)(ObjectType anObject))block;
 
+- (NSArray<ObjectType> *)flattenedArray;
+
 - (id)reduceWithBlock:(id (^)(ObjectType first, ObjectType second))block;
 - (id)reduceWithFirstValue:(id)firstValue block:(id (^)(id first, ObjectType second))block;
 
