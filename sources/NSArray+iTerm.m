@@ -67,6 +67,18 @@
     return temp;
 }
 
+- (NSArray *)flattenedArray {
+    NSMutableArray *result = [NSMutableArray array];
+    for (id object in self) {
+        if ([object isKindOfClass:[NSArray class]]) {
+            [result addObjectsFromArray:object];
+        } else {
+            [result addObject:object];
+        }
+    }
+    return result;
+}
+
 - (NSArray *)filteredArrayUsingBlock:(BOOL (^NS_NOESCAPE)(id))block {
     NSIndexSet *indexes = [self indexesOfObjectsPassingTest:^BOOL(id  _Nonnull obj,
                                                                   NSUInteger idx,
