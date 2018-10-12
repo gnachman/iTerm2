@@ -1340,6 +1340,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return self.shouldUseMinimalStyle;
 }
 
+- (BOOL)ptyWindowFullScreen {
+    return self.lionFullScreen || togglingLionFullScreen_;
+}
+
 - (void)closeSession:(PTYSession *)aSession {
     [self closeSession:aSession soft:NO];
 }

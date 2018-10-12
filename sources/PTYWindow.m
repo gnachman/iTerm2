@@ -60,6 +60,10 @@ const NSTimeInterval iTermWindowTitleChangeMinimumInterval = 0.1;
 @interface NSThemeFrame : NSTitledFrame
 @end
 
+@interface NSThemeFrame (Private)
+- (CGFloat)_titlebarHeight;
+@end
+
 @interface iTermThemeFrame : NSThemeFrame
 @end
 
@@ -67,6 +71,11 @@ const NSTimeInterval iTermWindowTitleChangeMinimumInterval = 0.1;
 
 // Height of built-in titlebar to create.
 - (CGFloat)_titlebarHeight {
+    if ([self.window.ptyWindow.ptyDelegate ptyWindowFullScreen]) {
+        if ([[[self class] superclass] instancesRespondToSelector:_cmd]) {
+            return [super _titlebarHeight];
+        }
+    }
     return 0;
 }
 

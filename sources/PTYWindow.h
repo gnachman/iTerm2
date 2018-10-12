@@ -53,7 +53,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 - (NSColor *)terminalWindowDecorationBackgroundColor;
 - (NSColor *)terminalWindowDecorationTextColor;
 - (BOOL)terminalWindowUseMinimalStyle;
-
+- (BOOL)ptyWindowFullScreen;
 @end
 
 // Common methods implemented by terminal windows of both kinds.
