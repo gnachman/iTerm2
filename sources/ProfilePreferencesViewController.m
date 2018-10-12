@@ -467,7 +467,15 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 
     // Animated
     _desiredFrame = frame;
+    const NSTimeInterval duration = [window animationResizeTime:frame];
     [window setFrame:frame display:YES animate:animated];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(duration * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        NSRect rect = frame;
+        rect.size.width += 1;
+        [window setFrame:rect display:YES];
+        rect.size.width -= 1;
+        [window setFrame:rect display:YES];
+    });
 }
 
 - (void)invalidateSavedSize {
