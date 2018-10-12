@@ -522,8 +522,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)_refreshLabels:(id)sender {
-    [tabViewItem_ setLabel:[[self activeSession] name]];
-    [parentWindow_ setWindowTitle];
+    if ([self activeSession]) {
+        [tabViewItem_ setLabel:[[self activeSession] name]];
+        [parentWindow_ setWindowTitle];
+    }
 }
 
 - (void)setBell:(BOOL)flag {
