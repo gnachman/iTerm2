@@ -465,8 +465,12 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
         [window.animator setFrame:frame display:YES];
     } completionHandler:^{
         self->_desiredFrame = NSZeroRect;
+        NSRect rect = frame;
+        rect.size.width += 1;
+        [window setFrame:rect display:YES];
+        rect.size.width -= 1;
+        [window setFrame:rect display:YES];
     }];
-
 }
 
 - (void)invalidateSavedSize {
