@@ -40,5 +40,7 @@ typedef NS_OPTIONS(NSUInteger, PTYTabState) {
 - (void)tab:(PTYTab *)tab didSetMetalEnabled:(BOOL)useMetal;
 - (BOOL)tabCanUseMetal:(PTYTab *)tab reason:(out iTermMetalUnavailableReason *)reason;
 - (BOOL)tabShouldUseTransparency:(PTYTab *)tab;
+- (void)numberOfSessionsDidChangeInTab:(PTYTab *)tab;
+- (void)sessionBackgroundColorDidChangeInTab:(PTYTab *)tab;
 
 @end
