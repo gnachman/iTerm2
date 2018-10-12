@@ -926,6 +926,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar {
+    if (togglingLionFullScreen_) {
+        return NO;
+    }
     if (self.anyFullScreen) {
         return NO;
     }
@@ -7149,6 +7152,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)rootTerminalViewWindowNumberLabelShouldBeVisible {
     if (@available(macOS 10.14, *)) { } else {
+        return NO;
+    }
+    if (self.lionFullScreen || togglingLionFullScreen_) {
         return NO;
     }
     if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
