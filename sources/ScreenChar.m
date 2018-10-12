@@ -125,6 +125,20 @@ static BOOL hasWrapped = NO;
 @synthesize line = _line;
 @synthesize length = _length;
 @synthesize eol = _eol;
+
+- (instancetype)initWithLine:(screen_char_t *)line
+                      length:(int)length
+                continuation:(screen_char_t)continuation {
+    self = [super init];
+    if (self) {
+        _line = line;
+        _length = length;
+        _continuation = continuation;
+        _eol = continuation.code;
+    }
+    return self;
+}
+
 @end
 
 static void CreateComplexCharMapIfNeeded() {
