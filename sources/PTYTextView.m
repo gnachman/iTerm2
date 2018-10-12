@@ -1207,7 +1207,9 @@ static const int kDragThreshold = 3;
     if (![_delegate textViewShouldDrawRect]) {
         // Metal code path in use
         [super drawRect:rect];
-        [self maybeInvalidateWindowShadow];
+        if (![iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyOnMojave]) {
+            [self maybeInvalidateWindowShadow];
+        }
         return;
     }
     if (_dataSource.width <= 0) {
