@@ -402,6 +402,7 @@ static NSDate* lastResizeDate_;
     // The metal view looks awful while resizing because it insists on scaling
     // its contents. Just switch off the metal renderer until it catches up.
     [_delegate sessionViewNeedsMetalFrameUpdate];
+    [self reallyUpdateMetalViewFrame];
 }
 
 - (void)reallyUpdateMetalViewFrame {

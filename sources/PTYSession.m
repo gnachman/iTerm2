@@ -9661,6 +9661,7 @@ ITERM_WEAKLY_REFERENCEABLE
             return;
         }
 
+        return;
         _metalFrameChangePending = YES;
         id token = [self temporarilyDisableMetal];
         [self.textview setNeedsDisplay:YES];
