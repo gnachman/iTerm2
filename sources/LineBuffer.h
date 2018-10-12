@@ -102,6 +102,11 @@
                                   width:(int)width
                            continuation:(screen_char_t *)continuation;
 
+// This is the fast way to get a bunch of lines at once.
+- (NSArray<ScreenCharArray *> *)wrappedLinesFromIndex:(int)lineNum
+                                                width:(int)width
+                                                count:(int)count;
+
 // Copy up to width chars from the last line into *ptr. The last line will be removed or
 // truncated from the buffer. Sets *includesEndOfLine to true if this line should have a
 // continuation marker.

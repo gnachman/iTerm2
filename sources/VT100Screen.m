@@ -1537,6 +1537,47 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [currentGrid_ screenCharsAtLineNumber:theIndex];
 }
 
+- (NSArray<ScreenCharArray *> *)gridLinesInRange:(const NSRange)range {
+    const int width = currentGrid_.size.width;
+    const int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:width];
+    NSMutableArray<ScreenCharArray *> *result = [NSMutableArray array];
+    for (NSInteger i = range.location; i < NSMaxRange(range); i++) {
+        screen_char_t *line = [currentGrid_ screenCharsAtLineNumber:i - numLinesInLineBuffer];
+        ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:line
+                                                                length:width
+                                                          continuation:line[width]];
+        [result addObject:array];
+    }
+    return result;
+}
+
+- (NSArray<ScreenCharArray *> *)historyLinesInRange:(const NSRange)range {
+    return [linebuffer_ wrappedLinesFromIndex:range.location width:currentGrid_.size.width count:range.length];
+}
+
+- (NSArray<ScreenCharArray *> *)linesInRange:(NSRange)range {
+    const int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    const NSRange gridRange = NSMakeRange(numLinesInLineBuffer, currentGrid_.size.height);
+    const NSRange historyRange = NSMakeRange(0, numLinesInLineBuffer);
+    const NSRange rangeForGrid = NSIntersectionRange(range, gridRange);
+
+    NSArray<ScreenCharArray *> *gridLines = nil;
+    if (rangeForGrid.length > 0) {
+        gridLines = [self gridLinesInRange:rangeForGrid];
+    } else {
+        gridLines = @[];
+    }
+    const NSRange rangeForHistory = NSIntersectionRange(range, historyRange);
+    NSArray<ScreenCharArray *> *historyLines = nil;
+    if (rangeForHistory.length > 0) {
+        historyLines = [self historyLinesInRange:rangeForHistory];
+    } else {
+        historyLines = @[];
+    }
+
+    return [gridLines arrayByAddingObjectsFromArray:historyLines];
+}
+
 - (int)numberOfScrollbackLines
 {
     return [linebuffer_ numLinesWithWidth:currentGrid_.size.width];

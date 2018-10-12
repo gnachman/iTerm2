@@ -6776,14 +6776,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (lineEnd > [_dataSource numberOfLines]) {
         lineEnd = [_dataSource numberOfLines];
     }
-    for (int y = lineStart; y < lineEnd; y++) {
-        if (_blinkAllowed) {
+    NSArray<ScreenCharArray *> *lines = nil;
+    if (_blinkAllowed) {
+        lines = [_dataSource linesInRange:NSMakeRange(lineStart, lineEnd - lineStart)];
+    }
+    const NSInteger numLines = lines.count;
+
+    for (int y = lineStart, i = 0; y < lineEnd; y++, i++) {
+        if (_blinkAllowed && i < numLines) {
             // First, mark blinking chars as dirty.
-            screen_char_t* theLine = [_dataSource getLineAtIndex:y];
-            for (int x = 0; x < width; x++) {
-                BOOL charBlinks = [self charBlinks:theLine[x]];
+            screen_char_t *theLine = lines[i].line;
+            for (int x = 0; x < lines[i].length; x++) {
+                const BOOL charBlinks = theLine[x].blink;
                 anyBlinkers |= charBlinks;
-                BOOL blinked = redrawBlink && charBlinks;
+                const BOOL blinked = redrawBlink && charBlinks;
                 if (blinked) {
                     NSRect dirtyRect = [self visibleRect];
                     dirtyRect.origin.y = y * _lineHeight;

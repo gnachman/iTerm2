@@ -193,6 +193,12 @@ typedef struct screen_char_t
 @property (nonatomic, assign) screen_char_t *line;  // Assume const unless instructed otherwise
 @property (nonatomic, assign) int length;
 @property (nonatomic, assign) int eol;
+@property (nonatomic) screen_char_t continuation;
+
+- (instancetype)initWithLine:(screen_char_t *)line
+                      length:(int)length
+                continuation:(screen_char_t)continuation;
+
 @end
 
 // Standard unicode replacement string. Is a double-width character.

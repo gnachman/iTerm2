@@ -526,6 +526,56 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return nil;
 }
 
+- (NSArray<ScreenCharArray *> *)wrappedLinesFromIndex:(int)lineNum width:(int)width count:(int)count {
+    if (count <= 0) {
+        return @[];
+    }
+    NSMutableArray<ScreenCharArray *> *arrays = [NSMutableArray array];
+    int numberLeft = count;
+    int line = lineNum;
+    int i;
+    for (i = 0; i < [blocks count]; ++i) {
+        LineBlock *block = [blocks objectAtIndex:i];
+
+        // getNumLinesWithWrapWidth caches its result for the last-used width so
+        // this is usually faster than calling getWrappedLineWithWrapWidth since
+        // most calls to the latter will just decrement line and return NULL.
+        int block_lines = [block getNumLinesWithWrapWidth:width];
+        if (block_lines < line) {
+            line -= block_lines;
+            continue;
+        }
+
+        do {
+            int length, eol;
+            ScreenCharArray *lineResult = [[[ScreenCharArray alloc] init] autorelease];
+            screen_char_t continuation;
+            lineResult.line = [block getWrappedLineWithWrapWidth:width
+                                                         lineNum:&line
+                                                      lineLength:&length
+                                               includesEndOfLine:&eol
+                                                    continuation:&continuation];
+            if (!lineResult.line) {
+                return arrays;
+            }
+
+            lineResult.continuation = continuation;
+            lineResult.length = length;
+            lineResult.eol = eol;
+            NSAssert(lineResult.length <= width, @"Length too long");
+            [arrays addObject:lineResult];
+            numberLeft--;
+            line++;
+            if (numberLeft == 0) {
+                return arrays;
+            }
+        } while (numberLeft > 0 && block_lines >= line);
+    }
+    NSLog(@"Couldn't find line %d", lineNum);
+    NSAssert(NO, @"Tried to get non-existent line");
+    return nil;
+}
+
 - (int)numLinesWithWidth:(int)width {
     if (width == 0) {
         return 0;
