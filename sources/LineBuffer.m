@@ -400,51 +400,45 @@ static int RawNumLines(LineBuffer* buffer, int width) {
            continuation:(screen_char_t *)continuationPtr
 {
     ITBetaAssert(lineNum >= 0, @"Negative lineNum to copyLineToBuffer");
-    int line = lineNum;
-    for (LineBlock *block in _lineBlocks.blocks) {
-        ITBetaAssert(line >= 0, @"Negative lineNum BEFORE consuming block_lines");
+    int remainder = 0;
+    LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
+    ITBetaAssert(remainder >= 0, @"Negative lineNum BEFORE consuming block_lines");
+    if (!block) {
+        NSLog(@"Couldn't find line %d", lineNum);
+        NSAssert(NO, @"Tried to get non-existent line");
+        return NO;
+    }
 
-        // getNumLinesWithWrapWidth caches its result for the last-used width so
-        // this is usually faster than calling getWrappedLineWithWrapWidth since
-        // most calls to the latter will just decrement line and return NULL.
-        int block_lines = [block getNumLinesWithWrapWidth:width];
-        if (block_lines < line) {
-            line -= block_lines;
-            continue;
-        }
-        ITBetaAssert(line >= 0, @"Negative lineNum after consuming block_lines");
+    int length;
+    int eol;
+    screen_char_t continuation;
+    const int requestedLine = remainder;
+    screen_char_t* p = [block getWrappedLineWithWrapWidth:width
+                                                  lineNum:&remainder
+                                               lineLength:&length
+                                        includesEndOfLine:&eol
+                                             continuation:&continuation];
+    if (p == nil) {
+        ITAssertWithMessage(NO, @"Nil wrapped line %@ for block with width %@", @(requestedLine), @(width));
+        return NO;
+    }
 
-        int length;
-        int eol;
-        screen_char_t continuation;
-        const int requestedLine = line;
-        screen_char_t* p = [block getWrappedLineWithWrapWidth:width
-                                                      lineNum:&line
-                                                   lineLength:&length
-                                            includesEndOfLine:&eol
-                                                 continuation:&continuation];
-        if (continuationPtr) {
-            *continuationPtr = continuation;
-        }
-        if (p) {
-            NSAssert(length <= width, @"Length too long");
-            memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
-            [self extendContinuation:continuation inBuffer:buffer ofLength:length toWidth:width];
+    if (continuationPtr) {
+        *continuationPtr = continuation;
+    }
+    NSAssert(length <= width, @"Length too long");
+    memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
+    [self extendContinuation:continuation inBuffer:buffer ofLength:length toWidth:width];
 
-            if (requestedLine == 0 && [iTermAdvancedSettingsModel showBlockBoundaries]) {
-                for (int i = 0; i < width; i++) {
-                    buffer[i].code = 'X';
-                    buffer[i].complexChar = NO;
-                    buffer[i].image = NO;
-                    buffer[i].urlCode = 0;
-                }
-            }
-            return eol;
+    if (requestedLine == 0 && [iTermAdvancedSettingsModel showBlockBoundaries]) {
+        for (int i = 0; i < width; i++) {
+            buffer[i].code = 'X';
+            buffer[i].complexChar = NO;
+            buffer[i].image = NO;
+            buffer[i].urlCode = 0;
         }
     }
-    NSLog(@"Couldn't find line %d", lineNum);
-    NSAssert(NO, @"Tried to get non-existent line");
-    return NO;
+    return eol;
 }
 
 - (void)extendContinuation:(screen_char_t)continuation
