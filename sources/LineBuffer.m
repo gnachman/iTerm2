@@ -949,18 +949,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return position;
 }
 
-- (long long)absPositionOfFindContext:(FindContext *)findContext
-{
-    long long offset = droppedChars + findContext.offset;
+- (long long)absPositionOfFindContext:(FindContext *)findContext {
     int numBlocks = findContext.absBlockNum - num_dropped_blocks;
-    for (LineBlock *block in _lineBlocks.blocks) {
-        if (!numBlocks) {
-            break;
-        }
-        --numBlocks;
-        offset += [block rawSpaceUsed];
-    }
-    return offset;
+    return [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, numBlocks)] + findContext.offset;
 }
 
 - (int)positionForAbsPosition:(long long)absPosition
