@@ -944,10 +944,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (LineBufferPosition *)lastPosition {
     LineBufferPosition *position = [LineBufferPosition position];
 
-    position.absolutePosition = droppedChars;
-    for (LineBlock *block in _lineBlocks.blocks) {
-        position.absolutePosition = position.absolutePosition + [block rawSpaceUsed];
-    }
+    position.absolutePosition = droppedChars + _lineBlocks.rawSpaceUsed;
 
     return position;
 }
