@@ -461,31 +461,27 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
                                   width:(int)width
                            continuation:(screen_char_t *)continuation {
-    int line = lineNum;
-    ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
-    for (LineBlock *block in _lineBlocks.blocks) {
-        // getNumLinesWithWrapWidth caches its result for the last-used width so
-        // this is usually faster than calling getWrappedLineWithWrapWidth since
-        // most calls to the latter will just decrement line and return NULL.
-        int block_lines = [block getNumLinesWithWrapWidth:width];
-        if (block_lines < line) {
-            line -= block_lines;
-            continue;
-        }
-
-        int length, eol;
-        result.line = [block getWrappedLineWithWrapWidth:width
-                                                 lineNum:&line
-                                              lineLength:&length
-                                       includesEndOfLine:&eol
-                                            continuation:continuation];
-        if (result.line) {
-            result.length = length;
-            result.eol = eol;
-            NSAssert(result.length <= width, @"Length too long");
-            return result;
-        }
+    int remainder = 0;
+    LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
+    if (!block) {
+        ITAssertWithMessage(NO, @"Failed to find line %@ with width %@", @(lineNum), @(width));
+        return nil;
     }
+
+    int length, eol;
+    ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
+    result.line = [block getWrappedLineWithWrapWidth:width
+                                             lineNum:&remainder
+                                          lineLength:&length
+                                   includesEndOfLine:&eol
+                                        continuation:continuation];
+    if (result.line) {
+        result.length = length;
+        result.eol = eol;
+        NSAssert(result.length <= width, @"Length too long");
+        return result;
+    }
+
     NSLog(@"Couldn't find line %d", lineNum);
     NSAssert(NO, @"Tried to get non-existent line");
     return nil;
