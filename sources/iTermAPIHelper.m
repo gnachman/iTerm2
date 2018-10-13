@@ -925,6 +925,7 @@ static id sAPIHelperInstance;
 }
 
 - (NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *)subscriptionsForVariableChangeScope:(ITMVariableScope)scope {
+    [self createSubscriptionDictionariesIfNeeded];
     switch (scope) {
         case ITMVariableScope_App:
             return _appVariableSubscriptions;
