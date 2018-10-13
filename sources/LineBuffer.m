@@ -720,7 +720,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
          multipleResults:((context.options & FindMultipleResults) != 0)];
     NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context.results count]];
     BOOL haveOutOfRangeResults = NO;
-    int blockPosition = _lineBlocks.rawSpaceUsed;
+    int blockPosition = [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, context.absBlockNum - num_dropped_blocks)];
     const int stopAt = stopPosition.absolutePosition - droppedChars;
     for (ResultRange* range in context.results) {
         range->position += blockPosition;
