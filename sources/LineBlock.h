@@ -23,6 +23,8 @@ typedef struct {
     int width_for_double_width_characters_cache;
 } LineBlockMetadata;
 
+extern NSString *const iTermLineBlockDidChangeNotification;
+
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
 @interface LineBlock : NSObject <NSCopying>

@@ -31,6 +31,8 @@ NSString *const kLineBlockIsPartialKey = @"Is Partial";
 NSString *const kLineBlockMetadataKey = @"Metadata";
 NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
 
+NSString *const iTermLineBlockDidChangeNotification = @"iTermLineBlockDidChangeNotification";
+
 void EnableDoubleWidthCharacterLineCache() {
     gEnableDoubleWidthCharacterLineCache = YES;
 }
@@ -439,6 +441,8 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
 #endif
     }
     is_partial = partial;
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermLineBlockDidChangeNotification object:self];
     return YES;
 }
 
@@ -790,6 +794,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     }
     // refresh cache
     cached_numlines_width = -1;
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermLineBlockDidChangeNotification object:self];
     return YES;
 }
 
@@ -910,6 +915,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 #ifdef TEST_LINEBUFFER_SANITY
             [self checkAndResetCachedNumlines:"dropLines" width: width];
 #endif
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermLineBlockDidChangeNotification object:self];
             return orig_n;
         }
         prev = cll;
@@ -922,6 +928,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     start_offset = 0;
     first_entry = 0;
     *charsDropped = [self rawSpaceUsed];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermLineBlockDidChangeNotification object:self];
     return orig_n - n;
 }
 
