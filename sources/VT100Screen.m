@@ -440,10 +440,10 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     return currentGrid_.size;
 }
 
-- (void)setSize:(VT100GridSize)newSize {
+- (BOOL)shouldSetSizeTo:(VT100GridSize)size {
     [self.temporaryDoubleBuffer reset];
 
-    DLog(@"Resize session to %@", VT100GridSizeDescription(newSize));
+    DLog(@"Resize session to %@", VT100GridSizeDescription(size));
     DLog(@"Before:\n%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
     DLog(@"Cursor at %d,%d", currentGrid_.cursorX, currentGrid_.cursorY);
     if (commandStartX_ != -1) {
@@ -452,357 +452,362 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
     }
     self.lastCommandMark = nil;
 
-    newSize.width = MAX(newSize.width, 1);
-    newSize.height = MAX(newSize.height, 1);
     if (currentGrid_.size.width == 0 ||
         currentGrid_.size.height == 0 ||
-        (newSize.width == currentGrid_.size.width &&
-         newSize.height == currentGrid_.size.height)) {
-            return;
+        (size.width == currentGrid_.size.width &&
+         size.height == currentGrid_.size.height)) {
+        return NO;
     }
-    VT100GridSize oldSize = currentGrid_.size;
+    return YES;
+}
 
-    iTermSelection *selection = [delegate_ screenSelection];
+- (VT100GridSize)safeSizeForSize:(VT100GridSize)proposedSize {
+    VT100GridSize size;
+    size.width = MAX(proposedSize.width, 1);
+    size.height = MAX(proposedSize.height, 1);
+    return size;
+}
+
+- (void)willSetSizeWithSelection:(iTermSelection *)selection {
     if (selection.live) {
         [selection endLiveSelection];
     }
     [selection removeWindowsWithWidth:self.width];
-    BOOL couldHaveSelection = [delegate_ screenHasView] && selection.hasSelection;
+}
 
-    int usedHeight = [currentGrid_ numberOfLinesUsed];
-
-    VT100Grid *copyOfAltGrid = [[altGrid_ copy] autorelease];
-    LineBuffer *realLineBuffer = linebuffer_;
-
-    // This is an array of tuples:
-    // [LineBufferPositionRange, iTermSubSelection]
-    NSMutableArray *altScreenSubSelectionTuples = nil;
-    LineBufferPosition *originalLastPos = [linebuffer_ lastPosition];
-    BOOL wasShowingAltScreen = (currentGrid_ == altGrid_);
-
-    // If we're in the alternate screen, create a temporary linebuffer and append
-    // the base screen's contents to it.
-    LineBuffer *altScreenLineBuffer = nil;
-
-    // If non-nil, contains 3-tuples NSArray*s of
-    // [ PTYNoteViewController*,
-    //   LineBufferPosition* for start of range,
-    //   LineBufferPosition* for end of range ]
-    // These will be re-added to intervalTree_ later on.
-    NSMutableArray *altScreenNotes = nil;
-
-    if (wasShowingAltScreen) {
-        if (couldHaveSelection) {
-            // In alternate screen mode, get the original positions of the
-            // selection. Later this will be used to set the selection positions
-            // relative to the end of the updated linebuffer (which could change as
-            // lines from the base screen are pushed onto it).
-            LineBuffer *lineBufferWithAltScreen = [[linebuffer_ newAppendOnlyCopy] autorelease];
-            [self appendScreen:currentGrid_
-                  toScrollback:lineBufferWithAltScreen
-                withUsedHeight:usedHeight
-                     newHeight:newSize.height];
-            altScreenSubSelectionTuples = [NSMutableArray array];
-            for (iTermSubSelection *sub in selection.allSubSelections) {
-                VT100GridCoordRange range = sub.range.coordRange;
-                LineBufferPositionRange *positionRange =
-                    [self positionRangeForCoordRange:range
-                                        inLineBuffer:lineBufferWithAltScreen
-                                       tolerateEmpty:NO];
-                if (positionRange) {
-                    [altScreenSubSelectionTuples addObject:@[ positionRange, sub ]];
-                } else {
-                    DLog(@"Failed to get position range for selection on alt screen %@",
-                         VT100GridCoordRangeDescription(range));
-                }
-            }
-        }
-
-        altScreenLineBuffer = [[[LineBuffer alloc] init] autorelease];
-        [self appendScreen:altGrid_
-              toScrollback:altScreenLineBuffer
-            withUsedHeight:usedHeight
-                 newHeight:newSize.height];
-
-        if ([intervalTree_ count]) {
-            // Add notes that were on the alt grid to altScreenNotes, leaving notes in history alone.
-            VT100GridCoordRange screenCoordRange =
-            VT100GridCoordRangeMake(0,
-                                    [self numberOfScrollbackLines],
-                                    0,
-                                    [self numberOfScrollbackLines] + self.height);
-            NSArray *notesAtLeastPartiallyOnScreen =
-                [intervalTree_ objectsInInterval:[self intervalForGridCoordRange:screenCoordRange]];
-
-            LineBuffer *appendOnlyLineBuffer = [[realLineBuffer newAppendOnlyCopy] autorelease];
-            [self appendScreen:altGrid_
-                  toScrollback:appendOnlyLineBuffer
-                withUsedHeight:usedHeight
-                     newHeight:newSize.height];
-            altScreenNotes = [NSMutableArray array];
-
-            for (id<IntervalTreeObject> note in notesAtLeastPartiallyOnScreen) {
-                VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
-                [[note retain] autorelease];
-                [intervalTree_ removeObject:note];
-                LineBufferPositionRange *positionRange =
-                  [self positionRangeForCoordRange:range inLineBuffer:appendOnlyLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]];
-                if (positionRange) {
-                    DLog(@"Add note on alt screen at %@ (position %@ to %@) to altScreenNotes",
-                         VT100GridCoordRangeDescription(range),
-                         positionRange.start,
-                         positionRange.end);
-                    [altScreenNotes addObject:@[ note, positionRange.start, positionRange.end ]];
-                } else {
-                    DLog(@"Failed to get position range while in alt screen for note %@ with range %@",
-                         note, VT100GridCoordRangeDescription(range));
-                }
-            }
-        }
-
-        currentGrid_ = primaryGrid_;
-        // Move savedIntervalTree_ into intervalTree_. This should leave savedIntervalTree_ empty.
-        [self swapNotes];
-        currentGrid_ = altGrid_;
-    }
-
-    // Append primary grid to line buffer.
-    [self appendScreen:primaryGrid_
-          toScrollback:linebuffer_
-        withUsedHeight:[primaryGrid_ numberOfLinesUsed]
-             newHeight:newSize.height];
-    DLog(@"History after appending screen to scrollback:\n%@", [linebuffer_ debugString]);
-
-    // Contains iTermSubSelection*s updated for the new screen size. Used
-    // regardless of whether we were in the alt screen, as it's simply the set
-    // of new sub-selections.
-    NSMutableArray *newSubSelections = [NSMutableArray array];
-    if (!wasShowingAltScreen && couldHaveSelection) {
-        for (iTermSubSelection *sub in selection.allSubSelections) {
-            VT100GridCoordRange newSelection;
-            DLog(@"convert sub %@", sub);
-            BOOL ok = [self convertRange:sub.range.coordRange
-                                 toWidth:newSize.width
-                                      to:&newSelection
-                            inLineBuffer:linebuffer_
+- (NSArray *)subSelectionTuplesWithUsedHeight:(int)usedHeight
+                                    newHeight:(int)newHeight
+                                    selection:(iTermSelection *)selection {
+    // In alternate screen mode, get the original positions of the
+    // selection. Later this will be used to set the selection positions
+    // relative to the end of the updated linebuffer (which could change as
+    // lines from the base screen are pushed onto it).
+    LineBuffer *lineBufferWithAltScreen = [[linebuffer_ newAppendOnlyCopy] autorelease];
+    [self appendScreen:currentGrid_
+          toScrollback:lineBufferWithAltScreen
+        withUsedHeight:usedHeight
+             newHeight:newHeight];
+    NSMutableArray *altScreenSubSelectionTuples = [NSMutableArray array];
+    for (iTermSubSelection *sub in selection.allSubSelections) {
+        VT100GridCoordRange range = sub.range.coordRange;
+        LineBufferPositionRange *positionRange =
+        [self positionRangeForCoordRange:range
+                            inLineBuffer:lineBufferWithAltScreen
                            tolerateEmpty:NO];
-            if (ok) {
-                assert(sub.range.coordRange.start.y >= 0);
-                assert(sub.range.coordRange.end.y >= 0);
-                VT100GridWindowedRange theRange = VT100GridWindowedRangeMake(newSelection, 0, 0);
-                iTermSubSelection *theSub =
-                    [iTermSubSelection subSelectionWithRange:theRange mode:sub.selectionMode];
-                theSub.connected = sub.connected;
-                [newSubSelections addObject:theSub];
-            }
-        }
-    }
-
-    if ([intervalTree_ count]) {
-        // Fix up the intervals for the primary grid.
-        if (wasShowingAltScreen) {
-            // Temporarily swap in primary grid so convertRange: will do the right thing.
-            currentGrid_ = primaryGrid_;
-        }
-
-        // Convert ranges of notes to their new coordinates and replace the interval tree.
-        IntervalTree *replacementTree = [[IntervalTree alloc] init];
-        for (id<IntervalTreeObject> note in [intervalTree_ allObjects]) {
-            VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
-            VT100GridCoordRange newRange;
-            if (noteRange.end.x < 0 && noteRange.start.y == 0 && noteRange.end.y < 0) {
-                // note has scrolled off top
-                [intervalTree_ removeObject:note];
-            } else {
-                if ([self convertRange:noteRange
-                               toWidth:newSize.width
-                                    to:&newRange
-                          inLineBuffer:linebuffer_
-                         tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
-                    assert(noteRange.start.y >= 0);
-                    assert(noteRange.end.y >= 0);
-                    Interval *newInterval = [self intervalForGridCoordRange:newRange
-                                                                      width:newSize.width
-                                                                linesOffset:[self totalScrollbackOverflow]];
-                    [[note retain] autorelease];
-                    [intervalTree_ removeObject:note];
-                    [replacementTree addObject:note withInterval:newInterval];
-                }
-            }
-        }
-        [intervalTree_ release];
-        intervalTree_ = replacementTree;
-
-        if (wasShowingAltScreen) {
-            // Return to alt grid.
-            currentGrid_ = altGrid_;
-        }
-    }
-    currentGrid_.size = newSize;
-
-    // Restore the screen contents that were pushed onto the linebuffer.
-    [currentGrid_ restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : linebuffer_
-                              withDefaultChar:[currentGrid_ defaultChar]
-                            maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
-    DLog(@"After restoring screen from line buffer:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
-
-    // If we're in the alternate screen, restore its contents from the temporary
-    // linebuffer.
-    if (wasShowingAltScreen) {
-        // In alternate screen mode, the screen contents move up when the screen gets smaller.
-        // For example, if your alt screen looks like this before:
-        //   abcd
-        //   ef..
-        // And then gets shrunk to 3 wide, it becomes
-        //   d..
-        //   ef.
-        // The "abc" line was lost, so "linesMovedUp" is 1. That's the number of lines at the top
-        // of the alt screen that were lost.
-        int linesMovedUp = [altScreenLineBuffer numLinesWithWidth:currentGrid_.size.width];
-
-        primaryGrid_.size = newSize;
-        [primaryGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
-                                to:VT100GridCoordMake(newSize.width - 1, newSize.height - 1)
-                            toChar:primaryGrid_.savedDefaultChar];
-        if (oldSize.height < newSize.height) {
-            // Growing (avoid pulling in stuff from scrollback. Add blank lines
-            // at bottom instead). Note there's a little hack here: we use saved_primary_buffer as the default
-            // line because it was just initialized with default lines.
-            [primaryGrid_ restoreScreenFromLineBuffer:realLineBuffer
-                                      withDefaultChar:[primaryGrid_ defaultChar]
-                                    maxLinesToRestore:oldSize.height];
+        if (positionRange) {
+            [altScreenSubSelectionTuples addObject:@[ positionRange, sub ]];
         } else {
-            // Shrinking (avoid pulling in stuff from scrollback, pull in no more
-            // than might have been pushed, even if more is available). Note there's a little hack
-            // here: we use saved_primary_buffer as the default line because it was just initialized with
-            // default lines.
-            [primaryGrid_ restoreScreenFromLineBuffer:realLineBuffer
-                                      withDefaultChar:[primaryGrid_ defaultChar]
-                                    maxLinesToRestore:newSize.height];
+            DLog(@"Failed to get position range for selection on alt screen %@",
+                 VT100GridCoordRangeDescription(range));
         }
+    }
+    return altScreenSubSelectionTuples;
+}
 
-        // Any onscreen notes in primary grid get moved to savedIntervalTree_.
-        currentGrid_ = primaryGrid_;
-        [self swapNotes];
-        currentGrid_ = altGrid_;
+- (NSArray *)intervalTreeObjectsWithUsedHeight:(int)usedHeight
+                                     newHeight:(int)newHeight
+                                          grid:(VT100Grid *)grid
+                                    lineBuffer:(LineBuffer *)realLineBuffer {
+    // Add notes that were on the alt grid to altScreenNotes, leaving notes in history alone.
+    VT100GridCoordRange screenCoordRange =
+    VT100GridCoordRangeMake(0,
+                            [self numberOfScrollbackLines],
+                            0,
+                            [self numberOfScrollbackLines] + self.height);
+    NSArray *notesAtLeastPartiallyOnScreen =
+    [intervalTree_ objectsInInterval:[self intervalForGridCoordRange:screenCoordRange]];
 
-        LineBufferPosition *newLastPos = [realLineBuffer lastPosition];
+    LineBuffer *appendOnlyLineBuffer = [[realLineBuffer newAppendOnlyCopy] autorelease];
+    [self appendScreen:grid
+          toScrollback:appendOnlyLineBuffer
+        withUsedHeight:usedHeight
+             newHeight:newHeight];
 
-        ///////////////////////////////////////
-        // Create a cheap append-only copy of the line buffer and add the
-        // screen to it. This sets up the current state so that if there is a
-        // selection, linebuffer has the configuration that the user actually
-        // sees (history + the alt screen contents). That'll make
-        // convertRange:toWidth:... happy (the selection's Y values
-        // will be able to be looked up) and then after that's done we can swap
-        // back to the tempLineBuffer.
-        LineBuffer *appendOnlyLineBuffer = [[realLineBuffer newAppendOnlyCopy] autorelease];
+    NSMutableArray *triples = [NSMutableArray array];
 
-        [self appendScreen:copyOfAltGrid
-              toScrollback:appendOnlyLineBuffer
-            withUsedHeight:usedHeight
-                 newHeight:newSize.height];
-
-        for (int i = 0; i < altScreenSubSelectionTuples.count; i++) {
-            LineBufferPositionRange *positionRange = altScreenSubSelectionTuples[i][0];
-            iTermSubSelection *originalSub = altScreenSubSelectionTuples[i][1];
-            VT100GridCoordRange newSelection;
-            BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
-                                            limitPosition:newLastPos
-                                            startPosition:positionRange.start
-                                              endPosition:positionRange.end
-                                                 newWidth:newSize.width
-                                               lineBuffer:appendOnlyLineBuffer
-                                                    range:&newSelection
-                                             linesMovedUp:linesMovedUp];
-            if (ok) {
-                VT100GridWindowedRange theRange =
-                    VT100GridWindowedRangeMake(newSelection, 0, 0);
-                iTermSubSelection *theSub = [iTermSubSelection subSelectionWithRange:theRange
-                                                                                mode:originalSub.selectionMode];
-                theSub.connected = originalSub.connected;
-                [newSubSelections addObject:theSub];
-            }
+    for (id<IntervalTreeObject> note in notesAtLeastPartiallyOnScreen) {
+        VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
+        [[note retain] autorelease];
+        [intervalTree_ removeObject:note];
+        LineBufferPositionRange *positionRange =
+        [self positionRangeForCoordRange:range inLineBuffer:appendOnlyLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]];
+        if (positionRange) {
+            DLog(@"Add note on alt screen at %@ (position %@ to %@) to triples",
+                 VT100GridCoordRangeDescription(range),
+                 positionRange.start,
+                 positionRange.end);
+            [triples addObject:@[ note, positionRange.start, positionRange.end ]];
+        } else {
+            DLog(@"Failed to get position range while in alt screen for note %@ with range %@",
+                 note, VT100GridCoordRangeDescription(range));
         }
-        DLog(@"Original limit=%@", originalLastPos);
-        DLog(@"New limit=%@", newLastPos);
-        for (NSArray *tuple in altScreenNotes) {
-            id<IntervalTreeObject> note = tuple[0];
-            LineBufferPosition *start = tuple[1];
-            LineBufferPosition *end = tuple[2];
-            VT100GridCoordRange newRange;
-            DLog(@"  Note positions=%@ to %@", start, end);
-            BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
-                                            limitPosition:newLastPos
-                                            startPosition:start
-                                              endPosition:end
-                                                 newWidth:newSize.width
-                                               lineBuffer:appendOnlyLineBuffer
-                                                    range:&newRange
-                                             linesMovedUp:linesMovedUp];
-            if (ok) {
-                DLog(@"  New range=%@", VT100GridCoordRangeDescription(newRange));
-                Interval *interval = [self intervalForGridCoordRange:newRange
-                                                               width:newSize.width
-                                                         linesOffset:[self totalScrollbackOverflow]];
-                [intervalTree_ addObject:note withInterval:interval];
-            } else {
-                DLog(@"  *FAILED TO CONVERT*");
-            }
+    }
+    return triples;
+}
+
+- (NSArray *)subSelectionsWithConvertedRangesFromSelection:(iTermSelection *)selection
+                                                  newWidth:(int)newWidth {
+    NSMutableArray *newSubSelections = [NSMutableArray array];
+    for (iTermSubSelection *sub in selection.allSubSelections) {
+        VT100GridCoordRange newSelection;
+        DLog(@"convert sub %@", sub);
+        BOOL ok = [self convertRange:sub.range.coordRange
+                             toWidth:newWidth
+                                  to:&newSelection
+                        inLineBuffer:linebuffer_
+                       tolerateEmpty:NO];
+        if (ok) {
+            assert(sub.range.coordRange.start.y >= 0);
+            assert(sub.range.coordRange.end.y >= 0);
+            VT100GridWindowedRange theRange = VT100GridWindowedRangeMake(newSelection, 0, 0);
+            iTermSubSelection *theSub =
+            [iTermSubSelection subSelectionWithRange:theRange mode:sub.selectionMode];
+            theSub.connected = sub.connected;
+            [newSubSelections addObject:theSub];
         }
-    } else {
-        // Was showing primary grid. Fix up notes in the alt screen.
+    }
+    return newSubSelections;
+}
 
-        // Append alt screen to empty line buffer
-        altScreenLineBuffer = [[[LineBuffer alloc] init] autorelease];
-        [self appendScreen:altGrid_
-              toScrollback:altScreenLineBuffer
-            withUsedHeight:[altGrid_ numberOfLinesUsed]
-                 newHeight:newSize.height];
-        int numLinesThatWillBeRestored = MIN([altScreenLineBuffer numLinesWithWidth:newSize.width],
-                                             newSize.height);
-        int numLinesDroppedFromTop = [altScreenLineBuffer numLinesWithWidth:newSize.width] - numLinesThatWillBeRestored;
-
-        // Convert note ranges to new coords, dropping or truncating as needed
-        currentGrid_ = altGrid_;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
-        IntervalTree *replacementTree = [[IntervalTree alloc] init];
-        for (PTYNoteViewController *note in [savedIntervalTree_ allObjects]) {
-            VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
-            DLog(@"Found note at %@", VT100GridCoordRangeDescription(noteRange));
-            VT100GridCoordRange newRange;
-            if ([self convertRange:noteRange toWidth:newSize.width to:&newRange inLineBuffer:altScreenLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
+- (IntervalTree *)replacementIntervalTreeForNewWidth:(int)newWidth {
+    // Convert ranges of notes to their new coordinates and replace the interval tree.
+    IntervalTree *replacementTree = [[[IntervalTree alloc] init] autorelease];
+    for (id<IntervalTreeObject> note in [intervalTree_ allObjects]) {
+        VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
+        VT100GridCoordRange newRange;
+        if (noteRange.end.x < 0 && noteRange.start.y == 0 && noteRange.end.y < 0) {
+            // note has scrolled off top
+            [intervalTree_ removeObject:note];
+        } else {
+            if ([self convertRange:noteRange
+                           toWidth:newWidth
+                                to:&newRange
+                      inLineBuffer:linebuffer_
+                     tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
                 assert(noteRange.start.y >= 0);
                 assert(noteRange.end.y >= 0);
-                // Anticipate the lines that will be dropped when the alt grid is restored.
-                newRange.start.y += [self totalScrollbackOverflow] - numLinesDroppedFromTop;
-                newRange.end.y += [self totalScrollbackOverflow] - numLinesDroppedFromTop;
-                if (newRange.start.y < 0) {
-                    newRange.start.y = 0;
-                    newRange.start.x = 0;
-                }
-                DLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(noteRange), numLinesDroppedFromTop);
-                [savedIntervalTree_ removeObject:note];
-                if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
-                    Interval *newInterval = [self intervalForGridCoordRange:newRange
-                                                                      width:newSize.width
-                                                                linesOffset:0];
-                    [replacementTree addObject:note withInterval:newInterval];
-                } else {
-                    DLog(@"Failed to convert");
-                }
+                Interval *newInterval = [self intervalForGridCoordRange:newRange
+                                                                  width:newWidth
+                                                            linesOffset:[self totalScrollbackOverflow]];
+                [[note retain] autorelease];
+                [intervalTree_ removeObject:note];
+                [replacementTree addObject:note withInterval:newInterval];
             }
         }
-        [savedIntervalTree_ release];
-        savedIntervalTree_ = replacementTree;
-        currentGrid_ = primaryGrid_;  // Swap back to primary grid
-
-        // Restore alt screen with new width
-        altGrid_.size = VT100GridSizeMake(newSize.width, newSize.height);
-        [altGrid_ restoreScreenFromLineBuffer:altScreenLineBuffer
-                              withDefaultChar:[altGrid_ defaultChar]
-                            maxLinesToRestore:[altScreenLineBuffer numLinesWithWidth:currentGrid_.size.width]];
     }
+    return replacementTree;
+}
 
+- (NSArray *)subSelectionsForNewSize:(VT100GridSize)newSize
+                          lineBuffer:(LineBuffer *)realLineBuffer
+                                grid:(VT100Grid *)copyOfAltGrid
+                          usedHeight:(int)usedHeight
+                  subSelectionTuples:(NSArray *)altScreenSubSelectionTuples
+                originalLastPosition:(LineBufferPosition *)originalLastPos
+                     newLastPosition:(LineBufferPosition *)newLastPos
+                        linesMovedUp:(int)linesMovedUp
+                appendOnlyLineBuffer:(LineBuffer *)appendOnlyLineBuffer {
+    [self appendScreen:copyOfAltGrid
+          toScrollback:appendOnlyLineBuffer
+        withUsedHeight:usedHeight
+             newHeight:newSize.height];
+
+    NSMutableArray *newSubSelections = [NSMutableArray array];
+    for (int i = 0; i < altScreenSubSelectionTuples.count; i++) {
+        LineBufferPositionRange *positionRange = altScreenSubSelectionTuples[i][0];
+        iTermSubSelection *originalSub = altScreenSubSelectionTuples[i][1];
+        VT100GridCoordRange newSelection;
+        BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
+                                        limitPosition:newLastPos
+                                        startPosition:positionRange.start
+                                          endPosition:positionRange.end
+                                             newWidth:newSize.width
+                                           lineBuffer:appendOnlyLineBuffer
+                                                range:&newSelection
+                                         linesMovedUp:linesMovedUp];
+        if (ok) {
+            VT100GridWindowedRange theRange =
+            VT100GridWindowedRangeMake(newSelection, 0, 0);
+            iTermSubSelection *theSub = [iTermSubSelection subSelectionWithRange:theRange
+                                                                            mode:originalSub.selectionMode];
+            theSub.connected = originalSub.connected;
+            [newSubSelections addObject:theSub];
+        }
+    }
+    return newSubSelections;
+}
+
+- (void)addObjectsToIntervalTreeFromTuples:(NSArray *)altScreenNotes
+                                   newSize:(VT100GridSize)newSize
+                      originalLastPosition:(LineBufferPosition *)originalLastPos
+                           newLastPosition:(LineBufferPosition *)newLastPos
+                              linesMovedUp:(int)linesMovedUp
+                      appendOnlyLineBuffer:(LineBuffer *)appendOnlyLineBuffer
+{
+    for (NSArray *tuple in altScreenNotes) {
+        id<IntervalTreeObject> note = tuple[0];
+        LineBufferPosition *start = tuple[1];
+        LineBufferPosition *end = tuple[2];
+        VT100GridCoordRange newRange;
+        DLog(@"  Note positions=%@ to %@", start, end);
+        BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
+                                        limitPosition:newLastPos
+                                        startPosition:start
+                                          endPosition:end
+                                             newWidth:newSize.width
+                                           lineBuffer:appendOnlyLineBuffer
+                                                range:&newRange
+                                         linesMovedUp:linesMovedUp];
+        if (ok) {
+            DLog(@"  New range=%@", VT100GridCoordRangeDescription(newRange));
+            Interval *interval = [self intervalForGridCoordRange:newRange
+                                                           width:newSize.width
+                                                     linesOffset:[self totalScrollbackOverflow]];
+            [intervalTree_ addObject:note withInterval:interval];
+        } else {
+            DLog(@"  *FAILED TO CONVERT*");
+        }
+    }
+}
+
+- (void)restoreAlternateScreenFromTemporaryLineBuffer:(LineBuffer *)altScreenLineBuffer
+                                       realLineBuffer:(LineBuffer *)realLineBuffer
+                                              oldSize:(VT100GridSize)oldSize
+                                              newSize:(VT100GridSize)newSize {
+    primaryGrid_.size = newSize;
+    [primaryGrid_ setCharsFrom:VT100GridCoordMake(0, 0)
+                            to:VT100GridCoordMake(newSize.width - 1, newSize.height - 1)
+                        toChar:primaryGrid_.savedDefaultChar];
+    // If the height increased:
+    // Growing (avoid pulling in stuff from scrollback. Add blank lines
+    // at bottom instead). Note there's a little hack here: we use saved_primary_buffer as the default
+    // line because it was just initialized with default lines.
+    //
+    // If the height decreased or stayed the same:
+    // Shrinking (avoid pulling in stuff from scrollback, pull in no more
+    // than might have been pushed, even if more is available). Note there's a little hack
+    // here: we use saved_primary_buffer as the default line because it was just initialized with
+    // default lines.
+    [primaryGrid_ restoreScreenFromLineBuffer:realLineBuffer
+                              withDefaultChar:[primaryGrid_ defaultChar]
+                            maxLinesToRestore:MIN(oldSize.height, newSize.height)];
+
+    // Any onscreen notes in primary grid get moved to savedIntervalTree_.
+    currentGrid_ = primaryGrid_;
+    [self swapNotes];
+    currentGrid_ = altGrid_;
+}
+
+- (NSArray *)subSelectionsAfterRestoringAlternateScreen:(VT100Grid *)copyOfAltGrid
+                                         fromLineBuffer:(LineBuffer *)altScreenLineBuffer
+                                           toLineBuffer:(LineBuffer *)realLineBuffer
+                                     subSelectionTuples:(NSArray *)altScreenSubSelectionTuples
+                                   originalLastPosition:(LineBufferPosition *)originalLastPos
+                                                oldSize:(VT100GridSize)oldSize
+                                                newSize:(VT100GridSize)newSize
+                                             usedHeight:(int)usedHeight
+                                    intervalTreeObjects:(NSArray *)altScreenNotes {
+    // In alternate screen mode, the screen contents move up when the screen gets smaller.
+    // For example, if your alt screen looks like this before:
+    //   abcd
+    //   ef..
+    // And then gets shrunk to 3 wide, it becomes
+    //   d..
+    //   ef.
+    // The "abc" line was lost, so "linesMovedUp" is 1. That's the number of lines at the top
+    // of the alt screen that were lost.
+    const int linesMovedUp = [altScreenLineBuffer numLinesWithWidth:currentGrid_.size.width];
+    [self restoreAlternateScreenFromTemporaryLineBuffer:altScreenLineBuffer
+                                         realLineBuffer:realLineBuffer
+                                                oldSize:oldSize
+                                                newSize:newSize];
+    ///////////////////////////////////////
+    // Create a cheap append-only copy of the line buffer and add the
+    // screen to it. This sets up the current state so that if there is a
+    // selection, linebuffer has the configuration that the user actually
+    // sees (history + the alt screen contents). That'll make
+    // convertRange:toWidth:... happy (the selection's Y values
+    // will be able to be looked up) and then after that's done we can swap
+    // back to the tempLineBuffer.
+    LineBuffer *appendOnlyLineBuffer = [[realLineBuffer newAppendOnlyCopy] autorelease];
+    LineBufferPosition *newLastPos = [realLineBuffer lastPosition];
+    NSArray *newSubSelections = [self subSelectionsForNewSize:newSize
+                                                   lineBuffer:realLineBuffer
+                                                         grid:copyOfAltGrid
+                                                   usedHeight:usedHeight
+                                           subSelectionTuples:altScreenSubSelectionTuples
+                                         originalLastPosition:originalLastPos
+                                              newLastPosition:newLastPos
+                                                 linesMovedUp:linesMovedUp
+                                         appendOnlyLineBuffer:appendOnlyLineBuffer];
+    DLog(@"Original limit=%@", originalLastPos);
+    DLog(@"New limit=%@", newLastPos);
+    [self addObjectsToIntervalTreeFromTuples:altScreenNotes
+                                     newSize:newSize
+                        originalLastPosition:originalLastPos
+                             newLastPosition:newLastPos
+                                linesMovedUp:linesMovedUp
+                        appendOnlyLineBuffer:appendOnlyLineBuffer];
+    return newSubSelections;
+}
+
+- (void)updateAlternateScreenIntervalTreeForNewSize:(VT100GridSize)newSize {
+    // Append alt screen to empty line buffer
+    LineBuffer *altScreenLineBuffer = [[[LineBuffer alloc] init] autorelease];
+    [altScreenLineBuffer beginResizing];
+    [self appendScreen:altGrid_
+          toScrollback:altScreenLineBuffer
+        withUsedHeight:[altGrid_ numberOfLinesUsed]
+             newHeight:newSize.height];
+    int numLinesThatWillBeRestored = MIN([altScreenLineBuffer numLinesWithWidth:newSize.width],
+                                         newSize.height);
+    int numLinesDroppedFromTop = [altScreenLineBuffer numLinesWithWidth:newSize.width] - numLinesThatWillBeRestored;
+
+    // Convert note ranges to new coords, dropping or truncating as needed
+    currentGrid_ = altGrid_;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
+    IntervalTree *replacementTree = [[IntervalTree alloc] init];
+    for (PTYNoteViewController *note in [savedIntervalTree_ allObjects]) {
+        VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
+        DLog(@"Found note at %@", VT100GridCoordRangeDescription(noteRange));
+        VT100GridCoordRange newRange;
+        if ([self convertRange:noteRange toWidth:newSize.width to:&newRange inLineBuffer:altScreenLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
+            assert(noteRange.start.y >= 0);
+            assert(noteRange.end.y >= 0);
+            // Anticipate the lines that will be dropped when the alt grid is restored.
+            newRange.start.y += [self totalScrollbackOverflow] - numLinesDroppedFromTop;
+            newRange.end.y += [self totalScrollbackOverflow] - numLinesDroppedFromTop;
+            if (newRange.start.y < 0) {
+                newRange.start.y = 0;
+                newRange.start.x = 0;
+            }
+            DLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(noteRange), numLinesDroppedFromTop);
+            [savedIntervalTree_ removeObject:note];
+            if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
+                Interval *newInterval = [self intervalForGridCoordRange:newRange
+                                                                  width:newSize.width
+                                                            linesOffset:0];
+                [replacementTree addObject:note withInterval:newInterval];
+            } else {
+                DLog(@"Failed to convert");
+            }
+        }
+    }
+    [savedIntervalTree_ release];
+    savedIntervalTree_ = replacementTree;
+    currentGrid_ = primaryGrid_;  // Swap back to primary grid
+
+    // Restore alt screen with new width
+    altGrid_.size = VT100GridSizeMake(newSize.width, newSize.height);
+    [altGrid_ restoreScreenFromLineBuffer:altScreenLineBuffer
+                          withDefaultChar:[altGrid_ defaultChar]
+                        maxLinesToRestore:[altScreenLineBuffer numLinesWithWidth:currentGrid_.size.width]];
+    [altScreenLineBuffer endResizing];
+}
+
+- (void)didResizeToSize:(VT100GridSize)newSize
+              selection:(iTermSelection *)selection
+     couldHaveSelection:(BOOL)couldHaveSelection
+          subSelections:(NSArray *)newSubSelections {
     [terminal_ clampSavedCursorToScreenSize:VT100GridSizeMake(newSize.width, newSize.height)];
 
     [primaryGrid_ resetScrollRegions];
@@ -840,6 +845,159 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 
     [self reloadMarkCache];
     [delegate_ screenSizeDidChange];
+}
+
+- (LineBuffer *)prepareToResizeInAlternateScreenMode:(NSArray **)altScreenSubSelectionTuplesPtr
+                                 intervalTreeObjects:(NSArray **)altScreenNotesPtr
+                                        hasSelection:(BOOL)couldHaveSelection
+                                           selection:(iTermSelection *)selection
+                                          lineBuffer:(LineBuffer *)realLineBuffer
+                                          usedHeight:(int)usedHeight
+                                             newSize:(VT100GridSize)newSize {
+    if (couldHaveSelection) {
+        *altScreenSubSelectionTuplesPtr = [self subSelectionTuplesWithUsedHeight:usedHeight
+                                                                       newHeight:newSize.height
+                                                                    selection:selection];
+    }
+
+    LineBuffer *altScreenLineBuffer = [[[LineBuffer alloc] init] autorelease];
+    [altScreenLineBuffer beginResizing];
+    [self appendScreen:altGrid_
+          toScrollback:altScreenLineBuffer
+        withUsedHeight:usedHeight
+             newHeight:newSize.height];
+
+    if ([intervalTree_ count]) {
+        *altScreenNotesPtr = [self intervalTreeObjectsWithUsedHeight:usedHeight
+                                                           newHeight:newSize.height
+                                                                grid:altGrid_
+                                                          lineBuffer:realLineBuffer];
+    }
+
+    currentGrid_ = primaryGrid_;
+    // Move savedIntervalTree_ into intervalTree_. This should leave savedIntervalTree_ empty.
+    [self swapNotes];
+    currentGrid_ = altGrid_;
+
+    return altScreenLineBuffer;
+}
+
+- (void)fixUpPrimaryGridIntervalTreeForNewSize:(VT100GridSize)newSize
+                           wasShowingAltScreen:(BOOL)wasShowingAltScreen {
+    if ([intervalTree_ count]) {
+        // Fix up the intervals for the primary grid.
+        if (wasShowingAltScreen) {
+            // Temporarily swap in primary grid so convertRange: will do the right thing.
+            currentGrid_ = primaryGrid_;
+        }
+
+        [intervalTree_ autorelease];
+        intervalTree_ = [[self replacementIntervalTreeForNewWidth:newSize.width] retain];
+
+        if (wasShowingAltScreen) {
+            // Return to alt grid.
+            currentGrid_ = altGrid_;
+        }
+    }
+}
+
+- (void)setSize:(VT100GridSize)proposedSize {
+    VT100GridSize newSize = [self safeSizeForSize:proposedSize];
+    if (![self shouldSetSizeTo:newSize]) {
+        return;
+    }
+    [linebuffer_ beginResizing];
+    [self reallySetSize:newSize];
+    [linebuffer_ endResizing];
+}
+
+- (void)reallySetSize:(VT100GridSize)newSize {
+    const VT100GridSize oldSize = currentGrid_.size;
+    iTermSelection *selection = [delegate_ screenSelection];
+    [self willSetSizeWithSelection:selection];
+
+    const BOOL couldHaveSelection = [delegate_ screenHasView] && selection.hasSelection;
+    const int usedHeight = [currentGrid_ numberOfLinesUsed];
+
+    VT100Grid *copyOfAltGrid = [[altGrid_ copy] autorelease];
+    LineBuffer *realLineBuffer = linebuffer_;
+
+    // This is an array of tuples:
+    // [LineBufferPositionRange, iTermSubSelection]
+    NSArray *altScreenSubSelectionTuples = nil;
+    LineBufferPosition *originalLastPos = [linebuffer_ lastPosition];
+    BOOL wasShowingAltScreen = (currentGrid_ == altGrid_);
+
+
+    // If non-nil, contains 3-tuples NSArray*s of
+    // [ PTYNoteViewController*,
+    //   LineBufferPosition* for start of range,
+    //   LineBufferPosition* for end of range ]
+    // These will be re-added to intervalTree_ later on.
+    NSArray *altScreenNotes = nil;
+
+    // If we're in the alternate screen, create a temporary linebuffer and append
+    // the base screen's contents to it.
+    LineBuffer *altScreenLineBuffer = nil;
+    if (wasShowingAltScreen) {
+        altScreenLineBuffer = [self prepareToResizeInAlternateScreenMode:&altScreenSubSelectionTuples
+                                                     intervalTreeObjects:&altScreenNotes
+                                                            hasSelection:couldHaveSelection
+                                                               selection:selection
+                                                              lineBuffer:realLineBuffer
+                                                              usedHeight:usedHeight
+                                                                 newSize:newSize];
+    }
+
+    // Append primary grid to line buffer.
+    [self appendScreen:primaryGrid_
+          toScrollback:linebuffer_
+        withUsedHeight:[primaryGrid_ numberOfLinesUsed]
+             newHeight:newSize.height];
+    DLog(@"History after appending screen to scrollback:\n%@", [linebuffer_ debugString]);
+
+    // Contains iTermSubSelection*s updated for the new screen size. Used
+    // regardless of whether we were in the alt screen, as it's simply the set
+    // of new sub-selections.
+    NSArray *newSubSelections = @[];
+    if (!wasShowingAltScreen && couldHaveSelection) {
+        newSubSelections = [self subSelectionsWithConvertedRangesFromSelection:selection
+                                                                      newWidth:newSize.width];
+    }
+
+    [self fixUpPrimaryGridIntervalTreeForNewSize:newSize
+                             wasShowingAltScreen:wasShowingAltScreen];
+    currentGrid_.size = newSize;
+
+    // Restore the screen contents that were pushed onto the linebuffer.
+    [currentGrid_ restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : linebuffer_
+                              withDefaultChar:[currentGrid_ defaultChar]
+                            maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
+    DLog(@"After restoring screen from line buffer:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
+
+    if (wasShowingAltScreen) {
+        // If we're in the alternate screen, restore its contents from the temporary
+        // linebuffer.
+        newSubSelections = [self subSelectionsAfterRestoringAlternateScreen:copyOfAltGrid
+                                                             fromLineBuffer:altScreenLineBuffer
+                                                               toLineBuffer:realLineBuffer
+                                                         subSelectionTuples:altScreenSubSelectionTuples
+                                                       originalLastPosition:originalLastPos
+                                                                    oldSize:oldSize
+                                                                    newSize:newSize
+                                                                 usedHeight:usedHeight
+                                                        intervalTreeObjects:altScreenNotes];
+    } else {
+        // Was showing primary grid. Fix up notes in the alt screen.
+        [self updateAlternateScreenIntervalTreeForNewSize:newSize];
+    }
+
+    [self didResizeToSize:newSize
+                selection:selection
+       couldHaveSelection:couldHaveSelection
+            subSelections:newSubSelections];
+    [altScreenLineBuffer endResizing];
+
     DLog(@"After:\n%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
     DLog(@"Cursor at %d,%d", currentGrid_.cursorX, currentGrid_.cursorY);
 }

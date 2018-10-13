@@ -37,6 +37,15 @@
     return predecessor;
 }
 
+- (BOOL)isEqualToLineBufferPosition:(LineBufferPosition *)other {
+    if (!other) {
+        return NO;
+    }
+    return (absolutePosition_ == other->absolutePosition_ &&
+            yOffset_ == other->yOffset_ &&
+            extendsToEndOfLine_ == other->extendsToEndOfLine_);
+}
+
 @end
 
 @implementation LineBufferPositionRange : NSObject

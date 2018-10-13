@@ -139,6 +139,16 @@ static BOOL hasWrapped = NO;
     return self;
 }
 
+- (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other {
+    if (!other) {
+        return NO;
+    }
+    return (_line == other->_line &&
+            _length == other->_length &&
+            _eol == other->_eol &&
+            !memcmp(&_continuation, &other->_continuation, sizeof(_continuation)));
+}
+
 @end
 
 static void CreateComplexCharMapIfNeeded() {
