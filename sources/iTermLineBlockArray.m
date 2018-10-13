@@ -148,8 +148,13 @@
 }
 
 - (NSInteger)rawSpaceUsed {
+    return [self rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, _blocks.count)];
+}
+
+- (NSInteger)rawSpaceUsedInRangeOfBlocks:(NSRange)range {
     NSInteger position = 0;
-    for (LineBlock *block in _blocks) {
+    for (NSInteger i = 0; i < range.length; i++) {
+        LineBlock *block = _blocks[i + range.location];
         position += [block rawSpaceUsed];
     }
     return position;

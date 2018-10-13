@@ -834,46 +834,43 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 {
     int x = coord.x;
     int y = coord.y;
-    long long absolutePosition = droppedChars;
 
     int line = y;
-    for (LineBlock *block in _lineBlocks.blocks) {
-        // getNumLinesWithWrapWidth caches its result for the last-used width so
-        // this is usually faster than calling getWrappedLineWithWrapWidth since
-        // most calls to the latter will just decrement line and return NULL.
-        int block_lines = [block getNumLinesWithWrapWidth:width];
-        if (block_lines <= line) {
-            line -= block_lines;
-            absolutePosition += [block rawSpaceUsed];
-            continue;
-        }
-
-        int pos;
-        int yOffset = 0;
-        BOOL extends = NO;
-        pos = [block getPositionOfLine:&line
-                                   atX:x
-                             withWidth:width
-                               yOffset:&yOffset
-                               extends:&extends];
-        if (pos >= 0) {
-            absolutePosition += pos + offset;
-            LineBufferPosition *result = [LineBufferPosition position];
-            result.absolutePosition = absolutePosition;
-            result.yOffset = yOffset;
-            result.extendsToEndOfLine = extends;
-
-            // Make sure position is valid (might not be because of offset).
-            BOOL ok;
-            [self coordinateForPosition:result width:width ok:&ok];
-            if (ok) {
-                return result;
-            } else {
-                return nil;
-            }
-        }
+    NSInteger index = [_lineBlocks indexOfBlockContainingLineNumber:y width:width remainder:&line];
+    if (index == NSNotFound) {
+        return nil;
     }
-    return nil;
+
+    LineBlock *block = _lineBlocks[index];
+    long long absolutePosition = droppedChars + [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, index)];
+
+    int pos;
+    int yOffset = 0;
+    BOOL extends = NO;
+    pos = [block getPositionOfLine:&line
+                               atX:x
+                         withWidth:width
+                           yOffset:&yOffset
+                           extends:&extends];
+    if (pos < 0) {
+        DLog(@"failed to get position of line %@", @(line));
+        return nil;
+    }
+
+    absolutePosition += pos + offset;
+    LineBufferPosition *result = [LineBufferPosition position];
+    result.absolutePosition = absolutePosition;
+    result.yOffset = yOffset;
+    result.extendsToEndOfLine = extends;
+
+    // Make sure position is valid (might not be because of offset).
+    BOOL ok;
+    [self coordinateForPosition:result width:width ok:&ok];
+    if (ok) {
+        return result;
+    } else {
+        return nil;
+    }
 }
 
 - (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position

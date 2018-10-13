@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)removeLastBlock;
 
 - (void)setAllBlocksMayHaveDoubleWidthCharacters;
+- (NSInteger)indexOfBlockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr;
 - (nullable LineBlock *)blockContainingLineNumber:(int)lineNumber
                                             width:(int)width
                                         remainder:(out int *)remainderPtr;
@@ -34,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
                         block:(void (^)(screen_char_t *chars, int length, int eol, screen_char_t continuation, BOOL *stop))block;
 - (NSInteger)numberOfRawLines;
 - (NSInteger)rawSpaceUsed;
+- (NSInteger)rawSpaceUsedInRangeOfBlocks:(NSRange)range;
 
 @end
 
