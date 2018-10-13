@@ -580,12 +580,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     cursor_rawline += _lineBlocks.numberOfRawLines;
 }
 
-- (BOOL) getCursorInLastLineWithWidth: (int) width atX: (int*) x
-{
-    int total_raw_lines = 0;
-    for (LineBlock *block in _lineBlocks.blocks) {
-        total_raw_lines += [block numRawLines];
-    }
+- (BOOL)getCursorInLastLineWithWidth:(int)width atX:(int *)x {
+    int total_raw_lines = _lineBlocks.numberOfRawLines;
     if (cursor_rawline == total_raw_lines-1) {
         // The cursor is on the last line in the buffer.
         LineBlock* block = _lineBlocks.lastBlock;
