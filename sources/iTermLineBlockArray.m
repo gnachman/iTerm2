@@ -139,6 +139,14 @@
     ITAssertWithMessage(numberLeft == 0, @"not all lines available in range %@. Have %@ remaining.", NSStringFromRange(range), @(numberLeft));
 }
 
+- (NSInteger)numberOfRawLines {
+    NSInteger sum = 0;
+    for (LineBlock *block in _blocks) {
+        sum += [block numRawLines];
+    }
+    return sum;
+}
+
 #pragma mark - Low level method
 
 - (id)objectAtIndexedSubscript:(NSUInteger)index {

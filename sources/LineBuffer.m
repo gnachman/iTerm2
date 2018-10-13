@@ -566,8 +566,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return YES;
 }
 
-- (void) setCursor: (int) x
-{
+- (void)setCursor:(int)x {
     LineBlock *block = _lineBlocks.lastBlock;
     if ([block hasPartial]) {
         int last_line_length = [block getRawLineLength: [block numEntries]-1];
@@ -578,9 +577,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         cursor_rawline = 0;
     }
 
-    for (LineBlock *block in _lineBlocks.blocks) {
-        cursor_rawline += [block numRawLines];
-    }
+    cursor_rawline += _lineBlocks.numberOfRawLines;
 }
 
 - (BOOL) getCursorInLastLineWithWidth: (int) width atX: (int*) x

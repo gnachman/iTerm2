@@ -32,6 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
                         block:(void (^)(screen_char_t *chars, int length, int eol, screen_char_t continuation, BOOL *stop))block;
+- (NSInteger)numberOfRawLines;
 
 @end
 
