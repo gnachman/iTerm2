@@ -36,10 +36,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSInteger)numberOfRawLines;
 - (NSInteger)rawSpaceUsed;
 - (NSInteger)rawSpaceUsedInRangeOfBlocks:(NSRange)range;
-- (LineBlock *)blockContainingAbsolutePosition:(long long)p
-                                         width:(int)width
-                                     remainder:(int *)remainder
-                                   blockOffset:(int *)yoffset;
+- (LineBlock *)blockContainingPosition:(long long)p
+                                 width:(int)width
+                             remainder:(nullable int *)remainder
+                           blockOffset:(nullable int *)yoffset
+                                 index:(nullable int *)indexPtr;
 @end
 
 NS_ASSUME_NONNULL_END

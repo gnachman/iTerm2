@@ -905,10 +905,11 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     int p;
     int yoffset;
-    LineBlock *block = [_lineBlocks blockContainingAbsolutePosition:position.absolutePosition - droppedChars
-                                                              width:width
-                                                          remainder:&p
-                                                        blockOffset:&yoffset];
+    LineBlock *block = [_lineBlocks blockContainingPosition:position.absolutePosition - droppedChars
+                                                      width:width
+                                                  remainder:&p
+                                                blockOffset:&yoffset
+                                                      index:NULL];
     if (!block) {
         if (ok) {
             *ok = NO;
@@ -972,18 +973,17 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return absPos + droppedChars;
 }
 
-- (int)absBlockNumberOfAbsPos:(long long)absPos
-{
-    int absBlock = num_dropped_blocks;
-    long long cumPos = droppedChars;
-    for (LineBlock *block in _lineBlocks.blocks) {
-        cumPos += [block rawSpaceUsed];
-        if (cumPos >= absPos) {
-            return absBlock;
-        }
-        ++absBlock;
+- (int)absBlockNumberOfAbsPos:(long long)absPos {
+    int index;
+    LineBlock *block = [_lineBlocks blockContainingPosition:absPos - droppedChars
+                                                      width:0
+                                                  remainder:NULL
+                                                blockOffset:NULL
+                                                      index:&index];
+    if (!block) {
+        return _lineBlocks.count + num_dropped_blocks;
     }
-    return absBlock;
+    return index;
 }
 
 - (long long)absPositionOfAbsBlock:(int)absBlockNum

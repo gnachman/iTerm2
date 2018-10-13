@@ -160,18 +160,21 @@
     return position;
 }
 
-- (LineBlock *)blockContainingAbsolutePosition:(long long)position
-                                         width:(int)width
-                                     remainder:(int *)remainderPtr
-                                   blockOffset:(int *)yoffsetPtr {
+- (LineBlock *)blockContainingPosition:(long long)position
+                                 width:(int)width
+                             remainder:(int *)remainderPtr
+                           blockOffset:(int *)yoffsetPtr
+                                 index:(int *)indexPtr {
     long long p = position;
     int yoffset = 0;
-
+    int index = 0;
     for (LineBlock *block in _blocks) {
         const int used = [block rawSpaceUsed];
         if (p >= used) {
             p -= used;
-            yoffset += [block getNumLinesWithWrapWidth:width];
+            if (yoffsetPtr) {
+                yoffset += [block getNumLinesWithWrapWidth:width];
+            }
         } else {
             if (remainderPtr) {
                 *remainderPtr = p;
@@ -179,8 +182,12 @@
             if (yoffsetPtr) {
                 *yoffsetPtr = yoffset;
             }
+            if (indexPtr) {
+                *indexPtr = index;
+            }
             return block;
         }
+        index++;
     }
     return nil;
 
