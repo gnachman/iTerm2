@@ -36,6 +36,37 @@
     });
 }
 
+#pragma mark - High level methods
+
+- (void)setAllBlocksMayHaveDoubleWidthCharacters {
+    for (LineBlock *block in _blocks) {
+        block.mayHaveDoubleWidthCharacter = YES;
+    }
+    _cache = nil;
+}
+
+- (LineBlock *)blockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr {
+    int line = lineNumber;
+    for (LineBlock *block in _blocks) {
+        // getNumLinesWithWrapWidth caches its result for the last-used width so
+        // this is usually faster than calling getWrappedLineWithWrapWidth since
+        // most calls to the latter will just decrement line and return NULL.
+        int block_lines = [block getNumLinesWithWrapWidth:width];
+        if (block_lines <= line) {
+            line -= block_lines;
+            continue;
+        }
+
+        if (remainderPtr) {
+            *remainderPtr = line;
+        }
+        return block;
+    }
+    return nil;
+}
+
+#pragma mark - Low level method
+
 - (id)objectAtIndexedSubscript:(NSUInteger)index {
     return _blocks[index];
 }

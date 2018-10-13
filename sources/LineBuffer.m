@@ -153,9 +153,7 @@ static const NSInteger kUnicodeVersion = 9;
 - (void)setMayHaveDoubleWidthCharacter:(BOOL)mayHaveDoubleWidthCharacter {
     if (!_mayHaveDoubleWidthCharacter) {
         _mayHaveDoubleWidthCharacter = mayHaveDoubleWidthCharacter;
-        for (LineBlock *block in _lineBlocks.blocks) {
-            block.mayHaveDoubleWidthCharacter = YES;
-        }
+        [_lineBlocks setAllBlocksMayHaveDoubleWidthCharacters];
     }
 }
 
@@ -385,22 +383,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
-- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width
-{
-    int line = lineNum;
-    for (LineBlock *block in _lineBlocks.blocks) {
-        // getNumLinesWithWrapWidth caches its result for the last-used width so
-        // this is usually faster than calling getWrappedLineWithWrapWidth since
-        // most calls to the latter will just decrement line and return NULL.
-        int block_lines = [block getNumLinesWithWrapWidth:width];
-        if (block_lines <= line) {
-            line -= block_lines;
-            continue;
-        }
-
-        return [block timestampForLineNumber:line width:width];
-    }
-    return 0;
+- (NSTimeInterval)timestampForLineNumber:(int)lineNumber width:(int)width {
+    int remainder = 0;
+    LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNumber
+                                                        width:width
+                                                    remainder:&remainder];
+    return [block timestampForLineNumber:remainder width:width];
 }
 
 // Copy a line into the buffer. If the line is shorter than 'width' then only

@@ -23,6 +23,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)removeFirstBlocks:(NSInteger)count;
 - (void)removeLastBlock;
 
+- (void)setAllBlocksMayHaveDoubleWidthCharacters;
+- (nullable LineBlock *)blockContainingLineNumber:(int)lineNumber
+                                            width:(int)width
+                                        remainder:(out int *)remainderPtr;
+
 @end
 
 NS_ASSUME_NONNULL_END
