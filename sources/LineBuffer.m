@@ -32,6 +32,7 @@
 #import "BackgroundThread.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermLineBlockArray.h"
 #import "LineBlock.h"
 #import "RegexKitLite.h"
 
@@ -51,7 +52,7 @@ static const NSInteger kUnicodeVersion = 9;
 
 @implementation LineBuffer {
     // An array of LineBlock*s.
-    NSMutableArray* blocks;
+    iTermLineBlockArray *_lineBlocks;
 
     // The default storage for a LineBlock (some may be larger to accomodate very long lines).
     int block_size;
@@ -81,7 +82,7 @@ static const NSInteger kUnicodeVersion = 9;
 - (LineBlock*)_addBlockOfSize:(int)size {
     LineBlock* block = [[LineBlock alloc] initWithRawBufferSize: size];
     block.mayHaveDoubleWidthCharacter = self.mayHaveDoubleWidthCharacter;
-    [blocks addObject:block];
+    [_lineBlocks addBlock:block];
     [block release];
     return block;
 }
@@ -98,7 +99,7 @@ static const NSInteger kUnicodeVersion = 9;
 }
 
 - (void)commonInit {
-    blocks = [[NSMutableArray alloc] init];
+    _lineBlocks = [[iTermLineBlockArray alloc] init];
     max_lines = -1;
     num_wrapped_lines_width = -1;
     num_dropped_blocks = 0;
@@ -138,29 +139,21 @@ static const NSInteger kUnicodeVersion = 9;
                 [self autorelease];
                 return nil;
             }
-            [blocks addObject:block];
+            [_lineBlocks addBlock:block];
         }
     }
     return self;
 }
 
-- (void)dealloc
-{
-    // This causes the blocks to be released in a background thread.
-    // When a LineBuffer is really gigantic, it can take
-    // quite a bit of time to release all the blocks.
-    [blocks performSelector:@selector(removeAllObjects)
-                   onThread:[BackgroundThread backgroundThread]
-                 withObject:nil
-              waitUntilDone:NO];
-    [blocks release];
+- (void)dealloc {
+    [_lineBlocks release];
     [super dealloc];
 }
 
 - (void)setMayHaveDoubleWidthCharacter:(BOOL)mayHaveDoubleWidthCharacter {
     if (!_mayHaveDoubleWidthCharacter) {
         _mayHaveDoubleWidthCharacter = mayHaveDoubleWidthCharacter;
-        for (LineBlock *block in blocks) {
+        for (LineBlock *block in _lineBlocks.blocks) {
             block.mayHaveDoubleWidthCharacter = YES;
         }
     }
@@ -173,9 +166,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
     int count = 0;
     int i;
-    const int numBlocks = [buffer->blocks count];
+    const int numBlocks = [buffer->_lineBlocks count];
     for (i = 0; i < numBlocks; ++i) {
-        LineBlock* block = [buffer->blocks objectAtIndex: i];
+        LineBlock* block = buffer->_lineBlocks[i];
         count += [block getNumLinesWithWrapWidth: width];
     }
     buffer->num_wrapped_lines_width = width;
@@ -196,7 +189,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int nl = RawNumLines(self, width);
     int totalDropped = 0;
     if (max_lines != -1 && nl > max_lines) {
-        LineBlock *block = blocks[0];
+        LineBlock *block = _lineBlocks[0];
         int total_lines = nl;
         while (total_lines > max_lines) {
             int extra_lines = total_lines - max_lines;
@@ -214,10 +207,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             totalDropped += dropped;
             droppedChars += charsDropped;
             if ([block isEmpty]) {
-                [blocks removeObjectAtIndex:0];
+                [_lineBlocks removeFirstBlock];
                 ++num_dropped_blocks;
-                if ([blocks count] > 0) {
-                    block = blocks[0];
+                if (_lineBlocks.count > 0) {
+                    block = _lineBlocks[0];
                 }
             }
             total_lines -= dropped;
@@ -232,8 +225,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (NSString *)debugString {
     NSMutableString *s = [NSMutableString string];
-    for (int i = 0; i < [blocks count]; i++) {
-        LineBlock *block = [blocks objectAtIndex:i];
+    for (int i = 0; i < _lineBlocks.count; i++) {
+        LineBlock *block = _lineBlocks[i];
         [block appendToDebugString:s];
     }
     return [s length] ? [s substringToIndex:s.length - 1] : @"";  // strip trailing newline
@@ -243,10 +236,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 {
     int i;
     int rawOffset = 0;
-    for (i = 0; i < [blocks count]; ++i) {
+    for (i = 0; i < _lineBlocks.count; ++i) {
         NSLog(@"Block %d:\n", i);
-        [[blocks objectAtIndex: i] dump:rawOffset];
-        rawOffset += [[blocks objectAtIndex:i] rawSpaceUsed];
+        [_lineBlocks[i] dump:rawOffset];
+        rawOffset += [_lineBlocks[i] rawSpaceUsed];
     }
 }
 
@@ -301,11 +294,11 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         NSLog(@"Append: %s\n", a);
     }
 #endif
-    if ([blocks count] == 0) {
+    if (_lineBlocks.count == 0) {
         [self _addBlockOfSize:block_size];
     }
 
-    LineBlock* block = [blocks objectAtIndex: ([blocks count] - 1)];
+    LineBlock* block = _lineBlocks.lastBlock;
 
     int beforeLines = [block getNumLinesWithWrapWidth:width];
     if (![block appendLine:buffer
@@ -395,11 +388,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width
 {
     int line = lineNum;
-    int i;
-    for (i = 0; i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex:i];
-        NSAssert(block, @"Null block");
-
+    for (LineBlock *block in _lineBlocks.blocks) {
         // getNumLinesWithWrapWidth caches its result for the last-used width so
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
@@ -424,10 +413,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 {
     ITBetaAssert(lineNum >= 0, @"Negative lineNum to copyLineToBuffer");
     int line = lineNum;
-    int i;
-    for (i = 0; i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex: i];
-        NSAssert(block, @"Null block");
+    for (LineBlock *block in _lineBlocks.blocks) {
         ITBetaAssert(line >= 0, @"Negative lineNum BEFORE consuming block_lines");
 
         // getNumLinesWithWrapWidth caches its result for the last-used width so
@@ -494,11 +480,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                   width:(int)width
                            continuation:(screen_char_t *)continuation {
     int line = lineNum;
-    int i;
     ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
-    for (i = 0; i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex:i];
-
+    for (LineBlock *block in _lineBlocks.blocks) {
         // getNumLinesWithWrapWidth caches its result for the last-used width so
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
@@ -533,10 +516,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSMutableArray<ScreenCharArray *> *arrays = [NSMutableArray array];
     int numberLeft = count;
     int line = lineNum;
-    int i;
-    for (i = 0; i < [blocks count]; ++i) {
-        LineBlock *block = [blocks objectAtIndex:i];
-
+    for (LineBlock *block in _lineBlocks.blocks) {
         // getNumLinesWithWrapWidth caches its result for the last-used width so
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
@@ -594,7 +574,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
     num_wrapped_lines_width = -1;
 
-    LineBlock* block = [blocks lastObject];
+    LineBlock* block = _lineBlocks.lastBlock;
 
     // If the line is partial the client will want to add a continuation marker so
     // tell him there's no EOL in that case.
@@ -624,7 +604,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     // Clean up the block if the whole thing is empty, otherwise another call
     // to this function would not work correctly.
     if ([block isEmpty]) {
-        [blocks removeLastObject];
+        [_lineBlocks removeLastBlock];
     }
 
 #ifdef LOG_MUTATIONS
@@ -643,7 +623,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (void) setCursor: (int) x
 {
-    LineBlock* block = [blocks lastObject];
+    LineBlock *block = _lineBlocks.lastBlock;
     if ([block hasPartial]) {
         int last_line_length = [block getRawLineLength: [block numEntries]-1];
         cursor_x = x + last_line_length;
@@ -653,22 +633,20 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         cursor_rawline = 0;
     }
 
-    int i;
-    for (i = 0; i < [blocks count]; ++i) {
-        cursor_rawline += [[blocks objectAtIndex: i] numRawLines];
+    for (LineBlock *block in _lineBlocks.blocks) {
+        cursor_rawline += [block numRawLines];
     }
 }
 
 - (BOOL) getCursorInLastLineWithWidth: (int) width atX: (int*) x
 {
     int total_raw_lines = 0;
-    int i;
-    for (i = 0; i < [blocks count]; ++i) {
-        total_raw_lines += [[blocks objectAtIndex:i] numRawLines];
+    for (LineBlock *block in _lineBlocks.blocks) {
+        total_raw_lines += [block numRawLines];
     }
     if (cursor_rawline == total_raw_lines-1) {
         // The cursor is on the last line in the buffer.
-        LineBlock* block = [blocks lastObject];
+        LineBlock* block = _lineBlocks.lastBlock;
         int last_line_length = [block getRawLineLength: ([block numEntries]-1)];
         screen_char_t* lastRawLine = [block rawLine: ([block numEntries]-1)];
         int num_overflow_lines = [block numberOfFullLinesFromBuffer:lastRawLine length:last_line_length width:width];
@@ -700,8 +678,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 {
     int i;
     int position = start.absolutePosition - droppedChars;
-    for (i = 0; position >= 0 && i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex:i];
+    for (i = 0; position >= 0 && i < _lineBlocks.count; ++i) {
+        LineBlock *block = _lineBlocks[i];
         int used = [block rawSpaceUsed];
         if (position >= used) {
             position -= used;
@@ -716,10 +694,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (int) _blockPosition: (int) block_num
 {
-    int i;
     int position = 0;
-    for (i = 0; i < block_num; ++i) {
-        LineBlock* block = [blocks objectAtIndex:i];
+    for (LineBlock *block in _lineBlocks.blocks) {
         position += [block rawSpaceUsed];
     }
     return position;
@@ -753,7 +729,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (void)findSubstring:(FindContext*)context stopAt:(LineBufferPosition *)stopPosition {
     NSInteger blockIndex = context.absBlockNum - num_dropped_blocks;
-    const NSInteger numBlocks = blocks.count;  // This avoids involving unsigned integers in comparisons
+    const NSInteger numBlocks = _lineBlocks.count;  // This avoids involving unsigned integers in comparisons
     if (context.dir > 0) {
         // Search forwards
         if (context.absBlockNum < num_dropped_blocks) {
@@ -789,7 +765,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     assert(blockIndex >= 0);
     assert(blockIndex < numBlocks);
-    LineBlock* block = [blocks objectAtIndex:blockIndex];
+    LineBlock* block = _lineBlocks[blockIndex];
 
     if (blockIndex == 0 &&
         context.offset != -1 &&
@@ -861,9 +837,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSArray *positionsArray = [unsortedPositions sortedArrayUsingSelector:@selector(compare:)];
     int i = 0;
     int yoffset = 0;
-    int numBlocks = [blocks count];
+    int numBlocks = _lineBlocks.count;
     int passed = 0;
-    LineBlock *block = [blocks objectAtIndex:0];
+    LineBlock *block = _lineBlocks[0];
     int used = [block rawSpaceUsed];
     NSMutableDictionary* intermediate = [NSMutableDictionary dictionaryWithCapacity:[resultRanges count] * 2];
     int prev = -1;
@@ -880,7 +856,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             yoffset += [block getNumLinesWithWrapWidth:width];
             i++;
             if (i < numBlocks) {
-                block = [blocks objectAtIndex:i];
+                block = _lineBlocks.blocks[i];
                 used = [block rawSpaceUsed];
             }
         }
@@ -933,11 +909,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     long long absolutePosition = droppedChars;
 
     int line = y;
-    int i;
-    for (i = 0; i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex: i];
-        NSAssert(block, @"Null block");
-
+    for (LineBlock *block in _lineBlocks.blocks) {
         // getNumLinesWithWrapWidth caches its result for the last-used width so
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
@@ -986,7 +958,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // trailing empty lines. They all have the same position because they
         // are empty. We need to back up by the number of empty lines and then
         // use position.yOffset to disambiguate.
-        result.y = MAX(0, [self numLinesWithWidth:width] - 1 - [blocks.lastObject numberOfTrailingEmptyLines]);
+        result.y = MAX(0, [self numLinesWithWidth:width] - 1 - [_lineBlocks.lastBlock numberOfTrailingEmptyLines]);
         ScreenCharArray *lastLine = [self wrappedLineAtIndex:result.y
                                                        width:width
                                                 continuation:NULL];
@@ -1005,11 +977,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         }
         return result;
     }
-    int i;
     int yoffset = 0;
     int p = position.absolutePosition - droppedChars;
-    for (i = 0; p >= 0 && i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex:i];
+    for (LineBlock *block in _lineBlocks.blocks) {
         int used = [block rawSpaceUsed];
         if (p >= used) {
             p -= used;
@@ -1050,8 +1020,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     LineBufferPosition *position = [LineBufferPosition position];
 
     position.absolutePosition = droppedChars;
-    for (int i = 0; i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex:i];
+    for (LineBlock *block in _lineBlocks.blocks) {
         position.absolutePosition = position.absolutePosition + [block rawSpaceUsed];
     }
 
@@ -1062,7 +1031,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 {
     long long offset = droppedChars + findContext.offset;
     int numBlocks = findContext.absBlockNum - num_dropped_blocks;
-    for (LineBlock *block in blocks) {
+    for (LineBlock *block in _lineBlocks.blocks) {
         if (!numBlocks) {
             break;
         }
@@ -1076,7 +1045,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 {
     absPosition -= droppedChars;
     if (absPosition < 0) {
-        return [[blocks objectAtIndex:0] startOffset];
+        return [_lineBlocks[0] startOffset];
     }
     if (absPosition > INT_MAX) {
         absPosition = INT_MAX;
@@ -1094,7 +1063,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 {
     int absBlock = num_dropped_blocks;
     long long cumPos = droppedChars;
-    for (LineBlock *block in blocks) {
+    for (LineBlock *block in _lineBlocks.blocks) {
         cumPos += [block rawSpaceUsed];
         if (cumPos >= absPos) {
             return absBlock;
@@ -1107,8 +1076,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (long long)absPositionOfAbsBlock:(int)absBlockNum
 {
     long long cumPos = droppedChars;
-    for (int i = 0; i < blocks.count && i + num_dropped_blocks < absBlockNum; i++) {
-        cumPos += [[blocks objectAtIndex:i] rawSpaceUsed];
+    for (int i = 0; i < _lineBlocks.count && i + num_dropped_blocks < absBlockNum; i++) {
+        cumPos += [_lineBlocks[i] rawSpaceUsed];
     }
     return cumPos;
 }
@@ -1123,12 +1092,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (LineBuffer *)newAppendOnlyCopy {
     LineBuffer *theCopy = [[LineBuffer alloc] init];
-    [theCopy->blocks release];
-    theCopy->blocks = [[NSMutableArray alloc] initWithArray:blocks];
-    LineBlock *lastBlock = [blocks lastObject];
+    [theCopy->_lineBlocks release];
+    theCopy->_lineBlocks = [_lineBlocks copy];
+    LineBlock *lastBlock = _lineBlocks.lastBlock;
     if (lastBlock) {
-        [theCopy->blocks removeLastObject];
-        [theCopy->blocks addObject:[[lastBlock copy] autorelease]];
+        [theCopy->_lineBlocks removeLastBlock];
+        [theCopy->_lineBlocks addBlock:[[lastBlock copy] autorelease]];
     }
     theCopy->block_size = block_size;
     theCopy->cursor_x = cursor_x;
@@ -1148,14 +1117,14 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (int)largestAbsoluteBlockNumber {
-    return blocks.count + num_dropped_blocks;
+    return _lineBlocks.count + num_dropped_blocks;
 }
 
 - (NSArray *)codedBlocks:(BOOL *)truncated {
     *truncated = NO;
     NSMutableArray *codedBlocks = [NSMutableArray array];
     int numLines = 0;
-    for (LineBlock *block in [blocks reverseObjectEnumerator]) {
+    for (LineBlock *block in [_lineBlocks.blocks reverseObjectEnumerator]) {
         [codedBlocks insertObject:[block dictionary] atIndex:0];
 
         // This caps the amount of data at a reasonable but arbitrary size.
@@ -1184,7 +1153,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (void)appendMessage:(NSString *)message {
-    if (!blocks.count) {
+    if (!_lineBlocks.count) {
         [self _addBlockOfSize:message.length];
     }
     screen_char_t defaultBg = { 0 };
@@ -1224,8 +1193,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (id)copyWithZone:(NSZone *)zone {
     LineBuffer *theCopy = [[LineBuffer alloc] initWithBlockSize:block_size];
 
-    for (LineBlock *block in blocks) {
-        [theCopy->blocks addObject:block];
+    for (LineBlock *block in _lineBlocks.blocks) {
+        [theCopy->_lineBlocks addBlock:block];
     }
     theCopy->cursor_x = cursor_x;
     theCopy->cursor_rawline = cursor_rawline;
@@ -1241,7 +1210,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (int)numBlocksAtEndToGetMinimumLines:(int)minLines width:(int)width {
     int numBlocks = 0;
     int lines = 0;
-    for (LineBlock *block in blocks.reverseObjectEnumerator) {
+    for (LineBlock *block in _lineBlocks.blocks.reverseObjectEnumerator) {
         lines += [block getNumLinesWithWrapWidth:width];
         ++numBlocks;
         if (lines > minLines) {
@@ -1255,7 +1224,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     long long n = 0;
     for (int i = 0; i < range.length; i++) {
         NSUInteger j = range.location + i;
-        n += [blocks[j] numberOfCharacters];
+        n += [_lineBlocks[j] numberOfCharacters];
     }
     return n;
 }
@@ -1263,14 +1232,14 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (LineBuffer *)appendOnlyCopyWithMinimumLines:(int)minLines atWidth:(int)width {
     // Calculate how many blocks to keep.
     const int numBlocks = [self numBlocksAtEndToGetMinimumLines:minLines width:width];
-    const int totalBlocks = blocks.count;
+    const int totalBlocks = _lineBlocks.count;
     const int numDroppedBlocks = totalBlocks - numBlocks;
 
     // Make a copy of the whole thing (cheap)
     LineBuffer *theCopy = [[self newAppendOnlyCopy] autorelease];
 
     // Remove the blocks we don't need.
-    [theCopy->blocks removeObjectsInRange:NSMakeRange(0, numDroppedBlocks)];
+    [theCopy->_lineBlocks removeFirstBlocks:numDroppedBlocks];
 
     // Update stats and nuke cache.
     theCopy->num_dropped_blocks += numDroppedBlocks;

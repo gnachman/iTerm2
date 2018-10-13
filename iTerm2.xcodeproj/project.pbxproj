@@ -1993,6 +1993,8 @@
 		A6A4868220B685F000493302 /* iTermHotkeyPreferencesWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA2861CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.m */; };
 		A6A51A401B45CEA9007891F3 /* VT100DCSParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
+		A6AB55E0217256A600142244 /* iTermLineBlockArray.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AB55DE217256A600142244 /* iTermLineBlockArray.h */; };
+		A6AB55E1217256A600142244 /* iTermLineBlockArray.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AB55DF217256A600142244 /* iTermLineBlockArray.m */; };
 		A6AC5D211E9036D70097C0A7 /* iTermURLMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AC5D1F1E9036D70097C0A7 /* iTermURLMark.h */; };
 		A6AC5D221E9036D70097C0A7 /* iTermURLMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AC5D1F1E9036D70097C0A7 /* iTermURLMark.h */; };
 		A6AC5D241E9036D70097C0A7 /* iTermURLMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AC5D201E9036D70097C0A7 /* iTermURLMark.m */; };
@@ -4082,6 +4084,8 @@
 		A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100DCSParserTest.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6AB55DE217256A600142244 /* iTermLineBlockArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLineBlockArray.h; sourceTree = "<group>"; };
+		A6AB55DF217256A600142244 /* iTermLineBlockArray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLineBlockArray.m; sourceTree = "<group>"; };
 		A6AC5D1F1E9036D70097C0A7 /* iTermURLMark.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermURLMark.h; sourceTree = "<group>"; };
 		A6AC5D201E9036D70097C0A7 /* iTermURLMark.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermURLMark.m; sourceTree = "<group>"; };
 		A6ACD1F71B62F2210095CB57 /* iTermRuleTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRuleTest.m; sourceTree = "<group>"; };
@@ -5715,6 +5719,8 @@
 				A6F385DD1FA55E2000739939 /* iTermSmartCursorColor.m */,
 				A69A260921640F3F0091C16D /* iTermFlexibleView.h */,
 				A69A260A21640F3F0091C16D /* iTermFlexibleView.m */,
+				A6AB55DE217256A600142244 /* iTermLineBlockArray.h */,
+				A6AB55DF217256A600142244 /* iTermLineBlockArray.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -7485,6 +7491,7 @@
 				A66719151DCE36C3000CE608 /* iTermAppHotKeyProvider.h in Headers */,
 				5337A315203E065300024BEA /* iTermPowerManager.h in Headers */,
 				A6588829201F06ED006F48DB /* iTermTexture.h in Headers */,
+				A6AB55E0217256A600142244 /* iTermLineBlockArray.h in Headers */,
 				A66719161DCE36C3000CE608 /* NSURL+iTerm.h in Headers */,
 				A66719171DCE36C3000CE608 /* NSDate+iTerm.h in Headers */,
 				A66719181DCE36C3000CE608 /* iTermBaseHotKey.h in Headers */,
@@ -9309,6 +9316,7 @@
 				A6614A2420958ED400A10D97 /* iTermBuildingScriptWindowController.m in Sources */,
 				A68400C21FF99E1B008D3EE2 /* iTermTimestamps.metal in Sources */,
 				A6A4867720B67C3600493302 /* ProfilesAdvancedPreferencesViewController.m in Sources */,
+				A6AB55E1217256A600142244 /* iTermLineBlockArray.m in Sources */,
 				A67960CC1F81FCB6008A42BC /* iTermMetalCellRenderer.m in Sources */,
 				A6A4866220B6765E00493302 /* BulkCopyProfilePreferencesWindowController.m in Sources */,
 				A66F3CF11FEA3D9E00AA2021 /* iTermHistogram.mm in Sources */,
