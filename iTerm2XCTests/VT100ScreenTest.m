@@ -2207,11 +2207,9 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                withOffset:0
                 inContext:[screen findContext]
           multipleResults:YES];
-
     [myFindContext copyFromFindContext:[screen findContext]];
     myFindContext.results = nil;
     [screen saveFindContextAbsPos];
-
     [results removeAllObjects];
     [screen continueFindAllResults:results inContext:[screen findContext]];
     XCTAssert(results.count == 1);

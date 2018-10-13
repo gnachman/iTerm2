@@ -200,7 +200,7 @@ typedef struct screen_char_t
 - (instancetype)initWithLine:(screen_char_t *)line
                       length:(int)length
                 continuation:(screen_char_t)continuation;
-
+- (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other;
 @end
 
 // Standard unicode replacement string. Is a double-width character.

@@ -23,6 +23,12 @@ typedef struct {
     int width_for_double_width_characters_cache;
 } LineBlockMetadata;
 
+@class LineBlock;
+
+@protocol iTermLineBlockObserver<NSObject>
+- (void)lineBlockDidChange:(LineBlock *)lineBlock;
+@end
+
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
 @interface LineBlock : NSObject <NSCopying>
@@ -111,7 +117,7 @@ typedef struct {
 - (screen_char_t *)rawLine:(int)linenum;
 
 // NSLog the contents of the block. For debugging.
-- (void)dump:(int)rawOffset;
+- (void)dump:(int)rawOffset toDebugLog:(BOOL)toDebugLog;
 
 // Returns the timestamp associated with a line when wrapped to the specified width.
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
@@ -197,5 +203,9 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 
 // Call this only before a line block has been created.
 void EnableDoubleWidthCharacterLineCache(void);
+
+- (void)addObserver:(id<iTermLineBlockObserver>)observer;
+- (void)removeObserver:(id<iTermLineBlockObserver>)observer;
+- (BOOL)hasObserver:(id<iTermLineBlockObserver>)observer;
 
 @end

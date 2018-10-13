@@ -6824,6 +6824,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 #pragma mark - iTermSelectionDelegate
 
+#warning TODO This should be a no-op if it changed only because of scrollback overflow
 - (void)selectionDidChange:(iTermSelection *)selection {
     [_delegate refresh];
     if (!_selection.live && selection.hasSelection) {
