@@ -147,6 +147,14 @@
     return sum;
 }
 
+- (NSInteger)rawSpaceUsed {
+    NSInteger position = 0;
+    for (LineBlock *block in _blocks) {
+        position += [block rawSpaceUsed];
+    }
+    return position;
+}
+
 #pragma mark - Low level method
 
 - (id)objectAtIndexedSubscript:(NSUInteger)index {

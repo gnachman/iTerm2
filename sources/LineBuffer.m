@@ -630,16 +630,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return NO;
 }
 
-- (int) _blockPosition: (int) block_num
-{
-    int position = 0;
-    for (LineBlock *block in _lineBlocks.blocks) {
-        position += [block rawSpaceUsed];
-    }
-    return position;
-
-}
-
 - (void)prepareToSearchFor:(NSString*)substring
                 startingAt:(LineBufferPosition *)start
                    options:(FindOptions)options
@@ -730,7 +720,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
          multipleResults:((context.options & FindMultipleResults) != 0)];
     NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context.results count]];
     BOOL haveOutOfRangeResults = NO;
-    int blockPosition = [self _blockPosition:context.absBlockNum - num_dropped_blocks];
+    int blockPosition = _lineBlocks.rawSpaceUsed;
     const int stopAt = stopPosition.absolutePosition - droppedChars;
     for (ResultRange* range in context.results) {
         range->position += blockPosition;
