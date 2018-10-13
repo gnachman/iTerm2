@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "ScreenChar.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -28,6 +29,9 @@ NS_ASSUME_NONNULL_BEGIN
                                             width:(int)width
                                         remainder:(out int *)remainderPtr;
 - (int)numberOfWrappedLinesForWidth:(int)width;
+- (void)enumerateLinesInRange:(NSRange)range
+                        width:(int)width
+                        block:(void (^)(screen_char_t *chars, int length, int eol, screen_char_t continuation, BOOL *stop))block;
 
 @end
 

@@ -6,6 +6,8 @@
 //
 
 #import "iTermLineBlockArray.h"
+
+#import "DebugLogging.h"
 #import "LineBlock.h"
 
 @interface iTermLineBlockArray()
@@ -45,17 +47,18 @@
     _cache = nil;
 }
 
-- (LineBlock *)blockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr {
+- (NSInteger)indexOfBlockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr {
     int line = lineNumber;
-    for (LineBlock *block in _blocks) {
+    for (NSInteger i = 0; i < _blocks.count; i++) {
         if (line == 0) {
             // I don't think a block will ever have 0 lines, but this prevents an infinite loop if that does happen.
             *remainderPtr = 0;
-            return block;
+            return i;
         }
         // getNumLinesWithWrapWidth caches its result for the last-used width so
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
+        LineBlock *block = _blocks[i];
         int block_lines = [block getNumLinesWithWrapWidth:width];
         if (block_lines <= line) {
             line -= block_lines;
@@ -65,9 +68,19 @@
         if (remainderPtr) {
             *remainderPtr = line;
         }
-        return block;
+        return i;
     }
-    return nil;
+    return NSNotFound;
+}
+
+- (LineBlock *)blockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr {
+    NSInteger i = [self indexOfBlockContainingLineNumber:lineNumber
+                                                   width:width
+                                               remainder:remainderPtr];
+    if (i == NSNotFound) {
+        return nil;
+    }
+    return _blocks[i];
 }
 
 - (int)numberOfWrappedLinesForWidth:(int)width {
@@ -76,6 +89,54 @@
         count += [block getNumLinesWithWrapWidth:width];
     }
     return count;
+}
+
+- (void)enumerateLinesInRange:(NSRange)range
+                        width:(int)width
+                        block:(void (^)(screen_char_t * _Nonnull, int, int, screen_char_t, BOOL * _Nonnull))callback {
+    int remainder;
+    NSInteger startIndex = [self indexOfBlockContainingLineNumber:range.location width:width remainder:&remainder];
+    ITAssertWithMessage(startIndex != NSNotFound, @"Line %@ not found", @(range.location));
+    
+    int numberLeft = range.length;
+    ITAssertWithMessage(numberLeft >= 0, @"Invalid length in range %@", NSStringFromRange(range));
+    for (NSInteger i = startIndex; i < _blocks.count; i++) {
+        LineBlock *block = _blocks[i];
+        // getNumLinesWithWrapWidth caches its result for the last-used width so
+        // this is usually faster than calling getWrappedLineWithWrapWidth since
+        // most calls to the latter will just decrement line and return NULL.
+        int block_lines = [block getNumLinesWithWrapWidth:width];
+        if (block_lines <= remainder) {
+            remainder -= block_lines;
+            continue;
+        }
+
+        // Grab lines from this block until we're done or reach the end of the block.
+        BOOL stop = NO;
+        do {
+            int length, eol;
+            screen_char_t continuation;
+            screen_char_t *chars = [block getWrappedLineWithWrapWidth:width
+                                                              lineNum:&remainder
+                                                           lineLength:&length
+                                                    includesEndOfLine:&eol
+                                                         continuation:&continuation];
+            if (chars == NULL) {
+                return;
+            }
+            NSAssert(length <= width, @"Length too long");
+            callback(chars, length, eol, continuation, &stop);
+            if (stop) {
+                return;
+            }
+            numberLeft--;
+            remainder++;
+        } while (numberLeft > 0 && block_lines >= remainder);
+        if (numberLeft == 0) {
+            break;
+        }
+    }
+    ITAssertWithMessage(numberLeft == 0, @"not all lines available in range %@. Have %@ remaining.", NSStringFromRange(range), @(numberLeft));
 }
 
 #pragma mark - Low level method
