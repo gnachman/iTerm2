@@ -2220,7 +2220,8 @@ static BOOL hasBecomeActive = NO;
         case iTermMetalUnavailableReasonWindowResizing:
             return @"the window is being resized.";
         case iTermMetalUnavailableReasonDisconnectedFromPower:
-            return @"the computer is not connected to power. You can enable GPU rendering while disconnected from power in Preferences > General > Advanced GPU Settings.";
+            return @"the computer is not connected to power. You can enable GPU rendering while disconnected from "
+                   @"power in Preferences > General > Advanced GPU Settings.";
         case iTermMetalUnavailableReasonIdle:
             return @"the session is idle. You can enable Metal while idle in Preferences > Advanced.";
         case iTermMetalUnavailableReasonTooManyPanesReason:
