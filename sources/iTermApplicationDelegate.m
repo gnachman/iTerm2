@@ -2194,7 +2194,7 @@ static BOOL hasBecomeActive = NO;
         case iTermMetalUnavailableReasonDisabled:
             return @"GPU Renderer is disabled in Preferences > General.";
         case iTermMetalUnavailableReasonLigatures:
-            return @"ligatures are enabled. You can disable them in Prefs>Profiles>Text>Use ligatures.";
+            return @"ligatures are enabled. You can disable them in Preferences > Profiles > Text > Use ligatures.";
         case iTermMetalUnavailableReasonInitializing:
             return @"the GPU renderer is initializing. It should be ready soon.";
         case iTermMetalUnavailableReasonInvalidSize:
@@ -2202,13 +2202,13 @@ static BOOL hasBecomeActive = NO;
         case iTermMetalUnavailableReasonSessionInitializing:
             return @"the session is initializing.";
         case iTermMetalUnavailableReasonTransparency:
-            return @"transparent windows not supported. You can change window transparency in Prefs>Profiles>Window>Transparency";
+            return @"transparent windows are not supported. They can be disabled in Preferences > Profiles > Window > Transparency.";
         case iTermMetalUnavailableReasonVerticalSpacing:
-            return @"the font's vertical spacing set to less than 100%. You can change it in Prefs>Profiles>Text>Change Font.";
+            return @"the font's vertical spacing set to less than 100%. You can change it in Preferences > Profiles > Text > Change Font.";
         case iTermMetalUnavailableReasonMarginSize:
-            return @"terminal window margins are too small. You can edit them in Prefs>Advanced.";
+            return @"terminal window margins are too small. You can edit them in Preferences > Advanced.";
         case iTermMetalUnavailableReasonAnnotations:
-            return @"annotations are open. Find the session with visible annotations and close them with View>Show Annotations.";
+            return @"annotations are open. Find the session with visible annotations and close them with View > Show Annotations.";
         case iTermMetalUnavailableReasonFindPanel:
             return @"the find panel is open.";
         case iTermMetalUnavailableReasonPasteIndicator:
@@ -2220,9 +2220,9 @@ static BOOL hasBecomeActive = NO;
         case iTermMetalUnavailableReasonWindowResizing:
             return @"the window is being resized.";
         case iTermMetalUnavailableReasonDisconnectedFromPower:
-            return @"the computer is not connected to power. You can enable GPU rendering while disconnected from power in Prefs>General>Advanced GPU Settings.";
+            return @"the computer is not connected to power. You can enable GPU rendering while disconnected from power in Preferences > General > Advanced GPU Settings.";
         case iTermMetalUnavailableReasonIdle:
-            return @"the session is idle. You can enable Metal while idle in Prefs>Advanced.";
+            return @"the session is idle. You can enable Metal while idle in Preferences > Advanced.";
         case iTermMetalUnavailableReasonTooManyPanesReason:
             return @"This tab has too many split panes";
         case iTermMetalUnavailableReasonNoFocus:
