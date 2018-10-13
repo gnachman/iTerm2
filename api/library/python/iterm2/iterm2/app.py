@@ -15,6 +15,8 @@ async def async_get_app(connection):
     """Returns the app singleton, creating it if needed."""
     if App.instance is None:
         App.instance = await App.async_construct(connection)
+    else:
+        await App.instance.async_refresh()
     return App.instance
 
 class CreateWindowException(Exception):
