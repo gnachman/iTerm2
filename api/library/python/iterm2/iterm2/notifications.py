@@ -50,8 +50,26 @@ async def async_unsubscribe(connection, token):
         _get_handlers()[key] = coros
     else:
         del _get_handlers()[key]
-        session, notification_type = key
-        await _async_subscribe(connection, False, notification_type, None, session=session)
+        if len(key) == 2:
+            session, notification_type = key
+            await _async_subscribe(connection, False, notification_type, None, session=session)
+        else:
+            if key[-1] == iterm2.api_pb2.NOTIFY_ON_VARIABLE_CHANGE:
+                scope, identifier, name, notification_type = key
+                request = iterm2.api_pb2.VariableMonitorRequest()
+                request.name = name
+                request.scope = scope
+                request.identifier = identifier
+                await _async_subscribe(
+                        connection,
+                        False,
+                        notification_type,
+                        None,
+                        key=key,
+                        variable_monitor_request=request)
+            else:
+                # The key is custom and there should be code to handle unsubscribing as an elif clause here.
+                assert False
 
 async def async_subscribe_to_new_session_notification(connection, callback):
     """
@@ -304,7 +322,7 @@ async def async_subscribe_to_variable_change_notification(connection, callback, 
         request.identifier = identifier
     else:
         request.identifier = ""
-    key = (scope, request.identifier, name, iterm2.api_pb2.NOTIFY_ON_VARIABLE_CHANGE)
+    key = (request.scope, request.identifier, request.name, iterm2.api_pb2.NOTIFY_ON_VARIABLE_CHANGE)
     return await _async_subscribe(
         connection,
         True,
@@ -343,9 +361,10 @@ async def _async_subscribe(connection, subscribe, notification_type, callback, s
         if status_ok or already:
             if key:
                 _register_notification_handler_impl(key, callback)
+                return (key, callback)
             else:
                 _register_notification_handler(session, _string_rpc_registration_request(rpc_registration_request), notification_type, callback)
-            return ((session, notification_type), callback)
+                return ((session, notification_type), callback)
     else:
         # Unsubscribe
         if status_ok:

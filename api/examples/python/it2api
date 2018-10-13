@@ -470,6 +470,26 @@ async def set_color_preset(connection, args):
       profile = await partial.async_get_full_profile()
       await profile.async_set_color_preset(preset)
 
+async def monitor_variable(connection, args):
+  if args.session:
+    scope = iterm2.VariableScopes.SESSION
+    identifier = args.session
+  elif args.tab:
+    scope = iterm2.VariableScopes.TAB
+    identifier = args.tab
+  elif args.window:
+    scope = iterm2.VariableScopes.WINDOW
+    identifier = args.window
+  elif args.app:
+    scope = iterm2.VariableScopes.APP
+    identifier = ''
+  else:
+    assert False
+  async with iterm2.VariableMonitor(connection, scope, args.name, identifier) as monitor:
+    value = await monitor.async_get()
+    print(f"New value: {value}")
+
+
 def make_parser():
   parser = argparse.ArgumentParser(description='iTerm2 CLI')
   subparsers = parser.add_subparsers(help='Commands')
@@ -614,6 +634,14 @@ def make_parser():
   set_color_preset_parser.add_argument("profile", type=str, help="Profile name")
   set_color_preset_parser.add_argument("preset", type=str, help="Color preset name")
   set_color_preset_parser.set_defaults(func=set_color_preset)
+
+  monitor_variable_parser = subparsers.add_parser("monitor-variable", help="Monitor changes to a variable")
+  monitor_variable_parser.add_argument("name", type=str, help="variable name")
+  monitor_variable_parser.add_argument('--session', type=str, nargs='?', help='Session ID for the variable scope')
+  monitor_variable_parser.add_argument('--tab', type=str, nargs='?', help='Tab ID for the variable scope')
+  monitor_variable_parser.add_argument('--window', type=str, nargs='?', help='Window ID for the variable scope')
+  monitor_variable_parser.add_argument('--app', action='store_true', help='App scope', default=False)
+  monitor_variable_parser.set_defaults(func=monitor_variable)
 
   return parser
 
