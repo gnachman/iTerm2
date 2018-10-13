@@ -64,7 +64,7 @@ class ScreenContents:
     @property
     def number_of_lines(self):
         """The number of lines in this object."""
-        return self.__proto.windowed_coord_range.coord_range.end.y - self.__proto.windowed_coord_range.coord_range.start.y + 1
+        return self.__proto.windowed_coord_range.coord_range.end.y - self.__proto.windowed_coord_range.coord_range.start.y
 
     def line(self, index):
         """Returns the LineContents at the given index.
