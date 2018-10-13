@@ -50,6 +50,7 @@
     for (LineBlock *block in _blocks) {
         if (line == 0) {
             // I don't think a block will ever have 0 lines, but this prevents an infinite loop if that does happen.
+            *remainderPtr = 0;
             return block;
         }
         // getNumLinesWithWrapWidth caches its result for the last-used width so
