@@ -1106,9 +1106,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (id)copyWithZone:(NSZone *)zone {
     LineBuffer *theCopy = [[LineBuffer alloc] initWithBlockSize:block_size];
 
-    for (LineBlock *block in _lineBlocks.blocks) {
-        [theCopy->_lineBlocks addBlock:block];
-    }
+    [theCopy->_lineBlocks release];
+    theCopy->_lineBlocks = [_lineBlocks copy];
     theCopy->cursor_x = cursor_x;
     theCopy->cursor_rawline = cursor_rawline;
     theCopy->max_lines = max_lines;
