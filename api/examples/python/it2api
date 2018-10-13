@@ -54,9 +54,14 @@ async def split_pane(connection, args):
 async def get_buffer(connection, args):
   a = await iterm2.async_get_app(connection)
   s = a.get_session_by_id(args.session)
-  result = await s.async_get_buffer_lines(args.trailing_lines)
-  for contents in result.contents:
-    print(contents.text)
+  h, y, o, _f = await s.async_get_line_info()
+  start = iterm2.Point(0, y + o)
+  end = iterm2.Point(0, y + o + h)
+  coordRange = iterm2.CoordRange(start, end)
+  windowedRange = iterm2.WindowedCoordRange(coordRange)
+  result = await s.async_get_screen_contents(windowedRange)
+  for i in range(result.number_of_lines):
+    print(result.line(i).string)
 
 async def get_prompt(connection, args):
   a = await iterm2.async_get_app(connection)
@@ -521,7 +526,6 @@ def make_parser():
 
   get_buffer_parser = subparsers.add_parser("get-buffer", help="Get screen contents")
   get_buffer_parser.add_argument("session", type=str, help="Session ID")
-  get_buffer_parser.add_argument("trailing_lines", type=int, help="Number of lines from the end of the buffer to fetch")
   get_buffer_parser.set_defaults(func=get_buffer)
 
   get_prompt_parser = subparsers.add_parser("get-prompt", help="Get info about prompt, if available. Gives either the current prompt or the last prompt if a command is being run. Requires shell integration for prompt detection.")

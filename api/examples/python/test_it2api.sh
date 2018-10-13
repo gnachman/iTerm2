@@ -3,7 +3,11 @@ PYTHON=~/Library/ApplicationSupport/iTerm2/iterm2env/versions/3.7.0/bin/python3.
 
 function expect_contains() {
     echo -n "$1: "
-    echo -n "$3" | grep "$2" > /dev/null && echo "OK" || die "$2 not in $3"
+    if [[ $3 == *"$2"* ]]; then
+        echo OK
+    else
+        die "$2 not in $3"
+    fi
 }
 
 function expect_nothing() {
@@ -15,26 +19,26 @@ function die() {
     exit 1
 }
 
+set -x
+
 OUTPUT=$($PYTHON it2api create-tab)
 REGEX='id=([^ ]*) .([0-9]*) x ([0-9]*)'
 [[ $OUTPUT =~ $REGEX ]]
 FIRST_SESSION_ID="${BASH_REMATCH[1]}"
 WIDTH="${BASH_REMATCH[2]}"
-HEIGHT="${BASH_REMATCH[3]}"
 
 expect_contains "list-sessions" "$FIRST_SESSION_ID" "$($PYTHON it2api list-sessions)"
 expect_contains "show-hierarchy" "$FIRST_SESSION_ID" "$($PYTHON it2api show-hierarchy)"
 
 TEXT="qwerty"
 $PYTHON it2api send-text $FIRST_SESSION_ID "$TEXT" || die "send-text failed"
-expect_contains "get-buffer" "$TEXT" "$($PYTHON it2api get-buffer $FIRST_SESSION_ID $HEIGHT)"
+expect_contains "get-buffer" "$TEXT" "$($PYTHON it2api get-buffer $FIRST_SESSION_ID)"
 
 OUTPUT=$($PYTHON it2api split-pane "$FIRST_SESSION_ID")
 REGEX='id=([^ ]*) .([0-9]*) x ([0-9]*)'
 [[ $OUTPUT =~ $REGEX ]]
 SESSION_ID="${BASH_REMATCH[1]}"
 WIDTH="${BASH_REMATCH[2]}"
-HEIGHT="${BASH_REMATCH[3]}"
 
 expect_contains "split-pane" "Session" "$OUTPUT"
 expect_contains "get-prompt" "working_directory: \"$HOME\"" "$($PYTHON it2api get-prompt $FIRST_SESSION_ID)" 
@@ -63,11 +67,12 @@ expect_contains get-variable 123 "$($PYTHON it2api get-variable --session $SESSI
 expect_contains list-variables user.foo "$($PYTHON it2api list-variables --session $SESSION_ID)"
 
 expect_nothing "initialize preset" "$($PYTHON it2api set-color-preset Default "Dark Background")"
-expect_contains set-prset-initialized 0,0,0,255 "$($PYTHON it2api get-profile-property $FIRST_SESSION_ID background_color)"
+expect_contains set-preset-initialized 0,0,0,255 "$($PYTHON it2api get-profile-property $FIRST_SESSION_ID background_color)"
 expect_nothing "initialize preset" "$($PYTHON it2api set-color-preset Default "Light Background")"
-expect_contains set-prset-initialized 255,255,255,255 "$($PYTHON it2api get-profile-property $FIRST_SESSION_ID background_color)"
+expect_contains set-preset-initialized 255,255,255,255 "$($PYTHON it2api get-profile-property $FIRST_SESSION_ID background_color)"
+
+expect_contains monitor-variable /etc "$($PYTHON it2api monitor-variable --session $FIRST_SESSION_ID session.path)"
 
 # Missing tests:
 # saved-arrangement
 # list-profiles
-
