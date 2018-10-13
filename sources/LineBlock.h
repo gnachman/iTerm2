@@ -23,7 +23,11 @@ typedef struct {
     int width_for_double_width_characters_cache;
 } LineBlockMetadata;
 
-extern NSString *const iTermLineBlockDidChangeNotification;
+@class LineBlock;
+
+@protocol iTermLineBlockObserver<NSObject>
+- (void)lineBlockDidChange:(LineBlock *)lineBlock;
+@end
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
@@ -199,5 +203,8 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 
 // Call this only before a line block has been created.
 void EnableDoubleWidthCharacterLineCache(void);
+
+- (void)addObserver:(id<iTermLineBlockObserver>)observer;
+- (void)removeObserver:(id<iTermLineBlockObserver>)observer;
 
 @end

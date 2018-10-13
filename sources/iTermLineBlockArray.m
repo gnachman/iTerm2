@@ -10,7 +10,7 @@
 #import "DebugLogging.h"
 #import "LineBlock.h"
 
-@interface iTermLineBlockArray()
+@interface iTermLineBlockArray()<iTermLineBlockObserver>
 @end
 
 @implementation iTermLineBlockArray {
@@ -31,11 +31,12 @@
 }
 
 - (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-
     // This causes the blocks to be released in a background thread.
     // When a LineBuffer is really gigantic, it can take
     // quite a bit of time to release all the blocks.
+    for (LineBlock *block in _blocks) {
+        [block removeObserver:self];
+    }
     NSMutableArray<LineBlock *> *blocks = _blocks;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [blocks removeAllObjects];
@@ -105,6 +106,9 @@
         if (verbose) {
             NSLog(@"The cache entry exactly equals the line number so advance to index %@ with cache value %@", @(index), _cache[index]);
         }
+    }
+    if (index == _cache.count) {
+        return NSNotFound;
     }
 
     if (remainderPtr) {
@@ -304,10 +308,7 @@
 }
 
 - (void)addBlock:(LineBlock *)block {
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(lineBlockDidChange:)
-                                                 name:iTermLineBlockDidChangeNotification
-                                               object:block];
+    [block addObserver:self];
     [_blocks addObject:block];
     if (_cache) {
         [_cache addObject:_cache.lastObject];
@@ -318,9 +319,7 @@
 }
 
 - (void)removeFirstBlock {
-    [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                    name:iTermLineBlockDidChangeNotification
-                                                  object:_blocks[0]];
+    [_blocks.firstObject removeObserver:self];
     if (_cache) {
         _offset -= _numLines[0].integerValue;
         [_cache removeObjectAtIndex:0];
@@ -336,9 +335,7 @@
 }
 
 - (void)removeLastBlock {
-    [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                    name:iTermLineBlockDidChangeNotification
-                                                  object:_blocks.lastObject];
+    [_blocks.lastObject removeObserver:self];
     [_blocks removeLastObject];
     [_cache removeLastObject];
     [_numLines removeLastObject];
@@ -350,13 +347,6 @@
 
 - (LineBlock *)lastBlock {
     return _blocks.lastObject;
-}
-
-- (void)lineBlockDidChange:(NSNotification *)notification {
-    LineBlock *block = notification.object;
-    if (_cache) {
-        [self updateCacheForBlock:block];
-    }
 }
 
 - (void)updateCacheForBlock:(LineBlock *)block {
@@ -395,6 +385,14 @@
     theCopy->_cache = [_cache mutableCopy];
     theCopy->_numLines = [_numLines mutableCopy];
     return theCopy;
+}
+
+#pragma mark - iTermLineBlockObserver
+
+- (void)lineBlockDidChange:(LineBlock *)lineBlock {
+    if (_cache) {
+        [self updateCacheForBlock:lineBlock];
+    }
 }
 
 @end
