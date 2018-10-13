@@ -162,13 +162,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if (buffer->num_wrapped_lines_width == width) {
         return buffer->num_wrapped_lines_cache;
     }
-    int count = 0;
-    int i;
-    const int numBlocks = [buffer->_lineBlocks count];
-    for (i = 0; i < numBlocks; ++i) {
-        LineBlock* block = buffer->_lineBlocks[i];
-        count += [block getNumLinesWithWrapWidth: width];
-    }
+    int count = [buffer->_lineBlocks numberOfWrappedLinesForWidth:width];
     buffer->num_wrapped_lines_width = width;
     buffer->num_wrapped_lines_cache = count;
     return count;

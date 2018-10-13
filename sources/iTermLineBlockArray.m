@@ -70,6 +70,14 @@
     return nil;
 }
 
+- (int)numberOfWrappedLinesForWidth:(int)width {
+    int count = 0;
+    for (LineBlock *block in _blocks) {
+        count += [block getNumLinesWithWrapWidth:width];
+    }
+    return count;
+}
+
 #pragma mark - Low level method
 
 - (id)objectAtIndexedSubscript:(NSUInteger)index {

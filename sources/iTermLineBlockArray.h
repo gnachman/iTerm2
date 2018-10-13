@@ -27,6 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable LineBlock *)blockContainingLineNumber:(int)lineNumber
                                             width:(int)width
                                         remainder:(out int *)remainderPtr;
+- (int)numberOfWrappedLinesForWidth:(int)width;
 
 @end
 
