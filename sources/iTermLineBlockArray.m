@@ -48,6 +48,10 @@
 - (LineBlock *)blockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr {
     int line = lineNumber;
     for (LineBlock *block in _blocks) {
+        if (line == 0) {
+            // I don't think a block will ever have 0 lines, but this prevents an infinite loop if that does happen.
+            return block;
+        }
         // getNumLinesWithWrapWidth caches its result for the last-used width so
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
