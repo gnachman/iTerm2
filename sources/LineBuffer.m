@@ -902,37 +902,37 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         }
         return result;
     }
-    int yoffset = 0;
-    int p = position.absolutePosition - droppedChars;
-    for (LineBlock *block in _lineBlocks.blocks) {
-        int used = [block rawSpaceUsed];
-        if (p >= used) {
-            p -= used;
-            yoffset += [block getNumLinesWithWrapWidth:width];
-        } else {
-            int y;
-            int x;
-            BOOL positionIsValid = [block convertPosition:p
-                                                withWidth:width
-                                                      toX:&x
-                                                      toY:&y];
-            if (ok) {
-                *ok = positionIsValid;
-            }
-            if (position.yOffset > 0) {
-                x = 0;
-                y += position.yOffset;
-            }
-            if (position.extendsToEndOfLine) {
-                x = width - 1;
-            }
-            return VT100GridCoordMake(x, y + yoffset);
+
+    int p;
+    int yoffset;
+    LineBlock *block = [_lineBlocks blockContainingAbsolutePosition:position.absolutePosition - droppedChars
+                                                              width:width
+                                                          remainder:&p
+                                                        blockOffset:&yoffset];
+    if (!block) {
+        if (ok) {
+            *ok = NO;
         }
+        return VT100GridCoordMake(0, 0);
     }
+
+    int y;
+    int x;
+    BOOL positionIsValid = [block convertPosition:p
+                                        withWidth:width
+                                              toX:&x
+                                              toY:&y];
     if (ok) {
-        *ok = NO;
+        *ok = positionIsValid;
     }
-    return VT100GridCoordMake(0, 0);
+    if (position.yOffset > 0) {
+        x = 0;
+        y += position.yOffset;
+    }
+    if (position.extendsToEndOfLine) {
+        x = width - 1;
+    }
+    return VT100GridCoordMake(x, y + yoffset);
 }
 
 - (LineBufferPosition *)firstPosition {

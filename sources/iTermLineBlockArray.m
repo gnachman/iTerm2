@@ -160,6 +160,31 @@
     return position;
 }
 
+- (LineBlock *)blockContainingAbsolutePosition:(long long)position
+                                         width:(int)width
+                                     remainder:(int *)remainderPtr
+                                   blockOffset:(int *)yoffsetPtr {
+    long long p = position;
+    int yoffset = 0;
+
+    for (LineBlock *block in _blocks) {
+        const int used = [block rawSpaceUsed];
+        if (p >= used) {
+            p -= used;
+            yoffset += [block getNumLinesWithWrapWidth:width];
+        } else {
+            if (remainderPtr) {
+                *remainderPtr = p;
+            }
+            if (yoffsetPtr) {
+                *yoffsetPtr = yoffset;
+            }
+            return block;
+        }
+    }
+    return nil;
+
+}
 #pragma mark - Low level method
 
 - (id)objectAtIndexedSubscript:(NSUInteger)index {
