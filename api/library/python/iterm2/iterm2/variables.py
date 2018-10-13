@@ -28,19 +28,12 @@ class VariableMonitor:
         self.__scope = scope
         self.__name = name
         self.__identifier = identifier
-        self.__future = None
+        self.__queue = asyncio.Queue(loop=asyncio.get_event_loop())
 
     async def __aenter__(self):
         async def callback(_connection, message):
             """Called when a variable changes."""
-            future = self.__future
-            if future is None:
-                # Ignore reentrant calls
-                return
-
-            self.__future = None
-            if future is not None and not future.done():
-                future.set_result(message)
+            await self.__queue.put(message)
 
         self.__token = await iterm2.notifications.async_subscribe_to_variable_change_notification(
                 self.__connection,
@@ -54,14 +47,8 @@ class VariableMonitor:
         """
         Returns the new value of the variable.
         """
-        future = asyncio.Future()
-        self.__future = future
-        await self.__connection.async_dispatch_until_future(self.__future)
-        result = future.result()
-        self.__future = None
-
+        result = await self.__queue.get()
         jsonNewValue = result.json_new_value
-
         return json.loads(jsonNewValue)
 
     async def __aexit__(self, exc_type, exc, _tb):
