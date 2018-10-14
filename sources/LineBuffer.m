@@ -931,11 +931,35 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return NO;
 }
 
-- (BOOL)_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset
+#if SANITY_CHECK_CUMULATIVE_CACHE
+- (BOOL)_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset {
+    int nb=0, no=0;
+    BOOL newOk = [self new_findPosition:start inBlock:&nb inOffset:&no];
+    int ob=0, oo=0;
+    BOOL oldOk = [self old_findPosition:start inBlock:&ob inOffset:&oo];
+    assert(newOk == oldOk);
+    if (newOk) {
+        assert(nb == ob);
+        assert(no == oo);
+    }
+    if (block_num) {
+        *block_num = ob;
+    }
+    if (offset) {
+        *offset = oo;
+    }
+    return oldOk;
+}
+#else
+- (BOOL)_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset {
+    return [self new_findPosition:start inBlock:block_num inOffset:offset];
+}
+#endif
+
+- (BOOL)old_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset
 {
     int i;
     int position = start.absolutePosition - droppedChars;
-#warning TODO: Optimize this
     for (i = 0; position >= 0 && i < _lineBlocks.count; ++i) {
         LineBlock *block = _lineBlocks[i];
         int used = [block rawSpaceUsed];
@@ -948,6 +972,18 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         }
     }
     return NO;
+}
+
+- (BOOL)new_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset {
+    LineBlock *block = [_lineBlocks blockContainingPosition:start.absolutePosition - droppedChars
+                                                      width:-1
+                                                  remainder:offset
+                                                blockOffset:NULL
+                                                      index:block_num];
+    if (!block) {
+        return NO;
+    }
+    return YES;
 }
 
 #if SANITY_CHECK_CUMULATIVE_CACHE
@@ -1532,7 +1568,11 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (int)absBlockNumberOfAbsPos:(long long)absPos {
     int old = [self old_absBlockNumberOfAbsPos:absPos];
     int new = [self new_absBlockNumberOfAbsPos:absPos];
-    assert(old == new);
+    if (old != new) {
+        [self old_absBlockNumberOfAbsPos:absPos];
+        [self new_absBlockNumberOfAbsPos:absPos];
+        assert(NO);
+    }
     return old;
 }
 #else
@@ -1565,7 +1605,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if (!block) {
         return _lineBlocks.count + num_dropped_blocks;
     }
-    return index;
+    return index + num_dropped_blocks;
 }
 
 - (long long)absPositionOfAbsBlock:(int)absBlockNum

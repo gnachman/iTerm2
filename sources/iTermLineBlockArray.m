@@ -329,25 +329,26 @@
                              remainder:(int *)remainderPtr
                            blockOffset:(int *)yoffsetPtr
                                  index:(int *)indexPtr {
-    if (_numLinesCache && width != _width) {
+    // NOTE: line number cache is not used if yoffsetPtr is nil.
+    if (yoffsetPtr && _numLinesCache && width != _width) {
         [self eraseCache];
     }
-    if (!_numLinesCache) {
+    if (width > 0 && !_numLinesCache) {
         [self buildCacheForWidth:width];
     }
     if (_rawSpaceCache) {
-        int r, y, i;
-        LineBlock *actual = [self fast_blockContainingPosition:position width:width remainder:&r blockOffset:&y index:&i verbose:NO];
+        int r=0, y=0, i=0;
+        LineBlock *actual = [self fast_blockContainingPosition:position remainder:&r blockOffset:yoffsetPtr ? &y : NULL index:&i verbose:NO];
 #if PERFORM_SANITY_CHECKS
-        int ar, ay, ai;
-        LineBlock *expected = [self slow_blockContainingPosition:position width:width remainder:&ar blockOffset:&ay index:&ai verbose:NO];
+        int ar=0, ay=0, ai=0;
+        LineBlock *expected = [self slow_blockContainingPosition:position width:width remainder:&ar blockOffset:yoffsetPtr ? &ay : NULL index:&ai verbose:NO];
 
         if (actual != expected ||
             r != ar ||
             y != ay ||
             i != ai) {
-            [self fast_blockContainingPosition:position width:width remainder:&r blockOffset:&y index:&i verbose:YES];
-            [self slow_blockContainingPosition:position width:width remainder:&ar blockOffset:&ay index:&ai verbose:YES];
+            [self fast_blockContainingPosition:position remainder:&r blockOffset:yoffsetPtr ? &y : NULL index:&i verbose:YES];
+            [self slow_blockContainingPosition:position width:width remainder:&ar blockOffset:yoffsetPtr ? &ay : NULL index:&ai verbose:YES];
         }
         assert(actual == expected);
         assert(r == ar);
@@ -370,7 +371,6 @@
 }
 
 - (LineBlock *)fast_blockContainingPosition:(long long)position
-                                      width:(int)width
                                   remainder:(int *)remainderPtr
                                 blockOffset:(int *)yoffsetPtr
                                       index:(int *)indexPtr

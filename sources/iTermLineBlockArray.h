@@ -36,6 +36,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSInteger)numberOfRawLines;
 - (NSInteger)rawSpaceUsed;
 - (NSInteger)rawSpaceUsedInRangeOfBlocks:(NSRange)range;
+
+// If you don't need a yoffset pass -1 for width and NULL for blockOffset to avoid building a cache.
 - (LineBlock *)blockContainingPosition:(long long)p
                                  width:(int)width
                              remainder:(nullable int *)remainder
