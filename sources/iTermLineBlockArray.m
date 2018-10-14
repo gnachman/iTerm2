@@ -20,7 +20,7 @@
 
 @implementation iTermLineBlockArray {
     NSMutableArray<LineBlock *> *_blocks;
-
+    BOOL _mayHaveDoubleWidthCharacter;
     iTermCumulativeSumCache *_numLinesCache;
     iTermCumulativeSumCache *_rawSpaceCache;
 }
@@ -49,11 +49,21 @@
 #pragma mark - High level methods
 
 - (void)setAllBlocksMayHaveDoubleWidthCharacters {
+    if (_mayHaveDoubleWidthCharacter) {
+        return;
+    }
+    _mayHaveDoubleWidthCharacter = YES;
+    BOOL changed = NO;
     for (LineBlock *block in _blocks) {
+        if (!block.mayHaveDoubleWidthCharacter) {
+            changed = YES;
+        }
         block.mayHaveDoubleWidthCharacter = YES;
     }
-    _numLinesCache = nil;
-    _rawSpaceCache = nil;
+    if (changed) {
+        _numLinesCache = nil;
+        _rawSpaceCache = nil;
+    }
 }
 
 - (void)buildCacheForWidth:(int)width {
@@ -495,6 +505,7 @@
     theCopy->_blocks = [_blocks mutableCopy];
     theCopy->_numLinesCache = [_numLinesCache copy];
     theCopy->_rawSpaceCache = [_rawSpaceCache copy];
+    theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
 
     return theCopy;
 }
