@@ -20,10 +20,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSMutableArray<NSNumber *> *sums;
 @property (nonatomic, readonly) NSMutableArray<NSNumber *> *values;
 @property (nonatomic) NSInteger offset;
-@property (nonatomic, readonly) int width;
-
-- (instancetype)initWithWidth:(int)width NS_DESIGNATED_INITIALIZER;
-- (instancetype)init NS_UNAVAILABLE;
 
 // Returns NSNotFound if the value is largest than the maximum
 // Runs in O(log(N)) time for N=number of buckets.

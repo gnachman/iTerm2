@@ -9,12 +9,11 @@
 
 @implementation iTermCumulativeSumCache
 
-- (instancetype)initWithWidth:(int)width {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _sums = [NSMutableArray array];
         _values = [NSMutableArray array];
-        _width = width;
     }
     return self;
 }
@@ -125,7 +124,7 @@
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-    iTermCumulativeSumCache *theCopy = [[iTermCumulativeSumCache alloc] initWithWidth:_width];
+    iTermCumulativeSumCache *theCopy = [[iTermCumulativeSumCache alloc] init];
     theCopy->_sums = [_sums mutableCopy];
     theCopy->_values = [_values mutableCopy];
     theCopy->_offset = _offset;

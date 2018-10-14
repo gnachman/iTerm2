@@ -19,6 +19,7 @@
 @implementation iTermLineBlockArray {
     NSMutableArray<LineBlock *> *_blocks;
     BOOL _mayHaveDoubleWidthCharacter;
+    int _width;
     iTermCumulativeSumCache *_numLinesCache;
     iTermCumulativeSumCache *_rawSpaceCache;
 }
@@ -27,6 +28,7 @@
     self = [super init];
     if (self) {
         _blocks = [NSMutableArray array];
+        _width = -1;
     }
     return self;
 }
@@ -65,8 +67,9 @@
 }
 
 - (void)buildCacheForWidth:(int)width {
-    _numLinesCache = [[iTermCumulativeSumCache alloc] initWithWidth:width];
-    _rawSpaceCache = [[iTermCumulativeSumCache alloc] initWithWidth:width];
+    _width = width;
+    _numLinesCache = [[iTermCumulativeSumCache alloc] init];
+    _rawSpaceCache = [[iTermCumulativeSumCache alloc] init];
 
     for (LineBlock *block in _blocks) {
         const int block_lines = [block getNumLinesWithWrapWidth:width];
@@ -78,12 +81,12 @@
 }
 
 - (void)eraseCache {
+    _width = -1;
     _numLinesCache = nil;
-    _rawSpaceCache = nil;
 }
 
 - (NSInteger)indexOfBlockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr {
-    if (_numLinesCache && width != _numLinesCache.width) {
+    if (_numLinesCache && width != _width) {
         [self eraseCache];
     }
     if (!_numLinesCache) {
@@ -304,8 +307,11 @@
                              remainder:(int *)remainderPtr
                            blockOffset:(int *)yoffsetPtr
                                  index:(int *)indexPtr {
-    if (_numLinesCache && width != _numLinesCache.width) {
+    if (_numLinesCache && width != _width) {
         [self eraseCache];
+    }
+    if (!_numLinesCache) {
+        [self buildCacheForWidth:width];
     }
     if (_rawSpaceCache) {
         int r, y, i;
@@ -485,10 +491,10 @@
     assert(_blocks.count > 0);
 
     if (block == _blocks.firstObject) {
-        [_numLinesCache setFirstValue:[block getNumLinesWithWrapWidth:_numLinesCache.width]];
+        [_numLinesCache setFirstValue:[block getNumLinesWithWrapWidth:_width]];
         [_rawSpaceCache setFirstValue:[block rawSpaceUsed]];
     } else if (block == _blocks.lastObject) {
-        [_numLinesCache setLastValue:[block getNumLinesWithWrapWidth:_numLinesCache.width]];
+        [_numLinesCache setLastValue:[block getNumLinesWithWrapWidth:_width]];
         [_rawSpaceCache setLastValue:[block rawSpaceUsed]];
     } else {
         ITAssertWithMessage(block == _blocks.firstObject || block == _blocks.lastObject,
