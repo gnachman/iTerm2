@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSMutableArray<NSNumber *> *sums;
 @property (nonatomic, readonly) NSMutableArray<NSNumber *> *values;
 @property (nonatomic) NSInteger offset;
+@property (nonatomic, readonly) NSInteger sumOfAllValues;
 
 // Returns NSNotFound if the value is largest than the maximum
 // Runs in O(log(N)) time for N=number of buckets.
@@ -41,6 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Sum values in a range in O(1) time.
 - (NSInteger)sumOfValuesInRange:(NSRange)range;
+
 
 @end
 

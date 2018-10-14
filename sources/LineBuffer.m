@@ -629,7 +629,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     memset(&newCont, 0, sizeof(newCont));
     ScreenCharArray *new = [self new_wrappedLineAtIndex:lineNum width:width continuation:&newCont];
 
-    BOOL matches = [old isEqualToScreenCharArray:new];
+    BOOL matches = old == new || [old isEqualToScreenCharArray:new];
     assert(matches);
     assert(!memcmp(&oldCont, &newCont, sizeof(oldCont)));
 
@@ -1181,7 +1181,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                        offset:(int)offset {
     LineBufferPosition *old = [self old_positionForCoordinate:coord width:width offset:offset];
     LineBufferPosition *new = [self new_positionForCoordinate:coord width:width offset:offset];
-    assert([old isEqualToLineBufferPosition:new]);
+    assert(old == new || [old isEqualToLineBufferPosition:new]);
     return old;
 }
 #else
@@ -1478,10 +1478,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 #if SANITY_CHECK_CUMULATIVE_CACHE
 - (long long)absPositionOfFindContext:(FindContext *)findContext {
-    long long old = [self old_absPositionOfFindContext:findContext];
-    long long new = [self new_absPositionOfFindContext:findContext];
-    assert(old == new);
-    return old;
+    long long oldAbsolutePosition = [self old_absPositionOfFindContext:findContext];
+    long long newAbsolutePosition = [self new_absPositionOfFindContext:findContext];
+    if (oldAbsolutePosition != newAbsolutePosition) {
+        assert(NO);
+    }
+    return oldAbsolutePosition;
 }
 #else
 - (long long)absPositionOfFindContext:(FindContext *)findContext {
@@ -1505,7 +1507,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (long long)new_absPositionOfFindContext:(FindContext *)findContext {
     int numBlocks = findContext.absBlockNum - num_dropped_blocks;
-    return [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, numBlocks)] + findContext.offset;
+    return droppedChars + [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, numBlocks)] + findContext.offset;
 }
 
 - (int)positionForAbsPosition:(long long)absPosition

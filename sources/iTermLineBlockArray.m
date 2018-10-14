@@ -207,7 +207,28 @@
 }
 
 - (int)numberOfWrappedLinesForWidth:(int)width {
-#warning TODO: Optimize this
+    if (_numLinesCache && width != _width) {
+        [self eraseCache];
+    }
+    if (!_numLinesCache) {
+        [self buildCacheForWidth:width];
+    }
+    if (_numLinesCache) {
+        int actual = [self fast_numberOfWrappedLinesForWidth:width];
+#if PERFORM_SANITY_CHECKS
+        int expected = [self slow_numberOfWrappedLinesForWidth:width];
+        assert(actual == expected);
+#endif
+        return actual;
+    }
+    return [self slow_numberOfWrappedLinesForWidth:width];
+}
+
+- (int)fast_numberOfWrappedLinesForWidth:(int)width {
+    return _numLinesCache.sumOfAllValues;
+}
+
+- (int)slow_numberOfWrappedLinesForWidth:(int)width {
     int count = 0;
     for (LineBlock *block in _blocks) {
         count += [block getNumLinesWithWrapWidth:width];
@@ -262,6 +283,7 @@
     }
     ITAssertWithMessage(numberLeft == 0, @"not all lines available in range %@. Have %@ remaining.", NSStringFromRange(range), @(numberLeft));
 }
+
 
 - (NSInteger)numberOfRawLines {
 #warning TODO: Optimize this

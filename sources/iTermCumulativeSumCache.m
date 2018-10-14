@@ -27,6 +27,10 @@
     return _sums[highIndex].integerValue - _sums[lowIndex].integerValue + _values[lowIndex].integerValue;
 }
 
+- (NSInteger)sumOfAllValues {
+    return [self sumOfValuesInRange:NSMakeRange(0, _sums.count)];
+}
+
 - (NSInteger)maximumSum {
     return _sums.lastObject.integerValue;
 }
