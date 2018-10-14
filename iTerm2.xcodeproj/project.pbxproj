@@ -1995,6 +1995,8 @@
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6AB55E0217256A600142244 /* iTermLineBlockArray.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AB55DE217256A600142244 /* iTermLineBlockArray.h */; };
 		A6AB55E1217256A600142244 /* iTermLineBlockArray.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AB55DF217256A600142244 /* iTermLineBlockArray.m */; };
+		A6AB55E42173E18900142244 /* iTermCumulativeSumCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AB55E22173E18900142244 /* iTermCumulativeSumCache.h */; };
+		A6AB55E52173E18900142244 /* iTermCumulativeSumCache.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AB55E32173E18900142244 /* iTermCumulativeSumCache.m */; };
 		A6AC5D211E9036D70097C0A7 /* iTermURLMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AC5D1F1E9036D70097C0A7 /* iTermURLMark.h */; };
 		A6AC5D221E9036D70097C0A7 /* iTermURLMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AC5D1F1E9036D70097C0A7 /* iTermURLMark.h */; };
 		A6AC5D241E9036D70097C0A7 /* iTermURLMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AC5D201E9036D70097C0A7 /* iTermURLMark.m */; };
@@ -4086,6 +4088,8 @@
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6AB55DE217256A600142244 /* iTermLineBlockArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLineBlockArray.h; sourceTree = "<group>"; };
 		A6AB55DF217256A600142244 /* iTermLineBlockArray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLineBlockArray.m; sourceTree = "<group>"; };
+		A6AB55E22173E18900142244 /* iTermCumulativeSumCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCumulativeSumCache.h; sourceTree = "<group>"; };
+		A6AB55E32173E18900142244 /* iTermCumulativeSumCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCumulativeSumCache.m; sourceTree = "<group>"; };
 		A6AC5D1F1E9036D70097C0A7 /* iTermURLMark.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermURLMark.h; sourceTree = "<group>"; };
 		A6AC5D201E9036D70097C0A7 /* iTermURLMark.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermURLMark.m; sourceTree = "<group>"; };
 		A6ACD1F71B62F2210095CB57 /* iTermRuleTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRuleTest.m; sourceTree = "<group>"; };
@@ -5721,6 +5725,8 @@
 				A69A260A21640F3F0091C16D /* iTermFlexibleView.m */,
 				A6AB55DE217256A600142244 /* iTermLineBlockArray.h */,
 				A6AB55DF217256A600142244 /* iTermLineBlockArray.m */,
+				A6AB55E22173E18900142244 /* iTermCumulativeSumCache.h */,
+				A6AB55E32173E18900142244 /* iTermCumulativeSumCache.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -7607,6 +7613,7 @@
 				A66719531DCE36C3000CE608 /* iTermSocketAddress.h in Headers */,
 				A6E5D20B1FA3C55700EDD002 /* iTermMetalRowData.h in Headers */,
 				A66719541DCE36C3000CE608 /* SetDirectoryTrigger.h in Headers */,
+				A6AB55E42173E18900142244 /* iTermCumulativeSumCache.h in Headers */,
 				A6588825201E41A5006F48DB /* iTermMetalDebugInfo.h in Headers */,
 				A66719551DCE36C3000CE608 /* iTermAutomaticProfileSwitcher.h in Headers */,
 				A66719561DCE36C3000CE608 /* iTermRecentDirectoryMO.h in Headers */,
@@ -9288,6 +9295,7 @@
 				A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */,
 				A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
+				A6AB55E52173E18900142244 /* iTermCumulativeSumCache.m in Sources */,
 				A6FE8D04209380E400B5C648 /* iTermOptionalComponentDownloadWindowController.m in Sources */,
 				A62A1F721E6E724B00363EE9 /* iTermMenuOpener.m in Sources */,
 				A65EC0301F31800300AC0A6B /* iTermUpdateCadenceController.m in Sources */,
