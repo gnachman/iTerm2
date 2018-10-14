@@ -1608,14 +1608,32 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return index + num_dropped_blocks;
 }
 
-- (long long)absPositionOfAbsBlock:(int)absBlockNum
-{
+#if SANITY_CHECK_CUMULATIVE_CACHE
+- (long long)absPositionOfAbsBlock:(int)absBlockNum {
+    long long oldValue = [self old_absPositionOfAbsBlock:absBlockNum];
+    long long newValue = [self new_absPositionOfAbsBlock:absBlockNum];
+    assert(oldValue == newValue);
+    return oldValue;
+}
+#else
+- (long long)absPositionOfAbsBlock:(int)absBlockNum {
+    return [self new_absPositionOfAbsBlock:absBlockNum];
+}
+#endif
+
+- (long long)old_absPositionOfAbsBlock:(int)absBlockNum {
     long long cumPos = droppedChars;
-#warning TODO: Optimize this
     for (int i = 0; i < _lineBlocks.count && i + num_dropped_blocks < absBlockNum; i++) {
         cumPos += [_lineBlocks[i] rawSpaceUsed];
     }
     return cumPos;
+}
+
+- (long long)new_absPositionOfAbsBlock:(int)absBlockNum {
+    if (absBlockNum <= num_dropped_blocks) {
+        return droppedChars;
+    }
+    return droppedChars + [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, absBlockNum - num_dropped_blocks)];
 }
 
 - (void)storeLocationOfAbsPos:(long long)absPos
