@@ -10,15 +10,112 @@
 #import "DebugLogging.h"
 #import "LineBlock.h"
 
+#define PERFORM_SANITY_CHECKS 1
+
+@interface iTermCumulativeSumCache : NSObject<NSCopying>
+@property (nonatomic, readonly) NSMutableArray<NSNumber *> *sums;
+@property (nonatomic, readonly) NSMutableArray<NSNumber *> *values;
+@property (nonatomic) NSInteger offset;
+@property (nonatomic, readonly) int width;
+
+- (instancetype)initWithWidth:(int)width NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+
+- (NSInteger)insertionIndexForValue:(NSInteger)value;
+// Add a 0 to the end
+- (void)extend;
+- (void)removeFirstValue;
+- (void)removeLastValue;
+- (void)setLastValue:(NSInteger)value;
+- (void)setFirstValue:(NSInteger)value;
+
+@end
+
+@implementation iTermCumulativeSumCache
+
+- (instancetype)initWithWidth:(int)width {
+    self = [super init];
+    if (self) {
+        _sums = [NSMutableArray array];
+        _values = [NSMutableArray array];
+        _width = width;
+    }
+    return self;
+}
+
+- (NSInteger)insertionIndexForValue:(NSInteger)value {
+    // Subtract the offset because the offset is negative and our values are higher than what is exposed by the owner's interface.
+    const NSInteger adjustedValue = value - _offset;
+    const NSInteger insertionIndex = [_sums indexOfObject:@(adjustedValue)
+                                            inSortedRange:NSMakeRange(0, _sums.count)
+                                                  options:NSBinarySearchingInsertionIndex
+                                          usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+                                              return [obj1 compare:obj2];
+                                          }];
+    NSInteger index = insertionIndex;
+    while (index + 1 < _sums.count &&
+           _sums[index].integerValue == adjustedValue) {
+        index++;
+    }
+    if (index == _sums.count) {
+        return NSNotFound;
+    }
+
+    return index;
+}
+
+- (void)extend {
+    [_sums addObject:_sums.lastObject ?: @(-_offset)];
+    [_values addObject:@0];
+}
+
+- (void)removeFirstValue {
+    _offset -= _values[0].integerValue;
+    [_sums removeObjectAtIndex:0];
+    [_values removeObjectAtIndex:0];
+}
+
+- (void)removeLastValue {
+    [_sums removeLastObject];
+    [_values removeLastObject];
+}
+
+- (void)setLastValue:(NSInteger)value {
+    const NSInteger index = _sums.count - 1;
+    assert(index >= 1);
+    _values[index] = @(value);
+    _sums[index] = @(_sums[index - 1].integerValue + value);
+}
+
+- (void)setFirstValue:(NSInteger)value {
+    const NSInteger cachedNumLines = _values[0].integerValue;
+    const NSInteger delta = value - cachedNumLines;
+    if (_sums.count > 1) {
+        // Only ok to _drop_ lines from the first block when there are others after it.
+        assert(delta <= 0);
+    }
+    _offset += delta;
+    _values[0] = @(value);
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    iTermCumulativeSumCache *theCopy = [[iTermCumulativeSumCache alloc] initWithWidth:_width];
+    theCopy->_sums = [_sums mutableCopy];
+    theCopy->_values = [_values mutableCopy];
+    theCopy->_offset = _offset;
+    return theCopy;
+}
+
+@end
+
 @interface iTermLineBlockArray()<iTermLineBlockObserver>
 @end
 
 @implementation iTermLineBlockArray {
     NSMutableArray<LineBlock *> *_blocks;
     NSInteger _width;  // width for the cache
-    NSInteger _offset;  // Number of lines removed from the head
-    NSMutableArray<NSNumber *> *_sumNumLines;  // If nonnil, gives the cumulative number of lines for each block and is 1:1 with _blocks
-    NSMutableArray<NSNumber *> *_numLines;
+
+    iTermCumulativeSumCache *_numLinesCache;
 
     NSInteger _rawOffset;
     NSMutableArray<NSNumber *> *_sumRawSpace;
@@ -53,8 +150,7 @@
     for (LineBlock *block in _blocks) {
         block.mayHaveDoubleWidthCharacter = YES;
     }
-    _sumNumLines = nil;
-    _numLines = nil;
+    _numLinesCache = nil;
     _sumRawSpace = nil;
     _rawSpace = nil;
     _width = -1;
@@ -63,9 +159,7 @@
 - (void)buildCacheForWidth:(int)width {
     _width = width;
 
-    _offset = 0;
-    _sumNumLines = [NSMutableArray array];
-    _numLines = [NSMutableArray array];
+    _numLinesCache = [[iTermCumulativeSumCache alloc] initWithWidth:width];
 
     _rawOffset = 0;
     _sumRawSpace = [NSMutableArray array];
@@ -76,8 +170,8 @@
     for (LineBlock *block in _blocks) {
         int block_lines = [block getNumLinesWithWrapWidth:width];
         sumNumLines += block_lines;
-        [_sumNumLines addObject:@(sumNumLines)];
-        [_numLines addObject:@(block_lines)];
+        [_numLinesCache.sums addObject:@(sumNumLines)];
+        [_numLinesCache.values addObject:@(block_lines)];
 
         int rawSpace = [block rawSpaceUsed];
         sumRawSpace += rawSpace;
@@ -87,8 +181,7 @@
 }
 
 - (void)eraseCache {
-    _sumNumLines = nil;
-    _numLines = nil;
+    _numLinesCache = nil;
     _sumRawSpace = nil;
     _rawSpace = nil;
 }
@@ -97,41 +190,34 @@
     if (width != _width) {
         [self eraseCache];
     }
-    if (!_sumNumLines) {
+    if (!_numLinesCache) {
         [self buildCacheForWidth:width];
     }
-    if (_sumNumLines) {
-        return [self fastIndexOfBlockContainingLineNumber:lineNumber remainder:remainderPtr verbose:NO];
+    if (_numLinesCache) {
+        int r;
+        NSInteger actual = [self fastIndexOfBlockContainingLineNumber:lineNumber remainder:&r verbose:NO];
+#if PERFORM_SANITY_CHECKS
+        int ar;
+        NSInteger expected = [self slowIndexOfBlockContainingLineNumber:lineNumber width:width remainder:&ar verbose:NO];
+        if (actual != expected || r != ar) {
+            [self fastIndexOfBlockContainingLineNumber:lineNumber remainder:&r verbose:YES];
+            [self slowIndexOfBlockContainingLineNumber:lineNumber width:width remainder:&ar verbose:YES];
+            assert(NO);
+        }
+#endif
+        if (remainderPtr) {
+            *remainderPtr = r;
+        }
+        return actual;
     }
 
     return [self slowIndexOfBlockContainingLineNumber:lineNumber width:width remainder:remainderPtr verbose:NO];
 }
 
 - (NSInteger)fastIndexOfBlockContainingLineNumber:(int)lineNumber remainder:(out nonnull int *)remainderPtr verbose:(BOOL)verbose {
-    // Subtract the offset because the offset is negative and our line numbers are higher than what is exposed by the interface.
-    const NSInteger absoluteLineNumber = lineNumber - _offset;
-    if (verbose) {
-        NSLog(@"Begin fast search for line number %@, absolute line number %@", @(lineNumber), @(absoluteLineNumber));
-    }
-    const NSInteger insertionIndex = [_sumNumLines indexOfObject:@(absoluteLineNumber)
-                                             inSortedRange:NSMakeRange(0, _sumNumLines.count)
-                                                   options:NSBinarySearchingInsertionIndex
-                                           usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
-                                               return [obj1 compare:obj2];
-                                           }];
-    if (verbose) {
-        NSLog(@"Binary search gave me insertion index %@. Cache for that one is %@", @(insertionIndex), _sumNumLines[insertionIndex]);
-    }
+    const NSInteger index = [_numLinesCache insertionIndexForValue:lineNumber];
 
-    NSInteger index = insertionIndex;
-    while (index + 1 < _sumNumLines.count &&
-           _sumNumLines[index].integerValue == absoluteLineNumber) {
-        index++;
-        if (verbose) {
-            NSLog(@"The cache entry exactly equals the line number so advance to index %@ with cache value %@", @(index), _sumNumLines[index]);
-        }
-    }
-    if (index == _sumNumLines.count) {
+    if (index == NSNotFound) {
         return NSNotFound;
     }
 
@@ -142,12 +228,13 @@
             }
             *remainderPtr = lineNumber;
         } else {
+            const NSInteger absoluteLineNumber = lineNumber - _numLinesCache.offset;
             if (verbose) {
                 NSLog(@"Remainder is absoluteLineNumber-cache[i-1]: %@ - %@",
                       @(absoluteLineNumber),
-                      _sumNumLines[index - 1]);
+                      _numLinesCache.values[index - 1]);
             }
-            *remainderPtr = absoluteLineNumber - _sumNumLines[index - 1].integerValue;
+            *remainderPtr = absoluteLineNumber - _numLinesCache.sums[index - 1].integerValue;
         }
     }
     if (verbose) {
@@ -217,6 +304,7 @@
 }
 
 - (int)numberOfWrappedLinesForWidth:(int)width {
+#warning TODO: Optimize this
     int count = 0;
     for (LineBlock *block in _blocks) {
         count += [block getNumLinesWithWrapWidth:width];
@@ -273,6 +361,7 @@
 }
 
 - (NSInteger)numberOfRawLines {
+#warning TODO: Optimize this
     NSInteger sum = 0;
     for (LineBlock *block in _blocks) {
         sum += [block numRawLines];
@@ -341,7 +430,7 @@
         assert(r == ar);
         assert(y == ay);
         assert(i == ai);
-
+#endif
         if (remainderPtr) {
             *remainderPtr = r;
         }
@@ -351,7 +440,6 @@
         if (indexPtr) {
             *indexPtr = i;
         }
-#endif
         return actual;
     } else {
         return [self slow_blockContainingPosition:position width:width remainder:remainderPtr blockOffset:yoffsetPtr index:indexPtr verbose:NO];
@@ -403,9 +491,13 @@
     }
     if (yoffsetPtr) {
         if (verbose) {
-            NSLog(@"yoffset is sum[index]-lines[index]+offset: %@-%@+%@=%@", @(_sumNumLines[index].integerValue), _numLines[index], @(_offset), @(_sumNumLines[index].integerValue));
+            NSLog(@"yoffset is sum[index]-lines[index]+offset: %@-%@+%@=%@",
+                  _numLinesCache.sums[index],
+                  _numLinesCache.values[index],
+                  @(_numLinesCache.offset),
+                  @(_numLinesCache.sums[index].integerValue - _numLinesCache.values[index].integerValue + _numLinesCache.offset));
         }
-        *yoffsetPtr = _sumNumLines[index].integerValue - _numLines[index].integerValue + _offset;
+        *yoffsetPtr = _numLinesCache.sums[index].integerValue - _numLinesCache.values[index].integerValue + _numLinesCache.offset;
     }
     if (indexPtr) {
         *indexPtr = index;
@@ -466,13 +558,21 @@
     return _blocks[index];
 }
 
+- (void)replaceLastBlockWithCopy {
+    NSInteger index = _blocks.count;
+    if (index == 0) {
+        return;
+    }
+    index--;
+    _blocks[index] = [_blocks[index] copy];
+}
+
 - (void)addBlock:(LineBlock *)block {
     [block addObserver:self];
     [_blocks addObject:block];
-    if (_sumNumLines) {
-        [_sumNumLines addObject:_sumNumLines.lastObject];
-        [_numLines addObject:@0];
-        [_sumRawSpace addObject:_sumRawSpace.lastObject];
+    if (_numLinesCache) {
+        [_numLinesCache extend];
+        [_sumRawSpace addObject:_sumRawSpace.lastObject ?: @(-_rawOffset)];
         [_rawSpace addObject:@0];
         // The block might not be empty. Treat it like a bunch of lines just got appended.
         [self updateCacheForBlock:block];
@@ -481,10 +581,8 @@
 
 - (void)removeFirstBlock {
     [_blocks.firstObject removeObserver:self];
-    if (_sumNumLines) {
-        _offset -= _numLines[0].integerValue;
-        [_sumNumLines removeObjectAtIndex:0];
-        [_numLines removeObjectAtIndex:0];
+    if (_numLinesCache) {
+        [_numLinesCache removeFirstValue];
 
         _rawOffset -= _rawSpace[0].integerValue;
         [_sumRawSpace removeObjectAtIndex:0];
@@ -502,8 +600,7 @@
 - (void)removeLastBlock {
     [_blocks.lastObject removeObserver:self];
     [_blocks removeLastObject];
-    [_sumNumLines removeLastObject];
-    [_numLines removeLastObject];
+    [_numLinesCache removeLastValue];
     [_sumRawSpace removeLastObject];
     [_rawSpace removeLastObject];
 }
@@ -518,22 +615,14 @@
 
 - (void)updateCacheForBlock:(LineBlock *)block {
     assert(_width > 0);
-    assert(_sumNumLines.count == _blocks.count);
-    assert(_numLines.count == _blocks.count);
+    assert(_numLinesCache.sums.count == _blocks.count);
+    assert(_numLinesCache.values.count == _blocks.count);
     assert(_sumRawSpace.count == _blocks.count);
     assert(_rawSpace.count == _blocks.count);
     assert(_blocks.count > 0);
 
     if (block == _blocks.firstObject) {
-        const NSInteger cachedNumLines = _numLines[0].integerValue;
-        const NSInteger actualNumLines = [block getNumLinesWithWrapWidth:_width];
-        const NSInteger deltaNumLines = actualNumLines - cachedNumLines;
-        if (_blocks.count > 1) {
-            // Only ok to _drop_ lines from the first block when there are others after it.
-            assert(deltaNumLines <= 0);
-        }
-        _offset += deltaNumLines;
-        _numLines[0] = @(actualNumLines);
+        [_numLinesCache setFirstValue:[block getNumLinesWithWrapWidth:_width]];
 
         const NSInteger cachedRawSpace = _rawSpace[0].integerValue;
         const NSInteger actualRawSpace = [block rawSpaceUsed];
@@ -544,13 +633,10 @@
         _rawOffset += deltaRawSpace;
         _rawSpace[0] = @(actualRawSpace);
     } else if (block == _blocks.lastObject) {
-        const NSInteger index = _sumNumLines.count - 1;
-        assert(index >= 1);
-        const int numLines = [block getNumLinesWithWrapWidth:_width];
-        _numLines[index] = @(numLines);
-        _sumNumLines[index] = @(_sumNumLines[index - 1].integerValue + numLines);
+        [_numLinesCache setLastValue:[block getNumLinesWithWrapWidth:_width]];
 
         const NSInteger rawSpace = [block rawSpaceUsed];
+        const NSInteger index = _rawSpace.count - 1;
         _rawSpace[index] = @(rawSpace);
         _sumRawSpace[index] = @(_sumRawSpace[index - 1].integerValue + rawSpace);
     } else {
@@ -566,9 +652,7 @@
     theCopy->_blocks = [_blocks mutableCopy];
     theCopy->_width = _width;
 
-    theCopy->_offset = _offset;
-    theCopy->_sumNumLines = [_sumNumLines mutableCopy];
-    theCopy->_numLines = [_numLines mutableCopy];
+    theCopy->_numLinesCache = [_numLinesCache copy];
 
     theCopy->_rawOffset = _rawOffset;
     theCopy->_sumRawSpace = [_sumRawSpace mutableCopy];
@@ -580,7 +664,7 @@
 #pragma mark - iTermLineBlockObserver
 
 - (void)lineBlockDidChange:(LineBlock *)lineBlock {
-    if (_sumNumLines) {
+    if (_numLinesCache) {
         [self updateCacheForBlock:lineBlock];
     }
 }

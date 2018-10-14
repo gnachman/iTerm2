@@ -263,6 +263,34 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return s;
 }
 
+- (void)dumpLinesWithWidth:(int)width {
+    NSMutableString *s = [NSMutableString string];
+    int n = [self numLinesWithWidth:width];
+    int k = 0;
+    for (int i = 0; i < n; i++) {
+        screen_char_t continuation;
+        ScreenCharArray *line = [self wrappedLineAtIndex:i width:width continuation:&continuation];
+        [s appendFormat:@"%@", ScreenCharArrayToStringDebug(line.line, line.length)];
+        for (int j = line.length; j < width; j++) {
+            [s appendString:@"."];
+        }
+        if (continuation.code == EOL_HARD) {
+            [s appendString:@"!"];
+        } else if (continuation.code == EOL_SOFT) {
+            [s appendString:@"+"];
+        } else if (continuation.code == EOL_DWC) {
+            [s appendString:@">"];
+        } else {
+            [s appendString:@"?"];
+        }
+        if (i < n - 1) {
+            NSLog(@"%4d: %@", k++, s);
+            s = [NSMutableString string];
+        }
+    }
+    NSLog(@"%4d: %@", k++, s);
+}
+
 - (void)dumpWrappedToWidth:(int)width
 {
     NSLog(@"%@", [self compactLineDumpWithWidth:width andContinuationMarks:NO]);
@@ -1009,8 +1037,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     theCopy->_lineBlocks = [_lineBlocks copy];
     LineBlock *lastBlock = _lineBlocks.lastBlock;
     if (lastBlock) {
-        [theCopy->_lineBlocks removeLastBlock];
-        [theCopy->_lineBlocks addBlock:[[lastBlock copy] autorelease]];
+        [theCopy->_lineBlocks replaceLastBlockWithCopy];
     }
     theCopy->block_size = block_size;
     theCopy->cursor_x = cursor_x;
@@ -1159,6 +1186,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     theCopy->droppedChars += [self numCharsInRangeOfBlocks:NSMakeRange(0, numDroppedBlocks)];
 
     return theCopy;
+}
+
+- (int)numberOfWrappedLinesWithWidth:(int)width {
+    return [_lineBlocks numberOfWrappedLinesForWidth:width];
 }
 
 @end

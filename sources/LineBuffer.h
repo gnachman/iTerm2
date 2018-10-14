@@ -180,4 +180,6 @@
 // Make a copy of the last |minLines| at width |width|. May copy more than |minLines| for speed.
 - (LineBuffer *)appendOnlyCopyWithMinimumLines:(int)minLines atWidth:(int)width;
 
+- (int)numberOfWrappedLinesWithWidth:(int)width;
+
 @end
