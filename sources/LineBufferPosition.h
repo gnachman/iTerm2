@@ -18,6 +18,8 @@
 + (LineBufferPosition *)position;
 - (LineBufferPosition *)predecessor;
 
+- (BOOL)isEqualToLineBufferPosition:(LineBufferPosition *)other;
+
 @end
 
 @interface LineBufferPositionRange : NSObject

@@ -36,6 +36,9 @@
 #import "LineBlock.h"
 #import "RegexKitLite.h"
 
+// Run with this on for a while and see if there are any crashes. Turn it off for a big performance win.
+#define SANITY_CHECK_CUMULATIVE_CACHE 1
+
 static NSString *const kLineBufferVersionKey = @"Version";
 static NSString *const kLineBufferBlocksKey = @"Blocks";
 static NSString *const kLineBufferBlockSizeKey = @"Block Size";
@@ -163,6 +166,19 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         return buffer->num_wrapped_lines_cache;
     }
     int count = [buffer->_lineBlocks numberOfWrappedLinesForWidth:width];
+
+#if SANITY_CHECK_CUMULATIVE_CACHE
+    int newCount = count;
+    count = 0;
+    int i;
+    const int numBlocks = [buffer->_lineBlocks.blocks count];
+    for (i = 0; i < numBlocks; ++i) {
+        LineBlock* block = buffer->_lineBlocks.blocks[i];
+        count += [block getNumLinesWithWrapWidth: width];
+    }
+    assert(count == newCount);
+#endif
+
     buffer->num_wrapped_lines_width = width;
     buffer->num_wrapped_lines_cache = count;
     return count;
@@ -405,7 +421,42 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
-- (NSTimeInterval)timestampForLineNumber:(int)lineNumber width:(int)width {
+#if SANITY_CHECK_CUMULATIVE_CACHE
+- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width {
+    NSTimeInterval oldValue = [self old_timestampForLineNumber:lineNum width:width];
+    NSTimeInterval newValue = [self new_timestampForLineNumber:lineNum width:width];
+    assert(oldValue == newValue);
+    return oldValue;
+}
+#else
+- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width {
+    return [self new_timestampForLineNumber:lineNum width:width];
+}
+#endif
+
+- (NSTimeInterval)old_timestampForLineNumber:(int)lineNum width:(int)width
+{
+    int line = lineNum;
+    int i;
+    for (i = 0; i < [_lineBlocks count]; ++i) {
+        LineBlock* block = _lineBlocks[i];
+        NSAssert(block, @"Null block");
+
+        // getNumLinesWithWrapWidth caches its result for the last-used width so
+        // this is usually faster than calling getWrappedLineWithWrapWidth since
+        // most calls to the latter will just decrement line and return NULL.
+        int block_lines = [block getNumLinesWithWrapWidth:width];
+        if (block_lines <= line) {
+            line -= block_lines;
+            continue;
+        }
+
+        return [block timestampForLineNumber:line width:width];
+    }
+    return 0;
+}
+
+- (NSTimeInterval)new_timestampForLineNumber:(int)lineNumber width:(int)width {
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNumber
                                                         width:width
@@ -413,13 +464,99 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return [block timestampForLineNumber:remainder width:width];
 }
 
-// Copy a line into the buffer. If the line is shorter than 'width' then only
-// the first 'width' characters will be modified.
-// 0 <= lineNum < numLinesWithWidth:width
+#if SANITY_CHECK_CUMULATIVE_CACHE
 - (int)copyLineToBuffer:(screen_char_t *)buffer
                   width:(int)width
                 lineNum:(int)lineNum
-           continuation:(screen_char_t *)continuationPtr
+           continuation:(screen_char_t *)continuationPtr {
+    screen_char_t oldCont;
+    memset(&oldCont, 0, sizeof(oldCont));
+    int old = [self old_copyLineToBuffer:buffer width:width lineNum:lineNum continuation:&oldCont];
+
+    screen_char_t newCont = { 0 };
+    memset(&newCont, 0, sizeof(newCont));
+    int new = [self new_copyLineToBuffer:buffer width:width lineNum:lineNum continuation:&newCont];
+
+    assert(old == new);
+    assert(!memcmp(&oldCont, &newCont, sizeof(oldCont)));
+
+    if (continuationPtr) {
+        *continuationPtr = oldCont;
+    }
+    return old;
+}
+#else
+- (int)copyLineToBuffer:(screen_char_t *)buffer
+                  width:(int)width
+                lineNum:(int)lineNum
+           continuation:(screen_char_t *)continuationPtr {
+    return [self new_copyLineToBuffer:buffer width:width lineNum:lineNum continuation:continuationPtr];
+}
+#endif
+
+- (int)old_copyLineToBuffer:(screen_char_t *)buffer
+                      width:(int)width
+                    lineNum:(int)lineNum
+               continuation:(screen_char_t *)continuationPtr
+{
+    ITBetaAssert(lineNum >= 0, @"Negative lineNum to copyLineToBuffer");
+    int line = lineNum;
+    int i;
+    for (i = 0; i < _lineBlocks.count; ++i) {
+        LineBlock* block = _lineBlocks[i];
+        NSAssert(block, @"Null block");
+        ITBetaAssert(line >= 0, @"Negative lineNum BEFORE consuming block_lines");
+
+        // getNumLinesWithWrapWidth caches its result for the last-used width so
+        // this is usually faster than calling getWrappedLineWithWrapWidth since
+        // most calls to the latter will just decrement line and return NULL.
+        int block_lines = [block getNumLinesWithWrapWidth:width];
+        if (block_lines < line) {
+            line -= block_lines;
+            continue;
+        }
+        ITBetaAssert(line >= 0, @"Negative lineNum after consuming block_lines");
+
+        int length;
+        int eol;
+        screen_char_t continuation;
+        const int requestedLine = line;
+        screen_char_t* p = [block getWrappedLineWithWrapWidth:width
+                                                      lineNum:&line
+                                                   lineLength:&length
+                                            includesEndOfLine:&eol
+                                                 continuation:&continuation];
+        if (continuationPtr) {
+            *continuationPtr = continuation;
+        }
+        if (p) {
+            NSAssert(length <= width, @"Length too long");
+            memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
+            [self extendContinuation:continuation inBuffer:buffer ofLength:length toWidth:width];
+
+            if (requestedLine == 0 && [iTermAdvancedSettingsModel showBlockBoundaries]) {
+                for (int i = 0; i < width; i++) {
+                    buffer[i].code = 'X';
+                    buffer[i].complexChar = NO;
+                    buffer[i].image = NO;
+                    buffer[i].urlCode = 0;
+                }
+            }
+            return eol;
+        }
+    }
+    NSLog(@"Couldn't find line %d", lineNum);
+    NSAssert(NO, @"Tried to get non-existent line");
+    return NO;
+}
+
+// Copy a line into the buffer. If the line is shorter than 'width' then only
+// the first 'width' characters will be modified.
+// 0 <= lineNum < numLinesWithWidth:width
+- (int)new_copyLineToBuffer:(screen_char_t *)buffer
+                      width:(int)width
+                    lineNum:(int)lineNum
+               continuation:(screen_char_t *)continuationPtr
 {
     ITBetaAssert(lineNum >= 0, @"Negative lineNum to copyLineToBuffer");
     int remainder = 0;
@@ -480,9 +617,74 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
+#if SANITY_CHECK_CUMULATIVE_CACHE
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
                                   width:(int)width
                            continuation:(screen_char_t *)continuation {
+    screen_char_t oldCont;
+    memset(&oldCont, 0, sizeof(oldCont));
+    ScreenCharArray *old = [self old_wrappedLineAtIndex:lineNum width:width continuation:&oldCont];
+
+    screen_char_t newCont = { 0 };
+    memset(&newCont, 0, sizeof(newCont));
+    ScreenCharArray *new = [self new_wrappedLineAtIndex:lineNum width:width continuation:&newCont];
+
+    BOOL matches = [old isEqualToScreenCharArray:new];
+    assert(matches);
+    assert(!memcmp(&oldCont, &newCont, sizeof(oldCont)));
+
+    if (continuation) {
+        memmove(continuation, &oldCont, sizeof(oldCont));
+    }
+    return old;
+}
+#else
+- (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
+                                  width:(int)width
+                           continuation:(screen_char_t *)continuation {
+    return [self new_wrappedLineAtIndex:lineNum width:width continuation:continuation];
+}
+#endif
+
+- (ScreenCharArray *)old_wrappedLineAtIndex:(int)lineNum
+                                  width:(int)width
+                           continuation:(screen_char_t *)continuation {
+    int line = lineNum;
+    int i;
+    ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
+    for (i = 0; i < _lineBlocks.count; ++i) {
+        LineBlock* block = _lineBlocks[i];
+
+        // getNumLinesWithWrapWidth caches its result for the last-used width so
+        // this is usually faster than calling getWrappedLineWithWrapWidth since
+        // most calls to the latter will just decrement line and return NULL.
+        int block_lines = [block getNumLinesWithWrapWidth:width];
+        if (block_lines < line) {
+            line -= block_lines;
+            continue;
+        }
+
+        int length, eol;
+        result.line = [block getWrappedLineWithWrapWidth:width
+                                                 lineNum:&line
+                                              lineLength:&length
+                                       includesEndOfLine:&eol
+                                            continuation:continuation];
+        if (result.line) {
+            result.length = length;
+            result.eol = eol;
+            NSAssert(result.length <= width, @"Length too long");
+            return result;
+        }
+    }
+    NSLog(@"Couldn't find line %d", lineNum);
+    NSAssert(NO, @"Tried to get non-existent line");
+    return nil;
+}
+
+- (ScreenCharArray *)new_wrappedLineAtIndex:(int)lineNum
+                                      width:(int)width
+                               continuation:(screen_char_t *)continuation {
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
     if (!block) {
@@ -509,7 +711,74 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return nil;
 }
 
+#if SANITY_CHECK_CUMULATIVE_CACHE
 - (NSArray<ScreenCharArray *> *)wrappedLinesFromIndex:(int)lineNum width:(int)width count:(int)count {
+       NSArray *old = [self old_wrappedLinesFromIndex:lineNum width:width count:count];
+       NSArray *new = [self new_wrappedLinesFromIndex:lineNum width:width count:count];
+       assert(old.count == new.count);
+       for (NSInteger i = 0; i < old.count; i++) {
+           BOOL ok = [old[i] isEqualToScreenCharArray:new[i]];
+           assert(ok);
+       }
+       return old;
+}
+#else
+- (NSArray<ScreenCharArray *> *)wrappedLinesFromIndex:(int)lineNum width:(int)width count:(int)count {
+       return [self new_wrappedLinesFromIndex:lineNum width:width count:count];
+}
+#endif
+
+- (NSArray<ScreenCharArray *> *)old_wrappedLinesFromIndex:(int)lineNum width:(int)width count:(int)count {
+    if (count <= 0) {
+        return @[];
+    }
+    NSMutableArray<ScreenCharArray *> *arrays = [NSMutableArray array];
+    int numberLeft = count;
+    int line = lineNum;
+    int i;
+    for (i = 0; i < _lineBlocks.count; ++i) {
+        LineBlock *block = _lineBlocks[i];
+
+        // getNumLinesWithWrapWidth caches its result for the last-used width so
+        // this is usually faster than calling getWrappedLineWithWrapWidth since
+        // most calls to the latter will just decrement line and return NULL.
+        int block_lines = [block getNumLinesWithWrapWidth:width];
+        if (block_lines < line) {
+            line -= block_lines;
+            continue;
+        }
+
+        do {
+            int length, eol;
+            ScreenCharArray *lineResult = [[[ScreenCharArray alloc] init] autorelease];
+            screen_char_t continuation;
+            lineResult.line = [block getWrappedLineWithWrapWidth:width
+                                                         lineNum:&line
+                                                      lineLength:&length
+                                               includesEndOfLine:&eol
+                                                    continuation:&continuation];
+            if (!lineResult.line) {
+                return arrays;
+            }
+
+            lineResult.continuation = continuation;
+            lineResult.length = length;
+            lineResult.eol = eol;
+            NSAssert(lineResult.length <= width, @"Length too long");
+            [arrays addObject:lineResult];
+            numberLeft--;
+            line++;
+            if (numberLeft == 0) {
+                return arrays;
+            }
+        } while (numberLeft > 0 && block_lines >= line);
+    }
+    NSLog(@"Couldn't find line %d", lineNum);
+    NSAssert(NO, @"Tried to get non-existent line");
+    return nil;
+}
+
+- (NSArray<ScreenCharArray *> *)new_wrappedLinesFromIndex:(int)lineNum width:(int)width count:(int)count {
     if (count <= 0) {
         return @[];
     }
@@ -605,11 +874,33 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         cursor_rawline = 0;
     }
 
+#if SANITY_CHECK_CUMULATIVE_CACHE
+    int old = cursor_rawline;
+    for (int i = 0; i < _lineBlocks.count; ++i) {
+        old += [_lineBlocks[i] numRawLines];
+    }
+    int new = cursor_rawline + _lineBlocks.numberOfRawLines;
+    assert(old == new);
+    cursor_rawline = old;
+#else
     cursor_rawline += _lineBlocks.numberOfRawLines;
+#endif
 }
 
 - (BOOL)getCursorInLastLineWithWidth:(int)width atX:(int *)x {
-    int total_raw_lines = _lineBlocks.numberOfRawLines;
+    int total_raw_lines = 0;
+#if SANITY_CHECK_CUMULATIVE_CACHE
+    int i;
+    int old = 0;
+    for (i = 0; i < _lineBlocks.count; ++i) {
+        old += [_lineBlocks[i] numRawLines];
+    }
+    int new = _lineBlocks.numberOfRawLines;
+    assert(old == new);
+    total_raw_lines = old;
+#else
+    total_raw_lines = _lineBlocks.numberOfRawLines;
+#endif
     if (cursor_rawline == total_raw_lines-1) {
         // The cursor is on the last line in the buffer.
         LineBlock* block = _lineBlocks.lastBlock;
@@ -644,6 +935,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 {
     int i;
     int position = start.absolutePosition - droppedChars;
+#warning TODO: Optimize this
     for (i = 0; position >= 0 && i < _lineBlocks.count; ++i) {
         LineBlock *block = _lineBlocks[i];
         int used = [block rawSpaceUsed];
@@ -656,6 +948,33 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         }
     }
     return NO;
+}
+
+#if SANITY_CHECK_CUMULATIVE_CACHE
+- (int) _blockPosition: (int) block_num {
+    int old = [self old_blockPosition:block_num];
+    int new = [self new_blockPosition:block_num];
+    assert(old == new);
+    return old;
+}
+#else
+- (int) _blockPosition: (int) block_num {
+    return [self new_blockPosition:block_num];
+}
+#endif
+- (int)new_blockPosition:(int)block_num {
+    return [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, block_num)];
+}
+
+- (int)old_blockPosition:(int)block_num {
+    int i;
+    int position = 0;
+    for (i = 0; i < block_num; ++i) {
+        LineBlock* block = _lineBlocks[i];
+        position += [block rawSpaceUsed];
+    }
+    return position;
+
 }
 
 - (void)prepareToSearchFor:(NSString*)substring
@@ -748,7 +1067,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
          multipleResults:((context.options & FindMultipleResults) != 0)];
     NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context.results count]];
     BOOL haveOutOfRangeResults = NO;
-    int blockPosition = [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, context.absBlockNum - num_dropped_blocks)];
+    int blockPosition = [self _blockPosition:context.absBlockNum - num_dropped_blocks];
     const int stopAt = stopPosition.absolutePosition - droppedChars;
     for (ResultRange* range in context.results) {
         range->position += blockPosition;
@@ -856,10 +1175,76 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return result;
 }
 
+#if SANITY_CHECK_CUMULATIVE_CACHE
 - (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord
                                         width:(int)width
-                                       offset:(int)offset
-{
+                                       offset:(int)offset {
+    LineBufferPosition *old = [self old_positionForCoordinate:coord width:width offset:offset];
+    LineBufferPosition *new = [self new_positionForCoordinate:coord width:width offset:offset];
+    assert([old isEqualToLineBufferPosition:new]);
+    return old;
+}
+#else
+- (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord
+                                        width:(int)width
+                                       offset:(int)offset {
+    return [self new_positionForCoordinate:coord width:width offset:offset];
+}
+#endif
+
+- (LineBufferPosition *)old_positionForCoordinate:(VT100GridCoord)coord
+                                            width:(int)width
+                                           offset:(int)offset {
+    int x = coord.x;
+    int y = coord.y;
+    long long absolutePosition = droppedChars;
+
+    int line = y;
+    int i;
+    for (i = 0; i < _lineBlocks.count; ++i) {
+        LineBlock* block = _lineBlocks[i];
+        NSAssert(block, @"Null block");
+
+        // getNumLinesWithWrapWidth caches its result for the last-used width so
+        // this is usually faster than calling getWrappedLineWithWrapWidth since
+        // most calls to the latter will just decrement line and return NULL.
+        int block_lines = [block getNumLinesWithWrapWidth:width];
+        if (block_lines <= line) {
+            line -= block_lines;
+            absolutePosition += [block rawSpaceUsed];
+            continue;
+        }
+
+        int pos;
+        int yOffset = 0;
+        BOOL extends = NO;
+        pos = [block getPositionOfLine:&line
+                                   atX:x
+                             withWidth:width
+                               yOffset:&yOffset
+                               extends:&extends];
+        if (pos >= 0) {
+            absolutePosition += pos + offset;
+            LineBufferPosition *result = [LineBufferPosition position];
+            result.absolutePosition = absolutePosition;
+            result.yOffset = yOffset;
+            result.extendsToEndOfLine = extends;
+
+            // Make sure position is valid (might not be because of offset).
+            BOOL ok;
+            [self coordinateForPosition:result width:width ok:&ok];
+            if (ok) {
+                return result;
+            } else {
+                return nil;
+            }
+        }
+    }
+    return nil;
+}
+- (LineBufferPosition *)new_positionForCoordinate:(VT100GridCoord)coord
+                                            width:(int)width
+                                           offset:(int)offset {
     int x = coord.x;
     int y = coord.y;
 
@@ -901,9 +1286,97 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
+#if SANITY_CHECK_CUMULATIVE_CACHE
 - (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position
                                   width:(int)width
                                      ok:(BOOL *)ok {
+    BOOL oldOk;
+    VT100GridCoord old = [self old_coordinateForPosition:position width:width ok:&oldOk];
+    BOOL newOk;
+    VT100GridCoord new = [self new_coordinateForPosition:position width:width ok:&newOk];
+    assert(VT100GridCoordEquals(old, new));
+    assert(oldOk == newOk);
+
+    if (ok) {
+        *ok = oldOk;
+    }
+    return old;
+}
+#else
+- (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position
+                                  width:(int)width
+                                     ok:(BOOL *)ok {
+    return [self new_coordinateForPosition:position width:width ok:ok];
+}
+#endif
+
+- (VT100GridCoord)old_coordinateForPosition:(LineBufferPosition *)position
+                                      width:(int)width
+                                         ok:(BOOL *)ok {
+    if (position.absolutePosition == self.lastPosition.absolutePosition) {
+        VT100GridCoord result;
+        // If the absolute position is equal to the last position, then
+        // numLinesWithWidth: will give the wrapped line number after all
+        // trailing empty lines. They all have the same position because they
+        // are empty. We need to back up by the number of empty lines and then
+        // use position.yOffset to disambiguate.
+        result.y = MAX(0, [self numLinesWithWidth:width] - 1 - [_lineBlocks.blocks.lastObject numberOfTrailingEmptyLines]);
+        ScreenCharArray *lastLine = [self wrappedLineAtIndex:result.y
+                                                       width:width
+                                                continuation:NULL];
+        result.x = lastLine.length;
+        if (position.yOffset > 0) {
+            result.x = 0;
+            result.y += position.yOffset;
+        } else {
+            result.x = lastLine.length;
+        }
+        if (position.extendsToEndOfLine) {
+            result.x = width - 1;
+        }
+        if (ok) {
+            *ok = YES;
+        }
+        return result;
+    }
+    int i;
+    int yoffset = 0;
+    int p = position.absolutePosition - droppedChars;
+    for (i = 0; p >= 0 && i < _lineBlocks.count; ++i) {
+        LineBlock* block = _lineBlocks[i];
+        int used = [block rawSpaceUsed];
+        if (p >= used) {
+            p -= used;
+            yoffset += [block getNumLinesWithWrapWidth:width];
+        } else {
+            int y;
+            int x;
+            BOOL positionIsValid = [block convertPosition:p
+                                                withWidth:width
+                                                      toX:&x
+                                                      toY:&y];
+            if (ok) {
+                *ok = positionIsValid;
+            }
+            if (position.yOffset > 0) {
+                x = 0;
+                y += position.yOffset;
+            }
+            if (position.extendsToEndOfLine) {
+                x = width - 1;
+            }
+            return VT100GridCoordMake(x, y + yoffset);
+        }
+    }
+    if (ok) {
+        *ok = NO;
+    }
+    return VT100GridCoordMake(0, 0);
+}
+
+- (VT100GridCoord)new_coordinateForPosition:(LineBufferPosition *)position
+                                      width:(int)width
+                                         ok:(BOOL *)ok {
     if (position.absolutePosition == self.lastPosition.absolutePosition) {
         VT100GridCoord result;
         // If the absolute position is equal to the last position, then
@@ -970,7 +1443,32 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return position;
 }
 
+#if SANITY_CHECK_CUMULATIVE_CACHE
 - (LineBufferPosition *)lastPosition {
+    LineBufferPosition *old = [self old_lastPosition];
+    LineBufferPosition *new = [self new_lastPosition];
+    assert([new isEqualToLineBufferPosition:old]);
+    return old;
+}
+#else
+- (LineBufferPosition *)lastPosition {
+    return [self new_lastPosition];
+}
+#endif
+
+- (LineBufferPosition *)old_lastPosition {
+    LineBufferPosition *position = [LineBufferPosition position];
+
+    position.absolutePosition = droppedChars;
+    for (int i = 0; i < _lineBlocks.count; ++i) {
+        LineBlock* block = _lineBlocks[i];
+        position.absolutePosition = position.absolutePosition + [block rawSpaceUsed];
+    }
+
+    return position;
+}
+
+- (LineBufferPosition *)new_lastPosition {
     LineBufferPosition *position = [LineBufferPosition position];
 
     position.absolutePosition = droppedChars + _lineBlocks.rawSpaceUsed;
@@ -978,7 +1476,34 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return position;
 }
 
+#if SANITY_CHECK_CUMULATIVE_CACHE
 - (long long)absPositionOfFindContext:(FindContext *)findContext {
+    long long old = [self old_absPositionOfFindContext:findContext];
+    long long new = [self new_absPositionOfFindContext:findContext];
+    assert(old == new);
+    return old;
+}
+#else
+- (long long)absPositionOfFindContext:(FindContext *)findContext {
+    return [self new_absPositionOfFindContext:findContext];
+}
+#endif
+
+- (long long)old_absPositionOfFindContext:(FindContext *)findContext
+{
+    long long offset = droppedChars + findContext.offset;
+    int numBlocks = findContext.absBlockNum - num_dropped_blocks;
+    for (LineBlock *block in _lineBlocks.blocks) {
+        if (!numBlocks) {
+            break;
+        }
+        --numBlocks;
+        offset += [block rawSpaceUsed];
+    }
+    return offset;
+}
+
+- (long long)new_absPositionOfFindContext:(FindContext *)findContext {
     int numBlocks = findContext.absBlockNum - num_dropped_blocks;
     return [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, numBlocks)] + findContext.offset;
 }
@@ -1001,7 +1526,34 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return absPos + droppedChars;
 }
 
+#if SANITY_CHECK_CUMULATIVE_CACHE
 - (int)absBlockNumberOfAbsPos:(long long)absPos {
+    int old = [self old_absBlockNumberOfAbsPos:absPos];
+    int new = [self new_absBlockNumberOfAbsPos:absPos];
+    assert(old == new);
+    return old;
+}
+#else
+- (int)absBlockNumberOfAbsPos:(long long)absPos {
+    return [self new_absBlockNumberOfAbsPos:absPos];
+}
+#endif
+
+- (int)old_absBlockNumberOfAbsPos:(long long)absPos
+{
+    int absBlock = num_dropped_blocks;
+    long long cumPos = droppedChars;
+    for (LineBlock *block in _lineBlocks.blocks) {
+        cumPos += [block rawSpaceUsed];
+        if (cumPos >= absPos) {
+            return absBlock;
+        }
+        ++absBlock;
+    }
+    return absBlock;
+}
+
+- (int)new_absBlockNumberOfAbsPos:(long long)absPos {
     int index;
     LineBlock *block = [_lineBlocks blockContainingPosition:absPos - droppedChars
                                                       width:0
@@ -1017,6 +1569,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (long long)absPositionOfAbsBlock:(int)absBlockNum
 {
     long long cumPos = droppedChars;
+#warning TODO: Optimize this
     for (int i = 0; i < _lineBlocks.count && i + num_dropped_blocks < absBlockNum; i++) {
         cumPos += [_lineBlocks[i] rawSpaceUsed];
     }

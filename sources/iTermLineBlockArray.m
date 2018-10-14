@@ -13,8 +13,6 @@
 
 #define PERFORM_SANITY_CHECKS 1
 
-
-
 @interface iTermLineBlockArray()<iTermLineBlockObserver>
 @end
 
