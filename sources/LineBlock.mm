@@ -17,6 +17,7 @@ extern "C" {
 #import "iTermAdvancedSettingsModel.h"
 }
 #include <map>
+#include <vector>
 
 static BOOL gEnableDoubleWidthCharacterLineCache = NO;
 static BOOL gUseCachingNumberOfLines = NO;
@@ -71,7 +72,14 @@ void EnableDoubleWidthCharacterLineCache() {
     // Keys are (offset from raw_buffer, length to examine, width).
     std::map<std::tuple<int, int, int>, int> _numberOfFullLinesCache;
 
-    NSPointerArray *_observers;
+    std::vector<void *> _observers;
+}
+
+NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock) {
+    for (auto &observer : lineBlock->_observers) {
+        __unsafe_unretained id<iTermLineBlockObserver> obj = static_cast<id<iTermLineBlockObserver> >(observer);
+        [obj lineBlockDidChange:lineBlock];
+    }
 }
 
 - (instancetype)init {
@@ -110,7 +118,6 @@ void EnableDoubleWidthCharacterLineCache() {
     if (cll_capacity > 0) {
         metadata_ = (LineBlockMetadata *)calloc(sizeof(LineBlockMetadata), cll_capacity);
     }
-    _observers = [[NSPointerArray alloc] initWithOptions:(NSPointerFunctionsWeakMemory | NSPointerFunctionsObjectPersonality)];
 }
 
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary {
@@ -443,7 +450,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(screen_char_t *buffer,
     }
     is_partial = partial;
 
-    [self didChange];
+    iTermLineBlockDidChange(self);
     return YES;
 }
 
@@ -795,7 +802,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     }
     // refresh cache
     cached_numlines_width = -1;
-    [self didChange];
+    iTermLineBlockDidChange(self);
     return YES;
 }
 
@@ -916,7 +923,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
 #ifdef TEST_LINEBUFFER_SANITY
             [self checkAndResetCachedNumlines:"dropLines" width: width];
 #endif
-            [self didChange];
+            iTermLineBlockDidChange(self);
             return orig_n;
         }
         prev = cll;
@@ -929,7 +936,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     start_offset = 0;
     first_entry = 0;
     *charsDropped = [self rawSpaceUsed];
-    [self didChange];
+    iTermLineBlockDidChange(self);
     return orig_n - n;
 }
 
@@ -1498,42 +1505,21 @@ static int Search(NSString* needle,
 }
 
 - (void)addObserver:(id<iTermLineBlockObserver>)observer {
-    [_observers addPointer:observer];
+    _observers.push_back((void *)observer);
 }
 
 - (void)removeObserver:(id<iTermLineBlockObserver>)observer {
-    NSInteger count = _observers.count;
-    for (NSInteger i = count - 1; i >= 0; i--) {
-        if ([_observers pointerAtIndex:i] == observer) {
-            [_observers removePointerAtIndex:i];
-        }
-    }
-}
-
-- (void)didChange {
-#if SANITY_CHECK_CUMULATIVE_CACHE
-    assert(_observers.count > 0);
-#endif
-    BOOL needsCompaction = NO;
-    for (id<iTermLineBlockObserver> observer in _observers) {
-        if (observer) {
-            [observer lineBlockDidChange:self];
-        } else {
-            needsCompaction = YES;
-        }
-    }
-    if (needsCompaction) {
-        [_observers compact];
+    void *voidptr = static_cast<void *>(observer);
+    auto it = std::find(_observers.begin(), _observers.end(), voidptr);
+    if (it != _observers.end()) {
+        _observers.erase(it);
     }
 }
 
 - (BOOL)hasObserver:(id<iTermLineBlockObserver>)observer {
-    for (id<iTermLineBlockObserver> pointer in _observers) {
-        if (pointer == observer) {
-            return YES;
-        }
-    }
-    return NO;
+    void *voidptr = static_cast<void *>(observer);
+    auto it = std::find(_observers.begin(), _observers.end(), voidptr);
+    return it != _observers.end();
 }
 
 @end

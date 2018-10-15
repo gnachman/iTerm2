@@ -11,7 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 // Run with this on for a while and see if there are any crashes. Turn it off for a big performance win.
-#define SANITY_CHECK_CUMULATIVE_CACHE 1
+#define SANITY_CHECK_CUMULATIVE_CACHE 0
 
 @class LineBlock;
 

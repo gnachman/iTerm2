@@ -36,6 +36,9 @@
 #import "LineBlock.h"
 #import "RegexKitLite.h"
 
+// If SANITY_CHECK_CUMULATIVE_CACHE is off, use the old (slow) or new (fast but untested) code paths?
+#define PREFER_FAST_VERSION 1
+
 static NSString *const kLineBufferVersionKey = @"Version";
 static NSString *const kLineBufferBlocksKey = @"Blocks";
 static NSString *const kLineBufferBlockSizeKey = @"Block Size";
@@ -157,24 +160,36 @@ static const NSInteger kUnicodeVersion = 9;
     }
 }
 
+NS_INLINE int SlowRawNumLines(LineBuffer *buffer, int width) {
+    int count = 0;
+    const int numBlocks = [buffer->_lineBlocks.blocks count];
+    for (int i = 0; i < numBlocks; ++i) {
+        LineBlock* block = buffer->_lineBlocks.blocks[i];
+        count += [block getNumLinesWithWrapWidth:width];
+    }
+    return count;
+}
+
 // This is called a lot so it's a C function to avoid obj_msgSend
 static int RawNumLines(LineBuffer* buffer, int width) {
     if (buffer->num_wrapped_lines_width == width) {
         return buffer->num_wrapped_lines_cache;
     }
-    int count = [buffer->_lineBlocks numberOfWrappedLinesForWidth:width];
 
+    int count;
 #if SANITY_CHECK_CUMULATIVE_CACHE
-    int newCount = count;
-    count = 0;
-    int i;
-    const int numBlocks = [buffer->_lineBlocks.blocks count];
-    for (i = 0; i < numBlocks; ++i) {
-        LineBlock* block = buffer->_lineBlocks.blocks[i];
-        count += [block getNumLinesWithWrapWidth: width];
-    }
-    assert(count == newCount);
+    int fastCount = [buffer->_lineBlocks numberOfWrappedLinesForWidth:width];
+    int slowCount = SlowRawNumLines(buffer, width);
+    assert(fastCount == slowCount);
+    count = fastCount;
+#else
+#if PREFER_FAST_VERSION
+    count = [buffer->_lineBlocks numberOfWrappedLinesForWidth:width];
+#else
+    count = SlowRawNumLines(buffer, width);
 #endif
+#endif
+
 
     buffer->num_wrapped_lines_width = width;
     buffer->num_wrapped_lines_cache = count;
@@ -432,9 +447,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return oldValue;
 }
 #else
+#if PREFER_FAST_VERSION
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width {
     return [self new_timestampForLineNumber:lineNum width:width];
 }
+#else
+- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width {
+    return [self old_timestampForLineNumber:lineNum width:width];
+}
+#endif
 #endif
 
 - (NSTimeInterval)old_timestampForLineNumber:(int)lineNum width:(int)width
@@ -489,12 +510,21 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return old;
 }
 #else
+#if PREFER_FAST_VERSION
 - (int)copyLineToBuffer:(screen_char_t *)buffer
                   width:(int)width
                 lineNum:(int)lineNum
            continuation:(screen_char_t *)continuationPtr {
     return [self new_copyLineToBuffer:buffer width:width lineNum:lineNum continuation:continuationPtr];
 }
+#else
+- (int)copyLineToBuffer:(screen_char_t *)buffer
+                  width:(int)width
+                lineNum:(int)lineNum
+           continuation:(screen_char_t *)continuationPtr {
+    return [self old_copyLineToBuffer:buffer width:width lineNum:lineNum continuation:continuationPtr];
+}
+#endif
 #endif
 
 - (int)old_copyLineToBuffer:(screen_char_t *)buffer
@@ -645,11 +675,19 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return old;
 }
 #else
+#if PREFER_FAST_VERSION
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
                                   width:(int)width
                            continuation:(screen_char_t *)continuation {
     return [self new_wrappedLineAtIndex:lineNum width:width continuation:continuation];
 }
+#else
+- (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
+                                  width:(int)width
+                           continuation:(screen_char_t *)continuation {
+    return [self old_wrappedLineAtIndex:lineNum width:width continuation:continuation];
+}
+#endif
 #endif
 
 - (ScreenCharArray *)old_wrappedLineAtIndex:(int)lineNum
@@ -729,9 +767,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
        return old;
 }
 #else
+#if PREFER_FAST_VERSION
 - (NSArray<ScreenCharArray *> *)wrappedLinesFromIndex:(int)lineNum width:(int)width count:(int)count {
        return [self new_wrappedLinesFromIndex:lineNum width:width count:count];
 }
+#else
+- (NSArray<ScreenCharArray *> *)wrappedLinesFromIndex:(int)lineNum width:(int)width count:(int)count {
+    return [self old_wrappedLinesFromIndex:lineNum width:width count:count];
+}
+#endif
 #endif
 
 - (NSArray<ScreenCharArray *> *)old_wrappedLinesFromIndex:(int)lineNum width:(int)width count:(int)count {
@@ -869,6 +913,29 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return YES;
 }
 
+NS_INLINE int SlowTotalNumberOfRawLines(LineBuffer *object) {
+    int old = 0;
+    for (int i = 0; i < object->_lineBlocks.count; ++i) {
+        old += [object->_lineBlocks[i] numRawLines];
+    }
+    return old;
+}
+
+NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
+#if SANITY_CHECK_CUMULATIVE_CACHE
+    int oldValue = SlowTotalNumberOfRawLines(self);
+    int newValue = self->_lineBlocks.numberOfRawLines;
+    assert(oldValue == newValue);
+    return oldValue;
+#else
+#if PREFER_FAST_VERSION
+    return self->_lineBlocks.numberOfRawLines;
+#else
+    return SlowTotalNumberOfRawLines(self);
+#endif
+#endif
+}
+
 - (void)setCursor:(int)x {
     LineBlock *block = _lineBlocks.lastBlock;
     if ([block hasPartial]) {
@@ -880,36 +947,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         cursor_rawline = 0;
     }
 
-#if SANITY_CHECK_CUMULATIVE_CACHE
-    int old = cursor_rawline;
-    for (int i = 0; i < _lineBlocks.count; ++i) {
-        old += [_lineBlocks[i] numRawLines];
-    }
-    int new = cursor_rawline + _lineBlocks.numberOfRawLines;
-    assert(old == new);
-    cursor_rawline = old;
-#else
-    cursor_rawline += _lineBlocks.numberOfRawLines;
-#endif
+    cursor_rawline += TotalNumberOfRawLines(self);
+
 #if SANITY_CHECK_CUMULATIVE_CACHE
     [_lineBlocks sanityCheck];
 #endif
 }
 
 - (BOOL)getCursorInLastLineWithWidth:(int)width atX:(int *)x {
-    int total_raw_lines = 0;
-#if SANITY_CHECK_CUMULATIVE_CACHE
-    int i;
-    int old = 0;
-    for (i = 0; i < _lineBlocks.count; ++i) {
-        old += [_lineBlocks[i] numRawLines];
-    }
-    int new = _lineBlocks.numberOfRawLines;
-    assert(old == new);
-    total_raw_lines = old;
-#else
-    total_raw_lines = _lineBlocks.numberOfRawLines;
-#endif
+    int total_raw_lines = TotalNumberOfRawLines(self);
     if (cursor_rawline == total_raw_lines-1) {
         // The cursor is on the last line in the buffer.
         LineBlock* block = _lineBlocks.lastBlock;
@@ -960,9 +1006,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return oldOk;
 }
 #else
+#if PREFER_FAST_VERSION
 - (BOOL)_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset {
     return [self new_findPosition:start inBlock:block_num inOffset:offset];
 }
+#else
+- (BOOL)_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset {
+    return [self old_findPosition:start inBlock:block_num inOffset:offset];
+}
+#endif
 #endif
 
 - (BOOL)old_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset
@@ -1003,9 +1055,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return old;
 }
 #else
+#if PREFER_FAST_VERSION
 - (int) _blockPosition: (int) block_num {
     return [self new_blockPosition:block_num];
 }
+#else
+- (int) _blockPosition: (int) block_num {
+    return [self old_blockPosition:block_num];
+}
+#endif
 #endif
 - (int)new_blockPosition:(int)block_num {
     return [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, block_num)];
@@ -1230,11 +1288,19 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return old;
 }
 #else
+#if PREFER_FAST_VERSION
 - (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord
                                         width:(int)width
                                        offset:(int)offset {
     return [self new_positionForCoordinate:coord width:width offset:offset];
 }
+#else
+- (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord
+                                        width:(int)width
+                                       offset:(int)offset {
+    return [self old_positionForCoordinate:coord width:width offset:offset];
+}
+#endif
 #endif
 
 - (LineBufferPosition *)old_positionForCoordinate:(VT100GridCoord)coord
@@ -1348,11 +1414,19 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return old;
 }
 #else
+#if PREFER_FAST_VERSION
 - (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position
                                   width:(int)width
                                      ok:(BOOL *)ok {
     return [self new_coordinateForPosition:position width:width ok:ok];
 }
+#else
+- (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position
+                                  width:(int)width
+                                     ok:(BOOL *)ok {
+    return [self old_coordinateForPosition:position width:width ok:ok];
+}
+#endif
 #endif
 
 - (VT100GridCoord)old_coordinateForPosition:(LineBufferPosition *)position
@@ -1496,9 +1570,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return old;
 }
 #else
+#if PREFER_FAST_VERSION
 - (LineBufferPosition *)lastPosition {
     return [self new_lastPosition];
 }
+#else
+- (LineBufferPosition *)lastPosition {
+    return [self old_lastPosition];
+}
+#endif
 #endif
 
 - (LineBufferPosition *)old_lastPosition {
@@ -1531,9 +1611,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return oldAbsolutePosition;
 }
 #else
+#if PREFER_FAST_VERSION
 - (long long)absPositionOfFindContext:(FindContext *)findContext {
     return [self new_absPositionOfFindContext:findContext];
 }
+#else
+- (long long)absPositionOfFindContext:(FindContext *)findContext {
+    return [self old_absPositionOfFindContext:findContext];
+}
+#endif
 #endif
 
 - (long long)old_absPositionOfFindContext:(FindContext *)findContext
@@ -1585,9 +1671,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return old;
 }
 #else
+#if PREFER_FAST_VERSION
 - (int)absBlockNumberOfAbsPos:(long long)absPos {
     return [self new_absBlockNumberOfAbsPos:absPos];
 }
+#else
+- (int)absBlockNumberOfAbsPos:(long long)absPos {
+    return [self old_absBlockNumberOfAbsPos:absPos];
+}
+#endif
 #endif
 
 - (int)old_absBlockNumberOfAbsPos:(long long)absPos verbose:(BOOL)verbose
@@ -1630,9 +1722,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return oldValue;
 }
 #else
+#if PREFER_FAST_VERSION
 - (long long)absPositionOfAbsBlock:(int)absBlockNum {
     return [self new_absPositionOfAbsBlock:absBlockNum];
 }
+#else
+- (long long)absPositionOfAbsBlock:(int)absBlockNum {
+    return [self old_absPositionOfAbsBlock:absBlockNum];
+}
+#endif
 #endif
 
 - (long long)old_absPositionOfAbsBlock:(int)absBlockNum {
