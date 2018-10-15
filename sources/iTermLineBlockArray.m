@@ -11,7 +11,7 @@
 #import "iTermCumulativeSumCache.h"
 #import "LineBlock.h"
 
-#define PERFORM_SANITY_CHECKS 1
+#define PERFORM_SANITY_CHECKS SANITY_CHECK_CUMULATIVE_CACHE
 
 @interface iTermLineBlockArray()<iTermLineBlockObserver>
 @end
@@ -22,6 +22,7 @@
     int _width;
     iTermCumulativeSumCache *_numLinesCache;
     iTermCumulativeSumCache *_rawSpaceCache;
+    iTermCumulativeSumCache *_rawLinesCache;
 }
 
 - (instancetype)init {
@@ -62,21 +63,32 @@
     }
     if (changed) {
         _numLinesCache = nil;
-        _rawSpaceCache = nil;
     }
 }
 
 - (void)buildCacheForWidth:(int)width {
+    [self buildNumLinesCacheForWidth:width];
+    if (!_rawSpaceCache) {
+        [self buildWidthInsensitiveCaches];
+    }
+}
+
+- (void)buildWidthInsensitiveCaches {
+    _rawSpaceCache = [[iTermCumulativeSumCache alloc] init];
+    _rawLinesCache = [[iTermCumulativeSumCache alloc] init];
+    for (LineBlock *block in _blocks) {
+        [_rawSpaceCache appendValue:[block rawSpaceUsed]];
+        [_rawLinesCache appendValue:[block numRawLines]];
+    }
+}
+
+- (void)buildNumLinesCacheForWidth:(int)width {
     _width = width;
     _numLinesCache = [[iTermCumulativeSumCache alloc] init];
-    _rawSpaceCache = [[iTermCumulativeSumCache alloc] init];
 
     for (LineBlock *block in _blocks) {
         const int block_lines = [block getNumLinesWithWrapWidth:width];
         [_numLinesCache appendValue:block_lines];
-
-        const int rawSpace = [block rawSpaceUsed];
-        [_rawSpaceCache appendValue:rawSpace];
     }
 }
 
@@ -284,9 +296,28 @@
     ITAssertWithMessage(numberLeft == 0, @"not all lines available in range %@. Have %@ remaining.", NSStringFromRange(range), @(numberLeft));
 }
 
-
 - (NSInteger)numberOfRawLines {
-#warning TODO: Optimize this
+    if (_rawLinesCache) {
+        NSInteger result = [self fast_numberOfRawLines];
+#if PERFORM_SANITY_CHECKS
+        NSInteger expected = [self slow_numberOfRawLines];
+        if (result != expected) {
+            [self slow_numberOfRawLines];
+            [self fast_numberOfRawLines];
+            assert(NO);
+        }
+#endif
+        return result;
+    } else {
+        return [self slow_numberOfRawLines];
+    }
+}
+
+- (NSInteger)fast_numberOfRawLines {
+    return _rawLinesCache.sumOfAllValues;
+}
+
+- (NSInteger)slow_numberOfRawLines {
     NSInteger sum = 0;
     for (LineBlock *block in _blocks) {
         sum += [block numRawLines];
@@ -462,6 +493,7 @@
     }
     index--;
     _blocks[index] = [_blocks[index] copy];
+    [_blocks[index] addObserver:self];
 }
 
 - (void)addBlock:(LineBlock *)block {
@@ -469,18 +501,23 @@
     [_blocks addObject:block];
     if (_numLinesCache) {
         [_numLinesCache appendValue:0];
+    }
+    if (_rawSpaceCache) {
         [_rawSpaceCache appendValue:0];
+        [_rawLinesCache appendValue:0];
         // The block might not be empty. Treat it like a bunch of lines just got appended.
         [self updateCacheForBlock:block];
     }
+#if PERFORM_SANITY_CHECKS
+    [self sanityCheck];
+#endif
 }
 
 - (void)removeFirstBlock {
     [_blocks.firstObject removeObserver:self];
-    if (_numLinesCache) {
-        [_numLinesCache removeFirstValue];
-        [_rawSpaceCache removeFirstValue];
-    }
+    [_numLinesCache removeFirstValue];
+    [_rawSpaceCache removeFirstValue];
+    [_rawLinesCache removeFirstValue];
     [_blocks removeObjectAtIndex:0];
 }
 
@@ -495,6 +532,7 @@
     [_blocks removeLastObject];
     [_numLinesCache removeLastValue];
     [_rawSpaceCache removeLastValue];
+    [_rawLinesCache removeLastValue];
 }
 
 - (NSUInteger)count {
@@ -502,25 +540,49 @@
 }
 
 - (LineBlock *)lastBlock {
+#if PERFORM_SANITY_CHECKS
+    [self sanityCheck];
+#endif
     return _blocks.lastObject;
 }
 
 - (void)updateCacheForBlock:(LineBlock *)block {
-    assert(_numLinesCache.sums.count == _blocks.count);
-    assert(_numLinesCache.values.count == _blocks.count);
+    if (_numLinesCache) {
+        assert(_numLinesCache.sums.count == _blocks.count);
+        assert(_numLinesCache.values.count == _blocks.count);
+    }
     assert(_rawSpaceCache.sums.count == _blocks.count);
     assert(_rawSpaceCache.values.count == _blocks.count);
+    assert(_rawLinesCache.sums.count == _blocks.count);
+    assert(_rawLinesCache.values.count == _blocks.count);
     assert(_blocks.count > 0);
 
     if (block == _blocks.firstObject) {
         [_numLinesCache setFirstValue:[block getNumLinesWithWrapWidth:_width]];
         [_rawSpaceCache setFirstValue:[block rawSpaceUsed]];
+        [_rawLinesCache setFirstValue:[block numRawLines]];
     } else if (block == _blocks.lastObject) {
         [_numLinesCache setLastValue:[block getNumLinesWithWrapWidth:_width]];
         [_rawSpaceCache setLastValue:[block rawSpaceUsed]];
+        [_rawLinesCache setLastValue:[block numRawLines]];
     } else {
         ITAssertWithMessage(block == _blocks.firstObject || block == _blocks.lastObject,
                             @"Block with index %@/%@ changed", @([_blocks indexOfObject:block]), @(_blocks.count));
+    }
+#if PERFORM_SANITY_CHECKS
+    [self sanityCheck];
+#endif
+}
+
+- (void)sanityCheck {
+    if (_rawLinesCache == nil) {
+        return;
+    }
+    for (int i = 0; i < _blocks.count; i++) {
+        LineBlock *block = _blocks[i];
+        BOOL ok = [block numRawLines] == _rawLinesCache.values[i].integerValue;
+        assert(ok);
+        assert([block hasObserver:self]);
     }
 }
 
@@ -531,7 +593,11 @@
     theCopy->_blocks = [_blocks mutableCopy];
     theCopy->_numLinesCache = [_numLinesCache copy];
     theCopy->_rawSpaceCache = [_rawSpaceCache copy];
+    theCopy->_rawLinesCache = [_rawLinesCache copy];
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
+    for (LineBlock *block in _blocks) {
+        [block addObserver:theCopy];
+    }
 
     return theCopy;
 }
@@ -539,7 +605,7 @@
 #pragma mark - iTermLineBlockObserver
 
 - (void)lineBlockDidChange:(LineBlock *)lineBlock {
-    if (_numLinesCache) {
+    if (_rawSpaceCache || _numLinesCache || _rawLinesCache) {
         [self updateCacheForBlock:lineBlock];
     }
 }

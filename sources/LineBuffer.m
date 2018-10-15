@@ -36,9 +36,6 @@
 #import "LineBlock.h"
 #import "RegexKitLite.h"
 
-// Run with this on for a while and see if there are any crashes. Turn it off for a big performance win.
-#define SANITY_CHECK_CUMULATIVE_CACHE 1
-
 static NSString *const kLineBufferVersionKey = @"Version";
 static NSString *const kLineBufferBlocksKey = @"Blocks";
 static NSString *const kLineBufferBlockSizeKey = @"Block Size";
@@ -227,6 +224,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 #if ITERM_DEBUG
     assert(totalDropped == (nl - RawNumLines(self, width)));
+#endif
+#if SANITY_CHECK_CUMULATIVE_CACHE
+    [_lineBlocks sanityCheck];
 #endif
     return totalDropped;
 }
@@ -419,6 +419,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // Width change. Invalidate the wrapped lines cache.
         num_wrapped_lines_width = -1;
     }
+#if SANITY_CHECK_CUMULATIVE_CACHE
+    [_lineBlocks sanityCheck];
+#endif
 }
 
 #if SANITY_CHECK_CUMULATIVE_CACHE
@@ -636,6 +639,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if (continuation) {
         memmove(continuation, &oldCont, sizeof(oldCont));
     }
+#if SANITY_CHECK_CUMULATIVE_CACHE
+    [_lineBlocks sanityCheck];
+#endif
     return old;
 }
 #else
@@ -884,6 +890,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     cursor_rawline = old;
 #else
     cursor_rawline += _lineBlocks.numberOfRawLines;
+#endif
+#if SANITY_CHECK_CUMULATIVE_CACHE
+    [_lineBlocks sanityCheck];
 #endif
 }
 
@@ -1566,10 +1575,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 #if SANITY_CHECK_CUMULATIVE_CACHE
 - (int)absBlockNumberOfAbsPos:(long long)absPos {
-    int old = [self old_absBlockNumberOfAbsPos:absPos];
+    int old = [self old_absBlockNumberOfAbsPos:absPos verbose:NO];
     int new = [self new_absBlockNumberOfAbsPos:absPos];
     if (old != new) {
-        [self old_absBlockNumberOfAbsPos:absPos];
+        [self old_absBlockNumberOfAbsPos:absPos verbose:YES];
         [self new_absBlockNumberOfAbsPos:absPos];
         assert(NO);
     }
@@ -1581,16 +1590,21 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 #endif
 
-- (int)old_absBlockNumberOfAbsPos:(long long)absPos
+- (int)old_absBlockNumberOfAbsPos:(long long)absPos verbose:(BOOL)verbose
 {
     int absBlock = num_dropped_blocks;
     long long cumPos = droppedChars;
+    int i = 0;
     for (LineBlock *block in _lineBlocks.blocks) {
+        if (verbose) {
+            NSLog(@"Block %d/Absolute block %d: cumPos goes %@ -> %@", i, absBlock, @(cumPos), @(cumPos + [block rawSpaceUsed]));
+        }
         cumPos += [block rawSpaceUsed];
         if (cumPos >= absPos) {
             return absBlock;
         }
         ++absBlock;
+        i++;
     }
     return absBlock;
 }

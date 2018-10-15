@@ -1511,6 +1511,9 @@ static int Search(NSString* needle,
 }
 
 - (void)didChange {
+#if SANITY_CHECK_CUMULATIVE_CACHE
+    assert(_observers.count > 0);
+#endif
     BOOL needsCompaction = NO;
     for (id<iTermLineBlockObserver> observer in _observers) {
         if (observer) {
@@ -1522,6 +1525,15 @@ static int Search(NSString* needle,
     if (needsCompaction) {
         [_observers compact];
     }
+}
+
+- (BOOL)hasObserver:(id<iTermLineBlockObserver>)observer {
+    for (id<iTermLineBlockObserver> pointer in _observers) {
+        if (pointer == observer) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 @end

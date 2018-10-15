@@ -206,5 +206,6 @@ void EnableDoubleWidthCharacterLineCache(void);
 
 - (void)addObserver:(id<iTermLineBlockObserver>)observer;
 - (void)removeObserver:(id<iTermLineBlockObserver>)observer;
+- (BOOL)hasObserver:(id<iTermLineBlockObserver>)observer;
 
 @end

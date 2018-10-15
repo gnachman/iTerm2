@@ -10,6 +10,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Run with this on for a while and see if there are any crashes. Turn it off for a big performance win.
+#define SANITY_CHECK_CUMULATIVE_CACHE 1
+
 @class LineBlock;
 
 @interface iTermLineBlockArray : NSObject<NSCopying>
@@ -43,6 +46,8 @@ NS_ASSUME_NONNULL_BEGIN
                              remainder:(nullable int *)remainder
                            blockOffset:(nullable int *)yoffset
                                  index:(nullable int *)indexPtr;
+- (void)sanityCheck;
+
 @end
 
 NS_ASSUME_NONNULL_END
