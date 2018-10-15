@@ -147,9 +147,9 @@
             if (verbose) {
                 NSLog(@"Remainder is absoluteLineNumber-cache[i-1]: %@ - %@",
                       @(absoluteLineNumber),
-                      _numLinesCache.values[index - 1]);
+                      @([_numLinesCache valueAtIndex:index - 1]));
             }
-            *remainderPtr = absoluteLineNumber - _numLinesCache.sums[index - 1].integerValue;
+            *remainderPtr = absoluteLineNumber - [_numLinesCache sumAtIndex:index - 1];
         }
     }
     if (verbose) {
@@ -548,13 +548,10 @@
 
 - (void)updateCacheForBlock:(LineBlock *)block {
     if (_numLinesCache) {
-        assert(_numLinesCache.sums.count == _blocks.count);
-        assert(_numLinesCache.values.count == _blocks.count);
+        assert(_numLinesCache.count == _blocks.count);
     }
-    assert(_rawSpaceCache.sums.count == _blocks.count);
-    assert(_rawSpaceCache.values.count == _blocks.count);
-    assert(_rawLinesCache.sums.count == _blocks.count);
-    assert(_rawLinesCache.values.count == _blocks.count);
+    assert(_rawSpaceCache.count == _blocks.count);
+    assert(_rawLinesCache.count == _blocks.count);
     assert(_blocks.count > 0);
 
     if (block == _blocks.firstObject) {
@@ -580,7 +577,7 @@
     }
     for (int i = 0; i < _blocks.count; i++) {
         LineBlock *block = _blocks[i];
-        BOOL ok = [block numRawLines] == _rawLinesCache.values[i].integerValue;
+        BOOL ok = [block numRawLines] == [_rawLinesCache valueAtIndex:i];
         assert(ok);
         assert([block hasObserver:self]);
     }

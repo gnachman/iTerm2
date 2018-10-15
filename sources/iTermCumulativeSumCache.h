@@ -17,10 +17,9 @@ NS_ASSUME_NONNULL_BEGIN
 // - Sum a subrange of values
 @interface iTermCumulativeSumCache : NSObject<NSCopying>
 
-@property (nonatomic, readonly) NSMutableArray<NSNumber *> *sums;
-@property (nonatomic, readonly) NSMutableArray<NSNumber *> *values;
 @property (nonatomic) NSInteger offset;
 @property (nonatomic, readonly) NSInteger sumOfAllValues;
+@property (nonatomic, readonly) NSInteger count;
 
 // Returns NSNotFound if the value is largest than the maximum
 // Runs in O(log(N)) time for N=number of buckets.
@@ -43,6 +42,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Sum values in a range in O(1) time.
 - (NSInteger)sumOfValuesInRange:(NSRange)range;
 
+- (NSInteger)valueAtIndex:(NSInteger)index;
+- (NSInteger)sumAtIndex:(NSInteger)index;
 
 @end
 
