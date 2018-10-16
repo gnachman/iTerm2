@@ -5047,6 +5047,9 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"showMetalAndStopDrawingTextView");
     _wrapper.useMetal = YES;
     _textview.suppressDrawing = YES;
+    if (@available(macOS 10.14, *)) {
+        _view.scrollview.alphaValue = 0;
+    }
     _view.metalView.alphaValue = 1;
 }
 
@@ -5054,6 +5057,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view setUseMetal:useMetal dataSource:dataSource];
     if (!useMetal) {
         _textview.suppressDrawing = NO;
+        if (@available(macOS 10.14, *)) {
+            _view.scrollview.alphaValue = 1;
+        }
     }
 }
 
@@ -9589,6 +9595,9 @@ ITERM_WEAKLY_REFERENCEABLE
     assert(_useMetal);
     _wrapper.useMetal = NO;
     _textview.suppressDrawing = NO;
+    if (@available(macOS 10.14, *)) {
+        _view.scrollview.alphaValue = 1;
+    }
     _view.metalView.alphaValue = 0;
     id token = @(_nextMetalDisabledToken++);
     [_metalDisabledTokens addObject:token];

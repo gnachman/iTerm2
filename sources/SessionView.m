@@ -152,9 +152,20 @@ static NSDate* lastResizeDate_;
 
         // assign the main view
         [self addSubviewBelowFindView:_scrollview];
-
+        if (@available(macOS 10.14, *)) {
+            [self addSubviewBelowFindView:_scrollview.verticalScroller];
+            _scrollview.verticalScroller.frame = [self frameForScroller];
+        }
     }
     return self;
+}
+
+- (NSRect)frameForScroller NS_AVAILABLE_MAC(10_14) {
+    [_scrollview.verticalScroller sizeToFit];
+    NSSize size = _scrollview.verticalScroller.frame.size;
+    NSSize mySize = self.bounds.size;
+    NSRect frame = NSMakeRect(mySize.width - size.width, 0, size.width, mySize.height);
+    return frame;
 }
 
 - (void)dealloc {
@@ -374,6 +385,9 @@ static NSDate* lastResizeDate_;
             maxY -= frame.size.height;
             frame.origin.y = maxY;
             _scrollview.frame = frame;
+            if (@available(macOS 10.14, *)) {
+                _scrollview.verticalScroller.frame = [self frameForScroller];
+            }
         }
     }
 
@@ -860,6 +874,9 @@ static NSDate* lastResizeDate_;
     }
     if (adjustScrollView) {
         [scrollView setFrame:frame];
+        if (@available(macOS 10.14, *)) {
+            _scrollview.verticalScroller.frame = [self frameForScroller];
+        }
     } else {
         [self updateTitleFrame];
     }
@@ -946,7 +963,9 @@ static NSDate* lastResizeDate_;
     NSSize size = [_delegate sessionViewScrollViewWillResize:proposedSize];
     NSRect rect = NSMakeRect(0, proposedSize.height - size.height, size.width, size.height);
     [self scrollview].frame = rect;
-
+    if (@available(macOS 10.14, *)) {
+        _scrollview.verticalScroller.frame = [self frameForScroller];
+    }
     rect.origin = NSZeroPoint;
     rect.size.width = _scrollview.contentSize.width;
     rect.size.height = [_delegate sessionViewDesiredHeightOfDocumentView];
@@ -1093,6 +1112,10 @@ static NSDate* lastResizeDate_;
 
 - (void)userScrollDidChange:(BOOL)userScroll {
     [self.delegate sessionViewUserScrollDidChange:userScroll];
+}
+
+- (NSScrollView *)ptyScrollerScrollView NS_AVAILABLE_MAC(10_14) {
+    return _scrollview;
 }
 
 @end

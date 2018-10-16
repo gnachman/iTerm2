@@ -31,6 +31,7 @@
 
 @protocol PTYScrollerDelegate<NSObject>
 - (void)userScrollDidChange:(BOOL)userScroll;
+- (NSScrollView *)ptyScrollerScrollView NS_AVAILABLE_MAC(10_14);
 @end
 
 @interface PTYScroller : NSScroller
