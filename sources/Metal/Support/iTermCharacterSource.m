@@ -562,6 +562,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         }
     }
     for (int i = 0; i < _numberOfIterationsNeeded; i++) {
+        ITAssertWithMessage(_contexts[i] == NULL, @"context %@/%@ leaking", @(i), @(_numberOfIterationsNeeded));
         _contexts[i] = [iTermCharacterSource newBitmapContextOfSize:_size];
         ITAssertWithMessage(_contexts[i], @"context %@/%@ is null for size %@", @(i), @(_numberOfIterationsNeeded), NSStringFromSize(_size));
     }
