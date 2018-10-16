@@ -44,7 +44,7 @@ static const CGFloat iTermMenuBarHeight = 22;
 - (NSArray<NSDictionary *> *)allWindowInfoDictionaries {
     const CGWindowListOption options = (kCGWindowListExcludeDesktopElements |
                                         kCGWindowListOptionOnScreenOnly);
-    NSArray<NSDictionary *> *windowInfos = (__bridge NSArray *)CGWindowListCopyWindowInfo(options,
+    NSArray<NSDictionary *> *windowInfos = (__bridge_transfer NSArray *)CGWindowListCopyWindowInfo(options,
                                                                                           kCGNullWindowID);
     return windowInfos;
 }
