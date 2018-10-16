@@ -1173,6 +1173,7 @@ static void HandleSigChld(int n) {
         // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
         NSString *tempPath = [self pathToNewUnixDomainSocket];
         if (tempPath == nil) {
+            [self freeEnvironment:newEnviron];
             if (completion != nil) {
                 completion();
             }
