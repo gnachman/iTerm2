@@ -222,7 +222,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [_fontOverrides enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         temp[key] = obj;
     }];
-    return temp;
+    return [temp autorelease];
 }
 
 // Called when listing window finishes. Happens for all new windows/tabs, whether initiated by iTerm2 or not.
