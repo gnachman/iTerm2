@@ -539,7 +539,7 @@ static int MyForkPty(int *amaster,
         NSString *tempPath = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2-temp-socket."
                                                                                  suffix:@""];
         if (tempPath == nil) {
-            [self freeEnvironment:newEnviron]
+            [self freeEnvironment:newEnviron];
             NSAlert *alert = [[[NSAlert alloc] init] autorelease];
             alert.messageText = @"Error";
             alert.informativeText = [NSString stringWithFormat:@"An error was encountered while creating a temporary file with mkstemps. Verify that %@ exists and is writable.", NSTemporaryDirectory()];
