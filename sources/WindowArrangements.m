@@ -79,8 +79,6 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
 
 + (void)setArrangement:(NSArray *)arrangement withName:(NSString *)name
 {
-#warning DNS
-    arrangement = [arrangement arrayByAddingObject:@{ @"foo": @[ @{ @"bar": [NSNull null] } ] }];
     NSString *oops = [arrangement it_invalidPathInPlist];
     ITCriticalError(!oops,
                     @"Invalid plist at %@:\n%@", oops, [arrangement debugDescription]);
