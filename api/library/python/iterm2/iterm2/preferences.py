@@ -439,6 +439,9 @@ class PreferenceKeys(enum.Enum):
     Takes a nonnegative integer."""
     DEFAULT_TOOLBELT_WIDTH                   = "Default Toolbelt Width"
 
+    """Does changing text size with cmd-+ and cmd-- affect only the session or also its profile?"""
+    SIZE_CHANGES_AFFECT_PROFILE              = "Size Changes Affect Profile"
+
 async def async_get_preference(connection, key):
     """
     Gets a preference by key.

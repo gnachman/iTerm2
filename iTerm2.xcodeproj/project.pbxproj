@@ -1445,6 +1445,8 @@
 		A624231F19CF6F2000182C08 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
 		A624232019CF6F2C00182C08 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
 		A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		A6257C18217707BB00A8C5BD /* iTermAdjustFontSizeHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6257C16217707BB00A8C5BD /* iTermAdjustFontSizeHelper.h */; };
+		A6257C19217707BB00A8C5BD /* iTermAdjustFontSizeHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6257C17217707BB00A8C5BD /* iTermAdjustFontSizeHelper.m */; };
 		A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
 		A62A1AE31AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
 		A62A1AE41AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
@@ -4214,6 +4216,8 @@
 		A624230F19CF6B0C00182C08 /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Sparkle.framework; path = ThirdParty/Sparkle.framework; sourceTree = "<group>"; };
 		A624231819CF6DE000182C08 /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NMSSH.framework; path = ThirdParty/NMSSH.framework; sourceTree = "<group>"; };
 		A624232519CF70DF00182C08 /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NMSSH.framework; path = ThirdParty/NMSSH.framework; sourceTree = "<group>"; };
+		A6257C16217707BB00A8C5BD /* iTermAdjustFontSizeHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAdjustFontSizeHelper.h; sourceTree = "<group>"; };
+		A6257C17217707BB00A8C5BD /* iTermAdjustFontSizeHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermAdjustFontSizeHelper.m; sourceTree = "<group>"; };
 		A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextDrawingHelper.h; sourceTree = "<group>"; };
@@ -7709,6 +7713,8 @@
 				A6BC9B1D214A2AE900F50C09 /* iTermVariableReference.m */,
 				532F9429215DFEF600D509E4 /* iTermCacheableImage.h */,
 				532F942A215DFEF600D509E4 /* iTermCacheableImage.m */,
+				A6257C16217707BB00A8C5BD /* iTermAdjustFontSizeHelper.h */,
+				A6257C17217707BB00A8C5BD /* iTermAdjustFontSizeHelper.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -9030,6 +9036,7 @@
 				A66719271DCE36C3000CE608 /* SetHostnameTrigger.h in Headers */,
 				A6B1476421334D3900D0814F /* iTermTmuxStatusBarMonitor.h in Headers */,
 				A65943CB1F83382B00598B1E /* iTermMetalClipView.h in Headers */,
+				A6257C18217707BB00A8C5BD /* iTermAdjustFontSizeHelper.h in Headers */,
 				53FF982A2093C823008688D7 /* iTermSignatureVerifier.h in Headers */,
 				A66719281DCE36C3000CE608 /* iTermEventTap.h in Headers */,
 				A630117620E6971D008114B7 /* iTermStatusBarTextComponent.h in Headers */,
@@ -11370,6 +11377,7 @@
 				A630116620E606F9008114B7 /* iTermStatusBarViewController.m in Sources */,
 				53FF9817209247E2008688D7 /* iTermScriptTemplatePickerWindowController.m in Sources */,
 				A6047135213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m in Sources */,
+				A6257C19217707BB00A8C5BD /* iTermAdjustFontSizeHelper.m in Sources */,
 				A68AC8F41F05C0860023A216 /* NSBundle+iTerm.m in Sources */,
 				A67960CD1F81FCB6008A42BC /* iTermMetalRenderer.m in Sources */,
 				5365206E21433E9C003C58FD /* iTermGitCache.m in Sources */,

@@ -15,6 +15,7 @@
 #import "iTerm.h"
 #import "iTermAPIHelper.h"
 #import "iTermAboutWindow.h"
+#import "iTermAdjustFontSizeHelper.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementView.h"
 #import "iTermApplication.h"
@@ -8059,9 +8060,26 @@ ITERM_WEAKLY_REFERENCEABLE
         return self.currentSession.canProduceMetalFramecap;
     } else if (item.action == @selector(exportRecording:)) {
         return !self.currentSession.screen.dvr.empty;
+    } else if (item.action == @selector(toggleSizeChangesAffectProfile:)) {
+        item.state = [iTermPreferences boolForKey:kPreferenceKeySizeChangesAffectProfile] ? NSOnState : NSOffState;
+        return YES;
     }
 
     return result;
+}
+
+- (IBAction)toggleSizeChangesAffectProfile:(id)sender {
+    [iTermAdjustFontSizeHelper toggleSizeChangesAffectProfile];
+}
+- (IBAction)biggerFont:(id)sender {
+    [iTermAdjustFontSizeHelper biggerFont:self.currentSession];
+}
+- (IBAction)smallerFont:(id)sender {
+    [iTermAdjustFontSizeHelper smallerFont:self.currentSession];
+}
+- (IBAction)returnToDefaultSize:(id)sender {
+    [iTermAdjustFontSizeHelper returnToDefaultSize:self.currentSession
+                                     resetRowsCols:[sender isAlternate]];
 }
 
 - (IBAction)toggleAutoCommandHistory:(id)sender

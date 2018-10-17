@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.13.2" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.13.2"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14313.18"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -699,23 +699,29 @@ DQ
                             </menuItem>
                             <menuItem title="Make Text Bigger" keyEquivalent="+" identifier="Make Text Bigger" id="804">
                                 <connections>
-                                    <action selector="biggerFont:" target="201" id="808"/>
+                                    <action selector="biggerFont:" target="-1" id="hwQ-4a-7QF"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Make Text Normal Size" keyEquivalent="0" identifier="Make Text Normal Size" id="1464">
                                 <connections>
-                                    <action selector="returnToDefaultSize:" target="201" id="1465"/>
+                                    <action selector="returnToDefaultSize:" target="-1" id="FDv-eO-hny"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Restore Text and Session Size" alternate="YES" keyEquivalent="0" identifier="Restore Text and Session Size" id="1467">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
-                                    <action selector="returnToDefaultSize:" target="201" id="1468"/>
+                                    <action selector="returnToDefaultSize:" target="-1" id="6s0-TK-HAT"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Make Text Smaller" keyEquivalent="-" identifier="Make Text Smaller" id="805">
                                 <connections>
-                                    <action selector="smallerFont:" target="201" id="809"/>
+                                    <action selector="smallerFont:" target="-1" id="EDt-76-pVs"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Size Changes Update Profile" identifier="Size Changes Update Profile" id="wau-MD-nUH">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="toggleSizeChangesAffectProfile:" target="-1" id="BiY-GU-Ndu"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="915">

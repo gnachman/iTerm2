@@ -4555,16 +4555,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_screen width];
 }
 
-- (NSFont*)fontWithRelativeSize:(int)dir from:(NSFont*)font
-{
-    int newSize = [font pointSize] + dir;
-    if (newSize < 2) {
-        newSize = 2;
-    }
-    if (newSize > 200) {
-        newSize = 200;
-    }
-    return [NSFont fontWithName:[font fontName] size:newSize];
+- (NSFont *)fontWithRelativeSize:(int)dir from:(NSFont*)font {
+    return [font it_fontByAddingToPointSize:dir];
 }
 
 - (void)setFont:(NSFont*)font

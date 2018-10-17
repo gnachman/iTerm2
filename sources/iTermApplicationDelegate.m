@@ -86,6 +86,7 @@
 #import "NSBundle+iTerm.h"
 #import "NSData+GZIP.h"
 #import "NSFileManager+iTerm.h"
+#import "NSFont+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSUserDefaults+iTerm.h"
@@ -1870,36 +1871,6 @@ static BOOL hasBecomeActive = NO;
     [[iTermProfilesWindowController sharedInstance] showWindow:sender];
 }
 
-- (IBAction)biggerFont:(id)sender {
-    for (PTYSession *session in [self sessionsToAdjustFontSize]) {
-        [session changeFontSizeDirection:1];
-    }
-}
-
-- (IBAction)smallerFont:(id)sender {
-    for (PTYSession *session in [self sessionsToAdjustFontSize]) {
-        [session changeFontSizeDirection:-1];
-    }
-}
-
-- (IBAction)returnToDefaultSize:(id)sender {
-    PseudoTerminal *frontTerminal = [[iTermController sharedInstance] currentTerminal];
-    PTYSession *session = [frontTerminal currentSession];
-    if (![sender isAlternate]) {
-        for (PTYSession *session in [self sessionsToAdjustFontSize]) {
-            [session changeFontSizeDirection:0];
-        }
-    } else {
-        [session changeFontSizeDirection:0];
-    }
-    if ([sender isAlternate]) {
-        NSDictionary *abEntry = [session originalProfile];
-        [frontTerminal sessionInitiatedResize:session
-                                        width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
-                                       height:[[abEntry objectForKey:KEY_ROWS] intValue]];
-    }
-}
-
 - (IBAction)pasteFaster:(id)sender
 {
     [self changePasteSpeedBy:1.5
@@ -2317,20 +2288,6 @@ static BOOL hasBecomeActive = NO;
     for (NSView *subview in [aView subviews]) {
         [self hideToolTipsInView:subview];
     }
-}
-
-- (NSArray<PTYSession *> *)sessionsToAdjustFontSize {
-    PTYSession *session = [[[iTermController sharedInstance] currentTerminal] currentSession];
-    if (!session) {
-        return nil;
-    }
-    if ([iTermAdvancedSettingsModel fontChangeAffectsBroadcastingSessions]) {
-        NSArray<PTYSession *> *broadcastSessions = [[[iTermController sharedInstance] currentTerminal] broadcastSessions];
-        if ([broadcastSessions containsObject:session]) {
-            return broadcastSessions;
-        }
-    }
-    return @[ session ];
 }
 
 - (void)changePasteSpeedBy:(double)factor

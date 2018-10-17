@@ -136,6 +136,7 @@ NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab = @"PasteTabToStr
 NSString *const kPreferenceKeyShowFullscreenTabBar = @"ShowFullScreenTabBar";
 NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti = @"HotkeyMigratedFromSingleToMulti";
 NSString *const kPreferenceKeyDefaultToolbeltWidth = @"Default Toolbelt Width";
+NSString *const kPreferenceKeySizeChangesAffectProfile = @"Size Changes Affect Profile";
 // NOTE: If you update this list, also update preferences.py.
 
 static NSMutableDictionary *gObservers;
@@ -313,6 +314,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyHotkeyMigratedFromSingleToMulti: @NO,
                   kPreferenceKeyLeftTabBarWidth: @150,
                   kPreferenceKeyDefaultToolbeltWidth: @250,
+                  kPreferenceKeySizeChangesAffectProfile: @NO,
               };
     }
     return dict;
