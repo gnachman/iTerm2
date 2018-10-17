@@ -8,6 +8,7 @@
 
 #import "WindowArrangements.h"
 #import "iTermApplicationDelegate.h"
+#import "NSObject+iTerm.h"
 #import "PreferencePanel.h"
 
 static NSString* WINDOW_ARRANGEMENTS = @"Window Arrangements";
@@ -80,7 +81,15 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
 {
     NSMutableDictionary *arrangements = [NSMutableDictionary dictionaryWithDictionary:[WindowArrangements arrangements]];
     [arrangements setObject:arrangement forKey:name];
-    [[NSUserDefaults standardUserDefaults] setObject:arrangements forKey:WINDOW_ARRANGEMENTS];
+    @try {
+        [[NSUserDefaults standardUserDefaults] setObject:arrangements forKey:WINDOW_ARRANGEMENTS];
+    }
+    @catch (NSException *e) {
+        NSString *oops = [arrangements it_invalidPathInPlist];
+        ITCriticalError(NO,
+                        @"Exception %@ while saving arrangement. Invalid path is %@\n%@", e, oops, [arrangement debugDescription]);
+        return;
+    }
 
     if ([WindowArrangements count] == 1) {
         [WindowArrangements makeDefaultArrangement:name];

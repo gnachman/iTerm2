@@ -54,4 +54,6 @@
 - (void)it_setAssociatedObject:(id)associatedObject forKey:(void *)key;
 - (id)it_associatedObjectForKey:(void *)key;
 
+- (NSString *)it_invalidPathInPlist;
+
 @end
