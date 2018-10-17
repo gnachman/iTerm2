@@ -57,5 +57,6 @@
 - (void)it_performNonObjectReturningSelector:(SEL)selector withObject:(id)object;
 
 - (BOOL)it_isSafeForPlist;
+- (NSString *)it_invalidPathInPlist;
 
 @end

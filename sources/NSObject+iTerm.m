@@ -130,4 +130,53 @@
     return NO;
 }
 
+- (NSString *)it_invalidPathInPlist {
+    return [self it_invalidPathInPlist:@"/"];
+}
+
+- (NSString *)it_invalidPathInPlist:(NSString *)path {
+    if ([self isKindOfClass:[NSString class]]) {
+        return nil;
+    }
+    if ([self isKindOfClass:[NSNumber class]]) {
+        return nil;
+    }
+    if ([self isKindOfClass:[NSDate class]]) {
+        return nil;
+    }
+    if ([self isKindOfClass:[NSData class]]) {
+        return nil;
+    }
+    NSArray *array = [NSArray castFrom:self];
+    if (array) {
+        int i = 0;
+        for (NSObject *obj in array) {
+            NSString *oops = [obj it_invalidPathInPlist:[NSString stringWithFormat:@"%@array[%@]/", path, @(i)]];
+            if (oops) {
+                return oops;
+            }
+            i++;
+        }
+        return nil;
+    }
+
+    NSDictionary *dictionary = [NSDictionary castFrom:self];
+    if (dictionary) {
+        for (NSObject *key in dictionary) {
+            NSString *oops = [key it_invalidPathInPlist:[NSString stringWithFormat:@"%@dict key=%@ class=%@", path, key, NSStringFromClass([key class])]];
+            if (oops) {
+                return oops;
+            }
+            id value = dictionary[key];
+            oops = [value it_invalidPathInPlist:[NSString stringWithFormat:@"%@dict[%@]/", path, key]];
+            if (oops) {
+                return oops;
+            }
+        }
+        return nil;
+    }
+
+    return [NSString stringWithFormat:@"%@ has type %@", path, NSStringFromClass([self class])];
+}
+
 @end
