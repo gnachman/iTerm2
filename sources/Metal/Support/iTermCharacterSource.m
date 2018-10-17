@@ -542,6 +542,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         }
     }
     for (int i = 0; i < _numberOfIterationsNeeded; i++) {
+        CGContextRelease(_cgContexts[i]);
         _cgContexts[i] = [iTermCharacterSource newBitmapContextOfSize:_size];
     }
 }
