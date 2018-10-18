@@ -198,5 +198,6 @@
 
 // This keeps you from adding views over the find view.
 - (void)addSubview:(NSView *)view NS_UNAVAILABLE;
+- (void)removeMetalView;
 
 @end

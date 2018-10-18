@@ -2158,6 +2158,8 @@ static BOOL hasBecomeActive = NO;
             return @"this tab is not active.";
         case iTermMetalUnavailableReasonTabBarTemporarilyVisible:
             return @"the tab bar is temporarily visible.";
+        case iTermMetalUnavailableReasonScreensChanging:
+            return @"the screen configuration has just changed.";
     }
 
     return @"of an internal error. Please file a bug report!";

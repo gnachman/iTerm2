@@ -191,6 +191,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     BOOL _resizingSplit;
 
     NSInteger _numberOfSplitViewDragsInProgress;
+
+    // If YES then force metal off. Does a hard reset when changing screens.
+    BOOL _bounceMetal;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -371,8 +374,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                  name:iTermPowerManagerStateDidChange
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(bounceMetal:)
+                                             selector:@selector(metalSettingsDidChange:)
                                                  name:iTermMetalSettingsDidChangeNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(screenParametersDidChange:)
+                                                 name:NSApplicationDidChangeScreenParametersNotification
                                                object:nil];
 }
 
@@ -4841,6 +4848,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         _metalUnavailableReason = iTermMetalUnavailableReasonTooManyPanesReason;
     } else if (![_delegate tabCanUseMetal:self reason:&reason]) {
         _metalUnavailableReason = reason;
+    } else if (_bounceMetal) {
+        _metalUnavailableReason = iTermMetalUnavailableReasonScreensChanging;
     } else {
         _metalUnavailableReason = iTermMetalUnavailableReasonNone;
         allowed = YES;
@@ -4862,15 +4871,21 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [_delegate tab:self didSetMetalEnabled:useMetal];
 }
 
-- (void)bounceMetal:(NSNotification *)notification {
-    if (@available(macOS 10.11, *)) {
-        for (PTYSession *session in self.sessions) {
-            session.useMetal = NO;
-        }
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self updateUseMetal];
-        });
-    }
+- (void)metalSettingsDidChange:(NSNotification *)notification {
+    [self bounceMetal];
+}
+
+- (void)screenParametersDidChange:(NSNotification *)notification {
+    [self bounceMetal];
+}
+
+- (void)bounceMetal {
+    _bounceMetal = YES;
+    [self updateUseMetal];
+    _bounceMetal = NO;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self updateUseMetal];
+    });
 }
 
 #pragma mark - PTYSessionDelegate
