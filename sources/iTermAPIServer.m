@@ -841,6 +841,19 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
+- (void)handleSetBroadcastDomainsRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+    ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
+
+    __block BOOL handled = NO;
+    __weak __typeof(self) weakSelf = self;
+    [_delegate apiServerSetBroadcastDomainsRequest:request.setBroadcastDomainsRequest handler:^(ITMSetBroadcastDomainsResponse *theResponse) {
+        assert(!handled);
+        handled = YES;
+        response.setBroadcastDomainsResponse = theResponse;
+        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
+    }];
+}
+
 
 // Runs on main queue, either in or not in a transaction.
 - (void)dispatchRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
@@ -978,6 +991,10 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
         case ITMClientOriginatedMessage_Submessage_OneOfCase_StatusBarComponentRequest:
             [self handleStatusBarComponentRequest:request connection:webSocketConnection];
+            break;
+
+        case ITMClientOriginatedMessage_Submessage_OneOfCase_SetBroadcastDomainsRequest:
+            [self handleSetBroadcastDomainsRequest:request connection:webSocketConnection];
             break;
     }
 }

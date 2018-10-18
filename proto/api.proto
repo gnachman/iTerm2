@@ -45,6 +45,7 @@ message ClientOriginatedMessage {
     ColorPresetRequest color_preset_request = 127;
     SelectionRequest selection_request = 128;
     StatusBarComponentRequest status_bar_component_request = 129;
+    SetBroadcastDomainsRequest set_broadcast_domains_request = 130;
   }
 }
 
@@ -87,10 +88,25 @@ message ServerOriginatedMessage {
     ColorPresetResponse color_preset_response = 127;
     SelectionResponse selection_response = 128;
     StatusBarComponentResponse status_bar_component_response = 129;
+    SetBroadcastDomainsResponse set_broadcast_domains_response = 130;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
   }
+}
+
+message SetBroadcastDomainsRequest {
+  repeated BroadcastDomain broadcast_domains = 1;
+}
+
+message SetBroadcastDomainsResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    BROADCAST_DOMAINS_NOT_DISJOINT = 2;
+    SESSIONS_NOT_IN_SAME_WINDOW = 3;
+  }
+  optional Status status = 1;
 }
 
 message StatusBarComponentRequest {

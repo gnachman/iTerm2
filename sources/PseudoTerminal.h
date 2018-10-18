@@ -283,6 +283,7 @@ extern NSString *const iTermBroadcastDomainsDidChangeNotification;
 
 // Changes how input is broadcast.
 - (void)setBroadcastMode:(BroadcastMode)mode;
+- (void)setBroadcastingSessions:(NSArray<PTYSession *> *)sessions;
 
 // Change split selection mode for all sessions in this window.
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session move:(BOOL)move;
@@ -348,6 +349,7 @@ extern NSString *const iTermBroadcastDomainsDidChangeNotification;
 - (void)swapPaneRight;
 - (void)swapPaneUp;
 - (void)swapPaneDown;
+
 
 // Returns a restorable session that will restore the split pane, tab, or window, as needed.
 - (iTermRestorableSession *)restorableSessionForSession:(PTYSession *)session;

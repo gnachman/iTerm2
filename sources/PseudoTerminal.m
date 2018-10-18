@@ -6870,8 +6870,37 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)setBroadcastMode:(BroadcastMode)mode
-{
+- (void)setBroadcastingSessions:(NSArray<PTYSession *> *)sessions {
+    if (sessions.count == 0 && broadcastMode_ == BROADCAST_OFF && broadcastViewIds_.count == 0) {
+        return;
+    }
+    [broadcastViewIds_ removeAllObjects];
+    for (PTYTab *tab in self.tabs) {
+        tab.broadcasting = NO;
+    }
+    if (sessions.count > 0) {
+        broadcastMode_ = BROADCAST_CUSTOM;
+        [broadcastViewIds_ addObjectsFromArray:[sessions mapWithBlock:^id(PTYSession *session) {
+            if (![self.allSessions containsObject:session]) {
+                return nil;
+            }
+            return @(session.view.viewId);
+        }]];
+    } else {
+        broadcastMode_ = BROADCAST_OFF;
+    }
+    [self setDimmingForSessions];
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
+    [itad updateBroadcastMenuState];
+    // Post a notification to reload menus
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey"
+                                                        object:self
+                                                      userInfo:nil];
+    [self setWindowTitle];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
+}
+
+- (void)setBroadcastMode:(BroadcastMode)mode {
     if (mode != BROADCAST_CUSTOM && mode == [self broadcastMode]) {
         mode = BROADCAST_OFF;
     }
@@ -6896,8 +6925,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [itad updateBroadcastMenuState];
 }
 
-- (void)toggleBroadcastingInputToSession:(PTYSession *)session
-{
+- (void)toggleBroadcastingInputToSession:(PTYSession *)session {
     NSNumber *n = [NSNumber numberWithInt:[[session view] viewId]];
     switch ([self broadcastMode]) {
         case BROADCAST_TO_ALL_PANES:

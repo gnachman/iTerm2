@@ -111,6 +111,7 @@ View > Make Text Bigger                                                         
 View > Make Text Normal Size                                                            `Make Text Normal Size`                                                       
 View > Restore Text and Session Size                                                    `Restore Text and Session Size`                                               
 View > Make Text Smaller                                                                `Make Text Smaller`                                                           
+View > Size Changes Update Profile                                                      `Size Changes Update Profile`                                                 
 View > Start Instant Replay                                                             `Start Instant Replay`                                                        
 Session > Edit Session…                                                                 `Edit Session…`                                                               
 Session > Run Coprocess…                                                                `Run Coprocess…`                                                              

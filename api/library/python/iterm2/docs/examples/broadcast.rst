@@ -13,7 +13,6 @@ This demonstrates:
 
     #!/usr/bin/env python3
 
-    import asyncio
     import iterm2
 
     async def main(connection):

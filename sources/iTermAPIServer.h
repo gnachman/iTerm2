@@ -78,6 +78,8 @@ extern NSString *const iTermAPIServerConnectionClosed;
                           handler:(void (^)(ITMSelectionResponse *))response;
 - (void)apiServerStatusBarComponentRequest:(ITMStatusBarComponentRequest *)request
                                    handler:(void (^)(ITMStatusBarComponentResponse *))response;
+- (void)apiServerSetBroadcastDomainsRequest:(ITMSetBroadcastDomainsRequest *)request
+                                    handler:(void (^)(ITMSetBroadcastDomainsResponse *))completion;
 
 @end
 

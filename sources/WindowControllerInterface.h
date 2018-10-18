@@ -149,6 +149,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 
 // The current mode for broadcasting of input.
 - (BroadcastMode)broadcastMode;
+- (void)setBroadcastMode:(BroadcastMode)mode;
 
 // Returns true if the window is in 10.7-style fullscreen.
 - (BOOL)lionFullScreen;

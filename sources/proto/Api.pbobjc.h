@@ -128,6 +128,8 @@ CF_EXTERN_C_BEGIN
 @class ITMServerOriginatedRPCResultResponse;
 @class ITMServerOriginatedRPC_RPCArgument;
 @class ITMSessionSummary;
+@class ITMSetBroadcastDomainsRequest;
+@class ITMSetBroadcastDomainsResponse;
 @class ITMSetProfilePropertyRequest;
 @class ITMSetProfilePropertyRequest_GuidList;
 @class ITMSetProfilePropertyResponse;
@@ -249,6 +251,23 @@ GPBEnumDescriptor *ITMVariableScope_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMVariableScope_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMSetBroadcastDomainsResponse_Status
+
+typedef GPB_ENUM(ITMSetBroadcastDomainsResponse_Status) {
+  ITMSetBroadcastDomainsResponse_Status_Ok = 0,
+  ITMSetBroadcastDomainsResponse_Status_SessionNotFound = 1,
+  ITMSetBroadcastDomainsResponse_Status_BroadcastDomainsNotDisjoint = 2,
+  ITMSetBroadcastDomainsResponse_Status_SessionsNotInSameWindow = 3,
+};
+
+GPBEnumDescriptor *ITMSetBroadcastDomainsResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMSetBroadcastDomainsResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMStatusBarComponentResponse_Status
 
@@ -894,6 +913,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_ColorPresetRequest = 127,
   ITMClientOriginatedMessage_FieldNumber_SelectionRequest = 128,
   ITMClientOriginatedMessage_FieldNumber_StatusBarComponentRequest = 129,
+  ITMClientOriginatedMessage_FieldNumber_SetBroadcastDomainsRequest = 130,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -928,6 +948,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_ColorPresetRequest = 127,
   ITMClientOriginatedMessage_Submessage_OneOfCase_SelectionRequest = 128,
   ITMClientOriginatedMessage_Submessage_OneOfCase_StatusBarComponentRequest = 129,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_SetBroadcastDomainsRequest = 130,
 };
 
 /**
@@ -1001,6 +1022,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMStatusBarComponentRequest *statusBarComponentRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMSetBroadcastDomainsRequest *setBroadcastDomainsRequest;
+
 @end
 
 /**
@@ -1043,6 +1066,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_ColorPresetResponse = 127,
   ITMServerOriginatedMessage_FieldNumber_SelectionResponse = 128,
   ITMServerOriginatedMessage_FieldNumber_StatusBarComponentResponse = 129,
+  ITMServerOriginatedMessage_FieldNumber_SetBroadcastDomainsResponse = 130,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -1079,6 +1103,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_ColorPresetResponse = 127,
   ITMServerOriginatedMessage_Submessage_OneOfCase_SelectionResponse = 128,
   ITMServerOriginatedMessage_Submessage_OneOfCase_StatusBarComponentResponse = 129,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_SetBroadcastDomainsResponse = 130,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -1157,6 +1182,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMStatusBarComponentResponse *statusBarComponentResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMSetBroadcastDomainsResponse *setBroadcastDomainsResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 
@@ -1166,6 +1193,33 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
  * Clears whatever value was set for the oneof 'submessage'.
  **/
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
+
+#pragma mark - ITMSetBroadcastDomainsRequest
+
+typedef GPB_ENUM(ITMSetBroadcastDomainsRequest_FieldNumber) {
+  ITMSetBroadcastDomainsRequest_FieldNumber_BroadcastDomainsArray = 1,
+};
+
+@interface ITMSetBroadcastDomainsRequest : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMBroadcastDomain*> *broadcastDomainsArray;
+/** The number of items in @c broadcastDomainsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger broadcastDomainsArray_Count;
+
+@end
+
+#pragma mark - ITMSetBroadcastDomainsResponse
+
+typedef GPB_ENUM(ITMSetBroadcastDomainsResponse_FieldNumber) {
+  ITMSetBroadcastDomainsResponse_FieldNumber_Status = 1,
+};
+
+@interface ITMSetBroadcastDomainsResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMSetBroadcastDomainsResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+@end
 
 #pragma mark - ITMStatusBarComponentRequest
 

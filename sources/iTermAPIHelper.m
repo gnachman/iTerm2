@@ -2883,4 +2883,58 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     return;
 }
 
+- (void)apiServerSetBroadcastDomainsRequest:(ITMSetBroadcastDomainsRequest *)request handler:(void (^)(ITMSetBroadcastDomainsResponse *))completion {
+    ITMSetBroadcastDomainsResponse *response = [self handleSetBroadcastDomains:request];
+    completion(response);
+}
+
+- (ITMSetBroadcastDomainsResponse *)handleSetBroadcastDomains:(ITMSetBroadcastDomainsRequest *)request {
+    ITMSetBroadcastDomainsResponse *response = [[ITMSetBroadcastDomainsResponse alloc] init];
+
+    // Check validity
+    NSMutableSet<NSString *> *sessionIDs = [NSMutableSet set];
+    NSMutableArray<NSArray<PTYSession *> *> *sessionGroups = [NSMutableArray array];
+    NSMutableArray *windowControllers = [NSMutableArray array];
+    for (ITMBroadcastDomain *domain in request.broadcastDomainsArray) {
+        NSMutableArray<PTYSession *> *sessions = [NSMutableArray array];
+        id<iTermWindowController> windowController = nil;
+        for (NSString *sessionID in domain.sessionIdsArray) {
+            if ([sessionIDs containsObject:sessionID]) {
+                response.status = ITMSetBroadcastDomainsResponse_Status_BroadcastDomainsNotDisjoint;
+                return response;
+            }
+            PTYSession *session = [self sessionForAPIIdentifier:sessionID includeBuriedSessions:YES];
+            if (!session) {
+                response.status = ITMSetBroadcastDomainsResponse_Status_SessionNotFound;
+                return response;
+            }
+            id<iTermWindowController> thisWindowController = [session.delegate realParentWindow];
+            if (!windowController) {
+                windowController = thisWindowController;
+            } else if (windowController != thisWindowController) {
+                response.status = ITMSetBroadcastDomainsResponse_Status_SessionsNotInSameWindow;
+                return response;
+            }
+            [sessions addObject:session];
+        }
+        if (sessions.count) {
+            [sessionGroups addObject:sessions];
+            [windowControllers addObject:sessions.firstObject.delegate.realParentWindow];
+        }
+    }
+
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        if (![windowControllers containsObject:term]) {
+            [term setBroadcastingSessions:@[]];
+            continue;
+        }
+        for (NSArray<PTYSession *> *sessions in sessionGroups) {
+            PseudoTerminal *windowController = [PseudoTerminal castFrom:[sessions.firstObject.delegate realParentWindow]];
+            [windowController setBroadcastingSessions:sessions];
+        }
+    }
+    response.status = ITMSetBroadcastDomainsResponse_Status_Ok;
+    return response;
+}
+
 @end

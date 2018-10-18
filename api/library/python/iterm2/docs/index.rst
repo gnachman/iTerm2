@@ -28,6 +28,7 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
 
    app
    arrangement
+   broadcast
    color
    colorpresets
    connection

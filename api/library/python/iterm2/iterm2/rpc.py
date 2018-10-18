@@ -566,6 +566,17 @@ async def async_open_status_bar_component_popover(connection, identifier, sessio
     request.status_bar_component_request.open_popover.size.CopyFrom(size.proto)
     return await _async_call(connection, request)
 
+async def async_set_broadcast_domains(connection, list_of_list_of_session_ids):
+    request = _alloc_request()
+    request.set_broadcast_domains_request.SetInParent()
+    domains_protos = []
+    for list_of_session_ids in list_of_list_of_session_ids:
+        proto = iterm2.api_pb2.BroadcastDomain()
+        proto.session_ids.extend(list_of_session_ids)
+        domains_protos.append(proto)
+    request.set_broadcast_domains_request.broadcast_domains.extend(domains_protos)
+    return await _async_call(connection, request)
+
 ## Private --------------------------------------------------------------------
 
 def _alloc_id():

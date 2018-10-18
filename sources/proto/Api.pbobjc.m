@@ -263,6 +263,7 @@ BOOL ITMVariableScope_IsValidValue(int32_t value__) {
 @dynamic colorPresetRequest;
 @dynamic selectionRequest;
 @dynamic statusBarComponentRequest;
+@dynamic setBroadcastDomainsRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -296,6 +297,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMColorPresetRequest *colorPresetRequest;
   ITMSelectionRequest *selectionRequest;
   ITMStatusBarComponentRequest *statusBarComponentRequest;
+  ITMSetBroadcastDomainsRequest *setBroadcastDomainsRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -584,6 +586,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "setBroadcastDomainsRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMSetBroadcastDomainsRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_SetBroadcastDomainsRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, setBroadcastDomainsRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -649,6 +660,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic colorPresetResponse;
 @dynamic selectionResponse;
 @dynamic statusBarComponentResponse;
+@dynamic setBroadcastDomainsResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -684,6 +696,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMColorPresetResponse *colorPresetResponse;
   ITMSelectionResponse *selectionResponse;
   ITMStatusBarComponentResponse *statusBarComponentResponse;
+  ITMSetBroadcastDomainsResponse *setBroadcastDomainsResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -983,6 +996,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "setBroadcastDomainsResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMSetBroadcastDomainsResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_SetBroadcastDomainsResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, setBroadcastDomainsResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
@@ -1019,6 +1041,131 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMSetBroadcastDomainsRequest
+
+@implementation ITMSetBroadcastDomainsRequest
+
+@dynamic broadcastDomainsArray, broadcastDomainsArray_Count;
+
+typedef struct ITMSetBroadcastDomainsRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *broadcastDomainsArray;
+} ITMSetBroadcastDomainsRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "broadcastDomainsArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMBroadcastDomain),
+        .number = ITMSetBroadcastDomainsRequest_FieldNumber_BroadcastDomainsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMSetBroadcastDomainsRequest__storage_, broadcastDomainsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMSetBroadcastDomainsRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMSetBroadcastDomainsRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMSetBroadcastDomainsResponse
+
+@implementation ITMSetBroadcastDomainsResponse
+
+@dynamic hasStatus, status;
+
+typedef struct ITMSetBroadcastDomainsResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMSetBroadcastDomainsResponse_Status status;
+} ITMSetBroadcastDomainsResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMSetBroadcastDomainsResponse_Status_EnumDescriptor,
+        .number = ITMSetBroadcastDomainsResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMSetBroadcastDomainsResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMSetBroadcastDomainsResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMSetBroadcastDomainsResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMSetBroadcastDomainsResponse_Status
+
+GPBEnumDescriptor *ITMSetBroadcastDomainsResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000SessionNotFound\000BroadcastDomainsNotDi"
+        "sjoint\000SessionsNotInSameWindow\000";
+    static const int32_t values[] = {
+        ITMSetBroadcastDomainsResponse_Status_Ok,
+        ITMSetBroadcastDomainsResponse_Status_SessionNotFound,
+        ITMSetBroadcastDomainsResponse_Status_BroadcastDomainsNotDisjoint,
+        ITMSetBroadcastDomainsResponse_Status_SessionsNotInSameWindow,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMSetBroadcastDomainsResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMSetBroadcastDomainsResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMSetBroadcastDomainsResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMSetBroadcastDomainsResponse_Status_Ok:
+    case ITMSetBroadcastDomainsResponse_Status_SessionNotFound:
+    case ITMSetBroadcastDomainsResponse_Status_BroadcastDomainsNotDisjoint:
+    case ITMSetBroadcastDomainsResponse_Status_SessionsNotInSameWindow:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
 #pragma mark - ITMStatusBarComponentRequest
 
 @implementation ITMStatusBarComponentRequest

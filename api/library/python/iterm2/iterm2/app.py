@@ -3,6 +3,7 @@
 This module is the starting point for getting access to windows and other application-global data.
 """
 
+import iterm2.broadcast
 import iterm2.notifications
 import iterm2.rpc
 import iterm2.session
@@ -22,26 +23,6 @@ async def async_get_app(connection):
 class CreateWindowException(Exception):
     """A problem was encountered while creating a window."""
     pass
-
-class BroadcastDomain:
-    """Broadcast domains describe how keyboard input is broadcast.
-
-    A user typing in a session belonging to one broadcast domain will result in
-    those keystrokes being sent to all sessions in that domain.
-
-    Broadcast domains are disjoint.
-    """
-    def __init__(self, app):
-      self.__app = app
-      self.__session_ids = []
-
-    def add_session_id(self, session):
-      self.__session_ids.append(session)
-
-    @property
-    def sessions(self):
-      """Returns the list of sessions belonging to a broadcast domain."""
-      return list(map(lambda sid: self.__app.get_session_by_id(sid), self.__session_ids))
 
 class App:
     """Represents the application.
@@ -317,16 +298,20 @@ class App:
         self.__broadcast_domains = self.parse_broadcast_domains(broadcast_domains)
 
     def parse_broadcast_domains(self, list_of_broadcast_domain_protos):
-        """Converts a list of broadcast domain protobufs into a list of :class:`BroadcastDomain`s.
+        """Converts a list of broadcast domain protobufs into a list of :class:`iterm2.broadcast.BroadcastDomain`s.
 
         :param list_of_broadcast_domain_protos: A `iterm2.api_pb2.BroadcastDomain` protos.
-        :returns: A list of :class:`BroadcastDomain`s.
+        :returns: A list of :class:`iterm2.broadcast.BroadcastDomain`s.
         """
         domain_list = []
         for broadcast_domain_proto in list_of_broadcast_domain_protos:
-            domain = BroadcastDomain(self)
+            domain = iterm2.broadcast.BroadcastDomain()
             for sid in broadcast_domain_proto.session_ids:
-                domain.add_session_id(sid)
+                session = self.get_session_by_id(sid)
+                if session:
+                    domain.add_session(session)
+                else:
+                    domain.add_unresolved(lambda: self.get_session_by_id(sid))
             domain_list.append(domain)
         return domain_list
 
@@ -361,7 +346,7 @@ class App:
     def broadcast_domains(self):
         """Returns the current broadcast domains.
 
-        :returns: A list of :class:`BroadcastDomain`s.
+        :returns: A list of :class:`iterm2.broadcast.BroadcastDomain`s.
         """
         return self.__broadcast_domains
 
