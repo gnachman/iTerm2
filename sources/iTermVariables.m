@@ -58,6 +58,7 @@ NSString *const iTermVariableKeySessionChildPid = @"session.pid";
 NSString *const iTermVariableKeySessionTmuxStatusLeft = @"session.tmuxStatusLeft";
 NSString *const iTermVariableKeySessionTmuxStatusRight = @"session.tmuxStatusRight";
 NSString *const iTermVariableKeySessionMouseReportingMode = @"session.mouseReportingMode";
+NSString *const iTermVariableKeySessionBadge = @"session.badge";
 
 NSString *const iTermVariableKeyWindowTitleOverride = @"titleOverride";
 NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
@@ -112,6 +113,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
                                     iTermVariableKeySessionJobPid,
                                     iTermVariableKeySessionChildPid,
                                     iTermVariableKeySessionMouseReportingMode,
+                                    iTermVariableKeySessionBadge,
                                     iTermVariableKeySessionTmuxStatusLeft,
                                     iTermVariableKeySessionTmuxStatusRight ];
     [names enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {

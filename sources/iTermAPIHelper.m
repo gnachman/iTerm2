@@ -183,6 +183,7 @@ static id sAPIHelperInstance;
     NSMutableDictionary<id, ITMNotificationRequest *> *_layoutChangeSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_focusChangeSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_broadcastDomainChangeSubscriptions;
+    NSMutableDictionary<id, ITMNotificationRequest *> *_profileChangeSubscriptions;
     NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *_appVariableSubscriptions;
     NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *_tabVariableSubscriptions;
     NSMutableDictionary<id, NSMutableArray<iTermTuple<ITMNotificationRequest *, iTermVariableReference *> *> *> *_windowVariableSubscriptions;
@@ -291,6 +292,10 @@ static id sAPIHelperInstance;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(broadcastDomainsDidChange:)
                                                      name:iTermBroadcastDomainsDidChangeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(profileDidChange:)
+                                                     name:kReloadAddressBookNotification
                                                    object:nil];
     }
     return self;
@@ -430,6 +435,21 @@ static id sAPIHelperInstance;
 
 - (void)broadcastDomainsDidChange:(NSNotification *)notification {
     [self handleBroadcastChange];
+}
+
+- (void)profileDidChange:(NSNotification *)notification {
+    NSArray<BookmarkJournalEntry *> *entries = notification.userInfo[@"array"];
+    NSSet<NSString *> *guids = [NSSet setWithArray:[entries mapWithBlock:^id(BookmarkJournalEntry *entry) {
+        return entry->guid;
+    }]];
+    for (NSString *guid in guids) {
+        [_profileChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull request, BOOL * _Nonnull stop) {
+            ITMNotification *notification = [[ITMNotification alloc] init];
+            notification.profileChangedNotification = [[ITMProfileChangedNotification alloc] init];
+            notification.profileChangedNotification.guid = guid;
+            [self postAPINotification:notification toConnectionKey:key];
+        }];
+    }
 }
 
 - (void)handleFocusChange:(ITMFocusChangedNotification *)notif {
@@ -921,6 +941,7 @@ static id sAPIHelperInstance;
         _tabVariableSubscriptions = [[NSMutableDictionary alloc] init];
         _windowVariableSubscriptions = [[NSMutableDictionary alloc] init];
         _sessionVariableSubscriptions = [[NSMutableDictionary alloc] init];
+        _profileChangeSubscriptions = [[NSMutableDictionary alloc] init];
     }
 }
 
@@ -1041,6 +1062,8 @@ static id sAPIHelperInstance;
         subscriptions = _focusChangeSubscriptions;
     } else if (request.notificationType == ITMNotificationType_NotifyOnBroadcastChange) {
         subscriptions = _broadcastDomainChangeSubscriptions;
+    } else if (request.notificationType == ITMNotificationType_NotifyOnProfileChange) {
+        subscriptions = _profileChangeSubscriptions;
     } else if (request.notificationType == ITMNotificationType_NotifyOnServerOriginatedRpc) {
         if (!request.rpcRegistrationRequest.it_valid) {
             XLog(@"RPC signature not valid: %@", request.rpcRegistrationRequest);
@@ -1206,6 +1229,7 @@ static id sAPIHelperInstance;
     NSMutableDictionary *empty = [NSMutableDictionary dictionary];
     NSArray<NSMutableDictionary<id, ITMNotificationRequest *> *> *dicts =
     @[ _newSessionSubscriptions ?: empty,
+       _profileChangeSubscriptions ?: empty,
        _terminateSessionSubscriptions  ?: empty,
        _layoutChangeSubscriptions ?: empty,
        _focusChangeSubscriptions ?: empty,

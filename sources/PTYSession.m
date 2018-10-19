@@ -3877,6 +3877,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)updateBadgeLabel:(NSString *)newValue {
     _textview.badgeLabel = newValue;
+    [self.variablesScope setValue:newValue forVariableNamed:iTermVariableKeySessionBadge];
 }
 
 - (NSString *)badgeLabel {
@@ -10383,6 +10384,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case ITMNotificationType_NotifyOnFocusChange:
         case ITMNotificationType_NotifyOnServerOriginatedRpc:
         case ITMNotificationType_NotifyOnBroadcastChange:
+        case ITMNotificationType_NotifyOnProfileChange:
             // We won't get called for this
             assert(NO);
             break;

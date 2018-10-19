@@ -50,7 +50,7 @@ extern NSString *const iTermVariableKeySessionChildPid;  // NSNumber. Process id
 extern NSString *const iTermVariableKeySessionTmuxStatusLeft;  // String. Only set when in tmux integration mode.
 extern NSString *const iTermVariableKeySessionTmuxStatusRight;  // String. Only set when in tmux integration mode.
 extern NSString *const iTermVariableKeySessionMouseReportingMode;  // NSNumber (MouseMode)
-
+extern NSString *const iTermVariableKeySessionBadge;  // NSString. Evaluated badge swifty string.
 extern NSString *const iTermVariableKeyWindowTitleOverride;
 extern NSString *const iTermVariableKeyWindowCurrentTab;
 
