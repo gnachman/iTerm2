@@ -3872,6 +3872,19 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateBadgeLabel {
+    NSMutableArray *badRefs = [NSMutableArray array];
+    for (iTermVariableReference *ref in _badgeSwiftyString.refs) {
+        if ([self.variablesScope variableNamed:iTermVariableKeySessionBadge isReferencedBy:ref]) {
+            [badRefs addObject:ref];
+        }
+    }
+    if (badRefs.count) {
+        for (iTermVariableReference *ref in badRefs) {
+            [ref removeAllLinks];
+        }
+        [self setSessionSpecificProfileValues:@{ KEY_BADGE_FORMAT: @"[CYCLE DETECTED]" }];
+        return;
+    }
     [self updateBadgeLabel:[self badgeLabel]];
 }
 
