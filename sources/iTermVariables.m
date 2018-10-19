@@ -51,6 +51,7 @@ NSString *const iTermVariableKeySessionPresentationName = @"session.presentation
 NSString *const iTermVariableKeySessionTmuxWindowTitle = @"session.tmuxWindowTitle";
 NSString *const iTermVariableKeySessionTmuxRole = @"session.tmuxRole";
 NSString *const iTermVariableKeySessionTmuxClientName = @"session.tmuxClientName";
+NSString *const iTermVariableKeySessionAutoNameFormat = @"session.autoNameFormat";
 NSString *const iTermVariableKeySessionAutoName = @"session.autoName";
 NSString *const iTermVariableKeySessionTmuxWindowPane = @"session.tmuxWindowPane";
 NSString *const iTermVariableKeySessionJobPid = @"session.jobPid";
@@ -108,6 +109,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
                                     iTermVariableKeySessionTmuxWindowTitle,
                                     iTermVariableKeySessionTmuxRole,
                                     iTermVariableKeySessionTmuxClientName,
+                                    iTermVariableKeySessionAutoNameFormat,
                                     iTermVariableKeySessionAutoName,
                                     iTermVariableKeySessionTmuxWindowPane,
                                     iTermVariableKeySessionJobPid,
@@ -329,7 +331,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     NSArray<NSString *> *parts = [path componentsSeparatedByString:@"."];
     id value = _values[parts.firstObject];
     if (!value) {
-        return NO;
+        return [_unresolvedLinks[path].allObjects containsObject:reference];
     }
     iTermVariables *sub = [iTermVariables castFrom:value];
     if (sub && parts.count > 1) {

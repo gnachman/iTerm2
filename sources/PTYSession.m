@@ -474,6 +474,7 @@ static const NSUInteger kMaxHosts = 100;
     iTermVariables *_sessionVariables;
     iTermVariables *_userVariables;
     iTermSwiftyString *_badgeSwiftyString;
+    iTermSwiftyString *_autoNameSwiftyString;
     iTermEchoProbe *_echoProbe;
     
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
@@ -484,6 +485,7 @@ static const NSUInteger kMaxHosts = 100;
     
     iTermGraphicSource *_graphicSource;
     iTermVariableReference *_jobPidRef;
+    iTermVariableReference *_autoNameFormatRef;
     iTermCacheableImage *_customIcon;
 }
 
@@ -585,6 +587,12 @@ static const NSUInteger kMaxHosts = 100;
         _jobPidRef.onChangeBlock = ^{
             [weakSelf jobPidDidChange];
         };
+
+        _autoNameFormatRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionAutoNameFormat scope:self.variablesScope];
+        _autoNameFormatRef.onChangeBlock = ^{
+            [weakSelf updateAutoNameSwiftyStringIfNeeded];
+        };
+        [self updateAutoNameSwiftyStringIfNeeded];
 
         _tmuxSecureLogging = NO;
         _tailFindContext = [[FindContext alloc] init];
@@ -759,6 +767,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_copyModeState release];
     [_metalDisabledTokens release];
     [_badgeSwiftyString release];
+    [_autoNameSwiftyString release];
     [_statusBarViewController release];
     [_echoProbe release];
     [_backgroundDrawingHelper release];
@@ -1750,9 +1759,46 @@ ITERM_WEAKLY_REFERENCEABLE
     [self.variablesScope setValue:self.sessionId forVariableNamed:iTermVariableKeySessionTermID];
 }
 
+- (void)updateAutoNameSwiftyStringIfNeeded {
+    NSString *autoNameFormat = [self.variablesScope valueForVariableName:iTermVariableKeySessionAutoNameFormat];
+    if (!_autoNameSwiftyString ||
+        ![_autoNameSwiftyString.swiftyString isEqualToString:autoNameFormat]) {
+        __weak __typeof(self) weakSelf = self;
+        iTermSwiftyString *temp = [[iTermSwiftyString alloc] initWithString:autoNameFormat ?: @""
+                                                                      scope:self.variablesScope
+                                                                   observer:^(NSString * _Nonnull newValue) {
+                                                                       [weakSelf didEvaluateAutoName:newValue];
+                                                                   }];
+        NSArray *pathsPossiblyComputedFromAutoName = @[iTermVariableKeySessionAutoNameFormat,
+                                                       iTermVariableKeySessionAutoName,
+                                                       iTermVariableKeySessionName];
+        BOOL hasCycle = [self checkForCycleInSwiftyString:temp paths:pathsPossiblyComputedFromAutoName];
+        if (!hasCycle) {
+            hasCycle = [self doesSwiftyString:_badgeSwiftyString referencePaths:pathsPossiblyComputedFromAutoName];
+        }
+        if (hasCycle) {
+            [temp release];
+            DLog(@"cycle detected in %@", autoNameFormat);
+            temp = [[iTermSwiftyString alloc] initWithString:@"[CYCLE DETECTED]"
+                                                       scope:self.variablesScope
+                                                    observer:^(NSString * _Nonnull newValue) {
+                                                        [weakSelf didEvaluateAutoName:newValue];
+                                                    }];
+        }
+        DLog(@"Set autoNameFormat to %@", temp.swiftyString);
+        [_autoNameSwiftyString autorelease];
+        _autoNameSwiftyString = temp;
+    }
+}
+
+- (void)didEvaluateAutoName:(NSString *)evaluated {
+    // This should be the only place that autoName is assigned to.
+    [self.variablesScope setValue:evaluated forVariableNamed:iTermVariableKeySessionAutoName];
+}
+
 - (void)triggerDidChangeNameTo:(NSString *)newName {
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionTriggerName: newName,
-                                                    iTermVariableKeySessionAutoName: newName }];
+                                                    iTermVariableKeySessionAutoNameFormat: newName }];
 }
 
 - (void)setTmuxWindowTitle:(NSString *)newName {
@@ -1760,7 +1806,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)didInitializeSessionWithName:(NSString *)name {
-    [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionAutoName];
+    [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionAutoNameFormat];
 }
 
 - (void)profileNameDidChangeTo:(NSString *)name {
@@ -1784,7 +1830,7 @@ ITERM_WEAKLY_REFERENCEABLE
             profileName = [self.variablesScope valueForVariableName:iTermVariableKeySessionProfileName];
         }
     }
-    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionAutoName: autoName ?: [NSNull null],
+    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionAutoNameFormat: autoName ?: [NSNull null],
                                                     iTermVariableKeySessionProfileName: profileName ?: [NSNull null] }];
 }
 
@@ -3682,17 +3728,39 @@ ITERM_WEAKLY_REFERENCEABLE
     return _badgeSwiftyString.swiftyString;
 }
 
-- (void)updateBadgeLabel {
+- (BOOL)doesSwiftyString:(iTermSwiftyString *)swiftyString
+          referencePaths:(NSArray<NSString *> *)paths {
+    for (iTermVariableReference *ref in swiftyString.refs) {
+        for (NSString *path in paths) {
+            if ([self.variablesScope variableNamed:path isReferencedBy:ref]) {
+                return YES;
+            }
+        }
+    }
+    return NO;
+}
+
+- (BOOL)checkForCycleInSwiftyString:(iTermSwiftyString *)swiftyString
+                              paths:(NSArray<NSString *> *)paths {
     NSMutableArray *badRefs = [NSMutableArray array];
-    for (iTermVariableReference *ref in _badgeSwiftyString.refs) {
-        if ([self.variablesScope variableNamed:iTermVariableKeySessionBadge isReferencedBy:ref]) {
-            [badRefs addObject:ref];
+    for (iTermVariableReference *ref in swiftyString.refs) {
+        for (NSString *path in paths) {
+            if ([self.variablesScope variableNamed:path isReferencedBy:ref]) {
+                [badRefs addObject:ref];
+            }
         }
     }
     if (badRefs.count) {
         for (iTermVariableReference *ref in badRefs) {
             [ref removeAllLinks];
         }
+        return YES;
+    }
+    return NO;
+}
+
+- (void)updateBadgeLabel {
+    if ([self checkForCycleInSwiftyString:_badgeSwiftyString paths:@[iTermVariableKeySessionBadge]]) {
         [self setSessionSpecificProfileValues:@{ KEY_BADGE_FORMAT: @"[CYCLE DETECTED]" }];
         return;
     }
@@ -7900,7 +7968,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenSetName:(NSString *)theName {
-    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionAutoName: theName ?: [NSNull null],
+    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionAutoNameFormat: theName ?: [NSNull null],
                                                     iTermVariableKeySessionIconName: theName ?: [NSNull null] }];
 }
 

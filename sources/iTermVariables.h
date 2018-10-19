@@ -35,7 +35,8 @@ extern NSString *const iTermVariableKeySessionTTY;
 extern NSString *const iTermVariableKeySessionUsername;
 extern NSString *const iTermVariableKeySessionTermID;
 extern NSString *const iTermVariableKeySessionProfileName;  // current profile name
-extern NSString *const iTermVariableKeySessionAutoName;  // Defaults to profile name. Then, most recent of manually set or icon name.
+extern NSString *const iTermVariableKeySessionAutoNameFormat;  // Defaults to profile name. Then, most recent of manually set or icon name. Is an interpolated string.
+extern NSString *const iTermVariableKeySessionAutoName;  // Evaluated value of autoNameFormat
 extern NSString *const iTermVariableKeySessionIconName;  // set by esc code
 extern NSString *const iTermVariableKeySessionTriggerName;
 extern NSString *const iTermVariableKeySessionWindowName;  // set by esc code
