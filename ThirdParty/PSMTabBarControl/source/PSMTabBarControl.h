@@ -240,5 +240,8 @@ enum {
 // Is there anything useful at this point or just background? Useful if you can
 // drag the window by dragging the background.
 - (BOOL)wantsMouseDownAtPoint:(NSPoint)point;
+- (void)moveTabAtIndex:(NSInteger)sourceIndex
+              toTabBar:(PSMTabBarControl *)destinationTabBar
+               atIndex:(NSInteger)destinationIndex;
 
 @end

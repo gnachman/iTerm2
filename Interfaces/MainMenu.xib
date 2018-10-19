@@ -1028,6 +1028,12 @@ DQ
                             <menuItem isSeparatorItem="YES" id="885">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+                            <menuItem title="Merge All Windows" identifier="Merge All Windows" id="Kb8-2V-7Gg">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="mergeAllWindows:" target="-1" id="Xzh-bw-9Mo"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Arrange Windows Horizontally" identifier="Arrange Windows Horizontally" id="1178">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>

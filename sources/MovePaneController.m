@@ -7,6 +7,7 @@
 #import "MovePaneController.h"
 #import "DebugLogging.h"
 #import "iTermController.h"
+#import "NSObject+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
@@ -112,6 +113,14 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidChangeTabNotification object:movingSession];
     [movingSession didMoveSession];
+}
+
++ (void)moveTab:(PTYTab *)tab toWindow:(PseudoTerminal *)term atIndex:(NSInteger)index {
+    PseudoTerminal *sourceTerm = [PseudoTerminal castFrom:tab.realParentWindow];
+    assert(sourceTerm);
+    NSInteger sourceIndex = [sourceTerm.tabs indexOfObject:tab];
+    assert(sourceIndex != NSNotFound);
+    [sourceTerm.tabBarControl moveTabAtIndex:sourceIndex toTabBar:term.tabBarControl atIndex:index];
 }
 
 - (void)clearSession
