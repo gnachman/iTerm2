@@ -15,6 +15,7 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
     NSButton *_disclosureButton;
     NSRect _originalWindowFrame;
     NSTextField *_labelField;
+    CGFloat _headerWidth;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect prompt:(NSString *)prompt message:(NSString *)message {
@@ -39,6 +40,7 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
         [_labelField setAutoresizingMask:NSViewWidthSizable];
         [_labelField setTextColor:[NSColor headerTextColor]];
         [_labelField sizeToFit];
+        _headerWidth = _labelField.frame.size.width;
 
         _textView = [[NSTextView alloc] initWithFrame:NSMakeRect(8, NSMaxY(_disclosureButton.frame) + 3, 100, 100)];
         [[_textView textContainer] setContainerSize:NSMakeSize(FLT_MAX, FLT_MAX)];
@@ -51,6 +53,7 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
         [_textView setVerticallyResizable:YES];
         [_textView setHorizontallyResizable:YES];
         [[_textView textContainer] setWidthTracksTextView:YES];
+        [_textView sizeToFit];
 
         NSTextStorage *storage = [_textView textStorage];
         NSMutableParagraphStyle *style = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
@@ -75,9 +78,10 @@ static const CGFloat iTermDisclosableViewTextViewWidth = 300;
 }
 
 - (NSSize)intrinsicContentSize {
-    const CGFloat headerWidth = NSMaxX(_labelField.frame);
-    return NSMakeSize(_disclosureButton.state == NSOnState ? MAX(headerWidth, iTermDisclosableViewTextViewWidth) : headerWidth,
-                      _disclosureButton.state == NSOnState ? NSMaxY(_textView.frame) : NSMaxY(_disclosureButton.frame));
+    NSSize size = NSMakeSize(_disclosureButton.state == NSOnState ? MAX(_headerWidth, iTermDisclosableViewTextViewWidth) : _headerWidth,
+                             _disclosureButton.state == NSOnState ? NSMaxY(_textView.frame) : NSMaxY(_disclosureButton.frame));
+    size.width += _disclosureButton.frame.size.width;
+    return size;
 }
 
 - (void)disclosureButtonPressed:(id)sender {
