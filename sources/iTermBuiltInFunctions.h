@@ -15,6 +15,10 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
 typedef void (^iTermBuiltInFunctionCompletionBlock)(id _Nullable result, NSError * _Nullable error);
 typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull parameters, _Nonnull  iTermBuiltInFunctionCompletionBlock completion);
 
+@protocol iTermBuiltInFunction<NSObject>
++ (void)registerBuiltInFunction;
+@end
+
 @interface iTermBuiltInFunction : NSObject
 
 @property (nonatomic, readonly) NSString *name;
