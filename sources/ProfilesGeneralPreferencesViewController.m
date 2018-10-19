@@ -810,15 +810,17 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                       target:self
                                                     selector:@selector(postUpdateSessionNameNotification:)
                                                     userInfo:nil
-                                                     repeats:YES];
+                                                     repeats:NO];
         }
     }
 }
 
 #pragma mark - Notifications
 
-- (void)postUpdateSessionNameNotification:(NSNotification *)notification {
+- (void)postUpdateSessionNameNotification:(NSTimer *)timer {
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermProfilePreferencesUpdateSessionName object:nil];
+    [_timer invalidate];
+    _timer = nil;
 }
 
 - (void)updateProfileName {
