@@ -2260,7 +2260,16 @@ static BOOL hasBecomeActive = NO;
 
 - (BOOL)possiblyTmuxValueForWindow:(BOOL)isWindow cancel:(BOOL *)cancel {
     *cancel = NO;
-    static NSString *const kPossiblyTmuxIdentifier = @"NoSyncNewWindowOrTabFromTmuxOpensTmux";
+    static NSString *const legacyKey = @"NoSyncNewWindowOrTabFromTmuxOpensTmux";
+    NSString *key;
+    if ([iTermWarning identifierIsSilenced:legacyKey]) {
+        key = legacyKey;
+    } else if (isWindow) {
+        key = @"NoSyncNewWindowFromTmuxOpensTmux";
+    } else {
+        key = @"NoSyncNewTabFromTmuxOpensTmux";
+    }
+
     if ([[[[iTermController sharedInstance] currentTerminal] currentSession] isTmuxClient]) {
         NSString *heading =
             [NSString stringWithFormat:@"What kind of %@ do you want to open?",
@@ -2273,7 +2282,7 @@ static BOOL hasBecomeActive = NO;
         iTermWarningSelection selection = [iTermWarning showWarningWithTitle:title
                                                                      actions:@[ tmuxAction, @"Use Default Profile", @"Cancel" ]
                                                                    accessory:nil
-                                                                  identifier:kPossiblyTmuxIdentifier
+                                                                  identifier:key
                                                                  silenceable:kiTermWarningTypePermanentlySilenceable
                                                                      heading:heading
                                                                       window:[[[iTermController sharedInstance] currentTerminal] window]];
