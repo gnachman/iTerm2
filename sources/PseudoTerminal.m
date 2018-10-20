@@ -8209,8 +8209,9 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!theTab) {
         theTab = [self currentTab];
     }
-    PTYTab *copyOfTab = [[theTab copy] autorelease];
     if ([iTermProfilePreferences boolForKey:KEY_PREVENT_TAB inProfile:self.currentSession.profile]) {
+        PTYTab *copyOfTab = [[theTab copy] autorelease];
+        [copyOfTab updatePaneTitles];
         [[iTermController sharedInstance] launchBookmark:self.currentSession.profile
                                               inTerminal:nil
                                                  withURL:nil
@@ -8237,11 +8238,14 @@ ITERM_WEAKLY_REFERENCEABLE
                                                        for (PTYSession* aSession in [copyOfTab sessions]) {
                                                            [aSession setIgnoreResizeNotifications:NO];
                                                        }
-
                                                        return copyOfTab.activeSession;
                                                    }];
     } else {
-        [self appendTab:copyOfTab];
+        [PTYTab openTabWithArrangement:self.currentTab.arrangement
+                            inTerminal:self
+                       hasFlexibleView:self.currentTab.isTmuxTab
+                               viewMap:nil
+                            sessionMap:nil];
     }
 }
 
