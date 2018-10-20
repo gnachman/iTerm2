@@ -5136,7 +5136,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
                 case TAB_STYLE_DARK:
                 case TAB_STYLE_DARK_HIGH_CONTRAST:  // fall through
-                    backgroundColor = [PSMDarkTabStyle tabBarColor];
+                    // the key/active status is ignored on 10.12
+                    backgroundColor = [PSMDarkTabStyle tabBarColorWhenKeyAndActive:NO];
                     darkAppearance = YES;
                     break;
             }
