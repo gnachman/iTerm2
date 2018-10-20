@@ -250,26 +250,49 @@ static NSString *const kDynamicToolURL = @"URL";
 
 #pragma mark - NSView
 
-- (void)drawRect:(NSRect)dirtyRect {
-    NSColor *color = [NSColor colorWithCalibratedWhite:237.0/255.0 alpha:1];
+- (NSColor *)backgroundColor {
+    if (@available(macOS 10.14, *)) {
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+            case TAB_STYLE_AUTOMATIC:
+            case TAB_STYLE_MINIMAL:
+                return [NSColor controlBackgroundColor];
+
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+                break;
+        }
+    }
+
+    NSColor *lightColor = [NSColor colorWithCalibratedWhite:237.0/255.0 alpha:1];
+    NSColor *darkColor = [NSColor colorWithCalibratedWhite:0.12 alpha:1.00];
     switch ([self.effectiveAppearance it_tabStyle:[iTermPreferences intForKey:kPreferenceKeyTabStyle]]) {
         case TAB_STYLE_AUTOMATIC:
         case TAB_STYLE_MINIMAL:
             assert(NO);
-            
+
         case TAB_STYLE_LIGHT:
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            return lightColor;
             break;
 
         case TAB_STYLE_DARK:
         case TAB_STYLE_DARK_HIGH_CONTRAST:
-            if ([iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
-                color = [NSColor colorWithCalibratedWhite:0.12 alpha:1.00];
+            if (@available(macOS 10.14, *)) {
+                return darkColor;
+            } else if ([iTermAdvancedSettingsModel darkThemeHasBlackTitlebar]) {
+                return darkColor;
+            } else {
+                return lightColor;
             }
             break;
     }
+    return lightColor;
+}
 
-    [color set];
+- (void)drawRect:(NSRect)dirtyRect {
+    [[self backgroundColor] set];
     NSRectFill(dirtyRect);
     [super drawRect:dirtyRect];
 }
