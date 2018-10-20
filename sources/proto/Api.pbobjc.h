@@ -94,6 +94,8 @@ CF_EXTERN_C_BEGIN
 @class ITMPreferencesResponse_Result_SetDefaultProfileResult;
 @class ITMPreferencesResponse_Result_SetPreferenceResult;
 @class ITMPreferencesResponse_Result_UnrecognizedResult;
+@class ITMProfileChangeRequest;
+@class ITMProfileChangedNotification;
 @class ITMProfileProperty;
 @class ITMPromptNotification;
 @class ITMRPCRegistrationRequest;
@@ -206,6 +208,7 @@ typedef GPB_ENUM(ITMNotificationType) {
   ITMNotificationType_NotifyOnFocusChange = 9,
   ITMNotificationType_NotifyOnServerOriginatedRpc = 10,
   ITMNotificationType_NotifyOnBroadcastChange = 11,
+  ITMNotificationType_NotifyOnProfileChange = 13,
 };
 
 GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void);
@@ -3047,6 +3050,20 @@ typedef GPB_ENUM(ITMVariableMonitorRequest_FieldNumber) {
 
 @end
 
+#pragma mark - ITMProfileChangeRequest
+
+typedef GPB_ENUM(ITMProfileChangeRequest_FieldNumber) {
+  ITMProfileChangeRequest_FieldNumber_Guid = 1,
+};
+
+@interface ITMProfileChangeRequest : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *guid;
+/** Test to see if @c guid has been set. */
+@property(nonatomic, readwrite) BOOL hasGuid;
+
+@end
+
 #pragma mark - ITMNotificationRequest
 
 typedef GPB_ENUM(ITMNotificationRequest_FieldNumber) {
@@ -3056,6 +3073,7 @@ typedef GPB_ENUM(ITMNotificationRequest_FieldNumber) {
   ITMNotificationRequest_FieldNumber_RpcRegistrationRequest = 4,
   ITMNotificationRequest_FieldNumber_KeystrokeMonitorRequest = 5,
   ITMNotificationRequest_FieldNumber_VariableMonitorRequest = 6,
+  ITMNotificationRequest_FieldNumber_ProfileChangeRequest = 7,
 };
 
 typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
@@ -3063,6 +3081,7 @@ typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
   ITMNotificationRequest_Arguments_OneOfCase_RpcRegistrationRequest = 4,
   ITMNotificationRequest_Arguments_OneOfCase_KeystrokeMonitorRequest = 5,
   ITMNotificationRequest_Arguments_OneOfCase_VariableMonitorRequest = 6,
+  ITMNotificationRequest_Arguments_OneOfCase_ProfileChangeRequest = 7,
 };
 
 @interface ITMNotificationRequest : GPBMessage
@@ -3093,6 +3112,8 @@ typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMKeystrokeMonitorRequest *keystrokeMonitorRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMVariableMonitorRequest *variableMonitorRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMProfileChangeRequest *profileChangeRequest;
 
 @end
 
@@ -3129,6 +3150,7 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
   ITMNotification_FieldNumber_ServerOriginatedRpcNotification = 10,
   ITMNotification_FieldNumber_BroadcastDomainsChanged = 11,
   ITMNotification_FieldNumber_VariableChangedNotification = 12,
+  ITMNotification_FieldNumber_ProfileChangedNotification = 13,
 };
 
 @interface ITMNotification : GPBMessage
@@ -3180,6 +3202,24 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMVariableChangedNotification *variableChangedNotification;
 /** Test to see if @c variableChangedNotification has been set. */
 @property(nonatomic, readwrite) BOOL hasVariableChangedNotification;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMProfileChangedNotification *profileChangedNotification;
+/** Test to see if @c profileChangedNotification has been set. */
+@property(nonatomic, readwrite) BOOL hasProfileChangedNotification;
+
+@end
+
+#pragma mark - ITMProfileChangedNotification
+
+typedef GPB_ENUM(ITMProfileChangedNotification_FieldNumber) {
+  ITMProfileChangedNotification_FieldNumber_Guid = 1,
+};
+
+@interface ITMProfileChangedNotification : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *guid;
+/** Test to see if @c guid has been set. */
+@property(nonatomic, readwrite) BOOL hasGuid;
 
 @end
 

@@ -1275,6 +1275,8 @@
 		53C2D3A62152CA3900FF6471 /* NSUserDefaults+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 53C2D3A42152CA3900FF6471 /* NSUserDefaults+iTerm.m */; };
 		53E184F11FE32F2800DB78F3 /* iTermMetalBufferPool.h in Headers */ = {isa = PBXBuildFile; fileRef = 53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */; };
 		53E184F21FE32F2800DB78F3 /* iTermMetalBufferPool.m in Sources */ = {isa = PBXBuildFile; fileRef = 53E184F01FE32F2800DB78F3 /* iTermMetalBufferPool.m */; };
+		53FF84E2217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h in Headers */ = {isa = PBXBuildFile; fileRef = 53FF84E0217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h */; };
+		53FF84E3217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.m in Sources */ = {isa = PBXBuildFile; fileRef = 53FF84E1217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.m */; };
 		53FF980B20918D23008688D7 /* template_basic_simple.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template_basic_simple.py */; };
 		53FF980C20918D23008688D7 /* template_basic_simple.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template_basic_simple.py */; };
 		53FF980D20918D23008688D7 /* template_basic_simple.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF980A20918D23008688D7 /* template_basic_simple.py */; };
@@ -4003,6 +4005,8 @@
 		53EBF2B81DCCF66600766613 /* iTermWebSocketFrameBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWebSocketFrameBuilder.m; sourceTree = "<group>"; };
 		53EBF2BB1DCCF6A700766613 /* iTermWebSocketConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermWebSocketConnection.h; sourceTree = "<group>"; };
 		53EBF2BC1DCCF6A700766613 /* iTermWebSocketConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWebSocketConnection.m; sourceTree = "<group>"; };
+		53FF84E0217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSessionTitleBuiltInFunction.h; sourceTree = "<group>"; };
+		53FF84E1217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionTitleBuiltInFunction.m; sourceTree = "<group>"; };
 		53FF980A20918D23008688D7 /* template_basic_simple.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = template_basic_simple.py; path = sources/template_basic_simple.py; sourceTree = "<group>"; };
 		53FF980E209247E2008688D7 /* iTermScriptTemplatePickerWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermScriptTemplatePickerWindowController.h; sourceTree = "<group>"; };
 		53FF980F209247E2008688D7 /* iTermScriptTemplatePickerWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermScriptTemplatePickerWindowController.m; sourceTree = "<group>"; };
@@ -7715,6 +7719,8 @@
 				532F942A215DFEF600D509E4 /* iTermCacheableImage.m */,
 				A6257C16217707BB00A8C5BD /* iTermAdjustFontSizeHelper.h */,
 				A6257C17217707BB00A8C5BD /* iTermAdjustFontSizeHelper.m */,
+				53FF84E0217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h */,
+				53FF84E1217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -9046,6 +9052,7 @@
 				A6232E76202832A900EC0F98 /* iTermData.h in Headers */,
 				53E184F11FE32F2800DB78F3 /* iTermMetalBufferPool.h in Headers */,
 				A6E5D20F1FA3C57900EDD002 /* iTermMetalFrameData.h in Headers */,
+				53FF84E2217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h in Headers */,
 				A667192A1DCE36C3000CE608 /* iTermRecentDirectoryMO+Additions.h in Headers */,
 				A667192B1DCE36C3000CE608 /* iTermRoundedCornerScrollView.h in Headers */,
 				A69A260B21640F3F0091C16D /* iTermFlexibleView.h in Headers */,
@@ -11296,6 +11303,7 @@
 				A639359A210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m in Sources */,
 				A69CCB1D211BF4FF008ADA71 /* iTermRecordingCodec.m in Sources */,
 				A65429B020C492F000CE71B1 /* iTermParameterPanelWindowController.m in Sources */,
+				53FF84E3217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.m in Sources */,
 				A631FC9920EF04E900EB824F /* iTermStatusBarSetupConfigureComponentWindowController.m in Sources */,
 				A630117B20E69C23008114B7 /* iTermStatusBarSwiftyStringComponent.m in Sources */,
 				A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */,

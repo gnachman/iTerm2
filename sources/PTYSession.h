@@ -473,19 +473,10 @@ typedef enum {
              replacingProfileWithGUID:(NSString *)badGuid
                           withProfile:(Profile *)goodProfile;
 
-+ (NSString *)titleForSessionName:(NSString *)sessionName
-                      profileName:(NSString *)profileName
-                              job:(NSString *)jobVariable
-                              pwd:(NSString *)pwdVariable
-                              tty:(NSString *)ttyVariable
-                             user:(NSString *)userVariable
-                             host:(NSString *)hostVariable
-                             tmux:(NSString *)tmuxVariable
-                       components:(iTermTitleComponents)titleComponents;
-
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
 + (void)selectMenuItem:(NSString*)theName;
 + (void)registerBuiltInFunctions;
++ (NSMapTable<NSString *, PTYSession *> *)sessionMap;
 
 // Register the contents in the arrangement so that if the session is later
 // restored from an arrangement with the same guid as |arrangement|, the

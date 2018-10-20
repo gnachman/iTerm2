@@ -9,6 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermVariableReference;
 @class iTermVariableScope;
 
 // Represents a string with interpolated components like:
@@ -25,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, copy) id (^source)(NSString *);
 @property (nonatomic, readonly, copy) void (^observer)(NSString *);
 @property (nullable, nonatomic, readonly) NSString *evaluatedString;
+@property (nonatomic, readonly) NSArray<iTermVariableReference *> *refs;
 
 // Variables the string depends on
 @property (nonatomic, readonly) NSSet<NSString *> *dependencies;

@@ -25,7 +25,6 @@
 @implementation iTermSwiftyString {
     NSMutableSet<NSString *> *_missingFunctions;
     iTermVariableScope *_scope;
-    NSArray<iTermVariableReference *> *_refs;
     BOOL _observing;
 }
 

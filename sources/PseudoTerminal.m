@@ -8096,6 +8096,18 @@ ITERM_WEAKLY_REFERENCEABLE
     return result;
 }
 
+- (IBAction)mergeAllWindows:(id)sender {
+    for (PseudoTerminal *term in [[[[iTermController sharedInstance] terminals] copy] autorelease]) {
+        if (term == self) {
+            continue;
+        }
+
+        while (term.tabs.count) {
+            [MovePaneController moveTab:term.tabs.firstObject toWindow:self atIndex:self.tabs.count];
+        }
+    }
+}
+
 - (IBAction)toggleSizeChangesAffectProfile:(id)sender {
     [iTermAdjustFontSizeHelper toggleSizeChangesAffectProfile];
 }

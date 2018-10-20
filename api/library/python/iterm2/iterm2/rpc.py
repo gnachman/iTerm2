@@ -26,7 +26,7 @@ async def async_list_sessions(connection):
     request.list_sessions_request.SetInParent()
     return await _async_call(connection, request)
 
-async def async_notification_request(connection, subscribe, notification_type, session=None, rpc_registration_request=None, keystroke_monitor_request=None, variable_monitor_request=None):
+async def async_notification_request(connection, subscribe, notification_type, session=None, rpc_registration_request=None, keystroke_monitor_request=None, variable_monitor_request=None, profile_change_request=None):
     """
     Requests a change to a notification subscription.
 
@@ -37,6 +37,7 @@ async def async_notification_request(connection, subscribe, notification_type, s
     rpc_registration_request: The RPC registration request (only for registering an RPC handler) or None.
     keystroke_monitor_request: The keyboard monitor request (only for registering a keystroke handler) or None.
     variable_monitor_request: The variable monitor request (only for registering a variable monitor) or None.
+    profile_change_request: The profile monitor request (only for registering a profile change monitor) or None.
 
     Returns: iterm2.api_pb2.ServerOriginatedMessage
     """
@@ -51,6 +52,8 @@ async def async_notification_request(connection, subscribe, notification_type, s
         request.notification_request.keystroke_monitor_request.CopyFrom(keystroke_monitor_request)
     if variable_monitor_request:
         request.notification_request.variable_monitor_request.CopyFrom(variable_monitor_request)
+    if profile_change_request:
+        request.notification_request.profile_change_request.CopyFrom(profile_change_request)
     request.notification_request.subscribe = subscribe
     request.notification_request.notification_type = notification_type
     return await _async_call(connection, request)

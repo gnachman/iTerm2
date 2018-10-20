@@ -12,6 +12,7 @@
 extern NSString *const iTermMovePaneDragType;
 extern NSString *const iTermSessionDidChangeTabNotification;
 
+@class PseudoTerminal;
 @class PTYTab;
 @class PTYSession;
 @class SessionView;
@@ -50,5 +51,7 @@ extern NSString *const iTermSessionDidChangeTabNotification;
 
 // Move the window by |distance|.
 - (void)moveWindowBy:(NSPoint)distance;
+
++ (void)moveTab:(PTYTab *)tab toWindow:(PseudoTerminal *)window atIndex:(NSInteger)index;
 
 @end

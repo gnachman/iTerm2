@@ -35,7 +35,8 @@ extern NSString *const iTermVariableKeySessionTTY;
 extern NSString *const iTermVariableKeySessionUsername;
 extern NSString *const iTermVariableKeySessionTermID;
 extern NSString *const iTermVariableKeySessionProfileName;  // current profile name
-extern NSString *const iTermVariableKeySessionAutoName;  // Defaults to profile name. Then, most recent of manually set or icon name.
+extern NSString *const iTermVariableKeySessionAutoNameFormat;  // Defaults to profile name. Then, most recent of manually set or icon name. Is an interpolated string.
+extern NSString *const iTermVariableKeySessionAutoName;  // Evaluated value of autoNameFormat
 extern NSString *const iTermVariableKeySessionIconName;  // set by esc code
 extern NSString *const iTermVariableKeySessionTriggerName;
 extern NSString *const iTermVariableKeySessionWindowName;  // set by esc code
@@ -50,7 +51,7 @@ extern NSString *const iTermVariableKeySessionChildPid;  // NSNumber. Process id
 extern NSString *const iTermVariableKeySessionTmuxStatusLeft;  // String. Only set when in tmux integration mode.
 extern NSString *const iTermVariableKeySessionTmuxStatusRight;  // String. Only set when in tmux integration mode.
 extern NSString *const iTermVariableKeySessionMouseReportingMode;  // NSNumber (MouseMode)
-
+extern NSString *const iTermVariableKeySessionBadge;  // NSString. Evaluated badge swifty string.
 extern NSString *const iTermVariableKeyWindowTitleOverride;
 extern NSString *const iTermVariableKeyWindowCurrentTab;
 
@@ -119,6 +120,7 @@ typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
 - (void)setValue:(nullable id)value forKey:(NSString *)key NS_UNAVAILABLE;
 - (void)setValuesForKeysWithDictionary:(NSDictionary<NSString *, id> *)keyedValues NS_UNAVAILABLE;
 - (void)addLinksToReference:(iTermVariableReference *)reference;
+- (BOOL)variableNamed:(NSString *)name isReferencedBy:(iTermVariableReference *)reference;
 
 @end
 

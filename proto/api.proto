@@ -754,6 +754,7 @@ enum NotificationType {
   NOTIFY_ON_FOCUS_CHANGE = 9;
   NOTIFY_ON_SERVER_ORIGINATED_RPC = 10;
   NOTIFY_ON_BROADCAST_CHANGE = 11;
+  NOTIFY_ON_PROFILE_CHANGE = 13;
 }
 
 enum Modifiers {
@@ -800,6 +801,10 @@ message VariableMonitorRequest {
   optional string identifier = 3;  // Session, Window, or Tab identifier.
 }
 
+message ProfileChangeRequest {
+  optional string guid = 1;
+}
+
 message NotificationRequest {
   // See documentation on session IDs. NOTIFY_ON_NEW_SESSION, NOTIFY_ON_TERMINATE_SESSION, and
   // NOTIFY_ON_LAYOUT_CHANGE do not use the session ID and are posted on all such events.
@@ -817,6 +822,7 @@ message NotificationRequest {
     RPCRegistrationRequest rpc_registration_request = 4;  // For NOTIFY_ON_SERVER_ORIGINATED_RPC
     KeystrokeMonitorRequest keystroke_monitor_request = 5;
     VariableMonitorRequest variable_monitor_request = 6;
+    ProfileChangeRequest profile_change_request = 7;
   }
 }
 
@@ -846,6 +852,11 @@ message Notification {
   optional ServerOriginatedRPCNotification server_originated_rpc_notification = 10;
   optional BroadcastDomainsChangedNotification broadcast_domains_changed = 11;
   optional VariableChangedNotification variable_changed_notification = 12;
+  optional ProfileChangedNotification profile_changed_notification = 13;
+}
+
+message ProfileChangedNotification {
+  optional string guid = 1;
 }
 
 message VariableChangedNotification {

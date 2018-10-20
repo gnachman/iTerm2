@@ -2177,6 +2177,44 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminen
     }
 }
 
+- (void)moveTabAtIndex:(NSInteger)sourceIndex toTabBar:(PSMTabBarControl *)destinationTabBar atIndex:(NSInteger)destinationIndex {
+    assert(destinationTabBar != self);
+    PSMTabBarCell *movingCell = _cells[sourceIndex];
+    [destinationTabBar.cells insertObject:movingCell atIndex:destinationIndex];
+    [movingCell setControlView:destinationTabBar];
+
+    // Remove the tracking rects and bindings registered on the old tab.
+    [self removeTrackingRect:[movingCell closeButtonTrackingTag]];
+    [self removeTrackingRect:[movingCell cellTrackingTag]];
+    [self removeTabForCell:movingCell];
+
+    if ([self.delegate respondsToSelector:@selector(tabView:willDropTabViewItem:inTabBar:)]) {
+        [self.delegate tabView:self.tabView
+           willDropTabViewItem:movingCell.representedObject
+                      inTabBar:destinationTabBar];
+    }
+
+    [self.tabView removeTabViewItem:[movingCell representedObject]];
+    [[destinationTabBar tabView] insertTabViewItem:[movingCell representedObject] atIndex:destinationIndex];
+
+    // Rebind the cell to the new control.
+    [destinationTabBar initializeStateForCell:movingCell];
+    [destinationTabBar bindPropertiesForCell:movingCell andTabViewItem:[movingCell representedObject]];
+
+    // Select the newly moved item in the destination tab view.
+    [[destinationTabBar tabView] selectTabViewItem:[movingCell representedObject]];
+
+    if ([self.delegate respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {
+        [self.delegate tabView:self.tabView
+            didDropTabViewItem:movingCell.representedObject
+                      inTabBar:destinationTabBar];
+    }
+    if ([self.tabView numberOfTabViewItems] == 0 &&
+        [self.delegate respondsToSelector:@selector(tabView:closeWindowForLastTabViewItem:)]) {
+        [self.delegate tabView:self.tabView closeWindowForLastTabViewItem:[movingCell representedObject]];
+    }
+}
+
 #pragma mark - NSDraggingSource
 
 - (NSDragOperation)draggingSession:(NSDraggingSession *)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {

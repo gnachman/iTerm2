@@ -14,6 +14,7 @@
 #import "iTermImageWell.h"
 #import "iTermLaunchServices.h"
 #import "iTermProfilePreferences.h"
+#import "iTermSessionTitleBuiltInFunction.h"
 #import "iTermShortcutInputView.h"
 #import "iTermVariables.h"
 #import "NSObject+iTerm.h"
@@ -732,15 +733,15 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         }
     }
 
-    titleSettings.title = customName ?: [PTYSession titleForSessionName:@"Name"
-                                                            profileName:@"Profile"
-                                                                    job:@"Job"
-                                                                    pwd:@"PWD"
-                                                                    tty:@"TTY"
-                                                                   user:@"User"
-                                                                   host:@"Host"
-                                                                   tmux:nil
-                                                             components:value];
+    titleSettings.title = customName ?: [iTermSessionTitleBuiltInFunction titleForSessionName:@"Name"
+                                                                                  profileName:@"Profile"
+                                                                                          job:@"Job"
+                                                                                          pwd:@"PWD"
+                                                                                          tty:@"TTY"
+                                                                                         user:@"User"
+                                                                                         host:@"Host"
+                                                                                         tmux:nil
+                                                                                   components:value];
 
     const CGFloat maxWidth = NSMinX(_customTitleHelp.frame) - NSMinX(titleSettings.frame) - 5;
     [titleSettings sizeToFit];
@@ -809,15 +810,17 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                       target:self
                                                     selector:@selector(postUpdateSessionNameNotification:)
                                                     userInfo:nil
-                                                     repeats:YES];
+                                                     repeats:NO];
         }
     }
 }
 
 #pragma mark - Notifications
 
-- (void)postUpdateSessionNameNotification:(NSNotification *)notification {
+- (void)postUpdateSessionNameNotification:(NSTimer *)timer {
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermProfilePreferencesUpdateSessionName object:nil];
+    [_timer invalidate];
+    _timer = nil;
 }
 
 - (void)updateProfileName {
