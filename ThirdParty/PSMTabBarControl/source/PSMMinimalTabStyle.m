@@ -121,12 +121,19 @@
                                tabBarControl:(PSMTabBarControl *)bar {
     if (self.anyTabHasColor) {
         const CGFloat brightness = [self tabColorBrightness:cell];
-        NSRect rect = NSInsetRect(cell.frame, 0, 0.5);
+        NSRect containingFrame = cell.frame;
+        if (bar.cells.lastObject == cell && bar.orientation == PSMTabBarHorizontalOrientation) {
+            containingFrame = NSMakeRect(NSMinX(cell.frame),
+                                         0,
+                                         bar.frame.size.width - NSMinX(cell.frame),
+                                         bar.height);
+        }
+        NSRect rect = NSInsetRect(containingFrame, 0, 0.5);
         NSBezierPath *path;
         
         NSColor *outerColor;
         NSColor *innerColor;
-        const CGFloat alpha = [self.tabBar.window isKeyWindow] ? 0.5 : 0.3;
+        const CGFloat alpha = [self.tabBar.window isKeyWindow] ? 0.75 : 0.5;
         if (brightness > 0.5) {
             outerColor = [NSColor colorWithWhite:1 alpha:alpha];
             innerColor = [NSColor colorWithWhite:0 alpha:alpha];
@@ -134,20 +141,21 @@
             outerColor = [NSColor colorWithWhite:0 alpha:alpha];
             innerColor = [NSColor colorWithWhite:1 alpha:alpha];
         }
-        
+
         [innerColor set];
-        path = [NSBezierPath bezierPath];
-        [path moveToPoint:NSMakePoint(NSMinX(rect), NSMaxY(rect))];
-        [path lineToPoint:NSMakePoint(NSMaxX(rect), NSMaxY(rect))];
-        [path setLineWidth:1];
-        [path stroke];
-        
-        [outerColor set];
         rect = NSInsetRect(rect, 0, 1);
         path = [NSBezierPath bezierPath];
         [path moveToPoint:NSMakePoint(NSMinX(rect), NSMaxY(rect))];
         [path lineToPoint:NSMakePoint(NSMaxX(rect), NSMaxY(rect))];
-        [path setLineWidth:1];
+        [path setLineWidth:2];
+        [path stroke];
+
+        [outerColor set];
+        rect = NSInsetRect(rect, 0, 2);
+        path = [NSBezierPath bezierPath];
+        [path moveToPoint:NSMakePoint(NSMinX(rect), NSMaxY(rect))];
+        [path lineToPoint:NSMakePoint(NSMaxX(rect), NSMaxY(rect))];
+        [path setLineWidth:2];
         [path stroke];
     }
 }
@@ -211,9 +219,9 @@
 - (void)drawEndInset {
     NSColor *color;
     PSMTabBarControl *bar = self.tabBar;
-    const BOOL oneTab = (self.lastTabIsSelected && !self.firstTabIsSelected);
+    const BOOL lastOfManyIsSelected = (self.lastTabIsSelected && !self.firstTabIsSelected);
     const BOOL horizontal = (bar.orientation == PSMTabBarHorizontalOrientation);
-    if ((horizontal && self.lastTabIsSelected) || (!horizontal && oneTab)) {
+    if ((horizontal && self.lastTabIsSelected) || (!horizontal && lastOfManyIsSelected)) {
         color = [self selectedTabColor];
     } else {
         color = [self nonSelectedTabColor];
