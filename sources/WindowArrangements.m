@@ -78,6 +78,9 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
 
 + (void)setArrangement:(NSArray *)arrangement withName:(NSString *)name
 {
+    DLog(@"Save arrangement %@", arrangement);
+    return;
+    
     NSMutableDictionary *arrangements = [NSMutableDictionary dictionaryWithDictionary:[WindowArrangements arrangements]];
     [arrangements setObject:arrangement forKey:name];
     [[NSUserDefaults standardUserDefaults] setObject:arrangements forKey:WINDOW_ARRANGEMENTS];
