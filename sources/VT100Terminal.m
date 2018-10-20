@@ -2307,6 +2307,7 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalRequestAttention:VT100AttentionRequestTypeStopBouncingDockIcon];
         }
     } else if ([key isEqualToString:@"SetBackgroundImageFile"]) {
+        DLog(@"Handle SetBackgroundImageFile");
         if ([delegate_ terminalIsTrusted]) {
             [delegate_ terminalSetBackgroundImageFile:value];
         }

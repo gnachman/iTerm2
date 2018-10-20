@@ -3785,7 +3785,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalIsTrusted {
-    return ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences];
+    const BOOL result = ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences];
+    DLog(@"terminalIsTrusted returning %@", @(result));
+    return result;
 }
 
 - (void)terminalRequestAttention:(VT100AttentionRequestType)request {

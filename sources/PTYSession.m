@@ -3340,11 +3340,14 @@ ITERM_WEAKLY_REFERENCEABLE
     NSDictionary *aDict = aePrefs;
 
     if (aDict == nil) {
+        DLog(@"nil dict, use default");
         aDict = [[ProfileModel sharedInstance] defaultBookmark];
     }
     if (aDict == nil) {
+        DLog(@"uh oh! no default dict!");
         return;
     }
+    DLog(@"%@: set prefs to address book entry:\n%@", self, aDict);
 
     if ([self isTmuxClient] && ![_profile[KEY_NAME] isEqualToString:aePrefs[KEY_NAME]]) {
         _tmuxTitleOutOfSync = YES;
@@ -4536,6 +4539,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues {
+    DLog(@"%@: setSessionSpecificProfilevalues:%@", self, newValues);
     if (!self.isDivorced) {
         [self divorceAddressBookEntryFromPreferences];
     }
@@ -4553,6 +4557,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // commonly when setting tab color after a split.
         return;
     }
+    DLog(@"Set bookmark and reload profile");
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
 
     // Update this session's copy of the bookmark
@@ -8261,12 +8266,15 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenSetBackgroundImageFile:(NSString *)filename {
-    filename = [filename stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+    DLog(@"screenSetbackgroundImageFile:%@", filename);
+    filename = [[filename stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if (!filename.length) {
+        DLog(@"Filename is empty. Reset the background image.");
         [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: [NSNull null] }];
         return;
     }
     if (!filename || ![[NSFileManager defaultManager] fileExistsAtPath:filename]) {
+        DLog(@"file %@ does not exist", filename);
         return;
     }
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
