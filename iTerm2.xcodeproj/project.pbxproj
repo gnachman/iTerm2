@@ -1739,6 +1739,8 @@
 		A663013019D0864C004AF81C /* SCEventListenerProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012519D0864C004AF81C /* SCEventListenerProtocol.h */; };
 		A663013119D0864C004AF81C /* SCEvents.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012619D0864C004AF81C /* SCEvents.h */; };
 		A663013219D0864C004AF81C /* SCEvents.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012619D0864C004AF81C /* SCEvents.h */; };
+		A6637FFF217B0DD900C8DD77 /* iTermFullDiskAccessManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A6637FFD217B0DD900C8DD77 /* iTermFullDiskAccessManager.h */; };
+		A6638000217B0DD900C8DD77 /* iTermFullDiskAccessManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A6637FFE217B0DD900C8DD77 /* iTermFullDiskAccessManager.m */; };
 		A66444BA1DEEA534000AC615 /* iTermDisclosableView.h in Headers */ = {isa = PBXBuildFile; fileRef = A66444B81DEEA534000AC615 /* iTermDisclosableView.h */; };
 		A667190A1DCE36C3000CE608 /* iTermRootTerminalView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BDB0B91B470CBE00F511E6 /* iTermRootTerminalView.h */; };
 		A667190B1DCE36C3000CE608 /* iTermCarbonHotKeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CC16521CF012E300E8C148 /* iTermCarbonHotKeyController.h */; };
@@ -4483,6 +4485,8 @@
 		A663012519D0864C004AF81C /* SCEventListenerProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SCEventListenerProtocol.h; path = SCEvents/Source/SCEventListenerProtocol.h; sourceTree = "<group>"; };
 		A663012619D0864C004AF81C /* SCEvents.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SCEvents.h; path = SCEvents/Source/SCEvents.h; sourceTree = "<group>"; };
 		A663012719D0864C004AF81C /* SCEvents.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SCEvents.m; path = SCEvents/Source/SCEvents.m; sourceTree = "<group>"; };
+		A6637FFD217B0DD900C8DD77 /* iTermFullDiskAccessManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFullDiskAccessManager.h; sourceTree = "<group>"; };
+		A6637FFE217B0DD900C8DD77 /* iTermFullDiskAccessManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFullDiskAccessManager.m; sourceTree = "<group>"; };
 		A66444B81DEEA534000AC615 /* iTermDisclosableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDisclosableView.h; sourceTree = "<group>"; };
 		A66444B91DEEA534000AC615 /* iTermDisclosableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDisclosableView.m; sourceTree = "<group>"; };
 		A667195C1DCE36C3000CE608 /* libiTerm2SharedARC.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiTerm2SharedARC.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -7725,6 +7729,8 @@
 				A6257C17217707BB00A8C5BD /* iTermAdjustFontSizeHelper.m */,
 				53FF84E0217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h */,
 				53FF84E1217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.m */,
+				A6637FFD217B0DD900C8DD77 /* iTermFullDiskAccessManager.h */,
+				A6637FFE217B0DD900C8DD77 /* iTermFullDiskAccessManager.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -9128,6 +9134,7 @@
 				A630119420E70C0A008114B7 /* iTermStatusBarSetupDestinationCollectionViewController.h in Headers */,
 				A630116920E60725008114B7 /* iTermStatusBarLayout.h in Headers */,
 				A69CCB1C211BF4FF008ADA71 /* iTermRecordingCodec.h in Headers */,
+				A6637FFF217B0DD900C8DD77 /* iTermFullDiskAccessManager.h in Headers */,
 				A66719431DCE36C3000CE608 /* iTermScriptingWindow.h in Headers */,
 				A60BB38E1EB6A08A00D76C09 /* iTermProcessCollection.h in Headers */,
 				A66F3CF71FED741E00AA2021 /* iTermTextRendererTransientState.h in Headers */,
@@ -11384,6 +11391,7 @@
 				A60C035D2089698500FE2F1F /* iTermAPIScriptLauncher.m in Sources */,
 				A6E34BD12118097A00F147DD /* iTermBackgroundDrawingHelper.m in Sources */,
 				5337A316203E065300024BEA /* iTermPowerManager.m in Sources */,
+				A6638000217B0DD900C8DD77 /* iTermFullDiskAccessManager.m in Sources */,
 				A6A4867320B67ADB00493302 /* PointerPrefsController.m in Sources */,
 				A6A4866C20B679DB00493302 /* iTermProfilePreferences.m in Sources */,
 				A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */,

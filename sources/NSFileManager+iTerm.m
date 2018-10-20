@@ -129,6 +129,18 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return nospaces;
 }
 
+- (NSString *)libraryDirectoryFor:(NSString *)app {
+    NSError *error;
+    NSString *result = [self findOrCreateDirectory:NSLibraryDirectory
+                                          inDomain:NSUserDomainMask
+                               appendPathComponent:app
+                                             error:&error];
+    if (!result) {
+        ELog(@"Unable to find or create application support directory:\n%@", error);
+    }
+    return result;
+}
+
 - (NSString *)applicationSupportDirectoryWithoutSpaces {
     NSError *error;
     NSString *realAppSupport = [self findOrCreateDirectory:NSApplicationSupportDirectory

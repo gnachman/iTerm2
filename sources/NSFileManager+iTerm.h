@@ -68,5 +68,6 @@
 - (BOOL)itemIsSymlink:(NSString *)path;
 - (BOOL)itemIsDirectory:(NSString *)path;
 - (NSArray<NSString *> *)it_itemsInDirectory:(NSString *)path;
+- (NSString *)libraryDirectoryFor:(NSString *)app;
 
 @end
