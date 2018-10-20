@@ -786,7 +786,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)guessVersion22Response:(NSString *)response {
-    if (response.length == 0) {
+    const NSInteger index = [response rangeOfCharacterFromSet:[[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet]].location;
+    if (index == NSNotFound) {
         [self decreaseMaximumServerVersionTo:@"2.1"];
     } else {
         [self increaseMinimumServerVersionTo:@"2.2"];
