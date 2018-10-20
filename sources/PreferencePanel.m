@@ -66,6 +66,8 @@
  *  additional profile: parameter. The analog of iTermPreferences is iTermProfilePreferences.
  *  */
 #import "PreferencePanel.h"
+
+#import "DebugLogging.h"
 #import "AppearancePreferencesViewController.h"
 #import "GeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
@@ -167,6 +169,10 @@ static PreferencePanel *gSessionsPreferencePanel;
     return gSessionsPreferencePanel;
 }
 
+- (BOOL)isSessionsInstance {
+    return (self == [PreferencePanel sessionsInstance]);
+}
+
 - (instancetype)initWithProfileModel:(ProfileModel*)model
               editCurrentSessionMode:(BOOL)editCurrentSessionMode {
     self = [super initWithWindowNibName:@"PreferencePanel"];
@@ -230,9 +236,18 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 - (void)selectProfilesTab {
-    _disableResize++;
+    // We want to disable resizing when opening sessionsInstace because it
+    // would resize to be way too big (leaving space for the profiles list).
+    // You can also get here because you want to open prefs directly to the
+    // profile tab (such as when coming from the Profiles window).
+    const BOOL shouldDisableResize = [self isSessionsInstance];
+    if (shouldDisableResize) {
+       _disableResize++;
+    }
     [_tabView selectTabViewItem:_bookmarksTabViewItem];
-    _disableResize--;
+    if (shouldDisableResize) {
+        _disableResize--;
+    }
     [_toolbar setSelectedItemIdentifier:[_bookmarksToolbarItem itemIdentifier]];
 }
 
