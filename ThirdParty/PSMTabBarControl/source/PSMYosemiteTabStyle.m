@@ -504,34 +504,54 @@
 #pragma mark - Drawing
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
-    if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
-        if (selected) {
-            return [NSColor colorWithSRGBRed:189/255.0 green:189/255.0 blue:189/255.0 alpha:1];
+    if (@available(macOS 10.14, *)) {
+        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+            return [NSColor colorWithSRGBRed:180.0/255.0 green:180.0/255.0 blue:180.0/255.0 alpha:1];
         } else {
-            return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
+            return [NSColor colorWithSRGBRed:209.0/255.0 green:209.0/255.0 blue:209.0/255.0 alpha:1];
         }
     } else {
-        return [NSColor colorWithSRGBRed:219/255.0 green:219/255.0 blue:219/255.0 alpha:1];
+        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+            if (selected) {
+                return [NSColor colorWithSRGBRed:189/255.0 green:189/255.0 blue:189/255.0 alpha:1];
+            } else {
+                return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
+            }
+        } else {
+            return [NSColor colorWithSRGBRed:219/255.0 green:219/255.0 blue:219/255.0 alpha:1];
+        }
     }
 }
 
 - (NSColor *)verticalLineColorSelected:(BOOL)selected {
-    if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
-        return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
+    if (@available(macOS 10.14, *)) {
+        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+            return [NSColor colorWithSRGBRed:174.0/255.0 green:174.0/255.0 blue:174.0/255.0 alpha:1];
+        } else {
+            return [NSColor colorWithSRGBRed:209.0/255.0 green:209.0/255.0 blue:209.0/255.0 alpha:1];
+        }
     } else {
-        return [NSColor colorWithSRGBRed:219/255.0 green:219/255.0 blue:219/255.0 alpha:1];
+        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+            return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
+        } else {
+            return [NSColor colorWithSRGBRed:219/255.0 green:219/255.0 blue:219/255.0 alpha:1];
+        }
     }
 }
 
 - (NSColor *)bottomLineColorSelected:(BOOL)selected {
-    if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
-        return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
+    if (@available(macOS 10.14, *)) {
+        return [NSColor colorWithWhite:0 alpha:0.15];
     } else {
-        return [NSColor colorWithSRGBRed:210/255.0 green:210/255.0 blue:210/255.0 alpha:1];
+        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+            return [NSColor colorWithSRGBRed:160/255.0 green:160/255.0 blue:160/255.0 alpha:1];
+        } else {
+            return [NSColor colorWithSRGBRed:210/255.0 green:210/255.0 blue:210/255.0 alpha:1];
+        }
     }
 }
 
-- (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
+- (NSColor *)legacyBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_DEPRECATED_MAC(10_12, 10_13) {
     if (selected) {
         if (@available(macOS 10.14, *)) {
             const CGFloat value = 246.0 / 255.0;
@@ -557,6 +577,53 @@
         return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
     }
 }
+- (NSColor *)mojaveBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_14) {
+    CGFloat colors[3];
+    if (self.tabBar.window.isKeyWindow && [NSApp isActive]) {
+        if (selected) {
+            colors[0] = 210.0 / 255.0;
+            colors[1] = 210.0 / 255.0;
+            colors[2] = 210.0 / 255.0;
+        } else {
+            NSColor *color = self.tabBarColor;
+            colors[0] = color.redComponent;
+            colors[1] = color.greenComponent;
+            colors[2] = color.blueComponent;
+        }
+    } else {
+        if (selected) {
+            colors[0] = 246.0 / 255.0;
+            colors[1] = 246.0 / 255.0;
+            colors[2] = 246.0 / 255.0;
+        } else {
+            NSColor *color = self.tabBarColor;
+            colors[0] = color.redComponent;
+            colors[1] = color.greenComponent;
+            colors[2] = color.blueComponent;
+        }
+    }
+    CGFloat highlightedColors[3] = { 0, 0, 0 };
+    CGFloat a = 0;
+    if (!selected) {
+        a = highlightAmount * 0.05;
+    }
+    for (int i = 0; i < 3; i++) {
+        colors[i] = colors[i] * (1.0 - a) + highlightedColors[i] * a;
+    }
+
+    return [NSColor colorWithSRGBRed:colors[0]
+                               green:colors[1]
+                                blue:colors[2]
+                               alpha:1];
+}
+
+- (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
+    if (@available(macOS 10.14, *)) {
+        return [self mojaveBackgroundColorSelected:selected highlightAmount:highlightAmount];
+    } else {
+        return [self legacyBackgroundColorSelected:selected highlightAmount:highlightAmount];
+    }
+}
 
 - (void)drawHorizontalLineInFrame:(NSRect)rect y:(CGFloat)y {
     NSRect modifiedRect = NSMakeRect(NSMinX(rect), y, rect.size.width + 1, 1);
@@ -564,7 +631,11 @@
 }
 
 - (void)drawVerticalLineInFrame:(NSRect)rect x:(CGFloat)x {
-    NSRect modifiedRect = NSMakeRect(x, NSMinY(rect) + 1, 1, rect.size.height - 2);
+    CGFloat delta = 1;
+    if (@available(macOS 10.14, *)) {
+        delta = 0;
+    }
+    NSRect modifiedRect = NSMakeRect(x, NSMinY(rect) + delta, 1, rect.size.height - 2 * delta);
     NSRectFillUsingOperation(modifiedRect, NSCompositingOperationSourceOver);
 }
 
@@ -870,10 +941,24 @@
 }
 
 - (NSColor *)tabBarColor {
-    if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
-        return [NSColor colorWithCalibratedWhite:0.0 alpha:0.2];
+    if (@available(macOS 10.14, *)) {
+        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+            return [NSColor colorWithSRGBRed:188.0 / 255.0
+                                       green:188.0 / 255.0
+                                        blue:188.0 / 255.0
+                                       alpha:1];
+        } else {
+            return [NSColor colorWithSRGBRed:221.0 / 255.0
+                                       green:221.0 / 255.0
+                                        blue:221.0 / 255.0
+                                       alpha:1];
+        }
     } else {
-        return [NSColor colorWithCalibratedWhite:236 / 255.0 alpha:1];
+        if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
+            return [NSColor colorWithCalibratedWhite:0.0 alpha:0.2];
+        } else {
+            return [NSColor colorWithCalibratedWhite:236 / 255.0 alpha:1];
+        }
     }
 }
 
