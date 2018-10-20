@@ -41,6 +41,7 @@
 #import "iTermExpose.h"
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
+#import "iTermFullDiskAccessManager.h"
 #import "iTermFullScreenWindowManager.h"
 #import "iTermHotKeyController.h"
 #import "iTermHotKeyProfileBindingController.h"
@@ -1042,6 +1043,7 @@ static BOOL hasBecomeActive = NO;
     [self openUntitledFileBecameSafe];
 }
 
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     [self warnAboutChangeToDefaultPasteBehavior];
     if (IsTouchBarAvailable()) {
@@ -1063,6 +1065,9 @@ static BOOL hasBecomeActive = NO;
         _appNapStoppingActivity =
                 [[[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityUserInitiatedAllowingIdleSystemSleep
                                                                 reason:@"User Preference"] retain];
+    }
+    if (@available(macOS 10.14, *)) {
+        [iTermFullDiskAccessManager maybeRequestFullDiskAccess];
     }
     [iTermFontPanel makeDefault];
 
