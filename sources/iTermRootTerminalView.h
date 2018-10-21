@@ -87,6 +87,7 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 @property(nonatomic, readonly) CGFloat leftTabBarPreferredWidth;
 
 @property(nonatomic) BOOL useMetal;
+@property(nonatomic, readonly) BOOL tabBarControlOnLoan NS_AVAILABLE_MAC(10_14);
 
 - (instancetype)initWithFrame:(NSRect)frame
                         color:(NSColor *)color
@@ -118,5 +119,7 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)windowTitleDidChangeTo:(NSString *)title;
 - (void)windowNumberDidChangeTo:(NSNumber *)number;
 - (void)setWindowTitleIcon:(NSImage *)icon;
+- (iTermTabBarControlView *)borrowTabBarControl NS_AVAILABLE_MAC(10_14);
+- (void)returnTabBarControlView:(iTermTabBarControlView *)tabBarControl NS_AVAILABLE_MAC(10_14);
 
 @end

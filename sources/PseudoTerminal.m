@@ -32,6 +32,7 @@
 #import "iTermHotKeyMigrationHelper.h"
 #import "iTermInstantReplayWindowController.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermLionFullScreenTabBarViewController.h"
 #import "iTermMenuBarObserver.h"
 #import "iTermOpenQuicklyWindow.h"
 #import "iTermPasswordManagerWindowController.h"
@@ -355,7 +356,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     //
     // Update: This seems to work properly on Mojave. Hurray!
     iTermWindowShortcutLabelTitlebarAccessoryViewController *_shortcutAccessoryViewController NS_AVAILABLE_MAC(10_14);
-
+    iTermLionFullScreenTabBarViewController *_lionFullScreenTabBarViewController NS_AVAILABLE_MAC(10_14);
+    
     // Is there a pending delayed-perform of enterFullScreen:? Used to figure
     // out if it's safe to toggle Lion full screen since only one can go at a time.
     BOOL _haveDelayedEnterFullScreenMode;
@@ -884,6 +886,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_autoCommandHistorySessionGuid release];
     if (@available(macOS 10.14, *)) {
         [_shortcutAccessoryViewController release];
+        [_lionFullScreenTabBarViewController release];
     }
     [_didEnterLionFullscreen release];
     [_desiredTitle release];
@@ -1628,6 +1631,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)updateFullScreenTabBar:(NSNotification *)notification {
     if ([self anyFullScreen]) {
+        if (@available(macOS 10.14, *)) {
+            if (_contentView.tabBarControlOnLoan != [self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]) {
+                [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(self.lionFullScreen || togglingLionFullScreen_)];
+            }
+        }
         [_contentView.tabBarControl updateFlashing];
         [self repositionWidgets];
         [self fitTabsToWindow];
@@ -4196,6 +4204,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)tabBarShouldBeVisible {
+    if (_contentView.tabBarControlOnLoan) {
+        return NO;
+    }
     return _contentView.tabBarShouldBeVisible;
 }
 
@@ -4302,6 +4313,47 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (NSTitlebarAccessoryViewController *)lionFullScreenTabBarViewController NS_AVAILABLE_MAC(10_14) {
+    if (!_lionFullScreenTabBarViewController) {
+        _lionFullScreenTabBarViewController = [[iTermLionFullScreenTabBarViewController alloc] initWithView:[_contentView borrowTabBarControl]];
+    }
+    return _lionFullScreenTabBarViewController;
+}
+
+- (BOOL)shouldMoveTabBarToTitlebarAccessoryInLionFullScreen {
+    if ([iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
+        return NO;
+    }
+    
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_LeftTab:
+        case PSMTab_BottomTab:
+            return NO;
+            break;
+
+        case PSMTab_TopTab:
+            break;
+    }
+
+    return YES;
+}
+
+- (void)updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(BOOL)fullScreen NS_AVAILABLE_MAC(10_14) {
+    if (fullScreen && [self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]) {
+        if (!_contentView.tabBarControlOnLoan) {
+            [self.window addTitlebarAccessoryViewController:[self lionFullScreenTabBarViewController]];
+        }
+    } else if (_contentView.tabBarControlOnLoan) {
+        const NSInteger index = [self.window.titlebarAccessoryViewControllers indexOfObject:_lionFullScreenTabBarViewController];
+        assert(index != NSNotFound);
+        [self.window removeTitlebarAccessoryViewControllerAtIndex:index];
+        [_contentView returnTabBarControlView:(iTermTabBarControlView *)_lionFullScreenTabBarViewController.view];
+        [_lionFullScreenTabBarViewController release];
+        _lionFullScreenTabBarViewController = nil;
+        [_contentView layoutSubviews];
+    }
+}
+
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
     DLog(@"Window will enter lion fullscreen");
     togglingLionFullScreen_ = YES;
@@ -4316,6 +4368,9 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     DLog(@"Window did enter lion fullscreen");
 
+    if (@available(macOS 10.14, *)) {
+        [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:YES];
+    }
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     _fullScreenRetryCount = 0;
@@ -4369,6 +4424,10 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     DLog(@"Window will exit lion fullscreen");
     exitingLionFullscreen_ = YES;
+
+    if (@available(macOS 10.14, *)) {
+        [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:NO];
+    }
     self.window.styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType_ hotkeyWindowType:_hotkeyWindowType];
     [_contentView.tabBarControl updateFlashing];
     [self fitTabsToWindow];
@@ -7356,6 +7415,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_contentView.tabBarControl setStyle:style];
     [self updateTabColors];
+    if (@available(macOS 10.14, *)) {
+        [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(self.lionFullScreen || togglingLionFullScreen_)];
+    }
 }
 
 - (void)hideMenuBar {
