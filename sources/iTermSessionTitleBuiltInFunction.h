@@ -22,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
                              user:(NSString *)userVariable
                              host:(NSString *)hostVariable
                              tmux:(nullable NSString *)tmuxVariable
+                         iconName:(NSString *)iconName
+                       windowName:(NSString *)windowName
                        components:(iTermTitleComponents)titleComponents;
 
 

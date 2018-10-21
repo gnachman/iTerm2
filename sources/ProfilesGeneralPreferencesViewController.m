@@ -741,6 +741,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                                                          user:@"User"
                                                                                          host:@"Host"
                                                                                          tmux:nil
+                                                                                     iconName:@"“Shell”"
+                                                                                   windowName:@""
                                                                                    components:value];
 
     const CGFloat maxWidth = NSMinX(_customTitleHelp.frame) - NSMinX(titleSettings.frame) - 5;
