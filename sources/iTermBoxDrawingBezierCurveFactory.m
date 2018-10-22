@@ -147,6 +147,7 @@
 + (NSArray<NSBezierPath *> *)bezierPathsForBoxDrawingCode:(unichar)code
                                                  cellSize:(NSSize)cellSize
                                                     scale:(CGFloat)scale
+                                                   offset:(CGPoint)offset
                                                     solid:(out BOOL *)solid {
     NSArray<NSBezierPath *> *solidBoxPaths = [self bezierPathsForSolidBoxesForCode:code
                                                                           cellSize:cellSize
@@ -574,11 +575,8 @@
         cellSize.height
 
     };
-    CGFloat (^retinaRound)(CGFloat) = ^CGFloat(CGFloat value) {
-        return round(scale * value) / scale;
-    };
     CGFloat (^centerPoint)(CGFloat) = ^CGFloat(CGFloat value) {
-        CGFloat nearest = retinaRound(value);
+        CGFloat nearest = value;
         if (nearest > 0) {
             return nearest + scale / 2;
         } else {
@@ -586,7 +584,8 @@
         }
     };
     CGPoint (^makePoint)(CGFloat, CGFloat) = ^CGPoint(CGFloat x, CGFloat y) {
-        return CGPointMake(centerPoint(x), centerPoint(y));
+        return CGPointMake(centerPoint(x) + offset.x,
+                           centerPoint(y) + offset.y);
     };
     while (i + 4 <= length) {
         int x1 = bytes[i++] - 'a';
