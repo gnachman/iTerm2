@@ -163,15 +163,15 @@
 - (NSColor *)outlineColor {
     CGFloat backgroundBrightness = self.tabBarColor.it_hspBrightness;
     
-    const CGFloat delta = [[self.tabBar.delegate tabView:self.tabBar
+    const CGFloat alpha = [[self.tabBar.delegate tabView:self.tabBar
                                            valueOfOption:PSMTabBarControlOptionColoredMinimalOutlineStrength] doubleValue];
     CGFloat value;
     if (backgroundBrightness < 0.5) {
-        value = MIN(1, backgroundBrightness + delta);
+        value = 1;
     } else {
-        value = MAX(0, backgroundBrightness - delta);
+        value = 0;
     }
-    return [NSColor colorWithWhite:value alpha:1];
+    return [NSColor colorWithWhite:value alpha:alpha];
 }
 
 - (void)drawVerticalLineInFrame:(NSRect)rect x:(CGFloat)x {
