@@ -32,4 +32,7 @@
 // Call this when the result of iTermTabBarShouldFlash would change.
 - (void)updateFlashing;
 
+- (void)setAlphaValue:(CGFloat)alphaValue animated:(BOOL)animated;
+- (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
+
 @end
