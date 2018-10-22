@@ -5013,7 +5013,10 @@ static void SwapInt(int *a, int *b) {
            kScreenStateAlternateGridStateKey: altGrid_.dictionaryValue ?: [NSNull null],
            kScreenStateNumberOfLinesDroppedKey: @(linesDroppedForBrevity)
            };
-    return [dict dictionaryByRemovingNullValues];
+    DLog(@"About to remove null values from arrangement dict: %@", dict);
+    NSDictionary *result = [dict dictionaryByRemovingNullValues];
+    DLog(@"Returning dict without NSNull values:\n%@", dict);
+    return result;
 }
 
 - (NSDictionary *)contentsOfNonCurrentGrid {

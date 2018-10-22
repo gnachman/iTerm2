@@ -7,6 +7,7 @@
 //
 
 #import "NSDictionary+iTerm.h"
+#import "DebugLogging.h"
 #import "NSColor+iTerm.h"
 #import "NSWorkspace+iTerm.h"
 
@@ -185,13 +186,20 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
 }
 
 - (NSDictionary *)dictionaryByRemovingNullValues {
+    DLog(@"dictionaryByRemovingNullValues called on %@", self);
     NSMutableDictionary *temp = [NSMutableDictionary dictionary];
     for (id key in self) {
         id value = self[key];
+        DLog(@"Consider %@ -> %@", key, value);
         if (![value isKindOfClass:[NSNull class]]) {
+            DLog(@"Add entry for key %@. The value's class is %@. Is a kind of null = %@", key, [value class], @([value isKindOfClass:[NSNull class]]));
             temp[key] = value;
+        } else {
+            DLog(@"Do NOT add entry for key %@", key);
+            DLog(@"temp is now %@", temp);
         }
     }
+    DLog(@"Return sanitized dictionary %@", temp);
     return temp;
 }
 
