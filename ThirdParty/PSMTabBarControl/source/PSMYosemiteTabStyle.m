@@ -920,7 +920,11 @@
     [[NSGraphicsContext currentContext] setShouldAntialias:NO];
 
     [backgroundColor set];
-    NSRectFillUsingOperation(rect, NSCompositingOperationSourceAtop);
+    if (@available(macOS 10.14, *)) {
+        NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
+    } else {
+        NSRectFillUsingOperation(rect, NSCompositingOperationSourceAtop);
+    }
 
     [[self bottomLineColorSelected:NO] set];
     if (_orientation == PSMTabBarHorizontalOrientation) {
