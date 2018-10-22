@@ -18,18 +18,7 @@
 
 + (NSColor *)tabBarColorWhenKeyAndActive:(BOOL)keyAndActive {
     if (@available(macOS 10.14, *)) {
-        if (keyAndActive) {
-            return [NSColor colorWithSRGBRed:40.0 / 255.0
-                                       green:49.0 / 255.0
-                                        blue:51.0 / 255.0
-                                       alpha:1];
-
-        } else {
-            return [NSColor colorWithSRGBRed:31.0 / 255.0
-                                       green:41.0 / 255.0
-                                        blue:43.0 / 255.0
-                                       alpha:1];
-        }
+        return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:0.25];
     } else {
         return [NSColor colorWithCalibratedWhite:0.12 alpha:1.00];
     }
@@ -90,9 +79,7 @@
         CGFloat colors[3];
         if (self.tabBar.window.isKeyWindow && [NSApp isActive]) {
             if (selected) {
-                colors[0] = 57.0 / 255.0;
-                colors[1] = 70.0 / 255.0;
-                colors[2] = 73.0 / 255.0;
+                return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:0];
             } else {
                 NSColor *color = [self.class tabBarColorWhenKeyAndActive:YES];
                 colors[0] = color.redComponent;
@@ -101,9 +88,7 @@
             }
         } else {
             if (selected) {
-                colors[0] = 44.0 / 255.0;
-                colors[1] = 58.0 / 255.0;
-                colors[2] = 61.0 / 255.0;
+                return [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:0];
             } else {
                 NSColor *color = [self.class tabBarColorWhenKeyAndActive:NO];
                 colors[0] = color.redComponent;
@@ -123,7 +108,7 @@
         return [NSColor colorWithSRGBRed:colors[0]
                                    green:colors[1]
                                     blue:colors[2]
-                                   alpha:1];
+                                   alpha:0.25];
     } else {
         CGFloat value = selected ? 0.25 : 0.13;
         if (!selected) {

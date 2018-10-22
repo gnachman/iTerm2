@@ -774,8 +774,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminen
     return YES;
 }
 
-- (void)drawRect:(NSRect)rect
-{
+- (void)drawRect:(NSRect)rect {
     for (PSMTabBarCell *cell in [self cells]) {
         [cell setIsLast:NO];
     }

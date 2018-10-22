@@ -48,8 +48,10 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    [[NSColor windowBackgroundColor] set];
-    NSRectFill(dirtyRect);
+    if (@available(macOS 10.14, *)) { } else {
+        [[NSColor windowBackgroundColor] set];
+        NSRectFill(dirtyRect);
+    }
 
     [super drawRect:dirtyRect];
 }
@@ -90,11 +92,36 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     _flashDelayedPerform = nil;
 }
 
+- (void)setAlphaValue:(CGFloat)alphaValue animated:(BOOL)animated {
+    if ([self.superview isKindOfClass:[NSVisualEffectView class]]) {
+        if (animated) {
+            self.superview.animator.alphaValue = alphaValue;
+        } else {
+            self.superview.alphaValue = alphaValue;
+        }
+        [super setAlphaValue:1.0];
+    } else {
+        if (animated) {
+            NSView *animator = self.animator;
+            animator.alphaValue = alphaValue;
+        } else {
+            [super setAlphaValue:alphaValue];
+        }
+    }
+}
+
+- (void)setHidden:(BOOL)hidden {
+    if ([self.superview isKindOfClass:[NSVisualEffectView class]]) {
+        self.superview.hidden = hidden;
+    }
+    [super setHidden:hidden];
+}
+
 - (void)fadeIn {
     DLog(@"fade in");
     self.flashState = kFlashHolding;
     [_itermTabBarDelegate iTermTabBarWillBeginFlash];
-    self.alphaValue = 1;
+    [self setAlphaValue:1.0 animated:NO];
 }
 
 - (void)scheduleFadeOutAfterDelay {
@@ -108,7 +135,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
                                                 if (!_cmdPressed) {
                                                     DLog(@"delayed fade out running");
                                                     self.flashState = kFlashFadingOut;
-                                                    [self.animator setAlphaValue:0];
+                                                    [self setAlphaValue:0 animated:YES];
                                                 } else {
                                                     DLog(@"delayed fade out aborted; extending");
                                                     self.flashState = kFlashExtending;
@@ -134,7 +161,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 - (void)stopFlashInstantly {
     DLog(@"stop flashing instantly");
     // Quickly stop flash.
-    self.alphaValue = 1;
+    [self setAlphaValue:1.0 animated:NO];
     self.flashState = kFlashOff;
     _flashDelayedPerform.canceled = YES;
     _flashDelayedPerform = nil;
@@ -151,7 +178,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     [NSView animateWithDuration:[iTermAdvancedSettingsModel tabFlashAnimationDuration]
                      animations:^{
                          self.flashState = kFlashFadingOut;
-                         [self.animator setAlphaValue:0];
+                         [self setAlphaValue:0 animated:YES];
                      }
                      completion:^(BOOL finished) {
                          if (finished && self.flashState == kFlashFadingOut) {

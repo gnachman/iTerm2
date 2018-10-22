@@ -4204,8 +4204,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)tabBarShouldBeVisible {
-    if (_contentView.tabBarControlOnLoan) {
-        return NO;
+    if (@available(macOS 10.14, *)) {
+        if (_contentView.tabBarControlOnLoan) {
+            return NO;
+        }
     }
     return _contentView.tabBarShouldBeVisible;
 }
@@ -8529,14 +8531,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)iTermTabBarWillBeginFlash {
-    _contentView.tabBarControl.alphaValue = 0;
+    [_contentView.tabBarControl setAlphaValue:0 animated:NO];
     _contentView.tabBarControl.hidden = NO;
     [self repositionWidgets];
     [self updateUseMetalInAllTabs];
 }
 
 - (void)iTermTabBarDidFinishFlash {
-    _contentView.tabBarControl.alphaValue = 1;
+    [_contentView.tabBarControl setAlphaValue:1 animated:NO];
     _contentView.tabBarControl.hidden = YES;
     [self repositionWidgets];
     [self updateUseMetalInAllTabs];
