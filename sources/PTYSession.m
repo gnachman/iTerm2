@@ -5025,7 +5025,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSSize size = _view.frame.size;
     // When closing a session I once got an insane height that caused an assertion.
     const CGFloat maxScale = 2;
-    return size.width > 0 && size.width < (16384 / maxScale) && size.height > 0 && size.height < (16384 / maxScale);
+    return size.width > 0 && size.width < (8192 / maxScale) && size.height > 0 && size.height < (8192 / maxScale);
 }
 
 - (BOOL)idleForMetal {
