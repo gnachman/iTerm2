@@ -1331,15 +1331,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                                                  size:(CGSize)size
                                                                                 scale:(CGFloat)scale
                                                                                 emoji:(nonnull BOOL *)emoji {
-    if (glyphKey->boxDrawing) {
-        *emoji = NO;
-        CGSize cellSize = _cellSize;
-        cellSize.width *= scale;
-        cellSize.height *= scale;
-        iTermCharacterBitmap *bitmap = [self bitmapForBoxDrawingCode:glyphKey->code glyphSize:size cellSize:cellSize scale:scale];
-        return @{ @(iTermTextureMapMiddleCharacterPart): bitmap };
-    }
-
     // Normal path
     BOOL fakeBold = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceBold);
     BOOL fakeItalic = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceItalic);
@@ -1365,13 +1356,16 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     iTermCharacterSource *characterSource =
         [[iTermCharacterSource alloc] initWithCharacter:CharToStr(glyphKey->code, glyphKey->isComplex)
                                                    font:font
-                                                   size:size
+                                              glyphSize:size
+                                               cellSize:_cellSize
+                                 cellSizeWithoutSpacing:_cellSizeWithoutSpacing
                                          baselineOffset:_baselineOffset
                                                   scale:scale
                                          useThinStrokes:glyphKey->thinStrokes
                                                fakeBold:fakeBold
                                              fakeItalic:fakeItalic
                                             antialiased:isAscii ? _asciiAntialias : _nonasciiAntialias
+                                             boxDrawing:glyphKey->boxDrawing
                                                  radius:radius];
     if (characterSource == nil) {
         return nil;
@@ -1537,48 +1531,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         color = [[_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:1.0];
     }
     return [_colorMap colorByDimmingTextColor:color];
-}
-
-#pragma mark - Box Drawing
-
-- (iTermCharacterBitmap *)bitmapForBoxDrawingCode:(unichar)code
-                                        glyphSize:(CGSize)glyphSize
-                                         cellSize:(CGSize)cellSize
-                                            scale:(CGFloat)scale {
-    NSColor *backgroundColor;
-    NSColor *foregroundColor;
-    if (iTermTextIsMonochrome()) {
-        backgroundColor = [NSColor clearColor];
-        foregroundColor = [NSColor whiteColor];
-    } else {
-        backgroundColor = [NSColor whiteColor];
-        foregroundColor = [NSColor blackColor];
-    }
-    NSMutableData *data = [NSImage argbDataForImageOfSize:glyphSize drawBlock:^(CGContextRef context) {
-        NSAffineTransform *transform = [NSAffineTransform transform];
-        [transform concat];
-        [backgroundColor set];
-        NSRectFill(NSMakeRect(0, 0, glyphSize.width, glyphSize.height));
-        [foregroundColor set];
-
-        BOOL solid = NO;
-        for (NSBezierPath *path in [iTermBoxDrawingBezierCurveFactory bezierPathsForBoxDrawingCode:code
-                                                                                          cellSize:cellSize
-                                                                                             scale:scale
-                                                                                             solid:&solid]) {
-            if (solid) {
-                [path fill];
-            } else {
-                [path setLineWidth:scale];
-                [path stroke];
-            }
-        }
-    }];
-
-    iTermCharacterBitmap *bitmap = [[iTermCharacterBitmap alloc] init];
-    bitmap.data = data;
-    bitmap.size = glyphSize;
-    return bitmap;
 }
 
 #pragma mark - iTermSmartCursorColorDelegate

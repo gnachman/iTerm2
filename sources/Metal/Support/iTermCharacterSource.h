@@ -25,13 +25,16 @@
 
 - (instancetype)initWithCharacter:(NSString *)string
                              font:(NSFont *)font
-                             size:(CGSize)size
+                        glyphSize:(CGSize)glyphSize
+                         cellSize:(CGSize)cellSize
+           cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                    baselineOffset:(CGFloat)baselineOffset
                             scale:(CGFloat)scale
                    useThinStrokes:(BOOL)useThinStrokes
                          fakeBold:(BOOL)fakeBold
                        fakeItalic:(BOOL)fakeItalic
                       antialiased:(BOOL)antialiased
+                       boxDrawing:(BOOL)boxDrawing
                            radius:(int)radius;
 
 - (iTermCharacterBitmap *)bitmapForPart:(int)part;

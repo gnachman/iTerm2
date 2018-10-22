@@ -14,6 +14,7 @@
 + (NSArray<NSBezierPath *> *)bezierPathsForBoxDrawingCode:(unichar)code
                                                  cellSize:(NSSize)cellSize
                                                     scale:(CGFloat)scale
+                                                   offset:(CGPoint)offset
                                                     solid:(out BOOL *)solid;
 
 @end
