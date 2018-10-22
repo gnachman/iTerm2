@@ -1632,9 +1632,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)updateFullScreenTabBar:(NSNotification *)notification {
     if ([self anyFullScreen]) {
         if (@available(macOS 10.14, *)) {
-            if (_contentView.tabBarControlOnLoan != [self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]) {
-                [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(self.lionFullScreen || togglingLionFullScreen_)];
-            }
+            [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(self.lionFullScreen || togglingLionFullScreen_)];
         }
         [_contentView.tabBarControl updateFlashing];
         [self repositionWidgets];
@@ -4318,20 +4316,16 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSTitlebarAccessoryViewController *)lionFullScreenTabBarViewController NS_AVAILABLE_MAC(10_14) {
     if (!_lionFullScreenTabBarViewController) {
         _lionFullScreenTabBarViewController = [[iTermLionFullScreenTabBarViewController alloc] initWithView:[_contentView borrowTabBarControl]];
+        _lionFullScreenTabBarViewController.layoutAttribute = NSLayoutAttributeBottom;
     }
     return _lionFullScreenTabBarViewController;
 }
 
 - (BOOL)shouldMoveTabBarToTitlebarAccessoryInLionFullScreen {
-    if ([iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
-        return NO;
-    }
-    
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
         case PSMTab_BottomTab:
             return NO;
-            break;
 
         case PSMTab_TopTab:
             break;
@@ -4341,12 +4335,18 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(BOOL)fullScreen NS_AVAILABLE_MAC(10_14) {
+    const NSInteger index = [self.window.titlebarAccessoryViewControllers indexOfObject:_lionFullScreenTabBarViewController];
     if (fullScreen && [self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]) {
-        if (!_contentView.tabBarControlOnLoan) {
-            [self.window addTitlebarAccessoryViewController:[self lionFullScreenTabBarViewController]];
+        NSTitlebarAccessoryViewController *viewController = [self lionFullScreenTabBarViewController];
+        if ([iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
+            [viewController setFullScreenMinHeight:_contentView.tabBarControl.frame.size.height];
+        } else {
+            [viewController setFullScreenMinHeight:0];
+        }
+        if (index == NSNotFound) {
+            [self.window addTitlebarAccessoryViewController:viewController];
         }
     } else if (_contentView.tabBarControlOnLoan) {
-        const NSInteger index = [self.window.titlebarAccessoryViewControllers indexOfObject:_lionFullScreenTabBarViewController];
         assert(index != NSNotFound);
         [self.window removeTitlebarAccessoryViewControllerAtIndex:index];
         [_contentView returnTabBarControlView:(iTermTabBarControlView *)_lionFullScreenTabBarViewController.view];
@@ -4364,6 +4364,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateWindowShadow];
     [self repositionWidgets];
     [_contentView didChangeCompactness];
+    if (@available(macOS 10.14, *)) {
+        if (self.window.styleMask & NSWindowStyleMaskTitled) {
+            [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:YES];
+        }
+    }
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
@@ -8685,7 +8690,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSApplicationPresentationOptions)window:(NSWindow *)window
       willUseFullScreenPresentationOptions:(NSApplicationPresentationOptions)proposedOptions {
-    return proposedOptions | NSApplicationPresentationAutoHideToolbar;
+    if (@available(macOS 10.14, *)) {
+        return proposedOptions;
+    } else {
+        return proposedOptions | NSApplicationPresentationAutoHideToolbar;
+    }
 }
 
 - (void)addSessionInNewTab:(PTYSession *)object {
