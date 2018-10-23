@@ -21,4 +21,11 @@ NSString *const iTermWindowAppearanceDidChange = @"iTermWindowAppearanceDidChang
     return [self conformsToProtocol:@protocol(PTYWindow)];
 }
 
+- (NSArray<NSTitlebarAccessoryViewController *> *)it_titlebarAccessoryViewControllers {
+    if (self.styleMask & NSWindowStyleMaskTitled) {
+        return self.titlebarAccessoryViewControllers;
+    } else {
+        return @[];
+    }
+}
 @end

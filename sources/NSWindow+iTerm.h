@@ -16,4 +16,6 @@ extern NSString *const iTermWindowAppearanceDidChange;
 @property(nonatomic, readonly) BOOL isFullScreen;
 - (BOOL)isTerminalWindow;
 
+@property (nonatomic, readonly) NSArray<__kindof NSTitlebarAccessoryViewController *> *it_titlebarAccessoryViewControllers;
+
 @end

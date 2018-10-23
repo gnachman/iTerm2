@@ -4335,7 +4335,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:(BOOL)fullScreen NS_AVAILABLE_MAC(10_14) {
-    const NSInteger index = [self.window.titlebarAccessoryViewControllers indexOfObject:_lionFullScreenTabBarViewController];
+    const NSInteger index = [self.window.it_titlebarAccessoryViewControllers indexOfObject:_lionFullScreenTabBarViewController];
     if (fullScreen && [self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]) {
         NSTitlebarAccessoryViewController *viewController = [self lionFullScreenTabBarViewController];
         if ([iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
