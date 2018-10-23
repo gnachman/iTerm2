@@ -211,14 +211,19 @@ static BOOL hasBecomeActive = NO;
         iTermUntitledFileOpenUnsafe,
         iTermUntitledFileOpenPending,
         iTermUntitledFileOpenAllowed,
-        iTermUntitledFileOpenComplete
+        iTermUntitledFileOpenComplete,
+        iTermUntitledFileOpenDisallowed
     } _untitledFileOpenStatus;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _untitledFileOpenStatus = iTermUntitledFileOpenUnsafe;
+        if ([iTermAdvancedSettingsModel openNewWindowAtStartup]) {
+            _untitledFileOpenStatus = iTermUntitledFileOpenUnsafe;
+        } else {
+            _untitledFileOpenStatus = iTermUntitledFileOpenDisallowed;
+        }
         // Add ourselves as an observer for notifications.
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(reloadMenus:)
@@ -815,6 +820,8 @@ static BOOL hasBecomeActive = NO;
         case iTermUntitledFileOpenComplete:
             // Shouldn't happen
             break;
+        case iTermUntitledFileOpenDisallowed:
+            break;
     }
 }
 
@@ -832,6 +839,8 @@ static BOOL hasBecomeActive = NO;
                 break;
             case iTermUntitledFileOpenComplete:
                 [self newWindow:nil];
+                break;
+            case iTermUntitledFileOpenDisallowed:
                 break;
         }
     }
@@ -1466,6 +1475,11 @@ static BOOL hasBecomeActive = NO;
                [[[iTermHotKeyController sharedInstance] profileHotKeys] count] == 0 &&
                [[[iTermBuriedSessions sharedInstance] buriedSessions] count] == 0) {
         [self newWindow:nil];
+    }
+    if (_untitledFileOpenStatus == iTermUntitledFileOpenDisallowed) {
+        // Don't need to worry about the initial window any more. Allow future clicks
+        // on the dock icon to open an untitled window.
+        _untitledFileOpenStatus = iTermUntitledFileOpenAllowed;
     }
 
     [[iTermController sharedInstance] setStartingUp:NO];
