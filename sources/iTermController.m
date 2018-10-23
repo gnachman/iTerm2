@@ -266,6 +266,11 @@ static iTermController *gSharedInstance;
 }
 
 - (BOOL)terminalIsObscured:(id<iTermWindowController>)terminal {
+    static const double kOcclusionThreshold = 0.4;
+    return [self terminalIsObscured:terminal threshold:kOcclusionThreshold];
+}
+
+- (BOOL)terminalIsObscured:(id<iTermWindowController>)terminal threshold:(double)threshold {
     BOOL windowIsObscured = NO;
     NSWindow *window = [terminal window];
     NSWindowOcclusionState occlusionState = window.occlusionState;
@@ -275,8 +280,7 @@ static iTermController *gSharedInstance;
     windowIsObscured = !(occlusionState & NSWindowOcclusionStateVisible);
     if (!windowIsObscured) {
         // Try to refine the guess by seeing if another terminal is covering this one.
-        static const double kOcclusionThreshold = 0.4;
-        if ([(iTermTerminalWindow *)terminal.window approximateFractionOccluded] > kOcclusionThreshold) {
+        if ([(iTermTerminalWindow *)terminal.window approximateFractionOccluded] > threshold) {
             windowIsObscured = YES;
         }
     }
