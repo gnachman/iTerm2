@@ -18,10 +18,18 @@
 static NSString *const kDebugLogFilename = @"/tmp/debuglog.txt";
 static NSString* gDebugLogHeader = nil;
 static NSMutableString* gDebugLogStr = nil;
-static NSRecursiveLock *gDebugLogLock = nil;
 
 static NSMutableDictionary *gPinnedMessages;
 BOOL gDebugLogging = NO;
+
+static NSRecursiveLock *GetDebugLogLock(void) {
+    static NSRecursiveLock *gDebugLogLock = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gDebugLogLock = [[NSRecursiveLock alloc] init];
+    });
+    return gDebugLogLock;
+}
 
 static void AppendWindowDescription(NSWindow *window, NSMutableString *windows) {
     [windows appendFormat:@"\nWindow %@\n%@\n",
@@ -72,7 +80,7 @@ static void WriteDebugLogFooter() {
 }
 
 static void FlushDebugLog() {
-    [gDebugLogLock lock];
+    [GetDebugLogLock() lock];
     NSMutableString *log = [NSMutableString string];
     [log appendString:gDebugLogHeader ?: @""];
     WriteDebugLogFooter();
@@ -91,7 +99,7 @@ static void FlushDebugLog() {
     [gDebugLogStr setString:@""];
     [gDebugLogHeader release];
     gDebugLogHeader = nil;
-    [gDebugLogLock unlock];
+    [GetDebugLogLock() unlock];
 }
 
 void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
@@ -105,7 +113,7 @@ void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
 
     NSString *log = [NSString stringWithFormat:@"%lld.%06lld [%@]: %@\n", (long long)tv.tv_sec, (long long)tv.tv_usec, key, s];
 
-    [gDebugLogLock lock];
+    [GetDebugLogLock() lock];
     if (!gPinnedMessages) {
         gPinnedMessages = [[NSMutableDictionary alloc] init];
     };
@@ -115,7 +123,7 @@ void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
     } else {
         gPinnedMessages[key] = [[log mutableCopy] autorelease];
     }
-    [gDebugLogLock unlock];
+    [GetDebugLogLock() unlock];
 }
 
 void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
@@ -133,12 +141,12 @@ void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
 
     NSString *log = [NSString stringWithFormat:@"%lld.%06lld [%@]: %@\n", (long long)tv.tv_sec, (long long)tv.tv_usec, key, s];
 
-    [gDebugLogLock lock];
+    [GetDebugLogLock() lock];
     if (!gPinnedMessages) {
         gPinnedMessages = [[NSMutableDictionary alloc] init];
     };
     gPinnedMessages[key] = log;
-    [gDebugLogLock unlock];
+    [GetDebugLogLock() unlock];
 }
 
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value)
@@ -147,7 +155,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
         struct timeval tv;
         gettimeofday(&tv, NULL);
 
-        [gDebugLogLock lock];
+        [GetDebugLogLock() lock];
         const char *lastSlash = strrchr(file, '/');
         if (!lastSlash) {
             lastSlash = file;
@@ -163,7 +171,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
             [gDebugLogStr replaceCharactersInRange:NSMakeRange(0, kMaxLogSize / 2)
                                         withString:@"*GIANT LOG TRUNCATED*\n"];
         }
-        [gDebugLogLock unlock];
+        [GetDebugLogLock() unlock];
     }
     return 1;
 }
@@ -216,11 +224,7 @@ void LogForNextCrash(const char *file, int line, const char *function, NSString*
 }
 
 static void StartDebugLogging() {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        gDebugLogLock = [[NSRecursiveLock alloc] init];
-    });
-    [gDebugLogLock lock];
+    [GetDebugLogLock() lock];
     if (!gDebugLogging) {
         if (![iTermAdvancedSettingsModel appendToExistingDebugLog]) {
             [[NSFileManager defaultManager] removeItemAtURL:[NSURL fileURLWithPath:kDebugLogFilename]
@@ -230,12 +234,12 @@ static void StartDebugLogging() {
         gDebugLogging = !gDebugLogging;
         WriteDebugLogHeader();
     }
-    [gDebugLogLock unlock];
+    [GetDebugLogLock() unlock];
 }
 
 static BOOL StopDebugLogging() {
     BOOL result = NO;
-    [gDebugLogLock lock];
+    [GetDebugLogLock() lock];
     if (gDebugLogging) {
         gDebugLogging = NO;
         FlushDebugLog();
@@ -243,7 +247,7 @@ static BOOL StopDebugLogging() {
         [gDebugLogStr release];
         result = YES;
     }
-    [gDebugLogLock unlock];
+    [GetDebugLogLock() unlock];
     return result;
 }
 
