@@ -146,7 +146,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     CGSize _cellSize;
     CGSize _cellSizeWithoutSpacing;
     CTLineRef _lineRefs[4];
-    CGContextRef _contexts[4];
+    CGContextRef _context;
+    NSMutableArray<NSMutableData *> *_datas;
 
     NSAttributedString *_attributedStrings[4];
     NSImage *_image;
@@ -281,12 +282,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 - (void)dealloc {
-    for (NSInteger i = 0; i < _numberOfIterationsNeeded; i++) {
-        CGContextRef context = [self contextForIteration:i];
-        if (context) {
-            [[iTermBitmapContextPool sharedInstance] deallocateBitmapContext:context];
-            _contexts[i] = NULL;
-        }
+    if (_context) {
+        [[iTermBitmapContextPool sharedInstance] deallocateBitmapContext:_context];
     }
     for (NSInteger i = 0; i < 4; i++) {
         if (_lineRefs[i]) {
@@ -296,14 +293,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     if (_imageRef) {
         CGImageRelease(_imageRef);
     }
-}
-
-- (CGContextRef)contextForIteration:(NSInteger)iteration {
-    ITAssertWithMessage(iteration >= 0 && iteration < 4, @"requested iteration %@ out of %@", @(iteration), @(_numberOfIterationsNeeded));
-    ITAssertWithMessage(iteration < _numberOfIterationsNeeded, @"requested iteration %@ out of %@", @(iteration), @(_numberOfIterationsNeeded));
-    CGContextRef context = _contexts[iteration];
-    ITAssertWithMessage(context, @"nil context for iteration %@/%@", @(iteration), @(_numberOfIterationsNeeded));
-    return context;
 }
 
 - (int)maxParts {
@@ -335,14 +324,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
     unsigned char *data[4];
     for (int i = 0; i < 4; i++) {
-        CGContextRef context = [self contextForIteration:i];
-        data[i] = (unsigned char *)CGBitmapContextGetData(context);
-
-        // Sanity checks to ensure we don't traipse off the end of the allocated region.
-        const size_t bytesPerRow = CGBitmapContextGetBytesPerRow(context);
-        ITAssertWithMessage(bytesPerRow >= _size.width * 4, @"bytesPerRow is %@ too big for size %@", @(bytesPerRow), NSStringFromSize(_size));
-        const size_t height = CGBitmapContextGetHeight(context);
-        ITAssertWithMessage(height >= _size.height, @"bitmap height is %@ for context %@, too big for size %@", @(height), context, NSStringFromSize(_size));
+        data[i] = _datas[i].mutableBytes;
     }
 
     // i indexes into the array of pixels, always to the red value.
@@ -371,7 +353,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
     const unsigned char *bitmapBytes = _postprocessedData.bytes;
     if (!bitmapBytes) {
-        bitmapBytes = (const unsigned char *)CGBitmapContextGetData([self contextForIteration:0]);
+        bitmapBytes = _datas[0].bytes;
     }
 
     iTermCharacterBitmap *bitmap = [[iTermCharacterBitmap alloc] init];
@@ -539,6 +521,10 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
               skew:skew
          iteration:iteration];
     _haveDrawn = YES;
+    const NSUInteger length = CGBitmapContextGetBytesPerRow(_context) * CGBitmapContextGetHeight(_context);
+    NSMutableData *data = [NSMutableData dataWithBytes:CGBitmapContextGetData(_context)
+                                                length:length];
+    [_datas addObject:data];
 }
 
 - (void)fillBackgroundForIteration:(NSInteger)iteration context:(CGContextRef)context {
@@ -595,11 +581,9 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         }
     }
 
-    for (int i = 0; i < _numberOfIterationsNeeded; i++) {
-        ITAssertWithMessage(_contexts[i] == NULL, @"context %@/%@ leaking", @(i), @(_numberOfIterationsNeeded));
-        _contexts[i] = [iTermCharacterSource newBitmapContextOfSize:_size];
-        ITAssertWithMessage(_contexts[i], @"context %@/%@ is null for size %@", @(i), @(_numberOfIterationsNeeded), NSStringFromSize(_size));
-    }
+    _context = [iTermCharacterSource newBitmapContextOfSize:_size];
+    ITAssertWithMessage(_context, @"context is null for size %@", NSStringFromSize(_size));
+    _datas = [NSMutableArray array];
 }
 
 - (void)drawBackgroundIfNeededForIteration:(NSInteger)iteration
@@ -664,7 +648,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                         initialized:(BOOL)haveInitializedThisIteration {
     [self initializeStateIfNeededWithFont:runFont];
 
-    CGContextRef context = [self contextForIteration:iteration];
+    CGContextRef context = _context;
     [self drawBackgroundIfNeededForIteration:iteration
                                      context:context];
     [self setTextColorForIteration:iteration
@@ -702,7 +686,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
        iteration:(NSInteger)iteration {
     if (_boxDrawing) {
         [self prepareToDrawRunAtIteration:0 offset:offset runFont:nil skew:skew initialized:NO];
-        CGContextRef context = [self contextForIteration:iteration];
+        CGContextRef context = _context;
         assert(context);
         NSGraphicsContext *graphicsContext = [NSGraphicsContext graphicsContextWithCGContext:context flipped:YES];
         [NSGraphicsContext saveGraphicsState];
@@ -731,7 +715,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
         [self prepareToDrawRunAtIteration:iteration offset:offset runFont:runFont skew:skew initialized:haveInitializedThisIteration];
         haveInitializedThisIteration = YES;
-        CGContextRef context = [self contextForIteration:iteration];
+        CGContextRef context = _context;
 
         if (_isEmoji) {
             [self drawEmojiWithFont:runFont
