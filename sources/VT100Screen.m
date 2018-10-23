@@ -908,6 +908,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
         [self commandDidStartAtScreenCoord:newCommandStart];
     }
+    [terminal_ resetSavedCursorPositions];
 }
 
 // This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
