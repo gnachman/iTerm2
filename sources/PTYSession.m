@@ -4827,6 +4827,13 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         return NO;
     }
+    if ([[iTermController sharedInstance] terminalIsObscured:_delegate.realParentWindow threshold:0.5]) {
+        if (reason) {
+            *reason = iTermMetalUnavailableReasonWindowObscured;
+        }
+        return NO;
+    }
+
     if (_textview.transparencyAlpha < 1) {
         if (@available(macOS 10.14, *)) {
             if (iTermTextIsMonochrome()) {

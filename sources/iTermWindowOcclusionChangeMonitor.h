@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+extern NSString *const iTermWindowOcclusionDidChange;
+
 @interface iTermWindowOcclusionChangeMonitor : NSObject
 
 // The time when windows' occlusion may have last changed. This depends on

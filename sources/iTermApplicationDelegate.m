@@ -2165,6 +2165,8 @@ static BOOL hasBecomeActive = NO;
             return @"the tab bar is temporarily visible.";
         case iTermMetalUnavailableReasonScreensChanging:
             return @"the screen configuration has just changed.";
+        case iTermMetalUnavailableReasonWindowObscured:
+            return @"most of the window is not visible.";
     }
 
     return @"of an internal error. Please file a bug report!";

@@ -46,6 +46,7 @@
 #import "iTermToolbeltView.h"
 #import "iTermTouchBarButton.h"
 #import "iTermWarning.h"
+#import "iTermWindowOcclusionChangeMonitor.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "MovePaneController.h"
 #import "NSAlert+iTerm.h"
@@ -743,6 +744,10 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(applicationDidBecomeActive:)
                                                  name:NSApplicationDidBecomeActiveNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowOcclusionDidChange:)
+                                                 name:iTermWindowOcclusionDidChange
                                                object:nil];
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                            selector:@selector(activeSpaceDidChange:)
@@ -3087,6 +3092,10 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     PtyLog(@"Screen parameters changed.");
     [self canonicalizeWindowFrame];
+}
+
+- (void)windowOcclusionDidChange:(NSNotification *)notification {
+    [self updateUseMetalInAllTabs];
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification {

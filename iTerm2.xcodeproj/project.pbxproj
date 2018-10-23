@@ -1900,7 +1900,6 @@
 		A690F7051B424F15009F76D8 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
 		A693395C1851A61D00EBEA20 /* VT100ScreenMark.h in Headers */ = {isa = PBXBuildFile; fileRef = A693395A1851A61D00EBEA20 /* VT100ScreenMark.h */; };
 		A6936B491D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6936B471D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.h */; };
-		A6936B4A1D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B481D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.m */; };
 		A6936B4D1D2E0ABF00521B04 /* iTermScriptingWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A6936B4B1D2E0ABF00521B04 /* iTermScriptingWindow.h */; };
 		A6936B4E1D2E0ABF00521B04 /* iTermScriptingWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B4C1D2E0ABF00521B04 /* iTermScriptingWindow.m */; };
 		A6936B511D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.h in Headers */ = {isa = PBXBuildFile; fileRef = A6936B4F1D2F5CA200521B04 /* iTermAdditionalHotKeyObjectValue.h */; };
@@ -2606,6 +2605,7 @@
 		A6EFF2401D21949D00806EEF /* iTermShortcut.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF23E1D21949D00806EEF /* iTermShortcut.m */; };
 		A6EFF2471D21DD0700806EEF /* iTermSessionHotkeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF2451D21DD0700806EEF /* iTermSessionHotkeyController.h */; };
 		A6EFF2481D21DD0700806EEF /* iTermSessionHotkeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF2461D21DD0700806EEF /* iTermSessionHotkeyController.m */; };
+		A6F14ED9217EDAD000047D2F /* iTermWindowOcclusionChangeMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B481D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.m */; };
 		A6F385DE1FA55E2000739939 /* iTermSmartCursorColor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F385DC1FA55E2000739939 /* iTermSmartCursorColor.h */; };
 		A6F385DF1FA55E2000739939 /* iTermSmartCursorColor.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F385DD1FA55E2000739939 /* iTermSmartCursorColor.m */; };
 		A6F3E96E1D60E4F0000E97C4 /* iTermInitialDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F3E96C1D60E4F0000E97C4 /* iTermInitialDirectory.h */; };
@@ -9279,6 +9279,7 @@
 				A6A4865E20B6758D00493302 /* iTermPreferencesBaseViewController.m in Sources */,
 				A66F3CF81FED741E00AA2021 /* iTermTextRendererTransientState.mm in Sources */,
 				A67960E41F8201A1008A42BC /* iTermMetalDriver.m in Sources */,
+				A6F14ED9217EDAD000047D2F /* iTermWindowOcclusionChangeMonitor.m in Sources */,
 				A614F2671FE4B16400EEE919 /* iTermCharacterParts.m in Sources */,
 				A66719641DCE3772000CE608 /* iTermSocket.m in Sources */,
 				A6FE8D13209528F400B5C648 /* iTermPythonRuntimeDownloader.m in Sources */,
@@ -9716,7 +9717,6 @@
 				A6C7630F1B45C52B00E3C992 /* iTermColorMap.mm in Sources */,
 				53AFFC931DD38F1500E6CEC6 /* ToolWebView.m in Sources */,
 				A6C763561B45C52B00E3C992 /* iTermOpenQuicklyTableView.m in Sources */,
-				A6936B4A1D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.m in Sources */,
 				A62C3B2C1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m in Sources */,
 				A6C7635F1B45C52B00E3C992 /* iTermPopupWindowController.m in Sources */,
 				A62C3A8E1BCAE08300B5629D /* iTermDirectoryTree.m in Sources */,

@@ -8,9 +8,14 @@
 
 #import "iTermWindowOcclusionChangeMonitor.h"
 
+#import "iTermRateLimitedUpdate.h"
 #import "DebugLogging.h"
 
-@implementation iTermWindowOcclusionChangeMonitor
+NSString *const iTermWindowOcclusionDidChange = @"iTermWindowOcclusionDidChange";
+
+@implementation iTermWindowOcclusionChangeMonitor {
+    iTermRateLimitedUpdate *_rateLimit;
+}
 
 + (instancetype)sharedInstance {
     static id instance;
@@ -24,6 +29,8 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _rateLimit = [[iTermRateLimitedUpdate alloc] init];
+        _rateLimit.minimumInterval = 1.0;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(invalidateCachedOcclusion:)
                                                      name:NSWindowDidMoveNotification
@@ -62,7 +69,6 @@
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [super dealloc];
 }
 
 - (void)invalidateCachedOcclusion:(NSNotification *)notification {
@@ -72,6 +78,9 @@
 
 - (void)invalidateCachedOcclusion {
     _timeOfLastOcclusionChange = [NSDate timeIntervalSinceReferenceDate];
+    [_rateLimit performRateLimitedBlock:^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermWindowOcclusionDidChange object:nil];
+    }];
 }
 
 
