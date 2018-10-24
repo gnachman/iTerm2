@@ -136,8 +136,12 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                 [self setTabBarControlAutoresizingMask:(NSViewHeightSizable | NSViewMaxXMargin)];
                 break;
         }
-        [self addSubview:_tabBarBacking];
-        [_tabBarBacking addSubview:_tabBarControl];
+        if (@available(macOS 10.14, *)) {
+            [self addSubview:_tabBarBacking];
+            [_tabBarBacking addSubview:_tabBarControl];
+        } else {
+            [self addSubview:_tabBarControl];
+        }
         _tabBarControl.tabView = _tabView;
         [_tabView setDelegate:_tabBarControl];
         _tabBarControl.delegate = tabBarDelegate;
@@ -429,18 +433,26 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     assert(!_tabBarControlOnLoan);
     iTermTabBarControlView *view = _tabBarControl;
     _tabBarControlOnLoan = YES;
-    _tabBarBacking.hidden = YES;
+    if (@available(macOS 10.14, *)) {
+        _tabBarBacking.hidden = YES;
+    }
     return view;
 }
 
 - (void)returnTabBarControlView:(iTermTabBarControlView *)tabBarControl {
     assert(_tabBarControlOnLoan);
     _tabBarControlOnLoan = NO;
-    [_tabBarBacking addSubview:tabBarControl];
+    if (@available(macOS 10.14, *)) {
+        [_tabBarBacking addSubview:tabBarControl];
+    } else {
+        [self addSubview:tabBarControl];
+    }
     _tabBarControl.frame = _tabBarBacking.bounds;
     _tabBarControl = tabBarControl;
     [self.tabBarControl updateFlashing];
-    _tabBarBacking.hidden = NO;
+    if (@available(macOS 10.14, *)) {
+        _tabBarBacking.hidden = NO;
+    }
 }
 
 - (void)windowNumberDidChangeTo:(NSNumber *)number {
