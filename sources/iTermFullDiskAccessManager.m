@@ -55,6 +55,7 @@
     [alert addButtonWithTitle:@"Never Ask Again"];
     NSModalResponse response = [alert runModal];
     if (response == NSAlertFirstButtonReturn) {
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NoSyncHaveRequestedFullDiskAccess"];
         [self openSystemPreferencesToSecurityAndPrivacy];
     } else if (response == NSAlertSecondButtonReturn) {
         [self openFullDiskAccessDocs];
