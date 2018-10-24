@@ -29,5 +29,9 @@
                                                selected:(BOOL)selected
                                         highlightAmount:(CGFloat)highlightAmount
                                                  window:(NSWindow *)window;
+- (void)drawCellBackgroundSelected:(BOOL)selected
+                            inRect:(NSRect)cellFrame
+                      withTabColor:(NSColor *)tabColor
+                   highlightAmount:(CGFloat)highlightAmount;
 
 @end
