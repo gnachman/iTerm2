@@ -388,6 +388,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // programmatic moves or moves because of disconnecting a display.
     BOOL _windowIsMoving;
     NSInteger _screenBeforeMoving;
+    BOOL _constrainFrameAfterDeminiaturization;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -1210,8 +1211,38 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateTouchBarIfNeeded:NO];
 }
 
+- (BOOL)miniaturizedWindowShouldPreserveFrameUntilDeminiaturized {
+    if (self.window.isMiniaturized) {
+        switch (windowType_) {
+            case WINDOW_TYPE_NORMAL:
+            case WINDOW_TYPE_NO_TITLE_BAR:
+                DLog(@"Returning YES");
+                return YES;
+            case WINDOW_TYPE_TOP:
+            case WINDOW_TYPE_LEFT:
+            case WINDOW_TYPE_RIGHT:
+            case WINDOW_TYPE_BOTTOM:
+            case WINDOW_TYPE_TOP_PARTIAL:
+            case WINDOW_TYPE_LEFT_PARTIAL:
+            case WINDOW_TYPE_RIGHT_PARTIAL:
+            case WINDOW_TYPE_BOTTOM_PARTIAL:
+            case WINDOW_TYPE_LION_FULL_SCREEN:
+            case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            case WINDOW_TYPE_COUNT:
+                break;
+        }
+    }
+
+    DLog(@"Returning NO");
+    return NO;
+}
+
 // Allow frame to go off-screen while hotkey window is sliding in or out.
 - (BOOL)terminalWindowShouldConstrainFrameToScreen {
+    if ([self miniaturizedWindowShouldPreserveFrameUntilDeminiaturized]) {
+        _constrainFrameAfterDeminiaturization = YES;
+        return NO;
+    }
     iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
     return !([profileHotKey rollingIn] || [profileHotKey rollingOut]);
 }
@@ -2507,6 +2538,11 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         [self disableBlur];
     }
+    if (_constrainFrameAfterDeminiaturization) {
+        _constrainFrameAfterDeminiaturization = NO;
+        NSRect frame = [self.window constrainFrameRect:self.window.frame toScreen:self.window.screen];
+        [self.window setFrame:frame display:YES animate:NO];
+    }
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowDidDeminiaturize"
                                                         object:self
                                                       userInfo:nil];
@@ -3258,6 +3294,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize {
     DLog(@"windowWillResize: self=%@, proposedFrameSize=%@ screen=%@",
            self, NSStringFromSize(proposedFrameSize), self.window.screen);
+    DLog(@"%@", [NSThread callStackSymbols]);
     if (self.togglingLionFullScreen || self.lionFullScreen || self.window.screen == nil) {
         DLog(@"Accepting proposal");
         return proposedFrameSize;
@@ -3452,11 +3489,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowDidChangeScreen:(NSNotification *)notification {
+    BOOL canonicalize = ![self miniaturizedWindowShouldPreserveFrameUntilDeminiaturized];
     // This gets called when any part of the window enters or exits the screen and
     // appears to be spuriously called for nonnative fullscreen windows.
     DLog(@"windowDidChangeScreen called. This is known to happen when the screen didn't really change! screen=%@",
          self.window.screen);
-    if (!_inWindowDidChangeScreen) {
+    if (canonicalize && !_inWindowDidChangeScreen) {
         // Nicolas reported a bug where canonicalizeWindowFrame moved the window causing this to
         // be called re-entrantly, and eventually the stack overflowed. If we insist the window should
         // be on screen A and the OS insists it should be on screen B, we'll never agree, so just
