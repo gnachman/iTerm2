@@ -5079,6 +5079,9 @@ ITERM_WEAKLY_REFERENCEABLE
                 [self setBackgroundColor:nil];
                 [_contentView setColor:normalBackgroundColor];
             }
+            for (PTYSession *session in aTab.sessions) {
+                [session.view tabColorDidChange];
+            }
         }
     }
 }

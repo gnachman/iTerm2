@@ -200,4 +200,6 @@
 - (void)addSubview:(NSView *)view NS_UNAVAILABLE;
 - (void)removeMetalView;
 
+- (void)tabColorDidChange;
+
 @end

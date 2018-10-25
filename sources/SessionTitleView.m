@@ -186,7 +186,7 @@ static const CGFloat kButtonSize = 17;
     return [NSColor colorWithCalibratedWhite:whiteLevel alpha:1];
 }
 
-- (void)drawRect:(NSRect)dirtyRect {
+- (NSColor *)backgroundColor {
     NSColor *tabColor = delegate_.tabColor;
     if (tabColor) {
         CGFloat hue = tabColor.hueComponent;
@@ -223,19 +223,32 @@ static const CGFloat kButtonSize = 17;
                 break;
         }
         if ([delegate_ sessionTitleViewIsFirstResponder]) {
-            [tabColor set];
+            return tabColor;
         } else {
-            [[SessionTitleView colorByDimmingColor:tabColor byDimmingAmount:0.3] set];
+            return [SessionTitleView colorByDimmingColor:tabColor byDimmingAmount:0.3];
         }
-    } else {
-        [[self dimmedBackgroundColorWithAppearance:self.effectiveAppearance] set];
     }
+    return [self dimmedBackgroundColorWithAppearance:self.effectiveAppearance];
+}
+
+- (void)setDelegate:(id<SessionTitleViewDelegate>)delegate {
+    delegate_ = delegate;
+    [self updateBackgroundColor];
+}
+
+- (void)drawRect:(NSRect)dirtyRect {
+    [[self backgroundColor] set];
     NSRectFill(dirtyRect);
 
     [[NSColor blackColor] set];
     NSRectFill(NSMakeRect(dirtyRect.origin.x, 0, dirtyRect.size.width, 1));
 
     [super drawRect:dirtyRect];
+}
+
+- (void)updateBackgroundColor {
+    label_.backgroundColor = [self backgroundColor];
+    label_.drawsBackground = YES;
 }
 
 - (void)setTitle:(NSString *)title {
