@@ -115,6 +115,7 @@ static NSString *const kMarkAlertAction = @"Mark Alert Action";
 NSString *const kMarkAlertActionModalAlert = @"Modal Alert";
 NSString *const kMarkAlertActionPostNotification = @"Post Notification";
 NSString *const kShowFullscreenTabsSettingDidChange = @"kShowFullscreenTabsSettingDidChange";
+NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureInputNotification";
 
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
 static NSString *const kURLStoreRestorableStateKey = @"kURLStoreRestorableStateKey";
@@ -2319,6 +2320,7 @@ static BOOL hasBecomeActive = NO;
             --_secureInputCount;
         }
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermDidToggleSecureInputNotification object:nil];
     DLog(@"After: IsSecureEventInputEnabled returns %d", (int)IsSecureEventInputEnabled());
 }
 

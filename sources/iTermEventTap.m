@@ -24,13 +24,22 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
     if (self) {
         _types = types;
         _observers = [[NSMutableArray alloc] init];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(secureInputDidChange:)
+                                                     name:iTermDidToggleSecureInputNotification
+                                                   object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_observers release];
     [super dealloc];
+}
+
+- (void)secureInputDidChange:(NSNotification *)notification {
+    [self setEnabled:[self shouldBeEnabled]];
 }
 
 #pragma mark - APIs
@@ -78,6 +87,9 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
 
 - (BOOL)shouldBeEnabled {
     [self pruneReleasedObservers];
+    if (IsSecureEventInputEnabled()) {
+        return NO;
+    }
     return (self.remappingDelegate != nil) || (self.observers.count > 0);
 }
 
@@ -95,6 +107,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
                                         CGEventType type,
                                         CGEventRef event,
                                         void *refcon) {
+    NSLog(@"event tap for %@", event);
     iTermEventTap *eventTap = (id)refcon;
     return [eventTap eventTapCallbackWithProxy:proxy type:type event:event];
 }
