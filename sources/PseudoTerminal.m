@@ -385,6 +385,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL _openingPopupWindow;
 
     NSInteger _fullScreenRetryCount;
+
+    // This is true if the user is dragging the window by the titlebar. It should not be set for
+    // programmatic moves or moves because of disconnecting a display.
+    BOOL _windowIsMoving;
+    NSInteger _screenBeforeMoving;
 }
 
 @synthesize scope = _scope;
@@ -3747,10 +3752,24 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Returning from windowDidChangeScreen:.");
 }
 
-- (void)windowDidMove:(NSNotification *)notification
-{
+- (void)windowWillMove:(NSNotification *)notification {
+    // AFAICT this is only called when you move the window by dragging it.
+    DLog(@"Looks like the user started dragging the window.");
+    _windowIsMoving = YES;
+    _screenBeforeMoving = [[NSScreen screens] indexOfObject:self.window.screen];
+}
+
+- (void)windowDidMove:(NSNotification *)notification {
     DLog(@"%@: Window %@ moved. Called from %@", self, self.window, [NSThread callStackSymbols]);
     [self saveTmuxWindowOrigins];
+    if (_windowIsMoving && _isAnchoredToScreen) {
+        NSInteger screenIndex = [[NSScreen screens] indexOfObject:self.window.screen];
+        if (screenIndex != _screenBeforeMoving) {
+            DLog(@"User appears to have dragged the window from screen %@ to screen %@. Removing screen anchor.", @(_screenBeforeMoving), @(screenIndex));
+            _isAnchoredToScreen = NO;
+        }
+    }
+    _windowIsMoving = NO;
 }
 
 - (void)windowDidResize:(NSNotification *)aNotification {
