@@ -846,7 +846,7 @@ typedef struct iTermTextColorContext {
 }
 
 - (NSSize)drawBadgeInRect:(NSRect)rect {
-    NSRect source;
+    NSRect source = NSZeroRect;
     NSRect intersection = [iTermTextDrawingHelper rectForBadgeImageOfSize:_badgeImage.size
                                                           destinationRect:rect
                                                      destinationFrameSize:_frame.size
