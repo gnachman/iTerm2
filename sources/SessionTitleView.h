@@ -28,5 +28,6 @@
 @property(nonatomic, assign) int ordinal;
 
 - (void)updateTextColor;
+- (void)updateBackgroundColor;
 
 @end

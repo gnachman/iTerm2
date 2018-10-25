@@ -170,6 +170,16 @@ static const CGFloat kButtonSize = 17;
     [super drawRect:dirtyRect];
 }
 
+- (void)setDelegate:(id<SessionTitleViewDelegate>)delegate {
+    delegate_ = delegate;
+    [self updateBackgroundColor];
+}
+
+- (void)updateBackgroundColor {
+    label_.backgroundColor = [self.delegate sessionTitleViewBackgroundColor];
+    label_.drawsBackground = YES;
+}
+
 - (void)setTitle:(NSString *)title {
     if ([title isEqualToString:title_]) {
         return;
