@@ -1544,9 +1544,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     NSMutableArray<ScreenCharArray *> *result = [NSMutableArray array];
     for (NSInteger i = range.location; i < NSMaxRange(range); i++) {
         screen_char_t *line = [currentGrid_ screenCharsAtLineNumber:i - numLinesInLineBuffer];
-        ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:line
-                                                                length:width
-                                                          continuation:line[width]];
+        ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:line
+                                                                 length:width
+                                                           continuation:line[width]] autorelease];
         [result addObject:array];
     }
     return result;
