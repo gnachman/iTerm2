@@ -2168,6 +2168,8 @@ static BOOL hasBecomeActive = NO;
             return @"the screen configuration has just changed.";
         case iTermMetalUnavailableReasonWindowObscured:
             return @"most of the window is not visible.";
+        case iTermMetalUnavailableReasonContextAllocationFailure:
+            return @"of a temporary failure to allocate a graphics context.";
     }
 
     return @"of an internal error. Please file a bug report!";

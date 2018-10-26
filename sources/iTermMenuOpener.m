@@ -160,6 +160,7 @@
     NSInteger i = 0;
     while (element != nil && i < path.count) {
         element = [self childOfMenu:element withName:path[i]];
+#warning TODO: I appear to be over-releasing these elements. See the analyzer.
         [result addObject:(__bridge id _Nonnull)(element)];
         i++;
         if (i < path.count) {

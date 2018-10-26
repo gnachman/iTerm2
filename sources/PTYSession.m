@@ -482,6 +482,9 @@ static const NSUInteger kMaxHosts = 100;
     int _nextMetalDisabledToken;
     NSMutableSet *_metalDisabledTokens;
     BOOL _metalDeviceChanging;
+
+    CGContextRef _metalContext;
+    BOOL _errorCreatingMetalContext;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -710,7 +713,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [_copyModeState release];
     [_metalDisabledTokens release];
-
+    if (_metalContext) {
+        CGContextRelease(_metalContext);
+    }
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -4771,12 +4776,73 @@ ITERM_WEAKLY_REFERENCEABLE
 
 #pragma mark - Metal Support
 
+#pragma mark iTermMetalGlueDelegate
+
 - (void)metalGlueDidDrawFrameAndNeedsRedraw:(BOOL)redrawAsap NS_AVAILABLE_MAC(10_11) {
     if (_view.useMetal) {
         if (redrawAsap) {
             [_textview setNeedsDisplay:YES];
         }
     }
+}
+
+- (CGContextRef)metalGlueContext {
+    return _metalContext;
+}
+
++ (CGColorSpaceRef)metalColorSpace {
+    static dispatch_once_t onceToken;
+    static CGColorSpaceRef colorSpace;
+    dispatch_once(&onceToken, ^{
+        colorSpace = CGColorSpaceCreateDeviceRGB();
+        ITAssertWithMessage(colorSpace, @"Colorspace is %@", colorSpace);
+    });
+    return colorSpace;
+}
+
++ (CGContextRef)onePixelContext {
+    static CGContextRef context;
+    if (context == NULL) {
+        context = CGBitmapContextCreate(NULL,
+                                        1,
+                                        1,
+                                        8,
+                                        1 * 4,
+                                        [self metalColorSpace],
+                                        kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
+    }
+    return context;
+}
+
+- (void)setMetalContextSize:(CGSize)size {
+    DLog(@"%@", self);
+    if (!self.textview.window) {
+        DLog(@"No window");
+        CGContextRelease(_metalContext);
+        _metalContext = NULL;
+        return;
+    }
+
+    const CGFloat scale = self.textview.window.backingScaleFactor;
+    const int radius = (iTermTextureMapMaxCharacterParts / 2) * 2 + 1;
+    CGSize scaledSize = CGSizeMake(size.width * scale * radius, size.height * scale * radius);
+    if (_metalContext) {
+        if (CGSizeEqualToSize(scaledSize, CGSizeMake(CGBitmapContextGetWidth(_metalContext),
+                                                     CGBitmapContextGetHeight(_metalContext)))) {
+            DLog(@"No size change");
+            return;
+        }
+        CGContextRelease(_metalContext);
+        _metalContext = NULL;
+    }
+    DLog(@"allocate new metal context of size %@", NSStringFromSize(scaledSize));
+    _metalContext = CGBitmapContextCreate(NULL,
+                                          scaledSize.width,
+                                          scaledSize.height,
+                                          8,
+                                          scaledSize.width * 4,  // bytes per row
+                                          [PTYSession metalColorSpace],
+                                          kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host);
 }
 
 - (BOOL)metalAllowed {
@@ -4800,6 +4866,12 @@ ITERM_WEAKLY_REFERENCEABLE
     if (![iTermPreferences boolForKey:kPreferenceKeyUseMetal]) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonDisabled;
+        }
+        return NO;
+    }
+    if ([PTYSession onePixelContext] == nil) {
+        if (reason) {
+            *reason = iTermMetalUnavailableReasonContextAllocationFailure;
         }
         return NO;
     }
@@ -4958,6 +5030,12 @@ ITERM_WEAKLY_REFERENCEABLE
     return NO;
 }
 
+- (BOOL)willEnableMetal {
+    DLog(@"%@", self);
+    [self updateMetalDriver];
+    return _metalContext != nil;
+}
+
 - (void)setUseMetal:(BOOL)useMetal {
     if (@available(macOS 10.11, *)) {
         if (useMetal == _useMetal) {
@@ -4973,6 +5051,13 @@ ITERM_WEAKLY_REFERENCEABLE
         } else {
             _wrapper.useMetal = NO;
             [_metalDisabledTokens removeAllObjects];
+            if (_metalContext) {
+                // If metal is re-enabled later, it must not use the same context.
+                // It's possible that a metal driver thread has survived this point
+                // and will continue to use the context.
+                CGContextRelease(_metalContext);
+                _metalContext = NULL;
+            }
         }
         [_textview setNeedsDisplay:YES];
         [_cadenceController changeCadenceIfNeeded];
@@ -5076,6 +5161,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateMetalDriver NS_AVAILABLE_MAC(10_11) {
+    DLog(@"%@", self);
     const CGSize cellSize = CGSizeMake(_textview.charWidth, _textview.lineHeight);
     CGSize glyphSize;
     if (iTermTextIsMonochrome()) {
@@ -5083,17 +5169,52 @@ ITERM_WEAKLY_REFERENCEABLE
         NSRect rect = [iTermCharacterSource boundingRectForCharactersInRange:NSMakeRange(32, 127-32)
                                                                         font:_textview.font
                                                               baselineOffset:_textview.primaryFont.baselineOffset
-                                                                       scale:_view.window.backingScaleFactor ?: 1];
+                                                                       scale:_view.window.backingScaleFactor ?: 1
+                                                                     context:[PTYSession onePixelContext]];
         glyphSize.width = MAX(cellSize.width, NSMaxX(rect));
         glyphSize.height = MAX(cellSize.height, NSMaxY(rect));
     } else {
         glyphSize = cellSize;
     }
+    [self setMetalContextSize:glyphSize];
+    if (!_metalContext) {
+        DLog(@"%p Failed to allocate metal context. Disable metal and try again in 1 second.", self);
+        if (_errorCreatingMetalContext) {
+            DLog(@"Already have a retry queued.");
+            return;
+        }
+        _errorCreatingMetalContext = YES;
+        [self.delegate sessionUpdateMetalAllowed];
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+                           [weakSelf retryMetalAfterContextAllocationFailure];
+                       });
+        return;
+    }
     [_view.driver setCellSize:cellSize
        cellSizeWithoutSpacing:CGSizeMake(_textview.charWidthWithoutSpacing, _textview.charHeightWithoutSpacing)
                     glyphSize:glyphSize
                      gridSize:_screen.currentGrid.size
-                        scale:_view.window.screen.backingScaleFactor];
+                        scale:_view.window.screen.backingScaleFactor
+                      context:_metalContext];
+}
+
+- (void)retryMetalAfterContextAllocationFailure {
+    DLog(@"%p It's been one second since trying to allocate a metal context failed. Try again.", self);
+    if (!_errorCreatingMetalContext) {
+        DLog(@"Oddly, errorCreatingMetalContext is NO");
+        return;
+    }
+    DLog(@"%p reset error state", self);
+    _errorCreatingMetalContext = NO;
+    [self updateMetalDriver];
+    if (_metalContext) {
+        DLog(@"A metal context was allocated. Try to turn metal on for this tab.");
+        [self.delegate sessionUpdateMetalAllowed];
+    } else {
+        DLog(@"Failed to allocate context again. A retry should have been scheduled.");
+    }
 }
 
 #pragma mark - Captured Output
