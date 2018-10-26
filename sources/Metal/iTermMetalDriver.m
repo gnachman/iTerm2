@@ -79,6 +79,7 @@ typedef struct {
     int columns;
     CGFloat scale;
     CGSize glyphSize;
+    CGContextRef context;
 } iTermMetalDriverMainThreadState;
 
 @interface iTermMetalDriver()
@@ -220,6 +221,14 @@ typedef struct {
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    // This reference to _mainThreadState is *possibly* unsafe! dealloc gets called off the main
+    // queue. But there should not be any remaining references to mainThreadState once you get to
+    // dealloc.
+    CGContextRef context = _mainThreadState.context;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        CGContextRelease(context);
+    });
 }
 
 - (iTermMetalDriverMainThreadState *)mainThreadState {
@@ -250,7 +259,8 @@ typedef struct {
 cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
           glyphSize:(CGSize)glyphSize
            gridSize:(VT100GridSize)gridSize
-              scale:(CGFloat)scale {
+              scale:(CGFloat)scale
+            context:(CGContextRef)context {
     scale = MAX(1, scale);
     cellSize.width *= scale;
     cellSize.height *= scale;
@@ -265,12 +275,18 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         DLog(@"Warning: scale is 0");
     }
     DLog(@"Cell size is now %@x%@, grid size is now %@x%@", @(cellSize.width), @(cellSize.height), @(gridSize.width), @(gridSize.height));
+    if (self.mainThreadState->context) {
+        CGContextRelease(self.mainThreadState->context);
+        self.mainThreadState->context = NULL;
+    }
+    CGContextRetain(context);
     self.mainThreadState->cellSize = cellSize;
     self.mainThreadState->cellSizeWithoutSpacing = cellSizeWithoutSpacing;
     self.mainThreadState->rows = MAX(1, gridSize.height);
     self.mainThreadState->columns = MAX(1, gridSize.width);
     self.mainThreadState->scale = scale;
     self.mainThreadState->glyphSize = glyphSize;
+    self.mainThreadState->context = context;
 }
 
 #pragma mark - MTKViewDelegate

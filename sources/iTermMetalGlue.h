@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalGlueDelegate<NSObject>
 - (void)metalGlueDidDrawFrameAndNeedsRedraw:(BOOL)redrawAsap;
+- (CGContextRef)metalGlueContext;
 @end
 
 NS_CLASS_AVAILABLE(10_11, NA)

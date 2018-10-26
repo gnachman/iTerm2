@@ -146,7 +146,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
 cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
           glyphSize:(CGSize)glyphSize
            gridSize:(VT100GridSize)gridSize
-              scale:(CGFloat)scale;
+              scale:(CGFloat)scale
+            context:(CGContextRef)context;
 
 // Draw and return immediately, calling completion block after GPU's completion
 // block is called.

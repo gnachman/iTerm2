@@ -158,7 +158,8 @@ static NSColor *ColorForVector(vector_float4 v) {
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
                           screen:(VT100Screen *)screen
-                            glue:(iTermMetalGlue *)glue NS_DESIGNATED_INITIALIZER;
+                            glue:(iTermMetalGlue *)glue
+                         context:(CGContextRef)context NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 @end
@@ -210,7 +211,10 @@ static NSColor *ColorForVector(vector_float4 v) {
     if (self.textView.drawingHelper.delegate == nil) {
         return nil;
     }
-    return [[iTermMetalPerFrameState alloc] initWithTextView:self.textView screen:self.screen glue:self];
+    return [[iTermMetalPerFrameState alloc] initWithTextView:self.textView
+                                                      screen:self.screen
+                                                        glue:self
+                                                     context:self.delegate.metalGlueContext];
 }
 
 - (void)metalDidFindImages:(NSSet<NSString *> *)foundImages
@@ -267,21 +271,30 @@ static NSColor *ColorForVector(vector_float4 v) {
 
 #pragma mark -
 
-@implementation iTermMetalPerFrameState
+@implementation iTermMetalPerFrameState {
+    CGContextRef _metalContext;
+}
 
 - (instancetype)initWithTextView:(PTYTextView *)textView
                           screen:(VT100Screen *)screen
-                            glue:(iTermMetalGlue *)glue {
+                            glue:(iTermMetalGlue *)glue
+                         context:(CGContextRef)context {
     assert([NSThread isMainThread]);
     self = [super init];
     if (self) {
         _startTime = [NSDate timeIntervalSinceReferenceDate];
-
+        _metalContext = CGContextRetain(context);
         [textView performBlockWithFlickerFixerGrid:^{
             [self loadAllWithTextView:textView screen:screen glue:glue];
         }];
     }
     return self;
+}
+
+- (void)dealloc {
+    if (_metalContext) {
+        CGContextRelease(_metalContext);
+    }
 }
 
 - (void)loadAllWithTextView:(PTYTextView *)textView
@@ -1346,13 +1359,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     NSFont *font = fontInfo.font;
     assert(font);
 
-    int radius = iTermTextureMapMaxCharacterParts / 2;
-    if (iTermTextIsMonochrome()) {
-        if (isAscii) {
-            // These are always guaranteed to fit in a single part.
-            radius = 0;
-        }
-    }
+    const int radius = iTermTextureMapMaxCharacterParts / 2;
     iTermCharacterSource *characterSource =
         [[iTermCharacterSource alloc] initWithCharacter:CharToStr(glyphKey->code, glyphKey->isComplex)
                                                    font:font
@@ -1366,7 +1373,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                              fakeItalic:fakeItalic
                                             antialiased:isAscii ? _asciiAntialias : _nonasciiAntialias
                                              boxDrawing:glyphKey->boxDrawing
-                                                 radius:radius];
+                                                 radius:radius
+                                                context:_metalContext];
     if (characterSource == nil) {
         return nil;
     }
@@ -1374,6 +1382,9 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     NSMutableDictionary<NSNumber *, iTermCharacterBitmap *> *result = [NSMutableDictionary dictionary];
     [characterSource.parts enumerateObjectsUsingBlock:^(NSNumber * _Nonnull partNumber, NSUInteger idx, BOOL * _Nonnull stop) {
         int part = partNumber.intValue;
+        if (isAscii && part != iTermImagePartFromDeltas(0, 0)) {
+            return;
+        }
         result[partNumber] = [characterSource bitmapForPart:part];
     }];
     if (emoji) {

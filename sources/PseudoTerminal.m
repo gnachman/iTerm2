@@ -1289,7 +1289,7 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_BOTTOM_PARTIAL:
             case WINDOW_TYPE_LION_FULL_SCREEN:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            case WINDOW_TYPE_COUNT:
+            case WINDOW_TYPE_COMPACT:
                 break;
         }
     }

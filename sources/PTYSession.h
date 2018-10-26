@@ -747,6 +747,7 @@ typedef enum {
 - (id)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11);
 - (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token NS_AVAILABLE_MAC(10_11);
 
+- (BOOL)willEnableMetal;
 - (BOOL)metalAllowed:(out iTermMetalUnavailableReason *)reason;
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length;
 - (void)injectData:(NSData *)data;

@@ -5031,7 +5031,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (!foregroundTab) {
         _metalUnavailableReason = iTermMetalUnavailableReasonTabInactive;
     }
-    const BOOL useMetal = allowed && satisfiesKeyRequirement && foregroundTab;
+    BOOL useMetal = NO;
+    if (allowed && satisfiesKeyRequirement && foregroundTab) {
+        useMetal = [self.sessions allWithBlock:^BOOL(PTYSession *session) {
+            return [session willEnableMetal];
+        }];
+        if (!useMetal) {
+            DLog(@"Not enabling metal. A session failed in willEnableMetal.");
+            _metalUnavailableReason = iTermMetalUnavailableReasonContextAllocationFailure;
+        }
+    }
     [self.sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         obj.useMetal = useMetal;
     }];
