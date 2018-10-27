@@ -1028,15 +1028,19 @@ static void HandleSigChld(int n) {
 }
 
 - (void)finishHandshakeWithJobInServer:(const iTermForkState *)forkState ttyState:(const iTermTTYState *)ttyState {
+    DLog(@"begin handshake");
     iTermFileDescriptorServerConnection serverConnection =
     iTermFileDescriptorClientRead(forkState->connectionFd, forkState->deadMansPipe[0]);
+    DLog(@"got connection");
     close(forkState->deadMansPipe[0]);
+    DLog(@"closed dead mans pipe");
     if (serverConnection.ok) {
         // We intentionally leave connectionFd open. If iTerm2 stops unexpectedly then its closure
         // lets the server know it should call accept(). We now have two copies of the master PTY
         // file descriptor. Let's close the original one because attachToServer: will use the
         // copy in serverConnection.
         close(fd);
+        DLog(@"close fd");
         fd = -1;
 
         // The serverConnection has the wrong server PID because the connection was made prior
@@ -1044,8 +1048,9 @@ static void HandleSigChld(int n) {
         serverConnection.serverPid = forkState->pid;
 
         // Connect this task to the server's PIDs and file descriptor.
+        DLog(@"attaching...");
         [self attachToServer:serverConnection];
-
+        DLog(@"attached. Set nonblocking");
         self.tty = [NSString stringWithUTF8String:ttyState->tty];
         fcntl(fd, F_SETFL, O_NONBLOCK);
     } else {
@@ -1053,6 +1058,7 @@ static void HandleSigChld(int n) {
         NSLog(@"Server died immediately!");
         [_delegate taskDiedImmediately];
     }
+    DLog(@"fini");
 }
 
 - (NSString *)tty {
@@ -1087,9 +1093,11 @@ static void HandleSigChld(int n) {
 }
 
 - (void)didForkParent:(const iTermForkState *)forkState newEnviron:(char **)newEnviron ttyState:(iTermTTYState *)ttyState {
+    DLog(@"free environment");
     [self freeEnvironment:newEnviron];
 
     // Make sure the master side of the pty is closed on future exec() calls.
+    DLog(@"fcntl");
     fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
 
     if (forkState->connectionFd > 0) {
@@ -1171,7 +1179,9 @@ static void HandleSigChld(int n) {
     BOOL closeFileDescriptors = !runJobsInServers;
     if (runJobsInServers) {
         // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
+        DLog(@"get path to UDS");
         NSString *tempPath = [self pathToNewUnixDomainSocket];
+        DLog(@"done");
         if (tempPath == nil) {
             [self freeEnvironment:newEnviron];
             if (completion != nil) {
@@ -1181,7 +1191,9 @@ static void HandleSigChld(int n) {
         }
 
         // Begin listening on that path as a unix domain socket.
+        DLog(@"fork");
         fd = iTermForkToRunJobInServer(&forkState, &ttyState, tempPath);
+        DLog(@"done forking");
         _serverPid = forkState.pid;
     } else {
         [self forkToRunJobDirectlyWithForkState:&forkState ttyState:&ttyState];

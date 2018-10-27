@@ -174,7 +174,9 @@ NS_ASSUME_NONNULL_BEGIN
     }
 
     void (^wrapper)(BOOL) = ^(BOOL ok) {
+        DLog(@"factory completion wrapper starting");
         [aSession didFinishInitialization:ok];
+        DLog(@"factory did finish initialization");
         if (completion) {
             completion(ok);
         }
