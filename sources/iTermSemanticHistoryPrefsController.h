@@ -20,6 +20,7 @@ extern NSString *kVSCodeIdentifier;
 extern NSString *kTextmateIdentifier;
 extern NSString *kTextmate2Identifier;
 extern NSString *kBBEditIdentifier;
+extern NSString *kEmacsAppIdentifier;
 
 extern NSString *kSemanticHistoryBestEditorAction;
 extern NSString *kSemanticHistoryUrlAction;
