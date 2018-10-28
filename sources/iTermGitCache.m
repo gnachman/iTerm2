@@ -32,4 +32,8 @@
     return _cache[path];
 }
 
+- (void)removeStateForPath:(NSString *)path {
+    [_cache removeObjectForKey:path];
+}
+
 @end

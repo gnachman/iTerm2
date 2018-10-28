@@ -74,6 +74,16 @@ NS_ASSUME_NONNULL_BEGIN
     _update();
 }
 
+- (void)setCurrentDirectory:(NSString *)currentDirectory {
+    if (currentDirectory == _currentDirectory ||
+        [currentDirectory isEqualToString:_currentDirectory]) {
+        return;
+    }
+    [[iTermGitPollWorker sharedInstance] invalidateCacheForPath:currentDirectory];
+    _currentDirectory = [currentDirectory copy];
+    [self poll];
+}
+
 @end
 
 NS_ASSUME_NONNULL_END

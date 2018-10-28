@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setState:(iTermGitState *)state forPath:(NSString *)path ttl:(NSTimeInterval)ttl;
 - (iTermGitState *)stateForPath:(NSString *)path;
+- (void)removeStateForPath:(NSString *)path;
 
 @end
 

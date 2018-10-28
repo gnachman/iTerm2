@@ -46,6 +46,10 @@ typedef void (^iTermGitCallback)(iTermGitState *);
     return self;
 }
 
+- (void)invalidateCacheForPath:(NSString *)path {
+    [_cache removeStateForPath:path];
+}
+
 - (void)requestPath:(NSString *)path completion:(iTermGitCallback)completion {
     iTermGitState *cached = [_cache stateForPath:path];
     if (cached) {
