@@ -3470,6 +3470,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)tabBarAlwaysVisible {
+    if (@available(macOS 10.14, *)) {
+        if (togglingLionFullScreen_ || [self lionFullScreen]) {
+            return YES;
+        }
+    }
     return ![iTermPreferences boolForKey:kPreferenceKeyHideTabBar];
 }
 
@@ -4205,6 +4210,9 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.14, *)) {
         if (_contentView.tabBarControlOnLoan) {
             return NO;
+        }
+        if (togglingLionFullScreen_ || [self lionFullScreen]) {
+            return YES;
         }
     }
     return _contentView.tabBarShouldBeVisible;
