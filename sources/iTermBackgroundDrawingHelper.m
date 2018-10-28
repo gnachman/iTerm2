@@ -233,8 +233,6 @@
         *boxRect2 = NSIntersectionRect(rightPillarboxInViewCoords, destinationRect);
 
         *drawRect = NSIntersectionRect(viewRect, destinationRect);
-        sourceRect.origin.x = 0;
-        sourceRect.size.width = imageSize.width;
     } else {
         // Top letterbox
         CGFloat letterboxHeight = (viewSize.height - viewRect.size.height) / 2;
@@ -251,11 +249,11 @@
                                                         viewSize.width,
                                                         letterboxHeight);
         *boxRect2 = NSIntersectionRect(bottomLetterboxInViewCoords, destinationRect);
-        sourceRect.origin.y = 0;
-        sourceRect.size.height = imageSize.height;
     }
 
-    return sourceRect;
+    // Ensure the bounds of the source rect are legit. The out-of-bounds parts are covered by letter/pillar boxes.
+    NSRect safeSourceRect = NSIntersectionRect(sourceRect, NSMakeRect(0, 0, imageSize.width, imageSize.height));
+    return safeSourceRect;
 }
 
 @end
