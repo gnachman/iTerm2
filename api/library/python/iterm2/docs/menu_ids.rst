@@ -150,6 +150,7 @@ Toolbelt > Set Default Width                                                    
 Window > Minimize                                                                       `Minimize`                                                                    
 Window > Zoom                                                                           `Zoom`                                                                        
 Window > Edit Window Title                                                              `Edit Window Title`                                                           
+Window > Merge All Windows                                                              `Merge All Windows`                                                           
 Window > Arrange Windows Horizontally                                                   `Arrange Windows Horizontally`                                                
 Window > Arrange Split Panes Evenly                                                     `Arrange Split Panes Evenly`                                                  
 Window > Exposé all Tabs                                                                `Exposé all Tabs`                                                             
