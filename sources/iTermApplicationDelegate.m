@@ -133,7 +133,7 @@ static BOOL gStartupActivitiesPerformed = NO;
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 static BOOL hasBecomeActive = NO;
 
-@interface iTermApplicationDelegate () <iTermPasswordManagerDelegate>
+@interface iTermApplicationDelegate () <iTermPasswordManagerDelegate, SUUpdaterDelegate>
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
@@ -290,6 +290,7 @@ static BOOL hasBecomeActive = NO;
     if (![iTermTipController sharedInstance]) {
         [_showTipOfTheDay.menu removeItem:_showTipOfTheDay];
     }
+    suUpdater.delegate = self;
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
@@ -2390,6 +2391,20 @@ static BOOL hasBecomeActive = NO;
             [quickLookController takeControl];
         }
     }
+}
+
+#pragma mark - SUUpdaterDelegate
+
+- (void)updaterWillRelaunchApplication:(SUUpdater *)updater {
+    DLog(@"issue 6256: updater will relaunch app");
+    for (NSWindow *window in NSApp.orderedWindows) {
+        DLog(@"issue 6256: invalidate restorable state of %@", window);
+        [window invalidateRestorableState];
+    }
+}
+
+- (nullable NSString *)feedURLStringForUpdater:(SUUpdater *)updater {
+    return @"https://iterm2.com/misc/issue6256.xml";
 }
 
 @end

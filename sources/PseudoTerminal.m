@@ -8184,9 +8184,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state {
+    DLog(@"issue 6256: %@", self);
     if (doNotSetRestorableState_) {
         // The window has been destroyed beyond recognition at this point and
         // there is nothing to save.
+        DLog(@"issue 6256: window rekt");
         return;
     }
     // Don't save and restore the hotkey window. The OS only restores windows that are in the window
@@ -8201,6 +8203,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Don't restore tmux windows since their canonical state is on the server.
     if ([self allTabsAreTmuxTabs]) {
         [[self ptyWindow] setRestoreState:nil];
+        DLog(@"issue 6256: not saving tmux window");
         return;
     }
     if (_wellFormed) {
@@ -8210,7 +8213,7 @@ ITERM_WEAKLY_REFERENCEABLE
         lastArrangement_ = [[self arrangementExcludingTmuxTabs:YES
                                              includingContents:includeContents] retain];
         NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
-        DLog(@"Time to encode state for window %@: %@", self, @(end - start));
+        DLog(@"issue 6256: Time to encode state for window %@: %@", self, @(end - start));
     }
     // For whatever reason, setting the value in the coder here doesn't work but
     // doing it in PTYWindow immediately after this method's caller returns does
