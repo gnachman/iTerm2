@@ -20,6 +20,7 @@ extern const CGFloat iTermStatusBarViewControllerIconWidth;
 @property (nonatomic) CGFloat desiredOrigin;
 @property (nonatomic) CGFloat leftMargin;
 @property (nonatomic) CGFloat rightMargin;
+@property (nonatomic) BOOL componentHidden;
 
 @property (nonatomic, readonly) NSColor *backgroundColor;
 @property (nonatomic) CGFloat leftSeparatorOffset;

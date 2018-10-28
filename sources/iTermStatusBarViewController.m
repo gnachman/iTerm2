@@ -285,7 +285,11 @@ const CGFloat iTermStatusBarHeight = 21;
         return @[];
     }
 
-    NSMutableArray<iTermStatusBarContainerView *> *prioritized = [_containerViews sortedArrayUsingComparator:^NSComparisonResult(iTermStatusBarContainerView * _Nonnull obj1, iTermStatusBarContainerView * _Nonnull obj2) {
+    NSArray<iTermStatusBarContainerView *> *eligibleContainerViews = [_containerViews filteredArrayUsingBlock:
+                                                                      ^BOOL(iTermStatusBarContainerView *view) {
+                                                                          return !view.componentHidden;
+                                                                      }];
+    NSMutableArray<iTermStatusBarContainerView *> *prioritized = [eligibleContainerViews sortedArrayUsingComparator:^NSComparisonResult(iTermStatusBarContainerView * _Nonnull obj1, iTermStatusBarContainerView * _Nonnull obj2) {
         NSComparisonResult result = [@(obj2.component.statusBarComponentPriority) compare:@(obj1.component.statusBarComponentPriority)];
         if (result != NSOrderedSame) {
             return result;
@@ -349,10 +353,13 @@ const CGFloat iTermStatusBarHeight = 21;
         } else {
             view = [[iTermStatusBarContainerView alloc] initWithComponent:component];
         }
-        component.delegate = self;
         [updatedContainerViews addObject:view];
     }
     _containerViews = updatedContainerViews;
+    // setDelegate: may have side effects that expect _containerViews to be populated.
+    for (id<iTermStatusBarComponent> component in components) {
+        component.delegate = self;
+    }
     [self updateColors];
     [self.view setNeedsLayout:YES];
 }
@@ -400,6 +407,12 @@ const CGFloat iTermStatusBarHeight = 21;
 
 - (NSColor *)statusBarComponentDefaultTextColor {
     return [self.delegate statusBarDefaultTextColor];
+}
+
+- (void)statusBarComponent:(id<iTermStatusBarComponent>)component setHidden:(BOOL)hidden {
+    iTermStatusBarContainerView *view = [self containerViewForComponent:component];
+    view.componentHidden = hidden;
+    [self.view setNeedsLayout:YES];
 }
 
 @end

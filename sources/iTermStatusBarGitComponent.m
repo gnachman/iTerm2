@@ -31,6 +31,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     iTermGitPoller *_gitPoller;
     iTermVariableReference *_pwdRef;
     iTermVariableReference *_hostRef;
+    BOOL _hidden;
 }
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
@@ -55,6 +56,11 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         [self updatePollerEnabled];
     };
     return self;
+}
+
+- (void)setDelegate:(id<iTermStatusBarComponentDelegate>)delegate {
+    [super setDelegate:delegate];
+    [self statusBarComponentUpdate];
 }
 
 - (NSImage *)statusBarComponentIcon {
@@ -133,8 +139,28 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     return [[NSAttributedString alloc] initWithString:string ?: @"" attributes:attributes];
 }
 
+- (BOOL)shouldBeHidden {
+    return !self.pollerReady || _gitPoller.state.branch.length == 0;
+}
+
+- (BOOL)pollerReady {
+    return _gitPoller.state && _gitPoller.enabled;
+}
+
+- (void)statusBarComponentUpdate {
+    [super statusBarComponentUpdate];
+    if (self.delegate == nil) {
+        return;
+    }
+    const BOOL shouldBeHidden = self.shouldBeHidden;
+    if (shouldBeHidden != _hidden) {
+        _hidden = shouldBeHidden;
+        [self.delegate statusBarComponent:self setHidden:_hidden];
+    }
+}
+
 - (nullable NSAttributedString *)attributedStringValue {
-    if (!_gitPoller.state || !_gitPoller.enabled) {
+    if (!self.pollerReady) {
         return nil;
     }
     static NSAttributedString *upImage;
