@@ -8,25 +8,119 @@
 #import "iTermBackgroundDrawingHelper.h"
 #import "SessionView.h"
 
+typedef struct {
+    NSRect solidBackgroundColorRect;
+    
+    NSImage *image;
+    NSRect imageDestinationRect;
+    NSRect imageSourceRect;
+    NSRect boxes[2];
+    NSRect imageRect;
+} iTermBackgroundDraws;
+
 @implementation iTermBackgroundDrawingHelper {
     NSImage *_patternedImage;
 }
 
 - (void)drawBackgroundImageInView:(NSView *)view
+                        container:(NSView *)container
                          viewRect:(NSRect)rect
-           blendDefaultBackground:(BOOL)blendDefaultBackground {
+                      contentRect:(NSRect)contentRect
+           blendDefaultBackground:(BOOL)blendDefaultBackground
+                             flip:(BOOL)shouldFlip {
+    const BOOL debug = NO;
+    const iTermBackgroundDraws draws = [self drawsForBackgroundImageInView:view
+                                                                  viewRect:rect
+                                                             containerView:container
+                                                               contentRect:contentRect
+                                                    blendDefaultBackground:blendDefaultBackground];
+    
     const float alpha = [self.delegate backgroundDrawingHelperUseTransparency] ? (1.0 - [self.delegate backgroundDrawingHelperTransparency]) : 1.0;
+    if (!draws.image) {
+        [[[self.delegate backgroundDrawingHelperDefaultBackgroundColor] colorWithAlphaComponent:alpha] set];
+        NSRectFillUsingOperation(draws.solidBackgroundColorRect, NSCompositingOperationCopy);
+        return;
+    }
+
+    NSCompositingOperation operation;
+    if (@available(macOS 10.14, *)) {
+        operation = NSCompositingOperationSourceOver;
+    } else {
+        operation = NSCompositingOperationCopy;
+    }
+
+    NSRect (^flip)(NSRect) = ^NSRect(NSRect r) {
+        return NSMakeRect(r.origin.x, draws.image.size.height - r.origin.y - r.size.height, r.size.width, r.size.height);
+    };
+    NSRect (^identity)(NSRect) = ^NSRect(NSRect r) {
+        return r;
+    };
+    NSRect (^transform)(NSRect) = shouldFlip ? flip : identity;
+    
+    [draws.image drawInRect:draws.imageDestinationRect
+                   fromRect:transform(draws.imageSourceRect)
+                  operation:operation
+                   fraction:alpha
+             respectFlipped:YES
+                      hints:nil];
+    // Draw letterboxes/pillarboxes
+    NSColor *defaultBackgroundColor = [self.delegate backgroundDrawingHelperDefaultBackgroundColor];
+    [defaultBackgroundColor set];
+    NSRectFillUsingOperation(draws.boxes[0], NSCompositingOperationSourceOver);
+    NSRectFillUsingOperation(draws.boxes[1], NSCompositingOperationSourceOver);
+    
+    if (blendDefaultBackground) {
+        // Blend default background color over background image.
+        [[defaultBackgroundColor colorWithAlphaComponent:1 - [self.delegate backgroundDrawingHelperBlending]] set];
+        NSRectFillUsingOperation(draws.imageRect, NSCompositingOperationSourceOver);
+    }
+    
+    if (debug) {
+        NSBezierPath *path = [NSBezierPath bezierPath];
+        [path moveToPoint:rect.origin];
+        [path lineToPoint:NSMakePoint(NSMaxX(rect), NSMaxY(rect))];
+        [[NSColor redColor] set];
+        [path setLineWidth:1];
+        [path stroke];
+        NSFrameRect(rect);
+        NSRect localRect = [container convertRect:rect fromView:view];
+        NSString *s = [NSString stringWithFormat:@"rect=%@ local=%@ src=%@ dst=%@",
+                       NSStringFromRect(rect),
+                       NSStringFromRect(localRect),
+                       NSStringFromRect(NSIntegralRect(draws.imageSourceRect)),
+                       NSStringFromRect(NSIntegralRect(draws.imageDestinationRect))];
+
+        [[NSColor whiteColor] set];
+        NSRectFill(NSMakeRect(100, rect.origin.y+20, 600, 24));
+
+        [s drawAtPoint:NSMakePoint(100, rect.origin.y+20) withAttributes:@{ NSForegroundColorAttributeName: [NSColor blackColor] }];
+    }
+}
+
+- (iTermBackgroundDraws)drawsForBackgroundImageInView:(NSView *)view
+                                             viewRect:(NSRect)rect
+                                        containerView:(NSView *)containerView
+                                          contentRect:(NSRect)contentRect
+                               blendDefaultBackground:(BOOL)blendDefaultBackground {
+    iTermBackgroundDraws result;
     NSImage *backgroundImage = [self.delegate backgroundDrawingHelperImage];
+    result.image = backgroundImage;
+    if (!backgroundImage && blendDefaultBackground) {
+        // No image, so just draw background color.
+        result.solidBackgroundColorRect = rect;
+        return result;
+    }
+    result.solidBackgroundColorRect = NSZeroRect;
+    
     if (backgroundImage) {
-        SessionView *sessionView = [self.delegate backgroundDrawingHelperView];
-        NSRect localRect = [sessionView convertRect:rect fromView:view];
+        NSRect localRect = [containerView convertRect:rect fromView:view];
         NSImage *image;
-        const NSRect contentRect = sessionView.contentRect;
         NSRect sourceRect;
-        NSRect boxes[2] = { NSZeroRect, NSZeroRect };
+        result.boxes[0] = NSZeroRect;
+        result.boxes[1] = NSZeroRect;
         NSRect drawRect = rect;
         NSRect imageRect = rect;
-        
+
         switch ([self.delegate backgroundDrawingHelperBackgroundImageMode]) {
             case iTermBackgroundImageModeStretch:
                 image = backgroundImage;
@@ -36,7 +130,7 @@
                 break;
                 
             case iTermBackgroundImageModeTile:
-                image = [self patternedImage];
+                image = [self patternedImageForViewOfSize:contentRect.size];
                 sourceRect = [self sourceRectForImageSize:image.size
                                                  viewSize:contentRect.size
                                           destinationRect:localRect];
@@ -45,67 +139,43 @@
             case iTermBackgroundImageModeScaleAspectFill:
                 image = backgroundImage;
                 sourceRect = [self scaleAspectFillSourceRectForImageSize:image.size
-                                                                viewSize:contentRect.size
+                                                             contentRect:contentRect
                                                          destinationRect:localRect];
                 break;
                 
             case iTermBackgroundImageModeScaleAspectFit:
                 image = backgroundImage;
-                localRect = NSIntersectionRect(localRect, sessionView.bounds);
+                localRect = NSIntersectionRect(localRect, containerView.bounds);
                 sourceRect = [self scaleAspectFitSourceRectForForImageSize:image.size
                                                                   viewSize:contentRect.size
                                                            destinationRect:localRect
                                                                   drawRect:&drawRect
-                                                                  boxRect1:&boxes[0]
-                                                                  boxRect2:&boxes[1]
+                                                                  boxRect1:&result.boxes[0]
+                                                                  boxRect2:&result.boxes[1]
                                                                  imageRect:&imageRect];
-                drawRect = [sessionView convertRect:drawRect fromView:view];
-                for (int i = 0; i < sizeof(boxes) / sizeof(*boxes); i++) {
-                    boxes[i] = [sessionView convertRect:boxes[i] fromView:view];
+                drawRect = [view convertRect:drawRect fromView:containerView];
+                for (int i = 0; i < sizeof(result.boxes) / sizeof(*result.boxes); i++) {
+                    result.boxes[i] = [view convertRect:result.boxes[i] fromView:containerView];
                 }
-                imageRect = [sessionView convertRect:imageRect fromView:view];
+                imageRect = [view convertRect:imageRect fromView:containerView];
                 break;
         }
-
-        NSCompositingOperation operation;
-        if (@available(macOS 10.14, *)) {
-            operation = NSCompositingOperationSourceOver;
-        } else {
-            operation = NSCompositingOperationCopy;
-        }
-        [image drawInRect:drawRect
-                 fromRect:sourceRect
-                operation:operation
-                 fraction:alpha
-           respectFlipped:YES
-                    hints:nil];
-        // Draw letterboxes/pillarboxes
-        NSColor *defaultBackgroundColor = [self.delegate backgroundDrawingHelperDefaultBackgroundColor];
-        [defaultBackgroundColor set];
-        NSRectFillUsingOperation(boxes[0], NSCompositingOperationSourceOver);
-        NSRectFillUsingOperation(boxes[1], NSCompositingOperationSourceOver);
-
-        if (blendDefaultBackground) {
-            // Blend default background color over background image.
-            [[defaultBackgroundColor colorWithAlphaComponent:1 - [self.delegate backgroundDrawingHelperBlending]] set];
-            NSRectFillUsingOperation(imageRect, NSCompositingOperationSourceOver);
-        }
-    } else if (blendDefaultBackground) {
-        // No image, so just draw background color.
-        [[[self.delegate backgroundDrawingHelperDefaultBackgroundColor] colorWithAlphaComponent:alpha] set];
-        NSRectFillUsingOperation(rect, NSCompositingOperationCopy);
+        result.image = image;
+        result.imageDestinationRect = drawRect;
+        result.imageSourceRect = sourceRect;
+        result.imageRect = imageRect;
     }
+    return result;
 }
 
 #pragma mark - Private
 
-- (NSImage *)patternedImage {
+- (NSImage *)patternedImageForViewOfSize:(NSSize)size {
     // If there is a tiled background image, tesselate _backgroundImage onto
     // _patternedImage, which will be the source for future background image
     // drawing operations.
-    SessionView *view = [self.delegate backgroundDrawingHelperView];
-    if (!_patternedImage || !NSEqualSizes(_patternedImage.size, view.contentRect.size)) {
-        _patternedImage = [[NSImage alloc] initWithSize:view.contentRect.size];
+    if (!_patternedImage || !NSEqualSizes(_patternedImage.size, size)) {
+        _patternedImage = [[NSImage alloc] initWithSize:size];
         [_patternedImage lockFocus];
         NSColor *pattern = [NSColor colorWithPatternImage:[self.delegate backgroundDrawingHelperImage]];
         [pattern drawSwatchInRect:NSMakeRect(0,
@@ -131,8 +201,9 @@
 }
 
 - (NSRect)scaleAspectFillSourceRectForImageSize:(NSSize)imageSize
-                                       viewSize:(NSSize)viewSize
+                                    contentRect:(NSRect)contentRect
                                 destinationRect:(NSRect)destinationRect {
+    const NSSize viewSize = contentRect.size;
     CGFloat imageAspectRatio = imageSize.width / imageSize.height;
     CGFloat viewAspectRatio = viewSize.width / viewSize.height;
     NSRect imageSpaceRect;

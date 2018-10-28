@@ -213,6 +213,8 @@ typedef enum {
 - (void)sessionDidChangeGraphic:(PTYSession *)session
                      shouldShow:(BOOL)shouldShow
                           image:(NSImage *)image;
+- (NSView *)sessionContainerView:(PTYSession *)session;
+
 
 @end
 

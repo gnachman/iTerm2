@@ -204,7 +204,8 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (BOOL)textViewTerminalStateForMenuItem:(NSMenuItem *)menuItem;
 - (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem;
 - (void)textViewResetTerminal;
-
+- (CGRect)textViewRelativeFrame;
+- (CGSize)textViewContainerSize;
 @end
 
 @interface iTermHighlightedRow : NSObject

@@ -142,7 +142,9 @@ static NSColor *ColorForVector(vector_float4 v) {
     BOOL _cutOutRightCorner;
     BOOL _cutOutLeftCorner;
     NSEdgeInsets _edgeInsets;
-
+    CGRect _relativeFrame;
+    CGSize _containerSize;
+        
     // Row on screen to characters with annotation underline on that row.
     NSDictionary<NSNumber *, NSIndexSet *> *_rowToAnnotationRanges;
     NSArray<iTermHighlightedRow *> *_highlightedRows;
@@ -333,6 +335,8 @@ static NSColor *ColorForVector(vector_float4 v) {
     _firstVisibleAbsoluteLineNumber = _visibleRange.start.y + totalScrollbackOverflow;
     _lastVisibleAbsoluteLineNumber = _visibleRange.end.y + totalScrollbackOverflow;
     _baselineOffset = drawingHelper.baselineOffset;
+    _relativeFrame = textView.delegate.textViewRelativeFrame;
+    _containerSize = textView.delegate.textViewContainerSize;
 }
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -1427,6 +1431,17 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
 - (const iTermData *const)lineForRow:(int)y {
     return _screenCharLines[y];
+}
+
+- (CGRect)relativeFrame {
+    return NSMakeRect(_relativeFrame.origin.x,
+                      1 - _relativeFrame.size.height - _relativeFrame.origin.y,
+                      _relativeFrame.size.width,
+                      _relativeFrame.size.height);
+}
+
+- (CGSize)containerSize {
+    return _containerSize;
 }
 
 #pragma mark - Color

@@ -41,6 +41,9 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     // Show per-pane title bar with split panes.
     IBOutlet NSButton *_showPaneTitles;
 
+    // Separate background images per pane
+    IBOutlet NSButton *_separateBackgroundImages;
+    
     // Hide menu bar in non-lion fullscreen.
     IBOutlet NSButton *_hideMenuBarInFullscreen;
 
@@ -141,6 +144,11 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     info = [self defineControl:_showPaneTitles
                            key:kPreferenceKeyShowPaneTitles
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [weakSelf postRefreshNotification]; };
+
+    info = [self defineControl:_separateBackgroundImages
+                           key:kPreferenceKeyPerPaneBackgroundImage
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 

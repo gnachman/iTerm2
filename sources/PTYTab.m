@@ -5197,4 +5197,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (NSView *)sessionContainerView:(PTYSession *)session {
+    return root_;
+}
+
 @end

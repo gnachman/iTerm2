@@ -6927,9 +6927,43 @@ ITERM_WEAKLY_REFERENCEABLE
         _backgroundDrawingHelper = [[iTermBackgroundDrawingHelper alloc] init];
         _backgroundDrawingHelper.delegate = self;
     }
-    [_backgroundDrawingHelper drawBackgroundImageInView:view
-                                               viewRect:rect
-                                 blendDefaultBackground:blendDefaultBackground];
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        [_backgroundDrawingHelper drawBackgroundImageInView:view
+                                                  container:self.view
+                                                   viewRect:rect
+                                                contentRect:self.view.contentRect
+                                     blendDefaultBackground:blendDefaultBackground
+                                                       flip:NO];
+    } else {
+        NSView *container = [self.delegate sessionContainerView:self];
+        [_backgroundDrawingHelper drawBackgroundImageInView:view
+                                                  container:container
+                                                   viewRect:NSIntersectionRect(rect, view.enclosingScrollView.documentVisibleRect)
+                                                contentRect:container.bounds
+                                     blendDefaultBackground:blendDefaultBackground
+                                                       flip:YES];
+    }
+}
+
+- (CGRect)textViewRelativeFrame {
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        return CGRectMake(0, 0, 1, 1);
+    }
+    NSView *container = [self.delegate sessionContainerView:self];
+    const NSRect viewRect = [container convertRect:self.view.bounds fromView:self.view];
+    const NSRect containerBounds = container.bounds;
+    return CGRectMake(viewRect.origin.x / containerBounds.size.width,
+                      viewRect.origin.y / containerBounds.size.height,
+                      viewRect.size.width / containerBounds.size.width,
+                      viewRect.size.height / containerBounds.size.height);
+}
+
+- (CGSize)textViewContainerSize {
+    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+        return self.view.scrollview.frame.size;
+    }
+    NSView *container = [self.delegate sessionContainerView:self];
+    return container.bounds.size;
 }
 
 - (NSImage *)textViewBackgroundImage {

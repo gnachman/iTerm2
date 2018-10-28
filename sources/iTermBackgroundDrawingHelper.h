@@ -25,7 +25,10 @@
 @property (nonatomic, weak) id<iTermBackgroundDrawingHelperDelegate> delegate;
 
 - (void)drawBackgroundImageInView:(NSView *)view
+                        container:(NSView *)container
                          viewRect:(NSRect)rect
-           blendDefaultBackground:(BOOL)blendDefaultBackground;
+                      contentRect:(NSRect)contentRect
+           blendDefaultBackground:(BOOL)blendDefaultBackground
+                             flip:(BOOL)shouldFlip;
 
 @end
