@@ -115,6 +115,8 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
     return [NSColor blackColor];
 }
 
+- (void)statusBarComponent:(id<iTermStatusBarComponent>)component setHidden:(BOOL)hidden {
+}
 
 @end
 

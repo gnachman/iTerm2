@@ -78,7 +78,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (nullable NSArray<NSString *> *)stringVariants {
-    return [self variantsOf:self.cached ?: @""];
+    return [self variantsOf:[self transformedValue:self.cached ?: @""]];
+}
+
+- (NSString *)transformedValue:(NSString *)value {
+    return value;
 }
 
 - (void)updateTextFieldIfNeeded {
@@ -189,11 +193,22 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-@implementation iTermStatusBarWorkingDirectoryComponent
+@implementation iTermStatusBarWorkingDirectoryComponent {
+    NSString *_home;
+}
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey, id> *)configuration
                                 scope:(nullable iTermVariableScope *)scope {
+    _home = [NSHomeDirectory() copy];
     return [super initWithPath:@"session.path" configuration:configuration scope:scope];
+}
+
+- (NSString *)transformedValue:(NSString *)value {
+    if (_home && [value hasPrefix:_home]) {
+        return [@"~" stringByAppendingString:[value substringFromIndex:_home.length]];
+    } else {
+        return value;
+    }
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {

@@ -217,8 +217,12 @@ const CGFloat iTermStatusBarHeight = 21;
 
     // Find views that can grow
     NSArray<iTermStatusBarContainerView *> *views = [_visibleContainerViews filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *view) {
+        double preferredWidth = view.component.statusBarComponentPreferredWidth;
+        if (view.component.statusBarComponentIcon) {
+            preferredWidth += iTermStatusBarViewControllerIconWidth;
+        }
         return ([view.component statusBarComponentCanStretch] &&
-                floor(view.component.statusBarComponentPreferredWidth) > floor(view.desiredWidth));
+                floor(preferredWidth) > floor(view.desiredWidth));
     }];
 
 
@@ -256,7 +260,11 @@ const CGFloat iTermStatusBarHeight = 21;
         const NSInteger numberBefore = views.count;
         // Remove satisifed views.
         views = [views filteredArrayUsingBlock:^BOOL(iTermStatusBarContainerView *view) {
-            const BOOL unsatisfied = floor(view.component.statusBarComponentPreferredWidth) > ceil(view.desiredWidth);
+            double preferredWidth = view.component.statusBarComponentPreferredWidth;
+            if (view.component.statusBarComponentIcon) {
+                preferredWidth += iTermStatusBarViewControllerIconWidth;
+            }
+            const BOOL unsatisfied = floor(preferredWidth) > ceil(view.desiredWidth);
             if (unsatisfied) {
                 DLog(@"%@ unsatisfied prefers=%@ allocated=%@", view.component.class, @(view.component.statusBarComponentPreferredWidth), @(view.desiredWidth));
             }

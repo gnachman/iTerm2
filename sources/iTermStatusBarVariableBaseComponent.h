@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // If you override stringVariants you don't need to provide this.
 - (NSString *)stringByCompressingString:(NSString *)source;
+- (NSString *)transformedValue:(NSString *)value;
 
 @end
 
