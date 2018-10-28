@@ -221,6 +221,11 @@ static const CGFloat kButtonSize = 17;
     [self updateTextColor];
 }
 
+- (void)viewDidMoveToWindow {
+    [super viewDidMoveToWindow];
+    [self updateTextColor];
+}
+
 - (void)updateTextColor {
     CGFloat whiteLevel = 0;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];

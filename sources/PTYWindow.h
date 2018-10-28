@@ -52,6 +52,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 - (BOOL)terminalWindowShouldConstrainFrameToScreen;
 - (NSColor *)terminalWindowDecorationBackgroundColor;
 - (NSColor *)terminalWindowDecorationTextColor;
+- (NSColor *)terminalWindowDecorationControlColor;
 - (BOOL)terminalWindowUseMinimalStyle;
 - (BOOL)ptyWindowFullScreen;
 @end
@@ -69,6 +70,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 
 - (NSColor *)it_terminalWindowDecorationBackgroundColor;
 - (NSColor *)it_terminalWindowDecorationTextColor;
+- (NSColor *)it_terminalWindowDecorationControlColor;
 - (BOOL)it_terminalWindowUseMinimalStyle;
 
 - (void)smartLayout;

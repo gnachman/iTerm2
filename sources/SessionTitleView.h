@@ -27,4 +27,6 @@
 @property(nonatomic, assign) double dimmingAmount;
 @property(nonatomic, assign) int ordinal;
 
+- (void)updateTextColor;
+
 @end

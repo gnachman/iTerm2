@@ -596,6 +596,10 @@ static NSDate* lastResizeDate_;
     [_title setDimmingAmount:amount];
 }
 
+- (void)updateColors {
+    [_title updateTextColor];
+}
+
 - (void)setDimmed:(BOOL)isDimmed {
     if (isDimmed == _dim) {
         return;

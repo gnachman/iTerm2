@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermPreferences.h"
 #import "NSAppearance+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "PTYWindow.h"
 
 @implementation PTYSplitView {
@@ -23,24 +24,15 @@
 }
 
 - (NSColor *)dividerColor {
-    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
-        return self.window.ptyWindow.it_terminalWindowDecorationBackgroundColor;
-    }
-    switch ([self.effectiveAppearance it_tabStyle:preferredStyle]) {
-        case TAB_STYLE_AUTOMATIC:
-        case TAB_STYLE_MINIMAL:
-            assert(NO);
-            
-        case TAB_STYLE_LIGHT:
-        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-            return [NSColor lightGrayColor];
-            break;
-        case TAB_STYLE_DARK:
-        case TAB_STYLE_DARK_HIGH_CONTRAST:
-            return [NSColor darkGrayColor];
-            break;
-    }
+    NSColor *color = self.window.ptyWindow.it_terminalWindowDecorationControlColor;
+    return color;
+}
+
+// NSSplitView, that paragon of quality, does not redraw itself properly
+// on 10.14 (and, who knows, maybe earlier versions) unless you subclass
+// drawRect.
+- (void)drawRect:(NSRect)dirtyRect {
+    [super drawRect:dirtyRect];
 }
 
 - (NSString *)description

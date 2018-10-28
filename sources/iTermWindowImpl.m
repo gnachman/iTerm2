@@ -440,6 +440,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self.ptyDelegate terminalWindowDecorationTextColor];
 }
 
+- (NSColor *)it_terminalWindowDecorationControlColor {
+    return [self.ptyDelegate terminalWindowDecorationControlColor];
+}
+
 - (BOOL)it_terminalWindowUseMinimalStyle {
     return [self.ptyDelegate terminalWindowUseMinimalStyle];
 }

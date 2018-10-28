@@ -170,6 +170,7 @@
 - (void)setDimmed:(BOOL)isDimmed;
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed;
 - (void)updateDim;
+- (void)updateColors;
 - (void)saveFrameSize;
 - (void)restoreFrameSize;
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move session:(id)session;

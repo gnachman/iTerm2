@@ -680,6 +680,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 
     DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
     [self setWindowWithWindowType:windowType
+                  savedWindowType:savedWindowType
            windowTypeForStyleMask:(windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) ? windowType : savedWindowType
                  hotkeyWindowType:hotkeyWindowType
                      initialFrame:initialFrame];
@@ -1291,6 +1292,30 @@ ITERM_WEAKLY_REFERENCEABLE
         }
 
         return [NSColor colorWithCalibratedWhite:whiteLevel alpha:1];
+    }
+}
+
+- (NSColor *)terminalWindowDecorationControlColor {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (self.shouldUseMinimalStyle) {
+        NSColor *color = [self terminalWindowDecorationBackgroundColor];
+        const CGFloat perceivedBrightness = [color perceivedBrightness];
+        const CGFloat target = perceivedBrightness < 0.5 ? 1 : 0;
+        return [color colorDimmedBy:0.15 towardsGrayLevel:target];
+    }
+    switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_MINIMAL:
+            assert(NO);
+            
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            return [NSColor lightGrayColor];
+            break;
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+            return [NSColor darkGrayColor];
+            break;
     }
 }
 
@@ -3960,11 +3985,15 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSWindow *)setWindowWithWindowType:(iTermWindowType)windowType
+                      savedWindowType:(iTermWindowType)savedWindowType
                windowTypeForStyleMask:(iTermWindowType)windowTypeForStyleMask
                      hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                          initialFrame:(NSRect)initialFrame {
     const BOOL panel = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel);
-    const BOOL compact = windowType == WINDOW_TYPE_COMPACT;
+    const BOOL compact = ((windowType == WINDOW_TYPE_COMPACT) ||
+                          ((windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
+                            windowType == WINDOW_TYPE_LION_FULL_SCREEN) &&
+                           (savedWindowType == WINDOW_TYPE_COMPACT)));
     Class windowClass;
     if (panel) {
         if (compact) {
@@ -4013,6 +4042,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSWindow *oldWindow = self.window;
     oldWindow.delegate = nil;
     [self setWindowWithWindowType:newWindowType
+                  savedWindowType:savedWindowType_
            windowTypeForStyleMask:newWindowType
                  hotkeyWindowType:_hotkeyWindowType
                      initialFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]];
@@ -4208,11 +4238,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)tabBarShouldBeVisible {
     if (@available(macOS 10.14, *)) {
-        if (_contentView.tabBarControlOnLoan) {
-            return NO;
-        }
         if (togglingLionFullScreen_ || [self lionFullScreen]) {
             return YES;
+        }
+        if (_contentView.tabBarControlOnLoan) {
+            return NO;
         }
     }
     return _contentView.tabBarShouldBeVisible;
@@ -4318,6 +4348,14 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)didChangeAnyFullScreen {
     for (PTYSession *session in self.allSessions) {
         [session updateStatusBarStyle];
+    }
+    if (@available(macOS 10.14, *)) {
+        if (lionFullScreen_) {
+            self.window.styleMask = self.styleMask | NSWindowStyleMaskFullScreen;
+        } else {
+            self.window.styleMask = [self styleMask];
+        }
+        [self repositionWidgets];
     }
 }
 
@@ -4444,6 +4482,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:NO];
     }
     self.window.styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType_ hotkeyWindowType:_hotkeyWindowType];
+    [PseudoTerminal updateDecorationsOfWindow:self.window forType:savedWindowType_];
     [_contentView.tabBarControl updateFlashing];
     [self fitTabsToWindow];
     [self repositionWidgets];
@@ -4458,10 +4497,10 @@ ITERM_WEAKLY_REFERENCEABLE
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
     lionFullScreen_ = NO;
-    [self didChangeAnyFullScreen];
 
     DLog(@"Window did exit fullscreen. Set window type to %d", savedWindowType_);
     self.windowType = savedWindowType_;
+    [self didChangeAnyFullScreen];
 
     [_contentView.tabBarControl updateFlashing];
     // Set scrollbars appropriately

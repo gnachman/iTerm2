@@ -5117,6 +5117,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self updateFlexibleViewColors];
     }
     [self.delegate tabSessionDidChangeBackgroundColor:self];
+    for (PTYSession *session in self.sessions) {
+        [session.view updateColors];
+    }
+    [root_ setNeedsDisplay:YES];
 }
 
 - (void)sessionKeyLabelsDidChange:(PTYSession *)session {
