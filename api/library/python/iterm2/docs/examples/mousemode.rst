@@ -41,7 +41,7 @@ folder.
         defaults = { "reporting": "session.mouseReportingMode" }
 
         # Register the component.
-        await iterm2.Registration.async_register_status_bar_component(connection, component, coro, defaults=defaults)
+        await component.async_register(connection, coro, defaults=defaults)
 
     iterm2.run_forever(main)
 
