@@ -235,7 +235,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     const NSUInteger length = destRowSize * _partSize.height;
 
     if (iTermTextIsMonochrome()) {
-        if (!_postprocessed && !_isEmoji && !_boxDrawing) {
+        if (!_postprocessed && !_isEmoji) {
             [self performPostProcessing];
         }
     }
@@ -455,20 +455,13 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     // same trick.
     _haveTestedForEmoji = YES;
 
-    if (runFont == nil) {
-        // Box drawing character
-        _isEmoji = NO;
-        _numberOfIterationsNeeded = 1;
-    } else {
-        // Not a box drawing character
-        NSString *fontName = CFBridgingRelease(CTFontCopyFamilyName(runFont));
-        _isEmoji = ([fontName isEqualToString:@"AppleColorEmoji"] ||
-                    [fontName isEqualToString:@"Apple Color Emoji"]);
-        _numberOfIterationsNeeded = 1;
-        if (!_isEmoji) {
-            if (iTermTextIsMonochrome()) {
-                _numberOfIterationsNeeded = 4;
-            }
+    NSString *fontName = CFBridgingRelease(CTFontCopyFamilyName(runFont));
+    _isEmoji = ([fontName isEqualToString:@"AppleColorEmoji"] ||
+                [fontName isEqualToString:@"Apple Color Emoji"]);
+    _numberOfIterationsNeeded = 1;
+    if (!_isEmoji) {
+        if (iTermTextIsMonochrome()) {
+            _numberOfIterationsNeeded = 4;
         }
     }
 
@@ -570,31 +563,27 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
 }
 
+- (void)drawBoxAtOffset:(CGPoint)offset {
+    NSGraphicsContext *graphicsContext = [NSGraphicsContext graphicsContextWithCGContext:_context flipped:YES];
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:graphicsContext];
+    NSAffineTransform *transform = [NSAffineTransform transform];
+
+    const CGFloat scaledCellHeight = _cellSize.height * _scale;
+    const CGFloat scaledCellHeightWithoutSpacing = _cellSizeWithoutSpacing.height * _scale;
+    const float verticalShift = round((scaledCellHeight - scaledCellHeightWithoutSpacing) / (2 * _scale)) * _scale;
+
+    [transform translateXBy:offset.x yBy:offset.y + (_baselineOffset + _cellSize.height) * _scale - verticalShift];
+    [transform scaleXBy:1 yBy:-1];
+    [transform concat];
+    [self drawBoxInContext:_context offset:CGPointZero];
+    [NSGraphicsContext restoreGraphicsState];
+}
+
 - (void)drawRuns:(CFArrayRef)runs
         atOffset:(CGPoint)offset
             skew:(CGFloat)skew
        iteration:(NSInteger)iteration {
-    if (_boxDrawing) {
-        [self prepareToDrawRunAtIteration:0 offset:offset runFont:nil skew:skew initialized:NO];
-        CGContextRef context = _context;
-        assert(context);
-        NSGraphicsContext *graphicsContext = [NSGraphicsContext graphicsContextWithCGContext:context flipped:YES];
-        [NSGraphicsContext saveGraphicsState];
-        [NSGraphicsContext setCurrentContext:graphicsContext];
-        NSAffineTransform *transform = [NSAffineTransform transform];
-
-        const CGFloat scaledCellHeight = _cellSize.height * _scale;
-        const CGFloat scaledCellHeightWithoutSpacing = _cellSizeWithoutSpacing.height * _scale;
-        const float verticalShift = round((scaledCellHeight - scaledCellHeightWithoutSpacing) / (2 * _scale)) * _scale;
-
-        [transform translateXBy:offset.x yBy:offset.y + (_baselineOffset + _cellSize.height) * _scale - verticalShift];
-        [transform scaleXBy:1 yBy:-1];
-        [transform concat];
-        [self drawBoxInContext:context offset:CGPointZero];
-        [NSGraphicsContext restoreGraphicsState];
-        return;
-    }
-
     BOOL haveInitializedThisIteration = NO;
     for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
         CTRunRef run = CFArrayGetValueAtIndex(runs, j);
@@ -607,7 +596,9 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         haveInitializedThisIteration = YES;
         CGContextRef context = _context;
 
-        if (_isEmoji) {
+        if (_boxDrawing) {
+            [self drawBoxAtOffset:offset];
+        } else if (_isEmoji) {
             [self drawEmojiWithFont:runFont
                              offset:offset
                              buffer:buffer
