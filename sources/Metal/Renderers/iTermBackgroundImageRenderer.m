@@ -14,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) NSSize imageSize;
 @property (nonatomic) CGRect frame;
 @property (nonatomic) CGSize containerSize;
+@property (nonatomic) vector_float4 defaultBackgroundColor;
+@property (nullable, nonatomic, strong) id<MTLBuffer> box1;
+@property (nullable, nonatomic, strong) id<MTLBuffer> box2;
 @end
 
 @implementation iTermBackgroundImageRendererTransientState
@@ -37,11 +40,15 @@ NS_ASSUME_NONNULL_BEGIN
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
     iTermMetalBufferPool *_alphaPool;
 #endif
+    iTermMetalBufferPool *_colorPool;
+    iTermMetalBufferPool *_box1Pool;
+    iTermMetalBufferPool *_box2Pool;
     iTermBackgroundImageMode _mode;
     NSImage *_image;
     id<MTLTexture> _texture;
     CGRect _frame;
     CGSize _containerSize;
+    vector_float4 _color;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -57,6 +64,9 @@ NS_ASSUME_NONNULL_BEGIN
             _alphaPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(float)];
         }
 #endif
+        _box1Pool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
+        _box2Pool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
+        _colorPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
     }
     return self;
 }
@@ -73,11 +83,13 @@ NS_ASSUME_NONNULL_BEGIN
             mode:(iTermBackgroundImageMode)mode
            frame:(CGRect)frame
    containerSize:(CGSize)containerSize
+           color:(vector_float4)defaultBackgroundColor
          context:(nullable iTermMetalBufferPoolContext *)context {
     if (image != _image) {
         _texture = image ? [_metalRenderer textureFromImage:image context:context] : nil;
     }
     _frame = frame;
+    _color = defaultBackgroundColor;
     _containerSize = containerSize;
     _image = image;
     _mode = mode;
@@ -92,6 +104,33 @@ NS_ASSUME_NONNULL_BEGIN
     
 }
 #endif
+
+- (id<MTLBuffer>)colorBufferWithColor:(vector_float4)color
+                                alpha:(CGFloat)alpha
+                          poolContext:(iTermMetalBufferPoolContext *)poolContext {
+    return [_colorPool requestBufferFromContext:poolContext
+                                      withBytes:&color
+                                 checkIfChanged:YES];
+}
+
+- (id<MTLBuffer>)boxBufferWithRect:(CGRect)rect
+                               box:(int)number
+                       poolContext:(iTermMetalBufferPoolContext *)poolContext {
+    iTermMetalBufferPool *pool = number == 1 ? _box1Pool : _box2Pool;
+    const iTermVertex vertices[] = {
+        // Pixel Positions       Texture Coordinates
+        { { CGRectGetMaxX(rect), CGRectGetMinY(rect) }, { 0, 0 } },
+        { { CGRectGetMinX(rect), CGRectGetMinY(rect) }, { 0, 0 } },
+        { { CGRectGetMinX(rect), CGRectGetMaxY(rect) }, { 0, 0 } },
+        
+        { { CGRectGetMaxX(rect), CGRectGetMinY(rect) }, { 0, 0 } },
+        { { CGRectGetMinX(rect), CGRectGetMaxY(rect) }, { 0, 0 } },
+        { { CGRectGetMaxX(rect), CGRectGetMaxY(rect) }, { 0, 0 } },
+    };
+    return [pool requestBufferFromContext:poolContext
+                                withBytes:vertices
+                           checkIfChanged:YES];
+}
 
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
@@ -110,12 +149,14 @@ NS_ASSUME_NONNULL_BEGIN
         fragmentBuffers = @{};
     }
 #else
+    float alpha = 1;
     _metalRenderer.fragmentFunctionName = tState.repeat ? @"iTermBackgroundImageRepeatFragmentShader" : @"iTermBackgroundImageClampFragmentShader";
     fragmentBuffers = @{};
 #endif
     
     tState.pipelineState = [_metalRenderer pipelineState];
 
+    tState.pipelineState = _metalRenderer.pipelineState;
     [_metalRenderer drawWithTransientState:tState
                              renderEncoder:frameData.renderEncoder
                           numberOfVertices:6
@@ -123,6 +164,29 @@ NS_ASSUME_NONNULL_BEGIN
                              vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer }
                            fragmentBuffers:fragmentBuffers
                                   textures:@{ @(iTermTextureIndexPrimary): tState.texture }];
+
+    if (tState.box1) {
+        assert(tState.box2);
+        id<MTLBuffer> colorBuffer = [self colorBufferWithColor:tState.defaultBackgroundColor
+                                                         alpha:alpha
+                                                   poolContext:tState.poolContext];
+        _metalRenderer.fragmentFunctionName = @"iTermBackgroundImageLetterboxFragmentShader";
+        tState.pipelineState = _metalRenderer.pipelineState;
+        [_metalRenderer drawWithTransientState:tState
+                                 renderEncoder:frameData.renderEncoder
+                              numberOfVertices:6
+                                  numberOfPIUs:0
+                                 vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.box1 }
+                               fragmentBuffers:@{ @(iTermFragmentInputIndexColor): colorBuffer }
+                                      textures:@{}];
+        [_metalRenderer drawWithTransientState:tState
+                                 renderEncoder:frameData.renderEncoder
+                              numberOfVertices:6
+                                  numberOfPIUs:0
+                                 vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.box2 }
+                               fragmentBuffers:@{ @(iTermFragmentInputIndexColor): colorBuffer }
+                                      textures:@{}];
+    }
 }
 
 - (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
@@ -145,6 +209,7 @@ NS_ASSUME_NONNULL_BEGIN
     tState.imageSize = _image.size;
     tState.repeat = (_mode == iTermBackgroundImageModeTile);
     tState.frame = _frame;
+    tState.defaultBackgroundColor = _color;
     tState.containerSize = _containerSize;
 }
 
@@ -212,6 +277,8 @@ NS_ASSUME_NONNULL_BEGIN
             CGRect globalQuadFrame;
             CGFloat globalLetterboxHeight = 0;
             CGFloat globalPillarboxWidth = 0;
+            CGRect globalBox1 = CGRectZero;
+            CGRect globalBox2 = CGRectZero;
             if (imageAspectRatio > containerAspectRatio) {
                 // Image is wide relative to view.
                 // There will be letterboxes top and bottom.
@@ -220,6 +287,8 @@ NS_ASSUME_NONNULL_BEGIN
                                              minY + globalLetterboxHeight,
                                              containerWidth,
                                              containerHeight - globalLetterboxHeight * 2);
+                globalBox1 = CGRectMake(0, 0, containerWidth, globalLetterboxHeight);
+                globalBox2 = CGRectMake(0, containerSize.height - globalLetterboxHeight, containerWidth, globalLetterboxHeight);
             } else {
                 // Image is tall relative to view.
                 // There will be pillarboxes left and right.
@@ -228,7 +297,18 @@ NS_ASSUME_NONNULL_BEGIN
                                              minY,
                                              containerWidth - globalPillarboxWidth * 2,
                                              containerHeight);
+                globalBox1 = CGRectMake(0, 0, globalPillarboxWidth, containerHeight);
+                globalBox2 = CGRectMake(containerWidth - globalPillarboxWidth, 0, globalPillarboxWidth, containerHeight);
             }
+            CGRect box1 = CGRectIntersection(globalBox1, myFrameInContainer);
+            box1.origin.x -= myFrameInContainer.origin.x;
+            box1.origin.y -= myFrameInContainer.origin.y;
+            CGRect box2 = CGRectIntersection(globalBox2, myFrameInContainer);
+            box2.origin.x -= myFrameInContainer.origin.x;
+            box2.origin.y -= myFrameInContainer.origin.y;
+            tState.box1 = [self boxBufferWithRect:box1 box:1 poolContext:tState.poolContext];
+            tState.box2 = [self boxBufferWithRect:box2 box:2 poolContext:tState.poolContext];
+
             quadFrame = CGRectIntersection(myFrameInContainer, globalQuadFrame);
             quadFrame.origin.x -= myFrameInContainer.origin.x;
             quadFrame.origin.y -= myFrameInContainer.origin.y;

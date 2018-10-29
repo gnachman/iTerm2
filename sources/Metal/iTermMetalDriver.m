@@ -907,6 +907,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                   mode:mode
                                  frame:frameData.perFrameState.relativeFrame
                          containerSize:frameData.perFrameState.containerSize
+                                 color:frameData.perFrameState.defaultBackgroundColor
                                context:frameData.framePoolContext];
 }
 

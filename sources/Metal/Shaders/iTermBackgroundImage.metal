@@ -70,3 +70,9 @@ iTermBackgroundImageWithAlphaRepeatFragmentShader(iTermBackgroundImageVertexFunc
     colorSample.w = static_cast<half>(*alpha);
     return colorSample;
 }
+
+fragment half4
+iTermBackgroundImageLetterboxFragmentShader(iTermBackgroundImageVertexFunctionOutput in [[stage_in]],
+                                            constant float4 &color [[ buffer(iTermFragmentInputIndexColor) ]]) {
+    return static_cast<half4>(color);
+}

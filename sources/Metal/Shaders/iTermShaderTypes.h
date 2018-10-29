@@ -29,6 +29,7 @@ typedef enum {
     iTermFragmentBufferIndexIndicatorAlpha = 3, // Points at a single float giving alpha value
     iTermFragmentBufferIndexFullScreenFlashColor = 4, // Points at a float4
     iTermFragmentInputIndexAlpha = 5,  // float4 pointer. Used by transparent windows on 10.14
+    iTermFragmentInputIndexColor = 6,  // float4. Gives color for letterboxes/pillarboxes
 } iTermFragmentBufferIndex;
 
 typedef enum {
