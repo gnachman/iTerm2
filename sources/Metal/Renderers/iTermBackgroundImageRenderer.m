@@ -169,7 +169,6 @@ NS_ASSUME_NONNULL_BEGIN
     const CGFloat rightMargin = insets.right;
 
     const CGFloat imageAspectRatio = nativeTextureSize.width / nativeTextureSize.height;
-    const CGFloat viewAspectRatio = viewportSize.width / viewportSize.height;
     
     // pixel coordinates
     const CGFloat viewHeight = viewportSize.height + topMargin + bottomMargin;
