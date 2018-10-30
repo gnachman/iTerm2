@@ -211,6 +211,9 @@
 }
 
 - (NSArray *)subarrayToIndex:(NSUInteger)index {
+    if (self.count < index) {
+        return self;
+    }
     return [self subarrayWithRange:NSMakeRange(0, index)];
 }
 

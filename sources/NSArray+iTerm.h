@@ -87,6 +87,7 @@
 - (NSURL *)lowestCommonAncestorOfURLs;
 
 - (NSArray<ObjectType> *)subarrayFromIndex:(NSUInteger)index;
+- (NSArray<ObjectType> *)subarrayToIndex:(NSUInteger)index;
 
 - (void)enumerateCoalescedObjectsWithComparator:(BOOL (^)(ObjectType obj1, ObjectType obj2))comparator
                                           block:(void (^)(ObjectType object, NSUInteger count))block;
