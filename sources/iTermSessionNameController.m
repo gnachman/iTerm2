@@ -7,6 +7,7 @@
 
 #import "iTermSessionNameController.h"
 
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAPIHelper.h"
 #import "iTermBuiltInFunctions.h"
@@ -27,10 +28,10 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
 @end
 
 @implementation iTermSessionNameController {
-    // The window title stack
+    // The window title stack. Contains NSString and NSNull.
     NSMutableArray *_windowTitleStack;
 
-    // The icon title stack
+    // The icon title stack. Contains NSString and NSNull.
     NSMutableArray *_iconTitleStack;
 
     NSString *_cachedEvaluation;
@@ -176,13 +177,14 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
         // initialize lazily
         _windowTitleStack = [[NSMutableArray alloc] init];
     }
-    NSString *title = self.windowNameFromVariable;
+    id title = self.windowNameFromVariable;
     if (!title) {
         // if current title is nil, treat it as an empty string.
-        title = @"";
+        title = [NSNull null];
     }
     // push it
     [_windowTitleStack addObject:title];
+    DLog(@"Pushed window title. Stack is now %@", _windowTitleStack);
 }
 
 - (NSString *)popWindowTitle {
@@ -190,9 +192,10 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
     NSUInteger count = [_windowTitleStack count];
     if (count > 0) {
         // pop window title
-        NSString *result = [_windowTitleStack objectAtIndex:count - 1];
+        id result = [_windowTitleStack objectAtIndex:count - 1];
         [_windowTitleStack removeObjectAtIndex:count - 1];
-        return result;
+        DLog(@"Popped window title %@. Stack is now %@", result, _windowTitleStack);
+        return [result nilIfNull];
     } else {
         return nil;
     }
@@ -204,13 +207,14 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
         _iconTitleStack = [[NSMutableArray alloc] init];
     }
     iTermVariableScope *scope = [self.delegate sessionNameControllerScope];
-    NSString *title = [scope valueForVariableName:iTermVariableKeySessionIconName];
+    id title = [scope valueForVariableName:iTermVariableKeySessionIconName];
     if (!title) {
         // if current icon title is nil, treat it as an empty string.
-        title = @"";
+        title = [NSNull null];
     }
     // push it
     [_iconTitleStack addObject:title];
+    DLog(@"Pushed icon title. Stack is now %@", _iconTitleStack);
 }
 
 - (NSString *)popIconTitle {
@@ -220,7 +224,8 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
         // pop icon title
         NSString *result = [_iconTitleStack objectAtIndex:count - 1];
         [_iconTitleStack removeObjectAtIndex:count - 1];
-        return result;
+        DLog(@"Popped icon title %@. Stack is now %@", result, _iconTitleStack);
+        return [result nilIfNull];
     } else {
         return nil;
     }
