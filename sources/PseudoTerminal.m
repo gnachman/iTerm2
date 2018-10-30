@@ -3476,6 +3476,9 @@ ITERM_WEAKLY_REFERENCEABLE
     if (windowType_ != WINDOW_TYPE_COMPACT) {
         return NSEdgeInsetsZero;
     }
+    if (self.anyFullScreen || togglingLionFullScreen_) {
+        return NSEdgeInsetsZero;
+    }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab:
             if ([self rootTerminalViewWindowNumberLabelShouldBeVisible]) {
