@@ -795,11 +795,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         NSColor *bgColor;
         bgColor = [ITAddressBookMgr decodeColor:self.tmuxController.profile[KEY_BACKGROUND_COLOR]];
         if ([self.delegate tabShouldUseTransparency:self]) {
-            CGFloat alpha = [iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:self.tmuxController.profile];
+            CGFloat alpha = 1.0 - [iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:self.tmuxController.profile];
             if (alpha < 1) {
                 bgColor = [bgColor colorWithAlphaComponent:alpha];
             }
         }
+
+
         [flexibleView_ setColor:bgColor];
     } else {
         // Fullscreen, overly large flexible view, or exact size flex view.
