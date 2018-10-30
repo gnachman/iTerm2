@@ -141,7 +141,7 @@ static NSDate* lastResizeDate_;
         _scrollview.contentView.copiesOnScroll = NO;
 
         if (@available(macOS 10.14, *)) {
-            _visualEffectView = [[NSVisualEffectView alloc] init];
+            _visualEffectView = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
             _visualEffectView.material = NSVisualEffectMaterialFullScreenUI;
             _visualEffectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
             _visualEffectView.state = NSVisualEffectStateActive;
