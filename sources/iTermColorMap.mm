@@ -518,4 +518,14 @@ const int kColorMapAnsiBrightModifier = 8;
     return other;
 }
 
+- (iTermColorMapKey)keyForSystemMessageForBackground:(BOOL)background {
+    const vector_float4 color = [self fastColorForKey:kColorMapBackground];
+    const float brightness = SIMDPerceivedBrightness(color);
+    const float magnitude = background ? 0.15 : 0.4;
+    const float sign = brightness > 0.5 ? -1 : 1;
+    const double delta = magnitude * sign;
+    const int value = floor((brightness + delta) * 255);
+    return [iTermColorMap keyFor8bitRed:value green:value blue:value];
+}
+
 @end

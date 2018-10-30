@@ -4175,6 +4175,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                     [result addObject:@"39"];
                     break;
 
+                case ALTSEM_SYSTEM_MESSAGE:
+                    // There is no SGR code for this case.
+                    break;
+
                 case ALTSEM_SELECTED:
                 case ALTSEM_CURSOR:
                     // This isn't used as far as I can tell.
@@ -4208,6 +4212,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 case ALTSEM_DEFAULT:
                 case ALTSEM_REVERSED_DEFAULT:  // Not sure quite how to handle this, going with the simplest approach for now.
                     [result addObject:@"49"];
+                    break;
+
+                case ALTSEM_SYSTEM_MESSAGE:
+                    // There is no SGR code for this case.
                     break;
 
                 case ALTSEM_SELECTED:

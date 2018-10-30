@@ -80,6 +80,8 @@
 // foreground for background (reverse video).
 #define ALTSEM_REVERSED_DEFAULT 3
 
+#define ALTSEM_SYSTEM_MESSAGE 4
+
 typedef NS_ENUM(NSUInteger, kiTermScreenCharAnsiColor) {
     kiTermScreenCharAnsiColorBlack,
     kiTermScreenCharAnsiColorRed,
