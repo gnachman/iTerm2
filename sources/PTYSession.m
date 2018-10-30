@@ -7562,7 +7562,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSString *)valueForLanguageEnvironmentVariable {
     DLog(@"Looking for a locale...");
-    NSArray<NSString *> *languageCodes = [[NSLocale preferredLanguages] mapWithBlock:^id(NSString *language) {
+    const NSInteger numberOfLanguagesToConsider = 1;
+    DLog(@"Consider %@ of languages: %@", @(numberOfLanguagesToConsider), [NSLocale preferredLanguages]);
+    NSArray<NSString *> *languageCodes = [[[NSLocale preferredLanguages] subarrayToIndex:numberOfLanguagesToConsider] mapWithBlock:^id(NSString *language) {
         DLog(@"Found preferred language: %@", language);
         NSUInteger index = [language rangeOfString:@"-" options:0].location;
         if (index == NSNotFound) {
