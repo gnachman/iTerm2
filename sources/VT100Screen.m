@@ -5182,7 +5182,10 @@ static void SwapInt(int *a, int *b) {
 
     LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
     if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
-        [lineBuffer appendMessage:@"Session Contents Restored"];
+        NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+        dateFormatter.dateStyle = NSDateFormatterMediumStyle;
+        dateFormatter.timeStyle = NSDateFormatterShortStyle;
+        [lineBuffer appendMessage:[NSString stringWithFormat:@"Session Contents Restored on %@", [dateFormatter stringFromDate:[NSDate date]]]];
     }
     [lineBuffer setMaxLines:maxScrollbackLines_ + self.height];
     if (!unlimitedScrollback_) {
