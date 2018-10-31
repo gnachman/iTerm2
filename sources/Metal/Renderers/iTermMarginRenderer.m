@@ -40,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
             _compositeOverRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                                  vertexFunctionName:@"iTermMarginVertexShader"
                                                                fragmentFunctionName:@"iTermMarginFragmentShader"
-                                                                           blending:[iTermMetalBlending backgroundColorCompositing]
+                                                                           blending:[iTermMetalBlending premultipliedCompositing]
                                                                      piuElementSize:0
                                                                 transientStateClass:[iTermMarginRendererTransientState class]];
         }
@@ -78,6 +78,9 @@ NS_ASSUME_NONNULL_BEGIN
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermMarginRendererTransientState *tState = transientState;
     vector_float4 color = tState.color;
+    color.x *= color.w;
+    color.y *= color.w;
+    color.z *= color.w;
     id<MTLBuffer> colorBuffer = [_colorPool requestBufferFromContext:tState.poolContext
                                                            withBytes:&color
                                                       checkIfChanged:YES];

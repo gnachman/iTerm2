@@ -47,5 +47,6 @@ iTermBackgroundImageWithAlphaFragmentShader(iTermBackgroundImageVertexFunctionOu
     
     half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
     colorSample.w = static_cast<half>(*alpha);
+    colorSample.xyz *= colorSample.w;
     return colorSample;
 }

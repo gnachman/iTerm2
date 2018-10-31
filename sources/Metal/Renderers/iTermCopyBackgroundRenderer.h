@@ -57,12 +57,4 @@ NS_CLASS_DEPRECATED_MAC(10_12, 10_14)
 @end
 #endif
 
-NS_CLASS_AVAILABLE_MAC(10_14)
-@interface iTermPremultiplyAlphaRendererTransientState : iTermCopyRendererTransientState
-@end
-
-NS_CLASS_AVAILABLE_MAC(10_14)
-@interface iTermPremultiplyAlphaRenderer : iTermCopyRenderer
-@end
-
 NS_ASSUME_NONNULL_END

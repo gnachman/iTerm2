@@ -24,6 +24,9 @@
     for (int i = 0; i < count; i++) {
         iTermBackgroundColorPIU &piu = *_pius.get_next();
         piu.color = rles[i].color;
+        piu.color.x *= piu.color.w;
+        piu.color.y *= piu.color.w;
+        piu.color.z *= piu.color.w;
         piu.runLength = rles[i].count;
         piu.numRows = repeatingRows;
         piu.offset = simd_make_float2(cellSize.x * (float)rles[i].origin,
@@ -71,7 +74,7 @@
             _compositeOverRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                         vertexFunctionName:@"iTermBackgroundColorVertexShader"
                                                       fragmentFunctionName:@"iTermBackgroundColorFragmentShader"
-                                                                  blending:[iTermMetalBlending backgroundColorCompositing]
+                                                                  blending:[iTermMetalBlending premultipliedCompositing]
                                                             piuElementSize:sizeof(iTermBackgroundColorPIU)
                                                        transientStateClass:[iTermBackgroundColorRendererTransientState class]];
             _compositeOverRenderer.formatterDelegate = self;
