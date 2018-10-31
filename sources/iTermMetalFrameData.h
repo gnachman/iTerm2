@@ -152,7 +152,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) MTLRenderPassDescriptor *intermediateRenderPassDescriptor NS_DEPRECATED_MAC(10_12, 10_14);
 #if ENABLE_USE_TEMPORARY_TEXTURE
 @property (nonatomic, strong) MTLRenderPassDescriptor *temporaryRenderPassDescriptor NS_DEPRECATED_MAC(10_12, 10_14);
-@property (nonatomic, strong) MTLRenderPassDescriptor *postmultipliedRenderPassDescriptor NS_AVAILABLE_MAC(10_14);
 #endif
 
 - (instancetype)initWithView:(MTKView *)view
