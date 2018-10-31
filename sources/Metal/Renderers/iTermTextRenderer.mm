@@ -196,7 +196,7 @@ static BOOL gMonochromeText;
         // NOTE: The vertex and fragment function names get changed later. These aren't used but must be valid.
         iTermMetalBlending *blending;
         if (iTermTextIsMonochrome()) {
-            blending = [iTermMetalBlending backgroundColorCompositing];
+            blending = [iTermMetalBlending premultipliedCompositing];
         } else {
             blending = [[iTermMetalBlending alloc] init];
         }

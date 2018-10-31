@@ -31,15 +31,16 @@ const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight = 3;
 
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
 
-+ (instancetype)backgroundColorCompositing {
+// See https://en.wikipedia.org/wiki/Alpha_compositing
++ (instancetype)premultipliedCompositing {
     iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
     blending.rgbBlendOperation = MTLBlendOperationAdd;
-    blending.sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+    blending.sourceRGBBlendFactor = MTLBlendFactorOne;
     blending.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
     
-    blending.alphaBlendOperation = MTLBlendOperationMax;
-    blending.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
-    blending.destinationAlphaBlendFactor = MTLBlendFactorDestinationAlpha;
+    blending.alphaBlendOperation = MTLBlendOperationAdd;
+    blending.sourceAlphaBlendFactor = MTLBlendFactorOne;
+    blending.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
     
     return blending;
 }

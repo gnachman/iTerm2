@@ -255,6 +255,7 @@ iTermTextFragmentShaderMonochrome(iTermTextVertexFunctionOutputMonochrome in [[s
     half4 textureColor = texture.sample(textureSampler, in.textureCoordinate);
     half4 result = in.textColor;
     result.w = dot(textureColor, in.alphaVector);
+    result.xyz *= result.w;
     return result;
 }
 
@@ -284,9 +285,11 @@ iTermTextFragmentShaderMonochromeUnderlinedEmoji(iTermTextVertexFunctionOutput i
                                                                  texture,
                                                                  textureSampler,
                                                                  dimensions->scale);
-    return mix(textureColor,
-               in.underlineColor,
-               underlineWeight);
+    half4 result = mix(textureColor,
+                       in.underlineColor,
+                       underlineWeight);
+    result.xyz *= result.w;
+    return result;
 }
 
 // Return colored sample from texture plus underline
@@ -320,7 +323,9 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
     recoloredTextColor.w = dot(textureColor, in.alphaVector);
 
     // I could eke out a little speed by passing a half4 from the vector shader but this is so slow I'd rather not add the complexity.
-    return mix(recoloredTextColor,
-               in.underlineColor,
-               underlineWeight);
+    half4 result = mix(recoloredTextColor,
+                       in.underlineColor,
+                       underlineWeight);
+    result.xyz *= result.w;
+    return result;
 }

@@ -112,10 +112,12 @@ typedef struct {
     iTermCopyBackgroundRenderer *_copyBackgroundRenderer;
     iTermCursorRenderer *_keyCursorRenderer;
     iTermImageRenderer *_imageRenderer;
-#if ENABLE_USE_TEMPORARY_TEXTURE
-    iTermCopyToDrawableRenderer *_copyToDrawableRenderer NS_DEPRECATED_MAC(10_12, 10_14);
-#endif
-    iTermPremultiplyAlphaRenderer *_premultiplyAlphaRenderer NS_AVAILABLE_MAC(10_14);
+    // This thing serves double duty.
+    // It copies from the temporary texture, used when blending subpixel AA text over other
+    // subpixel AA text, to the drawable.
+    // Alternatively, if premultiplied alpha is in use, this copies to the drawable.
+    // TODO: That shouldn't be necessary. We should be able to draw directly to the drawable.
+    iTermCopyToDrawableRenderer *_copyToDrawableRenderer;
 
     // This one is special because it's debug only
     iTermCopyOffscreenRenderer *_copyOffscreenRenderer;
@@ -151,6 +153,18 @@ typedef struct {
     iTermMetalDriverAsyncContext *_context;
 }
 
++ (BOOL)shouldUseCopyToDrawableRenderer {
+#if ENABLE_USE_TEMPORARY_TEXTURE
+    if (!iTermTextIsMonochrome()) {
+        return YES;
+    }
+#endif
+    if (@available(macOS 10.14, *)) {
+        return YES;
+    }
+    return NO;
+}
+
 - (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device {
     self = [super init];
     if (self) {
@@ -182,15 +196,8 @@ typedef struct {
         _copyModeCursorRenderer = [iTermCursorRenderer newCopyModeCursorRendererWithDevice:device];
         _keyCursorRenderer = [iTermCursorRenderer newKeyCursorRendererWithDevice:device];
         _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:device];
-#if ENABLE_USE_TEMPORARY_TEXTURE
-        if (iTermTextIsMonochrome()) {} else {
+        if ([iTermMetalDriver shouldUseCopyToDrawableRenderer]) {
             _copyToDrawableRenderer = [[iTermCopyToDrawableRenderer alloc] initWithDevice:device];
-        }
-#endif
-        if (@available(macOS 10.14, *)) {
-            if (iTermTextIsMonochromeOnMojave()) {
-                _premultiplyAlphaRenderer = [[iTermPremultiplyAlphaRenderer alloc] initWithDevice:device];
-            }
         }
 
         _commandQueue = [device newCommandQueue];
@@ -664,13 +671,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     [self updateTextRendererForFrameData:frameData];
     [self updateBackgroundImageRendererForFrameData:frameData];
     [self updateCopyBackgroundRendererForFrameData:frameData];
-    if (@available(macOS 10.14, *)) {
-        if (iTermTextIsMonochromeOnMojave()) {
-            if (frameData.postmultipliedRenderPassDescriptor) {
-                [self updatePremultiplyAlphaRendererForFrameData:frameData];
-            }
-        }
-    }
     [self updateBadgeRendererForFrameData:frameData];
     [self updateBroadcastStripesRendererForFrameData:frameData];
     [self updateCursorGuideRendererForFrameData:frameData];
@@ -728,13 +728,6 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                        range:(NSRange)range {
     [self populateMarginRendererTransientStateWithFrameData:frameData];
     [self populateCopyBackgroundRendererTransientStateWithFrameData:frameData];
-    if (@available(macOS 10.14, *)) {
-        if (iTermTextIsMonochromeOnMojave()) {
-            if (frameData.postmultipliedRenderPassDescriptor) {
-                [self populatePremultiplyAlphaTransientStateWithFrameData:frameData];
-            }
-        }
-    }
     [self populateCursorRendererTransientStateWithFrameData:frameData];
     [self populateTextAndBackgroundRenderersTransientStateWithFrameData:frameData];
     [self populateBadgeRendererTransientStateWithFrameData:frameData];
@@ -932,18 +925,9 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return;
     }
     _copyBackgroundRenderer.enabled = (frameData.intermediateRenderPassDescriptor != nil);
-#if ENABLE_USE_TEMPORARY_TEXTURE
-    if (iTermTextIsMonochrome()) {} else {
+    if ([iTermMetalDriver shouldUseCopyToDrawableRenderer]) {
         _copyToDrawableRenderer.enabled = YES;
     }
-#endif
-}
-
-- (void)updatePremultiplyAlphaRendererForFrameData:(iTermMetalFrameData *)frameData NS_AVAILABLE_MAC(10_14) {
-    if (_premultiplyAlphaRenderer.rendererDisabled) {
-        return;
-    }
-    _premultiplyAlphaRenderer.enabled = YES;
 }
 
 - (void)updateBadgeRendererForFrameData:(iTermMetalFrameData *)frameData {
@@ -1000,18 +984,19 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     iTermCopyBackgroundRendererTransientState *copyState = [frameData transientStateForRenderer:_copyBackgroundRenderer];
     copyState.sourceTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;
 
+    id<MTLTexture> sourceTexture = nil;
 #if ENABLE_USE_TEMPORARY_TEXTURE
-    iTermCopyToDrawableRendererTransientState *dState = [frameData transientStateForRenderer:_copyToDrawableRenderer];
-    dState.sourceTexture = frameData.temporaryRenderPassDescriptor.colorAttachments[0].texture;
+    sourceTexture = frameData.temporaryRenderPassDescriptor.colorAttachments[0].texture;
 #endif
-}
-
-- (void)populatePremultiplyAlphaTransientStateWithFrameData:(iTermMetalFrameData *)frameData NS_AVAILABLE_MAC(10_14) {
-    if (_premultiplyAlphaRenderer.rendererDisabled) {
-        return;
+    if (@available(macOS 10.14, *)) {
+        if (iTermTextIsMonochrome()) {
+            sourceTexture = frameData.postmultipliedRenderPassDescriptor.colorAttachments[0].texture;
+        }
     }
-    iTermPremultiplyAlphaRendererTransientState *tstate = [frameData transientStateForRenderer:_premultiplyAlphaRenderer];
-    tstate.sourceTexture = frameData.postmultipliedRenderPassDescriptor.colorAttachments[0].texture;
+    if (sourceTexture) {
+        iTermCopyToDrawableRendererTransientState *dState = [frameData transientStateForRenderer:_copyToDrawableRenderer];
+        dState.sourceTexture = sourceTexture;
+    }
 }
 
 - (void)populateCursorRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -1696,7 +1681,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         [frameData.renderEncoder endEncoding];
         if (iTermTextIsMonochrome()) {
             [self updateRenderEncoderForCurrentPass:frameData label:@"Premultiply Alpha"];
-            [self drawRenderer:_premultiplyAlphaRenderer
+            [self drawRenderer:_copyToDrawableRenderer
                      frameData:frameData
                           stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
         } else {
@@ -1860,7 +1845,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
         return [shared arrayByAddingObject:_copyToDrawableRenderer];
     } else {
         if (iTermTextIsMonochrome()) {
-            return [shared arrayByAddingObject:_premultiplyAlphaRenderer];
+            return [shared arrayByAddingObject:_copyToDrawableRenderer];
         }
         return shared;
     }

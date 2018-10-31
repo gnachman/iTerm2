@@ -115,18 +115,3 @@
 
 @end
 #endif
-
-@implementation iTermPremultiplyAlphaRendererTransientState
-@end
-
-@implementation iTermPremultiplyAlphaRenderer
-
-- (Class)transientStateClass {
-    return [iTermPremultiplyAlphaRendererTransientState class];
-}
-
-- (NSString *)fragmentFunctionName {
-    return @"iTermPremultiplyAlphaFragmentShader";
-}
-
-@end

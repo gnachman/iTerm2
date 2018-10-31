@@ -84,8 +84,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 + (instancetype)compositeSourceOver;
 
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
-// Blends rgb according to source alpha but preserves destination alpha
-+ (instancetype)backgroundColorCompositing;
++ (instancetype)premultipliedCompositing;
 #endif
 
 @end
