@@ -200,6 +200,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // If YES then force metal off. Does a hard reset when changing screens.
     BOOL _bounceMetal;
+    NSString *_temporarilyUnmaximizedSessionGUID;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -5221,6 +5222,26 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (NSView *)sessionContainerView:(PTYSession *)session {
     return root_;
+}
+
+- (void)sessionDraggingExited:(PTYSession *)session {
+    if (_temporarilyUnmaximizedSessionGUID) {
+        PTYSession *session = [self.sessions objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
+            return [session.guid isEqualToString:self->_temporarilyUnmaximizedSessionGUID];
+        }];
+        if (session && !self.hasMaximizedPane) {
+            [self setActiveSession:session];
+            [self maximize];
+        }
+    }
+    _temporarilyUnmaximizedSessionGUID = nil;
+}
+
+- (void)sessionDraggingEntered:(PTYSession *)session {
+    if (self.hasMaximizedPane) {
+        _temporarilyUnmaximizedSessionGUID = [[session guid] copy];
+        [self unmaximize];
+    }
 }
 
 @end

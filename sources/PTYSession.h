@@ -216,6 +216,8 @@ typedef enum {
 - (NSView *)sessionContainerView:(PTYSession *)session;
 
 
+- (void)sessionDraggingEntered:(PTYSession *)session;
+- (void)sessionDraggingExited:(PTYSession *)session;
 @end
 
 @class SessionView;
