@@ -203,6 +203,8 @@ typedef enum {
 
 - (BOOL)sessionShouldAutoClose:(PTYSession *)session;
 
+- (void)sessionDraggingEntered:(PTYSession *)session;
+- (void)sessionDraggingExited:(PTYSession *)session;
 @end
 
 @class SessionView;

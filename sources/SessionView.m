@@ -825,6 +825,7 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)draggingExited:(id<NSDraggingInfo>)sender {
+    [_delegate sessionViewDraggingExited:sender];
     [_splitSelectionView removeFromSuperview];
     _splitSelectionView = nil;
 }
@@ -838,7 +839,9 @@ static NSDate* lastResizeDate_;
 }
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
-    return [_delegate sessionViewPerformDragOperation:sender];
+    BOOL result = [_delegate sessionViewPerformDragOperation:sender];
+    [_delegate sessionViewDraggingExited:sender];
+    return result;
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {

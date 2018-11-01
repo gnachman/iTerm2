@@ -9597,7 +9597,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 }
 
+- (void)sessionViewDraggingExited:(id<NSDraggingInfo>)sender {
+    [self.delegate sessionDraggingExited:self];
+}
+
 - (NSDragOperation)sessionViewDraggingEntered:(id<NSDraggingInfo>)sender {
+    [self.delegate sessionDraggingEntered:self];
+
     PTYSession *movingSession = [[MovePaneController sharedInstance] session];
     if (![_delegate session:self shouldAllowDrag:sender]) {
         return NSDragOperationNone;

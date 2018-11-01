@@ -194,6 +194,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // If YES then force metal off. Does a hard reset when changing screens.
     BOOL _bounceMetal;
+    NSString *_temporarilyUnmaximizedSessionGUID;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -414,6 +415,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [parseTree_ release];
     [hiddenLiveViews_ release];
     [_viewToSessionMap release];
+    [_temporarilyUnmaximizedSessionGUID release];
     [super dealloc];
 }
 
@@ -5031,5 +5033,28 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (BOOL)sessionShouldAutoClose:(PTYSession *)session {
     return _numberOfSplitViewDragsInProgress == 0;
 }
+
+- (void)sessionDraggingExited:(PTYSession *)session {
+    if (_temporarilyUnmaximizedSessionGUID) {
+        PTYSession *session = [self.sessions objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
+            return [session.guid isEqualToString:_temporarilyUnmaximizedSessionGUID];
+        }];
+        if (session && !self.hasMaximizedPane) {
+            [self setActiveSession:session];
+            [self maximize];
+        }
+    }
+    [_temporarilyUnmaximizedSessionGUID release];
+    _temporarilyUnmaximizedSessionGUID = nil;
+}
+
+- (void)sessionDraggingEntered:(PTYSession *)session {
+    if (self.hasMaximizedPane) {
+        [_temporarilyUnmaximizedSessionGUID autorelease];
+        _temporarilyUnmaximizedSessionGUID = [[session guid] copy];
+        [self unmaximize];
+    }
+}
+
 
 @end
