@@ -626,8 +626,8 @@
 }
 
 - (void)drawHorizontalLineInFrame:(NSRect)rect y:(CGFloat)y {
-    NSRect modifiedRect = NSMakeRect(NSMinX(rect), y, rect.size.width + 1, 1);
-    NSRectFillUsingOperation(modifiedRect, NSCompositingOperationSourceOver);
+    NSRectFillUsingOperation(NSMakeRect(NSMinX(rect), y, rect.size.width + 1, 1),
+                             NSCompositingOperationSourceOver);
 }
 
 - (void)drawVerticalLineInFrame:(NSRect)rect x:(CGFloat)x {
