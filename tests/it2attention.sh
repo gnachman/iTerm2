@@ -26,6 +26,8 @@ function show_help() {
   echo "    Begin bouncing the dock icon if another app is active" 1>& 2
   echo "  $(basename $0) stop" 1>& 2
   echo "    Stop bouncing the dock icon if another app is active" 1>& 2
+  echo "  $(basename $0) once" 1>& 2
+  echo "    Bounce the dock icon once if another app is active" 1>& 2
   echo "  $(basename $0) fireworks" 1>& 2
   echo "    Show an explosion animation at the cursor" 1>& 2
 }
@@ -39,6 +41,12 @@ function start_bounce() {
 function stop_bounce() {
   print_osc
   printf "1337;RequestAttention=0"
+  print_st
+}
+
+function bounce_once() {
+  print_osc
+  printf "1337;RequestAttention=once"
   print_st
 }
 
@@ -61,6 +69,9 @@ then
 elif [[ $1 == stop ]]
 then
   stop_bounce
+elif [[ $1 == once ]]
+then
+  bounce_once
 elif [[ $1 == fireworks ]]
 then
   fireworks
