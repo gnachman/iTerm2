@@ -11,7 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 // Run with this on for a while and see if there are any crashes. Turn it off for a big performance win.
-#define SANITY_CHECK_CUMULATIVE_CACHE 0
+#define SANITY_CHECK_CUMULATIVE_CACHE 1
 
 @class LineBlock;
 
@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSArray<LineBlock *> *blocks;
 @property (nonatomic, readonly) NSUInteger count;
 @property (nonatomic, readonly) LineBlock *lastBlock;
+// NOTE: Update -copyWithZone: if you add properties.
 
 - (LineBlock *)objectAtIndexedSubscript:(NSUInteger)index;
 - (void)addBlock:(LineBlock *)object;

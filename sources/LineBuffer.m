@@ -1606,6 +1606,8 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     long long oldAbsolutePosition = [self old_absPositionOfFindContext:findContext];
     long long newAbsolutePosition = [self new_absPositionOfFindContext:findContext];
     if (oldAbsolutePosition != newAbsolutePosition) {
+        [self old_absPositionOfFindContext:findContext];
+        [self new_absPositionOfFindContext:findContext];
         assert(NO);
     }
     return oldAbsolutePosition;
@@ -1637,8 +1639,15 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (long long)new_absPositionOfFindContext:(FindContext *)findContext {
+    if (findContext.absBlockNum < 0) {
+        if (_lineBlocks.count == 0) {
+            return 0;
+        }
+        return findContext.offset + droppedChars + [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, _lineBlocks.count)];
+    }
     int numBlocks = findContext.absBlockNum - num_dropped_blocks;
-    return droppedChars + [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, numBlocks)] + findContext.offset;
+    const NSInteger rawSpaceUsed = numBlocks > 0 ? [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, numBlocks)] : 0;
+    return droppedChars + rawSpaceUsed + findContext.offset;
 }
 
 - (int)positionForAbsPosition:(long long)absPosition

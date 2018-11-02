@@ -14,6 +14,7 @@
 #define PERFORM_SANITY_CHECKS SANITY_CHECK_CUMULATIVE_CACHE
 
 @interface iTermLineBlockArray()<iTermLineBlockObserver>
+// NOTE: Update -copyWithZone: if you add properties.
 @end
 
 @implementation iTermLineBlockArray {
@@ -27,6 +28,7 @@
     LineBlock *_tail;
     BOOL _headDirty;
     BOOL _tailDirty;
+    // NOTE: Update -copyWithZone: if you add member variables.
 }
 
 - (instancetype)init {
@@ -88,6 +90,7 @@
 }
 
 - (void)buildNumLinesCacheForWidth:(int)width {
+    assert(width > 0);
     _width = width;
     _numLinesCache = [[iTermCumulativeSumCache alloc] init];
 
@@ -573,6 +576,7 @@
 
 - (void)updateCacheForBlock:(LineBlock *)block {
     if (_numLinesCache) {
+        assert(_width > 0);
         assert(_numLinesCache.count == _blocks.count);
     }
     if (_rawSpaceCache) {
@@ -583,12 +587,16 @@
 
     if (block == _blocks.firstObject) {
         _headDirty = NO;
-        [_numLinesCache setFirstValue:[block getNumLinesWithWrapWidth:_width]];
+        if (_numLinesCache) {
+            [_numLinesCache setFirstValue:[block getNumLinesWithWrapWidth:_width]];
+        }
         [_rawSpaceCache setFirstValue:[block rawSpaceUsed]];
         [_rawLinesCache setFirstValue:[block numRawLines]];
     } else if (block == _blocks.lastObject) {
         _tailDirty = NO;
-        [_numLinesCache setLastValue:[block getNumLinesWithWrapWidth:_width]];
+        if (_numLinesCache) {
+            [_numLinesCache setLastValue:[block getNumLinesWithWrapWidth:_width]];
+        }
         [_rawSpaceCache setLastValue:[block rawSpaceUsed]];
         [_rawLinesCache setLastValue:[block numRawLines]];
     } else {
@@ -630,7 +638,12 @@
     theCopy->_numLinesCache = [_numLinesCache copy];
     theCopy->_rawSpaceCache = [_rawSpaceCache copy];
     theCopy->_rawLinesCache = [_rawLinesCache copy];
+    theCopy->_width = _width;
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
+    theCopy->_head = _head;
+    theCopy->_headDirty = _headDirty;
+    theCopy->_tail = _tail;
+    theCopy->_tailDirty = _tailDirty;
     for (LineBlock *block in _blocks) {
         [block addObserver:theCopy];
     }

@@ -16,11 +16,19 @@
 }
 
 - (NSInteger)sumOfValuesInRange:(NSRange)range {
-    if (range.length == 0) {
+    assert(range.location < NSIntegerMax);
+    const NSInteger location = range.location;
+    const NSInteger length = range.length;
+    const NSInteger limit = location + length;
+    if (length == 0) {
         return 0;
     }
-    const int lowIndex = range.location;
-    const int highIndex = NSMaxRange(range) - 1;
+
+    const int lowIndex = MAX(0, location);
+    const int highIndex = MAX(0, limit) - 1;
+    if (highIndex < lowIndex) {
+        return 0;
+    }
     return _sums[highIndex] - _sums[lowIndex] + _values[lowIndex];
 }
 
