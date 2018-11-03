@@ -1192,9 +1192,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int len;
     screen_char_t fg = { 0 };
     screen_char_t bg = { 0 };
-    fg.foregroundColor = ALTSEM_REVERSED_DEFAULT;
+    fg.foregroundColor = ALTSEM_SYSTEM_MESSAGE;
     fg.backgroundColorMode = ColorModeAlternate;
-    bg.backgroundColor = ALTSEM_REVERSED_DEFAULT;
+    bg.backgroundColor = ALTSEM_SYSTEM_MESSAGE;
     bg.backgroundColorMode = ColorModeAlternate;
     StringToScreenChars(message, buffer, fg, bg, &len, NO, NULL, NULL, NO, kUnicodeVersion);
     [self appendLine:buffer

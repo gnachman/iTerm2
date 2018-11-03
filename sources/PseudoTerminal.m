@@ -3476,6 +3476,9 @@ ITERM_WEAKLY_REFERENCEABLE
     if (windowType_ != WINDOW_TYPE_COMPACT) {
         return NSEdgeInsetsZero;
     }
+    if (self.anyFullScreen || togglingLionFullScreen_) {
+        return NSEdgeInsetsZero;
+    }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab:
             if ([self rootTerminalViewWindowNumberLabelShouldBeVisible]) {
@@ -3991,9 +3994,7 @@ ITERM_WEAKLY_REFERENCEABLE
                          initialFrame:(NSRect)initialFrame {
     const BOOL panel = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel);
     const BOOL compact = ((windowType == WINDOW_TYPE_COMPACT) ||
-                          ((windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
-                            windowType == WINDOW_TYPE_LION_FULL_SCREEN) &&
-                           (savedWindowType == WINDOW_TYPE_COMPACT)));
+                          (windowType == WINDOW_TYPE_LION_FULL_SCREEN && savedWindowType == WINDOW_TYPE_COMPACT));
     Class windowClass;
     if (panel) {
         if (compact) {

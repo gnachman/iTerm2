@@ -127,7 +127,11 @@ static BOOL gShowingWarning;
     warning.warningType = warningType;
     warning.heading = heading;
     warning.cancelLabel = cancelLabel;
-    warning.window = window;
+    NSWindow *deepestWindow = window;
+    while (deepestWindow.sheets.lastObject) {
+        deepestWindow = deepestWindow.sheets.lastObject;
+    }
+    warning.window = deepestWindow;
     return [warning runModal];
 }
 

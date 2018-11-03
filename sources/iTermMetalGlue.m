@@ -1279,6 +1279,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                     } else {
                         return kColorMapCursorText;
                     }
+                case ALTSEM_SYSTEM_MESSAGE:
+                    return [_colorMap keyForSystemMessageForBackground:isBackground];
                 case ALTSEM_REVERSED_DEFAULT:
                     isBackgroundForDefault = !isBackgroundForDefault;
                     // Fall through.
