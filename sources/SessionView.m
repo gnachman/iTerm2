@@ -279,7 +279,13 @@ static NSDate* lastResizeDate_;
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
 
-    [self insertSubview:_metalView atIndex:0];
+    NSUInteger index = _visualEffectView ? [[self subviews] indexOfObject:_visualEffectView] : NSNotFound;
+    if (index == NSNotFound) {
+        index = 0;
+    } else {
+        index++;
+    }
+    [self insertSubview:_metalView atIndex:index];
 
     // Configure and hide the metal view. It will be shown by PTYSession after it has rendered its
     // first frame. Until then it's just a solid gray rectangle.
