@@ -83,9 +83,11 @@ NS_ASSUME_NONNULL_BEGIN
         [currentDirectory isEqualToString:_currentDirectory]) {
         return;
     }
-    [_rateLimit performRateLimitedBlock:^{
-        [[iTermGitPollWorker sharedInstance] invalidateCacheForPath:currentDirectory];
-    }];
+    if (currentDirectory) {
+        [_rateLimit performRateLimitedBlock:^{
+            [[iTermGitPollWorker sharedInstance] invalidateCacheForPath:currentDirectory];
+        }];
+    }
     _currentDirectory = [currentDirectory copy];
     [self poll];
 }
