@@ -5794,28 +5794,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [_passwordManagerWindowController autorelease];
     _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
     _passwordManagerWindowController.delegate = self;
-    BOOL noAnimations = [iTermAdvancedSettingsModel disablePasswordManagerAnimations];
-    if (noAnimations) {
-        [CATransaction begin];
-        [CATransaction setValue:@YES
-                         forKey:kCATransactionDisableActions];
-    }
 
     [self.window beginSheet:[_passwordManagerWindowController window] completionHandler:^(NSModalResponse returnCode) {
-        if (noAnimations) {
-            [CATransaction begin];
-            [CATransaction setValue:@YES
-                             forKey:kCATransactionDisableActions];
-        }
         [[_passwordManagerWindowController window] close];
+        [_passwordManagerWindowController autorelease];
         _passwordManagerWindowController = nil;
-        if (noAnimations) {
-            [CATransaction commit];
-        }
     }];
-    if (noAnimations) {
-        [CATransaction commit];
-    }
 
     [_passwordManagerWindowController selectAccountName:name];
 }
