@@ -5106,7 +5106,7 @@ ITERM_WEAKLY_REFERENCEABLE
     NSBitmapImageRep *tabviewRep;
 
     PTYTab *tab = tabViewItem.identifier;
-    [tab temporarilyDisableMetal];
+    [tab bounceMetal];
 
     tabviewRep = [tabRootView bitmapImageRepForCachingDisplayInRect:viewRect];
     [tabRootView cacheDisplayInRect:viewRect toBitmapImageRep:tabviewRep];
