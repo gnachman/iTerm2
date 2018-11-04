@@ -251,7 +251,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyHideTabCloseButton: @NO,
                   kPreferenceKeyHideTabActivityIndicator: @NO,
                   kPreferenceKeyShowNewOutputIndicator: @YES,
-                  kPreferenceKeyStretchTabsToFillBar: @NO,
+                  kPreferenceKeyStretchTabsToFillBar: @YES,
 
                   kPreferenceKeyShowPaneTitles: @YES,
                   kPreferenceKeyPerPaneBackgroundImage: @YES,
