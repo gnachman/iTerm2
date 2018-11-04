@@ -20,5 +20,7 @@
 - (NSColor *)topLineColorSelected:(BOOL)selected;
 - (BOOL)anyTabHasColor;
 - (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell;
+- (NSEdgeInsets)insetsForTabBarDividers;
+- (NSEdgeInsets)backgroundInsetsWithHorizontalOrientation:(BOOL)horizontal;
 
 @end

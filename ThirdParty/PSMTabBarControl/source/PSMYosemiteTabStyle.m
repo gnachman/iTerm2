@@ -587,11 +587,12 @@
 }
 
 - (void)drawVerticalLineInFrame:(NSRect)rect x:(CGFloat)x {
-    CGFloat delta = 1;
+    CGFloat topInset = 1;
+    CGFloat bottomInset = 1;
     if (@available(macOS 10.14, *)) {
-        delta = 0;
+        bottomInset = 0;
     }
-    NSRect modifiedRect = NSMakeRect(x, NSMinY(rect) + delta, 1, rect.size.height - 2 * delta);
+    NSRect modifiedRect = NSMakeRect(x, NSMinY(rect) + topInset, 1, rect.size.height - topInset - bottomInset);
     NSRectFillUsingOperation(modifiedRect, NSCompositingOperationSourceOver);
 }
 
@@ -640,14 +641,39 @@
     }
 }
 
+- (NSEdgeInsets)backgroundInsetsWithHorizontalOrientation:(BOOL)horizontal {
+    NSEdgeInsets insets = NSEdgeInsetsZero;
+    if (@available(macOS 10.14, *)) {
+        insets.top = 1;
+        insets.bottom = 1;
+        insets.left = 1;
+    } else {
+      // 10.13 and earlier
+      return insets;
+    }
+    if (!horizontal) {
+        insets.left = 0.5;
+        insets.top = 0;
+        insets.right = 1;
+    }
+    return insets;
+}
+
 - (void)drawCellBackgroundAndFrameHorizontallyOriented:(BOOL)horizontal
                                                 inRect:(NSRect)cellFrame
                                               selected:(BOOL)selected
                                           withTabColor:(NSColor *)tabColor
+                                               isFirst:(BOOL)isFirst
                                                 isLast:(BOOL)isLast
                                        highlightAmount:(CGFloat)highlightAmount {
     [[self backgroundColorSelected:selected highlightAmount:highlightAmount] set];
-    NSRectFill(cellFrame);
+    NSRect backgroundRect = cellFrame;
+    NSEdgeInsets backgroundInsets = [self backgroundInsetsWithHorizontalOrientation:horizontal];
+    backgroundRect.origin.x += backgroundInsets.left;
+    backgroundRect.origin.y += backgroundInsets.top;
+    backgroundRect.size.width -= backgroundInsets.left + backgroundInsets.right;
+    backgroundRect.size.height -= backgroundInsets.top + backgroundInsets.bottom;
+    NSRectFill(backgroundRect);
 
     if (tabColor) {
         NSColor *color = [self cellBackgroundColorForTabColor:tabColor selected:selected];
@@ -657,8 +683,16 @@
     }
 
     if (horizontal) {
-        BOOL isLeftmostTab = NSMinX(cellFrame) == 0;
-        if (!isLeftmostTab) {
+        BOOL shouldDrawLeftLine;
+        if (@available(macOS 10.14, *)) {
+            // Because alpha is less than 1, we don't want to double-draw. I don't think
+            // drawing the left line is necessary in earlier macOS versions either but I
+            // don't feel like adding any risk at the moment.
+            shouldDrawLeftLine = NO;
+        } else {
+            shouldDrawLeftLine = !isFirst;
+        }
+        if (shouldDrawLeftLine) {
             // Left line
             [[self verticalLineColorSelected:selected] set];
             [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
@@ -670,38 +704,51 @@
 
         // Top line
         [[self topLineColorSelected:selected] set];
-        if (isLast) {
-            NSRect rect = cellFrame;
-            rect.size.width -= 1;
-            [self drawHorizontalLineInFrame:rect y:NSMinY(cellFrame)];
-        } else {
-            [self drawHorizontalLineInFrame:cellFrame y:NSMinY(cellFrame)];
+        if (@available(macOS 10.14, *)) {} else {
+            // 10.13 and earlier
+            if (isLast) {
+                NSRect rect = cellFrame;
+                rect.size.width -= 1;
+                [self drawHorizontalLineInFrame:rect y:NSMinY(cellFrame)];
+            } else {
+                [self drawHorizontalLineInFrame:cellFrame y:NSMinY(cellFrame)];
+            }
         }
-
         // Bottom line
         [[self bottomLineColorSelected:selected] set];
         [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
-
     } else {
         // Bottom line
         [[self verticalLineColorSelected:selected] set];
-        cellFrame.origin.x += 1;
-        cellFrame.size.width -= 3;
+        const NSEdgeInsets insets = [self insetsForTabBarDividers];
+        cellFrame.origin.x += insets.left;
+        cellFrame.size.width -= (insets.left + insets.right);
         [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
-        cellFrame.origin.x -= 1;
-        cellFrame.size.width += 3;
+        cellFrame.origin.x -= insets.left;
+        cellFrame.size.width += (insets.left + insets.right);
 
         cellFrame.size.width -= 1;
         cellFrame.origin.y -= 1;
         cellFrame.size.height += 2;
 
         // Left line
-        [[self topLineColorSelected:selected] set];
-        [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
+        if (@available(macOS 10.14, *)) {} else {
+            // 10.13 and earlier
+            [[self topLineColorSelected:selected] set];
+            [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
 
-        // Right line
-        [[self bottomLineColorSelected:selected] set];
-        [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame)];
+            // Right line
+            [[self bottomLineColorSelected:selected] set];
+            [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame)];
+        }
+    }
+}
+
+- (NSEdgeInsets)insetsForTabBarDividers {
+    if (@available(macOS 10.14, *)) {
+        return NSEdgeInsetsMake(0, 0.5, 0, 2);
+    } else {
+        return NSEdgeInsetsMake(0, 1, 0, 2);
     }
 }
 
@@ -711,9 +758,9 @@
                                                   inRect:cell.frame
                                                 selected:([cell state] == NSOnState)
                                             withTabColor:[cell tabColor]
+                                                 isFirst:cell == _tabBar.cells.firstObject
                                                   isLast:cell == _tabBar.cells.lastObject
                                          highlightAmount:highlightAmount];
-
     [self drawInteriorWithTabCell:cell inView:[cell controlView] highlightAmount:highlightAmount];
 }
 
@@ -981,6 +1028,7 @@
 
 - (void)drawTabBar:(PSMTabBarControl *)bar
             inRect:(NSRect)rect
+          clipRect:(NSRect)clipRect
         horizontal:(BOOL)horizontal {
     if (_orientation != [bar orientation]) {
         _orientation = [bar orientation];
@@ -990,12 +1038,20 @@
         _tabBar = bar;
     }
 
-    [self drawBackgroundInRect:rect color:[self tabBarColor] horizontal:horizontal];
+    [self drawBackgroundInRect:clipRect color:[self tabBarColor] horizontal:horizontal];
     [[self topLineColorSelected:NO] set];
-    [self drawHorizontalLineInFrame:rect y:0];
+
+    NSRect insetRect;
+    if (@available(macOS 10.14, *)) {
+        insetRect = NSInsetRect(rect, 1, 0);
+        insetRect.size.width -= 1;
+    } else {
+        insetRect = clipRect;
+    }
+    [self drawHorizontalLineInFrame:NSIntersectionRect(clipRect, insetRect) y:0];
 
     // no tab view == not connected
-    if (![bar tabView]){
+    if (![bar tabView]) {
         NSRect labelRect = rect;
         labelRect.size.height -= 4.0;
         labelRect.origin.y += 4.0;
@@ -1020,7 +1076,7 @@
     for (int i = 0; i < 2; i++) {
         NSInteger stateToDraw = (i == 0 ? NSOnState : NSOffState);
         for (PSMTabBarCell *cell in [bar cells]) {
-            if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], rect)) {
+            if (![cell isInOverflowMenu] && NSIntersectsRect(NSInsetRect([cell frame], -1, -1), clipRect)) {
                 if (cell.state == stateToDraw) {
                     [cell drawWithFrame:[cell frame] inView:bar];
                     if (stateToDraw == NSOnState) {
@@ -1031,8 +1087,16 @@
             }
         }
     }
+    if (@available(macOS 10.14, *)) {
+        if (_orientation != PSMTabBarHorizontalOrientation) {
+            [[self bottomLineColorSelected:NO] set];
+            NSRect rightLineRect = rect;
+            rightLineRect.origin.y -= 1;
+            [self drawVerticalLineInFrame:rightLineRect x:NSMaxX(rect) - 1];
+        }
+    }
     for (PSMTabBarCell *cell in [bar cells]) {
-        if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], rect) && cell.state == NSOnState) {
+        if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], clipRect) && cell.state == NSOnState) {
             [cell drawPostHocDecorationsOnSelectedCellWithTabBarControl:bar];
         }
     }
