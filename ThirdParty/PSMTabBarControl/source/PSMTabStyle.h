@@ -46,7 +46,7 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 // drawing
 - (void)drawTabCell:(PSMTabBarCell *)cell highlightAmount:(CGFloat)highlightAmount;
 - (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color horizontal:(BOOL)horizontal;
-- (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect horizontal:(BOOL)horizontal;
+- (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect clipRect:(NSRect)clipRect horizontal:(BOOL)horizontal;
 
 - (NSColor *)accessoryFillColor;
 - (NSColor *)accessoryStrokeColor;

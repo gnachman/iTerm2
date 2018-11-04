@@ -779,7 +779,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminen
         [cell setIsLast:NO];
     }
     [[[self cells] lastObject] setIsLast:YES];
-    [_style drawTabBar:self inRect:rect horizontal:(_orientation == PSMTabBarHorizontalOrientation)];
+    [_style drawTabBar:self
+                inRect:self.bounds
+              clipRect:rect
+            horizontal:(_orientation == PSMTabBarHorizontalOrientation)];
 }
 
 - (void)moveTabAtIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destIndex

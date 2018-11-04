@@ -43,15 +43,9 @@
 - (NSColor *)topLineColorSelected:(BOOL)selected {
     if (@available(macOS 10.14, *)) {
         if (self.tabBar.window.isKeyWindow && [NSApp isActive]) {
-            return [NSColor colorWithSRGBRed:97.0 / 255.0
-                                       green:110.0 / 255.0
-                                        blue:113 / 255.0
-                                       alpha:1];
+            return [NSColor colorWithWhite:1 alpha:0.20];
         } else {
-            return [NSColor colorWithSRGBRed:74.0 / 255.0
-                                       green:88.0 / 255.0
-                                        blue:91.0 / 255.0
-                                       alpha:1];
+            return [NSColor colorWithWhite:1 alpha:0.16];
         }
     } else {
         return [NSColor colorWithCalibratedWhite:0.10 alpha:1.00];
@@ -132,6 +126,26 @@
 
 - (NSColor *)accessoryTextColor {
     return [self textColorDefaultSelected:YES];
+}
+
+- (NSEdgeInsets)insetsForTabBarDividers {
+    return NSEdgeInsetsMake(0, 1, 0, 1);
+}
+
+- (NSEdgeInsets)backgroundInsetsWithHorizontalOrientation:(BOOL)horizontal {
+    NSEdgeInsets insets = NSEdgeInsetsZero;
+    if (@available(macOS 10.14, *)) {
+        insets.top = 1;
+        insets.bottom = 0;
+        insets.left = 1;
+        insets.right = 0;
+    }
+    if (!horizontal) {
+        insets.left = 1;
+        insets.top = 0;
+        insets.right = 1;
+    }
+    return insets;
 }
 
 @end

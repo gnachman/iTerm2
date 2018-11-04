@@ -24,6 +24,8 @@
 - (NSColor *)topLineColorSelected:(BOOL)selected;
 - (BOOL)anyTabHasColor;
 - (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell;
+- (NSEdgeInsets)insetsForTabBarDividers;
+- (NSEdgeInsets)backgroundInsetsWithHorizontalOrientation:(BOOL)horizontal;
 
 - (NSColor *)effectiveBackgroundColorForTabWithTabColor:(NSColor *)tabColor
                                                selected:(BOOL)selected
@@ -32,6 +34,6 @@
 - (void)drawCellBackgroundSelected:(BOOL)selected
                             inRect:(NSRect)cellFrame
                       withTabColor:(NSColor *)tabColor
-                   highlightAmount:(CGFloat)highlightAmount;
-
+                   highlightAmount:(CGFloat)highlightAmount
+                        horizontal:(BOOL)horizontal;
 @end

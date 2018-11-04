@@ -183,7 +183,8 @@
 - (void)drawCellBackgroundSelected:(BOOL)selected
                             inRect:(NSRect)cellFrame
                       withTabColor:(NSColor *)tabColor
-                   highlightAmount:(CGFloat)highlightAmount {
+                   highlightAmount:(CGFloat)highlightAmount
+                        horizontal:(BOOL)horizontal {
     const BOOL horizontalOrientation = self.tabBar.orientation == PSMTabBarHorizontalOrientation;
     NSEdgeInsets insets = NSEdgeInsetsZero;
     BOOL drawFrame = NO;
@@ -214,7 +215,7 @@
     insetCellFrame.origin.y += insets.top;
     insetCellFrame.size.width -= (insets.left + insets.right);
     insetCellFrame.size.height -= (insets.top + insets.bottom);
-    [super drawCellBackgroundSelected:selected inRect:insetCellFrame withTabColor:tabColor highlightAmount:highlightAmount];
+    [super drawCellBackgroundSelected:selected inRect:insetCellFrame withTabColor:tabColor highlightAmount:highlightAmount horizontal:horizontal];
 }
 
 - (void)drawBackgroundInRect:(NSRect)rect
@@ -340,8 +341,9 @@
 
 - (void)drawTabBar:(PSMTabBarControl *)bar
             inRect:(NSRect)rect
+          clipRect:(NSRect)clipRect
         horizontal:(BOOL)horizontal {
-    [super drawTabBar:bar inRect:rect horizontal:horizontal];
+    [super drawTabBar:bar inRect:rect clipRect:clipRect horizontal:horizontal];
     
     const BOOL horizontalOrientation = bar.orientation == PSMTabBarHorizontalOrientation;
     
