@@ -3915,19 +3915,7 @@ ITERM_WEAKLY_REFERENCEABLE
         (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
          !self.isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
          [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren])) {
-        // Native fullscreen path
-        [[self ptyWindow] performSelector:@selector(toggleFullScreen:) withObject:self];
-        if (lionFullScreen_) {
-            // will exit fullscreen
-            DLog(@"Set window type to lion fs");
-            self.windowType = WINDOW_TYPE_LION_FULL_SCREEN;
-        } else {
-            // Will enter fullscreen
-            DLog(@"Set saved window type to %d before setting window type to normal in preparation for going fullscreen", savedWindowType_);
-            savedWindowType_ = windowType_;
-            self.windowType = WINDOW_TYPE_NORMAL;
-        }
-        // TODO(georgen): toggle enabled status of use transparency menu item
+        [[self ptyWindow] toggleFullScreen:self];
         return;
     }
 
@@ -4416,6 +4404,10 @@ ITERM_WEAKLY_REFERENCEABLE
             [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:YES];
         }
     }
+    if (windowType_ != WINDOW_TYPE_LION_FULL_SCREEN) {
+        savedWindowType_ = windowType_;
+        windowType_ = WINDOW_TYPE_LION_FULL_SCREEN;
+    }
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
@@ -4432,6 +4424,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self didChangeAnyFullScreen];
     [_contentView.tabBarControl setFlashing:YES];
     [_contentView updateToolbelt];
+    [self repositionWidgets];
     // Set scrollbars appropriately
     [self updateSessionScrollbars];
     [self fitTabsToWindow];
@@ -4490,6 +4483,7 @@ ITERM_WEAKLY_REFERENCEABLE
     self.window.hasShadow = YES;
     [self updateUseMetalInAllTabs];
     [self updateWindowShadow];
+    self.windowType = WINDOW_TYPE_LION_FULL_SCREEN;
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification
