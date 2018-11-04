@@ -9,6 +9,7 @@
 #import "iTermPasswordManagerWindowController.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermSearchField.h"
 #import "iTermSystemVersion.h"
@@ -19,6 +20,21 @@
 static NSString *const kServiceName = @"iTerm2";
 static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersShouldReloadData";
 static BOOL sAuthenticated;
+
+@interface iTermPasswordManagerPanel : NSPanel
+@end
+
+@implementation iTermPasswordManagerPanel
+
+- (NSTimeInterval)animationResizeTime:(NSRect)newFrame {
+    BOOL noAnimations = [iTermAdvancedSettingsModel disablePasswordManagerAnimations];
+    if (noAnimations) {
+        return 0;
+    }
+    return [super animationResizeTime:newFrame];
+}
+
+@end
 
 @interface iTermPasswordManagerWindowController () <
     NSTableViewDataSource,
