@@ -202,7 +202,6 @@
                            target:(id)target
                          selector:(SEL)selector
                          userData:(NSDictionary *)userData {
-    assert(!_suspended);
     DLog(@"Register %@ from\n%@", shortcut, [NSThread callStackSymbols]);
 
     EventHotKeyRef eventHotKey = NULL;
@@ -214,13 +213,15 @@
     EventHotKeyID hotKeyID;
     if (!existingHotKey) {
         hotKeyID = [self nextHotKeyID];
-        if (RegisterEventHotKey((UInt32)shortcut.keyCode,
-                                carbonModifiers,
-                                hotKeyID,
-                                GetEventDispatcherTarget(),
-                                0,
-                                &eventHotKey)) {
-            return nil;
+        if (!_suspended) {
+            if (RegisterEventHotKey((UInt32)shortcut.keyCode,
+                                    carbonModifiers,
+                                    hotKeyID,
+                                    GetEventDispatcherTarget(),
+                                    0,
+                                    &eventHotKey)) {
+                return nil;
+            }
         }
     } else {
         hotKeyID = existingHotKey.hotKeyID;
@@ -233,9 +234,15 @@
                                                            userData:userData
                                                              target:target
                                                            selector:selector] autorelease];
-    DLog(@"Register %@", hotkey);
-    [_hotKeys addObject:hotkey];
-    DLog(@"Hotkeys are now:\n%@", _hotKeys);
+    if (_suspended) {
+        DLog(@"Register in suspended state %@", hotkey);
+        [_suspendedHotKeys addObject:hotkey];
+        DLog(@"Suspended hotkeys are now:\n%@", _suspendedHotKeys);
+    } else {
+        DLog(@"Register %@", hotkey);
+        [_hotKeys addObject:hotkey];
+        DLog(@"Hotkeys are now:\n%@", _hotKeys);
+    }
     return hotkey;
 }
 
