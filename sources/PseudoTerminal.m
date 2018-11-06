@@ -654,7 +654,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         [myWindow setFrame:initialFrame display:NO];
     }
 
-    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL)];
+    [self updateWindowShadow];
 
     DLog(@"Create window %@", myWindow);
 
@@ -3817,7 +3817,7 @@ ITERM_WEAKLY_REFERENCEABLE
 #endif
         PtyLog(@"toggleFullScreenMode - allocate new terminal");
     }
-    [self.window setHasShadow:(windowType_ == WINDOW_TYPE_NORMAL)];
+    [self updateWindowShadow];
 
     if (!_fullScreen &&
         [iTermPreferences boolForKey:kPreferenceKeyDisableFullscreenTransparencyByDefault]) {
@@ -3928,13 +3928,35 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateWindowShadow {
+    switch (windowType_) {
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            self.window.hasShadow = NO;
+            return;
+            
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_COUNT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+            break;
+    }
     if (@available(macOS 10.14, *)) {
-        if ([iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyOnMojave]) {
+        if ([iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyOnMojave] &&
+            ![iTermAdvancedSettingsModel mojaveVisualEffectView]) {
             const BOOL haveTransparency = [self anySessionInCurrentTabHasTransparency];
             DLog(@"%@: have transparency = %@ for sessions %@ in tab %@", self, @(haveTransparency), self.currentTab.sessions, self.currentTab);
             self.window.hasShadow = !haveTransparency;
+            return;
         }
     }
+    self.window.hasShadow = YES;
 }
 
 - (BOOL)fullScreen
@@ -4108,7 +4130,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView.tabBarControl updateFlashing];
     [self fitTabsToWindow];
     [self repositionWidgets];
-    self.window.hasShadow = YES;
     [self updateUseMetalInAllTabs];
     [self updateWindowShadow];
 }
