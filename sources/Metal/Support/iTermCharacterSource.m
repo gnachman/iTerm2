@@ -386,12 +386,14 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     if (flipped) {
         frame.origin.y = _size.height - frame.origin.y - frame.size.height;
     }
-
+    DLog(@"Bounding box for character '%@' in font %@ is %@ at scale %@", _string, _font, NSStringFromRect(frame), @(_scale));
+    
     CGPoint min = CGPointMake(floor(CGRectGetMinX(frame)),
                               floor(CGRectGetMinY(frame)));
     CGPoint max = CGPointMake(ceil(CGRectGetMaxX(frame)),
                               ceil(CGRectGetMaxY(frame)));
     frame = CGRectMake(min.x, min.y, max.x - min.x, max.y - min.y);
+    DLog(@"Return frame %@", NSStringFromRect(frame));
 
     return frame;
 }
