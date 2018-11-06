@@ -4861,6 +4861,9 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([iTermPreferences boolForKey:kPreferenceKeyEnableProxyIcon]) {
         self.window.representedURL = self.currentSession.textViewCurrentLocation;
     } else {
+}
+
+- (void) updateProxyIcon {
         self.window.representedURL = nil;
     }
 }

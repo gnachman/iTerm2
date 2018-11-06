@@ -74,6 +74,9 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Set the window title to the name of the current session.
 - (void)setWindowTitle;
 
+// Updates the proxy icon
+- (void) updateProxyIcon;
+
 // Return the foreground tab
 - (PTYTab*)currentTab;
 

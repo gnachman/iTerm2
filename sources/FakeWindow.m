@@ -240,4 +240,7 @@
 - (void)createDuplicateOfTab:(PTYTab *)theTab {
 }
 
+- (void)updateProxyIcon {
+}
+
 @end
