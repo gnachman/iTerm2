@@ -4858,13 +4858,19 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateCurrentLocation {
-    if ([iTermPreferences boolForKey:kPreferenceKeyEnableProxyIcon]) {
-        self.window.representedURL = self.currentSession.textViewCurrentLocation;
-    } else {
+    [self updateProxyIcon];
 }
 
 - (void) updateProxyIcon {
+    if (![iTermPreferences boolForKey:kPreferenceKeyEnableProxyIcon]) {
         self.window.representedURL = nil;
+        return;
+    }
+
+    if (self.currentSession.userDesiredProxyIcon) {
+        self.window.representedURL = self.currentSession.userDesiredProxyIcon;
+    } else {
+        self.window.representedURL = self.currentSession.textViewCurrentLocation;
     }
 }
 
