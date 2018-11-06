@@ -8046,6 +8046,22 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void) setProxyIcon:(NSString *)value {
+    NSURL* url = nil;
+    if (value) {
+        NSMutableCharacterSet *allowedChars = [[NSMutableCharacterSet alloc] init];
+        [allowedChars formUnionWithCharacterSet:[NSCharacterSet URLFragmentAllowedCharacterSet]];
+        [allowedChars formUnionWithCharacterSet:[NSCharacterSet URLHostAllowedCharacterSet]];
+        [allowedChars formUnionWithCharacterSet:[NSCharacterSet URLQueryAllowedCharacterSet]];
+        [allowedChars formUnionWithCharacterSet:[NSCharacterSet URLUserAllowedCharacterSet]];
+        url = [[NSURL alloc] initWithString:[value stringByAddingPercentEncodingWithAllowedCharacters:allowedChars]];
+    }
+    self.userDesiredProxyIcon = url;
+    if (url) {
+        [[_delegate parentWindow] updateProxyIcon];
+    }
+}
+
 - (BOOL)screenWindowIsMiniaturized {
     return [[_delegate parentWindow] windowIsMiniaturized];
 }
