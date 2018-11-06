@@ -82,6 +82,8 @@
 // If flag is set, bring the window to front; if not, move to back.
 - (void)screenRaise:(BOOL)flag;
 
+- (void) setProxyIcon:(NSString *)value;
+
 // Returns if the window is miniaturized.
 - (BOOL)screenWindowIsMiniaturized;
 
