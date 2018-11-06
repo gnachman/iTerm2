@@ -3442,6 +3442,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetProxyIcon:(NSString *)value {
+    [delegate_ setProxyIcon:value];
 }
 
 - (void)terminalClearScrollbackBuffer {
@@ -3461,6 +3462,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         dir = [delegate_ screenCurrentWorkingDirectory];
     }
     if (dir.length) {
+        [delegate_ setProxyIcon:nil];
         BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorLine]];
         [self setWorkingDirectory:dir onLine:cursorLine];
         if (willChange) {
