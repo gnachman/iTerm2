@@ -2312,6 +2312,10 @@ static const int kMaxScreenRows = 4096;
         if ([delegate_ terminalIsTrusted]) {
             [delegate_ terminalSetRemoteHost:value];
         }
+    } else if ([key isEqualToString:@"SetProxyIcon"]) {
+        if ([delegate_ terminalIsTrusted]) {
+            [delegate_ terminalSetProxyIcon:value];
+        }
     } else if ([key isEqualToString:@"SetMark"]) {
         [delegate_ terminalSaveScrollPositionWithArgument:value];
     } else if ([key isEqualToString:@"StealFocus"]) {

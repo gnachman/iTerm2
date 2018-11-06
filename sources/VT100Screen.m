@@ -3441,6 +3441,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenRaise:YES];
 }
 
+- (void)terminalSetProxyIcon:(NSString *)value {
+}
+
 - (void)terminalClearScrollbackBuffer {
     if (![iTermAdvancedSettingsModel preventEscapeSequenceFromClearingHistory]) {
         [self clearScrollbackBuffer];
