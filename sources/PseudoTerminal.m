@@ -3796,10 +3796,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)willExitTraditionalFullScreenMode {
-    [self showMenuBar];
     windowType_ = savedWindowType_;
+    // NOTE: Setting the style mask causes the presentation options to be
+    // changed (menu/dock hidden) because refreshTerminal gets called.
     self.window.styleMask = [self styleMask];
-    
+    [self showMenuBar];
+
     // This will be close but probably not quite right because tweaking to the decoration size
     // happens later.
     if (oldFrameSizeIsBogus_) {
