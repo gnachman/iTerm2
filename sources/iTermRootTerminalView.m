@@ -101,8 +101,12 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                 [self setTabBarAutoresizingMask:(NSViewHeightSizable | NSViewMaxXMargin)];
                 break;
         }
-        [self addSubview:_tabBarBacking];
-        [_tabBarBacking addSubview:_tabBarControl];
+        if (@available(macOS 10.14, *)) {
+            [self addSubview:_tabBarBacking];
+            [_tabBarBacking addSubview:_tabBarControl];
+        } else {
+            [self addSubview:_tabBarControl];
+        }
         _tabBarControl.tabView = _tabView;
         [_tabView setDelegate:_tabBarControl];
         _tabBarControl.delegate = tabBarDelegate;

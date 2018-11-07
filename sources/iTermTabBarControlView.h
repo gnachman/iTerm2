@@ -33,6 +33,5 @@
 - (void)updateFlashing;
 
 - (void)setAlphaValue:(CGFloat)alphaValue animated:(BOOL)animated;
-- (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
 
 @end
