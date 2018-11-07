@@ -8692,6 +8692,9 @@ ITERM_WEAKLY_REFERENCEABLE
             _requestAttentionId =
                 [NSApp requestUserAttention:NSCriticalRequest];
             break;
+        case VT100AttentionRequestTypeBounceOnceDockIcon:
+            [NSApp requestUserAttention:NSInformationalRequest];
+            break;
     }
 }
 
