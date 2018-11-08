@@ -248,29 +248,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     bitmap.data = [NSMutableData uninitializedDataWithLength:length];
     bitmap.size = _partSize;
 
-    BOOL saveBitmapsForDebugging = NO;
-    if (saveBitmapsForDebugging) {
-        NSImage *image = [NSImage imageWithRawData:[NSData dataWithBytes:bitmapBytes length:bitmap.data.length]
-                                              size:_partSize
-                                     bitsPerSample:8
-                                   samplesPerPixel:4
-                                          hasAlpha:YES
-                                    colorSpaceName:NSDeviceRGBColorSpace];
-        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/%@.%@.png", _string, @(part)]];
-
-        NSData *bigData = [NSData dataWithBytes:bitmapBytes length:_size.width*_size.height*4];
-        image = [NSImage imageWithRawData:bigData
-                                     size:_size
-                            bitsPerSample:8
-                          samplesPerPixel:4
-                                 hasAlpha:YES
-                           colorSpaceName:NSDeviceRGBColorSpace];
-        [image saveAsPNGTo:[NSString stringWithFormat:@"/tmp/big-%@.png", _string]];
-    }
-
-
     char *dest = (char *)bitmap.data.mutableBytes;
-
+    
     // Flip vertically and copy. The vertical flip is for historical reasons
     // (i.e., if I had more time I'd undo it but it's annoying because there
     // are assumptions about vertical flipping all over the fragment shader).
@@ -281,6 +260,29 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         sourceOffset += sourceRowSize;
         destOffset -= destRowSize;
     }
+    
+    BOOL saveBitmapsForDebugging = [_string isEqualToString:@"j"];
+    if (saveBitmapsForDebugging) {
+        NSImage *image = [NSImage imageWithRawData:[NSData dataWithBytes:bitmap.data.bytes length:bitmap.data.length]
+                                              size:_partSize
+                                     bitsPerSample:8
+                                   samplesPerPixel:4
+                                          hasAlpha:YES
+                                    colorSpaceName:NSDeviceRGBColorSpace];
+        NSData *data = [image dataForFileOfType:NSPNGFileType];
+        DLog(@"small image of %@ in %@ at scale %@:\n%@", _string, _font, @(_scale), [data base64EncodedStringWithOptions:0]);
+
+        NSData *bigData = [NSData dataWithBytes:bitmapBytes length:_size.width*_size.height*4];
+        image = [NSImage imageWithRawData:bigData
+                                     size:_size
+                            bitsPerSample:8
+                          samplesPerPixel:4
+                                 hasAlpha:YES
+                           colorSpaceName:NSDeviceRGBColorSpace];
+        data = [image dataForFileOfType:NSPNGFileType];
+        DLog(@"big image of %@ in %@ at scale %@:\n%@", _string, _font, @(_scale), [data base64EncodedStringWithOptions:0]);
+    }
+
 
     return bitmap;
 }
