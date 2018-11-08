@@ -8046,6 +8046,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+// Sets current session proxy icon.
 - (void) setProxyIcon:(NSString *)value {
     NSURL* url = nil;
     if (value) {

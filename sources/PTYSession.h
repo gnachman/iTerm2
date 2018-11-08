@@ -276,7 +276,8 @@ typedef enum {
 // should be used.
 @property(nonatomic, readonly) NSString *windowTitle;
 
-// The path to the proxy icon thath should be used when this session is current.
+// The path to the proxy icon thath should be used when this session is current. If is nil the current directory icon
+// is shown.
 @property(nonatomic, retain) NSURL *userDesiredProxyIcon;
 
 // Shell wraps the underlying file descriptor pair.
