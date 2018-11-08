@@ -8050,12 +8050,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void) setProxyIcon:(NSString *)value {
     NSURL* url = nil;
     if (value) {
-        NSMutableCharacterSet *allowedChars = [[NSMutableCharacterSet alloc] init];
-        [allowedChars formUnionWithCharacterSet:[NSCharacterSet URLFragmentAllowedCharacterSet]];
-        [allowedChars formUnionWithCharacterSet:[NSCharacterSet URLHostAllowedCharacterSet]];
-        [allowedChars formUnionWithCharacterSet:[NSCharacterSet URLQueryAllowedCharacterSet]];
-        [allowedChars formUnionWithCharacterSet:[NSCharacterSet URLUserAllowedCharacterSet]];
-        url = [[NSURL alloc] initWithString:[value stringByAddingPercentEncodingWithAllowedCharacters:allowedChars]];
+        url = [NSURL fileURLWithPath:value];
     }
     self.userDesiredProxyIcon = url;
     if (url) {
