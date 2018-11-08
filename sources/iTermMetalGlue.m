@@ -603,6 +603,20 @@ static NSColor *ColorForVector(vector_float4 v) {
     [_markStyles addObject:@(markStyle)];
 }
 
+- (iTermCharacterSourceDescriptor *)characterSourceDescriptorForASCIIWithGlyphSize:(CGSize)glyphSize {
+    return [iTermCharacterSourceDescriptor characterSourceDescriptorWithAsciiFont:_asciiFont
+                                                                     nonAsciiFont:_nonAsciiFont
+                                                                        glyphSize:glyphSize
+                                                                         cellSize:_cellSize
+                                                           cellSizeWithoutSpacing:_cellSizeWithoutSpacing
+                                                                            scale:_scale
+                                                                      useBoldFont:_useBoldFont
+                                                                    useItalicFont:_useItalicFont
+                                                                 usesNonAsciiFont:_useNonAsciiFont
+                                                                 asciiAntiAliased:_asciiAntialias
+                                                              nonAsciiAntiAliased:_nonasciiAntialias];
+}
+
 - (CGFloat)transparencyAlpha {
     return _transparencyAlpha;
 }
@@ -1338,34 +1352,29 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                                                                  size:(CGSize)size
                                                                                 scale:(CGFloat)scale
                                                                                 emoji:(nonnull BOOL *)emoji {
-    // Normal path
-    BOOL fakeBold = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceBold);
-    BOOL fakeItalic = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceItalic);
+    const BOOL bold = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceBold);
+    const BOOL italic = !!(glyphKey->typeface & iTermMetalGlyphKeyTypefaceItalic);
     const BOOL isAscii = !glyphKey->isComplex && (glyphKey->code < 128);
-    PTYFontInfo *fontInfo = [PTYFontInfo fontForAsciiCharacter:isAscii
-                                                     asciiFont:_asciiFont
-                                                  nonAsciiFont:_nonAsciiFont
-                                                   useBoldFont:_useBoldFont
-                                                 useItalicFont:_useItalicFont
-                                              usesNonAsciiFont:_useNonAsciiFont
-                                                    renderBold:&fakeBold
-                                                  renderItalic:&fakeItalic];
-    NSFont *font = fontInfo.font;
-    assert(font);
 
     const int radius = iTermTextureMapMaxCharacterParts / 2;
+    iTermCharacterSourceDescriptor *descriptor = [iTermCharacterSourceDescriptor characterSourceDescriptorWithAsciiFont:_asciiFont
+                                                                                                           nonAsciiFont:_nonAsciiFont
+                                                                                                              glyphSize:size
+                                                                                                               cellSize:_cellSize
+                                                                                                 cellSizeWithoutSpacing:_cellSizeWithoutSpacing
+                                                                                                                  scale:scale
+                                                                                                            useBoldFont:_useBoldFont
+                                                                                                          useItalicFont:_useItalicFont
+                                                                                                       usesNonAsciiFont:_useNonAsciiFont
+                                                                                                       asciiAntiAliased:_asciiAntialias
+                                                                                                    nonAsciiAntiAliased:_nonasciiAntialias];
+    iTermCharacterSourceAttributes *attributes = [iTermCharacterSourceAttributes characterSourceAttributesWithThinStrokes:glyphKey->thinStrokes
+                                                                                                                 bold:bold
+                                                                                                                   italic:italic];
     iTermCharacterSource *characterSource =
         [[iTermCharacterSource alloc] initWithCharacter:CharToStr(glyphKey->code, glyphKey->isComplex)
-                                                   font:font
-                                              glyphSize:size
-                                               cellSize:_cellSize
-                                 cellSizeWithoutSpacing:_cellSizeWithoutSpacing
-                                         baselineOffset:_baselineOffset
-                                                  scale:scale
-                                         useThinStrokes:glyphKey->thinStrokes
-                                               fakeBold:fakeBold
-                                             fakeItalic:fakeItalic
-                                            antialiased:isAscii ? _asciiAntialias : _nonasciiAntialias
+                                             descriptor:descriptor
+                                             attributes:attributes
                                              boxDrawing:glyphKey->boxDrawing
                                                  radius:radius
                                                 context:_metalContext];

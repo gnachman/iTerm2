@@ -85,6 +85,8 @@ NS_CLASS_AVAILABLE(10_11, NA)
                      date:(out NSDate * _Nonnull * _Nonnull)date
                      sketch:(out NSUInteger *)sketchPtr;
 
+- (iTermCharacterSourceDescriptor *)characterSourceDescriptorForASCIIWithGlyphSize:(CGSize)glyphSize;
+
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo;
 
 - (nullable NSDictionary<NSNumber *, iTermCharacterBitmap *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey

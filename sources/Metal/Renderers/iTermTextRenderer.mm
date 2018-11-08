@@ -573,13 +573,13 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
 }
 
 - (void)setASCIICellSize:(CGSize)cellSize
-               glyphSize:(CGSize)glyphSize
+              descriptor:(iTermCharacterSourceDescriptor *)descriptor
       creationIdentifier:(id)creationIdentifier
                 creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation {
-    iTermASCIITextureGroup *replacement = [[iTermASCIITextureGroup alloc] initWithGlyphSize:glyphSize
-                                                                                     device:_cellRenderer.device
-                                                                         creationIdentifier:(id)creationIdentifier
-                                                                                   creation:creation];
+    iTermASCIITextureGroup *replacement = [[iTermASCIITextureGroup alloc] initWithDevice:_cellRenderer.device
+                                                                      creationIdentifier:(id)creationIdentifier
+                                                                              descriptor:descriptor
+                                                                                creation:creation];
     if (![replacement isEqual:_asciiTextureGroup]) {
         _asciiTextureGroup = replacement;
     }

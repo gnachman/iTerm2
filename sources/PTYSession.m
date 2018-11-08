@@ -5167,9 +5167,12 @@ ITERM_WEAKLY_REFERENCEABLE
     if (iTermTextIsMonochrome()) {
         // Mojave can use a glyph size larger than cell size because compositing is trivial without subpixel AA.
         NSRect rect = [iTermCharacterSource boundingRectForCharactersInRange:NSMakeRange(32, 127-32)
-                                                                        font:_textview.font
-                                                              baselineOffset:_textview.primaryFont.baselineOffset
+                                                               asciiFontInfo:_textview.primaryFont
+                                                            nonAsciiFontInfo:_textview.secondaryFont
                                                                        scale:_view.window.backingScaleFactor ?: 1
+                                                                 useBoldFont:_textview.useBoldFont
+                                                               useItalicFont:_textview.useItalicFont
+                                                            usesNonAsciiFont:_textview.useNonAsciiFont
                                                                      context:[PTYSession onePixelContext]];
         glyphSize.width = MAX(cellSize.width, NSMaxX(rect));
         glyphSize.height = MAX(cellSize.height, NSMaxY(rect));

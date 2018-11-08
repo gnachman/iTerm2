@@ -55,6 +55,7 @@ typedef NS_OPTIONS(int, iTermASCIITextureParts) {
 };
 
 @class iTermCharacterBitmap;
+@class iTermCharacterSourceDescriptor;
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermASCIITexture : NSObject
@@ -66,7 +67,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithAttributes:(iTermASCIITextureAttributes)attributes
-                         glyphSize:(CGSize)glyphSize
+                        descriptor:(iTermCharacterSourceDescriptor *)descriptor
                             device:(id<MTLDevice>)device
                           creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull (^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
 
@@ -101,10 +102,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) id creationIdentifier;
 @property (nonatomic, readonly) vector_float2 atlasSize;
 
-- (instancetype)initWithGlyphSize:(CGSize)glyphSize
-                           device:(id<MTLDevice>)device
-               creationIdentifier:(id)creationIdentifier
-                         creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithDevice:(id<MTLDevice>)device
+            creationIdentifier:(id)creationIdentifier
+                    descriptor:(iTermCharacterSourceDescriptor *)descriptor
+                      creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (iTermASCIITexture *)asciiTextureForAttributes:(iTermASCIITextureAttributes)attributes;
