@@ -124,7 +124,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 }
 
 - (void)enumerateTopRightIndicatorsInFrame:(NSRect)frame andDraw:(BOOL)shouldDraw block:(void (^)(NSString *, NSImage *, NSRect))block {
-    NSArray *sequentialIdentifiers = [iTermIndicatorsHelper sequentialIndicatorlIdentifiers];
+    NSArray *sequentialIdentifiers = [iTermIndicatorsHelper sequentialIndicatorIdentifiers];
     const CGFloat vmargin = [iTermAdvancedSettingsModel terminalVMargin];
     const CGFloat kIndicatorTopMargin = MAX(5, vmargin);
     NSPoint point = NSMakePoint(frame.origin.x + frame.size.width,
