@@ -2669,12 +2669,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 // Uses idMap_ to reconstitute the TAB_ARRANGEMENT_SESSION elements of an arrangement including their
 // contents.
-- (NSDictionary *)arrangementNodeWithContentsFromArrangementNode:(NSDictionary *)node {
+- (NSDictionary *)arrangementNodeWithContents:(BOOL)includeContents fromArrangementNode:(NSDictionary *)node {
     NSMutableDictionary *result = [[node mutableCopy] autorelease];
     if ([node[TAB_ARRANGEMENT_VIEW_TYPE] isEqual:VIEW_TYPE_SPLITTER]) {
         NSMutableArray *subnodes = [[node[SUBVIEWS] mutableCopy] autorelease];
         for (int i = 0; i < subnodes.count; i++) {
-            subnodes[i] = [self arrangementNodeWithContentsFromArrangementNode:subnodes[i]];
+            subnodes[i] = [self arrangementNodeWithContents:includeContents fromArrangementNode:subnodes[i]];
         }
         result[SUBVIEWS] = subnodes;
     } else {
@@ -2687,7 +2687,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 sessionView &&
                 [self sessionForSessionView:sessionView]) {
                 result[TAB_ARRANGEMENT_SESSION] =
-                    [[self sessionForSessionView:sessionView] arrangementWithContents:YES];
+                    [[self sessionForSessionView:sessionView] arrangementWithContents:includeContents];
             } else {
                 XLog(@"Bogus value in idmap for key %@: %@", sessionId, sessionView);
             }
@@ -2725,7 +2725,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         mutableRootNode[TAB_ARRANGEMENT_IS_MAXIMIZED] = @YES;
 
         // Fill in the contents.
-        rootNode = [self arrangementNodeWithContentsFromArrangementNode:mutableRootNode];
+        rootNode = [self arrangementNodeWithContents:contents fromArrangementNode:mutableRootNode];
     } else {
         // Build a new arrangement. If |constructIdMap| is set then pass in
         // idMap_, and it will get filled in with number->SessionView entries.
