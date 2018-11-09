@@ -85,11 +85,13 @@ NS_CLASS_AVAILABLE(10_11, NA)
                      date:(out NSDate * _Nonnull * _Nonnull)date
                      sketch:(out NSUInteger *)sketchPtr;
 
-- (iTermCharacterSourceDescriptor *)characterSourceDescriptorForASCIIWithGlyphSize:(CGSize)glyphSize;
+- (iTermCharacterSourceDescriptor *)characterSourceDescriptorForASCIIWithGlyphSize:(CGSize)glyphSize
+                                                                       asciiOffset:(CGSize)asciiOffset;
 
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo;
 
 - (nullable NSDictionary<NSNumber *, iTermCharacterBitmap *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
+                                                                          asciiOffset:(CGSize)asciiOffset
                                                                                  size:(CGSize)size
                                                                                 scale:(CGFloat)scale
                                                                                 emoji:(BOOL *)emoji;
@@ -99,7 +101,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 // An object that compares as equal if ascii characters produced by metalImagesForGlyph would
 // produce the same bitmap.
-- (id)metalASCIICreationIdentifier;
+- (id)metalASCIICreationIdentifierWithOffset:(CGSize)asciiOffset;
 
 // Returns metrics and optional color for underlines.
 - (void)metalGetUnderlineDescriptorsForASCII:(out iTermMetalUnderlineDescriptor *)ascii
@@ -148,6 +150,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
           glyphSize:(CGSize)glyphSize
            gridSize:(VT100GridSize)gridSize
+        asciiOffset:(CGSize)asciiOffset
               scale:(CGFloat)scale
             context:(CGContextRef)context;
 

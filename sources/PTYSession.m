@@ -5273,16 +5273,32 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"%@", self);
     const CGSize cellSize = CGSizeMake(_textview.charWidth, _textview.lineHeight);
     CGSize glyphSize;
+    const CGFloat scale = _view.window.backingScaleFactor ?: 1;
+    NSRect rect = [iTermCharacterSource boundingRectForCharactersInRange:NSMakeRange(32, 127-32)
+                                                           asciiFontInfo:_textview.primaryFont
+                                                        nonAsciiFontInfo:_textview.secondaryFont
+                                                                   scale:scale
+                                                             useBoldFont:_textview.useBoldFont
+                                                           useItalicFont:_textview.useItalicFont
+                                                        usesNonAsciiFont:_textview.useNonAsciiFont
+                                                                 context:[PTYSession onePixelContext]];
+    CGSize asciiOffset = CGSizeZero;
+    if (rect.origin.y < 0) {
+        // Iosevka Light is the only font I've found that needs this.
+        // It rides *very* low in its box. The lineheight that PTYFontInfo calculates is actually too small
+        // to contain the glyphs (it uses a weird algorithm that was discovered "organically").
+        // There are gobs of empty pixels at the top, so we shift all its ASCII glyphs a bit so they'll
+        // fit. Non-ASCII characters may take multiple parts and so can properly extend beyond their
+        // cell, so we only need to think about ASCII. In other words, this hack shifts the character up
+        // *in the texture* to make better use of space without using a larger glyph size.
+        //
+        // In a monochrome world, this is still necessary because even though glyph size and cell
+        // size are no longer required to be the same, part of the glyph will be drawn outside its
+        // bounds and get clipped in the texture.
+        asciiOffset.height = -floor(rect.origin.y * scale);
+    }
     if (iTermTextIsMonochrome()) {
         // Mojave can use a glyph size larger than cell size because compositing is trivial without subpixel AA.
-        NSRect rect = [iTermCharacterSource boundingRectForCharactersInRange:NSMakeRange(32, 127-32)
-                                                               asciiFontInfo:_textview.primaryFont
-                                                            nonAsciiFontInfo:_textview.secondaryFont
-                                                                       scale:_view.window.backingScaleFactor ?: 1
-                                                                 useBoldFont:_textview.useBoldFont
-                                                               useItalicFont:_textview.useItalicFont
-                                                            usesNonAsciiFont:_textview.useNonAsciiFont
-                                                                     context:[PTYSession onePixelContext]];
         glyphSize.width = MAX(cellSize.width, NSMaxX(rect));
         glyphSize.height = MAX(cellSize.height, NSMaxY(rect));
     } else {
@@ -5308,6 +5324,7 @@ ITERM_WEAKLY_REFERENCEABLE
        cellSizeWithoutSpacing:CGSizeMake(_textview.charWidthWithoutSpacing, _textview.charHeightWithoutSpacing)
                     glyphSize:glyphSize
                      gridSize:_screen.currentGrid.size
+                  asciiOffset:asciiOffset
                         scale:_view.window.screen.backingScaleFactor
                       context:_metalContext];
 }

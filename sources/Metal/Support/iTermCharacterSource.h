@@ -13,6 +13,7 @@
 @interface iTermCharacterSourceDescriptor : NSObject
 @property (nonatomic, readonly, strong) PTYFontInfo *asciiFontInfo;
 @property (nonatomic, readonly, strong) PTYFontInfo *nonAsciiFontInfo;
+@property (nonatomic, readonly) CGSize asciiOffset;
 @property (nonatomic, readonly) CGSize glyphSize;
 @property (nonatomic, readonly) CGSize cellSize;
 @property (nonatomic, readonly) CGSize cellSizeWithoutSpacing;
@@ -26,6 +27,7 @@
 
 + (instancetype)characterSourceDescriptorWithAsciiFont:(PTYFontInfo *)asciiFontInfo
                                           nonAsciiFont:(PTYFontInfo *)nonAsciiFontInfo
+                                           asciiOffset:(CGSize)asciiOffset
                                              glyphSize:(CGSize)glyphSize
                                               cellSize:(CGSize)cellSize
                                 cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing

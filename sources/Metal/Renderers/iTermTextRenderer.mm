@@ -295,6 +295,7 @@ static BOOL gMonochromeText;
     tState.asciiTextureGroup = _asciiTextureGroup;
     tState.texturePageCollectionSharedPointer = _texturePageCollectionSharedPointer;
     tState.numberOfCells = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height;
+    tState.asciiOffset = _asciiOffset;
 }
 
 - (id<MTLBuffer>)quadOfSize:(CGSize)size
@@ -573,6 +574,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
 }
 
 - (void)setASCIICellSize:(CGSize)cellSize
+                  offset:(CGSize)asciiOffset
               descriptor:(iTermCharacterSourceDescriptor *)descriptor
       creationIdentifier:(id)creationIdentifier
                 creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^)(char, iTermASCIITextureAttributes))creation {
@@ -583,6 +585,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
     if (![replacement isEqual:_asciiTextureGroup]) {
         _asciiTextureGroup = replacement;
     }
+    _asciiOffset = asciiOffset;
 }
 
 - (void)writeDebugInfoToFolder:(NSURL *)folder {

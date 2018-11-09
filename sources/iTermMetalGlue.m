@@ -610,9 +610,11 @@ static NSColor *ColorForVector(vector_float4 v) {
     [_markStyles addObject:@(markStyle)];
 }
 
-- (iTermCharacterSourceDescriptor *)characterSourceDescriptorForASCIIWithGlyphSize:(CGSize)glyphSize {
+- (iTermCharacterSourceDescriptor *)characterSourceDescriptorForASCIIWithGlyphSize:(CGSize)glyphSize
+                                                                       asciiOffset:(CGSize)asciiOffset {
     return [iTermCharacterSourceDescriptor characterSourceDescriptorWithAsciiFont:_asciiFont
                                                                      nonAsciiFont:_nonAsciiFont
+                                                                      asciiOffset:asciiOffset
                                                                         glyphSize:glyphSize
                                                                          cellSize:_cellSize
                                                            cellSizeWithoutSpacing:_cellSizeWithoutSpacing
@@ -1349,17 +1351,19 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return kColorMapInvalid;
 }
 
-- (id)metalASCIICreationIdentifier {
+- (id)metalASCIICreationIdentifierWithOffset:(CGSize)asciiOffset {
     return @{ @"font": _asciiFont.font ?: [NSNull null],
               @"boldFont": _asciiFont.boldVersion ?: [NSNull null],
               @"boldItalicFont": _asciiFont.boldItalicVersion ?: [NSNull null],
               @"useBold": @(_useBoldFont),
               @"useItalic": @(_useItalicFont),
               @"asciiAntialiased": @(_asciiAntialias),
-              @"nonasciiAntialiased": @(_nonasciiAntialias) };
+              @"nonasciiAntialiased": @(_nonasciiAntialias),
+              @"asciiOffset": @(asciiOffset), };
 }
 
 - (nullable NSDictionary<NSNumber *, iTermCharacterBitmap *> *)metalImagesForGlyphKey:(iTermMetalGlyphKey *)glyphKey
+                                                                          asciiOffset:(CGSize)asciiOffset
                                                                                  size:(CGSize)size
                                                                                 scale:(CGFloat)scale
                                                                                 emoji:(nonnull BOOL *)emoji {
@@ -1370,6 +1374,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     const int radius = iTermTextureMapMaxCharacterParts / 2;
     iTermCharacterSourceDescriptor *descriptor = [iTermCharacterSourceDescriptor characterSourceDescriptorWithAsciiFont:_asciiFont
                                                                                                            nonAsciiFont:_nonAsciiFont
+                                                                                                            asciiOffset:asciiOffset
                                                                                                               glyphSize:size
                                                                                                                cellSize:_cellSize
                                                                                                  cellSizeWithoutSpacing:_cellSizeWithoutSpacing
