@@ -76,6 +76,7 @@ typedef struct {
     int columns;
     CGFloat scale;
     CGSize glyphSize;
+    CGSize asciiOffset;
     CGContextRef context;
 } iTermMetalDriverMainThreadState;
 
@@ -249,6 +250,7 @@ typedef struct {
 cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
           glyphSize:(CGSize)glyphSize
            gridSize:(VT100GridSize)gridSize
+        asciiOffset:(CGSize)asciiOffset
               scale:(CGFloat)scale
             context:(CGContextRef)context {
     scale = MAX(1, scale);
@@ -276,6 +278,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     self.mainThreadState->columns = MAX(1, gridSize.width);
     self.mainThreadState->scale = scale;
     self.mainThreadState->glyphSize = glyphSize;
+    self.mainThreadState->asciiOffset = asciiOffset;
     self.mainThreadState->context = context;
 }
 
@@ -464,6 +467,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
     [frameData measureTimeForStat:iTermMetalFrameDataStatMtExtractFromApp ofBlock:^{
         frameData.viewportSize = self.mainThreadState->viewportSize;
+        frameData.asciiOffset = self.mainThreadState->asciiOffset;
 
         // This is the slow part
         frameData.perFrameState = [self->_dataSource metalDriverWillBeginDrawingFrame];
@@ -832,8 +836,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
     CGFloat scale = frameData.scale;
     __weak iTermMetalFrameData *weakFrameData = frameData;
     [_textRenderer setASCIICellSize:cellSize
-                         descriptor:[frameData.perFrameState characterSourceDescriptorForASCIIWithGlyphSize:glyphSize]
-                 creationIdentifier:[frameData.perFrameState metalASCIICreationIdentifier]
+                             offset:frameData.asciiOffset
+                         descriptor:[frameData.perFrameState characterSourceDescriptorForASCIIWithGlyphSize:glyphSize
+                                                                                                asciiOffset:frameData.asciiOffset]
+                 creationIdentifier:[frameData.perFrameState metalASCIICreationIdentifierWithOffset:frameData.asciiOffset]
                            creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(char c, iTermASCIITextureAttributes attributes) {
                                __typeof(self) strongSelf = weakSelf;
                                iTermMetalFrameData *strongFrameData = weakFrameData;
@@ -849,6 +855,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                    };
                                    BOOL emoji = NO;
                                    return [strongFrameData.perFrameState metalImagesForGlyphKey:&glyphKey
+                                                                                    asciiOffset:frameData.asciiOffset
                                                                                            size:glyphSize
                                                                                           scale:scale
                                                                                           emoji:&emoji];
@@ -1097,6 +1104,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                 context:textState.poolContext
                                creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(int x, BOOL *emoji) {
                                    return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
+                                                                              asciiOffset:frameData.asciiOffset
                                                                                      size:glyphSize
                                                                                     scale:scale
                                                                                     emoji:emoji];

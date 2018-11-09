@@ -698,6 +698,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     const float cellWidth = self.cellConfiguration.cellSize.width;
     const float verticalShift = round((cellHeight - self.cellConfiguration.cellSizeWithoutSpacing.height) / (2 * self.configuration.scale)) * self.configuration.scale;
     const float yOffset = (self.cellConfiguration.gridSize.height - row - 1) * cellHeight + verticalShift;
+    const float asciiYOffset = -self.asciiOffset.height;
 
     std::map<int, int> lastRelations;
     BOOL inMarkedRange = NO;
@@ -718,7 +719,7 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
                                                                                                      glyphKeys[x].thinStrokes);
             [self addASCIICellToPIUsForCode:glyphKeys[x].code
                                           x:x
-                                    yOffset:yOffset
+                                    yOffset:yOffset + asciiYOffset
                                           w:reciprocalAsciiAtlasSize.x
                                           h:reciprocalAsciiAtlasSize.y
                                   cellWidth:cellWidth

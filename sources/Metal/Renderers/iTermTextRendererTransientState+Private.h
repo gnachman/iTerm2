@@ -17,6 +17,7 @@
 @property (nonatomic, strong) iTermASCIITextureGroup *asciiTextureGroup;
 @property (nonatomic) iTermTexturePageCollectionSharedPointer *texturePageCollectionSharedPointer;
 @property (nonatomic) NSInteger numberOfCells;
+@property (nonatomic) CGSize asciiOffset;
 
 + (NSString *)formatTextPIU:(iTermTextPIU)a;
 
