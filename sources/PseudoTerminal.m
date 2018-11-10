@@ -1067,7 +1067,7 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     DLog(@"tmuxFontDidChange");
     if ([[self uniqueTmuxControllers] count]) {
-        [self fitWindowToIdealizedTabs];
+        [self fitWindowToIdealizedTabsPreservingHeight:NO];
     }
 }
 
@@ -6686,10 +6686,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)fitWindowToTabs {
-    [self fitWindowToTabsExcludingTmuxTabs:NO];
+    [self fitWindowToTabsExcludingTmuxTabs:NO preservingHeight:NO];
 }
 
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux {
+    [self fitWindowToTabsExcludingTmuxTabs:excludeTmux preservingHeight:NO];
+}
+
+- (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux preservingHeight:(BOOL)preserveHeight {
     if (togglingFullScreen_) {
         return;
     }
@@ -6725,7 +6729,8 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     PtyLog(@"fitWindowToTabs - calling fitWindowToTabSize");
-    if (![self fitWindowToTabSize:maxTabSize]) {
+    NSNumber *preferredHeight = preserveHeight ? @(self.window.frame.size.height) : nil;
+    if (![self fitWindowToTabSize:maxTabSize preferredHeight:preferredHeight]) {
         // Sometimes the window doesn't resize but widgets need to be moved. For example, when toggling
         // the scrollbar.
         [self repositionWidgets];
@@ -6733,7 +6738,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize {
-    PtyLog(@"fitWindowToTabSize %@", NSStringFromSize(tabSize));
+    return [self fitWindowToTabSize:tabSize preferredHeight:nil];
+}
+
+// NOTE: The preferred height is respected only if it would be larger than the height the window would
+// otherwise be set to and is less than the max height (self.maxFrame.size.height).
+- (BOOL)fitWindowToTabSize:(NSSize)tabSize preferredHeight:(NSNumber *)preferredHeight {
+    PtyLog(@"fitWindowToTabSize:%@ preferredHeight:%@", NSStringFromSize(tabSize), preferredHeight);
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];
         return NO;
@@ -6744,6 +6755,14 @@ ITERM_WEAKLY_REFERENCEABLE
     NSSize winSize = tabSize;
     winSize.width += decorationSize.width;
     winSize.height += decorationSize.height;
+
+    if (preferredHeight && preferredHeight.doubleValue > winSize.height) {
+        DLog(@"Respecting preferred height %@", preferredHeight);
+        winSize.height = preferredHeight.doubleValue;
+    } else {
+        DLog(@"Ignoring preferred height %@ with winSize.height %@", preferredHeight, @(winSize.height));
+    }
+
     NSRect frame = [[self window] frame];
     DLog(@"Pre-adjustment frame: %@", NSStringFromRect(frame));
 
@@ -7089,14 +7108,14 @@ ITERM_WEAKLY_REFERENCEABLE
 // ideal size is the smallest size that fits all panes without requiring any to shrink, although some
 // may need to grow. For tmux tabs, their existing sizes are preserved exactly and the window grows
 // as needed (probably leaving "holes" if there are split panes present).
-- (void)fitWindowToIdealizedTabs {
+- (void)fitWindowToIdealizedTabsPreservingHeight:(BOOL)preserveHeight {
     for (PTYTab *aTab in [self tabs]) {
         [aTab setReportIdealSizeAsCurrent:YES];
         if ([aTab isTmuxTab]) {
             [aTab reloadTmuxLayout];
         }
     }
-    [self fitWindowToTabs];
+    [self fitWindowToTabsExcludingTmuxTabs:NO preservingHeight:preserveHeight];
     for (PTYTab *aTab in [self tabs]) {
         [aTab setReportIdealSizeAsCurrent:NO];
     }
@@ -7168,7 +7187,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // The scrollbar has already been added so tabs' current sizes are wrong.
         // Use ideal sizes instead, to fit to the session dimensions instead of
         // the existing pixel dimensions of the tabs.
-        [self fitWindowToIdealizedTabs];
+        [self fitWindowToTabsExcludingTmuxTabs:NO preservingHeight:YES];
     }
 }
 
