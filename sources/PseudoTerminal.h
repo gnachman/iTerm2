@@ -263,9 +263,6 @@ extern NSString *const iTermSelectedTabDidChange;
 - (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux
                              includingContents:(BOOL)includeContents;
 
-// Update a window's tmux layout, such as when fonts or scrollbar sizes change.
-- (void)refreshTmuxLayoutsAndWindow;
-
 // All tabs in this window.
 - (NSArray<PTYTab *> *)tabs;
 

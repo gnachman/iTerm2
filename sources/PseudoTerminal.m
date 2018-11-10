@@ -720,7 +720,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                                  name:kRefreshTerminalNotification
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_scrollerStyleChanged:)
+                                             selector:@selector(scrollerStyleDidChange:)
                                                  name:@"NSPreferredScrollerStyleDidChangeNotification"
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -1021,8 +1021,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tmuxFontDidChange:(NSNotification *)notification
 {
+    DLog(@"tmuxFontDidChange");
     if ([[self uniqueTmuxControllers] count]) {
-        [self refreshTmuxLayoutsAndWindow];
+        [self fitWindowToIdealizedTabs];
     }
 }
 
@@ -6729,8 +6730,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 }
 
-- (void)refreshTmuxLayoutsAndWindow
-{
+// This adjusts the window size to fit tabs by requesting tabs to compute their "ideal" size. The
+// ideal size is the smallest size that fits all panes without requiring any to shrink, although some
+// may need to grow. For tmux tabs, their existing sizes are preserved exactly and the window grows
+// as needed (probably leaving "holes" if there are split panes present).
+- (void)fitWindowToIdealizedTabs {
     for (PTYTab *aTab in [self tabs]) {
         [aTab setReportIdealSizeAsCurrent:YES];
         if ([aTab isTmuxTab]) {
@@ -6800,8 +6804,8 @@ ITERM_WEAKLY_REFERENCEABLE
 #endif
 }
 
-- (void)_scrollerStyleChanged:(id)sender
-{
+- (void)scrollerStyleDidChange:(NSNotification *)notification {
+    DLog(@"scrollerStyleDidChange");
     [self updateSessionScrollbars];
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];
@@ -6809,7 +6813,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // The scrollbar has already been added so tabs' current sizes are wrong.
         // Use ideal sizes instead, to fit to the session dimensions instead of
         // the existing pixel dimensions of the tabs.
-        [self refreshTmuxLayoutsAndWindow];
+        [self fitWindowToIdealizedTabs];
     }
 }
 
