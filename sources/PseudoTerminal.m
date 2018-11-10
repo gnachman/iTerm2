@@ -1342,7 +1342,8 @@ ITERM_WEAKLY_REFERENCEABLE
         NSColor *color = [self terminalWindowDecorationBackgroundColor];
         const CGFloat perceivedBrightness = [color perceivedBrightness];
         const CGFloat target = perceivedBrightness < 0.5 ? 1 : 0;
-        return [color colorDimmedBy:0.15 towardsGrayLevel:target];
+        return [color colorDimmedBy:[iTermAdvancedSettingsModel minimalSplitPaneDividerProminence]
+                   towardsGrayLevel:target];
     }
     switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
         case TAB_STYLE_AUTOMATIC:

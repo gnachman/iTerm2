@@ -234,6 +234,7 @@ DEFINE_BOOL(middleClickClosesTab, YES, SECTION_TABS @"Should middle-click on a t
 DEFINE_FLOAT(coloredSelectedTabOutlineStrength, 0.5, SECTION_TABS @"How prominent should the outline around the selected tab be drawn when there are colored tabs in a window?\nTakes a value in 0 to 3, where 0 means no outline and 3 means a very prominent outline.");
 DEFINE_FLOAT(minimalTabStyleBackgroundColorDifference, 0.05, SECTION_TABS @"In minimal tab style, how different should the background color of the selected tab be from the others?\nTakes a value in 0 to 1, where 0 is no difference and 1 very different.");
 DEFINE_FLOAT(minimalTabStyleOutlineStrength, 0.2, SECTION_TABS @"In minimal tab style, how prominent should the tab outline be?\nTakes a value in 0 to 1, where 0 is invisible and 1 is very prominent");
+DEFINE_FLOAT(minimalSplitPaneDividerProminence, 0.15, SECTION_TABS @"In minimal tab style, how prominent should split pane dividers be?\nTakes a value in 0 to 1, where 0 is invisible and 1 is very prominent");
 DEFINE_FLOAT(coloredUnselectedTabTextProminence, 0.1, SECTION_TABS @"How prominent should the text in a non-selected tab be when there are colored tabs in a window?\nTakes a value in 0 to 0.5, the distance from middle gray.");
 DEFINE_FLOAT(compactMinimalTabBarHeight, 40, SECTION_TABS @"Tab bar height (points) for compact windows with minimal theme.");
 

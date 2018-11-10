@@ -114,6 +114,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)metalSlowFrameRate;
 + (BOOL)middleClickClosesTab;
 + (int)minCompactTabWidth;
++ (double)minimalSplitPaneDividerProminence;
 + (double)minimalTabStyleBackgroundColorDifference;
 + (double)minimalTabStyleOutlineStrength;
 + (int)minimumTabDragDistance;
