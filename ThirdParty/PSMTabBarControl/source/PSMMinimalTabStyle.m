@@ -120,29 +120,35 @@
 - (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell
                                tabBarControl:(PSMTabBarControl *)bar {
     if (self.anyTabHasColor) {
-        const CGFloat brightness = [self tabColorBrightness:cell];
+        const BOOL tabColorIsDark = ([self tabColorBrightness:cell] < 0.);
         NSRect containingFrame = cell.frame;
-        if (bar.cells.lastObject == cell && bar.orientation == PSMTabBarHorizontalOrientation) {
-            containingFrame = NSMakeRect(NSMinX(cell.frame),
-                                         0,
-                                         bar.frame.size.width - NSMinX(cell.frame),
-                                         bar.height);
+        const BOOL isHorizontal = bar.orientation == PSMTabBarHorizontalOrientation;
+        if (isHorizontal) {
+            if (bar.cells.lastObject == cell) {
+                containingFrame = NSMakeRect(NSMinX(cell.frame),
+                                             0,
+                                             bar.frame.size.width - NSMinX(cell.frame),
+                                             bar.height);
+            }
+            containingFrame.origin.x += 0.5;
+            containingFrame.size.width -= 0.5;
         }
-        NSRect rect = NSInsetRect(containingFrame, 0, 0.5);
+        NSRect rect = NSInsetRect(containingFrame, 0, 0);
         NSBezierPath *path;
         
         NSColor *outerColor;
         NSColor *innerColor;
         const CGFloat alpha = [self.tabBar.window isKeyWindow] ? 0.75 : 0.5;
-        if (brightness > 0.5) {
+        const BOOL tabBarColorIsDark = self.backgroundIsDark;
+        if (tabColorIsDark != tabBarColorIsDark) {
             outerColor = [NSColor colorWithWhite:1 alpha:alpha];
-            innerColor = [NSColor colorWithWhite:0 alpha:alpha];
+            innerColor = [NSColor colorWithWhite:0 alpha:sqrt(alpha)];
         } else {
-            outerColor = [NSColor colorWithWhite:0 alpha:alpha];
+            outerColor = [NSColor colorWithWhite:0 alpha:sqrt(alpha)];
             innerColor = [NSColor colorWithWhite:1 alpha:alpha];
         }
 
-        [innerColor set];
+        [outerColor set];
         rect = NSInsetRect(rect, 0, 1);
         path = [NSBezierPath bezierPath];
         [path moveToPoint:NSMakePoint(NSMinX(rect), NSMaxY(rect))];
@@ -150,7 +156,7 @@
         [path setLineWidth:2];
         [path stroke];
 
-        [outerColor set];
+        [innerColor set];
         rect = NSInsetRect(rect, 0, 2);
         path = [NSBezierPath bezierPath];
         [path moveToPoint:NSMakePoint(NSMinX(rect), NSMaxY(rect))];
@@ -195,15 +201,16 @@
     if (highlightAmount > 0 && !selected) {
         if (horizontalOrientation) {
             drawFrame = YES;
-            insets.left = 0.5;
+            insets.left = 1.0;
+            insets.right = 0.5;
             insets.bottom = 1.0;
-            insets.top = 1.0;
+            insets.top = 0.5;
         }
     } else if (selected) {
         if (horizontalOrientation) {
             drawFrame = YES;
             insets.left = 0.5;
-            insets.top = 1.0;
+            insets.top = 0.5;
         }
     }
     if (drawFrame) {
@@ -216,6 +223,10 @@
     insetCellFrame.size.width -= (insets.left + insets.right);
     insetCellFrame.size.height -= (insets.top + insets.bottom);
     [super drawCellBackgroundSelected:selected inRect:insetCellFrame withTabColor:tabColor highlightAmount:highlightAmount horizontal:horizontal];
+}
+
+- (NSEdgeInsets)backgroundInsetsWithHorizontalOrientation:(BOOL)horizontal {
+    return NSEdgeInsetsZero;
 }
 
 - (void)drawBackgroundInRect:(NSRect)rect
@@ -344,13 +355,12 @@
           clipRect:(NSRect)clipRect
         horizontal:(BOOL)horizontal {
     [super drawTabBar:bar inRect:rect clipRect:clipRect horizontal:horizontal];
-    
     const BOOL horizontalOrientation = bar.orientation == PSMTabBarHorizontalOrientation;
     
     NSRect (^inset)(NSRect) = ^NSRect(NSRect rect) {
-        const CGFloat leftInset = horizontalOrientation ? 0.5 : 1.0;
-        const CGFloat rightInset = horizontalOrientation ? 0.0 : 0.5;
-        const CGFloat topInset = horizontalOrientation ? 1.0 : 0.5;
+        const CGFloat leftInset = horizontalOrientation ? 0.0 : 1.0;
+        const CGFloat rightInset = horizontalOrientation ? -0.5 : 0.5;
+        const CGFloat topInset = horizontalOrientation ? 0.5 : 0.5;
         rect.origin.x += leftInset;
         rect.origin.y += topInset;
         rect.size.width -= leftInset + rightInset;
