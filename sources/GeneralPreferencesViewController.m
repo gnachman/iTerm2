@@ -14,6 +14,7 @@
 #import "iTermShellHistoryController.h"
 #import "iTermWarning.h"
 #import "PasteboardHistory.h"
+#import "RegexKitLite.h"
 #import "WindowArrangements.h"
 #import "NSImage+iTerm.h"
 
@@ -452,7 +453,7 @@ enum {
     [self updateRemotePrefsViews];
     if (shouldLoadRemotePrefs) {
         // Just turned it on.
-        if ([[_prefsCustomFolder stringValue] length] == 0) {
+        if ([[_prefsCustomFolder stringValue] length] == 0 && ![self pasteboardHasGitlabURL]) {
             // Field was initially empty so browse for a dir.
             if ([self choosePrefsCustomFolder]) {
                 // User didn't hit cancel; if he chose a writable directory, ask if he wants to write to it.
@@ -469,6 +470,11 @@ enum {
         }
     }
     [self updateRemotePrefsViews];
+}
+
+- (BOOL)pasteboardHasGitlabURL {
+    NSString *pasteboardString = [NSString stringFromPasteboard];
+    return [pasteboardString isMatchedByRegex:@"^https://gitlab.com/gnachman/iterm2/uploads/[a-f0-9]*/com.googlecode.iterm2.plist$"];
 }
 
 - (BOOL)choosePrefsCustomFolder {
