@@ -1094,7 +1094,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
         if (line[x].image) {
             if (line[x].code == previousImageCode &&
-                line[x].foregroundColor == previousImageCoord.x + 1 &&
+                line[x].foregroundColor == ((previousImageCoord.x + 1) & 0xff) &&
                 line[x].backgroundColor == previousImageCoord.y) {
                 imageRuns.lastObject.length = imageRuns.lastObject.length + 1;
                 previousImageCoord.x++;
