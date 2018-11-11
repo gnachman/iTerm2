@@ -193,6 +193,7 @@ typedef enum {
 
 - (void)sessionCurrentDirectoryDidChange:(PTYSession *)session;
 - (void)sessionCurrentHostDidChange:(PTYSession *)session;
+- (void)sessionSetProxyIcon:(PTYSession *)session;
 
 // Remove a session from the tab, even if it's the only one.
 - (void)sessionRemoveSession:(PTYSession *)session;

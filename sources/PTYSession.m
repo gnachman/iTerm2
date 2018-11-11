@@ -8054,7 +8054,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     self.preferredProxyIcon = url;
     if (url) {
-        [[_delegate parentWindow] updateProxyIcon];
+        [_delegate sessionSetProxyIcon:self];
     }
 }
 
