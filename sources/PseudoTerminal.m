@@ -4842,7 +4842,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         _contentView.color = [NSColor windowBackgroundColor];
     }
-    [self updateCurrentLocation];
+    [self updateProxyIcon];
     [self updateUseMetalInAllTabs];
     [self.scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
     [self updateWindowShadow];
@@ -4855,10 +4855,6 @@ ITERM_WEAKLY_REFERENCEABLE
             [aTab updateUseMetal];
         }
     }
-}
-
-- (void)updateCurrentLocation {
-    [self updateProxyIcon];
 }
 
 - (void) updateProxyIcon {
@@ -6667,7 +6663,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self editSession:self.currentSession makeKey:NO];
     }
     [self updateTouchBarIfNeeded:NO];
-    [self updateCurrentLocation];
+    [self updateProxyIcon];
 }
 
 - (void)fitWindowToTabs {
@@ -7265,7 +7261,7 @@ ITERM_WEAKLY_REFERENCEABLE
     PtyLog(@"refreshTerminal - calling fitWindowToTabs");
 
     [self updateTabBarStyle];
-    [self updateCurrentLocation];
+    [self updateProxyIcon];
 
     // If hiding of menu bar changed.
     if ([self fullScreen] && ![self lionFullScreen]) {
@@ -8878,7 +8874,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tab:(PTYTab *)tab currentLocationDidChange:(NSURL *)location {
     if (tab == self.currentTab) {
-        [self updateCurrentLocation];
+        [self updateProxyIcon];
     }
 }
 
