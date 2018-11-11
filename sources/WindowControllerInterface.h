@@ -75,7 +75,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (void)setWindowTitle;
 
 // Updates the proxy icon
-- (void) updateProxyIcon;
+- (void)updateProxyIcon;
 
 // Return the foreground tab
 - (PTYTab*)currentTab;
