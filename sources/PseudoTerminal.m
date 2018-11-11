@@ -8872,7 +8872,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView.tabBarControl setObjectCount:objectCount forTabWithIdentifier:tab];
 }
 
-- (void)tab:(PTYTab *)tab currentLocationDidChange:(NSURL *)location {
+- (void)tab:(PTYTab *)tab proxyIconDidChange:(NSURL *)location {
     if (tab == self.currentTab) {
         [self updateProxyIcon];
     }
