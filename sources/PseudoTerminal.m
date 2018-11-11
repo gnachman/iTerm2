@@ -4857,7 +4857,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void) updateProxyIcon {
+- (void)updateProxyIcon {
     if (![iTermPreferences boolForKey:kPreferenceKeyEnableProxyIcon]) {
         self.window.representedURL = nil;
         return;
