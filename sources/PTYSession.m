@@ -8052,7 +8052,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (value) {
         url = [NSURL fileURLWithPath:value];
     }
-    self.userDesiredProxyIcon = url;
+    self.preferredProxyIcon = url;
     if (url) {
         [[_delegate parentWindow] updateProxyIcon];
     }

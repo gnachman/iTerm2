@@ -278,7 +278,7 @@ typedef enum {
 
 // The path to the proxy icon thath should be used when this session is current. If is nil the current directory icon
 // is shown.
-@property(nonatomic, retain) NSURL *userDesiredProxyIcon;
+@property(nonatomic, retain) NSURL *preferredProxyIcon;
 
 // Shell wraps the underlying file descriptor pair.
 @property(nonatomic, retain) PTYTask *shell;

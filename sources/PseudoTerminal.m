@@ -4867,8 +4867,8 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
 
-    if (self.currentSession.userDesiredProxyIcon) {
-        self.window.representedURL = self.currentSession.userDesiredProxyIcon;
+    if (self.currentSession.preferredProxyIcon) {
+        self.window.representedURL = self.currentSession.preferredProxyIcon;
     } else {
         self.window.representedURL = self.currentSession.textViewCurrentLocation;
     }
