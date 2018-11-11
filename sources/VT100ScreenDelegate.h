@@ -83,7 +83,7 @@
 - (void)screenRaise:(BOOL)flag;
 
 // Set the proxy icon of current session window.
-- (void) setProxyIcon:(NSString *)value;
+- (void)screenSetPreferredProxyIcon:(NSString *)value;
 
 // Returns if the window is miniaturized.
 - (BOOL)screenWindowIsMiniaturized;
