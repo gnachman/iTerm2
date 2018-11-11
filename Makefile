@@ -42,7 +42,7 @@ Deployment:
 
 Nightly: force
 	cp plists/nightly-iTerm2.plist plists/iTerm2.plist
-	xcodebuild -parallelizeTargets -target iTerm2 -configuration Nightly CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO && \
+	xcodebuild -enableAddressSanitizer YES -parallelizeTargets -target iTerm2 -configuration Nightly CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO && \
 	git checkout -- plists/iTerm2.plist
 	chmod -R go+rX build/Nightly
 
