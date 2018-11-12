@@ -881,7 +881,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 // This is KVO-observed by PSMTabBarControl and determines whether the activity indicator is visible.
 - (BOOL)isProcessing {
-    return (![iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator] &&
+    return (![iTermPreferences hideTabActivityIndicator] &&
             isProcessing_ &&
             ![self isForegroundTab]);
 }
