@@ -9,49 +9,10 @@
 #import <Foundation/Foundation.h>
 
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermUserDefaultsObserver.h"
 #import "NSApplication+iTerm.h"
 #import "NSStringITerm.h"
 #import <objc/runtime.h>
-
-static char iTermAdvancedSettingsModelKVOKey;
-
-@interface iTermAdvancedSettingsModelChangeObserver: NSObject
-- (void)observeKey:(NSString *)key block:(void (^)(void))block;
-@end
-
-@implementation iTermAdvancedSettingsModelChangeObserver {
-    NSMutableDictionary<NSString *, void (^)(void)> *_blocks;
-}
-
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        _blocks = [NSMutableDictionary dictionary];
-    }
-    return self;
-}
-
-- (void)observeKey:(NSString *)key block:(void (^)(void))block {
-    _blocks[key] = [block copy];
-    [[NSUserDefaults standardUserDefaults] addObserver:self
-                                            forKeyPath:key
-                                               options:NSKeyValueObservingOptionNew
-                                               context:(void *)&iTermAdvancedSettingsModelKVOKey];
-}
-
-// This is called when user defaults are changed anywhere.
-- (void)observeValueForKeyPath:(NSString *)keyPath
-                      ofObject:(id)object
-                        change:(NSDictionary *)change
-                       context:(void *)context {
-    if (context == &iTermAdvancedSettingsModelKVOKey) {
-        void (^block)(void) = _blocks[keyPath];
-        if (block) {
-            block();
-        }
-    }
-}
-@end
 
 
 NSString *const kAdvancedSettingIdentifier = @"kAdvancedSettingIdentifier";
@@ -544,8 +505,8 @@ DEFINE_STRING(pythonRuntimeDownloadURL, @"https://iterm2.com/downloads/pyenv/man
 
 + (void)initialize {
     if (self == [iTermAdvancedSettingsModel self]) {
-        static iTermAdvancedSettingsModelChangeObserver *observer;
-        observer = [[iTermAdvancedSettingsModelChangeObserver alloc] init];
+        static iTermUserDefaultsObserver *observer;
+        observer = [[iTermUserDefaultsObserver alloc] init];
         [self enumerateMethods:^(Method method, SEL selector) {
             NSString *name = NSStringFromSelector(selector);
             if ([name hasPrefix:@"load_"]) {

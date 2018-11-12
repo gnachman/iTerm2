@@ -14,6 +14,7 @@
 
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
+#import "iTermUserDefaultsObserver.h"
 #import "WindowArrangements.h"
 
 #define BLOCK(x) [^id() { return [self x]; } copy]
@@ -568,5 +569,46 @@ static NSString *sPreviousVersion;
         return @(TAB_STYLE_LIGHT);
     }
 }
+
++ (iTermUserDefaultsObserver *)sharedObserver {
+    static iTermUserDefaultsObserver *instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[iTermUserDefaultsObserver alloc]init];
+    });
+    return instance;
+}
+
+@end
+
+typedef struct {
+    NSString *key;
+    BOOL value;
+    dispatch_once_t onceToken;
+} iTermPreferencesBoolCache;
+
+#define FAST_BOOL_ACCESSOR(userDefaultsKey) \
++ (BOOL)hideTabActivityIndicator { \
+    static iTermPreferencesBoolCache cache = { \
+        .key = userDefaultsKey, \
+        .value = NO, \
+        .onceToken = 0 \
+    }; \
+    return [self boolWithCache:&cache]; \
+}
+
+@implementation iTermPreferences (FastAccessors)
+
++ (BOOL)boolWithCache:(iTermPreferencesBoolCache *)cache {
+    dispatch_once(&cache->onceToken, ^{
+        cache->value = [self boolForKey:cache->key];
+        [[self sharedObserver] observeKey:cache->key block:^{
+            cache->value = [self boolForKey:cache->key];
+        }];
+    });
+    return cache->value;
+}
+
+FAST_BOOL_ACCESSOR(kPreferenceKeyHideTabActivityIndicator)
 
 @end

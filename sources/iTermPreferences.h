@@ -219,3 +219,7 @@ extern NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti;
 + (NSUInteger)maskForModifierTag:(iTermPreferencesModifierTag)tag;
 
 @end
+
+@interface iTermPreferences (FastAccessors)
++ (BOOL)hideTabActivityIndicator;
+@end
