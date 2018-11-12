@@ -8050,7 +8050,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)screenSetPreferredProxyIcon:(NSString *)value {
     NSURL *url = nil;
     if ([value length]) {
-        url = [NSURL fileURLWithPath:value];
+        url = [NSURL URLWithString:value];
     }
     self.preferredProxyIcon = url;
     [_delegate sessionSetProxyIcon:self];

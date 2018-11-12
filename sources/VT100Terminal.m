@@ -2312,10 +2312,6 @@ static const int kMaxScreenRows = 4096;
         if ([delegate_ terminalIsTrusted]) {
             [delegate_ terminalSetRemoteHost:value];
         }
-    } else if ([key isEqualToString:@"SetProxyIcon"]) {
-        if ([delegate_ terminalIsTrusted]) {
-            [delegate_ terminalSetProxyIcon:value];
-        }
     } else if ([key isEqualToString:@"SetMark"]) {
         [delegate_ terminalSaveScrollPositionWithArgument:value];
     } else if ([key isEqualToString:@"StealFocus"]) {
@@ -2502,6 +2498,10 @@ static const int kMaxScreenRows = 4096;
 
 - (void)executeXtermProprietaryExtermExtension:(VT100Token *)token {
     NSString* argument = token.string;
+    if ([argument hasPrefix:@"file://"]) {
+        [delegate_ terminalSetProxyIcon:argument];
+        return;
+    }
     NSArray* parts = [argument componentsSeparatedByString:@";"];
     NSString* func = nil;
     if ([parts count] >= 1) {
