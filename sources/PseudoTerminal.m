@@ -4678,9 +4678,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSImage *)tabView:(NSTabView *)aTabView
     imageForTabViewItem:(NSTabViewItem *)tabViewItem
-                 offset:(NSSize *)offset
-              styleMask:(unsigned int *)styleMask
-{
+              styleMask:(unsigned int *)styleMask {
     NSImage *viewImage;
 
     if (tabViewItem == [aTabView selectedTabViewItem]) {
@@ -4762,35 +4760,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
         [viewImage unlockFocus];
 
-        offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
-        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
-            offset->height = kHorizontalTabBarHeight;
-        } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
-            offset->height = viewRect.size.height + kHorizontalTabBarHeight;
-        } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
-            offset->height = 0;
-            offset->width = 0;
-        }
         *styleMask = NSWindowStyleMaskBorderless;
     } else {
         // grabs whole tabview image
         viewImage = [[tabViewItem identifier] image:YES];
-
-        offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-            case PSMTab_LeftTab:
-                offset->width = _contentView.leftTabBarWidth;
-                offset->height = 0;
-                break;
-
-            case PSMTab_TopTab:
-                offset->height = kHorizontalTabBarHeight;
-                break;
-
-            case PSMTab_BottomTab:
-                offset->height = [viewImage size].height;
-                break;
-        }
 
         *styleMask = NSWindowStyleMaskBorderless;
     }
@@ -5017,7 +4990,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 case WINDOW_TYPE_COUNT:
                     if (![iTermPreferences boolForKey:kPreferenceKeyHideTabBar]) {
                         point.y -= self.tabBarControl.frame.size.height;
-                        [[term window] setFrameOrigin:point];
+                        [[term window] setFrameTopLeftPoint:point];
                     }
                     break;
                 case WINDOW_TYPE_TOP:
