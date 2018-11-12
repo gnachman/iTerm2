@@ -45,6 +45,7 @@
     NSMutableArray *_sineCurveWidths;
     NSPoint _currentMouseLoc;
     PSMTabBarCell *_targetCell;
+    NSSize _dragTabOffset;
 }
 
 #pragma mark -
@@ -169,6 +170,10 @@
 
     NSDraggingItem *dragItem = [[[NSDraggingItem alloc] initWithPasteboardWriter:pbItem] autorelease];
     [dragItem setDraggingFrame:draggingRect contents:imageToDrag];
+    NSPoint windowCoord = event.locationInWindow;
+    NSPoint cellOriginInWindow = [control convertPoint:cellFrame.origin toView:nil];
+    _dragTabOffset = NSMakeSize(windowCoord.x - cellOriginInWindow.x,
+                                windowCoord.y - cellOriginInWindow.y);
     ILog(@"Begin dragging session for tab bar %p", control);
     NSDraggingSession *draggingSession = [control beginDraggingSessionWithItems:@[ dragItem ]
                                                                           event:event
@@ -588,10 +593,15 @@
     [[self destinationTabBar] sanityCheck:@"finishDrag destination"];
 }
 
+- (void)moveDragTabWindowForMouseLocation:(NSPoint)aPoint {
+    [_dragTabWindow setFrameTopLeftPoint:NSMakePoint(aPoint.x - _dragTabOffset.width,
+                                                     aPoint.y - _dragTabOffset.height)];
+}
+
 - (void)draggingBeganAt:(NSPoint)aPoint {
     ILog(@"Drag of %p began with current event %@ in window with frame %@ from\n%@", [self sourceTabBar], [NSApp currentEvent], NSStringFromRect(self.sourceTabBar.window.frame), [NSThread callStackSymbols]);
     if (_dragTabWindow) {
-        [_dragTabWindow setFrameTopLeftPoint:aPoint];
+        [self moveDragTabWindowForMouseLocation:aPoint];
 
         if ([[[self sourceTabBar] tabView] numberOfTabViewItems] == 1) {
             [self draggingExitedTabBar:[self sourceTabBar]];
@@ -602,7 +612,7 @@
 
 - (void)draggingMovedTo:(NSPoint)aPoint {
     if (_dragTabWindow) {
-        [_dragTabWindow setFrameTopLeftPoint:aPoint];
+        [self moveDragTabWindowForMouseLocation:aPoint];
 
         if (_dragViewWindow) {
             //move the view representation with the tab
