@@ -5051,7 +5051,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSImage *)imageFromSelectedTabView:(NSTabView *)aTabView
-                               offset:(NSSize *)offset
                           tabViewItem:(NSTabViewItem *)tabViewItem {
     NSView *tabRootView = [tabViewItem view];
     NSRect tabFrame = [_contentView.tabBarControl frame];
@@ -5129,52 +5128,24 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [viewImage unlockFocus];
 
-    offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
-    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
-        offset->height = _contentView.tabBarControl.height;
-    } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
-        offset->height = viewRect.size.height + _contentView.tabBarControl.height;
-    } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
-        offset->height = 0;
-        offset->width = 0;
-    }
-
     return viewImage;
 }
 
-- (NSImage *)imageFromNonSelectedTabViewItem:(NSTabViewItem *)tabViewItem
-                                 offset:(NSSize *)offset {
+- (NSImage *)imageFromNonSelectedTabViewItem:(NSTabViewItem *)tabViewItem {
     NSImage *viewImage = [[tabViewItem identifier] image:YES];
-
-    offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
-    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-        case PSMTab_LeftTab:
-            offset->width = _contentView.leftTabBarWidth;
-            offset->height = 0;
-            break;
-
-        case PSMTab_TopTab:
-            offset->height = _contentView.tabBarControl.height;
-            break;
-
-        case PSMTab_BottomTab:
-            offset->height = [viewImage size].height;
-            break;
-    }
     return viewImage;
 }
 
 - (NSImage *)tabView:(NSTabView *)aTabView
     imageForTabViewItem:(NSTabViewItem *)tabViewItem
-                 offset:(NSSize *)offset
               styleMask:(unsigned int *)styleMask {
     *styleMask = NSWindowStyleMaskBorderless;
 
     NSImage *viewImage;
     if (tabViewItem == [aTabView selectedTabViewItem]) {
-        viewImage = [self imageFromSelectedTabView:aTabView offset:offset tabViewItem:tabViewItem];
+        viewImage = [self imageFromSelectedTabView:aTabView tabViewItem:tabViewItem];
     } else {
-        viewImage = [self imageFromNonSelectedTabViewItem:tabViewItem offset:offset];
+        viewImage = [self imageFromNonSelectedTabViewItem:tabViewItem];
     }
 
     return viewImage;
@@ -5411,7 +5382,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 case WINDOW_TYPE_NO_TITLE_BAR:
                     if (![iTermPreferences boolForKey:kPreferenceKeyHideTabBar]) {
                         point.y -= self.tabBarControl.frame.size.height;
-                        [[term window] setFrameOrigin:point];
+                        [[term window] setFrameTopLeftPoint:point];
                     }
                     break;
                 case WINDOW_TYPE_TOP:
