@@ -4869,6 +4869,12 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         return NO;
     }
+    if (!self.view.window) {
+        if (reason) {
+            *reason = iTermMetalUnavailableReasonSessionHasNoWindow;
+        }
+        return NO;
+    }
     if ([PTYSession onePixelContext] == nil) {
         if (reason) {
             *reason = iTermMetalUnavailableReasonContextAllocationFailure;
@@ -5204,6 +5210,11 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         _errorCreatingMetalContext = YES;
         [self.delegate sessionUpdateMetalAllowed];
+        if (!_useMetal) {
+            DLog("Failed to create context for %@ but metal is not allowed", self);
+            return;
+        }
+        DLog(@"Failed to create context for %@. schedule retry", self);
         __weak __typeof(self) weakSelf = self;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)),
                        dispatch_get_main_queue(), ^{

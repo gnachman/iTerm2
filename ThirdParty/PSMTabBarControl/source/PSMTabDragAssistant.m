@@ -463,8 +463,6 @@
         }
     }
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidEndNotification object:nil];
-
     PSMTabBarControl *destination = [[[self destinationTabBar] retain] autorelease];
     PSMTabBarControl *source = [[[self sourceTabBar] retain] autorelease];
 
@@ -595,6 +593,7 @@
         _dragViewWindow = nil;
     }
 
+    const BOOL wasDragging = self.isDragging;
     [self setIsDragging:NO];
     [self removeAllPlaceholdersFromTabBar:[self sourceTabBar]];
     [self setSourceTabBar:nil];
@@ -611,6 +610,9 @@
     self.temporarilyHiddenWindow = nil;
     [[self sourceTabBar] sanityCheck:@"finishDrag source"];
     [[self destinationTabBar] sanityCheck:@"finishDrag destination"];
+    if (wasDragging) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidEndNotification object:nil];
+    }
 }
 
 - (void)moveDragTabWindowForMouseLocation:(NSPoint)aPoint {

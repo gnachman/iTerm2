@@ -4834,7 +4834,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     iTermMetalUnavailableReason reason = iTermMetalUnavailableReasonNone;
     BOOL allowed = NO;
-    if (resizing) {
+    if ([self.delegate tabAnyDragInProgress:self]) {
+        _metalUnavailableReason = iTermMetalUnavailableReasonTabDragInProgress;
+    } else if (resizing) {
         _metalUnavailableReason = iTermMetalUnavailableReasonWindowResizing;
     } else if (!powerOK) {
         _metalUnavailableReason = iTermMetalUnavailableReasonDisconnectedFromPower;

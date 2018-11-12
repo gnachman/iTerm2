@@ -30,5 +30,7 @@ typedef NS_ENUM(NSUInteger, iTermMetalUnavailableReason) {
     iTermMetalUnavailableReasonTabBarTemporarilyVisible,
     iTermMetalUnavailableReasonScreensChanging,
     iTermMetalUnavailableReasonWindowObscured,
-    iTermMetalUnavailableReasonContextAllocationFailure
+    iTermMetalUnavailableReasonContextAllocationFailure,
+    iTermMetalUnavailableReasonTabDragInProgress,
+    iTermMetalUnavailableReasonSessionHasNoWindow
 };

@@ -2170,6 +2170,10 @@ static BOOL hasBecomeActive = NO;
             return @"most of the window is not visible.";
         case iTermMetalUnavailableReasonContextAllocationFailure:
             return @"of a temporary failure to allocate a graphics context.";
+        case iTermMetalUnavailableReasonTabDragInProgress:
+            return @"a tab is being dragged.";
+        case iTermMetalUnavailableReasonSessionHasNoWindow:
+            return @"the current session has no window (this shouldn't happen).";
     }
 
     return @"of an internal error. Please file a bug report!";
