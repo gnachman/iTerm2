@@ -4330,7 +4330,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateDisplayBecause:(NSString *)reason {
-    DLog(@"updateDisplayBecause:%@", reason);
+    DLog(@"updateDisplayBecause:%@ %@", reason, _cadenceController);
     _updateCount++;
     if (@available(macOS 10.11, *)) {
         if (_useMetal && _updateCount % 10 == 0) {
@@ -10256,7 +10256,7 @@ ITERM_WEAKLY_REFERENCEABLE
 #pragma mark - iTermUpdateCadenceController
 
 - (void)updateCadenceControllerUpdateDisplay:(iTermUpdateCadenceController *)controller {
-    [self updateDisplayBecause:controller.description];
+    [self updateDisplayBecause:nil];
 }
 
 - (iTermUpdateCadenceState)updateCadenceControllerState {
