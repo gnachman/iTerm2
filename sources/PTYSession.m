@@ -5211,7 +5211,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _errorCreatingMetalContext = YES;
         [self.delegate sessionUpdateMetalAllowed];
         if (!_useMetal) {
-            DLog("Failed to create context for %@ but metal is not allowed", self);
+            DLog(@"Failed to create context for %@ but metal is not allowed", self);
             return;
         }
         DLog(@"Failed to create context for %@. schedule retry", self);
