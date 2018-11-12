@@ -94,6 +94,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionColoredUnselectedTabTextProminen
     return bundle;
 }
 
++ (BOOL)isAnyDragInProgress {
+    return [[PSMTabDragAssistant sharedDragAssistant] isDragging];
+}
+
 - (float)availableCellWidth {
     float width = [self frame].size.width;
     width = width - [_style leftMarginForTabBarControl] - [_style rightMarginForTabBarControl] - _resizeAreaCompensation;

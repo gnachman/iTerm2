@@ -191,6 +191,7 @@ enum {
 
 // control characteristics
 + (NSBundle *)bundle;
++ (BOOL)isAnyDragInProgress;
 
 - (void)changeIdentifier:(id)newIdentifier atIndex:(int)theIndex;
 - (void)moveTabAtIndex:(NSInteger)i1 toIndex:(NSInteger)i2;

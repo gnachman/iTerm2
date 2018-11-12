@@ -768,6 +768,14 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
                                              selector:@selector(windowOcclusionDidChange:)
                                                  name:iTermWindowOcclusionDidChange
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(draggingDidBeginOrEnd:)
+                                                 name:PSMTabDragDidEndNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(draggingDidBeginOrEnd:)
+                                                 name:PSMTabDragDidBeginNotification
+                                               object:nil];
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                            selector:@selector(activeSpaceDidChange:)
                                                                name:NSWorkspaceActiveSpaceDidChangeNotification
@@ -1061,6 +1069,10 @@ ITERM_WEAKLY_REFERENCEABLE
         autocompleteView = nil;
     }
     [self.window makeKeyWindow];
+}
+
+- (void)draggingDidBeginOrEnd:(NSNotification *)notification {
+    [self updateUseMetalInAllTabs];
 }
 
 - (void)tmuxFontDidChange:(NSNotification *)notification
@@ -8925,6 +8937,14 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)tabShouldUseTransparency:(PTYTab *)tab {
     return self.useTransparency;
+}
+
+- (BOOL)tabAnyDragInProgress:(PTYTab *)tab {
+    return [PSMTabBarControl isAnyDragInProgress];
+}
+
+- (void)sessionBackgroundColorDidChangeInTab:(PTYTab *)tab {
+    [self updateWindowShadow:self.ptyWindow];
 }
 
 - (void)currentSessionWordAtCursorDidBecome:(NSString *)word {
