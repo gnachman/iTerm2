@@ -3462,7 +3462,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         dir = [delegate_ screenCurrentWorkingDirectory];
     }
     if (dir.length) {
-        [delegate_ screenSetPreferredProxyIcon:nil]; // clear current proxy icon if exists
+        [delegate_ screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
         BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorLine]];
         [self setWorkingDirectory:dir onLine:cursorLine];
         if (willChange) {
