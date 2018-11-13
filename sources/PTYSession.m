@@ -8053,7 +8053,7 @@ ITERM_WEAKLY_REFERENCEABLE
         url = [NSURL URLWithString:value];
     }
     self.preferredProxyIcon = url;
-    [_delegate sessionSetProxyIcon:self];
+    [_delegate sessionProxyIconDidChange:self];
 }
 
 - (BOOL)screenWindowIsMiniaturized {

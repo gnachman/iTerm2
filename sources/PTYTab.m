@@ -5139,7 +5139,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
-- (void)sessionSetProxyIcon:(PTYSession *)session {
+- (void)sessionProxyIconDidChange:(PTYSession *)session {
     if (session == self.activeSession) {
         [_delegate tab:self proxyIconDidChange:session.preferredProxyIcon];
     }
