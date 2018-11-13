@@ -1281,7 +1281,6 @@
 		A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A60BB3831EB54B6700D76C09 /* CopyMode@2x.png */; };
 		A60BB38E1EB6A08A00D76C09 /* iTermProcessCollection.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BB38C1EB6A08A00D76C09 /* iTermProcessCollection.h */; };
 		A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB38D1EB6A08A00D76C09 /* iTermProcessCollection.m */; };
-		A60BB3911EB6A56800D76C09 /* iTermProcessCollectionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB3901EB6A56800D76C09 /* iTermProcessCollectionTest.m */; };
 		A60BB3921EB6A56800D76C09 /* iTermProcessCollectionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB3901EB6A56800D76C09 /* iTermProcessCollectionTest.m */; };
 		A60BD9131B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BD9111B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h */; };
 		A60BD9141B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BD9111B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h */; };
@@ -1878,7 +1877,6 @@
 		A68A3119186E2F54007F550F /* PopupModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3117186E2F54007F550F /* PopupModel.h */; };
 		A68AC8F31F05C0860023A216 /* NSBundle+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A68AC8F11F05C0860023A216 /* NSBundle+iTerm.h */; };
 		A68AC8F41F05C0860023A216 /* NSBundle+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A68AC8F21F05C0860023A216 /* NSBundle+iTerm.m */; };
-		A68AC8F61F0823100023A216 /* iTermFindOnPageHelperTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A68AC8F51F0823100023A216 /* iTermFindOnPageHelperTest.m */; };
 		A68AC8F71F0823100023A216 /* iTermFindOnPageHelperTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A68AC8F51F0823100023A216 /* iTermFindOnPageHelperTest.m */; };
 		A68BADFB1E0DD52F00E4BB7B /* Touch Bar Function Keys.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BADF91E0DD52F00E4BB7B /* Touch Bar Function Keys.png */; };
 		A68BADFC1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BADFA1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png */; };
@@ -9161,7 +9159,6 @@
 				A68400C01FF99E1B008D3EE2 /* iTermTimestamps.metal in Sources */,
 				A6DBC04020049CB100F1466D /* iTermImage.metal in Sources */,
 				A638A04C20EB3C3800DE347F /* iTermUnusedText.metal in Sources */,
-				A68AC8F61F0823100023A216 /* iTermFindOnPageHelperTest.m in Sources */,
 				90A1E13B186F9EA4003EC3E8 /* AppleScriptTest.m in Sources */,
 				A6C1FD551FC2B210006B9A69 /* iTermMargin.metal in Sources */,
 				A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */,
@@ -9172,7 +9169,6 @@
 				A68400B31FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
 				A67960F11F8202C1008A42BC /* iTermBadge.metal in Sources */,
 				A67960F21F8202C1008A42BC /* iTermBroadcastStripes.metal in Sources */,
-				A60BB3911EB6A56800D76C09 /* iTermProcessCollectionTest.m in Sources */,
 				A6DBC04D2005F45700F1466D /* iTermHighlightRow.metal in Sources */,
 				A67960EF1F8202C1008A42BC /* iTermBackgroundColor.metal in Sources */,
 				A67960F41F8202C1008A42BC /* iTermCursorRenderer.metal in Sources */,
