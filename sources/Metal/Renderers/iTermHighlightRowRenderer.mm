@@ -100,12 +100,13 @@ namespace iTerm2 {
     iTermHighlightRowRendererTransientState *tState = transientState;
     const VT100GridSize gridSize = tState.cellConfiguration.gridSize;
     const CGSize cellSize = tState.cellConfiguration.cellSize;
+    const CGFloat top = tState.margins.top;
     const CGFloat left = tState.margins.left;
     const CGFloat right = tState.margins.right;
 
     [tState enumerateDraws:^(vector_float4 color, int row) {
         id<MTLBuffer> vertexBuffer = [self->_cellRenderer newQuadWithFrame:CGRectMake(0,
-                                                                                      (gridSize.height - row - 1) * cellSize.height,
+                                                                                      (gridSize.height - row - 1) * cellSize.height + top,
                                                                                       cellSize.width * gridSize.width + left + right,
                                                                                       cellSize.height)
                                                               textureFrame:CGRectMake(0, 0, 0, 0)
