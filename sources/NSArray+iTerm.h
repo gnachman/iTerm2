@@ -87,6 +87,7 @@
                                           block:(void (^)(ObjectType object, NSUInteger count))block;
 
 - (NSDictionary<id, NSArray<ObjectType> *> *)classify:(id (^)(ObjectType object))block;
+- (id)it_jsonSafeValue;
 
 @end
 

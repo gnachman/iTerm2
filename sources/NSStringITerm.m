@@ -1899,6 +1899,10 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
+- (id)it_jsonSafeValue {
+    return self;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

@@ -268,6 +268,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (BOOL)startsWithEmoji;
 + (NSString *)it_formatBytes:(double)bytes;
+- (id)it_jsonSafeValue;
 
 @end
 

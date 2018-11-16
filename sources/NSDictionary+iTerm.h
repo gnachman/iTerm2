@@ -48,6 +48,7 @@
 - (NSString *)sizeInfo;
 
 - (BOOL)it_writeToXMLPropertyListAt:(NSString *)path;
+- (id)it_jsonSafeValue;
 
 @end
 
