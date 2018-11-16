@@ -474,6 +474,16 @@
     return result;
 }
 
+- (id)it_jsonSafeValue {
+    return [self mapWithBlock:^id(id anObject) {
+        if ([anObject respondsToSelector:_cmd]) {
+            return [anObject it_jsonSafeValue];
+        } else {
+            return nil;
+        }
+    }];
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)

@@ -351,6 +351,21 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
     return result;
 }
 
+- (id)it_jsonSafeValue {
+    NSMutableDictionary *safe = [NSMutableDictionary dictionary];
+    for (id key in self) {
+        id value = self[key];
+        id safeKey = nil;
+        if ([key respondsToSelector:_cmd]) {
+            safeKey = [key it_jsonSafeValue];
+        }
+        if (safeKey && [value respondsToSelector:_cmd]) {
+            safe[safeKey] = [value it_jsonSafeValue];
+        }
+    }
+    return safe;
+}
+
 @end
 
 @implementation NSDictionary(HotKey)

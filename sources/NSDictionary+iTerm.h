@@ -65,6 +65,7 @@
 - (NSDictionary<id, NSDictionary<KeyType, ObjectType> *> *)classifyWithBlock:(id (^NS_NOESCAPE)(KeyType key, ObjectType object))block;
 
 - (BOOL)it_writeToXMLPropertyListAt:(NSString *)path;
+- (id)it_jsonSafeValue;
 
 - (NSDictionary *)it_attributesDictionaryWithAppearance:(NSAppearance *)appearance;
 

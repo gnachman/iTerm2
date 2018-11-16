@@ -17,6 +17,7 @@
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "NSDictionary+Profile.h"
 #import "PreferencePanel.h"
 #import "ProfileListView.h"
@@ -649,7 +650,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 }
 
 - (NSString *)jsonForProfile:(Profile *)profile error:(NSError **)error {
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:profile
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:[profile it_jsonSafeValue]
                                                        options:NSJSONWritingPrettyPrinted
                                                          error:error];
 

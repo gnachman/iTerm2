@@ -101,6 +101,7 @@
 - (NSArray<ObjectType> *)it_arrayByDroppingLastN:(NSUInteger)n;
 - (NSArray *)countedInstancesStrings;
 - (NSDictionary *)keyValuePairsWithBlock:(iTermTuple * (^)(ObjectType object))block;
+- (id)it_jsonSafeValue;
 
 @end
 
