@@ -14,13 +14,23 @@
 
 static const CGFloat kMaxDimension = 10000;
 
+#define DECODE_IMAGES_IN_PROCESS 0
+
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#undef DECODE_IMAGES_IN_PROCESS
+#warning Decoding images in process because address sanitizer is enabled.
+#define DECODE_IMAGES_IN_PROCESS 1
+#endif
+#endif
+
 @interface iTermImage()
 @property(nonatomic, retain) NSMutableArray<NSNumber *> *delays;
 @property(nonatomic, readwrite) NSSize size;
 @property(nonatomic, retain) NSMutableArray<NSImage *> *images;
 @end
 
-#if DEBUG
+#if DECODE_IMAGES_IN_PROCESS
 static NSDictionary *GIFProperties(CGImageSourceRef source, size_t i) {
     CFDictionaryRef const properties = CGImageSourceCopyPropertiesAtIndex(source, i, NULL);
     if (properties) {
@@ -62,13 +72,10 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
 }
 
 + (instancetype)imageWithCompressedData:(NSData *)compressedData {
-#if DEBUG
-#if defined(__has_feature)
-#if __has_feature(address_sanitizer)
+
+#if DECODE_IMAGES_IN_PROCESS
     NSLog(@"** WARNING: Decompressing image in-process **");
     return [[[iTermImage alloc] initWithData:compressedData] autorelease];
-#endif
-#endif
 #endif
 
     iTermImageDecoderDriver *driver = [[[iTermImageDecoderDriver alloc] init] autorelease];
@@ -89,7 +96,7 @@ static NSTimeInterval DelayInGifProperties(NSDictionary *gifProperties) {
     return self;
 }
 
-#if DEBUG
+#if DECODE_IMAGES_IN_PROCESS
 - (instancetype)initWithData:(NSData *)data {
     self = [self init];
     if (self) {

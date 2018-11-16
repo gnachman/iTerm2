@@ -788,6 +788,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSArray *new = [self new_wrappedLinesFromIndex:lineNum width:width count:count verbose:NO];
     if (old.count != new.count) {
         [_lineBlocks oopsWithWidth:width block:^{
+            DLog(@"wrappedLineFromIndex:%@ width:%@ count:%@", @(lineNum), @(width), @(count));
+            DLog(@"old.count=%@, new.count=%@", @(old.count), @(new.count));
+            DLog(@"old=%@", old);
+            DLog(@"new=%@", new);
             for (NSInteger i = 0; i < old.count; i++) {
                 BOOL ok = [old[i] isEqualToScreenCharArray:new[i]];
                 DLog(@"Line at index %@ ok=%@", @(i), @(ok));
@@ -824,7 +828,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
         int block_lines = [block getNumLinesWithWrapWidth:width];
-        if (block_lines < line) {
+        if (block_lines <= line) {
             line -= block_lines;
             continue;
         }

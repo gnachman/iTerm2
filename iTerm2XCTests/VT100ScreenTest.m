@@ -4108,6 +4108,36 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssertEqualObjects([remoteHost hostname], @"example.com");
 }
 
+// Issue 7323
+- (void)testWrappedLinesFromIndexAtBoundary {
+    const int blockSize = 8192;
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:blockSize] autorelease];
+    const int linesPerBlock = 50;
+    const int n = 8192 / linesPerBlock;
+    screen_char_t line[n];
+    memset(line, 0, sizeof(line));
+    for (int i = 0; i < n; i++) {
+        line[i].code = 'x';
+    }
+    screen_char_t continuation;
+    memset(&continuation, 0, sizeof(continuation));
+    continuation.code = EOL_HARD;
+    const int wrapWidth = 200;
+    for (int i = 0; i < linesPerBlock * 2; i++) {
+        line[0].code = '0' + i;
+        [lineBuffer appendLine:line length:n partial:NO width:wrapWidth timestamp:0 continuation:continuation];
+    }
+    // This tests the regression.
+    NSArray *lines = [lineBuffer wrappedLinesFromIndex:linesPerBlock
+                                                 width:n*2
+                                                 count:2];
+    XCTAssertEqual(lines.count, 2);
+    
+    // This works because the old version is, as far as I can tell, written defensively rather than correctly.
+    screen_char_t buffer[n];
+    [lineBuffer copyLineToBuffer:buffer width:wrapWidth lineNum:linesPerBlock continuation:&continuation];
+}
+
 #pragma mark - CSI Tests
 
 - (void)testCSI_CUD {
