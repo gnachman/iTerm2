@@ -15,3 +15,14 @@
 #define THE_CLASS iTermPanel
 #include "iTermWindowScriptingImpl.m"
 #undef THE_CLASS
+
+#define ENABLE_COMPACT_WINDOW_HACK 1
+#define THE_CLASS iTermCompactWindow
+#include "iTermWindowScriptingImpl.m"
+#undef THE_CLASS
+
+#define THE_CLASS iTermCompactPanel
+#include "iTermWindowScriptingImpl.m"
+#undef THE_CLASS
+
+// NOTE: If you modify this file update PTYWindow.m similarly.

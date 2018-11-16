@@ -109,3 +109,5 @@ const NSTimeInterval iTermWindowTitleChangeMinimumInterval = 0.1;
 #define THE_CLASS iTermCompactPanel
 #include "iTermWindowImpl.m"
 #undef THE_CLASS
+
+// NOTE: If you modify this file update PTYWindow+Scripting.m similarly.
