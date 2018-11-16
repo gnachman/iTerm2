@@ -1107,6 +1107,7 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                      @"Need %@ bytes of glyph keys but have %@",
                                      @(rowData.numberOfDrawableGlyphs * sizeof(iTermMetalGlyphKey)),
                                      @(rowData.keysData.length));
+            __weak iTermMetalFrameData *weakFrameData = frameData;
             [textState setGlyphKeysData:rowData.keysData
                                   count:rowData.numberOfDrawableGlyphs
                          attributesData:rowData.attributesData
@@ -1115,11 +1116,16 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                       markedRangeOnLine:markedRangeOnLine
                                 context:textState.poolContext
                                creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(int x, BOOL *emoji) {
-                                   return [frameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
-                                                                              asciiOffset:frameData.asciiOffset
-                                                                                     size:glyphSize
-                                                                                    scale:scale
-                                                                                    emoji:emoji];
+                                   iTermMetalFrameData *strongFrameData = weakFrameData;
+                                   if (strongFrameData) {
+                                       return [strongFrameData.perFrameState metalImagesForGlyphKey:&glyphKeys[x]
+                                                                                        asciiOffset:strongFrameData.asciiOffset
+                                                                                               size:glyphSize
+                                                                                              scale:scale
+                                                                                              emoji:emoji];
+                                   } else {
+                                       return nil;
+                                   }
                                }];
         }
         [rowData.keysData checkForOverrun];
