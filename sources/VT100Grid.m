@@ -908,14 +908,18 @@ static NSString *const kGridSizeKey = @"Size";
 #endif
             aLine[cursor_.x].code = 0;
             aLine[cursor_.x].complexChar = NO;
-            aLine[cursor_.x-1].code = 0;
-            aLine[cursor_.x-1].complexChar = NO;
+            if (cursor_.x > 0) {
+                aLine[cursor_.x-1].code = 0;
+                aLine[cursor_.x-1].complexChar = NO;
+            }
             [self markCharDirty:YES
                              at:VT100GridCoordMake(cursor_.x, lineNumber)
                 updateTimestamp:YES];
-            [self markCharDirty:YES
-                             at:VT100GridCoordMake(cursor_.x - 1, lineNumber)
-                updateTimestamp:YES];
+            if (cursor_.x > 0) {
+                [self markCharDirty:YES
+                                 at:VT100GridCoordMake(cursor_.x - 1, lineNumber)
+                    updateTimestamp:YES];
+            }
         }
 
         // This is an ugly little optimization--if we're inserting just one character, see if it would
