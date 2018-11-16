@@ -840,29 +840,41 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                          descriptor:[frameData.perFrameState characterSourceDescriptorForASCIIWithGlyphSize:glyphSize
                                                                                                 asciiOffset:frameData.asciiOffset]
                  creationIdentifier:[frameData.perFrameState metalASCIICreationIdentifierWithOffset:frameData.asciiOffset]
-                           creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> * _Nonnull(char c, iTermASCIITextureAttributes attributes) {
+                           creation:^NSDictionary<NSNumber *, iTermCharacterBitmap *> *(char c, iTermASCIITextureAttributes attributes) {
                                __typeof(self) strongSelf = weakSelf;
                                iTermMetalFrameData *strongFrameData = weakFrameData;
                                if (strongSelf && strongFrameData) {
-                                   static const int typefaceMask = ((1 << iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded) - 1);
-                                   iTermMetalGlyphKey glyphKey = {
-                                       .code = c,
-                                       .isComplex = NO,
-                                       .boxDrawing = NO,
-                                       .thinStrokes = !!(attributes & iTermASCIITextureAttributesThinStrokes),
-                                       .drawable = YES,
-                                       .typeface = (attributes & typefaceMask),
-                                   };
-                                   BOOL emoji = NO;
-                                   return [strongFrameData.perFrameState metalImagesForGlyphKey:&glyphKey
-                                                                                    asciiOffset:frameData.asciiOffset
-                                                                                           size:glyphSize
-                                                                                          scale:scale
-                                                                                          emoji:&emoji];
+                                   return [strongSelf dictionaryForCharacter:c
+                                                              withAttributes:attributes
+                                                                   frameData:strongFrameData
+                                                                   glyphSize:glyphSize
+                                                                       scale:scale];
                                } else {
                                    return nil;
                                }
                            }];
+}
+
+- (NSDictionary<NSNumber *, iTermCharacterBitmap *> *)dictionaryForCharacter:(char)c
+                                                              withAttributes:(iTermASCIITextureAttributes)attributes
+                                                                   frameData:(iTermMetalFrameData *)frameData
+                                                                   glyphSize:(CGSize)glyphSize
+                                                                       scale:(CGFloat)scale {
+    static const int typefaceMask = ((1 << iTermMetalGlyphKeyTypefaceNumberOfBitsNeeded) - 1);
+    iTermMetalGlyphKey glyphKey = {
+        .code = c,
+        .isComplex = NO,
+        .boxDrawing = NO,
+        .thinStrokes = !!(attributes & iTermASCIITextureAttributesThinStrokes),
+        .drawable = YES,
+        .typeface = (attributes & typefaceMask),
+    };
+    BOOL emoji = NO;
+    return [frameData.perFrameState metalImagesForGlyphKey:&glyphKey
+                                               asciiOffset:frameData.asciiOffset
+                                                      size:glyphSize
+                                                     scale:scale
+                                                     emoji:&emoji];
 }
 
 - (void)updateBackgroundImageRendererForFrameData:(iTermMetalFrameData *)frameData {
