@@ -82,6 +82,9 @@
 // If flag is set, bring the window to front; if not, move to back.
 - (void)screenRaise:(BOOL)flag;
 
+// Set the proxy icon of current session window.
+- (void)screenSetPreferredProxyIcon:(NSString *)value;
+
 // Returns if the window is miniaturized.
 - (BOOL)screenWindowIsMiniaturized;
 

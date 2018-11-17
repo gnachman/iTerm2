@@ -8181,6 +8181,16 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+// Sets current session proxy icon.
+- (void)screenSetPreferredProxyIcon:(NSString *)value {
+    NSURL *url = nil;
+    if (value) {
+        url = [NSURL URLWithString:value];
+    }
+    self.preferredProxyIcon = url;
+    [_delegate sessionProxyIconDidChange:self];
+}
+
 - (BOOL)screenWindowIsMiniaturized {
     return [[_delegate parentWindow] windowIsMiniaturized];
 }

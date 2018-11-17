@@ -2501,6 +2501,12 @@ static const int kMaxScreenRows = 4096;
 
 - (void)executeXtermProprietaryEtermExtension:(VT100Token *)token {
     NSString* argument = token.string;
+    if (![argument startsWithDigit]) {  // Support for proxy icon, if argument is empty clears current proxy icon
+        if ([delegate_ terminalIsTrusted]) {
+            [delegate_ terminalSetProxyIcon:argument];
+        }
+        return;
+    }
     NSArray* parts = [argument componentsSeparatedByString:@";"];
     NSString* func = nil;
     if ([parts count] >= 1) {

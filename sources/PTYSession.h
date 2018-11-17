@@ -193,6 +193,7 @@ typedef enum {
 
 - (void)sessionCurrentDirectoryDidChange:(PTYSession *)session;
 - (void)sessionCurrentHostDidChange:(PTYSession *)session;
+- (void)sessionProxyIconDidChange:(PTYSession *)session;
 
 // Remove a session from the tab, even if it's the only one.
 - (void)sessionRemoveSession:(PTYSession *)session;
@@ -277,6 +278,10 @@ typedef enum {
 // The window title that should be used when this session is current. Otherwise defaultName
 // should be used.
 @property(nonatomic, readonly) NSString *windowTitle;
+
+// The path to the proxy icon that should be used when this session is current. If is nil the current directory icon
+// is shown.
+@property(nonatomic, retain) NSURL *preferredProxyIcon;
 
 // Shell wraps the underlying file descriptor pair.
 @property(nonatomic, retain) PTYTask *shell;

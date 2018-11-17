@@ -3600,6 +3600,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate_ screenRaise:YES];
 }
 
+- (void)terminalSetProxyIcon:(NSString *)value {
+    NSString *path = [value length] ? value : nil;
+    [delegate_ screenSetPreferredProxyIcon:path];
+}
+
 - (void)terminalClearScrollbackBuffer {
     if (![iTermAdvancedSettingsModel preventEscapeSequenceFromClearingHistory]) {
         [self clearScrollbackBuffer];
@@ -3617,6 +3622,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         dir = [delegate_ screenCurrentWorkingDirectory];
     }
     if (dir.length) {
+        [delegate_ screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
         BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorLine]];
         [self setWorkingDirectory:dir onLine:cursorLine];
         if (willChange) {

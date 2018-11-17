@@ -279,6 +279,9 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 // Make the current terminal visible and give it keyboard focus.
 - (void)terminalStealFocus;
 
+// Set the proxy icon of current session window.
+- (void)terminalSetProxyIcon:(NSString *)value;
+
 // Erase the screen (preserving the line the cursor is on) and the scrollback buffer.
 - (void)terminalClearBuffer;
 

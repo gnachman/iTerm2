@@ -5152,13 +5152,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)sessionCurrentDirectoryDidChange:(PTYSession *)session {
     if (session == self.activeSession) {
-        [_delegate tab:self currentLocationDidChange:session.textViewCurrentLocation];
+        [_delegate tab:self proxyIconDidChange:session.textViewCurrentLocation];
     }
 }
 
 - (void)sessionCurrentHostDidChange:(PTYSession *)session {
     if (session == self.activeSession) {
-        [_delegate tab:self currentLocationDidChange:session.textViewCurrentLocation];
+        [_delegate tab:self proxyIconDidChange:session.textViewCurrentLocation];
+    }
+}
+
+- (void)sessionProxyIconDidChange:(PTYSession *)session {
+    if (session == self.activeSession) {
+        [_delegate tab:self proxyIconDidChange:session.preferredProxyIcon];
     }
 }
 
