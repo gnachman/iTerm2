@@ -1799,6 +1799,10 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return range.location == NSNotFound;
 }
 
+- (BOOL)startsWithDigit {
+    return YES;
+}
+
 - (NSRange)makeRangeSafe:(NSRange)range {
     if (range.location == NSNotFound || range.length == 0) {
         return range;
