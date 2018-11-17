@@ -160,11 +160,13 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         _windowNumberLabel = [NSTextField newLabelStyledTextField];
         _windowNumberLabel.alphaValue = 0.75;
         _windowNumberLabel.hidden = YES;
+        _windowNumberLabel.autoresizingMask = (NSViewMaxXMargin | NSViewMinYMargin);
         [self addSubview:_windowNumberLabel];
 
         _windowTitleLabel = [NSTextField newLabelStyledTextField];
         _windowTitleLabel.alignment = NSTextAlignmentCenter;
         _windowTitleLabel.hidden = YES;
+        _windowTitleLabel.autoresizingMask = (NSViewMinYMargin | NSViewWidthSizable);
         [self addSubview:_windowTitleLabel];
     }
     return self;
