@@ -1800,7 +1800,12 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (BOOL)startsWithDigit {
-    return YES;
+    if (![self length]) {
+        return NO;
+    }
+
+    NSCharacterSet *digitsSet = [NSCharacterSet decimalDigitCharacterSet];
+    return [digitsSet characterIsMember:[self characterAtIndex:0]];
 }
 
 - (NSRange)makeRangeSafe:(NSRange)range {
