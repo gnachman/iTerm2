@@ -9,6 +9,7 @@
 
 @implementation iTermStandardWindowButtonsView {
     BOOL _mouseInGroup;
+    BOOL _optionModifier;
     NSTrackingArea *_trackingArea;
 }
 
@@ -81,14 +82,29 @@
         return;
     }
     _mouseInGroup = mouseInGroup;
-    for (NSView *subview in self.subviews) {
-        [subview setNeedsDisplay:YES];
-    }
+    [self redraw];
 }
 
 // Overrides a private method. Returns YES to show icons in the buttons.
 - (BOOL)_mouseInGroup:(NSButton*)button {
     return _mouseInGroup;
+}
+
+#pragma mark - Option key handling
+
+- (void)setOptionModifier:(BOOL)optionModifier {
+    if (_mouseInGroup && optionModifier != _optionModifier) {
+        [self redraw];
+    }
+    _optionModifier = optionModifier;
+}
+
+- (void)zoomButtonEvent {
+    if (_optionModifier) {
+        [self.window zoom:self];
+    } else {
+        [self.window toggleFullScreen:self];
+    }
 }
 
 @end
