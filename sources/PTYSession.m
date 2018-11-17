@@ -8049,7 +8049,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // Sets current session proxy icon.
 - (void)screenSetPreferredProxyIcon:(NSString *)value {
     NSURL *url = nil;
-    if (![value isEqualToString:@"file://"]) {  // Empty path should clear preferred proxy icon.
+    if (value) {
         url = [NSURL URLWithString:value];
     }
     self.preferredProxyIcon = url;

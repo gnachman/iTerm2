@@ -3442,7 +3442,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetProxyIcon:(NSString *)value {
-    [delegate_ screenSetPreferredProxyIcon:value];
+    NSString *path = [value length] ? value : nil;
+    [delegate_ screenSetPreferredProxyIcon:path];
 }
 
 - (void)terminalClearScrollbackBuffer {
