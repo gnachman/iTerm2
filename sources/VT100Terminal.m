@@ -2498,7 +2498,7 @@ static const int kMaxScreenRows = 4096;
 
 - (void)executeXtermProprietaryExtermExtension:(VT100Token *)token {
     NSString* argument = token.string;
-    if ([argument hasPrefix:@"file://"]) {  // Support for proxy icon, following Terminal.app syntax
+    if (![argument startsWithDigit]) {  // Support for proxy icon, if argument is empty clears current proxy icon
         if ([delegate_ terminalIsTrusted]) {
             [delegate_ terminalSetProxyIcon:argument];
         }
