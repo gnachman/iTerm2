@@ -341,12 +341,14 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             [self launchSublimeTextWithBundleIdentifier:bundleId path:path];
         } else if ([identifier isEqualToString:kEmacsAppIdentifier]) {
             NSMutableArray *args = [NSMutableArray array];
-            [args addObject:path];
-            if (lineNumber) {
-                if (columnNumber) {
-                    [args insertObject:[NSString stringWithFormat:@"+%@:%@", lineNumber, columnNumber] atIndex:0];
-                } else {
-                    [args insertObject:[NSString stringWithFormat:@"+%@", lineNumber] atIndex:0];
+            if (path) {
+                [args addObject:path];
+                if (lineNumber) {
+                    if (columnNumber) {
+                        [args insertObject:[NSString stringWithFormat:@"+%@:%@", lineNumber, columnNumber] atIndex:0];
+                    } else {
+                        [args insertObject:[NSString stringWithFormat:@"+%@", lineNumber] atIndex:0];
+                    }
                 }
             }
             [self launchEmacsWithArguments:args];

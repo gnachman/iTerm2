@@ -559,19 +559,19 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
     iTermTextPIU *piu;
     if (iTermTextIsMonochrome()) {
         // There is only a center part for ASCII on Mojave because the glyph size is increased to contain the largest ASCII glyph.
-        piu = iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[outerPIUIndex][asciiAttrs].get_next(),
-                                                          code,
-                                                          w,
-                                                          h,
-                                                          texture,
-                                                          cellWidth,
-                                                          x,
-                                                          yOffset,
-                                                          iTermASCIITextureOffsetCenter,
-                                                          textColor,
-                                                          attributes[x].backgroundColor,
-                                                          underlineStyle,
-                                                          underlineColor);
+        iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[outerPIUIndex][asciiAttrs].get_next(),
+                                                    code,
+                                                    w,
+                                                    h,
+                                                    texture,
+                                                    cellWidth,
+                                                    x,
+                                                    yOffset,
+                                                    iTermASCIITextureOffsetCenter,
+                                                    textColor,
+                                                    attributes[x].backgroundColor,
+                                                    underlineStyle,
+                                                    underlineColor);
         return;
     }
     // Pre-10.14, ASCII glyphs can get chopped up into multiple parts. This is necessary so subpixel AA will work right.

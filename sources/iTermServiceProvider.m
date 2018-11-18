@@ -28,7 +28,6 @@
         if ([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]) {
             if (!isDirectory) {
                 windowController = [self openTab:allowTabs inTerminal:windowController directory:[path stringByDeletingLastPathComponent]];
-                path = [path stringByDeletingLastPathComponent];
             } else {
                 windowController = [self openTab:allowTabs inTerminal:windowController directory:path];
             }
