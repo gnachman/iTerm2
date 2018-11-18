@@ -7910,6 +7910,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)reloadBookmarks
 {
+    for (PTYTab *tab in self.tabs) {
+        [tab setDeferFontChanges:YES];
+    }
     for (PTYSession* session in [self allSessions]) {
         Profile *oldBookmark = [session profile];
         NSString* oldName = [[[oldBookmark objectForKey:KEY_NAME] copy] autorelease];
@@ -7929,6 +7932,9 @@ ITERM_WEAKLY_REFERENCEABLE
                 [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
             }
         }
+    }
+    for (PTYTab *tab in self.tabs) {
+        [tab setDeferFontChanges:NO];
     }
     if (self.isHotKeyWindow) {
         iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];

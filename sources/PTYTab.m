@@ -195,6 +195,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // If YES then force metal off. Does a hard reset when changing screens.
     BOOL _bounceMetal;
     NSString *_temporarilyUnmaximizedSessionGUID;
+
+    NSMutableArray<PTYSession *> *_sessionsWithDeferredFontChanges;
 }
 
 @synthesize parentWindow = parentWindow_;
@@ -366,6 +368,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _tabNumberForItermSessionId = -1;
     hiddenLiveViews_ = [[NSMutableArray alloc] init];
     tmuxWindow_ = -1;
+    _sessionsWithDeferredFontChanges = [[NSMutableArray alloc] init];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
                                                  name:kUpdateLabelsNotification
@@ -416,6 +419,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [hiddenLiveViews_ release];
     [_viewToSessionMap release];
     [_temporarilyUnmaximizedSessionGUID release];
+    [_sessionsWithDeferredFontChanges release];
     [super dealloc];
 }
 
@@ -1482,7 +1486,30 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return [self isForegroundTab];
 }
 
+- (void)setDeferFontChanges:(BOOL)deferFontChanges {
+    if (deferFontChanges == _deferFontChanges) {
+        return;
+    }
+    _deferFontChanges = deferFontChanges;
+    if (!deferFontChanges) {
+        for (PTYSession *session in _sessionsWithDeferredFontChanges) {
+            [self reallyChangeSessionFontSize:session];
+        }
+        [_sessionsWithDeferredFontChanges removeAllObjects];
+    }
+}
+
 - (void)sessionDidChangeFontSize:(PTYSession *)session {
+    if (self.deferFontChanges) {
+        if (![_sessionsWithDeferredFontChanges containsObject:session]) {
+            [_sessionsWithDeferredFontChanges addObject:session];
+        }
+        return;
+    }
+    [self reallyChangeSessionFontSize:session];
+}
+
+- (void)reallyChangeSessionFontSize:(PTYSession *)session {
     if (![[self parentWindow] anyFullScreen]) {
         if ([iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
             [[self parentWindow] fitWindowToTab:self];
