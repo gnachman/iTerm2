@@ -240,11 +240,9 @@ NSString*    gCrashLogString = nil;
     else
         userMessage = [[NSLocalizedStringFromTable(@"FEEDBACK_MESSAGE_TEXT",@"UKCrashReporter",@"") mutableCopy] autorelease];
 
-    NSString *userName = NSFullUserName();
     NSString *emailAddr = NSLocalizedStringFromTable(@"MISSING_EMAIL_ADDRESS",@"UKCrashReporter",@"");
 
     if ([self europeanLocale]) {
-        userName = @"<Your Name Here>";
         emailAddr = NSLocalizedStringFromTable(@"MISSING_EMAIL_ADDRESS",@"UKCrashReporter",@"");
     }
 

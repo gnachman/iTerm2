@@ -198,8 +198,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         pointSize = asciiFontInfo.font.pointSize;
     }
     NSArray *key = @[ NSStringFromRange(range),
-                      asciiFontInfo.font.fontName,
-                      nonAsciiFontInfo.font.fontName,
+                      asciiFontInfo.font.fontName ?: @"",
+                      nonAsciiFontInfo.font.fontName ?: @"",
                       @(pointSize),
                       @(asciiFontInfo.baselineOffset),
                       @(scale),
@@ -617,7 +617,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                     context:(CGContextRef)context {
     CGContextSetShouldAntialias(context, _antialiased);
 
-    BOOL shouldSmooth = _attributes.useThinStrokes;
+    BOOL shouldSmooth;
     int style = -1;
     if (iTermTextIsMonochrome()) {
         if (_attributes.useThinStrokes) {

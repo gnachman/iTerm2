@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface NSNumber (iTerm)
 
-- (id)it_jsonSafeValue;
+- (nullable id)it_jsonSafeValue;
 
 @end
 

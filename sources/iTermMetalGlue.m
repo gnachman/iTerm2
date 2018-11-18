@@ -956,12 +956,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     NSUInteger sketch = *sketchPtr;
     vector_float4 lastUnprocessedBackgroundColor = simd_make_float4(0, 0, 0, 0);
     BOOL lastSelected = NO;
-    float alpha;
-    if (iTermTextIsMonochrome()) {
-        alpha = _transparencyAlpha;
-    } else {
-        alpha = 1;
-    }
     // Prime numbers chosen more or less arbitrarily.
     const vector_float4 bmul = simd_make_float4(7, 11, 13, 1) * 255;
     const vector_float4 fmul = simd_make_float4(17, 19, 23, 1) * 255;
