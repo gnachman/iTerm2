@@ -16,7 +16,7 @@
  @param request Question from server
  @returns A valid response to the given question
  */
-- (NSString *)session:(NMSSHSession *)session keyboardInteractiveRequest:(NSString *)request;
+- (nonnull NSString *)session:(nonnull NMSSHSession *)session keyboardInteractiveRequest:(nonnull NSString *)request;
 
 /**
  Called when a session has failed and disconnected.
@@ -24,7 +24,7 @@
  @param session The session that was disconnected
  @param error A description of the error that caused the disconnect
  */
-- (void)session:(NMSSHSession *)session didDisconnectWithError:(NSError *)error;
+- (void)session:(nonnull NMSSHSession *)session didDisconnectWithError:(nonnull NSError *)error;
 
 /**
  Called when a session is connecting to a host, the fingerprint is used
@@ -34,6 +34,6 @@
  @param fingerprint The host's fingerprint
  @returns YES if the session should trust the host, otherwise NO.
  */
-- (BOOL)session:(NMSSHSession *)session shouldConnectToHostWithFingerprint:(NSString *)fingerprint;
+- (BOOL)session:(nonnull NMSSHSession *)session shouldConnectToHostWithFingerprint:(nonnull NSString *)fingerprint;
 
 @end
