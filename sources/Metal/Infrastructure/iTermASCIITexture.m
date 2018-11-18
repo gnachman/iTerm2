@@ -21,7 +21,8 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
 + (instancetype)sharedInstance;
 - (iTermASCIITexture *)asciiTextureWithAttributes:(iTermASCIITextureAttributes)attributes
                                        descriptor:(iTermCharacterSourceDescriptor *)descriptor
-                                           device:(id<MTLDevice>)device;
+                                           device:(id<MTLDevice>)device
+                                         creation:(iTermASCIITexture * (^)(void))creation;
 - (void)addAsciiTexture:(iTermASCIITexture *)texture
          withAttributes:(iTermASCIITextureAttributes)attributes
              descriptor:(iTermCharacterSourceDescriptor *)descriptor
@@ -30,7 +31,7 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
 @end
 
 @implementation iTermASCIITextureCache {
-    NSCache *_cache;
+    NSCache *_sharedCache;
 }
 
 + (instancetype)sharedInstance {
@@ -45,29 +46,38 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _cache = [[NSCache alloc] init];
-        _cache.countLimit = 256;
-        _cache.delegate = self;
+        _sharedCache = [[NSCache alloc] init];
+        _sharedCache.countLimit = 256;
+        _sharedCache.delegate = self;
     }
     return self;
 }
 
 - (iTermASCIITexture *)asciiTextureWithAttributes:(iTermASCIITextureAttributes)attributes
                                        descriptor:(iTermCharacterSourceDescriptor *)descriptor
-                                           device:(id<MTLDevice>)device {
+                                           device:(id<MTLDevice>)device
+                                         creation:(iTermASCIITexture *(^)(void))creation {
     id key = [self keyForAttributes:attributes descriptor:descriptor device:device];
-    iTermASCIITexture *texture = [_cache objectForKey:key];
+    iTermASCIITexture *texture;
+    @synchronized(_sharedCache) {
+        texture = [_sharedCache objectForKey:key];
+        if (!texture) {
+            texture = creation();
+            [self addAsciiTexture:texture withAttributes:attributes descriptor:descriptor device:device];
+        }
+    }
     DLog(@"Texture for %@ is %@", key, texture);
     return texture;
 }
 
+// NOTE: Only call this in @synchronized(_sharedCache)
 - (void)addAsciiTexture:(iTermASCIITexture *)texture
          withAttributes:(iTermASCIITextureAttributes)attributes
              descriptor:(iTermCharacterSourceDescriptor *)descriptor
                  device:(id<MTLDevice>)device {
     id key = [self keyForAttributes:attributes descriptor:descriptor device:device];
     DLog(@"Add texture %@ for key %@", texture, key);
-    [_cache setObject:texture forKey:key];
+    [_sharedCache setObject:texture forKey:key];
 }
 
 - (id)keyForAttributes:(iTermASCIITextureAttributes)attributes
@@ -162,24 +172,26 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
     return _descriptor.glyphSize;
 }
 
+- (iTermASCIITexture *)newASCIITextureForAttributes:(iTermASCIITextureAttributes)attributes {
+    return [[iTermASCIITexture alloc] initWithAttributes:attributes
+                                              descriptor:_descriptor
+                                                  device:_device
+                                                creation:_creation];
+}
+
 - (iTermASCIITexture *)asciiTextureForAttributes:(iTermASCIITextureAttributes)attributes {
     if (_textures[attributes]) {
         return _textures[attributes];
     }
 
+    __weak __typeof(self) weakSelf = self;
     iTermASCIITexture *texture = [[iTermASCIITextureCache sharedInstance] asciiTextureWithAttributes:attributes
                                                                                           descriptor:_descriptor
-                                                                                              device:_device];
-    if (!texture) {
-        texture = [[iTermASCIITexture alloc] initWithAttributes:attributes
-                                                     descriptor:_descriptor
-                                                         device:_device
-                                                       creation:_creation];
-        [[iTermASCIITextureCache sharedInstance] addAsciiTexture:texture
-                                                  withAttributes:attributes
-                                                      descriptor:_descriptor
-                                                          device:_device];
-    }
+                                                                                              device:_device
+                                                                                            creation:^iTermASCIITexture *{
+                                                                                                NSLog(@"Create texture with attributes %@", @(attributes));
+                                                                                                return [weakSelf newASCIITextureForAttributes:attributes];
+                                                                                            }];
     _textures[attributes] = texture;
     return texture;
 }
