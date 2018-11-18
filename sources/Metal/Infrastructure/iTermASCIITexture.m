@@ -189,7 +189,7 @@ static const NSInteger iTermASCIITextureCapacity = iTermASCIITextureOffsetCount 
                                                                                           descriptor:_descriptor
                                                                                               device:_device
                                                                                             creation:^iTermASCIITexture *{
-                                                                                                NSLog(@"Create texture with attributes %@", @(attributes));
+                                                                                                DLog(@"Create texture with attributes %@", @(attributes));
                                                                                                 return [weakSelf newASCIITextureForAttributes:attributes];
                                                                                             }];
     _textures[attributes] = texture;
