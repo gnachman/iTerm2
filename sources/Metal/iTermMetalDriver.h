@@ -66,8 +66,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) NSColor *timestampsBackgroundColor;
 @property (nonatomic, readonly) NSColor *timestampsTextColor;
 @property (nonatomic, readonly) long long firstVisibleAbsoluteLineNumber;
-@property (nonatomic, readonly) BOOL cutOutLeftCorner;
-@property (nonatomic, readonly) BOOL cutOutRightCorner;
 @property (nonatomic, readonly) NSEdgeInsets edgeInsets;
 @property (nonatomic, readonly) BOOL hasBackgroundImage;
 @property (nonatomic, readonly) CGFloat transparencyAlpha;

@@ -200,6 +200,7 @@ extern int kVT100ScreenMinRows;
 
 // Uninitialize timestamps.
 - (void)resetTimestamps;
+- (NSInteger)generationForLine:(int)y;
 
 // Fake shell integration via triggers APIs
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord;

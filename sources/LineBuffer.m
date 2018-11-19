@@ -443,6 +443,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 #endif
 }
 
+- (NSInteger)generationForLineNumber:(int)lineNum width:(int)width {
+    int remainder = 0;
+    LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum
+                                                        width:width
+                                                    remainder:&remainder
+                                                      verbose:NO];
+    return [block generationForLineNumber:remainder width:width];
+}
+
 #if SANITY_CHECK_CUMULATIVE_CACHE
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width {
     NSTimeInterval oldValue = [self old_timestampForLineNumber:lineNum width:width verbose:NO];

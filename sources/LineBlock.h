@@ -21,6 +21,7 @@ typedef struct {
     // width_for_double_width_characters_cache.
     NSMutableIndexSet *double_width_characters;
     int width_for_double_width_characters_cache;
+    NSInteger generation;
 } LineBlockMetadata;
 
 @class LineBlock;
@@ -121,6 +122,7 @@ typedef struct {
 
 // Returns the timestamp associated with a line when wrapped to the specified width.
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
+- (NSInteger)generationForLineNumber:(int)lineNum width:(int)width;
 
 // Appends the contents of the block to |s|.
 - (void)appendToDebugString:(NSMutableString *)s;
