@@ -414,6 +414,27 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return 0;
 }
 
+- (NSInteger)generationForLineNumber:(int)lineNum width:(int)width {
+    int line = lineNum;
+    int i;
+    for (i = 0; i < [blocks count]; ++i) {
+        LineBlock* block = [blocks objectAtIndex:i];
+        NSAssert(block, @"Null block");
+
+        // getNumLinesWithWrapWidth caches its result for the last-used width so
+        // this is usually faster than calling getWrappedLineWithWrapWidth since
+        // most calls to the latter will just decrement line and return NULL.
+        int block_lines = [block getNumLinesWithWrapWidth:width];
+        if (block_lines <= line) {
+            line -= block_lines;
+            continue;
+        }
+
+        return [block generationForLineNumber:line width:width];
+    }
+    return 0;
+}
+
 // Copy a line into the buffer. If the line is shorter than 'width' then only
 // the first 'width' characters will be modified.
 // 0 <= lineNum < numLinesWithWidth:width

@@ -120,6 +120,10 @@ NS_INLINE BOOL VT100GridRangeContains(VT100GridRange range, int value) {
     return value >= range.location && value < range.location + range.length;
 }
 
+NS_INLINE BOOL VT100GridRangeEqualsRange(VT100GridRange a, VT100GridRange b) {
+    return a.location == b.location && a.length == b.length;
+}
+
 NS_INLINE int VT100GridRangeMax(VT100GridRange range) {
     return range.location + range.length - 1;
 }

@@ -85,6 +85,8 @@
 // Returns the timestamp associated with a line when wrapped to the specified width.
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
 
+- (NSInteger)generationForLineNumber:(int)lineNum width:(int)width;
+
 // Copy a line into the buffer. If the line is shorter than 'width' then only the first 'width'
 // characters will be modified.
 // 0 <= lineNum < numLinesWithWidth:width

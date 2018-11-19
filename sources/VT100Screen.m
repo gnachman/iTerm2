@@ -1858,6 +1858,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [NSDate dateWithTimeIntervalSinceReferenceDate:interval];
 }
 
+- (NSInteger)generationForLine:(int)y {
+    int numLinesInLineBuffer = [linebuffer_ numLinesWithWidth:currentGrid_.size.width];
+    if (y >= numLinesInLineBuffer) {
+        return [currentGrid_ generationForLine:y - numLinesInLineBuffer];
+    } else {
+        return [linebuffer_ generationForLineNumber:y width:currentGrid_.size.width];
+    }
+}
+
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range
                                   width:(int)width
                             linesOffset:(long long)linesOffset
