@@ -5,7 +5,7 @@
 //  Created by GEORGE NACHMAN on 7/4/18.
 //
 
-#import <cocoa/cocoa.h>
+#import <Cocoa/Cocoa.h>
 #import "iTermFindViewController.h"
 
 @class FindViewController;
