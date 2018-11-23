@@ -61,6 +61,7 @@
         if (!strongSelf) {
             return;
         }
+        [strongSelf.view.window makeFirstResponder:strongSelf->_unlimitedScrollback];
         BOOL unlimited = [strongSelf boolForKey:KEY_UNLIMITED_SCROLLBACK];
         strongSelf->_numScrollbackLines.enabled = !unlimited;
         if (unlimited) {

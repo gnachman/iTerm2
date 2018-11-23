@@ -546,6 +546,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                 if (info.deferUpdate) {
                     const int intValue = [[NSTextField castFrom:info.control] separatorTolerantIntValue];
                     [self setInt:intValue forKey:info.key];
+                    info.control.intValue = intValue;
                 }
                 break;
 
