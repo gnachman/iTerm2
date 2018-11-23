@@ -46,12 +46,12 @@
    to make the BANNER define (used by src/session.c) be a valid SSH
    banner. Release versions have no appended strings and may of course not
    have dashes either. */
-#define LIBSSH2_VERSION "1.7.0"
+#define LIBSSH2_VERSION "1.8.0"
 
 /* The numeric version number is also available "in parts" by using these
    defines: */
 #define LIBSSH2_VERSION_MAJOR 1
-#define LIBSSH2_VERSION_MINOR 7
+#define LIBSSH2_VERSION_MINOR 8
 #define LIBSSH2_VERSION_PATCH 0
 
 /* This is the numeric version of the libssh2 version number, meant for easier
@@ -69,7 +69,7 @@
    and it is always a greater number in a more recent release. It makes
    comparisons with greater than and less than work.
 */
-#define LIBSSH2_VERSION_NUM 0x010700
+#define LIBSSH2_VERSION_NUM 0x010800
 
 /*
  * This is the date and time when the full source package was created. The
@@ -80,7 +80,7 @@
  *
  * "Mon Feb 12 11:35:33 UTC 2007"
  */
-#define LIBSSH2_TIMESTAMP "tis 23 feb 2016 07:56:30 UTC"
+#define LIBSSH2_TIMESTAMP "Tue Oct 25 06:44:33 UTC 2016"
 
 #ifndef RC_INVOKED
 
@@ -202,7 +202,16 @@ typedef off_t libssh2_struct_stat_size;
 #endif
 
 #ifndef LIBSSH2_STRUCT_STAT_SIZE_FORMAT
-#  define LIBSSH2_STRUCT_STAT_SIZE_FORMAT      "%zd"
+#  ifdef __VMS
+/* We have to roll our own format here because %z is a C99-ism we don't have. */
+#    if __USE_OFF64_T || __USING_STD_STAT
+#      define LIBSSH2_STRUCT_STAT_SIZE_FORMAT      "%Ld"
+#    else
+#      define LIBSSH2_STRUCT_STAT_SIZE_FORMAT      "%d"
+#    endif
+#  else
+#    define LIBSSH2_STRUCT_STAT_SIZE_FORMAT      "%zd"
+#  endif
 typedef struct stat libssh2_struct_stat;
 typedef off_t libssh2_struct_stat_size;
 #endif
