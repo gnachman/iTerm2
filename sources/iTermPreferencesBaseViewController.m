@@ -494,7 +494,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     if (numChars) {
         lastChar = [[textField stringValue] characterAtIndex:numChars - 1];
     }
-    if (iv != [textField separatorTolerantIntValue] || (lastChar < '0' || lastChar > '9')) {
+    if (iv != [textField separatorTolerantIntValue]) {
         // If the int values don't match up or there are terminal non-number
         // chars, then update the value.
         [textField setIntValue:iv];
