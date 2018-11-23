@@ -25,6 +25,14 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
     iTermEchoProbeState _state;
 }
 
+- (void)setDelegate:(id<iTermEchoProbeDelegate>)delegate {
+    if (delegate == self.delegate) {
+        return;
+    }
+    [self.delegate echoProbeDelegateWillChange:delegate];
+    _delegate = delegate;
+}
+
 - (void)beginProbeWithBackspace:(NSData *)backspace
                        password:(nonnull NSString *)password {
     _password = [password copy];
@@ -34,8 +42,8 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
         // Try to figure out if we're at a shell prompt. Send a space character and immediately
         // backspace over it. If no output is received within a specified timeout, then go ahead and
         // send the password. Otherwise, ask for confirmation.
-        [self.delegate echoProbeWriteString:@" "];
-        [self.delegate echoProbeWriteData:backspace];
+        [self.delegate echoProbe:self writeString:@" "];
+        [self.delegate echoProbe:self writeData:backspace];
         @synchronized(self) {
             _state = iTermEchoProbeWaiting;
         }
@@ -56,7 +64,11 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
         const int count = CVectorCount(vector);
         for (int i = 0; i < count; i++) {
             VT100Token *token = CVectorGetObject(vector, i);
+            const iTermEchoProbeState previousState = _state;
             _state = iTermEchoProbeGetNextState(_state, token);
+            if (_state != previousState) {
+                DLog(@"%@ went %@->%@ because of token %@", self, @(previousState), @(_state), token);
+            }
             if (_state == iTermEchoProbeOff || _state == iTermEchoProbeFailed) {
                 break;
             }
@@ -107,8 +119,12 @@ iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100T
 }
 
 - (void)enterPassword {
-    [self.delegate echoProbeWriteString:_password];
-    [self.delegate echoProbeWriteString:@"\n"];
+    const BOOL shouldSend = [self.delegate echoProbeShouldSendPassword:self];
+    if (shouldSend) {
+        [self.delegate echoProbe:self writeString:_password];
+        [self.delegate echoProbe:self writeString:@"\n"];
+    }
+    [self.delegate echoProbeDidSucceed:self];
     _password = nil;
 }
 
@@ -128,7 +144,7 @@ iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100T
             case iTermEchoProbeSpaceOverAsterisk:
             case iTermEchoProbeBackspaceOverAsterisk:
             case iTermEchoProbeOneAsterisk:
-                [self.delegate echoProbeDidFail];
+                [self.delegate echoProbeDidFail:self];
                 break;
         }
         _state = iTermEchoProbeOff;

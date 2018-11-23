@@ -11,7 +11,8 @@
 @protocol iTermPasswordManagerDelegate <NSObject>
 
 - (BOOL)iTermPasswordManagerCanEnterPassword;
-- (void)iTermPasswordManagerEnterPassword:(NSString *)password;
+- (void)iTermPasswordManagerEnterPassword:(NSString *)password broadcast:(BOOL)broadcast;
+- (BOOL)iTermPasswordManagerCanBroadcast;
 
 @end
 

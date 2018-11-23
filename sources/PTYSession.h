@@ -2,6 +2,7 @@
 
 #import "Api.pbobjc.h"
 #import "DVR.h"
+#import "iTermEchoProbe.h"
 #import "iTermFindDriver.h"
 #import "iTermFileDescriptorClient.h"
 #import "iTermMetalUnavailableReason.h"
@@ -37,6 +38,7 @@ extern NSString *const PTYSessionRevivedNotification;
 @class CapturedOutput;
 @class FakeWindow;
 @class iTermAnnouncementViewController;
+@class iTermEchoProbe;
 @class iTermStatusBarViewController;
 @class iTermVariables;
 @class iTermVariableScope;
@@ -223,6 +225,7 @@ typedef enum {
 
 @class SessionView;
 @interface PTYSession : NSResponder <
+    iTermEchoProbeDelegate,
     iTermFindDriverDelegate,
     iTermWeaklyReferenceable,
     PopupDelegate,
@@ -475,6 +478,8 @@ typedef enum {
 @property(nonatomic, readonly) NSImage *tabGraphic;
 @property(nonatomic, readonly) iTermStatusBarViewController *statusBarViewController;
 @property(nonatomic, readonly) BOOL shouldShowTabGraphic;
+@property(nonatomic, readonly) NSData *backspaceData;
+@property(nonatomic, readonly) iTermEchoProbe *echoProbe;
 
 #pragma mark - methods
 
@@ -578,6 +583,8 @@ typedef enum {
 - (void)writeTaskNoBroadcast:(NSString *)string
                     encoding:(NSStringEncoding)optionalEncoding
                forceEncoding:(BOOL)forceEncoding;
+
+- (void)writeLatin1EncodedData:(NSData *)data broadcastAllowed:(BOOL)broadcast;
 
 // PTYTextView
 - (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent*)event;

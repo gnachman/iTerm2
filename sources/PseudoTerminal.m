@@ -20,6 +20,7 @@
 #import "iTermAnnouncementView.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermBroadcastPasswordHelper.h"
 #import "iTermColorPresets.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermController.h"
@@ -8899,8 +8900,60 @@ ITERM_WEAKLY_REFERENCEABLE
     return session && ![session exited];
 }
 
-- (void)iTermPasswordManagerEnterPassword:(NSString *)password {
-    [[self currentSession] enterPassword:password];
+- (BOOL)iTermPasswordManagerCanBroadcast {
+    return self.broadcastSessions.count > 1;
+}
+
+- (void)broadcastPassword:(NSString *)password {
+    [iTermBroadcastPasswordHelper tryToSendPassword:password
+                                         toSessions:self.broadcastSessions
+                                         completion:
+     ^NSArray<PTYSession *> * _Nonnull(NSArray<PTYSession *> * _Nonnull okSessions,
+                                       NSArray<PTYSession *> * _Nonnull problemSessions) {
+         if (problemSessions.count == 0) {
+             return okSessions;
+         }
+         NSArray<NSString *> *names = [problemSessions mapWithBlock:^id(PTYSession *session) {
+             return session.nameController.presentationSessionTitle;
+         }];
+         NSString *message;
+         if (names.count < 2) {
+             message = [NSString stringWithFormat:@"The session named “%@” does not appear to be at a password prompt.", names.firstObject];
+         } else {
+             message = [NSString stringWithFormat:@"The following sessions to which input is broadcast do not appear to be at a password prompt: %@", [names componentsJoinedWithOxfordComma]];
+         }
+         NSArray *actions;
+         if (okSessions.count > 0) {
+             actions = @[ @"Cancel", @"Enter Password in Sessions at Prompt" ];
+         } else {
+             actions = @[ @"OK" ];
+         }
+         iTermWarningSelection selection = [iTermWarning showWarningWithTitle:message
+                                                                      actions:actions
+                                                                    accessory:nil
+                                                                   identifier:nil
+                                                                  silenceable:kiTermWarningTypePersistent
+                                                                      heading:@"Not all sessions at password prompt"
+                                                                       window:self.window];
+         switch (selection) {
+             case kiTermWarningSelection0:
+                 return @[];
+             case kiTermWarningSelection1:
+                 return okSessions;
+             case kiTermWarningSelection2:
+             case kItermWarningSelectionError:
+                 break;  // shouldn't happen
+         }
+         return @[];
+     }];
+}
+
+- (void)iTermPasswordManagerEnterPassword:(NSString *)password broadcast:(BOOL)broadcast {
+    if (broadcast) {
+        [self broadcastPassword:password];
+    } else {
+        [[self currentSession] enterPassword:password];
+    }
 }
 
 #pragma mark - PTYTabDelegate

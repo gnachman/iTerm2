@@ -2429,13 +2429,17 @@ static BOOL hasBecomeActive = NO;
 
 #pragma mark - iTermPasswordManagerDelegate
 
-- (void)iTermPasswordManagerEnterPassword:(NSString *)password {
+- (void)iTermPasswordManagerEnterPassword:(NSString *)password broadcast:(BOOL)broadcast {
   [[[[iTermController sharedInstance] currentTerminal] currentSession] enterPassword:password];
 }
 
 - (BOOL)iTermPasswordManagerCanEnterPassword {
   PTYSession *session = [[[iTermController sharedInstance] currentTerminal] currentSession];
   return session && ![session exited];
+}
+
+- (BOOL)iTermPasswordManagerCanBroadcast {
+    return NO;
 }
 
 - (void)currentSessionDidChange {

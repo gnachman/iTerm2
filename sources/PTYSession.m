@@ -238,7 +238,6 @@ static const NSUInteger kMaxHosts = 100;
     iTermAutomaticProfileSwitcherDelegate,
     iTermBackgroundDrawingHelperDelegate,
     iTermCoprocessDelegate,
-    iTermEchoProbeDelegate,
     iTermHotKeyNavigableSession,
     iTermMetaFrustrationDetector,
     iTermMetalGlueDelegate,
@@ -475,7 +474,6 @@ static const NSUInteger kMaxHosts = 100;
     iTermVariables *_userVariables;
     iTermSwiftyString *_badgeSwiftyString;
     iTermSwiftyString *_autoNameSwiftyString;
-    iTermEchoProbe *_echoProbe;
     
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
     iTermMetaFrustrationDetector *_metaFrustrationDetector;
@@ -5340,6 +5338,7 @@ ITERM_WEAKLY_REFERENCEABLE
 #pragma mark - Password Management
 
 - (void)enterPassword:(NSString *)password {
+    _echoProbe.delegate = self;
     [_echoProbe beginProbeWithBackspace:[self backspaceData]
                                password:password];
 }
@@ -10590,15 +10589,15 @@ ITERM_WEAKLY_REFERENCEABLE
 
 #pragma mark - iTermEchoProbeDelegate
 
-- (void)echoProbeWriteString:(NSString *)string {
+- (void)echoProbe:(iTermEchoProbe *)echoProbe writeString:(NSString *)string {
     [self writeTaskNoBroadcast:string];
 }
 
-- (void)echoProbeWriteData:(NSData *)data {
+- (void)echoProbe:(iTermEchoProbe *)echoProbe writeData:(NSData *)data {
     [self writeLatin1EncodedData:data broadcastAllowed:NO];
 }
 
-- (void)echoProbeDidFail {
+- (void)echoProbeDidFail:(iTermEchoProbe *)echoProbe {
     BOOL ok = ([iTermWarning showWarningWithTitle:@"Are you really at a password prompt? It looks "
                 @"like what you're typing is echoed to the screen."
                                           actions:@[ @"Cancel", @"Enter Password" ]
@@ -10608,6 +10607,16 @@ ITERM_WEAKLY_REFERENCEABLE
     if (ok) {
         [_echoProbe enterPassword];
     }
+}
+
+- (void)echoProbeDidSucceed:(iTermEchoProbe *)echoProbe {
+}
+
+- (BOOL)echoProbeShouldSendPassword:(iTermEchoProbe *)echoProbe {
+    return YES;
+}
+
+- (void)echoProbeDelegateWillChange:(iTermEchoProbe *)echoProbe {
 }
 
 #pragma mark - iTermBackgroundDrawingHelperDelegate

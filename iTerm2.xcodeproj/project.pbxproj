@@ -1406,6 +1406,8 @@
 		A614F2631FE47D8600EEE919 /* iTermCharacterBitmap.m in Sources */ = {isa = PBXBuildFile; fileRef = A614F2611FE47D8600EEE919 /* iTermCharacterBitmap.m */; };
 		A614F2651FE4B0A200EEE919 /* iTermCharacterParts.h in Headers */ = {isa = PBXBuildFile; fileRef = A614F2641FE4B0A200EEE919 /* iTermCharacterParts.h */; };
 		A614F2671FE4B16400EEE919 /* iTermCharacterParts.m in Sources */ = {isa = PBXBuildFile; fileRef = A614F2661FE4B16400EEE919 /* iTermCharacterParts.m */; };
+		A6180D7821A883860073F219 /* iTermBroadcastPasswordHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D7621A883860073F219 /* iTermBroadcastPasswordHelper.h */; };
+		A6180D7921A883860073F219 /* iTermBroadcastPasswordHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6180D7721A883860073F219 /* iTermBroadcastPasswordHelper.m */; };
 		A6184F891BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; };
 		A6184F8A1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; };
 		A6184F8B1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; };
@@ -4201,6 +4203,8 @@
 		A614F2611FE47D8600EEE919 /* iTermCharacterBitmap.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermCharacterBitmap.m; path = Metal/Infrastructure/iTermCharacterBitmap.m; sourceTree = "<group>"; };
 		A614F2641FE4B0A200EEE919 /* iTermCharacterParts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermCharacterParts.h; path = Metal/Infrastructure/iTermCharacterParts.h; sourceTree = "<group>"; };
 		A614F2661FE4B16400EEE919 /* iTermCharacterParts.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermCharacterParts.m; path = Metal/Infrastructure/iTermCharacterParts.m; sourceTree = "<group>"; };
+		A6180D7621A883860073F219 /* iTermBroadcastPasswordHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBroadcastPasswordHelper.h; sourceTree = "<group>"; };
+		A6180D7721A883860073F219 /* iTermBroadcastPasswordHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBroadcastPasswordHelper.m; sourceTree = "<group>"; };
 		A6184F881BAB3ED70088EF3C /* ColorPicker.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ColorPicker.framework; path = ColorPicker/ColorPicker.framework; sourceTree = "<group>"; };
 		A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+Profile.h"; sourceTree = "<group>"; };
 		A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+Profile.m"; sourceTree = "<group>"; };
@@ -7755,6 +7759,8 @@
 				53FF84E1217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.m */,
 				A6637FFD217B0DD900C8DD77 /* iTermFullDiskAccessManager.h */,
 				A6637FFE217B0DD900C8DD77 /* iTermFullDiskAccessManager.m */,
+				A6180D7621A883860073F219 /* iTermBroadcastPasswordHelper.h */,
+				A6180D7721A883860073F219 /* iTermBroadcastPasswordHelper.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -9036,6 +9042,7 @@
 				A66719161DCE36C3000CE608 /* NSURL+iTerm.h in Headers */,
 				A66719171DCE36C3000CE608 /* NSDate+iTerm.h in Headers */,
 				A66719181DCE36C3000CE608 /* iTermBaseHotKey.h in Headers */,
+				A6180D7821A883860073F219 /* iTermBroadcastPasswordHelper.h in Headers */,
 				A66719191DCE36C3000CE608 /* iTermShortcut.h in Headers */,
 				A667191A1DCE36C3000CE608 /* iTermWebSocketFrameBuilder.h in Headers */,
 				530AB8A320B12B9500D2AA08 /* iTermFunctionCallTextFieldDelegate.h in Headers */,
@@ -11260,6 +11267,7 @@
 				A630117F20E69D43008114B7 /* iTermStatusBarComponentKnob.m in Sources */,
 				A6A4866A20B6793E00493302 /* iTermKeyMappingViewController.m in Sources */,
 				A6A4868120B681A300493302 /* iTermColorPresets.m in Sources */,
+				A6180D7921A883860073F219 /* iTermBroadcastPasswordHelper.m in Sources */,
 				A6AC5D241E9036D70097C0A7 /* iTermURLMark.m in Sources */,
 				535EA51420D8C1EB00FC81E0 /* iTermProfilesWindowController.m in Sources */,
 				A6A4866F20B67A1600493302 /* iTermSemanticHistoryPrefsController.m in Sources */,

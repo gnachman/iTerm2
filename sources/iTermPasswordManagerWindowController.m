@@ -50,6 +50,7 @@ static BOOL sAuthenticated;
     IBOutlet NSButton *_editButton;
     IBOutlet NSButton *_enterPasswordButton;
     IBOutlet iTermSearchField *_searchField;
+    IBOutlet NSButton *_broadcastButton;
     NSArray *_accounts;
     NSString *_accountNameToSelectAfterAuthentication;
 }
@@ -174,6 +175,7 @@ static BOOL sAuthenticated;
 }
 
 - (void)awakeFromNib {
+    _broadcastButton.state = NSOffState;
     [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
     [self reloadAccounts];
     [self update];
@@ -194,6 +196,7 @@ static BOOL sAuthenticated;
 #pragma mark - APIs
 
 - (void)update {
+    _broadcastButton.enabled = [self.delegate iTermPasswordManagerCanBroadcast];
     [_enterPasswordButton setEnabled:([_tableView selectedRow] >= 0 &&
                                       [_delegate iTermPasswordManagerCanEnterPassword])];
 }
@@ -295,7 +298,8 @@ static BOOL sAuthenticated;
     NSString *password = [self selectedPassword];
     if (password) {
         DLog(@"enterPassword: giving password to delegate");
-        [_delegate iTermPasswordManagerEnterPassword:password];
+        [_delegate iTermPasswordManagerEnterPassword:password
+                                           broadcast:_broadcastButton.state == NSOnState];
         DLog(@"enterPassword: closing sheet");
         [self closeOrEndSheet];
     }
