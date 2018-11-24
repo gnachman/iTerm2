@@ -93,11 +93,8 @@
 
 - (void)updateTextColor {
     if (@available(macOS 10.14, *)) {
-        if (_isMain) {
-            _label.textColor = [_label.textColor colorWithAlphaComponent:0.5];
-        } else {
-            _label.textColor = [_label.textColor colorWithAlphaComponent:0.3];
-        }
+        _label.textColor = [NSColor windowFrameTextColor];
+        self.view.alphaValue = 0.5;
         return;
     }
     _label.textColor = _isMain ? [NSColor windowFrameTextColor] : [NSColor colorWithWhite:0.67 alpha:1];
