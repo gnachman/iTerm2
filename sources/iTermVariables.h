@@ -52,6 +52,7 @@ extern NSString *const iTermVariableKeySessionTmuxStatusLeft;  // String. Only s
 extern NSString *const iTermVariableKeySessionTmuxStatusRight;  // String. Only set when in tmux integration mode.
 extern NSString *const iTermVariableKeySessionMouseReportingMode;  // NSNumber (MouseMode)
 extern NSString *const iTermVariableKeySessionBadge;  // NSString. Evaluated badge swifty string.
+extern NSString *const iTermVariableKeySessionTab;  // NString. Containing tab.
 extern NSString *const iTermVariableKeyWindowTitleOverride;
 extern NSString *const iTermVariableKeyWindowCurrentTab;
 
@@ -115,6 +116,9 @@ typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
 // nil or NSNull value means unset it.
 // Returns whether it was set. If the value is unchanged, it does not get set.
 - (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name;
+
+// Set weak to YES when a strong reference to value should not be kept.
+- (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name weak:(BOOL)weak;
 
 // Freaking KVO crap keeps autocompleting and causing havoc
 - (void)setValue:(nullable id)value forKey:(NSString *)key NS_UNAVAILABLE;

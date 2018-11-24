@@ -60,11 +60,47 @@ NSString *const iTermVariableKeySessionTmuxStatusLeft = @"session.tmuxStatusLeft
 NSString *const iTermVariableKeySessionTmuxStatusRight = @"session.tmuxStatusRight";
 NSString *const iTermVariableKeySessionMouseReportingMode = @"session.mouseReportingMode";
 NSString *const iTermVariableKeySessionBadge = @"session.badge";
+NSString *const iTermVariableKeySessionTab = @"session.tab";
 
 NSString *const iTermVariableKeyWindowTitleOverride = @"titleOverride";
 NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
 
 // NOTE: If you add here, also update +recordBuiltInVariables
+
+@interface iTermWeakVariables : NSObject<NSSecureCoding>
+@property (nonatomic, nullable, weak, readonly) iTermVariables *variables;
+
+- (instancetype)initWithVariables:(iTermVariables *)variables NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+
+@end
+
+@implementation iTermWeakVariables
+
+- (instancetype)initWithVariables:(iTermVariables *)variables {
+    self = [super init];
+    if (self) {
+        _variables = variables;
+    }
+    return self;
+}
+
+- (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
+    self = [super init];
+    if (self) {
+        _variables = nil;
+    }
+    return self;
+}
+
+- (void)encodeWithCoder:(NSCoder *)aCoder {
+}
+
++ (BOOL)supportsSecureCoding {
+    return YES;
+}
+
+@end
 
 @implementation iTermVariables {
     NSMutableDictionary<NSString *, id> *_values;
@@ -117,7 +153,8 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
                                     iTermVariableKeySessionMouseReportingMode,
                                     iTermVariableKeySessionBadge,
                                     iTermVariableKeySessionTmuxStatusLeft,
-                                    iTermVariableKeySessionTmuxStatusRight ];
+                                    iTermVariableKeySessionTmuxStatusRight,
+                                    iTermVariableKeySessionTab ];
     [names enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [self recordUseOfVariableNamed:obj inContext:iTermVariablesSuggestionContextSession];
     }];
@@ -253,7 +290,11 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
 #pragma mark - APIs
 
 - (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name {
-    iTermVariables *owner = [self setValue:value forVariableNamed:name withSideEffects:YES];
+    return [self setValue:value forVariableNamed:name weak:NO];
+}
+
+- (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name weak:(BOOL)weak {
+    iTermVariables *owner = [self setValue:value forVariableNamed:name withSideEffects:YES weak:weak];
     return owner != nil;
 }
 
@@ -262,7 +303,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     for (NSString *name in dict) {
         id value = dict[name];
         iTermVariables *owner = nil;
-        owner = [self setValue:value forVariableNamed:name withSideEffects:NO];
+        owner = [self setValue:value forVariableNamed:name withSideEffects:NO weak:NO];
         if (owner) {
             NSInteger depth = [[name componentsSeparatedByString:@"."] count];
             [mutations addObject:[iTermTriple tripleWithObject:@(depth) andObject:owner object:name]];
@@ -280,15 +321,26 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     return [self valueForVariableName:name];
 }
 
+- (id)valueByUnwrappingWeakVariables:(id)value {
+    iTermWeakVariables *weakVariables = [iTermWeakVariables castFrom:value];
+    if (weakVariables) {
+        return weakVariables.variables;
+    } else {
+        return value;
+    }
+}
+
 - (id)valueForVariableName:(NSString *)name {
     if (_values[name]) {
-        return _values[name];
+        return [self valueByUnwrappingWeakVariables:_values[name]];
     }
     NSArray<NSString *> *parts = [name componentsSeparatedByString:@"."];
     if (parts.count <= 1) {
         return nil;
     }
-    iTermVariables *child = [iTermVariables castFrom:_values[parts.firstObject]];
+
+    id value = _values[parts.firstObject];
+    iTermVariables *child = [iTermVariables castFrom:[self valueByUnwrappingWeakVariables:value]];
     if (!child) {
         return nil;
     }
@@ -317,7 +369,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     if (value) {
         [self addWeakReferenceToLinkTable:_resolvedLinks toObject:reference forKey:parts.firstObject];
         [reference addLinkToVariables:self localPath:parts.firstObject];
-        iTermVariables *sub = [iTermVariables castFrom:value];
+        iTermVariables *sub = [iTermVariables castFrom:[self valueByUnwrappingWeakVariables:value]];
         if (sub && parts.count > 1) {
             [sub addLinkToReference:reference path:[[parts subarrayFromIndex:1] componentsJoinedByString:@"."]];
         }
@@ -333,7 +385,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     if (!value) {
         return [_unresolvedLinks[path].allObjects containsObject:reference];
     }
-    iTermVariables *sub = [iTermVariables castFrom:value];
+    iTermVariables *sub = [iTermVariables castFrom:[self valueByUnwrappingWeakVariables:value]];
     if (sub && parts.count > 1) {
         return [sub hasLinkToReference:reference path:[[parts subarrayFromIndex:1] componentsJoinedByString:@"."]];
     }
@@ -414,37 +466,42 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     }
 }
 
-- (iTermVariables *)setValue:(id)value forVariableNamed:(NSString *)name withSideEffects:(BOOL)sideEffects {
+- (iTermVariables *)setValue:(id)value forVariableNamed:(NSString *)name withSideEffects:(BOOL)sideEffects weak:(BOOL)weak {
     assert(name.length > 0);
 
     // If name refers to a variable of a child, go down a level.
     NSArray<NSString *> *parts = [name componentsSeparatedByString:@"."];
     if (parts.count > 1) {
-        iTermVariables *child = [iTermVariables castFrom:_values[parts.firstObject]];
+        iTermVariables *child = [iTermVariables castFrom:[self valueByUnwrappingWeakVariables:_values[parts.firstObject]]];
         if (!child) {
             return nil;
         }
         return [child setValue:value
               forVariableNamed:[[parts subarrayFromIndex:1] componentsJoinedByString:@"."]
-               withSideEffects:sideEffects];
+               withSideEffects:sideEffects
+                          weak:weak];
     }
 
-    const BOOL changed = ![NSObject object:value isEqualToObject:_values[name]];
+    const BOOL changed = ![NSObject object:value isEqualToObject:[self valueByUnwrappingWeakVariables:_values[name]]];
     if (!changed) {
         return nil;
     }
     iTermVariables *child = [iTermVariables castFrom:value];
-    if (child) {
+    if (child && !weak) {
         child->_parentName = [name copy];
         child->_parent = self;
     }
     if (value && ![NSNull castFrom:value]) {
         if ([value isKindOfClass:[iTermVariables class]]) {
-            _values[name] = value;
+            if (weak) {
+                _values[name] = [[iTermWeakVariables alloc] initWithVariables:value];
+            } else {
+                _values[name] = value;
+            }
             [self didChangeNonterminalValueWithPath:name];
         } else {
             DLog(@"Set variable %@ = %@ (%@)", name, value, self);
-            const BOOL wasVariables = [_values[name] isKindOfClass:[iTermVariables class]];
+            const BOOL wasVariables = [[self valueByUnwrappingWeakVariables:_values[name]] isKindOfClass:[iTermVariables class]];
             _values[name] = [value copy];
             if (wasVariables) {
                 [self didChangeNonterminalValueWithPath:name];
@@ -454,7 +511,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
         }
     } else {
         DLog(@"Unset variable %@ (%@)", name, self);
-        const BOOL wasVariables = [_values[name] isKindOfClass:[iTermVariables class]];
+        const BOOL wasVariables = [[self valueByUnwrappingWeakVariables:_values[name]] isKindOfClass:[iTermVariables class]];
         [_values removeObjectForKey:name];
         if (wasVariables) {
             [self didChangeNonterminalValueWithPath:name];
@@ -521,7 +578,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
 - (void)recordUseOfVariables:(NSSet<NSString *> *)names {
     if (_context != iTermVariablesSuggestionContextNone) {
         [names enumerateObjectsUsingBlock:^(NSString * _Nonnull name, BOOL * _Nonnull stop) {
-            if (![self->_values[name] isKindOfClass:[iTermVariables class]]) {
+            if (![[self valueByUnwrappingWeakVariables:self->_values[name]] isKindOfClass:[iTermVariables class]]) {
                 [iTermVariables recordUseOfVariableNamed:name inContext:self->_context];
             }
         }];
@@ -547,7 +604,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     NSMutableDictionary<NSString *, NSString *> *result = [NSMutableDictionary dictionary];
     for (NSString *name in _values) {
         id value = _values[name];
-        iTermVariables *child = [iTermVariables castFrom:value];
+        iTermVariables *child = [iTermVariables castFrom:[self valueByUnwrappingWeakVariables:value]];
         if (child) {
             [result it_mergeFrom:[child.stringValuedDictionary mapKeysWithBlock:^id(NSString *key, NSString *object) {
                 if (scopeName) {
@@ -571,6 +628,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     NSMutableDictionary<NSString *, NSString *> *result = [NSMutableDictionary dictionary];
     for (NSString *name in _values) {
         id value = _values[name];
+        // Weak variables are intentionally not unwrapped here to avoid getting stuck in a cycle.
         iTermVariables *child = [iTermVariables castFrom:value];
         if (child) {
             [result it_mergeFrom:[[child dictionaryInScope:nil] mapKeysWithBlock:^id(NSString *key, id object) {
@@ -715,12 +773,16 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
 }
 
 - (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name {
+    return [self setValue:value forVariableNamed:name weak:NO];
+}
+
+- (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name weak:(BOOL)weak {
     NSString *stripped = nil;
     iTermVariables *owner = [self ownerForKey:name stripped:&stripped];
     if (!owner) {
         return NO;
     }
-    const BOOL result = [owner setValue:value forVariableNamed:stripped];
+    const BOOL result = [owner setValue:value forVariableNamed:stripped weak:weak];
     if ([value isKindOfClass:[iTermVariables class]]) {
         [self resolveDanglingReferences];
     }
