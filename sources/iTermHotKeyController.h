@@ -53,7 +53,7 @@ extern NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID;
 
 - (iTermProfileHotKey *)profileHotKeyForWindowController:(PseudoTerminal *)windowController;
 
-- (void)createHiddenWindowsFromRestorableStates:(NSArray *)states;
+- (NSInteger)createHiddenWindowsFromRestorableStates:(NSArray *)states;
 - (void)createHiddenWindowFromLegacyRestorableState:(NSDictionary *)legacyState;
 
 // Auto hide all hotkey windows, if needed and possible.

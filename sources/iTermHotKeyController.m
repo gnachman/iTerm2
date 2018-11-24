@@ -143,16 +143,19 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     }
 }
 
-- (void)createHiddenWindowsFromRestorableStates:(NSArray *)states {
+- (NSInteger)createHiddenWindowsFromRestorableStates:(NSArray *)states {
+    NSInteger count = 0;
     for (__kindof iTermBaseHotKey *hotkey in _hotKeys) {
         if ([hotkey isKindOfClass:[iTermProfileHotKey class]]) {
             iTermProfileHotKey *profileHotKey = hotkey;
             if ([profileHotKey loadRestorableStateFromArray:states]) {
                 [profileHotKey createWindow];
                 [profileHotKey.windowController.window orderOut:nil];  // Issue 4065
+                count++;
             }
         }
     }
+    return count;
 }
 
 - (void)createHiddenWindowFromLegacyRestorableState:(NSDictionary *)legacyState {
