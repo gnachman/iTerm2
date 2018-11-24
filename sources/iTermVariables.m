@@ -67,7 +67,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
 
 // NOTE: If you add here, also update +recordBuiltInVariables
 
-@interface iTermWeakVariables : NSObject<NSSecureCoding>
+@interface iTermWeakVariables : NSObject<NSCopying, NSSecureCoding>
 @property (nonatomic, nullable, weak, readonly) iTermVariables *variables;
 
 - (instancetype)initWithVariables:(iTermVariables *)variables NS_DESIGNATED_INITIALIZER;
@@ -99,6 +99,10 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
 
 + (BOOL)supportsSecureCoding {
     return YES;
+}
+
+- (id)copyWithZone:(nullable NSZone *)zone {
+    return self;
 }
 
 @end
