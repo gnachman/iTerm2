@@ -7,6 +7,7 @@
 
 #import "iTermEchoProbe.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "VT100Token.h"
 

@@ -138,7 +138,7 @@ static NSMutableArray<iTermBroadcastPasswordHelper *> *sBroadcastPasswordHelpers
 
 - (void)echoProbeDidSucceed:(iTermEchoProbe *)echoProbe {
     PTYSession *session = [self sessionForProbe:echoProbe];
-    DLog(@"Echo probe %@ succeeded for %@", session);
+    DLog(@"Echo probe %@ succeeded for %@", echoProbe, session);
     if (session) {
         [_successes addObject:session];
     } else {
