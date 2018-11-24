@@ -5,6 +5,7 @@
 //  Created by George Nachman on 8/1/18.
 //
 
+#import "DebugLogging.h"
 #import "iTermEchoProbe.h"
 
 #import "iTermAdvancedSettingsModel.h"
