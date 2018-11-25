@@ -14,6 +14,27 @@
     NSArray<NSString *> *_dependencies;
 }
 
++ (void)writeSetupPyToFile:(NSString *)file name:(NSString *)name dependencies:(NSArray<NSString *> *)dependencies {
+    NSArray<NSString *> *quotedDependencies = [dependencies mapWithBlock:^id(NSString *anObject) {
+        return [NSString stringWithFormat:@"'%@'", anObject];
+    }];
+    NSString *contents = [NSString stringWithFormat:
+                          @"from setuptools import setup\n"
+                          @"# WARNING: install_requires must be on one line and contain only quoted strings.\n"
+                          @"#          This protects the security of users installing the script.\n"
+                          @"#          The script import feature will fail if you try to get fancy.\n"
+                          @"setup(name='%@',\n"
+                          @"      version='1.0',\n"
+                          @"      scripts=['%@/%@.py'],\n"
+                          @"      install_requires=['iterm2',%@]\n"
+                          @"      )",
+                          name,
+                          name,
+                          name,
+                          [quotedDependencies componentsJoinedByString:@", "]];
+    [contents writeToFile:file atomically:NO encoding:NSUTF8StringEncoding error:nil];
+}
+
 - (instancetype)initWithPath:(NSString *)path {
     self = [super init];
     if (self) {

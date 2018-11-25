@@ -53,6 +53,10 @@
     runner.completion = ^(int status) {
         completion(status == 0);
     };
+    runner.outputHandler = ^(NSData *data) {
+        DLog(@"%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+    };
+    DLog(@"Running %@ %@", runner.command, [runner.arguments componentsJoinedByString:@" "]);
     [runner run];
 }
 

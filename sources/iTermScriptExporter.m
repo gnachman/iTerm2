@@ -13,6 +13,22 @@
 
 @implementation iTermScriptExporter
 
++ (NSURL *)urlForNewZipFileInFolder:(NSURL *)destinationFolder name:(NSString *)name {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSURL *zipURL;
+    NSInteger count = 0;
+    do {
+        count++;
+        if (count == 1) {
+            zipURL = [destinationFolder URLByAppendingPathComponent:[name stringByAppendingPathExtension:@"zip"]];
+        } else {
+            NSString *nameWithCount = [NSString stringWithFormat:@"%@ (%@)", name, @(count)];
+            zipURL = [destinationFolder URLByAppendingPathComponent:[nameWithCount stringByAppendingPathExtension:@"zip"]];
+        }
+    } while ([fileManager fileExistsAtPath:zipURL.path]);
+    return zipURL;
+}
+
 + (void)exportScriptAtURL:(NSURL *)fullURL completion:(void (^)(NSString *errorMessage, NSURL *zipURL))completion {
     NSURL *relativeURL = [self relativeURLFromFullURL:fullURL];
     if (!relativeURL) {
@@ -24,46 +40,45 @@
     if (![self urlContainsScript:fullURL fullEnvironment:&fullEnvironment]) {
         completion(@"No found script at selected location.", nil);
     }
-    NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *name = [fullURL.path lastPathComponent];
-    NSURL *zipURL;
+    if (!fullEnvironment) {
+        NSString *scriptName = [name stringByDeletingPathExtension];
+        NSString *temp = [[[NSFileManager defaultManager] temporaryDirectory] stringByAppendingPathComponent:scriptName];
+        [[NSFileManager defaultManager] createDirectoryAtPath:temp withIntermediateDirectories:YES attributes:nil error:NULL];
+        [self copySimpleScriptAtURL:fullURL
+                              named:[name stringByDeletingPathExtension]
+                toFullEnvironmentIn:temp];
+        NSURL *tempURL = [NSURL fileURLWithPath:temp];
+        [self exportFullEnvironmentScriptAtURL:tempURL
+                                   relativeURL:[NSURL fileURLWithPath:scriptName]
+                                          name:scriptName
+                                    completion:^(NSString *errorMessage, NSURL *zipURL) {
+                                        [[NSFileManager defaultManager] removeItemAtPath:temp error:nil];
+                                        completion(errorMessage, zipURL);
+                                    }];
+        return;
+    }
+    [self exportFullEnvironmentScriptAtURL:fullURL relativeURL:relativeURL name:name completion:completion];
+}
+
++ (void)exportFullEnvironmentScriptAtURL:(NSURL *)fullURL
+                             relativeURL:(NSURL *)relativeURL
+                                    name:(NSString *)name
+                              completion:(void (^)(NSString *errorMessage, NSURL *zipURL))completion {
     NSArray<NSURL *> *sourceURLs;
     NSURL *destinationFolder = [NSURL fileURLWithPath:[[NSFileManager defaultManager] desktopDirectory]];
-    if (fullEnvironment) {
-        NSString *absSetupPath = [fullURL URLByAppendingPathComponent:@"setup.py"].path;
-        iTermSetupPyParser *setupParser = [[iTermSetupPyParser alloc] initWithPath:absSetupPath];
-        if (setupParser.dependenciesError) {
-            completion(@"Could not parse install_requires in setup.py", nil);
-            return;
-        }
 
-        sourceURLs = @[ [relativeURL URLByAppendingPathComponent:@"setup.py"],
-                        [relativeURL URLByAppendingPathComponent:name] ];
-        NSInteger count = 0;
-        do {
-            count++;
-            if (count == 1) {
-                zipURL = [destinationFolder URLByAppendingPathComponent:[name stringByAppendingPathExtension:@"zip"]];
-            } else {
-                NSString *nameWithCount = [NSString stringWithFormat:@"%@ (%@)", name, @(count)];
-                zipURL = [destinationFolder URLByAppendingPathComponent:[nameWithCount stringByAppendingPathExtension:@"zip"]];
-            }
-        } while ([fileManager fileExistsAtPath:zipURL.path]);
-    } else {
-        sourceURLs = @[ relativeURL ];
-        NSInteger count = 0;
-        do {
-            count++;
-            if (count == 1) {
-                zipURL = [destinationFolder URLByAppendingPathComponent:[name stringByAppendingPathExtension:@"zip"]];
-            } else {
-                NSString *nameWithCount = [NSString stringWithFormat:@"%@ (%@)", name, @(count)];
-                zipURL = [destinationFolder URLByAppendingPathComponent:[nameWithCount stringByAppendingPathExtension:@"zip"]];
-            }
-        } while ([fileManager fileExistsAtPath:zipURL.path]);
+    NSString *absSetupPath = [fullURL URLByAppendingPathComponent:@"setup.py"].path;
+    iTermSetupPyParser *setupParser = [[iTermSetupPyParser alloc] initWithPath:absSetupPath];
+    if (setupParser.dependenciesError) {
+        completion(@"Could not parse install_requires in setup.py", nil);
+        return;
     }
 
+    sourceURLs = @[ [relativeURL URLByAppendingPathComponent:@"setup.py"],
+                    [relativeURL URLByAppendingPathComponent:name] ];
 
+    NSURL *zipURL = [self urlForNewZipFileInFolder:destinationFolder name:name];
     [iTermCommandRunner zipURLs:sourceURLs
                       arguments:@[ @"-r" ]
                        toZipURL:zipURL
@@ -71,6 +86,27 @@
                      completion:^(BOOL ok) {
                          completion(ok ? nil : @"Failed to create zip file.", zipURL);
                      }];
+}
+
++ (void)copySimpleScriptAtURL:(NSURL *)simpleScriptSourceURL
+                        named:(NSString *)name
+          toFullEnvironmentIn:(NSString *)destination {
+    [iTermSetupPyParser writeSetupPyToFile:[destination stringByAppendingPathComponent:[NSString stringWithFormat:@"setup.py"]]
+                                      name:name
+                              dependencies:@[]];
+    NSString *sourceFolder = [destination stringByAppendingPathComponent:name];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    [fileManager createDirectoryAtPath:sourceFolder
+           withIntermediateDirectories:NO
+                            attributes:nil
+                                 error:NULL];
+    NSURL *destinationPy = [NSURL fileURLWithPath:[sourceFolder stringByAppendingPathComponent:[simpleScriptSourceURL lastPathComponent]]];
+    [fileManager copyItemAtURL:simpleScriptSourceURL
+                         toURL:destinationPy
+                         error:NULL];
+    [fileManager setAttributes:@{ NSFilePosixPermissions: @(0744)}
+                  ofItemAtPath:destinationPy.path
+                         error:NULL];
 }
 
 + (BOOL)urlContainsScript:(NSURL *)url fullEnvironment:(out nullable BOOL *)fullEnvironment {

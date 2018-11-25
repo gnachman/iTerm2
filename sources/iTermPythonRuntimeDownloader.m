@@ -12,6 +12,7 @@
 #import "iTermDisclosableView.h"
 #import "iTermNotificationController.h"
 #import "iTermOptionalComponentDownloadWindowController.h"
+#import "iTermSetupPyParser.h"
 #import "iTermSignatureVerifier.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -290,27 +291,6 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     }
 }
 
-- (void)writeSetupPyToFile:(NSString *)file name:(NSString *)name dependencies:(NSArray<NSString *> *)dependencies {
-    NSArray<NSString *> *quotedDependencies = [dependencies mapWithBlock:^id(NSString *anObject) {
-        return [NSString stringWithFormat:@"'%@'", anObject];
-    }];
-    NSString *contents = [NSString stringWithFormat:
-                          @"from setuptools import setup\n"
-                          @"# WARNING: install_requires must be on one line and contain only quoted strings.\n"
-                          @"#          This protects the security of users installing the script.\n"
-                          @"#          The script import feature will fail if you try to get fancy.\n"
-                          @"setup(name='%@',\n"
-                          @"      version='1.0',\n"
-                          @"      scripts=['%@/%@.py'],\n"
-                          @"      install_requires=['iterm2',%@]\n"
-                          @"      )",
-                          name,
-                          name,
-                          name,
-                          [quotedDependencies componentsJoinedByString:@", "]];
-    [contents writeToFile:file atomically:NO encoding:NSUTF8StringEncoding error:nil];
-}
-
 - (void)installPythonEnvironmentTo:(NSURL *)container dependencies:(NSArray<NSString *> *)dependencies completion:(void (^)(BOOL))completion {
     NSString *zip = [self pathToZIP];
     [self unzip:[NSURL fileURLWithPath:zip] to:container completion:^(BOOL unzipOk) {
@@ -347,9 +327,9 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 
                     [alert runModal];
                 }
-                [self writeSetupPyToFile:[container.path stringByAppendingPathComponent:@"setup.py"]
-                                    name:container.path.lastPathComponent
-                            dependencies:dependencies];
+                [iTermSetupPyParser writeSetupPyToFile:[container.path stringByAppendingPathComponent:@"setup.py"]
+                                                  name:container.path.lastPathComponent
+                                          dependencies:dependencies];
                 completion(YES);
             }];
         } else {
