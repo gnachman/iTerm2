@@ -781,7 +781,14 @@ class WriteOnlyProfile:
         """
         coros = []
         for value in preset.values:
-            coro = self._async_color_set(value.key, iterm2.color.Color(value.red * 255, value.green * 255, value.blue * 255, value.alpha * 255, value.color_space))
+            coro = self._async_color_set(
+                    value.key,
+                    iterm2.color.Color(
+                        value.red,
+                        value.green,
+                        value.blue,
+                        value.alpha,
+                        value.color_space))
             coros.append(coro)
         await asyncio.gather(*coros)
 
@@ -1550,7 +1557,13 @@ class Profile(WriteOnlyProfile):
         else:
             return None
 
-    def _color_get(self, key):
+    def get_color_with_key(self, key):
+        """Returns the color for the request key, or None.
+
+        :param key: A string describing the color. Corresponds to the keys in :class:`iterm2.ColorPreset.Color`.
+
+        :returns: Either a :class:`iterm2.color.Color` or `None`.
+        """
         try:
             color = iterm2.color.Color()
             color.from_dict(self.__props[key])
@@ -1569,168 +1582,168 @@ class Profile(WriteOnlyProfile):
         """Returns the foreground color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Foreground Color")
+        return self.get_color_with_key("Foreground Color")
 
     @property
     def background_color(self):
         """Returns the background color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Background Color")
+        return self.get_color_with_key("Background Color")
 
     @property
     def bold_color(self):
         """Returns the bold text color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Bold Color")
+        return self.get_color_with_key("Bold Color")
 
     @property
     def link_color(self):
         """Returns the link color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Link Color")
+        return self.get_color_with_key("Link Color")
 
     @property
     def selection_color(self):
         """Returns the selection background color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Selection Color")
+        return self.get_color_with_key("Selection Color")
 
     @property
     def selected_text_color(self):
         """Returns the selection text color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Selected Text Color")
+        return self.get_color_with_key("Selected Text Color")
 
     @property
     def cursor_color(self):
         """Returns the cursor color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Cursor Color")
+        return self.get_color_with_key("Cursor Color")
 
     @property
     def cursor_text_color(self):
         """Returns the cursor text color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Cursor Text Color")
+        return self.get_color_with_key("Cursor Text Color")
 
     @property
     def ansi_0_color(self):
         """Returns the ANSI 0 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 0 Color")
+        return self.get_color_with_key("Ansi 0 Color")
 
     @property
     def ansi_1_color(self):
         """Returns the ANSI 1 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 1 Color")
+        return self.get_color_with_key("Ansi 1 Color")
 
     @property
     def ansi_2_color(self):
         """Returns the ANSI 2 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 2 Color")
+        return self.get_color_with_key("Ansi 2 Color")
 
     @property
     def ansi_3_color(self):
         """Returns the ANSI 3 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 3 Color")
+        return self.get_color_with_key("Ansi 3 Color")
 
     @property
     def ansi_4_color(self):
         """Returns the ANSI 4 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 4 Color")
+        return self.get_color_with_key("Ansi 4 Color")
 
     @property
     def ansi_5_color(self):
         """Returns the ANSI 5 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 5 Color")
+        return self.get_color_with_key("Ansi 5 Color")
 
     @property
     def ansi_6_color(self):
         """Returns the ANSI 6 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 6 Color")
+        return self.get_color_with_key("Ansi 6 Color")
 
     @property
     def ansi_7_color(self):
         """Returns the ANSI 7 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 7 Color")
+        return self.get_color_with_key("Ansi 7 Color")
 
     @property
     def ansi_8_color(self):
         """Returns the ANSI 8 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 8 Color")
+        return self.get_color_with_key("Ansi 8 Color")
 
     @property
     def ansi_9_color(self):
         """Returns the ANSI 9 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 9 Color")
+        return self.get_color_with_key("Ansi 9 Color")
 
     @property
     def ansi_10_color(self):
         """Returns the ANSI 10 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 10 Color")
+        return self.get_color_with_key("Ansi 10 Color")
 
     @property
     def ansi_11_color(self):
         """Returns the ANSI 11 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 11 Color")
+        return self.get_color_with_key("Ansi 11 Color")
 
     @property
     def ansi_12_color(self):
         """Returns the ANSI 12 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 12 Color")
+        return self.get_color_with_key("Ansi 12 Color")
 
     @property
     def ansi_13_color(self):
         """Returns the ANSI 13 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 13 Color")
+        return self.get_color_with_key("Ansi 13 Color")
 
     @property
     def ansi_14_color(self):
         """Returns the ANSI 14 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 14 Color")
+        return self.get_color_with_key("Ansi 14 Color")
 
     @property
     def ansi_15_color(self):
         """Returns the ANSI 15 color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Ansi 15 Color")
+        return self.get_color_with_key("Ansi 15 Color")
 
     @property
     def smart_cursor_color(self):
@@ -1744,28 +1757,28 @@ class Profile(WriteOnlyProfile):
         """Returns the tab color.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Tab Color")
+        return self.get_color_with_key("Tab Color")
 
     @property
     def underline_color(self):
         """Returns the underline color.
 
         :returns: A :class:`Color` or None"""
-        return self._color_get("Underline Color")
+        return self.get_color_with_key("Underline Color")
 
     @property
     def cursor_guide_color(self):
         """Returns the cursor guide color. The alpha value is respected.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Cursor Guide Color")
+        return self.get_color_with_key("Cursor Guide Color")
 
     @property
     def badge_color(self):
         """Returns the badge color. The alpha value is respected.
 
         :returns: A :class:`Color`"""
-        return self._color_get("Badge Color")
+        return self.get_color_with_key("Badge Color")
 
     @property
     def name(self):

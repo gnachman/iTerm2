@@ -21,6 +21,15 @@ class ColorPreset:
         def key(self):
             return self.__key
 
+        def __repr__(self):
+            return "({},{},{},{},{} {})".format(
+                self.__key,
+                round(self.red),
+                round(self.green),
+                round(self.blue),
+                round(self.alpha),
+                self.color_space)
+
     @staticmethod
     async def async_get_list(connection):
         """Fetches a list of color presets.
@@ -53,7 +62,13 @@ class ColorPreset:
         """Do not call this directly. Use :meth:async_get instead."""
         self.__values = []
         for setting in proto:
-            self.__values.append(ColorPreset.Color(setting.red, setting.green, setting.blue, setting.alpha, setting.color_space, setting.key))
+            self.__values.append(ColorPreset.Color(
+                setting.red * 255,
+                setting.green * 255,
+                setting.blue * 255,
+                setting.alpha * 255,
+                setting.color_space,
+                setting.key))
 
     @property
     def values(self):

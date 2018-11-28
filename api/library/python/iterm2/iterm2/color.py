@@ -102,7 +102,8 @@ class Color:
         if "Color Space" in input_dict:
             self.color_space = input_dict["Color Space"]
         else:
-            self.color_space = "sRGB"
+            # This is the default because it is what profiles use by default.
+            self.color_space = Color.COLOR_SPACE_NAME_CALIBRATED
 
     @property
     def json(self):
