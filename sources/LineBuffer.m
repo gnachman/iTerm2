@@ -444,7 +444,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (NSInteger)generationForLineNumber:(int)lineNumber width:(int)width {
-    int line = lineNum;
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNumber
                                                         width:width

@@ -912,7 +912,7 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 }
 
 - (void)reallySetSize:(VT100GridSize)newSize {
-    [self.temporaryDoubleBuffer resetExplicitly];
+    [self.temporaryDoubleBuffer reset];
     const VT100GridSize oldSize = currentGrid_.size;
     iTermSelection *selection = [delegate_ screenSelection];
     [self willSetSizeWithSelection:selection];
