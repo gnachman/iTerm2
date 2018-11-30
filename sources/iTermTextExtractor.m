@@ -1676,6 +1676,7 @@ const NSInteger kLongMaximumWordLength = 100000;
                     charBlock:(BOOL (^)(screen_char_t *currentLine, screen_char_t theChar, VT100GridCoord coord))charBlock
                      eolBlock:(BOOL (^)(unichar code, int numPrecedingNulls, int line))eolBlock {
     int width = [_dataSource width];
+
     int startx = VT100GridWindowedRangeStart(range).x;
     int endx = range.columnWindow.length ? range.columnWindow.location + range.columnWindow.length
                                          : [_dataSource width];
@@ -1694,6 +1695,7 @@ const NSInteger kLongMaximumWordLength = 100000;
         // Count number of nulls at end of line.
         int numNulls = 0;
         for (int x = endx - 1; x >= range.columnWindow.location; x--) {
+            ITAssertWithMessage(x >= 0 && x < width, @"Counting number of nulls. x=%@ range=%@ width=%@", @(x), VT100GridWindowedRangeDescription(range), @(width));
             BOOL isNull;
             // If not full-width then treat terminal spaces as nulls. This makes soft selection
             // find newlines more reliably, but can occasionally insert newlines where they
@@ -1712,6 +1714,7 @@ const NSInteger kLongMaximumWordLength = 100000;
 
         // Iterate over characters up to terminal nulls.
         for (int x = MAX(range.columnWindow.location, startx); x < endx - numNulls; x++) {
+            ITAssertWithMessage(x >= 0 && x < width, @"Iterating terminal nulls. x=%@ range=%@ width=%@ numNulls=%@", @(x), VT100GridWindowedRangeDescription(range), @(width), @(numNulls));
             if (charBlock) {
                 if (charBlock(theLine, theLine[x], VT100GridCoordMake(x, y))) {
                     return;
