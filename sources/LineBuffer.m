@@ -170,6 +170,9 @@ NS_INLINE int SlowRawNumLines(LineBuffer *buffer, int width) {
     return count;
 }
 
+static BOOL DoSanityCheck(void) {
+    return arc4random_uniform(100) == 0;
+}
 // This is called a lot so it's a C function to avoid obj_msgSend
 static int RawNumLines(LineBuffer* buffer, int width) {
     if (buffer->num_wrapped_lines_width == width) {
@@ -178,12 +181,14 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     int count;
 #if SANITY_CHECK_CUMULATIVE_CACHE
-    int fastCount = [buffer->_lineBlocks numberOfWrappedLinesForWidth:width];
     int slowCount = SlowRawNumLines(buffer, width);
-    if (fastCount != slowCount) {
-        [buffer->_lineBlocks oopsWithWidth:width block:^{
-            DLog(@"fastCount=%@ slowCount=%@", @(fastCount), @(slowCount));
-        }];
+    if (DoSanityCheck()) {
+        int fastCount = [buffer->_lineBlocks numberOfWrappedLinesForWidth:width];
+        if (fastCount != slowCount) {
+            [buffer->_lineBlocks oopsWithWidth:width block:^{
+                DLog(@"fastCount=%@ slowCount=%@", @(fastCount), @(slowCount));
+            }];
+        }
     }
     count = slowCount;
 #else
@@ -245,7 +250,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     assert(totalDropped == (nl - RawNumLines(self, width)));
 #endif
 #if SANITY_CHECK_CUMULATIVE_CACHE
-    [_lineBlocks sanityCheck];
+    if (DoSanityCheck()) {
+        [_lineBlocks sanityCheck];
+    }
 #endif
     return totalDropped;
 }
@@ -439,7 +446,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         num_wrapped_lines_width = -1;
     }
 #if SANITY_CHECK_CUMULATIVE_CACHE
-    [_lineBlocks sanityCheck];
+    if (DoSanityCheck()) {
+        [_lineBlocks sanityCheck];
+    }
 #endif
 }
 
@@ -455,13 +464,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 #if SANITY_CHECK_CUMULATIVE_CACHE
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width {
     NSTimeInterval oldValue = [self old_timestampForLineNumber:lineNum width:width verbose:NO];
-    NSTimeInterval newValue = [self new_timestampForLineNumber:lineNum width:width verbose:NO];
-    if (oldValue != newValue) {
-        [_lineBlocks oopsWithWidth:width block:^{
-            DLog(@"lineNum=%@ width=%@ oldvalue=%@ newValue=%@", @(lineNum), @(width), @(oldValue), @(newValue));
-            [self old_timestampForLineNumber:lineNum width:width verbose:YES];
-            [self new_timestampForLineNumber:lineNum width:width verbose:YES];
-        }];
+    if (DoSanityCheck()) {
+        NSTimeInterval newValue = [self new_timestampForLineNumber:lineNum width:width verbose:NO];
+        if (oldValue != newValue) {
+            [_lineBlocks oopsWithWidth:width block:^{
+                DLog(@"lineNum=%@ width=%@ oldvalue=%@ newValue=%@", @(lineNum), @(width), @(oldValue), @(newValue));
+                [self old_timestampForLineNumber:lineNum width:width verbose:YES];
+                [self new_timestampForLineNumber:lineNum width:width verbose:YES];
+            }];
+        }
     }
     return oldValue;
 }
@@ -519,19 +530,21 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     memset(&oldCont, 0, sizeof(oldCont));
     int oldValue = [self old_copyLineToBuffer:buffer width:width lineNum:lineNum continuation:&oldCont];
 
-    screen_char_t newCont = { 0 };
-    memset(&newCont, 0, sizeof(newCont));
-    int newValue = [self new_copyLineToBuffer:buffer width:width lineNum:lineNum continuation:&newCont verbose:NO];
+    if (DoSanityCheck()) {
+        screen_char_t newCont = { 0 };
+        memset(&newCont, 0, sizeof(newCont));
+        int newValue = [self new_copyLineToBuffer:buffer width:width lineNum:lineNum continuation:&newCont verbose:NO];
 
-    if (oldValue != newValue) {
-        [_lineBlocks oopsWithWidth:width block:^{
-            DLog(@"lineNum=%@ oldValue=%@ newValue=%@", @(lineNum), @(oldValue), @(newValue));
-            screen_char_t newCont = { 0 };
-            memset(&newCont, 0, sizeof(newCont));
-            [self new_copyLineToBuffer:buffer width:width lineNum:lineNum continuation:&newCont verbose:YES];
-        }];
+        if (oldValue != newValue) {
+            [_lineBlocks oopsWithWidth:width block:^{
+                DLog(@"lineNum=%@ oldValue=%@ newValue=%@", @(lineNum), @(oldValue), @(newValue));
+                screen_char_t newCont = { 0 };
+                memset(&newCont, 0, sizeof(newCont));
+                [self new_copyLineToBuffer:buffer width:width lineNum:lineNum continuation:&newCont verbose:YES];
+            }];
+        }
+        assert(!memcmp(&oldCont, &newCont, sizeof(oldCont)));
     }
-    assert(!memcmp(&oldCont, &newCont, sizeof(oldCont)));
 
     if (continuationPtr) {
         *continuationPtr = oldCont;
@@ -687,25 +700,29 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     memset(&oldCont, 0, sizeof(oldCont));
     ScreenCharArray *old = [self old_wrappedLineAtIndex:lineNum width:width continuation:&oldCont];
 
-    screen_char_t newCont = { 0 };
-    memset(&newCont, 0, sizeof(newCont));
-    ScreenCharArray *new = [self new_wrappedLineAtIndex:lineNum width:width continuation:&newCont verbose:NO];
+    if (DoSanityCheck()) {
+        screen_char_t newCont = { 0 };
+        memset(&newCont, 0, sizeof(newCont));
+        ScreenCharArray *new = [self new_wrappedLineAtIndex:lineNum width:width continuation:&newCont verbose:NO];
 
-    BOOL matches = old == new || [old isEqualToScreenCharArray:new];
-    if (!matches) {
-        [_lineBlocks oopsWithWidth:width block:^{
-            DLog(@"lineNum=%@", @(lineNum));
-            screen_char_t newCont = { 0 };
-            [self new_wrappedLineAtIndex:lineNum width:width continuation:&newCont verbose:YES];
-        }];
+        BOOL matches = old == new || [old isEqualToScreenCharArray:new];
+        if (!matches) {
+            [_lineBlocks oopsWithWidth:width block:^{
+                DLog(@"lineNum=%@", @(lineNum));
+                screen_char_t newCont = { 0 };
+                [self new_wrappedLineAtIndex:lineNum width:width continuation:&newCont verbose:YES];
+            }];
+        }
+        assert(!memcmp(&oldCont, &newCont, sizeof(oldCont)));
     }
-    assert(!memcmp(&oldCont, &newCont, sizeof(oldCont)));
 
     if (continuation) {
         memmove(continuation, &oldCont, sizeof(oldCont));
     }
 #if SANITY_CHECK_CUMULATIVE_CACHE
-    [_lineBlocks sanityCheck];
+    if (DoSanityCheck()) {
+        [_lineBlocks sanityCheck];
+    }
 #endif
     return old;
 }
@@ -795,19 +812,21 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 #if SANITY_CHECK_CUMULATIVE_CACHE
 - (NSArray<ScreenCharArray *> *)wrappedLinesFromIndex:(int)lineNum width:(int)width count:(int)count {
     NSArray *old = [self old_wrappedLinesFromIndex:lineNum width:width count:count];
-    NSArray *new = [self new_wrappedLinesFromIndex:lineNum width:width count:count verbose:NO];
-    if (old.count != new.count) {
-        [_lineBlocks oopsWithWidth:width block:^{
-            DLog(@"wrappedLineFromIndex:%@ width:%@ count:%@", @(lineNum), @(width), @(count));
-            DLog(@"old.count=%@, new.count=%@", @(old.count), @(new.count));
-            DLog(@"old=%@", old);
-            DLog(@"new=%@", new);
-            for (NSInteger i = 0; i < old.count; i++) {
-                BOOL ok = [old[i] isEqualToScreenCharArray:new[i]];
-                DLog(@"Line at index %@ ok=%@", @(i), @(ok));
-            }
-            [self new_wrappedLinesFromIndex:lineNum width:width count:count verbose:YES];
-        }];
+    if (DoSanityCheck()) {
+        NSArray *new = [self new_wrappedLinesFromIndex:lineNum width:width count:count verbose:NO];
+        if (old.count != new.count) {
+            [_lineBlocks oopsWithWidth:width block:^{
+                DLog(@"wrappedLineFromIndex:%@ width:%@ count:%@", @(lineNum), @(width), @(count));
+                DLog(@"old.count=%@, new.count=%@", @(old.count), @(new.count));
+                DLog(@"old=%@", old);
+                DLog(@"new=%@", new);
+                for (NSInteger i = 0; i < old.count; i++) {
+                    BOOL ok = [old[i] isEqualToScreenCharArray:new[i]];
+                    DLog(@"Line at index %@ ok=%@", @(i), @(ok));
+                }
+                [self new_wrappedLinesFromIndex:lineNum width:width count:count verbose:YES];
+            }];
+        }
     }
     return old;
 }
@@ -970,11 +989,13 @@ NS_INLINE int SlowTotalNumberOfRawLines(LineBuffer *object) {
 NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 #if SANITY_CHECK_CUMULATIVE_CACHE
     int oldValue = SlowTotalNumberOfRawLines(self);
-    int newValue = self->_lineBlocks.numberOfRawLines;
-    if (oldValue != newValue) {
-        [self->_lineBlocks oopsWithWidth:0 block:^{
-            DLog(@"oldValue=%@ newValue=%@", @(oldValue), @(newValue));
-        }];
+    if (DoSanityCheck()) {
+        int newValue = self->_lineBlocks.numberOfRawLines;
+        if (oldValue != newValue) {
+            [self->_lineBlocks oopsWithWidth:0 block:^{
+                DLog(@"oldValue=%@ newValue=%@", @(oldValue), @(newValue));
+            }];
+        }
     }
     return oldValue;
 #else
@@ -1000,7 +1021,9 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     cursor_rawline += TotalNumberOfRawLines(self);
 
 #if SANITY_CHECK_CUMULATIVE_CACHE
-    [_lineBlocks sanityCheck];
+    if (DoSanityCheck()) {
+        [_lineBlocks sanityCheck];
+    }
 #endif
 }
 
@@ -1038,24 +1061,28 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
 #if SANITY_CHECK_CUMULATIVE_CACHE
 - (BOOL)_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset {
-    int nb=0, no=0;
-    BOOL newOk = [self new_findPosition:start inBlock:&nb inOffset:&no verbose:NO];
     int ob=0, oo=0;
     BOOL oldOk = [self old_findPosition:start inBlock:&ob inOffset:&oo];
 
-    BOOL sane = YES;
-    if (newOk != oldOk) {
-        sane = NO;
-    } else if (newOk) {
-        sane = (nb == ob) && (no == oo);
+    if (DoSanityCheck()) {
+        int nb=0, no=0;
+        BOOL newOk = [self new_findPosition:start inBlock:&nb inOffset:&no verbose:NO];
+
+        BOOL sane = YES;
+        if (newOk != oldOk) {
+            sane = NO;
+        } else if (newOk) {
+            sane = (nb == ob) && (no == oo);
+        }
+        if (!sane) {
+            [_lineBlocks oopsWithWidth:0 block:^{
+                DLog(@"newOK=%@ oldOK=%@ nb=%@ ob=%@ no=%@ oo=%@ start=%@", @(newOk), @(oldOk), @(nb), @(ob), @(no), @(oo), start);
+                int nb, no;
+                [self new_findPosition:start inBlock:&nb inOffset:&no verbose:YES];
+            }];
+        }
     }
-    if (!sane) {
-        [_lineBlocks oopsWithWidth:0 block:^{
-            DLog(@"newOK=%@ oldOK=%@ nb=%@ ob=%@ no=%@ oo=%@ start=%@", @(newOk), @(oldOk), @(nb), @(ob), @(no), @(oo), start);
-            int nb, no;
-            [self new_findPosition:start inBlock:&nb inOffset:&no verbose:YES];
-        }];
-    }
+
     if (block_num) {
         *block_num = ob;
     }
@@ -1110,12 +1137,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 #if SANITY_CHECK_CUMULATIVE_CACHE
 - (int)_blockPosition:(int) block_num {
     int oldValue = [self old_blockPosition:block_num];
-    int newValue = [self new_blockPosition:block_num verbose:NO];
-    if (oldValue != newValue) {
-        [_lineBlocks oopsWithWidth:0 block:^{
-            DLog(@"oldValue=%@ newValue=%@ block_num=%@", @(oldValue), @(newValue), @(block_num));
-            [self new_blockPosition:block_num verbose:YES];
-        }];
+    if (DoSanityCheck()) {
+        int newValue = [self new_blockPosition:block_num verbose:NO];
+        if (oldValue != newValue) {
+            [_lineBlocks oopsWithWidth:0 block:^{
+                DLog(@"oldValue=%@ newValue=%@ block_num=%@", @(oldValue), @(newValue), @(block_num));
+                [self new_blockPosition:block_num verbose:YES];
+            }];
+        }
     }
     return oldValue;
 }
@@ -1348,13 +1377,15 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                                         width:(int)width
                                        offset:(int)offset {
     LineBufferPosition *oldValue = [self old_positionForCoordinate:coord width:width offset:offset];
-    LineBufferPosition *newValue = [self new_positionForCoordinate:coord width:width offset:offset verbose:NO];
-    BOOL sane = (oldValue == newValue || [oldValue isEqualToLineBufferPosition:newValue]);
-    if (!sane) {
-        [_lineBlocks oopsWithWidth:width block:^{
-            DLog(@"coord=%@ offset=%@ oldValue=%@ newValue=%@", VT100GridCoordDescription(coord), @(offset), oldValue, newValue);
-            [self new_positionForCoordinate:coord width:width offset:offset verbose:YES];
-        }];
+    if (DoSanityCheck()) {
+        LineBufferPosition *newValue = [self new_positionForCoordinate:coord width:width offset:offset verbose:NO];
+        BOOL sane = (oldValue == newValue || [oldValue isEqualToLineBufferPosition:newValue]);
+        if (!sane) {
+            [_lineBlocks oopsWithWidth:width block:^{
+                DLog(@"coord=%@ offset=%@ oldValue=%@ newValue=%@", VT100GridCoordDescription(coord), @(offset), oldValue, newValue);
+                [self new_positionForCoordinate:coord width:width offset:offset verbose:YES];
+            }];
+        }
     }
     return oldValue;
 }
@@ -1475,17 +1506,18 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                                      ok:(BOOL *)ok {
     BOOL oldOk;
     VT100GridCoord oldValue = [self old_coordinateForPosition:position width:width ok:&oldOk];
-    BOOL newOk;
-    VT100GridCoord newValue = [self new_coordinateForPosition:position width:width ok:&newOk verbose:NO];
-    BOOL sane = (VT100GridCoordEquals(oldValue, newValue) && (oldOk == newOk));
-    if (!sane) {
-        [_lineBlocks oopsWithWidth:width block:^{
-            DLog(@"position=%@ old=%@ new=%@ oldOk=%@ newOk=%@", position, VT100GridCoordDescription(oldValue), VT100GridCoordDescription(newValue), @(oldOk), @(newOk));
-            BOOL newOk;
-            [self new_coordinateForPosition:position width:width ok:&newOk verbose:YES];
-        }];
+    if (DoSanityCheck()) {
+        BOOL newOk;
+        VT100GridCoord newValue = [self new_coordinateForPosition:position width:width ok:&newOk verbose:NO];
+        BOOL sane = (VT100GridCoordEquals(oldValue, newValue) && (oldOk == newOk));
+        if (!sane) {
+            [_lineBlocks oopsWithWidth:width block:^{
+                DLog(@"position=%@ old=%@ new=%@ oldOk=%@ newOk=%@", position, VT100GridCoordDescription(oldValue), VT100GridCoordDescription(newValue), @(oldOk), @(newOk));
+                BOOL newOk;
+                [self new_coordinateForPosition:position width:width ok:&newOk verbose:YES];
+            }];
+        }
     }
-
     if (ok) {
         *ok = oldOk;
     }
@@ -1645,12 +1677,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 #if SANITY_CHECK_CUMULATIVE_CACHE
 - (LineBufferPosition *)lastPosition {
     LineBufferPosition *oldValue = [self old_lastPosition];
-    LineBufferPosition *newValue = [self new_lastPositionVerbose:NO];
-    if (![newValue isEqualToLineBufferPosition:oldValue]) {
-        [_lineBlocks oopsWithWidth:0 block:^{
-            DLog(@"old=%@ new=%@", oldValue, newValue);
-            [self new_lastPositionVerbose:YES];
-        }];
+    if (DoSanityCheck()) {
+        LineBufferPosition *newValue = [self new_lastPositionVerbose:NO];
+        if (![newValue isEqualToLineBufferPosition:oldValue]) {
+            [_lineBlocks oopsWithWidth:0 block:^{
+                DLog(@"old=%@ new=%@", oldValue, newValue);
+                [self new_lastPositionVerbose:YES];
+            }];
+        }
     }
     return oldValue;
 }
@@ -1689,13 +1723,15 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 #if SANITY_CHECK_CUMULATIVE_CACHE
 - (long long)absPositionOfFindContext:(FindContext *)findContext {
     long long oldAbsolutePosition = [self old_absPositionOfFindContext:findContext];
-    long long newAbsolutePosition = [self new_absPositionOfFindContext:findContext verbose:NO];
-    if (oldAbsolutePosition != newAbsolutePosition) {
-        [_lineBlocks oopsWithWidth:0 block:^{
-            DLog(@"oldAbsolutePosition=%@, newAbsolutePosition=%@, findContext=%@", @(oldAbsolutePosition), @(newAbsolutePosition), findContext);
-            [self old_absPositionOfFindContext:findContext];
-            [self new_absPositionOfFindContext:findContext verbose:YES];
-        }];
+    if (DoSanityCheck()) {
+        long long newAbsolutePosition = [self new_absPositionOfFindContext:findContext verbose:NO];
+        if (oldAbsolutePosition != newAbsolutePosition) {
+            [_lineBlocks oopsWithWidth:0 block:^{
+                DLog(@"oldAbsolutePosition=%@, newAbsolutePosition=%@, findContext=%@", @(oldAbsolutePosition), @(newAbsolutePosition), findContext);
+                [self old_absPositionOfFindContext:findContext];
+                [self new_absPositionOfFindContext:findContext verbose:YES];
+            }];
+        }
     }
     return oldAbsolutePosition;
 }
@@ -1758,15 +1794,17 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 #if SANITY_CHECK_CUMULATIVE_CACHE
 - (int)absBlockNumberOfAbsPos:(long long)absPos {
     int oldValue = [self old_absBlockNumberOfAbsPos:absPos verbose:NO];
-    int newValue = [self new_absBlockNumberOfAbsPos:absPos verbose:NO];
-    if (oldValue != newValue) {
-        [_lineBlocks oopsWithWidth:0 block:^{
-            DLog(@"oldValue=%@ newValue=%@ absPos=%@", @(oldValue), @(newValue), @(absPos));
-            DLog(@"Begin old_absBlockNumberOfAbsPos");
-            [self old_absBlockNumberOfAbsPos:absPos verbose:YES];
-            DLog(@"Begin new_absBlockNumberOfAbsPos");
-            [self new_absBlockNumberOfAbsPos:absPos verbose:YES];
-        }];
+    if (DoSanityCheck()) {
+        int newValue = [self new_absBlockNumberOfAbsPos:absPos verbose:NO];
+        if (oldValue != newValue) {
+            [_lineBlocks oopsWithWidth:0 block:^{
+                DLog(@"oldValue=%@ newValue=%@ absPos=%@", @(oldValue), @(newValue), @(absPos));
+                DLog(@"Begin old_absBlockNumberOfAbsPos");
+                [self old_absBlockNumberOfAbsPos:absPos verbose:YES];
+                DLog(@"Begin new_absBlockNumberOfAbsPos");
+                [self new_absBlockNumberOfAbsPos:absPos verbose:YES];
+            }];
+        }
     }
     return oldValue;
 }
@@ -1818,12 +1856,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 #if SANITY_CHECK_CUMULATIVE_CACHE
 - (long long)absPositionOfAbsBlock:(int)absBlockNum {
     long long oldValue = [self old_absPositionOfAbsBlock:absBlockNum];
-    long long newValue = [self new_absPositionOfAbsBlock:absBlockNum verbose:NO];
-    if (oldValue != newValue) {
-        [_lineBlocks oopsWithWidth:0 block:^{
-            DLog(@"absBlockNum=%@ oldValue=%@ newValue=%@", @(absBlockNum), @(oldValue), @(newValue));
-            [self new_absPositionOfAbsBlock:absBlockNum verbose:YES];
-        }];
+    if (DoSanityCheck()) {
+        long long newValue = [self new_absPositionOfAbsBlock:absBlockNum verbose:NO];
+        if (oldValue != newValue) {
+            [_lineBlocks oopsWithWidth:0 block:^{
+                DLog(@"absBlockNum=%@ oldValue=%@ newValue=%@", @(absBlockNum), @(oldValue), @(newValue));
+                [self new_absPositionOfAbsBlock:absBlockNum verbose:YES];
+            }];
+        }
     }
     return oldValue;
 }
