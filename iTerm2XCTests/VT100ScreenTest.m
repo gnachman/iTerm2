@@ -4139,7 +4139,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssertEqual(lines.count, 2);
     
     // This works because the old version is, as far as I can tell, written defensively rather than correctly.
-    screen_char_t buffer[n];
+    screen_char_t buffer[wrapWidth];
     [lineBuffer copyLineToBuffer:buffer width:wrapWidth lineNum:linesPerBlock continuation:&continuation];
 }
 
