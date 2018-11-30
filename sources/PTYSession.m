@@ -1777,7 +1777,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                        iTermVariableKeySessionName];
         BOOL hasCycle = [self checkForCycleInSwiftyString:temp paths:pathsPossiblyComputedFromAutoName];
         if (!hasCycle) {
-            hasCycle = [self doesSwiftyString:_badgeSwiftyString referencePaths:pathsPossiblyComputedFromAutoName];
+            hasCycle = ([self doesSwiftyString:_badgeSwiftyString referencePaths:pathsPossiblyComputedFromAutoName] &&
+                        [self doesSwiftyString:temp referencePaths:@[ iTermVariableKeySessionBadge ]]);
         }
         if (hasCycle) {
             [temp release];
