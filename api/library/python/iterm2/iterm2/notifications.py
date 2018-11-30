@@ -4,6 +4,7 @@ This module provides functions that let you subscribe and unsubscribe from notif
 posts notifications when some event of interest (for example, a keystroke) occurs. By subscribing to
 a notifications your async callback will be run when the event occurs.
 """
+import asyncio
 import enum
 import iterm2.api_pb2
 import iterm2.connection
@@ -568,3 +569,46 @@ class KeystrokePattern:
         proto.characters.extend(self.__characters)
         proto.characters_ignoring_modifiers.extend(self.__characters_ignoring_modifiers)
         return proto
+
+class NewSessionMonitor:
+    """Watches for the creation of new sessions.
+
+      :param connection: The :class:`iterm2.Connection` to use.
+
+       Example:
+
+       .. code-block:: python
+
+           app = await iterm2.async_get_app(connection)
+           async with NewSessionMonitor(connection) as mon:
+               while True:
+                   session_id = await mon.async_get()
+                   DoSomethingWithSession(app.get_session_by_id(session_id))
+
+      """
+    def __init__(self, connection):
+        self.__connection = connection
+        self.__queue = asyncio.Queue(loop=asyncio.get_event_loop())
+
+    async def __aenter__(self):
+        async def callback(_connection, message):
+            """Called when a new session is created."""
+            await self.__queue.put(message)
+
+        self.__token = await async_subscribe_to_new_session_notification(
+                self.__connection,
+                callback)
+        return self
+
+    async def async_get(self):
+        """
+        Returns the new session ID.
+        """
+        result = await self.__queue.get()
+        session_id = result.uniqueIdentifier
+        return session_id
+
+    async def __aexit__(self, exc_type, exc, _tb):
+        await async_unsubscribe(self.__connection, self.__token)
+
+
