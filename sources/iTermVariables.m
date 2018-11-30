@@ -609,7 +609,11 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     NSMutableDictionary<NSString *, NSString *> *result = [NSMutableDictionary dictionary];
     for (NSString *name in _values) {
         id value = _values[name];
-        iTermVariables *child = [iTermVariables castFrom:[self valueByUnwrappingWeakVariables:value]];
+        if ([value isKindOfClass:[iTermWeakVariables class]]) {
+            // Avoid cycles.
+            continue;
+        }
+        iTermVariables *child = [iTermVariables castFrom:value];
         if (child) {
             [result it_mergeFrom:[child.stringValuedDictionary mapKeysWithBlock:^id(NSString *key, NSString *object) {
                 if (scopeName) {
