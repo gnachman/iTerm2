@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.7
 
 import iterm2
 # To install packages from PyPI, use this command, changing package_name to the package you

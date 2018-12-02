@@ -132,14 +132,27 @@ NSString *const iTermScriptSetupPyName = @"setup.py";
     // You always get the iterm2 module so don't bother to pip install it.
     dependencies = [dependencies arrayByRemovingObject:@"iterm2"];
     NSString *to = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:self.name];
-    [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:[NSURL fileURLWithPath:from]
-                                                                 dependencies:dependencies
-                                                                   completion:^(BOOL ok) {
-                                                                       [self didInstallPythonRuntime:ok
-                                                                                                from:from
-                                                                                                  to:to
-                                                                                          completion:completion];
-                                                                   }];
+    [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
+                                                                                        pythonVersion:setupParser.pythonVersion
+                                                                                       withCompletion:
+     ^(BOOL downloadedOk) {
+         if (!downloadedOk) {
+             NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"Python Runtime not downloaded" };
+             NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:3 userInfo:userInfo];
+             completion(error);
+             return;
+         }
+         [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:[NSURL fileURLWithPath:from]
+                                                                     pythonVersion:setupParser.pythonVersion
+                                                                      dependencies:dependencies
+                                                                     createSetupPy:NO
+                                                                        completion:^(BOOL ok) {
+                                                                            [self didInstallPythonRuntime:ok
+                                                                                                     from:from
+                                                                                                       to:to
+                                                                                               completion:completion];
+                                                                        }];
+     }];
 }
 
 - (void)didInstallPythonRuntime:(BOOL)ok

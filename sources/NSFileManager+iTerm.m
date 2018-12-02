@@ -248,19 +248,22 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
     DLog(@"Additional network paths are: %@", additionalNetworkPaths);
     // Augment list of additional paths with nfs automounter mount points.
-    NSMutableArray *networkPaths = [[additionalNetworkPaths mutableCopy] autorelease];
+    NSMutableArray *networkPaths = [additionalNetworkPaths mutableCopy];
     [networkPaths addObjectsFromArray:[[iTermAutoMasterParser sharedInstance] mountpoints]];
     DLog(@"Including automounter paths, ignoring: %@", networkPaths);
 
-    for (NSString *path in networkPaths) {
-        if (!path.length) {
+    for (NSString *networkPath in networkPaths) {
+        if (!networkPath.length) {
             continue;
         }
-        if (![path hasSuffix:@"/"]) {
-            path = [path stringByAppendingString:@"/"];
+        NSString *path;
+        if (![networkPath hasSuffix:@"/"]) {
+            path = [networkPath stringByAppendingString:@"/"];
+        } else {
+            path = networkPath;
         }
-        if ([filename hasPrefix:path]) {
-            DLog(@"Filename %@ has prefix of ignored path %@", filename, path);
+        if ([filename hasPrefix:networkPath]) {
+            DLog(@"Filename %@ has prefix of ignored path %@", filename, networkPath);
             return YES;
         }
     }

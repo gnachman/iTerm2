@@ -272,7 +272,8 @@ NS_ASSUME_NONNULL_BEGIN
         NSString *name = fullPath.lastPathComponent;
         NSString *mainPyPath = [[[fullPath stringByAppendingPathComponent:name] stringByAppendingPathComponent:name] stringByAppendingPathExtension:@"py"];
         [iTermAPIScriptLauncher launchScript:mainPyPath
-                              withVirtualEnv:venv];
+                              withVirtualEnv:venv
+                                 setupPyPath:[[fullPath stringByAppendingPathComponent:name] stringByAppendingPathComponent:@"setup.py"]];
         return;
     }
 
@@ -325,18 +326,22 @@ NS_ASSUME_NONNULL_BEGIN
     NSArray<NSString *> *dependencies = nil;
     NSURL *url = [self runSavePanelForNewScriptWithPicker:picker dependencies:&dependencies];
     if (url) {
-        [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES withCompletion:^(BOOL ok) {
+#warning TODO: Make it possible to pick a python version
+        [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
+                                                                                            pythonVersion:nil
+                                                                                           withCompletion:^(BOOL ok) {
             if (!ok) {
                 return;
             }
-            [self reallyCreateNewPythonScriptAtURL:url picker:picker dependencies:dependencies];
+            [self reallyCreateNewPythonScriptAtURL:url picker:picker dependencies:dependencies pythonVersion:nil];
         }];
     }
 }
 
 - (void)reallyCreateNewPythonScriptAtURL:(NSURL *)url
                                   picker:(iTermScriptTemplatePickerWindowController *)picker
-                            dependencies:(NSArray<NSString *> *)dependencies {
+                            dependencies:(NSArray<NSString *> *)dependencies
+                           pythonVersion:(nullable NSString *)pythonVersion {
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
         NSURL *folder = [NSURL fileURLWithPath:[self folderForFullEnvironmentSavePanelURL:url]];
         NSURL *existingEnv = [folder URLByAppendingPathComponent:@"iterm2env"];
@@ -349,7 +354,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                      [pleaseWait.window makeKeyAndOrderFront:nil];
                                                                  }];
         _disablePathWatcher++;
-        [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder dependencies:dependencies completion:^(BOOL ok) {
+        [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder pythonVersion:pythonVersion dependencies:dependencies createSetupPy:YES completion:^(BOOL ok) {
             [[NSNotificationCenter defaultCenter] removeObserver:token];
             [pleaseWait.window close];
             if (!ok) {
@@ -583,7 +588,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
         fullPath = [iTermAPIScriptLauncher prospectivePythonPathForPyenvScriptNamed:url.lastPathComponent];
     } else {
-        fullPath = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython];
+        fullPath = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:nil];
     }
     return fullPath;
 }

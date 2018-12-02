@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.7
 
 import iterm2
 # This script was created with the "basic" environment which does not support adding dependencies

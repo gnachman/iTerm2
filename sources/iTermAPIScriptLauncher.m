@@ -15,6 +15,7 @@
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
+#import "iTermSetupPyParser.h"
 #import "iTermWebSocketCookieJar.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -28,18 +29,61 @@
 @implementation iTermAPIScriptLauncher
 
 + (void)launchScript:(NSString *)filename {
-    [self launchScript:filename withVirtualEnv:nil];
+    [self launchScript:filename withVirtualEnv:nil setupPyPath:nil];
 }
 
-+ (void)launchScript:(NSString *)filename withVirtualEnv:(NSString *)virtualenv {
-    [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES withCompletion:^(BOOL ok) {
++ (void)launchScript:(NSString *)filename withVirtualEnv:(NSString *)virtualenv setupPyPath:(NSString *)setupPyPath {
+    NSString *pythonVersion;
+    if (pythonVersion) {
+        iTermSetupPyParser *parser = [[iTermSetupPyParser alloc] initWithPath:setupPyPath];
+        pythonVersion = parser.pythonVersion;
+    } else {
+        pythonVersion = [self inferredPythonVersionFromScriptAt:filename];
+    }
+    [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
+                                                                                        pythonVersion:pythonVersion
+                                                                                       withCompletion:^(BOOL ok) {
         if (ok) {
-            [self reallyLaunchScript:filename withVirtualEnv:virtualenv];
+            [self reallyLaunchScript:filename withVirtualEnv:virtualenv pythonVersion:pythonVersion];
         }
     }];
 }
 
-+ (void)reallyLaunchScript:(NSString *)filename withVirtualEnv:(NSString *)virtualenv {
+// Takes a file starting with:
+// #!/usr/bin/env python3.7
+// and returns "3.7", or nil if it was malformed.
++ (NSString *)inferredPythonVersionFromScriptAt:(NSString *)path {
+    FILE *file = fopen(path.UTF8String, "r");
+
+    size_t length;
+    char *byteArray = fgetln(file, &length);
+    if (length == 0 || byteArray == NULL) {
+        return nil;
+    }
+    NSData *data = [NSData dataWithBytes:byteArray length:length];
+    fclose(file);
+    NSString *line = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    NSString *const expectedPrefix = @"#!/usr/bin/env python";
+    if (![line hasPrefix:expectedPrefix]) {
+        return nil;
+    }
+    NSString *candidate = [[line substringFromIndex:expectedPrefix.length] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];;
+    if (candidate.length == 0) {
+        return nil;
+    }
+
+    NSArray<NSString *> *parts = [candidate componentsSeparatedByString:@"."];
+    const BOOL allNumeric = [parts allWithBlock:^BOOL(NSString *anObject) {
+        return [anObject isNumeric];
+    }];
+    if (!allNumeric) {
+        return nil;
+    }
+
+    return candidate;
+}
+
++ (void)reallyLaunchScript:(NSString *)filename withVirtualEnv:(NSString *)virtualenv pythonVersion:(NSString *)pythonVersion {
     if (![iTermAPIHelper sharedInstance]) {
         return;
     }
@@ -55,13 +99,15 @@
                                                                         identifier:identifier
                                                                           relaunch:
                                       ^{
-                                          [iTermAPIScriptLauncher reallyLaunchScript:filename withVirtualEnv:virtualenv];
+                                          [iTermAPIScriptLauncher reallyLaunchScript:filename
+                                                                      withVirtualEnv:virtualenv
+                                                                       pythonVersion:pythonVersion];
                                       }];
     entry.path = filename;
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
 
     @try {
-        [self tryLaunchScript:filename historyEntry:entry key:key withVirtualEnv:virtualenv];
+        [self tryLaunchScript:filename historyEntry:entry key:key withVirtualEnv:virtualenv pythonVersion:pythonVersion];
     }
     @catch (NSException *e) {
         [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
@@ -74,12 +120,13 @@
 + (void)tryLaunchScript:(NSString *)filename
            historyEntry:(iTermScriptHistoryEntry *)entry
                     key:(NSString *)key
-         withVirtualEnv:(NSString *)virtualenv {
+         withVirtualEnv:(NSString *)virtualenv
+          pythonVersion:(NSString *)pythonVersion {
     NSTask *task = [[NSTask alloc] init];
     NSString *shell = [PTYTask userShell];
 
     task.launchPath = shell;
-    task.arguments = [self argumentsToRunScript:filename withVirtualEnv:virtualenv];
+    task.arguments = [self argumentsToRunScript:filename withVirtualEnv:virtualenv pythonVersion:pythonVersion];
     NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] newCookie];
     task.environment = [self environmentFromEnvironment:task.environment shell:shell cookie:cookie key:key];
 
@@ -107,9 +154,11 @@
     return environment;
 }
 
-+ (NSArray *)argumentsToRunScript:(NSString *)filename withVirtualEnv:(NSString *)providedVirtualEnv {
++ (NSArray *)argumentsToRunScript:(NSString *)filename
+                   withVirtualEnv:(NSString *)providedVirtualEnv
+                    pythonVersion:(NSString *)pythonVersion {
     NSString *wrapper = [[NSBundle bundleForClass:self.class] pathForResource:@"it2_api_wrapper" ofType:@"sh"];
-    NSString *pyenv = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPython];
+    NSString *pyenv = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
     NSString *virtualEnv = providedVirtualEnv ?: pyenv;
     NSString *command = [NSString stringWithFormat:@"%@ %@ %@",
                          [wrapper stringWithEscapedShellCharactersExceptTabAndNewline],
@@ -164,37 +213,13 @@
     [alert runModal];
 }
 
-+ (NSString *)bestPythonVersionAt:(NSString *)path {
-    // TODO: This is convenient but I'm not sure it's technically correct for all possible Python
-    // versions. But it'll do for three dotted numbers, which is the norm.
-    SUStandardVersionComparator *comparator = [[SUStandardVersionComparator alloc] init];
-    NSString *best = nil;
-    NSDirectoryEnumerator *enumerator = [NSFileManager.defaultManager enumeratorAtURL:[NSURL fileURLWithPath:path]
-                                                           includingPropertiesForKeys:nil
-                                                                              options:NSDirectoryEnumerationSkipsSubdirectoryDescendants
-                                                                         errorHandler:nil];
-    for (NSURL *url in enumerator) {
-        NSString *file = url.path.lastPathComponent;
-        NSArray<NSString *> *parts = [file componentsSeparatedByString:@"."];
-        const BOOL allNumeric = [parts allWithBlock:^BOOL(NSString *anObject) {
-            return [anObject isNumeric];
-        }];
-        if (allNumeric) {
-            if (!best || [comparator compareVersion:best toVersion:file] == NSOrderedAscending) {
-                best = file;
-            }
-        }
-    }
-    return best;
-}
-
 + (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name {
     NSArray<NSString *> *components = @[ name, @"iterm2env", @"versions" ];
     NSString *path = [[NSFileManager defaultManager] scriptsPathWithoutSpaces];
     for (NSString *part in components) {
         path = [path stringByAppendingPathComponent:part];
     }
-    NSString *pythonVersion = [self bestPythonVersionAt:path] ?: @"_NO_PYTHON_VERSION_FOUND_";
+    NSString *pythonVersion = [iTermPythonRuntimeDownloader bestPythonVersionAt:path] ?: @"_NO_PYTHON_VERSION_FOUND_";
     components = @[ pythonVersion, @"bin", @"python3" ];
     for (NSString *part in components) {
         path = [path stringByAppendingPathComponent:part];

@@ -11,7 +11,9 @@
 
 // Launches an API script. Reads its output and waits for it to terminate.
 + (void)launchScript:(NSString *)filename;
-+ (void)launchScript:(NSString *)filename withVirtualEnv:(NSString *)virtualenv;
++ (void)launchScript:(NSString *)filename
+      withVirtualEnv:(NSString *)virtualenv
+         setupPyPath:(NSString *)setupPyPath;
 + (NSString *)environmentForScript:(NSString *)path checkForMain:(BOOL)checkForMain;
 + (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name;
 

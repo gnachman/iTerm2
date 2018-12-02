@@ -7,6 +7,7 @@
 
 #import "iTermOptionalComponentDownloadWindowController.h"
 
+#import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
@@ -117,8 +118,13 @@ didCompleteWithError:(nullable NSError *)error {
 @implementation iTermManifestDownloadPhase
 
 - (instancetype)initWithURL:(NSURL *)url
+     requestedPythonVersion:(NSString *)requestedPythonVersion
            nextPhaseFactory:(iTermOptionalComponentDownloadPhase *(^)(iTermOptionalComponentDownloadPhase *))nextPhaseFactory {
-    return [super initWithURL:url title:@"Finding latest version…" nextPhaseFactory:nextPhaseFactory];
+    self = [super initWithURL:url title:@"Finding latest version…" nextPhaseFactory:nextPhaseFactory];
+    if (self) {
+        _requestedPythonVersion = [requestedPythonVersion copy];
+    }
+    return self;
 }
 
 - (BOOL)iTermVersionAtLeast:(NSString *)minVersion
@@ -127,7 +133,7 @@ didCompleteWithError:(nullable NSError *)error {
     if (!version) {
         return NO;
     }
-    if ([version containsString:@".git."]) {
+    if ([version isEqual:@"unknown"] || [version containsString:@".git."]) {
         // Assume it's the top of master because there's no ordering on git commit numbers
         return YES;
     }
@@ -153,36 +159,50 @@ didCompleteWithError:(nullable NSError *)error {
 - (NSDictionary *)parsedManifestFromInputStream:(NSInputStream *)stream {
     id obj = [NSJSONSerialization JSONObjectWithStream:stream options:0 error:nil];
     NSArray *array = [NSArray castFrom:obj];
-    if (array) {
-        int bestVersion = -1;
-        NSDictionary *bestDict = nil;
-        for (id element in array) {
-            NSDictionary *dict = [NSDictionary castFrom:element];
-            if (!dict) {
-                continue;
-            }
-            if (dict[@"url"] && dict[@"signature"] && dict[@"version"]) {
-                int version = [dict[@"version"] intValue];
-                if (version > bestVersion) {
-                    NSString *minimumTermVersion = dict[@"minimum_iterm_version"];
-                    NSString *maximumTermVersion = dict[@"maximum_iterm_version"];
-                    if ([self iTermVersionAtLeast:minimumTermVersion atMost:maximumTermVersion]) {
-                        bestVersion = version;
-                        bestDict = dict;
+    if (!array) {
+        return nil;
+    }
+
+    const NSUInteger requestedPartCount = [[self.requestedPythonVersion componentsSeparatedByString:@"."] count];
+    int bestVersion = -1;
+    NSDictionary *bestDict = nil;
+    for (id element in array) {
+        NSDictionary *dict = [NSDictionary castFrom:element];
+        if (!dict) {
+            continue;
+        }
+        if (self.requestedPythonVersion) {
+            NSArray<NSString *> *pythonVersions = dict[@"python_versions"];
+            if (requestedPartCount == 3) {
+                if (![pythonVersions containsObject:self.requestedPythonVersion]) {
+                    continue;
+                }
+            } else if (requestedPartCount == 2) {
+                NSArray<NSString *> *twoPartPythonVersions = [pythonVersions mapWithBlock:^id(NSString *possiblyThreePartVersion) {
+                    NSArray<NSString *> *parts = [possiblyThreePartVersion componentsSeparatedByString:@"."];
+                    if (parts.count != 3) {
+                        return nil;
                     }
+                    return [[parts subarrayToIndex:2] componentsJoinedByString:@"."];
+                }];
+                if (![twoPartPythonVersions containsObject:self.requestedPythonVersion]) {
+                    continue;
                 }
             }
         }
-        return bestDict;
+        if (dict[@"url"] && dict[@"signature"] && dict[@"version"]) {
+            int version = [dict[@"version"] intValue];
+            if (version > bestVersion) {
+                NSString *minimumTermVersion = dict[@"minimum_iterm_version"];
+                NSString *maximumTermVersion = dict[@"maximum_iterm_version"];
+                if ([self iTermVersionAtLeast:minimumTermVersion atMost:maximumTermVersion]) {
+                    bestVersion = version;
+                    bestDict = dict;
+                }
+            }
+        }
     }
-
-    // Deprecated. OK to delete after June 2018
-    NSDictionary *dict = [NSDictionary castFrom:obj];
-    if (dict[@"url"] && dict[@"signature"] && dict[@"version"]) {
-        return dict;
-    } else {
-        return nil;
-    }
+    return bestDict;
 }
 
 - (void)URLSession:(NSURLSession *)session
@@ -199,6 +219,7 @@ didCompleteWithError:(nullable NSError *)error {
                 self->_nextURL = [NSURL URLWithString:dict[@"url"]];
                 self->_signature = dict[@"signature"];
                 self->_version = version;
+                self->_pythonVersionsInArchive = [dict[@"python_versions"] copy];
             } else {
                 innerError = [NSError errorWithDomain:@"com.iterm2" code:2 userInfo:@{ NSLocalizedDescriptionKey: @"☹️ Malformed manifest." }];
             }
@@ -213,10 +234,17 @@ didCompleteWithError:(nullable NSError *)error {
 
 @implementation iTermPayloadDownloadPhase
 
-- (instancetype)initWithURL:(NSURL *)url expectedSignature:(NSString *)expectedSignature {
+- (instancetype)initWithURL:(NSURL *)url
+                    version:(int)version
+          expectedSignature:(NSString *)expectedSignature
+     requestedPythonVersion:(NSString *)requestedPythonVersion
+           expectedVersions:(NSArray<NSString *> *)expectedVersions {
     self = [super initWithURL:url title:@"Downloading Python runtime…" nextPhaseFactory:nil];
     if (self) {
+        _version = version;
         _expectedSignature = [expectedSignature copy];
+        _requestedPythonVersion = [requestedPythonVersion copy];
+        _expectedVersions = [expectedVersions copy];
     }
     return self;
 }

@@ -19,8 +19,12 @@
 @property (nonatomic, readonly) NSError *dependenciesError;
 
 @property (nonatomic, readonly) NSString *content;
+@property (nonatomic, readonly) NSString *pythonVersion;
 
-+ (void)writeSetupPyToFile:(NSString *)file name:(NSString *)name dependencies:(NSArray<NSString *> *)dependencies;
++ (void)writeSetupPyToFile:(NSString *)file
+                      name:(NSString *)name
+              dependencies:(NSArray<NSString *> *)dependencies
+             pythonVersion:(NSString *)pythonVersion;
 - (instancetype)initWithPath:(NSString *)path NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 

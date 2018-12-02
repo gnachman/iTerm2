@@ -8,16 +8,22 @@
 #import "iTermSetupPyParser.h"
 
 #import "NSArray+iTerm.h"
+#import "NSStringITerm.h"
 #import "RegexKitLite.h"
 
 @implementation iTermSetupPyParser {
     NSArray<NSString *> *_dependencies;
 }
 
-+ (void)writeSetupPyToFile:(NSString *)file name:(NSString *)name dependencies:(NSArray<NSString *> *)dependencies {
++ (void)writeSetupPyToFile:(NSString *)file
+                      name:(NSString *)name
+              dependencies:(NSArray<NSString *> *)dependencies
+             pythonVersion:(NSString *)pythonVersion {
+    assert(pythonVersion);
+
     NSArray<NSString *> *quotedDependencies = [dependencies mapWithBlock:^id(NSString *anObject) {
         return [NSString stringWithFormat:@"'%@'", anObject];
-    }];
+    }] ?: @[];
     NSString *contents = [NSString stringWithFormat:
                           @"from setuptools import setup\n"
                           @"# WARNING: install_requires must be on one line and contain only quoted strings.\n"
@@ -26,12 +32,14 @@
                           @"setup(name='%@',\n"
                           @"      version='1.0',\n"
                           @"      scripts=['%@/%@.py'],\n"
-                          @"      install_requires=['iterm2',%@]\n"
+                          @"      install_requires=['iterm2',%@],\n"
+                          @"      python_requires='=%@'\n"
                           @"      )",
                           name,
                           name,
                           name,
-                          [quotedDependencies componentsJoinedByString:@", "]];
+                          [quotedDependencies componentsJoinedByString:@", "],
+                          pythonVersion];
     [contents writeToFile:file atomically:NO encoding:NSUTF8StringEncoding error:nil];
 }
 
@@ -44,6 +52,7 @@
             return nil;
         }
         [self computeDependencies];
+        [self computePythonVersion];
     }
     return self;
 }
@@ -65,6 +74,35 @@
     }
 
     return modifiedString;
+}
+
+- (void)computePythonVersion {
+    NSString *regex = @"python_requires='";
+    NSRange range = [_content rangeOfRegex:regex];
+    if (range.location == NSNotFound) {
+        return;
+    }
+
+    NSString *expression = [_content substringFromIndex:NSMaxRange(range)];
+    NSUInteger closeQuote = [expression rangeOfRegex:@"'"].location;
+    if (closeQuote == NSNotFound) {
+        return;
+    }
+
+    expression = [expression substringToIndex:closeQuote];
+    if (![expression hasPrefix:@"="]) {
+        return;
+    }
+    NSString *version = [expression substringFromIndex:1];
+    NSArray<NSString *> *parts = [version componentsSeparatedByString:@"."];
+    if ([parts anyWithBlock:^BOOL(NSString *anObject) {
+        return ![anObject isNumeric];
+    }]) {
+        // Contains a non-numeric value
+        return;
+    }
+
+    _pythonVersion = version;
 }
 
 // Sets one of _dependencies or _dependenciesError

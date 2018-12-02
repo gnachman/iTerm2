@@ -14,11 +14,14 @@ extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
 @property (nonatomic, readonly) BOOL isPythonRuntimeInstalled;
 
 // Returns the path of the standard python binary.
-@property (nonatomic, readonly) NSString *pathToStandardPyenvPython;
+- (NSString *)pathToStandardPyenvPythonWithPythonVersion:(NSString *)pythonVersion;
 
-- (NSString *)pathToStandardPyenvCreatingSymlinkIfNeeded:(BOOL)createSymlink;
++ (NSString *)latestPythonVersion;
+
+- (NSString *)pathToStandardPyenvWithVersion:(NSString *)pythonVersion creatingSymlinkIfNeeded:(BOOL)createSymlink;
 
 + (instancetype)sharedInstance;
++ (NSString *)bestPythonVersionAt:(NSString *)path;
 
 // This downloads if any version is already installed and there's a newer version available.
 - (void)upgradeIfPossible;
@@ -27,12 +30,19 @@ extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
 - (void)userRequestedCheckForUpdate;
 
 // This downloads only if the minimum version is not installed.
-- (void)downloadOptionalComponentsIfNeededWithConfirmation:(BOOL)confirm withCompletion:(void (^)(BOOL))completion;
+- (void)downloadOptionalComponentsIfNeededWithConfirmation:(BOOL)confirm
+                                             pythonVersion:(NSString *)pythonVersion
+                                            withCompletion:(void (^)(BOOL))completion;
 
 // Returns the path of the python binary given a root directory having a pyenv.
 - (NSString *)pyenvAt:(NSString *)root;
 
 // Install a copy of the current environment somewhere.
-- (void)installPythonEnvironmentTo:(NSURL *)container dependencies:(NSArray<NSString *> *)dependencies completion:(void (^)(BOOL))completion;
+- (void)installPythonEnvironmentTo:(NSURL *)container
+                     pythonVersion:(NSString *)pythonVersion
+                      dependencies:(NSArray<NSString *> *)dependencies
+                     createSetupPy:(BOOL)createSetupPy
+                        completion:(void (^)(BOOL))completion;
+
 
 @end

@@ -8,6 +8,7 @@
 #import "iTermScriptExporter.h"
 
 #import "iTermCommandRunner.h"
+#import "iTermPythonRuntimeDownloader.h"
 #import "iTermSetupPyParser.h"
 #import "NSFileManager+iTerm.h"
 
@@ -93,7 +94,8 @@
           toFullEnvironmentIn:(NSString *)destination {
     [iTermSetupPyParser writeSetupPyToFile:[destination stringByAppendingPathComponent:[NSString stringWithFormat:@"setup.py"]]
                                       name:name
-                              dependencies:@[]];
+                              dependencies:@[]
+                             pythonVersion:[iTermPythonRuntimeDownloader latestPythonVersion]];
     NSString *sourceFolder = [destination stringByAppendingPathComponent:name];
     NSFileManager *fileManager = [NSFileManager defaultManager];
     [fileManager createDirectoryAtPath:sourceFolder
