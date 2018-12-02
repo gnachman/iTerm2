@@ -5011,7 +5011,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     const BOOL resizing = self.realParentWindow.windowIsResizing;
     const BOOL powerOK = [[iTermPowerManager sharedInstance] metalAllowed];
     __block iTermMetalUnavailableReason sessionReason = iTermMetalUnavailableReasonNone;
-    const BOOL allSessionsAllowMetal = [self.sessions allWithBlock:^BOOL(PTYSession *anObject) {
+    NSArray<PTYSession *> *nonHiddenSessions = [self.sessions filteredArrayUsingBlock:^BOOL(PTYSession *session) {
+        if (!isMaximized_) {
+            // Invisible sessions in a maximized tab aren't in the view hierarchy and so will always
+            // say Metal is disallowed.
+            return YES;
+        }
+        return session == self.activeSession;
+    }];
+    const BOOL allSessionsAllowMetal = [nonHiddenSessions allWithBlock:^BOOL(PTYSession *anObject) {
         return [anObject metalAllowed:&sessionReason];
     }];
     const BOOL allSessionsIdle = (allSessionsAllowMetal &&
@@ -5065,7 +5073,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     BOOL useMetal = NO;
     if (allowed && satisfiesKeyRequirement && foregroundTab) {
-        useMetal = [self.sessions allWithBlock:^BOOL(PTYSession *session) {
+        useMetal = [nonHiddenSessions allWithBlock:^BOOL(PTYSession *session) {
             return [session willEnableMetal];
         }];
         if (!useMetal) {
