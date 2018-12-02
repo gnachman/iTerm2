@@ -5755,6 +5755,14 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)tmuxHostDisconnected:(NSString *)dcsID {
     _hideAfterTmuxWindowOpens = NO;
 
+    if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
+        [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
+        // Do this before detaching because it may be the only tab in a hotkey window. If all the
+        // tabs close the window is destroyed and it breaks the reference from iTermProfileHotkey.
+        // See issue 7384.
+        [[iTermBuriedSessions sharedInstance] restoreSession:self];
+    }
+
     [_tmuxController detach];
     // Autorelease the gateway because it called this function so we can't free
     // it immediately.
@@ -5770,11 +5778,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [dcsID release];
     });
     self.tmuxMode = TMUX_NONE;
-
-    if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
-        [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
-        [[iTermBuriedSessions sharedInstance] restoreSession:self];
-    }
 }
 
 - (void)tmuxCannotSendCharactersInSupplementaryPlanes:(NSString *)string windowPane:(int)windowPane {
