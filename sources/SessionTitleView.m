@@ -178,6 +178,7 @@ static const CGFloat kButtonSize = 17;
 - (void)updateBackgroundColor {
     label_.backgroundColor = [self.delegate sessionTitleViewBackgroundColor];
     label_.drawsBackground = YES;
+    [self setNeedsDisplay:YES];
 }
 
 - (void)setTitle:(NSString *)title {
