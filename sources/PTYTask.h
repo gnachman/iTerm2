@@ -58,6 +58,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 @property(atomic, readonly) BOOL writeBufferHasRoom;
 @property(atomic, readonly) BOOL hasCoprocess;
 @property(nonatomic, readonly) BOOL passwordInput;
+@property(nonatomic) unichar pendingHighSurrogate;
 
 + (NSString *)userShell;
 

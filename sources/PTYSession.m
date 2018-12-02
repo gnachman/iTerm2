@@ -2253,6 +2253,11 @@ ITERM_WEAKLY_REFERENCEABLE
              self, @(encoding), @(forceEncoding), @(canBroadcast), stack);
         DLog(@"writeTaskImpl string=%@", string);
     }
+    if (string.length == 0) {
+        DLog(@"String length is 0");
+        // Abort early so the surrogate hack works.
+        return;
+    }
     if (canBroadcast && _terminal.sendReceiveMode && !self.isTmuxClient && !self.isTmuxGateway) {
         // Local echo. Only for broadcastable text to avoid printing passwords from the password manager.
         [_screen appendStringAtCursor:[string stringByMakingControlCharactersToPrintable]];
@@ -2273,7 +2278,7 @@ ITERM_WEAKLY_REFERENCEABLE
             PTYScroller *verticalScroller = [_view.scrollview ptyVerticalScroller];
             [verticalScroller setUserScroll:NO];
         }
-        NSData *data = [string dataUsingEncoding:encoding allowLossyConversion:YES];
+        NSData *data = [self dataForInputString:string usingEncoding:encoding];
         const char *bytes = data.bytes;
         for (NSUInteger i = 0; i < data.length; i++) {
             DLog(@"Write byte 0x%02x (%c)", (((int)bytes[i]) & 0xff), bytes[i]);
@@ -2282,6 +2287,35 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+// Convert the string to the requested encoding. If the string is a lone surrogate, deal with it by
+// saving the high surrogate and then combining it with a subsequent low surrogate.
+- (NSData *)dataForInputString:(NSString *)string usingEncoding:(NSStringEncoding)encoding {
+    NSData *data = [string dataUsingEncoding:encoding allowLossyConversion:YES];
+    if (data) {
+        _shell.pendingHighSurrogate = 0;
+        return data;
+    }
+    if (string.length != 1) {
+        _shell.pendingHighSurrogate = 0;
+        return nil;
+    }
+
+    const unichar c = [string characterAtIndex:0];
+    if (IsHighSurrogate(c)) {
+        _shell.pendingHighSurrogate = c;
+        DLog(@"Detected high surrogate 0x%x", (int)c);
+        return nil;
+    } else if (IsLowSurrogate(c) && _shell.pendingHighSurrogate) {
+        DLog(@"Detected low surrogate 0x%x with pending high surrogate 0x%x", (int)c, (int)_shell.pendingHighSurrogate);
+        unichar chars[2] = { _shell.pendingHighSurrogate, c };
+        _shell.pendingHighSurrogate = 0;
+        NSString *composite = [NSString stringWithCharacters:chars length:2];
+        return [composite dataUsingEncoding:encoding allowLossyConversion:YES];
+    }
+
+    _shell.pendingHighSurrogate = 0;
+    return nil;
+}
 
 - (void)writeTaskNoBroadcast:(NSString *)string {
     [self writeTaskNoBroadcast:string encoding:_terminal.encoding forceEncoding:NO];
