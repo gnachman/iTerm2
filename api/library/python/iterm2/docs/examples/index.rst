@@ -13,6 +13,7 @@ Here are a collection of working scripts for you to crib from.
 * :doc:`cls`
 * :doc:`create_window`
 * :doc:`random_color`
+* :doc:`colorhost`
 * :doc:`targeted_input`
 * :doc:`enable_broadcasting`
 * :doc:`broadcast`
