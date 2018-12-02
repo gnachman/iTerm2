@@ -6,7 +6,7 @@ Example Scripts
 
 Here are a collection of working scripts for you to crib from.
 
-* :doc:`current_preset.py`
+* :doc:`current_preset`
 * :doc:`georges_title`
 * :doc:`badgetitle`
 * :doc:`function_key_tabs`
@@ -20,6 +20,7 @@ Here are a collection of working scripts for you to crib from.
 * :doc:`sorttabs`
 * :doc:`mrutabs`
 * :doc:`statusbar`
+* :doc:`escindicator`
 * :doc:`jsonpretty`
 * :doc:`mousemode`
 * :doc:`theme`
