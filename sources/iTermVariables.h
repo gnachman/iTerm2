@@ -72,7 +72,7 @@ typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
 // scope, then perform references to it from the scope.
 @interface iTermVariables : NSObject
 
-@property (nonatomic, readonly) id owner;
+@property (nonatomic, readonly, weak) id owner;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 @property (nonatomic, readonly) NSDictionary<NSString *,NSString *> *stringValuedDictionary;
 
