@@ -110,6 +110,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (void)writeTask:(NSString *)string;
 - (void)writeStringWithLatin1Encoding:(NSString *)string;
 - (void)textViewDidBecomeFirstResponder;
+- (void)textViewDidResignFirstResponder;
 - (void)refresh;
 - (BOOL)textViewIsActiveSession;
 - (BOOL)textViewSessionIsBroadcastingInput;

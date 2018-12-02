@@ -7108,6 +7108,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)textViewDidBecomeFirstResponder {
     [_delegate setActiveSession:self];
+    [_view setNeedsDisplay:YES];
+}
+
+- (void)textViewDidResignFirstResponder {
+    [_view setNeedsDisplay:YES];
 }
 
 - (BOOL)textViewReportMouseEvent:(NSEventType)eventType
