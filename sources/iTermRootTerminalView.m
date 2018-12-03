@@ -281,6 +281,15 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         return;
     }
     [self didChangeCompactness];
+    for (int i = 0; i < self.numberOfWindowButtons; i++) {
+        NSButton *button = _standardButtons[@(self.windowButtonTypes[i])];
+        if (self.windowButtonTypes[i] == NSWindowZoomButton) {
+            button.target = _standardWindowButtonsView;
+            button.action = @selector(zoomButtonEvent);
+        } else {
+            button.target = self.window;
+        }
+    }
 }
 
 - (void)didChangeCompactness {
@@ -313,12 +322,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         frame.origin.x = x;
         frame.origin.y = 4;
         button.frame = frame;
-        
-        if (self.windowButtonTypes[i] == NSWindowZoomButton) {
-            button.target = _standardWindowButtonsView;
-            button.action = @selector(zoomButtonEvent);
-        }
-        
+
         [_standardWindowButtonsView addSubview:button];
         _standardButtons[@(self.windowButtonTypes[i])] = button;
         x += stride;
