@@ -7,6 +7,7 @@
 
 #import "iTermPythonRuntimeDownloader.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCommandRunner.h"
 #import "iTermDisclosableView.h"
@@ -435,11 +436,22 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     NSString *source = [self pathToStandardPyenvWithVersion:pythonVersion
                                     creatingSymlinkIfNeeded:NO];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        const BOOL ok = [[NSFileManager defaultManager] linkItemAtPath:source
-                                                                toPath:[container URLByAppendingPathComponent:@"iterm2env"].path
-                                                                 error:nil];
+        NSError *error = nil;
+        NSString *destination = [container URLByAppendingPathComponent:@"iterm2env"].path;
+        BOOL ok;
+        ok = [[NSFileManager defaultManager] createDirectoryAtPath:container.path
+                                       withIntermediateDirectories:YES
+                                                        attributes:nil
+                                                             error:&error];
+        if (!ok) {
+            XLog(@"Failed to create %@: %@", container, error);
+        }
+        ok = [[NSFileManager defaultManager] linkItemAtPath:source
+                                                     toPath:destination
+                                                      error:&error];
         dispatch_async(dispatch_get_main_queue(), ^{
             if (!ok) {
+                XLog(@"Failed to link %@ to %@: %@", source, destination, error);
                 completion(NO);
                 return;
             }
