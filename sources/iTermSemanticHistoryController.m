@@ -109,6 +109,10 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         return nil;
     }
 
+    // If it's in any form of bracketed delimiters, strip them
+    path = [path stringByRemovingEnclosingBrackets];
+
+    BOOL stripTrailingParen = YES;
     if (lineNumber != nil) {
         NSString *value = [path stringByMatching:@":(\\d+)" capture:1];
         if (!value) {
@@ -116,6 +120,12 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         }
         if (!value) {
             value = [suffix stringByMatching:@"\", line (\\d+), column (\\d+)" capture:1];
+        }
+        if (!value) {
+            value = [path stringByMatching:@"\\((\\d+), \\d+\\)" capture:1];
+            if (value) {
+                stripTrailingParen = NO;
+            }
         }
         *lineNumber = value;
     }
@@ -127,20 +137,24 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         if (!value) {
             value = [suffix stringByMatching:@"\", line (\\d+), column (\\d+)" capture:2];
         }
+        if (!value) {
+            value = [path stringByMatching:@"\\((\\d+), (\\d+)\\)" capture:2];
+        }
         *columnNumber = value;
     }
 
-    // If it's in any form of bracketed delimiters, strip them
-    path = [path stringByRemovingEnclosingBrackets];
-
     // strip various trailing characters that are unlikely to be part of the file name.
-    path = [path stringByReplacingOccurrencesOfRegex:@"[.),:]$"
+    NSString *regex = stripTrailingParen ? @"[.),:]$" : @"[.,:]$";
+    path = [path stringByReplacingOccurrencesOfRegex:regex
                                           withString:@""];
     DLog(@" Strip trailing chars, leaving %@", path);
 
     NSString *pathExLineNumberAndColumn = nil;
     if ([path stringByMatching:@"\\[(\\d+), (\\d+)]"]) {
         pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@"\\[\\d+, \\d+](?::.*)?$"
+                                                                   withString:@""];
+    } else if ([path stringByMatching:@"\\((\\d+), (\\d+)\\)"]) {
+        pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@"\\(\\d+, \\d+\\)(?::.*)?$"
                                                                    withString:@""];
     } else {
         pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@":\\d*(?::.*)?$"
