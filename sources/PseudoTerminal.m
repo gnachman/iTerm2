@@ -5386,6 +5386,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [item setRepresentedObject:tabViewItem];
     [rootMenu addItem:item];
 
+    for (NSMenuItem *item in rootMenu.itemArray) {
+        item.target = self;
+    }
+
     return rootMenu;
 }
 

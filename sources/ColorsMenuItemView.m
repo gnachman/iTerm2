@@ -176,7 +176,7 @@ enum {
 }
 
 - (void)mouseUp:(NSEvent*) event {
-    NSPoint mousePoint = [self convertPoint:[[self window] mouseLocationOutsideOfEventStream] fromView:nil];
+    NSPoint mousePoint = [self convertPoint:event.locationInWindow fromView:nil];
     NSMenuItem* mitem = [self enclosingMenuItem];
     NSMenu* m = [mitem menu];
     [m cancelTracking];
