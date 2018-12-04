@@ -40,6 +40,12 @@
     } else {
         pythonVersion = [self inferredPythonVersionFromScriptAt:filename];
     }
+    if (virtualenv != nil) {
+        // Launching a full environment script: do not check for a newer version, as it is frozen and
+        // downloading wouldn't affect it anyway.
+        [self reallyLaunchScript:filename withVirtualEnv:virtualenv pythonVersion:pythonVersion];
+        return;
+    }
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:pythonVersion
                                                                                        withCompletion:^(BOOL ok) {
@@ -77,6 +83,10 @@
         return [anObject isNumeric];
     }];
     if (!allNumeric) {
+        return nil;
+    }
+
+    if (parts.count < 2) {
         return nil;
     }
 
