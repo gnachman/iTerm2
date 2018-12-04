@@ -21,6 +21,12 @@
              pythonVersion:(NSString *)pythonVersion {
     assert(pythonVersion);
 
+    NSString *sanitizedPythonVersion = pythonVersion;
+    NSArray<NSString *> *parts = [pythonVersion componentsSeparatedByString:@"."];
+    if (parts.count > 2) {
+        sanitizedPythonVersion = [[parts subarrayToIndex:2] componentsJoinedByString:@"."];
+    }
+    
     NSArray<NSString *> *quotedDependencies = [dependencies mapWithBlock:^id(NSString *anObject) {
         return [NSString stringWithFormat:@"'%@'", anObject];
     }] ?: @[];
@@ -39,7 +45,7 @@
                           name,
                           name,
                           [quotedDependencies componentsJoinedByString:@", "],
-                          pythonVersion];
+                          sanitizedPythonVersion];
     [contents writeToFile:file atomically:NO encoding:NSUTF8StringEncoding error:nil];
 }
 
