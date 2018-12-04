@@ -1049,7 +1049,7 @@ static BOOL hasBecomeActive = NO;
     BOOL highContrast = NO;
     BOOL minimal = NO;
 
-    switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
         case TAB_STYLE_DARK:
             dark = YES;
             break;

@@ -5651,8 +5651,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setMojaveBackgroundColor:(nullable NSColor *)backgroundColor NS_AVAILABLE_MAC(10_14) {
-    switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
         case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_MINIMAL:
             self.window.appearance = nil;
             break;
 
