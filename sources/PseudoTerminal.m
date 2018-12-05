@@ -20,6 +20,7 @@
 #import "iTermAnnouncementView.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermBroadcastInputHelper.h"
 #import "iTermBroadcastPasswordHelper.h"
 #import "iTermColorPresets.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
@@ -114,7 +115,6 @@ NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWin
 NSString *const iTermDidDecodeWindowRestorableStateNotification = @"iTermDidDecodeWindowRestorableStateNotification";
 NSString *const iTermTabDidChangePositionInWindowNotification = @"iTermTabDidChangePositionInWindowNotification";
 NSString *const iTermSelectedTabDidChange = @"iTermSelectedTabDidChange";
-NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDomainsDidChangeNotification";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 
@@ -164,6 +164,7 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
 }
 
 @interface PseudoTerminal () <
+    iTermBroadcastInputHelperDelegate,
     iTermTabBarControlViewDelegate,
     iTermPasswordManagerDelegate,
     PTYTabDelegate,
@@ -221,9 +222,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // by the user.
     BOOL oldUseTransparency_;
     BOOL restoreUseTransparency_;
-
-    // How input should be broadcast (or not).
-    BroadcastMode broadcastMode_;
 
     // When sending input to all sessions we temporarily change the background
     // color. This stores the normal background color so we can restore to it.
@@ -283,7 +281,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // Time since 1970 of last window resize
     double lastResizeTime_;
 
-    NSMutableSet *broadcastViewIds_;
+    iTermBroadcastInputHelper *_broadcastInputHelper;
+    
     NSTimeInterval findCursorStartTime_;
 
     // Accumulated pinch magnification amount.
@@ -593,7 +592,8 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     // Force the nib to load
     [self window];
     self.windowType = windowType;
-    broadcastViewIds_ = [[NSMutableSet alloc] init];
+    _broadcastInputHelper = [[iTermBroadcastInputHelper alloc] init];
+    _broadcastInputHelper.delegate = self;
 
     NSScreen *screen = [self anchorToScreenNumber:screenNumber];
 
@@ -885,7 +885,7 @@ ITERM_WEAKLY_REFERENCEABLE
         NSLog(@"Red alert! Current terminal is being freed!");
         [[iTermController sharedInstance] setCurrentTerminal:nil];
     }
-    [broadcastViewIds_ release];
+    [_broadcastInputHelper release];
     [autocompleteView shutdown];
     [commandHistoryPopup shutdown];
     [_directoriesPopupWindowController shutdown];
@@ -971,9 +971,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return _contentView.tabviewWidth;
 }
 
-- (void)toggleBroadcastingToCurrentSession:(id)sender
-{
-    [self toggleBroadcastingInputToSession:[self currentSession]];
+- (void)toggleBroadcastingToCurrentSession:(id)sender {
+    [_broadcastInputHelper toggleSession:self.currentSession.guid];
 }
 
 - (void)notifyTmuxOfWindowResize {
@@ -1943,47 +1942,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (NSArray *)broadcastSessions
-{
-    NSMutableArray *sessions = [NSMutableArray array];
-    int i;
-    int n = [_contentView.tabView numberOfTabViewItems];
-    switch ([self broadcastMode]) {
-        case BROADCAST_OFF:
-            break;
-
-        case BROADCAST_TO_ALL_PANES:
-            for (PTYSession* aSession in [[self currentTab] sessions]) {
-                if (![aSession exited]) {
-                    [sessions addObject:aSession];
-                }
-            }
-            break;
-
-        case BROADCAST_TO_ALL_TABS:
-            for (i = 0; i < n; ++i) {
-                for (PTYSession* aSession in [[[_contentView.tabView tabViewItemAtIndex:i] identifier] sessions]) {
-                    if (![aSession exited]) {
-                        [sessions addObject:aSession];
-                    }
-                }
-            }
-            break;
-
-        case BROADCAST_CUSTOM: {
-            for (PTYTab *aTab in [self tabs]) {
-                for (PTYSession *aSession in [aTab sessions]) {
-                    if ([broadcastViewIds_ containsObject:[NSNumber numberWithInt:[[aSession view] viewId]]]) {
-                        if (![aSession exited]) {
-                            [sessions addObject:aSession];
-                        }
-                    }
-                }
-            }
-            break;
-        }
-    }
-    return sessions;
+- (NSArray<PTYSession *> *)broadcastSessions {
+    NSSet<NSString *> *guids = _broadcastInputHelper.broadcastSessionIDs;
+    return [self.allSessions filteredArrayUsingBlock:^BOOL(PTYSession *session) {
+        return [guids containsObject:session.guid];
+    }];
 }
 
 - (void)sendInputToAllSessions:(NSString *)string
@@ -1996,36 +1959,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (BOOL)broadcastInputToSession:(PTYSession *)session
-{
-    switch ([self broadcastMode]) {
-        case BROADCAST_OFF:
-            return NO;
-
-        case BROADCAST_TO_ALL_PANES:
-            for (PTYSession* aSession in [[self currentTab] sessions]) {
-                if (aSession == session) {
-                    return YES;
-                }
-            }
-            return NO;
-
-        case BROADCAST_TO_ALL_TABS:
-            for (PTYTab *aTab in [self tabs]) {
-                for (PTYSession* aSession in [aTab sessions]) {
-                    if (aSession == session) {
-                        return YES;
-                    }
-                }
-            }
-            return NO;
-
-        case BROADCAST_CUSTOM:
-            return [broadcastViewIds_ containsObject:[NSNumber numberWithInt:[[session view] viewId]]];
-
-        default:
-            return NO;
-    }
+- (BOOL)broadcastInputToSession:(PTYSession *)session {
+    return [_broadcastInputHelper.broadcastSessionIDs containsObject:session.guid];
 }
 
 + (int)_windowTypeForArrangement:(NSDictionary*)arrangement
@@ -3000,7 +2935,6 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad updateMaximizePaneMenuItem];
     [itad updateUseTransparencyMenuItem];
-    [itad updateBroadcastMenuState];
     if (_fullScreen) {
         if (![self isHotKeyWindow] ||
             [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] rollingIn] ||
@@ -4878,8 +4812,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [s setFocused:(s == activeSession)];
     }
     [self showOrHideInstantReplayBar];
-    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-    [itad updateBroadcastMenuState];
     [self refreshTools];
     [self updateTabColors];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
@@ -4965,20 +4897,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem
-{
+- (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem {
     [self saveAffinitiesLater:[tabViewItem identifier]];
-    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-    [itad updateBroadcastMenuState];
 }
 
-- (void)tabView:(NSTabView *)tabView willAddTabViewItem:(NSTabViewItem *)tabViewItem
-{
+- (void)tabView:(NSTabView *)tabView willAddTabViewItem:(NSTabViewItem *)tabViewItem {
 
     [self tabView:tabView willInsertTabViewItem:tabViewItem atIndex:[tabView numberOfTabViewItems]];
     [self saveAffinitiesLater:[tabViewItem identifier]];
-    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-    [itad updateBroadcastMenuState];
 }
 
 - (void)tabView:(NSTabView *)tabView
@@ -4995,8 +4921,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [[theTab tmuxController] setClientSize:[theTab tmuxSize]];
     }
     [self saveAffinitiesLater:[tabViewItem identifier]];
-    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-    [itad updateBroadcastMenuState];
 }
 
 - (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem {
@@ -5961,11 +5885,6 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)fitWindowToTab:(PTYTab*)tab
 {
     [self fitWindowToTabSize:[tab size]];
-}
-
-- (BOOL)sendInputToAllSessions
-{
-    return [self broadcastMode] != BROADCAST_OFF;
 }
 
 - (PTYSession *)syntheticSessionForSession:(PTYSession *)oldSession {
@@ -7035,129 +6954,22 @@ ITERM_WEAKLY_REFERENCEABLE
     return [NSDate dateWithTimeIntervalSince1970:lastResizeTime_];
 }
 
-- (BroadcastMode)broadcastMode
-{
-    if ([[self currentTab] isBroadcasting]) {
-        return BROADCAST_TO_ALL_PANES;
-    } else {
-        return broadcastMode_;
-    }
+- (BroadcastMode)broadcastMode {
+    return _broadcastInputHelper.broadcastMode;
 }
 
 - (void)setBroadcastingSessions:(NSArray<PTYSession *> *)sessions {
-    if (sessions.count == 0 && broadcastMode_ == BROADCAST_OFF && broadcastViewIds_.count == 0) {
-        return;
-    }
-    [broadcastViewIds_ removeAllObjects];
-    for (PTYTab *tab in self.tabs) {
-        tab.broadcasting = NO;
-    }
-    if (sessions.count > 0) {
-        broadcastMode_ = BROADCAST_CUSTOM;
-        [broadcastViewIds_ addObjectsFromArray:[sessions mapWithBlock:^id(PTYSession *session) {
-            if (![self.allSessions containsObject:session]) {
-                return nil;
-            }
-            return @(session.view.viewId);
-        }]];
-    } else {
-        broadcastMode_ = BROADCAST_OFF;
-    }
-    [self setDimmingForSessions];
-    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-    [itad updateBroadcastMenuState];
-    // Post a notification to reload menus
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey"
-                                                        object:self
-                                                      userInfo:nil];
-    [self setWindowTitle];
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
+    _broadcastInputHelper.broadcastSessionIDs = [NSSet setWithArray:[sessions mapWithBlock:^id(PTYSession *session) {
+        return session.guid;
+    }]];
 }
 
 - (void)setBroadcastMode:(BroadcastMode)mode {
-    if (mode != BROADCAST_CUSTOM && mode == [self broadcastMode]) {
-        mode = BROADCAST_OFF;
-    }
-    if (mode != BROADCAST_OFF && [self broadcastMode] == BROADCAST_OFF) {
-        if ([iTermWarning showWarningWithTitle:@"Keyboard input will be sent to multiple sessions."
-                                       actions:@[ @"OK", @"Cancel" ]
-                                    identifier:@"NoSyncSuppressBroadcastInputWarning"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable
-                                        window:self.window] == kiTermWarningSelection1) {
-            return;
-        }
-    }
-    if (mode == BROADCAST_TO_ALL_PANES) {
-        [[self currentTab] setBroadcasting:YES];
-        mode = BROADCAST_OFF;
-    } else {
-        [[self currentTab] setBroadcasting:NO];
-    }
-    broadcastMode_ = mode;
-    [self setDimmingForSessions];
-    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-    [itad updateBroadcastMenuState];
+    _broadcastInputHelper.broadcastMode = mode;
 }
 
 - (void)toggleBroadcastingInputToSession:(PTYSession *)session {
-    NSNumber *n = [NSNumber numberWithInt:[[session view] viewId]];
-    switch ([self broadcastMode]) {
-        case BROADCAST_TO_ALL_PANES:
-            [[self currentTab] setBroadcasting:NO];
-            [broadcastViewIds_ removeAllObjects];
-            for (PTYSession *aSession in [[self currentTab] sessions]) {
-                [broadcastViewIds_ addObject:[NSNumber numberWithInt:[[aSession view] viewId]]];
-            }
-            break;
-
-        case BROADCAST_TO_ALL_TABS:
-            [broadcastViewIds_ removeAllObjects];
-            for (PTYTab *aTab in [self tabs]) {
-                for (PTYSession *aSession in [aTab sessions]) {
-                    [broadcastViewIds_ addObject:[NSNumber numberWithInt:[[aSession view] viewId]]];
-                }
-            }
-            break;
-
-        case BROADCAST_OFF:
-            [broadcastViewIds_ removeAllObjects];
-            break;
-
-        case BROADCAST_CUSTOM:
-            break;
-    }
-    broadcastMode_ = BROADCAST_CUSTOM;
-    int prevCount = [broadcastViewIds_ count];
-    if ([broadcastViewIds_ containsObject:n]) {
-        [broadcastViewIds_ removeObject:n];
-    } else {
-        [broadcastViewIds_ addObject:n];
-    }
-    if ([broadcastViewIds_ count] == 0) {
-        // Untoggled the last session.
-        broadcastMode_ = BROADCAST_OFF;
-    } else if ([broadcastViewIds_ count] == 1 &&
-               prevCount == 2) {
-        // Untoggled a session and got down to 1. Disable broadcast because you can't broadcast with
-        // fewer than 2 sessions.
-        broadcastMode_ = BROADCAST_OFF;
-        [broadcastViewIds_ removeAllObjects];
-    } else if ([broadcastViewIds_ count] == 1) {
-        // Turned on one session so add the current session.
-        [broadcastViewIds_ addObject:[NSNumber numberWithInt:[[[self currentSession] view] viewId]]];
-        // NOTE: There may still be only one session. This is of use to focus
-        // follows mouse users who want to toggle particular panes.
-    }
-    for (PTYTab *aTab in [self tabs]) {
-        for (PTYSession *aSession in [aTab sessions]) {
-            [[aSession view] setNeedsDisplay:YES];
-        }
-    }
-    // Update dimming of panes.
-    [self refreshTerminal:nil];
-    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-    [itad updateBroadcastMenuState];
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
+    [_broadcastInputHelper toggleSession:session.guid];
 }
 
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session move:(BOOL)move {
@@ -8165,6 +7977,12 @@ ITERM_WEAKLY_REFERENCEABLE
         result = [_contentView.tabView numberOfTabViewItems] > 1;
     } else if ([item action] == @selector(toggleBroadcastingToCurrentSession:)) {
         result = ![[self currentSession] exited];
+    } else if (item.action == @selector(enableSendInputToAllTabs:)) {
+        item.state = (_broadcastInputHelper.broadcastMode == BROADCAST_TO_ALL_TABS) ? NSOnState : NSOffState;
+    } else if (item.action == @selector(enableSendInputToAllPanes:)) {
+        item.state = (_broadcastInputHelper.broadcastMode == BROADCAST_TO_ALL_PANES) ? NSOnState : NSOffState;
+    } else if (item.action == @selector(disableBroadcasting:)) {
+        item.state = (_broadcastInputHelper.broadcastMode == BROADCAST_OFF) ? NSOnState : NSOffState;
     } else if ([item action] == @selector(runCoprocess:)) {
         result = ![[self currentSession] hasCoprocess];
     } else if ([item action] == @selector(stopCoprocess:)) {
@@ -8307,8 +8125,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 // Turn on/off sending of input to all sessions. This causes a bunch of UI
 // to update in addition to flipping the flag.
-- (IBAction)enableSendInputToAllPanes:(id)sender
-{
+- (IBAction)enableSendInputToAllPanes:(id)sender {
     [self setBroadcastMode:BROADCAST_TO_ALL_PANES];
 
     // Post a notification to reload menus
@@ -8316,11 +8133,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         object:self
                                                       userInfo:nil];
     [self setWindowTitle];
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
 }
 
-- (IBAction)disableBroadcasting:(id)sender
-{
+- (IBAction)disableBroadcasting:(id)sender {
     [self setBroadcastMode:BROADCAST_OFF];
 
     // Post a notification to reload menus
@@ -8328,13 +8143,11 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         object:self
                                                       userInfo:nil];
     [self setWindowTitle];
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
 }
 
 // Turn on/off sending of input to all sessions. This causes a bunch of UI
 // to update in addition to flipping the flag.
-- (IBAction)enableSendInputToAllTabs:(id)sender
-{
+- (IBAction)enableSendInputToAllTabs:(id)sender {
     [self setBroadcastMode:BROADCAST_TO_ALL_TABS];
 
     // Post a notification to reload menus
@@ -8342,7 +8155,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                                         object:self
                                                       userInfo:nil];
     [self setWindowTitle];
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
 }
 
 // Push size changes to all sessions so they are all as large as possible while
@@ -9130,6 +8942,67 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSColor *)minimalTabStyleBackgroundColor {
     return [self.currentSession.colorMap colorForKey:kColorMapBackground];
+}
+
+#pragma mark - iTermBroadcastInputHelperDelegate
+
+- (NSArray<NSString *> *)broadcastInputHelperSessionsInCurrentTab:(iTermBroadcastInputHelper *)helper
+                                                    includeExited:(BOOL)includeExited {
+    return [self.currentTab.sessions mapWithBlock:^id(PTYSession *session) {
+        if (!includeExited && session.exited) {
+            return nil;
+        }
+        return session.guid;
+    }];
+}
+
+- (NSArray<NSString *> *)broadcastInputHelperSessionsInAllTabs:(iTermBroadcastInputHelper *)helper
+                                                 includeExited:(BOOL)includeExited {
+    return [self.allSessions mapWithBlock:^id(PTYSession *session) {
+        if (!includeExited && session.exited) {
+            return nil;
+        }
+        return session.guid;
+    }];
+}
+
+- (NSString *)broadcastInputHelperCurrentSession:(iTermBroadcastInputHelper *)helper {
+    return self.currentSession.guid;
+}
+
+- (void)broadcastInputHelperDidUpdate:(iTermBroadcastInputHelper *)helper {
+    for (PTYTab *tab in [self tabs]) {
+        for (PTYSession *session in tab.sessions) {
+            [session.view setNeedsDisplay:YES];
+        }
+    }
+    // Update dimming of panes.
+    [self refreshTerminal:nil];
+    [self setDimmingForSessions];
+    
+    // Post a notification to reload menus
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey"
+                                                        object:self
+                                                      userInfo:nil];
+    [self setWindowTitle];
+}
+
+- (BOOL)broadcastInputHelperCurrentTabIsBroadcasting:(iTermBroadcastInputHelper *)helper {
+    return self.currentTab.isBroadcasting;
+}
+
+- (void)broadcastInputHelperSetNoTabBroadcasting:(iTermBroadcastInputHelper *)helper {
+    for (PTYTab *tab in self.tabs) {
+        tab.broadcasting = NO;
+    }
+}
+
+- (void)broadcastInputHelper:(iTermBroadcastInputHelper *)helper setCurrentTabBroadcasting:(BOOL)broadcasting {
+    self.currentTab.broadcasting = broadcasting;
+}
+
+- (NSWindow *)broadcastInputHelperWindowForWarnings:(iTermBroadcastInputHelper *)helper {
+    return self.window;
 }
 
 @end

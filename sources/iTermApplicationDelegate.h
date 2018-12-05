@@ -65,7 +65,6 @@ extern NSString *const iTermDidToggleSecureInputNotification;
 
 - (void)updateMaximizePaneMenuItem;
 - (void)updateUseTransparencyMenuItem;
-- (void)updateBroadcastMenuState;
 
 - (void)makeHotKeyWindowKeyIfOpen;
 

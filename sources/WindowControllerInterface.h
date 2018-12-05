@@ -2,6 +2,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ITAddressBookMgr.h"
+#import "iTermBroadcastInputHelper.h"
 #import "ProfileModel.h"
 #import "PTYTabDelegate.h"
 #import "PTYWindow.h"
@@ -14,13 +15,6 @@
 @class PTYTabView;
 @class TmuxController;
 @class VT100RemoteHost;
-
-typedef NS_ENUM(NSInteger, BroadcastMode) {
-    BROADCAST_OFF,
-    BROADCAST_TO_ALL_PANES,
-    BROADCAST_TO_ALL_TABS,
-    BROADCAST_CUSTOM
-};
 
 @class iTermRestorableSession;
 

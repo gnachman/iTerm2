@@ -2,6 +2,7 @@
 
 #import "Autocomplete.h"
 #import "FutureMethods.h"
+#import "iTermBroadcastInputHelper.h"
 #import "iTermController.h"
 #import "iTermInstantReplayWindowController.h"
 #import "iTermPopupWindowController.h"
@@ -34,8 +35,6 @@ extern NSString *const iTermDidDecodeWindowRestorableStateNotification;
 extern NSString *const iTermTabDidChangePositionInWindowNotification;
 
 extern NSString *const iTermSelectedTabDidChange;
-
-extern NSString *const iTermBroadcastDomainsDidChangeNotification;
 
 // This class is 1:1 with windows. It controls the tabs, the window's fullscreen
 // status, and coordinates resizing of sessions (either session-initiated
