@@ -184,6 +184,10 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     return _registrationRequest.statusBarComponentAttributes.detailedDescription;
 }
 
+- (void)statusBarComponentUpdate {
+    [self updateWithKnobValues:self.configuration[iTermStatusBarComponentConfigurationKeyKnobValues]];
+}
+
 - (iTermStatusBarComponentKnobType)knobTypeFromDescriptorType:(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type)type {
     switch (type) {
         case ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_Color:
