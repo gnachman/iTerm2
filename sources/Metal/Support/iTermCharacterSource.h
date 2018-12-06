@@ -37,6 +37,7 @@
                       antialiased:(BOOL)antialiased
                        boxDrawing:(BOOL)boxDrawing
                            radius:(int)radius
+         useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs
                           context:(CGContextRef)context;
 
 - (iTermCharacterBitmap *)bitmapForPart:(int)part;

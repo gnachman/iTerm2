@@ -40,6 +40,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     BOOL _fakeItalic;
     BOOL _antialiased;
     BOOL _boxDrawing;
+    BOOL _useNativePowerlineGlyphs;
     BOOL _postprocessed NS_AVAILABLE_MAC(10_14);
     
     CGSize _partSize;
@@ -107,6 +108,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                                                                antialiased:YES
                                                                                 boxDrawing:NO
                                                                                     radius:0
+                                                                  useNativePowerlineGlyphs:NO
                                                                                    context:context];
             CGRect frame = [source frameFlipped:NO];
             unionRect = NSUnionRect(unionRect, frame);
@@ -133,6 +135,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                       antialiased:(BOOL)antialiased
                        boxDrawing:(BOOL)boxDrawing
                            radius:(int)radius
+         useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs
                           context:(CGContextRef)context {
     assert(font);
     assert(glyphSize.width > 0);
@@ -159,6 +162,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         _fakeBold = fakeBold;
         _fakeItalic = fakeItalic;
         _boxDrawing = boxDrawing;
+        _useNativePowerlineGlyphs = useNativePowerlineGlyphs;
         _context = context;
         CGContextRetain(context);
 
@@ -544,26 +548,18 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
 }
 
-- (void)drawBoxInContext:(CGContextRef)context offset:(CGPoint)offset {
+- (void)drawBoxInContext:(CGContextRef)context offset:(CGPoint)offset iteration:(int)iteration {
     assert(context);
-    BOOL solid;
-    NSArray<NSBezierPath *> *paths = [iTermBoxDrawingBezierCurveFactory bezierPathsForBoxDrawingCode:[_string characterAtIndex:0]
-                                                                                            cellSize:NSMakeSize(_cellSize.width * _scale,
-                                                                                                                _cellSize.height * _scale)
-                                                                                               scale:_scale
-                                                                                              offset:offset
-                                                                                               solid:&solid];
-    for (NSBezierPath *path in paths) {
-        if (solid) {
-            [path fill];
-        } else {
-            [path setLineWidth:_scale];
-            [path stroke];
-        }
-    }
+    [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:[_string characterAtIndex:0]
+                                                       cellSize:NSMakeSize(_cellSize.width * _scale,
+                                                                           _cellSize.height * _scale)
+                                                          scale:_scale
+                                                         offset:offset
+                                                          color:[self textColorForIteration:iteration]
+                                       useNativePowerlineGlyphs:_useNativePowerlineGlyphs];
 }
 
-- (void)drawBoxAtOffset:(CGPoint)offset {
+- (void)drawBoxAtOffset:(CGPoint)offset iteration:(int)iteration {
     NSGraphicsContext *graphicsContext = [NSGraphicsContext graphicsContextWithCGContext:_context flipped:YES];
     [NSGraphicsContext saveGraphicsState];
     [NSGraphicsContext setCurrentContext:graphicsContext];
@@ -576,7 +572,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     [transform translateXBy:offset.x yBy:offset.y + (_baselineOffset + _cellSize.height) * _scale - verticalShift];
     [transform scaleXBy:1 yBy:-1];
     [transform concat];
-    [self drawBoxInContext:_context offset:CGPointZero];
+    [self drawBoxInContext:_context offset:CGPointZero iteration:iteration];
     [NSGraphicsContext restoreGraphicsState];
 }
 
@@ -597,7 +593,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         CGContextRef context = _context;
 
         if (_boxDrawing) {
-            [self drawBoxAtOffset:offset];
+            [self drawBoxAtOffset:offset
+                        iteration:iteration];
         } else if (_isEmoji) {
             [self drawEmojiWithFont:runFont
                              offset:offset

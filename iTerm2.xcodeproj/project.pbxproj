@@ -1273,6 +1273,13 @@
 		53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 53C166A920C21FBB003B03AF /* iTermMigrationHelper.m */; };
 		53C2D3A52152CA3900FF6471 /* NSUserDefaults+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 53C2D3A32152CA3900FF6471 /* NSUserDefaults+iTerm.h */; };
 		53C2D3A62152CA3900FF6471 /* NSUserDefaults+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 53C2D3A42152CA3900FF6471 /* NSUserDefaults+iTerm.m */; };
+		53C5650121B8C26C002B3167 /* PowerlineVersionControlBranch.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650021B8C26C002B3167 /* PowerlineVersionControlBranch.pdf */; };
+		53C5650321B8C8C2002B3167 /* PowerlineLN.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650221B8C8C1002B3167 /* PowerlineLN.pdf */; };
+		53C5650521B8CB1C002B3167 /* PowerlinePadlock.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650421B8CB1C002B3167 /* PowerlinePadlock.pdf */; };
+		53C5650821B8CDF5002B3167 /* PowerlineSolidLeftArrow.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650621B8CDF5002B3167 /* PowerlineSolidLeftArrow.pdf */; };
+		53C5650921B8CDF5002B3167 /* PowerlineSolidRightArrow.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650721B8CDF5002B3167 /* PowerlineSolidRightArrow.pdf */; };
+		53C5650C21B8CF65002B3167 /* PowerlineLineLeftArrow.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650A21B8CF64002B3167 /* PowerlineLineLeftArrow.pdf */; };
+		53C5650D21B8CF65002B3167 /* PowerlineLineRightArrow.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 53C5650B21B8CF64002B3167 /* PowerlineLineRightArrow.pdf */; };
 		53E184F11FE32F2800DB78F3 /* iTermMetalBufferPool.h in Headers */ = {isa = PBXBuildFile; fileRef = 53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */; };
 		53E184F21FE32F2800DB78F3 /* iTermMetalBufferPool.m in Sources */ = {isa = PBXBuildFile; fileRef = 53E184F01FE32F2800DB78F3 /* iTermMetalBufferPool.m */; };
 		53FF84E2217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h in Headers */ = {isa = PBXBuildFile; fileRef = 53FF84E0217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h */; };
@@ -4001,6 +4008,13 @@
 		53C166A920C21FBB003B03AF /* iTermMigrationHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMigrationHelper.m; sourceTree = "<group>"; };
 		53C2D3A32152CA3900FF6471 /* NSUserDefaults+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSUserDefaults+iTerm.h"; sourceTree = "<group>"; };
 		53C2D3A42152CA3900FF6471 /* NSUserDefaults+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSUserDefaults+iTerm.m"; sourceTree = "<group>"; };
+		53C5650021B8C26C002B3167 /* PowerlineVersionControlBranch.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineVersionControlBranch.pdf; path = images/PowerlineVersionControlBranch.pdf; sourceTree = "<group>"; };
+		53C5650221B8C8C1002B3167 /* PowerlineLN.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineLN.pdf; path = images/PowerlineLN.pdf; sourceTree = "<group>"; };
+		53C5650421B8CB1C002B3167 /* PowerlinePadlock.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlinePadlock.pdf; path = images/PowerlinePadlock.pdf; sourceTree = "<group>"; };
+		53C5650621B8CDF5002B3167 /* PowerlineSolidLeftArrow.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineSolidLeftArrow.pdf; path = images/PowerlineSolidLeftArrow.pdf; sourceTree = "<group>"; };
+		53C5650721B8CDF5002B3167 /* PowerlineSolidRightArrow.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineSolidRightArrow.pdf; path = images/PowerlineSolidRightArrow.pdf; sourceTree = "<group>"; };
+		53C5650A21B8CF64002B3167 /* PowerlineLineLeftArrow.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineLineLeftArrow.pdf; path = images/PowerlineLineLeftArrow.pdf; sourceTree = "<group>"; };
+		53C5650B21B8CF64002B3167 /* PowerlineLineRightArrow.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = PowerlineLineRightArrow.pdf; path = images/PowerlineLineRightArrow.pdf; sourceTree = "<group>"; };
 		53E184EF1FE32F2800DB78F3 /* iTermMetalBufferPool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalBufferPool.h; sourceTree = "<group>"; };
 		53E184F01FE32F2800DB78F3 /* iTermMetalBufferPool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetalBufferPool.m; sourceTree = "<group>"; };
 		53EBF29B1DCBFF7C00766613 /* iTermAPIServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAPIServer.h; sourceTree = "<group>"; };
@@ -6065,6 +6079,13 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				53C5650A21B8CF64002B3167 /* PowerlineLineLeftArrow.pdf */,
+				53C5650B21B8CF64002B3167 /* PowerlineLineRightArrow.pdf */,
+				53C5650621B8CDF5002B3167 /* PowerlineSolidLeftArrow.pdf */,
+				53C5650721B8CDF5002B3167 /* PowerlineSolidRightArrow.pdf */,
+				53C5650421B8CB1C002B3167 /* PowerlinePadlock.pdf */,
+				53C5650221B8C8C1002B3167 /* PowerlineLN.pdf */,
+				53C5650021B8C26C002B3167 /* PowerlineVersionControlBranch.pdf */,
 				A6F7A700213CB142004DE961 /* StatusBarIconClock.png */,
 				A6F7A6F3213CB13E004DE961 /* StatusBarIconClock@2x.png */,
 				A6F7A6FA213CB140004DE961 /* StatusBarIconComposer.png */,
@@ -10517,6 +10538,7 @@
 				A67F61D0214395C60093940A /* graphic_ruby.png in Resources */,
 				53FF980B20918D23008688D7 /* template_basic_simple.py in Resources */,
 				A62DBB9C20F47CFA008B63D1 /* GoForward.png in Resources */,
+				53C5650D21B8CF65002B3167 /* PowerlineLineRightArrow.pdf in Resources */,
 				A6EFF2321D2049A300806EEF /* Erase@2x.png in Resources */,
 				A67D0D7A1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				1D8BBA841B31DC0D0005A852 /* ChevronDown.png in Resources */,
@@ -10580,6 +10602,7 @@
 				1D8BBA781B30FD230005A852 /* Later.png in Resources */,
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
 				A67F61DE214395D50093940A /* graphic_yarn.png in Resources */,
+				53C5650C21B8CF65002B3167 /* PowerlineLineLeftArrow.pdf in Resources */,
 				A6E7AE92214394DD00DE9F3B /* graphic_coffee.png in Resources */,
 				A623D94B1F8984690011F8C3 /* key.png in Resources */,
 				A68E33351DE746F5003F1D8E /* Next Mark Touch Bar Icon.png in Resources */,
@@ -10600,11 +10623,13 @@
 				A67F61EA214395D50093940A /* graphic_yarn@2x.png in Resources */,
 				53FF9818209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */,
 				A67F617E214395A70093940A /* graphic_perl.png in Resources */,
+				53C5650921B8CDF5002B3167 /* PowerlineSolidRightArrow.pdf in Resources */,
 				1D94EAB112D64022008225A9 /* UKCrashReporter.strings in Resources */,
 				A67D0D651A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
 				A6E7AE83214394DD00DE9F3B /* graphic_code@2x.png in Resources */,
 				A6374A211DEA08C5000A136F /* PTYTextViewTest-golden-testCustomUnderline.png in Resources */,
 				A6EFF2381D20F6BE00806EEF /* EraseDarkBackground@2x.png in Resources */,
+				53C5650321B8C8C2002B3167 /* PowerlineLN.pdf in Resources */,
 				1DE922E61AC3709200965876 /* BackgroundStripes.png in Resources */,
 				A69A15731D7FD78200A9E7EF /* TipCalendar.png in Resources */,
 				1DA02CFB1327612600D7E7DB /* bell.png in Resources */,
@@ -10641,6 +10666,7 @@
 				A67F61F82143976F0093940A /* graphic_icons.json in Resources */,
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
 				A6F7A725213CB143004DE961 /* StatusBarIconHost.png in Resources */,
+				53C5650821B8CDF5002B3167 /* PowerlineSolidLeftArrow.pdf in Resources */,
 				A65B72B41B33C07D00F947A7 /* NextTip@2x.png in Resources */,
 				A686A11E1C86AA930024C2DE /* DeadForDarkTheme@2x.png in Resources */,
 				A6F7A710213CB143004DE961 /* StatusBarIconFolder@2x.png in Resources */,
@@ -10651,6 +10677,7 @@
 				A67F61C1214395C60093940A /* graphic_read.png in Resources */,
 				A67D0D7D1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
 				A68E333C1DE78D08003F1D8E /* Man Page Touch Bar Icon@2x.png in Resources */,
+				53C5650121B8C26C002B3167 /* PowerlineVersionControlBranch.pdf in Resources */,
 				A65B72521B1A5D7500F947A7 /* WarningSign.png in Resources */,
 				A6374A251DEA0929000A136F /* PTYTextViewTest-golden-testUnderline.png in Resources */,
 				A65429A420BE7ECA00CE71B1 /* ScriptIcon@2x.png in Resources */,
@@ -10738,6 +10765,7 @@
 				A67F61E4214395D50093940A /* graphic_vim.png in Resources */,
 				9DB3D6E0176C8F0B0071CCF8 /* PrefsAppearance.png in Resources */,
 				A6F7A74C213CB143004DE961 /* StatusBarIconComposer@2x.png in Resources */,
+				53C5650521B8CB1C002B3167 /* PowerlinePadlock.pdf in Resources */,
 				A6F7A713213CB143004DE961 /* StatusBarIconClock@2x.png in Resources */,
 				A66DB8321C8E4C2E00233E88 /* ChangeProfile.png in Resources */,
 				A6057C171883D12E004A60AF /* broken_image.png in Resources */,

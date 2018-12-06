@@ -207,6 +207,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                          KEY_IDLE_CODE, KEY_IDLE_PERIOD, KEY_OPTION_KEY_SENDS,
                          KEY_RIGHT_OPTION_KEY_SENDS, KEY_APPLICATION_KEYPAD_ALLOWED,
                          KEY_PLACE_PROMPT_AT_FIRST_COLUMN, KEY_SHOW_MARK_INDICATORS,
+                         KEY_POWERLINE
                        ];
     NSArray *dict = @[ KEY_STATUS_BAR_LAYOUT ];
     if ([string containsObject:key]) {
@@ -307,6 +308,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_OPEN_TOOLBELT: @NO,
                   KEY_ASCII_ANTI_ALIASED: @NO,
                   KEY_NONASCII_ANTI_ALIASED: @NO,
+                  KEY_POWERLINE: @NO,
                   KEY_SCROLLBACK_LINES: @1000,
                   KEY_UNLIMITED_SCROLLBACK: @NO,
                   KEY_SCROLLBACK_WITH_STATUS_BAR: @NO,

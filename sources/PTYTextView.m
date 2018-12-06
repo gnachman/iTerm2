@@ -1158,6 +1158,7 @@ static const int kDragThreshold = 3;
     _drawingHelper.passwordInput = ([self isInKeyWindow] &&
                                     [_delegate textViewIsActiveSession] &&
                                     _delegate.textViewPasswordInput);
+    _drawingHelper.useNativePowerlineGlyphs = self.useNativePowerlineGlyphs;
 
     CGFloat rightMargin = 0;
     if (_drawingHelper.showTimestamps) {

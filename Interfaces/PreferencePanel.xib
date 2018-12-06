@@ -1504,7 +1504,7 @@ DQ
                 <outlet property="view" destination="SCN-fS-hNB" id="yvb-17-eJa"/>
             </connections>
         </customObject>
-        <customObject id="lhd-u6-xr5" userLabel="Profiles&gt;Text View Controller" customClass="ProfilesTextPreferencesViewController">
+        <customObject id="lhd-u6-xr5" userLabel="Prefs&gt;Profiles&gt;Text View Controller" customClass="ProfilesTextPreferencesViewController">
             <connections>
                 <outlet property="_ambiguousIsDoubleWidth" destination="5126" id="Eee-f8-fvr"/>
                 <outlet property="_asciiAntiAliased" destination="4782" id="P5t-r0-fdU"/>
@@ -1523,6 +1523,7 @@ DQ
                 <outlet property="_normalFontDescription" destination="4775" id="Pwe-1n-DX6"/>
                 <outlet property="_normalFontWantsAntialiasing" destination="QMj-Rf-IwZ" id="uPi-s4-g9d"/>
                 <outlet property="_normalization" destination="XDS-1Z-hVv" id="QUB-dq-OEO"/>
+                <outlet property="_powerline" destination="RlK-7g-Aj5" id="FUG-uj-1bZ"/>
                 <outlet property="_subpixelAA" destination="eyk-me-Lp0" id="D5O-fy-u3f"/>
                 <outlet property="_thinStrokes" destination="bp3-dc-JQV" id="RVt-pO-7Rz"/>
                 <outlet property="_thinStrokesLabel" destination="8oY-ax-IVW" id="ydV-bn-481"/>
@@ -2527,10 +2528,21 @@ DQ
                         <action selector="settingChanged:" target="lhd-u6-xr5" id="PIM-8Z-pho"/>
                     </connections>
                 </button>
-                <button id="5148">
-                    <rect key="frame" x="227" y="338" width="154" height="18"/>
+                <button id="RlK-7g-Aj5">
+                    <rect key="frame" x="18" y="286" width="199" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Blinking text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5149">
+                    <buttonCell key="cell" type="check" title="Use built-in Powerline glyphs" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="XGj-qV-Ys8">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="J7W-v6-ufB"/>
+                    </connections>
+                </button>
+                <button id="5148">
+                    <rect key="frame" x="250" y="338" width="154" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Blinking text" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5149">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -2558,7 +2570,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="7Qb-bA-qT4">
-                    <rect key="frame" x="18" y="263" width="132" height="17"/>
+                    <rect key="frame" x="18" y="253" width="132" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Unicode" id="ACB-I9-bi4">
                         <font key="font" metaFont="systemBold"/>
@@ -2757,7 +2769,7 @@ DQ
                     </connections>
                 </button>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="MOD-dL-6SH">
-                    <rect key="frame" x="18" y="214" width="228" height="17"/>
+                    <rect key="frame" x="18" y="204" width="228" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Unicode normalization form:" id="lS7-WI-sn5">
                         <font key="font" metaFont="system"/>
@@ -2766,7 +2778,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <popUpButton verticalHuggingPriority="750" id="XDS-1Z-hVv">
-                    <rect key="frame" x="250" y="208" width="292" height="26"/>
+                    <rect key="frame" x="250" y="198" width="292" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="None" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="td0-LJ-Zf9" id="ttZ-UD-tsk">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -2808,7 +2820,7 @@ DQ
                 <button id="6400">
                     <rect key="frame" x="407" y="338" width="134" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Italic text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6401">
+                    <buttonCell key="cell" type="check" title="Italic text" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6401">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -2817,20 +2829,8 @@ DQ
                         <outlet property="nextKeyView" destination="2100" id="6403"/>
                     </connections>
                 </button>
-                <button toolTip="If you work mostly in East Asian languages this can be helpful. For most users, it causes misalignment." id="5126">
-                    <rect key="frame" x="18" y="239" width="266" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Ambiguous characters are double-width" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5127">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="lhd-u6-xr5" id="x1G-OP-lD8"/>
-                        <outlet property="nextKeyView" destination="4765" id="5254"/>
-                    </connections>
-                </button>
                 <button id="jlZ-SF-XtE">
-                    <rect key="frame" x="338" y="239" width="203" height="18"/>
+                    <rect key="frame" x="18" y="229" width="203" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">Apps (such as your shell or your editor) expect each character to have a particular “width,” between 0 and 2 cells. If the app and the terminal emulator have different width tables, rendering problems ensue. Notably, Unicode 8 defines most Emoji to be 1 cell wide. Most fonts render them as two cells wide. Unicode 9 fixes this. If your apps have been updated for Unicode 9, you should enable this.</string>
                     <buttonCell key="cell" type="check" title="Use Unicode version 9 widths" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="usB-uD-pmw">
@@ -2863,6 +2863,18 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="didToggleSubpixelAntiAliasing:" target="lhd-u6-xr5" id="6FH-zH-FXw"/>
+                    </connections>
+                </button>
+                <button toolTip="If you work mostly in East Asian languages this can be helpful. For most users, it causes misalignment." id="5126">
+                    <rect key="frame" x="250" y="229" width="266" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Ambiguous characters are double-width" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5127">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="x1G-OP-lD8"/>
+                        <outlet property="nextKeyView" destination="4765" id="5254"/>
                     </connections>
                 </button>
             </subviews>

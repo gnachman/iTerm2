@@ -3630,7 +3630,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                       inProfile:aDict]
                    nonAscii:[iTermProfilePreferences boolForKey:KEY_NONASCII_ANTI_ALIASED
                                                       inProfile:aDict]];
-
+    [_textview setUseNativePowerlineGlyphs:[iTermProfilePreferences boolForKey:KEY_POWERLINE inProfile:aDict]];
     [self setEncoding:[iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
     [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]];
     [_terminal setAnswerBackString:[iTermProfilePreferences stringForKey:KEY_ANSWERBACK_STRING inProfile:aDict]];

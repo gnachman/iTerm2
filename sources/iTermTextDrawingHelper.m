@@ -1143,21 +1143,14 @@ typedef struct iTermTextColorContext {
     [transform translateXBy:pos.x yBy:pos.y];
     [transform concat];
 
-    BOOL solid = NO;
-    for (NSBezierPath *path in [iTermBoxDrawingBezierCurveFactory bezierPathsForBoxDrawingCode:theCharacter
-                                                                                      cellSize:_cellSize
-                                                                                         scale:1
-                                                                                        offset:CGPointZero
-                                                                                         solid:&solid]) {
-        NSColor *color = [NSColor colorWithCGColor:(CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName]];
-        [color set];
-        if (solid) {
-            [path fill];
-        } else {
-            [path stroke];
-        }
-    }
-
+    NSColor *color = [NSColor colorWithCGColor:(CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName]];
+    [color set];
+    [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:theCharacter
+                                                       cellSize:_cellSize
+                                                          scale:1
+                                                         offset:CGPointZero
+                                                          color:color
+                                       useNativePowerlineGlyphs:self.useNativePowerlineGlyphs];
     [ctx restoreGraphicsState];
 }
 
@@ -1773,7 +1766,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     const BOOL isComplex = c->complexChar;
     const unichar code = c->code;
 
-    attributes->boxDrawing = !isComplex && [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPaths] characterIsMember:code];
+    attributes->boxDrawing = !isComplex && [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs] characterIsMember:code];
 
     if (forceTextColor) {
         attributes->foregroundColor = forceTextColor;
@@ -1872,7 +1865,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         static NSCharacterSet *boxSet;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            boxSet = [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPaths] retain];
+            boxSet = [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs] retain];
         });
         BOOL box = [boxSet characterIsMember:c->code];
         BOOL pcBox = [boxSet characterIsMember:pc->code];

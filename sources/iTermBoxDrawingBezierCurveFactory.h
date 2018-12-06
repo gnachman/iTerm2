@@ -10,11 +10,13 @@
 
 @interface iTermBoxDrawingBezierCurveFactory : NSObject
 
-+ (NSCharacterSet *)boxDrawingCharactersWithBezierPaths;
-+ (NSArray<NSBezierPath *> *)bezierPathsForBoxDrawingCode:(unichar)code
-                                                 cellSize:(NSSize)cellSize
-                                                    scale:(CGFloat)scale
-                                                   offset:(CGPoint)offset
-                                                    solid:(out BOOL *)solid;
++ (NSCharacterSet *)boxDrawingCharactersWithBezierPathsIncludingPowerline:(BOOL)includingPowerline;
++ (void)drawCodeInCurrentContext:(unichar)code
+                        cellSize:(NSSize)cellSize
+                           scale:(CGFloat)scale
+                          offset:(CGPoint)offset
+                           color:(NSColor *)color
+        useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs;
+
 
 @end

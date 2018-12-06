@@ -144,7 +144,8 @@
 #define KEY_BACKGROUND_IMAGE_TILED_DEPRECATED @"Background Image Is Tiled"  // DEPRECATED
 #define KEY_ASCII_LIGATURES        @"ASCII Ligatures"
 #define KEY_NON_ASCII_LIGATURES    @"Non-ASCII Ligatures"
-#define KEY_BACKGROUND_IMAGE_MODE @"Background Image Mode"  // iTermBackgroundImageMode enum
+#define KEY_BACKGROUND_IMAGE_MODE  @"Background Image Mode"  // iTermBackgroundImageMode enum
+#define KEY_POWERLINE              @"Draw Powerline Glyphs"
 
 // Terminal
 #define KEY_DISABLE_WINDOW_RESIZING           @"Disable Window Resizing"

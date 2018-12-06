@@ -11,20 +11,53 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "charmaps.h"
 #import "NSArray+iTerm.h"
+#import "NSImage+iTerm.h"
 
 @implementation iTermBoxDrawingBezierCurveFactory
 
-+ (NSCharacterSet *)boxDrawingCharactersWithBezierPaths {
++ (NSCharacterSet *)boxDrawingCharactersWithBezierPathsIncludingPowerline:(BOOL)includingPowerline {
+    if (includingPowerline) {
+        return [self boxDrawingCharactersWithBezierPathsIncludingPowerline];
+    } else {
+        return [self boxDrawingCharactersWithBezierPathsExcludingPowerline];
+    }
+}
+
++ (NSCharacterSet *)boxDrawingCharactersWithBezierPathsIncludingPowerline {
     static NSCharacterSet *sBoxDrawingCharactersWithBezierPaths;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         if ([iTermAdvancedSettingsModel disableCustomBoxDrawing]) {
             sBoxDrawingCharactersWithBezierPaths = [[NSCharacterSet characterSetWithCharactersInString:@""] retain];
         } else {
-            sBoxDrawingCharactersWithBezierPaths =
-            [[NSCharacterSet characterSetWithCharactersInString:@"─━│┃┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤"
-              @"┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╴╵╶╷╸╹╺╻╼╽╾╿"
-              @"╯╮╰╭╱╲╳▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐▔▕▖▗▘▙▚▛▜▝▞▟"] retain];
+            /*
+            U+E0A0        Version control branch
+            U+E0A1        LN (line) symbol
+            U+E0A2        Closed padlock
+            U+E0B0        Rightwards black arrowhead
+            U+E0B1        Rightwards arrowhead
+            U+E0B2        Leftwards black arrowhead
+            U+E0B3        Leftwards arrowhead
+             */
+            NSMutableCharacterSet *temp = [[self boxDrawingCharactersWithBezierPathsExcludingPowerline] mutableCopy];
+            [temp addCharactersInRange:NSMakeRange(0xE0A0, 3)];
+            [temp addCharactersInRange:NSMakeRange(0xE0B0, 4)];
+            sBoxDrawingCharactersWithBezierPaths = temp;
+        };
+    });
+    return sBoxDrawingCharactersWithBezierPaths;
+}
+
++ (NSCharacterSet *)boxDrawingCharactersWithBezierPathsExcludingPowerline {
+    static NSCharacterSet *sBoxDrawingCharactersWithBezierPaths;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        if ([iTermAdvancedSettingsModel disableCustomBoxDrawing]) {
+            sBoxDrawingCharactersWithBezierPaths = [[NSCharacterSet characterSetWithCharactersInString:@""] retain];
+        } else {
+            sBoxDrawingCharactersWithBezierPaths = [[NSCharacterSet characterSetWithCharactersInString:@"─━│┃┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤"
+                                                     @"┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╴╵╶╷╸╹╺╻╼╽╾╿"
+                                                     @"╯╮╰╭╱╲╳▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐▔▕▖▗▘▙▚▛▜▝▞▟"] retain];
         };
     });
     return sBoxDrawingCharactersWithBezierPaths;
@@ -38,6 +71,15 @@
     // First two characters give the letter + number of origin in eighths.
     // Then come two digits giving width and height in eighths.
     switch (code) {
+        case 0xE0A0:  // Version control branch
+        case 0xE0A1:  // LN (line) symbol
+        case 0xE0A2:  // Closed padlock
+        case 0xE0B0:  // Rightward black arrowhead
+        case 0xE0B1:  // Rightwards arrowhead
+        case 0xE0B2:  // Leftwards black arrowhead
+        case 0xE0B3:  // Leftwards arrowhead
+            return nil;
+
         case iTermUpperHalfBlock: // ▀
             parts = @[ @"a084" ];
             break;
@@ -142,6 +184,122 @@
 
         return [NSBezierPath bezierPathWithRect:NSMakeRect(xo, yo, w, h)];
     }];
+}
+
++ (void)performBlockWithoutAntialiasing:(void (^)(void))block {
+    NSImageInterpolation saved = [[NSGraphicsContext currentContext] imageInterpolation];
+    [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationNone];
+    block();
+    [[NSGraphicsContext currentContext] setImageInterpolation:saved];
+}
+
++ (void)drawPowerlineCode:(unichar)code cellSize:(NSSize)cellSize offset:(CGPoint)offset color:(NSColor *)color {
+    switch (code) {
+        case 0xE0A0:
+            [self drawPDFWithName:@"PowerlineVersionControlBranch" cellSize:cellSize offset:offset stretch:NO color:color];
+            break;
+
+        case 0xE0A1:
+            [self performBlockWithoutAntialiasing:^{
+                [self drawPDFWithName:@"PowerlineLN" cellSize:cellSize offset:offset stretch:NO color:color];
+            }];
+            break;
+
+        case 0xE0A2:
+            [self drawPDFWithName:@"PowerlinePadlock" cellSize:cellSize offset:offset stretch:NO color:color];
+            break;
+        case 0xE0B0:
+            [self drawPDFWithName:@"PowerlineSolidRightArrow" cellSize:cellSize offset:offset stretch:YES color:color];
+            break;
+        case 0xE0B2:
+            [self drawPDFWithName:@"PowerlineSolidLeftArrow" cellSize:cellSize offset:offset stretch:YES color:color];
+            break;
+        case 0xE0B1:
+            [self drawPDFWithName:@"PowerlineLineRightArrow" cellSize:cellSize offset:offset stretch:YES color:color];
+            break;
+        case 0xE0B3:
+            [self drawPDFWithName:@"PowerlineLineLeftArrow" cellSize:cellSize offset:offset stretch:YES color:color];
+            break;
+    }
+}
+
++ (void)drawPDFWithName:(NSString *)pdfName cellSize:(NSSize)cellSize offset:(CGPoint)offset stretch:(BOOL)stretch color:(NSColor *)color {
+
+    NSString *pdfPath = [[NSBundle bundleForClass:self] pathForResource:pdfName ofType:@"pdf"];
+    NSData* pdfData = [NSData dataWithContentsOfFile:pdfPath];
+    NSPDFImageRep *pdfImageRep = [NSPDFImageRep imageRepWithData:pdfData];
+    const CGFloat pdfAspectRatio = pdfImageRep.size.width / pdfImageRep.size.height;
+    const CGFloat cellAspectRatio = cellSize.width / cellSize.height;
+    NSRect destination;
+    if (stretch) {
+        destination = NSMakeRect(0, 0, cellSize.width, cellSize.height);
+    } else if (pdfAspectRatio > cellAspectRatio) {
+        // PDF is wider than cell, so letterbox top and bottom
+        const CGFloat letterboxHeight = (cellSize.height - cellSize.width / pdfAspectRatio) / 2;
+        destination = NSMakeRect(0, letterboxHeight, cellSize.width, cellSize.height - letterboxHeight * 2);
+    } else {
+        // PDF is taller than cell so pillarbox left and right
+        const CGFloat pillarboxWidth = (cellSize.width - cellSize.height * pdfAspectRatio) / 2;
+        destination = NSMakeRect(pillarboxWidth, 0, cellSize.width - pillarboxWidth * 2, cellSize.height);
+    }
+    if (color) {
+        NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(pdfImageRep.size.width * 2,
+                                                                  pdfImageRep.size.height * 2)];
+        [image addRepresentation:pdfImageRep];
+        image = [image imageWithColor:color];
+        [image drawInRect:destination
+                 fromRect:NSZeroRect
+                operation:NSCompositingOperationSourceOver
+                 fraction:1
+           respectFlipped:YES
+                    hints:nil];
+        return;
+    }
+    [pdfImageRep drawInRect:destination
+                   fromRect:NSZeroRect
+                  operation:NSCompositingOperationSourceOver
+                   fraction:1
+             respectFlipped:YES
+                      hints:nil];
+}
+
++ (void)drawCodeInCurrentContext:(unichar)code
+                        cellSize:(NSSize)cellSize
+                           scale:(CGFloat)scale
+                          offset:(CGPoint)offset
+                           color:(NSColor *)color
+        useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs {
+    if (useNativePowerlineGlyphs) {
+        switch (code) {
+            case 0xE0A0:  // Version control branch
+            case 0xE0A1:  // LN (line) symbol
+            case 0xE0A2:  // Closed padlock
+            case 0xE0B0:  // Rightward black arrowhead
+            case 0xE0B1:  // Rightwards arrowhead
+            case 0xE0B2:  // Leftwards black arrowhead
+            case 0xE0B3:  // Leftwards arrowhead
+                [self drawPowerlineCode:code
+                               cellSize:cellSize
+                                 offset:offset
+                                  color:color];
+                return;
+        }
+    }
+    
+    BOOL solid = NO;
+    NSArray<NSBezierPath *> *paths = [iTermBoxDrawingBezierCurveFactory bezierPathsForBoxDrawingCode:code
+                                                                                            cellSize:cellSize
+                                                                                               scale:scale
+                                                                                              offset:offset
+                                                                                               solid:&solid];
+    for (NSBezierPath *path in paths) {
+        if (solid) {
+            [path fill];
+        } else {
+            [path setLineWidth:scale];
+            [path stroke];
+        }
+    }
 }
 
 + (NSArray<NSBezierPath *> *)bezierPathsForBoxDrawingCode:(unichar)code

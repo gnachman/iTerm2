@@ -144,7 +144,8 @@ static NSColor *ColorForVector(vector_float4 v) {
     NSEdgeInsets _edgeInsets;
     CGRect _relativeFrame;
     CGSize _containerSize;
-        
+    BOOL _useNativePowerlineGlyphs;
+
     // Row on screen to characters with annotation underline on that row.
     NSDictionary<NSNumber *, NSIndexSet *> *_rowToAnnotationRanges;
     NSArray<iTermHighlightedRow *> *_highlightedRows;
@@ -374,6 +375,7 @@ static NSColor *ColorForVector(vector_float4 v) {
     _inputMethodMarkedRange = drawingHelper.inputMethodMarkedRange;
     _asciiAntialias = drawingHelper.asciiAntiAlias;
     _nonasciiAntialias = _useNonAsciiFont ? drawingHelper.nonAsciiAntiAlias : _asciiAntialias;
+    _useNativePowerlineGlyphs = drawingHelper.useNativePowerlineGlyphs;
     _showBroadcastStripes = drawingHelper.showStripes;
     _processedDefaultBackgroundColor = [drawingHelper defaultBackgroundColor];
     _timestampsEnabled = drawingHelper.showTimestamps;
@@ -924,7 +926,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
            drawableGlyphs:(int *)drawableGlyphsPtr
                      date:(out NSDate **)datePtr
                    sketch:(out NSUInteger *)sketchPtr {
-    NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPaths];
+    NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs];
     if (_timestampsEnabled) {
         *datePtr = _dates[row];
     }
@@ -1374,6 +1376,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                             antialiased:isAscii ? _asciiAntialias : _nonasciiAntialias
                                              boxDrawing:glyphKey->boxDrawing
                                                  radius:radius
+                               useNativePowerlineGlyphs:_useNativePowerlineGlyphs
                                                 context:_metalContext];
     if (characterSource == nil) {
         return nil;

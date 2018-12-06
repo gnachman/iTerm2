@@ -47,7 +47,8 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSButton *_asciiLigatures;
     IBOutlet NSButton *_nonAsciiLigatures;
     IBOutlet NSButton *_subpixelAA;
-
+    IBOutlet NSButton *_powerline;
+    
     // Labels indicating current font. Not registered as controls.
     IBOutlet NSTextField *_normalFontDescription;
     IBOutlet NSTextField *_nonAsciiFontDescription;
@@ -216,6 +217,10 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                            key:KEY_NONASCII_ANTI_ALIASED
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{ [weakSelf updateWarnings]; };
+
+    info = [self defineControl:_powerline
+                           key:KEY_POWERLINE
+                          type:kPreferenceInfoTypeCheckbox];
 
     [self updateFontsDescriptions];
     [self updateNonAsciiFontViewVisibility];
