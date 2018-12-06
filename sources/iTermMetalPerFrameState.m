@@ -49,6 +49,7 @@ typedef struct {
     unsigned int faint : 1;
     vector_float4 background;
     ColorMode mode : 2;
+    unsigned int isBoxDrawing : 1;
 } iTermTextColorKey;
 
 typedef struct {
@@ -759,6 +760,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         currentColorKey->bold = line[x].bold;
         currentColorKey->faint = line[x].faint;
         currentColorKey->background = backgroundColor;
+        currentColorKey->isBoxDrawing = isBoxDrawingCharacter;
         if (x > 0 &&
             currentColorKey->isMatch == previousColorKey->isMatch &&
             currentColorKey->inUnderlinedRange == previousColorKey->inUnderlinedRange &&
@@ -769,7 +771,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             currentColorKey->fgBlue == previousColorKey->fgBlue &&
             currentColorKey->bold == previousColorKey->bold &&
             currentColorKey->faint == previousColorKey->faint &&
-            simd_equal(currentColorKey->background, previousColorKey->background)) {
+            simd_equal(currentColorKey->background, previousColorKey->background) &&
+            currentColorKey->isBoxDrawing == previousColorKey->isBoxDrawing) {
             attributes[x].foregroundColor = attributes[x - 1].foregroundColor;
         } else {
             vector_float4 textColor = [self textColorForCharacter:&line[x]
