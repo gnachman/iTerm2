@@ -367,6 +367,19 @@ def _string_rpc_registration_request(rpc):
 async def _async_subscribe(connection, subscribe, notification_type, callback, session=None, rpc_registration_request=None, keystroke_monitor_request=None, variable_monitor_request=None, key=None, profile_change_request=None):
     _register_helper_if_needed()
     transformed_session = session if session is not None else "all"
+
+    # Register locally in case iTerm2 responds with an RPC immediately.
+    # That is typical when registering a session title provider when a session is already open.
+    if subscribe:
+        if key:
+            _register_notification_handler_impl(key, callback)
+        else:
+            _register_notification_handler(
+                    session,
+                    _string_rpc_registration_request(rpc_registration_request),
+                    notification_type,
+                    callback)
+
     response = await iterm2.rpc.async_notification_request(
         connection,
         subscribe,
@@ -379,18 +392,34 @@ async def _async_subscribe(connection, subscribe, notification_type, callback, s
     status = response.notification_response.status
     status_ok = (status == iterm2.api_pb2.NotificationResponse.Status.Value("OK"))
 
+    unregister = False
     if subscribe:
         already = (status == iterm2.api_pb2.NotificationResponse.Status.Value("ALREADY_SUBSCRIBED"))
         if status_ok or already:
             if key:
-                _register_notification_handler_impl(key, callback)
                 return (key, callback)
             else:
-                _register_notification_handler(session, _string_rpc_registration_request(rpc_registration_request), notification_type, callback)
                 return ((session, notification_type), callback)
+        else:
+            # Uh oh, undo the registration.
+            unregister = True
     else:
         # Unsubscribe
         if status_ok:
+            unregister = True
+
+    if unregister:
+        if key:
+            _unregister_notification_handler_impl(key, callback)
+        else:
+            _unregister_notification_handler(
+                session,
+                _string_rpc_registration_request(rpc_registration_request),
+                notification_type,
+                callback)
+
+        if not subscribe and status_ok:
+            # Normal code path for unsubscribe
             return
 
     raise SubscriptionException(iterm2.api_pb2.NotificationResponse.Status.Name(status))
@@ -490,6 +519,20 @@ def _register_notification_handler_impl(key, coro):
         _get_handlers()[key].append(coro)
     else:
         _get_handlers()[key] = [coro]
+
+def _unregister_notification_handler(session, rpc_registration_request, notification_type, coro):
+    assert coro is not None
+
+    if rpc_registration_request is None:
+        key = (session, notification_type)
+    else:
+        key = (session, notification_type, rpc_registration_request)
+    _unregister_notification_handler_impl(key, coro)
+
+def _unregister_notification_handler_impl(key, coro):
+    if key in _get_handlers():
+        if coro in _get_handlers()[key]:
+            _get_handlers()[key].remove(coro)
 
 class KeystrokePattern:
     """Describes attributes that select keystrokes.
