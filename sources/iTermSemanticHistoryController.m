@@ -75,19 +75,21 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     path = [path stringByRemovingEnclosingBrackets];
 
     BOOL stripTrailingParen = YES;
+    // Check for trailing line number, and if we'd like to strip parens.
+    NSString *value = [path stringByMatching:@":(\\d+)" capture:1];
+    if (!value) {
+        value = [path stringByMatching:@"\\[(\\d+), \\d+]" capture:1];
+    }
+    if (!value) {
+        value = [path stringByMatching:@"\\((\\d+), \\d+\\)" capture:1];
+        if (value) {
+            stripTrailingParen = NO;
+        }
+    }
     if (lineNumber != nil) {
-        NSString *value = [path stringByMatching:@":(\\d+)" capture:1];
-        if (!value) {
-            value = [path stringByMatching:@"\\[(\\d+), \\d+]" capture:1];
-        }
-        if (!value) {
-            value = [path stringByMatching:@"\\((\\d+), \\d+\\)" capture:1];
-            if (value) {
-                stripTrailingParen = NO;
-            }
-        }
         *lineNumber = value;
     }
+
     if (columnNumber != nil) {
         NSString *value = [path stringByMatching:@":(\\d+):(\\d+)" capture:2];
         if (!value) {
