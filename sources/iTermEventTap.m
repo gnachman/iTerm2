@@ -107,8 +107,8 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
                                         CGEventType type,
                                         CGEventRef event,
                                         void *refcon) {
-    NSLog(@"event tap for %@", event);
     iTermEventTap *eventTap = (id)refcon;
+    DLog(@"event tap %@ for %@", eventTap, event);
     return [eventTap eventTapCallbackWithProxy:proxy type:type event:event];
 }
 
@@ -200,7 +200,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
     DLog(@"Start event tap");
     assert(!self.isEnabled);
 
-    DLog(@"Register event tap.");
+    AppendPinnedDebugLogMessage(@"EventTap", @"Register event tap.");
     _machPort = CGEventTapCreate(kCGHIDEventTap,
                                  kCGTailAppendEventTap,
                                  kCGEventTapOptionDefault,
@@ -209,17 +209,21 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
                                  self);
     if (!_machPort) {
         XLog(@"CGEventTapCreate failed");
+        AppendPinnedDebugLogMessage(@"EventTap", @"CGEventTapCreate failed");
         goto error;
     }
 
     DLog(@"Create runloop source");
+    AppendPinnedDebugLogMessage(@"EventTap", @"Create runloop source");
     _eventSource = CFMachPortCreateRunLoopSource(NULL, _machPort, 0);
     if (_eventSource == NULL) {
         XLog(@"CFMachPortCreateRunLoopSource for key down failed.");
+        AppendPinnedDebugLogMessage(@"EventTap", @"CFMachPortCreateRunLoopSource for key down failed");
         goto error;
     }
 
     DLog(@"Adding run loop source.");
+    AppendPinnedDebugLogMessage(@"EventTap", @"Adding run loop source");
     // Get the CFRunLoop primitive for the Carbon Main Event Loop, and add the new event source
     CFRunLoopAddSource(CFRunLoopGetCurrent(),
                        _eventSource,
