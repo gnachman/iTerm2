@@ -121,31 +121,32 @@ static NSString *const kWindowNameFormat = @"iTerm Window %d";
 #define PtyLog DLog
 
 // Constants for saved window arrangement key names.
-static NSString* TERMINAL_ARRANGEMENT_OLD_X_ORIGIN = @"Old X Origin";
-static NSString* TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN = @"Old Y Origin";
-static NSString* TERMINAL_ARRANGEMENT_OLD_WIDTH = @"Old Width";
-static NSString* TERMINAL_ARRANGEMENT_OLD_HEIGHT = @"Old Height";
-static NSString* TERMINAL_ARRANGEMENT_X_ORIGIN = @"X Origin";
-static NSString* TERMINAL_ARRANGEMENT_Y_ORIGIN = @"Y Origin";
-static NSString* TERMINAL_ARRANGEMENT_WIDTH = @"Width";
-static NSString* TERMINAL_ARRANGEMENT_HEIGHT = @"Height";
-static NSString* TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF = @"Edge Spanning Off";  // Deprecated. Included in window type now.
-static NSString* TERMINAL_ARRANGEMENT_TABS = @"Tabs";
-static NSString* TERMINAL_ARRANGEMENT_FULLSCREEN = @"Fullscreen";
-static NSString* TERMINAL_ARRANGEMENT_LION_FULLSCREEN = @"LionFullscreen";
-static NSString* TERMINAL_ARRANGEMENT_WINDOW_TYPE = @"Window Type";
-static NSString* TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE = @"Saved Window Type";  // Only relevant for fullscreen
-static NSString* TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
-static NSString* TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
-static NSString* TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening";
-static NSString* TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
-static NSString* TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
-static NSString* TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW = @"Is Hotkey Window";
-static NSString* TERMINAL_ARRANGEMENT_INITIAL_PROFILE = @"Initial Profile";  // Optional
+static NSString *const TERMINAL_ARRANGEMENT_OLD_X_ORIGIN = @"Old X Origin";
+static NSString *const TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN = @"Old Y Origin";
+static NSString *const TERMINAL_ARRANGEMENT_OLD_WIDTH = @"Old Width";
+static NSString *const TERMINAL_ARRANGEMENT_OLD_HEIGHT = @"Old Height";
+static NSString *const TERMINAL_ARRANGEMENT_X_ORIGIN = @"X Origin";
+static NSString *const TERMINAL_ARRANGEMENT_Y_ORIGIN = @"Y Origin";
+static NSString *const TERMINAL_ARRANGEMENT_WIDTH = @"Width";
+static NSString *const TERMINAL_ARRANGEMENT_HEIGHT = @"Height";
+static NSString *const TERMINAL_ARRANGEMENT_EDGE_SPANNING_OFF = @"Edge Spanning Off";  // Deprecated. Included in window type now.
+static NSString *const TERMINAL_ARRANGEMENT_TABS = @"Tabs";
+static NSString *const TERMINAL_ARRANGEMENT_FULLSCREEN = @"Fullscreen";
+static NSString *const TERMINAL_ARRANGEMENT_LION_FULLSCREEN = @"LionFullscreen";
+static NSString *const TERMINAL_ARRANGEMENT_WINDOW_TYPE = @"Window Type";
+static NSString *const TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE = @"Saved Window Type";  // Only relevant for fullscreen
+static NSString *const TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
+static NSString *const TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
+static NSString *const TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening";
+static NSString *const TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
+static NSString *const TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
+static NSString *const TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW = @"Is Hotkey Window";
+static NSString *const TERMINAL_ARRANGEMENT_INITIAL_PROFILE = @"Initial Profile";  // Optional
 
-static NSString* TERMINAL_GUID = @"TerminalGuid";
-static NSString* TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
-static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"Hiding Toolbelt Should Resize Window";
+static NSString *const TERMINAL_GUID = @"TerminalGuid";
+static NSString *const TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
+static NSString *const TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"Hiding Toolbelt Should Resize Window";
+static NSString *const TERMINAL_ARRANGEMENT_USE_TRANSPARENCY = @"Use Transparency";
 
 static NSRect iTermRectCenteredHorizontallyWithinRect(NSRect frameToCenter, NSRect container) {
     CGFloat centerOfContainer = NSMidX(container);
@@ -2563,6 +2564,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!restoreTabsOK) {
         return NO;
     }
+    if (arrangement[TERMINAL_ARRANGEMENT_USE_TRANSPARENCY]) {
+        useTransparency_ = [arrangement[TERMINAL_ARRANGEMENT_USE_TRANSPARENCY] boolValue];
+    }
+
     _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
@@ -2652,6 +2657,9 @@ ITERM_WEAKLY_REFERENCEABLE
     result[TERMINAL_ARRANGEMENT_Y_ORIGIN] = @(rect.origin.y);
     result[TERMINAL_ARRANGEMENT_WIDTH] = @(rect.size.width);
     result[TERMINAL_ARRANGEMENT_HEIGHT] = @(rect.size.height);
+
+    result[TERMINAL_ARRANGEMENT_USE_TRANSPARENCY] = @(useTransparency_);
+
     DLog(@"While creating arrangement for %@ save frame of %@", self, NSStringFromRect(rect));
     DLog(@"%@", [NSThread callStackSymbols]);
     result[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] = @(_contentView.shouldShowToolbelt);
