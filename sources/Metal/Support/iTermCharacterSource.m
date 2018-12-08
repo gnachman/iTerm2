@@ -617,33 +617,36 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                     context:(CGContextRef)context {
     CGContextSetShouldAntialias(context, _antialiased);
 
-    BOOL shouldSmooth;
-    int style = -1;
-    if (iTermTextIsMonochrome()) {
-        if (_attributes.useThinStrokes) {
-            shouldSmooth = NO;
+    if (_antialiased) {
+        BOOL shouldSmooth;
+        int style = -1;
+        if (iTermTextIsMonochrome()) {
+            if (_attributes.useThinStrokes) {
+                shouldSmooth = NO;
+            } else {
+                shouldSmooth = YES;
+            }
         } else {
+            // User enabled subpixel AA
             shouldSmooth = YES;
         }
-    } else {
-        // User enabled subpixel AA
-        shouldSmooth = YES;
-    }
-    if (shouldSmooth) {
-        if (_attributes.useThinStrokes) {
-            // This seems to be available at least on 10.8 and later. The only reference to it is in
-            // WebKit. This causes text to render just a little lighter, which looks nicer.
-            // It does not work in Mojave without subpixel AA.
-            style = 16;
-        } else {
-            style = 0;
+        if (shouldSmooth) {
+            if (_attributes.useThinStrokes) {
+                // This seems to be available at least on 10.8 and later. The only reference to it is in
+                // WebKit. This causes text to render just a little lighter, which looks nicer.
+                // It does not work in Mojave without subpixel AA.
+                style = 16;
+            } else {
+                style = 0;
+            }
         }
+        CGContextSetShouldSmoothFonts(context, shouldSmooth);
+        if (style >= 0) {
+            CGContextSetFontSmoothingStyle(context, style);
+        }
+    } else {
+        CGContextSetFontSmoothingStyle(context, YES);  // Issue 7394.
     }
-    CGContextSetShouldSmoothFonts(context, shouldSmooth);
-    if (style >= 0) {
-        CGContextSetFontSmoothingStyle(context, style);
-    }
-
     [self initializeTextMatrixInContext:context
                                withSkew:skew
                                  offset:offset];

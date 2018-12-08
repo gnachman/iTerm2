@@ -1177,7 +1177,15 @@ typedef struct iTermTextColorContext {
     }
 }
 
-- (int)setSmoothingWithContext:(CGContextRef)ctx savedFontSmoothingStyle:(int *)savedFontSmoothingStyle useThinStrokes:(BOOL)useThinStrokes {
+- (int)setSmoothingWithContext:(CGContextRef)ctx
+       savedFontSmoothingStyle:(int *)savedFontSmoothingStyle
+                useThinStrokes:(BOOL)useThinStrokes
+                    antialised:(BOOL)antialiased {
+    if (!antialiased) {
+        // Issue 7394.
+        CGContextSetShouldSmoothFonts(ctx, YES);
+        return -1;
+    }
     BOOL shouldSmooth = useThinStrokes;
     int style = -1;
     if (iTermTextIsMonochrome()) {
@@ -1262,7 +1270,10 @@ typedef struct iTermTextColorContext {
     const BOOL useThinStrokes = [self useThinStrokesAgainstBackgroundColor:backgroundColor
                                                            foregroundColor:color];
     int savedFontSmoothingStyle = 0;
-    int style = [self setSmoothingWithContext:ctx savedFontSmoothingStyle:&savedFontSmoothingStyle useThinStrokes:useThinStrokes];
+    int style = [self setSmoothingWithContext:ctx
+                      savedFontSmoothingStyle:&savedFontSmoothingStyle
+                               useThinStrokes:useThinStrokes
+                                   antialised:antiAlias];
 
     size_t numCodes = cheapString.length;
     size_t length = numCodes;
@@ -1403,7 +1414,10 @@ typedef struct iTermTextColorContext {
     BOOL useThinStrokes = [self useThinStrokesAgainstBackgroundColor:backgroundColor
                                                      foregroundColor:cgColor];
     int savedFontSmoothingStyle = 0;
-    int style = [self setSmoothingWithContext:cgContext savedFontSmoothingStyle:&savedFontSmoothingStyle useThinStrokes:useThinStrokes];
+    int style = [self setSmoothingWithContext:cgContext
+                      savedFontSmoothingStyle:&savedFontSmoothingStyle
+                               useThinStrokes:useThinStrokes
+                                   antialised:antiAlias];
 
     const CGFloat ty = origin.y + _baselineOffset + _cellSize.height;
     CGAffineTransform textMatrix = CGAffineTransformMake(1.0, 0.0,
