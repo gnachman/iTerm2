@@ -8,6 +8,7 @@
 
 #import "iTermSavePanel.h"
 #import "DebugLogging.h"
+#import "iTermSavePanelFileFormatAccessory.h"
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
 #import "NSFileManager+iTerm.h"
@@ -18,6 +19,8 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
 @property(nonatomic, copy) NSString *filename;  // Just the filename.
 @property(nonatomic, copy) NSString *path;  // Full path.
 @property(nonatomic, assign) iTermSavePanelReplaceOrAppend replaceOrAppend;
+@property(nonatomic, copy) NSString *requiredExtension;
+@property(nonatomic, copy) NSString *forcedExtension;
 @end
 
 @implementation iTermSavePanel {
@@ -37,6 +40,35 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
                 initialDirectory:initialDirectory
                  defaultFilename:defaultFilename
                 allowedFileTypes:nil];
+}
+
++ (NSString *)nameForFileType:(NSString *)extension {
+    CFStringRef fileUTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension,
+                                                                (__bridge CFStringRef)extension,
+                                                                NULL);
+    NSString *lowercaseDescription = (__bridge NSString *)UTTypeCopyDescription(fileUTI);
+
+    CFRelease(fileUTI);
+
+    lowercaseDescription = [lowercaseDescription stringByCapitalizingFirstLetter];
+    NSRange range = [lowercaseDescription rangeOfString:[NSString stringWithFormat:@"(%@)", extension]];
+    if (range.location == NSNotFound) {
+        return lowercaseDescription;
+    }
+    return [lowercaseDescription stringByReplacingCharactersInRange:range withString:[extension uppercaseString]];
+}
+
++ (iTermSavePanelFileFormatAccessory *)newFileFormatAccessoryViewControllerFileWithFileTypes:(NSArray<NSString *> *)fileTypes {
+    iTermSavePanelFileFormatAccessory *accessory = [[iTermSavePanelFileFormatAccessory alloc] initWithNibName:@"iTermSavePanelFileFormatAccessory" bundle:[NSBundle bundleForClass:self]];
+    [accessory view];
+    NSInteger i = 0;
+    for (NSString *fileType in fileTypes) {
+        NSString *name = [self nameForFileType:fileType];
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:name action:nil keyEquivalent:@""];
+        item.tag = i++;
+        [accessory.popupButton.menu addItem:item];
+    }
+    return accessory;
 }
 
 + (iTermSavePanel *)showWithOptions:(NSInteger)options
@@ -59,8 +91,18 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
         savePanel.extensionHidden = NO;
         savePanel.allowedFileTypes = allowedFileTypes;
     }
-    iTermSavePanel *delegate = [[[iTermSavePanel alloc] initWithOptions:options] autorelease];
-
+    iTermSavePanelFileFormatAccessory *accessoryViewController = nil;
+    if (options & kSavePanelOptionFileFormatAccessory) {
+        accessoryViewController = [self newFileFormatAccessoryViewControllerFileWithFileTypes:allowedFileTypes];
+        savePanel.accessoryView = accessoryViewController.view;
+    }
+    iTermSavePanel *delegate = [[iTermSavePanel alloc] initWithOptions:options];
+    accessoryViewController.onChange = ^(NSInteger i){
+        [delegate setRequiredExtension:allowedFileTypes[i]];
+    };
+    if (options & kSavePanelOptionFileFormatAccessory) {
+        delegate.requiredExtension = allowedFileTypes[0];
+    }
     savePanel.delegate = delegate;
     BOOL retrying;
     do {
@@ -71,6 +113,10 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
             return nil;
         }
 
+        NSURL *URL = savePanel.URL;
+        if (delegate.forcedExtension) {
+            URL = [[URL URLByDeletingPathExtension] URLByAppendingPathExtension:delegate.forcedExtension];
+        }
         retrying = NO;
         if (options & kSavePanelOptionAppendOrReplace) {
             if (!delegate.filename) {
@@ -80,7 +126,7 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
             }
 
             // The path contains random crap in the last path component. Use what we saved instead.
-            NSString *directory = [savePanel.URL.path stringByDeletingLastPathComponent];
+            NSString *directory = [URL.path stringByDeletingLastPathComponent];
             delegate.path = [directory stringByAppendingPathComponent:delegate.filename];
             if (allowedFileTypes.count && ![allowedFileTypes containsObject:delegate.path.pathExtension]) {
                 delegate.path = [delegate.path stringByAppendingPathExtension:allowedFileTypes.firstObject];
@@ -89,7 +135,7 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
             // Show the replace/append/cancel panel.
             retrying = [delegate checkForExistingFile];
         } else {
-            delegate.path = savePanel.URL.path;
+            delegate.path = URL.path;
             if (allowedFileTypes.count && ![allowedFileTypes containsObject:delegate.path.pathExtension]) {
                 delegate.path = [delegate.path stringByAppendingPathExtension:allowedFileTypes.firstObject];
             }
@@ -111,12 +157,6 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
         _options = options;
     }
     return self;
-}
-
-- (void)dealloc {
-    [_filename release];
-    [_path release];
-    [super dealloc];
 }
 
 #pragma mark - Private
@@ -188,6 +228,46 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
         // Default behavior.
         return filename;
     }
+}
+
+- (BOOL)panel:(id)sender validateURL:(NSURL *)url error:(NSError **)outError {
+    NSString *proposedExtension = url.pathExtension;
+    self.forcedExtension = nil;
+    if (!proposedExtension.length) {
+        return YES;
+    }
+    if (!self.requiredExtension) {
+        return YES;
+    }
+    if ([proposedExtension isEqualToString:self.requiredExtension]) {
+        return YES;
+    }
+    iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"You can choose to use both, so that your file name ends in “.%@.%@”.", proposedExtension, _requiredExtension]
+                                                                 actions:@[ [NSString stringWithFormat:@"Use .%@", _requiredExtension],
+                                                                            @"Cancel",
+                                                                            @"Use both" ]
+                                                               accessory:nil
+                                                              identifier:nil
+                                                             silenceable:kiTermWarningTypePersistent
+                                                                 heading:[NSString stringWithFormat:@"You cannot save this document with extension “.%@” at the end of the name. The required extension is “.%@”.",
+                                                                          proposedExtension, _requiredExtension]
+                                                                  window:nil];
+    switch (selection) {
+        case kiTermWarningSelection0:
+            self.forcedExtension = self.requiredExtension;
+            return YES;
+
+        case kiTermWarningSelection1:
+            return NO;
+
+        case kiTermWarningSelection2:
+            self.forcedExtension = [NSString stringWithFormat:@"%@.%@", proposedExtension, _requiredExtension];
+            break;
+
+        default:
+            break;
+    }
+    return NO;
 }
 
 @end

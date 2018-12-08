@@ -7918,6 +7918,41 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self currentSession] clearScrollbackBuffer];
 }
 
+- (IBAction)saveContents:(id)sender {
+    NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+    dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"yyyyMMMd"
+                                                               options:0
+                                                                locale:[NSLocale currentLocale]];
+    NSDateFormatter *timeFormatter = [[[NSDateFormatter alloc] init] autorelease];
+    timeFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"hh.mm.ss"
+                                                               options:0
+                                                                locale:[NSLocale currentLocale]];
+
+    NSDate *now = [NSDate date];
+    NSString *suggestedFilename = [NSString stringWithFormat:@"iTerm2 Session %@ at %@.txt",
+                                   [dateFormatter stringFromDate:now],
+                                   [timeFormatter stringFromDate:now]];
+    iTermSavePanel *savePanel = [iTermSavePanel showWithOptions:kSavePanelOptionFileFormatAccessory
+                                                     identifier:@"SaveContents"
+                                               initialDirectory:NSHomeDirectory()
+                                                defaultFilename:suggestedFilename
+                                               allowedFileTypes:@[ @"txt", @"rtf" ]];
+    if (savePanel.path) {
+        NSURL *url = [NSURL fileURLWithPath:savePanel.path];
+        if (url) {
+            if ([[url pathExtension] isEqualToString:@"rtf"]) {
+                NSAttributedString *attributedString = [self.currentSession.textview contentWithAttributes:YES];
+                NSData *data = [attributedString dataFromRange:NSMakeRange(0, attributedString.length)
+                                            documentAttributes:@{NSDocumentTypeDocumentAttribute: NSRTFTextDocumentType}
+                                                         error:NULL];
+                [data writeToFile:url.path atomically:YES];
+            } else {
+                [[self.currentSession.textview content] writeToFile:url.path atomically:NO encoding:NSUTF8StringEncoding error:nil];
+            }
+        }
+    }
+}
+
 - (IBAction)exportRecording:(id)sender {
     [iTermRecordingCodec exportRecording:self.currentSession];
 }

@@ -835,6 +835,13 @@ DQ
                                                 <action selector="exportRecording:" target="-1" id="e25-uz-tFr"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="e9g-9L-fVf"/>
+                                        <menuItem title="Save Contents…" identifier="Log.SaveContents" id="eia-2d-pmU">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="saveContents:" target="-1" id="bgb-Rp-6yV"/>
+                                            </connections>
+                                        </menuItem>
                                     </items>
                                 </menu>
                             </menuItem>

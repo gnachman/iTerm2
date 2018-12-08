@@ -11,7 +11,8 @@
 typedef NS_OPTIONS(NSInteger, iTermSavePanelOptions) {
     // If the file exists, ask the user if he'd like to append to it or replace it.
     // If this option is not set, the user will only be asked about replacing.
-    kSavePanelOptionAppendOrReplace = (1 << 0)
+    kSavePanelOptionAppendOrReplace = (1 << 0),
+    kSavePanelOptionFileFormatAccessory = (1 << 1)
 };
 
 typedef NS_ENUM(NSInteger, iTermSavePanelReplaceOrAppend) {
