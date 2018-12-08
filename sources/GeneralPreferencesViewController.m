@@ -236,7 +236,7 @@ enum {
                                    actions:@[ @"OK" ]
                                 identifier:nil
                                silenceable:kiTermWarningTypePersistent
-                                    window:weakSelf.view.window];
+                                    window:nil];
     };
 
 
