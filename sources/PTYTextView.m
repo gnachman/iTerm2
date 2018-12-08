@@ -1383,8 +1383,10 @@ static const int kDragThreshold = 3;
 // view handles it. It's necessary to setUserScroll in the PTYScroller, or else
 // it scrolls back to the bottom right away. This code handles those two
 // keypresses and scrolls correctly.
-- (BOOL)performKeyEquivalent:(NSEvent *)theEvent
-{
+- (BOOL)performKeyEquivalent:(NSEvent *)theEvent {
+    if (self.window.firstResponder != self) {
+        return [super performKeyEquivalent:theEvent];
+    }
     NSString* unmodkeystr = [theEvent charactersIgnoringModifiers];
     if ([unmodkeystr length] == 0) {
         return [super performKeyEquivalent:theEvent];
