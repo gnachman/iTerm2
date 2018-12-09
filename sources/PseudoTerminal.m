@@ -4043,57 +4043,54 @@ ITERM_WEAKLY_REFERENCEABLE
     [oldWindow close];
 }
 
-- (void)toggleTraditionalFullScreenMode {
-    [SessionView windowDidResize];
-    PtyLog(@"toggleFullScreenMode called");
-    CGFloat savedToolbeltWidth = _contentView.toolbeltWidth;
-    if (!_fullScreen) {
-        oldFrame_ = self.window.frame;
-        oldFrameSizeIsBogus_ = NO;
-        savedWindowType_ = windowType_;
-        if (@available(macOS 10.14, *)) {
-            if ([_shortcutAccessoryViewController respondsToSelector:@selector(removeFromParentViewController)]) {
-                [_shortcutAccessoryViewController removeFromParentViewController];
-            }
+- (void)willEnterTraditionalFullScreenMode {
+    oldFrame_ = self.window.frame;
+    oldFrameSizeIsBogus_ = NO;
+    savedWindowType_ = windowType_;
+    if (@available(macOS 10.14, *)) {
+        if ([_shortcutAccessoryViewController respondsToSelector:@selector(removeFromParentViewController)]) {
+            [_shortcutAccessoryViewController removeFromParentViewController];
         }
-        self.windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
-        [self.window setOpaque:NO];
-        self.window.alphaValue = 0;
-        if (savedWindowType_ == WINDOW_TYPE_COMPACT) {
-            [self replaceWindowWithWindowOfType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN];
-        } else {
-            self.window.styleMask = [self styleMask];
-            [self.window setFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]
-                          display:YES];
-        }
-        self.window.alphaValue = 1;
-    } else {
-        [self showMenuBar];
-        self.windowType = savedWindowType_;
-        if (savedWindowType_ == WINDOW_TYPE_COMPACT) {
-            [self replaceWindowWithWindowOfType:savedWindowType_];
-        } else {
-            self.window.styleMask = [self styleMask];
-        }
-
-        // This will be close but probably not quite right because tweaking to the decoration size
-        // happens later.
-        if (oldFrameSizeIsBogus_) {
-            oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
-        }
-        [self.window setFrame:oldFrame_ display:YES];
-        if (@available(macOS 10.14, *)) {
-            if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
-                (self.window.styleMask & NSWindowStyleMaskTitled)) {
-                [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
-                [self updateWindowNumberVisibility:nil];
-            }
-        }
-        PtyLog(@"toggleFullScreenMode - allocate new terminal");
     }
-    [self.window setHasShadow:(windowType_ == WINDOW_TYPE_NORMAL ||
-                               windowType_ == WINDOW_TYPE_COMPACT)];
+    self.windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
+    [self.window setOpaque:NO];
+    self.window.alphaValue = 0;
+    if (savedWindowType_ == WINDOW_TYPE_COMPACT) {
+        [self replaceWindowWithWindowOfType:WINDOW_TYPE_TRADITIONAL_FULL_SCREEN];
+    } else {
+        self.window.styleMask = [self styleMask];
+        [self.window setFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]
+                      display:YES];
+    }
+    self.window.alphaValue = 1;
+}
 
+- (void)willExitTraditionalFullScreenMode {
+    [self showMenuBar];
+    self.windowType = savedWindowType_;
+    if (savedWindowType_ == WINDOW_TYPE_COMPACT) {
+        [self replaceWindowWithWindowOfType:savedWindowType_];
+    } else {
+        self.window.styleMask = [self styleMask];
+    }
+
+    // This will be close but probably not quite right because tweaking to the decoration size
+    // happens later.
+    if (oldFrameSizeIsBogus_) {
+        oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
+    }
+    [self.window setFrame:oldFrame_ display:YES];
+    if (@available(macOS 10.14, *)) {
+        if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
+            (self.window.styleMask & NSWindowStyleMaskTitled)) {
+            [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
+            [self updateWindowNumberVisibility:nil];
+        }
+    }
+    PtyLog(@"toggleFullScreenMode - allocate new terminal");
+}
+
+- (void)updateTransparencyBeforeTogglingTraditionalFullScreenMode {
     if (!_fullScreen &&
         [iTermPreferences boolForKey:kPreferenceKeyDisableFullscreenTransparencyByDefault]) {
         oldUseTransparency_ = useTransparency_;
@@ -4106,7 +4103,58 @@ ITERM_WEAKLY_REFERENCEABLE
             restoreUseTransparency_ = NO;
         }
     }
+}
+
+- (void)toggleTraditionalFullScreenMode {
+    [SessionView windowDidResize];
+    PtyLog(@"toggleFullScreenMode called");
+    CGFloat savedToolbeltWidth = _contentView.toolbeltWidth;
+    if (!_fullScreen) {
+        [self willEnterTraditionalFullScreenMode];
+    } else {
+        [self willExitTraditionalFullScreenMode];
+    }
+    [self updateWindowShadow:self.ptyWindow];
+
+    [self updateTransparencyBeforeTogglingTraditionalFullScreenMode];
     _fullScreen = !_fullScreen;
+    [self didToggleTraditionalFullScreenModeWithSavedToolbeltWidth:savedToolbeltWidth];
+}
+
+- (void)didExitTraditionalFullScreenMode {
+    NSSize contentSize = [[[self window] contentView] frame].size;
+    if (_contentView.shouldShowToolbelt) {
+        contentSize.width -= _contentView.toolbelt.frame.size.width;
+    }
+    if ([self tabBarShouldBeVisible]) {
+        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+            case PSMTab_LeftTab:
+                contentSize.width -= _contentView.leftTabBarWidth;
+                break;
+
+            case PSMTab_TopTab:
+            case PSMTab_BottomTab:
+                contentSize.height -= _contentView.tabBarControl.height;
+                break;
+        }
+    }
+    if ([self haveLeftBorder]) {
+        --contentSize.width;
+    }
+    if ([self haveRightBorder]) {
+        --contentSize.width;
+    }
+    if ([self haveBottomBorder]) {
+        --contentSize.height;
+    }
+    if ([self haveTopBorder]) {
+        --contentSize.height;
+    }
+
+    [self fitWindowToTabSize:contentSize];
+}
+
+- (void)didToggleTraditionalFullScreenModeWithSavedToolbeltWidth:(CGFloat)savedToolbeltWidth {
     [self didChangeAnyFullScreen];
     [_contentView.tabBarControl updateFlashing];
     togglingFullScreen_ = YES;
@@ -4127,36 +4175,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!_fullScreen) {
         // Find the largest possible session size for the existing window frame
         // and fit the window to an imaginary session of that size.
-        NSSize contentSize = [[[self window] contentView] frame].size;
-        if (_contentView.shouldShowToolbelt) {
-            contentSize.width -= _contentView.toolbelt.frame.size.width;
-        }
-        if ([self tabBarShouldBeVisible]) {
-            switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-                case PSMTab_LeftTab:
-                    contentSize.width -= _contentView.leftTabBarWidth;
-                    break;
-
-                case PSMTab_TopTab:
-                case PSMTab_BottomTab:
-                    contentSize.height -= _contentView.tabBarControl.height;
-                    break;
-            }
-        }
-        if ([self haveLeftBorder]) {
-            --contentSize.width;
-        }
-        if ([self haveRightBorder]) {
-            --contentSize.width;
-        }
-        if ([self haveBottomBorder]) {
-            --contentSize.height;
-        }
-        if ([self haveTopBorder]) {
-            --contentSize.height;
-        }
-
-        [self fitWindowToTabSize:contentSize];
+        [self didExitTraditionalFullScreenMode];
     }
     togglingFullScreen_ = NO;
     PtyLog(@"toggleFullScreenMode - calling updateSessionScrollbars");
