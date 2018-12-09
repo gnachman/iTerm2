@@ -403,12 +403,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     }
 }
 
-+ (void)updateDecorationsOfWindow:(NSWindow *)myWindow forType:(iTermWindowType)windowType {
-    const BOOL isCompact = (windowType == WINDOW_TYPE_COMPACT);
-    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL ||
-                            isCompact)];
+- (void)updateDecorationsOfWindow:(NSWindow *)myWindow forType:(iTermWindowType)windowType {
+    [self updateWindowShadow:(NSWindow<PTYWindow> *)myWindow];
     // Chrome doesn't change titleVisibility so neither do we.
     // Some truly dreadful hacks are used instead. See PTYWindow.m.
+    const BOOL isCompact = (windowType == WINDOW_TYPE_COMPACT);
     myWindow.titlebarAppearsTransparent = isCompact;
 }
 
@@ -3812,7 +3811,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [[self currentTab] recheckBlur];
     [self updateTabColors];  // Updates the window's background color as a side-effect
-    [self updateWindowShadow];
+    [self updateWindowShadow:self.ptyWindow];
 }
 
 - (BOOL)anySessionInCurrentTabHasTransparency {
@@ -4015,7 +4014,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // monitor.
         [myWindow setFrame:initialFrame display:NO];
     }
-    [PseudoTerminal updateDecorationsOfWindow:myWindow forType:windowTypeForStyleMask];
+    [self updateDecorationsOfWindow:myWindow forType:windowTypeForStyleMask];
     [self setWindow:myWindow];
     if (@available(macOS 10.14, *)) {
         // This doesn't work on 10.14. See it_setNeedsInvalidateShadow for a saner approach.
@@ -4204,21 +4203,40 @@ ITERM_WEAKLY_REFERENCEABLE
     [self didChangeCompactness];
     [self updateTouchBarIfNeeded:NO];
     [self updateUseMetalInAllTabs];
-    [self updateWindowShadow];
+    [self updateWindowShadow:self.ptyWindow];
 }
 
-- (void)updateWindowShadow {
+- (void)updateWindowShadow:(NSWindow<PTYWindow> *)window {
+    switch (windowType_) {
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            window.hasShadow = NO;
+            return;
+
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_COMPACT:
+            break;
+    }
     if (@available(macOS 10.14, *)) {
         if ([iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyOnMojave]) {
             const BOOL haveTransparency = [self anySessionInCurrentTabHasTransparency];
             DLog(@"%@: have transparency = %@ for sessions %@ in tab %@", self, @(haveTransparency), self.currentTab.sessions, self.currentTab);
-            self.window.hasShadow = !haveTransparency;
+            window.hasShadow = !haveTransparency;
         }
     }
 }
 
 - (void)didChangeCompactness {
-    [PseudoTerminal updateDecorationsOfWindow:self.window forType:windowType_];
+    [self updateDecorationsOfWindow:self.window forType:windowType_];
     [_contentView didChangeCompactness];
 }
 
@@ -4398,7 +4416,7 @@ ITERM_WEAKLY_REFERENCEABLE
     togglingLionFullScreen_ = YES;
     [self didChangeAnyFullScreen];
     [self updateUseMetalInAllTabs];
-    [self updateWindowShadow];
+    [self updateWindowShadow:self.ptyWindow];
     [self repositionWidgets];
     [_contentView didChangeCompactness];
     if (@available(macOS 10.14, *)) {
@@ -4444,7 +4462,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self updateTouchBarIfNeeded:NO];
     [self updateUseMetalInAllTabs];
-    [self updateWindowShadow];
+    [self updateWindowShadow:self.ptyWindow];
 }
 
 - (void)windowDidFailToEnterFullScreen:(NSWindow *)window {
@@ -4478,13 +4496,13 @@ ITERM_WEAKLY_REFERENCEABLE
         [self updateTabBarControlIsTitlebarAccessoryAssumingFullScreen:NO];
     }
     self.window.styleMask = [PseudoTerminal styleMaskForWindowType:savedWindowType_ hotkeyWindowType:_hotkeyWindowType];
-    [PseudoTerminal updateDecorationsOfWindow:self.window forType:savedWindowType_];
+    [self updateDecorationsOfWindow:self.window forType:savedWindowType_];
     [_contentView.tabBarControl updateFlashing];
     [self fitTabsToWindow];
     [self repositionWidgets];
     self.window.hasShadow = YES;
     [self updateUseMetalInAllTabs];
-    [self updateWindowShadow];
+    [self updateWindowShadow:self.ptyWindow];
     self.windowType = WINDOW_TYPE_LION_FULL_SCREEN;
 }
 
@@ -4518,7 +4536,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateUseMetalInAllTabs];
     [_contentView didChangeCompactness];
     [_contentView layoutSubviews];
-    [self updateWindowShadow];
+    [self updateWindowShadow:self.ptyWindow];
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame {
@@ -4839,7 +4857,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateProxyIcon];
     [self updateUseMetalInAllTabs];
     [self.scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
-    [self updateWindowShadow];
+    [self updateWindowShadow:self.ptyWindow];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
 }
 
@@ -6642,7 +6660,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self.contentView setNeedsDisplay:YES];
         [self.tabBarControl setNeedsDisplay:YES];
     }
-    [self updateWindowShadow];
+    [self updateWindowShadow:self.ptyWindow];
 }
 
 - (void)fitWindowToTabs {
@@ -8867,7 +8885,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (preferredStyle == TAB_STYLE_MINIMAL) {
         [self.contentView setNeedsDisplay:YES];
     }
-    [self updateWindowShadow];
+    [self updateWindowShadow:self.ptyWindow];
 }
 
 - (void)tab:(PTYTab *)tab didChangeToState:(PTYTabState)newState {
