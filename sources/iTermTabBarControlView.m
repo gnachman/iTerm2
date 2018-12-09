@@ -105,7 +105,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
             NSView *animator = self.animator;
             animator.alphaValue = alphaValue;
         } else {
-            [super setAlphaValue:alphaValue];
+            [self setAlphaValue:alphaValue];
         }
     }
 }
