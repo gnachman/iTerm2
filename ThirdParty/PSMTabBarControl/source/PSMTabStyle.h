@@ -57,7 +57,8 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 - (BOOL)useLightControls;
 
 - (NSColor *)verticalLineColorSelected:(BOOL)selected;
-- (NSColor *)textColorDefaultSelected:(BOOL)selected;
+- (NSColor *)textColorDefaultSelected:(BOOL)selected
+                      backgroundColor:(NSColor *)backgroundColor;
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount;
 - (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell
                                tabBarControl:(PSMTabBarControl *)bar;

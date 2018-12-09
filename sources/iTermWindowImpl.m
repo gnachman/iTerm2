@@ -451,8 +451,8 @@ ITERM_WEAKLY_REFERENCEABLE
     return [self.ptyDelegate terminalWindowDecorationBackgroundColor];
 }
 
-- (NSColor *)it_terminalWindowDecorationTextColor {
-    return [self.ptyDelegate terminalWindowDecorationTextColor];
+- (NSColor *)it_terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor {
+    return [self.ptyDelegate terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor];
 }
 
 - (NSColor *)it_terminalWindowDecorationControlColor {

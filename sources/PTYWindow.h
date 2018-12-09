@@ -51,7 +51,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 // Should the window's frame be constrainted to its present screen?
 - (BOOL)terminalWindowShouldConstrainFrameToScreen;
 - (NSColor *)terminalWindowDecorationBackgroundColor;
-- (NSColor *)terminalWindowDecorationTextColor;
+- (NSColor *)terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor;
 - (NSColor *)terminalWindowDecorationControlColor;
 - (BOOL)terminalWindowUseMinimalStyle;
 - (BOOL)ptyWindowFullScreen;
@@ -69,7 +69,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 @property(nonatomic) NSInteger it_openingSheet;
 
 - (NSColor *)it_terminalWindowDecorationBackgroundColor;
-- (NSColor *)it_terminalWindowDecorationTextColor;
+- (NSColor *)it_terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor;
 - (NSColor *)it_terminalWindowDecorationControlColor;
 - (BOOL)it_terminalWindowUseMinimalStyle;
 

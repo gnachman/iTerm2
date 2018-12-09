@@ -10657,7 +10657,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSColor *)textColorForStatusBar {
     if (self.view.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
-        return self.view.window.ptyWindow.it_terminalWindowDecorationTextColor;
+        return [self.view.window.ptyWindow it_terminalWindowDecorationTextColorForBackgroundColor:nil];
     } else if (@available(macOS 10.14, *)) {
         return [NSColor labelColor];
     } else if ([_view.effectiveAppearance.name isEqualToString:NSAppearanceNameVibrantDark]) {

@@ -56,8 +56,8 @@
     return (backgroundBrightness < 0.5);
 }
 
-- (NSColor *)textColorDefaultSelected:(BOOL)selected {
-    CGFloat backgroundBrightness = self.tabBarColor.it_hspBrightness;
+- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor {
+    CGFloat backgroundBrightness = backgroundColor ? backgroundColor.it_hspBrightness : self.tabBarColor.it_hspBrightness;
     
     const CGFloat delta = selected ? 0.85 : 0.5;
     CGFloat value;
@@ -114,7 +114,7 @@
 }
 
 - (NSColor *)accessoryTextColor {
-    return [self textColorDefaultSelected:YES];
+    return [self textColorDefaultSelected:YES backgroundColor:nil];
 }
 
 - (void)drawPostHocDecorationsOnSelectedCell:(PSMTabBarCell *)cell

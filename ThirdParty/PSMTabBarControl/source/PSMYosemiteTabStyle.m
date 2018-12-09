@@ -386,7 +386,7 @@
                autorelease];
 }
 
-- (NSColor *)textColorDefaultSelected:(BOOL)selected {
+- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor {
     CGFloat value;
     if (_tabBar.window.isKeyWindow && [NSApp isActive]) {
         value = 0;
@@ -437,9 +437,9 @@
     } else {
         // No cell has a tab color
         if (selected) {
-            return [self textColorDefaultSelected:YES];
+            return [self textColorDefaultSelected:YES backgroundColor:nil];
         } else {
-            textColor = [self textColorDefaultSelected:NO];
+            textColor = [self textColorDefaultSelected:NO backgroundColor:nil];
         }
     }
     return textColor;

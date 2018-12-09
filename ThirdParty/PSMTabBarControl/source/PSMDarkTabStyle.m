@@ -28,7 +28,7 @@
     return [PSMDarkTabStyle tabBarColorWhenKeyAndActive:self.tabBar.window.isKeyWindow && [NSApp isActive]];
 }
 
-- (NSColor *)textColorDefaultSelected:(BOOL)selected {
+- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor {
     CGFloat value = selected ? 0.80 : 0.60;
     if (@available(macOS 10.14, *)) {
         if (self.tabBar.window.isKeyWindow && [NSApp isActive]) {
@@ -125,7 +125,7 @@
 }
 
 - (NSColor *)accessoryTextColor {
-    return [self textColorDefaultSelected:YES];
+    return [self textColorDefaultSelected:YES backgroundColor:nil];
 }
 
 - (NSEdgeInsets)insetsForTabBarDividers {

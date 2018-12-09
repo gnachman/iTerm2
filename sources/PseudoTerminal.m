@@ -1361,11 +1361,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (NSColor *)terminalWindowDecorationTextColor {
+- (NSColor *)terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.shouldUseMinimalStyle) {
         PSMMinimalTabStyle *style = [PSMMinimalTabStyle castFrom:_contentView.tabBarControl.style];
-        return [style textColorDefaultSelected:YES];
+        return [style textColorDefaultSelected:YES backgroundColor:backgroundColor];
     } else {
         CGFloat whiteLevel;
         switch ([self.window.effectiveAppearance it_tabStyle:preferredStyle]) {
@@ -6637,6 +6637,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [self updateTouchBarIfNeeded:NO];
     [self updateProxyIcon];
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (preferredStyle == TAB_STYLE_MINIMAL) {
+        [self.contentView setNeedsDisplay:YES];
+        [self.tabBarControl setNeedsDisplay:YES];
+    }
+    [self updateWindowShadow];
 }
 
 - (void)fitWindowToTabs {
@@ -7250,7 +7256,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     
     // The window number will be displayed over the tabbar color.
-    return [_contentView.tabBarControl.style textColorDefaultSelected:self.window.isKeyWindow];
+    return [_contentView.tabBarControl.style textColorDefaultSelected:self.window.isKeyWindow
+                                                      backgroundColor:nil];
 }
 
 - (NSColor *)rootTerminalViewTabBarTextColorForTitle {

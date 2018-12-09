@@ -240,7 +240,7 @@ static const CGFloat kButtonSize = 17;
     CGFloat whiteLevel = 0;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
-        label_.textColor = self.window.ptyWindow.it_terminalWindowDecorationTextColor;
+        label_.textColor = [self.window.ptyWindow it_terminalWindowDecorationTextColorForBackgroundColor:[delegate_ sessionTitleViewBackgroundColor]];
         [self setNeedsDisplay:YES];
         return;
     }
