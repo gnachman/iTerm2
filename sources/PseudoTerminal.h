@@ -2,6 +2,7 @@
 
 #import "Autocomplete.h"
 #import "FutureMethods.h"
+#import "ITAddressBookMgr.h"
 #import "iTermBroadcastInputHelper.h"
 #import "iTermController.h"
 #import "iTermInstantReplayWindowController.h"
@@ -85,7 +86,7 @@ extern NSString *const iTermSelectedTabDidChange;
 @property(nonatomic) BOOL restorableStateDecodePending;
 
 // Used only by hotkey windows. Indicate if it should move to the active space when opening.
-@property(nonatomic, readonly) BOOL openInCurrentSpace;
+@property (nonatomic, readonly) iTermProfileSpaceSetting spaceSetting;
 
 @property(nonatomic, readonly) BOOL hasBeenKeySinceActivation;
 
@@ -93,6 +94,7 @@ extern NSString *const iTermSelectedTabDidChange;
 @property(nonatomic, readonly) int number;
 @property(nonatomic, readonly) Profile *initialProfile;
 @property(nonatomic, readonly) iTermVariableScope *scope;
+@property(nonatomic, readonly) NSWindowCollectionBehavior desiredWindowCollectionBehavior;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,

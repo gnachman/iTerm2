@@ -828,24 +828,43 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     return self.isHotKeyWindow && [[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats];
 }
 
-- (void)setHotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
-    _hotkeyWindowType = hotkeyWindowType;
-    switch (hotkeyWindowType) {
+- (NSWindowCollectionBehavior)desiredWindowCollectionBehavior {
+    NSWindowCollectionBehavior result = self.window.collectionBehavior;
+    if (_spaceSetting == iTermProfileJoinsAllSpaces) {
+        result |= NSWindowCollectionBehaviorCanJoinAllSpaces;
+    }
+    switch (_hotkeyWindowType) {
         case iTermHotkeyWindowTypeNone:
             // This allows the window to enter Lion fullscreen.
-            [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
-            break;
+            result |= NSWindowCollectionBehaviorFullScreenPrimary;
+            return result;
 
         case iTermHotkeyWindowTypeRegular:
         case iTermHotkeyWindowTypeFloatingPanel:
-        case iTermHotkeyWindowTypeFloatingWindow:
-            [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
-            if (![iTermAdvancedSettingsModel hotkeyWindowsExcludedFromCycling]) {
-                [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorIgnoresCycle];
-                [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
+        case iTermHotkeyWindowTypeFloatingWindow: {
+            NSWindowCollectionBehavior result = self.window.collectionBehavior;
+            result |= NSWindowCollectionBehaviorFullScreenAuxiliary;
+            BOOL excludeFromCycling = [iTermAdvancedSettingsModel hotkeyWindowsExcludedFromCycling];
+            if (!excludeFromCycling) {
+                iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
+                excludeFromCycling = !profileHotKey.isHotKeyWindowOpen;
+            }
+            if (excludeFromCycling) {
+                result |= NSWindowCollectionBehaviorIgnoresCycle;
+                result &= ~NSWindowCollectionBehaviorParticipatesInCycle;
+            } else {
+                result &= ~NSWindowCollectionBehaviorIgnoresCycle;
+                result |= NSWindowCollectionBehaviorParticipatesInCycle;
             }
             break;
+        }
     }
+    return result;
+}
+
+- (void)setHotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
+    _hotkeyWindowType = hotkeyWindowType;
+    self.window.collectionBehavior = self.desiredWindowCollectionBehavior;
 }
 
 - (void)finishToolbeltInitialization {
@@ -2586,10 +2605,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     Profile* addressbookEntry = [[[[[self tabs] objectAtIndex:0] sessions] objectAtIndex:0] profile];
-    if ([addressbookEntry[KEY_SPACE] intValue] == iTermProfileJoinsAllSpaces) {
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
-    } else if ([addressbookEntry[KEY_SPACE] intValue] == iTermProfileOpenInCurrentSpace) {
-        _openInCurrentSpace = YES;
+    _spaceSetting = [addressbookEntry[KEY_SPACE] intValue];
+    switch ([addressbookEntry[KEY_SPACE] intValue]) {
+        case iTermProfileJoinsAllSpaces:
+            self.window.collectionBehavior = [self desiredWindowCollectionBehavior];
+        case iTermProfileOpenInCurrentSpace:
+            break;
     }
     if ([arrangement objectForKey:TERMINAL_GUID] &&
         [[arrangement objectForKey:TERMINAL_GUID] isKindOfClass:[NSString class]]) {
@@ -8632,11 +8653,15 @@ ITERM_WEAKLY_REFERENCEABLE
                                              completion:nil];
 
     // On Lion, a window that can join all spaces can't go fullscreen.
-    if ([self numberOfTabs] == 1 &&
-        [profile[KEY_SPACE] intValue] == iTermProfileJoinsAllSpaces) {
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
-    } else if ([profile[KEY_SPACE] intValue] == iTermProfileOpenInCurrentSpace) {
-        _openInCurrentSpace = YES;
+    if ([self numberOfTabs] == 1) {
+        _spaceSetting = [profile[KEY_SPACE] intValue];
+        switch (_spaceSetting) {
+            case iTermProfileJoinsAllSpaces:
+                self.window.collectionBehavior = [self desiredWindowCollectionBehavior];
+            case iTermProfileOpenInCurrentSpace:
+            default:
+                break;
+        }
     }
 
     return aSession;

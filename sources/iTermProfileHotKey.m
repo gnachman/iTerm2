@@ -631,7 +631,8 @@ static NSString *const kArrangement = @"Arrangement";
     if (self.windowController.weaklyReferencedObject) {
         DLog(@"already have a hotkey window created");
         if (self.windowController.window.alphaValue == 1) {
-            if (self.windowController.openInCurrentSpace && !self.windowController.window.isOnActiveSpace) {
+            if (self.windowController.spaceSetting == iTermProfileOpenInCurrentSpace &&
+                !self.windowController.window.isOnActiveSpace) {
                 DLog(@"Move already-open hotkey window to current space");
                 NSWindow *window = self.windowController.window;
                 // I tested this on 10.12 and it's sufficient to move the window. Maybe not in older OS versions?
@@ -728,6 +729,7 @@ static NSString *const kArrangement = @"Arrangement";
     [self.windowController.window makeKeyAndOrderFront:nil];
     [self.windowController.window makeFirstResponder:self.windowController.currentSession.textview];
     [[self.windowController currentTab] recheckBlur];
+    self.windowController.window.collectionBehavior = self.windowController.desiredWindowCollectionBehavior;
 }
 
 - (void)didFinishRollingOut {
@@ -746,6 +748,7 @@ static NSString *const kArrangement = @"Arrangement";
     } else {
         [self orderOut];
     }
+    self.windowController.window.collectionBehavior = self.windowController.desiredWindowCollectionBehavior;
 }
 
 - (void)orderOut {

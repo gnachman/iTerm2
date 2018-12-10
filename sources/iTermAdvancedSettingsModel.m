@@ -310,7 +310,7 @@ DEFINE_STRING(pathToTelnet, @"telnet", SECTION_GENERAL @"Path to telnet for open
 DEFINE_STRING(fallbackLCCType, @"", SECTION_GENERAL @"Value to set LC_CTYPE to if the machine‘s combination of country and language are not supported.\nIf unset, the encoding (e.g., UTF-8) will be used.");
 // See issue 6994
 DEFINE_BOOL(useVirtualKeyCodesForDetectingDigits, NO, SECTION_GENERAL @"Treat the top row of keys like number keys on an English keyboard for the purposes of switching panes, tabs, and windows with modifier+number.\nFor example, AZERTY requires you to hold down Shift to enter a number. To switch tabs with ⌘+Number on an AZERTY keyboard, you must enable this setting. Then, for example, ⌘-& switches to tab 1. When this setting is enabled, some user-defined shortcuts may become unavailable because the tab/window/pane switching behavior takes precedence.");
-DEFINE_BOOL(hotkeyWindowsExcludedFromCycling, YES, SECTION_GENERAL @"Hotkey windows are excluded from Cycle Through Windows.");
+DEFINE_BOOL(hotkeyWindowsExcludedFromCycling, NO, SECTION_GENERAL @"Hotkey windows are excluded from Cycle Through Windows.");
 
 #pragma mark - Drawing
 
