@@ -127,6 +127,7 @@ Session > Log > Start                                                           
 Session > Log > Stop                                                                    `Log.Stop`                                                                    
 Session > Log > Import Recording                                                        `Log.ImportRecording`                                                         
 Session > Log > Export Recording                                                        `Log.ExportRecording`                                                         
+Session > Log > Save Contents…                                                          `Log.SaveContents`                                                            
 Session > Terminal State > Alternate Screen                                             `Alternate Screen`                                                            
 Session > Terminal State > Focus Reporting                                              `Focus Reporting`                                                             
 Session > Terminal State > Mouse Reporting                                              `Mouse Reporting`                                                             

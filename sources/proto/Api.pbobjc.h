@@ -62,6 +62,7 @@ CF_EXTERN_C_BEGIN
 @class ITMGetPropertyResponse;
 @class ITMInjectRequest;
 @class ITMInjectResponse;
+@class ITMKeystrokeFilterRequest;
 @class ITMKeystrokeMonitorRequest;
 @class ITMKeystrokeNotification;
 @class ITMKeystrokePattern;
@@ -200,6 +201,9 @@ typedef GPB_ENUM(ITMNotificationType) {
   ITMNotificationType_NotifyOnLocationChange = 4,
   ITMNotificationType_NotifyOnCustomEscapeSequence = 5,
   ITMNotificationType_NotifyOnVariableChange = 12,
+
+  /** Does not send a notification */
+  ITMNotificationType_KeystrokeFilter = 14,
 
   /** Notifications that ignore the `session` parameter. */
   ITMNotificationType_NotifyOnNewSession = 6,
@@ -452,7 +456,7 @@ typedef GPB_ENUM(ITMSavedArrangementRequest_Action) {
   /** Restore an existing arrangement with the given name */
   ITMSavedArrangementRequest_Action_Restore = 0,
 
-  /** Save windows to a new arrangment with the given name */
+  /** Save windows to a new arrangement with the given name */
   ITMSavedArrangementRequest_Action_Save = 1,
 };
 
@@ -3020,6 +3024,24 @@ typedef GPB_ENUM(ITMKeystrokeMonitorRequest_FieldNumber) {
  * If a keystroke matches any of these patterns then they will not be handled by the application.
  * A notification will be posted and the script can handle it as it pleases.
  **/
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMKeystrokePattern*> *patternsToIgnoreArray DEPRECATED_ATTRIBUTE;
+/** The number of items in @c patternsToIgnoreArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger patternsToIgnoreArray_Count DEPRECATED_ATTRIBUTE;
+
+@end
+
+#pragma mark - ITMKeystrokeFilterRequest
+
+typedef GPB_ENUM(ITMKeystrokeFilterRequest_FieldNumber) {
+  ITMKeystrokeFilterRequest_FieldNumber_PatternsToIgnoreArray = 1,
+};
+
+@interface ITMKeystrokeFilterRequest : GPBMessage
+
+/**
+ * If a keystroke matches any of these patterns then they will not be handled by the application.
+ * A notification will be posted and the script can handle it as it pleases.
+ **/
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMKeystrokePattern*> *patternsToIgnoreArray;
 /** The number of items in @c patternsToIgnoreArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger patternsToIgnoreArray_Count;
@@ -3074,6 +3096,7 @@ typedef GPB_ENUM(ITMNotificationRequest_FieldNumber) {
   ITMNotificationRequest_FieldNumber_KeystrokeMonitorRequest = 5,
   ITMNotificationRequest_FieldNumber_VariableMonitorRequest = 6,
   ITMNotificationRequest_FieldNumber_ProfileChangeRequest = 7,
+  ITMNotificationRequest_FieldNumber_KeystrokeFilterRequest = 8,
 };
 
 typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
@@ -3082,6 +3105,7 @@ typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
   ITMNotificationRequest_Arguments_OneOfCase_KeystrokeMonitorRequest = 5,
   ITMNotificationRequest_Arguments_OneOfCase_VariableMonitorRequest = 6,
   ITMNotificationRequest_Arguments_OneOfCase_ProfileChangeRequest = 7,
+  ITMNotificationRequest_Arguments_OneOfCase_KeystrokeFilterRequest = 8,
 };
 
 @interface ITMNotificationRequest : GPBMessage
@@ -3114,6 +3138,8 @@ typedef GPB_ENUM(ITMNotificationRequest_Arguments_OneOfCase) {
 @property(nonatomic, readwrite, strong, null_resettable) ITMVariableMonitorRequest *variableMonitorRequest;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMProfileChangeRequest *profileChangeRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMKeystrokeFilterRequest *keystrokeFilterRequest;
 
 @end
 
@@ -3661,7 +3687,7 @@ typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
 };
 
 /**
- * Reponds with metadata about the current shell prompt, if possible.
+ * Responds with metadata about the current shell prompt, if possible.
  **/
 @interface ITMGetPromptResponse : GPBMessage
 
@@ -4007,7 +4033,7 @@ typedef GPB_ENUM(ITMLineContents_FieldNumber) {
  * of a line, but it is possible.
  *
  * The ñ is composed of the letter n and a combining tilde (U+0303) (indicated in our example
- * as ~), while í is composed of the leter i and a combining acute accent (U+0301) (indicated in
+ * as ~), while í is composed of the letter i and a combining acute accent (U+0301) (indicated in
  * our example as ').
  *
  * To map code points in `text` to screen positions, `code_points_per_cell`

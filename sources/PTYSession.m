@@ -442,6 +442,7 @@ static const NSUInteger kMaxHosts = 100;
     VT100RemoteHost *_currentHost;
 
     NSMutableDictionary<id, ITMNotificationRequest *> *_keystrokeSubscriptions;
+    NSMutableDictionary<id, ITMNotificationRequest *> *_keyboardFilterSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_updateSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_promptSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_locationChangeSubscriptions;
@@ -610,6 +611,7 @@ static const NSUInteger kMaxHosts = 100;
         _cadenceController.delegate = self;
 
         _keystrokeSubscriptions = [[NSMutableDictionary alloc] init];
+        _keyboardFilterSubscriptions = [[NSMutableDictionary alloc] init];
         _updateSubscriptions = [[NSMutableDictionary alloc] init];
         _promptSubscriptions = [[NSMutableDictionary alloc] init];
         _locationChangeSubscriptions = [[NSMutableDictionary alloc] init];
@@ -759,6 +761,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_currentHost release];
 
     [_keystrokeSubscriptions release];
+    [_keyboardFilterSubscriptions release];
     [_updateSubscriptions release];
     [_promptSubscriptions release];
     [_locationChangeSubscriptions release];
@@ -4569,6 +4572,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)apiServerUnsubscribe:(NSNotification *)notification {
     [_promptSubscriptions removeObjectForKey:notification.object];
     [_keystrokeSubscriptions removeObjectForKey:notification.object];
+    [_keyboardFilterSubscriptions removeObjectForKey:notification.object];
     [_updateSubscriptions removeObjectForKey:notification.object];
     [_locationChangeSubscriptions removeObjectForKey:notification.object];
     [_customEscapeSequenceNotifications removeObjectForKey:notification.object];
@@ -6138,9 +6142,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)keystrokeIsFilteredByMonitor:(NSEvent *)event {
-    for (NSString *identifier in _keystrokeSubscriptions) {
-        ITMNotificationRequest *request = _keystrokeSubscriptions[identifier];
-        for (ITMKeystrokePattern *pattern in request.keystrokeMonitorRequest.patternsToIgnoreArray) {
+    for (NSString *identifier in _keyboardFilterSubscriptions) {
+        ITMNotificationRequest *request = _keyboardFilterSubscriptions[identifier];
+        for (ITMKeystrokePattern *pattern in request.keystrokeFilterRequest.patternsToIgnoreArray) {
             if ([self event:event matchesPattern:pattern]) {
                 return YES;
             }
@@ -10526,6 +10530,9 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
         case ITMNotificationType_NotifyOnKeystroke:
             subscriptions = _keystrokeSubscriptions;
+            break;
+        case ITMNotificationType_KeystrokeFilter:
+            subscriptions = _keyboardFilterSubscriptions;
             break;
         case ITMNotificationType_NotifyOnScreenUpdate:
             subscriptions = _updateSubscriptions;

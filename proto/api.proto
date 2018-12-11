@@ -746,6 +746,7 @@ enum NotificationType {
   NOTIFY_ON_LOCATION_CHANGE = 4;
   NOTIFY_ON_CUSTOM_ESCAPE_SEQUENCE = 5;
   NOTIFY_ON_VARIABLE_CHANGE = 12;
+  KEYSTROKE_FILTER = 14;  // Does not send a notification
 
   // Notifications that ignore the `session` parameter.
   NOTIFY_ON_NEW_SESSION = 6;
@@ -783,6 +784,11 @@ message KeystrokePattern {
 }
 
 message KeystrokeMonitorRequest {
+  // KeystrokeFilterRequest was split from this to make a more sensible API.
+  repeated KeystrokePattern patterns_to_ignore = 1 [deprecated=true];
+}
+
+message KeystrokeFilterRequest {
   // If a keystroke matches any of these patterns then they will not be handled by the application.
   // A notification will be posted and the script can handle it as it pleases.
   repeated KeystrokePattern patterns_to_ignore = 1;
@@ -823,6 +829,7 @@ message NotificationRequest {
     KeystrokeMonitorRequest keystroke_monitor_request = 5;
     VariableMonitorRequest variable_monitor_request = 6;
     ProfileChangeRequest profile_change_request = 7;
+    KeystrokeFilterRequest keystroke_filter_request = 8;
   }
 }
 

@@ -35,14 +35,12 @@ This script is a long-running daemon since it must continually update the status
 	    await asyncio.sleep(2)
 	    await session.async_set_variable("user.showEscIndicator", False)
 
-	async def keystroke_handler(connection, notification):
+	async def keystroke_handler(keystroke):
 	    """This function is called every time a key is pressed."""
-	    # https://stackoverflow.com/questions/3202629/where-can-i-find-a-list-of-mac-virtual-key-codes
-	    ESC = 0x35
-	    if notification.keyCode != ESC:
+	    if keystroke.keycode != iterm2.Keycode.ESCAPE:
 		return
 
-	    # There might not be a current session, so ther emight be an exception
+	    # There might not be a current session, so there might be an exception
 	    # while trying to get it.
 	    try:
 		session = app.current_terminal_window.current_tab.current_session
@@ -81,9 +79,10 @@ This script is a long-running daemon since it must continually update the status
 	await component.async_register(connection, coro, defaults=defaults)
 
 	# Monitor the keyboard
-	await iterm2.notifications.async_subscribe_to_keystroke_notification(
-		connection,
-		keystroke_handler)
+	async with iterm2.KeystrokeMonitor(connection) as mon:
+	    while True:
+		keystroke = await mon.async_get()
+		await keystroke_handler(keystroke)
 
     iterm2.run_forever(main)
 

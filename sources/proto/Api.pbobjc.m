@@ -95,11 +95,11 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
         "NotifyOnKeystroke\000NotifyOnScreenUpdate\000N"
         "otifyOnPrompt\000NotifyOnLocationChange\000Not"
         "ifyOnCustomEscapeSequence\000NotifyOnVariab"
-        "leChange\000NotifyOnNewSession\000NotifyOnTerm"
-        "inateSession\000NotifyOnLayoutChange\000Notify"
-        "OnFocusChange\000NotifyOnServerOriginatedRp"
-        "c\000NotifyOnBroadcastChange\000NotifyOnProfil"
-        "eChange\000";
+        "leChange\000KeystrokeFilter\000NotifyOnNewSess"
+        "ion\000NotifyOnTerminateSession\000NotifyOnLay"
+        "outChange\000NotifyOnFocusChange\000NotifyOnSe"
+        "rverOriginatedRpc\000NotifyOnBroadcastChang"
+        "e\000NotifyOnProfileChange\000";
     static const int32_t values[] = {
         ITMNotificationType_NotifyOnKeystroke,
         ITMNotificationType_NotifyOnScreenUpdate,
@@ -107,6 +107,7 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
         ITMNotificationType_NotifyOnLocationChange,
         ITMNotificationType_NotifyOnCustomEscapeSequence,
         ITMNotificationType_NotifyOnVariableChange,
+        ITMNotificationType_KeystrokeFilter,
         ITMNotificationType_NotifyOnNewSession,
         ITMNotificationType_NotifyOnTerminateSession,
         ITMNotificationType_NotifyOnLayoutChange,
@@ -136,6 +137,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
     case ITMNotificationType_NotifyOnLocationChange:
     case ITMNotificationType_NotifyOnCustomEscapeSequence:
     case ITMNotificationType_NotifyOnVariableChange:
+    case ITMNotificationType_KeystrokeFilter:
     case ITMNotificationType_NotifyOnNewSession:
     case ITMNotificationType_NotifyOnTerminateSession:
     case ITMNotificationType_NotifyOnLayoutChange:
@@ -6699,6 +6701,49 @@ typedef struct ITMKeystrokeMonitorRequest__storage_ {
 
 @end
 
+#pragma mark - ITMKeystrokeFilterRequest
+
+@implementation ITMKeystrokeFilterRequest
+
+@dynamic patternsToIgnoreArray, patternsToIgnoreArray_Count;
+
+typedef struct ITMKeystrokeFilterRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *patternsToIgnoreArray;
+} ITMKeystrokeFilterRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "patternsToIgnoreArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMKeystrokePattern),
+        .number = ITMKeystrokeFilterRequest_FieldNumber_PatternsToIgnoreArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMKeystrokeFilterRequest__storage_, patternsToIgnoreArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMKeystrokeFilterRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMKeystrokeFilterRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMVariableMonitorRequest
 
 @implementation ITMVariableMonitorRequest
@@ -6822,6 +6867,7 @@ typedef struct ITMProfileChangeRequest__storage_ {
 @dynamic keystrokeMonitorRequest;
 @dynamic variableMonitorRequest;
 @dynamic profileChangeRequest;
+@dynamic keystrokeFilterRequest;
 
 typedef struct ITMNotificationRequest__storage_ {
   uint32_t _has_storage_[2];
@@ -6831,6 +6877,7 @@ typedef struct ITMNotificationRequest__storage_ {
   ITMKeystrokeMonitorRequest *keystrokeMonitorRequest;
   ITMVariableMonitorRequest *variableMonitorRequest;
   ITMProfileChangeRequest *profileChangeRequest;
+  ITMKeystrokeFilterRequest *keystrokeFilterRequest;
 } ITMNotificationRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -6906,6 +6953,16 @@ typedef struct ITMNotificationRequest__storage_ {
         .core.number = ITMNotificationRequest_FieldNumber_ProfileChangeRequest,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, profileChangeRequest),
+        .core.flags = GPBFieldOptional,
+        .core.dataType = GPBDataTypeMessage,
+      },
+      {
+        .defaultValue.valueMessage = nil,
+        .core.name = "keystrokeFilterRequest",
+        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMKeystrokeFilterRequest),
+        .core.number = ITMNotificationRequest_FieldNumber_KeystrokeFilterRequest,
+        .core.hasIndex = -1,
+        .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, keystrokeFilterRequest),
         .core.flags = GPBFieldOptional,
         .core.dataType = GPBDataTypeMessage,
       },

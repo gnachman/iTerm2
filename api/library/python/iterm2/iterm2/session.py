@@ -206,30 +206,6 @@ class Session:
         """
         return self.__session_id
 
-    def get_keystroke_reader(self, patterns_to_ignore=[]):
-        """
-        Provides a nice interface for observing a sequence of keystrokes.
-
-        :param patterns_to_ignore: A list of :class`KeystrokePattern` objects giving keystrokes that should not be handled normally by iTerm2 and only sent to the keystroke reader for processing in the script.
-
-        :returns: A :class:`Session.KeystrokeReader`.
-
-        :Example:
-
-        .. code-block:: python
-
-          async with session.get_keystroke_reader() as reader:
-            done = False
-            while not done:
-              for keystroke in await reader.async_get():
-                done = my_function(keystroke)  # Returns True to finish the keystroke reading loop
-                if done:
-                  break
-
-        .. note:: The `async with` statement will not finish until the while loop exits.
-        """
-        return self.KeystrokeReader(self.connection, self.__session_id, patterns_to_ignore)
-
     def get_screen_streamer(self, want_contents=True):
         """
         Provides a nice interface for receiving updates to the screen.
@@ -602,51 +578,6 @@ class Session:
             raise iterm2.rpc.RPCException(iterm2.api_pb2.GetPropertyResponse.Status.Name(status))
         dict = json.loads(response.get_property_response.json_value)
         return (dict["grid"], dict["history"], dict["overflow"], dict["first_visible"] )
-
-    class KeystrokeReader:
-        """An asyncio context manager for reading keystrokes.
-
-        Don't create this yourself. Use Session.get_keystroke_reader() instead. See
-        its docstring for more info."""
-        def __init__(self, connection, session_id, patterns_to_ignore):
-            self.connection = connection
-            self.session_id = session_id
-            self.patterns_to_ignore = []
-            self.buffer = []
-            self.token = None
-            self.future = None
-
-        async def __aenter__(self):
-            async def async_on_keystroke(_connection, message):
-                """Called on keystroke. Saves the keystroke in a buffer."""
-                self.buffer.append(message)
-                if self.future is not None:
-                    temp = self.buffer
-                    self.buffer = []
-                    self.future.set_result(temp)
-
-            self.token = await iterm2.notifications.async_subscribe_to_keystroke_notification(
-                self.connection,
-                async_on_keystroke,
-                self.session_id,
-                self.patterns_to_ignore)
-            return self
-
-        async def async_get(self):
-            """
-            Get the next keystroke.
-
-            :returns: A list of iterm2.api_pb2.KeystrokeNotification objects.
-            """
-            self.future = asyncio.Future()
-            await self.future
-            result = self.future.result()
-            self.future = None
-            return result
-
-        async def __aexit__(self, exc_type, exc, _tb):
-            await iterm2.notifications.async_unsubscribe(self.connection, self.token)
-            return self.buffer
 
 
 class InvalidSessionId(Exception):

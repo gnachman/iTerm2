@@ -33,6 +33,7 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    colorpresets
    connection
    focus
+   keyboard
    mainmenu
    notifications
    profile

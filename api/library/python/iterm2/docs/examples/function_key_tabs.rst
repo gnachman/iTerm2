@@ -25,12 +25,12 @@ The script makes it possible to select a tab by pressing a function key. F1 choo
                   pass
 
 	patterns = iterm2.KeystrokePattern()
-	patterns.forbidden_modifiers.extend([iterm2.MODIFIER_CONTROL,
-                                             iterm2.MODIFIER_OPTION,
-                                             iterm2.MODIFIER_COMMAND,
-                                             iterm2.MODIFIER_SHIFT,
-                                             iterm2.MODIFIER_NUMPAD])
-	patterns.required_modifiers.extend([iterm2.MODIFIER_FUNCTION])
+	patterns.forbidden_modifiers.extend([iterm2.CONTROL,
+                                             iterm2.OPTION,
+                                             iterm2.COMMAND,
+                                             iterm2.SHIFT,
+                                             iterm2.NUMPAD])
+	patterns.required_modifiers.extend([iterm2.FUNCTION])
 	patterns.keycodes.extend(keycodes)
 
 	await iterm2.notifications.async_subscribe_to_keystroke_notification(connection, keystroke_handler, patterns_to_ignore=[patterns])
