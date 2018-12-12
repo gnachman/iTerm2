@@ -117,7 +117,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     {
         NSString *value = [path stringByMatching:@":(\\d+)" capture:1];
         if (!value) {
-            value = [path stringByMatching:@"\\[(\\d+), \\d+]" capture:1];
+            value = [path stringByMatching:@"\\[(\\d+), ?\\d+]" capture:1];
         }
         if (!value) {
             value = [suffix stringByMatching:@"\", line (\\d+), column (\\d+)" capture:1];
@@ -135,7 +135,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     if (columnNumber != nil) {
         NSString *value = [path stringByMatching:@":(\\d+):(\\d+)" capture:2];
         if (!value) {
-            value = [path stringByMatching:@"\\[(\\d+), (\\d+)]" capture:2];
+            value = [path stringByMatching:@"\\[(\\d+), ?(\\d+)]" capture:2];
         }
         if (!value) {
             value = [suffix stringByMatching:@"\", line (\\d+), column (\\d+)" capture:2];
@@ -153,8 +153,8 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     DLog(@" Strip trailing chars, leaving %@", path);
 
     NSString *pathExLineNumberAndColumn = nil;
-    if ([path stringByMatching:@"\\[(\\d+), (\\d+)]"]) {
-        pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@"\\[\\d+, \\d+](?::.*)?$"
+    if ([path stringByMatching:@"\\[(\\d+), ?(\\d+)]"]) {
+        pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@"\\[\\d+, ?\\d+](?::.*)?$"
                                                                    withString:@""];
     } else if ([path stringByMatching:@"\\((\\d+), ?(\\d+)\\)"]) {
         pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@"\\(\\d+, ?\\d+\\)(?::.*)?$"
@@ -689,7 +689,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 - (NSString *)columnAndLineNumberFromChunks:(NSArray<NSString *> *)afterChunks {
     NSString *suffix = [afterChunks componentsJoinedByString:@""];
     NSArray<NSString *> *regexes = @[ @"^(:\\d+)",
-                                      @"^(\\[\\d+, \\d+])",
+                                      @"^(\\[\\d+, ?\\d+])",
                                       @"^(\", line \\d+, column \\d+)",
                                       @"^(\\(\\d+, ?\\d+\\))"];
     for (NSString *regex in regexes) {
