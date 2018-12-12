@@ -122,7 +122,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             value = [suffix stringByMatching:@"\", line (\\d+), column (\\d+)" capture:1];
         }
         if (!value) {
-            value = [path stringByMatching:@"\\((\\d+), \\d+\\)" capture:1];
+            value = [path stringByMatching:@"\\((\\d+), ?\\d+\\)" capture:1];
             if (value) {
                 stripTrailingParen = NO;
             }
@@ -138,7 +138,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             value = [suffix stringByMatching:@"\", line (\\d+), column (\\d+)" capture:2];
         }
         if (!value) {
-            value = [path stringByMatching:@"\\((\\d+), (\\d+)\\)" capture:2];
+            value = [path stringByMatching:@"\\((\\d+), ?(\\d+)\\)" capture:2];
         }
         *columnNumber = value;
     }
@@ -153,8 +153,8 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     if ([path stringByMatching:@"\\[(\\d+), (\\d+)]"]) {
         pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@"\\[\\d+, \\d+](?::.*)?$"
                                                                    withString:@""];
-    } else if ([path stringByMatching:@"\\((\\d+), (\\d+)\\)"]) {
-        pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@"\\(\\d+, \\d+\\)(?::.*)?$"
+    } else if ([path stringByMatching:@"\\((\\d+), ?(\\d+)\\)"]) {
+        pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@"\\(\\d+, ?\\d+\\)(?::.*)?$"
                                                                    withString:@""];
     } else {
         pathExLineNumberAndColumn = [path stringByReplacingOccurrencesOfRegex:@":\\d*(?::.*)?$"

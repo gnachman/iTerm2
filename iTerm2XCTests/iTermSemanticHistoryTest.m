@@ -332,10 +332,29 @@
     static NSString *const kWorkingDirectory = @"/working/directory";
     NSString *kFilenameWithLineNumber = [kFilename stringByAppendingString:@"(123, 456)"];
     [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
-    NSString *actual = [_semanticHistoryController getFullPath:kFilenameWithLineNumber
-                                              workingDirectory:kWorkingDirectory
-                                                    lineNumber:&lineNumber
-                                                  columnNumber:&columnNumber];
+    NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilenameWithLineNumber
+                                                                  suffix:@""
+                                                        workingDirectory:kWorkingDirectory
+                                                     extractedLineNumber:&lineNumber
+                                                            columnNumber:&columnNumber];
+    NSString *expected = kFilename;
+    XCTAssert([expected isEqualToString:actual]);
+    XCTAssert(lineNumber.integerValue == 123);
+    XCTAssert(columnNumber.integerValue == 456);
+}
+
+- (void)testGetFullPathExtractsParenthesesLineNumberAndColumnSyntax_NoSpaceAfterComma {
+    NSString *lineNumber = nil;
+    NSString *columnNumber = nil;
+    static NSString *const kFilename = @"/path/to/file";
+    static NSString *const kWorkingDirectory = @"/working/directory";
+    NSString *kFilenameWithLineNumber = [kFilename stringByAppendingString:@"(123,456)"];
+    [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+    NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilenameWithLineNumber
+                                                                  suffix:@""
+                                                        workingDirectory:kWorkingDirectory
+                                                     extractedLineNumber:&lineNumber
+                                                            columnNumber:&columnNumber];
     NSString *expected = kFilename;
     XCTAssert([expected isEqualToString:actual]);
     XCTAssert(lineNumber.integerValue == 123);
