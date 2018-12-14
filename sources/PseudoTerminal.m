@@ -842,7 +842,6 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case iTermHotkeyWindowTypeRegular:
         case iTermHotkeyWindowTypeFloatingPanel:
         case iTermHotkeyWindowTypeFloatingWindow: {
-            NSWindowCollectionBehavior result = self.window.collectionBehavior;
             result |= NSWindowCollectionBehaviorFullScreenAuxiliary;
             BOOL excludeFromCycling = [iTermAdvancedSettingsModel hotkeyWindowsExcludedFromCycling];
             if (!excludeFromCycling) {
