@@ -5297,6 +5297,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 #pragma mark - Password Management
 
+- (BOOL)canOpenPasswordManager {
+    return _echoProbeState == iTermEchoProbeOff;
+}
+
 - (void)enterPassword:(NSString *)password {
     NSData *backspace = [self backspaceData];
     if (backspace) {
