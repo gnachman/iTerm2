@@ -32,6 +32,11 @@ CF_EXTERN_C_BEGIN
 @class ITMActivateResponse;
 @class ITMBroadcastDomain;
 @class ITMBroadcastDomainsChangedNotification;
+@class ITMCloseRequest;
+@class ITMCloseRequest_CloseSessions;
+@class ITMCloseRequest_CloseTabs;
+@class ITMCloseRequest_CloseWindows;
+@class ITMCloseResponse;
 @class ITMCodePointsPerCell;
 @class ITMColorPresetRequest;
 @class ITMColorPresetRequest_GetPreset;
@@ -258,6 +263,22 @@ GPBEnumDescriptor *ITMVariableScope_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMVariableScope_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMCloseResponse_Status
+
+typedef GPB_ENUM(ITMCloseResponse_Status) {
+  ITMCloseResponse_Status_Ok = 0,
+  ITMCloseResponse_Status_NotFound = 1,
+  ITMCloseResponse_Status_UserDeclined = 2,
+};
+
+GPBEnumDescriptor *ITMCloseResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMCloseResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMSetBroadcastDomainsResponse_Status
 
@@ -921,6 +942,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_SelectionRequest = 128,
   ITMClientOriginatedMessage_FieldNumber_StatusBarComponentRequest = 129,
   ITMClientOriginatedMessage_FieldNumber_SetBroadcastDomainsRequest = 130,
+  ITMClientOriginatedMessage_FieldNumber_CloseRequest = 131,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -956,6 +978,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_SelectionRequest = 128,
   ITMClientOriginatedMessage_Submessage_OneOfCase_StatusBarComponentRequest = 129,
   ITMClientOriginatedMessage_Submessage_OneOfCase_SetBroadcastDomainsRequest = 130,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_CloseRequest = 131,
 };
 
 /**
@@ -1031,6 +1054,8 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSetBroadcastDomainsRequest *setBroadcastDomainsRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMCloseRequest *closeRequest;
+
 @end
 
 /**
@@ -1074,6 +1099,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_SelectionResponse = 128,
   ITMServerOriginatedMessage_FieldNumber_StatusBarComponentResponse = 129,
   ITMServerOriginatedMessage_FieldNumber_SetBroadcastDomainsResponse = 130,
+  ITMServerOriginatedMessage_FieldNumber_CloseResponse = 131,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -1111,6 +1137,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_SelectionResponse = 128,
   ITMServerOriginatedMessage_Submessage_OneOfCase_StatusBarComponentResponse = 129,
   ITMServerOriginatedMessage_Submessage_OneOfCase_SetBroadcastDomainsResponse = 130,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_CloseResponse = 131,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -1191,6 +1218,8 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMSetBroadcastDomainsResponse *setBroadcastDomainsResponse;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMCloseResponse *closeResponse;
+
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
 
@@ -1200,6 +1229,99 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
  * Clears whatever value was set for the oneof 'submessage'.
  **/
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message);
+
+#pragma mark - ITMCloseRequest
+
+typedef GPB_ENUM(ITMCloseRequest_FieldNumber) {
+  ITMCloseRequest_FieldNumber_Tabs = 1,
+  ITMCloseRequest_FieldNumber_Sessions = 2,
+  ITMCloseRequest_FieldNumber_Windows = 3,
+  ITMCloseRequest_FieldNumber_Force = 4,
+};
+
+typedef GPB_ENUM(ITMCloseRequest_Target_OneOfCase) {
+  ITMCloseRequest_Target_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMCloseRequest_Target_OneOfCase_Tabs = 1,
+  ITMCloseRequest_Target_OneOfCase_Sessions = 2,
+  ITMCloseRequest_Target_OneOfCase_Windows = 3,
+};
+
+@interface ITMCloseRequest : GPBMessage
+
+@property(nonatomic, readonly) ITMCloseRequest_Target_OneOfCase targetOneOfCase;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMCloseRequest_CloseTabs *tabs;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMCloseRequest_CloseSessions *sessions;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMCloseRequest_CloseWindows *windows;
+
+@property(nonatomic, readwrite) BOOL force;
+
+@property(nonatomic, readwrite) BOOL hasForce;
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'target'.
+ **/
+void ITMCloseRequest_ClearTargetOneOfCase(ITMCloseRequest *message);
+
+#pragma mark - ITMCloseRequest_CloseTabs
+
+typedef GPB_ENUM(ITMCloseRequest_CloseTabs_FieldNumber) {
+  ITMCloseRequest_CloseTabs_FieldNumber_TabIdsArray = 1,
+};
+
+@interface ITMCloseRequest_CloseTabs : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *tabIdsArray;
+/** The number of items in @c tabIdsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger tabIdsArray_Count;
+
+@end
+
+#pragma mark - ITMCloseRequest_CloseSessions
+
+typedef GPB_ENUM(ITMCloseRequest_CloseSessions_FieldNumber) {
+  ITMCloseRequest_CloseSessions_FieldNumber_SessionIdsArray = 1,
+};
+
+@interface ITMCloseRequest_CloseSessions : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *sessionIdsArray;
+/** The number of items in @c sessionIdsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger sessionIdsArray_Count;
+
+@end
+
+#pragma mark - ITMCloseRequest_CloseWindows
+
+typedef GPB_ENUM(ITMCloseRequest_CloseWindows_FieldNumber) {
+  ITMCloseRequest_CloseWindows_FieldNumber_WindowIdsArray = 1,
+};
+
+@interface ITMCloseRequest_CloseWindows : GPBMessage
+
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *windowIdsArray;
+/** The number of items in @c windowIdsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger windowIdsArray_Count;
+
+@end
+
+#pragma mark - ITMCloseResponse
+
+typedef GPB_ENUM(ITMCloseResponse_FieldNumber) {
+  ITMCloseResponse_FieldNumber_StatusesArray = 1,
+};
+
+@interface ITMCloseResponse : GPBMessage
+
+// |statusesArray| contains |ITMCloseResponse_Status|
+@property(nonatomic, readwrite, strong, null_resettable) GPBEnumArray *statusesArray;
+/** The number of items in @c statusesArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger statusesArray_Count;
+
+@end
 
 #pragma mark - ITMSetBroadcastDomainsRequest
 
@@ -3020,10 +3142,7 @@ typedef GPB_ENUM(ITMKeystrokeMonitorRequest_FieldNumber) {
 
 @interface ITMKeystrokeMonitorRequest : GPBMessage
 
-/**
- * If a keystroke matches any of these patterns then they will not be handled by the application.
- * A notification will be posted and the script can handle it as it pleases.
- **/
+/** KeystrokeFilterRequest was split from this to make a more sensible API. */
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMKeystrokePattern*> *patternsToIgnoreArray DEPRECATED_ATTRIBUTE;
 /** The number of items in @c patternsToIgnoreArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger patternsToIgnoreArray_Count DEPRECATED_ATTRIBUTE;

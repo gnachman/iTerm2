@@ -1760,12 +1760,15 @@ ITERM_WEAKLY_REFERENCEABLE
     [self closeTabIfConfirmed:tab];
 }
 
-- (void)closeTabIfConfirmed:(PTYTab *)tab {
+- (BOOL)closeTabIfConfirmed:(PTYTab *)tab {
     const BOOL shouldClose = [self tabView:_contentView.tabView
                     shouldCloseTabViewItem:tab.tabViewItem
                       suppressConfirmation:[self willShowTmuxWarningWhenClosingTab:tab]];
     if (shouldClose) {
         [self closeTab:tab];
+        return YES;
+    } else {
+        return NO;
     }
 }
 
@@ -1778,11 +1781,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)closeSessionWithConfirmation:(PTYSession *)aSession {
+- (BOOL)closeSessionWithConfirmation:(PTYSession *)aSession {
     PTYTab *tab = [self tabForSession:aSession];
     if ([[tab sessions] count] == 1) {
-        [self closeTabIfConfirmed:tab];
-        return;
+        return [self closeTabIfConfirmed:tab];
     }
     BOOL okToClose = NO;
     if ([aSession exited]) {
@@ -1796,10 +1798,17 @@ ITERM_WEAKLY_REFERENCEABLE
                                                     [aSession name]]];
     }
     if (okToClose) {
-        // Just in case IR is open, close it first.
-        [self closeInstantReplay:self orTerminateSession:NO];
-        [self closeSession:aSession];
+        [self closeSessionWithoutConfirmation:aSession];
+        return YES;
     }
+
+    return NO;
+}
+
+- (void)closeSessionWithoutConfirmation:(PTYSession *)aSession {
+    // Just in case IR is open, close it first.
+    [self closeInstantReplay:self orTerminateSession:NO];
+    [self closeSession:aSession];
 }
 
 - (IBAction)restartSession:(id)sender {

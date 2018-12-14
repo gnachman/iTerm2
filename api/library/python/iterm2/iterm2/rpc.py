@@ -580,6 +580,23 @@ async def async_set_broadcast_domains(connection, list_of_list_of_session_ids):
     request.set_broadcast_domains_request.broadcast_domains.extend(domains_protos)
     return await _async_call(connection, request)
 
+async def async_close(connection, sessions=None, tabs=None, windows=None, force=False):
+    request = _alloc_request()
+    request.close_request.SetInParent()
+    assert sessions or tabs or windows
+    if sessions:
+        assert not tabs and not windows
+        request.close_request.sessions.session_ids.extend(sessions)
+    elif tabs:
+        assert not sessions and not windows
+        request.close_request.tabs.tab_ids.extend(tabs)
+    else:
+        assert not sessions and not tabs
+        request.close_request.windows.window_ids.extend(windows)
+    request.close_request.force = force
+    return await _async_call(connection, request)
+
+
 ## Private --------------------------------------------------------------------
 
 def _alloc_id():

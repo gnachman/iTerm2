@@ -283,6 +283,19 @@ class Window:
             True,
             window_id=self.__window_id)
 
+    async def async_close(self, force=False):
+        """
+        Closes the window.
+
+        :param force: If True, the user will not be prompted for a confirmation.
+
+        :throws: :class:`RPCException` if something goes wrong.
+        """
+        result = await iterm2.rpc.async_close(self.connection, windows=[self.__window_id], force=force)
+        status = result.close_response.statuses[0]
+        if status != iterm2.api_pb2.CloseResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.CloseResponse.Status.Name(status))
+
     async def async_save_window_as_arrangement(self, name):
         """Save the current window as a new arrangement.
 

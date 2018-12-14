@@ -46,6 +46,7 @@ message ClientOriginatedMessage {
     SelectionRequest selection_request = 128;
     StatusBarComponentRequest status_bar_component_request = 129;
     SetBroadcastDomainsRequest set_broadcast_domains_request = 130;
+    CloseRequest close_request = 131;
   }
 }
 
@@ -89,10 +90,38 @@ message ServerOriginatedMessage {
     SelectionResponse selection_response = 128;
     StatusBarComponentResponse status_bar_component_response = 129;
     SetBroadcastDomainsResponse set_broadcast_domains_response = 130;
+    CloseResponse close_response = 131;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
   }
+}
+
+message CloseRequest {
+  message CloseTabs {
+    repeated string tab_ids = 1;
+  }
+  message CloseSessions {
+    repeated string session_ids = 1;
+  }
+  message CloseWindows {
+    repeated string window_ids = 1;
+  }
+  oneof target {
+    CloseTabs tabs = 1;
+    CloseSessions sessions = 2;
+    CloseWindows windows = 3;
+  }
+  optional bool force = 4;
+}
+
+message CloseResponse {
+  enum Status {
+    OK = 0;
+    NOT_FOUND = 1;
+    USER_DECLINED = 2;
+  }
+  repeated Status statuses = 1;
 }
 
 message SetBroadcastDomainsRequest {

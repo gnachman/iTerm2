@@ -481,6 +481,19 @@ class Session:
         if status != iterm2.api_pb2.RestartSessionResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(iterm2.api_pb2.RestartSessionResponse.Status.Name(status))
 
+    async def async_close(self, force=False):
+        """
+        Closes the session.
+
+        :param force: If True, the user will not be prompted for a confirmation.
+
+        :throws: :class:`RPCException` if something goes wrong.
+        """
+        result = await iterm2.rpc.async_close(self.connection, sessions=[self.__session_id], force=force)
+        status = result.close_response.statuses[0]
+        if status != iterm2.api_pb2.CloseResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.CloseResponse.Status.Name(status))
+
     async def async_set_grid_size(self, size):
         """Sets the visible size of a session.
 

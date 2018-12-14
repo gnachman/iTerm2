@@ -313,6 +313,9 @@ extern NSString *const iTermSelectedTabDidChange;
 // Turn full-screen mode on or off. Creates a new PseudoTerminal and moves this
 // one's state into it.
 - (IBAction)closeCurrentTab:(id)sender;
+- (BOOL)closeTabIfConfirmed:(PTYTab *)tab;
+- (BOOL)closeSessionWithConfirmation:(PTYSession *)aSession;
+- (void)closeSessionWithoutConfirmation:(PTYSession *)aSession;
 
 - (void)changeTabColorToMenuAction:(id)sender;
 - (void)moveSessionToWindow:(id)sender;

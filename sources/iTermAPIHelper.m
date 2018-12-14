@@ -2961,4 +2961,72 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     return response;
 }
 
+- (void)apiServerCloseRequest:(ITMCloseRequest *)request handler:(void (^)(ITMCloseResponse *))completion {
+    ITMCloseResponse *response = [[ITMCloseResponse alloc] init];
+    for (NSString *windowID in request.windows.windowIdsArray) {
+        PseudoTerminal *term = [[iTermController sharedInstance] terminalWithGuid:windowID];
+        if (!term) {
+            [response.statusesArray addValue:ITMCloseResponse_Status_NotFound];
+            continue;
+        }
+        if (request.force) {
+            [term.window close];
+            [response.statusesArray addValue:ITMCloseResponse_Status_Ok];
+            continue;
+        }
+        if (![term windowShouldClose:term.window]) {
+            [response.statusesArray addValue:ITMCloseResponse_Status_UserDeclined];
+            continue;
+        }
+
+        [term.window close];
+        [response.statusesArray addValue:ITMCloseResponse_Status_Ok];
+    }
+    for (NSString *tabID in request.tabs.tabIdsArray) {
+        PTYTab *tab = [self tabWithID:tabID];
+        if (!tab) {
+            [response.statusesArray addValue:ITMCloseResponse_Status_NotFound];
+            continue;
+        }
+        PseudoTerminal *term = [PseudoTerminal castFrom:tab.realParentWindow];
+        if (!term) {
+            DLog(@"Strange, the tab's window is not a PseudoTerminal");
+            [response.statusesArray addValue:ITMCloseResponse_Status_NotFound];
+            continue;
+        }
+        if (request.force) {
+            [term removeTab:tab];
+            [response.statusesArray addValue:ITMCloseResponse_Status_Ok];
+            continue;
+        }
+        if ([term closeTabIfConfirmed:tab]) {
+            [response.statusesArray addValue:ITMCloseResponse_Status_Ok];
+        } else {
+            [response.statusesArray addValue:ITMCloseResponse_Status_UserDeclined];
+        }
+    }
+    for (NSString *sessionID in request.sessions.sessionIdsArray) {
+        PTYSession *session = [self sessionForAPIIdentifier:sessionID includeBuriedSessions:YES];
+        if (!session) {
+            [response.statusesArray addValue:ITMCloseResponse_Status_NotFound];
+            continue;
+        }
+        if ([[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:session]) {
+            [[iTermBuriedSessions sharedInstance] restoreSession:session];
+        }
+        PseudoTerminal *term = [[iTermController sharedInstance] terminalWithSession:session];
+        if (request.force) {
+            [term closeSessionWithoutConfirmation:session];
+            [response.statusesArray addValue:ITMCloseResponse_Status_Ok];
+            continue;
+        }
+        if (![term closeSessionWithConfirmation:session]) {
+            [response.statusesArray addValue:ITMCloseResponse_Status_UserDeclined];
+            continue;
+        }
+        [response.statusesArray addValue:ITMCloseResponse_Status_Ok];
+    }
+    completion(response);
+}
+
 @end

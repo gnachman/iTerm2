@@ -152,3 +152,17 @@ class Tab:
             raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
         else:
             return json.loads(result.variable_response.values[0])
+
+    async def async_close(self, force=False):
+        """
+        Closes the tab.
+
+        :param force: If True, the user will not be prompted for a confirmation.
+
+        :throws: :class:`RPCException` if something goes wrong.
+        """
+        result = await iterm2.rpc.async_close(self.connection, tabs=[self.__tab_id], force=force)
+        status = result.close_response.statuses[0]
+        if status != iterm2.api_pb2.CloseResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(iterm2.api_pb2.CloseResponse.Status.Name(status))
+

@@ -269,6 +269,7 @@ BOOL ITMVariableScope_IsValidValue(int32_t value__) {
 @dynamic selectionRequest;
 @dynamic statusBarComponentRequest;
 @dynamic setBroadcastDomainsRequest;
+@dynamic closeRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -303,6 +304,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMSelectionRequest *selectionRequest;
   ITMStatusBarComponentRequest *statusBarComponentRequest;
   ITMSetBroadcastDomainsRequest *setBroadcastDomainsRequest;
+  ITMCloseRequest *closeRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -600,6 +602,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "closeRequest",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMCloseRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_CloseRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, closeRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -666,6 +677,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic selectionResponse;
 @dynamic statusBarComponentResponse;
 @dynamic setBroadcastDomainsResponse;
+@dynamic closeResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -702,6 +714,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMSelectionResponse *selectionResponse;
   ITMStatusBarComponentResponse *statusBarComponentResponse;
   ITMSetBroadcastDomainsResponse *setBroadcastDomainsResponse;
+  ITMCloseResponse *closeResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -1010,6 +1023,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .dataType = GPBDataTypeMessage,
       },
       {
+        .name = "closeResponse",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMCloseResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_CloseResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, closeResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
         .name = "notification",
         .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
@@ -1046,6 +1068,304 @@ void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMess
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBMaybeClearOneof(message, oneof, -1, 0);
 }
+#pragma mark - ITMCloseRequest
+
+@implementation ITMCloseRequest
+
+@dynamic targetOneOfCase;
+@dynamic tabs;
+@dynamic sessions;
+@dynamic windows;
+@dynamic hasForce, force;
+
+typedef struct ITMCloseRequest__storage_ {
+  uint32_t _has_storage_[2];
+  ITMCloseRequest_CloseTabs *tabs;
+  ITMCloseRequest_CloseSessions *sessions;
+  ITMCloseRequest_CloseWindows *windows;
+} ITMCloseRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "tabs",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMCloseRequest_CloseTabs),
+        .number = ITMCloseRequest_FieldNumber_Tabs,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMCloseRequest__storage_, tabs),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "sessions",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMCloseRequest_CloseSessions),
+        .number = ITMCloseRequest_FieldNumber_Sessions,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMCloseRequest__storage_, sessions),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "windows",
+        .dataTypeSpecific.className = GPBStringifySymbol(ITMCloseRequest_CloseWindows),
+        .number = ITMCloseRequest_FieldNumber_Windows,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMCloseRequest__storage_, windows),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "force",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMCloseRequest_FieldNumber_Force,
+        .hasIndex = 0,
+        .offset = 1,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMCloseRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMCloseRequest__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    static const char *oneofs[] = {
+      "target",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+void ITMCloseRequest_ClearTargetOneOfCase(ITMCloseRequest *message) {
+  GPBDescriptor *descriptor = [message descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBMaybeClearOneof(message, oneof, -1, 0);
+}
+#pragma mark - ITMCloseRequest_CloseTabs
+
+@implementation ITMCloseRequest_CloseTabs
+
+@dynamic tabIdsArray, tabIdsArray_Count;
+
+typedef struct ITMCloseRequest_CloseTabs__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *tabIdsArray;
+} ITMCloseRequest_CloseTabs__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "tabIdsArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMCloseRequest_CloseTabs_FieldNumber_TabIdsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMCloseRequest_CloseTabs__storage_, tabIdsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMCloseRequest_CloseTabs class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMCloseRequest_CloseTabs__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMCloseRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMCloseRequest_CloseSessions
+
+@implementation ITMCloseRequest_CloseSessions
+
+@dynamic sessionIdsArray, sessionIdsArray_Count;
+
+typedef struct ITMCloseRequest_CloseSessions__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *sessionIdsArray;
+} ITMCloseRequest_CloseSessions__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "sessionIdsArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMCloseRequest_CloseSessions_FieldNumber_SessionIdsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMCloseRequest_CloseSessions__storage_, sessionIdsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMCloseRequest_CloseSessions class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMCloseRequest_CloseSessions__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMCloseRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMCloseRequest_CloseWindows
+
+@implementation ITMCloseRequest_CloseWindows
+
+@dynamic windowIdsArray, windowIdsArray_Count;
+
+typedef struct ITMCloseRequest_CloseWindows__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *windowIdsArray;
+} ITMCloseRequest_CloseWindows__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "windowIdsArray",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMCloseRequest_CloseWindows_FieldNumber_WindowIdsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMCloseRequest_CloseWindows__storage_, windowIdsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMCloseRequest_CloseWindows class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMCloseRequest_CloseWindows__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMCloseRequest)];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMCloseResponse
+
+@implementation ITMCloseResponse
+
+@dynamic statusesArray, statusesArray_Count;
+
+typedef struct ITMCloseResponse__storage_ {
+  uint32_t _has_storage_[1];
+  GPBEnumArray *statusesArray;
+} ITMCloseResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "statusesArray",
+        .dataTypeSpecific.enumDescFunc = ITMCloseResponse_Status_EnumDescriptor,
+        .number = ITMCloseResponse_FieldNumber_StatusesArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMCloseResponse__storage_, statusesArray),
+        .flags = (GPBFieldFlags)(GPBFieldRepeated | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMCloseResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMCloseResponse__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    NSAssert(descriptor == nil, @"Startup recursed!");
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMCloseResponse_Status
+
+GPBEnumDescriptor *ITMCloseResponse_Status_EnumDescriptor(void) {
+  static GPBEnumDescriptor *descriptor = NULL;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000NotFound\000UserDeclined\000";
+    static const int32_t values[] = {
+        ITMCloseResponse_Status_Ok,
+        ITMCloseResponse_Status_NotFound,
+        ITMCloseResponse_Status_UserDeclined,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMCloseResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMCloseResponse_Status_IsValidValue];
+    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMCloseResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMCloseResponse_Status_Ok:
+    case ITMCloseResponse_Status_NotFound:
+    case ITMCloseResponse_Status_UserDeclined:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
 #pragma mark - ITMSetBroadcastDomainsRequest
 
 @implementation ITMSetBroadcastDomainsRequest
