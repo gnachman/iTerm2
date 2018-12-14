@@ -77,6 +77,10 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
     }
 }
 
+- (BOOL)isActive {
+    return _state != iTermEchoProbeOff;
+}
+
 iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100Token *token) {
     switch (state) {
         case iTermEchoProbeOff:

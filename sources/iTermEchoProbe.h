@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermEchoProbe : NSObject
 
 @property (nonatomic, weak) id<iTermEchoProbeDelegate> delegate;
+@property (nonatomic, readonly) BOOL isActive;
 
 - (void)beginProbeWithBackspace:(NSData *)backspaceData
                        password:(NSString *)password;

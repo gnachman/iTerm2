@@ -5782,6 +5782,10 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)openPasswordManagerToAccountName:(NSString *)name
                                inSession:(PTYSession *)session {
     DLog(@"openPasswordManagerToAccountName:%@ inSession:%@", name, session);
+    if (!session.canOpenPasswordManager) {
+        DLog(@"Can't open password manager right now");
+        return;
+    }
     if (_passwordManagerWindowController != nil) {
         DLog(@"Password manager sheet already open");
         return;

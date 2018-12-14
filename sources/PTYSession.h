@@ -480,6 +480,7 @@ typedef enum {
 @property(nonatomic, readonly) BOOL shouldShowTabGraphic;
 @property(nonatomic, readonly) NSData *backspaceData;
 @property(nonatomic, readonly) iTermEchoProbe *echoProbe;
+@property(nonatomic, readonly) BOOL canOpenPasswordManager;
 
 #pragma mark - methods
 

@@ -5410,6 +5410,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 #pragma mark - Password Management
 
+- (BOOL)canOpenPasswordManager {
+    return !self.echoProbe.isActive;
+}
+
 - (void)enterPassword:(NSString *)password {
     _echoProbe.delegate = self;
     [_echoProbe beginProbeWithBackspace:[self backspaceData]
