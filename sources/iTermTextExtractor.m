@@ -1239,7 +1239,9 @@ const NSInteger kLongMaximumWordLength = 100000;
             } else {
                 [result appendString:string];
             }
-            [coords addObject:[NSValue valueWithGridCoord:coord]];
+            for (NSInteger i = 0; i < string.length; i++) {
+                [coords addObject:[NSValue valueWithGridCoord:coord]];
+            }
         };
 
     if (attributeProvider) {

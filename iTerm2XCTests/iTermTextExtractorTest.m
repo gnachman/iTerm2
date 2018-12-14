@@ -367,6 +367,29 @@ static const NSInteger kUnicodeVersion = 9;
     XCTAssertEqualObjects(@"ab  c", actual);
 }
 
+- (void)testWrappedString {
+    NSMutableArray<NSValue *> *coords = [NSMutableArray array];
+    // cell       0     0     12345
+    _lines = @[ @"\u2716\ufe0e https://example.com/" ];
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSString *prefix = [extractor wrappedStringAt:VT100GridCoordMake(5, 0)
+                                          forward:NO
+                              respectHardNewlines:YES
+                                         maxChars:4096
+                                continuationChars:[NSMutableIndexSet indexSet]
+                              convertNullsToSpace:NO
+                                           coords:coords];
+    XCTAssertEqualObjects(prefix, @"\u2716\ufe0e htt");
+    XCTAssertEqual(coords.count, prefix.length);
+    int expected[] = { 0, 0, 1, 2, 3, 4 };
+    for (int i = 0; i < sizeof(expected) / sizeof(*expected); i++) {
+        NSValue *value = coords[i];
+        VT100GridCoord coord = [value gridCoordValue];
+        XCTAssertEqual(expected[i], coord.x);
+        XCTAssertEqual(0, coord.y);
+    }
+}
+
 - (void)appendWrappedLine:(NSString *)line width:(int)width eol:(int)eol {
     NSMutableData *data = [NSMutableData dataWithLength:(width + 1) * sizeof(screen_char_t)];
     screen_char_t color = { 0 };
