@@ -5082,6 +5082,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }
     }
     [self.sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (isMaximized_) {
+            obj.useMetal = useMetal && (obj == self.activeSession);
+            return;
+        }
         obj.useMetal = useMetal;
     }];
     [_delegate tab:self didSetMetalEnabled:useMetal];
