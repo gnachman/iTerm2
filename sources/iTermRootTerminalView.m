@@ -340,6 +340,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         
         [_standardWindowButtonsView setOptionModifier:optionKey];
     }
+    [super flagsChanged:event];
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
