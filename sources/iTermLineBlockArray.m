@@ -13,8 +13,6 @@
 #import "LineBlock.h"
 #import "NSArray+iTerm.h"
 
-#define PERFORM_SANITY_CHECKS SANITY_CHECK_CUMULATIVE_CACHE
-
 @interface iTermLineBlockArray()<iTermLineBlockObserver>
 // NOTE: Update -copyWithZone: if you add properties.
 @end
@@ -242,42 +240,25 @@
     ITCriticalError(NO, @"New history algorithm bug detected");
 }
 
-- (NSInteger)indexOfBlockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr verbose:(BOOL)verbose {
+- (NSInteger)indexOfBlockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr {
     [self buildCacheForWidth:width];
     [self updateCacheIfNeeded];
 
     __block int r;
-    NSInteger actual = [self fastIndexOfBlockContainingLineNumber:lineNumber width:width remainder:&r verbose:verbose];
-#if PERFORM_SANITY_CHECKS
-    __block int ar;
-    NSInteger expected = [self slowIndexOfBlockContainingLineNumber:lineNumber width:width remainder:&ar verbose:NO];
-    if (actual != expected || r != ar) {
-        if (actual == expected && actual == NSNotFound) {
-            // The remainder is undefined
-            return actual;
-        }
-        [self oopsWithWidth:width block:^{
-            DLog(@"lineNumber=%@ width=%@", @(lineNumber), @(width));
-            DLog(@"Actual=%@ expected=%@", @(actual), @(expected));
-            [self fastIndexOfBlockContainingLineNumber:lineNumber width:width remainder:&r verbose:YES];
-            [self slowIndexOfBlockContainingLineNumber:lineNumber width:width remainder:&ar verbose:YES];
-        }];
-    }
-#endif
+    const NSInteger result = [self internalIndexOfBlockContainingLineNumber:lineNumber width:width remainder:&r];
     if (remainderPtr) {
         *remainderPtr = r;
     }
-    return actual;
+    return result;
 }
 
-- (NSInteger)fastIndexOfBlockContainingLineNumber:(int)lineNumber
-                                            width:(int)width
-                                        remainder:(out nonnull int *)remainderPtr
-                                          verbose:(BOOL)verbose {
+- (NSInteger)internalIndexOfBlockContainingLineNumber:(int)lineNumber
+                                                width:(int)width
+                                            remainder:(out nonnull int *)remainderPtr {
     [self buildCacheForWidth:width];
     [self updateCacheIfNeeded];
     iTermCumulativeSumCache *numLinesCache = [_numLinesCaches numLinesCacheForWidth:width];
-    const NSInteger index = verbose ? [numLinesCache verboseIndexContainingValue:lineNumber] : [numLinesCache indexContainingValue:lineNumber];
+    const NSInteger index = [numLinesCache indexContainingValue:lineNumber];
 
     if (index == NSNotFound) {
         return NSNotFound;
@@ -285,77 +266,20 @@
 
     if (remainderPtr) {
         if (index == 0) {
-            if (verbose) {
-                DLog(@"Index is 0 so return block 0 and remainder of %@", @(lineNumber));
-            }
             *remainderPtr = lineNumber;
         } else {
             const NSInteger absoluteLineNumber = lineNumber - numLinesCache.offset;
-            if (verbose) {
-                DLog(@"Remainder is absoluteLineNumber-cache[i-1]: %@ - %@",
-                     @(absoluteLineNumber),
-                     @([numLinesCache valueAtIndex:index - 1]));
-            }
             *remainderPtr = absoluteLineNumber - [numLinesCache sumAtIndex:index - 1];
         }
-    }
-    if (verbose) {
-        DLog(@"Return index %@", @(index));
     }
     return index;
 }
 
-- (NSInteger)slowIndexOfBlockContainingLineNumber:(int)lineNumber
-                                            width:(int)width
-                                        remainder:(out nonnull int *)remainderPtr
-                                          verbose:(BOOL)verbose {
-    int line = lineNumber;
-    if (verbose) {
-        DLog(@"Begin SLOW search for line number %@", @(lineNumber));
-    }
-    for (NSInteger i = 0; i < _blocks.count; i++) {
-        if (verbose) {
-            DLog(@"Block %@", @(i));
-        }
-        if (line == 0) {
-            // I don't think a block will ever have 0 lines, but this prevents an infinite loop if that does happen.
-            *remainderPtr = 0;
-            if (verbose) {
-                DLog(@"hm, line is 0. All done I guess");
-            }
-            return i;
-        }
-        // getNumLinesWithWrapWidth caches its result for the last-used width so
-        // this is usually faster than calling getWrappedLineWithWrapWidth since
-        // most calls to the latter will just decrement line and return NULL.
-        LineBlock *block = _blocks[i];
-        int block_lines = [block getNumLinesWithWrapWidth:width];
-        if (block_lines <= line) {
-            line -= block_lines;
-            if (verbose) {
-                DLog(@"Consume %@ lines from block %@. Have %@ more to go.", @(block_lines), @(i), @(line));
-            }
-            continue;
-        }
-
-        if (verbose) {
-            DLog(@"Result is at block %@ with a remainder of %@", @(i), @(line));
-        }
-        if (remainderPtr) {
-            *remainderPtr = line;
-        }
-        assert(line < block_lines);
-        return i;
-    }
-    return NSNotFound;
-}
-
-- (LineBlock *)blockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr verbose:(BOOL)verbose {
+- (LineBlock *)blockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr {
     int remainder = 0;
     NSInteger i = [self indexOfBlockContainingLineNumber:lineNumber
                                                    width:width
-                                               remainder:&remainder
-                                                 verbose:verbose];
+                                               remainder:&remainder];
     if (i == NSNotFound) {
         return nil;
     }
@@ -373,43 +297,14 @@
     [self buildCacheForWidth:width];
     [self updateCacheIfNeeded];
 
-    int actual = [self fast_numberOfWrappedLinesForWidth:width];
-#if PERFORM_SANITY_CHECKS
-    int expected = [self slow_numberOfWrappedLinesForWidth:width verbose:NO];
-    if (actual != expected) {
-        [self oopsWithWidth:width block:^{
-            DLog(@"width=%@", @(width));
-            DLog(@"actual=%@ expected=%@", @(actual), @(expected));
-            [self slow_numberOfWrappedLinesForWidth:width verbose:YES];
-        }];
-    }
-#endif
-    return actual;
-}
-
-- (int)fast_numberOfWrappedLinesForWidth:(int)width {
-    [self buildCacheForWidth:width];
     return [[_numLinesCaches numLinesCacheForWidth:width] sumOfAllValues];
-}
-
-- (int)slow_numberOfWrappedLinesForWidth:(int)width verbose:(BOOL)verbose {
-    int count = 0;
-    for (LineBlock *block in _blocks) {
-        const int n = [block getNumLinesWithWrapWidth:width];
-        count += n;
-        if (verbose) {
-            DLog(@"count += %@, giving %@", @(n), @(count));
-        }
-    }
-    return count;
 }
 
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
-                      verbose:(BOOL)verbose
                         block:(void (^)(screen_char_t * _Nonnull, int, int, screen_char_t, BOOL * _Nonnull))callback {
     int remainder;
-    NSInteger startIndex = [self indexOfBlockContainingLineNumber:range.location width:width remainder:&remainder verbose:verbose];
+    NSInteger startIndex = [self indexOfBlockContainingLineNumber:range.location width:width remainder:&remainder];
     ITAssertWithMessage(startIndex != NSNotFound, @"Line %@ not found", @(range.location));
     
     int numberLeft = range.length;
@@ -456,76 +351,42 @@
 - (NSInteger)numberOfRawLines {
     if (_rawLinesCache) {
         [self updateCacheIfNeeded];
-        NSInteger result = [self fast_numberOfRawLines];
-#if PERFORM_SANITY_CHECKS
-        NSInteger expected = [self slow_numberOfRawLinesVerbose:NO];
-        if (result != expected) {
-            [self oopsWithWidth:0 block:^{
-                [self slow_numberOfRawLinesVerbose:YES];
-                [self fast_numberOfRawLines];
-            }];
-        }
-#endif
+        const NSInteger result = _rawLinesCache.sumOfAllValues;
         return result;
     } else {
-        return [self slow_numberOfRawLinesVerbose:NO];
+        return [self slow_numberOfRawLines];
     }
 }
 
-- (NSInteger)fast_numberOfRawLines {
-    return _rawLinesCache.sumOfAllValues;
-}
-
-- (NSInteger)slow_numberOfRawLinesVerbose:(BOOL)verbose {
+- (NSInteger)slow_numberOfRawLines {
     NSInteger sum = 0;
     for (LineBlock *block in _blocks) {
         int n = [block numRawLines];
         sum += n;
-        if (verbose) {
-            DLog(@"sum += %@, giving %@", @(n), @(sum));
-        }
     }
     return sum;
 }
 
-- (NSInteger)rawSpaceUsedVerbose:(BOOL)verbose {
-    return [self rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, _blocks.count) verbose:verbose];
+- (NSInteger)rawSpaceUsed {
+    return [self rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, _blocks.count)];
 }
 
-- (NSInteger)rawSpaceUsedInRangeOfBlocks:(NSRange)range
-                                 verbose:(BOOL)verbose {
+- (NSInteger)rawSpaceUsedInRangeOfBlocks:(NSRange)range{
     if (_rawSpaceCache) {
         [self updateCacheIfNeeded];
-        const NSInteger actual = [self fast_rawSpaceUsedInRangeOfBlocks:range];
-#if PERFORM_SANITY_CHECKS
-        const NSInteger expected = [self slow_rawSpaceUsedInRangeOfBlocks:range verbose:verbose];
-        if (actual != expected) {
-            [self oopsWithWidth:0 block:^{
-                DLog(@"range=%@", NSStringFromRange(range));
-                DLog(@"actual=%@ expected=%@", @(actual), @(expected));
-                [self slow_rawSpaceUsedInRangeOfBlocks:range verbose:YES];
-            }];
-        }
-#endif
-        return actual;
+        const NSInteger result = [_rawSpaceCache sumOfValuesInRange:range];
+        return result;
     } else {
-        return [self slow_rawSpaceUsedInRangeOfBlocks:range verbose:verbose];
+        return [self slow_rawSpaceUsedInRangeOfBlocks:range];
     }
 }
 
-- (NSInteger)fast_rawSpaceUsedInRangeOfBlocks:(NSRange)range {
-    return [_rawSpaceCache sumOfValuesInRange:range];
-}
-
-- (NSInteger)slow_rawSpaceUsedInRangeOfBlocks:(NSRange)range verbose:(BOOL)verbose {
+- (NSInteger)slow_rawSpaceUsedInRangeOfBlocks:(NSRange)range {
     NSInteger position = 0;
     for (NSInteger i = 0; i < range.length; i++) {
         LineBlock *block = _blocks[i + range.location];
         int  n = [block rawSpaceUsed];
         position += n;
-        if (verbose) {
-            DLog(@"position += %@, giving %@", @(n), @(position));
-        }
     }
     return position;
 }
@@ -534,42 +395,14 @@
                                  width:(int)width
                              remainder:(int *)remainderPtr
                            blockOffset:(int *)yoffsetPtr
-                                 index:(int *)indexPtr
-                               verbose:(BOOL)verbose {
+                                 index:(int *)indexPtr {
     if (width > 0) {
         [self buildCacheForWidth:width];
     }
     [self updateCacheIfNeeded];
-    if (width > 0 && _rawSpaceCache && !verbose) {
+    if (width > 0 && _rawSpaceCache) {
         int r=0, y=0, i=0;
-        LineBlock *actual = [self fast_blockContainingPosition:position width:width remainder:&r blockOffset:yoffsetPtr ? &y : NULL index:&i verbose:NO];
-#if PERFORM_SANITY_CHECKS
-        int ar=0, ay=0, ai=0;
-        LineBlock *expected = [self slow_blockContainingPosition:position width:width remainder:&ar blockOffset:yoffsetPtr ? &ay : NULL index:&ai verbose:NO];
-
-        if (actual != expected ||
-            r != ar ||
-            y != ay ||
-            i != ai) {
-            [self oopsWithWidth:width block:^{
-                DLog(@"position=%@ width=%@ r=%@ y=%@ i=%@ ar=%@ ay=%@ ai=%@",
-                     @(position), @(width), @(r), @(y), @(i), @(ar), @(ay), @(ai));
-                DLog(@"Actual:");
-                [actual dump:width toDebugLog:YES];
-                DLog(@"Expected:");
-                [expected dump:width toDebugLog:YES];
-                DLog(@"-- End dumps --");
-                int r=0, y=0, i=0;
-                [self fast_blockContainingPosition:position width:width remainder:&r blockOffset:yoffsetPtr ? &y : NULL index:&i verbose:YES];
-                int ar=0, ay=0, ai=0;
-                [self slow_blockContainingPosition:position width:width remainder:&ar blockOffset:yoffsetPtr ? &ay : NULL index:&ai verbose:YES];
-            }];
-        }
-        assert(actual == expected);
-        assert(r == ar);
-        assert(y == ay);
-        assert(i == ai);
-#endif
+        LineBlock *result = [self fast_blockContainingPosition:position width:width remainder:&r blockOffset:yoffsetPtr ? &y : NULL index:&i];
         if (remainderPtr) {
             *remainderPtr = r;
         }
@@ -579,9 +412,9 @@
         if (indexPtr) {
             *indexPtr = i;
         }
-        return actual;
+        return result;
     } else {
-        return [self slow_blockContainingPosition:position width:width remainder:remainderPtr blockOffset:yoffsetPtr index:indexPtr verbose:verbose];
+        return [self slow_blockContainingPosition:position width:width remainder:remainderPtr blockOffset:yoffsetPtr index:indexPtr];
     }
 }
 
@@ -589,30 +422,19 @@
                                       width:(int)width
                                   remainder:(int *)remainderPtr
                                 blockOffset:(int *)yoffsetPtr
-                                      index:(int *)indexPtr
-                                    verbose:(BOOL)verbose {
+                                      index:(int *)indexPtr {
     [self buildCacheForWidth:width];
     [self updateCacheIfNeeded];
-    NSInteger index = verbose ? [_rawSpaceCache verboseIndexContainingValue:position] : [_rawSpaceCache indexContainingValue:position];
+    NSInteger index = [_rawSpaceCache indexContainingValue:position];
     if (index == NSNotFound) {
-        if (verbose) {
-            DLog(@"Index is past the end. Return nil.");
-        }
         return nil;
     }
 
     if (remainderPtr) {
         *remainderPtr = position - [_rawSpaceCache sumOfValuesInRange:NSMakeRange(0, index)];
-        if (verbose) {
-            DLog(@"Remainder is position - space before index %@: %@-%@=%@",
-                  @(index), @(position), @([_rawSpaceCache sumOfValuesInRange:NSMakeRange(0, index)]), @(*remainderPtr));
-        }
     }
     if (yoffsetPtr) {
         *yoffsetPtr = [[_numLinesCaches numLinesCacheForWidth:width] sumOfValuesInRange:NSMakeRange(0, index)];
-        if (verbose) {
-            DLog(@"yoffset is sum of blocks up to but not including %@: %@", @(index), @(*yoffsetPtr));
-        }
     }
     if (indexPtr) {
         *indexPtr = index;
@@ -624,12 +446,7 @@
                                       width:(int)width
                                   remainder:(int *)remainderPtr
                                 blockOffset:(int *)yoffsetPtr
-                                      index:(int *)indexPtr
-                                    verbose:(BOOL)verbose {
-    if (verbose) {
-        DLog(@"Begin slow block containing position.");
-        DLog(@"Look for position %@ for width %@", @(position), @(width));
-    }
+                                      index:(int *)indexPtr {
     long long p = position;
     int yoffset = 0;
     int index = 0;
@@ -640,14 +457,7 @@
             if (yoffsetPtr) {
                 yoffset += [block getNumLinesWithWrapWidth:width];
             }
-            if (verbose) {
-                DLog(@"Block %@: used=%@, p<-%@ numLines=%@ yoffset<-%@",
-                      @(index), @(used), @(p), @([block getNumLinesWithWrapWidth:width]), @(yoffset));
-            }
         } else {
-            if (verbose) {
-                DLog(@"Block %@: used=%@. Return remainder=%@, yoffset=%@", @(index), @(used), @(p), @(yoffset));
-            }
             if (remainderPtr) {
                 *remainderPtr = p;
             }
@@ -660,9 +470,6 @@
             return block;
         }
         index++;
-    }
-    if (verbose) {
-        DLog(@"Ran out of blocks, return nil");
     }
     return nil;
 }
@@ -702,9 +509,6 @@
         // The block might not be empty. Treat it like a bunch of lines just got appended.
         [self updateCacheForBlock:block];
     }
-#if PERFORM_SANITY_CHECKS
-    [self sanityCheck];
-#endif
 }
 
 - (void)removeFirstBlock {
@@ -740,9 +544,6 @@
 }
 
 - (LineBlock *)lastBlock {
-#if PERFORM_SANITY_CHECKS
-    [self sanityCheck];
-#endif
     return _blocks.lastObject;
 }
 
@@ -771,9 +572,6 @@
         ITAssertWithMessage(block == _blocks.firstObject || block == _blocks.lastObject,
                             @"Block with index %@/%@ changed", @([_blocks indexOfObject:block]), @(_blocks.count));
     }
-#if PERFORM_SANITY_CHECKS
-    [self sanityCheck];
-#endif
 }
 
 - (void)sanityCheck {
