@@ -7,6 +7,7 @@
 
 #import "iTermTimestampsRenderer.h"
 
+#import "FutureMethods.h"
 #import "iTermTexturePool.h"
 #import "iTermTimestampDrawHelper.h"
 
@@ -132,14 +133,20 @@
     self = [super init];
     if (self) {
         _texturePool = [[iTermTexturePool alloc] init];
+        iTermMetalBlending *blending = [[iTermMetalBlending alloc] init];
+#if ENABLE_TRANSPARENT_METAL_WINDOWS
+        if (iTermTextIsMonochrome()) {
+            blending = [iTermMetalBlending premultipliedCompositing];
+        }
+#endif
         _cellRenderer = [[iTermMetalCellRenderer alloc] initWithDevice:device
                                                     vertexFunctionName:@"iTermTimestampsVertexShader"
                                                   fragmentFunctionName:@"iTermTimestampsFragmentShader"
-                                                              blending:[[iTermMetalBlending alloc] init]
+                                                              blending:blending
                                                         piuElementSize:0
                                                    transientStateClass:[iTermTimestampsRendererTransientState class]];
         _cache = [[NSCache alloc] init];
-    }
+    }a
     return self;
 }
 

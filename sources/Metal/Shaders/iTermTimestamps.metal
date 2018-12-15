@@ -33,7 +33,8 @@ iTermTimestampsFragmentShader(iTermTimestampsVertexFunctionOutput in [[stage_in]
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
-    const half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
+    half4 colorSample = texture.sample(textureSampler, in.textureCoordinate);
+    colorSample.xyz *= colorSample.w;
     return float4(colorSample);
 }
 
