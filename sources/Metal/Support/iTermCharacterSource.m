@@ -344,6 +344,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         }
     }
     _postprocessed = YES;
+    [_postprocessedData checkForOverrun];
 }
 
 - (iTermCharacterBitmap *)bitmapForPart:(int)part {
