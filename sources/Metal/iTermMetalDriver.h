@@ -121,6 +121,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSource<NSObject>
 
+- (BOOL)metalDriverShouldDrawFrame;
 - (nullable id<iTermMetalDriverDataSourcePerFrameState>)metalDriverWillBeginDrawingFrame;
 
 - (void)metalDriverDidDrawFrame:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState;

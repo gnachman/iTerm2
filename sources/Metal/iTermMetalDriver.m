@@ -475,6 +475,10 @@ cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
 
 // Called on the main queue
 - (iTermMetalFrameData *)newFrameDataForView:(MTKView *)view {
+    if (![_dataSource metalDriverShouldDrawFrame]) {
+        DLog(@"Metal driver declined to draw");
+        return nil;
+    }
     iTermMetalFrameData *frameData = [[iTermMetalFrameData alloc] initWithView:view
                                                            fullSizeTexturePool:_fullSizeTexturePool];
 

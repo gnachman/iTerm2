@@ -83,10 +83,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - iTermMetalDriverDataSource
 
+- (BOOL)metalDriverShouldDrawFrame {
+    return self.delegate.metalGlueContext != nil;
+}
+
 - (nullable id<iTermMetalDriverDataSourcePerFrameState>)metalDriverWillBeginDrawingFrame {
     if (self.textView.drawingHelper.delegate == nil) {
         return nil;
     }
+    ITBetaAssert(self.delegate != nil, @"Nil delegate");
+    ITBetaAssert(self.delegate.metalGlueContext != nil, @"Nil metal glue context");
     return [[iTermMetalPerFrameState alloc] initWithTextView:self.textView
                                                       screen:self.screen
                                                         glue:self
