@@ -10,9 +10,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-// Run with this on for a while and see if there are any crashes. Turn it off for a big performance win.
-#define SANITY_CHECK_CUMULATIVE_CACHE 1
-
 @class LineBlock;
 
 @interface iTermLineBlockArray : NSObject<NSCopying>
@@ -31,28 +28,24 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)removeLastBlock;
 - (void)replaceLastBlockWithCopy;
 - (void)setAllBlocksMayHaveDoubleWidthCharacters;
-- (NSInteger)indexOfBlockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr verbose:(BOOL)verbose;
+- (NSInteger)indexOfBlockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr;
 - (nullable LineBlock *)blockContainingLineNumber:(int)lineNumber
                                             width:(int)width
-                                        remainder:(out int *)remainderPtr
-                                          verbose:(BOOL)verbose;
+                                        remainder:(out int *)remainderPtr;
 - (int)numberOfWrappedLinesForWidth:(int)width;
 - (void)enumerateLinesInRange:(NSRange)range
                         width:(int)width
-                      verbose:(BOOL)verbose
                         block:(void (^)(screen_char_t *chars, int length, int eol, screen_char_t continuation, BOOL *stop))block;
 - (NSInteger)numberOfRawLines;
-- (NSInteger)rawSpaceUsedVerbose:(BOOL)verbose;
-- (NSInteger)rawSpaceUsedInRangeOfBlocks:(NSRange)range
-                                 verbose:(BOOL)verbose;
+- (NSInteger)rawSpaceUsed;
+- (NSInteger)rawSpaceUsedInRangeOfBlocks:(NSRange)range;
 
 // If you don't need a yoffset pass -1 for width and NULL for blockOffset to avoid building a cache.
 - (LineBlock *)blockContainingPosition:(long long)p
                                  width:(int)width
                              remainder:(nullable int *)remainder
                            blockOffset:(nullable int *)yoffset
-                                 index:(nullable int *)indexPtr
-                               verbose:(BOOL)verbose;
+                                 index:(nullable int *)indexPtr;
 - (void)sanityCheck;
 - (void)oopsWithWidth:(int)width block:(void (^)(void))block;
 
