@@ -90,5 +90,6 @@ extern NSString *const iTermAPIServerConnectionClosed;
 @property (nonatomic, weak) id<iTermAPIServerDelegate> delegate;
 
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
+- (NSString *)websocketKeyForConnectionKey:(NSString *)connectionKey;
 
 @end

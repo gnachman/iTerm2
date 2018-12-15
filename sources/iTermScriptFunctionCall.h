@@ -66,6 +66,9 @@
                scope:(iTermVariableScope *)scope
           completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
 
++ (NSString *)signatureForFunctionCallInvocation:(NSString *)invocation
+                                           error:(out NSError **)error;
+
 // Evaluate a string with embedded function calls like a swift string with \(expression)s in it.
 // If you need a string that changes dynamically as its dependencies (i.e., variables) change,
 // use iTermSwiftyString instead.

@@ -14,6 +14,7 @@
 #import "iTermStatusBarComponentKnob.h"
 #import "iTermVariables.h"
 #import "iTermVariableReference.h"
+#import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -80,7 +81,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     [_registrationRequest.statusBarComponentAttributes.knobsArray enumerateObjectsUsingBlock:^(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         id value = [NSJSONSerialization it_objectForJsonString:obj.jsonDefaultValue];
         if (value) {
-            knobs[obj.key] = obj.jsonDefaultValue;
+            knobs[obj.key] = value;
         }
     }];
     return [knobs copy];
@@ -100,6 +101,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     NSArray<NSString *> *_variants;
     NSArray<iTermVariableReference *> *_dependencies;
     NSMutableSet<NSString *> *_missingFunctions;
+    NSString *_errorMessage;  // Nil if the last evaluation was successful.
 }
 
 - (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest
@@ -229,6 +231,11 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 - (void)updateWithKnobValues:(NSDictionary<NSString *, id> *)knobValues {
     __weak __typeof(self) weakSelf = self;
     iTermVariableScope *scope = [self.scope copy];
+    if (!scope) {
+        // This happens in the setup UI because the component is not attached to a real session. To
+        // avoid spurious errors, do not actually evaluate the invocation.
+        return;
+    }
     // Create a temporary frame to shadow __knobs in the scope. This avoids mutating a scope we don't own.
     iTermVariables *variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
                                                                   owner:self];
@@ -253,6 +260,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 - (void)handleSuccessfulEvaluationWithValue:(id)value {
     NSString *stringValue = [NSString castFrom:value];
     NSArray *arrayValue = [NSArray castFrom:value];
+    _errorMessage = nil;
     if (stringValue) {
         _variants = @[ stringValue ];
     } else if ([arrayValue allWithBlock:^BOOL(id anObject) {
@@ -260,7 +268,9 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     }]) {
         _variants = arrayValue;
     } else {
-        [[iTermScriptHistoryEntry globalEntry] addOutput:[NSString stringWithFormat:@"Return value from %@ invalid. Return value was: %@", self.invocation, value]];
+        _errorMessage = [NSString stringWithFormat:@"Return value from %@ invalid.\n\nIt should have returned a string or a list of strings.\n\nInstead, it returned:\n\n%@", self.invocation, value];
+        [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:_registrationRequest.it_stringRepresentation
+                                                                              string:_errorMessage];
         _variants = @[ @"🐞" ];
     }
     [self updateTextFieldIfNeeded];
@@ -268,9 +278,10 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 
 - (void)handleEvaluationError:(NSError *)error
              missingFunctions:(NSSet<NSString *> *)missingFunctions {
-    NSString *message = [NSString stringWithFormat:@"Error evaluating status bar component function invocation %@: %@\n%@\n",
-                         self.invocation, error.localizedDescription, error.localizedFailureReason];
-    [[iTermScriptHistoryEntry globalEntry] addOutput:message];
+    _errorMessage = [NSString stringWithFormat:@"Error evaluating status bar component function invocation:\n\n%@\n\nThe error was:\n\n%@\n\n%@",
+                     self.invocation, error.localizedDescription, error.localizedFailureReason ?: @"[no stack trace available]"];
+    [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:_registrationRequest.it_stringRepresentation
+                                                                          string:_errorMessage];
     _variants = @[ @"🐞" ];
     _missingFunctions = [missingFunctions mutableCopy];
     [self updateTextFieldIfNeeded];
@@ -301,6 +312,15 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 }
 
 - (void)onClick:(id)sender {
+    if (_errorMessage) {
+        iTermWarning *warning = [[iTermWarning alloc] init];
+        warning.title = _errorMessage;
+        warning.warningActions = @[ [iTermWarningAction warningActionWithLabel:@"OK" block:nil] ];
+        warning.warningType = kiTermWarningTypePersistent;
+        warning.heading = @"Status Bar Script Error";
+        [warning runModal];
+        return;
+    }
     NSString *sessionId = [self.scope valueForVariableName:iTermVariableKeySessionID];
     NSString *identifier = [[self.statusBarComponentIdentifier stringByReplacingOccurrencesOfString:@"." withString:@"_"] stringByReplacingOccurrencesOfString:@"-" withString:@"_"];
     NSString *func = [NSString stringWithFormat:@"__%@__on_click(session_id: \"%@\")", identifier, sessionId];

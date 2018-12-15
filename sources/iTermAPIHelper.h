@@ -53,5 +53,14 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 // stringSignature is like func(arg1,arg2). Use iTermFunctionSignatureFromNameAndArguments to construct it safely.
 - (BOOL)haveRegisteredFunctionWithSignature:(NSString *)stringSignature;
 - (NSString *)connectionKeyForRPCWithSignature:(NSString *)signature;
+- (void)logToConnectionHostingFunctionWithSignature:(NSString *)signatureString
+                                             format:(NSString *)format, ...;
+- (void)logToConnectionHostingFunctionWithSignature:(NSString *)signatureString
+                                             string:(NSString *)string;
+@end
 
+@interface ITMRPCRegistrationRequest(Extensions)
+// This gives the string signature.
+@property (nonatomic, readonly) NSString *it_stringRepresentation;
+- (BOOL)it_rpcRegistrationRequestValidWithError:(out NSError **)error;
 @end

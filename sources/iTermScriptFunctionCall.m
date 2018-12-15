@@ -103,6 +103,25 @@
                    completion:completion];
 }
 
++ (NSString *)signatureForFunctionCallInvocation:(NSString *)invocation
+                                           error:(out NSError *__autoreleasing *)error {
+    iTermVariableRecordingScope *permissiveScope = [[iTermVariableRecordingScope alloc] initWithScope:[[iTermVariableScope alloc] init]];
+    permissiveScope.neverReturnNil = YES;
+    iTermParsedExpression *expression = [[iTermFunctionCallParser callParser] parse:invocation
+                                                                              scope:permissiveScope];
+    if (expression.string || expression.number) {
+        *error = [NSError errorWithDomain:@"com.iterm2.call"
+                                     code:3
+                                 userInfo:@{ NSLocalizedDescriptionKey: @"Expected function call, not a literal" }];
+        return nil;
+    }
+    if (expression.error) {
+        *error = expression.error;
+        return nil;
+    }
+    return expression.functionCall.signature;
+}
+
 + (void)evaluateString:(NSString *)string
                timeout:(NSTimeInterval)timeout
                  scope:(iTermVariableScope *)scope

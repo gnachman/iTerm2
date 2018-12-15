@@ -124,7 +124,11 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
                  [error.domain isEqual:@"com.iterm2.api"]) {
                  // Waiting for the function to be registered
                  result = @"…";
+                 [self logMessage:[NSString stringWithFormat:@"Could not make a function call into a script. Either its signature changed (in which case you should update the session title setting) or the script is not running. The failed invocation was:\n%@", invocation]
+                       invocation:invocation];
              } else {
+                 [self logMessage:error.localizedDescription
+                       invocation:invocation];
                  result = @"🐞";
              }
          } else if (result.length == 0) {
@@ -151,6 +155,20 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
                 [weakSelf setNeedsReevaluation];
             };
         }
+    }
+}
+
+- (void)logMessage:(NSString *)message invocation:(NSString *)invocation {
+    NSError *invocationError = nil;
+    NSString *signature = [iTermScriptFunctionCall signatureForFunctionCallInvocation:invocation error:&invocationError];
+    if (signature) {
+        [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:signature
+                                                                              string:message];
+    } else {
+        [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:nil
+                                                                              format:@"Malformed invocation in session name controller. The invocation is:\n%@\nIt doesn't look like a function call! The parser said:\n",
+         invocation,
+         invocationError.localizedDescription];
     }
 }
 

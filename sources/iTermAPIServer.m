@@ -185,6 +185,14 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     });
 }
 
+- (NSString *)websocketKeyForConnectionKey:(NSString *)connectionKey {
+    __block NSString *result = nil;
+    dispatch_sync(_queue, ^{
+        result = self->_connections[connectionKey].key;
+    });
+    return result;
+
+}
 - (void)didAcceptConnectionOnFileDescriptor:(int)fd fromAddress:(iTermSocketAddress *)address {
     DLog(@"Accepted connection");
     dispatch_queue_t queue = _queue;
