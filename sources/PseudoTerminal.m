@@ -4860,7 +4860,8 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
     }
-    for (PTYSession* aSession in [[tabViewItem identifier] sessions]) {
+    PTYTab *tab = [tabViewItem identifier];
+    for (PTYSession* aSession in [tab sessions]) {
         [aSession setNewOutput:NO];
 
         // Background tabs' timers run infrequently so make sure the display is
@@ -4877,8 +4878,6 @@ ITERM_WEAKLY_REFERENCEABLE
             [[session textview] endFindCursor];
         }
     }
-    PTYSession* aSession = [[tabViewItem identifier] activeSession];
-    PTYTab *tab = [self tabForSession:aSession];
     if (!_fullScreen) {
         [tab updateLabelAttributes];
         [self setWindowTitle];
@@ -7662,7 +7661,8 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     float max=0;
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
-        for (PTYSession* session in [[[_contentView.tabView tabViewItemAtIndex:i] identifier] sessions]) {
+        PTYTab *tab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
+        for (PTYSession* session in [tab sessions]) {
             float w =[[session textview] charWidth];
             PtyLog(@"maxCharWidth - session %d has %dx%d, chars are %fx%f",
                    i, [session columns], [session rows], [[session textview] charWidth],
@@ -7684,7 +7684,8 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     float max=0;
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
-        for (PTYSession* session in [[[_contentView.tabView tabViewItemAtIndex:i] identifier] sessions]) {
+        PTYTab *tab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
+        for (PTYSession* session in [tab sessions]) {
             float h =[[session textview] lineHeight];
             PtyLog(@"maxCharHeight - session %d has %dx%d, chars are %fx%f", i, [session columns],
                    [session rows], [[session textview] charWidth], [[session textview] lineHeight]);
@@ -7706,7 +7707,8 @@ ITERM_WEAKLY_REFERENCEABLE
     float max=0;
     float ch=0;
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
-        for (PTYSession* session in [[[_contentView.tabView tabViewItemAtIndex:i] identifier] sessions]) {
+        PTYTab *tab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
+        for (PTYSession* session in [tab sessions]) {
             float w = [[session textview] charWidth];
             PtyLog(@"widestSessionWidth - session %d has %dx%d, chars are %fx%f", i,
                    [session columns], [session rows], [[session textview] charWidth],
@@ -7728,7 +7730,8 @@ ITERM_WEAKLY_REFERENCEABLE
     float max=0;
     float ch=0;
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
-        for (PTYSession* session in [[[_contentView.tabView tabViewItemAtIndex:i] identifier] sessions]) {
+        PTYTab *tab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
+        for (PTYSession* session in [tab sessions]) {
             float h = [[session textview] lineHeight];
             PtyLog(@"tallestSessionheight - session %d has %dx%d, chars are %fx%f", i, [session columns], [session rows], [[session textview] charWidth], [[session textview] lineHeight]);
             if (h * [session rows] > max) {
@@ -8524,7 +8527,8 @@ ITERM_WEAKLY_REFERENCEABLE
 {
     NSMutableArray* result = [NSMutableArray arrayWithCapacity:[_contentView.tabView numberOfTabViewItems]];
     for (NSTabViewItem* item in [_contentView.tabView tabViewItems]) {
-        [result addObjectsFromArray:[[item identifier] sessions]];
+        PTYTab *tab = [item identifier];
+        [result addObjectsFromArray:[tab sessions]];
     }
     return result;
 }

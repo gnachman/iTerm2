@@ -28,6 +28,7 @@
 
 #import "GlobalSearch.h"
 #import "PTYSession.h"
+#import "PTYTab.h"
 #import "PTYTextView.h"
 #import "PTYTextView.h"
 #import "PseudoTerminal.h"
@@ -547,7 +548,8 @@ const double GLOBAL_SEARCH_MARGIN = 10;
             NSArray* tabs = [aTerminal tabs];
             int j;
             for (j = 0; j < [tabs count]; ++j) {
-                if ([[[tabs objectAtIndex:j] sessions] indexOfObjectIdenticalTo:aSession] != NSNotFound) {
+                PTYTab *tab = tabs[j];
+                if ([tab.sessions indexOfObjectIdenticalTo:aSession] != NSNotFound) {
                     break;
                 }
             }
