@@ -30,7 +30,12 @@ class CheckboxKnob:
     :param key: A unique string key identifying this knob.
     """
     def __init__(self, name, default_value, key):
-        self.__knob = Knob(iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.Checkbox, name, "", json.dumps(default_value), key)
+        self.__knob = Knob(
+                iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.Checkbox,
+                name,
+                "",
+                json.dumps(default_value),
+                key)
 
     def to_proto(self):
         return self.__knob.to_proto()
@@ -44,7 +49,12 @@ class StringKnob:
     :param key: A unique string key identifying this knob.
     """
     def __init__(self, name, placeholder, default_value, key):
-        self.__knob = Knob(iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.Checkbox, name, placeholder, json.dumps(default_value), key)
+        self.__knob = Knob(
+                iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.String,
+                name,
+                placeholder,
+                json.dumps(default_value),
+                key)
 
     def to_proto(self):
         return self.__knob.to_proto()
@@ -57,7 +67,12 @@ class PositiveFloatingPointKnob:
     :param key: A unique string key identifying this knob.
     """
     def __init__(self, name, default_value, key):
-        self.__knob = Knob(iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.Checkbox, name, "", json.dumps(default_value), key)
+        self.__knob = Knob(
+                iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.PositiveFloatingPoint,
+                name,
+                "",
+                json.dumps(default_value),
+                key)
 
     def to_proto(self):
         return self.__knob.to_proto()
@@ -70,7 +85,11 @@ class ColorKnob:
     :param key: A unique string key identifying this knob
     """
     def __init__(self, name, default_value, key):
-        self.__knob = Knob(iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.Checkbox, name, "", default_value.json, key)
+        self.__knob = Knob(
+                iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.Color,
+                name,
+                "",
+                default_value.json, key)
 
     def to_proto(self):
         return self.__knob.to_proto()
@@ -79,7 +98,7 @@ class ColorKnob:
 class StatusBarComponent:
     """Describes a script-provided status bar component showing a text value provided by a user-provided coroutine.
 
-    :param name: A unique name for this component.
+    :param name: The RPC name. Combined with its arguments, this must be unique among all registered RPCs. It should consist of letters, numbers, and underscores and must begin with a letter.
     :param short_description: Short description shown below the component in the picker UI.
     :param detailed_description: Tool tip for th component in the picker UI.
     :param knobs: List of configuration knobs. See the various Knob classes for details.
