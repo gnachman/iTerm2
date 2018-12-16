@@ -146,7 +146,7 @@
                                                         piuElementSize:0
                                                    transientStateClass:[iTermTimestampsRendererTransientState class]];
         _cache = [[NSCache alloc] init];
-    }a
+    }
     return self;
 }
 

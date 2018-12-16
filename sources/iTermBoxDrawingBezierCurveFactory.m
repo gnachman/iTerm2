@@ -28,7 +28,7 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         if ([iTermAdvancedSettingsModel disableCustomBoxDrawing]) {
-            sBoxDrawingCharactersWithBezierPaths = [[NSCharacterSet characterSetWithCharactersInString:@""] retain];
+            sBoxDrawingCharactersWithBezierPaths = [NSCharacterSet characterSetWithCharactersInString:@""];
         } else {
             /*
             U+E0A0        Version control branch
@@ -53,11 +53,11 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         if ([iTermAdvancedSettingsModel disableCustomBoxDrawing]) {
-            sBoxDrawingCharactersWithBezierPaths = [[NSCharacterSet characterSetWithCharactersInString:@""] retain];
+            sBoxDrawingCharactersWithBezierPaths = [NSCharacterSet characterSetWithCharactersInString:@""];
         } else {
-            sBoxDrawingCharactersWithBezierPaths = [[NSCharacterSet characterSetWithCharactersInString:@"─━│┃┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤"
+            sBoxDrawingCharactersWithBezierPaths = [NSCharacterSet characterSetWithCharactersInString:@"─━│┃┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤"
                                                      @"┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╴╵╶╷╸╹╺╻╼╽╾╿"
-                                                     @"╯╮╰╭╱╲╳▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐▔▕▖▗▘▙▚▛▜▝▞▟"] retain];
+                                                     @"╯╮╰╭╱╲╳▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐▔▕▖▗▘▙▚▛▜▝▞▟"];
         };
     });
     return sBoxDrawingCharactersWithBezierPaths;
@@ -196,34 +196,38 @@
 + (void)drawPowerlineCode:(unichar)code cellSize:(NSSize)cellSize offset:(CGPoint)offset color:(NSColor *)color {
     switch (code) {
         case 0xE0A0:
-            [self drawPDFWithName:@"PowerlineVersionControlBranch" cellSize:cellSize offset:offset stretch:NO color:color];
+            [self drawPDFWithName:@"PowerlineVersionControlBranch" cellSize:cellSize offset:offset stretch:NO color:color antialiased:YES];
             break;
 
         case 0xE0A1:
-            [self performBlockWithoutAntialiasing:^{
-                [self drawPDFWithName:@"PowerlineLN" cellSize:cellSize offset:offset stretch:NO color:color];
-            }];
+            [self drawPDFWithName:@"PowerlineLN" cellSize:cellSize offset:offset stretch:NO color:color antialiased:NO];
             break;
 
         case 0xE0A2:
-            [self drawPDFWithName:@"PowerlinePadlock" cellSize:cellSize offset:offset stretch:NO color:color];
+            [self drawPDFWithName:@"PowerlinePadlock" cellSize:cellSize offset:offset stretch:NO color:color antialiased:YES];
             break;
         case 0xE0B0:
-            [self drawPDFWithName:@"PowerlineSolidRightArrow" cellSize:cellSize offset:offset stretch:YES color:color];
+            [self drawPDFWithName:@"PowerlineSolidRightArrow" cellSize:cellSize offset:offset stretch:YES color:color antialiased:YES];
             break;
         case 0xE0B2:
-            [self drawPDFWithName:@"PowerlineSolidLeftArrow" cellSize:cellSize offset:offset stretch:YES color:color];
+            [self drawPDFWithName:@"PowerlineSolidLeftArrow" cellSize:cellSize offset:offset stretch:YES color:color antialiased:YES];
             break;
         case 0xE0B1:
-            [self drawPDFWithName:@"PowerlineLineRightArrow" cellSize:cellSize offset:offset stretch:YES color:color];
+            [self drawPDFWithName:@"PowerlineLineRightArrow" cellSize:cellSize offset:offset stretch:YES color:color antialiased:YES];
             break;
         case 0xE0B3:
-            [self drawPDFWithName:@"PowerlineLineLeftArrow" cellSize:cellSize offset:offset stretch:YES color:color];
+            [self drawPDFWithName:@"PowerlineLineLeftArrow" cellSize:cellSize offset:offset stretch:YES color:color antialiased:YES];
             break;
     }
 }
 
-+ (void)drawPDFWithName:(NSString *)pdfName cellSize:(NSSize)cellSize offset:(CGPoint)offset stretch:(BOOL)stretch color:(NSColor *)color {
++ (void)drawPDFWithName:(NSString *)pdfName cellSize:(NSSize)cellSize offset:(CGPoint)offset stretch:(BOOL)stretch color:(NSColor *)color antialiased:(BOOL)antialiased {
+    if (!antialiased) {
+        [self performBlockWithoutAntialiasing:^{
+            [self drawPDFWithName:pdfName cellSize:cellSize offset:offset stretch:stretch color:color antialiased:YES];
+        }];
+        return;
+    }
 
     NSString *pdfPath = [[NSBundle bundleForClass:self] pathForResource:pdfName ofType:@"pdf"];
     NSData* pdfData = [NSData dataWithContentsOfFile:pdfPath];
