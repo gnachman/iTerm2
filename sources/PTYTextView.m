@@ -3164,7 +3164,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         case kiTermWarningSelection2:
             theCommand = @"curl -L https://iterm2.com/shell_integration/install_shell_integration.sh | bash\n";
             break;
-        case kItermWarningSelectionError:
+        default:
             assert(false);
     }
     if (theCommand) {

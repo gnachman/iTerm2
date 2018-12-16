@@ -7075,6 +7075,9 @@ ITERM_WEAKLY_REFERENCEABLE
         spacesPerTab = [_pasteHelper numberOfSpacesToConvertTabsTo:theString];
         if (spacesPerTab >= 0) {
             tabTransform = kTabTransformConvertToSpaces;
+        } else if (spacesPerTab == kNumberOfSpacesPerTabOpenAdvancedPaste) {
+            [_pasteHelper showAdvancedPasteWithFlags:flags];
+            return;
         } else if (spacesPerTab == kNumberOfSpacesPerTabCancel) {
             return;
         }

@@ -11,6 +11,7 @@
 
 extern const int kNumberOfSpacesPerTabCancel;
 extern const int kNumberOfSpacesPerTabNoConversion;
+extern const int kNumberOfSpacesPerTabOpenAdvancedPaste;
 
 @class iTermStatusBarViewController;
 @class iTermVariableScope;
@@ -93,6 +94,8 @@ extern const int kNumberOfSpacesPerTabNoConversion;
 // Call this when a shell prompt begins. If pasting in "commands" mode this
 // allows one more line to be pasted.
 - (void)unblock;
+
+- (void)showAdvancedPasteWithFlags:(PTYSessionPasteFlags)flags;
 
 #pragma mark - Testing
 

@@ -26,6 +26,7 @@
 
 const int kNumberOfSpacesPerTabCancel = -2;
 const int kNumberOfSpacesPerTabNoConversion = -1;
+const int kNumberOfSpacesPerTabOpenAdvancedPaste = -3;
 
 @interface iTermPasteHelper () <iTermPasteViewManagerDelegate>
 @end
@@ -80,7 +81,9 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                                                   encoding:[_delegate pasteHelperEncoding]
                                           canWaitForPrompt:[_delegate pasteHelperCanWaitForPrompt]
                                            isAtShellPrompt:![_delegate pasteHelperShouldWaitForPrompt]
+                                        forceEscapeSymbols:NO
                                                 completion:^(PasteEvent *event) {
+                                                    event.suppressMultilinePasteWarning = YES;
                                                     [self tryToPasteEvent:event];
                                                     [iTermPreferences setInt:event.defaultChunkSize
                                                                       forKey:kPreferenceKeyPasteSpecialChunkSize];
@@ -201,13 +204,13 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     [self pasteString:theString slowly:slowly escapeShellChars:escapeShellChars isUpload:isUpload tabTransform:tabTransform spacesPerTab:spacesPerTab progress:nil];
 }
 
-- (void)pasteString:(NSString *)theString
-             slowly:(BOOL)slowly
-   escapeShellChars:(BOOL)escapeShellChars
-           isUpload:(BOOL)isUpload
-       tabTransform:(iTermTabTransformTags)tabTransform
-       spacesPerTab:(int)spacesPerTab
-           progress:(void (^)(NSInteger))progress {
+- (PasteEvent *)pasteEventWithString:(NSString *)theString
+                              slowly:(BOOL)slowly
+                    escapeShellChars:(BOOL)escapeShellChars
+                            isUpload:(BOOL)isUpload
+                        tabTransform:(iTermTabTransformTags)tabTransform
+                        spacesPerTab:(int)spacesPerTab
+                            progress:(void (^)(NSInteger))progress {
     NSUInteger bracketFlag = [_delegate pasteHelperShouldBracket] ? kPasteFlagsBracket : 0;
     NSUInteger flags = (kPasteFlagsSanitizingNewlines |
                         kPasteFlagsRemovingUnsafeControlCodes |
@@ -240,8 +243,26 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
                                             spacesPerTab:spacesPerTab
                                                    regex:nil
                                             substitution:nil];
+    event.slow = slowly;
     event.progress = progress;
     event.isUpload = isUpload;
+    return event;
+}
+
+- (void)pasteString:(NSString *)theString
+             slowly:(BOOL)slowly
+   escapeShellChars:(BOOL)escapeShellChars
+           isUpload:(BOOL)isUpload
+       tabTransform:(iTermTabTransformTags)tabTransform
+       spacesPerTab:(int)spacesPerTab
+           progress:(void (^)(NSInteger))progress {
+    PasteEvent *event = [self pasteEventWithString:theString
+                                            slowly:slowly
+                                  escapeShellChars:escapeShellChars
+                                          isUpload:isUpload
+                                      tabTransform:tabTransform
+                                      spacesPerTab:spacesPerTab
+                                          progress:progress];
     [self tryToPasteEvent:event];
 }
 
@@ -519,6 +540,9 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
         !atShellPrompt) {
         return YES;
     }
+    if (pasteEvent.suppressMultilinePasteWarning) {
+        return YES;
+    }
     NSArray *lines = [pasteEvent.string componentsSeparatedByRegex:@"(?:\r\n)|(?:\r)|(?:\n)"];
     NSString *theTitle;
     NSMutableArray<iTermWarningAction *> *actions = [NSMutableArray array];
@@ -566,7 +590,15 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     }
     // Issue 5115
     [iTermWarning unsilenceIdentifier:identifier ifSelectionEquals:[actions indexOfObjectIdenticalTo:cancel]];
-
+    [actions addObject:[iTermWarningAction warningActionWithLabel:@"Advanced…" block:^(iTermWarningSelection selection) {
+        PTYSessionPasteFlags flags = 0;
+        if (pasteEvent.slow) {
+            flags |= kPTYSessionPasteSlowly;
+            // The other two flags do not appear to be used
+        }
+        [self showAdvancedPasteWithFlags:flags];
+        result = NO;
+    }]];
     iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
     warning.title = theTitle;
     warning.warningActions = actions;
@@ -578,6 +610,32 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     return result;
 }
 
+- (void)showAdvancedPasteWithFlags:(PTYSessionPasteFlags)flags {
+    PasteEvent *temporaryEvent = [self pasteEventWithString:@""
+                                                     slowly:!!(flags & kPTYSessionPasteSlowly)
+                                           escapeShellChars:!!(flags & kPTYSessionPasteEscapingSpecialCharacters)
+                                                   isUpload:NO
+                                               tabTransform:kTabTransformNone
+                                               spacesPerTab:4
+                                                   progress:nil];
+    PasteContext *temporaryContext = [[[PasteContext alloc] initWithBytesPerCallPrefKey:temporaryEvent.chunkKey
+                                                                           defaultValue:temporaryEvent.defaultChunkSize
+                                                               delayBetweenCallsPrefKey:temporaryEvent.delayKey
+                                                                           defaultValue:temporaryEvent.defaultDelay] autorelease];
+    [iTermPasteSpecialWindowController showAsPanelInWindow:self.delegate.pasteHelperViewForIndicator.window
+                                                 chunkSize:temporaryContext.bytesPerCall
+                                        delayBetweenChunks:temporaryContext.delayBetweenCalls
+                                         bracketingEnabled:[self.delegate pasteHelperShouldBracket]
+                                                  encoding:[_delegate pasteHelperEncoding]
+                                          canWaitForPrompt:[_delegate pasteHelperCanWaitForPrompt]
+                                           isAtShellPrompt:![_delegate pasteHelperShouldWaitForPrompt]
+                                        forceEscapeSymbols:!!(flags & kPTYSessionPasteEscapingSpecialCharacters)
+                                                completion:^(PasteEvent *event) {
+                                                    event.suppressMultilinePasteWarning = YES;
+                                                    [self tryToPasteEvent:event];
+                                                }];
+}
+
 - (int)numberOfSpacesToConvertTabsTo:(NSString *)source {
     if ([source rangeOfString:@"\t"].location != NSNotFound) {
         iTermNumberOfSpacesAccessoryViewController *accessoryController =
@@ -585,7 +643,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
 
         iTermWarningSelection selection =
             [iTermWarning showWarningWithTitle:@"You're about to paste a string with tabs."
-                                       actions:@[ @"Paste with tabs", @"Cancel", @"Convert tabs to spaces" ]
+                                       actions:@[ @"OK", @"Cancel", @"Convert tabs to spaces", @"Advanced…" ]
                                      accessory:accessoryController.view
                                     identifier:@"AboutToPasteTabsWithCancel"
                                    silenceable:kiTermWarningTypePermanentlySilenceable
@@ -598,6 +656,8 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
             case kiTermWarningSelection2:  // Convert to spaces
                 [accessoryController saveToUserDefaults];
                 return accessoryController.numberOfSpaces;
+            case kiTermWarningSelection3:  // Advanced
+                return kNumberOfSpacesPerTabOpenAdvancedPaste;
             default:
                 return kNumberOfSpacesPerTabNoConversion;
         }

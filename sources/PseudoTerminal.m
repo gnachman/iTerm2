@@ -8901,8 +8901,7 @@ ITERM_WEAKLY_REFERENCEABLE
                  return @[];
              case kiTermWarningSelection1:
                  return okSessions;
-             case kiTermWarningSelection2:
-             case kItermWarningSelectionError:
+             default:
                  break;  // shouldn't happen
          }
          return @[];

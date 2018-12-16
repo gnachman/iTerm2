@@ -20,6 +20,7 @@ typedef void (^iTermPasteSpecialCompletionBlock)(PasteEvent *pasteEvent);
                    encoding:(NSStringEncoding)encoding
            canWaitForPrompt:(BOOL)canWaitForPrompt
             isAtShellPrompt:(BOOL)isAtShellPrompt
+         forceEscapeSymbols:(BOOL)forceEscapeSymbols
                  completion:(iTermPasteSpecialCompletionBlock)completion;
 
 @end

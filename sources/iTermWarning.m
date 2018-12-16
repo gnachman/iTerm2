@@ -272,6 +272,10 @@ static BOOL gShowingWarning;
             selection = [self.class remapSelection:kiTermWarningSelection2 withMapping:_actionToSelectionMap];
             remember = ![_warningActions[2].label isEqualToString:_cancelLabel];
             break;
+        case NSAlertThirdButtonReturn + 1:
+            selection = [self.class remapSelection:kiTermWarningSelection3 withMapping:_actionToSelectionMap];
+            remember = ![_warningActions[3].label isEqualToString:_cancelLabel];
+            break;
         default:
             selection = kItermWarningSelectionError;
     }

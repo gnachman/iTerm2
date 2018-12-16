@@ -17,9 +17,9 @@ typedef NS_ENUM(NSInteger, iTermTabTransformTags) {
 
 // These flags are used on the tags in menu items.
 typedef NS_OPTIONS(unsigned int, PTYSessionPasteFlags) {
-    kPTYSessionPasteEscapingSpecialCharacters = (1 << 0),
+    kPTYSessionPasteEscapingSpecialCharacters = (1 << 0),  // Does not appear to be used
     kPTYSessionPasteSlowly = (1 << 1),
-    kPTYSessionPasteWithShellEscapedTabs = (1 << 2)
+    kPTYSessionPasteWithShellEscapedTabs = (1 << 2)  // Does not appear to be used.
 };
 
 typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
@@ -59,6 +59,11 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
 @property(nonatomic, copy) NSString *substitution;
 @property(nonatomic, assign) BOOL isUpload;
 @property(nonatomic, copy) void (^progress)(NSInteger);
+@property(nonatomic, assign) BOOL suppressMultilinePasteWarning;
+// The actual speed is conveyed in the chunkKey/defaultChunkSize, delayKey,
+// defaultDelay but this expresses the intent. If YES, the intent was slow. If
+// NO, no intent was expressed.
+@property(nonatomic, assign) BOOL slow;
 
 + (instancetype)pasteEventWithString:(NSString *)string
                                flags:(iTermPasteFlags)flags

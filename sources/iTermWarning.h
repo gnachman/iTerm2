@@ -17,6 +17,7 @@ typedef NS_ENUM(NSInteger, iTermWarningSelection) {
     kiTermWarningSelection0,  // First passed-in action
     kiTermWarningSelection1,  // Second passed-in action
     kiTermWarningSelection2,  // Third passed-in action
+    kiTermWarningSelection3,  // Fourth passed-in action
     kItermWarningSelectionError,  // Something went wrong.
 };
 
