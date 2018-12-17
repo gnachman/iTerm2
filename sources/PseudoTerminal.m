@@ -4171,6 +4171,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [self updateTransparencyBeforeTogglingTraditionalFullScreenMode];
     _fullScreen = !_fullScreen;
     [self didToggleTraditionalFullScreenModeWithSavedToolbeltWidth:savedToolbeltWidth];
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
+    [itad didToggleTraditionalFullScreenMode];
 }
 
 - (void)didExitTraditionalFullScreenMode {

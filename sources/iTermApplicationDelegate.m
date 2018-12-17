@@ -213,6 +213,8 @@ static BOOL hasBecomeActive = NO;
         iTermUntitledFileOpenComplete,
         iTermUntitledFileOpenDisallowed
     } _untitledFileOpenStatus;
+    
+    BOOL _disableTermination;
 }
 
 - (instancetype)init {
@@ -652,10 +654,28 @@ static BOOL hasBecomeActive = NO;
                afterDelay:[iTermAdvancedSettingsModel updateScreenParamsDelay]];
 }
 
+- (void)didToggleTraditionalFullScreenMode {
+    // LOL
+    // When you have only one window, and you do windowController.window = something new
+    // then it thinks you closed the only window and asks if you want to terminate the
+    // app. We run into this problem with compact windows, as other window types are
+    // able to simply change the window style without actually replacing the window.
+    // This awful hack catches that case. It takes two spins of the runloop because
+    // everything is terrible.
+    _disableTermination = YES;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            _disableTermination = NO;
+        });
+    });
+}
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)theNotification {
     DLog(@"applicationShouldTerminate:");
     NSArray *terminals;
-
+    if (_disableTermination) {
+        return NSTerminateCancel;
+    }
+    
     terminals = [[iTermController sharedInstance] terminals];
     int numSessions = 0;
 
