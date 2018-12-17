@@ -12,32 +12,6 @@
 
 static NSString *const iTermTupleValueKey = @"value";
 
-// https://www.mikeash.com/pyblog/friday-qa-2010-06-18-implementing-equality-and-hashing.html
-// NOTE: This does not compose well. Use iTermCombineHash if you need to chain hashes.
-static NSUInteger iTermMikeAshHash(NSUInteger hash1, NSUInteger hash2) {
-    static const int rot = (CHAR_BIT * sizeof(NSUInteger)) / 2;
-    return hash1 ^ ((hash2 << rot) | (hash2 >> rot));
-}
-
-// http://www.cse.yorku.ca/~oz/hash.html
-static NSUInteger iTermDJB2Hash(unsigned char *bytes, size_t length) {
-    NSUInteger hash = 5381;
-
-    for (NSUInteger i = 0; i < length; i++) {
-        unichar c = bytes[i];
-        hash = (hash * 33) ^ c;
-    }
-
-    return hash;
-}
-
-static NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
-    unsigned char hash1Bytes[sizeof(NSUInteger)];
-    memmove(hash1Bytes, &hash1, sizeof(hash1));
-    return iTermMikeAshHash(hash2, iTermDJB2Hash(hash1Bytes, sizeof(hash1)));
-}
-
-
 @implementation iTermTuple
 
 + (instancetype)tupleWithObject:(id)firstObject andObject:(id)secondObject {

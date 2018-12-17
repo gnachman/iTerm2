@@ -63,3 +63,11 @@ ANSI:
  ╳
 ╱ ╲
    
+POWERLINE
+
+[31m
+git     LN      Lock    SolidRt  Rt      SoldLf  Lf
+                                           
+[0m
+git     LN      Lock    SolidRt  Rt      SoldLf  Lf
+                                           

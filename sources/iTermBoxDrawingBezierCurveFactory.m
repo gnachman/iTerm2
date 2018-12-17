@@ -10,6 +10,7 @@
 
 #import "iTermAdvancedSettingsModel.h"
 #import "charmaps.h"
+#import "iTermImageCache.h"
 #import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
 
@@ -193,78 +194,140 @@
     [[NSGraphicsContext currentContext] setImageInterpolation:saved];
 }
 
-+ (void)drawPowerlineCode:(unichar)code cellSize:(NSSize)cellSize offset:(CGPoint)offset color:(NSColor *)color {
++ (void)drawPowerlineCode:(unichar)code cellSize:(NSSize)cellSize color:(NSColor *)color {
     switch (code) {
         case 0xE0A0:
-            [self drawPDFWithName:@"PowerlineVersionControlBranch" cellSize:cellSize offset:offset stretch:NO color:color antialiased:YES];
+            [self drawPDFWithName:@"PowerlineVersionControlBranch" cellSize:cellSize stretch:NO color:color antialiased:YES];
             break;
 
         case 0xE0A1:
-            [self drawPDFWithName:@"PowerlineLN" cellSize:cellSize offset:offset stretch:NO color:color antialiased:NO];
+            [self drawPDFWithName:@"PowerlineLN" cellSize:cellSize stretch:NO color:color antialiased:NO];
             break;
 
         case 0xE0A2:
-            [self drawPDFWithName:@"PowerlinePadlock" cellSize:cellSize offset:offset stretch:NO color:color antialiased:YES];
+            [self drawPDFWithName:@"PowerlinePadlock" cellSize:cellSize stretch:NO color:color antialiased:YES];
             break;
         case 0xE0B0:
-            [self drawPDFWithName:@"PowerlineSolidRightArrow" cellSize:cellSize offset:offset stretch:YES color:color antialiased:YES];
+            [self drawPDFWithName:@"PowerlineSolidRightArrow" cellSize:cellSize stretch:YES color:color antialiased:YES];
             break;
         case 0xE0B2:
-            [self drawPDFWithName:@"PowerlineSolidLeftArrow" cellSize:cellSize offset:offset stretch:YES color:color antialiased:YES];
+            [self drawPDFWithName:@"PowerlineSolidLeftArrow" cellSize:cellSize stretch:YES color:color antialiased:YES];
             break;
         case 0xE0B1:
-            [self drawPDFWithName:@"PowerlineLineRightArrow" cellSize:cellSize offset:offset stretch:YES color:color antialiased:YES];
+            [self drawPDFWithName:@"PowerlineLineRightArrow" cellSize:cellSize stretch:YES color:color antialiased:YES];
             break;
         case 0xE0B3:
-            [self drawPDFWithName:@"PowerlineLineLeftArrow" cellSize:cellSize offset:offset stretch:YES color:color antialiased:YES];
+            [self drawPDFWithName:@"PowerlineLineLeftArrow" cellSize:cellSize stretch:YES color:color antialiased:YES];
             break;
     }
 }
 
-+ (void)drawPDFWithName:(NSString *)pdfName cellSize:(NSSize)cellSize offset:(CGPoint)offset stretch:(BOOL)stretch color:(NSColor *)color antialiased:(BOOL)antialiased {
++ (NSImage *)bitmapForImage:(NSImage *)image {
+    NSSize size = image.size;
+    return [NSImage imageOfSize:size drawBlock:^{
+        [image drawInRect:NSMakeRect(0, 0, size.width, size.height)
+                 fromRect:NSZeroRect
+                operation:NSCompositingOperationSourceOver
+                 fraction:1];
+    }];
+}
+
++ (NSImage *)imageForPDFNamed:(NSString *)pdfName
+                     cellSize:(NSSize)cellSize
+                  antialiased:(BOOL)antialiased
+                        color:(NSColor *)color {
+    static iTermImageCache *cache;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cache = [[iTermImageCache alloc] initWithByteLimit:1024 * 1024];
+    });
+    NSImage *image = [cache imageWithName:pdfName size:cellSize color:color];
+    if (image) {
+        return image;
+    }
+
+    if (color) {
+        image = [cache imageWithName:pdfName size:cellSize color:nil];
+    }
+    
+    if (!image) {
+        image = [self newImageForPDFNamed:pdfName
+                                 cellSize:cellSize
+                              antialiased:antialiased];
+        image = [self bitmapForImage:image];
+        [cache addImage:image name:pdfName size:cellSize color:nil];
+    }
+    if (color) {
+        image = [image imageWithColor:color];
+        image = [self bitmapForImage:image];
+        [cache addImage:image name:pdfName size:cellSize color:color];
+    }
+    return image;
+}
+
++ (NSImage *)newImageForPDFNamed:(NSString *)pdfName
+                        cellSize:(NSSize)cellSize
+                     antialiased:(BOOL)antialiased {
     if (!antialiased) {
+        __block NSImage *image = nil;
         [self performBlockWithoutAntialiasing:^{
-            [self drawPDFWithName:pdfName cellSize:cellSize offset:offset stretch:stretch color:color antialiased:YES];
+            image = [self newImageForPDFNamed:pdfName
+                                     cellSize:cellSize
+                                  antialiased:YES];
         }];
-        return;
+        return image;
     }
 
     NSString *pdfPath = [[NSBundle bundleForClass:self] pathForResource:pdfName ofType:@"pdf"];
     NSData* pdfData = [NSData dataWithContentsOfFile:pdfPath];
     NSPDFImageRep *pdfImageRep = [NSPDFImageRep imageRepWithData:pdfData];
-    const CGFloat pdfAspectRatio = pdfImageRep.size.width / pdfImageRep.size.height;
-    const CGFloat cellAspectRatio = cellSize.width / cellSize.height;
-    NSRect destination;
+    NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(pdfImageRep.size.width * 2,
+                                                              pdfImageRep.size.height * 2)];
+    [image addRepresentation:pdfImageRep];
+    return image;
+}
+
++ (NSRect)drawingDestinationForImageOfSize:(NSSize)imageSize
+                           destinationSize:(NSSize)destinationSize
+                                   stretch:(BOOL)stretch {
+    const CGFloat pdfAspectRatio = imageSize.width / imageSize.height;
+    const CGFloat cellAspectRatio = destinationSize.width / destinationSize.height;
+
     if (stretch) {
-        destination = NSMakeRect(0, 0, cellSize.width, cellSize.height);
-    } else if (pdfAspectRatio > cellAspectRatio) {
+        return NSMakeRect(0, 0, destinationSize.width, destinationSize.height);
+    }
+    
+    if (pdfAspectRatio > cellAspectRatio) {
         // PDF is wider than cell, so letterbox top and bottom
-        const CGFloat letterboxHeight = (cellSize.height - cellSize.width / pdfAspectRatio) / 2;
-        destination = NSMakeRect(0, letterboxHeight, cellSize.width, cellSize.height - letterboxHeight * 2);
-    } else {
-        // PDF is taller than cell so pillarbox left and right
-        const CGFloat pillarboxWidth = (cellSize.width - cellSize.height * pdfAspectRatio) / 2;
-        destination = NSMakeRect(pillarboxWidth, 0, cellSize.width - pillarboxWidth * 2, cellSize.height);
+        const CGFloat letterboxHeight = (destinationSize.height - destinationSize.width / pdfAspectRatio) / 2;
+        return NSMakeRect(0, letterboxHeight, destinationSize.width, destinationSize.height - letterboxHeight * 2);
     }
-    if (color) {
-        NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(pdfImageRep.size.width * 2,
-                                                                  pdfImageRep.size.height * 2)];
-        [image addRepresentation:pdfImageRep];
-        image = [image imageWithColor:color];
-        [image drawInRect:destination
-                 fromRect:NSZeroRect
-                operation:NSCompositingOperationSourceOver
-                 fraction:1
-           respectFlipped:YES
-                    hints:nil];
-        return;
-    }
-    [pdfImageRep drawInRect:destination
-                   fromRect:NSZeroRect
-                  operation:NSCompositingOperationSourceOver
-                   fraction:1
-             respectFlipped:YES
-                      hints:nil];
+
+    // PDF is taller than cell so pillarbox left and right
+    const CGFloat pillarboxWidth = (destinationSize.width - destinationSize.height * pdfAspectRatio) / 2;
+    return NSMakeRect(pillarboxWidth, 0, destinationSize.width - pillarboxWidth * 2, destinationSize.height);
+}
+
++ (void)drawPDFWithName:(NSString *)pdfName
+               cellSize:(NSSize)cellSize
+                stretch:(BOOL)stretch
+                  color:(NSColor *)color
+            antialiased:(BOOL)antialiased {
+   
+    NSImage *image = [self imageForPDFNamed:pdfName
+                                   cellSize:cellSize
+                                antialiased:antialiased
+                                      color:color];
+    NSImageRep *imageRep = [[image representations] firstObject];
+    NSRect destination = [self drawingDestinationForImageOfSize:imageRep.size
+                                                destinationSize:cellSize
+                                                        stretch:stretch];
+    [imageRep drawInRect:destination
+                fromRect:NSZeroRect
+               operation:NSCompositingOperationSourceOver
+                fraction:1
+          respectFlipped:YES
+                   hints:nil];
 }
 
 + (void)drawCodeInCurrentContext:(unichar)code
@@ -284,7 +347,6 @@
             case 0xE0B3:  // Leftwards arrowhead
                 [self drawPowerlineCode:code
                                cellSize:cellSize
-                                 offset:offset
                                   color:color];
                 return;
         }
