@@ -55,7 +55,7 @@
 #import "iTermModifierRemapper.h"
 #import "iTermPreferences.h"
 #import "iTermPythonRuntimeDownloader.h"
-#import "iTermRemotePreferences.h"
+#import "iTermScriptImporter.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermOpenQuicklyWindowController.h"
 #import "iTermOrphanServerAdopter.h"
@@ -72,6 +72,7 @@
 #import "iTermQuickLookController.h"
 #import "iTermRemotePreferences.h"
 #import "iTermRestorableSession.h"
+#import "iTermRemotePreferences.h"
 #import "iTermScriptsMenuController.h"
 #import "iTermSystemVersion.h"
 #import "iTermTipController.h"
@@ -545,6 +546,23 @@ static BOOL hasBecomeActive = NO;
  */
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename {
     DLog(@"application:%@ openFile:%@", theApplication, filename);
+    if ([[filename pathExtension] isEqualToString:@"itermscript"]) {
+        [iTermScriptImporter importScriptFromURL:[NSURL fileURLWithPath:filename]
+                                   userInitiated:NO
+                                      completion:^(NSString * _Nullable errorMessage) {
+                                          if (errorMessage) {
+                                              NSAlert *alert = [[NSAlert alloc] init];
+                                              alert.messageText = @"Script Not Installed";
+                                              alert.informativeText = errorMessage;
+                                              [alert runModal];
+                                          } else {
+                                              NSAlert *alert = [[NSAlert alloc] init];
+                                              alert.messageText = @"Script Imported Successfully";
+                                              [alert runModal];
+                                          }
+                                      }];
+        return YES;
+    }
     if ([filename hasSuffix:@".itermcolors"]) {
         DLog(@"Importing color presets from %@", filename);
         if ([iTermColorPresets importColorPresetFromFile:filename]) {

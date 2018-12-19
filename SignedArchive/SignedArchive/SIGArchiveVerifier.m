@@ -23,6 +23,7 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
 
 @implementation SIGArchiveVerifier {
     SIGArchiveReader *_reader;
+    NSError *_readerLoadError;
     SIGTrust *_trust;
     NSInputStream *_payloadInputStream;
     SIGCertificate *_certificate;
@@ -37,6 +38,27 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
         _url = url;
     }
     return self;
+}
+
+- (BOOL)smellsLikeSignedArchive:(out NSError **)error {
+    if (!self.reader) {
+        return NO;
+    }
+    
+    NSString *header = [self.reader header:error];
+    if (!header) {
+        return NO;
+    }
+
+    const BOOL ok = [header isEqualToString:SIGArchiveHeaderMagicString];
+    if (error) {
+        if (ok) {
+            *error = nil;
+        } else {
+            *error = [SIGError errorWithCode:SIGErrorCodeMalformedHeader];
+        }
+    }
+    return ok;
 }
 
 - (void)verifyWithCompletion:(void (^)(BOOL, NSError *))completion {
@@ -57,6 +79,7 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
 
         NSError *internalError = nil;
         const BOOL verified = [self verify:&internalError];
+        self->_verified = verified;
         completion(verified, internalError);
     }];
 }
@@ -76,11 +99,14 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
     }];
 }
 
-#pragma mark - Private
-
 - (BOOL)copyPayloadToURL:(NSURL *)url
                    error:(out NSError **)errorOut {
-
+    if (!_verified) {
+        if (errorOut) {
+            *errorOut = [SIGError errorWithCode:SIGErrorCodeConsistency detail:@"Application error: archive not verified"];
+        }
+        return NO;
+    }
     NSError *error = nil;
     NSInputStream *readStream = [_reader payloadInputStream:&error];
     if (!readStream || error) {
@@ -131,6 +157,8 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
     }
     return YES;
 }
+
+#pragma mark - Private
 
 - (NSDictionary<NSString *, NSString *> *)metadataDictionaryFromString:(NSString *)metadata {
     NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
@@ -192,17 +220,11 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
 - (BOOL)prepareToVerify:(out NSError **)error {
     assert(!_prepared);
     _prepared = YES;
-    
-    _reader = [[SIGArchiveReader alloc] initWithURL:_url];
-    if (!_reader) {
+
+    if (!self.reader) {
         if (error) {
-            *error = [SIGError errorWithCode:SIGErrorCodeUnknown
-                                      detail:@"Could not create archive reader"];
+            *error = _readerLoadError;
         }
-        return NO;
-    }
-    
-    if (![_reader load:error]) {
         return NO;
     }
 
@@ -210,10 +232,7 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
     if (!header) {
         return NO;
     }
-    if (![header isEqualToString:SIGArchiveHeaderMagicString]) {
-        if (error) {
-            *error = [SIGError errorWithCode:SIGErrorCodeMalformedHeader];
-        }
+    if (![self smellsLikeSignedArchive:error]) {
         return NO;
     }
     
@@ -281,6 +300,26 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 1;
                           signatureData:_signatureData
                               publicKey:_certificate.publicKey.secKey
                                   error:error];
+}
+
+- (SIGArchiveReader *)reader {
+    if (!_reader && !_readerLoadError) {
+        [self createReader];
+    }
+    return _reader;
+}
+
+- (void)createReader {
+    _reader = [[SIGArchiveReader alloc] initWithURL:_url];
+    if (!_reader) {
+        _readerLoadError = [SIGError errorWithCode:SIGErrorCodeUnknown
+                                            detail:@"Could not create archive reader"];
+        return;
+    }
+    
+    NSError *error;
+    [_reader load:&error];
+    _readerLoadError = error;
 }
 
 @end

@@ -88,7 +88,7 @@
     sourceURLs = @[ [relativeURL URLByAppendingPathComponent:@"setup.py"],
                     [relativeURL URLByAppendingPathComponent:name] ];
 
-    NSString *extension = signingIdentity ? @"its" : @"zip";
+    NSString *extension = signingIdentity ? @"itermscript" : @"zip";
     NSURL *zipURL = [self urlForNewZipFileInFolder:destinationFolder name:name extension:extension];
     [iTermCommandRunner zipURLs:sourceURLs
                       arguments:@[ @"-r" ]

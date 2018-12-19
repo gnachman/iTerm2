@@ -945,13 +945,13 @@ DQ
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="4hk-FZ-gFt"/>
-                                        <menuItem title="Import" identifier="Import Script" id="hZE-iO-QIR">
+                                        <menuItem title="Import…" identifier="Import Script" id="hZE-iO-QIR">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="importScript:" target="201" id="eOl-HZ-58e"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Export" identifier="Export Script" id="dlj-rW-u7D">
+                                        <menuItem title="Export…" identifier="Export Script" id="dlj-rW-u7D">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="exportScript:" target="201" id="foG-lG-KnC"/>

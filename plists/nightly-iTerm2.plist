@@ -75,6 +75,24 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 		</dict>
+                <dict>
+                        <key>CFBundleTypeExtensions</key>
+                        <array>
+                                <string>itermscript</string>
+                        </array>
+                        <key>CFBundleTypeIconFile</key>
+                        <string>iTerm2Script.icns</string>
+                        <key>CFBundleTypeName</key>
+                        <string>iTerm2 Script</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Viewer</string>
+                        <key>LSItemContentTypes</key>
+                        <array>
+                          <string>public.data</string>
+                        </array>
+                        <key>LSHandlerRank</key>
+                        <string>Owner</string>
+                </dict>
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Shell</string>

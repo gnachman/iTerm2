@@ -70,6 +70,10 @@ NSString *const SIGArchiveHeaderMagicString = @"signed-archive";
         readError = [SIGError errorWithCode:SIGErrorCodeIORead
                                      detail:@"Short read"];
     }
+    if (!data && !readError) {
+        readError = [SIGError errorWithCode:SIGErrorCodeIORead
+                                     detail:@"Uncaught read failure"];
+    }
     if (error) {
         *error = readError;
     }

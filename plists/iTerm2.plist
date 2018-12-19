@@ -83,6 +83,24 @@
 				<string>public.unix-executable</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>itermscript</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>iTerm2Script.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>iTerm2 Script</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+                        <key>LSItemContentTypes</key>
+                        <array>
+                          <string>public.data</string>
+                        </array>
+                        <key>LSHandlerRank</key>
+                        <string>Owner</string>
+		</dict>
 	</array>
         <key>NSAppleEventsUsageDescription</key>
         <string>An application in iTerm2 wants to use AppleScript.</string>

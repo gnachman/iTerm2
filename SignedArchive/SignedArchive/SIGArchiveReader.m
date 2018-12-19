@@ -159,6 +159,12 @@
         [chunks addObject:chunk];
         offset = chunk.payloadOffset + chunk.payloadLength;
     }
+    if (offset > length) {
+        if (errorOut) {
+            *errorOut = [SIGError errorWithCode:SIGErrorCodeInputFileMalformed];
+        }
+        return NO;
+    }
     _chunks = [chunks copy];
     return YES;
 }

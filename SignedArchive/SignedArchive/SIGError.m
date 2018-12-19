@@ -16,7 +16,7 @@ NSString *const SIGErrorDomain = @"com.iterm2.sig";
     NSString *localizedDescription = [self localizedDescriptionFcode:code];
     return [SIGError errorWithDomain:SIGErrorDomain
                                 code:code
-                            userInfo:@{ NSLocalizedDescriptionKey: localizedDescription }];
+                            userInfo:@{ NSLocalizedDescriptionKey: [localizedDescription stringByAppendingString:@"."] }];
 }
 
 + (instancetype)errorWithCode:(SIGErrorCode)code detail:(NSString *)detail {
@@ -90,7 +90,7 @@ NSString *const SIGErrorDomain = @"com.iterm2.sig";
         case SIGErrorCodeTrustFailed:
             return @"Trust chain verification failed";
         case SIGErrorCodeSignatureDoesNotMatchPayload:
-            return @"Signature does not match payload. Do not use the file";
+            return @"Signature does not match payload";
     }
     return @"Unknown error";
 }

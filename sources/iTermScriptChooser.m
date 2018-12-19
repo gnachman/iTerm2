@@ -34,14 +34,13 @@
         [_signButton setAction:@selector(didToggleSignButton:)];
         _signButton.translatesAutoresizingMaskIntoConstraints = NO;
         _signButton.buttonType = NSSwitchButton;
-        _signButton.title = @"Code-sign exported script";
+        _signButton.title = @"Code-sign exported script using identity: ";
         [_signButton sizeToFit];
         [self addSubview:_signButton];
 
         _identityButton = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(22, 0, 400, 22) pullsDown:NO];
         _identityButton.translatesAutoresizingMaskIntoConstraints = NO;
         _identityButton.enabled = NO;
-        _identityButton.title = @"Signing Identity";
         [self addSubview:_identityButton];
         _identities = [SIGIdentity allSigningIdentities];
         [_identities enumerateObjectsUsingBlock:^(SIGIdentity * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {

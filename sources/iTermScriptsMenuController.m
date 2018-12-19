@@ -213,7 +213,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)chooseAndImportScript {
     NSOpenPanel *panel = [[NSOpenPanel alloc] init];
-    panel.allowedFileTypes = @[ @"zip" ];
+    panel.allowedFileTypes = @[ @"zip", @"itermscript" ];
     if ([panel runModal] == NSModalResponseOK) {
         NSURL *url = panel.URL;
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -224,6 +224,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)importFromURL:(NSURL *)url {
     [iTermScriptImporter importScriptFromURL:url
+                               userInitiated:YES
                                   completion:^(NSString * _Nullable errorMessage) {
                                       // Mojave deadlocks if you do this without the dispatch_async
                                       dispatch_async(dispatch_get_main_queue(), ^{

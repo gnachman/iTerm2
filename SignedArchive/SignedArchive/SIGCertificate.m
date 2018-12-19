@@ -61,6 +61,17 @@
     return (__bridge_transfer NSData *)SecCertificateCopyData(_secCertificate);
 }
 
+- (NSString *)name {
+    CFStringRef value;
+    const OSStatus status = SecCertificateCopyCommonName(_secCertificate,
+                                                         &value);
+    NSString *string = (__bridge_transfer NSString *)value;
+    if (string == NULL || status != noErr) {
+        return nil;
+    }
+    return string;
+}
+
 - (NSString *)longDescription {
     CFErrorRef error = NULL;
     NSString *value = (__bridge_transfer NSString *)SecCertificateCopyLongDescription(NULL,
