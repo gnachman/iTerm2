@@ -1243,6 +1243,37 @@
 		5365207621433F00003C58FD /* iTermGitPollWorker.m in Sources */ = {isa = PBXBuildFile; fileRef = 5365207421433F00003C58FD /* iTermGitPollWorker.m */; };
 		5365207921433F7A003C58FD /* iTermGitPoller.h in Headers */ = {isa = PBXBuildFile; fileRef = 5365207721433F7A003C58FD /* iTermGitPoller.h */; };
 		5365207A21433F7A003C58FD /* iTermGitPoller.m in Sources */ = {isa = PBXBuildFile; fileRef = 5365207821433F7A003C58FD /* iTermGitPoller.m */; };
+		5370678221C9D2780088D0F3 /* SIGArchiveChunk.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370676221C9D2700088D0F3 /* SIGArchiveChunk.h */; };
+		5370678321C9D2780088D0F3 /* SIGPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370676321C9D2710088D0F3 /* SIGPolicy.m */; };
+		5370678421C9D2780088D0F3 /* SIGTrust.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370676421C9D2720088D0F3 /* SIGTrust.h */; };
+		5370678521C9D2780088D0F3 /* SIGSHA2SigningAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370676521C9D2730088D0F3 /* SIGSHA2SigningAlgorithm.h */; };
+		5370678621C9D2780088D0F3 /* SIGError.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370676621C9D2730088D0F3 /* SIGError.m */; };
+		5370678721C9D2780088D0F3 /* SIGPartialInputStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370676721C9D2730088D0F3 /* SIGPartialInputStream.m */; };
+		5370678821C9D2780088D0F3 /* SIGPolicy.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370676821C9D2730088D0F3 /* SIGPolicy.h */; };
+		5370678921C9D2780088D0F3 /* SIGSHA2VerificationAlgorithm.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370676921C9D2740088D0F3 /* SIGSHA2VerificationAlgorithm.m */; };
+		5370678A21C9D2780088D0F3 /* SIGKey.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370676A21C9D2740088D0F3 /* SIGKey.m */; };
+		5370678B21C9D2780088D0F3 /* SIGError.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370676B21C9D2740088D0F3 /* SIGError.h */; };
+		5370678C21C9D2780088D0F3 /* SIGVerificationAlgorithm.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370676C21C9D2740088D0F3 /* SIGVerificationAlgorithm.m */; };
+		5370678D21C9D2780088D0F3 /* SIGArchiveVerifier.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370676D21C9D2740088D0F3 /* SIGArchiveVerifier.m */; };
+		5370678E21C9D2780088D0F3 /* SIGIdentity.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370676E21C9D2740088D0F3 /* SIGIdentity.m */; };
+		5370678F21C9D2780088D0F3 /* SIGSHA2VerificationAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370676F21C9D2750088D0F3 /* SIGSHA2VerificationAlgorithm.h */; };
+		5370679021C9D2780088D0F3 /* SIGArchiveChunk.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370677021C9D2750088D0F3 /* SIGArchiveChunk.m */; };
+		5370679121C9D2780088D0F3 /* SIGTrust.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370677121C9D2750088D0F3 /* SIGTrust.m */; };
+		5370679221C9D2780088D0F3 /* SIGIdentity.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677221C9D2750088D0F3 /* SIGIdentity.h */; };
+		5370679321C9D2780088D0F3 /* SIGPartialInputStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677321C9D2750088D0F3 /* SIGPartialInputStream.h */; };
+		5370679421C9D2780088D0F3 /* SIGKeychain.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370677421C9D2750088D0F3 /* SIGKeychain.m */; };
+		5370679521C9D2780088D0F3 /* SIGSigningAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677521C9D2760088D0F3 /* SIGSigningAlgorithm.h */; };
+		5370679621C9D2780088D0F3 /* SIGArchiveBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677621C9D2760088D0F3 /* SIGArchiveBuilder.h */; };
+		5370679721C9D2780088D0F3 /* SIGArchiveBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370677721C9D2760088D0F3 /* SIGArchiveBuilder.m */; };
+		5370679821C9D2780088D0F3 /* SIGSHA2SigningAlgorithm.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370677821C9D2760088D0F3 /* SIGSHA2SigningAlgorithm.m */; };
+		5370679921C9D2780088D0F3 /* SIGKeychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677921C9D2760088D0F3 /* SIGKeychain.h */; };
+		5370679A21C9D2780088D0F3 /* SIGArchiveVerifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677A21C9D2760088D0F3 /* SIGArchiveVerifier.h */; };
+		5370679B21C9D2780088D0F3 /* SIGVerificationAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677B21C9D2770088D0F3 /* SIGVerificationAlgorithm.h */; };
+		5370679C21C9D2780088D0F3 /* SIGCertificate.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677C21C9D2770088D0F3 /* SIGCertificate.h */; };
+		5370679D21C9D2780088D0F3 /* SIGKey.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677D21C9D2770088D0F3 /* SIGKey.h */; };
+		5370679E21C9D2780088D0F3 /* SIGArchiveReader.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677E21C9D2770088D0F3 /* SIGArchiveReader.h */; };
+		5370679F21C9D2780088D0F3 /* SIGCertificate.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370677F21C9D2770088D0F3 /* SIGCertificate.m */; };
+		537067A021C9D2780088D0F3 /* SIGArchiveReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370678021C9D2770088D0F3 /* SIGArchiveReader.m */; };
 		5370ECDA20F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370ECD820F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.h */; };
 		5370ECDB20F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370ECD920F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m */; };
 		5370F2EA1C7895F800874C0F /* QLPreviewPanel+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370F2E71C78958900874C0F /* QLPreviewPanel+iTerm.m */; };
@@ -3993,6 +4024,38 @@
 		5365207421433F00003C58FD /* iTermGitPollWorker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGitPollWorker.m; sourceTree = "<group>"; };
 		5365207721433F7A003C58FD /* iTermGitPoller.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGitPoller.h; sourceTree = "<group>"; };
 		5365207821433F7A003C58FD /* iTermGitPoller.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGitPoller.m; sourceTree = "<group>"; };
+		5370676221C9D2700088D0F3 /* SIGArchiveChunk.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGArchiveChunk.h; path = SignedArchive/SIGArchiveChunk.h; sourceTree = "<group>"; };
+		5370676321C9D2710088D0F3 /* SIGPolicy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGPolicy.m; path = SignedArchive/SIGPolicy.m; sourceTree = "<group>"; };
+		5370676421C9D2720088D0F3 /* SIGTrust.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGTrust.h; path = SignedArchive/SIGTrust.h; sourceTree = "<group>"; };
+		5370676521C9D2730088D0F3 /* SIGSHA2SigningAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGSHA2SigningAlgorithm.h; path = SignedArchive/SIGSHA2SigningAlgorithm.h; sourceTree = "<group>"; };
+		5370676621C9D2730088D0F3 /* SIGError.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGError.m; path = SignedArchive/SIGError.m; sourceTree = "<group>"; };
+		5370676721C9D2730088D0F3 /* SIGPartialInputStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGPartialInputStream.m; path = SignedArchive/SIGPartialInputStream.m; sourceTree = "<group>"; };
+		5370676821C9D2730088D0F3 /* SIGPolicy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGPolicy.h; path = SignedArchive/SIGPolicy.h; sourceTree = "<group>"; };
+		5370676921C9D2740088D0F3 /* SIGSHA2VerificationAlgorithm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGSHA2VerificationAlgorithm.m; path = SignedArchive/SIGSHA2VerificationAlgorithm.m; sourceTree = "<group>"; };
+		5370676A21C9D2740088D0F3 /* SIGKey.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGKey.m; path = SignedArchive/SIGKey.m; sourceTree = "<group>"; };
+		5370676B21C9D2740088D0F3 /* SIGError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGError.h; path = SignedArchive/SIGError.h; sourceTree = "<group>"; };
+		5370676C21C9D2740088D0F3 /* SIGVerificationAlgorithm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGVerificationAlgorithm.m; path = SignedArchive/SIGVerificationAlgorithm.m; sourceTree = "<group>"; };
+		5370676D21C9D2740088D0F3 /* SIGArchiveVerifier.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGArchiveVerifier.m; path = SignedArchive/SIGArchiveVerifier.m; sourceTree = "<group>"; };
+		5370676E21C9D2740088D0F3 /* SIGIdentity.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGIdentity.m; path = SignedArchive/SIGIdentity.m; sourceTree = "<group>"; };
+		5370676F21C9D2750088D0F3 /* SIGSHA2VerificationAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGSHA2VerificationAlgorithm.h; path = SignedArchive/SIGSHA2VerificationAlgorithm.h; sourceTree = "<group>"; };
+		5370677021C9D2750088D0F3 /* SIGArchiveChunk.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGArchiveChunk.m; path = SignedArchive/SIGArchiveChunk.m; sourceTree = "<group>"; };
+		5370677121C9D2750088D0F3 /* SIGTrust.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGTrust.m; path = SignedArchive/SIGTrust.m; sourceTree = "<group>"; };
+		5370677221C9D2750088D0F3 /* SIGIdentity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGIdentity.h; path = SignedArchive/SIGIdentity.h; sourceTree = "<group>"; };
+		5370677321C9D2750088D0F3 /* SIGPartialInputStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGPartialInputStream.h; path = SignedArchive/SIGPartialInputStream.h; sourceTree = "<group>"; };
+		5370677421C9D2750088D0F3 /* SIGKeychain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGKeychain.m; path = SignedArchive/SIGKeychain.m; sourceTree = "<group>"; };
+		5370677521C9D2760088D0F3 /* SIGSigningAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGSigningAlgorithm.h; path = SignedArchive/SIGSigningAlgorithm.h; sourceTree = "<group>"; };
+		5370677621C9D2760088D0F3 /* SIGArchiveBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGArchiveBuilder.h; path = SignedArchive/SIGArchiveBuilder.h; sourceTree = "<group>"; };
+		5370677721C9D2760088D0F3 /* SIGArchiveBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGArchiveBuilder.m; path = SignedArchive/SIGArchiveBuilder.m; sourceTree = "<group>"; };
+		5370677821C9D2760088D0F3 /* SIGSHA2SigningAlgorithm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGSHA2SigningAlgorithm.m; path = SignedArchive/SIGSHA2SigningAlgorithm.m; sourceTree = "<group>"; };
+		5370677921C9D2760088D0F3 /* SIGKeychain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGKeychain.h; path = SignedArchive/SIGKeychain.h; sourceTree = "<group>"; };
+		5370677A21C9D2760088D0F3 /* SIGArchiveVerifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGArchiveVerifier.h; path = SignedArchive/SIGArchiveVerifier.h; sourceTree = "<group>"; };
+		5370677B21C9D2770088D0F3 /* SIGVerificationAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGVerificationAlgorithm.h; path = SignedArchive/SIGVerificationAlgorithm.h; sourceTree = "<group>"; };
+		5370677C21C9D2770088D0F3 /* SIGCertificate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGCertificate.h; path = SignedArchive/SIGCertificate.h; sourceTree = "<group>"; };
+		5370677D21C9D2770088D0F3 /* SIGKey.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGKey.h; path = SignedArchive/SIGKey.h; sourceTree = "<group>"; };
+		5370677E21C9D2770088D0F3 /* SIGArchiveReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGArchiveReader.h; path = SignedArchive/SIGArchiveReader.h; sourceTree = "<group>"; };
+		5370677F21C9D2770088D0F3 /* SIGCertificate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGCertificate.m; path = SignedArchive/SIGCertificate.m; sourceTree = "<group>"; };
+		5370678021C9D2770088D0F3 /* SIGArchiveReader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGArchiveReader.m; path = SignedArchive/SIGArchiveReader.m; sourceTree = "<group>"; };
+		5370678121C9D2780088D0F3 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = SignedArchive/Info.plist; sourceTree = "<group>"; };
 		5370ECD820F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStatusBarRPCProvidedTextComponent.h; sourceTree = "<group>"; };
 		5370ECD920F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarRPCProvidedTextComponent.m; sourceTree = "<group>"; };
 		5370F2E61C78958900874C0F /* QLPreviewPanel+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "QLPreviewPanel+iTerm.h"; sourceTree = "<group>"; };
@@ -5573,6 +5636,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				5370676121C9D2390088D0F3 /* SignedArchive */,
 				530AB7EC20AE85DE00D2AA08 /* api */,
 				A6889E84213274E600ABB237 /* iTerm2.entitlements */,
 				A6D22A701BC8C27E004084E0 /* NSManagedObjects */,
@@ -6821,6 +6885,45 @@
 				530AB89320AE85DF00D2AA08 /* README.md */,
 			);
 			path = python;
+			sourceTree = "<group>";
+		};
+		5370676121C9D2390088D0F3 /* SignedArchive */ = {
+			isa = PBXGroup;
+			children = (
+				5370678121C9D2780088D0F3 /* Info.plist */,
+				5370677621C9D2760088D0F3 /* SIGArchiveBuilder.h */,
+				5370677721C9D2760088D0F3 /* SIGArchiveBuilder.m */,
+				5370676221C9D2700088D0F3 /* SIGArchiveChunk.h */,
+				5370677021C9D2750088D0F3 /* SIGArchiveChunk.m */,
+				5370677E21C9D2770088D0F3 /* SIGArchiveReader.h */,
+				5370678021C9D2770088D0F3 /* SIGArchiveReader.m */,
+				5370677A21C9D2760088D0F3 /* SIGArchiveVerifier.h */,
+				5370676D21C9D2740088D0F3 /* SIGArchiveVerifier.m */,
+				5370677C21C9D2770088D0F3 /* SIGCertificate.h */,
+				5370677F21C9D2770088D0F3 /* SIGCertificate.m */,
+				5370676B21C9D2740088D0F3 /* SIGError.h */,
+				5370676621C9D2730088D0F3 /* SIGError.m */,
+				5370677221C9D2750088D0F3 /* SIGIdentity.h */,
+				5370676E21C9D2740088D0F3 /* SIGIdentity.m */,
+				5370677D21C9D2770088D0F3 /* SIGKey.h */,
+				5370676A21C9D2740088D0F3 /* SIGKey.m */,
+				5370677921C9D2760088D0F3 /* SIGKeychain.h */,
+				5370677421C9D2750088D0F3 /* SIGKeychain.m */,
+				5370677321C9D2750088D0F3 /* SIGPartialInputStream.h */,
+				5370676721C9D2730088D0F3 /* SIGPartialInputStream.m */,
+				5370676821C9D2730088D0F3 /* SIGPolicy.h */,
+				5370676321C9D2710088D0F3 /* SIGPolicy.m */,
+				5370676521C9D2730088D0F3 /* SIGSHA2SigningAlgorithm.h */,
+				5370677821C9D2760088D0F3 /* SIGSHA2SigningAlgorithm.m */,
+				5370676F21C9D2750088D0F3 /* SIGSHA2VerificationAlgorithm.h */,
+				5370676921C9D2740088D0F3 /* SIGSHA2VerificationAlgorithm.m */,
+				5370677521C9D2760088D0F3 /* SIGSigningAlgorithm.h */,
+				5370676421C9D2720088D0F3 /* SIGTrust.h */,
+				5370677121C9D2750088D0F3 /* SIGTrust.m */,
+				5370677B21C9D2770088D0F3 /* SIGVerificationAlgorithm.h */,
+				5370676C21C9D2740088D0F3 /* SIGVerificationAlgorithm.m */,
+			);
+			path = SignedArchive;
 			sourceTree = "<group>";
 		};
 		53EBF29A1DCBFF6D00766613 /* API */ = {
@@ -9078,11 +9181,13 @@
 				530AB8AB20B2013000D2AA08 /* iTermFunctionCallParser.h in Headers */,
 				A655E6952066C78700DC21B9 /* iTermScrollAccumulator.h in Headers */,
 				A631FC8D20EDDAEA00EB824F /* iTermSearchFieldCell.h in Headers */,
+				5370679621C9D2780088D0F3 /* SIGArchiveBuilder.h in Headers */,
 				A65EC0331F3181E700AC0A6B /* NSTimer+iTerm.h in Headers */,
 				A667190D1DCE36C3000CE608 /* iTermHostRecordMO+CoreDataProperties.h in Headers */,
 				A62A1F711E6E724B00363EE9 /* iTermMenuOpener.h in Headers */,
 				A667190E1DCE36C3000CE608 /* iTermMark.h in Headers */,
 				530AB8A720B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.h in Headers */,
+				5370679521C9D2780088D0F3 /* SIGSigningAlgorithm.h in Headers */,
 				53FF984B20967806008688D7 /* iTermMetalDeviceProvider.h in Headers */,
 				A60C0393208F8B5000FE2F1F /* iTermScriptsMenuController.h in Headers */,
 				A6E34BD02118097A00F147DD /* iTermBackgroundDrawingHelper.h in Headers */,
@@ -9108,6 +9213,7 @@
 				5337A315203E065300024BEA /* iTermPowerManager.h in Headers */,
 				A6588829201F06ED006F48DB /* iTermTexture.h in Headers */,
 				A6AB55E0217256A600142244 /* iTermLineBlockArray.h in Headers */,
+				5370678F21C9D2780088D0F3 /* SIGSHA2VerificationAlgorithm.h in Headers */,
 				A66719161DCE36C3000CE608 /* NSURL+iTerm.h in Headers */,
 				A66719171DCE36C3000CE608 /* NSDate+iTerm.h in Headers */,
 				A66719181DCE36C3000CE608 /* iTermBaseHotKey.h in Headers */,
@@ -9160,6 +9266,7 @@
 				A6257C18217707BB00A8C5BD /* iTermAdjustFontSizeHelper.h in Headers */,
 				53FF982A2093C823008688D7 /* iTermSignatureVerifier.h in Headers */,
 				A66719281DCE36C3000CE608 /* iTermEventTap.h in Headers */,
+				5370678221C9D2780088D0F3 /* SIGArchiveChunk.h in Headers */,
 				A630117620E6971D008114B7 /* iTermStatusBarTextComponent.h in Headers */,
 				A66719291DCE36C3000CE608 /* iTermCommandHistoryEntryMO+CoreDataProperties.h in Headers */,
 				530AB8C020B4E1DE00D2AA08 /* iTermRPCTrigger.h in Headers */,
@@ -9171,8 +9278,10 @@
 				53FF84E2217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.h in Headers */,
 				A667192A1DCE36C3000CE608 /* iTermRecentDirectoryMO+Additions.h in Headers */,
 				A667192B1DCE36C3000CE608 /* iTermRoundedCornerScrollView.h in Headers */,
+				5370679A21C9D2780088D0F3 /* SIGArchiveVerifier.h in Headers */,
 				A69A260B21640F3F0091C16D /* iTermFlexibleView.h in Headers */,
 				A6180D6C21A35D5E0073F219 /* iTermMetalPerFrameState.h in Headers */,
+				5370679321C9D2780088D0F3 /* SIGPartialInputStream.h in Headers */,
 				A667192C1DCE36C3000CE608 /* iTermPreciseTimer.h in Headers */,
 				A68400BC1FF98101008D3EE2 /* iTermTimestampsRenderer.h in Headers */,
 				A630117120E60DBF008114B7 /* iTermStatusBarView.h in Headers */,
@@ -9194,6 +9303,7 @@
 				A68AC8F31F05C0860023A216 /* NSBundle+iTerm.h in Headers */,
 				A630118D20E6B71A008114B7 /* iTermStatusBarSetupCollectionViewItem.h in Headers */,
 				A69C9332212108BC00531438 /* iTermStatusBarComposerComponent.h in Headers */,
+				5370678421C9D2780088D0F3 /* SIGTrust.h in Headers */,
 				53C2D3A52152CA3900FF6471 /* NSUserDefaults+iTerm.h in Headers */,
 				A6047134213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h in Headers */,
 				A66719331DCE36C3000CE608 /* iTermWebSocketFrame.h in Headers */,
@@ -9213,6 +9323,7 @@
 				A66719391DCE36C3000CE608 /* iTermColorPresets.h in Headers */,
 				A667193A1DCE36C3000CE608 /* iTermProfileHotKey.h in Headers */,
 				A667193B1DCE36C3000CE608 /* iTermIPV4Address.h in Headers */,
+				5370679E21C9D2780088D0F3 /* SIGArchiveReader.h in Headers */,
 				A66F3CF01FEA3D9E00AA2021 /* iTermHistogram.h in Headers */,
 				A667193C1DCE36C3000CE608 /* iTermThroughputEstimator.h in Headers */,
 				53850903212FA8910039AFC7 /* iTermMetaFrustrationDetector.h in Headers */,
@@ -9265,18 +9376,23 @@
 				A63011C820E8518A008114B7 /* iTermStatusBarFixedSpacerComponent.h in Headers */,
 				A667194A1DCE36C3000CE608 /* iTermSessionHotkeyController.h in Headers */,
 				53C166AA20C21FBB003B03AF /* iTermMigrationHelper.h in Headers */,
+				5370679C21C9D2780088D0F3 /* SIGCertificate.h in Headers */,
 				A65EC02F1F31800300AC0A6B /* iTermUpdateCadenceController.h in Headers */,
 				5365207921433F7A003C58FD /* iTermGitPoller.h in Headers */,
 				A6B41405211A579300D28207 /* iTermStoplightHotbox.h in Headers */,
 				530AB8C420B5284A00D2AA08 /* iTermFocusReportingTextField.h in Headers */,
+				5370678521C9D2780088D0F3 /* SIGSHA2SigningAlgorithm.h in Headers */,
 				A6DBC0381FF9B30000F1466D /* iTermTexturePool.h in Headers */,
 				A667194B1DCE36C3000CE608 /* iTermModifierRemapper.h in Headers */,
 				537BFDC520FFA5A40098C91F /* iTermStatusBarJobComponent.h in Headers */,
 				A667194C1DCE36C3000CE608 /* iTermSocket.h in Headers */,
+				5370679221C9D2780088D0F3 /* SIGIdentity.h in Headers */,
 				5370ECDA20F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.h in Headers */,
 				A60C03642089897400FE2F1F /* iTermScriptConsole.h in Headers */,
 				530AB8B420B2098000D2AA08 /* iTermVariables.h in Headers */,
 				A667194D1DCE36C3000CE608 /* iTermWebSocketConnection.h in Headers */,
+				5370679D21C9D2780088D0F3 /* SIGKey.h in Headers */,
+				5370679B21C9D2780088D0F3 /* SIGVerificationAlgorithm.h in Headers */,
 				A6614C7C210AE7350001EAA3 /* iTermPasteViewManager.h in Headers */,
 				A667194E1DCE36C3000CE608 /* iTermInitialDirectory.h in Headers */,
 				A68400AF1FF861A8008D3EE2 /* iTermFullScreenFlashRenderer.h in Headers */,
@@ -9295,6 +9411,7 @@
 				A60C035C2089698500FE2F1F /* iTermAPIScriptLauncher.h in Headers */,
 				A66EF82C1EF59CFC0005891A /* iTermRateLimitedUpdate.h in Headers */,
 				A614F2621FE47D8600EEE919 /* iTermCharacterBitmap.h in Headers */,
+				5370678B21C9D2780088D0F3 /* SIGError.h in Headers */,
 				A653B6CE20AD3C4100B481F1 /* iTermSessionNameController.h in Headers */,
 				A6180D7021A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h in Headers */,
 				A66719521DCE36C3000CE608 /* iTermRecentDirectoryMO+CoreDataProperties.h in Headers */,
@@ -9310,10 +9427,12 @@
 				A66719561DCE36C3000CE608 /* iTermRecentDirectoryMO.h in Headers */,
 				A6556EA91FCB42E0000CC89C /* iTermCharacterSource.h in Headers */,
 				A630117E20E69D43008114B7 /* iTermStatusBarComponentKnob.h in Headers */,
+				5370679921C9D2780088D0F3 /* SIGKeychain.h in Headers */,
 				A656674F219EA46E005FE60E /* NSNumber+iTerm.h in Headers */,
 				A60C036E2089B29700FE2F1F /* iTermScriptHistory.h in Headers */,
 				A60C0372208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.h in Headers */,
 				A6D1784521BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.h in Headers */,
+				5370678821C9D2780088D0F3 /* SIGPolicy.h in Headers */,
 				A623D9541F8B04890011F8C3 /* iTermMetalGlue.h in Headers */,
 				535EA4F120D0CB7A00FC81E0 /* iTermSwiftyString.h in Headers */,
 				A66F52A9210458CA00571168 /* iTermNetworkUtilization.h in Headers */,
@@ -11312,9 +11431,12 @@
 				A6A4866020B6762E00493302 /* AppearancePreferencesViewController.m in Sources */,
 				A630119920E70CDA008114B7 /* iTermStatusBarSetupElement.m in Sources */,
 				A630118420E6A613008114B7 /* iTermStatusBarSetupViewController.m in Sources */,
+				5370678C21C9D2780088D0F3 /* SIGVerificationAlgorithm.m in Sources */,
 				A62EED9B20E0104000943DE3 /* iTermScriptArchive.m in Sources */,
 				A62EED9720DF602F00943DE3 /* iTermCommandRunner.m in Sources */,
 				A6A4866620B676EB00493302 /* GeneralPreferencesViewController.m in Sources */,
+				5370679421C9D2780088D0F3 /* SIGKeychain.m in Sources */,
+				5370678A21C9D2780088D0F3 /* SIGKey.m in Sources */,
 				5312269B20CB1D3A004831C6 /* iTermBuiltInFunctions.m in Sources */,
 				A653B6CF20AD3C4100B481F1 /* iTermSessionNameController.m in Sources */,
 				A64AE5182084128500D02F06 /* NSThread+iTerm.m in Sources */,
@@ -11324,7 +11446,9 @@
 				A6180D6D21A35D5E0073F219 /* iTermMetalPerFrameState.m in Sources */,
 				530AB7B520A615D900D2AA08 /* iTermPythonArgumentParser.m in Sources */,
 				A68400BD1FF98101008D3EE2 /* iTermTimestampsRenderer.m in Sources */,
+				537067A021C9D2780088D0F3 /* SIGArchiveReader.m in Sources */,
 				A60C034B20881D6000FE2F1F /* iTermWebSocketCookieJar.m in Sources */,
+				5370679021C9D2780088D0F3 /* SIGArchiveChunk.m in Sources */,
 				A6D8CC3220CE417000E79512 /* URLAction.m in Sources */,
 				A65429BA20CE3C9400CE71B1 /* iTermFocusReportingTextField.m in Sources */,
 				A63935962103FD8B00A16D1C /* iTermMemoryUtilization.m in Sources */,
@@ -11333,6 +11457,7 @@
 				A6A4867C20B67EFB00493302 /* ProfilesTextPreferencesViewController.m in Sources */,
 				A6DBC03D2003479400F1466D /* iTermImageRenderer.m in Sources */,
 				A65429A020BE71E400CE71B1 /* iTermOpenQuicklyModel.m in Sources */,
+				5370678D21C9D2780088D0F3 /* SIGArchiveVerifier.m in Sources */,
 				A67960D21F81FCBB008A42BC /* iTermBadgeRenderer.m in Sources */,
 				A621DDA9211D01D50095A399 /* NSAppearance+iTerm.m in Sources */,
 				A6A4867420B67B2400493302 /* PreferenceInfo.m in Sources */,
@@ -11344,11 +11469,13 @@
 				A63174A021214698004F0142 /* iTermGenericStatusBarContainer.m in Sources */,
 				A69CCB12211B55FB008ADA71 /* iTermMenuBarObserver.m in Sources */,
 				A6A4865D20B6706700493302 /* ProfilesKeysPreferencesViewController.m in Sources */,
+				5370679121C9D2780088D0F3 /* SIGTrust.m in Sources */,
 				A67F62022143A1650093940A /* iTermGraphicSource.m in Sources */,
 				A6A4867220B67AB800493302 /* PointerPreferencesViewController.m in Sources */,
 				A67C44E8211E24F6004EDB1C /* PSMMinimalTabStyle.m in Sources */,
 				A63011BA20E83000008114B7 /* iTermStatusBarKnobTextViewController.m in Sources */,
 				A630117F20E69D43008114B7 /* iTermStatusBarComponentKnob.m in Sources */,
+				5370678321C9D2780088D0F3 /* SIGPolicy.m in Sources */,
 				A6A4866A20B6793E00493302 /* iTermKeyMappingViewController.m in Sources */,
 				A6A4868120B681A300493302 /* iTermColorPresets.m in Sources */,
 				A6180D7921A883860073F219 /* iTermBroadcastPasswordHelper.m in Sources */,
@@ -11387,6 +11514,7 @@
 				A68400B51FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
 				53850904212FA8910039AFC7 /* iTermMetaFrustrationDetector.m in Sources */,
 				A6614C75210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.m in Sources */,
+				5370679721C9D2780088D0F3 /* SIGArchiveBuilder.m in Sources */,
 				A6F385DF1FA55E2000739939 /* iTermSmartCursorColor.m in Sources */,
 				A658882A201F06ED006F48DB /* iTermTexture.m in Sources */,
 				A630118920E6B4DA008114B7 /* iTermStatusBarComponent.m in Sources */,
@@ -11405,6 +11533,7 @@
 				5365207A21433F7A003C58FD /* iTermGitPoller.m in Sources */,
 				A6D5985221B78B9700B59C94 /* iTermBroadcastInputHelper.m in Sources */,
 				A65FF3C220F18547008BD0AE /* iTermMiniSearchFieldViewController.m in Sources */,
+				5370678721C9D2780088D0F3 /* SIGPartialInputStream.m in Sources */,
 				A6A4868220B685F000493302 /* iTermHotkeyPreferencesWindowController.m in Sources */,
 				A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */,
 				A60C036F2089B29700FE2F1F /* iTermScriptHistory.m in Sources */,
@@ -11438,6 +11567,7 @@
 				A6180D7121A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.m in Sources */,
 				A6FE8D13209528F400B5C648 /* iTermPythonRuntimeDownloader.m in Sources */,
 				A63011CD20E851E0008114B7 /* iTermStatusBarSpringComponent.m in Sources */,
+				5370679F21C9D2780088D0F3 /* SIGCertificate.m in Sources */,
 				A6A4866720B6780C00493302 /* iTermAdvancedSettingsModel.m in Sources */,
 				A67960D41F81FCBB008A42BC /* iTermCursorGuideRenderer.m in Sources */,
 				A692666A210A2FEA00A980C7 /* iTermTemporaryDoubleBufferedGridController.m in Sources */,
@@ -11478,6 +11608,7 @@
 				A6A4867D20B67F7E00493302 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				53C2D3A62152CA3900FF6471 /* NSUserDefaults+iTerm.m in Sources */,
 				A60C0373208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.m in Sources */,
+				5370679821C9D2780088D0F3 /* SIGSHA2SigningAlgorithm.m in Sources */,
 				A6556EAE1FD37ED6000CC89C /* iTermASCIITexture.m in Sources */,
 				A6971F3420D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.m in Sources */,
 				A66719661DCE3772000CE608 /* iTermWebSocketFrame.m in Sources */,
@@ -11500,6 +11631,7 @@
 				A6A4867720B67C3600493302 /* ProfilesAdvancedPreferencesViewController.m in Sources */,
 				A6AB55E1217256A600142244 /* iTermLineBlockArray.m in Sources */,
 				A67960CC1F81FCB6008A42BC /* iTermMetalCellRenderer.m in Sources */,
+				5370678921C9D2780088D0F3 /* SIGSHA2VerificationAlgorithm.m in Sources */,
 				A63011C520E85132008114B7 /* iTermStatusBarBaseComponent.m in Sources */,
 				A6EF57D221994DDC00C76698 /* iTermUserDefaultsObserver.m in Sources */,
 				A6A4866220B6765E00493302 /* BulkCopyProfilePreferencesWindowController.m in Sources */,
@@ -11539,6 +11671,7 @@
 				A68AC8F41F05C0860023A216 /* NSBundle+iTerm.m in Sources */,
 				A67960CD1F81FCB6008A42BC /* iTermMetalRenderer.m in Sources */,
 				5365206E21433E9C003C58FD /* iTermGitCache.m in Sources */,
+				5370678621C9D2780088D0F3 /* SIGError.m in Sources */,
 				A6B147612133395500D0814F /* iTermStatusBarLayout+tmux.m in Sources */,
 				A68400B91FF97138008D3EE2 /* iTermTimestampDrawHelper.m in Sources */,
 				A62EED9320DF5B2F00943DE3 /* iTermScriptChooser.m in Sources */,
@@ -11552,6 +11685,7 @@
 				A630118E20E6B71A008114B7 /* iTermStatusBarSetupCollectionViewItem.m in Sources */,
 				537BFDC620FFA5A40098C91F /* iTermStatusBarJobComponent.m in Sources */,
 				A63011C920E8518A008114B7 /* iTermStatusBarFixedSpacerComponent.m in Sources */,
+				5370678E21C9D2780088D0F3 /* SIGIdentity.m in Sources */,
 				537BFDD22101AD9F0098C91F /* iTermCPUUtilization.m in Sources */,
 				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */,
 				A608F22120F07658008E8009 /* iTermImageMark.m in Sources */,

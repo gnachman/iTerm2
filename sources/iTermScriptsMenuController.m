@@ -193,8 +193,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)chooseAndExportScript {
     [iTermScriptChooser chooseWithValidator:^BOOL(NSURL *url) {
         return [iTermScriptExporter urlIsScript:url];
-    } completion:^(NSURL *url) {
-        [iTermScriptExporter exportScriptAtURL:url completion:^(NSString *errorMessage, NSURL *zipURL) {
+    } completion:^(NSURL *url, SIGIdentity *signingIdentity) {
+        if (!url) {
+            return;
+        }
+        [iTermScriptExporter exportScriptAtURL:url signingIdentity:signingIdentity completion:^(NSString *errorMessage, NSURL *zipURL) {
             if (errorMessage || !zipURL) {
                 NSAlert *alert = [[NSAlert alloc] init];
                 alert.messageText = @"Export Failed";

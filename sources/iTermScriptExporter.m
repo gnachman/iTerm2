@@ -11,26 +11,29 @@
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermSetupPyParser.h"
 #import "NSFileManager+iTerm.h"
+#import "SIGArchiveBuilder.h"
 
 @implementation iTermScriptExporter
 
-+ (NSURL *)urlForNewZipFileInFolder:(NSURL *)destinationFolder name:(NSString *)name {
++ (NSURL *)urlForNewZipFileInFolder:(NSURL *)destinationFolder name:(NSString *)name extension:(NSString *)extension {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSURL *zipURL;
     NSInteger count = 0;
     do {
         count++;
         if (count == 1) {
-            zipURL = [destinationFolder URLByAppendingPathComponent:[name stringByAppendingPathExtension:@"zip"]];
+            zipURL = [destinationFolder URLByAppendingPathComponent:[name stringByAppendingPathExtension:extension]];
         } else {
             NSString *nameWithCount = [NSString stringWithFormat:@"%@ (%@)", name, @(count)];
-            zipURL = [destinationFolder URLByAppendingPathComponent:[nameWithCount stringByAppendingPathExtension:@"zip"]];
+            zipURL = [destinationFolder URLByAppendingPathComponent:[nameWithCount stringByAppendingPathExtension:extension]];
         }
     } while ([fileManager fileExistsAtPath:zipURL.path]);
     return zipURL;
 }
 
-+ (void)exportScriptAtURL:(NSURL *)fullURL completion:(void (^)(NSString *errorMessage, NSURL *zipURL))completion {
++ (void)exportScriptAtURL:(NSURL *)fullURL
+          signingIdentity:(SIGIdentity *)sigIdentity
+               completion:(void (^)(NSString *errorMessage, NSURL *zipURL))completion {
     NSURL *relativeURL = [self relativeURLFromFullURL:fullURL];
     if (!relativeURL) {
         completion(@"Invalid location (not under Scripts folder).", nil);
@@ -53,18 +56,24 @@
         [self exportFullEnvironmentScriptAtURL:tempURL
                                    relativeURL:[NSURL fileURLWithPath:scriptName]
                                           name:scriptName
+                               signingIdentity:sigIdentity
                                     completion:^(NSString *errorMessage, NSURL *zipURL) {
                                         [[NSFileManager defaultManager] removeItemAtPath:temp error:nil];
                                         completion(errorMessage, zipURL);
                                     }];
         return;
     }
-    [self exportFullEnvironmentScriptAtURL:fullURL relativeURL:relativeURL name:name completion:completion];
+    [self exportFullEnvironmentScriptAtURL:fullURL
+                               relativeURL:relativeURL
+                                      name:name
+                           signingIdentity:sigIdentity
+                                completion:completion];
 }
 
 + (void)exportFullEnvironmentScriptAtURL:(NSURL *)fullURL
                              relativeURL:(NSURL *)relativeURL
                                     name:(NSString *)name
+                         signingIdentity:(SIGIdentity *)signingIdentity
                               completion:(void (^)(NSString *errorMessage, NSURL *zipURL))completion {
     NSArray<NSURL *> *sourceURLs;
     NSURL *destinationFolder = [NSURL fileURLWithPath:[[NSFileManager defaultManager] desktopDirectory]];
@@ -79,14 +88,48 @@
     sourceURLs = @[ [relativeURL URLByAppendingPathComponent:@"setup.py"],
                     [relativeURL URLByAppendingPathComponent:name] ];
 
-    NSURL *zipURL = [self urlForNewZipFileInFolder:destinationFolder name:name];
+    NSString *extension = signingIdentity ? @"its" : @"zip";
+    NSURL *zipURL = [self urlForNewZipFileInFolder:destinationFolder name:name extension:extension];
     [iTermCommandRunner zipURLs:sourceURLs
                       arguments:@[ @"-r" ]
                        toZipURL:zipURL
                      relativeTo:fullURL.URLByDeletingLastPathComponent
                      completion:^(BOOL ok) {
-                         completion(ok ? nil : @"Failed to create zip file.", zipURL);
+                         if (!ok) {
+                             completion(@"Failed to create zip file.", nil);
+                             return;
+                         }
+                         if (signingIdentity) {
+                             [self signInPlace:zipURL withIdentity:signingIdentity completion:^(NSError *signingError) {
+                                 if (signingError) {
+                                     completion(signingError.localizedDescription, nil);
+                                     return;
+                                 }
+                                 completion(nil, zipURL);
+                             }];
+                             return;
+                         }
+                         completion(nil, zipURL);
                      }];
+}
+
++ (void)signInPlace:(NSURL *)url
+       withIdentity:(SIGIdentity *)identity
+         completion:(void (^)(NSError *))completion {
+    NSError *error = nil;
+    NSURL *payloadURL = [url URLByAppendingPathExtension:[[NSUUID UUID] UUIDString]];
+    BOOL ok = [[NSFileManager defaultManager] moveItemAtURL:url
+                                                      toURL:payloadURL
+                                                      error:&error];
+    if (!ok || error) {
+        completion(error);
+        return;
+    }
+
+    SIGArchiveBuilder *builder = [[SIGArchiveBuilder alloc] initWithPayloadFileURL:payloadURL identity:identity];
+    ok = [builder writeToURL:url error:&error];
+    [[NSFileManager defaultManager] removeItemAtURL:payloadURL error:nil];
+    completion(error);
 }
 
 + (void)copySimpleScriptAtURL:(NSURL *)simpleScriptSourceURL

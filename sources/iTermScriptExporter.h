@@ -7,9 +7,12 @@
 
 #import <Foundation/Foundation.h>
 
+@class SIGIdentity;
+
 @interface iTermScriptExporter : NSObject
 
 + (void)exportScriptAtURL:(NSURL *)url
+          signingIdentity:(SIGIdentity *)sigIdentity
                completion:(void (^)(NSString *errorMessage, NSURL *zipURL))completion;
 + (BOOL)urlIsScript:(NSURL *)url;
 

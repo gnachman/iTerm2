@@ -7,9 +7,11 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class SIGIdentity;
+
 @interface iTermScriptChooser : NSObject
 
 + (void)chooseWithValidator:(BOOL (^)(NSURL *))validator
-                 completion:(void (^)(NSURL *))completion;
+                 completion:(void (^)(NSURL *, SIGIdentity *))completion;
 
 @end
