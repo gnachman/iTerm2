@@ -29,6 +29,12 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _identities = [[SIGIdentity allSigningIdentities] sortedArrayUsingComparator:^NSComparisonResult(SIGIdentity * _Nonnull obj1, SIGIdentity * _Nonnull obj2) {
+            return [obj1.signingCertificate.longDescription compare:obj2.signingCertificate.longDescription];
+        }];
+        if (_identities.count == 0) {
+            return nil;
+        }
         _signButton = [[NSButton alloc] initWithFrame:NSMakeRect(0, 2, 18, 18)];
         [_signButton setTarget:self];
         [_signButton setAction:@selector(didToggleSignButton:)];
@@ -42,7 +48,6 @@
         _identityButton.translatesAutoresizingMaskIntoConstraints = NO;
         _identityButton.enabled = NO;
         [self addSubview:_identityButton];
-        _identities = [SIGIdentity allSigningIdentities];
         [_identities enumerateObjectsUsingBlock:^(SIGIdentity * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:obj.signingCertificate.longDescription
                                                               action:nil
@@ -53,7 +58,7 @@
 
         [_signButton setContentHuggingPriority:NSLayoutPriorityRequired forOrientation:NSLayoutConstraintOrientationHorizontal];
         NSDictionary *views = NSDictionaryOfVariableBindings(_signButton, _identityButton);
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-12-[_signButton]-12-[_identityButton]-12-|"
+        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-10-[_signButton]-10-[_identityButton]-10-|"
                                                                      options:0
                                                                      metrics:@{}
                                                                        views:views]];
