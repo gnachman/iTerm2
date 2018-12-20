@@ -1426,16 +1426,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)shouldUseMinimalStyle {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    if (preferredStyle != TAB_STYLE_MINIMAL) {
-        return NO;
-    }
-    if (self.anyFullScreen) {
-        return YES;
-    }
-    if (togglingLionFullScreen_) {
-        return YES;
-    }
-    return self.windowType != WINDOW_TYPE_NORMAL;
+    return (preferredStyle == TAB_STYLE_MINIMAL);
 }
 
 - (BOOL)terminalWindowUseMinimalStyle {
