@@ -9,15 +9,21 @@
 
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermSetupPyParser.h"
+#import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
+#import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 #import "RegexKitLite.h"
 
 NSString *const iTermScriptSetupPyName = @"setup.py";
+NSString *const iTermScriptMetadataName = @"metadata.json";
 
 @interface iTermScriptArchive()
 @property (nonatomic, copy, readwrite) NSString *container;
 @property (nonatomic, copy, readwrite) NSString *name;
+@property (nonatomic, strong, readwrite) NSDictionary *metadata;
 @property (nonatomic, readwrite) BOOL fullEnvironment;
 @end
 
@@ -30,7 +36,17 @@ NSString *const iTermScriptSetupPyName = @"setup.py";
     archive.container = container.copy;
     archive.name = name.copy;
     archive.fullEnvironment = fullEnvironment;
+    archive.metadata = [self metadataInContainer:container name:name];
     return archive;
+}
+
++ (NSDictionary *)metadataInContainer:(NSString *)container name:(NSString *)name {
+    NSString *path = [[container stringByAppendingPathComponent:name] stringByAppendingPathComponent:@"metadata.json"];
+    NSString *stringValue = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil];
+    if (!stringValue) {
+        return nil;
+    }
+    return [NSDictionary castFrom:[NSJSONSerialization it_objectForJsonString:stringValue]];
 }
 
 + (NSArray<NSString *> *)absolutePathsOfNonDotFilesIn:(NSString *)container {
@@ -66,22 +82,34 @@ NSString *const iTermScriptSetupPyName = @"setup.py";
     }
 
     NSArray<NSString *> *innerItems = [self absolutePathsOfNonDotFilesIn:topLevelItem];
-    if (innerItems.count != 2) {
+    if (innerItems.count < 2) {
         return nil;
     }
     // Maps a boolean number to an item name. True key = setup.py, false key = not setup.py
     NSString *setupPy = [topLevelItem stringByAppendingPathComponent:iTermScriptSetupPyName];
-    NSDictionary<NSNumber *, NSArray<NSString *> *> *classified = [innerItems classifyWithBlock:^id(NSString *item) {
-        NSString *fullPath = [container stringByAppendingPathComponent:iTermScriptSetupPyName];
-        return @([item isEqualToString:setupPy] && ![fileManager itemIsDirectory:fullPath]);
-    }];
-    if (classified[@YES].count != 1) {
+    NSString *metadata = [topLevelItem stringByAppendingPathComponent:iTermScriptMetadataName];
+    NSArray<NSString *> *requiredFiles = @[ setupPy ];
+    NSArray<NSString *> *optionalFiles = @[ metadata ];
+    NSString *folder = nil;
+
+    for (NSString *item in innerItems) {
+        if ([requiredFiles containsObject:item]) {
+            requiredFiles = [requiredFiles arrayByRemovingObject:item];
+            continue;
+        }
+        if ([optionalFiles containsObject:item]) {
+            continue;
+        }
+        if (folder == nil && [fileManager itemIsDirectory:item]) {
+            folder = item;
+            continue;
+        }
         return nil;
     }
-    if (classified[@NO].count != 1) {
+    if (!folder || requiredFiles.count) {
         return nil;
     }
-    NSString *name = [classified[@NO].firstObject lastPathComponent];
+    NSString *name = [folder lastPathComponent];
     BOOL isDirectory;
     // mainPy="dir/name/name.py"
     NSString *mainPy = [[topLevelItem stringByAppendingPathComponent:name] stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"py"]];
@@ -93,17 +121,38 @@ NSString *const iTermScriptSetupPyName = @"setup.py";
     return [iTermScriptArchive archiveForScriptIn:container named:name fullEnvironment:YES];
 }
 
-- (void)installWithCompletion:(void (^)(NSError *))completion {
+- (BOOL)wantsAutoLaunch {
+    return [[NSNumber castFrom:self.metadata[@"AutoLaunch"]] boolValue];
+}
+
+- (BOOL)userAcceptsAutoLaunchInstall {
+    NSString *body = [NSString stringWithFormat:@"“%@” would like to run automatically when iTerm2 starts. Would you like to allow that?", self.name];
+    const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
+                                                                       actions:@[ @"Allow", @"Decline" ]
+                                                                     accessory:nil
+                                                                    identifier:nil
+                                                                   silenceable:kiTermWarningTypePersistent
+                                                                       heading:@"Allow Auto-Launch?"
+                                                                        window:nil];
+    return (selection == kiTermWarningSelection0);
+}
+
+- (void)installTrusted:(BOOL)trusted withCompletion:(void (^)(NSError *))completion {
     if (self.fullEnvironment) {
-        [self installFullEnvironmentWithCompletion:completion];
+        [self installFullEnvironmentTrusted:trusted completion:completion];
     } else {
-        [self installBasicWithCompletion:completion];
+        [self installBasicTrusted:trusted completion:completion];
     }
 }
 
-- (void)installBasicWithCompletion:(void (^)(NSError *))completion {
+- (void)installBasicTrusted:(BOOL)trusted completion:(void (^)(NSError *))completion {
     NSString *from = [self.container stringByAppendingPathComponent:self.name];
-    NSString *to = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:self.name];
+    NSString *to;
+    if (trusted && [self wantsAutoLaunch] && [self userAcceptsAutoLaunchInstall]) {
+        to = [[[NSFileManager defaultManager] autolaunchScriptPath] stringByAppendingPathComponent:self.name];
+    } else {
+        to = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:self.name];
+    }
     NSError *error = nil;
     [[NSFileManager defaultManager] moveItemAtPath:from
                                             toPath:to
@@ -111,7 +160,7 @@ NSString *const iTermScriptSetupPyName = @"setup.py";
     completion(error);
 }
 
-- (void)installFullEnvironmentWithCompletion:(void (^)(NSError *))completion {
+- (void)installFullEnvironmentTrusted:(BOOL)trusted completion:(void (^)(NSError *))completion {
     NSString *from = [self.container stringByAppendingPathComponent:self.name];
 
     NSString *setupPy = [from stringByAppendingPathComponent:iTermScriptSetupPyName];
@@ -131,7 +180,12 @@ NSString *const iTermScriptSetupPyName = @"setup.py";
 
     // You always get the iterm2 module so don't bother to pip install it.
     dependencies = [dependencies arrayByRemovingObject:@"iterm2"];
-    NSString *to = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:self.name];
+    NSString *to;
+    if (trusted && [self wantsAutoLaunch] && [self userAcceptsAutoLaunchInstall]) {
+        to = [[[NSFileManager defaultManager] autolaunchScriptPath] stringByAppendingPathComponent:self.name];
+    } else {
+        to = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:self.name];
+    }
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:setupParser.pythonVersion
                                                                                        withCompletion:

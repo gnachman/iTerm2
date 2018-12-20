@@ -81,7 +81,7 @@
     if (_signButton.state != NSOnState) {
         return nil;
     }
-    return _identities[_signButton.selectedTag];
+    return _identities[_identityButton.selectedTag];
 }
 
 @end

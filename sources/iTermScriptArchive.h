@@ -14,8 +14,9 @@ extern NSString *const iTermScriptSetupPyName;
 @property (nonatomic, readonly) NSString *container;
 @property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) BOOL fullEnvironment;
+@property (nonatomic, readonly) NSDictionary *metadata;
 
 + (instancetype)archiveFromContainer:(NSString *)container;
-- (void)installWithCompletion:(void (^)(NSError *))completion;
+- (void)installTrusted:(BOOL)trusted withCompletion:(void (^)(NSError *))completion;
 
 @end

@@ -10,7 +10,9 @@
 #import "iTermCommandRunner.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermSetupPyParser.h"
+#import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
 #import "SIGArchiveBuilder.h"
 
 @implementation iTermScriptExporter
@@ -52,6 +54,8 @@
         [self copySimpleScriptAtURL:fullURL
                               named:[name stringByDeletingPathExtension]
                 toFullEnvironmentIn:temp];
+        [self writeMetadataTo:[NSURL fileURLWithPath:temp]
+                    sourceURL:fullURL];
         NSURL *tempURL = [NSURL fileURLWithPath:temp];
         [self exportFullEnvironmentScriptAtURL:tempURL
                                    relativeURL:[NSURL fileURLWithPath:scriptName]
@@ -63,11 +67,26 @@
                                     }];
         return;
     }
+
+    // Export full environment script
+    [self writeMetadataTo:fullURL
+                sourceURL:fullURL];
     [self exportFullEnvironmentScriptAtURL:fullURL
                                relativeURL:relativeURL
                                       name:name
                            signingIdentity:sigIdentity
                                 completion:completion];
+}
+
++ (void)writeMetadataTo:(NSURL *)destinationURL
+              sourceURL:(NSURL *)sourceURL {
+    NSString *autoLaunchPath = [[NSFileManager defaultManager] autolaunchScriptPath];
+    NSDictionary *metadata = @{};
+    metadata = @{ @"AutoLaunch": @([sourceURL.path hasPrefix:autoLaunchPath]) };
+    [[NSJSONSerialization it_jsonStringForObject:metadata] writeToURL:[destinationURL URLByAppendingPathComponent:@"metadata.json"]
+                                                           atomically:NO
+                                                             encoding:NSUTF8StringEncoding
+                                                                error:nil];
 }
 
 + (void)exportFullEnvironmentScriptAtURL:(NSURL *)fullURL
@@ -87,6 +106,10 @@
 
     sourceURLs = @[ [relativeURL URLByAppendingPathComponent:@"setup.py"],
                     [relativeURL URLByAppendingPathComponent:name] ];
+    NSURL *metadata = [relativeURL URLByAppendingPathComponent:@"metadata.json"];
+    if (signingIdentity) {
+        sourceURLs = [sourceURLs arrayByAddingObject:metadata];
+    }
 
     NSString *extension = signingIdentity ? @"itermscript" : @"zip";
     NSURL *zipURL = [self urlForNewZipFileInFolder:destinationFolder name:name extension:extension];
@@ -191,12 +214,7 @@
 }
 
 + (NSURL *)relativeURLFromFullURL:(NSURL *)full {
-    NSString *prefix = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingString:@"/"];
-    if (![full.path hasPrefix:prefix]) {
-        return nil;
-    }
-    NSString *suffix = [full.path substringFromIndex:prefix.length];
-    return [NSURL fileURLWithPath:suffix];
+    return [NSURL fileURLWithPath:[full lastPathComponent]];
 }
 
 @end

@@ -29,7 +29,7 @@ static BOOL sInstallingScript;
     }
 
     sInstallingScript = YES;
-    [self verifyAndUnwrapArchive:downloadedURL requireSignature:!userInitiated completion:^(NSURL *url, NSString *errorMessage) {
+    [self verifyAndUnwrapArchive:downloadedURL requireSignature:!userInitiated completion:^(NSURL *url, NSString *errorMessage, BOOL trusted) {
         if (errorMessage) {
             completion(errorMessage);
             sInstallingScript = NO;
@@ -50,7 +50,7 @@ static BOOL sInstallingScript;
                                   sInstallingScript = NO;
                                   return;
                               }
-                              [self didUnzipSuccessfullyTo:tempDir withCompletion:^(NSString *errorMessage) {
+                              [self didUnzipSuccessfullyTo:tempDir trusted:trusted withCompletion:^(NSString *errorMessage) {
                                   [self eraseTempDir:tempDir];
                                   [pleaseWait.window close];
                                   sInstallingScript = NO;
@@ -62,11 +62,11 @@ static BOOL sInstallingScript;
 
 + (void)verifyAndUnwrapArchive:(NSURL *)url
               requireSignature:(BOOL)requireSignature
-                    completion:(void (^)(NSURL *url, NSString *))completion {
+                    completion:(void (^)(NSURL *url, NSString *, BOOL trusted))completion {
     SIGArchiveVerifier *verifier = [[SIGArchiveVerifier alloc] initWithURL:url];
     if ([[url pathExtension] isEqualToString:@"itermscript"]) {
         if (![verifier smellsLikeSignedArchive:NULL]) {
-            completion(nil, @"This script archive is corrupt and cannot be installed.");
+            completion(nil, @"This script archive is corrupt and cannot be installed.", NO);
             return;
         }
         
@@ -84,10 +84,10 @@ static BOOL sInstallingScript;
         return;
     }
     if (requireSignature) {
-        completion(nil, @"This is not a valid iTerm2 script archive.");
+        completion(nil, @"This is not a valid iTerm2 script archive.", NO);
         return;
     }
-    completion(url, nil);
+    completion(url, nil, NO);
 }
 
 + (void)verifierDidComplete:(SIGArchiveVerifier *)verifier
@@ -95,9 +95,9 @@ static BOOL sInstallingScript;
                  payloadURL:(NSURL *)zipURL
            requireSignature:(BOOL)requireSignature
                       error:(NSError *)error
-                 completion:(void (^)(NSURL *url, NSString *))completion {
+                 completion:(void (^)(NSURL *url, NSString *, BOOL trusted))completion {
     if (!ok) {
-        completion(nil, error.localizedDescription ?: @"Unknown error");
+        completion(nil, error.localizedDescription ?: @"Unknown error", NO);
         return;
     }
     
@@ -105,18 +105,22 @@ static BOOL sInstallingScript;
         [self confirmInstallationOfVerifiedArchive:verifier.reader
                                         completion:^(BOOL ok) {
                                             if (!ok) {
-                                                completion(nil, @"Installation canceled by user request.");
+                                                completion(nil, @"Installation canceled by user request.", NO);
                                                 return;
                                             }
                                             [self copyPayloadFromVerifier:verifier
                                                                     toURL:zipURL
-                                                               completion:completion];
+                                                               completion:^(NSURL *URL, NSString *errorString) {
+                                                                   completion(URL, errorString, YES);
+                                                               }];
                                         }];
         return;
     }
     [self copyPayloadFromVerifier:verifier
                             toURL:zipURL
-                       completion:completion];
+                       completion:^(NSURL *URL, NSString *errorString) {
+                           completion(URL, errorString, YES);
+                       }];
 }
 
 + (void)copyPayloadFromVerifier:(SIGArchiveVerifier *)verifier
@@ -146,10 +150,12 @@ static BOOL sInstallingScript;
 }
 
 + (void)didUnzipSuccessfullyTo:(NSString *)tempDir
+                       trusted:(BOOL)trusted
                 withCompletion:(void (^)(NSString *errorMessage))completion {
     iTermScriptArchive *archive = [iTermScriptArchive archiveFromContainer:tempDir];
     if (!archive) {
         completion(@"Archive does not contain a valid iTerm2 script");
+        return;
     }
 
     if ([self haveScriptNamed:archive.name]) {
@@ -157,7 +163,7 @@ static BOOL sInstallingScript;
         return;
     }
 
-    [archive installWithCompletion:^(NSError *error) {
+    [archive installTrusted:trusted withCompletion:^(NSError *error) {
         completion(error.localizedDescription);
     }];
 }
