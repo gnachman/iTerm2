@@ -11,6 +11,8 @@
 #import "SIGCertificate.h"
 #import "SIGKey.h"
 #import "SIGKeychain.h"
+#import "SIGPolicy.h"
+#import "SIGTrust.h"
 
 @implementation SIGIdentity {
     SIGCertificate *_signingCertificate;
@@ -40,15 +42,35 @@
 
     CFArrayRef array = (CFArrayRef)result;
     NSMutableArray<SIGIdentity *> *identities = [NSMutableArray array];
+    dispatch_group_t group = dispatch_group_create();
     for (NSInteger i = 0; i < CFArrayGetCount(array); i++) {
         SecIdentityRef secIdentity = (SecIdentityRef)CFArrayGetValueAtIndex(array, i);
         SIGIdentity *identity = [[SIGIdentity alloc] initWithSecIdentity:secIdentity];
         if (!identity) {
             continue;
         }
-        [identities addObject:identity];
+        NSError *trustError = nil;
+        // Don't use the CRL policy because it would need to make a network round-trip.
+        SIGTrust *trust = [[SIGTrust alloc] initWithCertificates:@[ identity.signingCertificate]
+                                                        policies:@[ [[SIGX509Policy alloc] init] ]
+                                                           error:&trustError];
+        if (!trust || trustError) {
+            continue;
+        }
+        dispatch_group_enter(group);
+        [trust evaluateWithCompletion:^(BOOL ok, NSError * _Nullable error) {
+            if (ok) {
+                @synchronized(identities) {
+                    [identities addObject:identity];
+                }
+            }
+            dispatch_group_leave(group);
+        }];
     }
-    return identities;
+    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    @synchronized(identities) {
+        return identities;
+    }
 }
 
 - (instancetype)initWithSecIdentity:(SecIdentityRef)secIdentity {
