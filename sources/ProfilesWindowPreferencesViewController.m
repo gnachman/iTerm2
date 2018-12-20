@@ -16,6 +16,7 @@
 #import "iTermSystemVersion.h"
 #import "iTermVariables.h"
 #import "iTermWarning.h"
+#import "NSImage+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 
@@ -99,9 +100,37 @@
                     key:KEY_BLUR_RADIUS
                    type:kPreferenceInfoTypeSlider];
 
-    [self defineControl:_backgroundImageMode
-                    key:KEY_BACKGROUND_IMAGE_MODE
-                   type:kPreferenceInfoTypePopup];
+    info = [self defineControl:_backgroundImageMode
+                           key:KEY_BACKGROUND_IMAGE_MODE
+                          type:kPreferenceInfoTypePopup];
+    info.observer = ^() {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        switch ((iTermBackgroundImageMode)strongSelf->_backgroundImageMode.selectedTag) {
+            case iTermBackgroundImageModeTile:
+                self->_backgroundImagePreview.imageScaling = NSImageScaleNone;
+                break;
+            case iTermBackgroundImageModeStretch:
+                self->_backgroundImagePreview.imageScaling = NSImageScaleAxesIndependently;
+                break;
+            case iTermBackgroundImageModeScaleAspectFit:
+                self->_backgroundImagePreview.imageScaling = NSImageScaleProportionallyDown;
+                break;
+            case iTermBackgroundImageModeScaleAspectFill: {
+                self->_backgroundImagePreview.imageScaling = NSImageScaleNone;
+                NSString *filename = self.backgroundImageFilename;
+                if (filename) {
+                    NSImage *anImage = [[NSImage alloc] initWithContentsOfFile:filename];
+                    strongSelf->_backgroundImagePreview.image = [anImage it_imageFillingSize:strongSelf->_backgroundImagePreview.frame.size];
+                    self->_backgroundImagePreview.imageScaling = NSImageScaleNone;
+                    self.backgroundImageFilename = filename;
+                }
+                break;
+            }
+        }
+    };
 
     [self defineControl:_blendAmount
                     key:KEY_BLEND

@@ -11,6 +11,31 @@
 
 @implementation NSImage (iTerm)
 
+- (NSImage *)it_imageFillingSize:(NSSize)size {
+    const CGFloat imageAspectRatio = self.size.width / self.size.height;
+    const CGFloat containerAspectRatio = size.width / size.height;
+    NSRect sourceRect;
+    if (imageAspectRatio < containerAspectRatio) {
+        // image is taller than container.
+        sourceRect.origin.x = 0;
+        sourceRect.size.width = self.size.width;
+        sourceRect.size.height = self.size.width / containerAspectRatio;
+        sourceRect.origin.y = (self.size.height - sourceRect.size.height) / 2.0;
+    } else {
+        // container is taller than image
+        sourceRect.origin.y = 0;
+        sourceRect.size.height = self.size.height;
+        sourceRect.size.width = containerAspectRatio * self.size.height;
+        sourceRect.origin.x = (self.size.width - sourceRect.size.width) / 2.0;
+    }
+    return [NSImage imageOfSize:size drawBlock:^{
+        [self drawInRect:NSMakeRect(0, 0, size.width, size.height)
+                fromRect:sourceRect
+               operation:NSCompositingOperationCopy
+                fraction:1];
+    }];
+}
+
 + (NSImage *)imageOfSize:(NSSize)size color:(NSColor *)color {
     return [self imageOfSize:size drawBlock:^{
         [color set];
