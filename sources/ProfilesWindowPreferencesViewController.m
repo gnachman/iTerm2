@@ -183,7 +183,9 @@
                                  _openToolbelt,
                                  _windowStyle,
                                  _screen,
-                                 _space ];
+                                 _space,
+                                 _useCustomWindowTitle,
+                                 _preventTab ];
     for (id view in viewsToDisable) {
         [view setEnabled:NO];
     }
@@ -192,7 +194,8 @@
                                   _columnsLabel,
                                   _rowsLabel,
                                   _spaceLabel,
-                                  _windowStyleLabel ];
+                                  _windowStyleLabel,
+                                  _customWindowTitle ];
     for (NSTextField *field in labelsToDisable) {
         [field setLabelEnabled:NO];
     }
