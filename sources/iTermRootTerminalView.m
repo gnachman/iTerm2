@@ -294,9 +294,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 - (void)didChangeCompactness {
     id<PTYWindow> ptyWindow = self.window.ptyWindow;
-    const BOOL needCustomButtons = (ptyWindow.isCompact &&
-                                    !self.delegate.anyFullScreen &&
-                                    !self.delegate.enteringLionFullscreen);
+    const BOOL needCustomButtons = (ptyWindow.isCompact && [self.delegate rootTerminalViewShouldDrawStoplightButtons]);
     if (!needCustomButtons) {
         [_standardWindowButtonsView removeFromSuperview];
         _standardWindowButtonsView = nil;

@@ -408,7 +408,31 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     [self updateWindowShadow:(NSWindow<PTYWindow> *)myWindow];
     // Chrome doesn't change titleVisibility so neither do we.
     // Some truly dreadful hacks are used instead. See PTYWindow.m.
-    const BOOL isCompact = (windowType == WINDOW_TYPE_COMPACT);
+    BOOL isCompact = NO;
+    switch (windowType) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+            if (@available(macOS 10.14, *)) {
+                isCompact = YES;
+            }
+            break;
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            break;
+
+        case WINDOW_TYPE_COMPACT:
+            isCompact = YES;
+
+        default:
+            break;
+    }
     myWindow.titlebarAppearsTransparent = isCompact;
 }
 
@@ -428,7 +452,16 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
-            return mask | NSWindowStyleMaskBorderless | NSWindowStyleMaskResizable;
+            if (@available(macOS 10.14, *)) {
+                return (mask |
+                        NSWindowStyleMaskFullSizeContentView |
+                        NSWindowStyleMaskTitled |
+                        NSWindowStyleMaskClosable |
+                        NSWindowStyleMaskMiniaturizable |
+                        NSWindowStyleMaskResizable);
+            } else {
+                return mask | NSWindowStyleMaskBorderless | NSWindowStyleMaskResizable;
+            }
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             if (@available(macOS 10.13, *)) {
@@ -4017,14 +4050,44 @@ ITERM_WEAKLY_REFERENCEABLE
                       [iTermAdvancedSettingsModel terminalVMargin] * 2 + sessionSize.height * cellSize.height + decorationSize.height);
 }
 
++ (BOOL)windowType:(iTermWindowType)windowType shouldBeCompactWithSavedWindowType:(iTermWindowType)savedWindowType {
+    switch (windowType) {
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+            if (@available(macOS 10.14, *)) {
+                return YES;
+            }
+            return NO;
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_NORMAL:
+            return NO;
+            break;
+
+        case WINDOW_TYPE_COMPACT:
+            return YES;
+            break;
+
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            return savedWindowType == WINDOW_TYPE_COMPACT;
+    }
+    return NO;
+}
+
 - (NSWindow *)setWindowWithWindowType:(iTermWindowType)windowType
                       savedWindowType:(iTermWindowType)savedWindowType
                windowTypeForStyleMask:(iTermWindowType)windowTypeForStyleMask
                      hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                          initialFrame:(NSRect)initialFrame {
     const BOOL panel = (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel);
-    const BOOL compact = ((windowType == WINDOW_TYPE_COMPACT) ||
-                          (windowType == WINDOW_TYPE_LION_FULL_SCREEN && savedWindowType == WINDOW_TYPE_COMPACT));
+    const BOOL compact = [PseudoTerminal windowType:windowType shouldBeCompactWithSavedWindowType:savedWindowType];
     Class windowClass;
     if (panel) {
         if (compact) {
@@ -7379,6 +7442,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (NSImage *)rootTerminalViewCurrentTabIcon {
     return self.currentSession.shouldShowTabGraphic ? self.currentSession.tabGraphic : nil;
+}
+
+- (BOOL)rootTerminalViewShouldDrawStoplightButtons {
+    if (self.anyFullScreen || self.enteringLionFullscreen) {
+        return NO;
+    }
+    return windowType_ == WINDOW_TYPE_COMPACT;
 }
 
 - (void)updateTabBarStyle {

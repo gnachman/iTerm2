@@ -41,6 +41,7 @@
 - (BOOL)rootTerminalViewWindowNumberLabelShouldBeVisible;
 - (BOOL)rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar;
 - (NSImage *)rootTerminalViewCurrentTabIcon;
+- (BOOL)rootTerminalViewShouldDrawStoplightButtons;
 @end
 
 extern const NSInteger iTermRootTerminalViewWindowNumberLabelMargin;
