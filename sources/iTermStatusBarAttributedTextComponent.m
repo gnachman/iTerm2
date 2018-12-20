@@ -226,6 +226,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)updateTextFieldIfNeeded {
     [self setValueInField:_attributedStringView compressed:YES];
+    _attributedStringView.textColor = self.textColor;
     NSAttributedString *longest = [self longestAttributedStringValue];
     if (![longest isEqualToAttributedString:_attributedStringUsedForLayout]) {
         _attributedStringUsedForLayout = [longest copy];
