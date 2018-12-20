@@ -328,9 +328,8 @@ async def async_subscribe_to_variable_change_notification(connection, callback, 
     :param callback: A coroutine taking two arguments: an :class:`Connection` and iterm2.api_pb2.VariableChangedNotification.
     :param scope: A :class:`VariableScopes` enumerated value.
     :param name: The name of the variable, a string.
-    :param identifier: The identifier of the object (window, tab, or session) being monitored, or None for app.
+    :param identifier: The identifier of the object (window, tab, or session) being monitored, or None for app. Sometimes this will be "all" or "active".
     """
-    # TODO: Support identifiers of "all"
     request = iterm2.api_pb2.VariableMonitorRequest()
     request.name = name
     request.scope = scope
@@ -459,6 +458,19 @@ async def _async_dispatch_helper(connection, message):
 
     return bool(handlers)
 
+def _get_all_sessions_handler_key_from_notification(notification):
+    if notification.HasField('variable_changed_notification'):
+        return (iterm2.api_pb2.VariableScope.Value("SESSION"),
+                "all",
+                notification.variable_changed_notification.name,
+                iterm2.api_pb2.NOTIFY_ON_VARIABLE_CHANGE)
+    else:
+        standard_key, _ = _get_handler_key_from_notification(notification)
+        return (None, standard_key[1])
+
+    return None
+
+
 def _get_handler_key_from_notification(notification):
     key = None
 
@@ -512,7 +524,8 @@ def _get_notification_handlers(message):
     if key is None:
         return ([], None)
 
-    fallback = (None, key[1])
+    # This fallback catches "all"-style subscriptions.
+    fallback = _get_all_sessions_handler_key_from_notification(message.notification)
 
     if key in _get_handlers():
         return (_get_handlers()[key], sub_notification)

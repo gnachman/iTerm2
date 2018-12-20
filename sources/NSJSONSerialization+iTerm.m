@@ -17,7 +17,7 @@
     NSData *json = nil;
 
     if (!object) {
-        return nil;
+        return @"null";
     }
 
     if ([NSJSONSerialization isValidJSONObject:object]) {

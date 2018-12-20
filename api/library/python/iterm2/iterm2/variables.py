@@ -14,14 +14,24 @@ class VariableScopes(enum.Enum):
     APP = iterm2.api_pb2.VariableScope.Value("APP")
 
 class VariableMonitor:
-    """Watches for changes to a variable.
+    """
+    Watches for changes to a variable.
 
-      VariableMonitor is a context manager that helps observe changes in iTerm2 Variables.
+   VariableMonitor is a context manager that helps observe changes in iTerm2 Variables.
 
-      :param connection: The :class:`iterm2.Connection` to use.
-      :param scope: A :class:`iterm2.VariableScope`, describing the context for the name and identifier.
-      :param name: The variable name, a string.
-      :param identifier: A tab, window, or session identifier. Must correspond to the passed-in scope. If the scope is `APP` this should be None.
+   :param connection: The :class:`iterm2.Connection` to use.
+   :param scope: A :class:`iterm2.VariableScope`, describing the context for the name and identifier.
+   :param name: The variable name, a string.
+   :param identifier: A tab, window, or session identifier. Must correspond to the passed-in scope. If the scope is `APP` this should be None. If the scope is `SESSION` the identifier may be "all".
+
+    Example:
+
+      .. code-block:: python
+
+          async with iterm2.VariableMonitor(connection, iterm2.VariableScopes.SESSION, "session.jobName", my_session.session_id) as mon:
+              while True:
+                  new_value = await mon.async_get()
+                  DoSomething(new_value)
         """
     def __init__(self, connection, scope, name, identifier):
         self.__connection = connection

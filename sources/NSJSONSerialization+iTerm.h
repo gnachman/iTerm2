@@ -10,7 +10,7 @@
 @interface NSJSONSerialization (iTerm)
 
 // Converts object to a JSON string. Object may be a string, number, dictionary,
-// or array. Returns nil if it's not.
+// array, or nil. Returns nil if it's not.
 + (NSString *)it_jsonStringForObject:(id)object;
 
 // Converts a string to JSON.
