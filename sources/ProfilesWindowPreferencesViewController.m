@@ -12,6 +12,7 @@
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermImageWell.h"
 #import "iTermPreferences.h"
+#import "iTermSizeRememberingView.h"
 #import "iTermSystemVersion.h"
 #import "iTermVariables.h"
 #import "iTermWarning.h"
@@ -43,13 +44,13 @@
     IBOutlet NSTextField *_rowsLabel;
     IBOutlet NSTextField *_windowStyleLabel;
     IBOutlet NSTextField *_spaceLabel;
-    IBOutlet NSButton *_syncTitle;
     IBOutlet NSButton *_preventTab;
     IBOutlet NSButton *_transparencyAffectsOnlyDefaultBackgroundColor;
     IBOutlet NSButton *_openToolbelt;
     IBOutlet NSMenuItem *_compactWindowStyleMenuItem;
     IBOutlet NSButton *_useCustomWindowTitle;
     IBOutlet NSTextField *_customWindowTitle;
+    IBOutlet NSView *_settingsForNewWindows;
     iTermFunctionCallTextFieldDelegate *_customWindowTitleDelegate;
 }
 
@@ -177,28 +178,11 @@
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
-    NSArray *viewsToDisable = @[ _columnsField,
-                                 _rowsField,
-                                 _hideAfterOpening,
-                                 _openToolbelt,
-                                 _windowStyle,
-                                 _screen,
-                                 _space,
-                                 _useCustomWindowTitle,
-                                 _preventTab ];
-    for (id view in viewsToDisable) {
-        [view setEnabled:NO];
-    }
-
-    NSArray *labelsToDisable = @[ _screenLabel,
-                                  _columnsLabel,
-                                  _rowsLabel,
-                                  _spaceLabel,
-                                  _windowStyleLabel,
-                                  _customWindowTitle ];
-    for (NSTextField *field in labelsToDisable) {
-        [field setLabelEnabled:NO];
-    }
+    _settingsForNewWindows.hidden = YES;
+    iTermSizeRememberingView *sizeRememberingView = (iTermSizeRememberingView *)self.view;
+    CGSize size = sizeRememberingView.originalSize;
+    size.height -= NSHeight(_settingsForNewWindows.frame);
+    sizeRememberingView.originalSize = size;
 }
 
 - (NSArray *)keysForBulkCopy {
