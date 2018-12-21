@@ -140,8 +140,8 @@ Scripts > Manage > New Python Script                                            
 Scripts > Manage > Open Python REPL                                                     `Open Interactive Window`                                                     
 Scripts > Manage > Install Python Runtime                                               `Install Python Runtime`                                                      
 Scripts > Manage > Reveal Scripts in Finder                                             `Reveal in Finder`                                                            
-Scripts > Manage > Import                                                               `Import Script`                                                               
-Scripts > Manage > Export                                                               `Export Script`                                                               
+Scripts > Manage > Import…                                                              `Import Script`                                                               
+Scripts > Manage > Export…                                                              `Export Script`                                                               
 Scripts > Manage > Console                                                              `Script Console`                                                              
 Profiles > Open Profiles…                                                               `Open Profiles…`                                                              
 Profiles > Press Option for New Window                                                  `Press Option for New Window`                                                 
