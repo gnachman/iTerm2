@@ -52,7 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
     textField.editable = NO;
     textField.selectable = NO;
     textField.lineBreakMode = NSLineBreakByTruncatingTail;
-    
+
     textField.textColor = self.textColor;
     textField.backgroundColor = self.backgroundColor;
     textField.drawsBackground = (self.backgroundColor.alphaComponent > 0);
@@ -106,7 +106,11 @@ NS_ASSUME_NONNULL_BEGIN
 
     textField.stringValue = proposed ?: @"";
 
-    [textField sizeToFit];
+    if (textField.alignment == NSTextAlignmentRight && textField.superview) {
+        [self statusBarComponentSizeView:textField toFitWidth:textField.superview.bounds.size.width];
+    } else {
+        [textField sizeToFit];
+    }
     return YES;
 }
 
@@ -129,6 +133,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSString *longest = self.longestStringValue ?: @"";
     if (![longest isEqual:_longestStringValue]) {
         _longestStringValue = longest;
+        NSLog(@"%@: set longest string value to %@", self, longest);
         [self.delegate statusBarComponentPreferredSizeDidChange:self];
     }
 }
@@ -168,8 +173,14 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)statusBarComponentSizeView:(NSView *)view toFitWidth:(CGFloat)width {
-    [[NSTextField castFrom:view] sizeToFit];
-    view.frame = NSMakeRect(0, 0, width, view.frame.size.height);
+    NSTextField *textField = [NSTextField castFrom:view];
+    [textField sizeToFit];
+    CGFloat x = 0;
+    if (textField.alignment == NSTextAlignmentRight) {
+        x = textField.superview.frame.size.width - width;
+    }
+    DLog(@"Place text view %@ of width %@ at x=%@ in container of width %@", textField, @(width), @(x), @(textField.superview.frame.size.width));
+    view.frame = NSMakeRect(x, 0, width, view.frame.size.height);
 }
 
 - (CGFloat)widthForString:(NSString *)string {

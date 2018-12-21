@@ -15,6 +15,7 @@ extern NSString *const iTermStatusBarSwiftyStringComponentExpressionKey;
 
 // A status bar component showing a swifty string.
 @interface iTermStatusBarSwiftyStringComponent : iTermStatusBarTextComponent
+@property (nonatomic, readonly) NSString *value;
 @end
 
 NS_ASSUME_NONNULL_END

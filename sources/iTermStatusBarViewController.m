@@ -64,7 +64,7 @@ const CGFloat iTermStatusBarHeight = 21;
 - (void)viewWillLayout {
     NSArray<iTermStatusBarContainerView *> *previouslyVisible = _visibleContainerViews.copy;
     _visibleContainerViews = [self visibleContainerViews];
-    DLog(@"--- begin status bar layout ---");
+    DLog(@"--- begin status bar layout %@ ---", self);
     [self updateDesiredWidths];
     [self updateDesiredOrigins];
 

@@ -17,7 +17,6 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
 
 @implementation iTermStatusBarSwiftyStringComponent {
     iTermSwiftyString *_swiftyString;
-    NSString *_value;
 }
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration

@@ -13,8 +13,49 @@
 #import "iTermStatusBarSpringComponent.h"
 #import "iTermStatusBarSwiftyStringComponent.h"
 #import "iTermVariables.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "TmuxController.h"
+
+@interface iTermStatusBarTmuxLeftComponent : iTermStatusBarSwiftyStringComponent
+@end
+
+@implementation iTermStatusBarTmuxLeftComponent
+
+- (NSArray<NSString *> *)stringVariants {
+    NSArray *parts = [self.value ?: @"" componentsSeparatedByString:@" | "];
+    NSMutableArray<NSString *> *variants = [NSMutableArray array];
+    NSInteger count = parts.count;
+    for (NSInteger i = count - 1; i >= 0; i--) {
+        [variants addObject:[[parts subarrayToIndex:i] componentsJoinedByString:@" | "]];
+    };
+    return variants;
+}
+
+@end
+
+@interface iTermStatusBarTmuxRightComponent : iTermStatusBarSwiftyStringComponent
+@end
+
+@implementation iTermStatusBarTmuxRightComponent
+
+- (NSTextField *)newTextField {
+    NSTextField *textField = [super newTextField];
+    textField.alignment = NSTextAlignmentRight;
+    return textField;
+}
+
+- (NSArray<NSString *> *)stringVariants {
+    NSArray *parts = [self.value ?: @"" componentsSeparatedByString:@" | "];
+    NSMutableArray<NSString *> *variants = [NSMutableArray array];
+    NSInteger count = parts.count;
+    for (NSInteger i = 0; i < count; i++) {
+        [variants addObject:[[parts subarrayFromIndex:i] componentsJoinedByString:@" | "]];
+    };
+    return variants;
+}
+
+@end
 
 @implementation iTermStatusBarLayout (tmux)
 
@@ -31,10 +72,10 @@
     leftConfiguration = [self tmux_configurationWithInterpolatedStringExpression:iTermVariableKeySessionTmuxStatusLeft];
     rightConfiguration = [self tmux_configurationWithInterpolatedStringExpression:iTermVariableKeySessionTmuxStatusRight];
 
-    id<iTermStatusBarComponent> leftComponent = [[iTermStatusBarSwiftyStringComponent alloc] initWithConfiguration:leftConfiguration
-                                                                                                             scope:scope];
-    id<iTermStatusBarComponent> rightComponent = [[iTermStatusBarSwiftyStringComponent alloc] initWithConfiguration:rightConfiguration
-                                                                                                              scope:scope];
+    id<iTermStatusBarComponent> leftComponent = [[iTermStatusBarTmuxLeftComponent alloc] initWithConfiguration:leftConfiguration
+                                                                                                         scope:scope];
+    id<iTermStatusBarComponent> rightComponent = [[iTermStatusBarTmuxRightComponent alloc] initWithConfiguration:rightConfiguration
+                                                                                                           scope:scope];
     id<iTermStatusBarComponent> springComponent = [[iTermStatusBarSpringComponent alloc] initWithConfiguration:@{}
                                                                                                          scope:scope];
 

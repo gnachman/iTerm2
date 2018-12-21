@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic) BOOL active;
 @property (nonatomic, weak) TmuxGateway *gateway;
-@property (nonatomic, weak) iTermVariableScope *scope;
+@property (nonatomic, strong) iTermVariableScope *scope;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
