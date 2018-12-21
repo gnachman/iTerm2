@@ -93,6 +93,8 @@
     contentView.layer.borderWidth = 0.5;
 
     _divider.color = [NSColor colorWithCalibratedRed:0.66 green:0.66 blue:0.66 alpha:1];
+
+    [self updateTextColorForAllRows];
 }
 
 - (void)presentWindow {
@@ -298,16 +300,20 @@
         iTermOpenQuicklyItem *item = _model.items[i];
         NSColor *color;
         if (@available(macOS 10.14, *)) {
-            color = [NSColor labelColor];
+            if (i == _table.selectedRow) {
+                [[_table viewAtColumn:0 row:i makeIfNecessary:NO] setBackgroundStyle:NSBackgroundStyleEmphasized];
+            } else {
+                [[_table viewAtColumn:0 row:i makeIfNecessary:NO] setBackgroundStyle:NSBackgroundStyleNormal];
+            }
         } else {
             if (i == row) {
                 color = [NSColor whiteColor];
             } else {
                 color = [self blackColor];
             }
+            item.view.textField.textColor = color;
+            item.view.detailTextField.textColor = color;
         }
-        item.view.textField.textColor = color;
-        item.view.detailTextField.textColor = color;
     }
 }
 
