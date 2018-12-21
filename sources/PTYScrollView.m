@@ -144,9 +144,8 @@
 @end
 
 @implementation PTYScrollView {
-    // Used for working around Lion bug described in setHasVerticalScroller:inInit:
-    NSDate *creationDate_;
-    NSTimer *timer_;
+    // Sadly the superclass's -scroller property may return a dealloc'ed instance.
+    NSScroller *_scroller;
 }
 
 + (BOOL)isCompatibleWithResponsiveScrolling {
@@ -156,7 +155,7 @@
 - (instancetype)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller {
     self = [super initWithFrame:frame];
     if (self) {
-        [self setHasVerticalScroller:hasVerticalScroller inInit:YES];
+        [self setHasVerticalScroller:YES];
         assert([self contentView] != nil);
 
         PTYScroller *aScroller;
@@ -165,7 +164,6 @@
         [self setVerticalScroller:aScroller];
         [aScroller release];
         self.verticalScrollElasticity = NSScrollElasticityNone;
-        creationDate_ = [[NSDate date] retain];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(it_scrollViewDidScroll:) name:NSScrollViewDidLiveScrollNotification object:self];
     }
 
@@ -174,9 +172,7 @@
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [creationDate_ release];
-    [timer_ invalidate];
-    timer_ = nil;
+    [_scroller release];
 
     [super dealloc];
 }
@@ -245,52 +241,14 @@
         scrollRect.origin.y + scrollRect.size.height < [[self documentView] frame].size.height;
 }
 
-- (void)reallyShowScroller {
-    [super setHasVerticalScroller:YES];
-    timer_ = nil;
-}
-
 - (BOOL)isLegacyScroller {
     return [(NSScrollView*)self scrollerStyle] == NSScrollerStyleLegacy;
 }
 
-- (void)setHasVerticalScroller:(BOOL)flag {
-    [self setHasVerticalScroller:flag inInit:NO];
-}
-
-#pragma mark - Private
-
-- (void)setHasVerticalScroller:(BOOL)flag inInit:(BOOL)inInit {
-    if ([self isLegacyScroller]) {
-        [super setHasVerticalScroller:flag];
-        return;
-    }
-
-    // Work around a bug in 10.7.0. When using an overlay scroller and a
-    // non-white background, a white rectangle is briefly visible on the right
-    // side of the window. In that case, delay the initial show of the scroller
-    // for a few seconds.
-    // This isn't related to PTYScroller or the call to setVerticalScroller: as far
-    // as I can tell.
-    const NSTimeInterval kScrollerTimeDelay = 0.5;
-    if (flag &&
-        !timer_ &&
-        (inInit || [[NSDate date] timeIntervalSinceDate:creationDate_] < kScrollerTimeDelay)) {
-        timer_ = [NSTimer scheduledTimerWithTimeInterval:kScrollerTimeDelay
-                                                  target:self
-                                                selector:@selector(reallyShowScroller)
-                                                userInfo:nil
-                                                 repeats:NO];
-        return;
-    } else if (flag && timer_) {
-        return;
-    } else if (!flag && timer_) {
-        [timer_ invalidate];
-        timer_ = nil;
-        return;
-    } else {
-        [super setHasVerticalScroller:flag];
-    }
+- (void)setVerticalScroller:(NSScroller *)verticalScroller {
+    [_scroller autorelease];
+    _scroller = [verticalScroller retain];
+    [super setVerticalScroller:verticalScroller];
 }
 
 @end
