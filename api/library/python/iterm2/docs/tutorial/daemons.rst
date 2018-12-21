@@ -20,75 +20,45 @@ get started:
 .. code-block:: python
 
     #!/usr/bin/env python3
-
-    import asyncio
     import iterm2
 
     async def main(connection):
-        async def on_custom_esc(connection, notification):
-            print("Received a custom escape sequence")
-            if notification.sender_identity == "shared-secret":
-                if notification.payload == "create-window":
-                    await iterm2.Window.async_create()
+        async def my_callback(match):
+            await iterm2.Window.async_create(connection)
 
-        await iterm2.notifications.async_subscribe_to_custom_escape_sequence_notification(connection, on_custom_esc)
+        my_sequence = iterm2.CustomControlSequence(
+            connection=connection,
+            callback=my_callback,
+            shared_secret="shared-secret",
+            regex=r'^create-window$')
+
+        await my_sequence.async_register()
 
     iterm2.run_forever(main)
 
-Let's examine it line by line.
+Skipping the boilerplate we've seen before, let's look at the meat of the `main`
+function.
 
 .. code-block:: python
 
-    #!/usr/bin/env python3
+        async def my_callback(match):
+            await iterm2.Window.async_create(connection)
 
-This is standard boilerplate for a Python script. See :doc:`running` for
-details on how scripts are run.
-
-The next part of the template script are the imports:
-
-.. code-block:: python
-
-    import asyncio
-
-The `iterm2` module is based on the Python :py:mod:`asyncio` framework. For
-simple scripts, you don't need to know about it at all, but as you do more
-complex things it will become more important.
-
-.. code-block:: python
-
-        async def on_custom_esc(connection, notification):
-            print("Received a custom escape sequence")
-
-This is a callback that gets invoked when iTerm2 receives a custom escape
+This is a callback that gets invoked when iTerm2 receives a custom control
 sequence.
 
-A custom escape sequence is a special escape sequence that performs a
-user-defined action. In contradistinction to a standard escape sequence, such
-as those that position the cursor or change the current color, a custom escape
+A custom escape sequence is a special control sequence that performs a
+script-defined action. In contradistinction to a standard control sequence, such
+as those that position the cursor or change the current color, a custom control
 sequence is proprietary to iTerm2. When one is received, iTerm2 sends a
 notification to any script that has subscribed to custom escape sequence
 notifications. The `iterm2` python module invokes the script's registered
-callback, which in this case is `on_custom_esc`.
+callback, which in this case is `my_callback`.
 
-The first argument is a `connection`, which you have seen before.
-
-The second argument is a `notification`, which contains details about the
-notification. In the case of a custom escape sequence, it has a
-`sender_identity` and a `payload`. The `sender_identity` is intended to be a
-secret shared between your daemon and the program that produces a custom escape
-sequence. This is a security measure to prevent untrusted programs from using a
-daemon to control iTerm2 in ways you don't want.
-
-The `payload` is an arbitrary string provided in the custom escape sequence.
-
-.. note::
-    The `notification` is a Python representation of a Google protobuf message.
-    You can find the protobuf description in the `api.proto
-    <https://raw.githubusercontent.com/gnachman/iTerm2/master/proto/api.proto>`_
-    file.
-
-    The :doc:`/notifications` documentation describes which protobuf message to
-    expect in a notification callback.
+The callback takes a single argument, `match`, which is from Python's `re`
+regular expression module. The control sequence's payload gets matched against
+a regular expression you provide. If the search is successful, the resulting
+`re.Match` gets passed to your callback.
 
 To produce a custom escape sequence, you could run this at the command line:
 
@@ -99,38 +69,46 @@ To produce a custom escape sequence, you could run this at the command line:
 The first argument, `shared-secret` is the identity and the second argument,
 `create-window` is the payload.
 
-Let's see what the callback does:
+The callback simply creates a new window, as a demonstration of what could
+be done here.
 
 .. code-block:: python
 
-            if notification.sender_identity == "shared-secret":
-                if notification.payload == "create-window":
-                    await iterm2.Window.async_create()
-
-First, it checks that the sender identity is correct. Next, it selects the
-action to perform based on the payload. This daemon only knows how to create
-windows, but a more sophisticated daemon could handle many different payloads.
+        async def my_callback(match):
+            await iterm2.Window.async_create(connection)
 
 That's it for the callback. Let's see how we register for custom escape
 sequence notifications:
 
 .. code-block:: python
 
-    await iterm2.notifications.async_subscribe_to_custom_escape_sequence_notification(connection, on_custom_esc)
+        my_sequence = iterm2.CustomControlSequence(
+            connection=connection,
+            callback=my_callback,
+            identity="shared-secret",
+            regex=r'^create-window$')
 
-That's all you have to do to request that `on_custom_esc` be called any time a
-custom escape sequence is received in any session.
+        await my_sequence.async_register()
 
-This tells the `connection` to handle incoming messages until the passed-in
-future has its result set. The future will never have its result set, so the
-script will run until iTerm2 terminates.
+That's all you have to do to request that `my_callback` be called any time a
+custom escape sequence is received in any session with the specified identity
+and a payload matching the regular expression `^create-window$`.
+
+If you wanted the payload to take more information, such as the number of
+windows to create, you could use the regular expression matcher to capture
+that value in a capture group and retrieve it from the matcher in the callback.
+
+The control sequence remains registered even after `main` returns.
+
+Finally, we get to the last line of the script:
 
 .. code-block:: python
 
     iterm2.run_forever(main)
 
 This starts the script and keeps it running even after `main` returns so it can
-continue to process custom control sequences until iTerm2 terminates.
+continue to process custom control sequences until iTerm2 terminates. This is
+what makes it a long-running daemon.
 
 Continue to the next section, :doc:`rpcs`.
 

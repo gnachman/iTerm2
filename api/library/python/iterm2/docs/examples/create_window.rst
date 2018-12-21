@@ -7,21 +7,19 @@ starting point for developing your own custom escape sequence handler.
 
 .. code-block:: python
 
-    #!/usr/bin/env python3
-
-    import asyncio
     import iterm2
 
     async def main(connection):
-	app = await iterm2.async_get_app(connection)
+        async def my_callback(match):
+            await iterm2.Window.async_create(connection)
 
-	async def on_custom_esc(connection, notification):
-	    print("Received a custom escape sequence")
-	    if notification.sender_identity == "shared-secret":
-		if notification.payload == "create-window":
-		    await app.Window.async_create()
+        my_sequence = iterm2.CustomControlSequence(
+            connection=connection,
+            callback=my_callback,
+            identity="shared-secret",
+            regex=r'^create-window$')
 
-	await iterm2.notifications.async_subscribe_to_custom_escape_sequence_notification(connection, on_custom_esc)
+        await my_sequence.async_register()
 
     iterm2.run_forever(main)
 
@@ -33,4 +31,4 @@ To run the script, use:
 
 The *shared-secret* string is used to prevent untrusted code from invoking your
 function. For example, if you `cat` a text file, it could include escape
-sequences.
+sequences, but they won't work unless they contain the proper secret string.
