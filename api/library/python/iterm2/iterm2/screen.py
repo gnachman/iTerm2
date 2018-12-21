@@ -92,6 +92,8 @@ class ScreenContents:
 class ScreenStreamer:
     """An asyncio context manager for monitoring the screen contents.
 
+    You can use this to be notified when screen contents change. Optionally, you can receive the actual contents of the screen.
+
     Don't create this yourself. Use Session.get_screen_streamer() instead. See
     its docstring for more info."""
     def __init__(self, connection, session_id, want_contents=True):
@@ -124,9 +126,11 @@ class ScreenStreamer:
 
     async def async_get(self):
         """
-        Gets the screen contents, waiting until they change if needed.
+        Blocks until the screen contents change.
 
-        :returns: A :class:`ScreenContents`
+        If this `ScreenStreamer` has been configured to provide screen contents, then they will be returned.
+
+        :returns: A :class:`ScreenContents` (if so configured), otherwise `None`.
         """
         future = asyncio.Future()
         self.future = future
