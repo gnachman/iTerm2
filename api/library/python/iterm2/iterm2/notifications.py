@@ -159,24 +159,6 @@ async def async_subscribe_to_prompt_notification(connection, callback, session=N
         callback,
         session=session)
 
-async def async_subscribe_to_location_change_notification(connection, callback, session=None):
-    """
-    Registers a callback to be run when the host or current directory changes.
-
-    :param connection: A connected :class:`Connection`.
-    :param callback: A coroutine taking two arguments: an :class:`Connection` and
-      iterm2.api_pb2.LocationChangeNotification.
-    :param session: The session to monitor, or None.
-
-    :returns: A token that can be passed to unsubscribe.
-    """
-    return await _async_subscribe(
-        connection,
-        True,
-        iterm2.api_pb2.NOTIFY_ON_LOCATION_CHANGE,
-        callback,
-        session=session)
-
 async def async_subscribe_to_custom_escape_sequence_notification(connection,
                                                                  callback,
                                                                  session=None):

@@ -203,7 +203,7 @@ typedef GPB_ENUM(ITMNotificationType) {
   ITMNotificationType_NotifyOnKeystroke = 1,
   ITMNotificationType_NotifyOnScreenUpdate = 2,
   ITMNotificationType_NotifyOnPrompt = 3,
-  ITMNotificationType_NotifyOnLocationChange = 4,
+  ITMNotificationType_NotifyOnLocationChange DEPRECATED_ATTRIBUTE = 4,
   ITMNotificationType_NotifyOnCustomEscapeSequence = 5,
   ITMNotificationType_NotifyOnVariableChange = 12,
 
@@ -3312,9 +3312,9 @@ typedef GPB_ENUM(ITMNotification_FieldNumber) {
 /** Test to see if @c promptNotification has been set. */
 @property(nonatomic, readwrite) BOOL hasPromptNotification;
 
-@property(nonatomic, readwrite, strong, null_resettable) ITMLocationChangeNotification *locationChangeNotification;
+@property(nonatomic, readwrite, strong, null_resettable) ITMLocationChangeNotification *locationChangeNotification DEPRECATED_ATTRIBUTE;
 /** Test to see if @c locationChangeNotification has been set. */
-@property(nonatomic, readwrite) BOOL hasLocationChangeNotification;
+@property(nonatomic, readwrite) BOOL hasLocationChangeNotification DEPRECATED_ATTRIBUTE;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMCustomEscapeSequenceNotification *customEscapeSequenceNotification;
 /** Test to see if @c customEscapeSequenceNotification has been set. */

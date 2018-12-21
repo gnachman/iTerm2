@@ -445,7 +445,6 @@ static const NSUInteger kMaxHosts = 100;
     NSMutableDictionary<id, ITMNotificationRequest *> *_keyboardFilterSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_updateSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_promptSubscriptions;
-    NSMutableDictionary<id, ITMNotificationRequest *> *_locationChangeSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_customEscapeSequenceNotifications;
 
     // Used by auto-hide. We can't auto hide the tmux gateway session until at least one window has been opened.
@@ -614,7 +613,6 @@ static const NSUInteger kMaxHosts = 100;
         _keyboardFilterSubscriptions = [[NSMutableDictionary alloc] init];
         _updateSubscriptions = [[NSMutableDictionary alloc] init];
         _promptSubscriptions = [[NSMutableDictionary alloc] init];
-        _locationChangeSubscriptions = [[NSMutableDictionary alloc] init];
         _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
         _metalDisabledTokens = [[NSMutableSet alloc] init];
         _statusChangedAbsLine = -1;
@@ -764,7 +762,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_keyboardFilterSubscriptions release];
     [_updateSubscriptions release];
     [_promptSubscriptions release];
-    [_locationChangeSubscriptions release];
     [_customEscapeSequenceNotifications release];
 
     [_copyModeState release];
@@ -4574,7 +4571,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_keystrokeSubscriptions removeObjectForKey:notification.object];
     [_keyboardFilterSubscriptions removeObjectForKey:notification.object];
     [_updateSubscriptions removeObjectForKey:notification.object];
-    [_locationChangeSubscriptions removeObjectForKey:notification.object];
     [_customEscapeSequenceNotifications removeObjectForKey:notification.object];
 }
 
@@ -9004,16 +9000,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [self maybeResetTerminalStateOnHostChange];
     }
     self.currentHost = host;
-
-    ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
-    notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
-    notification.locationChangeNotification.hostName = host.hostname;
-    notification.locationChangeNotification.userName = host.username;
-    notification.locationChangeNotification.session = self.guid;
-    [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        [[iTermAPIHelper sharedInstance] postAPINotification:notification
-                                             toConnectionKey:key];
-    }];
 }
 
 - (void)maybeResetTerminalStateOnHostChange {
@@ -9178,15 +9164,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                   username:remoteHost.username
                                       path:newPath];
     [self.variablesScope setValue:newPath forVariableNamed:iTermVariableKeySessionPath];
-
-    ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
-    notification.locationChangeNotification = [[[ITMLocationChangeNotification alloc] init] autorelease];
-    notification.locationChangeNotification.session = self.guid;
-    notification.locationChangeNotification.directory = newPath;
-    [_locationChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
-        [[iTermAPIHelper sharedInstance] postAPINotification:notification
-                                             toConnectionKey:key];
-    }];
 }
 
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
@@ -10544,9 +10521,6 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
         case ITMNotificationType_NotifyOnScreenUpdate:
             subscriptions = _updateSubscriptions;
-            break;
-        case ITMNotificationType_NotifyOnLocationChange:
-            subscriptions = _locationChangeSubscriptions;
             break;
         case ITMNotificationType_NotifyOnCustomEscapeSequence:
             subscriptions = _customEscapeSequenceNotifications;

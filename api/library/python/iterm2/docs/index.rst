@@ -37,6 +37,7 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    mainmenu
    notifications
    profile
+   prompt
    registration
    screen
    selection
