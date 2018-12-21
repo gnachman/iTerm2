@@ -1077,7 +1077,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)webSocketConnection:(iTermWebSocketConnection *)webSocketConnection didReadFrame:(iTermWebSocketFrame *)frame {
     if (frame.opcode == iTermWebSocketOpcodeBinary) {
         ITMClientOriginatedMessage *request = [ITMClientOriginatedMessage parseFromData:frame.payload error:nil];
-        NSLog(@"Dispatch %@", request);
+        DLog(@"Dispatch %@", request);
         if (request) {
             DLog(@"Received request: %@", request);
             __weak __typeof(self) weakSelf = self;
