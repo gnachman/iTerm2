@@ -12,10 +12,15 @@ import iterm2.window
 
 import json
 
-async def async_get_app(connection):
-    """Returns the app singleton, creating it if needed."""
+async def async_get_app(connection, create_if_needed=True):
+    """Returns the app singleton, creating it if needed.
+
+    :param create_if_needed: A boolean. If `True`, create the global :class:`App` instance if one does not already exists. If `False`, do not create it.
+
+    :returns: The global :class:`App` instance. If `create_if_needed` is False this may return `None` if no such instance exists."""
     if App.instance is None:
-        App.instance = await App.async_construct(connection)
+        if create_if_needed:
+            App.instance = await App.async_construct(connection)
     else:
         await App.instance.async_refresh()
     return App.instance
@@ -86,18 +91,11 @@ class App:
 
     @staticmethod
     def _windows_from_list_sessions_response(connection, response):
-        windows = []
-        for window in response.windows:
-            tabs = []
-            for tab in window.tabs:
-                root = iterm2.session.Splitter.from_node(tab.root, connection)
-                if tab.HasField("tmux_window_id"):
-                    tmux_window_id = tab.tmux_window_id
-                else:
-                    tmux_window_id = None
-                tabs.append(iterm2.tab.Tab(connection, tab.tab_id, root, tmux_window_id, tab.tmux_connection_id))
-            windows.append(iterm2.window.Window(connection, window.window_id, tabs, window.frame, window.number))
-        return windows
+        return list(
+                filter(
+                    lambda x: x,
+                    map(lambda window: iterm2.window.Window.create_from_proto(connection, window),
+                        response.windows)))
 
     @staticmethod
     def _buried_sessions_from_list_sessions_response(connection, response):
