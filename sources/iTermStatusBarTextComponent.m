@@ -133,7 +133,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSString *longest = self.longestStringValue ?: @"";
     if (![longest isEqual:_longestStringValue]) {
         _longestStringValue = longest;
-        NSLog(@"%@: set longest string value to %@", self, longest);
+        DLog(@"%@: set longest string value to %@", self, longest);
         [self.delegate statusBarComponentPreferredSizeDidChange:self];
     }
 }
