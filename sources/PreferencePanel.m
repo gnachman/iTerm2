@@ -151,6 +151,7 @@ static PreferencePanel *gSessionsPreferencePanel;
     IBOutlet WindowArrangements *arrangements_;
     NSSize _standardSize;
     NSInteger _disableResize;
+    BOOL _tmux;
 }
 
 + (instancetype)sharedInstance {
@@ -208,6 +209,7 @@ static PreferencePanel *gSessionsPreferencePanel;
     _appearancePreferencesViewController.preferencePanel = self;
     _keysViewController.preferencePanel = self;
     _profilesViewController.preferencePanel = self;
+    _profilesViewController.tmuxSession = _tmux;
     _pointerViewController.preferencePanel = self;
 
     if (_editCurrentSessionMode) {
@@ -252,7 +254,9 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 // NOTE: Callers should invoke makeKeyAndOrderFront if they are so inclined.
-- (void)openToProfileWithGuid:(NSString*)guid selectGeneralTab:(BOOL)selectGeneralTab {
+- (void)openToProfileWithGuid:(NSString*)guid selectGeneralTab:(BOOL)selectGeneralTab tmux:(BOOL)tmux {
+    _tmux = tmux;
+    _profilesViewController.tmuxSession = tmux;
     [self window];
     [self selectProfilesTab];
     [self run];

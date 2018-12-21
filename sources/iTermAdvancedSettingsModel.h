@@ -233,6 +233,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)underlineCursorHeight;
 + (double)underlineCursorOffset;
 + (double)updateScreenParamsDelay;
++ (BOOL)useTmuxStatusBar;
 + (NSString *)URLCharacterSet;
 + (NSString *)URLCharacterSetExclusions;
 + (BOOL)useAdaptiveFrameRate;

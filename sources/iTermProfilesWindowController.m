@@ -323,7 +323,7 @@ typedef enum {
 {
     NSString* guid = [tableView_ selectedGuid];
     if (guid) {
-        [[PreferencePanel sharedInstance] openToProfileWithGuid:guid selectGeneralTab:YES];
+        [[PreferencePanel sharedInstance] openToProfileWithGuid:guid selectGeneralTab:YES tmux:NO];
         [[[PreferencePanel sharedInstance] window] makeKeyAndOrderFront:nil];
     }
 }

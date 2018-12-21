@@ -83,7 +83,7 @@ void LoadPrefsFromCustomFolder(void);
 - (instancetype)initWithProfileModel:(ProfileModel *)model
               editCurrentSessionMode:(BOOL)editCurrentSessionMode;
 
-- (void)openToProfileWithGuid:(NSString*)guid selectGeneralTab:(BOOL)selectGeneralTab;
+- (void)openToProfileWithGuid:(NSString*)guid selectGeneralTab:(BOOL)selectGeneralTab tmux:(BOOL)tmux;
 
 - (IBAction)showGlobalTabView:(id)sender;
 - (IBAction)showAppearanceTabView:(id)sender;

@@ -4786,7 +4786,9 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     NSString *newGuid = [session divorceAddressBookEntryFromPreferences];
-    [[PreferencePanel sessionsInstance] openToProfileWithGuid:newGuid selectGeneralTab:makeKey];
+    [[PreferencePanel sessionsInstance] openToProfileWithGuid:newGuid
+                                             selectGeneralTab:makeKey
+                                                         tmux:session.isTmuxClient];
     if (makeKey) {
         [[[PreferencePanel sessionsInstance] window] makeKeyAndOrderFront:nil];
     }

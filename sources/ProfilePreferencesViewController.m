@@ -746,6 +746,9 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
     }
 }
 
+- (BOOL)editingTmuxSession {
+    return _tmuxSession;
+}
 
 #pragma mark - ProfilesGeneralPreferencesViewControllerDelegate
 

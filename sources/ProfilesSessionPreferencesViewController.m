@@ -192,7 +192,8 @@
         if (!strongSelf) {
             return;
         }
-        strongSelf->_configureStatusBar.enabled = [strongSelf boolForKey:KEY_SHOW_STATUS_BAR];
+        strongSelf->_configureStatusBar.enabled = (![self.delegate editingTmuxSession] &&
+                                                   [strongSelf boolForKey:KEY_SHOW_STATUS_BAR]);
     };
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
 }
@@ -215,12 +216,20 @@
     [self awakeFromNib];  // We can get called before awakeFromNib
     [self infoForControl:_autoLog].observer = NULL;
     [self infoForControl:_logDir].observer = NULL;
+    [self updateStatusBarSettingsEnabled];
+}
+
+- (void)updateStatusBarSettingsEnabled {
+    const BOOL tmux = [self.delegate editingTmuxSession];
+    _statusBarEnabled.enabled = !tmux;
+    _configureStatusBar.enabled = !tmux;
 }
 
 - (void)reloadProfile {
     [super reloadProfile];
     [_jobsTable reloadData];
     [self updateRemoveJobButtonEnabled];
+    [self updateStatusBarSettingsEnabled];
 }
 
 - (NSArray *)keysForBulkCopy {

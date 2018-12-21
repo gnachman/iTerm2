@@ -27,6 +27,7 @@ extern NSString *const kProfileSessionHotkeyDidChange;
 @interface ProfilePreferencesViewController : iTermPreferencesBaseViewController
 
 @property(nonatomic, weak) IBOutlet id<ProfilePreferencesViewControllerDelegate> delegate;
+@property (nonatomic) BOOL tmuxSession;
 
 // Size of tab view.
 @property(nonatomic, readonly) NSSize size;

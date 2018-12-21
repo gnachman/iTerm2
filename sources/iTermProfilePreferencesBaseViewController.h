@@ -16,6 +16,7 @@
 - (Profile *)profilePreferencesCurrentProfile;
 - (ProfileModel *)profilePreferencesCurrentModel;
 - (void)profilePreferencesContentViewSizeDidChange:(iTermSizeRememberingView *)view;
+- (BOOL)editingTmuxSession;
 
 @end
 
