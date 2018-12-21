@@ -213,14 +213,16 @@ class Session:
         The screen is the mutable part of a session (its last lines, excluding
         scrollback history).
 
+        :param want_contents: A boolean. If True, the screen contents will be provided. See :class:`ScreenStreamer` for details.
+
+        :returns: A :class:`iterm2.screen.ScreenStreamer`.
+
         :Example:
 
           async with session.get_screen_streamer() as streamer:
             while condition():
               contents = await streamer.async_get()
               do_something(contents)
-
-        :returns: A :class:`ScreenStreamer`.
         """
         return iterm2.screen.ScreenStreamer(self.connection, self.__session_id, want_contents=want_contents)
 
