@@ -539,6 +539,10 @@ static NSDate* lastResizeDate_;
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
 }
 
+- (void)didBecomeVisible {
+    [[self.delegate sessionViewStatusBarViewController] updateColors];
+}
+
 - (void)updateMetalViewFrame {
     DLog(@"update metalView frame");
     // The metal view looks awful while resizing because it insists on scaling

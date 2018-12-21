@@ -221,5 +221,6 @@
 - (void)removeMetalView;
 
 - (void)tabColorDidChange;
+- (void)didBecomeVisible;
 
 @end

@@ -4929,6 +4929,7 @@ ITERM_WEAKLY_REFERENCEABLE
         aSession.active = YES;
         [self setDimmingForSession:aSession];
         [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
+        [[aSession view] didBecomeVisible];
     }
 
     for (PTYSession *session in [self allSessions]) {
