@@ -98,7 +98,6 @@ class ColorKnob:
 class StatusBarComponent:
     """Describes a script-provided status bar component showing a text value provided by a user-provided coroutine.
 
-    :param name: The RPC name. Combined with its arguments, this must be unique among all registered RPCs. It should consist of letters, numbers, and underscores and must begin with a letter.
     :param short_description: Short description shown below the component in the picker UI.
     :param detailed_description: Tool tip for th component in the picker UI.
     :param knobs: List of configuration knobs. See the various Knob classes for details.
@@ -106,10 +105,9 @@ class StatusBarComponent:
     :param update_cadence: How frequently in seconds to reload the value, or `None` if it does not need to be reloaded on a timer.
     :param identifier: A string uniquely identifying this component. Use a backwards domain name. For example, `com.example.calculator` for a calculator component provided by example.com.
     """
-    def __init__(self, name, short_description, detailed_description, knobs, exemplar, update_cadence, identifier):
+    def __init__(self, short_description, detailed_description, knobs, exemplar, update_cadence, identifier):
         """Initializes a status bar component.
         """
-        self.__name = name
         self.__short_description = short_description
         self.__detailed_description = detailed_description
         self.__knobs = knobs
@@ -117,10 +115,6 @@ class StatusBarComponent:
         self.__update_cadence = update_cadence
         self.__identifier = identifier
         self.__on_click = None
-
-    @property
-    def name(self):
-        return self.__name
 
     def set_fields_in_proto(self, proto):
         proto.short_description = self.__short_description
@@ -162,12 +156,7 @@ class StatusBarComponent:
         :param defaults: Gives default values. Names correspond to argument names in `arguments`. Values are in-scope variables of the session owning the status bar.
         """
         self.__connection = connection
-        await iterm2.registration.Registration.async_register_status_bar_component(
-                connection,
-                self,
-                coro,
-                timeout,
-                defaults)
+        await coro.async_register(connection, self)
         if self.__on_click:
             magic_name = "__" + self.__identifier.replace(".", "_").replace("-", "_") + "__on_click"
             async def handle_rpc(session_id):

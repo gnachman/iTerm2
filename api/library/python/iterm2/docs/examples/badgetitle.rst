@@ -12,7 +12,10 @@ First run the script. Then choose "Badge + Name" in **Prefs > Profiles > General
     import iterm2
 
     async def main(connection):
-        async def title(badge, auto_name):
+        @iterm2.TitleProviderRPC
+        async def badge_title(
+            badge=iterm2.Reference("session.badge?"),
+            auto_name=iterm2.Reference("session.autoName?")):
             if badge and auto_name:
                 return auto_name + u" \u2014 " + badge
             elif auto_name:
@@ -21,15 +24,7 @@ First run the script. Then choose "Badge + Name" in **Prefs > Profiles > General
                 return badge
             else:
                 return "Shell"
-
-        defaults = { "badge": "session.badge?",
-                     "auto_name": "session.autoName?" }
-        await iterm2.Registration.async_register_session_title_provider(
-                connection,
-                "nameandbadge",
-                title,
-                display_name="name + badge",
-                defaults=defaults)
+        await badge_title.async_register(connection, "Name + Badge")
 
     iterm2.run_forever(main)
 
@@ -45,7 +40,10 @@ but some users prefer to see the window title in both places.
     import iterm2
 
     async def main(connection):
-        async def title(window_name, auto_name):
+        @iterm2.TitleProviderRPC
+        async def window_title_in_tab(
+            window_name=iterm2.Reference("session.terminalWindowName?"),
+            auto_name=iterm2.Reference("session.autoName?")):
             if window_name:
                 return window_name
             elif auto_name:
@@ -53,13 +51,6 @@ but some users prefer to see the window title in both places.
             else:
                 return "Shell"
 
-        defaults = { "window_name": "session.terminalWindowName?",
-                     "auto_name": "session.autoName?" }
-        await iterm2.Registration.async_register_session_title_provider(
-                connection,
-                "window_name",
-                title,
-                display_name="Window Name",
-                defaults=defaults)
+        await window_title_in_tab.async_register(connection, "Window Name")
 
     iterm2.run_forever(main)

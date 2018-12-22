@@ -1,7 +1,7 @@
 George's Title Algorithm
 =========================
 
-This code combines user-defined variables from Shell Integration with a custom session title function. It demonstrates :meth:`iterm2.Registration.async_register_session_title_provider`. The end result is a snazzy title that includes your git branch:
+This code combines user-defined variables from Shell Integration with a custom session title function. It demonstrates :func:`iterm2.registration.TitleProviderRPC`. The end result is a snazzy title that includes your git branch:
 
 .. image:: georgesalgo.png
   :height: 32px
@@ -81,7 +81,15 @@ Next, install this script in `~/Library/Application Support/iTerm2/Scripts/AutoL
         localhome = os.environ.get("HOME")
         localhost = hostname_dash_f()
 
-        async def georges_title(pwd, hostname, branch, auto_name, profile_name, tmux_title, user_home):
+        @iterm2.TitleProviderRPC
+        async def georges_title(
+            pwd=iterm2.Reference("session.path?"),
+            hostname=iterm2.Reference("session.hostname?"),
+            branch=iterm2.Reference("user.gitBranch?"),
+            auto_name=iterm2.Reference("session.autoName?"),
+            profile_name=iterm2.Reference("session.profileName?"),
+            tmux_title=iterm2.Reference("session.tmuxWindowTitle?"),
+            user_home=iterm2.Reference("user.home?")):
             if tmux_title:
                 return tmux_title
 
@@ -90,19 +98,7 @@ Next, install this script in `~/Library/Application Support/iTerm2/Scripts/AutoL
                      make_pwd(user_home, localhome, pwd),
                      make_branch(branch)]
             return " ".join(list(filter(lambda x: x, parts)))
-
-        defaults = { "pwd":          "session.path?",
-                     "hostname":     "session.hostname?",
-                     "branch":       "user.gitBranch?",
-                     "auto_name":    "session.autoName?",
-                     "profile_name": "session.profileName?",
-                     "tmux_title":   "session.tmuxWindowTitle?",
-                     "user_home":    "user.home?" }
-        await iterm2.Registration.async_register_session_title_provider(connection,
-                                                                        "georges_title",
-                                                                        georges_title,
-                                                                        display_name="George's Title Algorithm",
-                                                                        defaults=defaults)
+        await georges_title.async_register("George's Title Algorithm")
 
     iterm2.run_forever(main)
 

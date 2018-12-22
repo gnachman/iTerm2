@@ -165,8 +165,8 @@ Timeouts
 
 By default, iTerm2 stops waiting for a function's result after five seconds.
 The function continues to run until completion. You can pass an optional
-`timeout` parameter to `iterm2.Registration.async_register_rpc_handler` to set your own timeout
-value in seconds.
+`timeout` parameter to `async_register` to set your own timeout value in
+seconds.
 
 Composition
 -----------
@@ -177,19 +177,21 @@ example, which you can add to the `main` function of the previous example:
 
 .. code-block:: python
 
+    @iterm2.RPC
     async def add(a, b):
         return a + b
+    await add.async_register(connection)
 
+    @iterm2.RPC
     async def times(a, b):
         return a * b
+    await add.async_register(connection)
 
+    @iterm2.RPC
     async def show(s):
         session = app.current_terminal_window.current_tab.current_session
         await session.async_inject(bytes(str(s), encoding="utf-8"))
-
-    await iterm2.Registration.async_register_rpc_handler(connection, "times", times)
-    await iterm2.Registration.async_register_rpc_handler(connection, "add", add)
-    await iterm2.Registration.async_register_rpc_handler(connection, "show", show)
+    await add.async_register(connection)
 
 
 To compute 1+2*3 and inject it into the current session, use this invocation:
