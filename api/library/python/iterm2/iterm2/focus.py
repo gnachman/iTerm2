@@ -103,22 +103,22 @@ class FocusUpdate:
 
     @property
     def application_active(self):
-        """:returns: None if no change to whether the app is active, otherwise :class:`FocusUpdateApplicationActive`"""
+        """:returns: `None` if no change to whether the app is active, otherwise :class:`FocusUpdateApplicationActive`"""
         return self.__application_active
 
     @property
     def window_changed(self):
-        """:returns: None if no change to the current window, otherwise :class:`FocusUpdateWindowChanged`."""
+        """:returns: `None` if no change to the current window, otherwise :class:`FocusUpdateWindowChanged`."""
         return self.__window_changed
 
     @property
     def selected_tab_changed(self):
-        """:returns: None if no change to selected tab, otherwise :class:`FocusUpdateSelectedTabChanged`."""
+        """:returns: `None` if no change to selected tab, otherwise :class:`FocusUpdateSelectedTabChanged`."""
         return self.__selected_tab_changed
 
     @property
     def active_session_changed(self):
-        """:returns: None if no change to active sessino, otherwise :class:`FocusUpdateActiveSessionChanged`."""
+        """:returns: `None` if no change to active session, otherwise :class:`FocusUpdateActiveSessionChanged`."""
         return self.__active_session_changed
 
 class FocusMonitor:
