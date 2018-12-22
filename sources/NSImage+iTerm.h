@@ -10,7 +10,6 @@
 
 @interface NSImage (iTerm)
 
-+ (CGContextRef)newBitmapContextOfSize:(NSSize)size storage:(NSMutableData *)data;
 + (NSImage *)imageOfSize:(NSSize)size color:(NSColor *)color;
 
 // Creates an image context and runs block. Do drawing into the current
