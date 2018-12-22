@@ -3750,7 +3750,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                      image:[self tabGraphicForProfile:aDict]];
     [self.delegate sessionUpdateMetalAllowed];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
-    [_nameController setNeedsUpdate];
 }
 
 - (void)setBadgeFormat:(NSString *)badgeFormat {
@@ -4222,6 +4221,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
     [[_delegate realParentWindow] invalidateRestorableState];
     [[_delegate realParentWindow] updateTabColors];
+    [_nameController setNeedsUpdate];
 }
 
 - (NSDictionary *)arrangement {
