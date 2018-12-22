@@ -49,6 +49,7 @@ static inline BOOL iTermCharacterSupportsFastPath(unichar code, BOOL asciiLigatu
 @property (nonatomic, readonly) unichar *characters;
 @property (nonatomic, readonly) NSDictionary *attributes;
 - (void)addAttribute:(NSString *)name value:(id)value;
+- (iTermCheapAttributedString *)copyWithAttributes:(NSDictionary *)attributes;
 @end
 
 @interface NSMutableAttributedString(iTermMutableAttributedStringBuilder) <iTermAttributedString>
