@@ -48,6 +48,11 @@ static const int kBadgeMargin = 4;
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
 extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
+typedef struct {
+    CGContextRef maskGraphicsContext;
+    CGImageRef alphaMask;
+} iTermUnderlineContext;
+
 BOOL CheckFindMatchAtIndex(NSData *findMatches, int index) {
     int theIndex = index / 8;
     int mask = 1 << (index & 7);
@@ -1507,88 +1512,143 @@ typedef struct iTermTextColorContext {
                                        backgroundColor:backgroundColor
                                        graphicsContext:graphicsContext
                                                  smear:NO];
+    iTermUnderlineContext storage = {
+        .maskGraphicsContext = nil,
+        .alphaMask = nil,
+    };
+    iTermUnderlineContext *underlineContext = &storage;
 
-    __block CGContextRef maskGraphicsContext = nil;
-    __block CGImageRef alphaMask = nil;
     NSDictionary *maskingAttributes = @{ (NSString *)kCTForegroundColorAttributeName: (id)[[NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:1] CGColor] };
-    CGContextRef cgContext = (CGContextRef) [graphicsContext graphicsPort];
 
     [attributedString enumerateAttribute:NSUnderlineStyleAttributeName
                                  inRange:NSMakeRange(0, attributedString.length)
                                  options:0
-                              usingBlock:^(NSNumber * _Nullable value, NSRange range, BOOL * _Nonnull stop) {
-                                  NSUnderlineStyle underlineStyle = value.integerValue;
-                                  if (underlineStyle != NSUnderlineStyleNone) {
-                                      CGFloat xOrigin = origin.x + stringPositions[range.location];
-                                      const BOOL mask = YES;
-                                      NSDictionary *attributes = [attributedString attributesAtIndex:range.location
-                                                                                      effectiveRange:nil];
-                                      const CGFloat width = [attributes[iTermUnderlineLengthAttribute] intValue] * _cellSize.width;
-                                      if (mask) {
-                                          const CGFloat maskHeight = _cellSize.height * 2;
-                                          if (!maskGraphicsContext) {
-                                              // Create a mask image.
-                                              maskGraphicsContext = [self newGrayscaleContextOfSize:NSMakeSize(width, maskHeight)];
-                                              [NSGraphicsContext saveGraphicsState];
-                                              [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithGraphicsPort:maskGraphicsContext
-                                                                                                                              flipped:NO]];
+                              usingBlock:
+     ^(NSNumber * _Nullable value, NSRange range, BOOL * _Nonnull stop) {
+         NSUnderlineStyle underlineStyle = value.integerValue;
+         if (underlineStyle == NSUnderlineStyleNone) {
+             return;
+         }
+         NSDictionary *const attributes = [attributedString attributesAtIndex:range.location
+                                                               effectiveRange:nil];
+         const NSSize size = NSMakeSize([attributes[iTermUnderlineLengthAttribute] intValue] * _cellSize.width,
+                                        _cellSize.height * 2);
+         const CGFloat xOrigin = origin.x + stringPositions[range.location];
+         const NSRect rect = NSMakeRect(xOrigin,
+                                        origin.y,
+                                        size.width,
+                                        size.height);
+         NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
+         NSColor *underlineColor;
+         if (underline) {
+             underlineColor = underline;
+         } else {
+             CGColorRef cgColor = (CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName];
+             underlineColor = [NSColor colorWithCGColor:cgColor];
+         }
+         [self drawUnderlinedTextWithContext:underlineContext
+                                      inRect:rect
+                              underlineColor:underlineColor
+                                       style:underlineStyle
+                                        font:attributes[NSFontAttributeName]
+                                       block:
+          ^{
+              [self drawAttributedStringForMask:attributedString
+                                     attributes:maskingAttributes
+                                         origin:NSMakePoint(-stringPositions[range.location], 0)
+                                stringPositions:stringPositions];
+          }];
+     }];
 
-                                              // Draw the background
-                                              [[NSColor whiteColor] setFill];
-                                              CGContextFillRect([[NSGraphicsContext currentContext] graphicsPort], NSMakeRect(0, 0, width, maskHeight));
-
-                                              // Draw text into the mask
-                                              NSMutableAttributedString *modifiedAttributedString = [[attributedString mutableCopy] autorelease];
-                                              NSRange fullRange = NSMakeRange(0, modifiedAttributedString.length);
-                                              [modifiedAttributedString removeAttribute:(NSString *)kCTForegroundColorAttributeName range:fullRange];
-                                              [modifiedAttributedString addAttributes:maskingAttributes range:fullRange];
-
-                                              [self drawTextOnlyAttributedStringWithoutUnderline:modifiedAttributedString
-                                                                                         atPoint:NSMakePoint(-stringPositions[range.location], 0)
-                                                                                       positions:stringPositions
-                                                                                 backgroundColor:[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1]
-                                                                                 graphicsContext:[NSGraphicsContext currentContext]
-                                                                                           smear:YES];
-
-                                              // Switch back to the window's context
-                                              [NSGraphicsContext restoreGraphicsState];
-
-                                              // Create an image mask from what we've drawn so far
-                                              alphaMask = CGBitmapContextCreateImage(maskGraphicsContext);
-                                          }
-
-                                          // Mask it
-                                          CGContextSaveGState(cgContext);
-                                          CGContextClipToMask(cgContext,
-                                                              NSMakeRect(xOrigin,
-                                                                         origin.y,
-                                                                         width,
-                                                                         maskHeight),
-                                                              alphaMask);
-                                      }
-
-                                      NSColor *underline = [self.colorMap colorForKey:kColorMapUnderline];
-                                      CGColorRef cgColor = (underline ? [underline CGColor] : (CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName]);
-                                      [self drawUnderlineOfColor:[NSColor colorWithCGColor:cgColor]
-                                                           style:underlineStyle
-                                                    atCellOrigin:NSMakePoint(xOrigin, origin.y)
-                                                            font:attributes[NSFontAttributeName]
-                                                           width:width];
-
-
-                                      if (mask) {
-                                          // Remove mask
-                                          CGContextRestoreGState(cgContext);
-                                      }
-                                  }
-                              }];
-
-    if (maskGraphicsContext) {
-        CGContextRelease(maskGraphicsContext);
+    if (underlineContext->maskGraphicsContext) {
+        CGContextRelease(underlineContext->maskGraphicsContext);
     }
-    if (alphaMask) {
-        CGImageRelease(alphaMask);
+    if (underlineContext->alphaMask) {
+        CGImageRelease(underlineContext->alphaMask);
     }
+}
+
+- (void)drawUnderlinedTextWithContext:(iTermUnderlineContext *)underlineContext
+                               inRect:(NSRect)rect
+                       underlineColor:(NSColor *)underlineColor
+                                style:(NSUnderlineStyle)underlineStyle
+                                 font:(NSFont *)font
+                                block:(void (^)(void))block {
+    if (!underlineContext->maskGraphicsContext) {
+        // Create a mask image.
+        [self initializeUnderlineContext:underlineContext
+                                  ofSize:rect.size
+                                   block:block];
+    }
+
+    NSGraphicsContext *graphicsContext = [NSGraphicsContext currentContext];
+    CGContextRef cgContext = (CGContextRef)[graphicsContext graphicsPort];
+    [self drawInContext:cgContext
+                 inRect:rect
+              alphaMask:underlineContext->alphaMask
+                  block:^{
+                      [self drawUnderlineOfColor:underlineColor
+                                           style:underlineStyle
+                                            font:font
+                                            rect:rect];
+                  }];
+}
+
+- (void)drawAttributedStringForMask:(NSAttributedString *)attributedString
+                         attributes:(NSDictionary *)maskingAttributes
+                             origin:(NSPoint)origin
+                    stringPositions:(CGFloat *)stringPositions {
+    // Draw text into the mask
+    NSMutableAttributedString *modifiedAttributedString = [[attributedString mutableCopy] autorelease];
+    NSRange fullRange = NSMakeRange(0, modifiedAttributedString.length);
+    [modifiedAttributedString removeAttribute:(NSString *)kCTForegroundColorAttributeName range:fullRange];
+    [modifiedAttributedString addAttributes:maskingAttributes range:fullRange];
+
+    [self drawTextOnlyAttributedStringWithoutUnderline:modifiedAttributedString
+                                               atPoint:origin
+                                             positions:stringPositions
+                                       backgroundColor:[NSColor colorWithSRGBRed:1 green:1 blue:1 alpha:1]
+                                       graphicsContext:[NSGraphicsContext currentContext]
+                                                 smear:YES];
+}
+
+- (void)initializeUnderlineContext:(iTermUnderlineContext *)underlineContext
+                            ofSize:(NSSize)size
+                             block:(void (^)(void))block {
+    underlineContext->maskGraphicsContext = [self newGrayscaleContextOfSize:size];
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithGraphicsPort:underlineContext->maskGraphicsContext
+                                                                                    flipped:NO]];
+
+    // Draw the background
+    [[NSColor whiteColor] setFill];
+    CGContextFillRect([[NSGraphicsContext currentContext] graphicsPort],
+                      NSMakeRect(0, 0, size.width, size.height));
+
+    block();
+
+    // Switch back to the window's context
+    [NSGraphicsContext restoreGraphicsState];
+
+    // Create an image mask from what we've drawn so far
+    underlineContext->alphaMask = CGBitmapContextCreateImage(underlineContext->maskGraphicsContext);
+}
+
+- (void)drawInContext:(CGContextRef)cgContext
+               inRect:(NSRect)rect
+            alphaMask:(CGImageRef)alphaMask
+                block:(void (^)(void))block {
+    // Mask it
+    CGContextSaveGState(cgContext);
+    CGContextClipToMask(cgContext,
+                        rect,
+                        alphaMask);
+
+
+    block();
+
+    // Remove mask
+    CGContextRestoreGState(cgContext);
 }
 
 - (CGContextRef)newGrayscaleContextOfSize:(NSSize)size {
@@ -2150,25 +2210,24 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 
 - (void)drawUnderlineOfColor:(NSColor *)color
                        style:(NSUnderlineStyle)underlineStyle
-                atCellOrigin:(NSPoint)startPoint
                         font:(NSFont *)font
-                       width:(CGFloat)runWidth {
+                        rect:(NSRect)rect {
     [color set];
     NSBezierPath *path = [NSBezierPath bezierPath];
 
-    NSPoint origin = NSMakePoint(startPoint.x,
+    NSPoint origin = NSMakePoint(rect.origin.x,
                                  [self yOriginForUnderlineForFont:font
-                                                          yOffset:startPoint.y
+                                                          yOffset:rect.origin.y
                                                        cellHeight:_cellSize.height]);
     origin.y += self.isRetina ? 0.25 : 0.5;
     CGFloat dashPattern[] = { 4, 3 };
-    CGFloat phase = fmod(startPoint.x, dashPattern[0] + dashPattern[1]);
+    CGFloat phase = fmod(rect.origin.x, dashPattern[0] + dashPattern[1]);
 
     const CGFloat lineWidth = [self underlineThicknessForFont:font];
     switch (underlineStyle) {
         case NSUnderlineStyleSingle:
             [path moveToPoint:origin];
-            [path lineToPoint:NSMakePoint(origin.x + runWidth, origin.y)];
+            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y)];
             [path setLineWidth:lineWidth];
             [path stroke];
             break;
@@ -2176,13 +2235,13 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
         case NSUnderlineStyleDouble: {
             origin.y -= lineWidth;
             [path moveToPoint:origin];
-            [path lineToPoint:NSMakePoint(origin.x + runWidth, origin.y)];
+            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y)];
             [path setLineWidth:lineWidth];
             [path stroke];
 
             path = [NSBezierPath bezierPath];
             [path moveToPoint:NSMakePoint(origin.x, origin.y + lineWidth + 1)];
-            [path lineToPoint:NSMakePoint(origin.x + runWidth, origin.y + lineWidth + 1)];
+            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y + lineWidth + 1)];
             [path setLineWidth:lineWidth];
             [path setLineDash:dashPattern count:2 phase:phase];
             [path stroke];
@@ -2191,7 +2250,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 
         case NSUnderlinePatternDash: {
             [path moveToPoint:origin];
-            [path lineToPoint:NSMakePoint(origin.x + runWidth, origin.y)];
+            [path lineToPoint:NSMakePoint(origin.x + rect.size.width, origin.y)];
             [path setLineWidth:lineWidth];
             [path setLineDash:dashPattern count:2 phase:phase];
             [path stroke];
