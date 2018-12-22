@@ -364,7 +364,7 @@ static id sAPIHelperInstance;
     [_newSessionSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[ITMNotification alloc] init];
         notification.newSessionNotification = [[ITMNewSessionNotification alloc] init];
-        notification.newSessionNotification.uniqueIdentifier = session.guid;
+        notification.newSessionNotification.sessionId = session.guid;
         [self postAPINotification:notification toConnectionKey:key];
     }];
 }

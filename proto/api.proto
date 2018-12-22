@@ -954,7 +954,7 @@ message CustomEscapeSequenceNotification {
 
 // Sent when a new session is created or a closure is undone.
 message NewSessionNotification {
-  optional string uniqueIdentifier = 1;
+  optional string session_id = 1;
 }
 
 // Note this is sent when the app becomes/resigns active, the key window changes, the selected tab

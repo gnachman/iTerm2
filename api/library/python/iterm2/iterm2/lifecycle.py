@@ -76,8 +76,59 @@ class LayoutChangeMonitor:
         * A session is buried or disintered.
 
         Use :class:`iterm2.App` to examine the updated application state.
+
+       Example:
+
+       .. code-block:: python
+
+           async with iterm2.LayoutChangeMonitor(connection) as mon:
+               while True:
+                   await mon.async_get()
+                   print("layout changed")
+
         """
         await self.__queue.get()
 
     async def __aexit__(self, exc_type, exc, _tb):
         await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
+
+class NewSessionMonitor:
+    """Watches for the creation of new sessions.
+
+      :param connection: The :class:`iterm2.connection.Connection` to use.
+
+       Example:
+
+       .. code-block:: python
+
+           async with iterm2.NewSessionMonitor(connection) as mon:
+               while True:
+                   session_id = await mon.async_get()
+                   print("Session ID {} created".format(session_id))
+
+      """
+    def __init__(self, connection):
+        self.__connection = connection
+        self.__queue = asyncio.Queue(loop=asyncio.get_event_loop())
+
+    async def __aenter__(self):
+        async def callback(_connection, message):
+            """Called when a new session is created."""
+            await self.__queue.put(message)
+
+        self.__token = await iterm2.notifications.async_subscribe_to_new_session_notification(
+                self.__connection,
+                callback)
+        return self
+
+    async def async_get(self):
+        """
+        Returns the new session ID.
+        """
+        result = await self.__queue.get()
+        session_id = result.session_id
+        return session_id
+
+    async def __aexit__(self, exc_type, exc, _tb):
+        await async_unsubscribe(self.__connection, self.__token)
+

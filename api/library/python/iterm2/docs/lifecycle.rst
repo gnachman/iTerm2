@@ -5,6 +5,8 @@ Life Cycle
    :members: async_get
 .. autoclass:: iterm2.LayoutChangeMonitor
    :members: async_get
+.. autoclass:: iterm2.NewSessionMonitor
+   :members: async_get
 
 ----
 

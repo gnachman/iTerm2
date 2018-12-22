@@ -8230,11 +8230,11 @@ typedef struct ITMCustomEscapeSequenceNotification__storage_ {
 
 @implementation ITMNewSessionNotification
 
-@dynamic hasUniqueIdentifier, uniqueIdentifier;
+@dynamic hasSessionId, sessionId;
 
 typedef struct ITMNewSessionNotification__storage_ {
   uint32_t _has_storage_[1];
-  NSString *uniqueIdentifier;
+  NSString *sessionId;
 } ITMNewSessionNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -8244,12 +8244,12 @@ typedef struct ITMNewSessionNotification__storage_ {
   if (!descriptor) {
     static GPBMessageFieldDescription fields[] = {
       {
-        .name = "uniqueIdentifier",
+        .name = "sessionId",
         .dataTypeSpecific.className = NULL,
-        .number = ITMNewSessionNotification_FieldNumber_UniqueIdentifier,
+        .number = ITMNewSessionNotification_FieldNumber_SessionId,
         .hasIndex = 0,
-        .offset = (uint32_t)offsetof(ITMNewSessionNotification__storage_, uniqueIdentifier),
-        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .offset = (uint32_t)offsetof(ITMNewSessionNotification__storage_, sessionId),
+        .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },
     };
@@ -8261,11 +8261,6 @@ typedef struct ITMNewSessionNotification__storage_ {
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMNewSessionNotification__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
-#if !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
-    static const char *extraTextFormatInfo =
-        "\001\001\020\000";
-    [localDescriptor setupExtraTextInfo:extraTextFormatInfo];
-#endif  // !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }

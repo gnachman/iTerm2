@@ -3594,7 +3594,7 @@ typedef GPB_ENUM(ITMCustomEscapeSequenceNotification_FieldNumber) {
 #pragma mark - ITMNewSessionNotification
 
 typedef GPB_ENUM(ITMNewSessionNotification_FieldNumber) {
-  ITMNewSessionNotification_FieldNumber_UniqueIdentifier = 1,
+  ITMNewSessionNotification_FieldNumber_SessionId = 1,
 };
 
 /**
@@ -3602,9 +3602,9 @@ typedef GPB_ENUM(ITMNewSessionNotification_FieldNumber) {
  **/
 @interface ITMNewSessionNotification : GPBMessage
 
-@property(nonatomic, readwrite, copy, null_resettable) NSString *uniqueIdentifier;
-/** Test to see if @c uniqueIdentifier has been set. */
-@property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
+/** Test to see if @c sessionId has been set. */
+@property(nonatomic, readwrite) BOOL hasSessionId;
 
 @end
 
