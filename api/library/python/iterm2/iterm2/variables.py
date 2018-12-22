@@ -28,7 +28,11 @@ class VariableMonitor:
 
       .. code-block:: python
 
-          async with iterm2.VariableMonitor(connection, iterm2.VariableScopes.SESSION, "session.jobName", my_session.session_id) as mon:
+          async with iterm2.VariableMonitor(
+                  connection,
+                  iterm2.VariableScopes.SESSION,
+                  "session.jobName",
+                  my_session.session_id) as mon:
               while True:
                   new_value = await mon.async_get()
                   DoSomething(new_value)
