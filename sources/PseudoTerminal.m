@@ -5861,7 +5861,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)openPasswordManagerToAccountName:(NSString *)name
                                inSession:(PTYSession *)session {
     DLog(@"openPasswordManagerToAccountName:%@ inSession:%@", name, session);
-    if (!session.canOpenPasswordManager) {
+    if (session && !session.canOpenPasswordManager) {
         DLog(@"Can't open password manager right now");
         return;
     }
