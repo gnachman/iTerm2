@@ -27,7 +27,7 @@ from iterm2.profile import Profile, PartialProfile, BadGUIDException, LocalWrite
 
 from iterm2.prompt import PromptMonitor
 
-from iterm2.registration import Registration
+from iterm2.registration import Registration, RPC, Reference
 
 from iterm2.screen import ScreenStreamer, LineContents, ScreenContents
 

@@ -16,16 +16,16 @@ This script shows a working example:
     import iterm2
 
     async def main(connection):
-	app = await iterm2.async_get_app(connection)
+        app = await iterm2.async_get_app(connection)
 
-	async def clear_all_sessions():
+        @iterm2.RPC
+        async def clear_all_sessions():
             code = b'\x1b' + b']1337;ClearScrollback' + b'\x07'
-	    for window in app.terminal_windows:
-		for tab in window.tabs:
-		    for session in tab.sessions:
-			await session.async_inject(code)
-
-	await iterm2.Registration.async_register_rpc_handler(connection, "clear_all_sessions", clear_all_sessions)
+            for window in app.terminal_windows:
+                for tab in window.tabs:
+                    for session in tab.sessions:
+                        await session.async_inject(code)
+        await clear_all_sessions.async_register(connection)
 
     iterm2.run_forever(main)
 
@@ -36,39 +36,45 @@ This call registers the RPC:
 
 .. code-block:: python
 
-	await iterm2.Registration.async_register_rpc_handler(connection, "clear_all_sessions", clear_all_sessions)
+        @iterm2.RPC
+        async def clear_all_sessions():
 
-The first argument gives the name of the RPC. To keep it simple, this example
-uses the same name as the function. The name you register with is the name you
-use when invoking the function. The passed-in function, `clear_all_sessions`,
-will be called by iTerm2 at a later time. Note that it is `async`. The
-registered function *must* be `async`.
+This function definition is modified by the `@iterm2.RPC` decorator. It adds a
+`register` value to the function which is a coroutine that registers the
+function as an RPC. Here's how you call it:
+
+        await clear_all_sessions.async_register(connection)
+
+This exploits a quirk of Python that functions are capable of having values
+attached to them in this odd way.
+
+Registered RPCs like this one exist in a single global name space. An RPC is
+identified by the combination of its name ("clear_all_sessions", in thise case)
+and its arguments' names, ignoring their order. Keep this in mind to avoid
+naming conflicts. Python's reflection features are used to determine the
+function's name and argument names.
+
+Your RPC may need information about the context in which it is run. For
+example, knowing the session_id of the session in which a key was pressed that
+invoked the RPC would allow you to perform actions on that session.
+
+Your RPC may take a special kind of default parameter value that gets filled in
+with the value of a variable at the time of invocation. Suppose you want to get
+the session ID in which an RPC was invoked. You could register it this way:
 
 .. code-block:: python
 
-	async def clear_all_sessions():
-
-This is the definition of the registered function.
-
-.. code-block:: python
-
+        @iterm2.RPC
+        async def clear_session(session_id=iterm2.Reference("session.id"):
             code = b'\x1b' + b']1337;ClearScrollback' + b'\x07'
+            session = app.get_session_by_id(session_id)
+            if session:
+                await session.async_inject(code)
+        await clear_session.async_register(connection)
 
-This is an iTerm2 `proprietary escape code <https://www.iterm2.com/documentation-escape-codes.html>`_ that clears the screen and erases history.
-
-.. code-block:: python
-
-    for window in app.terminal_windows:
-	for tab in window.tabs:
-	    for session in tab.sessions:
-		await session.async_inject(code)
-
-This iterates over every session and injects the ClearScrollback code.
-Injecting a byte array makes the session appear to receive that byte array
-as input, as though it had been output by the running app in the terminal.
-Injection is safe to use even while receiving input because it uses its own
-parser (so there's no interaction between a half-received escape sequence in
-the true input and the injected byte array).
+The function invocation will not be made if the reference cannot be resolved.
+If you'd prefer a value of `None` instead in such a case, use a question mark
+to indicate an optional value, like this: `Reference("session.id?")`.
 
 Invocation
 ----------
@@ -107,7 +113,11 @@ Arguments
 Registered RPCs may take arguments. Any argument may take a value of
 of `None`, so take care to handle that possibility.
 
-Here's an example of a call with arguments:
+When an RPC is invoked, it uses a slightly different syntax than Python. That's
+because iTerm2's scripting interface is meant to be language-agnostic (although
+at the time of writing there are only Python bindings).
+
+Here's what a function invocation might look like:
 
 .. code-block:: python
 
@@ -130,7 +140,8 @@ the user.
 For a full list of the iTerm2-defined paths, see `Badges <https://www.iterm2.com/documentation-badges.html>`_.
 
 To set a user-defined variable, you can use an escape sequence or call
-:meth:`iterm2.Session.async_set_variable`. Variables can be strings or numbers.
+:meth:`iterm2.Session.async_set_variable`. Variables can take any type JSON can
+describe.
 
 A reference to an unset variable raises an error, preventing the function call
 from being made. If you modify the path to end with `?` that signals it is

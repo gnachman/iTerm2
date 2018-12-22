@@ -23,7 +23,8 @@ This script is a long-running daemon since the registered function gets called w
             "Tests script-provided status bar components",
             knobs,
             "row x cols",
-            None)
+            None,
+            "com.iterm2.example.status-bar-demo")
 
         # This function gets called whenever any of the paths named in defaults (below) changes
         # or its configuration changes.
@@ -51,4 +52,3 @@ This script is a long-running daemon since the registered function gets called w
         await component.async_register(connection, coro, defaults=defaults)
 
     iterm2.run_forever(main)
-

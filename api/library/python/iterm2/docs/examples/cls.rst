@@ -16,6 +16,7 @@ You can bind it to a keystroke in **Prefs > Keys** by selecting the action *Invo
     async def main(connection):
 	app = await iterm2.async_get_app(connection)
 
+        @iterm2.RPC
 	async def clear_all_sessions():
 	    code = b'\x1b' + b']1337;ClearScrollback' + b'\x07'
 	    for window in app.terminal_windows:
@@ -23,7 +24,7 @@ You can bind it to a keystroke in **Prefs > Keys** by selecting the action *Invo
 		    for session in tab.sessions:
 			await session.async_inject(code)
 
-	await iterm2.Registration.async_register_rpc_handler(connection, "clear_all_sessions", clear_all_sessions)
+	await clear_all_sessions.async_register(connection)
 
     iterm2.run_forever(main)
 

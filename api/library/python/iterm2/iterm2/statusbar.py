@@ -169,7 +169,10 @@ class StatusBarComponent:
                 timeout,
                 defaults)
         if self.__on_click:
-            await iterm2.registration.Registration.async_register_rpc_handler(
-                    connection,
-                    "__" + self.__identifier.replace(".", "_").replace("-", "_") + "__on_click",
-                    self.__on_click)
+            magic_name = "__" + self.__identifier.replace(".", "_").replace("-", "_") + "__on_click"
+            async def handle_rpc(session_id):
+                await self.__on_click(session_id)
+            handle_rpc.__name__ = magic_name
+            # This is an abuse of the RPC decorator, but it's a simple way to
+            # register a function with a modified name.
+            await iterm2.registration.RPC(handle_rpc).async_register(connection)
