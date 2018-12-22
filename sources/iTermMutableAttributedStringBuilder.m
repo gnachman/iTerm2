@@ -55,6 +55,13 @@
     [self doesNotRecognizeSelector:_cmd];
 }
 
+- (iTermCheapAttributedString *)copyWithAttributes:(NSDictionary *)attributes {
+    iTermCheapAttributedString *other = [[iTermCheapAttributedString alloc] init];
+    other.characterData = [[_characterData mutableCopy] autorelease];
+    other.attributes = attributes;
+    return other;
+}
+
 @end
 
 @implementation iTermMutableAttributedStringBuilder {
