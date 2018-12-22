@@ -10,16 +10,11 @@ starting point for developing your own custom escape sequence handler.
     import iterm2
 
     async def main(connection):
-        async def my_callback(match):
-            await iterm2.Window.async_create(connection)
-
-        my_sequence = iterm2.CustomControlSequence(
-            connection=connection,
-            callback=my_callback,
-            identity="shared-secret",
-            regex=r'^create-window$')
-
-        await my_sequence.async_register()
+        async with iterm2.CustomControlSequenceMonitor(
+                connection, "shared-secret", r'^create-window$') as mon:
+            while True:
+                match = await mon.async_get()
+                await iterm2.Window.async_create(connection)
 
     iterm2.run_forever(main)
 

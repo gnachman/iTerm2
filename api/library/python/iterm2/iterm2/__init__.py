@@ -11,7 +11,7 @@ from iterm2.color import Color
 
 from iterm2.colorpresets import ColorPreset, ListPresetsException, GetPresetException
 
-from iterm2.customcontrol import CustomControlSequence
+from iterm2.customcontrol import CustomControlSequenceMonitor
 
 from iterm2.focus import FocusMonitor,  FocusUpdateApplicationActive, FocusUpdateWindowChanged, FocusUpdateSelectedTabChanged, FocusUpdateActiveSessionChanged, FocusUpdate, FocusMonitor
 
