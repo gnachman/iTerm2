@@ -34,6 +34,7 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    connection
    focus
    keyboard
+   lifecycle
    mainmenu
    notifications
    profile

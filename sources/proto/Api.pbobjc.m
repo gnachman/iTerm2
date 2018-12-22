@@ -8457,11 +8457,11 @@ BOOL ITMFocusChangedNotification_Window_WindowStatus_IsValidValue(int32_t value_
 
 @implementation ITMTerminateSessionNotification
 
-@dynamic hasUniqueIdentifier, uniqueIdentifier;
+@dynamic hasSessionId, sessionId;
 
 typedef struct ITMTerminateSessionNotification__storage_ {
   uint32_t _has_storage_[1];
-  NSString *uniqueIdentifier;
+  NSString *sessionId;
 } ITMTerminateSessionNotification__storage_;
 
 // This method is threadsafe because it is initially called
@@ -8471,12 +8471,12 @@ typedef struct ITMTerminateSessionNotification__storage_ {
   if (!descriptor) {
     static GPBMessageFieldDescription fields[] = {
       {
-        .name = "uniqueIdentifier",
+        .name = "sessionId",
         .dataTypeSpecific.className = NULL,
-        .number = ITMTerminateSessionNotification_FieldNumber_UniqueIdentifier,
+        .number = ITMTerminateSessionNotification_FieldNumber_SessionId,
         .hasIndex = 0,
-        .offset = (uint32_t)offsetof(ITMTerminateSessionNotification__storage_, uniqueIdentifier),
-        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .offset = (uint32_t)offsetof(ITMTerminateSessionNotification__storage_, sessionId),
+        .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },
     };
@@ -8488,11 +8488,6 @@ typedef struct ITMTerminateSessionNotification__storage_ {
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMTerminateSessionNotification__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
-#if !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
-    static const char *extraTextFormatInfo =
-        "\001\001\020\000";
-    [localDescriptor setupExtraTextInfo:extraTextFormatInfo];
-#endif  // !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
     NSAssert(descriptor == nil, @"Startup recursed!");
     descriptor = localDescriptor;
   }

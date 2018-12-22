@@ -3676,17 +3676,14 @@ typedef GPB_ENUM(ITMFocusChangedNotification_Window_FieldNumber) {
 #pragma mark - ITMTerminateSessionNotification
 
 typedef GPB_ENUM(ITMTerminateSessionNotification_FieldNumber) {
-  ITMTerminateSessionNotification_FieldNumber_UniqueIdentifier = 1,
+  ITMTerminateSessionNotification_FieldNumber_SessionId = 1,
 };
 
-/**
- * Note this is sent when a session is removed from the screen but its closure remains undoable.
- **/
 @interface ITMTerminateSessionNotification : GPBMessage
 
-@property(nonatomic, readwrite, copy, null_resettable) NSString *uniqueIdentifier;
-/** Test to see if @c uniqueIdentifier has been set. */
-@property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
+@property(nonatomic, readwrite, copy, null_resettable) NSString *sessionId;
+/** Test to see if @c sessionId has been set. */
+@property(nonatomic, readwrite) BOOL hasSessionId;
 
 @end
 

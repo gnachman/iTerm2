@@ -2154,7 +2154,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pasteHelper abort];
 
     [[_delegate realParentWindow] sessionDidTerminate:self];
-    [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
 
     _delegate = nil;
 }
@@ -2192,6 +2191,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (@available(macOS 10.11, *)) {
         _metalGlue.textView = nil;
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
 }
 
 - (void)jumpToLocationWhereCurrentStatusChanged {
@@ -2881,6 +2881,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     _exited = YES;
+    [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [_delegate updateLabelAttributes];
 

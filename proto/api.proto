@@ -993,9 +993,8 @@ message FocusChangedNotification {
   }
 }
 
-// Note this is sent when a session is removed from the screen but its closure remains undoable.
 message TerminateSessionNotification {
-  optional string uniqueIdentifier = 1;
+  optional string session_id = 1;
 }
 
 message LayoutChangedNotification {
