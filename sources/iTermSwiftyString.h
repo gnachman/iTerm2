@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) NSString *swiftyString;
 @property (nonatomic, readonly, copy) id (^source)(NSString *);
-@property (nonatomic, readonly, copy) void (^observer)(NSString *);
+@property (nonatomic, readonly, readonly) void (^observer)(NSString *);
 @property (nullable, nonatomic, readonly) NSString *evaluatedString;
 @property (nonatomic, readonly) NSArray<iTermVariableReference *> *refs;
 

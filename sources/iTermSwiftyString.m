@@ -7,6 +7,7 @@
 
 #import "iTermSwiftyString.h"
 
+#import "DebugLogging.h"
 #import "iTermAPIHelper.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptHistory.h"
@@ -64,6 +65,10 @@
     }
     _evaluatedString = [evaluatedString copy];
     assert(!_observing);
+    if (!self.observer) {
+        DLog(@"Swifty string %@ has no observer", self);
+        return;
+    }
     _observing = YES;
     self.observer(_evaluatedString);
     _observing = NO;
