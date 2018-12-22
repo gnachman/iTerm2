@@ -15,11 +15,11 @@ from iterm2.customcontrol import CustomControlSequence
 
 from iterm2.focus import FocusMonitor,  FocusUpdateApplicationActive, FocusUpdateWindowChanged, FocusUpdateSelectedTabChanged, FocusUpdateActiveSessionChanged, FocusUpdate, FocusMonitor
 
-from iterm2.lifecycle import SessionTerminationMonitor
+from iterm2.lifecycle import SessionTerminationMonitor, LayoutChangeMonitor
 
 from iterm2.mainmenu import MenuItemState, MainMenu, MenuItemException
 
-from iterm2.notifications import async_unsubscribe, async_subscribe_to_layout_change_notification, async_subscribe_to_focus_change_notification, RPC_ROLE_GENERIC, RPC_ROLE_SESSION_TITLE, NewSessionMonitor
+from iterm2.notifications import async_unsubscribe, async_subscribe_to_focus_change_notification, RPC_ROLE_GENERIC, RPC_ROLE_SESSION_TITLE, NewSessionMonitor
 
 from iterm2.keyboard import Modifier, Keycode, Keystroke, KeystrokePattern, KeystrokeMonitor, KeystrokeFilter
 

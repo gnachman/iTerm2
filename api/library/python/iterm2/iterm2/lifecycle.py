@@ -8,7 +8,7 @@ class SessionTerminationMonitor:
 
     A session is said to terminate when its command (typically `login`) has exited. If the user closes a window, tab, or split pane they can still undo closing it for some amount of time. Session termination will be delayed until it is no longer undoable.
 
-    :param connection: The :class:`iterm2.Connection` to use.
+    :param connection: The :class:`iterm2.connection.Connection` to use.
 
     Example:
 
@@ -44,3 +44,40 @@ class SessionTerminationMonitor:
         await iterm2.notifications.async_unsubscribe(
                 self.__connection,
                 self.__token)
+
+class LayoutChangeMonitor:
+    """
+    Watches for changes to the composition of sessions, tabs, and windows.
+
+    :param connection: The :class:`iterm2.connection.Connection` to use.
+    """
+    def __init__(self, connection):
+        self.__connection = connection
+        self.__queue = asyncio.Queue(loop=asyncio.get_event_loop())
+
+    async def __aenter__(self):
+        async def callback(_connection, message):
+            """Called when the layout changes."""
+            await self.__queue.put(message)
+
+        self.__token = await iterm2.notifications.async_subscribe_to_layout_change_notification(self.__connection, callback)
+        return self
+
+    async def async_get(self):
+        """
+        Blocks until the layout changes.
+
+        Will block until any of the following occurs:
+
+        * A session moves from one tab to another (including moving into its own window).
+        * The relative position of sessions within a tab changes.
+        * A tab moves from one window to another.
+        * The order of tabs within a window changes.
+        * A session is buried or disintered.
+
+        Use :class:`iterm2.App` to examine the updated application state.
+        """
+        await self.__queue.get()
+
+    async def __aexit__(self, exc_type, exc, _tb):
+        await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
