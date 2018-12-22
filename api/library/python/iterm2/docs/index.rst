@@ -36,7 +36,6 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    keyboard
    lifecycle
    mainmenu
-   notifications
    profile
    prompt
    registration

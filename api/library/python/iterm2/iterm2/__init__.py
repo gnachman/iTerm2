@@ -19,8 +19,6 @@ from iterm2.lifecycle import SessionTerminationMonitor, LayoutChangeMonitor, New
 
 from iterm2.mainmenu import MenuItemState, MainMenu, MenuItemException
 
-from iterm2.notifications import async_unsubscribe, RPC_ROLE_GENERIC, RPC_ROLE_SESSION_TITLE
-
 from iterm2.keyboard import Modifier, Keycode, Keystroke, KeystrokePattern, KeystrokeMonitor, KeystrokeFilter
 
 from iterm2.preferences import PreferenceKeys, async_get_preference
