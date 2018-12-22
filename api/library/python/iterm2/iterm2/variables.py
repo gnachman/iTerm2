@@ -17,7 +17,7 @@ class VariableMonitor:
     """
     Watches for changes to a variable.
 
-   VariableMonitor is a context manager that helps observe changes in iTerm2 Variables.
+    `VariableMonitor` is a context manager that helps observe changes in iTerm2 Variables.
 
    :param connection: The :class:`iterm2.Connection` to use.
    :param scope: A :class:`iterm2.VariableScope`, describing the context for the name and identifier.
