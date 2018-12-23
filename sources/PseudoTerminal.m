@@ -392,6 +392,11 @@ static NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect
     BOOL _windowIsMoving;
     NSInteger _screenBeforeMoving;
     BOOL _constrainFrameAfterDeminiaturization;
+
+    // Size of the last grid size shown in the transient window title, or 0,0 for never shown before.
+    VT100GridSize _previousGridSize;
+    // Have we started showing a transient title? If so, don't stop until time runs out.
+    BOOL _lockTransientTitle;
 }
 
 @synthesize scope = _scope;
@@ -1917,6 +1922,21 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.isShowingTransientTitle) {
         PTYSession *session = self.currentSession;
         NSString *aTitle;
+        VT100GridSize size = VT100GridSizeMake(session.columns, session.rows);
+        if (!_lockTransientTitle) {
+            if (VT100GridSizeEquals(_previousGridSize, VT100GridSizeMake(0, 0))) {
+                _previousGridSize = size;
+                DLog(@"NOT showing transient title because of no previous grid sizes");
+                return;
+            }
+            if (VT100GridSizeEquals(size, _previousGridSize)) {
+                DLog(@"NOT showing transient title because of equal grid sizes");
+                return;
+            }
+            _lockTransientTitle = YES;
+        }
+        _previousGridSize = size;
+        DLog(@"showing transient title %@", @(self.timeOfLastResize));
         if (self.window.frame.size.width < 250) {
             aTitle = [NSString stringWithFormat:@"%d✕%d", session.columns, session.rows];
         } else {
@@ -1927,6 +1947,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [self setWindowTitle:aTitle];
     } else {
+        _lockTransientTitle = NO;
         [self setWindowTitle:[self undecoratedWindowTitle]];
     }
 }
