@@ -8791,6 +8791,9 @@ ITERM_WEAKLY_REFERENCEABLE
         case VT100AttentionRequestTypeBounceOnceDockIcon:
             [NSApp requestUserAttention:NSInformationalRequest];
             break;
+        case VT100AttentionRequestTypeFlash:
+            [_textview.indicatorsHelper beginFlashingFullScreen];
+            break;
     }
 }
 

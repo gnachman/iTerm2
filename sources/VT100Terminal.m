@@ -2370,6 +2370,8 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalRequestAttention:VT100AttentionRequestTypeFireworks];
         } else if ([value isEqualToString:@"once"]) {
             [delegate_ terminalRequestAttention:VT100AttentionRequestTypeBounceOnceDockIcon];
+        } else if ([value isEqualToString:@"flash"]) {
+            [delegate_ terminalRequestAttention:VT100AttentionRequestTypeFlash];
         } else if ([value boolValue]) {
             [delegate_ terminalRequestAttention:VT100AttentionRequestTypeStartBouncingDockIcon];
         } else {

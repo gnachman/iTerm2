@@ -36,7 +36,8 @@ typedef NS_ENUM(NSUInteger, VT100AttentionRequestType) {
     VT100AttentionRequestTypeStartBouncingDockIcon,
     VT100AttentionRequestTypeStopBouncingDockIcon,
     VT100AttentionRequestTypeBounceOnceDockIcon,
-    VT100AttentionRequestTypeFireworks
+    VT100AttentionRequestTypeFireworks,
+    VT100AttentionRequestTypeFlash
 };
 
 typedef NS_ENUM(int, VT100TerminalColorIndex) {
