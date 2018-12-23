@@ -11,5 +11,6 @@
 @interface NSDate (iTerm)
 
 + (BOOL)isAprilFools;
++ (NSTimeInterval)timeIntervalFromMachTimeDuration:(uint64_t)elapsed;
 
 @end

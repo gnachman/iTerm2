@@ -54,6 +54,7 @@
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
+#import "NSDate+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -485,6 +486,10 @@ static const NSUInteger kMaxHosts = 100;
 
     CGContextRef _metalContext;
     BOOL _errorCreatingMetalContext;
+
+    iTermHistogram *_timeExecutingTokens;
+    iTermHistogram *_numberOfTokensPerBatch;
+    iTermHistogram *_cadence;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -512,6 +517,10 @@ static const NSUInteger kMaxHosts = 100;
 - (instancetype)initSynthetic:(BOOL)synthetic {
     self = [super init];
     if (self) {
+        _timeExecutingTokens = [[iTermHistogram alloc] init];
+        _numberOfTokensPerBatch = [[iTermHistogram alloc] init];
+        _cadence = [[iTermHistogram alloc] init];
+
         _autoLogId = arc4random();
         _useAdaptiveFrameRate = [iTermAdvancedSettingsModel useAdaptiveFrameRate];
         _adaptiveFrameRateThroughputThreshold = [iTermAdvancedSettingsModel adaptiveFrameRateThroughputThreshold];
@@ -638,6 +647,10 @@ static const NSUInteger kMaxHosts = 100;
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)iterm_dealloc {
+    [_timeExecutingTokens release];
+    [_numberOfTokensPerBatch release];
+    [_cadence release];
+
     [_view release];
     if (@available(macOS 10.11, *)) {
         [_metalGlue release];
@@ -2469,7 +2482,12 @@ ITERM_WEAKLY_REFERENCEABLE
         if (_useAdaptiveFrameRate) {
             [_throughputEstimator addByteCount:length];
         }
+        [_numberOfTokensPerBatch addValue:CVectorCount(&vector)];
+        uint64_t starttime = mach_absolute_time();
         [self executeTokens:&vector bytesHandled:length];
+        uint64_t endtime = mach_absolute_time();
+        NSTimeInterval elapsed = [NSDate timeIntervalFromMachTimeDuration:endtime - starttime];
+        [_timeExecutingTokens addValue:elapsed * 1000];
 
         // Unblock the background thread; if it's ready, it can send the main thread more tokens
         // now.
@@ -9955,6 +9973,19 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 #pragma mark - iTermUpdateCadenceController
+
+- (void)cadenceControllerDidSelectCadence:(NSTimeInterval)cadence {
+    [_cadence addValue:cadence * 1000];
+    NSString *log = [NSString stringWithFormat:
+                     @"Time executing tokens:\n%@\n\n"
+                     @"Number of tokens per batch:\n%@\n\n"
+                     @"Cadence:\n%@\n\n",
+                     _timeExecutingTokens.stringValue,
+                     _numberOfTokensPerBatch.stringValue,
+                     _cadence.stringValue];
+    iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: PTYSession histograms", self],
+                             log);
+}
 
 - (void)updateCadenceControllerUpdateDisplay:(iTermUpdateCadenceController *)controller {
     [self updateDisplayBecause:nil];

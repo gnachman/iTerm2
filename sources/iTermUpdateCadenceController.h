@@ -31,6 +31,7 @@ typedef struct {
 - (iTermUpdateCadenceState)updateCadenceControllerState;
 
 - (void)cadenceControllerActiveStateDidChange:(BOOL)active;
+- (void)cadenceControllerDidSelectCadence:(NSTimeInterval)cadence;
 
 @end
 

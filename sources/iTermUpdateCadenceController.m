@@ -130,21 +130,22 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
             if (estimatedThroughput < kThroughputLimit && estimatedThroughput > 0) {
                 DLog(@"select fast cadence");
                 [self setUpdateCadence:kFastUpdateCadence liveResizing:state.liveResizing force:force];
-            } else {
-                DLog(@"select slow frame rate");
-                [self setUpdateCadence:1.0 / state.slowFrameRate liveResizing:state.liveResizing force:force];
+                return;
             }
-        } else {
-            DLog(@"select active update cadence");
-            [self setUpdateCadence:_activeUpdateCadence liveResizing:state.liveResizing force:force];
+            DLog(@"select slow frame rate");
+            [self setUpdateCadence:1.0 / state.slowFrameRate liveResizing:state.liveResizing force:force];
+            return;
         }
-    } else {
-        DLog(@"select background update cadence");
-        [self setUpdateCadence:kBackgroundUpdateCadence liveResizing:state.liveResizing force:force];
+        DLog(@"select active update cadence");
+        [self setUpdateCadence:_activeUpdateCadence liveResizing:state.liveResizing force:force];
+        return;
     }
+    DLog(@"select background update cadence");
+    [self setUpdateCadence:kBackgroundUpdateCadence liveResizing:state.liveResizing force:force];
 }
 
 - (void)setUpdateCadence:(NSTimeInterval)cadence liveResizing:(BOOL)liveResizing force:(BOOL)force {
+    [self.delegate cadenceControllerDidSelectCadence:cadence];
     if (_useGCDUpdateTimer) {
         [self setGCDUpdateCadence:cadence liveResizing:liveResizing force:force];
     } else {

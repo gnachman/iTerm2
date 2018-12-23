@@ -8,6 +8,9 @@
 
 #import "NSDate+iTerm.h"
 
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+
 @implementation NSDate (iTerm)
 
 + (BOOL)isAprilFools {
@@ -25,6 +28,17 @@
     lastComputation = now;
   }
   return result;
+}
+
++ (NSTimeInterval)timeIntervalFromMachTimeDuration:(uint64_t)elapsed {
+    static mach_timebase_info_data_t sTimebaseInfo;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mach_timebase_info(&sTimebaseInfo);
+    });
+
+    double nanoseconds = elapsed * sTimebaseInfo.numer / sTimebaseInfo.denom;
+    return nanoseconds / 1000000000.0;
 }
 
 @end
