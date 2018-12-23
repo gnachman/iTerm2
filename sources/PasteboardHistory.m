@@ -29,6 +29,7 @@
 #include <wctype.h>
 #import "PasteboardHistory.h"
 #import "NSDateFormatterExtras.h"
+#import "NSStringITerm.h"
 #import "PopupModel.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
@@ -274,7 +275,22 @@
     PasteboardEntry *entry = [[self model] objectAtIndex:[self convertIndex:rowIndex]];
     if ([[aTableColumn identifier] isEqualToString:@"date"]) {
         // Date
-        return [NSDateFormatter dateDifferenceStringFromDate:entry.timestamp];
+        NSString *formattedDate = [NSDateFormatter dateDifferenceStringFromDate:entry.timestamp];
+        int i = [self convertIndex:rowIndex];
+        PopupEntry* e = [[self model] objectAtIndex:i];
+        NSString *formattedLength = [NSString it_formatBytes:e.mainValue.length];
+        const NSUInteger maximumLengthToScan = 1024 * 50;
+        const NSInteger numberOfLines = [[e.mainValue substringToIndex:MIN(e.mainValue.length, maximumLengthToScan)] it_numberOfLines];
+        NSString *formattedNumberOfLines;
+        NSString *plus;
+        if (e.mainValue.length > maximumLengthToScan) {
+            plus = @"+";
+        } else {
+            plus = @"";
+        }
+        NSString *s = numberOfLines != 1 ? @"s": @"";
+        formattedNumberOfLines = [NSString stringWithFormat:@"%@%@ line%@", @(numberOfLines), plus, s];
+        return [NSString stringWithFormat:@"%@, %@, %@", formattedNumberOfLines, formattedLength, formattedDate];
     } else {
         // Contents
         return [super tableView:aTableView objectValueForTableColumn:aTableColumn row:rowIndex];

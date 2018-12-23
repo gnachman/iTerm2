@@ -2043,6 +2043,23 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return self;
 }
 
+- (NSInteger)it_numberOfLines {
+    if (self.length == 0) {
+        return 0;
+    }
+    NSMutableData *data = [NSMutableData dataWithLength:self.length * sizeof(unichar)];
+    unichar *bytes = data.mutableBytes;
+    [self getCharacters:bytes];
+    const NSInteger length = self.length;
+    NSInteger numberOfLines = 1;
+    for (NSInteger i = 0; i < length; i++) {
+        if (bytes[i] == '\r' || bytes[i] == '\n') {
+            numberOfLines++;
+        }
+    }
+    return numberOfLines;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

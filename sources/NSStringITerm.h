@@ -291,6 +291,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
                                                 nonVariableReplacements:(NSDictionary *)nonvars;
 + (NSString *)sparkWithHeight:(double)fraction;
 - (id)it_jsonSafeValue;
+- (NSInteger)it_numberOfLines;
 
 @end
 
