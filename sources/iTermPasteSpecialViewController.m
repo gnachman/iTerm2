@@ -158,13 +158,22 @@ static NSString *const kSubstitution = @"Substitution";
     [_delegate pasteSpecialViewSpeedDidChange];
 }
 
+- (BOOL)controlIsTransform:(NSControl *)control {
+    return (control != _bracketedPasteMode &&
+            control != _waitForPrompts &&
+            control != _chunkSizeSlider &&
+            control != _delayBetweenChunksSlider);
+}
+
 - (IBAction)settingChanged:(id)sender {
     _spacesPerTab.enabled = (_tabTransform.enabled &&
                              _tabTransform.selectedTag == kTabTransformConvertToSpaces);
     _convertNewlines.enabled = (_removeNewlines.state != NSOnState);
     _regex.enabled = self.shouldUseRegexSubstitution;
     _substitution.enabled = self.shouldUseRegexSubstitution;
-    [_delegate pasteSpecialTransformDidChange];
+    if ([self controlIsTransform:sender]) {
+        [_delegate pasteSpecialTransformDidChange];
+    }
 }
 
 - (IBAction)stepperDidChange:(id)sender {
