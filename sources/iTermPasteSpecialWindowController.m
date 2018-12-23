@@ -122,8 +122,11 @@
                         continue;
                     }
                     if (entry == historyEntries.lastObject) {
-                        // This is better handled by examining the pasteboard.
-                        continue;
+                        NSString *pasteboardString = [NSString stringFromPasteboard];
+                        if (pasteboardString && entry.mainValue && [pasteboardString isEqualToString:entry.mainValue]) {
+                            // Include the last entry only if it differs from the current pasteboard contents.
+                            continue;
+                        }
                     }
                     NSString *title = entry.mainValue;
                     static const NSUInteger kMaxLength = 50;
@@ -514,6 +517,10 @@
 
 - (IBAction)ok:(id)sender {
     _shouldPaste = YES;
+    NSString *string = [[self pasteEvent] string];
+    if (string.length > 0) {
+        [[PasteboardHistory sharedInstance] save:string];
+    }
     [NSApp stopModal];
 }
 
