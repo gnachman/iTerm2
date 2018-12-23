@@ -9,6 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBadgeRendererTransientState ()
 @property (nonatomic, strong) id<MTLTexture> texture;
+@property (nonatomic) CGSize textureSizeInPoints;
 @end
 
 @implementation iTermBadgeRendererTransientState
@@ -66,7 +67,7 @@ NS_ASSUME_NONNULL_BEGIN
                              scale * size.width,
                              scale * size.height);
     // The destinationRect is clipped to the visible area.
-    const CGFloat textureHeight = tState.texture.height;
+    const CGFloat textureHeight = tState.textureSizeInPoints.height * tState.configuration.scale;
     const CGFloat fractionVisible = quad.size.height / textureHeight;
     CGRect textureFrame = CGRectMake(0, 1 - fractionVisible, 1, fractionVisible);
     const iTermVertex vertices[] = {
@@ -106,6 +107,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermBadgeRendererTransientState *)tState {
     tState.texture = _texture;
+    tState.textureSizeInPoints = _size;
 }
 
 @end
