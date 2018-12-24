@@ -1,6 +1,7 @@
 """Represents tmux integration objects."""
 import iterm2.app
 import iterm2.rpc
+import iterm2.transaction
 
 class TmuxException(Exception):
     """A problem was encountered in a Tmux request."""
@@ -30,6 +31,8 @@ class TmuxConnection:
     async def async_send_command(self, command):
         """Sends a command to the tmux server.
 
+        This may not be called from within a :class:`iterm2.Transaction`.
+
         :param command: The command to send to tmux (e.g., "list-sessions")
 
         :returns: The command's output as a string.
@@ -57,6 +60,8 @@ class TmuxConnection:
         attached to a tmux session, then it may be hidden. Use
         :meth:`iterm2.tmux.async_open_window` to make it visible again.
 
+        This may not be called from within a :class:`iterm2.Transaction`.
+
         :param tmux_window_id: The window to show or hide.
         :param visible: `True` to show a window, `False` to hide a window.
         """
@@ -71,6 +76,8 @@ class TmuxConnection:
 
     async def async_create_window(self):
         """Creates a new tmux window.
+
+        This may not be called from within a :class:`iterm2.Transaction`.
 
         :returns: A new :class:`Window`.
         """
@@ -87,6 +94,8 @@ class TmuxConnection:
 
 async def async_get_tmux_connections(connection):
     """Fetches a list of tmux connections.
+
+    This may not be called from within a :class:`iterm2.Transaction`.
 
     :param connection: An existing :class:`iterm2.Connection`.
     :returns: A list of :class:`TmuxConnection` objects.

@@ -4,6 +4,7 @@ import json
 import iterm2.api_pb2
 import iterm2.connection
 import iterm2.selection
+import iterm2.transaction
 
 ACTIVATE_RAISE_ALL_WINDOWS = 1
 ACTIVATE_IGNORING_OTHER_APPS = 2
@@ -458,6 +459,7 @@ async def async_get_broadcast_domains(connection):
 
 async def async_rpc_list_tmux_connections(connection):
     """Requests a list of tmux connections."""
+    _assert_not_in_transaction()
     request = _alloc_request()
     request.tmux_request.SetInParent()
     request.tmux_request.list_connections.SetInParent()
@@ -465,6 +467,7 @@ async def async_rpc_list_tmux_connections(connection):
 
 async def async_rpc_send_tmux_command(connection, tmux_connection_id, command):
     """Sends a command to the tmux server."""
+    _assert_not_in_transaction()
     request = _alloc_request()
     request.tmux_request.SetInParent()
     request.tmux_request.send_command.SetInParent()
@@ -474,6 +477,7 @@ async def async_rpc_send_tmux_command(connection, tmux_connection_id, command):
 
 async def async_rpc_set_tmux_window_visible(connection, tmux_connection_id, window_id, visible):
     """Hides/shows a tmux window (which is an iTerm2 tab)"""
+    _assert_not_in_transaction()
     request = _alloc_request()
     request.tmux_request.SetInParent()
     request.tmux_request.set_window_visible.SetInParent()
@@ -484,6 +488,7 @@ async def async_rpc_set_tmux_window_visible(connection, tmux_connection_id, wind
 
 async def async_rpc_create_tmux_window(connection, tmux_connection_id, affinity=None):
     """Creates a new tmux window."""
+    _assert_not_in_transaction()
     request = _alloc_request()
     request.tmux_request.SetInParent()
     request.tmux_request.create_window.SetInParent()
@@ -618,3 +623,7 @@ async def _async_call(connection, request):
         raise RPCException(response.error)
     else:
         return response
+
+def _assert_not_in_transaction():
+    assert not iterm2.Transaction.current()
+

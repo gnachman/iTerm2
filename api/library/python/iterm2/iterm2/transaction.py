@@ -2,6 +2,8 @@
 
 import iterm2.rpc
 
+gCurrentTransaction = None
+
 class Transaction:
     """An asyncio context manager for transactions.
 
@@ -11,9 +13,8 @@ class Transaction:
     transaction and you'll know the state of the terminal will remain unchanged
     during it.
 
-    Be really careful with this. No user interaction is possible during a
-    transaction. If you try to do something that requires UI work, such as
-    creating a new window via an API call, it will hang.
+    Some APIs are noted as not being allowed during a transaction. These do not
+    complete synchronously and would therefore deadlock in a transaction.
 
     :Example:
 
@@ -24,7 +25,20 @@ class Transaction:
         self.connection = connection
 
     async def __aenter__(self):
+        global gCurrentTransaction
+        if not gCurrentTransaction:
+            gCurrentTransaction = self
+
         await iterm2.rpc.async_start_transaction(self.connection)
 
     async def __aexit__(self, exc_type, exc, _tb):
         await iterm2.rpc.async_end_transaction(self.connection)
+
+        global gCurrentTransaction
+        if gCurrentTransaction == self:
+            gCurrentTransaction = None
+
+    @staticmethod
+    def current():
+        return gCurrentTransaction
+

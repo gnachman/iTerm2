@@ -5,6 +5,7 @@ import iterm2.app
 import iterm2.rpc
 import iterm2.session
 import iterm2.tab
+import iterm2.transaction
 import iterm2.util
 
 class CreateTabException(Exception):
@@ -171,6 +172,8 @@ class Window:
 
     async def async_create_tmux_tab(self, tmux_connection):
         """Creates a new tmux tab in this window.
+
+        This may not be called from within a :class:`iterm2.Transaction`.
 
         :param tmux_connection: A :class:`TmuxConnection` that owns the new tab.
 
