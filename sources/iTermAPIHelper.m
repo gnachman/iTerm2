@@ -1584,6 +1584,7 @@ static id sAPIHelperInstance;
         ITMSetProfilePropertyResponse *response = [[ITMSetProfilePropertyResponse alloc] init];
         response.status = ITMSetProfilePropertyResponse_Status_RequestMalformed;
         handler(response);
+        return;
     }
 
     for (id object in objects) {
@@ -1822,6 +1823,7 @@ static id sAPIHelperInstance;
         ITMSetPropertyResponse *response = [[ITMSetPropertyResponse alloc] init];
         response.status = ITMSetPropertyResponse_Status_InvalidValue;
         handler(response);
+        return;
     }
     switch (request.identifierOneOfCase) {
         case ITMSetPropertyRequest_Identifier_OneOfCase_GPBUnsetOneOfCase:
@@ -1846,6 +1848,7 @@ static id sAPIHelperInstance;
                 for (PTYSession *session in [self allSessions]) {
                     response.status = [self setPropertyInSession:session name:request.name value:value];
                     handler(response);
+                    return;
                 }
             } else {
                 PTYSession *session = [self sessionForAPIIdentifier:request.sessionId includeBuriedSessions:YES];
@@ -1856,9 +1859,12 @@ static id sAPIHelperInstance;
                 }
                 response.status = [self setPropertyInSession:session name:request.name value:value];
                 handler(response);
+                return;
             }
         }
     }
+    response.status = ITMSetPropertyResponse_Status_InvalidTarget;
+    handler(response);
 }
 
 - (ITMSetPropertyResponse_Status)setPropertyInWindow:(PseudoTerminal *)term name:(NSString *)name value:(id)value {
@@ -1994,8 +2000,11 @@ static id sAPIHelperInstance;
                 response.status = ITMGetPropertyResponse_Status_UnrecognizedName;
             }
             handler(response);
+            return;
         }
     }
+    response.status = ITMGetPropertyResponse_Status_InvalidTarget;
+    handler(response);
 }
 
 - (NSString *)getPropertyFromWindow:(PseudoTerminal *)term name:(NSString *)name {
