@@ -8583,6 +8583,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     for (PTYTab *tab in self.tabs) {
         [tab setDeferFontChanges:NO];
+        [tab updatePaneTitles];
     }
     if (self.isHotKeyWindow) {
         iTermProfileHotKey *profileHotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
