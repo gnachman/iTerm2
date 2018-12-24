@@ -123,6 +123,9 @@ NS_ASSUME_NONNULL_BEGIN
     NSMutableDictionary<NSString *, NSMenu *> *submenus = [NSMutableDictionary dictionary];
     NSSet<NSString *> *scriptExtensions = [NSSet setWithArray:@[ @"scpt", @"app", @"py" ]];
     for (NSString *file in directoryEnumerator) {
+        if ([file caseInsensitiveCompare:@".DS_Store"] == NSOrderedSame) {
+            continue;
+        }
         NSString *path = [root stringByAppendingPathComponent:file];
         BOOL isDirectory = NO;
         [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
@@ -131,13 +134,13 @@ NS_ASSUME_NONNULL_BEGIN
             if ([workspace isFilePackageAtPath:path] ||
                 [iTermAPIScriptLauncher environmentForScript:path checkForMain:NO]) {
                 [files addObject:file];
-            } else {
-                NSMenu *submenu = [[NSMenu alloc] initWithTitle:file];
-                submenus[file] = submenu;
-                [self addMenuItemsAt:path toMenu:submenu];
-                if (submenu.itemArray.count == 0) {
-                    [submenus removeObjectForKey:file];
-                }
+                continue;
+            }
+            NSMenu *submenu = [[NSMenu alloc] initWithTitle:file];
+            submenus[file] = submenu;
+            [self addMenuItemsAt:path toMenu:submenu];
+            if (submenu.itemArray.count == 0) {
+                [submenus removeObjectForKey:file];
             }
         } else if ([scriptExtensions containsObject:[file pathExtension]]) {
             [files addObject:file];
@@ -551,7 +554,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
     return [self relativePathFrom:possibleSuper
                            toPath:[possibleSub stringByDeletingLastPathComponent]
-                         relative:[relative stringByAppendingPathComponent:possibleSub.lastPathComponent]];
+                         relative:[possibleSub.lastPathComponent stringByAppendingPathComponent:relative]];
 }
 
 - (NSString *)folderForFullEnvironmentSavePanelURL:(NSURL *)url {
@@ -658,8 +661,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)runModernAutoLaunchScripts {
     NSString *scriptsPath = [[NSFileManager defaultManager] autolaunchScriptPath];
-    for (NSString *file in [[NSFileManager defaultManager] enumeratorAtPath:scriptsPath]) {
+    NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:scriptsPath];
+    for (NSString *file in enumerator) {
+        if ([file caseInsensitiveCompare:@".DS_Store"] == NSOrderedSame) {
+            continue;
+        }
         NSString *path = [scriptsPath stringByAppendingPathComponent:file];
+        if ([[NSFileManager defaultManager] itemIsDirectory:path]) {
+            [enumerator skipDescendants];
+        }
         [self runAutoLaunchScript:path];
     }
 }
