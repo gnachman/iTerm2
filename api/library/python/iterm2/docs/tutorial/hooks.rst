@@ -114,7 +114,7 @@ these exceptions are silently swallowed and you will pull all your hair out
 trying to understand what is wrong.
 
 Take care to mark references optional by suffixing them with a `?` when they
-might not exist, as is the case for `user.update_my_title_provider?`n the
+might not exist, as is the case for `user.update_my_title_provider?` the
 example above.
 
 ----
