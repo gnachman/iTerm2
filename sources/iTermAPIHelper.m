@@ -2697,6 +2697,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     if (!request.windowId.isNumeric) {
         response.status = ITMTmuxResponse_Status_InvalidWindowId;
         handler(response);
+        return;
     }
 
     if (request.visible) {
@@ -2710,18 +2711,18 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         [controller openWindowWithId:[[request windowId] intValue] intentional:YES];
         response.status = ITMTmuxResponse_Status_Ok;
         handler(response);
-    } else {
-        // Hide the window
-        if ([controller windowIsHidden:[request.windowId intValue]]) {
-            response.status = ITMTmuxResponse_Status_InvalidWindowId;
-            handler(response);
-            return;
-        }
-
-        [controller hideWindow:request.windowId.intValue];
-        response.status = ITMTmuxResponse_Status_Ok;
-        handler(response);
+        return;
     }
+    // Hide the window
+    if ([controller windowIsHidden:[request.windowId intValue]]) {
+        response.status = ITMTmuxResponse_Status_InvalidWindowId;
+        handler(response);
+        return;
+    }
+
+    [controller hideWindow:request.windowId.intValue];
+    response.status = ITMTmuxResponse_Status_Ok;
+    handler(response);
 }
 
 - (void)apiServerTmuxRequest:(ITMTmuxRequest *)request handler:(void (^)(ITMTmuxResponse *))handler {
