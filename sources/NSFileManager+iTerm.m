@@ -317,5 +317,16 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return results;
 }
 
++ (NSString *)pathToSaveFileInFolder:(NSString *)destinationDirectory preferredName:(NSString *)preferredName {
+    NSString *finalDestination = nil;
+    int retries = 0;
+    do {
+        NSString *name = retries > 0 ? [NSString stringWithFormat:@"%@ (%d).%@", preferredName.stringByDeletingPathExtension, retries, preferredName.pathExtension] : preferredName;
+        finalDestination = [destinationDirectory stringByAppendingPathComponent:name];
+        ++retries;
+    } while ([[NSFileManager defaultManager] fileExistsAtPath:finalDestination]);
+    return finalDestination;
+}
+
 @end
 

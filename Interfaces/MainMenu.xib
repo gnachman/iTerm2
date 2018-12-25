@@ -40,6 +40,9 @@
                                     <action selector="checkForUpdatesFromMenu:" target="201" id="vmh-LD-TwW"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="Dpc-y9-dq3">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
                             <menuItem title="Toggle Debug Logging" enabled="NO" identifier="Toggle Debug Logging" id="950">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
@@ -49,6 +52,14 @@
                             <menuItem title="Copy Performance Stats" identifier="Copy Performance Stats" id="cYu-lQ-5GD">
                                 <connections>
                                     <action selector="copyPerformanceStats:" target="201" id="Q9K-AS-x9Q"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Profile CPU Usage" identifier="Profile CPU Usage" id="BHe-4M-lqd">
+                                <string key="keyEquivalent" base64-UTF8="YES">
+CQ
+</string>
+                                <connections>
+                                    <action selector="createCPUProfile:" target="201" id="kex-OS-LzO"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Capture GPU Frame" identifier="Capture Metal Frame" id="8KO-hG-xdC">

@@ -36,6 +36,7 @@
 #import "iTermAppHotKeyProvider.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermBuriedSessions.h"
+#import "iTermCPUProfilerUI.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermDisclosableView.h"
@@ -1636,6 +1637,16 @@ static BOOL hasBecomeActive = NO;
 
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveWarnedAboutIncompatibleSoftware];
     return found;
+}
+
+- (IBAction)createCPUProfile:(id)sender {
+    [iTermCPUProfilerUI createProfileWithCompletion:^(iTermCPUProfile * _Nonnull profile) {
+        NSString *string = [profile stringTree];
+        NSString *path = [NSFileManager pathToSaveFileInFolder:[[NSFileManager defaultManager] desktopDirectory]
+                                                 preferredName:@"iTerm2Sample.txt"];
+        [string writeToURL:[NSURL fileURLWithPath:path] atomically:NO encoding:NSUTF8StringEncoding error:NULL];
+        [[NSWorkspace sharedWorkspace] openFile:path withApplication:@"Finder"];
+    }];
 }
 
 - (IBAction)checkForIncompatibleSoftware:(id)sender {
