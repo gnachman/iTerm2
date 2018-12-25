@@ -574,7 +574,7 @@ static NSString *sPreviousVersion;
     static iTermUserDefaultsObserver *instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[iTermUserDefaultsObserver alloc]init];
+        instance = [[iTermUserDefaultsObserver alloc] init];
     });
     return instance;
 }
@@ -587,8 +587,8 @@ typedef struct {
     dispatch_once_t onceToken;
 } iTermPreferencesBoolCache;
 
-#define FAST_BOOL_ACCESSOR(userDefaultsKey) \
-+ (BOOL)hideTabActivityIndicator { \
+#define FAST_BOOL_ACCESSOR(accessorName, userDefaultsKey) \
++ (BOOL)accessorName { \
     static iTermPreferencesBoolCache cache = { \
         .key = userDefaultsKey, \
         .value = NO, \
@@ -609,6 +609,7 @@ typedef struct {
     return cache->value;
 }
 
-FAST_BOOL_ACCESSOR(kPreferenceKeyHideTabActivityIndicator)
+FAST_BOOL_ACCESSOR(hideTabActivityIndicator, kPreferenceKeyHideTabActivityIndicator)
+FAST_BOOL_ACCESSOR(maximizeMetalThroughput, kPreferenceKeyMetalMaximizeThroughput)
 
 @end
