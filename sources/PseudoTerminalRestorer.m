@@ -121,7 +121,12 @@ static BOOL gWaitingForFullScreen;
                                                      name:kApplicationDidFinishLaunchingNotification
                                                    object:nil];
     }
-    NSDictionary *arrangement = [state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey];
+    NSDictionary *arrangement = nil;
+    @try {
+        arrangement = [state decodeObjectForKey:kTerminalWindowStateRestorationWindowArrangementKey];
+    } @catch (NSException *exception) {
+        XLog(@"Exception decoding window arrangement: %@", exception);
+    }
     if (arrangement) {
         DLog(@"Have an arrangement");
         VoidBlock theBlock = ^{
