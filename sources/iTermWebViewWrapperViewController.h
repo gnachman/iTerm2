@@ -7,7 +7,27 @@
 //
 
 #import <Cocoa/Cocoa.h>
+
+@class iTermVariableScope;
+@class WKUserContentController;
 @class WKWebView;
+
+extern NSString *const iTermWebViewErrorDomain;
+typedef NS_ENUM(NSUInteger, iTermWebViewErrorCode) {
+    iTermWebViewErrorCodeMissingInvocation,
+    iTermWebViewErrorCodeReceiverDealloced,
+    iTermWebViewErrorCodeRPCFailed,
+    iTermWebViewErrorCodeMissingCallback,
+    iTermWebViewErrorCodeCallbackFailed
+};
+
+@protocol iTermWebViewDelegate<NSObject>
+- (void)itermWebViewScriptInvocation:(NSString *)invocation
+                    didFailWithError:(NSError *)error;
+- (iTermVariableScope *)itermWebViewScriptScopeForUserContentController:(WKUserContentController *)userContentController;
+- (void)itermWebViewJavascriptError:(NSString *)errorText;
+- (void)itermWebViewWillExecuteJavascript:(NSString *)javascript;
+@end
 
 @interface iTermWebViewWrapperViewController : NSViewController
 
@@ -17,9 +37,7 @@
 
 @end
 
-// Because every WKWebView you create and place in a popover is immortal, I keep a pool of them
-// around and reuse them so you generally never have more than one allocated at a time.
 @interface iTermWebViewFactory : NSObject
 + (instancetype)sharedInstance;
-- (WKWebView *)webView;
+- (WKWebView *)webViewWithDelegate:(id<iTermWebViewDelegate>)delegate;
 @end

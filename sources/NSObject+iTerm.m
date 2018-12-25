@@ -81,6 +81,13 @@
                              OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
+- (void)it_setWeakAssociatedObject:(id)associatedObject forKey:(void *)key {
+    objc_setAssociatedObject(self,
+                             key,
+                             associatedObject,
+                             OBJC_ASSOCIATION_ASSIGN);
+}
+
 - (id)it_associatedObjectForKey:(void *)key {
     return objc_getAssociatedObject(self, key);
 }

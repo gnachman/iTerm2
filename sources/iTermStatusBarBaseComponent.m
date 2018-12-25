@@ -7,6 +7,8 @@
 
 #import "iTermStatusBarBaseComponent.h"
 
+#import "DebugLogging.h"
+#import "iTermAPIHelper.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarLayout.h"
 #import "iTermStatusBarSetupKnobsViewController.h"
@@ -72,7 +74,7 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
 
 @end
 
-@interface iTermStatusBarBaseComponent()<NSPopoverDelegate>
+@interface iTermStatusBarBaseComponent()<iTermWebViewDelegate, NSPopoverDelegate>
 @end
 
 @implementation iTermStatusBarBaseComponent
@@ -272,7 +274,7 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
 }
 
 - (void)statusBarComponentOpenPopoverWithHTML:(NSString *)html ofSize:(NSSize)size {
-    WKWebView *webView = [[iTermWebViewFactory sharedInstance] webView];
+    WKWebView *webView = [[iTermWebViewFactory sharedInstance] webViewWithDelegate:self];
     if (!webView) {
         return;
     }
@@ -317,6 +319,26 @@ NSString *const iTermStatusBarMinimumWidthKey = @"minwidth";
     [viewController terminateWebView];
 
 }
+
+#pragma mark - iTermWebViewDelegate
+
+- (void)itermWebViewScriptInvocation:(NSString *)invocation didFailWithError:(NSError *)error {
+    [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:invocation
+                                                                          string:error.localizedDescription];
+}
+
+- (iTermVariableScope *)itermWebViewScriptScopeForUserContentController:(WKUserContentController *)userContentController {
+    return self.scope;
+}
+
+- (void)itermWebViewJavascriptError:(NSString *)errorText {
+    XLog(@"Unhandled javascript error: %@", errorText);
+}
+
+- (void)itermWebViewWillExecuteJavascript:(NSString *)javascript {
+    XLog(@"Unexpected javascript execution: %@", javascript);
+}
+
 @end
 
 NS_ASSUME_NONNULL_END

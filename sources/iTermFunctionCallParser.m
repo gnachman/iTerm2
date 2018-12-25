@@ -80,6 +80,14 @@
     iTermGrammarProcessor *_grammarProcessor;
 }
 
++ (NSString *)signatureForTopLevelInvocation:(NSString *)invocation {
+    iTermFunctionCallParser *parser = [iTermFunctionCallParser callParser];
+    iTermVariableScope *scope = [[iTermVariableRecordingScope alloc] initWithScope:[[iTermVariableScope alloc] init]];
+    scope.neverReturnNil = YES;
+    iTermParsedExpression *expression = [parser parse:invocation scope:scope];
+    return expression.functionCall.signature;
+}
+
 + (instancetype)expressionParser {
     static iTermFunctionCallParser *sCachedInstance;
     static dispatch_once_t onceToken;

@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarLayout.h"
+#import "iTermWebViewWrapperViewController.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -18,7 +19,7 @@ extern NSString *const iTermStatusBarPriorityKey;
 extern NSString *const iTermStatusBarMaximumWidthKey;
 extern NSString *const iTermStatusBarMinimumWidthKey;
 
-@interface iTermStatusBarBaseComponent : NSObject<iTermStatusBarComponent>
+@interface iTermStatusBarBaseComponent : NSObject<iTermStatusBarComponent, iTermWebViewDelegate>
 
 @property (nonatomic, readonly) iTermVariableScope *scope;
 @property (nonatomic, readonly) NSDictionary<iTermStatusBarComponentConfigurationKey, id> *configuration;

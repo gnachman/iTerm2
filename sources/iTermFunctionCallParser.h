@@ -26,6 +26,7 @@
 + (CPTokeniser *)newTokenizer;
 + (id<CPTokenRecogniser>)stringRecognizerWithClass:(Class)theClass;
 + (void)setEscapeReplacerInStringRecognizer:(id)stringRecogniser;
++ (NSString *)signatureForTopLevelInvocation:(NSString *)invocation;
 
 // Use this to get an instance. Only on the main thread.
 + (instancetype)callParser;

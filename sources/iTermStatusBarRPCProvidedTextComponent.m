@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAPIHelper.h"
+#import "iTermFunctionCallParser.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptHistory.h"
 #import "iTermStatusBarComponentKnob.h"
@@ -333,6 +334,20 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
                                        [[iTermScriptHistoryEntry globalEntry] addOutput:message];
                                    }
                                }];
+}
+
+- (void)itermWebViewJavascriptError:(NSString *)errorText {
+    NSString *signature = [iTermFunctionCallParser signatureForTopLevelInvocation:self.invocation];
+    [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:signature
+                                                                          string:errorText];
+    [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:signature
+                                                                          string:@"Right-click in the webview and choose Inspect Element to open the Web Inspector."];
+}
+
+- (void)itermWebViewWillExecuteJavascript:(NSString *)javascript {
+    NSString *signature = [iTermFunctionCallParser signatureForTopLevelInvocation:self.invocation];
+    [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:signature
+                                                                          string:[NSString stringWithFormat:@"Execute javascript: %@", javascript]];
 }
 
 @end

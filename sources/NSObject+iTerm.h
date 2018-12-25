@@ -78,6 +78,7 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 - (instancetype)nilIfNull;
 
 - (void)it_setAssociatedObject:(id)associatedObject forKey:(void *)key;
+- (void)it_setWeakAssociatedObject:(id)associatedObject forKey:(void *)key;
 - (id)it_associatedObjectForKey:(void *)key;
 
 - (void)it_performNonObjectReturningSelector:(SEL)selector withObject:(id)object;
