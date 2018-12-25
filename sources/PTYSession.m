@@ -9967,7 +9967,7 @@ ITERM_WEAKLY_REFERENCEABLE
     state.visible = [_delegate sessionBelongsToVisibleTab];
 
     if (self.useMetal) {
-        if ([iTermPreferences boolForKey:kPreferenceKeyMetalMaximizeThroughput] &&
+        if ([iTermPreferences maximizeMetalThroughput] &&
             !_terminal.softAlternateScreenMode) {
             state.useAdaptiveFrameRate = YES;
         } else {

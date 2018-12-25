@@ -215,4 +215,5 @@ extern NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti;
 
 @interface iTermPreferences (FastAccessors)
 + (BOOL)hideTabActivityIndicator;
++ (BOOL)maximizeMetalThroughput;
 @end
