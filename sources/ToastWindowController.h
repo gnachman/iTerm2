@@ -14,5 +14,6 @@
 }
 
 + (void)showToastWithMessage:(NSString *)message;
++ (void)showToastWithMessage:(NSString *)message duration:(NSInteger)duration;
 
 @end

@@ -27,7 +27,11 @@ static NSMutableArray *visibleToast;
     visibleToast = [[NSMutableArray alloc] init];
 }
 
-+ (void)showToastWithMessage:(NSString *)message
++ (void)showToastWithMessage:(NSString *)message {
+    [self showToastWithMessage:message duration:5];
+}
+
++ (void)showToastWithMessage:(NSString *)message duration:(NSInteger)duration
 {
     ToastWindowController *toast = [[[ToastWindowController alloc] init] autorelease];
 
@@ -72,7 +76,7 @@ static NSMutableArray *visibleToast;
     [panel setContentView:roundedRect];
     [panel orderFrontRegardless];
     [toast setWindow:panel];
-    [toast hideAfterDelay:5];
+    [toast hideAfterDelay:duration];
     for (ToastWindowController *other in visibleToast) {
         [other hideToast];
     }

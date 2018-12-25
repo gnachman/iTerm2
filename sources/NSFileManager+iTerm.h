@@ -25,6 +25,8 @@
 
 @interface NSFileManager (iTerm)
 
++ (NSString *)pathToSaveFileInFolder:(NSString *)destinationDirectory preferredName:(NSString *)preferredName;
+
 - (NSString *)legacyApplicationSupportDirectory;
 - (NSString *)applicationSupportDirectory;
 
