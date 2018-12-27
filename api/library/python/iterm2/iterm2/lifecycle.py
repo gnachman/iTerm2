@@ -19,7 +19,7 @@ class SessionTerminationMonitor:
                   session_id = await mon.async_get()
                   print("Session {} closed".format(session_id))
     """
-    def __init__(self, connection):
+    def __init__(self, connection: iterm2.Connection):
         self.__connection = connection
         self.__queue = asyncio.Queue(loop=asyncio.get_event_loop())
 
@@ -33,9 +33,9 @@ class SessionTerminationMonitor:
                 callback)
         return self
 
-    async def async_get(self):
+    async def async_get(self) -> str:
         """
-        Returns the session_id of a just-terminated session.
+        Returns the `session_id` of a just-terminated session.
         """
         session_id = await self.__queue.get()
         return session_id
@@ -51,7 +51,7 @@ class LayoutChangeMonitor:
 
     :param connection: The :class:`iterm2.connection.Connection` to use.
     """
-    def __init__(self, connection):
+    def __init__(self, connection: iterm2.Connection):
         self.__connection = connection
         self.__queue = asyncio.Queue(loop=asyncio.get_event_loop())
 
@@ -107,7 +107,7 @@ class NewSessionMonitor:
                    print("Session ID {} created".format(session_id))
 
       """
-    def __init__(self, connection):
+    def __init__(self, connection: iterm2.Connection):
         self.__connection = connection
         self.__queue = asyncio.Queue(loop=asyncio.get_event_loop())
 
@@ -121,10 +121,8 @@ class NewSessionMonitor:
                 callback)
         return self
 
-    async def async_get(self):
-        """
-        Returns the new session ID.
-        """
+    async def async_get(self) -> str:
+        """Returns the new session ID."""
         result = await self.__queue.get()
         session_id = result.session_id
         return session_id
