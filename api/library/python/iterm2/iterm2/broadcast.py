@@ -1,5 +1,7 @@
 """Provides interfaces for managing input broadcasting."""
+import iterm2.connection
 import iterm2.session
+import typing
 
 class BroadcastDomain:
     """Broadcast domains describe how keyboard input is broadcast.
@@ -13,29 +15,33 @@ class BroadcastDomain:
         self.__sessions = []
         self.__unresolved = []
 
-    def add_session(self, session):
+    def add_session(self, session: iterm2.session.Session):
         """Adds a session to the broadcast domain.
 
-        :param session: A :class:`iterm2.Session` object."""
+        :param session: The session to add."""
         self.__sessions.append(session)
 
     def add_unresolved(self, resolver):
         self.__unresolved.append(unresolved)
 
     @property
-    def sessions(self):
+    def sessions(self) -> typing.List[iterm2.session.Session]:
         """Returns the list of sessions belonging to a broadcast domain.
 
-        :returns: A list of :class:`iterm2.Session` objects."""
+        :returns: The sessions belonging to the broadcast domain."""
         return list(filter(
             lambda x: x is not None,
             self.__sessions + list(map(lambda r: r(), self.__unresolved))))
 
 
-async def async_set_broadcast_domains(connection, broadcast_domains):
+async def async_set_broadcast_domains(
+    connection: iterm2.connection.Connection,
+    broadcast_domains: typing.List[BroadcastDomain]):
     """Sets the current set of broadcast domains.
 
-    :param broadcast_domains: A list of :class:`iterm2.BroadcastDomain` objects."""
+    :param connection: The connection to iTerm2.
+    :param broadcast_domains: The new collection of broadcast domains.
+    """
     await iterm2.rpc.async_set_broadcast_domains(connection, list(
         map(lambda d: list(
             map(lambda s: s.session_id,
