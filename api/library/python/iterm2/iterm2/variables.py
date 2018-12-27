@@ -1,17 +1,16 @@
 import asyncio
 import enum
+import iterm2.connection
 import iterm2.notifications
 import json
+import typing
 
 class VariableScopes(enum.Enum):
-    """Takes the following values:
-
-    `SESSION`, `TAB`, `WINDOW`, `APP`
-    """
-    SESSION = iterm2.api_pb2.VariableScope.Value("SESSION")
-    TAB = iterm2.api_pb2.VariableScope.Value("TAB")
-    WINDOW = iterm2.api_pb2.VariableScope.Value("WINDOW")
-    APP = iterm2.api_pb2.VariableScope.Value("APP")
+    """Describes the scope in which a variable can be evaluated."""
+    SESSION = iterm2.api_pb2.VariableScope.Value("SESSION")  #: Session scope
+    TAB = iterm2.api_pb2.VariableScope.Value("TAB")  #: Tab scope
+    WINDOW = iterm2.api_pb2.VariableScope.Value("WINDOW")  #: Window scope
+    APP = iterm2.api_pb2.VariableScope.Value("APP")  #: Whole-app scope
 
 class VariableMonitor:
     """
@@ -19,10 +18,10 @@ class VariableMonitor:
 
     `VariableMonitor` is a context manager that helps observe changes in iTerm2 Variables.
 
-   :param connection: The :class:`iterm2.Connection` to use.
-   :param scope: A :class:`iterm2.VariableScope`, describing the context for the name and identifier.
-   :param name: The variable name, a string.
-   :param identifier: A tab, window, or session identifier. Must correspond to the passed-in scope. If the scope is `APP` this should be None. If the scope is `SESSION` the identifier may be "all".
+   :param connection: The connection to iTerm2.
+   :param scope: The scope in which the variable should be evaluated.
+   :param name: The variable name.
+   :param identifier: A tab, window, or session identifier. Must correspond to the passed-in scope. If the scope is `APP` this should be None. If the scope is `SESSION` the identifier may be "all" or "active".
 
     Example:
 
@@ -37,7 +36,12 @@ class VariableMonitor:
                   new_value = await mon.async_get()
                   DoSomething(new_value)
         """
-    def __init__(self, connection, scope, name, identifier):
+    def __init__(
+            self,
+            connection: iterm2.connection.Connection,
+            scope: VariableScopes,
+            name: str,
+            identifier: typing.Optional[str]):
         self.__connection = connection
         self.__scope = scope
         self.__name = name
@@ -57,10 +61,8 @@ class VariableMonitor:
                 self.__identifier)
         return self
 
-    async def async_get(self):
-        """
-        Returns the new value of the variable.
-        """
+    async def async_get(self) -> typing.Any:
+        """Returns the new value of the variable."""
         result = await self.__queue.get()
         jsonNewValue = result.json_new_value
         return json.loads(jsonNewValue)

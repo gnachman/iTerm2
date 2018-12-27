@@ -5,6 +5,7 @@ Variables
    :members: async_get
 .. autoclass:: iterm2.VariableScopes
    :undoc-members:
+   :members:
 
 
 ----
