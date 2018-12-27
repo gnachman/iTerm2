@@ -1,29 +1,30 @@
 """Enables defining a custom control sequence."""
 import asyncio
+import iterm2.connection
 import iterm2.notifications
 import re
 
 class CustomControlSequenceMonitor:
-    def __init__(self, connection, identity, regex, session_id=None):
-        """Registers a handler for a custom control sequence.
+    """Registers a handler for a custom control sequence.
 
-        :param connection: The :class:`iterm2.Connection` to use.
-        :param identity: A string that must be provided as the sender identity in the control sequence. This is a shared secret, to make it harder to invoke control sequences without permission.
-        :param regex: A regular expression. It will be used to search the payload. If it matches, the resulting `re.Match` is returned from `async_get()`.
-        :param session_id: The session ID to monitor, or `None` to mean monitor all sessions (including those not yet created).
+    :param connection: The connection to iTerm2.
+    :param identity: A string that must be provided as the sender identity in the control sequence. This is a shared secret, to make it harder to invoke control sequences without permission.
+    :param regex: A regular expression. It will be used to search the payload. If it matches, the resulting `re.Match` is returned from `async_get()`.
+    :param session_id: The session ID to monitor, or `None` to mean monitor all sessions (including those not yet created).
 
-        Example:
+    Example:
 
-          .. code-block:: python
+      .. code-block:: python
 
-              async with iterm2.CustomControlSequenceMonitor(
-                      connection,
-                      "shared-secret",
-                      r'^create-window$') as mon:
-                  while True:
-                      match = await mon.async_get()
-                      await iterm2.Window.async_create(connection)
-        """
+          async with iterm2.CustomControlSequenceMonitor(
+                  connection,
+                  "shared-secret",
+                  r'^create-window$') as mon:
+              while True:
+                  match = await mon.async_get()
+                  await iterm2.Window.async_create(connection)
+    """
+    def __init__(self, connection: iterm2.connection.Connection, identity: str, regex: str, session_id: str=None):
         self.__connection = connection
         self.__regex = regex
         self.__identity = identity
@@ -45,7 +46,7 @@ class CustomControlSequenceMonitor:
                 self.__session_id)
         return self
 
-    async def async_get(self):
+    async def async_get(self) -> re.Match:
         """
         Blocks until a matching control sequence is returned.
 
