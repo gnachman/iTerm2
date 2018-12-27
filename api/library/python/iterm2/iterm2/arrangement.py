@@ -1,5 +1,6 @@
 """Provides access to saved arrangements."""
 
+import iterm2.connection
 import iterm2.rpc
 import iterm2.api_pb2
 
@@ -9,11 +10,12 @@ class SavedArrangementException(Exception):
 
 class Arrangement:
     @staticmethod
-    async def async_save(connection, name):
+    async def async_save(connection: iterm2.connection.Connection, name: str):
         """Save all windows as a new arrangement.
 
         Replaces the arrangement with the given name if it already exists.
 
+        :param connection: The name of the arrangement.
         :param name: The name of the arrangement.
 
         :throws: SavedArrangementException
@@ -26,9 +28,10 @@ class Arrangement:
                     result.saved_arrangement_response.status))
 
     @staticmethod
-    async def async_restore(connection, name):
+    async def async_restore(connection: iterm2.connection.Connection, name: str):
         """Restore a saved window arrangement.
 
+        :param connection: The name of the arrangement.
         :param name: The name of the arrangement to restore.
 
         :throws: SavedArrangementException
