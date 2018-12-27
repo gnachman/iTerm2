@@ -234,6 +234,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                              selector:@selector(updateProfileName)
                                                  name:iTermProfilePreferencesUpdateSessionName
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(didRegisterSessionTitleFunc:)
+                                                 name:iTermAPIDidRegisterSessionTitleFunctionNotification
+                                               object:nil];
     [self updateEditAdvancedConfigButton];
 }
 
@@ -830,6 +834,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [self settingChanged:_profileNameFieldForEditCurrentSession];
         _profileNameChangePending = NO;
     }
+}
+
+- (void)didRegisterSessionTitleFunc:(NSNotification *)notification {
+    [self updateTitleSettingsMenu];
+    [self updateSelectedTitleComponents];
 }
 
 #pragma mark - iTermImageWellDelegate
