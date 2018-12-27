@@ -1,17 +1,18 @@
 class Color:
-    """Describes a color."""
+    """Describes a color.
+
+      :param r: Red, in 0-255
+      :param g: Green, in 0-255
+      :param b: Blue, in 0-255
+      :param a: Alpha, in 0-255
+      :param color_space: The color space. Only sRGB is supported currently.
+      """
 
     COLOR_SPACE_NAME_SRGB="sRGB"
     COLOR_SPACE_NAME_CALIBRATED="Calibrated"
 
-    def __init__(self, r=0, g=0, b=0, a=255, color_space="sRGB"):
-        """Create a color.
-
-          r: Red, in 0-255
-          g: Green, in 0-255
-          b: Blue, in 0-255
-          a: Alpha, in 0-255
-          color_space: The color space. Only sRGB is supported currently."""
+    def __init__(self, r: int=0, g: int=0, b: int=0, a: int=255, color_space: str="sRGB"):
+        """Create a color."""
         self.__red = r
         self.__green = g
         self.__blue = b
@@ -27,7 +28,7 @@ class Color:
             self.color_space)
 
     @property
-    def red(self):
+    def red(self) -> int:
         """The color's red component."""
         return self.__red
 
