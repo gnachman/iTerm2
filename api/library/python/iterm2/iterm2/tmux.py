@@ -30,7 +30,7 @@ class TmuxConnection:
         return self.__connection_id
 
     @property
-    def owning_session(self) -> iterm2.Session:
+    def owning_session(self) -> 'iterm2.Session':
         """Returns the "gateway" session.
 
         :returns: The :class:`iterm2.Session` where `tmux -CC` was run, or `None` if it cannot be found."""
@@ -81,7 +81,7 @@ class TmuxConnection:
                 iterm2.api_pb2.TmuxResponse.Status.Name(
                     response.tmux_response.status))
 
-    async def async_create_window(self) -> iterm2.window.Window:
+    async def async_create_window(self) -> 'iterm2.Window':
         """Creates a new tmux window.
 
         This may not be called from within a :class:`iterm2.Transaction`.
