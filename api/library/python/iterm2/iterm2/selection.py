@@ -6,29 +6,16 @@ import iterm2.screen
 import iterm2.util
 import itertools
 from operator import itemgetter
+import typing
 
 class SelectionMode(enum.Enum):
-    """Enumerated list of selection modes.
-
-    `CHARACTER`, `WORD`, `LINE`, `WHOLE_LINE`, or `BOX`.
-
-    These determine how the selection is extended, and how to interpret its coordinate range.
-
-    `CHARACTER` means character-by-character selection.
-
-    `WORD` means word-by-word selection.
-
-    `LINE` means row-by-row selection.
-
-    `WHOLE_LINE` means entire wrapped lines, which could occupy many rows.
-
-    `BOX` is a rectangular region."""
-    CHARACTER = 0
-    WORD = 1
-    LINE = 2
-    SMART = 3
-    BOX = 4
-    WHOLE_LINE = 5
+    """Enumerated list of modes for selecting text."""
+    CHARACTER = 0  #: character-by-character selection
+    WORD = 1  #: word-by-word selection
+    LINE = 2  #: row-by-row selection
+    SMART = 3  #: smart selection
+    BOX = 4  #: rectangular region
+    WHOLE_LINE = 5  #: entire wrapped lines, which could occupy many rows
 
     @staticmethod
     def fromProtoValue(p):
@@ -45,18 +32,23 @@ class SubSelection:
 
     :param windowedCoordRange: A :class:`iterm2.util.WindowedCoordRange` describing the range.
     :param mode: A :class:`SelectionMode` describing how the selection is interpreted and extended.
+    :param connected: If true, no newline exists between this and the next sub-selection.
     """
-    def __init__(self, windowedCoordRange, mode, connected):
+    def __init__(
+            self,
+            windowedCoordRange: iterm2.util.WindowedCoordRange,
+            mode:SelectionMode,
+            connected: bool):
         self.__windowedCoordRange = windowedCoordRange
         self.__mode = mode
         self.__connected = connected
 
     @property
-    def windowedCoordRange(self):
+    def windowedCoordRange(self) -> iterm2.util.WindowedCoordRange:
         return self.__windowedCoordRange
 
     @property
-    def mode(self):
+    def mode(self) -> SelectionMode:
         return self.__mode
 
     @property
@@ -67,11 +59,15 @@ class SubSelection:
         return p
 
     @property
-    def connected(self):
+    def connected(self) -> bool:
         return self.__connected
 
-    async def async_get_string(self, connection, session_id):
-        """Gets the text belonging to this subselection."""
+    async def async_get_string(self, connection: iterm2.connection.Connection, session_id: str) -> str:
+        """Gets the text belonging to this subselection.
+
+        :param connection: The connection to iTerm2.
+        :param session_id: The ID of the session for which to look up the selected text.
+        """
         result = await iterm2.rpc.async_get_screen_contents(
             connection,
             session_id,
@@ -119,11 +115,11 @@ class Selection:
 
     :param subSelections: An array of :class:`SubSelection` objects.
     """
-    def __init__(self, subSelections):
+    def __init__(self, subSelections: typing.List[SubSelection]):
         self.__subSelections = subSelections
 
     @property
-    def subSelections(self):
+    def subSelections(self) -> typing.List[SubSelection]:
         return self.__subSelections
 
     async def _async_get_content_in_range(self, connection, session_id, coordRange):
@@ -144,7 +140,13 @@ class Selection:
                     s += "\n"
             return s
 
-    async def async_get_string(self, connection, session_id, width):
+    async def async_get_string(self, connection: iterm2.connection.Connection, session_id: str, width: int) -> str:
+        """Returns the selected text.
+
+        :param connection: The connection to iTerm2.
+        :param session_id: The ID of the session for which to look up the selected text.
+        :param width: The width (number of columns) of the session.
+        """
         if len(self.__subSelections) == 1:
             return await self.__subSelections[0].async_get_string(connection, session_id)
 
