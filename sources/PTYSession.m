@@ -8512,7 +8512,9 @@ ITERM_WEAKLY_REFERENCEABLE
     // Reset this in case it's taking the "real" shell integration path.
     _fakePromptDetectedAbsLine = -1;
     _lastPromptLine = (long long)line + [_screen totalScrollbackOverflow];
-    [[self screenAddMarkOnLine:line] setIsPrompt:YES];
+    VT100ScreenMark *mark = [self screenAddMarkOnLine:line];
+    [mark setIsPrompt:YES];
+    mark.promptRange = VT100GridAbsCoordRangeMake(0, _lastPromptLine, 0, _lastPromptLine);
     [_pasteHelper unblock];
 }
 
@@ -8552,6 +8554,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)screenPromptDidEndAtLine:(int)line {
+    VT100ScreenMark *mark = [_screen lastPromptMark];
+    const int x = _screen.cursorX - 1;
+    const long long y = (long long)line + [_screen totalScrollbackOverflow];
+    mark.promptRange = VT100GridAbsCoordRangeMake(mark.promptRange.start.x,
+                                                  mark.promptRange.end.y,
+                                                  x,
+                                                  y);
+    mark.commandRange = VT100GridAbsCoordRangeMake(x, y, x, y);
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
