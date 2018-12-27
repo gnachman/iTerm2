@@ -1,34 +1,42 @@
 """Represents tmux integration objects."""
 import iterm2.app
+import iterm2.connection
 import iterm2.rpc
+import iterm2.session
 import iterm2.transaction
+import iterm2.window
+import iterm2
+import typing
 
 class TmuxException(Exception):
     """A problem was encountered in a Tmux request."""
     pass
 
 class TmuxConnection:
+    """A tmux integration connection.
+
+    Do not create this yourself. Use :func:`async_get_tmux_connections`, instead."""
     def __init__(self, connection_id, owning_session_id, app):
         self.__connection_id = connection_id
         self.__owning_session_id = owning_session_id
         self.__app = app
 
     @property
-    def connection_id(self):
+    def connection_id(self) -> str:
         """Returns the unique identifier of the connection.
 
-        :returns: A connection ID (a string), which is also a human-readable description of the connection.
+        :returns: A connection ID, which is also a human-readable description of the connection.
         """
         return self.__connection_id
 
     @property
-    def owning_session(self):
+    def owning_session(self) -> iterm2.Session:
         """Returns the "gateway" session.
 
-        :returns: The :class:`Session` where `tmux -CC` was run, or None if it cannot be found."""
+        :returns: The :class:`iterm2.Session` where `tmux -CC` was run, or `None` if it cannot be found."""
         return self.__app.get_session_by_id(self.__owning_session_id)
 
-    async def async_send_command(self, command):
+    async def async_send_command(self, command: str) -> str:
         """Sends a command to the tmux server.
 
         This may not be called from within a :class:`iterm2.Transaction`.
@@ -52,13 +60,12 @@ class TmuxConnection:
                 iterm2.api_pb2.TmuxResponse.Status.Name(
                     response.tmux_response.status))
 
-    async def async_set_tmux_window_visible(self, tmux_window_id, visible):
+    async def async_set_tmux_window_visible(self, tmux_window_id: str, visible: bool) -> None:
         """Hides or shows a tmux window.
 
         Tmux windows are represented as tabs in iTerm2. You can get a
         tmux_window_id from :meth:`iterm2.Tab.tmux_window_id`. If this tab is
-        attached to a tmux session, then it may be hidden. Use
-        :meth:`iterm2.tmux.async_open_window` to make it visible again.
+        attached to a tmux session, then it may be hidden.
 
         This may not be called from within a :class:`iterm2.Transaction`.
 
@@ -74,7 +81,7 @@ class TmuxConnection:
                 iterm2.api_pb2.TmuxResponse.Status.Name(
                     response.tmux_response.status))
 
-    async def async_create_window(self):
+    async def async_create_window(self) -> iterm2.window.Window:
         """Creates a new tmux window.
 
         This may not be called from within a :class:`iterm2.Transaction`.
@@ -92,13 +99,13 @@ class TmuxConnection:
         return app.get_window_for_tab(tab_id)
 
 
-async def async_get_tmux_connections(connection):
+async def async_get_tmux_connections(connection: iterm2.connection.Connection) -> typing.List[TmuxConnection]:
     """Fetches a list of tmux connections.
 
     This may not be called from within a :class:`iterm2.Transaction`.
 
-    :param connection: An existing :class:`iterm2.Connection`.
-    :returns: A list of :class:`TmuxConnection` objects.
+    :param connection: The connection to iTerm2.
+    :returns: The current tmux connections.
     """
     response = await iterm2.rpc.async_rpc_list_tmux_connections(connection)
     app = await iterm2.app.async_get_app(connection)
@@ -114,10 +121,10 @@ async def async_get_tmux_connections(connection):
             iterm2.api_pb2.TmuxResponse.Status.Name(
                 response.tmux_response.status))
 
-async def async_get_tmux_connection_by_connection_id(connection, connection_id):
+async def async_get_tmux_connection_by_connection_id(connection: iterm2.connection.Connection, connection_id: str) -> typing.Optional[TmuxConnection]:
     """Find a tmux connection by its ID.
 
-    :param connection: An existing :class:`iterm2.Connection`.
+    :param connection: The connection to iTerm2.
     :param connection_id: A connection ID for a :class:`TmuxConnection`.
 
     :returns: Either a :class:`TmuxConnection` or `None`.
