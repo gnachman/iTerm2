@@ -21,9 +21,6 @@ class SplitPaneException(Exception):
 
 class Splitter:
     """A container of split pane sessions where the dividers are all aligned the same way.
-
-    :ivar vertical: Whether the split pane dividers in this Splitter are vertical
-      or horizontal.
     """
     def __init__(self, vertical: bool=False):
         """
