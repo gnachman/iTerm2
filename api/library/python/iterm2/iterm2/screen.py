@@ -4,6 +4,7 @@ import iterm2.api_pb2
 import iterm2.notifications
 import iterm2.rpc
 import iterm2.util
+import typing
 
 class LineContents:
     """Describes the contents of a line."""
@@ -19,13 +20,13 @@ class LineContents:
                 self.__length_of_cell.append(cppc.num_code_points)
 
     @property
-    def string(self):
+    def string(self) -> str:
         """
         :returns: The line's contents as a string.
         """
         return self.__proto.text
 
-    def string_at(self, x):
+    def string_at(self, x: int) -> str:
         """Returns the string of the cell at index `x`.
 
         :param x: The index to look up.
@@ -36,7 +37,7 @@ class LineContents:
         return self.__proto.text[offset:limit]
 
     @property
-    def hard_eol(self):
+    def hard_eol(self) -> bool:
         """
         :returns: True if the line has a hard newline. If False, the text of a longer line wraps onto the next line."""
         return self.__proto.continuation == iterm2.api_pb2.LineContents.Continuation.Value("CONTINUATION_HARD_EOL")
@@ -47,7 +48,7 @@ class ScreenContents:
         self.__proto = proto
 
     @property
-    def windowed_coord_range(self):
+    def windowed_coord_range(self) -> iterm2.util.WindowedCoordRange:
         """The line number of the first line in this object."""
         return iterm2.util.WindowedCoordRange(
                 iterm2.util.CoordRange(
@@ -62,11 +63,11 @@ class ScreenContents:
                     self.__proto.windowed_coord_range.columns.length))
 
     @property
-    def number_of_lines(self):
+    def number_of_lines(self) -> int:
         """The number of lines in this object."""
         return self.__proto.windowed_coord_range.coord_range.end.y - self.__proto.windowed_coord_range.coord_range.start.y
 
-    def line(self, index):
+    def line(self, index: int) -> LineContents:
         """Returns the LineContents at the given index.
 
         :param index: should be at least 0 and less than `number_of_lines`.
@@ -76,14 +77,14 @@ class ScreenContents:
         return LineContents(self.__proto.contents[index])
 
     @property
-    def cursor_coord(self):
+    def cursor_coord(self) -> iterm2.util.Point:
         """Returns the location of the cursor.
 
         :returns: A :class:`iterm2.Point`"""
         return iterm2.util.Point(self.__proto.cursor.x, self.__proto.cursor.y)
 
     @property
-    def number_of_lines_above_screen(self):
+    def number_of_lines_above_screen(self) -> int:
         """Returns the number of lines before the screen including scrollback history and lines lost from the head of scrollback history.
 
         :returns: The number of lines ever received before the top line of the screen."""
@@ -124,7 +125,7 @@ class ScreenStreamer:
     async def __aexit__(self, exc_type, exc, _tb):
         await iterm2.notifications.async_unsubscribe(self.connection, self.token)
 
-    async def async_get(self):
+    async def async_get(self) -> typing.Union[None, ScreenContents]:
         """
         Blocks until the screen contents change.
 

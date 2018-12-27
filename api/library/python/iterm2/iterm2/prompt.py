@@ -5,9 +5,9 @@ import iterm2.notifications
 
 class PromptMonitor:
     """An asyncio context manager to watch for changes to the prompt.
-    
+
     This requires shell integration or prompt-detecting triggers to be installed for prompt detection.
-    
+
     :param connection: The :class:`iterm2.connection.Connection` to use.
     :param session_id: The string session ID to monitor.
 
@@ -20,7 +20,7 @@ class PromptMonitor:
                   await mon.async_get()
                   DoSomething()
     """
-    def __init__(self, connection, session_id):
+    def __init__(self, connection: iterm2.connection.Connection, session_id: str):
         self.connection = connection
         self.session_id = session_id
         self.__queue = asyncio.Queue(loop=asyncio.get_event_loop())
@@ -36,7 +36,7 @@ class PromptMonitor:
                 self.session_id)
         return self
 
-    async def async_get(self):
+    async def async_get(self) -> None:
         """Blocks until a new shell prompt is received."""
         await self.__queue.get()
 
