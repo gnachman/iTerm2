@@ -77,6 +77,10 @@ class Point:
   def __repr__(self):
     return "({}, {})".format(self.x, self.y)
 
+  @staticmethod
+  def from_coord_proto(proto):
+      return Point(proto.x, proto.y)
+
   @property
   def x(self):
     return self.__x
@@ -237,6 +241,12 @@ class CoordRange:
 
     def __repr__(self):
         return "CoordRange({} to {})".format(self.start, self.end)
+
+    @staticmethod
+    def from_proto(proto):
+        return CoordRange(
+                Point.from_coord_proto(proto.start),
+                Point.from_coord_proto(proto.end))
 
     @property
     def start(self):

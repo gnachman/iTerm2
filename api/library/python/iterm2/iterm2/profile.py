@@ -779,6 +779,7 @@ class WriteOnlyProfile:
     """A profile that can be modified but not read. Useful for changing many
     sessions' profiles at once without knowing what they are."""
     def __init__(self, session_id, connection, guid=None):
+        assert session_id != "all"
         self.connection = connection
         self.session_id = session_id
         self.__guid = guid

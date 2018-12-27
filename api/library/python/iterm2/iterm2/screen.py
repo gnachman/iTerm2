@@ -65,7 +65,7 @@ class ScreenContents:
     @property
     def number_of_lines(self) -> int:
         """The number of lines in this object."""
-        return self.__proto.windowed_coord_range.coord_range.end.y - self.__proto.windowed_coord_range.coord_range.start.y
+        return len(self.__proto.contents)
 
     def line(self, index: int) -> LineContents:
         """Returns the LineContents at the given index.
@@ -98,6 +98,7 @@ class ScreenStreamer:
     Don't create this yourself. Use Session.get_screen_streamer() instead. See
     its docstring for more info."""
     def __init__(self, connection, session_id, want_contents=True):
+        assert session_id != "all"
         self.connection = connection
         self.session_id = session_id
         self.want_contents = want_contents
