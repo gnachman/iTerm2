@@ -102,8 +102,8 @@ default profile.
 
 .. code-block:: python
 
-	else:
-	    print("No current window")
+        else:
+            print("No current window")
 
 This prints a diagnostic message. You can view these messages in the Script
 Console. Select *Scripts > Script Console* in iTerm2 to view the output of
@@ -113,7 +113,7 @@ script.
 
 .. code-block:: python
 
-	iterm2.run_until_complete(main)
+        iterm2.run_until_complete(main)
 
 This makes a connection to iTerm2 and invokes your `main` function in an
 asyncio event loop. When `main` returns the program terminates.

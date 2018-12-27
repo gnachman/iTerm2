@@ -52,33 +52,33 @@ import traceback
     import iterm2
 
     async def main(connection):
-	app = await iterm2.async_get_app(connection)
-	tasks = {}
+        app = await iterm2.async_get_app(connection)
+        tasks = {}
 
-	async def redraw_title_provider_periodically(session_id):
-	   try:
-		age = 0
-		session = app.get_session_by_id(session_id)
-		while True:
-		    await asyncio.sleep(1)
-		    # When the session ends, this will raise an exception.
-		    await session.async_set_variable("user.session_age_in_seconds", age)
-		    age += 1
-	   except Exception as e:
-	       traceback.print_exc()
-	   finally:
-		del tasks[session_id]
+        async def redraw_title_provider_periodically(session_id):
+           try:
+                age = 0
+                session = app.get_session_by_id(session_id)
+                while True:
+                    await asyncio.sleep(1)
+                    # When the session ends, this will raise an exception.
+                    await session.async_set_variable("user.session_age_in_seconds", age)
+                    age += 1
+           except Exception as e:
+               traceback.print_exc()
+           finally:
+                del tasks[session_id]
 
-	@iterm2.TitleProviderRPC
-	async def age_in_seconds_title(
-		session_id=iterm2.Reference("session.id"),
-		age=iterm2.Reference("user.session_age_in_seconds?")):
-	    if session_id not in tasks:
-		wake_coro = redraw_title_provider_periodically(session_id)
-		tasks[session_id] = asyncio.create_task(wake_coro)
-	    return str(age)
+        @iterm2.TitleProviderRPC
+        async def age_in_seconds_title(
+                session_id=iterm2.Reference("session.id"),
+                age=iterm2.Reference("user.session_age_in_seconds?")):
+            if session_id not in tasks:
+                wake_coro = redraw_title_provider_periodically(session_id)
+                tasks[session_id] = asyncio.create_task(wake_coro)
+            return str(age)
 
-	await age_in_seconds_title.async_register(connection, "Age in Seconds")
+        await age_in_seconds_title.async_register(connection, "Age in Seconds")
 
     iterm2.run_forever(main)
 

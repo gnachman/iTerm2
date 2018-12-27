@@ -14,7 +14,7 @@ There may be multiple "broadcast domains". Each broadcast domain has a collectio
     import iterm2
 
     async def main(connection):
-	app = await iterm2.async_get_app(connection)
+        app = await iterm2.async_get_app(connection)
         domain = iterm2.broadcast.BroadcastDomain()
         for tab in app.terminal_windows[0].tabs:
             domain.add_session(tab.sessions[0])

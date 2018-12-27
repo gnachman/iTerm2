@@ -14,17 +14,17 @@ You can bind it to a keystroke in **Prefs > Keys** by selecting the action *Invo
     import time
 
     async def main(connection):
-	app = await iterm2.async_get_app(connection)
+        app = await iterm2.async_get_app(connection)
 
         @iterm2.RPC
-	async def clear_all_sessions():
-	    code = b'\x1b' + b']1337;ClearScrollback' + b'\x07'
-	    for window in app.terminal_windows:
-		for tab in window.tabs:
-		    for session in tab.sessions:
-			await session.async_inject(code)
+        async def clear_all_sessions():
+            code = b'\x1b' + b']1337;ClearScrollback' + b'\x07'
+            for window in app.terminal_windows:
+                for tab in window.tabs:
+                    for session in tab.sessions:
+                        await session.async_inject(code)
 
-	await clear_all_sessions.async_register(connection)
+        await clear_all_sessions.async_register(connection)
 
     iterm2.run_forever(main)
 
