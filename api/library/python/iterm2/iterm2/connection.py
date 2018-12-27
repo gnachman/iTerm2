@@ -251,18 +251,18 @@ class Connection:
 
 
 def run_until_complete(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]]) -> None:
-    """Convenience method to run an async function taking an :class:`iterm2.Connection` as an argument.
+    """Convenience method to run an async function taking an :class:`~iterm2.Connection` as an argument.
 
     After `coro` returns this function will return.
 
-    :param coro: The coroutine to run. Must be an `async def` function. It should take one argument, a :class:`iterm2.connection.Connection`, and does not need to return a value."""
+    :param coro: The coroutine to run. Must be an `async def` function. It should take one argument, a :class:`~iterm2.connection.Connection`, and does not need to return a value."""
     Connection().run_until_complete(coro)
 
 def run_forever(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]]) -> None:
-    """Convenience method to run an async function taking an :class:`iterm2.Connection` as an argument.
+    """Convenience method to run an async function taking an :class:`~iterm2.Connection` as an argument.
 
     This function never returns.
 
-    :param coro: The coroutine to run. Must be an `async def` function. It should take one argument, a :class:`iterm2.connection.Connection`, and does not need to return a value.
+    :param coro: The coroutine to run. Must be an `async def` function. It should take one argument, a :class:`~iterm2.connection.Connection`, and does not need to return a value.
     """
     Connection().run_forever(coro)

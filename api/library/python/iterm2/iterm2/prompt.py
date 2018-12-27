@@ -16,17 +16,17 @@ class Prompt:
 
     @property
     def prompt_range(self) -> iterm2.util.CoordRange:
-        """Gives the :class:`iterm2.util.CoordRange` of a shell prompt."""
+        """Gives the :class:`~iterm2.util.CoordRange` of a shell prompt."""
         return iterm2.util.CoordRange.from_proto(self.__proto.prompt_range)
 
     @property
     def command_range(self) -> iterm2.util.CoordRange:
-        """Gives the :class:`iterm2.util.CoordRange` of the command following the shell prompt."""
+        """Gives the :class:`~iterm2.util.CoordRange` of the command following the shell prompt."""
         return iterm2.util.CoordRange.from_proto(self.__proto.command_range)
 
     @property
     def output_range(self) -> iterm2.util.CoordRange:
-        """Gives the :class:`iterm2.util.CoordRange` of the output of a command following a shell prompt."""
+        """Gives the :class:`~iterm2.util.CoordRange` of the output of a command following a shell prompt."""
         return iterm2.util.CoordRange.from_proto(self.__proto.output_range)
 
 async def async_get_last_prompt(connection: iterm2.connection.Connection, session_id: str) -> typing.Union[None, Prompt]:
@@ -54,7 +54,7 @@ class PromptMonitor:
 
     This requires shell integration or prompt-detecting triggers to be installed for prompt detection.
 
-    :param connection: The :class:`iterm2.connection.Connection` to use.
+    :param connection: The :class:`~iterm2.connection.Connection` to use.
     :param session_id: The string session ID to monitor.
 
     Example:

@@ -1579,9 +1579,9 @@ class Profile(WriteOnlyProfile):
     def get_color_with_key(self, key):
         """Returns the color for the request key, or None.
 
-        :param key: A string describing the color. Corresponds to the keys in :class:`iterm2.ColorPreset.Color`.
+        :param key: A string describing the color. Corresponds to the keys in :class:`~iterm2.ColorPreset.Color`.
 
-        :returns: Either a :class:`iterm2.color.Color` or `None`.
+        :returns: Either a :class:`~iterm2.color.Color` or `None`.
         """
         try:
             color = iterm2.color.Color()

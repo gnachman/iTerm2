@@ -8,7 +8,7 @@ class SessionTerminationMonitor:
 
     A session is said to terminate when its command (typically `login`) has exited. If the user closes a window, tab, or split pane they can still undo closing it for some amount of time. Session termination will be delayed until it is no longer undoable.
 
-    :param connection: The :class:`iterm2.connection.Connection` to use.
+    :param connection: The :class:`~iterm2.connection.Connection` to use.
 
     Example:
 
@@ -49,7 +49,7 @@ class LayoutChangeMonitor:
     """
     Watches for changes to the composition of sessions, tabs, and windows.
 
-    :param connection: The :class:`iterm2.connection.Connection` to use.
+    :param connection: The :class:`~iterm2.connection.Connection` to use.
     """
     def __init__(self, connection: iterm2.Connection):
         self.__connection = connection
@@ -75,7 +75,7 @@ class LayoutChangeMonitor:
         * The order of tabs within a window changes.
         * A session is buried or disintered.
 
-        Use :class:`iterm2.App` to examine the updated application state.
+        Use :class:`~iterm2.App` to examine the updated application state.
 
        Example:
 
@@ -95,7 +95,7 @@ class LayoutChangeMonitor:
 class NewSessionMonitor:
     """Watches for the creation of new sessions.
 
-      :param connection: The :class:`iterm2.connection.Connection` to use.
+      :param connection: The :class:`~iterm2.connection.Connection` to use.
 
        Example:
 

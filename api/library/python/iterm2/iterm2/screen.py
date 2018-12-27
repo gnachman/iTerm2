@@ -80,7 +80,7 @@ class ScreenContents:
     def cursor_coord(self) -> iterm2.util.Point:
         """Returns the location of the cursor.
 
-        :returns: A :class:`iterm2.Point`"""
+        :returns: A :class:`~iterm2.Point`"""
         return iterm2.util.Point(self.__proto.cursor.x, self.__proto.cursor.y)
 
     @property

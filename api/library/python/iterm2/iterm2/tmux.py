@@ -33,13 +33,13 @@ class TmuxConnection:
     def owning_session(self) -> 'iterm2.Session':
         """Returns the "gateway" session.
 
-        :returns: The :class:`iterm2.Session` where `tmux -CC` was run, or `None` if it cannot be found."""
+        :returns: The :class:`~iterm2.Session` where `tmux -CC` was run, or `None` if it cannot be found."""
         return self.__app.get_session_by_id(self.__owning_session_id)
 
     async def async_send_command(self, command: str) -> str:
         """Sends a command to the tmux server.
 
-        This may not be called from within a :class:`iterm2.Transaction`.
+        This may not be called from within a :class:`~iterm2.Transaction`.
 
         :param command: The command to send to tmux (e.g., "list-sessions")
 
@@ -64,10 +64,10 @@ class TmuxConnection:
         """Hides or shows a tmux window.
 
         Tmux windows are represented as tabs in iTerm2. You can get a
-        tmux_window_id from :meth:`iterm2.Tab.tmux_window_id`. If this tab is
+        tmux_window_id from :meth:`~iterm2.Tab.tmux_window_id`. If this tab is
         attached to a tmux session, then it may be hidden.
 
-        This may not be called from within a :class:`iterm2.Transaction`.
+        This may not be called from within a :class:`~iterm2.Transaction`.
 
         :param tmux_window_id: The window to show or hide.
         :param visible: `True` to show a window, `False` to hide a window.
@@ -84,7 +84,7 @@ class TmuxConnection:
     async def async_create_window(self) -> 'iterm2.Window':
         """Creates a new tmux window.
 
-        This may not be called from within a :class:`iterm2.Transaction`.
+        This may not be called from within a :class:`~iterm2.Transaction`.
 
         :returns: A new :class:`Window`.
         """
@@ -102,7 +102,7 @@ class TmuxConnection:
 async def async_get_tmux_connections(connection: iterm2.connection.Connection) -> typing.List[TmuxConnection]:
     """Fetches a list of tmux connections.
 
-    This may not be called from within a :class:`iterm2.Transaction`.
+    This may not be called from within a :class:`~iterm2.Transaction`.
 
     :param connection: The connection to iTerm2.
     :returns: The current tmux connections.

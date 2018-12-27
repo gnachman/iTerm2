@@ -40,7 +40,7 @@ class Splitter:
         """Creates a new Splitter from a node.
 
         :param node: :class:`iterm2.api_pb2.SplitTreeNode`
-        :param connection: :class:`iterm2.connection.Connection`
+        :param connection: :class:`~iterm2.connection.Connection`
 
         :returns: A new Splitter.
         """
@@ -188,7 +188,7 @@ class Session:
 
     def __init__(self, connection, link, summary=None):
         """
-        Do not call this yourself. Use :class:`iterm2.app.App` instead.
+        Do not call this yourself. Use :class:`~iterm2.app.App` instead.
 
         :param connection: :class:`Connection`
         :param link: :class:`iterm2.api_pb2.SplitTreeNode.SplitTreeLink`
@@ -250,7 +250,7 @@ class Session:
         The screen is the mutable part of a session (its last lines, excluding
         scrollback history).
 
-        :param want_contents: If `True`, the screen contents will be provided. See :class:`iterm2.screen.ScreenStreamer` for details.
+        :param want_contents: If `True`, the screen contents will be provided. See :class:`~iterm2.screen.ScreenStreamer` for details.
 
         :returns: A new screen streamer, suitable for monitoring the contents of this session.
 
@@ -318,7 +318,7 @@ class Session:
         :param key: The name of the property
         :param value: A json-encodable value to set.
 
-        :throws: :class:`iterm2.rpc.RPCException` if something goes wrong.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         response = await iterm2.rpc.async_set_profile_property(
             self.connection,
@@ -335,7 +335,7 @@ class Session:
 
         :returns: The profile for this session, including any session-local changes not in the underlying profile.
 
-        :throws: :class:`iterm2.rpc.RPCException` if something goes wrong.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         response = await iterm2.rpc.async_get_profile(self.connection, self.__session_id)
         status = response.get_profile_property_response.status
@@ -354,7 +354,7 @@ class Session:
 
         :param data: A byte array to inject.
 
-        :throws: :class:`iterm2.rpc.RPCException` if something goes wrong.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         response = await iterm2.rpc.async_inject(self.connection, data, [self.__session_id])
         status = response.inject_response.status[0]
@@ -384,7 +384,7 @@ class Session:
         :param name: The variable's name.
         :param value: The new value to assign.
 
-        :throws: :class:`iterm2.rpc.RPCException` if something goes wrong.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         result = await iterm2.rpc.async_variable(
             self.connection,
@@ -405,7 +405,7 @@ class Session:
 
         :returns: The variable's value or empty string if it is undefined.
 
-        :throws: :class:`iterm2.rpc.RPCException` if something goes wrong.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         result = await iterm2.rpc.async_variable(self.connection, self.__session_id, [], [name])
         status = result.variable_response.status
@@ -420,7 +420,7 @@ class Session:
 
         :param only_if_exited: When `True`, this will raise an exception if the session is still running. When `False`, a running session will be killed and restarted.
 
-        :throws: :class:`iterm2.rpc.RPCException` if something goes wrong.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         result = await iterm2.rpc.async_restart_session(self.connection, self.__session_id, only_if_exited)
         status = result.restart_session_response.status
@@ -433,7 +433,7 @@ class Session:
 
         :param force: If `True`, the user will not be prompted for a confirmation.
 
-        :throws: :class:`iterm2.rpc.RPCException` if something goes wrong.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         result = await iterm2.rpc.async_close(self.connection, sessions=[self.__session_id], force=force)
         status = result.close_response.statuses[0]
@@ -443,11 +443,11 @@ class Session:
     async def async_set_grid_size(self, size: iterm2.util.Size) -> None:
         """Sets the visible size of a session.
 
-        Note: This is meant for tabs that contain a single pane. If split panes are present, use :func:`iterm2.tab.Tab.async_update_layout` instead.
+        Note: This is meant for tabs that contain a single pane. If split panes are present, use :func:`~iterm2.tab.Tab.async_update_layout` instead.
 
         :param size: The new size for the session, in cells.
 
-        :throws: :class:`iterm2.rpc.RPCException` if something goes wrong.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
 
         Note: This will fail on fullscreen windows."""
         await self._async_set_property("grid_size", size.json)
@@ -457,7 +457,7 @@ class Session:
 
         :param buried: If `True`, bury the session. If `False`, disinter it.
 
-        :throws: :class:`iterm2.rpc.RPCException` if something goes wrong.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         await self._async_set_property("buried", json.dumps(buried))
 
@@ -465,7 +465,7 @@ class Session:
     async def _async_set_property(self, key, json_value):
         """Sets a property on this session.
 
-        :throws: :class:`iterm2.rpc.RPCException` if something goes wrong.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         response = await iterm2.rpc.async_set_property(self.connection, key, json_value, session_id=self.session_id)
         status = response.set_property_response.status
@@ -477,7 +477,7 @@ class Session:
         """
         :returns: The selected regions of this session. The selection will be empty if there is no selected text.
 
-        :throws: :class:`iterm2.rpc.RPCException` if something goes wrong.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         response = await iterm2.rpc.async_get_selection(self.connection, self.session_id)
         status = response.selection_response.status
@@ -508,7 +508,7 @@ class Session:
     async def async_get_selection_text(self, selection: iterm2.selection.Selection) -> str:
         """Fetches the text within a selection region.
 
-        :param selection: A :class:`iterm2.selection.Selection` defining a region in the session.
+        :param selection: A :class:`~iterm2.selection.Selection` defining a region in the session.
 
         See also :func:`~iterm2.session.Session.async_get_selection`.
 
@@ -522,7 +522,7 @@ class Session:
         """
         :param selection: The regions of text to select.
 
-        :throws: :class:`iterm2.rpc.RPCException` if something goes wrong.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         response = await iterm2.rpc.async_set_selection(self.connection, self.session_id, selection)
         status = response.selection_response.status

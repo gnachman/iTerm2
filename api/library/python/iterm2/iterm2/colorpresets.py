@@ -15,9 +15,9 @@ class GetPresetException(Exception):
 
 class ColorPreset:
     class Color(iterm2.color.Color):
-        """Derives from :class:`iterm2.Color`.
+        """Derives from :class:`~iterm2.Color`.
 
-        Note this is `iterm2.ColorPreset.Color`, despite how Sphinx chooses to format this documentation."""
+        Note this is `~iterm2.ColorPreset.Color`, despite how Sphinx chooses to format this documentation."""
         def __init__(self, r, g, b, a, color_space, key):
             super().__init__(r, g, b, a, color_space)
             self.__key = key
@@ -40,7 +40,7 @@ class ColorPreset:
     async def async_get_list(connection: iterm2.connection.Connection) -> typing.List[str]:
         """Fetches a list of color presets.
 
-        :param connection: An :class:`iterm2.Connection`.
+        :param connection: An :class:`~iterm2.Connection`.
 
         :returns: Names of the color presets.
         """

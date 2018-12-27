@@ -267,7 +267,7 @@ class KeystrokePattern:
 class KeystrokeMonitor:
     """Monitors keystrokes in one or all sessions.
 
-    :param connection: The :class:`iterm2.Connection` to use.
+    :param connection: The :class:`~iterm2.Connection` to use.
     :param session: The session ID to affect, or `None` meaning all sessions.
 
     Example:
@@ -305,7 +305,7 @@ class KeystrokeMonitor:
 class KeystrokeFilter:
     """An async context manager that disables the regular handling of keystrokes matching patterns during its lifetime.
 
-    :param connection: The :class:`iterm2.Connection` to use.
+    :param connection: The :class:`~iterm2.Connection` to use.
     :param patterns: A list of :class:`KeystrokePattern` objects specifying keystrokes whose regular handling should be disabled.
     :param session: The session ID to affect, or None meaning all.
 

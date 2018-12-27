@@ -106,7 +106,7 @@ class Tab:
 
         Change the `Session.preferred_size` of any sessions you wish to adjust before calling this.
 
-        :throws: :class:`iterm2.rpc.RPCException` if something goes wrong.
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         response = await iterm2.rpc.async_set_tab_layout(self.connection, self.tab_id, self.__root.to_protobuf())
         status = response.set_tab_layout_response.status

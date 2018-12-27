@@ -28,7 +28,7 @@ class GetPropertyException(Exception):
 class Window:
     """Represents a terminal window.
 
-    Do not create this yourself. Instead, use :class:`iterm2.app.App`.
+    Do not create this yourself. Instead, use :class:`~iterm2.app.App`.
     """
     @staticmethod
     async def async_create(
@@ -38,7 +38,7 @@ class Window:
             profile_customizations: iterm2.profile.LocalWriteOnlyProfile=None) -> 'Window':
         """Creates a new window.
 
-        :param connection: A :class:`iterm2.connection.Connection`.
+        :param connection: A :class:`~iterm2.connection.Connection`.
         :param profile: The name of the profile to use for the new window.
         :param command: A command to run in lieu of the shell in the new session. Mutually exclusive with profile_customizations.
         :param profile_customizations: LocalWriteOnlyProfile giving changes to make in profile. Mutually exclusive with command.
@@ -182,7 +182,7 @@ class Window:
     async def async_create_tmux_tab(self, tmux_connection: iterm2.tmux.TmuxConnection) -> typing.Optional[iterm2.tab.Tab]:
         """Creates a new tmux tab in this window.
 
-        This may not be called from within a :class:`iterm2.transaction.Transaction`.
+        This may not be called from within a :class:`~iterm2.transaction.Transaction`.
 
         :param tmux_connection: The tmux connection to own the new tab.
 
@@ -356,7 +356,7 @@ class Window:
 
         :param name: The name to restore.
 
-        :raises: :class:`iterm2.arrangement.SavedArrangementException` if the named arrangement does not exist."""
+        :raises: :class:`~iterm2.arrangement.SavedArrangementException` if the named arrangement does not exist."""
         result = await iterm2.rpc.async_restore_arrangement(self.connection, name, self.__window_id)
         if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
             raise iterm2.arrangement.SavedArrangementException(

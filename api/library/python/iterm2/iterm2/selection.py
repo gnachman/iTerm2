@@ -30,7 +30,7 @@ class SelectionMode(enum.Enum):
 class SubSelection:
     """Describes a continguous block of selected characters.
 
-    :param windowedCoordRange: A :class:`iterm2.util.WindowedCoordRange` describing the range.
+    :param windowedCoordRange: A :class:`~iterm2.util.WindowedCoordRange` describing the range.
     :param mode: A :class:`SelectionMode` describing how the selection is interpreted and extended.
     :param connected: If true, no newline exists between this and the next sub-selection.
     """
@@ -163,7 +163,7 @@ class Selection:
     async def async_enumerate_ranges(self, connection, session_id, width, cb):
         """Gets the text belonging to each subselection and concatenates them with newlines.
 
-        :param connection: A :class:`iterm2.connection.Connection`.
+        :param connection: A :class:`~iterm2.connection.Connection`.
         :param session_id: A string session ID.
 
         :returns: A string with the selected text.
