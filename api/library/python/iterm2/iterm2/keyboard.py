@@ -290,8 +290,7 @@ class KeystrokeMonitor:
         self.__token = await iterm2.notifications.async_subscribe_to_keystroke_notification(
                 self.__connection,
                 callback,
-                self.__session,
-                [])
+                self.__session)
         return self
 
     async def async_get(self) -> Keystroke:
