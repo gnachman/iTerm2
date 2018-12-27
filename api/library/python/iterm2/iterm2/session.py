@@ -308,23 +308,24 @@ class Session:
             raise SplitPaneException(
                 iterm2.api_pb2.SplitPaneResponse.Status.Name(result.split_pane_response.status))
 
-    async def async_set_profile_property(self, key: str, value: typing.Any) -> None:
+    async def async_set_profile_properties(self, write_only_profile: iterm2.profile.LocalWriteOnlyProfile) -> None:
         """
-        Sets the value of a property in this session.
+        Sets the value of properties in this session.
 
         :param key: The name of the property
-        :param value: A json-encodable value to set.
+        :param write_only_profile: A write-only profile that has the desired changes.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
-        response = await iterm2.rpc.async_set_profile_property(
-            self.connection,
-            self.session_id,
-            key,
-            json_value)
-        status = response.set_profile_property_response.status
-        if status != iterm2.api_pb2.SetProfilePropertyResponse.Status.Value("OK"):
-            raise iterm2.rpc.RPCException(iterm2.api_pb2.GetPromptResponse.Status.Name(status))
+        for key, json_value in write_only_profile.values.items():
+            response = await iterm2.rpc.async_set_profile_property_json(
+                self.connection,
+                self.session_id,
+                key,
+                json_value)
+            status = response.set_profile_property_response.status
+            if status != iterm2.api_pb2.SetProfilePropertyResponse.Status.Value("OK"):
+                raise iterm2.rpc.RPCException(iterm2.api_pb2.GetPromptResponse.Status.Name(status))
 
     async def async_get_profile(self) -> iterm2.profile.Profile:
         """

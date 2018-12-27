@@ -233,15 +233,19 @@ async def async_set_profile_property(connection, session_id, key, value, guids=N
     :param value: a Python object, whose type depends on the key
     :param guids: List of GUIDs of the profile to modify or None. If None, session_id must be set.
 
-    Returns: iterm2.api_pb2.ServerOriginatedMessage
+    :returns: iterm2.api_pb2.ServerOriginatedMessage
     """
+    return await async_set_profile_property_json(connection, session_id, key, json.dumps(value), guids)
+
+async def async_set_profile_property_json(connection, session_id, key, json_value, guids=None):
+    """Like async_set_profile_property but takes a json-encoded value."""
     request = _alloc_request()
     if session_id is None:
         request.set_profile_property_request.guid_list.guids.extend(guids);
     else:
         request.set_profile_property_request.session = session_id
     request.set_profile_property_request.key = key
-    request.set_profile_property_request.json_value = json.dumps(value)
+    request.set_profile_property_request.json_value = json_value
     return await _async_call(connection, request)
 
 async def async_get_profile(connection, session=None, keys=None):
