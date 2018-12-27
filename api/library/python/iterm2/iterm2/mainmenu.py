@@ -7,20 +7,24 @@ class MenuItemException(Exception):
     pass
 
 class MenuItemState:
-    """Describes the current state of a menu item.
+    """Describes the current state of a menu item."""
+    def __init__(self, checked: bool, enabled: bool):
+        self.__checked = checked
+        self.__enabled = enabled
 
-    There are two properties:
+    @property
+    def checked(self):
+        """Is the menu item checked? A `bool` property."""
+        return self.__checked
 
-    `checked`: Is there a check mark next to the menu item?
-    `enabled`: Is the menu item selectable?
-    """
-    def __init__(self, checked, enabled):
-        self.checked = checked
-        self.enabled = enabled
+    @property
+    def enabled(self):
+        """Is the menu item enabled (i.e., it can be selected)? A `bool` property."""
+        return self.__enabled
 
 class MainMenu:
     @staticmethod
-    async def async_select_menu_item(connection, identifier):
+    async def async_select_menu_item(connection, identifier: str):
         """Selects a menu item.
 
         :param identifier: A string. See list of identifiers in :doc:`menu_ids`
@@ -33,11 +37,10 @@ class MainMenu:
             raise MenuItemException(iterm2.api_pb2.MenuItemResponse.Status.Name(status))
 
     @staticmethod
-    async def async_get_menu_item_state(connection, identifier):
+    async def async_get_menu_item_state(connection, identifier: str) -> MenuItemState:
         """Queries a menu item for its state.
 
         :param identifier: A string. See list of identifiers in :doc:`menu_ids`
-        :returns: :class:`MenuItemState`
 
         :throws MenuItemException: if something goes wrong.
         """

@@ -23,7 +23,7 @@ from iterm2.mainmenu import MenuItemState, MainMenu, MenuItemException
 
 from iterm2.keyboard import Modifier, Keycode, Keystroke, KeystrokePattern, KeystrokeMonitor, KeystrokeFilter
 
-from iterm2.preferences import PreferenceKeys, async_get_preference
+from iterm2.preferences import PreferenceKey, async_get_preference
 
 from iterm2.profile import Profile, PartialProfile, BadGUIDException, LocalWriteOnlyProfile
 
