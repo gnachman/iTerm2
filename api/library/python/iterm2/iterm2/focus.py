@@ -1,7 +1,9 @@
 """Provides interfaces relating to keyboard focus."""
 import asyncio
 import enum
+import iterm2.connection
 import iterm2.notifications
+import typing
 
 class FocusUpdateApplicationActive:
     """Describes a change in whether the application is active."""
@@ -9,7 +11,7 @@ class FocusUpdateApplicationActive:
         self.__application_active = active
 
     @property
-    def application_active(self):
+    def application_active(self) -> bool:
         """:returns: `True` if the application is active or `False` if not."""
         return self.__application_active
 
@@ -27,7 +29,7 @@ class FocusUpdateWindowChanged:
     TERMINAL_WINDOW_RESIGNED_KEY = 2
     TERMINAL_WINDOW_STRINGS = [ "WindowBecameKey", "WindowIsCurrent", "WindowResignedKey" ]
 
-    def __init__(self, window_id, event):
+    def __init__(self, window_id: str, event: str):
         self.__window_id = window_id
         self.__event = event
 
@@ -37,12 +39,12 @@ class FocusUpdateWindowChanged:
             FocusUpdateWindowChanged.TERMINAL_WINDOW_STRINGS[self.event])
 
     @property
-    def window_id(self):
+    def window_id(self) -> str:
         """:returns: the window ID of the window that changed."""
         return self.__window_id
 
     @property
-    def event(self):
+    def event(self) -> 'FocusUpdateWindowChanged':
         """Describes how the window's focus changed.
 
         :returns: One of `FocusUpdateWindowChanged.TERMINAL_WINDOW_BECAME_KEY`, `FocusUpdateWindowChanged.TERMINAL_WINDOW_IS_CURRENT`, or `FocusUpdateWindowChanged.TERMINAL_WINDOW_RESIGNED_KEY`.
@@ -51,14 +53,14 @@ class FocusUpdateWindowChanged:
 
 class FocusUpdateSelectedTabChanged:
     """Describes a change in the selected tab."""
-    def __init__(self, tab_id):
+    def __init__(self, tab_id: str):
         self.__tab_id = tab_id
 
     def __repr__(self):
         return "Tab selected: {}".format(self.tab_id)
 
     @property
-    def tab_id(self):
+    def tab_id(self) -> str:
         """
         :returns: A tab ID, which is a string.
         """
@@ -66,14 +68,14 @@ class FocusUpdateSelectedTabChanged:
 
 class FocusUpdateActiveSessionChanged:
     """Describes a change to the active session within a tab."""
-    def __init__(self, session_id):
+    def __init__(self, session_id: str):
         self.__session_id = session_id
 
     def __repr__(self):
         return "Session activated: {}".format(self.session_id)
 
     @property
-    def session_id(self):
+    def session_id(self) -> str:
         """Returns the active session ID within its tab.
 
         :returns: A session ID, which is a string.
@@ -83,8 +85,13 @@ class FocusUpdateActiveSessionChanged:
 class FocusUpdate:
     """Describes a change to keyboard focus.
 
-    Up to one of `application_active`, `window_changed`, `selected_tab_changed`, or `active_session_changed` will not be None."""
-    def __init__(self, application_active=None, window_changed=None, selected_tab_changed=None, active_session_changed=None):
+    Up to one of `application_active`, `window_changed`, `selected_tab_changed`, or `active_session_changed` will not be `None`."""
+    def __init__(
+            self,
+            application_active: FocusUpdateApplicationActive=None,
+            window_changed: FocusUpdateWindowChanged=None,
+            selected_tab_changed: FocusUpdateSelectedTabChanged=None,
+            active_session_changed: FocusUpdateActiveSessionChanged=None):
         self.__application_active = application_active
         self.__window_changed = window_changed
         self.__selected_tab_changed = selected_tab_changed
@@ -102,28 +109,30 @@ class FocusUpdate:
         return "No Event"
 
     @property
-    def application_active(self):
+    def application_active(self) -> typing.Union[None, FocusUpdateApplicationActive]:
         """:returns: `None` if no change to whether the app is active, otherwise :class:`FocusUpdateApplicationActive`"""
         return self.__application_active
 
     @property
-    def window_changed(self):
+    def window_changed(self) -> typing.Union[None, FocusUpdateWindowChanged]:
         """:returns: `None` if no change to the current window, otherwise :class:`FocusUpdateWindowChanged`."""
         return self.__window_changed
 
     @property
-    def selected_tab_changed(self):
+    def selected_tab_changed(self) -> typing.Union[None, FocusUpdateSelectedTabChanged]:
         """:returns: `None` if no change to selected tab, otherwise :class:`FocusUpdateSelectedTabChanged`."""
         return self.__selected_tab_changed
 
     @property
-    def active_session_changed(self):
+    def active_session_changed(self) -> typing.Union[None, FocusUpdateActiveSessionChanged]:
         """:returns: `None` if no change to active session, otherwise :class:`FocusUpdateActiveSessionChanged`."""
         return self.__active_session_changed
 
 class FocusMonitor:
-    """An asyncio context manager for monitoring keyboard focus changes."""
-    def __init__(self, connection):
+    """An asyncio context manager for monitoring keyboard focus changes.
+
+    :param connection: A connection to iTerm2."""
+    def __init__(self, connection: iterm2.connection.Connection):
         self.__connection = connection
         self.__queue = []
 
@@ -155,7 +164,7 @@ class FocusMonitor:
     async def __aexit__(self, exc_type, exc, _tb):
         await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)
 
-    async def async_get_next_update(self):
+    async def async_get_next_update(self) -> FocusUpdate:
         """
         When focus changes, returns an update.
 
@@ -179,9 +188,7 @@ class FocusMonitor:
 
         future = asyncio.Future()
         self.__future = future
-        print("async_get_next_update: Waiting for update...")
         await self.__future
-        print("async_get_next_update: Got an update")
         proto = future.result()
         self.__future = None
         return self.handle_proto(proto)
