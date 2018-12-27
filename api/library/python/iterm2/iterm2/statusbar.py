@@ -2,8 +2,12 @@
 
 import json
 import iterm2.api_pb2
+import iterm2.color
+import iterm2.connection
 import iterm2.registration
 import iterm2.rpc
+import iterm2.util
+import typing
 
 class Knob:
     def __init__(self, type, name, placeholder, json_default_value, key):
@@ -29,7 +33,7 @@ class CheckboxKnob:
     :param default_value: Default value (Boolean).
     :param key: A unique string key identifying this knob.
     """
-    def __init__(self, name, default_value, key):
+    def __init__(self, name: str, default_value: bool, key: str):
         self.__knob = Knob(
                 iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.Checkbox,
                 name,
@@ -48,7 +52,7 @@ class StringKnob:
     :param default_value: Default value.
     :param key: A unique string key identifying this knob.
     """
-    def __init__(self, name, placeholder, default_value, key):
+    def __init__(self, name: str, placeholder: str, default_value: str, key: str):
         self.__knob = Knob(
                 iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.String,
                 name,
@@ -66,7 +70,7 @@ class PositiveFloatingPointKnob:
     :param default_value: Default value.
     :param key: A unique string key identifying this knob.
     """
-    def __init__(self, name, default_value, key):
+    def __init__(self, name: str, default_value: float, key: str):
         self.__knob = Knob(
                 iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.PositiveFloatingPoint,
                 name,
@@ -81,10 +85,10 @@ class ColorKnob:
     """A status bar configuration knob to select color.
 
     :param name: Description of the knob.
-    :param default_value: Default value (a :class:`Color`)
+    :param default_value: Default value.
     :param key: A unique string key identifying this knob
     """
-    def __init__(self, name, default_value, key):
+    def __init__(self, name: str, default_value: iterm2.color.Color, key: str):
         self.__knob = Knob(
                 iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.Color,
                 name,
@@ -105,7 +109,13 @@ class StatusBarComponent:
     :param update_cadence: How frequently in seconds to reload the value, or `None` if it does not need to be reloaded on a timer.
     :param identifier: A string uniquely identifying this component. Use a backwards domain name. For example, `com.example.calculator` for a calculator component provided by example.com.
     """
-    def __init__(self, short_description, detailed_description, knobs, exemplar, update_cadence, identifier):
+    def __init__(self,
+            short_description: str,
+            detailed_description: str,
+            knobs: typing.List[Knob],
+            exemplar: str,
+            update_cadence: typing.Union[float, None],
+            identifier: str):
         """Initializes a status bar component.
         """
         self.__short_description = short_description
@@ -126,14 +136,14 @@ class StatusBarComponent:
         if self.__update_cadence is not None:
             proto.update_cadence = self.__update_cadence
 
-    def set_click_handler(self, coro):
-        """Sets a coroutine to call when the status bar component is clicked on.
+    def set_click_handler(self, coro: typing.Callable[[str, typing.Any], typing.Coroutine[typing.Any, typing.Any, None]]) -> None:
+        """Sets a coroutine to call when the status bar component is clicked on.StatusBarComponent
 
         :param coro: A coroutine to run when the user clicks on the status bar component. It should take one argument, which is the session_id of the session owning the status bar component that was clicked on.
         """
         self.__on_click = coro
 
-    async def async_open_popover(self, session_id, html, size):
+    async def async_open_popover(self, session_id: str, html: str, size: iterm2.util.Size):
         """Open a popover with a webview.
 
         :param session_id: The session identifier.
@@ -147,7 +157,12 @@ class StatusBarComponent:
                 html,
                 size)
 
-    async def async_register(self, connection, coro, timeout=None, defaults={}):
+    async def async_register(
+            self,
+            connection: iterm2.connection.Connection,
+            coro,
+            timeout: typing.Union[None, float]=None,
+            defaults: typing.Dict[str, typing.Any]={}):
         """Registers the statusbar component.
 
         :param connection: A :class:`iterm2.Connection`.
