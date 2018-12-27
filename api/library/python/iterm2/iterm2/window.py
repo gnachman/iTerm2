@@ -2,6 +2,8 @@
 import json
 import iterm2.api_pb2
 import iterm2.app
+import iterm2.arrangement
+import iterm2.connection
 import iterm2.rpc
 import iterm2.session
 import iterm2.tab
@@ -20,16 +22,12 @@ class GetPropertyException(Exception):
     """Something went wrong fetching a property."""
     pass
 
-class SavedArrangementException(Exception):
-    """Something went wrong saving or restoring a saved arrangement."""
-    pass
-
 class Window:
     @staticmethod
     async def async_create(connection, profile=None, command=None, profile_customizations=None):
         """Creates a new window.
 
-        :param connection: A :class:`iterm2.Connection`.
+        :param connection: A :class:`iterm2.connection.Connection`.
         :param profile: The name of the profile to use for the new window.
         :param command: A command to run in lieu of the shell in the new session. Mutually exclusive with profile_customizations.
         :param profile_customizations: LocalWriteOnlyProfile giving changes to make in profile. Mutually exclusive with command.
@@ -152,7 +150,7 @@ class Window:
 
         All provided tabs will be inserted in the given order starting at the first positions. Any tabs already belonging to this window not in the list will remain after the provided tabs.
 
-        :param tabs: a list of :class:`iterm2.Tab` objects
+        :param tabs: a list of :class:`iterm2.tab.Tab` objects
         :raises: RPCException if something goes wrong.
         """
         tab_ids = map(lambda tab: tab.tab_id, tabs)
@@ -163,7 +161,7 @@ class Window:
     @property
     def current_tab(self):
         """
-        :returns: The current iterm2.Tab in this window or None if it could not be determined.
+        :returns: The current iterm2.tab.Tab in this window or None if it could not be determined.
         """
         for tab in self.__tabs:
             if tab.tab_id == self.selected_tab_id:
@@ -173,7 +171,7 @@ class Window:
     async def async_create_tmux_tab(self, tmux_connection):
         """Creates a new tmux tab in this window.
 
-        This may not be called from within a :class:`iterm2.Transaction`.
+        This may not be called from within a :class:`iterm2.transaction.Transaction`.
 
         :param tmux_connection: A :class:`TmuxConnection` that owns the new tab.
 
@@ -243,7 +241,7 @@ class Window:
         status = response.get_property_response.status
         if status == iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
             frame_dict = json.loads(response.get_property_response.json_value)
-            frame = iterm2.Frame()
+            frame = iterm2.util.Frame()
             frame.load_from_dict(frame_dict)
             return frame
         else:
@@ -333,7 +331,7 @@ class Window:
         """
         result = await iterm2.rpc.async_save_arrangement(self.connection, name, self.__window_id)
         if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-            raise SavedArrangementException(
+            raise iterm2.arrangement.SavedArrangementException(
                 iterm2.api_pb2.SavedArrangementResponse.Status.Name(
                     result.saved_arrangement_response.status))
 
@@ -342,9 +340,9 @@ class Window:
 
         :param name: The name to restore.
 
-        :raises: :class:`SavedArrangementException` if the named arrangement does not exist."""
+        :raises: :class:`iterm2.arrangement.SavedArrangementException` if the named arrangement does not exist."""
         result = await iterm2.rpc.async_restore_arrangement(self.connection, name, self.__window_id)
         if result.create_tab_response.status != iterm2.api_pb2.CreateTabResponse.Status.Value("OK"):
-            raise SavedArrangementException(
+            raise iterm2.arrangement.SavedArrangementException(
                 iterm2.api_pb2.SavedArrangementResponse.Status.Name(
                     result.saved_arrangement_response.status))

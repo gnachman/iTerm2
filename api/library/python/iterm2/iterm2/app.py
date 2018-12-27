@@ -4,6 +4,8 @@ This module is the starting point for getting access to windows and other applic
 """
 
 import iterm2.broadcast
+
+import iterm2.connection
 import iterm2.notifications
 import iterm2.rpc
 import iterm2.session
@@ -11,11 +13,13 @@ import iterm2.tab
 import iterm2.window
 
 import json
+import typing
 
-async def async_get_app(connection, create_if_needed=True):
+async def async_get_app(connection: iterm2.connection.Connection, create_if_needed: bool=True) -> typing.Union[None,'App']:
     """Returns the app singleton, creating it if needed.
 
-    :param create_if_needed: A boolean. If `True`, create the global :class:`App` instance if one does not already exists. If `False`, do not create it.
+    :param connection: The connection to iTerm2.
+    :param create_if_needed: If `True`, create the global :class:`App` instance if one does not already exists. If `False`, do not create it.
 
     :returns: The global :class:`App` instance. If `create_if_needed` is False this may return `None` if no such instance exists."""
     if App.instance is None:
@@ -38,10 +42,10 @@ class App:
     This object keeps itself up to date by getting notifications when sessions,
     tabs, or windows change.
     """
-    instance = None
+    instance:typing.Union[None,'App'] = None
 
     @staticmethod
-    async def async_construct(connection):
+    async def async_construct(connection: iterm2.connection.Connection) -> 'App':
         """Don't use this directly. Use :func:`async_get_app()`.
 
         Use this to construct a new hierarchy instead of __init__.
@@ -69,7 +73,7 @@ class App:
         self.app_active = None
         self.current_terminal_window_id = None
 
-    async def async_activate(self, raise_all_windows=True, ignoring_other_apps=False):
+    async def async_activate(self, raise_all_windows: bool=True, ignoring_other_apps: bool=False) -> None:
         """Activate the app, giving it keyboard focus.
 
         :param raise_all_windows: Raise all windows if True, or only the key
@@ -103,7 +107,7 @@ class App:
                  response.buried_sessions)
         return list(mf)
 
-    def pretty_str(self):
+    def pretty_str(self) -> str:
         """Returns the hierarchy as a human-readable string"""
         session = ""
         for window in self.terminal_windows:
@@ -139,50 +143,50 @@ class App:
                 return window
         return None
 
-    async def async_refresh_focus(self):
+    async def async_refresh_focus(self) -> None:
         """Updates state about which objects have focus."""
         focus_info = await iterm2.rpc.async_get_focus_info(self.connection)
         for notif in focus_info.focus_response.notifications:
             await self._async_focus_change(self.connection, notif)
 
-    async def async_refresh_broadcast_domains(self):
+    async def async_refresh_broadcast_domains(self) -> None:
         response = await iterm2.rpc.async_get_broadcast_domains(self.connection)
         self._set_broadcast_domains(response.get_broadcast_domains_response.broadcast_domains)
 
-    def get_session_by_id(self, session_id):
+    def get_session_by_id(self, session_id: str) -> typing.Union[None,iterm2.session.Session]:
         """Finds a session exactly matching the passed-in id.
 
         :param session_id: The session ID to search for.
 
-        :returns: A :class:`Session` or None.
+        :returns: A :class:`Session` or `None`.
         """
         assert session_id
         return self._search_for_session_id(session_id)
 
-    def get_tab_by_id(self, tab_id):
+    def get_tab_by_id(self, tab_id: str) -> typing.Union[iterm2.tab.Tab, None]:
         """Finds a tab exactly matching the passed-in id.
 
         :param tab_id: The tab ID to search for.
 
-        :returns: A :class:`Tab` or None.
+        :returns: A :class:`Tab` or `None`.
         """
         return self._search_for_tab_id(tab_id)
 
-    def get_window_by_id(self, window_id):
+    def get_window_by_id(self, window_id: str) -> typing.Union[iterm2.window.Window, None]:
         """Finds a window exactly matching the passed-in id.
 
         :param window_id: The window ID to search for.
 
-        :returns: A :class:`Window` or None
+        :returns: A :class:`Window` or `None`.
         """
         return self._search_for_window_id(window_id)
 
-    def get_window_for_tab(self, tab_id):
+    def get_window_for_tab(self, tab_id: str) -> typing.Union[iterm2.window.Window, None]:
         """Finds the window that contains the passed-in tab id.
 
         :param tab_id: The tab ID to search for.
 
-        :returns: A :class:`Window` or None
+        :returns: A :class:`Window` or `None`.
         """
         return self._search_for_window_with_tab(tab_id)
 
@@ -193,7 +197,7 @@ class App:
                     return window
         return None
 
-    async def async_refresh(self, _connection=None, _sub_notif=None):
+    async def async_refresh(self, _connection: iterm2.connection.Connection=None, _sub_notif: typing.Any=None) -> None:
         """Reloads the hierarchy.
 
         Note that this calls :meth:`async_refresh_focus`.
@@ -216,7 +220,7 @@ class App:
         old_sessions = list(all_sessions(self.terminal_windows))
 
         windows = []
-        new_ids = []
+        new_ids: typing.List[str] = []
         for new_window in new_windows:
             for new_tab in new_window.tabs:
                 for new_session in new_tab.sessions:
@@ -295,11 +299,11 @@ class App:
     def _set_broadcast_domains(self, broadcast_domains):
         self.__broadcast_domains = self.parse_broadcast_domains(broadcast_domains)
 
-    def parse_broadcast_domains(self, list_of_broadcast_domain_protos):
-        """Converts a list of broadcast domain protobufs into a list of :class:`iterm2.broadcast.BroadcastDomain`s.
+    def parse_broadcast_domains(self, list_of_broadcast_domain_protos: typing.List[iterm2.api_pb2.BroadcastDomain]) -> typing.List[iterm2.broadcast.BroadcastDomain]:
+        """Converts a list of broadcast domain protobufs into a list of :class:`BroadcastDomain` objects.
 
-        :param list_of_broadcast_domain_protos: A `iterm2.api_pb2.BroadcastDomain` protos.
-        :returns: A list of :class:`iterm2.broadcast.BroadcastDomain`s.
+        :param list_of_broadcast_domain_protos: A list of `BroadcastDomain` protos.
+        :returns: A list of :class:`BroadcastDomain` objects.
         """
         domain_list = []
         for broadcast_domain_proto in list_of_broadcast_domain_protos:
@@ -314,18 +318,18 @@ class App:
         return domain_list
 
     @property
-    def current_terminal_window(self):
+    def current_terminal_window(self) -> typing.Union[iterm2.window.Window, None]:
         """Gets the topmost terminal window.
 
         The current terminal window is the window that receives keyboard input
         when iTerm2 is the active application.
 
-        :returns: :class:`Window` or None
+        :returns: A :class:`Window` or `None`.
         """
         return self.get_window_by_id(self.current_terminal_window_id)
 
     @property
-    def terminal_windows(self):
+    def terminal_windows(self) -> typing.List[iterm2.window.Window]:
         """Returns a list of all terminal windows.
 
         :returns: A list of :class:`Window`
@@ -333,27 +337,24 @@ class App:
         return self.__terminal_windows
 
     @property
-    def buried_sessions(self):
+    def buried_sessions(self) -> typing.List[iterm2.session.Session]:
         """Returns a list of buried sessions.
 
-        :returns: A list of buried :class:`Session`s.
+        :returns: A list of buried :class:`Session` objects.
         """
         return self.__buried_sessions
 
     @property
-    def broadcast_domains(self):
-        """Returns the current broadcast domains.
-
-        :returns: A list of :class:`iterm2.broadcast.BroadcastDomain`s.
-        """
+    def broadcast_domains(self) -> typing.List[iterm2.broadcast.BroadcastDomain]:
+        """Returns the current broadcast domains."""
         return self.__broadcast_domains
 
-    def get_tab_and_window_for_session(self, session):
+    def get_tab_and_window_for_session(self, session: iterm2.session.Session) -> typing.Union[typing.Tuple[None, None], typing.Tuple[iterm2.window.Window, iterm2.tab.Tab]]:
         """Finds the tab and window that own a session.
 
-        :param session: A :class:`Session` object.
+        :param session: The session whose tab and window you wish to find.
 
-        :returns: A tuple of (:class:`Window`, :class:`Tab`).
+        :returns: A tuple of (:class:`Window`, :class:`Tab`), or (`None`, `None`) if the session was not found.
         """
         for window in self.terminal_windows:
             for tab in window.tabs:
@@ -385,7 +386,7 @@ class App:
                 connection,
                 self._async_broadcast_domains_change))
 
-    async def async_set_variable(self, name, value):
+    async def async_set_variable(self, name: str, value: typing.Any) -> None:
         """
         Sets a user-defined variable in the application.
 
@@ -403,7 +404,7 @@ class App:
         if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
             raise iterm2.rpc.RPCException(iterm2.api_pb2.VariableResponse.Status.Name(status))
 
-    async def async_get_theme(self):
+    async def async_get_theme(self) -> typing.List[str]:
         """
         Gets attributes the current theme.
 
@@ -411,12 +412,12 @@ class App:
 
         On macOS 10.14, the light or dark attribute may be inferred from the system setting.
 
-        :returns: An array of one or more strings from the set: light, dark, automatic, minimal, highContrast.
+        :returns: A list of one or more strings from the set: light, dark, automatic, minimal, highContrast.
         """
         s = await self.async_get_variable("effectiveTheme")
         return s.split(" ")
 
-    async def async_get_variable(self, name):
+    async def async_get_variable(self, name: str) -> typing.Any:
         """
         Fetches an application variable.
 

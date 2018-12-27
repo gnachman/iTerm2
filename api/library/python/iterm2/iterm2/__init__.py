@@ -11,6 +11,8 @@ from iterm2.color import Color
 
 from iterm2.colorpresets import ColorPreset, ListPresetsException, GetPresetException
 
+from iterm2.connection import Connection, run_until_complete, run_forever
+
 from iterm2.customcontrol import CustomControlSequenceMonitor
 
 from iterm2.focus import FocusMonitor,  FocusUpdateApplicationActive, FocusUpdateWindowChanged, FocusUpdateSelectedTabChanged, FocusUpdateActiveSessionChanged, FocusUpdate, FocusMonitor
@@ -47,11 +49,9 @@ from iterm2.tool import async_register_web_view_tool
 
 from iterm2.util import frame_str, size_str, Size, Point, Frame, CoordRange, Range, WindowedCoordRange
 
-from iterm2.window import CreateTabException, SetPropertyException, GetPropertyException, SavedArrangementException, Window
+from iterm2.window import CreateTabException, SetPropertyException, GetPropertyException, Window
 
 from iterm2._version import __version__
-
-from iterm2.connection import Connection, run_until_complete, run_forever
 
 from iterm2.rpc import RPCException
 

@@ -1,11 +1,13 @@
 """Manages the details of the websocket connection. """
 
 import asyncio
+import builtins
 import concurrent
 import os
 import sys
 import time
 import traceback
+import typing
 import websockets
 
 import iterm2.api_pb2
@@ -47,7 +49,7 @@ class Connection:
 
     Provides functionality for sending and receiving messages. Supports
     dispatching incoming messages."""
-    helpers = []
+    helpers: typing.List[typing.Callable[['Connection', typing.Any], typing.Coroutine[typing.Any, typing.Any, None]]] = []
     @staticmethod
     def register_helper(helper):
         """
@@ -246,10 +248,10 @@ class Connection:
                 sys.exit(1)
 
 
-def run_until_complete(coro):
+def run_until_complete(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]]) -> None:
     """Convenience method to run an async function taking an :class:`iterm2.Connection` as an argument."""
     Connection().run_until_complete(coro)
 
-def run_forever(coro):
+def run_forever(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]]) -> None:
     """Convenience method to run an async function taking an :class:`iterm2.Connection` as an argument."""
     Connection().run_forever(coro)

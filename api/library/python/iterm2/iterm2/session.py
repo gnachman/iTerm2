@@ -310,24 +310,9 @@ class Session:
         await iterm2.notifications.async_unsubscribe(self.connection, token)
         return future.result
 
-    async def async_get_screen_contents(self):
-        """
-        :returns: The screen contents, an iterm2.api_pb2.GetBufferResponse
-
-        :throws: :class:`RPCException` if something goes wrong.
-        """
-        response = await iterm2.rpc.async_get_buffer_with_screen_contents(
-            self.connection,
-            self.__session_id)
-        status = response.get_buffer_response.status
-        if status == iterm2.api_pb2.GetBufferResponse.Status.Value("OK"):
-            return response.get_buffer_response
-        else:
-            raise iterm2.rpc.RPCException(iterm2.api_pb2.GetBufferResponse.Status.Name(status))
-
     async def async_get_screen_contents(self, windowedCoordRange):
         """
-        Fetches the last lines of the session, reaching into history if needed.
+        Fetches a range of lines from the session, reaching into history if needed.
 
         :param windowedCooordRange: A :class:`iterm2.util.WindowedCoordRange` describing the range to fetch.
 
@@ -618,15 +603,10 @@ class ProxySession(Session):
     def pretty_str(self, indent=""):
         return indent + "ProxySession %s" % self.__session_id
 
-    async def async_get_screen_contents(self):
+    async def async_get_screen_contents(self, windowedCoordRange):
         if self.__session_id == "all":
             raise InvalidSessionId()
-        return await super(ProxySession, self).async_get_screen_contents()
-
-    async def async_get_screen_contents(self):
-        if self.__session_id == "all":
-            raise InvalidSessionId()
-        return await super(ProxySession, self).async_get_screen_contents(trailing_lines)
+        return await super(ProxySession, self).async_get_screen_contents(trailing_lines, windowedCoordRange)
 
     async def async_get_prompt(self):
         if self.__session_id == "all":

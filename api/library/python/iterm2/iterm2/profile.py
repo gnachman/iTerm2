@@ -678,7 +678,7 @@ class LocalWriteOnlyProfile:
         :param value: Font name and size as a string."""
         return self._simple_set("Normal Font", value)
 
-    def set_normal_font(self, value):
+    def set_non_ascii_font(self, value):
         """Sets the non-ASCII font.
 
         This is used for non-ASCII characters if use_non_ascii_font is enabled.
@@ -1428,7 +1428,7 @@ class WriteOnlyProfile:
         :param value: Font name and size as a string."""
         return await self._async_simple_set("Normal Font", value)
 
-    async def async_set_normal_font(self, value):
+    async def async_set_non_ascii_font(self, value):
         """Sets the non-ASCII font.
 
         This is used for non-ASCII characters if use_non_ascii_font is enabled.
@@ -2381,38 +2381,38 @@ class Profile(WriteOnlyProfile):
         return self._simple_get("Dynamic Profile Filename")
 
     @property
-    def use_custom_command(self, value):
-        """"Whether to use a custom command when the session is created.
+    def use_custom_command(self):
+        """"Returns whether to use a custom command when the session is created.
 
-        :param value: The string "Yes" or "No".
+        :returns: Boolean, whether to use a custom command.
         """
-        return self._simple_get("Custom Command", value)
+        return self._simple_get("Custom Command")
 
     @property
-    def command(self, value):
+    def command(self):
         """"The command to run when the session starts.
 
-        custom_command must be set to "Yes" or this will be ignored.
-
-        :param value: A string giving the command to run.
+        :returns: The command to run, provided `use_custom_command` is `True`.
         """
-        return self._simple_get("Command", value)
+        return self._simple_get("Command")
 
     @property
-    def initial_directory_mode(self, value):
-        """Whether to use a custom (not home) initial working directory.
+    def initial_directory_mode(self):
+        """Returns wether to use a custom (not home) initial working directory.
 
-        :param value: "Yes" to use the `custom_directory`. "No" to use the home directory. "Recycle" to reuse the current directory. "Advanced" to respect advanced working directory settings.
+        :returns: "Yes" to use the `custom_directory`. "No" to use the home directory. "Recycle" to reuse the current directory. "Advanced" to respect advanced working directory settings.
         """
-        return self._simple_get("Custom Directory", value)
+        return self._simple_get("Custom Directory")
 
     @property
-    def custom_directory(self, value):
-        """The initial working directory.
+    def custom_directory(self):
+        """Returns the initial working directory.
 
         The initial_directory_mode must be set to "Yes" for this to take effect.
+
+        :returns: The specific directory this profile has been set to start in.
         """
-        return self._simple_get("Working Directory", value)
+        return self._simple_get("Working Directory")
 
     async def async_make_default(self):
         """Makes this profile the default profile."""
