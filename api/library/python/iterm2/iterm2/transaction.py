@@ -1,6 +1,7 @@
 """Provides a class to facilitate atomic transactions."""
 
 import iterm2.rpc
+import iterm2.connection
 
 gCurrentTransaction = None
 
@@ -16,12 +17,14 @@ class Transaction:
     Some APIs are noted as not being allowed during a transaction. These do not
     complete synchronously and would therefore deadlock in a transaction.
 
+    :param connection: The connection to iTerm2.
+
     :Example:
 
-      async with iterm2.transaction.Transaction():
+      async with iterm2.Transaction():
         do stuff
     """
-    def __init__(self, connection):
+    def __init__(self, connection: iterm2.connection.Connection):
         self.connection = connection
 
     async def __aenter__(self):
@@ -39,6 +42,6 @@ class Transaction:
             gCurrentTransaction = None
 
     @staticmethod
-    def current():
+    def current() -> 'Transaction':
         return gCurrentTransaction
 
