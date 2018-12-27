@@ -66,11 +66,13 @@ class Connection:
         Connection.helpers.append(helper)
 
     @staticmethod
-    async def async_create():
+    async def async_create() -> 'Connection':
         """Creates a new connection.
 
         This is intended for use in an apython REPL. It constructs a new
         connection and returns it without creating an asyncio event loop.
+
+        :returns: A new connection to iTerm2.
         """
         connection = Connection()
         cookie, key = _cookie_and_key()
@@ -237,7 +239,7 @@ class Connection:
         scripts skip the auth dialog. ITERM2_KEY is used to tie together the output
         of this program with its entry in the scripting console.
 
-        coro: A coroutine to run once connected.
+        :param coro: A coroutine to run once connected.
         """
         async with websockets.connect(_uri(), extra_headers=_headers(), subprotocols=_subprotocols()) as websocket:
             self.websocket = websocket
@@ -249,9 +251,18 @@ class Connection:
 
 
 def run_until_complete(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]]) -> None:
-    """Convenience method to run an async function taking an :class:`iterm2.Connection` as an argument."""
+    """Convenience method to run an async function taking an :class:`iterm2.Connection` as an argument.
+
+    After `coro` returns this function will return.
+
+    :param coro: The coroutine to run. Must be an `async def` function. It should take one argument, a :class:`iterm2.connection.Connection`, and does not need to return a value."""
     Connection().run_until_complete(coro)
 
 def run_forever(coro: typing.Callable[[Connection], typing.Coroutine[typing.Any, typing.Any, None]]) -> None:
-    """Convenience method to run an async function taking an :class:`iterm2.Connection` as an argument."""
+    """Convenience method to run an async function taking an :class:`iterm2.Connection` as an argument.
+
+    This function never returns.
+
+    :param coro: The coroutine to run. Must be an `async def` function. It should take one argument, a :class:`iterm2.connection.Connection`, and does not need to return a value.
+    """
     Connection().run_forever(coro)
