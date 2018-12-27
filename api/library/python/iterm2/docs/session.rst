@@ -10,7 +10,7 @@ Session
    :members:
 
 .. autoclass:: iterm2.session.Splitter
-   :members: children, sessions, pretty_str
+   :members: children, sessions, pretty_str, vertical
 
 
 

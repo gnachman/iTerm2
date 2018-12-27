@@ -29,7 +29,7 @@ class Splitter:
         """
         :param vertical: Bool. If true, the divider is vertical, else horizontal.
         """
-        self.vertical = vertical
+        self.__vertical = vertical
         # Elements are either Splitter or Session
         self.__children = []
         # Elements are Session
@@ -53,6 +53,11 @@ class Splitter:
                 subsplit = Splitter.from_node(link.node, connection)
                 splitter.add_child(subsplit)
         return splitter
+
+    @property
+    def vertical(self) -> bool:
+        """Are the dividers in this splitter vertical?"""
+        return self.__vertical
 
     def add_child(self, child):
         """
