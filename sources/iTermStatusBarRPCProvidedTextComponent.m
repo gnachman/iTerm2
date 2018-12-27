@@ -279,8 +279,12 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 
 - (void)handleEvaluationError:(NSError *)error
              missingFunctions:(NSSet<NSString *> *)missingFunctions {
-    _errorMessage = [NSString stringWithFormat:@"Error evaluating status bar component function invocation:\n\n%@\n\nThe error was:\n\n%@\n\n%@",
-                     self.invocation, error.localizedDescription, error.localizedFailureReason ?: @"[no stack trace available]"];
+    _errorMessage = [NSString stringWithFormat:@"Status bar component “%@” (%@) failed.\n\nThis function call had an error:\n\n%@\n\nThe error was:\n\n%@\n\n%@",
+                     _registrationRequest.statusBarComponentAttributes.shortDescription,
+                     _registrationRequest.statusBarComponentAttributes.uniqueIdentifier,
+                     self.invocation,
+                     error.localizedDescription,
+                     error.localizedFailureReason ? [@"\n\n" stringByAppendingString:error.localizedFailureReason] : @""];
     [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:_registrationRequest.it_stringRepresentation
                                                                           string:_errorMessage];
     _variants = @[ @"🐞" ];
