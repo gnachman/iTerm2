@@ -12,6 +12,7 @@
 extern NSString *const iTermRemoveAPIServerSubscriptionsNotification;
 extern NSString *const iTermAPIRegisteredFunctionsDidChangeNotification;
 extern NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification;
+extern NSString *const iTermAPIDidRegisterStatusBarComponentNotification;  // object is the unique id of the status bar component
 
 extern const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode;
 extern const NSInteger iTermAPIHelperFunctionCallOtherErrorCode;
@@ -31,7 +32,7 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
 + (NSString *)invocationWithName:(NSString *)name
                         defaults:(NSArray<ITMRPCRegistrationRequest_RPCArgument*> *)defaultsArray;
-+ (NSString *)nameOfScriptVendingStatusBarComponentWithUniqueIdentifier:(NSString *)uniqueID;
++ (ITMRPCRegistrationRequest *)registrationRequestForStatusBarComponentWithUniqueIdentifier:(NSString *)uniqueIdentifier;
 
 - (instancetype)init NS_UNAVAILABLE;
 
@@ -47,6 +48,8 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 + (NSArray<iTermSessionTitleProvider *> *)sessionTitleFunctions;
 
 + (NSArray<ITMRPCRegistrationRequest *> *)statusBarComponentProviderRegistrationRequests;
++ (ITMRPCRegistrationRequest_StatusBarComponentAttributes *)registeredStatusbarComponentAttributesWithUniqueIdentifier:(NSString *)uniqueIdentifier;
++ (NSString *)nameOfScriptVendingStatusBarComponentWithUniqueIdentifier:(NSString *)uniqueID;
 
 // Performs block either when the function becomes registered, immediately if it's already
 // registered, or after timeout (with an argument of YES) if it does not become registered

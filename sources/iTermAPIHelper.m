@@ -47,6 +47,7 @@
 NSString *const iTermRemoveAPIServerSubscriptionsNotification = @"iTermRemoveAPIServerSubscriptionsNotification";
 NSString *const iTermAPIRegisteredFunctionsDidChangeNotification = @"iTermAPIRegisteredFunctionsDidChangeNotification";
 NSString *const iTermAPIDidRegisterSessionTitleFunctionNotification = @"iTermAPIDidRegisterSessionTitleFunctionNotification";
+NSString *const iTermAPIDidRegisterStatusBarComponentNotification = @"iTermAPIDidRegisterStatusBarComponentNotification";
 
 const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode = 100;
 const NSInteger iTermAPIHelperFunctionCallOtherErrorCode = 1;
@@ -778,6 +779,12 @@ static id sAPIHelperInstance;
     }];
 }
 
++ (ITMRPCRegistrationRequest *)registrationRequestForStatusBarComponentWithUniqueIdentifier:(NSString *)uniqueIdentifier {
+    return [[[self sharedInstance] statusBarComponentProviderRegistrationRequests] objectPassingTest:^BOOL(ITMRPCRegistrationRequest *request, NSUInteger index, BOOL *stop) {
+        return [request.statusBarComponentAttributes.uniqueIdentifier isEqualToString:uniqueIdentifier];
+    }];
+}
+
 - (BOOL)haveRegisteredFunctionWithName:(NSString *)name
                              arguments:(NSArray<NSString *> *)arguments {
     NSString *stringSignature = iTermFunctionSignatureFromNameAndArguments(name, arguments);
@@ -1224,6 +1231,8 @@ static id sAPIHelperInstance;
 
 - (void)didRegisterStatusBarComponent:(ITMRPCRegistrationRequest_StatusBarComponentAttributes *)attributes
                          onConnection:(NSString *)connectionKey {
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIDidRegisterStatusBarComponentNotification
+                                                        object:attributes.uniqueIdentifier];
     NSString *key = connectionKey ? [_apiServer websocketKeyForConnectionKey:connectionKey] : nil;
     iTermScriptHistoryEntry *entry = key ? [[iTermScriptHistory sharedInstance] entryWithIdentifier:key] : nil;
     if (!entry) {

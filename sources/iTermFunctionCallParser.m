@@ -259,7 +259,7 @@
                                expression.string = [NSString castFrom:value];
                                expression.number = [NSNumber castFrom:value];
                                if (!expression.string && !expression.number) {
-                                   NSString *reason = [NSString stringWithFormat:@"Reference to undefined variable %@", path];
+                                   NSString *reason = [NSString stringWithFormat:@"Reference to undefined variable “%@”. Use ? to convert undefined values to null.", path];
                                    expression.error = [NSError errorWithDomain:@"com.iterm2.parser"
                                                                           code:1
                                                                       userInfo:@{ NSLocalizedDescriptionKey: reason }];

@@ -30,6 +30,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 
 @interface ITMRPCRegistrationRequest(StatusBar)
 @property (nonatomic, readonly) NSDictionary *statusBarConfiguration;
+- (instancetype)latestStatusBarRequest;
 @end
 
 @implementation ITMRPCRegistrationRequest(StatusBar)
@@ -39,17 +40,21 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
               iTermStatusBarComponentConfigurationKeyKnobValues: @{} };
 }
 
+- (instancetype)latestStatusBarRequest {
+    return [iTermAPIHelper registrationRequestForStatusBarComponentWithUniqueIdentifier:self.statusBarComponentAttributes.uniqueIdentifier] ?: self;
+}
+
 @end
 
 @implementation iTermStatusBarRPCComponentFactory {
-    ITMRPCRegistrationRequest *_registrationRequest;
+    ITMRPCRegistrationRequest *_savedRegistrationRequest;
     // NOTE: If mutable state is added, change copyWithZone:
 }
 
 - (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest {
     self = [super init];
     if (self) {
-        _registrationRequest = registrationRequest;
+        _savedRegistrationRequest = registrationRequest;
    }
     return self;
 }
@@ -61,8 +66,8 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
         if (!data) {
             return nil;
         }
-        _registrationRequest = [[ITMRPCRegistrationRequest alloc] initWithData:data error:nil];
-        if (!_registrationRequest) {
+        _savedRegistrationRequest = [[ITMRPCRegistrationRequest alloc] initWithData:data error:nil];
+        if (!_savedRegistrationRequest) {
             return nil;
         }
     }
@@ -70,11 +75,11 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 }
 
 - (void)encodeWithCoder:(NSCoder *)aCoder {
-    [aCoder encodeObject:_registrationRequest.data forKey:@"registrationRequest"];
+    [aCoder encodeObject:_savedRegistrationRequest.data forKey:@"registrationRequest"];
 }
 
 - (NSString *)componentDescription {
-    return _registrationRequest.statusBarComponentAttributes.shortDescription;
+    return _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.shortDescription;
 }
 
 - (nonnull id)copyWithZone:(nullable NSZone *)zone {
@@ -83,7 +88,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 
 - (NSDictionary *)defaultKnobs {
     NSMutableDictionary *knobs = [NSMutableDictionary dictionary];
-    [_registrationRequest.statusBarComponentAttributes.knobsArray enumerateObjectsUsingBlock:^(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    [_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.knobsArray enumerateObjectsUsingBlock:^(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         id value = [NSJSONSerialization it_objectForJsonString:obj.jsonDefaultValue];
         if (value) {
             knobs[obj.key] = value;
@@ -94,7 +99,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 
 - (id<iTermStatusBarComponent>)newComponentWithKnobs:(NSDictionary *)knobs
                                                scope:(iTermVariableScope *)scope {
-    return [[iTermStatusBarRPCProvidedTextComponent alloc] initWithRegistrationRequest:_registrationRequest
+    return [[iTermStatusBarRPCProvidedTextComponent alloc] initWithRegistrationRequest:_savedRegistrationRequest.latestStatusBarRequest
                                                                                  scope:scope
                                                                                  knobs:knobs];
 }
@@ -102,7 +107,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 @end
 
 @implementation iTermStatusBarRPCProvidedTextComponent {
-    ITMRPCRegistrationRequest *_registrationRequest;
+    ITMRPCRegistrationRequest *_savedRegistrationRequest;
     NSArray<NSString *> *_variants;
     NSArray<iTermVariableReference *> *_dependencies;
     NSMutableSet<NSString *> *_missingFunctions;
@@ -129,7 +134,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     }
     self = [super initWithConfiguration:configuration scope:realScope];
     if (self) {
-        _registrationRequest = registrationRequest;
+        _savedRegistrationRequest = registrationRequest;
         iTermVariableRecordingScope *scope = [[iTermVariableRecordingScope alloc] initWithScope:self.scope];
         scope.neverReturnNil = YES;
         [iTermScriptFunctionCall callFunction:self.invocation
@@ -148,6 +153,10 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
                                                  selector:@selector(registeredFunctionsDidChange:)
                                                      name:iTermAPIRegisteredFunctionsDidChangeNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(didRegisterStatusBarComponent:)
+                                                     name:iTermAPIDidRegisterStatusBarComponentNotification
+                                                   object:nil];
     }
     return self;
 }
@@ -157,17 +166,17 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 }
 
 - (NSString *)invocation {
-    NSArray<ITMRPCRegistrationRequest_RPCArgument *> *defaults = _registrationRequest.defaultsArray ?: @[];
+    NSArray<ITMRPCRegistrationRequest_RPCArgument *> *defaults = _savedRegistrationRequest.latestStatusBarRequest.defaultsArray ?: @[];
     ITMRPCRegistrationRequest_RPCArgument *knobs = [[ITMRPCRegistrationRequest_RPCArgument alloc] init];
     knobs.name = @"knobs";
     knobs.path = @"__knobs";
-    return [iTermAPIHelper invocationWithName:_registrationRequest.name
+    return [iTermAPIHelper invocationWithName:_savedRegistrationRequest.latestStatusBarRequest.name
                                      defaults:[defaults arrayByAddingObject:knobs]];
 }
 
 - (NSString *)statusBarComponentIdentifier {
     // Old (prerelease) ones did not have a unique identifier so assign one to prevent disaster.
-    return _registrationRequest.statusBarComponentAttributes.uniqueIdentifier ?: [[NSUUID UUID] UUIDString];
+    return _savedRegistrationRequest.statusBarComponentAttributes.uniqueIdentifier ?: [[NSUUID UUID] UUIDString];
 }
 
 - (NSTextField *)newTextField {
@@ -182,15 +191,15 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 }
 
 - (id<iTermStatusBarComponentFactory>)statusBarComponentFactory {
-    return [[iTermStatusBarRPCComponentFactory alloc] initWithRegistrationRequest:_registrationRequest];
+    return [[iTermStatusBarRPCComponentFactory alloc] initWithRegistrationRequest:_savedRegistrationRequest.latestStatusBarRequest];
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return _registrationRequest.statusBarComponentAttributes.shortDescription;
+    return _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.shortDescription;
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return _registrationRequest.statusBarComponentAttributes.detailedDescription;
+    return _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.detailedDescription;
 }
 
 - (void)statusBarComponentUpdate {
@@ -213,7 +222,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     NSArray<iTermStatusBarComponentKnob *> *knobs;
-    knobs = [_registrationRequest.statusBarComponentAttributes.knobsArray mapWithBlock:^id(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob *descriptor) {
+    knobs = [_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.knobsArray mapWithBlock:^id(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob *descriptor) {
         return [[iTermStatusBarComponentKnob alloc] initWithLabelText:descriptor.name
                                                                  type:[self knobTypeFromDescriptorType:descriptor.type]
                                                           placeholder:descriptor.hasPlaceholder ? descriptor.placeholder : nil
@@ -224,7 +233,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 }
 
 - (id)statusBarComponentExemplar {
-    return _registrationRequest.statusBarComponentAttributes.exemplar ?: @"";
+    return _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.exemplar ?: @"";
 }
 
 - (BOOL)statusBarComponentCanStretch {
@@ -251,7 +260,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     NSString *jsonKnobs = [NSJSONSerialization it_jsonStringForObject:knobsDict];
     [scope setValue:jsonKnobs forVariableNamed:@"__knobs"];
     [iTermScriptFunctionCall callFunction:self.invocation
-                                  timeout:_registrationRequest.timeout ?: [[NSDate distantFuture] timeIntervalSinceNow]
+                                  timeout:_savedRegistrationRequest.latestStatusBarRequest.timeout ?: [[NSDate distantFuture] timeIntervalSinceNow]
                                     scope:scope
                                completion:
      ^(id value, NSError *error, NSSet<NSString *> *missingFunctions) {
@@ -303,7 +312,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
         _variants = arrayValue;
     } else {
         _errorMessage = [NSString stringWithFormat:@"Return value from %@ invalid.\n\nIt should have returned a string or a list of strings.\n\nInstead, it returned:\n\n%@", self.invocation, value];
-        [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:_registrationRequest.it_stringRepresentation
+        [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:_savedRegistrationRequest.latestStatusBarRequest.it_stringRepresentation
                                                                               string:_errorMessage];
         _variants = @[ @"🐞" ];
     }
@@ -313,12 +322,12 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 - (void)handleEvaluationError:(NSError *)error
              missingFunctions:(NSSet<NSString *> *)missingFunctions {
     _errorMessage = [NSString stringWithFormat:@"Status bar component “%@” (%@) failed.\n\nThis function call had an error:\n\n%@\n\nThe error was:\n\n%@\n\n%@",
-                     _registrationRequest.statusBarComponentAttributes.shortDescription,
-                     _registrationRequest.statusBarComponentAttributes.uniqueIdentifier,
+                     _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.shortDescription,
+                     _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.uniqueIdentifier,
                      self.invocation,
                      error.localizedDescription,
                      error.localizedFailureReason ? [@"\n\n" stringByAppendingString:error.localizedFailureReason] : @""];
-    [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:_registrationRequest.it_stringRepresentation
+    [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:_savedRegistrationRequest.latestStatusBarRequest.it_stringRepresentation
                                                                           string:_errorMessage];
     _variants = @[ @"🐞" ];
     _missingFunctions = [missingFunctions mutableCopy];
@@ -328,6 +337,14 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 - (void)statusBarComponentSetKnobValues:(NSDictionary *)knobValues {
     [self updateWithKnobValues:knobValues];
     [super statusBarComponentSetKnobValues:knobValues];
+}
+
+- (void)didRegisterStatusBarComponent:(NSNotification *)notification {
+    if (![notification.object isEqual:_savedRegistrationRequest.statusBarComponentAttributes.uniqueIdentifier]) {
+        return;
+    }
+    [_missingFunctions removeAllObjects];
+    [self statusBarComponentUpdate];
 }
 
 - (void)registeredFunctionsDidChange:(NSNotification *)notification {
@@ -342,8 +359,8 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 }
 
 - (NSTimeInterval)statusBarComponentUpdateCadence {
-    if (_registrationRequest.statusBarComponentAttributes.hasUpdateCadence) {
-        return _registrationRequest.statusBarComponentAttributes.updateCadence;
+    if (_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.hasUpdateCadence) {
+        return _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.updateCadence;
     } else {
         return INFINITY;
     }
@@ -369,14 +386,14 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
 }
 
 - (NSString *)fullPathOfScript {
-    if (!_registrationRequest.statusBarComponentAttributes.uniqueIdentifier) {
+    if (!_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.uniqueIdentifier) {
         return nil;
     }
-    return [iTermAPIHelper nameOfScriptVendingStatusBarComponentWithUniqueIdentifier:_registrationRequest.statusBarComponentAttributes.uniqueIdentifier];
+    return [iTermAPIHelper nameOfScriptVendingStatusBarComponentWithUniqueIdentifier:_savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.uniqueIdentifier];
 }
 
 - (void)launchScript {
-    if (!_registrationRequest.statusBarComponentAttributes.uniqueIdentifier) {
+    if (!_savedRegistrationRequest.statusBarComponentAttributes.uniqueIdentifier) {
         return;
     }
     NSString *fullPath = [self fullPathOfScript];
