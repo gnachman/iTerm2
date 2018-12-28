@@ -10608,7 +10608,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 #pragma mark - iTermSessionNameControllerDelegate
 
-- (NSString *)sessionNameControllerInvocation {
+- (NSString *)sessionNameControllerUniqueIdentifier {
     iTermTitleComponents components = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS inProfile:_profile];
     if (components != iTermTitleComponentsCustom) {
         return @"iterm2.private.session_title(session: session.id)";

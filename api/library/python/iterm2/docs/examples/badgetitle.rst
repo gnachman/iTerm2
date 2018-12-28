@@ -24,7 +24,7 @@ First run the script. Then choose "Badge + Name" in **Prefs > Profiles > General
                 return badge
             else:
                 return "Shell"
-        await badge_title.async_register(connection, "Name + Badge")
+        await badge_title.async_register(connection, "Name + Badge", "com.iterm2.example.name-and-badge")
 
     iterm2.run_forever(main)
 
@@ -51,6 +51,6 @@ but some users prefer to see the window title in both places.
             else:
                 return "Shell"
 
-        await window_title_in_tab.async_register(connection, "Window Name")
+        await window_title_in_tab.async_register(connection, "Window Name", "com.iterm2.example.window-name")
 
     iterm2.run_forever(main)

@@ -24,7 +24,7 @@
 - (void)sessionNameControllerDidChangeWindowTitle;
 - (iTermSessionFormattingDescriptor *)sessionNameControllerFormattingDescriptor;
 - (iTermVariableScope *)sessionNameControllerScope;
-- (NSString *)sessionNameControllerInvocation;
+- (NSString *)sessionNameControllerUniqueIdentifier;
 
 @end
 

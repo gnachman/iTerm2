@@ -23,6 +23,13 @@ See :doc:`statusbar` for instructions on installing a custom status bar componen
     async def main(connection):
         app=await iterm2.async_get_app(connection)
 
+        # Set the click handler
+        async def onclick(session_id):
+            session = app.get_session_by_id(session_id)
+            selection = await session.async_get_selection()
+            selectedText = await session.async_get_selection_text(selection)
+            await component.async_open_popover(session_id, tohtml(prettyprint(selectedText)), iterm2.util.Size(200, 200))
+
         # Define the configuration knobs:
         vl = "json_pretty_printer"
         knobs = [iterm2.CheckboxKnob("JSON Pretty Printer", False, vl)]
@@ -40,17 +47,10 @@ See :doc:`statusbar` for instructions on installing a custom status bar componen
         async def coro(knobs):
             return ["{ JSON }"]
 
-        # Set the click handler
-        async def onclick(session_id):
-            session = app.get_session_by_id(session_id)
-            selection = await session.async_get_selection()
-            selectedText = await session.async_get_selection_text(selection)
-            await component.async_open_popover(session_id, tohtml(prettyprint(selectedText)), iterm2.util.Size(200, 200))
-
         component.set_click_handler(onclick)
 
         # Register the component.
-        await component.async_register(connection, coro)
+        await component.async_register(connection, coro, onclick=onclick)
 
     iterm2.run_forever(main)
 

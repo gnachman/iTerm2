@@ -1887,9 +1887,11 @@ class RPCRegistrationRequest(google___protobuf___message___Message):
 
     class SessionTitleAttributes(google___protobuf___message___Message):
         display_name = ... # type: typing___Text
+        unique_identifier = ... # type: typing___Text
 
         def __init__(self,
             display_name : typing___Optional[typing___Text] = None,
+            unique_identifier : typing___Optional[typing___Text] = None,
             ) -> None: ...
         @classmethod
         def FromString(cls, s: bytes) -> RPCRegistrationRequest.SessionTitleAttributes: ...

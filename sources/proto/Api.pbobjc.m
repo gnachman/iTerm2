@@ -6540,10 +6540,12 @@ typedef struct ITMRPCRegistrationRequest_RPCArgument__storage_ {
 @implementation ITMRPCRegistrationRequest_SessionTitleAttributes
 
 @dynamic hasDisplayName, displayName;
+@dynamic hasUniqueIdentifier, uniqueIdentifier;
 
 typedef struct ITMRPCRegistrationRequest_SessionTitleAttributes__storage_ {
   uint32_t _has_storage_[1];
   NSString *displayName;
+  NSString *uniqueIdentifier;
 } ITMRPCRegistrationRequest_SessionTitleAttributes__storage_;
 
 // This method is threadsafe because it is initially called
@@ -6558,6 +6560,15 @@ typedef struct ITMRPCRegistrationRequest_SessionTitleAttributes__storage_ {
         .number = ITMRPCRegistrationRequest_SessionTitleAttributes_FieldNumber_DisplayName,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_SessionTitleAttributes__storage_, displayName),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "uniqueIdentifier",
+        .dataTypeSpecific.className = NULL,
+        .number = ITMRPCRegistrationRequest_SessionTitleAttributes_FieldNumber_UniqueIdentifier,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_SessionTitleAttributes__storage_, uniqueIdentifier),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },

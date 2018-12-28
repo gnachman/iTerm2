@@ -250,7 +250,17 @@ async def async_subscribe_to_broadcast_domains_change_notification(connection, c
         callback,
         session=None)
 
-async def async_subscribe_to_server_originated_rpc_notification(connection, callback, name, arguments=[], timeout_seconds=5, defaults={}, role=RPC_ROLE_GENERIC, session_title_display_name=None, status_bar_component=None):
+async def async_subscribe_to_server_originated_rpc_notification(
+        connection,
+        callback,
+        name,
+        arguments=[],
+        timeout_seconds=5,
+        defaults={},
+        role=RPC_ROLE_GENERIC,
+        session_title_display_name=None,
+        session_title_unique_id=None,
+        status_bar_component=None):
     """
     Registers a callback to be run when the server wants to invoke an RPC.
 
@@ -292,6 +302,8 @@ async def async_subscribe_to_server_originated_rpc_notification(connection, call
 
     if session_title_display_name is not None:
         rpc_registration_request.session_title_attributes.display_name = session_title_display_name
+        assert session_title_unique_id
+        rpc_registration_request.session_title_attributes.unique_identifier = session_title_unique_id
     elif status_bar_component is not None:
         status_bar_component.set_fields_in_proto(rpc_registration_request.status_bar_component_attributes)
 

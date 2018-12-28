@@ -2991,6 +2991,7 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_RPCArgument_FieldNumber) {
 
 typedef GPB_ENUM(ITMRPCRegistrationRequest_SessionTitleAttributes_FieldNumber) {
   ITMRPCRegistrationRequest_SessionTitleAttributes_FieldNumber_DisplayName = 1,
+  ITMRPCRegistrationRequest_SessionTitleAttributes_FieldNumber_UniqueIdentifier = 6,
 };
 
 @interface ITMRPCRegistrationRequest_SessionTitleAttributes : GPBMessage
@@ -2999,6 +3000,14 @@ typedef GPB_ENUM(ITMRPCRegistrationRequest_SessionTitleAttributes_FieldNumber) {
 @property(nonatomic, readwrite, copy, null_resettable) NSString *displayName;
 /** Test to see if @c displayName has been set. */
 @property(nonatomic, readwrite) BOOL hasDisplayName;
+
+/**
+ * Identifies this title provider uniquely. Must not conflict with other title providers.
+ * Use a backwards domain name identifying yourself and the feature, like "com.example.featurename"
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *uniqueIdentifier;
+/** Test to see if @c uniqueIdentifier has been set. */
+@property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
 
 @end
 

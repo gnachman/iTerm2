@@ -100,7 +100,7 @@ def TitleProviderRPC(func):
 
     It must return a string.
 
-    Note that the `async_register` function is different than in the :func:`~iterm2.registration.RPC` decorator: it takes two arguments. The first is the :class:`~iterm2.connection.Connection`. The second is a "display name", which is the string to show in preferences that the user may select to use this title provider.
+    Note that the `async_register` function is different than in the :func:`~iterm2.registration.RPC` decorator: it takes three arguments. The first is the :class:`~iterm2.connection.Connection`. The second is a "display name", which is the string to show in preferences that the user may select to use this title provider. Then it takes a unique identifier, a string, which must be unique among all title providers.
 
     Example:
 
@@ -113,9 +113,13 @@ def TitleProviderRPC(func):
               return auto_name.upper()
 
           # Remember to call async_register!
-          await upper_case_title.async_register(connection, "Upper-case Title")
+          await upper_case_title.async_register(
+                  connection,
+                  display_name="Upper-case Title",
+                  unique_identifier="com.iterm2.example.title-provider")
     """
-    async def async_register(connection, display_name, timeout=None):
+    async def async_register(connection, display_name, unqiue_identifier, timeout=None):
+        assert unqiue_identifier
         signature = inspect.signature(func)
         defaults = {}
         for k, v in signature.parameters.items():
@@ -124,14 +128,15 @@ def TitleProviderRPC(func):
         async def handle_rpc(connection, notif):
             await generic_handle_rpc(func, connection, notif)
         func.rpc_token = await iterm2.notifications.async_subscribe_to_server_originated_rpc_notification(
-                connection,
-                handle_rpc,
-                func.__name__,
-                signature.parameters.keys(),
-                timeout,
-                defaults,
-                iterm2.notifications.RPC_ROLE_SESSION_TITLE,
-                display_name)
+                connection=connection,
+                callback=handle_rpc,
+                name=func.__name__,
+                arguments=signature.parameters.keys(),
+                timeout_seconds=timeout,
+                defaults=defaults,
+                role=iterm2.notifications.RPC_ROLE_SESSION_TITLE,
+                session_title_display_name=display_name,
+                session_title_unique_id=unqiue_identifier)
         func.rpc_connection = connection
 
     func.async_register = async_register
@@ -155,7 +160,7 @@ def StatusBarRPC(func):
       .. code-block:: python
 
           component = iterm2.StatusBarComponent(
-              short_description["Session ID",
+              short_description="Session ID",
               detailed_description="Show the session's identifier",
               knobs=[],
               exemplar="[session ID]",
@@ -163,12 +168,26 @@ def StatusBarRPC(func):
               identifier="com.iterm2.example.statusbar-rpc")
 
           @iterm2.StatusBarRPC
-          async def session_id_status_bar_coro(knobs, session_id=iterm2.Reference("session.id")):
-              # This status bar component shows the current session ID, which is useful for
-              # debugging scripts.
+          async def session_id_status_bar_coro(
+                  knobs,
+                  session_id=iterm2.Reference("session.id")):
+              # This status bar component shows the current session ID, which
+              # is useful for debugging scripts.
               return session_id
 
-          await component.async_register(connection, session_id_status_bar_coro)
+          @iterm2.RPC
+          async def my_status_bar_click_handler(session_id):
+              # When you click the status bar it opens a popover with the
+              # message "Hello World"
+              await component.async_open_popover(
+                      session_id,
+                      "Hello world",
+                      iterm2.Size(200, 200))
+
+          await component.async_register(
+                  connection,
+                  session_id_status_bar_coro,
+                  onclick=my_status_bar_click_handler)
     """
     async def async_register(connection, component, timeout=None):
         signature = inspect.signature(func)
@@ -190,15 +209,14 @@ def StatusBarRPC(func):
             await generic_handle_rpc(wrapper, connection, notif)
 
         func.rpc_token = await iterm2.notifications.async_subscribe_to_server_originated_rpc_notification(
-                connection,
-                handle_rpc,
-                func.__name__,
-                signature.parameters.keys(),
-                timeout,
-                defaults,
-                iterm2.notifications.RPC_ROLE_STATUS_BAR_COMPONENT,
-                None,
-                component)
+                connection=connection,
+                callback=handle_rpc,
+                name=func.__name__,
+                arguments=signature.parameters.keys(),
+                timeout_seconds=timeout,
+                defaults=defaults,
+                role=iterm2.notifications.RPC_ROLE_STATUS_BAR_COMPONENT,
+                status_bar_component=component)
         func.rpc_connection = connection
 
     func.async_register = async_register

@@ -98,7 +98,7 @@ Next, install this script in `~/Library/Application Support/iTerm2/Scripts/AutoL
                      make_pwd(user_home, localhome, pwd),
                      make_branch(branch)]
             return " ".join(list(filter(lambda x: x, parts)))
-        await georges_title.async_register("George's Title Algorithm")
+        await georges_title.async_register("George's Title Algorithm", "com.iterm2.example.georges-title-algorithm")
 
     iterm2.run_forever(main)
 

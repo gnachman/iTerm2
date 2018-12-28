@@ -366,33 +366,29 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [titleSettings.menu removeItemAtIndex:idx];
     }];
 
-    NSArray<iTermTuple<NSString *, NSString *> *> *funcs = [iTermAPIHelper sessionTitleFunctions];
+    NSArray<iTermSessionTitleProvider *> *funcs = [iTermAPIHelper sessionTitleFunctions];
     if (funcs.count) {
         NSMenuItem *separator = [NSMenuItem separatorItem];
         separator.identifier = @"";
         [titleSettings.menu addItem:separator];
     }
-    NSString *func = [self titleFunctionInvocation];
+    NSString *uniqueIdentifier = [self titleFunctionUniqueIdentifier];
     NSString *funcName = [self titleFunctionDisplayName];
-    for (iTermTuple<NSString *, NSString *> *tuple in funcs) {
+    for (iTermSessionTitleProvider *provider in funcs) {
         NSMenuItem *item = [[NSMenuItem alloc] init];
-        if (!tuple.firstObject || !tuple.secondObject) {
-            assert(false);
-            continue;
-        }
-        item.title = tuple.firstObject;
-        item.identifier = tuple.secondObject;
-        if (func && [func isEqualToString:tuple.secondObject]) {
-            func = nil;
+        item.title = provider.displayName;
+        item.identifier = provider.uniqueIdentifier;
+        if (uniqueIdentifier && [uniqueIdentifier isEqualToString:provider.uniqueIdentifier]) {
+            uniqueIdentifier = nil;
         }
         item.tag = -1;
         [titleSettings.menu addItem:item];
     }
-    if (func) {
+    if (uniqueIdentifier) {
         // Did not find the currently selected func. Maybe the script hasn't started, crashed, etc.
         NSMenuItem *item = [[NSMenuItem alloc] init];
         item.title = funcName;
-        item.identifier = func;
+        item.identifier = uniqueIdentifier;
         item.enabled = NO;
         item.tag = -1;
         [titleSettings.menu addItem:item];
@@ -653,9 +649,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     NSMenuItem *menuItem = [NSMenuItem castFrom:[titleSettings selectedItem]];
     if (menuItem.tag == -1) {
         // Selected a registered title function.
-        NSString *invocation = menuItem.identifier;
+        NSString *uniqueIdentifier = menuItem.identifier;
         NSString *displayName = menuItem.title;
-        iTermTuple<NSString *, NSString *> *tuple = [iTermTuple tupleWithObject:displayName andObject:invocation];
+        iTermTuple<NSString *, NSString *> *tuple = [iTermTuple tupleWithObject:displayName andObject:uniqueIdentifier];
         [self setTuple:tuple forKey:KEY_TITLE_FUNC];
 
         [self setUnsignedInteger:iTermTitleComponentsCustom forKey:KEY_TITLE_COMPONENTS];
@@ -709,7 +705,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     return [[self stringTupleForKey:KEY_TITLE_FUNC] firstObject];
 }
 
-- (NSString *)titleFunctionInvocation {
+- (NSString *)titleFunctionUniqueIdentifier {
     return [[self stringTupleForKey:KEY_TITLE_FUNC] secondObject];
 }
 
@@ -721,12 +717,12 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (void)updateSelectedTitleComponentsForView:(NSPopUpButton *)titleSettings {
     const iTermTitleComponents value = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
-    NSString *currentInvocation = self.titleFunctionInvocation;
+    NSString *currentUniqueIdentifier = self.titleFunctionUniqueIdentifier;
     NSString *customName = nil;
     for (NSMenuItem *item in titleSettings.menu.itemArray) {
         BOOL selected = !!(item.tag & value);
         if (value & iTermTitleComponentsCustom) {
-            selected = [NSObject object:item.identifier isEqualToObject:currentInvocation];
+            selected = [NSObject object:item.identifier isEqualToObject:currentUniqueIdentifier];
             customName = [self titleFunctionDisplayName];
         } else if (item.tag == -1) {
             selected = NO;

@@ -19,6 +19,12 @@ extern NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection;
 
 typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
+@interface iTermSessionTitleProvider : NSObject
+@property (nonatomic, readonly) NSString *displayName;
+@property (nonatomic, readonly) NSString *invocation;
+@property (nonatomic, readonly) NSString *uniqueIdentifier;
+@end
+
 @interface iTermAPIHelper : NSObject<iTermAPIServerDelegate>
 
 + (instancetype)sharedInstance;
@@ -37,8 +43,7 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 // function name -> [ arg1, arg2, ... ]
 + (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
 
-// Tuple is (display name, invocation).
-+ (NSArray<iTermTuple<NSString *, NSString *> *> *)sessionTitleFunctions;
++ (NSArray<iTermSessionTitleProvider *> *)sessionTitleFunctions;
 
 + (NSArray<ITMRPCRegistrationRequest *> *)statusBarComponentProviderRegistrationRequests;
 

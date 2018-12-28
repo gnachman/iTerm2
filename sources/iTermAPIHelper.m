@@ -60,6 +60,37 @@ static id sAPIHelperInstance;
 @property (nonatomic, copy) NSString *connectionKey;
 @end
 
+@implementation iTermSessionTitleProvider
+
+- (instancetype)initWithNotificationRequest:(ITMNotificationRequest *)req {
+    self = [super init];
+    if (self) {
+        if (req.rpcRegistrationRequest.role != ITMRPCRegistrationRequest_Role_SessionTitle) {
+            return nil;
+        }
+        _invocation = [self invocationOfRegistrationRequest:req.rpcRegistrationRequest];
+        if (!_invocation) {
+            return nil;
+        }
+        _displayName = [req.rpcRegistrationRequest.sessionTitleAttributes.displayName copy];
+        if (!_displayName) {
+            return nil;
+        }
+        _uniqueIdentifier = req.rpcRegistrationRequest.sessionTitleAttributes.uniqueIdentifier;
+        if (!_uniqueIdentifier) {
+            return nil;
+        }
+    }
+    return self;
+}
+
+- (NSString *)invocationOfRegistrationRequest:(ITMRPCRegistrationRequest *)req {
+    return [iTermAPIHelper invocationWithName:req.name
+                                     defaults:req.defaultsArray];
+}
+
+@end
+
 @implementation ITMRPCRegistrationRequest(Extensions)
 
 - (BOOL)it_rpcRegistrationRequestValidWithError:(out NSError **)error {
@@ -248,7 +279,7 @@ static id sAPIHelperInstance;
     return [sAPIHelperInstance registeredFunctionSignatureDictionary] ?: @{};
 }
 
-+ (NSArray<iTermTuple<NSString *, NSString *> *> *)sessionTitleFunctions {
++ (NSArray<iTermSessionTitleProvider *> *)sessionTitleFunctions {
     return [sAPIHelperInstance sessionTitleFunctions] ?: @[];
 }
 
@@ -702,10 +733,6 @@ static id sAPIHelperInstance;
     return result;
 }
 
-- (NSString *)invocationOfRegistrationRequest:(ITMRPCRegistrationRequest *)req {
-    return [iTermAPIHelper invocationWithName: req.name defaults:req.defaultsArray];
-}
-
 + (NSString *)invocationWithName:(NSString *)name
                         defaults:(NSArray<ITMRPCRegistrationRequest_RPCArgument*> *)defaultsArray {
     NSArray<ITMRPCRegistrationRequest_RPCArgument*> *sortedDefaults =
@@ -720,17 +747,13 @@ static id sAPIHelperInstance;
     return [NSString stringWithFormat:@"%@(%@)", name, [defaults componentsJoinedByString:@","]];
 }
 
-- (NSArray<iTermTuple<NSString *,NSString *> *> *)sessionTitleFunctions {
+- (NSArray<iTermSessionTitleProvider *> *)sessionTitleFunctions {
     return [self.serverOriginatedRPCSubscriptions.allKeys mapWithBlock:^id(NSString *signature) {
         ITMNotificationRequest *req = self.serverOriginatedRPCSubscriptions[signature].secondObject;
         if (!req) {
             return nil;
         }
-        if (req.rpcRegistrationRequest.role != ITMRPCRegistrationRequest_Role_SessionTitle) {
-            return nil;
-        }
-        NSString *invocation = [self invocationOfRegistrationRequest:req.rpcRegistrationRequest];
-        return [iTermTuple tupleWithObject:req.rpcRegistrationRequest.sessionTitleAttributes.displayName andObject:invocation];
+        return [[iTermSessionTitleProvider alloc] initWithNotificationRequest:req];
     }];
 }
 

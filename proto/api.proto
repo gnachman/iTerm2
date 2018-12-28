@@ -720,6 +720,9 @@ message RPCRegistrationRequest {
   message SessionTitleAttributes {
     // Used by SESSION_TITLE to control name in Preferences menu
     optional string display_name = 1;
+    // Identifies this title provider uniquely. Must not conflict with other title providers.
+    // Use a backwards domain name identifying yourself and the feature, like "com.example.featurename"
+    optional string unique_identifier = 6;
   }
   message StatusBarComponentAttributes {
     // Used by STATUS_BAR_COMPONENT

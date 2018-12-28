@@ -16,6 +16,7 @@
 #import "iTermScriptHistory.h"
 #import "iTermVariableReference.h"
 #import "iTermVariables.h"
+#import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
 static NSString *const iTermSessionNameControllerStateKeyWindowTitleStack = @"window title stack";
@@ -88,7 +89,15 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
     } else {
         scope = self.delegate.sessionNameControllerScope;
     }
-    NSString *invocation = self.delegate.sessionNameControllerInvocation;
+    NSString *uniqueIdentifier = self.delegate.sessionNameControllerUniqueIdentifier;
+    if (!uniqueIdentifier) {
+        [self didEvaluateInvocationWithResult:@""];
+        completion(@"");
+        return;
+    }
+    NSString *invocation = [[iTermAPIHelper sessionTitleFunctions] objectPassingTest:^BOOL(iTermSessionTitleProvider *provider, NSUInteger index, BOOL *stop) {
+        return [provider.uniqueIdentifier isEqualToString:uniqueIdentifier];
+    }].invocation;
     if (!invocation) {
         [self didEvaluateInvocationWithResult:@""];
         completion(@"");
