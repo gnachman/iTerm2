@@ -319,7 +319,7 @@ class KeystrokeFilter:
 
            filter = iterm2.KeystrokeFilter(connection, [ctrl])
            async with filter as mon:
-               await mon.async_wait_forever()
+               await iterm2.async_wait_forever()
     """
     def __init__(
             self,
@@ -336,10 +336,6 @@ class KeystrokeFilter:
                 self.__patterns,
                 self.__session)
         return self
-
-    async def async_wait_forever(self):
-        """A convenience function that never returns."""
-        await asyncio.wait([asyncio.Future()])
 
     async def __aexit__(self, exc_type, exc, _tb):
         await iterm2.notifications.async_unsubscribe(self.__connection, self.__token)

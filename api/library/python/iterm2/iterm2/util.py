@@ -374,3 +374,7 @@ class WindowedCoordRange:
         """Are the columns constrained?"""
         return self.__columnRange.length > 0
 
+async def async_wait_forever(self):
+    """A convenience function that never returns."""
+    await asyncio.wait([asyncio.Future()])
+
