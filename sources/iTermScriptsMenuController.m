@@ -249,6 +249,43 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
+- (BOOL)scriptShouldAutoLaunchWithFullPath:(NSString *)fullPath {
+    return [fullPath hasPrefix:[[self autolaunchScriptPath] stringByAppendingString:@"/"]];
+}
+
+- (NSString *)autoLaunchPathIfFullPathWereMovedToAutoLaunch:(NSString *)fullPath {
+    return [[self autolaunchScriptPath] stringByAppendingPathComponent:fullPath.lastPathComponent];
+}
+
+- (BOOL)couldMoveScriptToAutoLaunch:(NSString *)fullPath {
+    if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
+        return NO;
+    }
+    [[NSFileManager defaultManager] createDirectoryAtPath:[self autolaunchScriptPath]
+                              withIntermediateDirectories:YES
+                                               attributes:nil
+                                                    error:nil];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:[self autolaunchScriptPath]]) {
+        return NO;
+    }
+
+    NSString *destination = [self autoLaunchPathIfFullPathWereMovedToAutoLaunch:fullPath];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:destination]) {
+        return NO;
+    }
+    return YES;
+}
+
+- (void)moveScriptToAutoLaunch:(NSString *)fullPath {
+    [[NSFileManager defaultManager] createDirectoryAtPath:[self autolaunchScriptPath]
+                              withIntermediateDirectories:YES
+                                               attributes:nil
+                                                    error:nil];
+    NSString *destination = [self autoLaunchPathIfFullPathWereMovedToAutoLaunch:fullPath];
+    [[NSFileManager defaultManager] moveItemAtPath:fullPath
+                                            toPath:destination error:nil];
+}
+
 #pragma mark - Actions
 
 - (void)launchOrTerminateScript:(NSMenuItem *)sender {
@@ -273,12 +310,14 @@ NS_ASSUME_NONNULL_BEGIN
     [self launchScriptWithAbsolutePath:fullPath];
 }
 
+// NOTE: This logic needs to be kept in sync with -couldLaunchScriptWithAbsolutePath
 - (void)launchScriptWithAbsolutePath:(NSString *)fullPath {
     NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath checkForMain:YES];
     if (venv) {
         NSString *name = fullPath.lastPathComponent;
         NSString *mainPyPath = [[[fullPath stringByAppendingPathComponent:name] stringByAppendingPathComponent:name] stringByAppendingPathExtension:@"py"];
         [iTermAPIScriptLauncher launchScript:mainPyPath
+                                    fullPath:fullPath
                               withVirtualEnv:venv
                                  setupPyPath:[[fullPath stringByAppendingPathComponent:name] stringByAppendingPathComponent:@"setup.py"]];
         return;
@@ -307,6 +346,34 @@ NS_ASSUME_NONNULL_BEGIN
         }
     } else {
         [[NSWorkspace sharedWorkspace] launchApplication:fullPath];
+    }
+}
+
+// NOTE: This logic needs to be kept in sync with -launchScriptWithAbsolutePath
+- (BOOL)couldLaunchScriptWithAbsolutePath:(NSString *)fullPath {
+    if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
+        return NO;
+    }
+    NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath checkForMain:YES];
+    if (venv) {
+        return YES;
+    }
+
+    if ([[fullPath pathExtension] isEqualToString:@"py"]) {
+        return YES;
+    }
+    if ([[fullPath pathExtension] isEqualToString:@"scpt"]) {
+        NSAppleScript *script;
+        NSDictionary *errorInfo = nil;
+        NSURL *aURL = [NSURL fileURLWithPath:fullPath];
+
+        // Make sure our script suite registry is loaded
+        [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
+
+        script = [[NSAppleScript alloc] initWithContentsOfURL:aURL error:&errorInfo];
+        return script != nil;
+    } else {
+        return NO;
     }
 }
 

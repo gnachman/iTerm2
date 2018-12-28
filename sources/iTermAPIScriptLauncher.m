@@ -29,10 +29,13 @@
 @implementation iTermAPIScriptLauncher
 
 + (void)launchScript:(NSString *)filename {
-    [self launchScript:filename withVirtualEnv:nil setupPyPath:nil];
+    [self launchScript:filename fullPath:filename withVirtualEnv:nil setupPyPath:nil];
 }
 
-+ (void)launchScript:(NSString *)filename withVirtualEnv:(NSString *)virtualenv setupPyPath:(NSString *)setupPyPath {
++ (void)launchScript:(NSString *)filename
+            fullPath:(NSString *)fullPath
+      withVirtualEnv:(NSString *)virtualenv
+         setupPyPath:(NSString *)setupPyPath {
     NSString *pythonVersion;
     if (pythonVersion) {
         iTermSetupPyParser *parser = [[iTermSetupPyParser alloc] initWithPath:setupPyPath];
@@ -43,14 +46,20 @@
     if (virtualenv != nil) {
         // Launching a full environment script: do not check for a newer version, as it is frozen and
         // downloading wouldn't affect it anyway.
-        [self reallyLaunchScript:filename withVirtualEnv:virtualenv pythonVersion:pythonVersion];
+        [self reallyLaunchScript:filename
+                        fullPath:fullPath
+                  withVirtualEnv:virtualenv
+                   pythonVersion:pythonVersion];
         return;
     }
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:pythonVersion
                                                                                        withCompletion:^(BOOL ok) {
         if (ok) {
-            [self reallyLaunchScript:filename withVirtualEnv:virtualenv pythonVersion:pythonVersion];
+            [self reallyLaunchScript:filename
+                            fullPath:fullPath
+                      withVirtualEnv:virtualenv
+                       pythonVersion:pythonVersion];
         }
     }];
 }
@@ -60,10 +69,13 @@
 // and returns "3.7", or nil if it was malformed.
 + (NSString *)inferredPythonVersionFromScriptAt:(NSString *)path {
     FILE *file = fopen(path.UTF8String, "r");
-
+    if (!file) {
+        return nil;
+    }
     size_t length;
     char *byteArray = fgetln(file, &length);
     if (length == 0 || byteArray == NULL) {
+        fclose(file);
         return nil;
     }
     NSData *data = [NSData dataWithBytes:byteArray length:length];
@@ -93,7 +105,10 @@
     return candidate;
 }
 
-+ (void)reallyLaunchScript:(NSString *)filename withVirtualEnv:(NSString *)virtualenv pythonVersion:(NSString *)pythonVersion {
++ (void)reallyLaunchScript:(NSString *)filename
+                  fullPath:(NSString *)fullPath
+            withVirtualEnv:(NSString *)virtualenv
+             pythonVersion:(NSString *)pythonVersion {
     if (![iTermAPIHelper sharedInstance]) {
         return;
     }
@@ -106,10 +121,12 @@
     }
     NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
     iTermScriptHistoryEntry *entry = [[iTermScriptHistoryEntry alloc] initWithName:name
+                                                                          fullPath:fullPath
                                                                         identifier:identifier
                                                                           relaunch:
                                       ^{
                                           [iTermAPIScriptLauncher reallyLaunchScript:filename
+                                                                            fullPath:fullPath
                                                                       withVirtualEnv:virtualenv
                                                                        pythonVersion:pythonVersion];
                                       }];

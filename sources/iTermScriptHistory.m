@@ -32,6 +32,7 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         instance = [[self alloc] initWithName:@"iTerm2 App"
+                                     fullPath:nil
                                    identifier:@"iTerm2"
                                      relaunch:nil];
     });
@@ -39,11 +40,13 @@ NSString *const iTermScriptHistoryEntryFieldRPCValue = @"rpc";
 }
 
 - (instancetype)initWithName:(NSString *)name
+                    fullPath:(nullable NSString *)fullPath
                   identifier:(NSString *)identifier
                     relaunch:(void (^ _Nullable)(void))relaunch {
     self = [super init];
     if (self) {
         _name = [name copy];
+        _fullPath = [fullPath copy];
         _identifier = [identifier copy];
         _relaunch = [relaunch copy];
         _startDate = [NSDate date];
@@ -210,6 +213,12 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
 - (iTermScriptHistoryEntry *)runningEntryWithPath:(NSString *)path {
     return [self.runningEntries objectPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger index, BOOL *stop) {
         return [NSObject object:entry.path isEqualToObject:path];
+    }];
+}
+
+- (iTermScriptHistoryEntry *)runningEntryWithFullPath:(NSString *)fullPath {
+    return [self.runningEntries objectPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger index, BOOL *stop) {
+        return [NSObject object:entry.fullPath isEqualToObject:fullPath];
     }];
 }
 

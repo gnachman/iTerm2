@@ -16,13 +16,23 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithMenu:(NSMenu *)menu;
+
 - (void)build;
 - (BOOL)runAutoLaunchScriptsIfNeeded;
 - (void)revealScriptsInFinder;
 - (void)newPythonScript;
+
 - (void)launchScriptWithRelativePath:(NSString *)path;
+
+- (void)launchScriptWithAbsolutePath:(NSString *)fullPath;
+- (BOOL)couldLaunchScriptWithAbsolutePath:(NSString *)fullPath;
+
 - (void)chooseAndExportScript;
 - (void)chooseAndImportScript;
+
+- (BOOL)scriptShouldAutoLaunchWithFullPath:(NSString *)fullPath;
+- (void)moveScriptToAutoLaunch:(NSString *)fullPath;
+- (BOOL)couldMoveScriptToAutoLaunch:(NSString *)fullPath;
 
 @end
 

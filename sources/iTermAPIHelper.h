@@ -31,6 +31,7 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
 + (NSString *)invocationWithName:(NSString *)name
                         defaults:(NSArray<ITMRPCRegistrationRequest_RPCArgument*> *)defaultsArray;
++ (NSString *)nameOfScriptVendingStatusBarComponentWithUniqueIdentifier:(NSString *)uniqueID;
 
 - (instancetype)init NS_UNAVAILABLE;
 

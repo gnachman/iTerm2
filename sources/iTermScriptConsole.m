@@ -396,6 +396,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
             name = @"Unknown";
         }
         entry = [[iTermScriptHistoryEntry alloc] initWithName:name
+                                                     fullPath:nil
                                                    identifier:key
                                                      relaunch:nil];
     }
@@ -423,6 +424,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
             name = @"Unknown";
         }
         entry = [[iTermScriptHistoryEntry alloc] initWithName:name
+                                                     fullPath:nil
                                                    identifier:key
                                                      relaunch:nil];
         entry.pid = [notification.userInfo[@"pid"] intValue];

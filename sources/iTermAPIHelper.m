@@ -747,6 +747,14 @@ static id sAPIHelperInstance;
     return [NSString stringWithFormat:@"%@(%@)", name, [defaults componentsJoinedByString:@","]];
 }
 
++ (NSString *)userDefaultsKeyForNameOfScriptVendingStatusBarComponentWithID:(NSString *)uniqueID {
+    return [NSString stringWithFormat:@"NoSyncScriptNameForStatusBarComponent_%@", uniqueID];
+}
+
++ (NSString *)nameOfScriptVendingStatusBarComponentWithUniqueIdentifier:(NSString *)uniqueID {
+    return [[NSUserDefaults standardUserDefaults] objectForKey:[self userDefaultsKeyForNameOfScriptVendingStatusBarComponentWithID:uniqueID]];
+}
+
 - (NSArray<iTermSessionTitleProvider *> *)sessionTitleFunctions {
     return [self.serverOriginatedRPCSubscriptions.allKeys mapWithBlock:^id(NSString *signature) {
         ITMNotificationRequest *req = self.serverOriginatedRPCSubscriptions[signature].secondObject;
@@ -1214,6 +1222,22 @@ static id sAPIHelperInstance;
     return notification;
 }
 
+- (void)didRegisterStatusBarComponent:(ITMRPCRegistrationRequest_StatusBarComponentAttributes *)attributes
+                         onConnection:(NSString *)connectionKey {
+    NSString *key = connectionKey ? [_apiServer websocketKeyForConnectionKey:connectionKey] : nil;
+    iTermScriptHistoryEntry *entry = key ? [[iTermScriptHistory sharedInstance] entryWithIdentifier:key] : nil;
+    if (!entry) {
+        return;
+    }
+    NSString *fullPath = entry.fullPath;
+    if (!fullPath) {
+        return;
+    }
+    NSString *uniqueID = attributes.uniqueIdentifier;
+    return [[NSUserDefaults standardUserDefaults] setObject:fullPath
+                                                     forKey:[self.class userDefaultsKeyForNameOfScriptVendingStatusBarComponentWithID:uniqueID]];
+}
+
 - (ITMNotificationResponse *)handleAPINotificationRequest:(ITMNotificationRequest *)request
                                             connectionKey:(NSString *)connectionKey {
     ITMNotificationResponse *response = [[ITMNotificationResponse alloc] init];
@@ -1259,7 +1283,10 @@ static id sAPIHelperInstance;
                                                                         object:request.rpcRegistrationRequest.name];
                     break;
                 case ITMRPCRegistrationRequest_Role_Generic:
+                    break;
                 case ITMRPCRegistrationRequest_Role_StatusBarComponent:
+                    [self didRegisterStatusBarComponent:request.rpcRegistrationRequest.statusBarComponentAttributes
+                                           onConnection:connectionKey];
                     break;
             }
         } else {

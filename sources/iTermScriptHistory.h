@@ -31,9 +31,11 @@ extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
 @property (nonatomic, nullable, readonly) void (^relaunch)(void);
 @property (nonatomic) BOOL terminatedByUser;
 @property (nonatomic, copy) NSString *path;
+@property (nonatomic, readonly, nullable) NSString *fullPath;  // This can be passed to launchScriptWithAbsolutePath:
 
 + (instancetype)globalEntry;
 - (instancetype)initWithName:(NSString *)name
+                    fullPath:(nullable NSString *)fullPath
                   identifier:(NSString *)identifier
                     relaunch:(void (^ _Nullable)(void))relaunch NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
@@ -57,6 +59,7 @@ extern NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification;
 - (void)addHistoryEntry:(iTermScriptHistoryEntry *)entry;
 - (iTermScriptHistoryEntry *)entryWithIdentifier:(NSString *)identifier;
 - (iTermScriptHistoryEntry *)runningEntryWithPath:(NSString *)path;
+- (iTermScriptHistoryEntry *)runningEntryWithFullPath:(NSString *)fullPath;
 
 @end
 

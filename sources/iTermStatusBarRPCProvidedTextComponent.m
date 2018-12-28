@@ -10,8 +10,12 @@
 #import "DebugLogging.h"
 #import "iTermAPIHelper.h"
 #import "iTermFunctionCallParser.h"
+#import "iTermAPIScriptLauncher.h"
+#import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptHistory.h"
+#import "iTermScriptsMenuController.h"
 #import "iTermStatusBarComponentKnob.h"
 #import "iTermVariables.h"
 #import "iTermVariableReference.h"
@@ -103,6 +107,8 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     NSArray<iTermVariableReference *> *_dependencies;
     NSMutableSet<NSString *> *_missingFunctions;
     NSString *_errorMessage;  // Nil if the last evaluation was successful.
+    NSDate *_dateOfLaunchToFix;
+    NSString *_fullPath;
 }
 
 - (instancetype)initWithRegistrationRequest:(ITMRPCRegistrationRequest *)registrationRequest
@@ -258,7 +264,34 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
      }];
 }
 
+- (void)maybeOfferToMoveScriptToAutoLaunch {
+    if (-[_dateOfLaunchToFix timeIntervalSinceNow] >= 1) {
+        return;
+    }
+    iTermScriptsMenuController *menuController = [[[iTermApplication sharedApplication] delegate] scriptsMenuController];
+    if ([menuController scriptShouldAutoLaunchWithFullPath:_fullPath]) {
+        return;
+    }
+    if (![menuController couldMoveScriptToAutoLaunch:_fullPath]) {
+        return;
+    }
+
+    if ([iTermWarning showWarningWithTitle:@"This will move the script into the AutoLaunch folder."
+                                   actions:@[ @"OK", @"Cancel" ]
+                                 accessory:nil
+                                identifier:[NSString stringWithFormat:@"NoSyncAutoLaunchScript_%@", _fullPath]
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                   heading:@"Always launch this script when iTerm2 starts?"
+                                    window:self.textField.window] == kiTermWarningSelection0) {
+        [menuController moveScriptToAutoLaunch:_fullPath];
+    }
+}
+
 - (void)handleSuccessfulEvaluationWithValue:(id)value {
+    // Dispatch async so the user can see that it fixed it.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self maybeOfferToMoveScriptToAutoLaunch];
+    });
     NSString *stringValue = [NSString castFrom:value];
     NSArray *arrayValue = [NSArray castFrom:value];
     _errorMessage = nil;
@@ -316,13 +349,75 @@ static NSString *const iTermStatusBarRPCRegistrationRequestKey = @"registration 
     }
 }
 
+- (BOOL)scriptIsRunning:(NSString *)fullPath {
+    iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] runningEntryWithFullPath:fullPath];
+    if (!entry) {
+        return NO;
+    }
+    return entry.isRunning;
+}
+
+- (BOOL)scriptIsNotRunningButCouldBeLaunched {
+    NSString *fullPath = [self fullPathOfScript];
+    if (!fullPath) {
+        return NO;
+    }
+    if ([self scriptIsRunning:fullPath]) {
+        return NO;
+    }
+    return [[[[iTermApplication sharedApplication] delegate] scriptsMenuController] couldLaunchScriptWithAbsolutePath:fullPath];
+}
+
+- (NSString *)fullPathOfScript {
+    if (!_registrationRequest.statusBarComponentAttributes.uniqueIdentifier) {
+        return nil;
+    }
+    return [iTermAPIHelper nameOfScriptVendingStatusBarComponentWithUniqueIdentifier:_registrationRequest.statusBarComponentAttributes.uniqueIdentifier];
+}
+
+- (void)launchScript {
+    if (!_registrationRequest.statusBarComponentAttributes.uniqueIdentifier) {
+        return;
+    }
+    NSString *fullPath = [self fullPathOfScript];
+    if (!fullPath) {
+        return;
+    }
+    iTermScriptsMenuController *menuController = [[[iTermApplication sharedApplication] delegate] scriptsMenuController];
+    [menuController launchScriptWithAbsolutePath:fullPath];
+    _dateOfLaunchToFix = [NSDate date];
+    _fullPath = [fullPath copy];
+}
+
+- (void)revealInFinder {
+    NSString *fullPath = [self fullPathOfScript];
+    if (!fullPath) {
+        return;
+    }
+    [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:fullPath] ]];
+}
+
 - (void)onClick:(id)sender {
     if (_errorMessage) {
         iTermWarning *warning = [[iTermWarning alloc] init];
         warning.title = _errorMessage;
-        warning.warningActions = @[ [iTermWarningAction warningActionWithLabel:@"OK" block:nil] ];
+        warning.heading = @"Status Bar Component Problem";
+        NSArray *actions = @[ [iTermWarningAction warningActionWithLabel:@"OK" block:nil] ];
+        if ([self scriptIsNotRunningButCouldBeLaunched]) {
+            iTermWarningAction *launch = [iTermWarningAction warningActionWithLabel:@"Launch Script" block:^(iTermWarningSelection selection) {
+                [self launchScript];
+            }];
+            iTermWarningAction *reveal = [iTermWarningAction warningActionWithLabel:@"Reveal in Finder" block:^(iTermWarningSelection selection) {
+                [self revealInFinder];
+            }];
+            actions = [actions arrayByAddingObjectsFromArray:@[ launch, reveal ]];
+
+            warning.title = [NSString stringWithFormat:@"%@It looks like the script is not running. Launching it might fix the problem.", _errorMessage];
+        }
+        warning.warningActions = actions;
         warning.warningType = kiTermWarningTypePersistent;
         warning.heading = @"Status Bar Script Error";
+        warning.window = self.textField.window;
         [warning runModal];
         return;
     }
