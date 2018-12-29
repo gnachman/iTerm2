@@ -21,6 +21,7 @@
 
 static NSString *const iTermSessionNameControllerStateKeyWindowTitleStack = @"window title stack";
 static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon title stack";
+NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.iterm2.system-title";
 
 @interface iTermSessionNameController()
 @end
@@ -98,6 +99,11 @@ static NSString *const iTermSessionNameControllerStateKeyIconTitleStack = @"icon
     NSString *invocation = [[iTermAPIHelper sessionTitleFunctions] objectPassingTest:^BOOL(iTermSessionTitleProvider *provider, NSUInteger index, BOOL *stop) {
         return [provider.uniqueIdentifier isEqualToString:uniqueIdentifier];
     }].invocation;
+    if (!invocation) {
+        if ([uniqueIdentifier isEqualToString:iTermSessionNameControllerSystemTitleUniqueIdentifier]) {
+            invocation = @"iterm2.private.session_title(session: session.id)";
+        }
+    }
     if (!invocation) {
         [self didEvaluateInvocationWithResult:@""];
         completion(@"");

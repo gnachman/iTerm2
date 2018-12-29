@@ -10611,7 +10611,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (NSString *)sessionNameControllerUniqueIdentifier {
     iTermTitleComponents components = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS inProfile:_profile];
     if (components != iTermTitleComponentsCustom) {
-        return @"iterm2.private.session_title(session: session.id)";
+        return iTermSessionNameControllerSystemTitleUniqueIdentifier;
     }
     
     iTermTuple<NSString *, NSString *> *tuple = [iTermTuple fromPlistValue:[iTermProfilePreferences stringForKey:KEY_TITLE_FUNC inProfile:_profile]];
