@@ -11,6 +11,7 @@ Here are a collection of working scripts for you to crib from.
 * :doc:`badgetitle`
 * :doc:`function_key_tabs`
 * :doc:`cls`
+* :doc:`blending`
 * :doc:`close_to_the_right`
 * :doc:`movetab`
 * :doc:`create_window`
