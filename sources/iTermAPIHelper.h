@@ -48,7 +48,6 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 + (NSArray<iTermSessionTitleProvider *> *)sessionTitleFunctions;
 
 + (NSArray<ITMRPCRegistrationRequest *> *)statusBarComponentProviderRegistrationRequests;
-+ (ITMRPCRegistrationRequest_StatusBarComponentAttributes *)registeredStatusbarComponentAttributesWithUniqueIdentifier:(NSString *)uniqueIdentifier;
 + (NSString *)nameOfScriptVendingStatusBarComponentWithUniqueIdentifier:(NSString *)uniqueID;
 
 // Performs block either when the function becomes registered, immediately if it's already
