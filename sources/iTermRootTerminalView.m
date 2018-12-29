@@ -424,7 +424,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     NSDictionary *attributes = @{ NSFontAttributeName: _windowTitleLabel.font,
                                   NSForegroundColorAttributeName: _windowTitleLabel.textColor,
                                   NSParagraphStyleAttributeName: paragraphStyle };
-    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:title
+    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:title ?: @""
                                                                            attributes:attributes];
     if (icon) {
         NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
@@ -441,7 +441,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         [iconAttributedString appendAttributedString:attributedString];
         _windowTitleLabel.attributedStringValue = iconAttributedString;
     } else {
-        _windowTitleLabel.stringValue = title;
+        _windowTitleLabel.stringValue = title ?: @"";
     }
 }
 
