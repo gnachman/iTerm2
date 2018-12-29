@@ -224,6 +224,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
             dict[KEY_WINDOW_TYPE] = @(WINDOW_TYPE_TOP);
             dict[KEY_ROWS] = @25;
             dict[KEY_TRANSPARENCY] = @0.3;
+            dict[KEY_INITIAL_USE_TRANSPARENCY] = @YES;
             dict[KEY_BLEND] = @0.5;
             dict[KEY_BLUR_RADIUS] = @2.0;
             dict[KEY_BLUR] = @YES;

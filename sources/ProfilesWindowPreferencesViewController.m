@@ -29,6 +29,7 @@
 @implementation ProfilesWindowPreferencesViewController {
     IBOutlet NSSlider *_transparency;
     IBOutlet NSButton *_useBlur;
+    IBOutlet NSButton *_initialUseTransparency;
     IBOutlet NSSlider *_blurRadius;
     IBOutlet NSButton *_useBackgroundImage;
     IBOutlet iTermImageWell *_backgroundImagePreview;
@@ -84,6 +85,10 @@
         strongSelf->_blurRadius.enabled = haveTransparency;
         strongSelf->_useBlur.enabled = haveTransparency;
     };
+
+    info = [self defineControl:_initialUseTransparency
+                           key:KEY_INITIAL_USE_TRANSPARENCY
+                          type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_useBlur
                            key:KEY_BLUR

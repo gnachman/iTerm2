@@ -133,6 +133,7 @@
 #define KEY_THIN_STROKES           @"Thin Strokes"
 #define KEY_USE_ITALIC_FONT        @"Use Italic Font"
 #define KEY_TRANSPARENCY           @"Transparency"
+#define KEY_INITIAL_USE_TRANSPARENCY @"Initial Use Transparency"
 #define KEY_BLEND                  @"Blend"
 #define KEY_BLUR                   @"Blur"
 #define KEY_BLUR_RADIUS            @"Blur Radius"
