@@ -752,6 +752,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     titleSettings.frame = frame;
 }
 
+- (IBAction)titleHelp:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-session-title.html"]];
+}
+
 #pragma mark - NSTokenField delegate
 
 - (NSArray *)tokenField:(NSTokenField *)tokenField

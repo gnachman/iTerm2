@@ -2054,6 +2054,9 @@ DQ
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
+                    <connections>
+                        <action selector="titleHelp:" target="dVg-Ac-SiZ" id="r0q-o3-3rA"/>
+                    </connections>
                 </button>
                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" id="CNi-xf-qcd" customClass="iTermImageWell">
                     <rect key="frame" x="413" y="334" width="23" height="23"/>
