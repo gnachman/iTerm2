@@ -4,6 +4,7 @@
 #import "iTermColorMap.h"
 #import "iTermFindDriver.h"
 #import "iTermIndicatorsHelper.h"
+#import "iTermKeyboardHandler.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermTextDrawingHelper.h"
 #import "LineBuffer.h"
@@ -33,8 +34,6 @@
 @class VT100Screen;
 @class VT100Terminal;
 
-#define NSLeftAlternateKeyMask  (0x000020 | NSEventModifierFlagOption)
-#define NSRightAlternateKeyMask (0x000040 | NSEventModifierFlagOption)
 
 // Types of characters. Used when classifying characters for word selection.
 typedef NS_ENUM(NSInteger, PTYCharType) {
@@ -374,6 +373,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property (nonatomic) BOOL suppressDrawing;
 @property (nonatomic, readonly) long long firstVisibleAbsoluteLineNumber;
 @property (nonatomic) BOOL useNativePowerlineGlyphs;
+
+@property (nonatomic, readonly) iTermKeyboardHandler *keyboardHandler;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.

@@ -29,6 +29,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
     IBOutlet NSButton *_applicationKeypadAllowed;
     IBOutlet NSButton *_hasHotkey;
     IBOutlet NSButton *_configureHotKey;
+    IBOutlet NSButton *_useLibTickit;
     IBOutlet NSView *_hotKeyContainerView;
     IBOutlet iTermKeyMappingViewController *_keyMappingViewController;
     iTermHotkeyPreferencesWindowController *_hotkeyPanel;
@@ -76,6 +77,10 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
                     key:KEY_APPLICATION_KEYPAD_ALLOWED
                    type:kPreferenceInfoTypeCheckbox];
 
+    [self defineControl:_useLibTickit
+                    key:KEY_USE_LIBTICKIT_PROTOCOL
+                   type:kPreferenceInfoTypeCheckbox];
+
     PreferenceInfo *info = [self defineControl:_hasHotkey
                                            key:KEY_HAS_HOTKEY
                                           type:kPreferenceInfoTypeCheckbox];
@@ -108,7 +113,7 @@ static NSString *const kDeleteKeyString = @"0x7f-0x0";
 }
 
 - (NSArray *)keysForBulkCopy {
-    NSArray *keys = @[ KEY_KEYBOARD_MAP, KEY_TOUCHBAR_MAP, KEY_OPTION_KEY_SENDS, KEY_RIGHT_OPTION_KEY_SENDS, KEY_APPLICATION_KEYPAD_ALLOWED ];
+    NSArray *keys = @[ KEY_KEYBOARD_MAP, KEY_TOUCHBAR_MAP, KEY_OPTION_KEY_SENDS, KEY_RIGHT_OPTION_KEY_SENDS, KEY_APPLICATION_KEYPAD_ALLOWED, KEY_USE_LIBTICKIT_PROTOCOL ];
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 

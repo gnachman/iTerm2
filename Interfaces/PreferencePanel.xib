@@ -1281,7 +1281,7 @@ DQ
                 <outlet property="delegate" destination="6306" id="6372"/>
             </connections>
         </window>
-        <customObject id="yRc-rn-aAD" userLabel="Advanced Settings View Controller" customClass="iTermAdvancedSettingsViewController">
+        <customObject id="yRc-rn-aAD" userLabel="Prefs&gt;Advanced Settings View Controller" customClass="iTermAdvancedSettingsViewController">
             <connections>
                 <outlet property="_searchField" destination="gjV-o3-wzg" id="Rg5-PW-EAQ"/>
                 <outlet property="_settingColumn" destination="wQ6-7Q-vbc" id="ydA-mC-Eaq"/>
@@ -1377,7 +1377,7 @@ DQ
                 <outlet property="view" destination="Z7N-XT-vVo" id="hpk-zq-hqx"/>
             </connections>
         </customObject>
-        <customObject id="pwh-OY-l3e" customClass="PointerPreferencesViewController">
+        <customObject id="pwh-OY-l3e" userLabel="Prefs&gt;Pointer View Controller" customClass="PointerPreferencesViewController">
             <connections>
                 <outlet property="_cmdSelection" destination="6107" id="aP0-Ty-y8T"/>
                 <outlet property="_controlLeftClickActsLikeRightClick" destination="6111" id="tra-Ty-UvV"/>
@@ -1389,7 +1389,7 @@ DQ
                 <outlet property="view" destination="qwf-ly-A8K" id="myg-rZ-Ivy"/>
             </connections>
         </customObject>
-        <customObject id="HVI-63-mNz" customClass="ProfilePreferencesViewController">
+        <customObject id="HVI-63-mNz" userLabel="Prefs&gt;Profiles View Controller" customClass="ProfilePreferencesViewController">
             <connections>
                 <outlet property="_addProfileButton" destination="2111" id="bA3-2H-K5q"/>
                 <outlet property="_advancedTab" destination="5776" id="2gM-Ln-WjY"/>
@@ -1417,7 +1417,7 @@ DQ
                 <outlet property="view" destination="1946" id="QfY-2A-k9W"/>
             </connections>
         </customObject>
-        <customObject id="dVg-Ac-SiZ" userLabel="Profiles&gt;General View Controller" customClass="ProfilesGeneralPreferencesViewController">
+        <customObject id="dVg-Ac-SiZ" userLabel="Prefs&gt;Profiles&gt;General View Controller" customClass="ProfilesGeneralPreferencesViewController">
             <connections>
                 <outlet property="_advancedWorkingDirWindowController" destination="Cct-nR-QI7" id="BT2-8e-6Md"/>
                 <outlet property="_badgeText" destination="sa9-oD-SMc" id="MvW-wP-hbS"/>
@@ -1456,7 +1456,7 @@ DQ
                 <outlet property="view" destination="xGo-ez-mEe" id="fuM-10-WAU"/>
             </connections>
         </customObject>
-        <customObject id="Cct-nR-QI7" customClass="AdvancedWorkingDirectoryWindowController"/>
+        <customObject id="Cct-nR-QI7" userLabel="Prefs&gt;Profiles&gt;General&gt;Advanced Working Dir Window Controller" customClass="AdvancedWorkingDirectoryWindowController"/>
         <customObject id="p8i-eM-oBc" userLabel="Prefs&gt;Profiles&gt;Colors View Controller" customClass="ProfilesColorsPreferencesViewController">
             <connections>
                 <outlet property="_ansi0Color" destination="2297" id="Naq-Zb-19H"/>
@@ -1537,7 +1537,7 @@ DQ
                 <outlet property="view" destination="G2G-W6-kWa" id="dro-S5-ibW"/>
             </connections>
         </customObject>
-        <customObject id="BMA-OA-Kzc" userLabel="Profiles&gt;Profiles&gt;Window View Controller" customClass="ProfilesWindowPreferencesViewController">
+        <customObject id="BMA-OA-Kzc" userLabel="Prefs&gt;Profiles&gt;Window View Controller" customClass="ProfilesWindowPreferencesViewController">
             <connections>
                 <outlet property="_backgroundImageMode" destination="TfM-qR-99a" id="6E7-ta-mrr"/>
                 <outlet property="_backgroundImagePreview" destination="4974" id="zoR-T3-lJq"/>
@@ -1569,7 +1569,46 @@ DQ
                 <outlet property="view" destination="77f-eM-Dma" id="LjX-ea-ide"/>
             </connections>
         </customObject>
-        <customObject id="gMD-DK-gev" customClass="ProfilesTerminalPreferencesViewController">
+        <customObject id="TG6-06-mq9" userLabel="Prefs&gt;Profiles&gt;Session View Controller" customClass="ProfilesSessionPreferencesViewController">
+            <connections>
+                <outlet property="_alwaysWarn" destination="jr3-cM-gDJ" id="eda-kC-gu8"/>
+                <outlet property="_autoLog" destination="5685" id="27x-QK-Uur"/>
+                <outlet property="_changeLogDir" destination="5687" id="mMH-ci-Pff"/>
+                <outlet property="_closeSessionsOnEnd" destination="5681" id="7OH-SS-Zp9"/>
+                <outlet property="_configureStatusBar" destination="crL-dF-Ixm" id="Wa6-tm-Sfr"/>
+                <outlet property="_idleCode" destination="5698" id="wWW-3F-nXP"/>
+                <outlet property="_idlePeriod" destination="Dvw-Ch-E3y" id="Ts1-PZ-huD"/>
+                <outlet property="_jobsTable" destination="5661" id="yIR-qA-xyG"/>
+                <outlet property="_logDir" destination="5686" id="9gN-0Q-j71"/>
+                <outlet property="_logDirWarning" destination="5688" id="LwF-JR-iDw"/>
+                <outlet property="_neverWarn" destination="S85-6e-Wc9" id="6nd-Pt-QYC"/>
+                <outlet property="_reduceFlicker" destination="Flt-We-Y3i" id="gLN-is-gOD"/>
+                <outlet property="_removeJob" destination="5669" id="YFO-c0-Vq2"/>
+                <outlet property="_sendCodeWhenIdle" destination="5697" id="dJR-J9-XOR"/>
+                <outlet property="_statusBarEnabled" destination="cO8-6s-51k" id="q6E-b3-j7D"/>
+                <outlet property="_undoTimeout" destination="ksA-qB-n6W" id="YVr-dx-p2r"/>
+                <outlet property="_warnContainer" destination="9hB-rM-RqL" id="XZB-xl-v3a"/>
+                <outlet property="_warnIfJobsBesides" destination="EUn-gf-bpP" id="5Bb-fl-Kpv"/>
+                <outlet property="delegate" destination="HVI-63-mNz" id="ctD-Hw-Es8"/>
+                <outlet property="view" destination="ayN-Cl-pQs" id="xvI-1B-ZWf"/>
+            </connections>
+        </customObject>
+        <customObject id="kOZ-HN-eXg" userLabel="Prefs&gt;Profiles&gt;Keys View Controller" customClass="ProfilesKeysPreferencesViewController">
+            <connections>
+                <outlet property="_applicationKeypadAllowed" destination="U4H-3c-nZg" id="eUF-jC-ElI"/>
+                <outlet property="_configureHotKey" destination="buI-gb-hoX" id="yAR-QQ-pnW"/>
+                <outlet property="_deleteSendsCtrlHButton" destination="5074" id="g14-kJ-aEi"/>
+                <outlet property="_hasHotkey" destination="he1-vO-4KV" id="kDr-tW-FQn"/>
+                <outlet property="_hotKeyContainerView" destination="Rmc-92-zTk" id="hRa-hQ-fI5"/>
+                <outlet property="_keyMappingViewController" destination="ANy-SZ-4JP" id="cji-9x-lSb"/>
+                <outlet property="_optionKeySends" destination="4291" id="IFj-h4-wKL"/>
+                <outlet property="_rightOptionKeySends" destination="4293" id="qUt-MU-5Nv"/>
+                <outlet property="_useLibTickit" destination="JI4-WQ-gMX" id="Law-dB-f3B"/>
+                <outlet property="delegate" destination="HVI-63-mNz" id="xet-WM-Yj5"/>
+                <outlet property="view" destination="M5G-Dw-0HO" id="7cT-58-ldP"/>
+            </connections>
+        </customObject>
+        <customObject id="gMD-DK-gev" userLabel="Prefs&gt;Profiles&gt;Terminal View Controller" customClass="ProfilesTerminalPreferencesViewController">
             <connections>
                 <outlet property="_allowTitleReporting" destination="6387" id="ET9-YF-B1M"/>
                 <outlet property="_allowTitleSetting" destination="xih-tE-Xk7" id="mDx-e5-6YC"/>
@@ -1603,45 +1642,7 @@ DQ
                 <outlet property="view" destination="0rQ-EK-tyN" id="e2I-lI-Mj1"/>
             </connections>
         </customObject>
-        <customObject id="TG6-06-mq9" userLabel="Profiles&gt;Session View Controller" customClass="ProfilesSessionPreferencesViewController">
-            <connections>
-                <outlet property="_alwaysWarn" destination="jr3-cM-gDJ" id="eda-kC-gu8"/>
-                <outlet property="_autoLog" destination="5685" id="27x-QK-Uur"/>
-                <outlet property="_changeLogDir" destination="5687" id="mMH-ci-Pff"/>
-                <outlet property="_closeSessionsOnEnd" destination="5681" id="7OH-SS-Zp9"/>
-                <outlet property="_configureStatusBar" destination="crL-dF-Ixm" id="Wa6-tm-Sfr"/>
-                <outlet property="_idleCode" destination="5698" id="wWW-3F-nXP"/>
-                <outlet property="_idlePeriod" destination="Dvw-Ch-E3y" id="Ts1-PZ-huD"/>
-                <outlet property="_jobsTable" destination="5661" id="yIR-qA-xyG"/>
-                <outlet property="_logDir" destination="5686" id="9gN-0Q-j71"/>
-                <outlet property="_logDirWarning" destination="5688" id="LwF-JR-iDw"/>
-                <outlet property="_neverWarn" destination="S85-6e-Wc9" id="6nd-Pt-QYC"/>
-                <outlet property="_reduceFlicker" destination="Flt-We-Y3i" id="gLN-is-gOD"/>
-                <outlet property="_removeJob" destination="5669" id="YFO-c0-Vq2"/>
-                <outlet property="_sendCodeWhenIdle" destination="5697" id="dJR-J9-XOR"/>
-                <outlet property="_statusBarEnabled" destination="cO8-6s-51k" id="q6E-b3-j7D"/>
-                <outlet property="_undoTimeout" destination="ksA-qB-n6W" id="YVr-dx-p2r"/>
-                <outlet property="_warnContainer" destination="9hB-rM-RqL" id="XZB-xl-v3a"/>
-                <outlet property="_warnIfJobsBesides" destination="EUn-gf-bpP" id="5Bb-fl-Kpv"/>
-                <outlet property="delegate" destination="HVI-63-mNz" id="ctD-Hw-Es8"/>
-                <outlet property="view" destination="ayN-Cl-pQs" id="xvI-1B-ZWf"/>
-            </connections>
-        </customObject>
-        <customObject id="kOZ-HN-eXg" userLabel="Profiles Keys View Controller" customClass="ProfilesKeysPreferencesViewController">
-            <connections>
-                <outlet property="_applicationKeypadAllowed" destination="U4H-3c-nZg" id="eUF-jC-ElI"/>
-                <outlet property="_configureHotKey" destination="buI-gb-hoX" id="yAR-QQ-pnW"/>
-                <outlet property="_deleteSendsCtrlHButton" destination="5074" id="g14-kJ-aEi"/>
-                <outlet property="_hasHotkey" destination="he1-vO-4KV" id="kDr-tW-FQn"/>
-                <outlet property="_hotKeyContainerView" destination="Rmc-92-zTk" id="hRa-hQ-fI5"/>
-                <outlet property="_keyMappingViewController" destination="ANy-SZ-4JP" id="cji-9x-lSb"/>
-                <outlet property="_optionKeySends" destination="4291" id="IFj-h4-wKL"/>
-                <outlet property="_rightOptionKeySends" destination="4293" id="qUt-MU-5Nv"/>
-                <outlet property="delegate" destination="HVI-63-mNz" id="xet-WM-Yj5"/>
-                <outlet property="view" destination="M5G-Dw-0HO" id="7cT-58-ldP"/>
-            </connections>
-        </customObject>
-        <customObject id="Qvt-kg-svI" customClass="ProfilesAdvancedPreferencesViewController">
+        <customObject id="Qvt-kg-svI" userLabel="Prefs&gt;Profiles&gt;Advanced View Controller" customClass="ProfilesAdvancedPreferencesViewController">
             <connections>
                 <outlet property="_addBoundHost" destination="6w1-48-KZZ" id="qP5-iJ-D0j"/>
                 <outlet property="_boundHostHelp" destination="GNq-Xf-6Vi" id="WG9-GJ-hzf"/>
@@ -3992,11 +3993,11 @@ DQ
             <point key="canvasLocation" x="1332.5" y="305.5"/>
         </customView>
         <customView id="M5G-Dw-0HO" userLabel="Prefs - Profiles - Keys" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="657" height="438"/>
+            <rect key="frame" x="0.0" y="0.0" width="657" height="448"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4184">
-                    <rect key="frame" x="14" y="418" width="99" height="17"/>
+                    <rect key="frame" x="14" y="428" width="99" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Key Mappings" id="4185">
                         <font key="font" metaFont="systemBold"/>
@@ -4005,7 +4006,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <matrix toolTip="+Esc is the preferred setting for users who don't need the option key to enter diacritics or other special character." verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" id="4291">
-                    <rect key="frame" x="360" y="101" width="212" height="18"/>
+                    <rect key="frame" x="425" y="111" width="212" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     <size key="cellSize" width="68" height="18"/>
@@ -4040,7 +4041,7 @@ DQ
                     </connections>
                 </matrix>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4292">
-                    <rect key="frame" x="263" y="101" width="91" height="18"/>
+                    <rect key="frame" x="328" y="111" width="91" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Left ⌥ Key:" id="4300">
                         <font key="font" metaFont="system"/>
@@ -4049,7 +4050,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" id="4294">
-                    <rect key="frame" x="263" y="81" width="91" height="18"/>
+                    <rect key="frame" x="328" y="91" width="91" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Right ⌥ Key:" id="4295">
                         <font key="font" metaFont="system"/>
@@ -4058,7 +4059,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button id="5074">
-                    <rect key="frame" x="14" y="99" width="151" height="18"/>
+                    <rect key="frame" x="14" y="109" width="151" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">You probably don't want this; most systems use ^? (ASCII 127) for backspace. Changing this setting affects the key mappings in the table above.</string>
                     <buttonCell key="cell" type="check" title="Delete key sends ^H" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5075">
@@ -4070,7 +4071,7 @@ DQ
                     </connections>
                 </button>
                 <button id="U4H-3c-nZg">
-                    <rect key="frame" x="14" y="79" width="219" height="18"/>
+                    <rect key="frame" x="14" y="89" width="219" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">Some programs (such as vim and emacs) want to put the numeric keypad in "application" mode. Turn this off if you always want it to act as a numeric keypad.</string>
                     <buttonCell key="cell" type="check" title="Allow application keypad mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="cTE-39-JA0">
@@ -4082,7 +4083,7 @@ DQ
                     </connections>
                 </button>
                 <customView id="6sa-Ma-Wvi">
-                    <rect key="frame" x="16" y="123" width="621" height="287"/>
+                    <rect key="frame" x="16" y="133" width="621" height="287"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
                 <customView id="Rmc-92-zTk">
@@ -4124,7 +4125,7 @@ DQ
                     </subviews>
                 </customView>
                 <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" id="4293">
-                    <rect key="frame" x="360" y="81" width="212" height="18"/>
+                    <rect key="frame" x="425" y="91" width="212" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     <size key="cellSize" width="68" height="18"/>
@@ -4158,9 +4159,21 @@ DQ
                         <outlet property="nextKeyView" destination="5074" id="5287"/>
                     </connections>
                 </matrix>
+                <button id="JI4-WQ-gMX">
+                    <rect key="frame" x="14" y="69" width="148" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">Some programs (such as vim and emacs) want to put the numeric keypad in "application" mode. Turn this off if you always want it to act as a numeric keypad.</string>
+                    <buttonCell key="cell" type="check" title="Use libtickit protocol" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4hL-Io-AkB">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="ZhS-3H-TRk"/>
+                    </connections>
+                </button>
             </subviews>
             <accessibility identifier="prefsProfilesKeys"/>
-            <point key="canvasLocation" x="-4.5" y="35"/>
+            <point key="canvasLocation" x="-4.5" y="40"/>
         </customView>
         <customView id="prV-vq-Wo2" userLabel="Prefs - Profiles - Advanced" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="617"/>
@@ -4333,7 +4346,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="519" height="76"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="519" height="76"/>

@@ -222,6 +222,7 @@
 #define KEY_HOTKEY_ACTIVATE_WITH_MODIFIER     @"HotKey Activated By Modifier"
 #define KEY_HOTKEY_MODIFIER_ACTIVATION        @"HotKey Modifier Activation"
 #define KEY_HOTKEY_ALTERNATE_SHORTCUTS        @"HotKey Alternate Shortcuts"
+#define KEY_USE_LIBTICKIT_PROTOCOL            @"Use libtickit protocol"
 
 // Advanced
 #define KEY_TRIGGERS                         @"Triggers"  // NSArray of NSDictionary
@@ -246,6 +247,12 @@ extern const NSTimeInterval kMinimumAntiIdlePeriod;
 typedef NS_ENUM(NSInteger, iTermProfileSpaceSetting) {
     iTermProfileJoinsAllSpaces = -1,
     iTermProfileOpenInCurrentSpace = 0
+};
+
+typedef NS_ENUM(int, iTermOptionKeyBehavior) {
+    OPT_NORMAL = 0,
+    OPT_META = 1,
+    OPT_ESC = 2
 };
 
 // The numerical values for each enum matter because they are used in

@@ -38,5 +38,6 @@
 
 + (NSData *)it_dataWithArchivedObject:(id<NSCoding>)object;
 - (id)it_unarchivedObject;
+- (BOOL)isEqualToByte:(unsigned char)byte;
 
 @end

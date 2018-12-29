@@ -210,4 +210,12 @@
     return object;
 }
 
+- (BOOL)isEqualToByte:(unsigned char)byte {
+    if (self.length != 1) {
+        return NO;
+    }
+    unsigned char myByte = ((unsigned char *)self.bytes)[0];
+    return byte == myByte;
+}
+
 @end
