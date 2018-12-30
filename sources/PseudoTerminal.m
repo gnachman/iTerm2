@@ -7452,7 +7452,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([self shouldHaveTallTabBar]) {
         return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
     } else {
-        return iTermTabBarControlViewDefaultHeight;
+        return [iTermAdvancedSettingsModel defaultTabBarHeight];
     }
 }
 

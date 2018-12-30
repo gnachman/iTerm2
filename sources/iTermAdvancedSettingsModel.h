@@ -55,6 +55,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)coloredSelectedTabOutlineStrength;
 + (double)coloredUnselectedTabTextProminence;
 + (double)compactMinimalTabBarHeight;
++ (CGFloat)defaultTabBarHeight;
 + (BOOL)conservativeURLGuessing;
 + (BOOL)copyWithStylesByDefault;
 + (BOOL)darkThemeHasBlackTitlebar;
