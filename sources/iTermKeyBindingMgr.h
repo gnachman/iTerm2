@@ -25,6 +25,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "iTermTuple.h"
 #import "ProfileModel.h"
 
 // Key Definitions
@@ -191,6 +192,10 @@
 // load an xml plist with the given filename, and return it in dictionary
 // format.
 + (NSDictionary*)readPresetKeyMappingsFromPlist:(NSString *)thePlist;
+
++ (NSDictionary *)builtInPresetKeyMappings;
++ (NSArray<iTermTriple<NSString *, NSDictionary *, NSNumber *> *> *)triplesOfIdentifiersAndMappingsInProfile:(Profile *)profile;
++ (NSArray<iTermTuple<NSString *, NSDictionary *> *> *)tuplesInAllPresets;
 
 + (NSArray *)globalPresetNames;
 

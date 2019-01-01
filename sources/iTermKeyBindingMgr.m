@@ -622,6 +622,33 @@ exit:
     return [NSString stringWithFormat: @"0x%x-0x%x", characterIgnoringModifiers, theModifiers];
 }
 
++ (NSArray<iTermTuple<NSString *, NSDictionary *> *> *)tuplesInAllPresets {
+    NSMutableArray<iTermTuple<NSString *, NSDictionary *> *> *result = [NSMutableArray array];
+
+    NSDictionary *builtins = [iTermKeyBindingMgr builtInPresetKeyMappings];
+    for (NSString *name in builtins) {
+        NSDictionary<NSString *, NSDictionary *> *dict = builtins[name];
+        [dict enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull combo, NSDictionary * _Nonnull mapping, BOOL * _Nonnull stop) {
+            [result addObject:[iTermTuple tupleWithObject:combo andObject:mapping]];
+        }];
+    }
+    return result;
+}
+
++ (NSArray<iTermTriple<NSString *, NSDictionary *, NSNumber *> *> *)triplesOfIdentifiersAndMappingsInProfile:(Profile *)profile {
+    NSMutableArray<iTermTriple<NSString *, NSDictionary *, NSNumber *> *> *result = [NSMutableArray array];
+    NSDictionary<NSString *, NSDictionary *> *keyboardMap = profile[KEY_KEYBOARD_MAP];
+    [keyboardMap enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSDictionary * _Nonnull mapping, BOOL * _Nonnull stop) {
+        [result addObject:[iTermTriple tripleWithObject:key andObject:mapping object:@NO]];
+    }];
+
+    NSDictionary<NSString *, NSDictionary *> *touchbarMap = profile[KEY_TOUCHBAR_MAP];
+    [touchbarMap enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSDictionary * _Nonnull mapping, BOOL * _Nonnull stop) {
+        [result addObject:[iTermTriple tripleWithObject:key andObject:mapping object:@YES]];
+    }];
+    return result;
+}
+
 + (int)localActionForKeyCode:(unichar)keyCode
                    modifiers:(unsigned int)keyMods
                         text:(NSString **)text
@@ -776,11 +803,15 @@ exit:
     return dict;
 }
 
++ (NSDictionary *)builtInPresetKeyMappings {
+    return [self readPresetKeyMappingsFromPlist:@"PresetKeyMappings"];
+}
+
 + (void)setKeyMappingsToPreset:(NSString*)presetName inBookmark:(NSMutableDictionary*)bookmark {
     NSMutableDictionary* km = [NSMutableDictionary dictionaryWithDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]];
 
     [km removeAllObjects];
-    NSDictionary* presetsDict = [self readPresetKeyMappingsFromPlist:@"PresetKeyMappings"];
+    NSDictionary* presetsDict = [self builtInPresetKeyMappings];
 
     NSDictionary* settings = [presetsDict objectForKey:presetName];
     [km setDictionary:settings];
@@ -789,7 +820,7 @@ exit:
 }
 
 + (NSArray *)presetKeyMappingsNames {
-    NSDictionary* presetsDict = [self readPresetKeyMappingsFromPlist:@"PresetKeyMappings"];
+    NSDictionary* presetsDict = [self builtInPresetKeyMappings];
     return [presetsDict allKeys];
 }
 

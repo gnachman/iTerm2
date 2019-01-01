@@ -4160,15 +4160,26 @@ DQ
                     </connections>
                 </matrix>
                 <button id="JI4-WQ-gMX">
-                    <rect key="frame" x="14" y="69" width="148" height="18"/>
+                    <rect key="frame" x="14" y="69" width="195" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">Some programs (such as vim and emacs) want to put the numeric keypad in "application" mode. Turn this off if you always want it to act as a numeric keypad.</string>
-                    <buttonCell key="cell" type="check" title="Use libtickit protocol" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4hL-Io-AkB">
+                    <buttonCell key="cell" type="check" title="Report modifiers using CSI u" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4hL-Io-AkB">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="ZhS-3H-TRk"/>
+                        <action selector="settingChanged:" target="kOZ-HN-eXg" id="sEP-1F-ZXw"/>
+                    </connections>
+                </button>
+                <button horizontalHuggingPriority="750" verticalHuggingPriority="750" id="2zs-Mo-G3z">
+                    <rect key="frame" x="217" y="63" width="25" height="25"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="H7E-rj-aaa">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="csiuHelp:" target="kOZ-HN-eXg" id="ClE-0i-IMq"/>
                     </connections>
                 </button>
             </subviews>
