@@ -181,6 +181,10 @@
     const NSEventModifierFlags allEventModifierFlags = (NSEventModifierFlagControl |
                                                         NSEventModifierFlagOption |
                                                         NSEventModifierFlagShift);
+    if ((eventModifiers & allEventModifierFlags) == NSEventModifierFlagOption) {
+        // Prefer to use esc+ for these, per LeoNerd in email.
+        return nil;
+    }
     if (keyCode == kVK_Space && (eventModifiers & allEventModifierFlags) == NSEventModifierFlagControl) {
         // Control-space -> '\0'
         const unichar c = 0;

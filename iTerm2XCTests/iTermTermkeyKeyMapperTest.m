@@ -197,7 +197,17 @@ charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
     [self verifyCharacters:[self character:0xe7] charactersIgnoringModifiers:@"c" modifiers:0xc2140 keycode:8 expected:[self csiUWithCodepoint:'c' modifier:7]];
 }
 
+- (void)testAltBackspace {
+    _optionKeyBehavior = OPT_ESC;
+    [self verifyCharacters:[self character:0x7f] charactersIgnoringModifiers:[self character:0x7f] modifiers:0x80140 keycode:51 expected:[self escPlus:[self character:0x7f]]];
+}
+
 #pragma mark - Modified C0 Controls
+
+- (void)testAltShiftBackspace {
+    _optionKeyBehavior = OPT_ESC;
+    [self verifyCharacters:[self character:0x7f] charactersIgnoringModifiers:[self character:0x7f] modifiers:0xa0142 keycode:51 expected:[self csiUWithCodepoint:0x7f modifier:4]];
+}
 
 - (void)testShiftEnter {
     [self verifyCharacters:[self character:0xd] charactersIgnoringModifiers:[self character:0xd] modifiers:0x20102 keycode:36 expected:[self csiUWithCodepoint:13 modifier:2]];
