@@ -142,11 +142,53 @@ charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
 }
 
 - (void)testCtrlOpenBracket {
-    [self verifyCharacters:[self character:0x1b] charactersIgnoringModifiers:@"[" modifiers:0x42100 keycode:33 expected:[self csiUWithCodepoint:91 modifier:5]];
+    // This is an intentional deviation because the touch bar makes pressing esc hard.
+    [self verifyCharacters:[self character:0x1b] charactersIgnoringModifiers:@"[" modifiers:0x42100 keycode:33 expected:[self character:27]];
 }
 
 - (void)testCtrlAtSign {
-    [self verifyCharacters:[self character:0] charactersIgnoringModifiers:@"@" modifiers:0x62104 keycode:19 expected:[self csiUWithCodepoint:64 modifier:5]];
+    // This is an intentional deviation from the spec because control-2 changes desktops.
+    [self verifyCharacters:[self character:0] charactersIgnoringModifiers:@"@" modifiers:0x62104 keycode:19 expected:[self character:0]];
+}
+
+- (void)testControlCaret {
+    [self verifyCharacters:[self character:0x1e] charactersIgnoringModifiers:@"^" modifiers:0x62104 keycode:22 expected:[self character:0x1e]];
+}
+
+- (void)testControlHyphen {
+    [self verifyCharacters:[self character:0x1f] charactersIgnoringModifiers:@"-" modifiers:0x42100 keycode:27 expected:[self character:0x1f]];
+}
+
+- (void)testControlUnderscore {
+    [self verifyCharacters:[self character:0x1f] charactersIgnoringModifiers:@"_" modifiers:0x62102 keycode:27 expected:[self character:0x1f]];
+}
+
+- (void)testCtrl2 {
+    [self verifyCharacters:[self character:'2'] charactersIgnoringModifiers:@"2" modifiers:0x42100 keycode:19 expected:[self character:0]];
+}
+
+- (void)testControlOpenBracket {
+    [self verifyCharacters:[self character:0x1b] charactersIgnoringModifiers:@"[" modifiers:0x42100 keycode:33 expected:[self character:27]];
+}
+
+- (void)testControlShiftOpenBracket {
+    [self verifyCharacters:[self character:0x1b] charactersIgnoringModifiers:@"{" modifiers:0x62102 keycode:33 expected:[self csiUWithCodepoint:'{' modifier:5]];
+}
+
+- (void)testControlSlash {
+    [self verifyCharacters:[self character:'/'] charactersIgnoringModifiers:@"/" modifiers:0x42100 keycode:44 expected:[self character:0x7f]];
+}
+
+- (void)testControlQuestionMark {
+    [self verifyCharacters:[self character:'?'] charactersIgnoringModifiers:@"/" modifiers:0x60103 keycode:44 expected:[self csiUWithCodepoint:'/' modifier:5]];
+}
+
+- (void)testControlCloseBracket {
+    [self verifyCharacters:[self character:0x1d] charactersIgnoringModifiers:@"]" modifiers:0x42100 keycode:30 expected:[self character:0x1d]];
+}
+
+- (void)testControlShiftCloseBracket {
+    [self verifyCharacters:[self character:0x1d] charactersIgnoringModifiers:@"}" modifiers:0x62102 keycode:30 expected:[self csiUWithCodepoint:'}' modifier:5]];
 }
 
 - (void)testCtrlShiftI {

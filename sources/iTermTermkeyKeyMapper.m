@@ -286,16 +286,55 @@
 }
 
 // Only control pressed
-- (NSString *)modifiedUnicodeStringForControlCharacter:(unichar)codePoint {
+- (NSString *)modifiedUnicodeStringForControlCharacter:(unichar)codePoint
+                                          shiftPressed:(BOOL)shiftPressed {
     switch (codePoint) {
         case 'i':
         case 'm':
-        case '[':
-        case '@':
             return nil;
 
+        case '[':
+            // Intentional deviation from the CSI u spec because of the stupid touch bar.
+            if (shiftPressed) {
+                return nil;
+            }
+            return [self stringWithCharacter:27];
+
         case ' ':
+            if (shiftPressed) {
+                return nil;
+            }
             return [self stringWithCharacter:0];
+
+        case '2':
+        case '@':  // Intentional deviation from the CSI u spec because control+number changes desktops.
+            return [self stringWithCharacter:0];
+
+        case '\\':
+            if (shiftPressed) {
+                return nil;
+            }
+            return [self stringWithCharacter:28];
+
+        case ']':
+            if (shiftPressed) {
+                return nil;
+            }
+            return [self stringWithCharacter:29];
+
+        case '^':  // Intentional deviation from the CSI u spec because control+number changes desktops.
+        case '6':
+            return [self stringWithCharacter:30];
+
+        case '-':
+        case '_':  // Intentional deviation from the CSI u spec for emacs users.
+            return [self stringWithCharacter:31];
+
+        case '/':  // Intentional deviation from the CSI u spec for the sake of tradition.
+            if (shiftPressed) {
+                return nil;
+            }
+            return [self stringWithCharacter:0x7f];
     }
 
     if (codePoint < 'a') {
@@ -337,8 +376,11 @@
     }
 
     // Modified unicode - control
-    if ((eventModifiers & allEventModifierFlags) == NSEventModifierFlagControl) {
-        NSString *string = [self modifiedUnicodeStringForControlCharacter:codePoint];
+    const NSEventModifierFlags allEventModifierFlagsExShift = (NSEventModifierFlagControl |
+                                                               NSEventModifierFlagOption |
+                                                               NSEventModifierFlagFunction);
+    if ((eventModifiers & allEventModifierFlagsExShift) == NSEventModifierFlagControl) {
+        NSString *string = [self modifiedUnicodeStringForControlCharacter:codePoint shiftPressed:!!(eventModifiers & NSEventModifierFlagShift)];
         if (string) {
             return string;
         }
