@@ -354,7 +354,15 @@ static BOOL hasBecomeActive = NO;
     } else if ([menuItem action] == @selector(showTipOfTheDay:)) {
         return ![[iTermTipController sharedInstance] showingTip];
     } else if ([menuItem action] == @selector(toggleSecureInput:)) {
-        menuItem.state = IsSecureEventInputEnabled() ? NSOnState : NSOffState;
+        if (IsSecureEventInputEnabled()) {
+            if (secureInputDesired_) {
+                menuItem.state = NSControlStateValueOn;
+            } else {
+                menuItem.state = NSControlStateValueMixed;
+            }
+        } else {
+            menuItem.state = secureInputDesired_ ? NSOnState : NSOffState;
+        }
         return YES;
     } else if ([menuItem action] == @selector(togglePinHotkeyWindow:)) {
         iTermProfileHotKey *profileHotkey = self.currentProfileHotkey;
@@ -2009,7 +2017,7 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)toggleSecureInput:(id)sender {
     // Set secureInputDesired_ to the opposite of the current state.
-    secureInputDesired_ = !IsSecureEventInputEnabled();
+    secureInputDesired_ = !secureInputDesired_;
     DLog(@"toggleSecureInput called. Setting desired to %d", (int)secureInputDesired_);
 
     // Try to set the system's state of secure input to the desired state.
