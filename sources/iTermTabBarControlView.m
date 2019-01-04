@@ -13,8 +13,6 @@
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
 
-CGFloat iTermTabBarControlViewDefaultHeight = 24;
-
 @interface NSView (Private)
 - (NSRect)_opaqueRectForWindowMoveWhenInTitlebar;
 @end
@@ -42,7 +40,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
         // This used to depend on job but it's too difficult to do now that different sessions might
         // have different title formats.
         self.ignoreTrailingParentheticalsForSmartTruncation = YES;
-        self.height = iTermTabBarControlViewDefaultHeight;
+        self.height = [iTermAdvancedSettingsModel defaultTabBarHeight];
     }
     return self;
 }

@@ -58,6 +58,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)conservativeURLGuessing;
 + (BOOL)copyWithStylesByDefault;
 + (BOOL)darkThemeHasBlackTitlebar;
++ (CGFloat)defaultTabBarHeight;
 + (BOOL)detectPasswordInput;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (BOOL)disableAppNap;
