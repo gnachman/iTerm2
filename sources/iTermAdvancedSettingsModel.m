@@ -302,6 +302,7 @@ DEFINE_BOOL(openNewWindowAtStartup, YES, SECTION_GENERAL @"Open a window at star
 DEFINE_FLOAT(timeToWaitForEmojiPanel, 1, SECTION_GENERAL @"How long to wait for the emoji panel to open in seconds?\nFloating hotkey windows adjust their level when the emoji panel is open. If it’s really slow you might need to increase this value to prevent it from appearing beneath a floating hotkey window.");
 DEFINE_STRING(fallbackLCCType, @"", SECTION_GENERAL @"Value to set LC_CTYPE to if the machine‘s combination of country and language are not supported.\nIf unset, the encoding (e.g., UTF-8) will be used.");
 #pragma mark - Drawing
+DEFINE_BOOL(enableCharacterAccentMenu, NO, SECTION_GENERAL @"Enable character accent menu.\nThis disables the ordinary key repeat behavior for press-and-hold.");
 
 #define SECTION_DRAWING @"Drawing: "
 

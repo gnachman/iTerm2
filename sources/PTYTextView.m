@@ -1414,6 +1414,7 @@ static const int kDragThreshold = 3;
     return [super performKeyEquivalent:theEvent];
 }
 
+// Interpret the key events as text
 // I haven't figured out how to test this code automatically, but a few things to try:
 // * Repeats in US
 // * Repeats in AquaSKK's Hiragana
@@ -1598,8 +1599,11 @@ static const int kDragThreshold = 3;
             shouldPassToDelegate &= event.isARepeat;
         }
         if (eschewCocoaTextHandling) {
-            // It was never sent tp cocoa so the delegate must take it
+            // It was never sent to cocoa so the delegate must take it
             shouldPassToDelegate = YES;
+        }
+        if ([iTermAdvancedSettingsModel enableCharacterAccentMenu] && event.isARepeat) {
+            shouldPassToDelegate = NO;
         }
         if (shouldPassToDelegate) {
             DLog(@"PTYTextView keyDown unhandled (likely repeated) keypress with no IME, send to delegate");
@@ -5272,6 +5276,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
 }
 
+// Just log the text as we get it to show that it works
 // TODO: Respect replacementRange
 - (void)insertText:(id)aString replacementRange:(NSRange)replacementRange {
     DLog(@"insertText:%@ replacementRange:%@", aString ,NSStringFromRange(replacementRange));
@@ -5291,7 +5296,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
         DLog(@"insertText: clear marked text");
-         [self invalidateInputMethodEditorRect];
+        [self invalidateInputMethodEditorRect];
         _drawingHelper.inputMethodMarkedRange = NSMakeRange(0, 0);
         _drawingHelper.markedText = nil;
         _drawingHelper.numberOfIMELines = 0;
@@ -5398,8 +5403,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (NSRange)selectedRange {
+    if (![iTermAdvancedSettingsModel enableCharacterAccentMenu] && _eventBeingHandled) {
+        return NSMakeRange(NSNotFound, 0);
+    }
+
     DLog(@"selectedRange->NSNotFound");
-    return NSMakeRange(NSNotFound, 0);
+    const int y = [_dataSource cursorY] - 1;
+    const int x = [_dataSource cursorX] - 1;
+    NSInteger offset = _dataSource.numberOfLines - _dataSource.height + 1;
+    NSInteger width = _dataSource.width;
+    iTermSubSelection *sub = _selection.allSubSelections.firstObject;
+    if (sub) {
+        return NSMakeRange(sub.range.coordRange.start.x +
+                           (sub.range.coordRange.start.y + offset) * width,
+                           VT100GridCoordDistance(sub.range.coordRange.start, sub.range.coordRange.end, (int)width));
+    }
+    return NSMakeRange(x + (y + offset) * width, 0);
 }
 
 - (NSArray *)validAttributesForMarkedText

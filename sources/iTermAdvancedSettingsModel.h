@@ -75,6 +75,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)echoProbeDuration;
 + (BOOL)eliminateCloseButtons;
 + (BOOL)enableAPIServer;
++ (BOOL)enableCharacterAccentMenu;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;
 + (BOOL)experimentalKeyHandling;
