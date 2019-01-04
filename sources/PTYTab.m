@@ -5075,11 +5075,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return _numberOfSplitViewDragsInProgress == 0;
 }
 
+- (PTYSession *)sessionWithGUID:(NSString *)guid {
+    return [self.sessions objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
+        return [session.guid isEqualToString:guid];
+    }];
+}
+
 - (void)sessionDraggingExited:(PTYSession *)session {
     if (_temporarilyUnmaximizedSessionGUID) {
-        PTYSession *session = [self.sessions objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
-            return [session.guid isEqualToString:_temporarilyUnmaximizedSessionGUID];
-        }];
+        PTYSession *session = [self sessionWithGUID:_temporarilyUnmaximizedSessionGUID];
         if (session && !self.hasMaximizedPane) {
             [self setActiveSession:session];
             [self maximize];
@@ -5092,10 +5096,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)sessionDraggingEntered:(PTYSession *)session {
     if (self.hasMaximizedPane) {
         [_temporarilyUnmaximizedSessionGUID autorelease];
-        _temporarilyUnmaximizedSessionGUID = [[session guid] copy];
+        _temporarilyUnmaximizedSessionGUID = [[self.activeSession guid] copy];
         [self unmaximize];
     }
 }
 
+- (BOOL)sessionShouldSendWindowSizeIOCTL:(PTYSession *)session {
+    return _temporarilyUnmaximizedSessionGUID == nil;
+}
 
 @end
