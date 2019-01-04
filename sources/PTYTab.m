@@ -5267,15 +5267,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (PTYSession *)sessionWithGUID:(NSString *)guid {
+    return [self.sessions objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
+        return [session.guid isEqualToString:guid];
+    }];
+}
+
 - (NSView *)sessionContainerView:(PTYSession *)session {
     return root_;
 }
 
 - (void)sessionDraggingExited:(PTYSession *)session {
     if (_temporarilyUnmaximizedSessionGUID) {
-        PTYSession *session = [self.sessions objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
-            return [session.guid isEqualToString:self->_temporarilyUnmaximizedSessionGUID];
-        }];
+        PTYSession *session = [self sessionWithGUID:_temporarilyUnmaximizedSessionGUID];
         if (session && !self.hasMaximizedPane) {
             [self setActiveSession:session];
             [self maximize];
@@ -5289,6 +5293,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         _temporarilyUnmaximizedSessionGUID = [[session guid] copy];
         [self unmaximize];
     }
+}
+
+- (BOOL)sessionShouldSendWindowSizeIOCTL:(PTYSession *)session {
+    return _temporarilyUnmaximizedSessionGUID == nil;
 }
 
 @end
