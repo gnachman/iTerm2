@@ -326,6 +326,9 @@
         if (valuesMustBeArgs) {
             if (nextArgumentName == nil) {
                 legalPaths = [legalPaths mapWithBlock:^id(NSString *anObject) {
+                    if ([anObject hasSuffix:@"."]) {
+                        return anObject;
+                    }
                     return [anObject stringByAppendingString:@")"];
                 }];
             } else {

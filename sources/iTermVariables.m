@@ -338,7 +338,7 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
 + (NSSet<NSString *> *)recordedVariableNamesInContext:(iTermVariablesSuggestionContext)context
                                         augmentedWith:(NSSet<NSString *> *)augmentations
                                                prefix:(NSString *)prefix {
-    NSMutableSet<NSString *> *terminalCandidates = [[self recordedVariableNamesInContext:context] mutableCopy];
+    NSMutableSet<NSString *> *terminalCandidates = [[self recordedTerminalVariableNamesInContext:context] mutableCopy];
     [terminalCandidates unionSet:augmentations];
 
     NSMutableSet<NSString *> *results = [NSMutableSet set];
@@ -347,29 +347,33 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
         [results unionSet:paths];
     }
 
-    const NSInteger minimumNumberOfComponents = [[prefix componentsSeparatedByString:@"."] count];
-    for (NSString *terminal in [results copy]) {
-        NSSet<NSString *> *nonterminals = [self nonterminalsPrecedingPath:terminal minimumNumberOfComponents:minimumNumberOfComponents];
-        [results unionSet:nonterminals];
+    // This catches session.tab.currentSession for prefix session.tab.c
+    NSSet<NSString *> *nonterminalCandidates = [self recordedNonterminalVariableNamesInContext:context];
+    for (NSString *candidate in nonterminalCandidates) {
+        NSSet<NSString *> *paths = [self recordedVariableNamesInContext:context fromCandidate:candidate prefix:prefix];
+        for (NSString *path in paths) {
+            if ([path isEqualToString:candidate]) {
+                [results addObject:[path stringByAppendingString:@"."]];
+            } else {
+                [results addObject:path];
+            }
+        }
     }
-    return results;
-}
 
-+ (NSSet<NSString *> *)nonterminalsPrecedingPath:(NSString *)path
-                       minimumNumberOfComponents:(NSInteger)minimumNumberOfComponents {
-    NSArray<NSString *> *parts = [path componentsSeparatedByString:@"."];
-    NSMutableSet<NSString *> *result = [NSMutableSet set];
-    for (NSInteger i = minimumNumberOfComponents; i < parts.count; i++) {
-        NSArray<NSString *> *slice = [parts subarrayToIndex:i];
-        [result addObject:[slice componentsJoinedByString:@"."]];
+    // This catches session.tab for prefix session.t
+    for (NSString *nonterminalName in nonterminalCandidates) {
+        if ([nonterminalName hasPrefix:prefix]) {
+            [results addObject:[nonterminalName stringByAppendingString:@"."]];
+        }
     }
-    return result;
+
+    return results;
 }
 
 + (NSString *)pathByConsumingNonterminalsInPath:(NSString *)prefix
                                         context:(iTermVariablesSuggestionContext)context
                                      contextOut:(out iTermVariablesSuggestionContext *)contextPtr {
-    NSSet<NSString *> *candidates = [self recordedVariableNamesInContext:context];
+    NSSet<NSString *> *candidates = [self recordedTerminalVariableNamesInContext:context];
     if ([candidates containsObject:prefix]) {
         *contextPtr = context;
         return prefix;
@@ -495,8 +499,20 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     return result;
 }
 
-+ (NSSet<NSString *> *)recordedVariableNamesInContext:(iTermVariablesSuggestionContext)context {
++ (NSSet<NSString *> *)recordedTerminalVariableNamesInContext:(iTermVariablesSuggestionContext)context {
     return [NSSet setWithArray:[[[self recordedVariablesInContext:context] allObjects] mapWithBlock:^id(iTermRecordedVariable *record) {
+        if (!record.isTerminal) {
+            return nil;
+        }
+        return record.name;
+    }]];
+}
+
++ (NSSet<NSString *> *)recordedNonterminalVariableNamesInContext:(iTermVariablesSuggestionContext)context {
+    return [NSSet setWithArray:[[[self recordedVariablesInContext:context] allObjects] mapWithBlock:^id(iTermRecordedVariable *record) {
+        if (record.isTerminal) {
+            return nil;
+        }
         return record.name;
     }]];
 }
@@ -804,6 +820,10 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
         }
     }
 
+    if ([value isKindOfClass:[iTermVariables class]] || [value isKindOfClass:[iTermWeakVariables class]]) {
+        // Don't record the use of nonterminals.
+        return self;
+    }
     [self didReferenceVariables:@[ [iTermTriple tripleWithObject:@1 andObject:self object:name] ]];
     return self;
 }
