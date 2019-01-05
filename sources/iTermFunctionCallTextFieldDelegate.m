@@ -60,9 +60,15 @@
 
 - (NSArray *)control:(NSControl *)control
             textView:(NSTextView *)textView
-         completions:(NSArray *)words
+         completions:(NSArray *)words  // Dictionary words
  forPartialWordRange:(NSRange)charRange
  indexOfSelectedItem:(NSInteger *)index {
+    NSArray<NSString *> *suggestions = [self suggestionsForRange:charRange];
+    *index = -1;  // Don't select anything. Doing so causes pathological behavior when you press period.
+    return suggestions;
+}
+
+- (NSArray<NSString *> *)suggestionsForRange:(NSRange)charRange {
     if (!self.lastEntry) {
         return nil;
     }
@@ -70,16 +76,23 @@
         // Can't deal with suggestions in the middle!
         return nil;
     }
-    NSArray<NSString *> *suggestions = [_suggester suggestionsForString:self.lastEntry];
+    NSArray<NSString *> *suggestions = [_suggester suggestionsForString:[self.lastEntry substringToIndex:NSMaxRange(charRange)]];
 
     if (!suggestions.count) {
         return nil;
     }
 
-    return [suggestions mapWithBlock:^id(NSString *s) {
+    suggestions = [suggestions mapWithBlock:^id(NSString *s) {
         return [s substringFromIndex:charRange.location];
     }];
 
+    suggestions = [suggestions sortedArrayUsingSelector:@selector(compare:)];
+    suggestions = [suggestions uniq];
+    if (suggestions.count == 0) {
+        return nil;
+    }
+
+    return suggestions;
 }
 
 - (BOOL)control:(NSControl *)control
