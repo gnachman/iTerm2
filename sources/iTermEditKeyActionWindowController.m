@@ -234,9 +234,9 @@
             parameterHidden = NO;
             [[_parameter cell] setPlaceholderString:@"Function Call"];
             if (!_functionCallDelegate) {
-                _functionCallDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:[iTermVariables recordedVariableNamesInContext:_suggestContext]
-                                                                                      passthrough:nil
-                                                                                    functionsOnly:YES];
+                _functionCallDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariables pathSourceForContext:_suggestContext]
+                                                                                           passthrough:nil
+                                                                                         functionsOnly:YES];
             }
             parameterDelegate = _functionCallDelegate;
             break;

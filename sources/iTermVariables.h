@@ -65,6 +65,7 @@ typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
     iTermVariablesSuggestionContextSession = (1 << 0),
     iTermVariablesSuggestionContextTab = (1 << 1),
     iTermVariablesSuggestionContextApp = (1 << 2),
+    // NOTE: 1<<3 is missing!
     iTermVariablesSuggestionContextWindow = (1 << 4),
 };
 
@@ -77,10 +78,14 @@ typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
 @property (nonatomic, readonly) NSDictionary<NSString *,NSString *> *stringValuedDictionary;
 
 + (instancetype)globalInstance;
++ (NSString *)stringForContext:(iTermVariablesSuggestionContext)context;
 
 + (void)recordUseOfVariableNamed:(NSString *)name
                        inContext:(iTermVariablesSuggestionContext)context;
-+ (NSSet<NSString *> *)recordedVariableNamesInContext:(iTermVariablesSuggestionContext)context;
+
++ (NSSet<NSString *> *(^)(NSString *))pathSourceForContext:(iTermVariablesSuggestionContext)context;
++ (NSSet<NSString *> *(^)(NSString *))pathSourceForContext:(iTermVariablesSuggestionContext)context
+                                             augmentedWith:(NSSet<NSString *> *)augmentations;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithContext:(iTermVariablesSuggestionContext)context owner:(id)owner NS_DESIGNATED_INITIALIZER;

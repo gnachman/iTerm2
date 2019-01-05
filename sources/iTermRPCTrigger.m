@@ -70,10 +70,10 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
 }
 
 - (id<NSTextFieldDelegate>)newParameterDelegateWithPassthrough:(id<NSTextFieldDelegate>)passthrough {
-    NSSet<NSString *> *paths = [[iTermVariables recordedVariableNamesInContext:iTermVariablesSuggestionContextSession] setByAddingObjectsFromArray:self.allPaths];
-    return [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:paths
-                                                         passthrough:passthrough
-                                                       functionsOnly:YES];
+    return [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariables pathSourceForContext:iTermVariablesSuggestionContextSession
+                                                                                                 augmentedWith:[NSSet setWithArray:self.allPaths]]
+                                                              passthrough:passthrough
+                                                            functionsOnly:YES];
 }
 
 @end

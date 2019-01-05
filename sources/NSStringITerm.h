@@ -293,6 +293,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (id)it_jsonSafeValue;
 - (NSInteger)it_numberOfLines;
 
+// Empty strings are prefixes of all strings.
+- (BOOL)it_hasPrefix:(NSString *)prefix;
+
 @end
 
 @interface NSMutableString (iTerm)

@@ -22,18 +22,18 @@
 @protected
     CPLR1Parser *_parser;
     NSDictionary<NSString *,NSArray<NSString *> *> *_functionSignatures;
-    NSSet<NSString *> *_paths;
+    NSSet<NSString *> *(^_pathSource)(NSString *prefix);
     NSString *_prefix;
     CPTokeniser *_tokenizer;
     iTermGrammarProcessor *_grammarProcessor;
 }
 
 - (instancetype)initWithFunctionSignatures:(NSDictionary<NSString *,NSArray<NSString *> *> *)functionSignatures
-                                     paths:(NSSet<NSString *> *)paths {
+                                pathSource:(NSSet<NSString *> *(^)(NSString *prefix))pathSource {
     self = [super init];
     if (self) {
         _functionSignatures = [functionSignatures copy];
-        _paths = [paths copy];
+        _pathSource = [pathSource copy];
         _tokenizer = [iTermFunctionCallParser newTokenizer];
         [self addTokenRecognizersToTokenizer:_tokenizer];
         _tokenizer.delegate = self;
@@ -214,7 +214,7 @@
     if (prefix.length == 0) {
         // Zero-prefix suggest. This is a special case to avoid an annoying shift-reduce conflict
         // and because I expect it will need fancier ranking.
-        return [self pathsAndFunctionSuggestionsWithPrefix:@"" legalPaths:_paths.allObjects];
+        return [self pathsAndFunctionSuggestionsWithPrefix:@"" legalPaths:[_pathSource(@"") allObjects]];
     }
     _prefix = prefix;
     CPTokenStream *tokenStream = [_tokenizer tokenise:prefix];
@@ -319,10 +319,10 @@
         // The truncated_interpolation's value would be bar("baz\(blatz(
         // A few recursions later you should get suggestions for blatz's arguments.
         iTermFunctionCallSuggester *inner = [[iTermFunctionCallSuggester alloc] initWithFunctionSignatures:_functionSignatures
-                                                                                                     paths:_paths];
+                                                                                                pathSource:_pathSource];
         return [inner suggestionsForString:expression[@"truncated_interpolation"]];
     } else {
-        NSArray<NSString *> *legalPaths = _paths.allObjects;
+        NSArray<NSString *> *legalPaths = [_pathSource(expression[@"path"]) allObjects];
         if (valuesMustBeArgs) {
             if (nextArgumentName == nil) {
                 legalPaths = [legalPaths mapWithBlock:^id(NSString *anObject) {
@@ -349,6 +349,7 @@
     }];
 
     NSArray<NSString *> *options = [legalPaths arrayByAddingObjectsFromArray:functionNames];
+#warning TODO: Maybe I can remove this? They should already be prefixes.
     return [[options filteredArrayUsingBlock:^BOOL(NSString *anObject) {
         return prefix.length == 0 || [anObject hasPrefix:prefix];
     }] mapWithBlock:^id(NSString *s) {

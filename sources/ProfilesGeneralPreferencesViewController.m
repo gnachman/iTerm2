@@ -194,18 +194,18 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                     key:KEY_BADGE_FORMAT
                    type:kPreferenceInfoTypeStringTextField];
     _badgeTextFieldDelegate =
-        [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:[iTermVariables recordedVariableNamesInContext:iTermVariablesSuggestionContextSession]
-                                                      passthrough:_badgeText.delegate
-                                                    functionsOnly:NO];
+        [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariables pathSourceForContext:iTermVariablesSuggestionContextSession]
+                                                           passthrough:_badgeText.delegate
+                                                         functionsOnly:NO];
     _badgeText.delegate = _badgeTextFieldDelegate;
 
     [self defineControl:_badgeTextForEditCurrentSession
                     key:KEY_BADGE_FORMAT
                    type:kPreferenceInfoTypeStringTextField];
     _badgeTextForEditCurrentSessionFieldDelegate =
-        [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:[iTermVariables recordedVariableNamesInContext:iTermVariablesSuggestionContextSession]
-                                                      passthrough:_badgeTextForEditCurrentSession.delegate
-                                                    functionsOnly:NO];
+        [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariables pathSourceForContext:iTermVariablesSuggestionContextSession]
+                                                           passthrough:_badgeTextForEditCurrentSession.delegate
+                                                         functionsOnly:NO];
     _badgeTextForEditCurrentSession.delegate = _badgeTextForEditCurrentSessionFieldDelegate;
 
     [self defineControl:_titleSettings

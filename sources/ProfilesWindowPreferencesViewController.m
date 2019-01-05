@@ -197,9 +197,9 @@
         [weakSelf updateCustomWindowTitleEnabled];
     };
 
-    _customWindowTitleDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPaths:[iTermVariables recordedVariableNamesInContext:iTermVariablesSuggestionContextWindow]
-                                                                               passthrough:nil
-                                                                             functionsOnly:NO];
+    _customWindowTitleDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariables pathSourceForContext:iTermVariablesSuggestionContextWindow]
+                                                                                    passthrough:nil
+                                                                                  functionsOnly:NO];
     _customWindowTitle.delegate = _customWindowTitleDelegate;
     [self defineControl:_customWindowTitle
                     key:KEY_CUSTOM_WINDOW_TITLE

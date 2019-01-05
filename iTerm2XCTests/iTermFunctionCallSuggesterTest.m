@@ -33,7 +33,9 @@
     NSArray *paths = @[ @"path.first", @"path.second", @"third" ];
     _suggester =
         [[iTermFunctionCallSuggester alloc] initWithFunctionSignatures:signatures
-                                                                 paths:[NSSet setWithArray:paths]];
+                                                            pathSource:^NSSet<NSString *> *(NSString *prefix) {
+                                                                return paths;
+                                                            }];
 
     _parser = [[iTermFunctionCallParser alloc] initWithStart:@"expression"];
 }

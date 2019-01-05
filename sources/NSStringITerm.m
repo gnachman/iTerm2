@@ -2060,6 +2060,10 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return numberOfLines;
 }
 
+- (BOOL)it_hasPrefix:(NSString *)prefix {
+    return prefix.length == 0 || [self hasPrefix:prefix];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

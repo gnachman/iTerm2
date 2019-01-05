@@ -10,7 +10,7 @@
 @interface iTermFunctionCallSuggester : NSObject
 
 - (instancetype)initWithFunctionSignatures:(NSDictionary<NSString *, NSArray<NSString *> *> *)functionSignatures
-                                     paths:(NSSet<NSString *> *)paths NS_DESIGNATED_INITIALIZER;
+                                pathSource:(NSSet<NSString *> *(^)(NSString *prefix))pathSource NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (NSArray<NSString *> *)suggestionsForString:(NSString *)prefix;

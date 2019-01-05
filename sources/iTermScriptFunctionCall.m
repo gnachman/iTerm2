@@ -8,6 +8,7 @@
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptFunctionCall+Private.h"
 
+#import "DebugLogging.h"
 #import "iTermAPIHelper.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermFunctionCallParser.h"
@@ -262,15 +263,21 @@
                                         scope:scope
                                    completion:completion];
         return;
-    } else {
-        assert(expression.functionCall);
-
+    }
+    if (expression.optional) {
+        completion(nil, nil, nil);
+        return;
+    }
+    if (expression.functionCall) {
         [self performFunctionCall:expression.functionCall
                    fromInvocation:expression.functionCall.description
                             scope:scope
                           timeout:timeout
                        completion:completion];
+        return;
     }
+
+    ITAssertWithMessage(NO, @"Malformed expression %@", expression);
 }
 
 #pragma mark - Function Calls

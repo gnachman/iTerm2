@@ -27,7 +27,7 @@
     __weak id _passthrough;
 }
 
-- (instancetype)initWithPaths:(NSSet<NSString *> *)paths
+- (instancetype)initWithPathSource:(NSSet<NSString *> *(^)(NSString *))pathSource
                   passthrough:(id)passthrough
                 functionsOnly:(BOOL)functionsOnly {
     self = [super init];
@@ -36,7 +36,7 @@
             [iTermAPIHelper registeredFunctionSignatureDictionary];
         Class suggesterClass = functionsOnly ? [iTermFunctionCallSuggester class] : [iTermSwiftyStringSuggester class];
         _suggester = [[suggesterClass alloc] initWithFunctionSignatures:signatures
-                                                                  paths:paths];
+                                                             pathSource:pathSource];
         _passthrough = passthrough;
     }
     return self;

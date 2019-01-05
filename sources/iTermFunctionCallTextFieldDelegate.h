@@ -18,9 +18,9 @@
 // variable references, function calls). Otherwise, only suggestions for
 // a top-level function call will be made. It may, of course, have expressions
 // for argument values.
-- (instancetype)initWithPaths:(NSSet<NSString *> *)paths
-                  passthrough:(id)passthrough
-                functionsOnly:(BOOL)functionsOnly NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithPathSource:(NSSet<NSString *> *(^)(NSString *prefix))pathSource
+                       passthrough:(id)passthrough
+                     functionsOnly:(BOOL)functionsOnly NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 @end
