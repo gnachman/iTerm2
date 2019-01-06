@@ -361,7 +361,9 @@ charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
     iTermTermkeyKeyMapperConfiguration configuration = {
         .encoding = NSUTF8StringEncoding,
         .leftOptionKey = _optionKeyBehavior,
-        .rightOptionKey = _optionKeyBehavior
+        .rightOptionKey = _optionKeyBehavior,
+        .applicationCursorMode = NO,
+        .applicationKeypadMode = NO
     };
     termkeyKeyMapper.configuration = configuration;
 }

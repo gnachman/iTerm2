@@ -18,6 +18,8 @@ typedef struct {
     NSStringEncoding encoding;
     iTermOptionKeyBehavior leftOptionKey;
     iTermOptionKeyBehavior rightOptionKey;
+    BOOL applicationCursorMode;
+    BOOL applicationKeypadMode;
 } iTermTermkeyKeyMapperConfiguration;
 
 @protocol iTermTermkeyKeyMapperDelegate<NSObject>

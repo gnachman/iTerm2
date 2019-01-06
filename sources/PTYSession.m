@@ -10791,7 +10791,9 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermTermkeyKeyMapperConfiguration configuration = {
         .encoding = _terminal.encoding,
         .leftOptionKey = self.optionKey,
-        .rightOptionKey = self.rightOptionKey
+        .rightOptionKey = self.rightOptionKey,
+        .applicationCursorMode = _terminal.output.cursorMode,
+        .applicationKeypadMode = _terminal.output.keypadMode
     };
     termkeyKeyMaper.configuration = configuration;
 }
