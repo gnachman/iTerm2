@@ -11,6 +11,7 @@
 #import "iTermVariableScope.h"
 #import "iTermVariablesOutlineDelegate.h"
 #import "NSArray+iTerm.h"
+#import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
@@ -25,6 +26,7 @@
 @property (nonatomic, readonly) NSString *displayName;
 @property (nonatomic, readonly) iTermVariableScope *scope;
 @property (nonatomic, readonly) id identifier;
+- (void)reveal;
 @end
 
 @interface iTermOutlineSessionProxy : NSObject<iTermOutlineProxy>
@@ -60,6 +62,10 @@
     return _session.guid;
 }
 
+- (void)reveal {
+    [_session reveal];
+}
+
 @end
 
 @interface iTermOutlineTabProxy : NSObject<iTermOutlineProxy>
@@ -92,7 +98,11 @@
 }
 
 - (id)identifier {
-    return @(_tab.uniqueId);
+    return [@(_tab.uniqueId) stringValue];
+}
+
+- (void)reveal {
+    [_tab.activeSession reveal];
 }
 
 @end
@@ -130,6 +140,10 @@
     return _windowController.terminalGuid;
 }
 
+- (void)reveal {
+    [_windowController.currentSession reveal];
+}
+
 @end
 
 @interface iTermOutlineRoot : NSObject<iTermOutlineProxy>
@@ -161,6 +175,9 @@
 
 - (id)identifier {
     return [NSNull null];
+}
+
+- (void)reveal {
 }
 
 @end
@@ -212,9 +229,18 @@
         view = [[NSTableCellView alloc] init];
 
         NSTextField *textField = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
+        textField.translatesAutoresizingMaskIntoConstraints = NO;
         textField.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
         view.textField = textField;
         [view addSubview:textField];
+        [view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-0-[textField]-0-|"
+                                                                     options:0
+                                                                     metrics:nil
+                                                                       views:@{ @"textField": textField }]];
+        [view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-0-[textField]-0-|"
+                                                                     options:0
+                                                                     metrics:nil
+                                                                       views:@{ @"textField": textField }]];
         textField.frame = view.bounds;
         textField.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
     }
@@ -268,4 +294,16 @@
 
 }
 
+- (IBAction)reveal:(id)sender {
+    id<iTermOutlineProxy> proxy = [_sessionTabWindowOutlineView itemAtRow:_sessionTabWindowOutlineView.clickedRow];
+    [proxy reveal];
+}
+
+- (IBAction)copyIdentifier:(id)sender {
+    id<iTermOutlineProxy> proxy = [_sessionTabWindowOutlineView itemAtRow:_sessionTabWindowOutlineView.clickedRow];
+    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+    [pboard declareTypes:@[NSStringPboardType] owner:NSApp];
+    [pboard setString:proxy.identifier forType:NSStringPboardType];
+
+}
 @end

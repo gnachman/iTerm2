@@ -157,10 +157,7 @@ id iTermVariablesNewProxy(NSString *name, id value) {
 }
 
 - (NSString *)value {
-    if (_children.count == 1) {
-        return @"1 child";
-    }
-    return [NSString stringWithFormat:@"%@ children", @(_children.count)];
+    return @"";
 }
 
 - (BOOL)isExpandable {
