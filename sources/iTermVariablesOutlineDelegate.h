@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithScope:(nullable iTermVariableScope *)scope;
 - (NSString *)selectedPathForOutlineView:(NSOutlineView *)outlineView;
 - (void)selectPath:(NSString *)path inOutlineView:(NSOutlineView *)outlineView;
+- (void)copyPath:(id)sender;
+- (void)copyValue:(id)sender;
 
 @end
 

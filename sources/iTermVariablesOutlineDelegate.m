@@ -20,6 +20,13 @@
 @property (nonatomic, readonly) BOOL isExpandable;
 @end
 
+@interface iTermVariablesOutlineMenu : NSMenu
+@property (nonatomic, strong) IBOutlet NSOutlineView *outlineView;
+@end
+
+@implementation iTermVariablesOutlineMenu
+@end
+
 @interface iTermVariablesTerminalProxy : NSObject<iTermVariablesProxy>
 - (instancetype)initWithName:(NSString *)name value:(id)value;
 @end
@@ -213,12 +220,16 @@ id iTermVariablesNewProxy(NSString *name, id value) {
 }
 
 - (NSString *)selectedPathForOutlineView:(NSOutlineView *)outlineView {
-    NSInteger row = outlineView.selectedRow;
+    return [self pathForRow:outlineView.selectedRow
+                outlineView:outlineView];
+}
+
+- (NSString *)pathForRow:(NSInteger)row outlineView:(NSOutlineView *)outlineView {
     if (row < 0) {
         return nil;
     }
     NSArray<NSString *> *parts = @[];
-    id<iTermVariablesProxy> proxy = [outlineView itemAtRow:outlineView.selectedRow];
+    id<iTermVariablesProxy> proxy = [outlineView itemAtRow:row];
     while (proxy && proxy != _root) {
         parts = [@[proxy.path] arrayByAddingObjectsFromArray:parts];
         proxy = [outlineView parentForItem:proxy];
@@ -251,6 +262,23 @@ id iTermVariablesNewProxy(NSString *name, id value) {
     }
     [outlineView selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
     [outlineView scrollRowToVisible:row];
+}
+
+- (void)copyPath:(id)sender {
+    NSOutlineView *outlineView = [[iTermVariablesOutlineMenu castFrom:[sender menu]] outlineView];
+    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+    [pboard declareTypes:@[NSStringPboardType] owner:NSApp];
+    [pboard setString:[self pathForRow:outlineView.clickedRow outlineView:outlineView]
+              forType:NSStringPboardType];
+}
+
+- (void)copyValue:(id)sender {
+    NSOutlineView *outlineView = [[iTermVariablesOutlineMenu castFrom:[sender menu]] outlineView];
+    id<iTermVariablesProxy> proxy = [outlineView itemAtRow:outlineView.clickedRow];
+    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+    [pboard declareTypes:@[NSStringPboardType] owner:NSApp];
+    [pboard setString:proxy.value
+              forType:NSStringPboardType];
 }
 
 #pragma mark - NSOutlineViewDataSource

@@ -304,6 +304,14 @@
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
     [pboard declareTypes:@[NSStringPboardType] owner:NSApp];
     [pboard setString:proxy.identifier forType:NSStringPboardType];
-
 }
+
+- (IBAction)copyPath:(id)sender {
+    [_variablesOutlineDelegate copyPath:sender];
+}
+
+- (IBAction)copyValue:(id)sender {
+    [_variablesOutlineDelegate copyValue:sender];
+}
+
 @end

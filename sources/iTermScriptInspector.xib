@@ -208,6 +208,9 @@
                                                                             </prototypeCellViews>
                                                                         </tableColumn>
                                                                     </tableColumns>
+                                                                    <connections>
+                                                                        <outlet property="menu" destination="yhj-Rm-iTk" id="GWh-3F-WSd"/>
+                                                                    </connections>
                                                                 </outlineView>
                                                             </subviews>
                                                         </clipView>
@@ -444,67 +447,6 @@
             </connections>
             <point key="canvasLocation" x="379" y="257"/>
         </window>
-        <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="euh-aY-tV2">
-            <rect key="frame" x="0.0" y="0.0" width="219" height="254"/>
-            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" heightSizable="YES"/>
-            <clipView key="contentView" id="xod-Ma-k72">
-                <rect key="frame" x="1" y="1" width="217" height="252"/>
-                <autoresizingMask key="autoresizingMask"/>
-                <subviews>
-                    <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" rowSizeStyle="automatic" viewBased="YES" indentationPerLevel="16" outlineTableColumn="J5y-Jm-AWA" id="XgZ-Xe-jje">
-                        <rect key="frame" x="0.0" y="0.0" width="217" height="252"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <size key="intercellSpacing" width="3" height="2"/>
-                        <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
-                        <tableColumns>
-                            <tableColumn width="214" minWidth="40" maxWidth="1000" id="J5y-Jm-AWA">
-                                <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border">
-                                    <font key="font" metaFont="smallSystem"/>
-                                    <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
-                                    <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
-                                </tableHeaderCell>
-                                <textFieldCell key="dataCell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" title="Text Cell" id="wQI-lL-IAQ">
-                                    <font key="font" metaFont="system"/>
-                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                    <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                </textFieldCell>
-                                <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
-                                <prototypeCellViews>
-                                    <tableCellView id="8SN-fo-ja9">
-                                        <rect key="frame" x="1" y="1" width="214" height="17"/>
-                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                        <subviews>
-                                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Yx8-LE-9v8">
-                                                <rect key="frame" x="0.0" y="0.0" width="214" height="17"/>
-                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="mFk-BM-O6F">
-                                                    <font key="font" metaFont="system"/>
-                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                </textFieldCell>
-                                            </textField>
-                                        </subviews>
-                                        <connections>
-                                            <outlet property="textField" destination="Yx8-LE-9v8" id="L6Q-ud-62R"/>
-                                        </connections>
-                                    </tableCellView>
-                                </prototypeCellViews>
-                            </tableColumn>
-                        </tableColumns>
-                    </outlineView>
-                </subviews>
-            </clipView>
-            <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="fYc-BX-hOe">
-                <rect key="frame" x="1" y="217" width="217" height="16"/>
-                <autoresizingMask key="autoresizingMask"/>
-            </scroller>
-            <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="hd4-zG-gPn">
-                <rect key="frame" x="224" y="17" width="15" height="102"/>
-                <autoresizingMask key="autoresizingMask"/>
-            </scroller>
-            <point key="canvasLocation" x="-625" y="222"/>
-        </scrollView>
         <customObject id="20t-aj-7Wj" userLabel="Session, Tab, Window Outline Delegate" customClass="iTermSessionTabWindowOutlineDelegate">
             <connections>
                 <outlet property="_sessionTabWindowOutlineView" destination="d1h-MD-ihH" id="vpn-7d-Lrk"/>
@@ -516,7 +458,7 @@
                 <outlet property="_tableView" destination="Raq-1C-rcj" id="6eJ-zH-TQZ"/>
             </connections>
         </customObject>
-        <menu id="wns-wS-5WN">
+        <menu id="wns-wS-5WN" userLabel="Sessions, Tabs, and Windows Menu">
             <items>
                 <menuItem title="Reveal" id="28l-AU-yFl">
                     <modifierMask key="keyEquivalentModifierMask"/>
@@ -532,6 +474,26 @@
                 </menuItem>
             </items>
             <point key="canvasLocation" x="-294.5" y="-171"/>
+        </menu>
+        <menu id="yhj-Rm-iTk" userLabel="Variables Menu" customClass="iTermVariablesOutlineMenu">
+            <items>
+                <menuItem title="Copy Value" id="vbZ-sk-erj">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="copyValue:" target="20t-aj-7Wj" id="xtl-mv-EHL"/>
+                    </connections>
+                </menuItem>
+                <menuItem title="Copy Path" id="MJL-Ks-9nr">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="copyPath:" target="20t-aj-7Wj" id="4tj-om-Noc"/>
+                    </connections>
+                </menuItem>
+            </items>
+            <connections>
+                <outlet property="outlineView" destination="WOs-vF-O5P" id="0fw-RW-fzt"/>
+            </connections>
+            <point key="canvasLocation" x="-100" y="-192"/>
         </menu>
     </objects>
 </document>
