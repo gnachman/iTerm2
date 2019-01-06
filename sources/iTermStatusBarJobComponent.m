@@ -7,7 +7,7 @@
 
 #import "iTermStatusBarJobComponent.h"
 
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"

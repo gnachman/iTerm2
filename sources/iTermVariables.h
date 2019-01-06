@@ -7,6 +7,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "iTermVariableHistory.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 extern NSString *const iTermVariableKeyGlobalScopeName;
@@ -60,15 +62,6 @@ extern NSString *const iTermVariableKeyWindowCurrentTab;
 @class iTermVariables;
 @class iTermVariableScope;
 
-typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
-    iTermVariablesSuggestionContextNone = 0,
-    iTermVariablesSuggestionContextSession = (1 << 0),
-    iTermVariablesSuggestionContextTab = (1 << 1),
-    iTermVariablesSuggestionContextApp = (1 << 2),
-    // NOTE: 1<<3 is missing!
-    iTermVariablesSuggestionContextWindow = (1 << 4),
-};
-
 // Typically you would not use this directly. Create one and bind it to a
 // scope, then perform references to it from the scope.
 @interface iTermVariables : NSObject
@@ -78,14 +71,6 @@ typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
 @property (nonatomic, readonly) NSDictionary<NSString *,NSString *> *stringValuedDictionary;
 
 + (instancetype)globalInstance;
-+ (NSString *)stringForContext:(iTermVariablesSuggestionContext)context;
-
-+ (void)recordUseOfVariableNamed:(NSString *)name
-                       inContext:(iTermVariablesSuggestionContext)context;
-
-+ (NSSet<NSString *> *(^)(NSString *))pathSourceForContext:(iTermVariablesSuggestionContext)context;
-+ (NSSet<NSString *> *(^)(NSString *))pathSourceForContext:(iTermVariablesSuggestionContext)context
-                                             augmentedWith:(NSSet<NSString *> *)augmentations;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithContext:(iTermVariablesSuggestionContext)context owner:(id)owner NS_DESIGNATED_INITIALIZER;
@@ -99,47 +84,5 @@ typedef NS_OPTIONS(NSUInteger, iTermVariablesSuggestionContext) {
 
 @end
 
-@class iTermVariableRecordingScope;
-
-// Provides access to  the variables that are visible from a particular callsite. Each
-// set of variables except one (that of the most local scope) must have a name.
-// Variables are searched for one matching the name. You could get and set variables through
-// this object. If you want to get called back when a value changes, use iTermVariableReference.
-@interface iTermVariableScope : NSObject<NSCopying>
-@property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *dictionaryWithStringValues;
-@property (nonatomic) BOOL neverReturnNil;
-
-+ (instancetype)globalsScope;
-- (iTermVariableRecordingScope *)recordingCopy;
-
-- (void)addVariables:(iTermVariables *)variables toScopeNamed:(nullable NSString *)scopeName;
-- (id)valueForVariableName:(NSString *)name;
-- (NSString *)stringValueForVariableName:(NSString *)name;
-// Values of NSNull get unset
-- (BOOL)setValuesFromDictionary:(NSDictionary<NSString *, id> *)dict;
-
-// nil or NSNull value means unset it.
-// Returns whether it was set. If the value is unchanged, it does not get set.
-- (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name;
-
-// Set weak to YES when a strong reference to value should not be kept.
-- (BOOL)setValue:(nullable id)value forVariableNamed:(NSString *)name weak:(BOOL)weak;
-
-// Freaking KVO crap keeps autocompleting and causing havoc
-- (void)setValue:(nullable id)value forKey:(NSString *)key NS_UNAVAILABLE;
-- (void)setValuesForKeysWithDictionary:(NSDictionary<NSString *, id> *)keyedValues NS_UNAVAILABLE;
-- (void)addLinksToReference:(iTermVariableReference *)reference;
-- (BOOL)variableNamed:(NSString *)name isReferencedBy:(iTermVariableReference *)reference;
-
-@end
-
-// A scope that remembers which variables were referred to.
-@interface iTermVariableRecordingScope : iTermVariableScope
-@property (nonatomic, readonly) NSArray<iTermVariableReference *> *recordedReferences;
-
-- (instancetype)initWithScope:(iTermVariableScope *)scope NS_DESIGNATED_INITIALIZER;
-- (instancetype)init NS_UNAVAILABLE;
-
-@end
 
 NS_ASSUME_NONNULL_END

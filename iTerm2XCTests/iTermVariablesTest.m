@@ -7,7 +7,7 @@
 
 #import <XCTest/XCTest.h>
 #import "iTermVariableReference.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 
 @interface iTermVariablesTest : XCTestCase
 

@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 
 @interface iTermEditKeyActionWindowController : NSWindowController
 

@@ -7,7 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

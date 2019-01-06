@@ -56,7 +56,7 @@
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
 #import "iTermTouchBarButton.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "iTermWarning.h"
 #import "iTermWindowOcclusionChangeMonitor.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
@@ -2462,7 +2462,7 @@ ITERM_WEAKLY_REFERENCEABLE
     alert.informativeText = @"If this is empty, the window takes the active session’s title. Variables and function calls enclosed in \\(…) will replaced with their evaluation.";
     NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 400, 24 * 3)] autorelease];
     iTermFunctionCallTextFieldDelegate *delegate;
-    delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariables pathSourceForContext:iTermVariablesSuggestionContextWindow]
+    delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextWindow]
                                                                    passthrough:nil
                                                                  functionsOnly:NO] autorelease];
     titleTextField.delegate = delegate;
@@ -5643,7 +5643,7 @@ ITERM_WEAKLY_REFERENCEABLE
     alert.informativeText = @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will replaced with their evaluation.";
     NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 400, 24 * 3)] autorelease];
     iTermFunctionCallTextFieldDelegate *delegate;
-    delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariables pathSourceForContext:iTermVariablesSuggestionContextTab]
+    delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextTab]
                                                                    passthrough:nil
                                                                  functionsOnly:NO] autorelease];
     titleTextField.delegate = delegate;

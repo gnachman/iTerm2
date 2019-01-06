@@ -14,7 +14,7 @@
 #import "iTermGitState.h"
 #import "iTermLocalHostNameGuesser.h"
 #import "iTermVariableReference.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
 #import "NSDate+iTerm.h"
 #import "NSDictionary+iTerm.h"

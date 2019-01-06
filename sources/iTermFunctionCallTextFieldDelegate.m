@@ -9,7 +9,7 @@
 
 #import "iTermAPIHelper.h"
 #import "iTermFunctionCallSuggester.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 

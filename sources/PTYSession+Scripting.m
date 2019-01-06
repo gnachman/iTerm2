@@ -1,6 +1,6 @@
 #import "PTYSession+Scripting.h"
 
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "ProfilesColorsPreferencesViewController.h"

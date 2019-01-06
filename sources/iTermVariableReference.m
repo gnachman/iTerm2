@@ -6,7 +6,7 @@
 //
 
 #import "iTermVariableReference.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSObject+iTerm.h"
 
 @interface iTermVariableReferenceLink : NSObject

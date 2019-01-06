@@ -36,7 +36,7 @@ NSString *iTermFunctionSignatureFromNameAndArguments(NSString *name, NSArray<NSS
         _defaultValues = [defaultValues copy];
         _block = [block copy];
         [defaultValues enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
-            [iTermVariables recordUseOfVariableNamed:obj inContext:context];
+            [iTermVariableHistory recordUseOfVariableNamed:obj inContext:context];
         }];
     }
     return self;

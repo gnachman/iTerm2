@@ -8,7 +8,7 @@
 #import "iTermStatusBarSwiftyStringComponent.h"
 
 #import "iTermStatusBarComponentKnob.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSDictionary+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN

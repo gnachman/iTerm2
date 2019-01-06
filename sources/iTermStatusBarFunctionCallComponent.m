@@ -9,7 +9,7 @@
 
 #import "iTermScriptFunctionCall.h"
 #import "iTermStatusBarSetupKnobsViewController.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 

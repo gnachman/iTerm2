@@ -12,7 +12,7 @@
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarSpringComponent.h"
 #import "iTermStatusBarSwiftyStringComponent.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "TmuxController.h"

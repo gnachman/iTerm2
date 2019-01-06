@@ -29,7 +29,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermSwiftyStringParser.h"
 #import "iTermTuple.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSData+iTerm.h"
 #import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"

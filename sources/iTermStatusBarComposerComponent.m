@@ -10,7 +10,7 @@
 #import "iTermController.h"
 #import "iTermShellHistoryController.h"
 #import "iTermsStatusBarComposerViewController.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "PTYSession.h"

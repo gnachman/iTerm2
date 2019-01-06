@@ -24,7 +24,7 @@
 #import "iTermStatusBarComponent.h"
 #import "iTermStatusBarViewController.h"
 #import "iTermVariableReference.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "NSArray+iTerm.h"

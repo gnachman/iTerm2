@@ -9,7 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermProfilePreferences.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "PTYSession.h"
 
 // Arguments to title BIF

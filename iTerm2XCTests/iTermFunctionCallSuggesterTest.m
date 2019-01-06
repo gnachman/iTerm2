@@ -10,7 +10,7 @@
 #import "iTermFunctionCallParser.h"
 #import "iTermParsedExpression+Tests.h"
 #import "iTermScriptFunctionCall+Private.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 
 @interface iTermFunctionCallParser(Testing)
 - (instancetype)initPrivate;

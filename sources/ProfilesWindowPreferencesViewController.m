@@ -14,7 +14,7 @@
 #import "iTermPreferences.h"
 #import "iTermSizeRememberingView.h"
 #import "iTermSystemVersion.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "iTermWarning.h"
 #import "NSImage+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -197,7 +197,7 @@
         [weakSelf updateCustomWindowTitleEnabled];
     };
 
-    _customWindowTitleDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariables pathSourceForContext:iTermVariablesSuggestionContextWindow]
+    _customWindowTitleDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextWindow]
                                                                                     passthrough:nil
                                                                                   functionsOnly:NO];
     _customWindowTitle.delegate = _customWindowTitleDelegate;

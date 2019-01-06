@@ -14,7 +14,7 @@
 #import "iTermFunctionCallParser.h"
 #import "iTermScriptHistory.h"
 #import "iTermTruncatedQuotedRecognizer.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"

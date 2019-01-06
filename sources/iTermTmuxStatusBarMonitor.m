@@ -8,7 +8,7 @@
 #import "iTermTmuxStatusBarMonitor.h"
 
 #import "DebugLogging.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSTimer+iTerm.h"
 #import "TmuxGateway.h"
 #import "RegexKitLite.h"

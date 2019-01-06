@@ -16,7 +16,7 @@
 #import "iTermProfilePreferences.h"
 #import "iTermSessionTitleBuiltInFunction.h"
 #import "iTermShortcutInputView.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "ProfileListView.h"
@@ -194,7 +194,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                     key:KEY_BADGE_FORMAT
                    type:kPreferenceInfoTypeStringTextField];
     _badgeTextFieldDelegate =
-        [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariables pathSourceForContext:iTermVariablesSuggestionContextSession]
+        [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
                                                            passthrough:_badgeText.delegate
                                                          functionsOnly:NO];
     _badgeText.delegate = _badgeTextFieldDelegate;
@@ -203,7 +203,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                     key:KEY_BADGE_FORMAT
                    type:kPreferenceInfoTypeStringTextField];
     _badgeTextForEditCurrentSessionFieldDelegate =
-        [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariables pathSourceForContext:iTermVariablesSuggestionContextSession]
+        [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
                                                            passthrough:_badgeTextForEditCurrentSession.delegate
                                                          functionsOnly:NO];
     _badgeTextForEditCurrentSession.delegate = _badgeTextForEditCurrentSessionFieldDelegate;

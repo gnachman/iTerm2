@@ -70,7 +70,7 @@
 #import "iTermTmuxStatusBarMonitor.h"
 #import "iTermUpdateCadenceController.h"
 #import "iTermVariableReference.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "iTermWarning.h"
 #import "iTermWorkingDirectoryPoller.h"
 #import "MovePaneController.h"
@@ -1088,6 +1088,10 @@ ITERM_WEAKLY_REFERENCEABLE
         for (id key in variables) {
             if ([key hasPrefix:@"iterm2."]) {
                 // Legacy states had this
+                continue;
+            }
+            if ([[aSession.variablesScope valueForVariableName:key] isKindOfClass:[iTermVariables class]]) {
+                // Don't replace nonterminals.
                 continue;
             }
             [aSession.variablesScope setValue:variables[key] forVariableNamed:key];

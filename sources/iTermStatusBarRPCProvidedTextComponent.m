@@ -17,7 +17,7 @@
 #import "iTermScriptHistory.h"
 #import "iTermScriptsMenuController.h"
 #import "iTermStatusBarComponentKnob.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "iTermVariableReference.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"

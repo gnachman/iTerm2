@@ -12,7 +12,7 @@
 #import "iTermFlippedView.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermSystemVersion.h"
-#import "iTermVariables.h"
+#import "iTermVariableScope.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
