@@ -150,6 +150,7 @@
 
 @implementation iTermSessionTabWindowOutlineDelegate {
     IBOutlet NSOutlineView *_variablesOutlineView;
+    IBOutlet NSOutlineView *_sessionTabWindowOutlineView;
     iTermOutlineRoot *_root;
     iTermVariablesOutlineDelegate *_variablesOutlineDelegate;
 }
@@ -202,7 +203,6 @@
 }
 
 - (void)outlineViewSelectionDidChange:(NSNotification *)notification {
-    NSLog(@"%@", notification);
     NSOutlineView *outlineView = notification.object;
     id<iTermOutlineProxy> proxy = [outlineView itemAtRow:outlineView.selectedRow];
     iTermVariableScope *scope = proxy.scope;
@@ -212,6 +212,15 @@
         _variablesOutlineView.dataSource = _variablesOutlineDelegate;
         [_variablesOutlineView reloadData];
     }
+}
+
+- (void)reload {
+    _root = [[iTermOutlineRoot alloc] init];
+    [_sessionTabWindowOutlineView reloadData];
+    _variablesOutlineDelegate = [[iTermVariablesOutlineDelegate alloc] initWithScope:nil];
+    _variablesOutlineView.delegate = _variablesOutlineDelegate;
+    _variablesOutlineView.dataSource = _variablesOutlineDelegate;
+    [_variablesOutlineView reloadData];
 }
 
 @end

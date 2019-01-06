@@ -223,6 +223,8 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 - (IBAction)inspector:(id)sender {
     if (!_inspector) {
         _inspector = [[iTermScriptInspector alloc] initWithWindowNibName:@"iTermScriptInspector"];
+    } else {
+        [_inspector reload:nil];
     }
     [[_inspector window] makeKeyAndOrderFront:nil];
 }

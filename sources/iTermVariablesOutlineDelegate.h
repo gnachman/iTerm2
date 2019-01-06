@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermVariablesOutlineDelegate : NSObject<NSOutlineViewDataSource, NSOutlineViewDelegate>
 
-- (instancetype)initWithScope:(iTermVariableScope *)scope;
+- (instancetype)initWithScope:(nullable iTermVariableScope *)scope;
 
 @end
 

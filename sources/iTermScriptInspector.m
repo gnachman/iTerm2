@@ -6,17 +6,20 @@
 //
 
 #import "iTermScriptInspector.h"
+#import "iTermSessionTabWindowOutlineDelegate.h"
+#import "iTermRegisteredFunctionsTableViewDelegate.h"
 
 @interface iTermScriptInspector ()
 
 @end
 
-@implementation iTermScriptInspector
-
-- (void)windowDidLoad {
-    [super windowDidLoad];
-    
-    // Implement this method to handle any initialization after your window controller's window has been loaded from its nib file.
+@implementation iTermScriptInspector {
+    IBOutlet iTermSessionTabWindowOutlineDelegate *_sessionTabWindowOutlineDelegate;
+    IBOutlet iTermRegisteredFunctionsTableViewDelegate *_registeredFunctionTableViewDelegate;
 }
 
+- (IBAction)reload:(id)sender {
+    [_sessionTabWindowOutlineDelegate reload];
+    [_registeredFunctionTableViewDelegate reload];
+}
 @end

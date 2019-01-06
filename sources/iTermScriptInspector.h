@@ -11,6 +11,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermScriptInspector : NSWindowController
 
+- (IBAction)reload:(id)sender;
+
 @end
 
 NS_ASSUME_NONNULL_END

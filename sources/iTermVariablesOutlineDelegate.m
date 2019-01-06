@@ -185,7 +185,7 @@ id iTermVariablesNewProxy(NSString *name, id value) {
                     return iTermVariablesNewProxy(name, value);
                 }];
             }
-        }];
+        }] ?: @[];
     }
     return self;
 }
@@ -260,7 +260,6 @@ id iTermVariablesNewProxy(NSString *name, id value) {
 }
 
 - (void)outlineViewSelectionDidChange:(NSNotification *)notification {
-    NSLog(@"%@", notification);
 }
 
 @end

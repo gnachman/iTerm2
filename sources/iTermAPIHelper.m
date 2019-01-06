@@ -846,9 +846,14 @@ static id sAPIHelperInstance;
     [self logToConnectionWithKey:connectionKey string:string];
 }
 
-- (void)logToConnectionWithKey:(NSString *)connectionKey string:(NSString *)string {
+- (iTermScriptHistoryEntry *)scriptHistoryEntryForConnectionKey:(NSString *)connectionKey {
     NSString *key = connectionKey ? [_apiServer websocketKeyForConnectionKey:connectionKey] : nil;
     iTermScriptHistoryEntry *entry = key ? [[iTermScriptHistory sharedInstance] entryWithIdentifier:key] : nil;
+    return entry;
+}
+
+- (void)logToConnectionWithKey:(NSString *)connectionKey string:(NSString *)string {
+    iTermScriptHistoryEntry *entry = [self scriptHistoryEntryForConnectionKey:connectionKey];
     if (!entry) {
         entry = [iTermScriptHistoryEntry globalEntry];
     }

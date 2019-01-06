@@ -18,6 +18,8 @@ extern const NSInteger iTermAPIHelperFunctionCallUnregisteredErrorCode;
 extern const NSInteger iTermAPIHelperFunctionCallOtherErrorCode;
 extern NSString *const iTermAPIHelperFunctionCallErrorUserInfoKeyConnection;
 
+@class iTermScriptHistoryEntry;
+
 typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
 @interface iTermSessionTitleProvider : NSObject
@@ -65,6 +67,9 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
                                              format:(NSString *)format, ...;
 - (void)logToConnectionHostingFunctionWithSignature:(NSString *)signatureString
                                              string:(NSString *)string;
+- (iTermScriptHistoryEntry *)scriptHistoryEntryForConnectionKey:(NSString *)connectionKey;
+- (NSDictionary<NSString *, iTermTuple<id, ITMNotificationRequest *> *> *)serverOriginatedRPCSubscriptions;
+
 @end
 
 @interface ITMRPCRegistrationRequest(Extensions)

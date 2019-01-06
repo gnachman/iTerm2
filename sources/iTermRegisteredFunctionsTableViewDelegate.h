@@ -1,5 +1,5 @@
 //
-//  iTermSessionTabWindowOutlineDelegate.h
+//  iTermRegisteredFunctionsTableViewDelegate.h
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 1/5/19.
@@ -9,7 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermSessionTabWindowOutlineDelegate : NSObject
+@interface iTermRegisteredFunctionsTableViewDelegate : NSObject<NSTableViewDataSource, NSTableViewDelegate>
 
 - (void)reload;
 
