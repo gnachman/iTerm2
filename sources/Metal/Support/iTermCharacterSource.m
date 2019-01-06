@@ -344,7 +344,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         }
     }
     _postprocessed = YES;
-    [_postprocessedData checkForOverrun];
+    [_postprocessedData checkForOverrunWithInfo:[NSString stringWithFormat:@"Size is %@", NSStringFromSize(_size)]];
 }
 
 - (iTermCharacterBitmap *)bitmapForPart:(int)part {

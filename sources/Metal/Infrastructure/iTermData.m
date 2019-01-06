@@ -6,6 +6,7 @@
 //
 
 #import "iTermData.h"
+#import "DebugLogging.h"
 
 static const unsigned char iTermDataGuardRegionValue[64] = {
     0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,
@@ -151,14 +152,32 @@ static const unsigned char iTermDataGuardRegionValue[64] = {
 
 @implementation iTermBitmapData : iTermData
 + (instancetype)dataOfLength:(NSUInteger)length {
+    ITAssertWithMessage(length > 0, @"Zero length (%@)", @(length));
     return [[self alloc] initWithLength:length];
 }
 
 - (void)checkForOverrun {
+    [self checkForOverrunWithInfo:@"No info"];
+}
+
+- (void)checkForOverrunWithInfo:(NSString *)info {
     if (_mutableBytes) {
         unsigned char *buffer = _mutableBytes;
         const int comparisonResult = memcmp(buffer + _originalLength, iTermDataGuardRegionValue, sizeof(iTermDataGuardRegionValue));
-        assert(comparisonResult == 0);
+        if (comparisonResult == 0) {
+            return;
+        }
+        NSMutableString *hex = [NSMutableString string];
+        for (NSInteger i = 0; i < sizeof(iTermDataGuardRegionValue); i++) {
+            unsigned int value = buffer[_originalLength + i];
+            [hex appendFormat:@"%02x ", value];
+        }
+        [hex appendString:@"vs expected: "];
+        for (NSInteger i = 0; i < sizeof(iTermDataGuardRegionValue); i++) {
+            unsigned int value = iTermDataGuardRegionValue[i];
+            [hex appendFormat:@"%02x ", value];
+        }
+        ITAssertWithMessage(NO, @"%@. Guard corrupted: actual is %@", info, hex);
     }
 }
 @end
