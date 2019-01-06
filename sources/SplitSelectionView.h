@@ -21,6 +21,19 @@ typedef NS_ENUM(NSInteger, SplitSessionHalf) {
     kFullPane
 };
 
+typedef NS_ENUM(NSInteger, SplitSelectionViewMode) {
+    // Clicking cancels
+    SplitSelectionViewModeSourceMove,
+    SplitSelectionViewModeSourceSwap,
+
+    // Clicking moves/swaps
+    SplitSelectionViewModeTargetMove,
+    SplitSelectionViewModeTargetSwap,
+
+    // Clicking selects
+    SplitSelectionViewModeInspect
+};
+
 @class PTYSession;
 
 @protocol SplitSelectionViewDelegate <NSObject>
@@ -31,20 +44,15 @@ typedef NS_ENUM(NSInteger, SplitSessionHalf) {
 @end
 
 @interface SplitSelectionView : NSView
+@property (nonatomic, readonly) SplitSelectionViewMode mode;
 
-@property (nonatomic, assign) BOOL cancelOnly;
-
-// a "cancelOnly" pane can't be a destination and clicking on it cancels the
-// operation.
-//
 // frame is the frame fo the parent view.
 // session is the session we overlay.
 // the delegate gets called when a selection is made.
-- (instancetype)initAsCancelOnly:(BOOL)cancelOnly
-                       withFrame:(NSRect)frame
-                         session:(PTYSession *)session
-                        delegate:(id<SplitSelectionViewDelegate>)delegate
-                            move:(BOOL)move;
+- (instancetype)initWithMode:(SplitSelectionViewMode)mode
+                   withFrame:(NSRect)frame
+                     session:(PTYSession *)session
+                    delegate:(id<SplitSelectionViewDelegate>)delegate;
 
 // Update the selected half for a drag at the given point
 - (void)updateAtPoint:(NSPoint)point;

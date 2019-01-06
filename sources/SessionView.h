@@ -40,6 +40,8 @@
 @class SplitSelectionView;
 @class SessionTitleView;
 
+extern NSString *const SessionViewWasSelectedForInspectionNotification;
+
 @protocol iTermSessionViewDelegate<iTermFindDriverDelegate, NSObject>
 
 // Mouse entered the view.

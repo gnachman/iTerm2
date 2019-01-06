@@ -62,7 +62,8 @@ extern NSString *const PTYSessionRevivedNotification;
 typedef NS_ENUM(NSInteger, SplitSelectionMode) {
     kSplitSelectionModeOn,
     kSplitSelectionModeOff,
-    kSplitSelectionModeCancel
+    kSplitSelectionModeCancel,
+    kSplitSelectionModeInspect
 };
 
 typedef enum {

@@ -8,6 +8,7 @@
 #import "iTermSessionTabWindowOutlineDelegate.h"
 
 #import "iTermController.h"
+#import "iTermSessionPicker.h"
 #import "iTermVariableScope.h"
 #import "iTermVariablesOutlineDelegate.h"
 #import "NSArray+iTerm.h"
@@ -16,6 +17,7 @@
 #import "PTYSession.h"
 #import "PTYTab.h"
 #import "PseudoTerminal.h"
+#import "SessionView.h"
 
 @interface iTermSessionTabWindowOutlineDelegate()<NSOutlineViewDataSource, NSOutlineViewDelegate>
 @end
@@ -187,6 +189,7 @@
     IBOutlet NSOutlineView *_sessionTabWindowOutlineView;
     iTermOutlineRoot *_root;
     iTermVariablesOutlineDelegate *_variablesOutlineDelegate;
+    BOOL _picking;
 }
 
 - (instancetype)init {
@@ -312,6 +315,23 @@
 
 - (IBAction)copyValue:(id)sender {
     [_variablesOutlineDelegate copyValue:sender];
+}
+
+- (IBAction)pickSession:(id)sender {
+    if (_picking) {
+        return;
+    }
+    iTermSessionPicker *picker = [[iTermSessionPicker alloc] init];
+    PTYSession *session = [picker pickSession];
+    if (session) {
+        iTermOutlineSessionProxy *proxy = [[iTermOutlineSessionProxy alloc] initWithSession:session];
+        [self selectObjectEquivalentTo:proxy];
+    }
+    NSWindow *window = _sessionTabWindowOutlineView.window;
+    // Doesn't work unless you dispatch_async, I guess because modal sessions are a hack.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [window makeKeyAndOrderFront:nil];
+    });
 }
 
 @end

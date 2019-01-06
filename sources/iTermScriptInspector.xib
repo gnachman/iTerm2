@@ -106,6 +106,17 @@
                                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
                                                     </textField>
+                                                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="H3c-cy-8Av">
+                                                        <rect key="frame" x="437" y="229" width="40" height="26"/>
+                                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                        <buttonCell key="cell" type="bevel" title="⨁" bezelStyle="rounded" alignment="center" imageScaling="proportionallyDown" inset="2" id="UR4-22-8xy">
+                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                        <connections>
+                                                            <action selector="pickSession:" target="20t-aj-7Wj" id="5yy-jU-Nfz"/>
+                                                        </connections>
+                                                    </button>
                                                 </subviews>
                                                 <constraints>
                                                     <constraint firstAttribute="trailing" secondItem="p8M-Z1-71E" secondAttribute="trailing" constant="20" id="3dl-L6-dRa"/>
@@ -444,6 +455,7 @@
             </view>
             <connections>
                 <outlet property="delegate" destination="-2" id="0bl-1N-AYu"/>
+                <outlet property="initialFirstResponder" destination="d1h-MD-ihH" id="LUd-BT-yt9"/>
             </connections>
             <point key="canvasLocation" x="379" y="257"/>
         </window>
