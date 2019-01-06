@@ -7,6 +7,7 @@
 
 #import "iTermSessionTabWindowOutlineDelegate.h"
 
+#import "iTermBuriedSessions.h"
 #import "iTermController.h"
 #import "iTermSessionPicker.h"
 #import "iTermVariableScope.h"
@@ -92,7 +93,7 @@
 }
 
 - (NSString *)displayName {
-    return [NSString stringWithFormat:@"📁 %@ (%@)", _tab.tabViewItem.label, @(_tab.uniqueId)];
+    return [NSString stringWithFormat:@"🗂 %@ (%@)", _tab.tabViewItem.label, @(_tab.uniqueId)];
 }
 
 - (iTermVariableScope *)scope {
@@ -105,6 +106,42 @@
 
 - (void)reveal {
     [_tab.activeSession reveal];
+}
+
+@end
+
+@interface iTermOutlineBuriedSessionsProxy : NSObject<iTermOutlineProxy>
+@property (nonatomic, readonly) NSArray<iTermOutlineSessionProxy *> *children;
+@end
+
+@implementation iTermOutlineBuriedSessionsProxy
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _children = [[[iTermBuriedSessions sharedInstance] buriedSessions] mapWithBlock:^id(PTYSession *session) {
+            return [[iTermOutlineSessionProxy alloc] initWithSession:session];
+        }];
+    }
+    return self;
+}
+
+- (BOOL)isExpandable {
+    return YES;
+}
+
+- (NSString *)displayName {
+    return @"Buried Sessions";
+}
+
+- (iTermVariableScope *)scope {
+    return nil;
+}
+
+- (id)identifier {
+    return @"";
+}
+
+- (void)reveal {
 }
 
 @end
@@ -131,7 +168,7 @@
 }
 
 - (NSString *)displayName {
-    return [NSString stringWithFormat:@"🖼️ %@ (%@)", _windowController.window.title, _windowController.terminalGuid];
+    return [NSString stringWithFormat:@"🔲 %@ (%@)", _windowController.window.title, _windowController.terminalGuid];
 }
 
 - (iTermVariableScope *)scope {
@@ -149,7 +186,7 @@
 @end
 
 @interface iTermOutlineRoot : NSObject<iTermOutlineProxy>
-@property (nonatomic, readonly) NSArray<iTermOutlineWindowProxy *> *children;
+@property (nonatomic, readonly) NSArray<id<iTermOutlineProxy>> *children;
 @end
 
 @implementation iTermOutlineRoot
@@ -159,6 +196,10 @@
         _children = [[[iTermController sharedInstance] terminals] mapWithBlock:^id(PseudoTerminal *windowController) {
             return [[iTermOutlineWindowProxy alloc] initWithWindowController:windowController];
         }];
+        NSArray<PTYSession *> *sessions = [[iTermBuriedSessions sharedInstance] buriedSessions];
+        if (sessions.count) {
+            _children = [_children arrayByAddingObject:[[iTermOutlineBuriedSessionsProxy alloc] init]];
+        }
     }
     return self;
 }
