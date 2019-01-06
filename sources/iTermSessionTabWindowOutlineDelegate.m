@@ -24,6 +24,7 @@
 @property (nonatomic, readonly) BOOL isExpandable;
 @property (nonatomic, readonly) NSString *displayName;
 @property (nonatomic, readonly) iTermVariableScope *scope;
+@property (nonatomic, readonly) id identifier;
 @end
 
 @interface iTermOutlineSessionProxy : NSObject<iTermOutlineProxy>
@@ -53,6 +54,10 @@
 
 - (iTermVariableScope *)scope {
     return _session.variablesScope;
+}
+
+- (id)identifier {
+    return _session.guid;
 }
 
 @end
@@ -86,6 +91,10 @@
     return _tab.variablesScope;
 }
 
+- (id)identifier {
+    return @(_tab.uniqueId);
+}
+
 @end
 
 @interface iTermOutlineWindowProxy : NSObject<iTermOutlineProxy>
@@ -117,6 +126,10 @@
     return _windowController.scope;
 }
 
+- (id)identifier {
+    return _windowController.terminalGuid;
+}
+
 @end
 
 @interface iTermOutlineRoot : NSObject<iTermOutlineProxy>
@@ -146,6 +159,10 @@
     return [iTermVariableScope globalsScope];
 }
 
+- (id)identifier {
+    return [NSNull null];
+}
+
 @end
 
 @implementation iTermSessionTabWindowOutlineDelegate {
@@ -161,6 +178,10 @@
         _root = [[iTermOutlineRoot alloc] init];
     }
     return self;
+}
+
+- (void)awakeFromNib {
+    [_sessionTabWindowOutlineView expandItem:nil expandChildren:YES];
 }
 
 #pragma mark - NSOutlineViewDataSource
@@ -205,22 +226,46 @@
 - (void)outlineViewSelectionDidChange:(NSNotification *)notification {
     NSOutlineView *outlineView = notification.object;
     id<iTermOutlineProxy> proxy = [outlineView itemAtRow:outlineView.selectedRow];
+    [self showVariablesForProxy:proxy];
+}
+
+- (void)showVariablesForProxy:(id<iTermOutlineProxy>)proxy {
     iTermVariableScope *scope = proxy.scope;
     if (scope) {
+        NSString *path = [_variablesOutlineDelegate selectedPathForOutlineView:_variablesOutlineView];
         _variablesOutlineDelegate = [[iTermVariablesOutlineDelegate alloc] initWithScope:scope];
         _variablesOutlineView.delegate = _variablesOutlineDelegate;
         _variablesOutlineView.dataSource = _variablesOutlineDelegate;
         [_variablesOutlineView reloadData];
+        if (path) {
+            [_variablesOutlineDelegate selectPath:path inOutlineView:_variablesOutlineView];
+        }
     }
 }
 
-- (void)reload {
-    _root = [[iTermOutlineRoot alloc] init];
-    [_sessionTabWindowOutlineView reloadData];
+- (void)selectObjectEquivalentTo:(id<iTermOutlineProxy>)selectedObject {
+    const NSInteger numberOfRows = [_sessionTabWindowOutlineView numberOfRows];
+    for (NSInteger i = 0; i < numberOfRows; i++) {
+        id<iTermOutlineProxy> proxy = [_sessionTabWindowOutlineView itemAtRow:i];
+        if ([proxy.identifier isEqual:selectedObject.identifier]) {
+            [_sessionTabWindowOutlineView selectRowIndexes:[NSIndexSet indexSetWithIndex:i] byExtendingSelection:NO];
+            [_sessionTabWindowOutlineView scrollRowToVisible:i];
+            return;
+        }
+    }
     _variablesOutlineDelegate = [[iTermVariablesOutlineDelegate alloc] initWithScope:nil];
     _variablesOutlineView.delegate = _variablesOutlineDelegate;
     _variablesOutlineView.dataSource = _variablesOutlineDelegate;
     [_variablesOutlineView reloadData];
+}
+
+- (void)reload {
+    id<iTermOutlineProxy> selectedObject = [_sessionTabWindowOutlineView itemAtRow:[_sessionTabWindowOutlineView selectedRow]];
+    _root = [[iTermOutlineRoot alloc] init];
+    [_sessionTabWindowOutlineView reloadData];
+    [_sessionTabWindowOutlineView expandItem:nil expandChildren:YES];
+    [self selectObjectEquivalentTo:selectedObject];
+
 }
 
 @end

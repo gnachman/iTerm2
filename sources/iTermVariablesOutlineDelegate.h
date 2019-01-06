@@ -14,6 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermVariablesOutlineDelegate : NSObject<NSOutlineViewDataSource, NSOutlineViewDelegate>
 
 - (instancetype)initWithScope:(nullable iTermVariableScope *)scope;
+- (NSString *)selectedPathForOutlineView:(NSOutlineView *)outlineView;
+- (void)selectPath:(NSString *)path inOutlineView:(NSOutlineView *)outlineView;
 
 @end
 

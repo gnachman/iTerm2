@@ -215,6 +215,47 @@ id iTermVariablesNewProxy(NSString *name, id value) {
     return self;
 }
 
+- (NSString *)selectedPathForOutlineView:(NSOutlineView *)outlineView {
+    NSInteger row = outlineView.selectedRow;
+    if (row < 0) {
+        return nil;
+    }
+    NSArray<NSString *> *parts = @[];
+    id<iTermVariablesProxy> proxy = [outlineView itemAtRow:outlineView.selectedRow];
+    while (proxy && proxy != _root) {
+        parts = [@[proxy.path] arrayByAddingObjectsFromArray:parts];
+        proxy = [outlineView parentForItem:proxy];
+    }
+    return [parts componentsJoinedByString:@"."];
+}
+
+- (void)selectPath:(NSString *)path inOutlineView:(NSOutlineView *)outlineView {
+    NSArray<NSString *> *parts = [path componentsSeparatedByString:@"."];
+    id<iTermVariablesProxy> proxy = _root;
+    while (parts.count) {
+        NSString *name = parts.firstObject;
+        BOOL found = NO;
+        for (id<iTermVariablesProxy> child in proxy.children) {
+            if ([child.path isEqualToString:name]) {
+                found = YES;
+                [outlineView expandItem:proxy];
+                proxy = child;
+                parts = [parts subarrayFromIndex:1];
+                break;
+            }
+        }
+        if (!found) {
+            return;
+        }
+    }
+    const NSInteger row = [outlineView rowForItem:proxy];
+    if (row < 0) {
+        return;
+    }
+    [outlineView selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
+    [outlineView scrollRowToVisible:row];
+}
+
 #pragma mark - NSOutlineViewDataSource
 
 - (NSInteger)outlineView:(NSOutlineView *)outlineView numberOfChildrenOfItem:(nullable id)item {

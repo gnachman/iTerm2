@@ -70,24 +70,6 @@
                                                                                 <tableCellView id="Hr8-4f-zrb">
                                                                                     <rect key="frame" x="1" y="1" width="435" height="17"/>
                                                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                                                                    <subviews>
-                                                                                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="3Z3-NT-efP">
-                                                                                            <rect key="frame" x="0.0" y="0.0" width="435" height="17"/>
-                                                                                            <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="Dh5-3d-ufA">
-                                                                                                <font key="font" metaFont="system"/>
-                                                                                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                                                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                                                            </textFieldCell>
-                                                                                        </textField>
-                                                                                    </subviews>
-                                                                                    <constraints>
-                                                                                        <constraint firstItem="3Z3-NT-efP" firstAttribute="centerX" secondItem="Hr8-4f-zrb" secondAttribute="centerX" id="JE1-KD-bJA"/>
-                                                                                        <constraint firstItem="3Z3-NT-efP" firstAttribute="centerY" secondItem="Hr8-4f-zrb" secondAttribute="centerY" id="hrO-Br-nip"/>
-                                                                                        <constraint firstItem="3Z3-NT-efP" firstAttribute="leading" secondItem="Hr8-4f-zrb" secondAttribute="leading" constant="2" id="v5T-5w-xtL"/>
-                                                                                    </constraints>
-                                                                                    <connections>
-                                                                                        <outlet property="textField" destination="3Z3-NT-efP" id="NAq-NV-yRK"/>
-                                                                                    </connections>
                                                                                 </tableCellView>
                                                                             </prototypeCellViews>
                                                                         </tableColumn>
