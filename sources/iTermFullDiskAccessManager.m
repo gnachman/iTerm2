@@ -30,8 +30,9 @@
     if (d == NULL && errno == EPERM) {
         return YES;
     }
-
-    closedir(d);
+    if (d != NULL) {
+        closedir(d);
+    }
     return NO;
 }
 
