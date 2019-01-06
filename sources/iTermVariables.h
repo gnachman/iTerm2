@@ -69,6 +69,7 @@ extern NSString *const iTermVariableKeyWindowCurrentTab;
 @property (nonatomic, readonly, weak) id owner;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 @property (nonatomic, readonly) NSDictionary<NSString *,NSString *> *stringValuedDictionary;
+@property (nonatomic, readonly) NSArray<NSString *> *allNames;
 
 + (instancetype)globalInstance;
 
@@ -78,6 +79,9 @@ extern NSString *const iTermVariableKeyWindowCurrentTab;
 // WARNING: You almost never want to use this. It is useful if you need to get a known child out, as
 // open quickly does to find the names of all user variables.
 - (id)discouragedValueForVariableName:(NSString *)name;
+
+// Don't use this unless you really know what you're doing.
+- (id)rawValueForVariableName:(NSString *)name;
 
 - (void)removeLinkToReference:(iTermVariableReference *)reference
                          path:(NSString *)path;

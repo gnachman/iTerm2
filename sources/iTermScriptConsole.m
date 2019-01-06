@@ -9,6 +9,7 @@
 
 #import "iTermAPIServer.h"
 #import "iTermScriptHistory.h"
+#import "iTermScriptInspector.h"
 #import "iTermAPIScriptLauncher.h"
 #import "iTermWebSocketConnection.h"
 #import "NSArray+iTerm.h"
@@ -41,6 +42,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     IBOutlet NSTextField *_filter;
     IBOutlet NSButton *_terminateButton;
     IBOutlet NSButton *_startButton;
+    iTermScriptInspector *_inspector;
 
     id _token;
 }
@@ -216,6 +218,13 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
 - (void)cancel:(id)sender {
     [self close];
+}
+
+- (IBAction)inspector:(id)sender {
+    if (!_inspector) {
+        _inspector = [[iTermScriptInspector alloc] initWithWindowNibName:@"iTermScriptInspector"];
+    }
+    [[_inspector window] makeKeyAndOrderFront:nil];
 }
 
 #pragma mark - NSTableViewDataSource

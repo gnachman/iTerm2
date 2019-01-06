@@ -142,6 +142,10 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
     return [self valueForVariableName:name];
 }
 
+- (id)rawValueForVariableName:(NSString *)name {
+    return _values[name];
+}
+
 - (id)valueByUnwrappingWeakVariables:(id)value {
     iTermWeakVariables *weakVariables = [iTermWeakVariables castFrom:value];
     if (weakVariables) {
@@ -217,6 +221,10 @@ NSString *const iTermVariableKeyWindowCurrentTab = @"currentTab";
                          path:(NSString *)path {
     [self removeWeakReferenceFromLinkTable:_resolvedLinks toObject:reference forKey:path];
     [self removeWeakReferenceFromLinkTable:_unresolvedLinks toObject:reference forKey:path];
+}
+
+- (NSArray<NSString *> *)allNames {
+    return _values.allKeys;
 }
 
 #pragma mark - Private
