@@ -40,6 +40,7 @@
 @property(nonatomic, assign) MouseMode mouseMode;
 @property(nonatomic, readonly) MouseMode previousMouseMode;  // will never equal NONE
 @property(nonatomic, assign) MouseFormat mouseFormat;
+@property(nonatomic, assign) BOOL reportKeyUp;
 
 // The current foreground/background color to display (they're swapped when reverseVideo is on).
 @property(nonatomic, readonly) screen_char_t foregroundColorCode;

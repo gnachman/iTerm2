@@ -4623,6 +4623,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self.delegate screenSoftAlternateScreenModeDidChange];
 }
 
+- (void)terminalReportKeyUpDidChange:(BOOL)reportKeyUp {
+    [self.delegate screenReportKeyUpDidChange:reportKeyUp];
+}
+
 #pragma mark - Private
 
 - (VT100GridCoordRange)commandRange {

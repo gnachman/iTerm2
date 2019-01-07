@@ -50,6 +50,10 @@
     [self.delegate termkeyKeyMapperWillMapKey:self];
 }
 
+- (NSData *)keyMapperDataForKeyUp:(NSEvent *)event {
+    return nil;
+}
+
 #pragma mark - Termkey
 
 - (NSString *)stringWithCharacter:(unichar)character {
@@ -577,11 +581,17 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
 #pragma mark - iTerm
 
 - (NSString *)keyMapperStringForPreCocoaEvent:(NSEvent *)event {
+    if (event.type != NSEventTypeKeyDown) {
+        return nil;
+    }
     [self updateConfigurationWithEvent:event];
     return [self preCocoaString];
 }
 
 - (NSData *)keyMapperDataForPostCocoaEvent:(NSEvent *)event {
+    if (event.type != NSEventTypeKeyDown) {
+        return nil;
+    }
     [self updateConfigurationWithEvent:event];
     return [self postCocoaData];
 }

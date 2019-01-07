@@ -71,6 +71,7 @@ NSString *const kTerminalStateInCommandKey = @"In Command";
 NSString *const kTerminalStateUnicodeVersionStack = @"Unicode Version Stack";
 NSString *const kTerminalStateURL = @"URL";
 NSString *const kTerminalStateURLParams = @"URL Params";
+NSString *const kTerminalStateReportKeyUp = @"Report Key Up";
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reverseVideo;
@@ -339,6 +340,7 @@ static const int kMaxScreenRows = 4096;
     self.reverseWraparoundMode = NO;
     self.autorepeatMode = YES;
     self.keypadMode = NO;
+    self.reportKeyUp = NO;
     self.insertMode = NO;
     self.sendReceiveMode = NO;
     self.bracketedPasteMode = NO;
@@ -414,6 +416,14 @@ static const int kMaxScreenRows = 4096;
     if (!allow) {
         self.keypadMode = NO;
     }
+}
+
+- (void)setReportKeyUp:(BOOL)reportKeyUp {
+    if (reportKeyUp == _reportKeyUp) {
+        return;
+    }
+    _reportKeyUp = reportKeyUp;
+    [self.delegate terminalReportKeyUpDidChange:reportKeyUp];
 }
 
 - (screen_char_t)foregroundColorCode
@@ -620,6 +630,11 @@ static const int kMaxScreenRows = 4096;
                     self.mouseFormat = MOUSE_FORMAT_XTERM;
                 }
                 break;
+
+            case 1337:
+                self.reportKeyUp = mode;
+                break;
+                
             case 1049:
                 // From the xterm release log:
                 // Implement new escape sequence, private mode 1049, which combines
@@ -1231,6 +1246,8 @@ static const int kMaxScreenRows = 4096;
 
     // Reset DECKPAM
     self.keypadMode = NO;
+
+    self.reportKeyUp = NO;
 
     // Set WRAPROUND to initial value
     self.wraparoundMode = YES;
@@ -2798,6 +2815,7 @@ static const int kMaxScreenRows = 4096;
            kTerminalStateMouseFormatKey: @(self.mouseFormat),
            kTerminalStateCursorModeKey: @(self.cursorMode),
            kTerminalStateKeypadModeKey: @(self.keypadMode),
+           kTerminalStateReportKeyUp: @(self.reportKeyUp),
            kTerminalStateAllowKeypadModeKey: @(self.allowKeypadMode),
            kTerminalStateBracketedPasteModeKey: @(self.bracketedPasteMode),
            kTerminalStateAnsiModeKey: @(ansiMode_),
@@ -2845,6 +2863,7 @@ static const int kMaxScreenRows = 4096;
     self.mouseFormat = [dict[kTerminalStateMouseFormatKey] intValue];
     self.cursorMode = [dict[kTerminalStateCursorModeKey] boolValue];
     self.keypadMode = [dict[kTerminalStateKeypadModeKey] boolValue];
+    self.reportKeyUp = [dict[kTerminalStateReportKeyUp] boolValue];
     self.allowKeypadMode = [dict[kTerminalStateAllowKeypadModeKey] boolValue];
     self.url = [dict[kTerminalStateURL] nilIfNull];
     self.urlParams = [dict[kTerminalStateURLParams] nilIfNull];

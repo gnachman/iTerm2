@@ -109,6 +109,10 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
     }
 }
 
+- (void)flagsChanged:(NSEvent *)event {
+    [self.delegate keyboardHandler:self sendEventToController:event];
+}
+
 #pragma mark - NSTextInputClient
 
 - (void)doCommandBySelector:(SEL)aSelector {

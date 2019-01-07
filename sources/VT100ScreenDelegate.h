@@ -257,5 +257,6 @@
 - (void)screenReportFocusWillChangeTo:(BOOL)reportFocus;
 - (void)screenDidReceiveLineFeed;
 - (void)screenSoftAlternateScreenModeDidChange;
+- (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp;
 
 @end

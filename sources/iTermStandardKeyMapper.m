@@ -21,6 +21,10 @@
     [self.delegate standardKeyMapperWillMapKey:self];
 }
 
+- (NSData *)keyMapperDataForKeyUp:(NSEvent *)event {
+    return nil;
+}
+
 #pragma mark - Pre-Cocoa
 
 - (NSString *)preCocoaString {
@@ -369,11 +373,17 @@
 #pragma mark - iTermKeyMapper
 
 - (NSString *)keyMapperStringForPreCocoaEvent:(NSEvent *)event {
+    if (event.type != NSEventTypeKeyDown) {
+        return nil;
+    }
     [self updateConfigurationWithEvent:event];
     return [self preCocoaString];
 }
 
 - (NSData *)keyMapperDataForPostCocoaEvent:(NSEvent *)event {
+    if (event.type != NSEventTypeKeyDown) {
+        return nil;
+    }
     [self updateConfigurationWithEvent:event];
     return [self postCocoaData];
 }

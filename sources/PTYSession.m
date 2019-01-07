@@ -34,6 +34,7 @@
 #import "iTermKeyBindingMgr.h"
 #import "iTermKeyLabels.h"
 #import "iTermStandardKeyMapper.h"
+#import "iTermRawKeyMapper.h"
 #import "iTermTermkeyKeyMapper.h"
 #import "iTermLocalHostNameGuesser.h"
 #import "iTermMetaFrustrationDetector.h"
@@ -493,6 +494,7 @@ static const NSUInteger kMaxHosts = 100;
     BOOL _errorCreatingMetalContext;
 
     id<iTermKeyMapper> _keyMapper;
+    BOOL _useLibTickit;
 }
 
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap {
@@ -637,6 +639,7 @@ static const NSUInteger kMaxHosts = 100;
         _pwdPoller.delegate = self;
         _graphicSource = [[iTermGraphicSource alloc] init];
 
+        // This is a placeholder. When the profile is set it will get updated.
         iTermStandardKeyMapper *standardKeyMapper = [[iTermStandardKeyMapper alloc] init];
         standardKeyMapper.delegate = self;
         _keyMapper = standardKeyMapper;
@@ -3788,27 +3791,32 @@ ITERM_WEAKLY_REFERENCEABLE
 
 }
 
-- (BOOL)usingLibTickit {
-    return [_keyMapper isKindOfClass:[iTermTermkeyKeyMapper class]];
-}
-
 - (void)setUseLibTickit:(BOOL)value {
-    if (value == [self usingLibTickit]) {
+    if (value == _useLibTickit) {
         return;
     }
+    _useLibTickit = value;
+    [self updateKeyMapper];
+}
 
+- (void)updateKeyMapper {
+    Class mapperClass = [iTermStandardKeyMapper class];
+    if (_terminal.reportKeyUp) {
+        mapperClass = [iTermRawKeyMapper class];
+    } else if (_useLibTickit) {
+        mapperClass = [iTermTermkeyKeyMapper class];
+    }
+    if ([_keyMapper isKindOfClass:mapperClass]) {
+        return;
+    }
     [_keyMapper release];
     _keyMapper = nil;
 
-    if (value) {
-        iTermTermkeyKeyMapper *termkeyKeyMapper = [[iTermTermkeyKeyMapper alloc] init];
-        termkeyKeyMapper.delegate = self;
-        _keyMapper = termkeyKeyMapper;
-    } else {
-        iTermStandardKeyMapper *standardKeyMapper = [[iTermStandardKeyMapper alloc] init];
-        standardKeyMapper.delegate = self;
-        _keyMapper = standardKeyMapper;
+    id<iTermKeyMapper> keyMapper = [[mapperClass alloc] init];
+    if ([keyMapper respondsToSelector:@selector(setDelegate:)]) {
+        [keyMapper setDelegate:self];
     }
+    _keyMapper = keyMapper;
     _textview.keyboardHandler.keyMapper = _keyMapper;
 }
 
@@ -6733,11 +6741,13 @@ ITERM_WEAKLY_REFERENCEABLE
     if (event.charactersIgnoringModifiers.length == 0) {
         return;
     }
-    [self logKeystroke:event];
-    [self resumeOutputIfNeeded];
+    if (event.type == NSEventTypeKeyDown) {
+        [self logKeystroke:event];
+        [self resumeOutputIfNeeded];
 
-    if ([self trySpecialKeyHandlersForEvent:event]) {
-        return;
+        if ([self trySpecialKeyHandlersForEvent:event]) {
+            return;
+        }
     }
     if (_exited) {
         DLog(@"Terminal already dead");
@@ -6752,6 +6762,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)keyUp:(NSEvent *)event {
+    if (_terminal.reportKeyUp) {
+        NSData *const dataToSend = [_keyMapper keyMapperDataForKeyUp:event];
+        if (dataToSend) {
+            [self writeLatin1EncodedData:dataToSend broadcastAllowed:YES];
+        }
+    }
+}
 - (void)logKeystroke:(NSEvent *)event {
     const unichar unicode = event.characters.length > 0 ? [event.characters characterAtIndex:0] : 0;
     DLog(@"event:%@ (%llx+%x)[%@][%@]:%x(%c) <%lu>",
@@ -9686,6 +9704,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)screenSoftAlternateScreenModeDidChange {
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+}
+
+- (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp {
+    [self updateKeyMapper];
 }
 
 #pragma mark - Announcements

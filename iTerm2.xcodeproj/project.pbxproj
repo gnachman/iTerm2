@@ -2403,6 +2403,8 @@
 		A6971F3820DA295A0075CFD4 /* ToolWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = 53AFFC911DD38F1500E6CEC6 /* ToolWebView.m */; };
 		A697E27B1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A697E27C1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
+		A699507721E33827009916BC /* iTermRawKeyMapper.h in Headers */ = {isa = PBXBuildFile; fileRef = A699507521E33827009916BC /* iTermRawKeyMapper.h */; };
+		A699507821E33827009916BC /* iTermRawKeyMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = A699507621E33827009916BC /* iTermRawKeyMapper.m */; };
 		A699BAE618C8394700D425A7 /* CVector.h in Headers */ = {isa = PBXBuildFile; fileRef = A699BAE418C8394700D425A7 /* CVector.h */; };
 		A69A15731D7FD78200A9E7EF /* TipCalendar.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A15711D7FD78200A9E7EF /* TipCalendar.png */; };
 		A69A15741D7FD78200A9E7EF /* TipCalendar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A69A15721D7FD78200A9E7EF /* TipCalendar@2x.png */; };
@@ -5073,6 +5075,8 @@
 		A6971F3220D8D3C30075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermAdvancedGPUSettingsWindowController.xib; sourceTree = "<group>"; };
 		A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMinimumSubsequenceMatcher.h; sourceTree = "<group>"; };
 		A697E27A1B42501000E175DA /* iTermMinimumSubsequenceMatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMinimumSubsequenceMatcher.m; sourceTree = "<group>"; };
+		A699507521E33827009916BC /* iTermRawKeyMapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRawKeyMapper.h; sourceTree = "<group>"; };
+		A699507621E33827009916BC /* iTermRawKeyMapper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermRawKeyMapper.m; sourceTree = "<group>"; };
 		A699BAE418C8394700D425A7 /* CVector.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = CVector.h; sourceTree = "<group>"; tabWidth = 4; };
 		A69A15711D7FD78200A9E7EF /* TipCalendar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TipCalendar.png; path = images/TipCalendar.png; sourceTree = "<group>"; };
 		A69A15721D7FD78200A9E7EF /* TipCalendar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "TipCalendar@2x.png"; path = "images/TipCalendar@2x.png"; sourceTree = "<group>"; };
@@ -8001,6 +8005,8 @@
 				A62F8FCD21D993A5008EA71C /* iTermKeyMapper.h */,
 				A62F8FCE21D9A603008EA71C /* iTermTermkeyKeyMapper.h */,
 				A62F8FCF21D9A603008EA71C /* iTermTermkeyKeyMapper.m */,
+				A699507521E33827009916BC /* iTermRawKeyMapper.h */,
+				A699507621E33827009916BC /* iTermRawKeyMapper.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -9476,6 +9482,7 @@
 				A65429AB20C4880300CE71B1 /* iTermSessionFactory.h in Headers */,
 				A66719461DCE36C3000CE608 /* iTermSocketIPV4Address.h in Headers */,
 				537BFDD52101B2500098C91F /* iTermStatusBarCPUUtilizationComponent.h in Headers */,
+				A699507721E33827009916BC /* iTermRawKeyMapper.h in Headers */,
 				A6D5985121B78B9700B59C94 /* iTermBroadcastInputHelper.h in Headers */,
 				A66F52AD21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.h in Headers */,
 				A69C93412121140100531438 /* iTermStatusBarLargeComposerViewController.h in Headers */,
@@ -11579,6 +11586,7 @@
 				A6BF035121E176C30097DA86 /* iTermVariableScope.m in Sources */,
 				A6971F3820DA295A0075CFD4 /* ToolWebView.m in Sources */,
 				A608F22220F08369008E8009 /* VT100DCSParser.m in Sources */,
+				A699507821E33827009916BC /* iTermRawKeyMapper.m in Sources */,
 				A626DF0C217D3034005600F9 /* iTermLionFullScreenTabBarViewController.m in Sources */,
 				A6180D6D21A35D5E0073F219 /* iTermMetalPerFrameState.m in Sources */,
 				530AB7B520A615D900D2AA08 /* iTermPythonArgumentParser.m in Sources */,

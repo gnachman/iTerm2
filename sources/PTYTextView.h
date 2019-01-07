@@ -78,6 +78,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 - (BOOL)isPasting;
 - (void)queueKeyDown:(NSEvent *)event;
 - (void)keyDown:(NSEvent *)event;
+- (void)keyUp:(NSEvent *)event;
 - (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event;
 - (int)optionKey;
 - (int)rightOptionKey;

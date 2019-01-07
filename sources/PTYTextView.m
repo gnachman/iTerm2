@@ -1342,6 +1342,11 @@ static const int kDragThreshold = 3;
     [_keyboardHandler keyDown:event inputContext:self.inputContext];
 }
 
+- (void)keyUp:(NSEvent *)event {
+    [self.delegate keyUp:event];
+    [super keyUp:event];
+}
+
 - (BOOL)keyIsARepeat {
     return _keyboardHandler.keyIsARepeat;
 }
@@ -1644,6 +1649,10 @@ static const int kDragThreshold = 3;
 - (void)flagsChanged:(NSEvent *)theEvent {
     URLAction *action = [self updateUnderlinedURLs:theEvent];
     [self updateCursor:theEvent action:action];
+    NSString *string = [_keyboardHandler.keyMapper keyMapperStringForPreCocoaEvent:theEvent];
+    if (string) {
+        [_delegate insertText:string];
+    }
     [super flagsChanged:theEvent];
 }
 

@@ -26,10 +26,15 @@ NS_ASSUME_NONNULL_BEGIN
 // as the last resort after the controller has a chance to handle it.
 - (nullable NSData *)keyMapperDataForPostCocoaEvent:(NSEvent *)event;
 
+- (nullable NSData *)keyMapperDataForKeyUp:(NSEvent *)event;
+
 // If this returns YES then the event will be sent to the controller which, if it does not handle
 // the event itself, will send the event to the post-cocoa handler here. Don't return YES if the
 // event should go through the IME.
 - (BOOL)keyMapperShouldBypassPreCocoaForEvent:(NSEvent *)event;
+
+@optional
+- (void)setDelegate:(id)delegate;
 
 @end
 

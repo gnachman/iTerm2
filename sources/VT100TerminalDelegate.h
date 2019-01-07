@@ -424,4 +424,6 @@ typedef NS_ENUM(int, VT100TerminalColorIndex) {
 - (void)terminalReportFocusWillChangeTo:(BOOL)reportFocus;
 - (void)terminalSoftAlternateScreenModeDidChange;
 
+- (void)terminalReportKeyUpDidChange:(BOOL)reportKeyUp;
+
 @end

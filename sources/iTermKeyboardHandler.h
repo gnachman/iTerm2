@@ -63,6 +63,7 @@ typedef struct {
 - (void)doCommandBySelector:(SEL)aSelector;
 - (void)insertText:(id)aString replacementRange:(NSRange)replacementRange;
 - (BOOL)hasMarkedText;
+- (void)flagsChanged:(NSEvent *)event;
 
 @end
 
