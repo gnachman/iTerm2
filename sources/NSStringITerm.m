@@ -80,7 +80,16 @@
 
 + (NSString *)stringFromPasteboard {
     NSPasteboard *board;
-
+    if (gDebugLogging) {
+        DLog(@"--- begin list of items ---");
+        for (NSPasteboardItem *item in [[NSPasteboard generalPasteboard] pasteboardItems]) {
+            DLog(@"Item=%@", item);
+            for (NSPasteboardType type in item.types) {
+                DLog(@"  For type %@: plist=%@ data=%@ string=%@", type, [item propertyListForType:type], [item dataForType:type], [item stringForType:type]);
+            }
+        }
+        DLog(@"--- end list of items ---");
+    }
     board = [NSPasteboard generalPasteboard];
     if (!board) {
         DLog(@"Failed to get the general pasteboard!");
