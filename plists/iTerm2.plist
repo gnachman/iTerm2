@@ -24,6 +24,18 @@
 	<string>English</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
+                <dict>
+                        <key>CFBundleTypeExtensions</key>
+                        <array>
+                                <string>itr</string>
+                        </array>
+                        <key>CFBundleTypeIconFile</key>
+                        <string>iTerm2.icns</string>
+                        <key>CFBundleTypeName</key>
+                        <string>iTerm2 Recording</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Editor</string>
+                </dict>
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
@@ -54,18 +66,6 @@
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
-				<string>itr</string>
-			</array>
-			<key>CFBundleTypeIconFile</key>
-			<string>iTerm2.icns</string>
-			<key>CFBundleTypeName</key>
-			<string>iTerm2 Recording</string>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-		</dict>
-		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
 				<string>itermcolors</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
@@ -75,6 +75,24 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 		</dict>
+                <dict>
+                        <key>CFBundleTypeExtensions</key>
+                        <array>
+                                <string>itermscript</string>
+                        </array>
+                        <key>CFBundleTypeIconFile</key>
+                        <string>iTerm2Script.icns</string>
+                        <key>CFBundleTypeName</key>
+                        <string>iTerm2 Script</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Viewer</string>
+                        <key>LSItemContentTypes</key>
+                        <array>
+                          <string>public.data</string>
+                        </array>
+                        <key>LSHandlerRank</key>
+                        <string>Owner</string>
+                </dict>
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Shell</string>
@@ -82,24 +100,6 @@
 			<array>
 				<string>public.unix-executable</string>
 			</array>
-		</dict>
-		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>itermscript</string>
-			</array>
-			<key>CFBundleTypeIconFile</key>
-			<string>iTerm2Script.icns</string>
-			<key>CFBundleTypeName</key>
-			<string>iTerm2 Script</string>
-			<key>CFBundleTypeRole</key>
-			<string>Viewer</string>
-                        <key>LSItemContentTypes</key>
-                        <array>
-                          <string>public.data</string>
-                        </array>
-                        <key>LSHandlerRank</key>
-                        <string>Owner</string>
 		</dict>
 	</array>
         <key>NSAppleEventsUsageDescription</key>
