@@ -15,6 +15,7 @@
 #import "iTermCharacterSource.h"
 #import "iTermData.h"
 #import "iTermTextureArray.h"
+#import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSMutableData+iTerm.h"
 #import "NSStringITerm.h"
@@ -174,6 +175,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     NSInteger _numberOfIterationsNeeded;
     iTermBitmapData *_postprocessedData;
     BOOL _isAscii;
+
+    NSMutableString *_log;
 }
 
 + (NSRect)boundingRectForCharactersInRange:(NSRange)range
@@ -284,10 +287,15 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         _context = context;
         CGContextRetain(context);
 
+        if ([string isEqualToString:@"G"]) {
+            string = @" ";
+        }
         for (int i = 0; i < 4; i++) {
             _attributedStrings[i] = [[NSAttributedString alloc] initWithString:string attributes:[self attributesForIteration:i]];
             _lineRefs[i] = CTLineCreateWithAttributedString((CFAttributedStringRef)_attributedStrings[i]);
         }
+        _log = [NSMutableString string];
+        [_log appendFormat:@"Initialized\n"];
     }
     return self;
 }
@@ -348,6 +356,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 - (iTermCharacterBitmap *)bitmapForPart:(int)part {
+    [_log appendFormat:@"Bitmap for part %@ requested\n", @(part)];
     [self drawIfNeeded];
     const int radius = _radius;
     const int dx = iTermImagePartDX(part) + radius;
@@ -359,6 +368,51 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     if (iTermTextIsMonochrome()) {
         if (!_postprocessed && !_isEmoji) {
             [self performPostProcessing];
+            [_log appendFormat:@"Post-processed: %@\n", _postprocessedData];
+        }
+    }
+    if (_isAscii && _string.length == 1) {
+        unichar c = [_string characterAtIndex:0];
+        if (c >= 'A' && c <= 'Z') {
+            [_log appendFormat:@"Performing sanity check\n"];
+            const BOOL ok = [_datas anyWithBlock:^BOOL(NSMutableData *data) {
+
+                unsigned char *bytes = data.mutableBytes;
+                for (NSInteger i = 0; i < data.length; i++) {
+                    if (bytes[i]) {
+                        return YES;
+                    }
+                }
+                return NO;
+            }];
+            if (!ok) {
+                [_log appendFormat:@"string=%@\n", _string];
+                [_log appendFormat:@"descriptor=%@\n", _descriptor.dictionaryValue];
+                [_log appendFormat:@"thinstrokes=%@\n", @(_attributes.useThinStrokes)];
+                [_log appendFormat:@"bold=%@\n", @(_attributes.bold)];
+                [_log appendFormat:@"italic=%@\n", @(_attributes.italic)];
+                [_log appendFormat:@"fakeBold=%@\n", @(_fakeBold)];
+                [_log appendFormat:@"fakeItalic=%@\n", @(_fakeItalic)];
+                [_log appendFormat:@"size=%@\n", NSStringFromSize(_size)];
+                [_log appendFormat:@"boxDrawing=%@\n", @(_boxDrawing)];
+                [_log appendFormat:@"useNativePowerlineGlyphs=%@\n", @(_useNativePowerlineGlyphs)];
+                [_log appendFormat:@"postprocessed=%@\n", @(_postprocessed)];
+                [_log appendFormat:@"context=%@\n", _context];
+                [_log appendFormat:@"attributedStrings[0]=%@\n", _attributedStrings[0]];
+                [_log appendFormat:@"attributedStrings[1]=%@\n", _attributedStrings[1]];
+                [_log appendFormat:@"attributedStrings[2]=%@\n", _attributedStrings[2]];
+                [_log appendFormat:@"attributedStrings[3]=%@\n", _attributedStrings[3]];
+                [_log appendFormat:@"image=%@\n", _image];
+                [_log appendFormat:@"haveDrawn=%@\n", @(_haveDrawn)];
+                [_log appendFormat:@"radius=%@\n", @(_radius)];
+                [_log appendFormat:@"haveTestedForEmoji=%@\n", @(_haveTestedForEmoji)];
+                [_log appendFormat:@"nextIterationToDrawBackgroundFor=%@\n", @(_nextIterationToDrawBackgroundFor)];
+                [_log appendFormat:@"numberOfIterationsNeeded=%@\n", @(_numberOfIterationsNeeded)];
+                [_log appendFormat:@"isAscii=%@\n", @(_isAscii)];
+                [_log appendFormat:@"isEmoji=%@\n", @(_isEmoji)];
+
+                ITCriticalError(NO, @"All pixels are clear.\n%@", _log);
+            }
         }
     }
     const unsigned char *bitmapBytes = _postprocessedData.bytes;
@@ -437,7 +491,9 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 - (void)drawIfNeeded {
+    [_log appendFormat:@"drawIfNeeded called\n"];
     if (!_haveDrawn) {
+        [_log appendFormat:@"drawIfNeeded drawing\n"];
         CGSize offset;
         if (_isAscii) {
             offset = _descriptor.asciiOffset;
@@ -528,6 +584,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 #pragma mark Drawing
 
 - (void)drawWithOffset:(CGPoint)offset iteration:(NSInteger)iteration {
+    [_log appendFormat:@"drawWithOffset:%@ iteration:%@\n", @(offset), @(iteration)];
     CGAffineTransform textMatrix = CGContextGetTextMatrix(_context);
     CGContextSaveGState(_context);
     CFArrayRef runs = CTLineGetGlyphRuns(_lineRefs[iteration]);
@@ -542,24 +599,31 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     const NSUInteger length = CGBitmapContextGetBytesPerRow(_context) * CGBitmapContextGetHeight(_context);
     NSMutableData *data = [NSMutableData dataWithBytes:CGBitmapContextGetData(_context)
                                                 length:length];
+    [_log appendFormat:@"After drawing, data=%@\n", data];
+
     [_datas addObject:data];
     CGContextRestoreGState(_context);
     CGContextSetTextMatrix(_context, textMatrix);
 }
 
 - (void)fillBackgroundForIteration:(NSInteger)iteration context:(CGContextRef)context {
+    [_log appendFormat:@"fillBackgroundForIteration:%@ context:%@\n", @(iteration), context];
     if (iTermTextIsMonochrome()) {
+        [_log appendFormat:@"CGContextSetRGBFillColor(black)\n"];
         CGContextSetRGBFillColor(context, 0, 0, 0, 0);
     } else {
         if (_isEmoji) {
+            [_log appendFormat:@"CGContextSetRGBFillColor(clear)\n"];
             CGContextSetRGBFillColor(context, 1, 1, 1, 0);
         } else {
+            [_log appendFormat:@"CGContextSetRGBFillColor(white)\n"];
             CGContextSetRGBFillColor(context, 1, 1, 1, 1);
         }
     }
     CGRect rect = CGRectMake(0, 0, _size.width, _size.height);
     CGContextClearRect(context, rect);
     CGContextFillRect(context, rect);
+    [_log appendFormat:@"CGContextFillRect(%@, %@)\n", context, NSStringFromRect(rect)];
 
 #if ENABLE_DEBUG_CHARACTER_SOURCE_ALIGNMENT
     CGContextSetRGBStrokeColor(context, 1, 0, 0, 1);
@@ -576,7 +640,9 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 // Initializes a bunch of state that depends on knowing the font.
 - (void)initializeStateIfNeededWithFont:(CTFontRef)runFont {
+    [_log appendFormat:@"initializeStateIfNeededWithFont:%@\n", runFont];
     if (_haveTestedForEmoji) {
+        [_log appendFormat:@"haveTestedForEmoji=YES, not initializing state again\n"];
         return;
     }
 
@@ -594,6 +660,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
             _numberOfIterationsNeeded = 4;
         }
     }
+    [_log appendFormat:@"fontName=%@, numberOfIterationsNeeded set to %@\n", fontName, @(_numberOfIterationsNeeded)];
 
     ITAssertWithMessage(_context, @"context is null for size %@", NSStringFromSize(_size));
     _datas = [NSMutableArray array];
@@ -601,16 +668,20 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 - (void)drawBackgroundIfNeededForIteration:(NSInteger)iteration
                                    context:(CGContextRef)context {
+    [_log appendFormat:@"drawBackgroundIfNeededForIteration:%@ context:%@\n", @(iteration), context];
     if (iteration >= _nextIterationToDrawBackgroundFor) {
         _nextIterationToDrawBackgroundFor = iteration;
+        [_log appendFormat:@"_nextIterationToDrawBackgroundFor <- %@\n", @(_nextIterationToDrawBackgroundFor)];
         [self fillBackgroundForIteration:iteration
                                  context:context];
     }
 }
 
 - (void)setTextColorForIteration:(NSInteger)iteration context:(CGContextRef)context {
+    [_log appendFormat:@"setTextColorForIteration:%@ context:%@\n", @(iteration), context];
     ITAssertWithMessage(context, @"nil context for iteration %@/%@", @(iteration), @(_numberOfIterationsNeeded));
     CGColorRef color = [[self textColorForIteration:iteration] CGColor];
+    [_log appendFormat:@"CGContextSetStrokeColorWithColor(%@, %@) as NSColor: %@\n", context, color, [NSColor colorWithCGColor:color]];
     CGContextSetFillColorWithColor(context, color);
     CGContextSetStrokeColorWithColor(context, color);
 }
@@ -620,19 +691,25 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                      offset:(CGPoint)offset
                        skew:(CGFloat)skew
                     context:(CGContextRef)context {
+    [_log appendFormat:@"initializeIteration:%@ offset:%@ skew:%@ context:%@\n", @(iteration), @(offset), @(skew), context];
     CGContextSetShouldAntialias(context, _antialiased);
 
     if (_antialiased) {
+        [_log appendFormat:@"antialiased\n"];
         BOOL shouldSmooth;
         int style = -1;
         if (iTermTextIsMonochrome()) {
+            [_log appendFormat:@"monochrome\n"];
             if (_attributes.useThinStrokes) {
+                [_log appendFormat:@"shoulSmooth=NO\n"];
                 shouldSmooth = NO;
             } else {
+                [_log appendFormat:@"shoulSmooth=YES\n"];
                 shouldSmooth = YES;
             }
         } else {
             // User enabled subpixel AA
+            [_log appendFormat:@"subpixel AA. shouldSmooth=YES\n"];
             shouldSmooth = YES;
         }
         if (shouldSmooth) {
@@ -640,13 +717,17 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                 // This seems to be available at least on 10.8 and later. The only reference to it is in
                 // WebKit. This causes text to render just a little lighter, which looks nicer.
                 // It does not work in Mojave without subpixel AA.
+                [_log appendFormat:@"style=16\n"];
                 style = 16;
             } else {
+                [_log appendFormat:@"style=0\n"];
                 style = 0;
             }
         }
+        [_log appendFormat:@"CGContextSetShouldSmoothFonts(%@, %@)\n", context, @(shouldSmooth)];
         CGContextSetShouldSmoothFonts(context, shouldSmooth);
         if (style >= 0) {
+            [_log appendFormat:@"CGContextSetFontSmoothingStyle(%@, %@)\n", context, @(style)];
             CGContextSetFontSmoothingStyle(context, style);
         }
     } else {
@@ -662,6 +743,8 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                             runFont:(CTFontRef)runFont
                                skew:(CGFloat)skew
                         initialized:(BOOL)haveInitializedThisIteration {
+    [_log appendFormat:@"prepareToDrawRunAtIteration:%@ offset:%@ runFont:%@ skew:%@ initialized:%@",
+     @(iteration), @(offset), runFont, @(skew), @(haveInitializedThisIteration)];
     [self initializeStateIfNeededWithFont:runFont];
 
     CGContextRef context = _context;
@@ -689,6 +772,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 - (void)drawBoxAtOffset:(CGPoint)offset iteration:(int)iteration {
+    [_log appendFormat:@"drawBoxAtOffset:%@ iteration:%@\n", NSStringFromPoint(offset), @(iteration)];
     NSGraphicsContext *graphicsContext = [NSGraphicsContext graphicsContextWithCGContext:_context flipped:YES];
     [NSGraphicsContext saveGraphicsState];
     [NSGraphicsContext setCurrentContext:graphicsContext];
@@ -709,6 +793,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         atOffset:(CGPoint)offset
             skew:(CGFloat)skew
        iteration:(NSInteger)iteration {
+    [_log appendFormat:@"drawRuns:%@ offset:%@ skew:%@ iteration:%@\n", runs, @(offset), @(skew), @(iteration)];
     BOOL haveInitializedThisIteration = NO;
     for (CFIndex j = 0; j < CFArrayGetCount(runs); j++) {
         CTRunRef run = CFArrayGetValueAtIndex(runs, j);
@@ -733,13 +818,32 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                           iteration:iteration
                             context:context];
         } else {
+            [_log appendFormat:@"CTFontDrawGlyphs(%@, buffer=[", runFont];
+            for (int i = 0; i < length; i++) {
+                [_log appendFormat:@"%@, ", @(buffer[i])];
+            }
+            [_log appendFormat:@"], positions=["];
+            for (int i = 0; i < length; i++) {
+                [_log appendFormat:@"%@, ", NSStringFromPoint(positions[i])];
+            }
+            [_log appendFormat:@"], length=%@, context=%@\n", @(length), context];
             CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, context);
 
             if (_fakeBold) {
+                [_log appendFormat:@"fakeBold is true\n"];
                 [self initializeTextMatrixInContext:context
                                            withSkew:skew
                                              offset:CGPointMake(offset.x + self.fakeBoldShift * _descriptor.scale,
                                                                 offset.y)];
+                [_log appendFormat:@"For FAKE BOLD: CTFontDrawGlyphs(%@, buffer=[", runFont];
+                for (int i = 0; i < length; i++) {
+                    [_log appendFormat:@"%@, ", @(buffer[i])];
+                }
+                [_log appendFormat:@"], positions=["];
+                for (int i = 0; i < length; i++) {
+                    [_log appendFormat:@"%@, ", NSStringFromPoint(positions[i])];
+                }
+                [_log appendFormat:@"], length=%@, context=%@\n", @(length), context];
                 CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, context);
             }
 
@@ -784,6 +888,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                    length:(size_t)length
                 iteration:(NSInteger)iteration
                   context:(CGContextRef)context {
+    [_log appendFormat:@"drawEmojiWithFont\n"];
     CGAffineTransform textMatrix = CGContextGetTextMatrix(context);
     CGContextSaveGState(context);
     // You have to use the CTM with emoji. CGContextSetTextMatrix doesn't work.
@@ -818,13 +923,22 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 - (void)initializeTextMatrixInContext:(CGContextRef)cgContext
                              withSkew:(CGFloat)skew
                                offset:(CGPoint)offset {
+    [_log appendFormat:@"initializeTextMatrixInContext:%@ skew:%@ offset:%@", cgContext, @(skew), @(offset)];
     if (!_isEmoji) {
         // Can't use this with emoji.
         CGAffineTransform textMatrix = CGAffineTransformMake(_descriptor.scale,        0.0,
                                                              skew * _descriptor.scale, _descriptor.scale,
                                                              offset.x,                 offset.y);
+        [_log appendFormat:@"not emoji. matrix=%@ %@ %@ %@ / %@ %@\n",
+         @(textMatrix.a),
+         @(textMatrix.b),
+         @(textMatrix.c),
+         @(textMatrix.d),
+         @(textMatrix.tx),
+         @(textMatrix.ty)];
         CGContextSetTextMatrix(cgContext, textMatrix);
     } else {
+        [_log appendFormat:@"emoji. Using identity matrix\n"];
         CGContextSetTextMatrix(cgContext, CGAffineTransformIdentity);
     }
 }
