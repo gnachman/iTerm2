@@ -121,6 +121,9 @@ extern NSString *const PTYTabVariableTitleOverride;
 
 - (void)setRoot:(NSSplitView *)newRoot;
 
+// This is safe to call when there may be a maximized pane.
+- (void)setActiveSessionPreservingMaximization:(PTYSession *)session;
+
 - (NSRect)absoluteFrame;
 - (int)indexOfSessionView:(SessionView*)sessionView;
 

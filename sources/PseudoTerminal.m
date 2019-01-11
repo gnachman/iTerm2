@@ -1907,10 +1907,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_contentView.tabView selectTabViewItem:tab.tabViewItem];
     if (tab.activeSession != session) {
-        if (tab.isMaximized) {
-            [tab unmaximize];
-        }
-        [tab setActiveSession:session];
+        [tab setActiveSessionPreservingMaximization:session];
     }
 }
 
