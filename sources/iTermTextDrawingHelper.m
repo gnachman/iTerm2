@@ -159,6 +159,8 @@ typedef struct iTermTextColorContext {
 
     // The cache we'll use next time.
     NSMutableDictionary<NSAttributedString *, id> *_replacementLineRefCache;
+
+    BOOL _preferSpeedToFullLigatureSupport;
 }
 
 - (instancetype)init {
@@ -1989,12 +1991,15 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
 
     attributes->font = fontInfo.font;
     attributes->ligatureLevel = fontInfo.ligatureLevel;
-    if (!c->complexChar && iTermCharacterSupportsFastPath(c->code, _asciiLigaturesAvailable)) {
-        attributes->ligatureLevel = 0;
-    }
-    if (c->complexChar || c->code > 128) {
-        if (!_nonAsciiLigatures) {
+    if (_preferSpeedToFullLigatureSupport) {
+        if (!c->complexChar &&
+            iTermCharacterSupportsFastPath(c->code, _asciiLigaturesAvailable)) {
             attributes->ligatureLevel = 0;
+        }
+        if (c->complexChar || c->code > 128) {
+            if (!_nonAsciiLigatures) {
+                attributes->ligatureLevel = 0;
+            }
         }
     }
     attributes->underline = (c->underline || inUnderlinedRange);
@@ -2963,6 +2968,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     _visibleRect = _delegate.visibleRect;
     _scrollViewContentSize = _delegate.enclosingScrollView.contentSize;
     _scrollViewDocumentVisibleRect = _delegate.enclosingScrollView.documentVisibleRect;
+    _preferSpeedToFullLigatureSupport = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
 
     BOOL ignore1 = NO, ignore2 = NO;
     PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:'a'

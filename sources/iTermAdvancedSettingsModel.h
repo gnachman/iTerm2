@@ -160,6 +160,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)performDictionaryLookupOnQuickLook;
 + (BOOL)pinchToChangeFontSizeDisabled;
 + (double)pointSizeOfTimeStamp;
++ (BOOL)preferSpeedToFullLigatureSupport;
 + (BOOL)preventEscapeSequenceFromClearingHistory;
 + (BOOL)profilesWindowJoinsActiveSpace;
 + (BOOL)promptForPasteWhenNotAtPrompt;

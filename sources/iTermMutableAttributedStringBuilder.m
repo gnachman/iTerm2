@@ -75,7 +75,7 @@
     self = [super init];
     if (self) {
 #if ENABLE_TEXT_DRAWING_FAST_PATH
-        _canUseFastPath = YES;
+    _canUseFastPath = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
 #endif
     }
     return self;
