@@ -456,6 +456,12 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                 return;
             }
 
+            // pip3 must use the python in this environment so it will install new dependencies to the right place.
+            NSString *const pathToEnvironment = [container.path stringByAppendingPathComponent:@"iterm2env"];
+            NSString *const pip3 = [self pip3At:pathToEnvironment];
+            NSString *const pathToPython = [self pyenvAt:pathToEnvironment];
+            [self replaceShebangInScriptAtPath:pip3 with:[NSString stringWithFormat:@"#!%@", pathToPython]];
+
             [self installDependencies:dependencies to:container completion:^(NSArray<NSString *> *failures, NSArray<NSData *> *outputs) {
                 if (failures.count) {
                     NSAlert *alert = [[NSAlert alloc] init];
@@ -503,6 +509,42 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             }];
         });
     });
+}
+
+- (void)replaceShebangInScriptAtPath:(NSString *)scriptPath with:(NSString *)newShebang {
+    NSError *error = nil;
+    NSString *script = [NSString stringWithContentsOfFile:scriptPath encoding:NSUTF8StringEncoding error:&error];
+    if (!script) {
+        DLog(@"Failed to replace shebang in %@ because I couldn't read the file contents: %@", scriptPath, error);
+        return;
+    }
+    NSMutableArray<NSString *> *lines = [[script componentsSeparatedByString:@"\n"] mutableCopy];
+    if (lines.count == 0) {
+        DLog(@"Empty script at %@", scriptPath);
+        return;
+    }
+    if (![lines.firstObject hasPrefix:@"#!/"]) {
+        DLog(@"First line of %@ is not a shebang: %@", scriptPath, lines.firstObject);
+        return;
+    }
+    const BOOL unlinkedOk = [[NSFileManager defaultManager] removeItemAtPath:scriptPath error:&error];
+    if (!unlinkedOk) {
+        DLog(@"Failed to unlink %@: %@", scriptPath, error);
+        return;
+    }
+    lines[0] = newShebang;
+    NSString *fixedScript = [lines componentsJoinedByString:@"\n"];
+    const BOOL ok = [fixedScript writeToFile:scriptPath atomically:NO encoding:NSUTF8StringEncoding error:&error];
+    if (!ok) {
+        DLog(@"Write to %@ failed: %@", scriptPath, error);
+    }
+    const BOOL chmodOk = [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions: @(0755) }
+                                                          ofItemAtPath:scriptPath
+                                                                 error:&error];
+    if (!chmodOk) {
+        DLog(@"Failed to chmod 0755 %@: %@", scriptPath, error);
+    }
+
 }
 
 - (void)installDependencies:(NSArray<NSString *> *)dependencies
