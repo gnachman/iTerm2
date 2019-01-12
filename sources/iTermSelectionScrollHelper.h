@@ -13,7 +13,7 @@
 
 - (CGFloat)lineHeight;
 - (CGFloat)excess;
-- (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView;
+- (BOOL)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView;
 - (void)selectionScrollWillStart;
 
 @end

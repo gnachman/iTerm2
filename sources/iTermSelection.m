@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "ScreenChar.h"
 
 static NSString *const kSelectionSubSelectionsKey = @"Sub selections";
@@ -75,6 +76,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     iTermSubSelection *theCopy = [[iTermSubSelection alloc] init];
     theCopy.range = self.range;
     theCopy.selectionMode = self.selectionMode;
+    theCopy.connected = self.connected;
 
     return theCopy;
 }
@@ -114,6 +116,15 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     }
 }
 
+- (BOOL)isEqual:(id)object {
+    iTermSubSelection *other = [iTermSubSelection castFrom:object];
+    if (!other) {
+        return NO;
+    }
+    return (VT100GridWindowsRangeEqualsWindowedRange(self.range, other.range) &&
+            self.selectionMode == other.selectionMode &&
+            self.connected == other.connected);
+}
 @end
 
 @implementation iTermSelection {
@@ -440,16 +451,17 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     return VT100GridCoordOrder(a, b) == NSOrderedSame;
 }
 
-- (void)moveSelectionEndpointTo:(VT100GridCoord)coord {
+- (BOOL)moveSelectionEndpointTo:(VT100GridCoord)coord {
     DLog(@"Move selection to %@", VT100GridCoordDescription(coord));
     if (coord.y < 0) {
         coord.x = coord.y = 0;
     }
+    NSArray<iTermSubSelection *> *subselectionsBefore = [[self.allSubSelections copy] autorelease] ?: @[];
     VT100GridWindowedRange range = [self rangeForCurrentModeAtCoord:coord
                                               includeParentheticals:NO
                                                  needAccurateWindow:NO];
-
-    if (!_live) {
+    const BOOL startLiveSelection = !_live;
+    if (startLiveSelection) {
         [self beginSelectionAt:coord mode:self.selectionMode resume:NO append:NO];
     }
     switch (_selectionMode) {
@@ -469,6 +481,11 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     _extend = YES;
     [self extendPastNulls];
     [_delegate selectionDidChange:[[self retain] autorelease]];
+    if (startLiveSelection) {
+        return YES;
+    }
+    NSArray<iTermSubSelection *> *subselectionsAfter = self.allSubSelections ?: @[];
+    return ![subselectionsBefore isEqualToArray:self.allSubSelections];
 }
 
 - (void)moveSelectionEndpointToRange:(VT100GridWindowedRange)range {

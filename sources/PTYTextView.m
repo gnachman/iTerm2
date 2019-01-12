@@ -235,6 +235,7 @@ static const int kDragThreshold = 3;
 
     BOOL _haveSeenScrollWheelEvent;
     iTermRateLimitedUpdate *_shadowRateLimit;
+    BOOL _committedToDrag;
 }
 
 
@@ -1926,6 +1927,7 @@ static const int kDragThreshold = 3;
     }
 
     dragOk_ = YES;
+    _committedToDrag = NO;
     if (cmdPressed) {
         if (frontTextView != self) {
             if ([NSApp keyWindow] != [self window]) {
@@ -2108,12 +2110,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _mouseDown = NO;
 
     [_selectionScrollHelper mouseUp];
+    const BOOL mouseDragged = (_mouseDragged && _committedToDrag);
+    _committedToDrag = NO;
 
     BOOL isUnshiftedSingleClick = ([event clickCount] < 2 &&
-                                   !_mouseDragged &&
+                                   !mouseDragged &&
                                    !([event modifierFlags] & NSEventModifierFlagShift));
     BOOL isShiftedSingleClick = ([event clickCount] == 1 &&
-                                 !_mouseDragged &&
+                                 !mouseDragged &&
                                  ([event modifierFlags] & NSEventModifierFlagShift));
     BOOL willFollowLink = (isUnshiftedSingleClick &&
                            cmdPressed &&
@@ -2250,8 +2254,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self updateCursor:event action:action];
 }
 
-- (void)mouseDragged:(NSEvent *)event
-{
+- (void)mouseDragged:(NSEvent *)event {
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     DLog(@"mouseDragged");
     if (_mouseDownIsThreeFingerClick) {
@@ -2275,6 +2278,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint mouseDownLocation = [_mouseDownEvent locationInWindow];
     if (EuclideanDistance(mouseDownLocation, locationInWindow) >= kDragThreshold) {
         dragThresholdMet = YES;
+        _committedToDrag = YES;
     }
     if ([event eventNumber] == _firstMouseEventNumber) {
         // We accept first mouse for the purposes of focusing or dragging a
@@ -2287,6 +2291,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     if ([self reportMouseEvent:event]) {
+        _committedToDrag = YES;
         return;
     }
     [self removeUnderline];
@@ -2303,12 +2308,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                      ([event modifierFlags] & NSEventModifierFlagCommand));
     if (okToDrag) {
         if (_mouseDownOnImage && dragThresholdMet) {
+            _committedToDrag = YES;
             [self _dragImage:_imageBeingClickedOn forEvent:event];
         } else if (_mouseDownOnSelection == YES && dragThresholdMet) {
             DLog(@"drag and drop a selection");
             // Drag and drop a selection
             NSString *theSelectedText = [self selectedText];
             if ([theSelectedText length] > 0) {
+                _committedToDrag = YES;
                 [self _dragText:theSelectedText forEvent:event];
                 DLog(@"Mouse drag. selection=%@", _selection);
                 return;
@@ -2365,6 +2372,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
         draggingSession.draggingFormation = NSDraggingFormationNone;
+        _committedToDrag = YES;
 
         // Valid drag, so we reset the flag because mouseUp doesn't get called when a drag is done
         _semanticHistoryDragged = NO;
@@ -2376,7 +2384,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     [_selectionScrollHelper mouseDraggedTo:locationInTextView coord:VT100GridCoordMake(x, y)];
 
-    [self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView];
+    if ([self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView]) {
+        _committedToDrag = YES;
+    }
 }
 
 #pragma mark PointerControllerDelegate
@@ -6474,25 +6484,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return rect;
 }
 
-- (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView
-{
-    if (_selection.live) {
-        DLog(@"Move selection endpoint to %d,%d, coord=%@",
-             x, y, [NSValue valueWithPoint:locationInTextView]);
-        int width = [_dataSource width];
-        if (locationInTextView.y == 0) {
-            x = y = 0;
-        } else if (locationInTextView.x < [iTermAdvancedSettingsModel terminalMargin] && _selection.liveRange.coordRange.start.y < y) {
-            // complete selection of previous line
-            x = width;
-            y--;
-        }
-        if (y >= [_dataSource numberOfLines]) {
-            y = [_dataSource numberOfLines] - 1;
-        }
-        [_selection moveSelectionEndpointTo:VT100GridCoordMake(x, y)];
-        DLog(@"moveSelectionEndpoint. selection=%@", _selection);
+// Returns YES if the selection changed.
+- (BOOL)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView {
+    if (!_selection.live) {
+        return NO;
     }
+
+    DLog(@"Move selection endpoint to %d,%d, coord=%@",
+         x, y, [NSValue valueWithPoint:locationInTextView]);
+    int width = [_dataSource width];
+    if (locationInTextView.y == 0) {
+        x = y = 0;
+    } else if (locationInTextView.x < [iTermAdvancedSettingsModel terminalMargin] && _selection.liveRange.coordRange.start.y < y) {
+        // complete selection of previous line
+        x = width;
+        y--;
+    }
+    if (y >= [_dataSource numberOfLines]) {
+        y = [_dataSource numberOfLines] - 1;
+    }
+    const BOOL result = [_selection moveSelectionEndpointTo:VT100GridCoordMake(x, y)];
+    DLog(@"moveSelectionEndpoint. selection=%@", _selection);
+    return result;
 }
 
 - (BOOL)shouldRedrawBlinkingObjects {
@@ -6797,6 +6810,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)selectionScrollWillStart {
     PTYScroller *scroller = (PTYScroller *)self.enclosingScrollView.verticalScroller;
     scroller.userScroll = YES;
+    _committedToDrag = YES;
 }
 
 #pragma mark - Color

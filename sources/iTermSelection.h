@@ -136,7 +136,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 - (void)beginExtendingSelectionAt:(VT100GridCoord)coord;
 
 // During live selection, adjust the endpoint.
-- (void)moveSelectionEndpointTo:(VT100GridCoord)coord;
+- (BOOL)moveSelectionEndpointTo:(VT100GridCoord)coord;
 
 // End live selection.
 - (void)endLiveSelection;
