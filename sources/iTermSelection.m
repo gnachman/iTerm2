@@ -484,7 +484,6 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     if (startLiveSelection) {
         return YES;
     }
-    NSArray<iTermSubSelection *> *subselectionsAfter = self.allSubSelections ?: @[];
     return ![subselectionsBefore isEqualToArray:self.allSubSelections];
 }
 

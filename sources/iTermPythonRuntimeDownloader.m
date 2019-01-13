@@ -618,13 +618,14 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     iTermCommandRunner *runner = [[iTermCommandRunner alloc] initWithCommand:pip3
                                                                withArguments:arguments
                                                                         path:container.path];
+    NSString *identifier = [runner description];
     runner.outputHandler = ^(NSData *data) {
-        DLog(@"Runner %@ recvd: %@", runner, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+        DLog(@"Runner %@ recvd: %@", identifier, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
         [output appendData:data];
     };
     runner.completion = ^(int status) {
         if (status != 0) {
-            DLog(@"Runner %@ FAILED with %@", runner, [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding]);
+            DLog(@"Runner %@ FAILED with %@", identifier, [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding]);
         }
         completion(status == 0, output);
     };

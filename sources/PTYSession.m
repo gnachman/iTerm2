@@ -10494,6 +10494,10 @@ ITERM_WEAKLY_REFERENCEABLE
         case ITMNotificationType_NotifyOnServerOriginatedRpc:
         case ITMNotificationType_NotifyOnBroadcastChange:
         case ITMNotificationType_NotifyOnProfileChange:
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        case ITMNotificationType_NotifyOnLocationChange:
+#pragma clang diagnostic pop
             // We won't get called for this
             assert(NO);
             break;
