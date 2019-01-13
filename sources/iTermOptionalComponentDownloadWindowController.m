@@ -335,8 +335,9 @@ didCompleteWithError:(nullable NSError *)error {
             self.completion(phase);
         }
     } else {
+        _titleLabel.stringValue = @"Download Finished";
         _button.enabled = NO;
-        _progressLabel.stringValue = @"Finished";
+        _progressLabel.stringValue = @"Installing…";
         iTermOptionalComponentDownloadPhase *phase = _currentPhase;
         _currentPhase = nil;
         self.completion(phase);
