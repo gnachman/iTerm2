@@ -22,4 +22,9 @@
     [_sessionTabWindowOutlineDelegate reload];
     [_registeredFunctionTableViewDelegate reload];
 }
+
+- (IBAction)closeCurrentSession:(id)sender {
+    [self close];
+}
+
 @end
