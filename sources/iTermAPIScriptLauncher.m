@@ -32,18 +32,23 @@
     [self launchScript:filename fullPath:filename withVirtualEnv:nil setupPyPath:nil];
 }
 
++ (NSString *)pythonVersionForScript:(NSString *)path {
+    NSString *setupPyPath = [path stringByAppendingPathComponent:@"setup.py"];
+    iTermSetupPyParser *parser = [[iTermSetupPyParser alloc] initWithPath:setupPyPath];
+    if (parser) {
+        return parser.pythonVersion;
+    } else {
+        return [self inferredPythonVersionFromScriptAt:path];
+    }
+}
+
 + (void)launchScript:(NSString *)filename
             fullPath:(NSString *)fullPath
       withVirtualEnv:(NSString *)virtualenv
          setupPyPath:(NSString *)setupPyPath {
-    NSString *pythonVersion;
-    if (pythonVersion) {
-        iTermSetupPyParser *parser = [[iTermSetupPyParser alloc] initWithPath:setupPyPath];
-        pythonVersion = parser.pythonVersion;
-    } else {
-        pythonVersion = [self inferredPythonVersionFromScriptAt:filename];
-    }
     if (virtualenv != nil) {
+        iTermSetupPyParser *parser = [[iTermSetupPyParser alloc] initWithPath:setupPyPath];
+        NSString *pythonVersion = parser.pythonVersion;
         // Launching a full environment script: do not check for a newer version, as it is frozen and
         // downloading wouldn't affect it anyway.
         [self reallyLaunchScript:filename
@@ -52,6 +57,8 @@
                    pythonVersion:pythonVersion];
         return;
     }
+
+    NSString *pythonVersion = [self inferredPythonVersionFromScriptAt:filename];
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                         pythonVersion:pythonVersion
                                                                                        withCompletion:^(BOOL ok) {
@@ -267,7 +274,8 @@
 
     // Does it have an pyenv?
     // foo/bar/iterm2env
-    NSString *pyenvPython = [[iTermPythonRuntimeDownloader sharedInstance] pyenvAt:[path stringByAppendingPathComponent:@"iterm2env"]];
+    NSString *pyenvPython = [[iTermPythonRuntimeDownloader sharedInstance] pyenvAt:[path stringByAppendingPathComponent:@"iterm2env"]
+                                                                     pythonVersion:[iTermAPIScriptLauncher pythonVersionForScript:path]];
     if ([[NSFileManager defaultManager] fileExistsAtPath:pyenvPython isDirectory:nil]) {
         return pyenvPython;
     }

@@ -1534,12 +1534,19 @@ static iTermController *gSharedInstance;
 }
 
 - (void)openSingleUseWindowWithCommand:(NSString *)command {
-    [self openSingleUseWindowWithCommand:command inject:nil environment:nil];
+    [self openSingleUseWindowWithCommand:command inject:nil environment:nil completion:nil];
 }
 
 - (void)openSingleUseWindowWithCommand:(NSString *)command
                                 inject:(NSData *)injection
                            environment:(NSDictionary *)environment {
+    [self openSingleUseWindowWithCommand:command inject:injection environment:environment completion:nil];
+}
+
+- (void)openSingleUseWindowWithCommand:(NSString *)command
+                                inject:(NSData *)injection
+                           environment:(NSDictionary *)environment
+                            completion:(void (^)(void))completion {
     if ([command hasSuffix:@"&"] && command.length > 1) {
         command = [command substringToIndex:command.length - 1];
         system(command.UTF8String);
@@ -1568,6 +1575,19 @@ static iTermController *gSharedInstance;
                        session.isSingleUseSession = YES;
                        if (injection) {
                            [session injectData:injection];
+                       }
+                       if (completion) {
+                           __block BOOL completionBlockRun = NO;
+                           [[NSNotificationCenter defaultCenter] addObserverForName:PTYSessionTerminatedNotification
+                                                                             object:session
+                                                                              queue:nil
+                                                                         usingBlock:^(NSNotification * _Nonnull note) {
+                                                                             if (completionBlockRun) {
+                                                                                 return;
+                                                                             }
+                                                                             completionBlockRun = YES;
+                                                                             completion();
+                                                                         }];
                        }
                        return session;
                    }];

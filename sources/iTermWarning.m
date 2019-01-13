@@ -145,6 +145,7 @@ static BOOL gShowingWarning;
     [_cancelLabel release];
     [_showHelpBlock release];
     [_window release];
+    [_initialFirstResponder release];
     [super dealloc];
 }
 
@@ -238,6 +239,9 @@ static BOOL gShowingWarning;
             };
         }
         [alert setAccessoryView:_accessory];
+        if (_initialFirstResponder) {
+            alert.window.initialFirstResponder = _initialFirstResponder;
+        }
     }
     if (_showHelpBlock) {
         alert.showsHelp = YES;

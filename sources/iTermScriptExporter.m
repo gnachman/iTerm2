@@ -161,6 +161,7 @@
     [iTermSetupPyParser writeSetupPyToFile:[destination stringByAppendingPathComponent:[NSString stringWithFormat:@"setup.py"]]
                                       name:name
                               dependencies:@[]
+                       ensureiTerm2Present:YES
                              pythonVersion:[iTermPythonRuntimeDownloader latestPythonVersion]];
     NSString *sourceFolder = [destination stringByAppendingPathComponent:name];
     NSFileManager *fileManager = [NSFileManager defaultManager];

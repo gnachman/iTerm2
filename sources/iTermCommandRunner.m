@@ -71,7 +71,7 @@
         _readingQueue = dispatch_queue_create("com.iterm2.crun-reading", DISPATCH_QUEUE_SERIAL);
         _writingQueue = dispatch_queue_create("com.iterm2.crun-writing", DISPATCH_QUEUE_SERIAL);
         _waitingQueue = dispatch_queue_create("com.iterm2.crun-waiting", DISPATCH_QUEUE_SERIAL);
-
+        assert(command);
         self.command = command;
         self.arguments = arguments;
         self.currentDirectoryPath = currentDirectoryPath;

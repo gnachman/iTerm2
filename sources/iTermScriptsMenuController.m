@@ -18,6 +18,7 @@
 #import "iTermScriptHistory.h"
 #import "iTermScriptImporter.h"
 #import "iTermScriptTemplatePickerWindowController.h"
+#import "iTermTuple.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -25,6 +26,61 @@
 #import "SCEvents.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
+@implementation iTermScriptItem {
+    NSMutableArray<iTermScriptItem *> *_children;
+}
+
+- (instancetype)initFullEnvironmentWithPath:(NSString *)path parent:(nullable iTermScriptItem *)parent {
+    self = [self initFileWithPath:path parent:parent];
+    if (self) {
+        _fullEnvironment = YES;
+    }
+    return self;
+}
+
+- (instancetype)initFileWithPath:(NSString *)path parent:(nullable iTermScriptItem *)parent {
+    self = [super init];
+    if (self) {
+        _path = [path copy];
+        _parent = parent;
+    }
+    return self;
+}
+
+- (instancetype)initFolderWithPath:(NSString *)path parent:(nullable iTermScriptItem *)parent {
+    self = [super init];
+    if (self) {
+        _isFolder = YES;
+        _path = [path copy];
+        _parent = parent;
+    }
+    return self;
+}
+
+- (NSString *)name {
+    return _path.lastPathComponent;
+}
+
+- (NSComparisonResult)compare:(iTermScriptItem *)other {
+    if (_isFolder != other.isFolder) {
+        if (_isFolder) {
+            return NSOrderedAscending;
+        } else {
+            return NSOrderedDescending;
+        }
+    }
+    return [self.name localizedCaseInsensitiveCompare:other.name];
+}
+
+- (void)addChild:(iTermScriptItem *)child {
+    if (!_children) {
+        _children = [NSMutableArray array];
+    }
+    [_children addObject:child];
+}
+
+@end
 
 @interface iTermScriptsMenuController()<NSOpenSavePanelDelegate, SCEventListenerProtocol>
 @end
@@ -108,24 +164,28 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)build {
     [self removeMenuItemsAfterSeparator];
-
-    NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
-
-    [self addMenuItemsAt:scriptsPath toMenu:_scriptsMenu];
+    [self addMenuItemsTo:_scriptsMenu];
     _allScripts = [self allScriptsFromMenu];
 }
 
-- (void)addMenuItemsAt:(NSString *)root toMenu:(NSMenu *)menu {
++ (NSArray<iTermScriptItem *> *)scriptItems {
+    iTermScriptItem *root = [[iTermScriptItem alloc] initFolderWithPath:[[NSFileManager defaultManager] scriptsPathWithoutSpaces] parent:nil];
+    [self populateScriptItem:root];
+    return root.children;
+}
+
++ (void)populateScriptItem:(iTermScriptItem *)parentFolderItem {
+    NSString *root = parentFolderItem.path;
     NSDirectoryEnumerator *directoryEnumerator =
         [[NSFileManager defaultManager] enumeratorAtPath:root];
     NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
-    NSMutableArray<NSString *> *files = [NSMutableArray array];
-    NSMutableDictionary<NSString *, NSMenu *> *submenus = [NSMutableDictionary dictionary];
     NSSet<NSString *> *scriptExtensions = [NSSet setWithArray:@[ @"scpt", @"app", @"py" ]];
+
     for (NSString *file in directoryEnumerator) {
         if ([file caseInsensitiveCompare:@".DS_Store"] == NSOrderedSame) {
             continue;
         }
+
         NSString *path = [root stringByAppendingPathComponent:file];
         BOOL isDirectory = NO;
         [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
@@ -133,30 +193,39 @@ NS_ASSUME_NONNULL_BEGIN
             [directoryEnumerator skipDescendents];
             if ([workspace isFilePackageAtPath:path] ||
                 [iTermAPIScriptLauncher environmentForScript:path checkForMain:NO]) {
-                [files addObject:file];
+                [parentFolderItem addChild:[[iTermScriptItem alloc] initFullEnvironmentWithPath:path parent:parentFolderItem]];
                 continue;
             }
-            NSMenu *submenu = [[NSMenu alloc] initWithTitle:file];
-            submenus[file] = submenu;
-            [self addMenuItemsAt:path toMenu:submenu];
-            if (submenu.itemArray.count == 0) {
-                [submenus removeObjectForKey:file];
+            iTermScriptItem *folderItem = [[iTermScriptItem alloc] initFolderWithPath:path parent:parentFolderItem];
+            [self populateScriptItem:folderItem];
+            if (folderItem.children.count > 0) {
+                [parentFolderItem addChild:folderItem];
             }
         } else if ([scriptExtensions containsObject:[file pathExtension]]) {
-            [files addObject:file];
+            [parentFolderItem addChild:[[iTermScriptItem alloc] initFileWithPath:path parent:parentFolderItem]];
         }
     }
-    [files sortUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
-    NSArray<NSString *> *folders = [submenus.allKeys sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+}
 
-    for (NSString *folder in folders) {
-        NSMenuItem *submenuItem = [[NSMenuItem alloc] init];
-        submenuItem.title = folder;
-        submenuItem.submenu = submenus[folder];
-        [menu addItem:submenuItem];
-    }
-    for (NSString *file in files) {
-        [self addFile:file withFullPath:[root stringByAppendingPathComponent:file] toScriptMenu:menu];
+- (void)addMenuItemsTo:(NSMenu *)rootMenu {
+    [self addMenuItemsForScriptItems:[iTermScriptsMenuController scriptItems]
+                              toMenu:rootMenu];
+}
+
+- (void)addMenuItemsForScriptItems:(NSArray<iTermScriptItem *> *)unsortedScriptItems
+                            toMenu:(NSMenu *)containingMenu {
+    NSArray<iTermScriptItem *> *const scriptItems = [unsortedScriptItems sortedArrayUsingSelector:@selector(compare:)];
+    for (iTermScriptItem *scriptItem in scriptItems) {
+        if (scriptItem.isFolder) {
+            NSMenuItem *submenuItem = [[NSMenuItem alloc] init];
+            submenuItem.title = scriptItem.name;
+            submenuItem.submenu = [[NSMenu alloc] initWithTitle:scriptItem.name];
+            [containingMenu addItem:submenuItem];
+            [self addMenuItemsForScriptItems:scriptItem.children toMenu:submenuItem.submenu];
+            continue;
+        }
+
+        [self addFile:scriptItem.name withFullPath:scriptItem.path toScriptMenu:containingMenu];
     }
 }
 
@@ -169,7 +238,6 @@ NS_ASSUME_NONNULL_BEGIN
         return NO;
     }
 }
-
 
 - (void)revealScriptsInFinder {
     NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
@@ -319,7 +387,7 @@ NS_ASSUME_NONNULL_BEGIN
         [iTermAPIScriptLauncher launchScript:mainPyPath
                                     fullPath:fullPath
                               withVirtualEnv:venv
-                                 setupPyPath:[[fullPath stringByAppendingPathComponent:name] stringByAppendingPathComponent:@"setup.py"]];
+                                 setupPyPath:[fullPath stringByAppendingPathComponent:@"setup.py"]];
         return;
     }
 

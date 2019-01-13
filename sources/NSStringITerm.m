@@ -30,6 +30,7 @@
 #import "iTermSwiftyStringParser.h"
 #import "iTermTuple.h"
 #import "iTermVariableScope.h"
+#import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
@@ -2071,6 +2072,19 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
 - (BOOL)it_hasPrefix:(NSString *)prefix {
     return prefix.length == 0 || [self hasPrefix:prefix];
+}
+
+- (NSString *)it_twoPartVersionNumber {
+    NSArray<NSString *> *parts = [self componentsSeparatedByString:@"."];
+    if (![parts allWithBlock:^BOOL(NSString *anObject) {
+        return anObject.isNumeric;
+    }]) {
+        return nil;
+    }
+    if (parts.count < 2) {
+        return nil;
+    }
+    return [[parts subarrayToIndex:2] componentsJoinedByString:@"."];
 }
 
 @end

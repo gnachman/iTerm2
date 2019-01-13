@@ -9,10 +9,21 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@interface iTermScriptItem : NSObject
+@property (nonatomic, readonly, weak) iTermScriptItem *parent;
+@property (nonatomic, readonly, strong) NSString *name;
+@property (nonatomic, readonly, strong) NSString *path;
+@property (nonatomic, readonly) BOOL isFolder;
+@property (nonatomic, readonly) BOOL fullEnvironment;
+@property (nonatomic, readonly) NSArray<iTermScriptItem *> *children;
+@end
+
 @interface iTermScriptsMenuController : NSObject
 
 @property (nonatomic, strong) NSMenuItem *installRuntimeMenuItem;
 @property (nonatomic, readonly) NSArray<NSString *> *allScripts;
+
++ (NSArray<iTermScriptItem *> *)scriptItems;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithMenu:(NSMenu *)menu;

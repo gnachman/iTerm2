@@ -936,6 +936,7 @@ DQ
                                                 <action selector="newPythonScript:" target="201" id="v2b-iE-k7t"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="2O5-I1-S86"/>
                                         <menuItem title="Open Python REPL" identifier="Open Interactive Window" id="jXH-0I-Wtc">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
@@ -943,10 +944,16 @@ DQ
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="iQa-T4-8Bh"/>
-                                        <menuItem title="Install Python Runtime" identifier="Install Python Runtime" id="wHh-8e-oU2">
+                                        <menuItem title="Manage Dependencies…" identifier="Manage Dependencies" id="wHh-8e-oU2">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
-                                                <action selector="installPythonRuntime:" target="201" id="r4H-5W-hCN"/>
+                                                <action selector="openDependencyEditor:" target="201" id="4J6-lc-cWr"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Install Python Runtime" identifier="Install Python Runtime" id="0D0-tt-wlA">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="installPythonRuntime:" target="201" id="uxc-3n-hZc"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Reveal Scripts in Finder" identifier="Reveal in Finder" id="eeH-ly-45H">
@@ -1299,7 +1306,7 @@ DQ
         <customObject id="201" userLabel="iTermApplicationDelegate" customClass="iTermApplicationDelegate">
             <connections>
                 <outlet property="_buriedSessions" destination="PTu-aD-qbz" id="Fl9-Gn-jv2"/>
-                <outlet property="_installPythonRuntime" destination="wHh-8e-oU2" id="qv8-po-q7I"/>
+                <outlet property="_installPythonRuntime" destination="0D0-tt-wlA" id="nad-Fp-mh8"/>
                 <outlet property="_scriptsMenu" destination="CZD-7u-bch" id="2Q5-aI-74T"/>
                 <outlet property="_showTipOfTheDay" destination="ft3-BP-igZ" id="WZt-qp-iuC"/>
                 <outlet property="bookmarkMenu" destination="592" id="874"/>

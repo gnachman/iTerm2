@@ -18,6 +18,7 @@
 + (void)writeSetupPyToFile:(NSString *)file
                       name:(NSString *)name
               dependencies:(NSArray<NSString *> *)dependencies
+       ensureiTerm2Present:(BOOL)ensureiTerm2Present
              pythonVersion:(NSString *)pythonVersion {
     assert(pythonVersion);
 
@@ -26,8 +27,10 @@
     if (parts.count > 2) {
         sanitizedPythonVersion = [[parts subarrayToIndex:2] componentsJoinedByString:@"."];
     }
-    
-    NSArray<NSString *> *quotedDependencies = [dependencies mapWithBlock:^id(NSString *anObject) {
+    if (ensureiTerm2Present && ![dependencies containsObject:@"iterm2"]) {
+        dependencies = [@[ @"iterm2" ] arrayByAddingObjectsFromArray:dependencies];
+    }
+    NSArray<NSString *> *quotedDependencies = [[NSSet setWithArray:dependencies].allObjects mapWithBlock:^id(NSString *anObject) {
         return [NSString stringWithFormat:@"'%@'", anObject];
     }] ?: @[];
     NSString *contents = [NSString stringWithFormat:
@@ -38,7 +41,7 @@
                           @"setup(name='%@',\n"
                           @"      version='1.0',\n"
                           @"      scripts=['%@/%@.py'],\n"
-                          @"      install_requires=['iterm2',%@],\n"
+                          @"      install_requires=[%@],\n"
                           @"      python_requires='=%@'\n"
                           @"      )",
                           name,
@@ -57,6 +60,7 @@
         if (!_content || error) {
             return nil;
         }
+        [self computeName];
         [self computeDependencies];
         [self computePythonVersion];
     }
@@ -82,20 +86,31 @@
     return modifiedString;
 }
 
-- (void)computePythonVersion {
-    NSString *regex = @"python_requires='";
+- (NSString *)valueForKeyWithStringValue:(NSString *)key {
+    NSString *regex = [NSString stringWithFormat:@"%@='", key];
     NSRange range = [_content rangeOfRegex:regex];
     if (range.location == NSNotFound) {
-        return;
+        return nil;
     }
 
     NSString *expression = [_content substringFromIndex:NSMaxRange(range)];
     NSUInteger closeQuote = [expression rangeOfRegex:@"'"].location;
     if (closeQuote == NSNotFound) {
-        return;
+        return nil;
     }
 
-    expression = [expression substringToIndex:closeQuote];
+    return [expression substringToIndex:closeQuote];
+}
+
+- (void)computeName {
+    _name = [self valueForKeyWithStringValue:@"name"];
+}
+
+- (void)computePythonVersion {
+    NSString *expression = [self valueForKeyWithStringValue:@"python_requires"];
+    if (!expression) {
+        return;
+    }
     if (![expression hasPrefix:@"="]) {
         return;
     }
@@ -144,7 +159,7 @@
         return;
     }
 
-    _dependencies = names;
+    _dependencies = [[NSSet setWithArray:names] allObjects];
 }
 
 @end

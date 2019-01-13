@@ -39,6 +39,7 @@
 #import "iTermCPUProfilerUI.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
+#import "iTermDependencyEditorWindowController.h"
 #import "iTermDisclosableView.h"
 #import "iTermExpose.h"
 #import "iTermFileDescriptorSocketPath.h"
@@ -2155,6 +2156,10 @@ static BOOL hasBecomeActive = NO;
                                                                   inject:nil
                                                              environment:environment];
     }];
+}
+
+- (IBAction)openDependencyEditor:(id)sender {
+    [[iTermDependencyEditorWindowController sharedInstance] open];
 }
 
 - (IBAction)openScriptConsole:(id)sender {

@@ -296,6 +296,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Empty strings are prefixes of all strings.
 - (BOOL)it_hasPrefix:(NSString *)prefix;
 
+// If this is a 2+ part version number, return a 2 part version number. Otherwise, nil.
+- (NSString *)it_twoPartVersionNumber;
 @end
 
 @interface NSMutableString (iTerm)

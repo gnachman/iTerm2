@@ -175,6 +175,10 @@ void OnHotKeyEvent(void);
 - (void)openSingleUseWindowWithCommand:(NSString *)command
                                 inject:(NSData *)injection
                            environment:(NSDictionary *)environment;
+- (void)openSingleUseWindowWithCommand:(NSString *)command
+                                inject:(NSData *)injection
+                           environment:(NSDictionary *)environment
+                            completion:(void (^)(void))completion;
 
 @end
 

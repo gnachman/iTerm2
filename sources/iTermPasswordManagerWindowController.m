@@ -326,6 +326,9 @@ static BOOL sAuthenticated;
             NSAlert *alert = [[[NSAlert alloc] init] autorelease];
             alert.messageText = [NSString stringWithFormat:@"Password for %@", accountName];
             NSString *password = [[[self selectedPassword] retain] autorelease];
+            if (!password) {
+                return;
+            }
             alert.informativeText = password;
             [alert addButtonWithTitle:@"OK"];
             [alert addButtonWithTitle:@"Copy"];

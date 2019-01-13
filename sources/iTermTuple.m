@@ -75,6 +75,19 @@ static NSString *const iTermTupleValueKey = @"value";
                             [_secondObject hash]);
 }
 
+- (NSComparisonResult)compare:(id)object {
+    iTermTuple *other = [iTermTuple castFrom:object];
+    if (!other) {
+        return NSOrderedAscending;
+    }
+
+    NSComparisonResult result = [self.firstObject compare:other.firstObject];
+    if (result != NSOrderedSame) {
+        return result;
+    }
+    return [self.secondObject compare:other.secondObject];
+}
+
 @end
 
 @implementation iTermTriple
@@ -143,5 +156,21 @@ static NSString *const iTermTupleValueKey = @"value";
                             [_thirdObject hash]);
 }
 
-@end
+- (NSComparisonResult)compare:(id)object {
+    iTermTriple *other = [iTermTriple castFrom:object];
+    if (!other) {
+        return NSOrderedAscending;
+    }
 
+    NSComparisonResult result = [self.firstObject compare:other.firstObject];
+    if (result != NSOrderedSame) {
+        return result;
+    }
+    result = [self.secondObject compare:other.secondObject];
+    if (result != NSOrderedSame) {
+        return result;
+    }
+    return [self.thirdObject compare:other.thirdObject];
+}
+
+@end

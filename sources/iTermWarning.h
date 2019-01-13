@@ -150,6 +150,7 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 @property(nonatomic, copy) void (^showHelpBlock)(void);
 
 @property(nonatomic, retain) NSWindow *window;
+@property(nonatomic, retain) NSView *initialFirstResponder;
 
 // Modally show the alert. Returns the selection.
 - (iTermWarningSelection)runModal;

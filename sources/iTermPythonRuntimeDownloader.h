@@ -21,6 +21,7 @@ extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
 - (NSString *)pathToStandardPyenvWithVersion:(NSString *)pythonVersion creatingSymlinkIfNeeded:(BOOL)createSymlink;
 
 + (instancetype)sharedInstance;
++ (NSArray<NSString *> *)pythonVersionsAt:(NSString *)path;
 + (NSString *)bestPythonVersionAt:(NSString *)path;
 
 // This downloads if any version is already installed and there's a newer version available.
@@ -35,7 +36,8 @@ extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
                                             withCompletion:(void (^)(BOOL))completion;
 
 // Returns the path of the python binary given a root directory having a pyenv.
-- (NSString *)pyenvAt:(NSString *)root;
+- (NSString *)pyenvAt:(NSString *)root pythonVersion:(NSString *)pythonVersion;
+- (NSString *)pip3At:(NSString *)root pythonVersion:(NSString *)pythonVersion;
 
 // Install a copy of the current environment somewhere.
 - (void)installPythonEnvironmentTo:(NSURL *)container
@@ -43,6 +45,11 @@ extern NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
                       dependencies:(NSArray<NSString *> *)dependencies
                      createSetupPy:(BOOL)createSetupPy
                         completion:(void (^)(BOOL))completion;
+
+- (void)runPip3InContainer:(NSURL *)container
+             pythonVersion:(NSString *)pythonVersion
+             withArguments:(NSArray<NSString *> *)arguments
+                completion:(void (^)(BOOL ok, NSData *output))completion;
 
 
 @end

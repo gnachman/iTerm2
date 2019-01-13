@@ -20,10 +20,12 @@
 
 @property (nonatomic, readonly) NSString *content;
 @property (nonatomic, readonly) NSString *pythonVersion;
+@property (nonatomic, readonly) NSString *name;
 
 + (void)writeSetupPyToFile:(NSString *)file
                       name:(NSString *)name
               dependencies:(NSArray<NSString *> *)dependencies
+       ensureiTerm2Present:(BOOL)ensureiTerm2Present
              pythonVersion:(NSString *)pythonVersion;
 - (instancetype)initWithPath:(NSString *)path NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
